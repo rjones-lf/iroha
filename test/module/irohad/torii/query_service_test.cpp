@@ -16,7 +16,6 @@
  */
 
 #include "torii/query_service.hpp"
-#include "backend/protobuf/query_responses/proto_block_query_response.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"

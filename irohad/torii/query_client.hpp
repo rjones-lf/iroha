@@ -48,9 +48,8 @@ namespace torii_utils {
     grpc::Status Find(const iroha::protocol::Query &query,
                       iroha::protocol::QueryResponse &response) const;
 
-    void FetchCommits(
-        const iroha::protocol::BlocksQuery &blocks_query,
-        std::vector<iroha::protocol::BlockQueryResponse> &responses);
+    std::vector<iroha::protocol::BlockQueryResponse> FetchCommits(
+        const iroha::protocol::BlocksQuery &blocks_query) const;
 
    private:
     void swap(QuerySyncClient &lhs, QuerySyncClient &rhs);

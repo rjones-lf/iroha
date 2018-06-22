@@ -93,7 +93,7 @@ namespace torii {
       grpc::ServerContext *context,
       const iroha::protocol::BlocksQuery *request,
       grpc::ServerWriter<iroha::protocol::BlockQueryResponse> *writer) {
-    log_->info("Fetching commits");
+    log_->debug("Fetching commits");
     shared_model::proto::TransportBuilder<
         shared_model::proto::BlocksQuery,
         shared_model::validation::DefaultBlocksQueryValidator>()
@@ -115,7 +115,7 @@ namespace torii {
                               shared_model::interface::BlockQueryResponse>
                               response) {
                         if (context->IsCancelled()) {
-                          log_->info("Unsubscribed");
+                          log_->debug("Unsubscribed");
                           sub.unsubscribe();
                         } else {
                           iroha::visit_in_place(
@@ -123,7 +123,7 @@ namespace torii {
                               [this, writer, request](
                                   const shared_model::interface::BlockResponse
                                       &block_response) {
-                                log_->info(
+                                log_->debug(
                                     "{} receives committed block",
                                     request->meta().creator_account_id());
                                 auto proto_block_response = static_cast<
@@ -136,9 +136,10 @@ namespace torii {
                                   const shared_model::interface::
                                       BlockErrorResponse
                                           &block_error_response) {
-                                log_->info("{} received error with message: {}",
-                                           request->meta().creator_account_id(),
-                                           block_error_response.message());
+                                log_->debug(
+                                    "{} received error with message: {}",
+                                    request->meta().creator_account_id(),
+                                    block_error_response.message());
                                 auto proto_block_error_response =
                                     static_cast<const shared_model::proto::
                                                     BlockErrorResponse &>(
@@ -151,7 +152,7 @@ namespace torii {
                       });
             },
             [this, writer](const auto &error) {
-              log_->info("Stateless invalid: {}", error.error);
+              log_->debug("Stateless invalid: {}", error.error);
               iroha::protocol::BlockQueryResponse response;
               response.mutable_error_response()->set_message(
                   std::move(error.error));

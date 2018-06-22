@@ -9,16 +9,13 @@
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/queries.hpp"
+#include "main/server_runner.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "torii/query_client.hpp"
+#include "torii/query_service.hpp"
 #include "utils/query_error_response_visitor.hpp"
-
-using namespace torii;
-
-using namespace iroha;
-using namespace iroha::torii;
 
 using ::testing::_;
 using ::testing::A;
@@ -36,14 +33,14 @@ class ToriiQueryServiceTest : public ::testing::Test {
     runner = std::make_unique<ServerRunner>(ip + ":0");
 
     // ----------- Command Service --------------
-    query_processor = std::make_shared<MockQueryProcessor>();
+    query_processor = std::make_shared<iroha::torii::MockQueryProcessor>();
     EXPECT_CALL(*query_processor, queryNotifier())
         .WillOnce(
             Return(rxcpp::observable<>::empty<
                    std::shared_ptr<shared_model::interface::QueryResponse>>()));
 
     //----------- Server run ----------------
-    runner->append(std::make_unique<::torii::QueryService>(query_processor))
+    runner->append(std::make_unique<torii::QueryService>(query_processor))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -57,12 +54,8 @@ class ToriiQueryServiceTest : public ::testing::Test {
   }
 
   std::unique_ptr<ServerRunner> runner;
-  std::shared_ptr<MockQueryProcessor> query_processor;
+  std::shared_ptr<iroha::torii::MockQueryProcessor> query_processor;
 
-  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
-      prop_notifier_;
-  std::shared_ptr<shared_model::proto::QueryResponse> model_response;
-  std::shared_ptr<shared_model::interface::BlockQueryResponse> block_response;
   iroha::protocol::Block block;
 
   shared_model::crypto::Keypair keypair =
@@ -108,10 +101,9 @@ TEST_F(ToriiQueryServiceTest, FetchBlocksWhenValidQuery) {
       .WillOnce(Return(rxcpp::observable<>::just(block_response)));
 
   auto client = torii_utils::QuerySyncClient(ip, port);
-  std::vector<iroha::protocol::BlockQueryResponse> responses;
   auto proto_blocks_query =
       std::static_pointer_cast<shared_model::proto::BlocksQuery>(blocks_query);
-  client.FetchCommits(proto_blocks_query->getTransport(), responses);
+  auto responses = client.FetchCommits(proto_blocks_query->getTransport());
 
   ASSERT_EQ(responses.size(), 1);
   auto response = responses.at(0);
@@ -140,10 +132,9 @@ TEST_F(ToriiQueryServiceTest, FetchBlocksWhenInvalidQuery) {
           .finish());
 
   auto client = torii_utils::QuerySyncClient(ip, port);
-  std::vector<iroha::protocol::BlockQueryResponse> responses;
   auto proto_blocks_query =
       std::static_pointer_cast<shared_model::proto::BlocksQuery>(blocks_query);
-  client.FetchCommits(proto_blocks_query->getTransport(), responses);
+  auto responses = client.FetchCommits(proto_blocks_query->getTransport());
 
   ASSERT_EQ(responses.size(), 1);
   auto response = responses.at(0);
