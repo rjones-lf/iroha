@@ -140,7 +140,8 @@ namespace iroha {
             &signatories) {
       using namespace std::string_literals;
 
-      std::string signatures_string = "", signatories_string = "";
+      auto signatures_string = ""s;
+      auto signatories_string = ""s;
       for (const auto &signature : signatures) {
         signatures_string += signature.publicKey().toString() + "\n"s;
       }
