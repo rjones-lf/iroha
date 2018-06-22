@@ -76,7 +76,7 @@ class GrantPermissionTest : public AcceptanceFixture {
         permitee_account_name + "@" + kDomain;
     return TxBuilder()
         .creatorAccountId(creator_account_id)
-        .createdTime(iroha::time::now())
+        .createdTime(getUniqueTime())
         .grantPermission(permitee_account_id, grant_permission)
         .quorum(1)
         .build()
@@ -618,8 +618,8 @@ TEST_F(GrantPermissionTest, GrantSetAccountDetailPermission) {
  * @then a block with transaction to grant right is written
  * AND the transfer is made
  */
-TEST_F(GrantPermissionTest, DISABLED_GrantTransferPermission) {
-  auto amount_of_asset = "1000.00";
+TEST_F(GrantPermissionTest, GrantTransferPermission) {
+  auto amount_of_asset = "1000.0";
 
   createTwoAccounts(concatenateVectors({kCanTransferMyAssets, kCanReceive}),
                     concatenateVectors({kCanTransfer, kCanReceive}))
