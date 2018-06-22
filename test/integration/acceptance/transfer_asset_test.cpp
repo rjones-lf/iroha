@@ -93,7 +93,7 @@ TEST_F(TransferAsset, Basic) {
  * @when execute tx with TransferAsset command
  * @then there is an empty proposal
  */
-TEST_F(TransferAsset, DISABLED_WithOnlyCanTransferPerm) {
+TEST_F(TransferAsset, WithoutCanTransfer) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTxAwait(makeFirstUser({}), check(1))
@@ -109,11 +109,13 @@ TEST_F(TransferAsset, DISABLED_WithOnlyCanTransferPerm) {
  * @when execute tx with TransferAsset command
  * @then there is an empty proposal
  */
-TEST_F(TransferAsset, DISABLED_WithOnlyCanReceivePerm) {
+TEST_F(TransferAsset, WithoutCanReceive) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTxAwait(makeFirstUser(), check(1))
-      .sendTxAwait(makeSecondUser({}), check(1))
+      // TODO(@l4l) 23/06/18: remove permission with IR-1367
+      .sendTxAwait(makeSecondUser({interface::permissions::Role::kAddPeer}),
+                   check(1))
       .sendTxAwait(addAssets(), check(1))
       .sendTxAwait(makeTransfer(), check(0))
       .done();
