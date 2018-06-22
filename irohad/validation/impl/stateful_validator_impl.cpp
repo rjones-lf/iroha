@@ -98,15 +98,17 @@ namespace iroha {
       };
 
       // Filter only valid transactions and accumulate errors
-      auto transactions_errors_log = std::vector<std::vector<std::string>>{};
+      auto transactions_errors_log =
+          std::vector<std::pair<std::vector<std::string>, int>>{};
       auto filter = [&temporaryWsv,
                      checking_transaction,
-                     &transactions_errors_log](auto &tx) {
+                     &transactions_errors_log](auto &tx, int tx_index) {
         return temporaryWsv.apply(tx, checking_transaction)
             .match([](expected::Value<void> &) { return true; },
-                   [&transactions_errors_log](
+                   [&transactions_errors_log, tx_index](
                        expected::Error<std::vector<std::string>> &error) {
-                     transactions_errors_log.push_back(error.error);
+                     transactions_errors_log.push_back(
+                         std::make_pair(error.error, tx_index));
                      return false;
                    });
       };
@@ -114,11 +116,14 @@ namespace iroha {
       // TODO: kamilsa IR-1010 20.02.2018 rework validation logic, so that this
       // cast is not needed and stateful validator does not know about the
       // transport
-      auto valid_proto_txs =
-          proposal.transactions() | boost::adaptors::filtered(filter)
-          | boost::adaptors::transformed([](auto &tx) {
-              return static_cast<const shared_model::proto::Transaction &>(tx);
-            });
+      std::vector<const shared_model::proto::Transaction> valid_proto_txs{};
+      for (auto i = 0; i < proposal.transactions().size(); ++i) {
+        const auto &tx = proposal.transactions()[i];
+        if (filter(tx, i)) {
+          valid_proto_txs.push_back(
+              static_cast<const shared_model::proto::Transaction &>(tx));
+        }
+      }
 
       auto validated_proposal = shared_model::proto::ProposalBuilder()
                                     .createdTime(proposal.createdTime())
@@ -140,8 +145,7 @@ namespace iroha {
             &signatories) {
       using namespace std::string_literals;
 
-      auto signatures_string = ""s;
-      auto signatories_string = ""s;
+      std::string signatures_string = "", signatories_string = "";
       for (const auto &signature : signatures) {
         signatures_string += signature.publicKey().toString() + "\n"s;
       }
