@@ -123,7 +123,7 @@ class GrantPermissionTest : public AcceptanceFixture {
   proto::Transaction permiteeSetQuorum(const std::string &permitee_account_name,
                                        const crypto::Keypair &permitee_key,
                                        const std::string &account_name,
-                                       const int &quorum) {
+                                       int quorum) {
     const std::string permitee_account_id =
         permitee_account_name + "@" + kDomain;
     const std::string account_id = account_name + "@" + kDomain;
@@ -290,9 +290,9 @@ class GrantPermissionTest : public AcceptanceFixture {
    * @return function
    */
   static auto checkSignatorySet(const crypto::Keypair &signatory,
-                                const int &quantity,
-                                const bool &is_contained) {
-    return [&signatory, &quantity, &is_contained](
+                                int quantity,
+                                bool is_contained) {
+    return [&signatory, quantity, is_contained](
         const shared_model::proto::QueryResponse &query_response) {
       ASSERT_NO_THROW({
                         const auto &resp = boost::apply_visitor(
@@ -315,8 +315,8 @@ class GrantPermissionTest : public AcceptanceFixture {
    * response
    * @return function
    */
-  static auto checkQuorum(const int &quorum_quantity) {
-    return [&quorum_quantity](
+  static auto checkQuorum(int quorum_quantity) {
+    return [quorum_quantity](
         const shared_model::proto::QueryResponse &query_response) {
       ASSERT_NO_THROW({
                         const auto &resp = boost::apply_visitor(
