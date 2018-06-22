@@ -5,15 +5,17 @@
 
 #include <gtest/gtest.h>
 
-#include "acceptance_fixture.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
+#include "integration/acceptance/acceptance_fixture.hpp"
 
 using namespace integration_framework;
+
 using namespace shared_model;
 using namespace shared_model::interface;
+using namespace shared_model::interface::permissions;
 
 class GrantPermissionTest : public AcceptanceFixture {
  public:
@@ -41,12 +43,11 @@ class GrantPermissionTest : public AcceptanceFixture {
    * @param perm2 set of permissions for account #2
    * @return reference to ITF object with two transactions
    */
-  auto createTwoAccounts(
+  decltype(auto) createTwoAccounts(
+      IntegrationTestFramework &itf,
       const shared_model::interface::RolePermissionSet &perm1,
       const shared_model::interface::RolePermissionSet &perm2) {
-    auto itf = std::make_shared<IntegrationTestFramework>(1);
-    (*itf)
-        .setInitialState(kAdminKeypair)
+    itf.setInitialState(kAdminKeypair)
         .sendTx(
             makeAccountWithPerms(kAccount1, kAccount1Keypair, perm1, kRole1))
         .skipProposal()
@@ -87,9 +88,9 @@ class GrantPermissionTest : public AcceptanceFixture {
   /**
    * Forms a transaction that either adds or removes signatory of an account
    * @param f Add or Remove signatory function
-   * @param permitee_account_name
-   * @param permitee_key
-   * @param account_name
+   * @param permitee_account_name name of account which is granted permission
+   * @param permitee_key key of account which is granted permission
+   * @param account_name account name which has granted permission to permitee
    * @return a transaction
    */
   proto::Transaction permiteeModifySignatory(
@@ -113,10 +114,10 @@ class GrantPermissionTest : public AcceptanceFixture {
 
   /**
    * Forms a transaction that allows permitted user to modify quorum field
-   * @param permitee_account_name
-   * @param permitee_key
-   * @param account_name
-   * @param quorum
+   * @param permitee_account_name name of account which is granted permission
+   * @param permitee_key key of account which is granted permission
+   * @param account_name account name which has granted permission to permitee
+   * @param quorum quorum field
    * @return a transaction
    */
   proto::Transaction permiteeSetQuorum(const std::string &permitee_account_name,
@@ -139,9 +140,9 @@ class GrantPermissionTest : public AcceptanceFixture {
   /**
    * Forms a transaction that allows permitted user to set details of the
    * account
-   * @param permitee_account_name
-   * @param permitee_key
-   * @param account_name
+   * @param permitee_account_name name of account which is granted permission
+   * @param permitee_key key of account which is granted permission
+   * @param account_name account name which has granted permission to permitee
    * @param key of the data to set
    * @param detail is the data value
    * @return a transaction
@@ -167,10 +168,10 @@ class GrantPermissionTest : public AcceptanceFixture {
 
   /**
    * Adds specified amount of an asset and transfers it
-   * @param creator_name
-   * @param creator_key
-   * @param amount
-   * @param receiver_name
+   * @param creator_name account name which is creating transfer transaction
+   * @param creator_key account key which is creating transfer transaction
+   * @param amount created amount of a default asset in AcceptanceFixture
+   * @param receiver_name name of an account which receives transfer
    * @return a transaction
    */
   proto::Transaction addAssetAndTransfer(const std::string &creator_name,
@@ -195,11 +196,11 @@ class GrantPermissionTest : public AcceptanceFixture {
 
   /**
    * Transaction, that transfers standard asset from source account to receiver
-   * @param creator_name
-   * @param creator_key
-   * @param source_account_name
-   * @param amount
-   * @param receiver_name
+   * @param creator_name account name which is creating transfer transaction
+   * @param creator_key account key which is creating transfer transaction
+   * @param source_account_name account which has assets to transfer
+   * @param amount amount of transfered asset
+   * @param receiver_name name of an account which receives transfer
    * @return a transaction
    */
   proto::Transaction transferAssetFromSource(
@@ -225,9 +226,9 @@ class GrantPermissionTest : public AcceptanceFixture {
   }
 
   /**
-   * Get signatories of an account
-   * @param account_name
-   * @param account_key
+   * Get signatories of an account (same as transaction creator)
+   * @param account_name account name which has signatories
+   * @param account_key account key which has signatories
    * @return
    */
   proto::Query querySignatories(const std::string &account_name,
@@ -245,9 +246,9 @@ class GrantPermissionTest : public AcceptanceFixture {
 
   /**
    * Get account metadata in order to check quorum field
-   * @param account_name
-   * @param account_key
-   * @return
+   * @param account_name account name
+   * @param account_key account key
+   * @return a query
    */
   proto::Query queryAccount(const std::string &account_name,
                             const crypto::Keypair &account_key) {
@@ -264,9 +265,9 @@ class GrantPermissionTest : public AcceptanceFixture {
 
   /**
    * Get account details
-   * @param account_name
-   * @param account_key
-   * @return
+   * @param account_name account name which has AccountDetails in JSON
+   * @param account_key account key which has AccountDetails in JSON
+   * @return a query
    */
   proto::Query queryAccountDetail(const std::string &account_name,
                                   const crypto::Keypair &account_key) {
@@ -282,24 +283,11 @@ class GrantPermissionTest : public AcceptanceFixture {
   }
 
   /**
-   * Concatenates variadic number of permission vectors
-   * @param perm
-   * @return
-   */
-  auto concatenateVectors(std::initializer_list<RolePermissionSet> perm) {
-    RolePermissionSet result;
-    for (auto &p : perm) {
-      result |= p;
-    }
-    return result;
-  }
-
-  /**
    * Creates a lambda that checks query response for signatures
-   * @param signatory
-   * @param quantity
-   * @param is_contained
-   * @return
+   * @param signatory a keypair that has a public key to compare
+   * @param quantity required quantity of signatories
+   * @param is_contained true if the signtory is in the set
+   * @return function
    */
   static auto checkSignatorySet(const crypto::Keypair &signatory,
                                 const int &quantity,
@@ -323,8 +311,8 @@ class GrantPermissionTest : public AcceptanceFixture {
 
   /**
    * Lambda method that checks quorum to be equal to passed quantity value
-   * @param quorum_quantity
-   * @return
+   * @param quorum_quantity value of quorum that has to be equal in query response
+   * @return function
    */
   static auto checkQuorum(const int &quorum_quantity) {
     return [&quorum_quantity](
@@ -341,9 +329,9 @@ class GrantPermissionTest : public AcceptanceFixture {
 
   /**
    * Lambda method that checks account details to contain key and value (detail)
-   * @param key
-   * @param detail
-   * @return
+   * @param key key which has to be equal in account details
+   * @param detail value which has to be equal in account details
+   * @return function
    */
   static auto checkAccountDetail(const std::string &key,
                                  const std::string &detail) {
@@ -372,33 +360,6 @@ class GrantPermissionTest : public AcceptanceFixture {
 
   const std::string kAccountDetailKey = "some_key";
   const std::string kAccountDetailValue = "some_value";
-
-  const RolePermissionSet kCanGetMySignatories{
-      permissions::Role::kGetMySignatories};
-
-  const RolePermissionSet kCanGetMyAccount{permissions::Role::kGetMyAccount};
-
-  const RolePermissionSet kCanGetMyAccountDetail{
-      permissions::Role::kGetMyAccDetail};
-
-  const RolePermissionSet kCanTransfer{permissions::Role::kTransfer};
-
-  const RolePermissionSet kCanReceive{permissions::Role::kReceive};
-
-  const RolePermissionSet kCanGrantCanAddMySignatory{
-      permissions::Role::kAddMySignatory};
-
-  const RolePermissionSet kCanGrantCanRemoveMySignatory{
-      permissions::Role::kRemoveMySignatory};
-
-  const RolePermissionSet kCanGrantCanSetMyQuorum{
-      permissions::Role::kSetMyQuorum};
-
-  const RolePermissionSet kCanGrantCanSetMyAccountDetail{
-      permissions::Role::kSetMyAccountDetail};
-
-  const RolePermissionSet kCanTransferMyAssets{
-      permissions::Role::kTransferMyAssets};
 
   const RolePermissionSet kCanGrantAll{permissions::Role::kAddMySignatory,
                                        permissions::Role::kRemoveMySignatory,
@@ -454,10 +415,11 @@ TEST_F(GrantPermissionTest, GrantAddSignatoryPermission) {
   auto check_if_signatory_is_contained = checkSignatorySet(
       kAccount2Keypair, expected_number_of_signatories, is_contained);
 
-  createTwoAccounts(
-      concatenateVectors({kCanGrantCanAddMySignatory, kCanGetMySignatories}),
-      kCanReceive)
-      ->sendTx(accountGrantToAccount(kAccount1,
+  IntegrationTestFramework itf(1);
+  createTwoAccounts(itf,
+{Role::kAddMySignatory, Role::kGetMySignatories},
+                    {Role::kReceive})
+      .sendTx(accountGrantToAccount(kAccount1,
                                      kAccount1Keypair,
                                      kAccount2,
                                      permissions::Grantable::kAddMySignatory))
@@ -493,11 +455,12 @@ TEST_F(GrantPermissionTest, GrantRemoveSignatoryPermission) {
   auto check_if_signatory_is_not_contained = checkSignatorySet(
       kAccount2Keypair, expected_number_of_signatories, is_contained);
 
-  createTwoAccounts(concatenateVectors({kCanGrantCanAddMySignatory,
-                                        kCanGrantCanRemoveMySignatory,
-                                        kCanGetMySignatories}),
-                    kCanReceive)
-      ->sendTx(accountGrantToAccount(kAccount1,
+  IntegrationTestFramework itf(1);
+  createTwoAccounts(itf, {Role::kAddMySignatory,
+                          Role::kRemoveMySignatory,
+                          Role::kGetMySignatories},
+                    {Role::kReceive})
+      .sendTx(accountGrantToAccount(kAccount1,
                                      kAccount1Keypair,
                                      kAccount2,
                                      permissions::Grantable::kAddMySignatory))
@@ -545,11 +508,12 @@ TEST_F(GrantPermissionTest, GrantSetQuorumPermission) {
   auto quorum_quantity = 2;
   auto check_quorum_quantity = checkQuorum(quorum_quantity);
 
-  createTwoAccounts(concatenateVectors({kCanGrantCanSetMyQuorum,
-                                        kCanGrantCanAddMySignatory,
-                                        kCanGetMyAccount}),
-                    kCanReceive)
-      ->sendTx(accountGrantToAccount(kAccount1,
+  IntegrationTestFramework itf(1);
+  createTwoAccounts(itf, {Role::kSetMyQuorum,
+                                             Role::kAddMySignatory,
+                                             Role::kGetMyAccount},
+                    {Role::kReceive})
+      .sendTx(accountGrantToAccount(kAccount1,
                                      kAccount1Keypair,
                                      kAccount2,
                                      permissions::Grantable::kSetMyQuorum))
@@ -590,10 +554,11 @@ TEST_F(GrantPermissionTest, GrantSetAccountDetailPermission) {
   auto check_account_detail =
       checkAccountDetail(kAccountDetailKey, kAccountDetailValue);
 
-  createTwoAccounts(concatenateVectors({kCanGrantCanSetMyAccountDetail,
-                                        kCanGetMyAccountDetail}),
-                    kCanReceive)
-      ->sendTx(
+  IntegrationTestFramework itf(1);
+  createTwoAccounts(itf, {Role::kSetMyAccountDetail,
+                          Role::kGetMyAccDetail},
+                    {Role::kReceive})
+      .sendTx(
           accountGrantToAccount(kAccount1,
                                 kAccount1Keypair,
                                 kAccount2,
@@ -628,9 +593,10 @@ TEST_F(GrantPermissionTest, GrantSetAccountDetailPermission) {
 TEST_F(GrantPermissionTest, GrantTransferPermission) {
   auto amount_of_asset = "1000.0";
 
-  createTwoAccounts(concatenateVectors({kCanTransferMyAssets, kCanReceive}),
-                    concatenateVectors({kCanTransfer, kCanReceive}))
-      ->sendTx(accountGrantToAccount(kAccount1,
+  IntegrationTestFramework itf(1);
+  createTwoAccounts(itf, {Role::kTransferMyAssets, Role::kReceive},
+                    {Role::kTransfer, Role::kReceive})
+      .sendTx(accountGrantToAccount(kAccount1,
                                      kAccount1Keypair,
                                      kAccount2,
                                      permissions::Grantable::kTransferMyAssets))
@@ -660,10 +626,11 @@ TEST_F(GrantPermissionTest, GrantTransferPermission) {
  * AND it is not written in the block
  */
 TEST_F(GrantPermissionTest, GrantWithoutGrantPermissions) {
-  auto itf = createTwoAccounts(kCanReceive, kCanReceive);
+  IntegrationTestFramework itf(1);
+  createTwoAccounts(itf, {Role::kReceive}, {Role::kReceive});
   for (auto &perm : kAllGrantable)
   {
-    itf->sendTx(accountGrantToAccount(kAccount1,
+    itf.sendTx(accountGrantToAccount(kAccount1,
                                       kAccount1Keypair,
                                       kAccount2,
                                       perm))
@@ -671,7 +638,7 @@ TEST_F(GrantPermissionTest, GrantWithoutGrantPermissions) {
         .checkBlock(
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
   }
-  itf->done();
+  itf.done();
 }
 
 /**
@@ -684,8 +651,9 @@ TEST_F(GrantPermissionTest, GrantWithoutGrantPermissions) {
  */
 
 TEST_F(GrantPermissionTest, GrantMoreThanOnce) {
-  createTwoAccounts(kCanGrantAll, kCanReceive)
-      ->sendTx(accountGrantToAccount(kAccount1,
+  IntegrationTestFramework itf(1);
+  createTwoAccounts(itf, {kCanGrantAll}, {Role::kReceive})
+      .sendTx(accountGrantToAccount(kAccount1,
                                      kAccount1Keypair,
                                      kAccount2,
                                      permissions::Grantable::kAddMySignatory))
