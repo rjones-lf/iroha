@@ -40,3 +40,10 @@ target_link_libraries(query_service_test
     server_runner
     query_client
     )
+
+addtest(torii_service_query_test torii_service_query_test.cpp)
+target_link_libraries(torii_service_query_test
+    torii_service
+    server_runner
+    query_client
+    )

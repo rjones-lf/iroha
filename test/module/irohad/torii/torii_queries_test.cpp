@@ -47,6 +47,8 @@ using namespace shared_model::interface::permissions;
 
 using wTransaction = std::shared_ptr<shared_model::interface::Transaction>;
 
+// TODO kamilsa 22.06.18 IR-1472 rework this test so that query service is
+// mocked
 class ToriiQueriesTest : public testing::Test {
  public:
   virtual void SetUp() {
