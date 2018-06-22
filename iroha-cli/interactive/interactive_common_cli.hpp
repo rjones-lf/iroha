@@ -46,6 +46,9 @@ namespace iroha_cli {
       RESULT
     };
 
+
+	using ParamsData = std::vector<std::pair<std::string, std::string>>;
+
     // Description of parameters
     using ParamsDescription = std::vector<std::string>;
     // map for command - command description relationship
@@ -53,7 +56,7 @@ namespace iroha_cli {
     // Points in a menu
     using MenuPoints = std::vector<std::string>;
     // map for command - ParamsDescription relationship
-    using ParamsMap = std::unordered_map<std::string, ParamsDescription>;
+    using ParamsMap = std::unordered_map<std::string, ParamsData>;
 
     // ------ Common commands short name ---------
     const std::string SAVE_CODE = "save";
@@ -72,6 +75,8 @@ namespace iroha_cli {
      */
     ParamsMap getCommonParamsMap(const std::string &default_ip,
                                  int default_port);
+
+	ParamsData makeParamsData(std::vector<std::string> params);
 
     /**
      * Handle error with empty command
@@ -108,7 +113,7 @@ namespace iroha_cli {
      * @param parameters needed to run the command
      */
     void printCommandParameters(std::string &command,
-                                std::vector<std::string> parameters);
+                                ParamsData parameters);
 
     /**
      * Pretty Print of menu
@@ -125,6 +130,13 @@ namespace iroha_cli {
     boost::optional<std::string> promptString(const std::string &message);
 
     /**
+     * Get string input from user
+     * @param message Message to ask user
+     * @return nullopt if termintaing symbol, else user's input
+     */
+    boost::optional<std::string> promptString(std::pair<std::string, std::string> params);
+
+    /**
      * Parse parameters in interactive and shortcuted mode.
      * Function run interactive mode if in line only the command name is passed.
      * Function will parse all needed parameters from line if the line with
@@ -136,7 +148,7 @@ namespace iroha_cli {
      * @return vector with needed parameters
      */
     boost::optional<std::vector<std::string>> parseParams(
-        std::string line, std::string command_name, ParamsMap params_map);
+        std::string line, std::string command_name, ParamsMap &params_map);
 
     /**
      * Add menu point to vector menu
@@ -172,7 +184,7 @@ namespace iroha_cli {
      */
     template <typename K, typename V>
     boost::optional<V> findInHandlerMap(K command_name,
-                                         std::unordered_map<K, V> params_map) {
+                                         std::unordered_map<K, V> &params_map) {
       auto it = params_map.find(command_name);
       if (it == params_map.end()) {
         // Command not found, report error
@@ -211,7 +223,7 @@ namespace iroha_cli {
         C class_pointer,
         std::string &line,
         std::unordered_map<std::string, V> &parsers_map,
-        ParamsMap params_map) {
+        ParamsMap &params_map) {
       auto raw_command = parser::parseFirstCommand(line);
       if (not raw_command) {
         handleEmptyCommand();

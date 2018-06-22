@@ -50,7 +50,7 @@ namespace iroha_cli {
       descriptionMap_ = {{GET_TX_INFO, "Get status of transaction"}};
       const auto tx_id = "Requested tx hash";
 
-      requestParamsDescriptions_ = {{GET_TX_INFO, {tx_id}}};
+      requestParamsDescriptions_ = {{GET_TX_INFO, makeParamsData({tx_id})}};
       actionHandlers_ = {{GET_TX_INFO, &InteractiveStatusCli::parseGetHash}};
 
       menuPoints_ = formMenu(
