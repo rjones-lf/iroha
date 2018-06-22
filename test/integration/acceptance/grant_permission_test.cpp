@@ -103,7 +103,7 @@ class GrantPermissionTest : public AcceptanceFixture {
     const std::string account_id = account_name + "@" + kDomain;
     return (TxBuilder()
         .creatorAccountId(permitee_account_id)
-        .createdTime(iroha::time::now())
+        .createdTime(getUniqueTime())
         .*f)(account_id, permitee_key.publicKey())
         .quorum(1)
         .build()
@@ -128,7 +128,7 @@ class GrantPermissionTest : public AcceptanceFixture {
     const std::string account_id = account_name + "@" + kDomain;
     return TxBuilder()
         .creatorAccountId(permitee_account_id)
-        .createdTime(iroha::time::now())
+        .createdTime(getUniqueTime())
         .setAccountQuorum(account_id, quorum)
         .quorum(1)
         .build()
@@ -157,7 +157,7 @@ class GrantPermissionTest : public AcceptanceFixture {
     const std::string account_id = account_name + "@" + kDomain;
     return TxBuilder()
         .creatorAccountId(permitee_account_id)
-        .createdTime(iroha::time::now())
+        .createdTime(getUniqueTime())
         .setAccountDetail(account_id, key, detail)
         .quorum(1)
         .build()
@@ -183,7 +183,7 @@ class GrantPermissionTest : public AcceptanceFixture {
         IntegrationTestFramework::kAssetName + "#" + kDomain;
     return TxBuilder()
         .creatorAccountId(creator_account_id)
-        .createdTime(iroha::time::now())
+        .createdTime(getUniqueTime())
         .addAssetQuantity(creator_account_id, asset_id, amount)
         .transferAsset(
             creator_account_id, receiver_account_id, asset_id, "", amount)
@@ -215,7 +215,7 @@ class GrantPermissionTest : public AcceptanceFixture {
         IntegrationTestFramework::kAssetName + "#" + kDomain;
     return TxBuilder()
         .creatorAccountId(creator_account_id)
-        .createdTime(iroha::time::now())
+        .createdTime(getUniqueTime())
         .transferAsset(
             source_account_id, receiver_account_id, asset_id, "", amount)
         .quorum(1)
@@ -235,7 +235,7 @@ class GrantPermissionTest : public AcceptanceFixture {
     const std::string account_id = account_name + "@" + kDomain;
     return proto::QueryBuilder()
         .creatorAccountId(account_id)
-        .createdTime(iroha::time::now())
+        .createdTime(getUniqueTime())
         .queryCounter(1)
         .getSignatories(account_id)
         .build()
@@ -254,7 +254,7 @@ class GrantPermissionTest : public AcceptanceFixture {
     const std::string account_id = account_name + "@" + kDomain;
     return proto::QueryBuilder()
         .creatorAccountId(account_id)
-        .createdTime(iroha::time::now())
+        .createdTime(getUniqueTime())
         .queryCounter(1)
         .getAccount(account_id)
         .build()
@@ -273,7 +273,7 @@ class GrantPermissionTest : public AcceptanceFixture {
     const std::string account_id = account_name + "@" + kDomain;
     return proto::QueryBuilder()
         .creatorAccountId(account_id)
-        .createdTime(iroha::time::now())
+        .createdTime(getUniqueTime())
         .queryCounter(1)
         .getAccountDetail(account_id)
         .build()
@@ -301,10 +301,9 @@ class GrantPermissionTest : public AcceptanceFixture {
    * @param is_contained
    * @return
    */
-  static std::function<void(const shared_model::proto::QueryResponse &)>
-  checkSignatorySet(const crypto::Keypair &signatory,
-                    const int &quantity,
-                    const bool &is_contained) {
+  static auto checkSignatorySet(const crypto::Keypair &signatory,
+                                const int &quantity,
+                                const bool &is_contained) {
     return [&signatory, &quantity, &is_contained](
         const shared_model::proto::QueryResponse &query_response) {
       ASSERT_NO_THROW({
@@ -327,8 +326,7 @@ class GrantPermissionTest : public AcceptanceFixture {
    * @param quorum_quantity
    * @return
    */
-  static std::function<void(const shared_model::proto::QueryResponse &)>
-  checkQuorum(const int &quorum_quantity) {
+  static auto checkQuorum(const int &quorum_quantity) {
     return [&quorum_quantity](
         const shared_model::proto::QueryResponse &query_response) {
       ASSERT_NO_THROW({
@@ -347,8 +345,8 @@ class GrantPermissionTest : public AcceptanceFixture {
    * @param detail
    * @return
    */
-  static std::function<void(const shared_model::proto::QueryResponse &)>
-  checkAccountDetail(const std::string &key, const std::string &detail) {
+  static auto checkAccountDetail(const std::string &key,
+                                 const std::string &detail) {
     return [&key,
         &detail](const shared_model::proto::QueryResponse &query_response) {
       ASSERT_NO_THROW({
@@ -407,6 +405,15 @@ class GrantPermissionTest : public AcceptanceFixture {
                                        permissions::Role::kSetMyQuorum,
                                        permissions::Role::kSetMyAccountDetail,
                                        permissions::Role::kTransferMyAssets};
+
+  const std::vector<permissions::Grantable> kAllGrantable {
+      permissions::Grantable::kAddMySignatory,
+      permissions::Grantable::kRemoveMySignatory,
+      permissions::Grantable::kSetMyQuorum,
+      permissions::Grantable::kSetMyAccountDetail,
+      permissions::Grantable::kTransferMyAssets
+  };
+
 };
 
 /**
@@ -653,15 +660,18 @@ TEST_F(GrantPermissionTest, GrantTransferPermission) {
  * AND it is not written in the block
  */
 TEST_F(GrantPermissionTest, GrantWithoutGrantPermissions) {
-  createTwoAccounts(kCanReceive, kCanReceive)
-      ->sendTx(accountGrantToAccount(kAccount1,
-                                     kAccount1Keypair,
-                                     kAccount2,
-                                     permissions::Grantable::kAddMySignatory))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+  auto itf = createTwoAccounts(kCanReceive, kCanReceive);
+  for (auto &perm : kAllGrantable)
+  {
+    itf->sendTx(accountGrantToAccount(kAccount1,
+                                      kAccount1Keypair,
+                                      kAccount2,
+                                      perm))
+        .skipProposal()
+        .checkBlock(
+            [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
+  }
+  itf->done();
 }
 
 /**
