@@ -15,7 +15,6 @@
 #include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"
-#include "utils/query_error_response_visitor.hpp"
 
 using ::testing::_;
 using ::testing::A;

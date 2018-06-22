@@ -17,14 +17,10 @@
 
 #include "torii/query_service.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
-#include "builders/default_builders.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "builders/protobuf/queries.hpp"
-#include "main/server_runner.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
-#include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
-#include "torii/query_client.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 using namespace torii;
@@ -35,8 +31,6 @@ using namespace iroha::torii;
 using namespace shared_model::detail;
 using namespace shared_model::interface;
 using ::testing::_;
-using ::testing::A;
-using ::testing::An;
 using ::testing::Invoke;
 using ::testing::Return;
 using ::testing::Truly;
@@ -75,12 +69,7 @@ class QueryServiceTest : public ::testing::Test {
   }
 
   std::shared_ptr<shared_model::proto::Query> query;
-  std::shared_ptr<shared_model::interface::BlocksQuery> blocks_query;
   std::shared_ptr<shared_model::proto::QueryResponse> model_response;
-  std::shared_ptr<shared_model::interface::BlockQueryResponse> block_response;
-
-  iroha::protocol::Block block;
-
   std::shared_ptr<QueryService> query_service;
   std::shared_ptr<MockQueryProcessor> query_processor;
 };
