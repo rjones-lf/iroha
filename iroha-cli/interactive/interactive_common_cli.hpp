@@ -47,17 +47,16 @@ namespace iroha_cli {
     };
 
 
-	using param_t = std::pair<std::string, std::string>;
-	using ParamsData = std::vector<std::shared_ptr<param_t>>;
-
+    // Parameter prompt and default/cache value pair
+    using ParamData = std::pair<std::string, std::string>;
     // Description of parameters
-    using ParamsDescription = std::vector<std::string>;
+    using ParamsDescription = std::vector<std::shared_ptr<ParamData>>;
     // map for command - command description relationship
     using DescriptionMap = std::unordered_map<std::string, std::string>;
     // Points in a menu
     using MenuPoints = std::vector<std::string>;
     // map for command - ParamsDescription relationship
-    using ParamsMap = std::unordered_map<std::string, ParamsData>;
+    using ParamsMap = std::unordered_map<std::string, ParamsDescription>;
 
     // ------ Common commands short name ---------
     const std::string SAVE_CODE = "save";
@@ -77,7 +76,7 @@ namespace iroha_cli {
     ParamsMap getCommonParamsMap(const std::string &default_ip,
                                  int default_port);
 
-	ParamsData makeParamsData(std::vector<std::string> params);
+    ParamsDescription makeParamsDescription(std::vector<std::string> params);
 
     /**
      * Handle error with empty command
@@ -114,7 +113,7 @@ namespace iroha_cli {
      * @param parameters needed to run the command
      */
     void printCommandParameters(std::string &command,
-                                ParamsData parameters);
+                                ParamsDescription parameters);
 
     /**
      * Pretty Print of menu
@@ -131,11 +130,11 @@ namespace iroha_cli {
     boost::optional<std::string> promptString(const std::string &message);
 
     /**
-     * Get string input from user
-     * @param message Message to ask user
+     * Construct a prompt and get a string input from user
+     * @param param Parameter to collect the input for
      * @return nullopt if termintaing symbol, else user's input
      */
-    boost::optional<std::string> promptString(std::pair<std::string, std::string> params);
+    boost::optional<std::string> promptString(ParamData param);
 
     /**
      * Parse parameters in interactive and shortcuted mode.

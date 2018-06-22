@@ -35,23 +35,23 @@ namespace iroha_cli {
                                  int default_port) {
       return {
           // commonParamsMap
-          {SAVE_CODE, makeParamsData({"Path to save json file"})},
+          {SAVE_CODE, makeParamsDescription({"Path to save json file"})},
           {SEND_CODE, {
-			  std::make_shared<param_t>(std::make_pair("Peer address", default_ip)),
-			  std::make_shared<param_t>(std::make_pair("Peer port", std::to_string(default_port)))
-			}
-		  }
+              std::make_shared<ParamData>(std::make_pair("Peer address", default_ip)),
+              std::make_shared<ParamData>(std::make_pair("Peer port", std::to_string(default_port)))
+            }
+          }
           // commonParamsMap
       };
     }
 
-	ParamsData makeParamsData(std::vector<std::string> params) {
-		ParamsData data;
-		std::for_each(params.begin(), params.end(), [&data](auto el) {
-			data.push_back(std::make_shared<param_t>(std::make_pair(el, "")));
-		});
-		return data;
-	}
+    ParamsDescription makeParamsDescription(std::vector<std::string> params) {
+        ParamsDescription data;
+        std::for_each(params.begin(), params.end(), [&data](auto el) {
+            data.push_back(std::make_shared<ParamData>(std::make_pair(el, "")));
+        });
+        return data;
+    }
 
     void handleEmptyCommand() {
       std::cout << "Put not empty command" << std::endl;
@@ -72,7 +72,7 @@ namespace iroha_cli {
     }
 
     void printCommandParameters(std::string &command,
-                                ParamsData parameters) {
+                                ParamsDescription parameters) {
       std::cout << "Run " << command
                 << " with following parameters: " << std::endl;
       std::for_each(parameters.begin(), parameters.end(), [](auto el) {
@@ -97,20 +97,20 @@ namespace iroha_cli {
       return line;
     }
 
-	boost::optional<std::string> promptString(std::pair<std::string, std::string> params) {
-		std::string message = std::get<0>(params);
-		if (not std::get<1>(params).empty()) {
-			message += " (" + std::get<1>(params) + ")";
-		}
-		return promptString(message);
-	}
+    boost::optional<std::string> promptString(ParamData param) {
+        std::string message = std::get<0>(param);
+        if (not std::get<1>(param).empty()) {
+            message += " (" + std::get<1>(param) + ")";
+        }
+        return promptString(message);
+    }
 
     void printEnd() {
       std::cout << "--------------------" << std::endl;
     }
 
     boost::optional<std::pair<std::string, uint16_t>> parseIrohaPeerParams(
-        ParamsDescription params,
+        std::vector<std::string> params,
         const std::string &default_ip,
         int default_port) {
       const auto &address = params[0].empty() ? default_ip : params[0];
@@ -126,9 +126,9 @@ namespace iroha_cli {
 
     boost::optional<std::vector<std::string>> parseParams(
         std::string line, std::string command_name, ParamsMap params_map) {
-      auto params_data =
-          findInHandlerMap(command_name, params_map);
-      if (not params_data) {
+      auto params_description =
+          findInHandlerMap(command_name, std::move(params_map));
+      if (not params_description) {
         // Report no params where found for this command
         std::cout << "Command params not found" << std::endl;
         // Stop parsing, something is not implemented
@@ -138,27 +138,29 @@ namespace iroha_cli {
       if (words.size() == 1) {
         // Start interactive mode
         std::vector<std::string> params;
-        std::for_each(params_data.value().begin(),
-                      params_data.value().end(),
+        std::for_each(params_description.value().begin(),
+                      params_description.value().end(),
                       [&params](auto param) {
                         auto val = promptString(*param);
-						if (val) {
-							if (not val.value().empty()) {
-								std::get<1>(*param) = val.value();
-								params.push_back(val.value());
-							} else if (not std::get<1>(*param).empty()) {
-								params.push_back(std::get<1>(*param));
-							}
-						}
+                        if (val) {
+                            if (not val.value().empty()) {
+                                // Update input cache
+                                std::get<1>(*param) = val.value();
+                                params.push_back(val.value());
+                            } else if (not std::get<1>(*param).empty()) {
+                                // Input cache is not empty, use cached value
+                                params.push_back(std::get<1>(*param));
+                            }
+                        }
                       });
-        if (params.size() != params_data.value().size()) {
+        if (params.size() != params_description.value().size()) {
           // Wrong params passed
           return boost::none;
         }
         return params;
-      } else if (words.size() != params_data.value().size() + 1) {
+      } else if (words.size() != params_description.value().size() + 1) {
         // Not enough parameters passed
-        printCommandParameters(command_name, params_data.value());
+        printCommandParameters(command_name, params_description.value());
         return boost::none;
       } else {
         // Remove command name, return parameters

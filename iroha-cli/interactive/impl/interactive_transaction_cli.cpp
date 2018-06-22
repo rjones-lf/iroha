@@ -86,24 +86,24 @@ namespace iroha_cli {
       const auto can_asset_creator = "Can create/add new assets";
       const auto can_roles = "Can create/append roles";
 
-      command_params_data_ = {
-          {ADD_ASSET_QTY, makeParamsData({acc_id, ast_id, amount_a, amount_b})},
-          {ADD_PEER, makeParamsData({peer_id, pub_key})},
-          {ADD_SIGN, makeParamsData({acc_id, pub_key})},
-          {CREATE_ACC, makeParamsData({acc_name, dom_id, pub_key})},
-          {CREATE_DOMAIN, makeParamsData({dom_id, std::string("Default ") + role})},
-          {CREATE_ASSET, makeParamsData({ast_name, dom_id, ast_precision})},
-          {REMOVE_SIGN, makeParamsData({acc_id, pub_key})},
-          {SET_QUO, makeParamsData({acc_id, quorum})},
-          {SUB_ASSET_QTY, makeParamsData({})},
+      command_params_map_ = {
+          {ADD_ASSET_QTY, makeParamsDescription({acc_id, ast_id, amount_a, amount_b})},
+          {ADD_PEER, makeParamsDescription({peer_id, pub_key})},
+          {ADD_SIGN, makeParamsDescription({acc_id, pub_key})},
+          {CREATE_ACC, makeParamsDescription({acc_name, dom_id, pub_key})},
+          {CREATE_DOMAIN, makeParamsDescription({dom_id, std::string("Default ") + role})},
+          {CREATE_ASSET, makeParamsDescription({ast_name, dom_id, ast_precision})},
+          {REMOVE_SIGN, makeParamsDescription({acc_id, pub_key})},
+          {SET_QUO, makeParamsDescription({acc_id, quorum})},
+          {SUB_ASSET_QTY, makeParamsDescription({})},
           {TRAN_ASSET,
-           makeParamsData({std::string("Src") + acc_id,
+            makeParamsDescription({std::string("Src") + acc_id,
             std::string("Dest") + acc_id,
             ast_id,
             amount_a,
             amount_b})},
           {CREATE_ROLE,
-           makeParamsData({role,
+            makeParamsDescription({role,
             can_read_self,
             can_edit_self,
             can_read_all,
@@ -112,11 +112,11 @@ namespace iroha_cli {
             can_create_domain,
             can_roles,
             can_create_account})},
-          {APPEND_ROLE, makeParamsData({acc_id, role})},
-          {DETACH_ROLE, makeParamsData({acc_id, role})},
-          {GRANT_PERM, makeParamsData({acc_id, perm})},
-          {REVOKE_PERM, makeParamsData({acc_id, perm})},
-          {SET_ACC_KV, makeParamsData({acc_id, "key", "value"})}
+          {APPEND_ROLE, makeParamsDescription({acc_id, role})},
+          {DETACH_ROLE, makeParamsDescription({acc_id, role})},
+          {GRANT_PERM, makeParamsDescription({acc_id, perm})},
+          {REVOKE_PERM, makeParamsDescription({acc_id, perm})},
+          {SET_ACC_KV, makeParamsDescription({acc_id, "key", "value"})}
           // command parameters descriptions
       };
 
@@ -142,7 +142,7 @@ namespace iroha_cli {
       };
 
       commands_menu_ = formMenu(command_handlers_,
-                                command_params_data_,
+                                command_params_map_,
                                 commands_description_map_);
       // Add "go back" option
       addBackOption(commands_menu_);
@@ -159,11 +159,11 @@ namespace iroha_cli {
       result_desciption.insert(
           {BACK_CODE, "Go back and start a new transaction"});
 
-      result_params_data =
+      result_params_map =
           getCommonParamsMap(default_peer_ip_, default_port_);
 
-      result_params_data.insert({ADD_CMD, {}});
-      result_params_data.insert({BACK_CODE, {}});
+      result_params_map.insert({ADD_CMD, {}});
+      result_params_map.insert({BACK_CODE, {}});
 
       result_handlers_ = {
           {SAVE_CODE, &InteractiveTransactionCli::parseSaveFile},
@@ -174,7 +174,7 @@ namespace iroha_cli {
       };
 
       result_menu_ = formMenu(
-          result_handlers_, result_params_data, result_desciption);
+          result_handlers_, result_params_map, result_desciption);
     }
 
     InteractiveTransactionCli::InteractiveTransactionCli(
@@ -227,7 +227,7 @@ namespace iroha_cli {
       }
 
       auto res = handleParse<std::shared_ptr<iroha::model::Command>>(
-          this, line, command_handlers_, command_params_data_);
+          this, line, command_handlers_, command_params_map_);
 
       if (not res) {
         // Continue parsing
@@ -458,7 +458,7 @@ namespace iroha_cli {
     bool InteractiveTransactionCli::parseResult(std::string line) {
       // Find in result handler map
       auto res = handleParse<bool>(
-          this, line, result_handlers_, result_params_data);
+          this, line, result_handlers_, result_params_map);
       return res.get_value_or(true);
     }
 
