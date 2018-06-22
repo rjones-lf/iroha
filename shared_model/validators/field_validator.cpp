@@ -20,9 +20,7 @@
 #include <boost/algorithm/string_regex.hpp>
 #include <boost/format.hpp>
 #include <limits>
-
-#include "interfaces/queries/query_payload_meta.hpp"
-
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
 #include "interfaces/queries/query_payload_meta.hpp"
 #include "validators/field_validator.hpp"
@@ -52,7 +50,12 @@ namespace shared_model {
         R"([A-Za-z0-9_]{1,64})";
     const std::string FieldValidator::role_id_pattern_ = R"#([a-z_0-9]{1,32})#";
 
-    const size_t FieldValidator::public_key_size = 32;
+    const size_t FieldValidator::public_key_size =
+        crypto::DefaultCryptoAlgorithmType::kPublicKeyLength;
+    const size_t FieldValidator::signature_size =
+        crypto::DefaultCryptoAlgorithmType::kSignatureLength;
+    const size_t FieldValidator::hash_size =
+        crypto::DefaultCryptoAlgorithmType::kHashLength;
     /// limit for the set account detail size in bytes
     const size_t FieldValidator::value_size = 4 * 1024 * 1024;
     const size_t FieldValidator::description_size = 64;
@@ -328,15 +331,13 @@ namespace shared_model {
         const auto &pkey = signature.publicKey();
         bool is_valid = true;
 
-        if (sign.blob().size() != 64) {
-          // TODO (@l4l) 03/02/18: IR-977 replace signature size with a const
+        if (sign.blob().size() != signature_size) {
           reason.second.push_back(
               (boost::format("Invalid signature: %s") % sign.hex()).str());
           is_valid = false;
         }
 
-        if (pkey.blob().size() != 32) {
-          // TODO (@l4l) 03/02/18: IR-977 replace public key size with a const
+        if (pkey.blob().size() != public_key_size) {
           reason.second.push_back(
               (boost::format("Invalid pubkey: %s") % pkey.hex()).str());
           is_valid = false;
@@ -376,6 +377,14 @@ namespace shared_model {
             (boost::format("Height should be > 0, passed value: %d") % height)
                 .str();
         reason.second.push_back(message);
+      }
+    }
+
+    void FieldValidator::validateHash(ReasonsGroupType &reason,
+                                      const crypto::Hash &hash) const {
+      if (hash.size() != hash_size) {
+        reason.second.push_back(
+            (boost::format("Hash has invalid size: %d") % hash.size()).str());
       }
     }
   }  // namespace validation

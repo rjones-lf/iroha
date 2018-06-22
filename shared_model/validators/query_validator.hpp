@@ -80,6 +80,15 @@ namespace shared_model {
         ReasonsGroupType reason;
         reason.first = "GetTransactions";
 
+        const auto &hashes = qry.transactionHashes();
+        if (hashes.size() == 0) {
+          reason.second.push_back("tx_hashes cannot be empty");
+        }
+
+        for (const auto &h : hashes) {
+          validator_.validateHash(reason, h);
+        }
+
         return reason;
       }
 

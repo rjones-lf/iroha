@@ -19,7 +19,9 @@
 
 #include <boost/range/adaptor/transformed.hpp>
 
+#include "backend/protobuf/empty_block.hpp"
 #include "builders/protobuf/block.hpp"
+#include "builders/protobuf/empty_block.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 
@@ -66,17 +68,24 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process proposal");
       // Get last block from local ledger
-      block_queries_->getTopBlocks(1)
-          .subscribe_on(rxcpp::observe_on_new_thread())
-          .as_blocking()
-          .subscribe([this](auto block) { last_block = block; });
-      if (not last_block) {
-        log_->warn("Could not fetch last block");
+      auto top_block_result = block_queries_->getTopBlock();
+      auto block_fetched = top_block_result.match(
+          [&](expected::Value<std::shared_ptr<shared_model::interface::Block>>
+                  &block) {
+            last_block = block.value;
+            return true;
+          },
+          [this](expected::Error<std::string> &error) {
+            log_->warn("Could not fetch last block: " + error.error);
+            return false;
+          });
+      if (not block_fetched) {
         return;
       }
-      if (last_block.value()->height() + 1 != proposal.height()) {
+
+      if (last_block->height() + 1 != proposal.height()) {
         log_->warn("Last block height: {}, proposal height: {}",
-                   last_block.value()->height(),
+                   last_block->height(),
                    proposal.height());
         return;
       }
@@ -106,20 +115,35 @@ namespace iroha {
           proposal.transactions() | boost::adaptors::transformed([](auto &tx) {
             return static_cast<const shared_model::proto::Transaction &>(tx);
           });
+
+      auto sign_and_send = [this](const auto& any_block){
+        crypto_signer_->sign(*any_block);
+        block_notifier_.get_subscriber().on_next(any_block);
+      };
+
+      if (proto_txs.empty()) {
+        auto empty_block = std::make_shared<shared_model::proto::EmptyBlock>(
+            shared_model::proto::UnsignedEmptyBlockBuilder()
+                .height(proposal.height())
+                .prevHash(last_block->hash())
+                .createdTime(proposal.createdTime())
+                .build());
+
+        sign_and_send(empty_block);
+        return;
+      }
       auto block = std::make_shared<shared_model::proto::Block>(
           shared_model::proto::UnsignedBlockBuilder()
               .height(block_queries_->getTopBlockHeight() + 1)
-              .prevHash(last_block.value()->hash())
+              .prevHash(last_block->hash())
               .transactions(proto_txs)
               .createdTime(proposal.createdTime())
               .build());
 
-      crypto_signer_->sign(*block);
-
-      block_notifier_.get_subscriber().on_next(block);
+      sign_and_send(block);
     }
 
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+    rxcpp::observable<shared_model::interface::BlockVariant>
     Simulator::on_block() {
       return block_notifier_.get_observable();
     }

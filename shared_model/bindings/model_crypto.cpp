@@ -17,7 +17,7 @@
 
 #include "bindings/model_crypto.hpp"
 #include "common/byteutils.hpp"
-#include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "generator/generator.hpp"
 
 namespace shared_model {
@@ -28,8 +28,8 @@ namespace shared_model {
 
     crypto::Keypair ModelCrypto::fromPrivateKey(
         const std::string &private_key) {
-      // TODO 07/06/18 Akvinikym: remove magic number (64) IR-977
-      if (private_key.size() != 64) {
+      if (private_key.size()
+          != crypto::DefaultCryptoAlgorithmType::kPrivateKeyLength) {
         throw std::invalid_argument("input string has incorrect length "
                                     + std::to_string(private_key.length()));
       }

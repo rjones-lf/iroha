@@ -20,9 +20,6 @@
 
 #include "ametsuchi/wsv_command.hpp"
 
-#include <set>
-#include <string>
-
 #include "ametsuchi/impl/postgres_wsv_common.hpp"
 
 namespace iroha {
@@ -43,8 +40,8 @@ namespace iroha {
 
       WsvCommandResult insertRolePermissions(
           const shared_model::interface::types::RoleIdType &role_id,
-          const std::set<shared_model::interface::types::PermissionNameType>
-              &permissions) override;
+          const shared_model::interface::RolePermissionSet &permissions)
+          override;
 
       WsvCommandResult insertAccount(
           const shared_model::interface::Account &account) override;
@@ -80,15 +77,13 @@ namespace iroha {
           const shared_model::interface::types::AccountIdType
               &permittee_account_id,
           const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::PermissionNameType
-              &permission_id) override;
+          shared_model::interface::permissions::Grantable permission) override;
 
       WsvCommandResult deleteAccountGrantablePermission(
           const shared_model::interface::types::AccountIdType
               &permittee_account_id,
           const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::PermissionNameType
-              &permission_id) override;
+          shared_model::interface::permissions::Grantable permission) override;
 
      private:
       pqxx::nontransaction &transaction_;

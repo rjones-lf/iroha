@@ -19,6 +19,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
@@ -132,12 +133,10 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
-  EXPECT_CALL(*query, getTopBlocks(1))
-      .WillOnce(Return(rxcpp::observable<>::just(block).map(
-          [](auto &&x) { return wBlock(clone(x)); })));
+  EXPECT_CALL(*query, getTopBlock())
+      .WillOnce(Return(expected::makeValue(wBlock(clone(block)))));
 
-  EXPECT_CALL(*query, getTopBlockHeight())
-      .WillOnce(Return(1));
+  EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(1));
 
   EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(proposal));
 
@@ -160,9 +159,15 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
 
   auto block_wrapper =
       make_test_subscriber<CallExact>(simulator->on_block(), 1);
-  block_wrapper.subscribe([&proposal](auto block) {
-    ASSERT_EQ(block->height(), proposal->height());
-    ASSERT_EQ(block->transactions(), proposal->transactions());
+  block_wrapper.subscribe([&proposal](const auto &block_variant) {
+    ASSERT_EQ(block_variant.height(), proposal->height());
+    ASSERT_NO_THROW({
+      auto block = boost::apply_visitor(
+          framework::SpecifiedVisitor<
+              std::shared_ptr<shared_model::interface::Block>>(),
+          block_variant);
+      ASSERT_EQ(block->transactions(), proposal->transactions());
+    });
   });
 
   simulator->process_proposal(*proposal);
@@ -176,9 +181,8 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   auto proposal = makeProposal(2);
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(0);
-
-  EXPECT_CALL(*query, getTopBlocks(1))
-      .WillOnce(Return(rxcpp::observable<>::empty<wBlock>()));
+  EXPECT_CALL(*query, getTopBlock())
+      .WillOnce(Return(expected::makeError("no block")));
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
@@ -214,9 +218,8 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(0);
 
-  EXPECT_CALL(*query, getTopBlocks(1))
-      .WillOnce(Return(rxcpp::observable<>::just(block).map(
-          [](auto &&x) { return wBlock(clone(x)); })));
+  EXPECT_CALL(*query, getTopBlock())
+      .WillOnce(Return(expected::makeValue(wBlock(clone(block)))));
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 

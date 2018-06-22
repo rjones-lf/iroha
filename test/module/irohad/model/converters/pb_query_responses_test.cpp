@@ -175,7 +175,7 @@ TEST(QueryResponseTest, role_permissions) {
   model::converters::PbQueryResponseFactory pb_factory;
 
   model::RolePermissionsResponse response{};
-  response.role_permissions = {"can_read", "can_write"};
+  response.role_permissions = {1, 2};
 
   auto shrd_resp = std::make_shared<decltype(response)>(response);
   auto query_response = *pb_factory.serialize(shrd_resp);

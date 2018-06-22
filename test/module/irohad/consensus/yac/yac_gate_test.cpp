@@ -20,9 +20,11 @@
 
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "builders/protobuf/transaction.hpp"
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
@@ -47,6 +49,13 @@ class YacGateTest : public ::testing::Test {
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
     expected_hash = YacHash("proposal", "block");
+    auto tx = shared_model::proto::TransactionBuilder()
+                  .creatorAccountId("account@domain")
+                  .setAccountQuorum("account@domain", 1)
+                  .createdTime(iroha::time::now())
+                  .quorum(1)
+                  .build()
+                  .signAndAddSignature(keypair);
     shared_model::proto::Block tmp =
         shared_model::proto::BlockBuilder()
             .height(1)
@@ -120,14 +129,22 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+      .WillOnce(Return(
+          rxcpp::observable<>::just<shared_model::interface::BlockVariant>(
+              expected_block)));
 
   init();
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe(
-      [this](auto block) { ASSERT_EQ(*block, *expected_block); });
+  gate_wrapper.subscribe([this](const auto &block_variant) {
+    ASSERT_NO_THROW({
+      auto block = boost::apply_visitor(
+          framework::SpecifiedVisitor<decltype(expected_block)>(),
+          block_variant);
+      ASSERT_EQ(*block, *expected_block);
+    });
+  });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -149,7 +166,9 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+      .WillOnce(Return(
+          rxcpp::observable<>::just<shared_model::interface::BlockVariant>(
+              expected_block)));
 
   init();
 }
@@ -159,7 +178,9 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+      .WillOnce(Return(
+          rxcpp::observable<>::just<shared_model::interface::BlockVariant>(
+              expected_block)));
 
   // make hash from block
   EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
@@ -195,8 +216,14 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe(
-      [this](auto block) { ASSERT_EQ(*block, *expected_block); });
+  gate_wrapper.subscribe([this](const auto &block_variant) {
+    ASSERT_NO_THROW({
+      auto block = boost::apply_visitor(
+          framework::SpecifiedVisitor<decltype(expected_block)>(),
+          block_variant);
+      ASSERT_EQ(*block, *expected_block);
+    });
+  });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -212,7 +239,9 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+      .WillOnce(Return(
+          rxcpp::observable<>::just<shared_model::interface::BlockVariant>(
+              expected_block)));
 
   // make hash from block
   EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
@@ -249,8 +278,14 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe(
-      [this](auto block) { ASSERT_EQ(*block, *expected_block); });
+  gate_wrapper.subscribe([this](const auto &block_variant) {
+    ASSERT_NO_THROW({
+      auto block = boost::apply_visitor(
+          framework::SpecifiedVisitor<decltype(expected_block)>(),
+          block_variant);
+      ASSERT_EQ(*block, *expected_block);
+    });
+  });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }

@@ -7,6 +7,7 @@
 #define IROHA_SHARED_MODEL_PERMISSIONS_HPP
 
 #include <bitset>
+#include <functional>
 #include <initializer_list>
 #include <vector>
 
@@ -72,6 +73,8 @@ namespace shared_model {
       };
 
       Role permissionFor(Grantable);
+      // TODO(@l4l) 19/06/18: Remove with IR-1452
+      Grantable permissionOf(Role);
 
       /**
        * @param perm protocol object for checking
@@ -111,6 +114,8 @@ namespace shared_model {
       PermissionSet<Perm> &operator&=(const PermissionSet<Perm> &r);
       PermissionSet<Perm> &operator|=(const PermissionSet<Perm> &r);
       PermissionSet<Perm> &operator^=(const PermissionSet<Perm> &r);
+
+      void iterate(std::function<void(Perm)> f) const;
     };
 
     using RolePermissionSet = PermissionSet<permissions::Role>;

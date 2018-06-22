@@ -253,9 +253,8 @@ namespace iroha {
       const shared_model::interface::CreateRole &command) {
     std::string command_name = "CreateRole";
     auto result = commands->insertRole(command.roleName()) | [&] {
-      auto tmp = toString(command.rolePermissions());
       return commands->insertRolePermissions(command.roleName(),
-                                             {tmp.begin(), tmp.end()});
+                                             command.rolePermissions());
     };
     return makeExecutionResult(result, command_name);
   }
@@ -269,11 +268,10 @@ namespace iroha {
 
   ExecutionResult CommandExecutor::operator()(
       const shared_model::interface::GrantPermission &command) {
-    return makeExecutionResult(commands->insertAccountGrantablePermission(
-                                   command.accountId(),
-                                   creator_account_id,
-                                   toString(command.permissionName())),
-                               "GrantPermission");
+    return makeExecutionResult(
+        commands->insertAccountGrantablePermission(
+            command.accountId(), creator_account_id, command.permissionName()),
+        "GrantPermission");
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -289,11 +287,10 @@ namespace iroha {
 
   ExecutionResult CommandExecutor::operator()(
       const shared_model::interface::RevokePermission &command) {
-    return makeExecutionResult(commands->deleteAccountGrantablePermission(
-                                   command.accountId(),
-                                   creator_account_id,
-                                   toString(command.permissionName())),
-                               "RevokePermission");
+    return makeExecutionResult(
+        commands->deleteAccountGrantablePermission(
+            command.accountId(), creator_account_id, command.permissionName()),
+        "RevokePermission");
   }
 
   ExecutionResult CommandExecutor::operator()(
@@ -436,54 +433,48 @@ namespace iroha {
                 .balance(*new_src_balance)
                 .build();
           };
-    return src_account_asset_new.match(
-        [&](const expected::Value<
-            std::shared_ptr<shared_model::interface::AccountAsset>>
-                &src_account_asset_new_val) -> ExecutionResult {
-          expected::PolymorphicResult<shared_model::interface::AccountAsset,
-                                      std::string>
-              dest_account_asset_new;
-          if (not dest_account_asset) {
-            // This assert is new for this account - create new AccountAsset
-            dest_account_asset_new =
-                account_asset_builder_.assetId(command.assetId())
-                    .accountId(command.destAccountId())
-                    .balance(command.amount())
-                    .build();
 
-          } else {
-            dest_account_asset_new =
-                (dest_account_asset.value()->balance() + command.amount()) |
-                [this, &command](const auto &new_dest_balance) {
-                  return account_asset_builder_.assetId(command.assetId())
-                      .accountId(command.destAccountId())
-                      .balance(*new_dest_balance)
-                      .build();
-                };
-          }
-          return dest_account_asset_new.match(
-              [&](const expected::Value<
-                  std::shared_ptr<shared_model::interface::AccountAsset>>
-                      &dest_account_asset_new_val) -> ExecutionResult {
-                auto result = commands->upsertAccountAsset(
-                                  *dest_account_asset_new_val.value)
-                    | [&] {
-                        return commands->upsertAccountAsset(
-                            *src_account_asset_new_val.value);
-                      };
-                return makeExecutionResult(result, command_name);
-              },
-              [&command_name](const auto &error) -> ExecutionResult {
-                return makeExecutionError(
-                    "account asset builder failed. reason " + *error.error,
-                    command_name);
-              });
-        },
-        [&command_name](const auto &error) -> ExecutionResult {
-          return makeExecutionError(
-              "account asset builder failed. reason " + *error.error,
-              command_name);
-        });
+    auto dest_account_asset_new = command_amount | [&](const auto &amount) {
+      const auto kZero = boost::get<
+          expected::Value<std::shared_ptr<shared_model::interface::Amount>>>(
+          amount_builder_.precision(asset.value()->precision())
+              .intValue(0)
+              .build());
+      auto new_amount =
+          (dest_account_asset | [](const auto &ast)
+               -> boost::optional<const shared_model::interface::Amount &> {
+            return {ast->balance()};
+          })
+              .get_value_or(*kZero.value)
+          + *amount;
+      return new_amount | [this, &command](const auto &new_dest_balance) {
+        return account_asset_builder_.assetId(command.assetId())
+            .accountId(command.destAccountId())
+            .balance(*new_dest_balance)
+            .build();
+      };
+    };
+
+    auto map_error = [&command_name](const auto &t) {
+      return expected::map_error<ExecutionError>(
+          t, [&command_name](const auto &error) -> ExecutionError {
+            return {"account asset builder failed. reason " + *error,
+                    command_name};
+          });
+    };
+
+    return (map_error(src_account_asset_new) |
+                [&](std::shared_ptr<shared_model::interface::AccountAsset>
+                        src_amount) -> ExecutionResult {
+      return map_error(dest_account_asset_new) |
+                 [&](std::shared_ptr<shared_model::interface::AccountAsset>
+                         dst_amount) -> ExecutionResult {
+        return makeExecutionResult(
+            commands->upsertAccountAsset(*src_amount) |
+                [&] { return commands->upsertAccountAsset(*dst_amount); },
+            command_name);
+      };
+    });
   }
 
   // ----------------------| Validator |----------------------
@@ -531,10 +522,9 @@ namespace iroha {
                  creator_account_id, queries, Role::kAddSignatory))
         or
         // Case 2. Creator has granted permission for it
-        (queries.hasAccountGrantablePermission(
-            creator_account_id,
-            command.accountId(),
-            toString(Role::kAddMySignatory)));
+        (queries.hasAccountGrantablePermission(creator_account_id,
+                                               command.accountId(),
+                                               Grantable::kAddMySignatory));
   }
 
   bool CommandValidator::hasPermissions(
@@ -610,7 +600,7 @@ namespace iroha {
         or (queries.hasAccountGrantablePermission(
                creator_account_id,
                command.accountId(),
-               toString(Role::kRemoveMySignatory)));
+               Grantable::kRemoveMySignatory));
   }
 
   bool CommandValidator::hasPermissions(
@@ -618,9 +608,7 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return queries.hasAccountGrantablePermission(
-        command.accountId(),
-        creator_account_id,
-        toString(command.permissionName()));
+        command.accountId(), creator_account_id, command.permissionName());
   }
 
   bool CommandValidator::hasPermissions(
@@ -629,12 +617,14 @@ namespace iroha {
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     return
         // Case 1. Creator set details for his account
-        creator_account_id == command.accountId() or
+        creator_account_id == command.accountId()
+        or checkAccountRolePermission(
+               creator_account_id, queries, Role::kSetDetail)
+        or
         // Case 2. Creator has grantable permission to set account key/value
-        queries.hasAccountGrantablePermission(
-            creator_account_id,
-            command.accountId(),
-            toString(Role::kSetMyAccountDetail));
+        queries.hasAccountGrantablePermission(creator_account_id,
+                                              command.accountId(),
+                                              Grantable::kSetMyAccountDetail);
   }
 
   bool CommandValidator::hasPermissions(
@@ -647,10 +637,9 @@ namespace iroha {
          and checkAccountRolePermission(
                  creator_account_id, queries, Role::kSetQuorum))
         // 2. Creator has granted permission on it
-        or (queries.hasAccountGrantablePermission(
-               creator_account_id,
-               command.accountId(),
-               toString(Role::kSetMyQuorum)));
+        or (queries.hasAccountGrantablePermission(creator_account_id,
+                                                  command.accountId(),
+                                                  Grantable::kSetMyQuorum));
   }
 
   bool CommandValidator::hasPermissions(
@@ -672,7 +661,7 @@ namespace iroha {
                 and queries.hasAccountGrantablePermission(
                         creator_account_id,
                         command.srcAccountId(),
-                        toString(Role::kTransferMyAssets)))
+                        Grantable::kTransferMyAssets))
                or
                // 2. Creator transfer from their account
                (creator_account_id == command.srcAccountId()
@@ -715,21 +704,15 @@ namespace iroha {
       return false;
     }
 
-    std::set<std::string> account_permissions;
+    shared_model::interface::RolePermissionSet account_permissions{};
     for (const auto &role : *account_roles) {
       auto permissions = queries.getRolePermissions(role);
       if (not permissions)
         continue;
-      for (const auto &permission : *permissions)
-        account_permissions.insert(permission);
+      account_permissions |= *permissions;
     }
 
-    return std::none_of((*role_permissions).begin(),
-                        (*role_permissions).end(),
-                        [&account_permissions](const auto &perm) {
-                          return account_permissions.find(perm)
-                              == account_permissions.end();
-                        });
+    return role_permissions->isSubsetOf(account_permissions);
   }
 
   bool CommandValidator::isValid(

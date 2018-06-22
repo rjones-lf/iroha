@@ -42,7 +42,7 @@ namespace iroha {
       MOCK_METHOD1(getAccountDetail,
                    boost::optional<std::string>(const std::string &account_id));
       MOCK_METHOD1(getRolePermissions,
-                   boost::optional<std::vector<std::string>>(
+                   boost::optional<shared_model::interface::RolePermissionSet>(
                        const std::string &role_name));
       MOCK_METHOD0(getRoles, boost::optional<std::vector<std::string>>());
       MOCK_METHOD1(
@@ -74,10 +74,11 @@ namespace iroha {
           getDomain,
           boost::optional<std::shared_ptr<shared_model::interface::Domain>>(
               const std::string &domain_id));
-      MOCK_METHOD3(hasAccountGrantablePermission,
-                   bool(const std::string &permitee_account_id,
-                        const std::string &account_id,
-                        const std::string &permission_id));
+      MOCK_METHOD3(
+          hasAccountGrantablePermission,
+          bool(const std::string &permitee_account_id,
+               const std::string &account_id,
+               shared_model::interface::permissions::Grantable permission));
     };
 
     class MockWsvCommand : public WsvCommand {
@@ -89,19 +90,25 @@ namespace iroha {
       MOCK_METHOD2(deleteAccountRole,
                    WsvCommandResult(const std::string &account_id,
                                     const std::string &role_name));
-      MOCK_METHOD2(insertRolePermissions,
-                   WsvCommandResult(const std::string &role_id,
-                                    const std::set<std::string> &permissions));
+      MOCK_METHOD2(
+          insertRolePermissions,
+          WsvCommandResult(
+              const std::string &role_id,
+              const shared_model::interface::RolePermissionSet &permissions));
 
-      MOCK_METHOD3(insertAccountGrantablePermission,
-                   WsvCommandResult(const std::string &permittee_account_id,
-                                    const std::string &account_id,
-                                    const std::string &permission_id));
+      MOCK_METHOD3(
+          insertAccountGrantablePermission,
+          WsvCommandResult(
+              const std::string &permittee_account_id,
+              const std::string &account_id,
+              shared_model::interface::permissions::Grantable permission));
 
-      MOCK_METHOD3(deleteAccountGrantablePermission,
-                   WsvCommandResult(const std::string &permittee_account_id,
-                                    const std::string &account_id,
-                                    const std::string &permission_id));
+      MOCK_METHOD3(
+          deleteAccountGrantablePermission,
+          WsvCommandResult(
+              const std::string &permittee_account_id,
+              const std::string &account_id,
+              shared_model::interface::permissions::Grantable permission));
       MOCK_METHOD1(insertAccount,
                    WsvCommandResult(const shared_model::interface::Account &));
       MOCK_METHOD1(updateAccount,
@@ -168,6 +175,7 @@ namespace iroha {
                    rxcpp::observable<wBlock>(
                        shared_model::interface::types::HeightType));
       MOCK_METHOD1(getTopBlocks, rxcpp::observable<wBlock>(uint32_t));
+      MOCK_METHOD0(getTopBlock, expected::Result<wBlock, std::string>(void));
       MOCK_METHOD1(hasTxWithHash, bool(const shared_model::crypto::Hash &hash));
       MOCK_METHOD0(getTopBlockHeight, uint32_t(void));
     };

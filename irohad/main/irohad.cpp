@@ -151,10 +151,10 @@ int main(int argc, char *argv[]) {
 
     // Check if force flag to overwrite ledger is specified
     if (ledger_not_empty && not FLAGS_overwrite_ledger) {
-        log->error(
-            "Block store not empty. Use '--overwrite_ledger' to force "
-            "overwrite it. Shutting down...");
-        return EXIT_FAILURE;
+      log->error(
+          "Block store not empty. Use '--overwrite_ledger' to force "
+          "overwrite it. Shutting down...");
+      return EXIT_FAILURE;
     }
 
     // clear previous storage if any
@@ -172,9 +172,9 @@ int main(int argc, char *argv[]) {
   }
 
   // check if at least one block is available in the ledger
-  auto blocks_exist = false;
-  irohad.storage->getBlockQuery()->getTopBlocks(1).subscribe(
-      [&blocks_exist](auto block) { blocks_exist = true; });
+  auto blocks_exist = irohad.storage->getBlockQuery()->getTopBlock().match(
+      [](const auto &) { return true; },
+      [](iroha::expected::Error<std::string> &) { return false; });
 
   if (not blocks_exist) {
     log->error(

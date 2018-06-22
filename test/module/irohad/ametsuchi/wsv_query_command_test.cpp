@@ -40,6 +40,10 @@ namespace iroha {
                             .quorum(1)
                             .jsonData(R"({"id@domain": {"key": "value"}})")
                             .build());
+        role_permissions.set(
+            shared_model::interface::permissions::Role::kAddMySignatory);
+        grantable_permission =
+            shared_model::interface::permissions::Grantable::kAddMySignatory;
       }
 
       void SetUp() override {
@@ -59,7 +63,9 @@ namespace iroha {
         wsv_transaction->exec(init_);
       }
 
-      std::string role = "role", permission = "permission";
+      std::string role = "role";
+      shared_model::interface::RolePermissionSet role_permissions;
+      shared_model::interface::permissions::Grantable grantable_permission;
       std::unique_ptr<shared_model::interface::Account> account;
       std::unique_ptr<shared_model::interface::Domain> domain;
 
@@ -111,12 +117,11 @@ namespace iroha {
      * @then RolePermissions are inserted
      */
     TEST_F(RolePermissionsTest, InsertRolePermissionsWhenRoleExists) {
-      ASSERT_TRUE(val(command->insertRolePermissions(role, {permission})));
+      ASSERT_TRUE(val(command->insertRolePermissions(role, role_permissions)));
 
       auto permissions = query->getRolePermissions(role);
       ASSERT_TRUE(permissions);
-      ASSERT_EQ(1, permissions->size());
-      ASSERT_EQ(permission, permissions->front());
+      ASSERT_EQ(role_permissions, permissions);
     }
 
     /**
@@ -126,11 +131,12 @@ namespace iroha {
      */
     TEST_F(RolePermissionsTest, InsertRolePermissionsWhenNoRole) {
       auto new_role = role + " ";
-      ASSERT_TRUE(err(command->insertRolePermissions(new_role, {permission})));
+      ASSERT_TRUE(
+          err(command->insertRolePermissions(new_role, role_permissions)));
 
       auto permissions = query->getRolePermissions(new_role);
       ASSERT_TRUE(permissions);
-      ASSERT_EQ(0, permissions->size());
+      ASSERT_FALSE(role_permissions.isSubsetOf(*permissions));
     }
 
     class AccountTest : public WsvQueryCommandTest {
@@ -351,10 +357,14 @@ namespace iroha {
     TEST_F(AccountGrantablePermissionTest,
            InsertAccountGrantablePermissionWhenAccountsExist) {
       ASSERT_TRUE(val(command->insertAccountGrantablePermission(
-          permittee_account->accountId(), account->accountId(), permission)));
+          permittee_account->accountId(),
+          account->accountId(),
+          grantable_permission)));
 
-      ASSERT_TRUE(query->hasAccountGrantablePermission(
-          permittee_account->accountId(), account->accountId(), permission));
+      ASSERT_TRUE(
+          query->hasAccountGrantablePermission(permittee_account->accountId(),
+                                               account->accountId(),
+                                               grantable_permission));
     }
 
     /**
@@ -366,20 +376,20 @@ namespace iroha {
            InsertAccountGrantablePermissionWhenNoPermitteeAccount) {
       auto permittee_account_id = permittee_account->accountId() + " ";
       ASSERT_TRUE(err(command->insertAccountGrantablePermission(
-          permittee_account_id, account->accountId(), permission)));
+          permittee_account_id, account->accountId(), grantable_permission)));
 
       ASSERT_FALSE(query->hasAccountGrantablePermission(
-          permittee_account_id, account->accountId(), permission));
+          permittee_account_id, account->accountId(), grantable_permission));
     }
 
     TEST_F(AccountGrantablePermissionTest,
            InsertAccountGrantablePermissionWhenNoAccount) {
       auto account_id = account->accountId() + " ";
       ASSERT_TRUE(err(command->insertAccountGrantablePermission(
-          permittee_account->accountId(), account_id, permission)));
+          permittee_account->accountId(), account_id, grantable_permission)));
 
       ASSERT_FALSE(query->hasAccountGrantablePermission(
-          permittee_account->accountId(), account_id, permission));
+          permittee_account->accountId(), account_id, grantable_permission));
     }
 
     /**
@@ -390,10 +400,14 @@ namespace iroha {
     TEST_F(AccountGrantablePermissionTest,
            DeleteAccountGrantablePermissionWhenAccountsPermissionExist) {
       ASSERT_TRUE(val(command->deleteAccountGrantablePermission(
-          permittee_account->accountId(), account->accountId(), permission)));
+          permittee_account->accountId(),
+          account->accountId(),
+          grantable_permission)));
 
-      ASSERT_FALSE(query->hasAccountGrantablePermission(
-          permittee_account->accountId(), account->accountId(), permission));
+      ASSERT_FALSE(
+          query->hasAccountGrantablePermission(permittee_account->accountId(),
+                                               account->accountId(),
+                                               grantable_permission));
     }
 
     class DeletePeerTest : public WsvQueryCommandTest {

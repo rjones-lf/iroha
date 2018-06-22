@@ -24,8 +24,8 @@
 #include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/permissions.hpp"
-#include "interfaces/transaction.hpp"
 #include "interfaces/queries/query_payload_meta.hpp"
+#include "interfaces/transaction.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -143,8 +143,9 @@ namespace shared_model {
           const interface::types::SignatureRangeType &signatures,
           const crypto::Blob &source) const;
 
-      void validateQueryPayloadMeta(ReasonsGroupType &reason,
-                              const interface::QueryPayloadMeta &meta) const;
+      void validateQueryPayloadMeta(
+          ReasonsGroupType &reason,
+          const interface::QueryPayloadMeta &meta) const;
 
       void validateDescription(
           ReasonsGroupType &reason,
@@ -152,6 +153,9 @@ namespace shared_model {
 
       void validateHeight(ReasonsGroupType &reason,
                           const interface::types::HeightType &height) const;
+
+      void validateHash(ReasonsGroupType &reason,
+                        const crypto::Hash &hash) const;
 
      private:
       const static std::string account_name_pattern_;
@@ -185,6 +189,8 @@ namespace shared_model {
 
       // size of key
       static const size_t public_key_size;
+      static const size_t signature_size;
+      static const size_t hash_size;
       static const size_t value_size;
       static const size_t description_size;
     };

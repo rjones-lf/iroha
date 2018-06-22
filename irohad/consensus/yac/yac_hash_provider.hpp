@@ -22,10 +22,10 @@
 #include <string>
 
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/iroha_internal/block_variant.hpp"
 
 namespace shared_model {
   namespace interface {
-    class Block;
     class Signature;
   }  // namespace interface
 }  // namespace shared_model
@@ -78,7 +78,7 @@ namespace iroha {
          * @return hashed value of block
          */
         virtual YacHash makeHash(
-            const shared_model::interface::Block &block) const = 0;
+            const shared_model::interface::BlockVariant &block) const = 0;
 
         /**
          * Convert YacHash to model hash

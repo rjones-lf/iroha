@@ -51,7 +51,7 @@ message RolesResponse {
 }
 
 message RolePermissionsResponse {
-  repeated string permissions = 1;
+  repeated RolePermission permissions = 1;
 }
 
 message ErrorResponse {

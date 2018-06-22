@@ -471,16 +471,12 @@ public class QueryTest {
 
     // The following four tests are disabled because there is a need to
     // clarify desired behavior.
-    // TODO igor-egorov, 08.05.2018, IR-1322
-    @Disabled
     @Test
     void getTransactionsWithEmptyVector() {
         ModelQueryBuilder builder = base().getTransactions(new HashVector());
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
-    // TODO igor-egorov, 08.05.2018, IR-1325
-    @Disabled
     @Test
     void getTransactionsWithInvalidHashSizes() {
         String hashes[] = {
@@ -498,8 +494,6 @@ public class QueryTest {
         }
     }
 
-    // TODO igor-egorov, 08.05.2018, IR-1325
-    @Disabled
     @Test
     void getTransactionsWithOneValidAndOneInvalidHash1() {
         Hash valid = new Hash("12345678901234567890123456789012");
@@ -512,8 +506,6 @@ public class QueryTest {
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
-    // TODO igor-egorov, 08.05.2018, IR-1325
-    @Disabled
     @Test
     void getTransactionsWithOneValidAndOneInvalidHash2() {
         Hash valid = new Hash("12345678901234567890123456789012");

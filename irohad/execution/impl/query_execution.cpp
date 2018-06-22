@@ -19,7 +19,6 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "backend/protobuf/from_old.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "execution/common_executor.hpp"
 
@@ -67,11 +66,12 @@ bool hasQueryPermission(const std::string &creator,
                         Role all_permission_id,
                         Role domain_permission_id) {
   auto perms_set = iroha::getAccountPermissions(creator, wsv_query);
+  auto grantable = permissionOf(indiv_permission_id);
   return
       // 1. Creator has grant permission from other user
       (creator != target_account
        and wsv_query.hasAccountGrantablePermission(
-               creator, target_account, toString(indiv_permission_id)))
+               creator, target_account, grantable))
       or  // ----- Creator has role permission ---------
       (perms_set
        and (
@@ -222,11 +222,7 @@ QueryProcessingFactory::executeGetRolePermissions(
     return buildError<shared_model::interface::NoRolesErrorResponse>();
   }
 
-  shared_model::interface::RolePermissionSet set =
-      shared_model::interface::permissions::fromOldR(
-          std::set<std::string>{perm->begin(), perm->end()});
-
-  auto response = QueryResponseBuilder().rolePermissionsResponse(set);
+  auto response = QueryResponseBuilder().rolePermissionsResponse(*perm);
   return response;
 }
 

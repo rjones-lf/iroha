@@ -28,6 +28,7 @@
 #include "interfaces/common_objects/asset.hpp"
 #include "interfaces/common_objects/domain.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "interfaces/permissions.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/query_response.hpp"
 #include "interfaces/transaction.hpp"
@@ -46,15 +47,14 @@ namespace iroha {
        * Check if permitee has permission on account
        * @param permitee_account_id
        * @param account_id
-       * @param permission_id
+       * @param permission
        * @return true if has permission, false otherwise
        */
       virtual bool hasAccountGrantablePermission(
           const shared_model::interface::types::AccountIdType
               &permitee_account_id,
           const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::PermissionNameType
-              &permission_id) = 0;
+          shared_model::interface::permissions::Grantable permission) = 0;
 
       /**
        * Get iroha domain
@@ -79,8 +79,7 @@ namespace iroha {
        * @param role_name
        * @return
        */
-      virtual boost::optional<
-          std::vector<shared_model::interface::types::PermissionNameType>>
+      virtual boost::optional<shared_model::interface::RolePermissionSet>
       getRolePermissions(
           const shared_model::interface::types::RoleIdType &role_name) = 0;
 
@@ -96,8 +95,7 @@ namespace iroha {
        * @param account_id
        * @return
        */
-      virtual boost::optional<
-          std::shared_ptr<shared_model::interface::Account>>
+      virtual boost::optional<std::shared_ptr<shared_model::interface::Account>>
       getAccount(
           const shared_model::interface::types::AccountIdType &account_id) = 0;
 
@@ -132,8 +130,8 @@ namespace iroha {
        * @param account_id
        * @return
        */
-      virtual boost::optional<std::vector<
-          std::shared_ptr<shared_model::interface::AccountAsset>>>
+      virtual boost::optional<
+          std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>>
       getAccountAssets(
           const shared_model::interface::types::AccountIdType &account_id) = 0;
       /**

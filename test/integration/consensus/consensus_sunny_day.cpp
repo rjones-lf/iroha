@@ -40,13 +40,8 @@ auto mk_local_peer(uint64_t num) {
 class FixedCryptoProvider : public MockYacCryptoProvider {
  public:
   explicit FixedCryptoProvider(const std::string &public_key) {
-    // TODO 15.04.2018 x3medima17 IR-1189: move to separate class
-    auto size =
-        shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
-            .publicKey()
-            .size();
-    // TODO 16.04.2018 x3medima17 IR-977: add sizes
-    std::string key(size, 0);
+    std::string key(
+        shared_model::crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, 0);
     std::copy(public_key.begin(), public_key.end(), key.begin());
     pubkey = clone(shared_model::crypto::PublicKey(key));
   }
