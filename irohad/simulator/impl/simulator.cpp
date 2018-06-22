@@ -48,9 +48,10 @@ namespace iroha {
 
       notifier_.get_observable().subscribe(
           verified_proposal_subscription_,
-          [this](const std::shared_ptr<shared_model::interface::Proposal>
-                     &verified_proposal) {
-            this->process_verified_proposal(*verified_proposal);
+          [this](const shared_model::interface::types::VerifiedProposalAndErrors
+                     &verified_proposal_and_errors) {
+            this->process_verified_proposal(
+                *verified_proposal_and_errors.first);
           });
     }
 
@@ -59,7 +60,7 @@ namespace iroha {
       verified_proposal_subscription_.unsubscribe();
     }
 
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
+    rxcpp::observable<shared_model::interface::types::VerifiedProposalAndErrors>
     Simulator::on_verified_proposal() {
       return notifier_.get_observable();
     }
@@ -95,15 +96,7 @@ namespace iroha {
                   &temporaryStorage) {
             auto validated_proposal_and_errors =
                 validator_->validate(proposal, *temporaryStorage.value);
-            // Temporary variant: errors are lost now, but then they are going
-            // to be handled upwards
-            notifier_.get_subscriber().on_next(
-                validated_proposal_and_errors.first);
-            for (const auto &transaction: validated_proposal_and_errors.second) {
-              for (const auto &command_error: transaction) {
-                log_->error(command_error);
-              }
-            }
+            notifier_.get_subscriber().on_next(validated_proposal_and_errors);
           },
           [&](expected::Error<std::string> &error) {
             log_->error(error.error);

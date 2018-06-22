@@ -49,6 +49,31 @@ namespace iroha {
         }
       });
 
+      // process errors, which appeared during proposal verifying
+      pcs->on_verified_proposal().subscribe(
+          [this](shared_model::interface::types::VerifiedProposalAndErrors
+                     proposal_and_errors) {
+            // form the error message
+            auto error_msg = "Stateful Validation Errors:\n";
+            auto errors = proposal_and_errors.second;
+            for (const auto &tx_error : errors) {
+              error_msg += std::string("=== Transaction ") + tx_error.second
+                  + std::string(" ===\n\n");
+              for (const auto &cmd_error : tx_error.first) {
+                error_msg +=
+                    std::string("==>") + cmd_error + std::string("<==\n\n");
+              }
+            }
+
+            // send to client
+            std::lock_guard<std::mutex> lock(notifier_mutex_);
+            notifier_.get_subscriber().on_next(
+                shared_model::builder::DefaultTransactionStatusBuilder()
+                    .statefulValidationFailed()
+                    .
+                    .build());
+          });
+
       // move commited txs from proposal to candidate map
       pcs_->on_commit().subscribe([this](Commit blocks) {
         blocks.subscribe(

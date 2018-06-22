@@ -58,6 +58,14 @@ namespace iroha {
       on_proposal() const = 0;
 
       /**
+       * Event is triggered when verified proposal arrives
+       * @return verified proposal and list of stateful validation errors
+       */
+      virtual rxcpp::observable<
+          shared_model::interface::types::VerifiedProposalAndErrors>
+      on_verified_proposal() const = 0;
+
+      /**
        * Event is triggered when commit block arrives.
        * @return observable with sequence of committed blocks.
        * In common case observable<Block> will contain one element.

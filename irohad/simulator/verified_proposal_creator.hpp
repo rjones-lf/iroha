@@ -46,7 +46,7 @@ namespace iroha {
        * @return
        */
       virtual rxcpp::observable<
-          std::shared_ptr<shared_model::interface::Proposal>>
+          shared_model::interface::types::VerifiedProposalAndErrors>
       on_verified_proposal() = 0;
 
       virtual ~VerifiedProposalCreator() = default;
