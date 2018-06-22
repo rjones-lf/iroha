@@ -311,7 +311,8 @@ class GrantPermissionTest : public AcceptanceFixture {
 
   /**
    * Lambda method that checks quorum to be equal to passed quantity value
-   * @param quorum_quantity value of quorum that has to be equal in query response
+   * @param quorum_quantity value of quorum that has to be equal in query
+   * response
    * @return function
    */
   static auto checkQuorum(const int &quorum_quantity) {
@@ -367,14 +368,12 @@ class GrantPermissionTest : public AcceptanceFixture {
                                        permissions::Role::kSetMyAccountDetail,
                                        permissions::Role::kTransferMyAssets};
 
-  const std::vector<permissions::Grantable> kAllGrantable {
+  const std::vector<permissions::Grantable> kAllGrantable{
       permissions::Grantable::kAddMySignatory,
       permissions::Grantable::kRemoveMySignatory,
       permissions::Grantable::kSetMyQuorum,
       permissions::Grantable::kSetMyAccountDetail,
-      permissions::Grantable::kTransferMyAssets
-  };
-
+      permissions::Grantable::kTransferMyAssets};
 };
 
 /**
@@ -416,13 +415,12 @@ TEST_F(GrantPermissionTest, GrantAddSignatoryPermission) {
       kAccount2Keypair, expected_number_of_signatories, is_contained);
 
   IntegrationTestFramework itf(1);
-  createTwoAccounts(itf,
-{Role::kAddMySignatory, Role::kGetMySignatories},
-                    {Role::kReceive})
+  createTwoAccounts(
+      itf, {Role::kAddMySignatory, Role::kGetMySignatories}, {Role::kReceive})
       .sendTx(accountGrantToAccount(kAccount1,
-                                     kAccount1Keypair,
-                                     kAccount2,
-                                     permissions::Grantable::kAddMySignatory))
+                                    kAccount1Keypair,
+                                    kAccount2,
+                                    permissions::Grantable::kAddMySignatory))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -456,14 +454,15 @@ TEST_F(GrantPermissionTest, GrantRemoveSignatoryPermission) {
       kAccount2Keypair, expected_number_of_signatories, is_contained);
 
   IntegrationTestFramework itf(1);
-  createTwoAccounts(itf, {Role::kAddMySignatory,
-                          Role::kRemoveMySignatory,
-                          Role::kGetMySignatories},
+  createTwoAccounts(itf,
+                    {Role::kAddMySignatory,
+                     Role::kRemoveMySignatory,
+                     Role::kGetMySignatories},
                     {Role::kReceive})
       .sendTx(accountGrantToAccount(kAccount1,
-                                     kAccount1Keypair,
-                                     kAccount2,
-                                     permissions::Grantable::kAddMySignatory))
+                                    kAccount1Keypair,
+                                    kAccount2,
+                                    permissions::Grantable::kAddMySignatory))
       .skipProposal()
       .skipBlock()
       .sendTx(accountGrantToAccount(kAccount1,
@@ -509,14 +508,14 @@ TEST_F(GrantPermissionTest, GrantSetQuorumPermission) {
   auto check_quorum_quantity = checkQuorum(quorum_quantity);
 
   IntegrationTestFramework itf(1);
-  createTwoAccounts(itf, {Role::kSetMyQuorum,
-                                             Role::kAddMySignatory,
-                                             Role::kGetMyAccount},
-                    {Role::kReceive})
+  createTwoAccounts(
+      itf,
+      {Role::kSetMyQuorum, Role::kAddMySignatory, Role::kGetMyAccount},
+      {Role::kReceive})
       .sendTx(accountGrantToAccount(kAccount1,
-                                     kAccount1Keypair,
-                                     kAccount2,
-                                     permissions::Grantable::kSetMyQuorum))
+                                    kAccount1Keypair,
+                                    kAccount2,
+                                    permissions::Grantable::kSetMyQuorum))
       .skipProposal()
       .skipBlock()
       .sendTx(accountGrantToAccount(kAccount1,
@@ -555,9 +554,8 @@ TEST_F(GrantPermissionTest, GrantSetAccountDetailPermission) {
       checkAccountDetail(kAccountDetailKey, kAccountDetailValue);
 
   IntegrationTestFramework itf(1);
-  createTwoAccounts(itf, {Role::kSetMyAccountDetail,
-                          Role::kGetMyAccDetail},
-                    {Role::kReceive})
+  createTwoAccounts(
+      itf, {Role::kSetMyAccountDetail, Role::kGetMyAccDetail}, {Role::kReceive})
       .sendTx(
           accountGrantToAccount(kAccount1,
                                 kAccount1Keypair,
@@ -594,12 +592,13 @@ TEST_F(GrantPermissionTest, GrantTransferPermission) {
   auto amount_of_asset = "1000.0";
 
   IntegrationTestFramework itf(1);
-  createTwoAccounts(itf, {Role::kTransferMyAssets, Role::kReceive},
+  createTwoAccounts(itf,
+                    {Role::kTransferMyAssets, Role::kReceive},
                     {Role::kTransfer, Role::kReceive})
       .sendTx(accountGrantToAccount(kAccount1,
-                                     kAccount1Keypair,
-                                     kAccount2,
-                                     permissions::Grantable::kTransferMyAssets))
+                                    kAccount1Keypair,
+                                    kAccount2,
+                                    permissions::Grantable::kTransferMyAssets))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -628,12 +627,9 @@ TEST_F(GrantPermissionTest, GrantTransferPermission) {
 TEST_F(GrantPermissionTest, GrantWithoutGrantPermissions) {
   IntegrationTestFramework itf(1);
   createTwoAccounts(itf, {Role::kReceive}, {Role::kReceive});
-  for (auto &perm : kAllGrantable)
-  {
-    itf.sendTx(accountGrantToAccount(kAccount1,
-                                      kAccount1Keypair,
-                                      kAccount2,
-                                      perm))
+  for (auto &perm : kAllGrantable) {
+    itf.sendTx(
+            accountGrantToAccount(kAccount1, kAccount1Keypair, kAccount2, perm))
         .skipProposal()
         .checkBlock(
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
@@ -654,9 +650,9 @@ TEST_F(GrantPermissionTest, GrantMoreThanOnce) {
   IntegrationTestFramework itf(1);
   createTwoAccounts(itf, {kCanGrantAll}, {Role::kReceive})
       .sendTx(accountGrantToAccount(kAccount1,
-                                     kAccount1Keypair,
-                                     kAccount2,
-                                     permissions::Grantable::kAddMySignatory))
+                                    kAccount1Keypair,
+                                    kAccount2,
+                                    permissions::Grantable::kAddMySignatory))
       .skipProposal()
       .skipBlock()
       .sendTx(accountGrantToAccount(kAccount1,
