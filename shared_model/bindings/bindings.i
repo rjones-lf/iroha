@@ -93,7 +93,6 @@ namespace std {
 %include "cryptography/hash.hpp"
 %include "cryptography/keypair.hpp"
 %include "cryptography/signed.hpp"
-%include "backend/protobuf/permissions.hpp"
 %include "backend/protobuf/transaction.hpp"
 %include "backend/protobuf/queries/proto_query.hpp"
 %include "backend/protobuf/queries/proto_blocks_query.hpp"

@@ -242,5 +242,20 @@ namespace iroha {
       return block_store_.last_id();
     }
 
+    expected::Result<BlockQuery::wBlock, std::string>
+    PostgresBlockQuery::getTopBlock() {
+      // TODO 18/06/18 Akvinikym: add dependency injection IR-937 IR-1040
+      auto block =
+          block_store_.get(block_store_.last_id()) | [](const auto &bytes) {
+            return shared_model::converters::protobuf::jsonToModel<
+                shared_model::proto::Block>(bytesToString(bytes));
+          };
+      if (not block) {
+        return expected::makeError("error while fetching the last block");
+      }
+      return expected::makeValue(std::make_shared<shared_model::proto::Block>(
+          std::move(block.value())));
+    }
+
   }  // namespace ametsuchi
 }  // namespace iroha

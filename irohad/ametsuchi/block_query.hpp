@@ -22,6 +22,7 @@
 #include <cmath>
 #include <rxcpp/rx-observable.hpp>
 
+#include "common/result.hpp"
 #include "common/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/transaction.hpp"
@@ -33,7 +34,7 @@ namespace iroha {
      * Public interface for queries on blocks and transactions
      */
     class BlockQuery {
-    protected:
+     protected:
       using wTransaction =
           std::shared_ptr<shared_model::interface::Transaction>;
       using wBlock = std::shared_ptr<shared_model::interface::Block>;
@@ -72,15 +73,17 @@ namespace iroha {
        * @param count - number of blocks to retrieve
        * @return observable of Model Block
        */
-      virtual rxcpp::observable<wBlock> getBlocks(shared_model::interface::types::HeightType height,
-                                                  uint32_t count) = 0;
+      virtual rxcpp::observable<wBlock> getBlocks(
+          shared_model::interface::types::HeightType height,
+          uint32_t count) = 0;
 
       /**
        * Get all blocks starting from given height.
        * @param from - starting height
        * @return observable of Model Block
        */
-      virtual rxcpp::observable<wBlock> getBlocksFrom(shared_model::interface::types::HeightType height) = 0;
+      virtual rxcpp::observable<wBlock> getBlocksFrom(
+          shared_model::interface::types::HeightType height) = 0;
 
       /**
        * Get given number of blocks from top.
@@ -110,6 +113,12 @@ namespace iroha {
        * @return true if transaction exists, false otherwise
        */
       virtual bool hasTxWithHash(const shared_model::crypto::Hash &hash) = 0;
+
+      /**
+       * Get the top-most block
+       * @return result of Model Block or error message
+       */
+      virtual expected::Result<wBlock, std::string> getTopBlock() = 0;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

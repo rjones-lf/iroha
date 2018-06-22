@@ -108,6 +108,8 @@ include_directories(
   ${IROHA_SCHEMA_DIR}
 )
 
+SET(IROHA_ROOT_PROJECT ON)
+
 include(FeatureSummary)
 include(cmake/functions.cmake)
 include(cmake/dependencies.cmake)
@@ -116,8 +118,6 @@ include(cmake/clang-cxx-dev-tools.cmake)
 if(PACKAGE_TGZ OR PACKAGE_ZIP OR PACKAGE_RPM OR PACKAGE_DEB)
   include(cmake/release.cmake)
 endif()
-
-SET(IROHA_ROOT_PROJECT ON)
 
 add_subdirectory(schema)
 add_subdirectory(libs)
