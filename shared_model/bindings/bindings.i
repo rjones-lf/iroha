@@ -55,8 +55,6 @@ namespace std {
 %ignore shared_model::proto::Query::signatures;
 %ignore shared_model::proto::BlocksQuery::signatures;
 %ignore shared_model::proto::Transaction::signatures;
-%ignore toTransport;
-%ignore fromTransport;
 
 %extend shared_model::proto::Query {
   std::vector<const shared_model::interface::Signature*> signs() {
@@ -138,7 +136,6 @@ namespace std {
 %include "cryptography/hash.hpp"
 %include "cryptography/keypair.hpp"
 %include "cryptography/signed.hpp"
-%include "backend/protobuf/permissions.hpp"
 %include "backend/protobuf/transaction.hpp"
 %include "backend/protobuf/queries/proto_query.hpp"
 %include "backend/protobuf/queries/proto_blocks_query.hpp"
