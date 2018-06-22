@@ -111,7 +111,7 @@ def doAndroidBindings(abiVersion) {
   sh """
     (cd /iroha; git init; git remote add origin https://github.com/hyperledger/iroha.git; \
     # TODO possible race on consequent pushes to the same branch
-    git fetch --depth 1 origin ${env.GIT_LOCAL_BRANCH}; git checkout -t origin/${env.GIT_LOCAL_BRANCH})
+    git fetch origin ${GIT_COMMIT}; git checkout FETCH_HEAD)
   """
   sh """
     . /entrypoint.sh; \
