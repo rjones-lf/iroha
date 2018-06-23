@@ -24,6 +24,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <memory>
 
 namespace parser {
   boost::optional<std::string> parseFirstCommand(std::string line);
