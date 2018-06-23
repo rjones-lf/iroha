@@ -45,18 +45,12 @@ namespace iroha {
 
      protected:
       virtual void clear() {
-        pqxx::work txn(*connection);
-        txn.exec(drop_);
-        txn.commit();
+        storage->reset();
 
         iroha::remove_dir_contents(block_store_path);
       }
 
-      virtual void disconnect() {
-        connection->disconnect();
-      }
-
-      virtual void connect() {
+      void SetUp() override {
         StorageImpl::create(block_store_path, pgopt_)
             .match([&](iroha::expected::Value<std::shared_ptr<StorageImpl>>
                            &_storage) { storage = _storage.value; },
@@ -64,25 +58,20 @@ namespace iroha {
                      FAIL() << "StorageImpl: " << error.error;
                    });
 
-        connection = std::make_shared<pqxx::lazyconnection>(pgopt_);
+        storage->reset();
+        storage->init();
+
         try {
-          connection->activate();
+          pqxx::lazyconnection connection(pgopt_);
+          connection.activate();
         } catch (const pqxx::broken_connection &e) {
           FAIL() << "Connection to PostgreSQL broken: " << e.what();
         }
       }
 
-      void SetUp() override {
-        connect();
+      void TearDown() override {
         storage->dropStorage();
       }
-
-      void TearDown() override {
-        clear();
-        disconnect();
-      }
-
-      std::shared_ptr<pqxx::lazyconnection> connection;
 
       std::shared_ptr<StorageImpl> storage;
 
@@ -98,23 +87,6 @@ namespace iroha {
                                          .string();
 
       // TODO(warchant): IR-1019 hide SQLs under some interface
-      const std::string drop_ = R"(
-DROP TABLE IF EXISTS account_has_signatory;
-DROP TABLE IF EXISTS account_has_asset;
-DROP TABLE IF EXISTS role_has_permissions;
-DROP TABLE IF EXISTS account_has_roles;
-DROP TABLE IF EXISTS account_has_grantable_permissions;
-DROP TABLE IF EXISTS account;
-DROP TABLE IF EXISTS asset;
-DROP TABLE IF EXISTS domain;
-DROP TABLE IF EXISTS signatory;
-DROP TABLE IF EXISTS peer;
-DROP TABLE IF EXISTS role;
-DROP TABLE IF EXISTS height_by_hash;
-DROP TABLE IF EXISTS height_by_account_set;
-DROP TABLE IF EXISTS index_by_creator_height;
-DROP TABLE IF EXISTS index_by_id_height_asset;
-)";
 
       const std::string init_ = R"(
 CREATE TABLE IF NOT EXISTS role (

@@ -43,7 +43,9 @@ namespace iroha {
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
-          log_(logger::log("StorageImpl")) {}
+          log_(logger::log("StorageImpl")) {
+      init();
+    }
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
     StorageImpl::createTemporaryWsv() {
@@ -139,9 +141,20 @@ namespace iroha {
       return inserted;
     }
 
-    void StorageImpl::dropStorage() {
-      log_->info("Drop ledger");
-      auto drop = R"(
+    static void exec(const std::string &opt, const std::string &sql) {
+      pqxx::connection connection(opt);
+      pqxx::work txn(connection);
+      txn.exec(sql);
+      txn.commit();
+    }
+
+    void StorageImpl::init() {
+      exec(postgres_options_.optionsString(), init_);
+    }
+
+    void StorageImpl::reset() {
+      log_->info("Drop tables");
+      exec(postgres_options_.optionsString(), R"(
 DROP TABLE IF EXISTS account_has_signatory;
 DROP TABLE IF EXISTS account_has_asset;
 DROP TABLE IF EXISTS role_has_permissions CASCADE;
@@ -157,18 +170,20 @@ DROP TABLE IF EXISTS height_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
 DROP TABLE IF EXISTS index_by_id_height_asset;
-)";
+)");
+    }
 
-      // erase db
-      log_->info("drop db");
-      pqxx::connection connection(postgres_options_.optionsString());
-      pqxx::work txn(connection);
-      txn.exec(drop);
-      txn.commit();
+    void StorageImpl::dropStorage() {
+      log_->info("Drop ledger");
 
-      pqxx::work init_txn(connection);
-      init_txn.exec(init_);
-      init_txn.commit();
+      reset();
+      if (auto dbname = postgres_options_.dbname()) {
+        log_->info("Drop database");
+        // kill all active connections and drop database
+        pqxx::connection conn(postgres_options_.optionsStringWithoutDbName());
+        pqxx::nontransaction handle(conn);
+        handle.exec("DROP DATABASE IF EXISTS " + dbname.value() + ";");
+      }
 
       // erase blocks
       log_->info("drop block store");

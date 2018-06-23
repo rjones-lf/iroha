@@ -30,11 +30,10 @@ namespace iroha {
       // get all blocks starting from the genesis
       std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
       storage.getBlockQuery()->getBlocksFrom(1).as_blocking().subscribe(
-          [&blocks](auto block) {
-            blocks.push_back(std::move(block));
-          });
+          [&blocks](auto block) { blocks.push_back(std::move(block)); });
 
-      storage.dropStorage();
+      storage.reset();
+      storage.init();
 
       if (not storage.insertBlocks(blocks))
         return expected::makeError("cannot insert blocks");

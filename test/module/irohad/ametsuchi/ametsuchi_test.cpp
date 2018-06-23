@@ -681,44 +681,49 @@ TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {
       "Test case: create storage "
       "=> insert block "
       "=> assert that inserted");
-  std::shared_ptr<StorageImpl> storage;
-  auto storageResult = StorageImpl::create(block_store_path, pgopt_);
-  storageResult.match(
-      [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
-        storage = _storage.value;
-      },
-      [](iroha::expected::Error<std::string> &error) {
-        FAIL() << "StorageImpl: " << error.error;
-      });
-  ASSERT_TRUE(storage);
-  auto wsv = storage->getWsvQuery();
-  ASSERT_EQ(0, wsv->getPeers().value().size());
+  {
+    std::shared_ptr<StorageImpl> storage;
+    auto storageResult = StorageImpl::create(block_store_path, pgopt_);
+    storageResult.match(
+        [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
+          storage = _storage.value;
+        },
+        [](iroha::expected::Error<std::string> &error) {
+          FAIL() << "StorageImpl: " << error.error;
+        });
+    ASSERT_TRUE(storage);
+    auto wsv = storage->getWsvQuery();
+    ASSERT_EQ(0, wsv->getPeers().value().size());
 
-  log->info("Try insert block");
+    log->info("Try insert block");
 
-  auto inserted = storage->insertBlock(getBlock());
-  ASSERT_TRUE(inserted);
+    auto inserted = storage->insertBlock(getBlock());
+    ASSERT_TRUE(inserted);
 
-  log->info("Request ledger information");
+    log->info("Request ledger information");
 
-  ASSERT_NE(0, wsv->getPeers().value().size());
+    ASSERT_NE(0, wsv->getPeers().value().size());
 
-  log->info("Drop ledger");
+    log->info("Drop ledger");
 
-  storage->dropStorage();
+    storage->reset();
+    ASSERT_NO_THROW(storage->init());
 
-  ASSERT_EQ(0, wsv->getPeers().value().size());
-  std::shared_ptr<StorageImpl> new_storage;
-  auto new_storageResult = StorageImpl::create(block_store_path, pgopt_);
-  storageResult.match(
-      [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
-        new_storage = _storage.value;
-      },
-      [](iroha::expected::Error<std::string> &error) {
-        FAIL() << "StorageImpl: " << error.error;
-      });
-  ASSERT_EQ(0, wsv->getPeers().value().size());
-  new_storage->dropStorage();
+    ASSERT_EQ(0, wsv->getPeers().value().size());
+  }
+
+  {
+    std::shared_ptr<StorageImpl> storage;
+    auto storageResult = StorageImpl::create(block_store_path, pgopt_);
+    storageResult.match(
+        [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
+          storage = _storage.value;
+        },
+        [](iroha::expected::Error<std::string> &error) {
+          FAIL() << "StorageImpl: " << error.error;
+        });
+    ASSERT_EQ(0, storage->getWsvQuery()->getPeers().value().size());
+  }
 }
 
 /**
@@ -931,11 +936,14 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
   EXPECT_TRUE(res);
 
   // spoil WSV
-  pqxx::work txn(*connection);
-  txn.exec(R"(
+  {
+    pqxx::lazyconnection connection(pgopt_);
+    pqxx::work txn(connection);
+    txn.exec(R"(
 DELETE FROM domain;
 )");
-  txn.commit();
+    txn.commit();
+  }
 
   // check there is no data in WSV
   res = storage->getWsvQuery()->getDomain("test");

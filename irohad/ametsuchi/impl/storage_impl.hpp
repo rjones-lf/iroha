@@ -75,7 +75,9 @@ namespace iroha {
           const std::vector<std::shared_ptr<shared_model::interface::Block>>
               &blocks) override;
 
-      virtual void dropStorage() override;
+      void init() override;
+      void reset() override;
+      void dropStorage() override;
 
       void commit(std::unique_ptr<MutableStorage> mutableStorage) override;
 

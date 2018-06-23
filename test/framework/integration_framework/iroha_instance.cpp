@@ -44,6 +44,7 @@ namespace integration_framework {
 
   void IrohaInstance::makeGenesis(const shared_model::interface::Block &block) {
     instance_->storage->dropStorage();
+    instance_->storage->init();
     rawInsertBlock(block);
     instance_->init();
   }
