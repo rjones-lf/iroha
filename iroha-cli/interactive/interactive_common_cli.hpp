@@ -48,8 +48,12 @@ namespace iroha_cli {
     };
 
 
-    // Parameter prompt and default/cache value pair
-    using ParamData = std::pair<std::string, std::string>;
+    // Parameter prompt and default/cache
+    struct ParamData {
+        std::string message;
+        std::string cache;
+    };
+
     // Description of parameters
     using ParamsDescription = std::vector<std::shared_ptr<ParamData>>;
     // map for command - command description relationship
@@ -77,7 +81,7 @@ namespace iroha_cli {
     ParamsMap getCommonParamsMap(const std::string &default_ip,
                                  int default_port);
 
-    ParamsDescription makeParamsDescription(std::vector<std::string> params);
+    ParamsDescription makeParamsDescription(const std::vector<std::string> &params);
 
     /**
      * Handle error with empty command
@@ -114,7 +118,7 @@ namespace iroha_cli {
      * @param parameters needed to run the command
      */
     void printCommandParameters(std::string &command,
-                                ParamsDescription parameters);
+                                const ParamsDescription &parameters);
 
     /**
      * Pretty Print of menu
@@ -135,7 +139,7 @@ namespace iroha_cli {
      * @param param Parameter to collect the input for
      * @return nullopt if termintaing symbol, else user's input
      */
-    boost::optional<std::string> promptString(ParamData param);
+    boost::optional<std::string> promptString(const ParamData &param);
 
     /**
      * Parse parameters in interactive and shortcuted mode.

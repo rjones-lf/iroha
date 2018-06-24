@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 #include <utility>
+#include <numeric>
 
 #include "interactive/interactive_common_cli.hpp"
 #include "parser/parser.hpp"
@@ -37,20 +38,24 @@ namespace iroha_cli {
           // commonParamsMap
           {SAVE_CODE, makeParamsDescription({"Path to save json file"})},
           {SEND_CODE, {
-              std::make_shared<ParamData>(std::make_pair("Peer address", default_ip)),
-              std::make_shared<ParamData>(std::make_pair("Peer port", std::to_string(default_port)))
+              std::make_shared<ParamData>(ParamData({"Peer address", default_ip})),
+              std::make_shared<ParamData>(ParamData({"Peer port", std::to_string(default_port)}))
             }
           }
           // commonParamsMap
       };
     }
 
-    ParamsDescription makeParamsDescription(std::vector<std::string> params) {
-        ParamsDescription data;
-        std::for_each(params.begin(), params.end(), [&data](auto el) {
-            data.push_back(std::make_shared<ParamData>(std::make_pair(el, "")));
-        });
-        return data;
+    ParamsDescription makeParamsDescription(const std::vector<std::string> &params) {
+        return std::accumulate(
+            params.begin(),
+            params.end(),
+            ParamsDescription{},
+            [](auto &&acc, auto &el) {
+                acc.push_back(std::make_shared<ParamData>(ParamData({el, {}})));
+                return std::forward<decltype(acc)>(acc);;
+            }
+        );
     }
 
     void handleEmptyCommand() {
@@ -72,11 +77,11 @@ namespace iroha_cli {
     }
 
     void printCommandParameters(std::string &command,
-                                ParamsDescription parameters) {
+                                const ParamsDescription &parameters) {
       std::cout << "Run " << command
                 << " with following parameters: " << std::endl;
       std::for_each(parameters.begin(), parameters.end(), [](auto el) {
-        std::cout << "  " << std::get<0>(*el) << std::endl;
+        std::cout << "  " << el->message << std::endl;
       });
     }
 
@@ -97,10 +102,10 @@ namespace iroha_cli {
       return line;
     }
 
-    boost::optional<std::string> promptString(ParamData param) {
-        std::string message = std::get<0>(param);
-        if (not std::get<1>(param).empty()) {
-            message += " (" + std::get<1>(param) + ")";
+    boost::optional<std::string> promptString(const ParamData &param) {
+        std::string message = param.message;
+        if (not param.cache.empty()) {
+            message += " (" + param.cache + ")";
         }
         return promptString(message);
     }
@@ -145,11 +150,11 @@ namespace iroha_cli {
                         if (val) {
                             if (not val.value().empty()) {
                                 // Update input cache
-                                std::get<1>(*param) = val.value();
+                                param->cache = val.value();
                                 params.push_back(val.value());
-                            } else if (not std::get<1>(*param).empty()) {
+                            } else if (not param->cache.empty()) {
                                 // Input cache is not empty, use cached value
-                                params.push_back(std::get<1>(*param));
+                                params.push_back(param->cache);
                             }
                         }
                       });
