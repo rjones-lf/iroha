@@ -122,7 +122,7 @@ class AcceptanceFixture : public ::testing::Test {
  private:
   iroha::time::time_t initial_time;
   /// number of created transactions, used to provide unique time
-  int tx_counter;
+  int nonce_counter;
 };
 
 #endif  // IROHA_ACCEPTANCE_FIXTURE_HPP
