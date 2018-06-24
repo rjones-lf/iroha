@@ -19,12 +19,12 @@
 #define IROHA_CLI_INTERACTIVE_COMMON_CLI_HPP
 
 #include <algorithm>
-#include <iostream>
 #include <boost/optional.hpp>
+#include <iostream>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <memory>
 
 namespace parser {
   boost::optional<std::string> parseFirstCommand(std::string line);
@@ -47,11 +47,10 @@ namespace iroha_cli {
       RESULT
     };
 
-
     // Parameter prompt and default/cache
     struct ParamData {
-        std::string message;
-        std::string cache;
+      std::string message;
+      std::string cache;
     };
 
     // Description of parameters
@@ -81,7 +80,8 @@ namespace iroha_cli {
     ParamsMap getCommonParamsMap(const std::string &default_ip,
                                  int default_port);
 
-    ParamsDescription makeParamsDescription(const std::vector<std::string> &params);
+    ParamsDescription makeParamsDescription(
+        const std::vector<std::string> &params);
 
     /**
      * Handle error with empty command
@@ -189,7 +189,7 @@ namespace iroha_cli {
      */
     template <typename K, typename V>
     boost::optional<V> findInHandlerMap(K command_name,
-                                         std::unordered_map<K, V> params_map) {
+                                        std::unordered_map<K, V> params_map) {
       auto it = params_map.find(command_name);
       if (it == params_map.end()) {
         // Command not found, report error

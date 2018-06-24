@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <utility>
 #include <numeric>
+#include <utility>
 
 #include "interactive/interactive_common_cli.hpp"
 #include "parser/parser.hpp"
@@ -37,25 +37,26 @@ namespace iroha_cli {
       return {
           // commonParamsMap
           {SAVE_CODE, makeParamsDescription({"Path to save json file"})},
-          {SEND_CODE, {
-              std::make_shared<ParamData>(ParamData({"Peer address", default_ip})),
-              std::make_shared<ParamData>(ParamData({"Peer port", std::to_string(default_port)}))
-            }
-          }
+          {SEND_CODE,
+           {std::make_shared<ParamData>(
+                ParamData({"Peer address", default_ip})),
+            std::make_shared<ParamData>(
+                ParamData({"Peer port", std::to_string(default_port)}))}}
           // commonParamsMap
       };
     }
 
-    ParamsDescription makeParamsDescription(const std::vector<std::string> &params) {
-        return std::accumulate(
-            params.begin(),
-            params.end(),
-            ParamsDescription{},
-            [](auto &&acc, auto &el) {
-                acc.push_back(std::make_shared<ParamData>(ParamData({el, {}})));
-                return std::forward<decltype(acc)>(acc);;
-            }
-        );
+    ParamsDescription makeParamsDescription(
+        const std::vector<std::string> &params) {
+      return std::accumulate(
+          params.begin(),
+          params.end(),
+          ParamsDescription{},
+          [](auto &&acc, auto &el) {
+            acc.push_back(std::make_shared<ParamData>(ParamData({el, {}})));
+            return std::forward<decltype(acc)>(acc);
+            ;
+          });
     }
 
     void handleEmptyCommand() {
@@ -72,8 +73,7 @@ namespace iroha_cli {
 
     bool isBackOption(std::string line) {
       auto command = parser::parseFirstCommand(std::move(line));
-      return command
-          and (*command == "0" or *command == BACK_CODE);
+      return command and (*command == "0" or *command == BACK_CODE);
     }
 
     void printCommandParameters(std::string &command,
@@ -103,11 +103,11 @@ namespace iroha_cli {
     }
 
     boost::optional<std::string> promptString(const ParamData &param) {
-        std::string message = param.message;
-        if (not param.cache.empty()) {
-            message += " (" + param.cache + ")";
-        }
-        return promptString(message);
+      std::string message = param.message;
+      if (not param.cache.empty()) {
+        message += " (" + param.cache + ")";
+      }
+      return promptString(message);
     }
 
     void printEnd() {
@@ -148,14 +148,14 @@ namespace iroha_cli {
                       [&params](auto param) {
                         auto val = promptString(*param);
                         if (val) {
-                            if (not val.value().empty()) {
-                                // Update input cache
-                                param->cache = val.value();
-                                params.push_back(val.value());
-                            } else if (not param->cache.empty()) {
-                                // Input cache is not empty, use cached value
-                                params.push_back(param->cache);
-                            }
+                          if (not val.value().empty()) {
+                            // Update input cache
+                            param->cache = val.value();
+                            params.push_back(val.value());
+                          } else if (not param->cache.empty()) {
+                            // Input cache is not empty, use cached value
+                            params.push_back(param->cache);
+                          }
                         }
                       });
         if (params.size() != params_description.value().size()) {

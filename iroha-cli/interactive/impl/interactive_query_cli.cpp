@@ -74,7 +74,8 @@ namespace iroha_cli {
       query_handlers_ = {
           {GET_ACC, &InteractiveQueryCli::parseGetAccount},
           {GET_ACC_AST, &InteractiveQueryCli::parseGetAccountAssets},
-          {GET_ACC_AST_TX, &InteractiveQueryCli::parseGetAccountAssetTransactions},
+          {GET_ACC_AST_TX,
+           &InteractiveQueryCli::parseGetAccountAssetTransactions},
           {GET_ACC_TX, &InteractiveQueryCli::parseGetAccountTransactions},
           {GET_TX, &InteractiveQueryCli::parseGetTransactions},
           {GET_ACC_SIGN, &InteractiveQueryCli::parseGetSignatories},
@@ -84,8 +85,8 @@ namespace iroha_cli {
           // query_handlers_
       };
 
-      menu_points_ = formMenu(
-          query_handlers_, query_params_map_, description_map_);
+      menu_points_ =
+          formMenu(query_handlers_, query_params_map_, description_map_);
       // Add "go back" option
       addBackOption(menu_points_);
     }
@@ -93,12 +94,10 @@ namespace iroha_cli {
     void InteractiveQueryCli::create_result_menu() {
       result_handlers_ = {{SAVE_CODE, &InteractiveQueryCli::parseSaveFile},
                           {SEND_CODE, &InteractiveQueryCli::parseSendToIroha}};
-      result_params_map_ =
-          getCommonParamsMap(default_peer_ip_, default_port_);
+      result_params_map_ = getCommonParamsMap(default_peer_ip_, default_port_);
 
-      result_points_ = formMenu(result_handlers_,
-                                result_params_map_,
-                                getCommonDescriptionMap());
+      result_points_ = formMenu(
+          result_handlers_, result_params_map_, getCommonDescriptionMap());
       addBackOption(result_points_);
     }
 
@@ -259,8 +258,8 @@ namespace iroha_cli {
         return true;
       }
 
-      auto res = handleParse<bool>(
-          this, line, result_handlers_, result_params_map_);
+      auto res =
+          handleParse<bool>(this, line, result_handlers_, result_params_map_);
 
       return res.get_value_or(true);
     }
