@@ -47,9 +47,19 @@ namespace iroha_cli {
       RESULT
     };
 
-    // Parameter prompt and default/cache
+    /**
+     * Data structure for parameter data
+     *
+     */
     struct ParamData {
+      /**
+       * Message to display when prompting for user input
+       */
       std::string message;
+
+      /**
+       * Cached user input for the parameter or the default value
+       */
       std::string cache;
     };
 
@@ -75,11 +85,19 @@ namespace iroha_cli {
 
     /**
      * Return mapping of Command_name to parameters descriptions
-     * @return Map with parameters of common commands
+     * @param default_ip - default hostname or IP to be used when connecting to
+     * irohad
+     * @param default_port - default port to be used when connecting to irohad
+     * @return ParamsMap with parameters of common commands
      */
     ParamsMap getCommonParamsMap(const std::string &default_ip,
                                  int default_port);
 
+    /**
+     * Creates parameters descriptions with empty default/cache values
+     * @param params - parameters as a vector of prompt messages
+     * @return ParamsDescription with parameter data
+     */
     ParamsDescription makeParamsDescription(
         const std::vector<std::string> &params);
 
