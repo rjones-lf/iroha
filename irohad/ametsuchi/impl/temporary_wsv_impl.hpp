@@ -33,7 +33,7 @@ namespace iroha {
       TemporaryWsvImpl(std::unique_ptr<pqxx::lazyconnection> connection,
                        std::unique_ptr<pqxx::nontransaction> transaction);
 
-      expected::Result<void, std::vector<std::string>> apply(
+      expected::Result<void, std::string> apply(
           const shared_model::interface::Transaction &,
           std::function<expected::Result<void, std::string>(
               const shared_model::interface::Transaction &, WsvQuery &)>

@@ -47,17 +47,8 @@ namespace iroha {
       command_executor_->setCreatorAccountId(tx_creator);
       command_validator_->setCreatorAccountId(tx_creator);
       auto execute_command =
-          [this, &tx_creator](
-              auto &command,
-              int command_index) -> expected::Result<void, std::string> {
-        auto account = wsv_->getAccount(tx_creator);
-//        if (not account) {
-//          return expected::makeError(
-//              ((boost::format(
-//                    "stateful validation error: could not fetch account ")
-//                % tx_creator)
-//                   .str()));
-//        }
+          [this](auto &command,
+                 size_t command_index) -> expected::Result<void, std::string> {
         // Validate command
         return boost::apply_visitor(*command_validator_, command.get())
                    .match(

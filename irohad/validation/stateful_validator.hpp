@@ -18,6 +18,7 @@ limitations under the License.
 
 #include "ametsuchi/temporary_wsv.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "validation/stateful_validator_common.hpp"
 
 namespace iroha {
   namespace validation {
@@ -39,7 +40,7 @@ namespace iroha {
        * @return proposal with valid transactions and errors, which appeared in
        * a process of validating
        */
-      virtual shared_model::interface::types::VerifiedProposalAndErrors validate(
+      virtual VerifiedProposalAndErrors validate(
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) = 0;
     };

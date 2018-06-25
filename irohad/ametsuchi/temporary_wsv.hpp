@@ -52,7 +52,7 @@ namespace iroha {
        * @return void result value, if transaction was successfully applied, and
        * vector of strings with errors of all failed command otherwise
        */
-      virtual expected::Result<void, std::vector<std::string>> apply(
+      virtual expected::Result<void, std::string> apply(
           const shared_model::interface::Transaction &,
           std::function<expected::Result<void, std::string>(
               const shared_model::interface::Transaction &, WsvQuery &)>
