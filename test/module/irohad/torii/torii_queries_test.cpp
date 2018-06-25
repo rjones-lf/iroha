@@ -193,11 +193,6 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
 
   EXPECT_CALL(*wsv_query, getSignatories(creator))
       .WillRepeatedly(Return(signatories));
-  // EXPECT_CALL(
-  //     *wsv_query,
-  //     hasAccountGrantablePermission(
-  //         creator, accountB->accountId(), permissionOf(Role::kGetMyAccount)))
-  //     .WillOnce(Return(true));
 
   // Should be called once, after successful stateful validation
   EXPECT_CALL(*wsv_query, getAccount(accountB->accountId()))
