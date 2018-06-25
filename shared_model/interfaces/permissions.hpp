@@ -9,6 +9,7 @@
 #include <bitset>
 #include <functional>
 #include <initializer_list>
+#include <string>
 #include <vector>
 
 namespace shared_model {
@@ -98,9 +99,13 @@ namespace shared_model {
      public:
       PermissionSet();
       PermissionSet(std::initializer_list<Perm> list);
+      PermissionSet(const std::string &s);
 
-      size_t size() const;
+      std::string to_string() const;
+
+      static size_t size();
       PermissionSet &reset();
+      PermissionSet &set();
       PermissionSet &set(Perm p);
       PermissionSet &unset(Perm p);
 
