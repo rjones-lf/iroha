@@ -17,6 +17,7 @@
 #include <numeric>
 #include <utility>
 
+#include "common/types.hpp"
 #include "interactive/interactive_common_cli.hpp"
 #include "parser/parser.hpp"
 
@@ -142,17 +143,17 @@ namespace iroha_cli {
         std::for_each(params_description.value().begin(),
                       params_description.value().end(),
                       [&params](auto &param) {
-                        auto val = promptString(param);
-                        if (val) {
-                          if (not val.value().empty()) {
+                        using namespace iroha;
+                        promptString(param) | [&](auto &val) {
+                          if (not val.empty()) {
                             // Update input cache
-                            param.cache = val.value();
-                            params.push_back(val.value());
+                            param.cache = val;
+                            params.push_back(val);
                           } else if (not param.cache.empty()) {
                             // Input cache is not empty, use cached value
                             params.push_back(param.cache);
                           }
-                        }
+                        };
                       });
         if (params.size() != params_description.value().size()) {
           // Wrong params passed
