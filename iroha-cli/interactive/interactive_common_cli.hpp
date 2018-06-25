@@ -54,7 +54,7 @@ namespace iroha_cli {
     };
 
     // Description of parameters
-    using ParamsDescription = std::vector<std::shared_ptr<ParamData>>;
+    using ParamsDescription = std::vector<ParamData>;
     // map for command - command description relationship
     using DescriptionMap = std::unordered_map<std::string, std::string>;
     // Points in a menu
@@ -153,7 +153,7 @@ namespace iroha_cli {
      * @return vector with needed parameters
      */
     boost::optional<std::vector<std::string>> parseParams(
-        std::string line, std::string command_name, ParamsMap params_map);
+        std::string line, std::string command_name, ParamsMap &params_map);
 
     /**
      * Add menu point to vector menu
@@ -188,8 +188,8 @@ namespace iroha_cli {
      * @return nullopt if key not found, value if found
      */
     template <typename K, typename V>
-    boost::optional<V> findInHandlerMap(K command_name,
-                                        std::unordered_map<K, V> params_map) {
+    boost::optional<V &> findInHandlerMap(
+        K command_name, std::unordered_map<K, V> &params_map) {
       auto it = params_map.find(command_name);
       if (it == params_map.end()) {
         // Command not found, report error
@@ -228,7 +228,7 @@ namespace iroha_cli {
         C class_pointer,
         std::string &line,
         std::unordered_map<std::string, V> &parsers_map,
-        ParamsMap params_map) {
+        ParamsMap &params_map) {
       auto raw_command = parser::parseFirstCommand(line);
       if (not raw_command) {
         handleEmptyCommand();

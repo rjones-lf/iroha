@@ -38,25 +38,22 @@ namespace iroha_cli {
           // commonParamsMap
           {SAVE_CODE, makeParamsDescription({"Path to save json file"})},
           {SEND_CODE,
-           {std::make_shared<ParamData>(
-                ParamData({"Peer address", default_ip})),
-            std::make_shared<ParamData>(
-                ParamData({"Peer port", std::to_string(default_port)}))}}
+           {ParamData({"Peer address", default_ip}),
+            ParamData({"Peer port", std::to_string(default_port)})}}
           // commonParamsMap
       };
     }
 
     ParamsDescription makeParamsDescription(
         const std::vector<std::string> &params) {
-      return std::accumulate(
-          params.begin(),
-          params.end(),
-          ParamsDescription{},
-          [](auto &&acc, auto &el) {
-            acc.push_back(std::make_shared<ParamData>(ParamData({el, {}})));
-            return std::forward<decltype(acc)>(acc);
-            ;
-          });
+      return std::accumulate(params.begin(),
+                             params.end(),
+                             ParamsDescription{},
+                             [](auto &&acc, auto &el) {
+                               acc.push_back(ParamData({el, {}}));
+                               return std::forward<decltype(acc)>(acc);
+                               ;
+                             });
     }
 
     void handleEmptyCommand() {
@@ -81,7 +78,7 @@ namespace iroha_cli {
       std::cout << "Run " << command
                 << " with following parameters: " << std::endl;
       std::for_each(parameters.begin(), parameters.end(), [](auto el) {
-        std::cout << "  " << el->message << std::endl;
+        std::cout << "  " << el.message << std::endl;
       });
     }
 
@@ -130,9 +127,8 @@ namespace iroha_cli {
     }
 
     boost::optional<std::vector<std::string>> parseParams(
-        std::string line, std::string command_name, ParamsMap params_map) {
-      auto params_description =
-          findInHandlerMap(command_name, std::move(params_map));
+        std::string line, std::string command_name, ParamsMap &params_map) {
+      auto params_description = findInHandlerMap(command_name, params_map);
       if (not params_description) {
         // Report no params where found for this command
         std::cout << "Command params not found" << std::endl;
@@ -145,16 +141,16 @@ namespace iroha_cli {
         std::vector<std::string> params;
         std::for_each(params_description.value().begin(),
                       params_description.value().end(),
-                      [&params](auto param) {
-                        auto val = promptString(*param);
+                      [&params](auto &param) {
+                        auto val = promptString(param);
                         if (val) {
                           if (not val.value().empty()) {
                             // Update input cache
-                            param->cache = val.value();
+                            param.cache = val.value();
                             params.push_back(val.value());
-                          } else if (not param->cache.empty()) {
+                          } else if (not param.cache.empty()) {
                             // Input cache is not empty, use cached value
-                            params.push_back(param->cache);
+                            params.push_back(param.cache);
                           }
                         }
                       });
