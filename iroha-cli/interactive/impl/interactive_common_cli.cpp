@@ -53,7 +53,6 @@ namespace iroha_cli {
                              [](auto &&acc, auto &el) {
                                acc.push_back(ParamData({el, {}}));
                                return std::forward<decltype(acc)>(acc);
-                               ;
                              });
     }
 

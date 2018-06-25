@@ -49,7 +49,6 @@ namespace iroha_cli {
 
     /**
      * Data structure for parameter data
-     *
      */
     struct ParamData {
       /**
