@@ -73,8 +73,6 @@ namespace shared_model {
       };
 
       Role permissionFor(Grantable);
-      // TODO(@l4l) 19/06/18: Remove with IR-1452
-      Grantable permissionOf(Role);
 
       /**
        * @param perm protocol object for checking

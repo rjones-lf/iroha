@@ -237,20 +237,15 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));
 
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          "admin@test",
-          "test@test",
-          shared_model::interface::permissions::permissionOf(
-              shared_model::interface::permissions::Role::kGetMyAccDetail)))
-      .WillOnce(Return(true));
-
   EXPECT_CALL(*wsv_query, getAccountDetail("test@test"))
       .WillOnce(Return(boost::make_optional(std::string("value"))));
 
+  const std::vector<std::string> kRole{"role"};
   EXPECT_CALL(*wsv_query, getAccountRoles("admin@test"))
-      .WillOnce(Return(boost::none));
+      .WillOnce(Return(boost::make_optional(kRole)));
+  EXPECT_CALL(*wsv_query, getRolePermissions(kRole[0]))
+      .WillOnce(Return(shared_model::interface::RolePermissionSet{
+          shared_model::interface::permissions::Role::kGetAllAccDetail}));
 
   auto query = QueryBuilder()
                    .createdTime(iroha::time::now())
@@ -270,15 +265,6 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
 
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));
-
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          "admin@test",
-          "test@test",
-          shared_model::interface::permissions::permissionOf(
-              shared_model::interface::permissions::Role::kGetMyAccDetail)))
-      .WillOnce(Return(false));
 
   EXPECT_CALL(*wsv_query, getAccountRoles("admin@test"))
       .WillOnce(Return(boost::none));

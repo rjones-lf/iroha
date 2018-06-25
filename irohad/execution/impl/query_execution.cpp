@@ -59,32 +59,28 @@ shared_model::proto::TemplateQueryResponseBuilder<1> statefulFailed() {
   return buildError<shared_model::interface::StatefulFailedErrorResponse>();
 }
 
-bool hasQueryPermission(const std::string &creator,
-                        const std::string &target_account,
-                        WsvQuery &wsv_query,
-                        Role indiv_permission_id,
-                        Role all_permission_id,
-                        Role domain_permission_id) {
+static bool hasQueryPermission(const std::string &creator,
+                               const std::string &target_account,
+                               WsvQuery &wsv_query,
+                               Role indiv_permission_id,
+                               Role all_permission_id,
+                               Role domain_permission_id) {
   auto perms_set = iroha::getAccountPermissions(creator, wsv_query);
-  auto grantable = permissionOf(indiv_permission_id);
-  return
-      // 1. Creator has grant permission from other user
-      (creator != target_account
-       and wsv_query.hasAccountGrantablePermission(
-               creator, target_account, grantable))
-      or  // ----- Creator has role permission ---------
-      (perms_set
-       and (
-               // 2. Creator want to query his account, must have role
-               // permission
-               (creator == target_account
-                and perms_set.value().test(indiv_permission_id))
-               or  // 3. Creator has global permission to get any account
-               perms_set.value().test(all_permission_id)
-               or  // 4. Creator has domain permission
-               (getDomainFromName(creator) == getDomainFromName(target_account)
-                and perms_set.value().test(domain_permission_id))));
+  if (not perms_set) {
+    return false;
+  }
+
+  auto &set = perms_set.value();
+  // Creator want to query his account, must have role
+  // permission
+  return (creator == target_account and set.test(indiv_permission_id)) or
+      // Creator has global permission to get any account
+      set.test(all_permission_id) or
+      // Creator has domain permission
+      (getDomainFromName(creator) == getDomainFromName(target_account)
+       and set.test(domain_permission_id));
 }
+
 bool QueryProcessingFactory::validate(
     const shared_model::interface::BlocksQuery &query) {
   return checkAccountRolePermission(
