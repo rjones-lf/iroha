@@ -142,7 +142,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
 
   EXPECT_CALL(*validator, validate(_, _))
       .WillOnce(Return(
-          std::make_pair(proposal, std::vector<std::pair<std::vector<std::string>, int>> {})));
+          std::make_pair(proposal, std::vector<std::pair<std::vector<std::string>, size_t>> {})));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
