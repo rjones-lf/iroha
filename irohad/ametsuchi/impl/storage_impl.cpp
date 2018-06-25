@@ -76,17 +76,17 @@ namespace iroha {
       auto wsv_transaction =
           std::make_unique<pqxx::nontransaction>(*postgres_connection, kTmpWsv);
 
-      boost::optional<shared_model::interface::types::HashType> top_hash;
-
-      getBlockQuery()
-          ->getTopBlocks(1)
-          .subscribe_on(rxcpp::observe_on_new_thread())
-          .as_blocking()
-          .subscribe([&top_hash](auto block) { top_hash = block->hash(); });
-
+      auto block_result = getBlockQuery()->getTopBlock();
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
           std::make_unique<MutableStorageImpl>(
-              top_hash.value_or(shared_model::interface::types::HashType("")),
+              block_result.match(
+                  [](expected::Value<
+                      std::shared_ptr<shared_model::interface::Block>> &block) {
+                    return block.value->hash();
+                  },
+                  [](expected::Error<std::string> &) {
+                    return shared_model::interface::types::HashType("");
+                  }),
               std::move(postgres_connection),
               std::move(wsv_transaction)));
     }
@@ -105,8 +105,6 @@ namespace iroha {
                                         const auto &top_hash) { return true; });
             log_->info("block inserted: {}", inserted);
             commit(std::move(storage.value));
-            notifier_.get_subscriber().on_next(
-                std::shared_ptr<shared_model::interface::Block>(clone(block)));
           },
           [&](expected::Error<std::string> &error) {
             log_->error(error.error);
@@ -258,6 +256,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
             stringToBytes(shared_model::converters::protobuf::modelToJson(
                 *std::static_pointer_cast<shared_model::proto::Block>(
                     block.second))));
+        notifier_.get_subscriber().on_next(block.second);
       }
 
       storage->transaction_->exec("COMMIT;");

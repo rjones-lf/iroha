@@ -113,7 +113,6 @@ namespace iroha {
       auto qpf = QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
       if (not qpf.validate(*qry)) {
         auto response = buildBlocksQueryError("Stateful invalid");
-        blocksQuerySubject_.get_subscriber().on_next(response);
         return rxcpp::observable<>::just(
             std::shared_ptr<shared_model::interface::BlockQueryResponse>(
                 response));

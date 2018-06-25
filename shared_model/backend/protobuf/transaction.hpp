@@ -86,7 +86,7 @@ namespace shared_model {
         return payload_.created_time();
       }
 
-      Transaction::QuorumType quorum() const override {
+      interface::types::QuorumType quorum() const override {
         return payload_.quorum();
       }
 

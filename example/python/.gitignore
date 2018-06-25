@@ -1,6 +1,7 @@
 # Ignore everything
 *
 !.gitignore
-!.tx-example.py
+!tx-example.py
+!blocks-query.py
 !prepare.sh
 !README.md

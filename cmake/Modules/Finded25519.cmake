@@ -23,7 +23,11 @@ set_target_description(ed25519 "Digital signature algorithm" ${URL} ${VERSION})
 if (NOT ed25519_FOUND)
   if (NOT WIN32)
     find_package(Git REQUIRED)
-    set(PATCH_RANDOM ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR}/patch/close.patch || true)
+    set(PATCH_RANDOM ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR})
+    if (NOT IROHA_ROOT_PROJECT)
+      set(PATCH_RANDOM ${PATCH_RANDOM}/..)
+    endif ()
+    set(PATCH_RANDOM ${PATCH_RANDOM}/patch/close.patch || true)
   endif ()
 
   externalproject_add(hyperledger_ed25519

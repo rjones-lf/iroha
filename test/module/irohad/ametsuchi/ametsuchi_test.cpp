@@ -632,6 +632,41 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
   ASSERT_TRUE(wrapper.validate());
 }
 
+/**
+ * @given created storage
+ * @when commit block
+ * @then committed block is emitted to observable
+ */
+TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
+  ASSERT_TRUE(storage);
+
+  auto expected_block = getBlock();
+
+  // create test subscriber to check if committed block is as expected
+  auto wrapper = make_test_subscriber<CallExact>(storage->on_commit(), 1);
+  wrapper.subscribe([&expected_block](const auto &block) {
+    ASSERT_EQ(*block, expected_block);
+  });
+
+  std::unique_ptr<MutableStorage> mutable_storage;
+  storage->createMutableStorage().match(
+      [&mutable_storage](iroha::expected::Value<std::unique_ptr<MutableStorage>>
+                             &mut_storage) {
+        mutable_storage = std::move(mut_storage.value);
+      },
+      [](const auto &) { FAIL() << "Mutable storage cannot be created"; });
+
+  mutable_storage->apply(
+      expected_block,
+      [](const auto &, const auto &, const auto &) { return true; });
+
+  storage->commit(std::move(mutable_storage));
+
+  storage->dropStorage();
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
 TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {
   auto logger = logger::testLog("TestStorage");
   logger->info(

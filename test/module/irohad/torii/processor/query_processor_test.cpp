@@ -28,6 +28,7 @@
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "network/ordering_gate.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "utils/query_error_response_visitor.hpp"
@@ -49,6 +50,16 @@ class QueryProcessorTest : public ::testing::Test {
     created_time = iroha::time::now();
     account_id = "account@domain";
     counter = 1048576;
+  }
+
+  auto getBlocksQuery(const std::string &creator_account_id) {
+    return TestUnsignedBlocksQueryBuilder()
+        .createdTime(created_time)
+        .creatorAccountId(creator_account_id)
+        .queryCounter(counter)
+        .build()
+        .signAndAddSignature(keypair)
+        .finish();
   }
 
   decltype(iroha::time::now()) created_time;
@@ -279,4 +290,111 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
                   .build()));
   }
   ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given admin with permisisons to get blocks
+ * @and user with no permissions to get blocks
+ * @when admin sends blocks query
+ * @and user sends blocks query
+ * @then admin will get only block response
+ * @and user will get only block error response with stateful invalid message
+ */
+TEST_F(QueryProcessorTest, NoOneSeesStatefulInvalidButCaller) {
+  auto wsv_queries = std::make_shared<MockWsvQuery>();
+  auto block_queries = std::make_shared<MockBlockQuery>();
+  auto storage = std::make_shared<MockStorage>();
+
+  auto qpf =
+      std::make_unique<QueryProcessingFactory>(wsv_queries, block_queries);
+
+  iroha::torii::QueryProcessorImpl qpi(storage);
+
+  std::shared_ptr<shared_model::interface::Account> account_with_perms = clone(
+      shared_model::proto::AccountBuilder().accountId(account_id).build());
+
+  std::shared_ptr<shared_model::interface::Account> account_without_perms =
+      clone(
+          shared_model::proto::AccountBuilder().accountId(account_id).build());
+
+  auto admin_account_id = "admin@test";
+  auto user_account_id = "user@test";
+
+  auto admin_role = "admin";
+  auto user_role = "user";
+
+  shared_model::interface::RolePermissionSet admin_perms = {
+      shared_model::interface::permissions::Role::kGetMyAccount,
+      shared_model::interface::permissions::Role::kGetBlocks};
+  shared_model::interface::RolePermissionSet user_perms = {
+      shared_model::interface::permissions::Role::kGetMyAccount};
+
+  EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
+  EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_queries));
+
+  EXPECT_CALL(*wsv_queries, getSignatories(admin_account_id))
+      .WillRepeatedly(Return(signatories));
+  EXPECT_CALL(*wsv_queries, getSignatories(user_account_id))
+      .WillRepeatedly(Return(signatories));
+
+  EXPECT_CALL(*wsv_queries, getAccountRoles(admin_account_id))
+      .WillOnce(Return(std::vector<std::string>{admin_role}));
+  EXPECT_CALL(*wsv_queries, getAccountRoles(user_account_id))
+      .WillOnce(Return(std::vector<std::string>{user_role}));
+
+  EXPECT_CALL(*wsv_queries, getRolePermissions(admin_role))
+      .WillOnce(Return(admin_perms));
+  EXPECT_CALL(*wsv_queries, getRolePermissions(user_role))
+      .WillOnce(Return(user_perms));
+
+  auto expected_block =
+      TestBlockBuilder()
+          .height(1)
+          .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
+          .build();
+
+  auto admin_block_query = getBlocksQuery(admin_account_id);
+
+  // check that admin can get block and do not get anything but block responses
+  auto admin_wrapper = make_test_subscriber<CallExact>(
+      qpi.blocksQueryHandle(std::make_shared<shared_model::proto::BlocksQuery>(
+          admin_block_query.getTransport())),
+      1);
+  admin_wrapper.subscribe([&expected_block](
+                              const std::shared_ptr<
+                                  shared_model::interface::BlockQueryResponse>
+                                  &block) {
+    ASSERT_NO_THROW({
+      auto &block_response = boost::apply_visitor(
+          framework::SpecifiedVisitor<shared_model::interface::BlockResponse>(),
+          block->get());
+      ASSERT_EQ(block_response.block(), expected_block);
+    });
+  });
+
+  auto user_block_query = getBlocksQuery(user_account_id);
+
+  // check that user without can_get_blocks permission will not get anything but
+  // block error response
+  auto user_wrapper = make_test_subscriber<CallExact>(
+      qpi.blocksQueryHandle(std::make_shared<shared_model::proto::BlocksQuery>(
+          user_block_query.getTransport())),
+      1);
+  user_wrapper.subscribe(
+      [](const std::shared_ptr<shared_model::interface::BlockQueryResponse>
+             &block) {
+        ASSERT_NO_THROW({
+          auto &block_response = boost::apply_visitor(
+              framework::SpecifiedVisitor<
+                  shared_model::interface::BlockErrorResponse>(),
+              block->get());
+          ASSERT_EQ(block_response.message(), "Stateful invalid");
+        });
+      });
+
+  // apply expected block to the ledger
+  storage->notifier.get_subscriber().on_next(clone(expected_block));
+
+  ASSERT_TRUE(admin_wrapper.validate());
+  ASSERT_TRUE(user_wrapper.validate());
 }

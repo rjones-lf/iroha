@@ -37,13 +37,10 @@ namespace shared_model {
        */
       virtual const types::AccountIdType &creatorAccountId() const = 0;
 
-      /// Type of quorum
-      using QuorumType = uint8_t;
-
       /**
        * @return quorum of transaction
        */
-      virtual QuorumType quorum() const = 0;
+      virtual types::QuorumType quorum() const = 0;
 
       /// Type of ordered collection of commands
       using CommandsType = boost::any_range<Command,

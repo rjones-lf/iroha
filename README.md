@@ -2,11 +2,9 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/960/badge)](https://bestpractices.coreinfrastructure.org/projects/960)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/4d8edb74d4954c76a4656a9e109dbc4e)](https://www.codacy.com/app/neewy/iroha?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=hyperledger/iroha&amp;utm_campaign=Badge_Grade)
-[![CircleCI](https://circleci.com/gh/hyperledger/iroha/tree/master.svg?style=svg)](https://circleci.com/gh/hyperledger/iroha/tree/master)
 [![codecov](https://codecov.io/gh/hyperledger/iroha/branch/master/graph/badge.svg)](https://codecov.io/gh/hyperledger/iroha)
 [![Snap Status](https://build.snapcraft.io/badge/hyperledger/iroha.svg)](https://build.snapcraft.io/user/hyperledger/iroha)
-
+[![Build Status](https://jenkins.soramitsu.co.jp/buildStatus/icon?job=iroha/iroha-hyperledger/master)](https://jenkins.soramitsu.co.jp/job/iroha/iroha-hyperledger/master)
 [![Throughput Graph](https://graphs.waffle.io/hyperledger/iroha/throughput.svg)](https://waffle.io/hyperledger/iroha/metrics/throughput)
 
 Blockchain platform Hyperledger Iroha is designed for simple creation and management of assets. This is a distributed ledger of transactions.
@@ -27,16 +25,31 @@ Among the non-functional requirements can be noted a high degree of network faul
 
 ## Documentation
 
+Our documentation is hosted at ReadTheDocs service here: [http://iroha.readthedocs.io](http://iroha.readthedocs.io/en/).
+We have documentation in several languages available and you are welcome to contribute on [POEditor website](https://poeditor.com/join/project/SFpZw7o33o)!
+
+### How to explore Iroha really fast?
+
 Check [getting started](http://iroha.readthedocs.io/en/latest/getting_started/) section in your version of localized docs to start exploring the system.
 
-For more information, such as how to use client libraries in your target programming language, or how to deploy Iroha in a network check the rest of the documentation.
+### How to build Iroha?
+
+Use [build guide](http://iroha.readthedocs.io/en/latest/guides/build.html), which might be helpful if you want to modify the code and contribute.
+
+### Is there SDK available?
+
+Yes, in [Java](http://iroha.readthedocs.io/en/latest/guides/libraries/java.html), [Python](http://iroha.readthedocs.io/en/latest/guides/libraries/python.html), [Javascript](http://iroha.readthedocs.io/en/latest/guides/libraries/nodejs.html), builds for [Android](http://iroha.readthedocs.io/en/latest/guides/libraries/android.html), and [iOS](http://iroha.readthedocs.io/en/latest/guides/libraries/swift_ios.html).
+
+### Are there any example applications?
+
+[Android point app](https://github.com/soramitsu/iroha-demo-android) and [JavaScript wallet](https://github.com/soramitsu/iroha-wallet-js).
 
 ## Need help?
 
 * Join [telegram chat](https://t.me/hyperledgeriroha) where the maintainers team is able to help you
 * Communicate in Gitter chat with our development community [![Join the chat at https://gitter.im/hyperledger-iroha/Lobby](https://badges.gitter.im/hyperledger-iroha/Lobby.svg)](https://gitter.im/hyperledger-iroha/Lobby)
 * Submit issues via GitHub Iroha repository
-* Join [HyperLedger RocketChat](https://chat.hyperledger.org) #iroha channel to discuss your concerns and proposals
+* Join [Hyperledger RocketChat](https://chat.hyperledger.org) #iroha channel to discuss your concerns and proposals
 * Use mailing list to spread your word within Iroha development community [hyperledger-iroha@lists.hyperledger.org](mailto:hyperledger-iroha@lists.hyperledger.org)
 
 ## License
