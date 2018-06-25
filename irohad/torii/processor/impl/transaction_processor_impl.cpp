@@ -54,7 +54,7 @@ namespace iroha {
           [this](shared_model::interface::types::VerifiedProposalAndErrors
                      proposal_and_errors) {
             // form the error message
-            auto error_msg = "Stateful Validation Errors:\n";
+            std::string error_msg = "Stateful Validation Errors:\n";
             auto errors = proposal_and_errors.second;
             for (const auto &tx_error : errors) {
               error_msg += std::string("=== Transaction ") + tx_error.second
@@ -70,7 +70,8 @@ namespace iroha {
             notifier_.get_subscriber().on_next(
                 shared_model::builder::DefaultTransactionStatusBuilder()
                     .statefulValidationFailed()
-                    .
+                    .errorMsg(error_msg)
+                    .txHash()
                     .build());
           });
 
@@ -82,7 +83,6 @@ namespace iroha {
               for (const auto &tx : model_block->transactions()) {
                 auto hash = tx.hash();
                 if (this->proposal_set_.find(hash) != proposal_set_.end()) {
-                  proposal_set_.erase(hash);
                   candidate_set_.insert(hash);
                   log_->info("on commit stateful success: {}", hash.hex());
                   std::lock_guard<std::mutex> lock(notifier_mutex_);
@@ -96,17 +96,6 @@ namespace iroha {
             },
             // on complete
             [this]() {
-              for (auto &tx_hash : proposal_set_) {
-                log_->info("on commit stateful failed: {}", tx_hash.hex());
-                std::lock_guard<std::mutex> lock(notifier_mutex_);
-                notifier_.get_subscriber().on_next(
-                    shared_model::builder::DefaultTransactionStatusBuilder()
-                        .statefulValidationFailed()
-                        .txHash(tx_hash)
-                        .build());
-              }
-              proposal_set_.clear();
-
               for (auto &tx_hash : candidate_set_) {
                 log_->info("on commit committed: {}", tx_hash.hex());
                 std::lock_guard<std::mutex> lock(notifier_mutex_);
@@ -117,6 +106,7 @@ namespace iroha {
                         .build());
               }
               candidate_set_.clear();
+              proposal_set_.clear();
             });
       });
 
