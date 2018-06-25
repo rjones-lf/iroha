@@ -103,7 +103,7 @@ namespace shared_model {
       /// dimension of vector is transaction, second is commands
       using VerifiedProposalAndErrors =
           std::pair<std::shared_ptr<shared_model::interface::Proposal>,
-                    std::vector<std::pair<std::vector<std::string>, int>>>;
+                    std::vector<std::pair<std::vector<std::string>, size_t>>>;
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model

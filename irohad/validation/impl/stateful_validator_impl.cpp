@@ -18,6 +18,7 @@
 #include "validation/impl/stateful_validator_impl.hpp"
 
 #include <boost/format.hpp>
+#include <boost/range/algorithm/find.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <string>
@@ -93,37 +94,37 @@ namespace iroha {
                 return {};
               }
               return expected::makeError(
-                  formSignaturesErrorMsg(tx.signatures(), signatories));
+                  this->formSignaturesErrorMsg(tx.signatures(), signatories));
             });
       };
 
       // Filter only valid transactions and accumulate errors
       auto transactions_errors_log =
-          std::vector<std::pair<std::vector<std::string>, int>>{};
+          std::vector<std::pair<std::vector<std::string>, size_t>>{};
       auto filter = [&temporaryWsv,
                      checking_transaction,
-                     &transactions_errors_log](auto &tx, int tx_index) {
+                     &transactions_errors_log,
+                     &proposal](auto &tx) {
         return temporaryWsv.apply(tx, checking_transaction)
-            .match([](expected::Value<void> &) { return true; },
-                   [&transactions_errors_log, tx_index](
-                       expected::Error<std::vector<std::string>> &error) {
-                     transactions_errors_log.push_back(
-                         std::make_pair(error.error, tx_index));
-                     return false;
-                   });
+            .match(
+                [](expected::Value<void> &) { return true; },
+                [&transactions_errors_log,
+                 &proposal, &tx](expected::Error<std::vector<std::string>> &error) {
+                  auto txs = proposal.transactions();
+                  transactions_errors_log.push_back(std::make_pair(
+                      error.error, boost::range::find(txs, tx) - txs.begin()));
+                  return false;
+                });
       };
 
       // TODO: kamilsa IR-1010 20.02.2018 rework validation logic, so that this
       // cast is not needed and stateful validator does not know about the
       // transport
-      std::vector<const shared_model::proto::Transaction> valid_proto_txs{};
-      for (auto i = 0; i < proposal.transactions().size(); ++i) {
-        const auto &tx = proposal.transactions()[i];
-        if (filter(tx, i)) {
-          valid_proto_txs.push_back(
-              static_cast<const shared_model::proto::Transaction &>(tx));
-        }
-      }
+      auto valid_proto_txs =
+          proposal.transactions() | boost::adaptors::filtered(filter)
+          | boost::adaptors::transformed([](auto &tx) {
+              return static_cast<const shared_model::proto::Transaction &>(tx);
+            });
 
       auto validated_proposal = shared_model::proto::ProposalBuilder()
                                     .createdTime(proposal.createdTime())
@@ -145,7 +146,7 @@ namespace iroha {
             &signatories) {
       using namespace std::string_literals;
 
-      std::string signatures_string = "", signatories_string = "";
+      std::string signatures_string = "", signatories_string;
       for (const auto &signature : signatures) {
         signatures_string += signature.publicKey().toString() + "\n"s;
       }
