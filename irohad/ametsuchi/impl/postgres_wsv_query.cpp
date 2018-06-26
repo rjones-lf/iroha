@@ -93,6 +93,7 @@ namespace iroha {
                  | [&](const auto &result)
                  -> boost::optional<
                      shared_model::interface::RolePermissionSet> {
+        // TODO(@l4l) 26/06/18 remove with IR-1480
         if (result.empty()) {
           return shared_model::interface::RolePermissionSet();
         }

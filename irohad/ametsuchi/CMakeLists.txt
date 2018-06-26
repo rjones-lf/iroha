@@ -21,5 +21,6 @@ target_link_libraries(ametsuchi
     command_execution
     query_execution
     shared_model_interfaces
+    shared_model_proto_backend
     shared_model_stateless_validation
     )

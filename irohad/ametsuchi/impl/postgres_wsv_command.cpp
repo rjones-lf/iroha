@@ -18,6 +18,7 @@
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 
 #include <boost/format.hpp>
+#include "backend/protobuf/permissions.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -83,9 +84,14 @@ namespace iroha {
           + " );");
 
       auto message_gen = [&] {
+        // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
+        const auto &str =
+            shared_model::proto::permissions::toString(permissions);
+        const auto perm_debug_str =
+            std::accumulate(str.begin(), str.end(), std::string());
         return (boost::format("failed to insert role permissions, role "
                               "id: '%s', permissions: [%s]")
-                % role_id % perm_str)
+                % role_id % perm_debug_str)
             .str();
       };
 
@@ -105,8 +111,9 @@ namespace iroha {
                "INSERT INTO account_has_grantable_permissions as "
                "has_perm(permittee_account_id, account_id, permission) VALUES "
                "(%1%, %2%, %3%) ON CONFLICT (permittee_account_id, account_id) "
+               // SELECT will end up with a error, if the permission exists
                "DO UPDATE SET permission=(SELECT has_perm.permission | %3% "
-               "WHERE has_perm.permission & %3% <> %3%);")
+               "WHERE (has_perm.permission & %3%) <> %3%);")
            % transaction_.quote(permittee_account_id)
            % transaction_.quote(account_id) % transaction_.quote(perm_str))
               .str();
@@ -117,7 +124,10 @@ namespace iroha {
                               "permittee account id: '%s', "
                               "account id: '%s', "
                               "permission: '%s'")
-                % permittee_account_id % account_id % perm_str)
+                % permittee_account_id
+                % account_id
+                // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
+                % shared_model::proto::permissions::toString(permission))
             .str();
       };
 
@@ -135,6 +145,8 @@ namespace iroha {
                                 .toBitstring();
       auto query =
           (boost::format("UPDATE account_has_grantable_permissions as has_perm "
+                         // SELECT will end up with a error, if the permission
+                         // doesn't exists
                          "SET permission=(SELECT has_perm.permission & %3% "
                          "WHERE has_perm.permission & %3% = %3%) WHERE "
                          "permittee_account_id=%1% AND account_id=%2%;")
@@ -148,7 +160,10 @@ namespace iroha {
                               "permittee account id: '%s', "
                               "account id: '%s', "
                               "permission id: '%s'")
-                % permittee_account_id % account_id % perm_str)
+                % permittee_account_id
+                % account_id
+                // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
+                % shared_model::proto::permissions::toString(permission))
             .str();
       };
 
