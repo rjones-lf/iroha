@@ -38,7 +38,7 @@ namespace iroha {
       transaction_->exec("BEGIN;");
     }
 
-    expected::Result<void, std::vector<std::string>> TemporaryWsvImpl::apply(
+    expected::Result<void, std::string> TemporaryWsvImpl::apply(
         const shared_model::interface::Transaction &tx,
         std::function<expected::Result<void, std::string>(
             const shared_model::interface::Transaction &, WsvQuery &)>
@@ -50,69 +50,56 @@ namespace iroha {
           [this](auto &command,
                  size_t command_index) -> expected::Result<void, std::string> {
         // Validate command
-        return boost::apply_visitor(*command_validator_, command.get())
-                   .match(
-                       [](expected::Value<void> &)
-                           -> expected::Result<void, std::string> {
-                         return {};
-                       },
-                       [command_index](expected::Error<CommandError> &error)
-                           -> expected::Result<void, std::string> {
-                         return expected::makeError(
-                             ((boost::format("stateful validation error: could "
-                                             "not validate "
-                                             "command with index %d: %s")
-                               % command_index % error.error.toString()))
-                                 .str());
-                       })
-            |
-            [this, command_index, &command] {
-              // Execute command
-              return boost::apply_visitor(*command_executor_, command.get())
-                  .match(
-                      [](expected::Value<void> &)
-                          -> expected::Result<void, std::string> { return {}; },
-                      [command_index](expected::Error<CommandError> &e)
-                          -> expected::Result<void, std::string> {
-                        return expected::makeError(
-                            ((boost::format(
+        return expected::map_error<std::string>(
+                   boost::apply_visitor(*command_validator_, command.get()),
+                   [command_index](CommandError &error) {
+                     return (boost::format("stateful validation error: could "
+                                           "not validate "
+                                           "command with index %d: %s")
+                             % command_index % error.toString())
+                         .str();
+                   })
+            | [this, command_index, &command] {
+                // Execute commands
+                return expected::map_error<std::string>(
+                    boost::apply_visitor(*command_executor_, command.get()),
+                    [command_index](CommandError &error) {
+                      return (boost::format(
                                   "stateful validation error: could not "
                                   "execute command with index %d: %s")
-                              % command_index % e.error.toString()))
-                                .str());
-                      });
-            };
+                              % command_index % error.toString())
+                          .str();
+                    });
+              };
       };
+
       transaction_->exec("SAVEPOINT savepoint_;");
 
-      auto tx_failed = false;
-      auto commands_errors_log = std::vector<std::string>{};
-      auto failed_cmd_processor = [&commands_errors_log, &tx_failed](
-                                      expected::Error<std::string> error) {
-        commands_errors_log.push_back(error.error);
-        tx_failed = true;
-      };
-
-      // Check transaction validness
-      apply_function(tx, *wsv_).match([](expected::Value<void>) {},
-                                      failed_cmd_processor);
-
-      if (not tx_failed) {
-        // Check commands validness
+      return expected::map_error<std::string>(
+                 apply_function(tx, *wsv_),
+                 [](std::string &error) { return error; })
+                 | [this,
+                    &execute_command,
+                    &tx]() -> expected::Result<void, std::string> {
+        // check transaction's commands validness
         const auto &commands = tx.commands();
+        std::string cmd_error;
         for (size_t i = 0; i < commands.size(); ++i) {
-          execute_command(commands[i], i)
-              .match([](expected::Value<void>) {}, failed_cmd_processor);
-        };
-      }
-
-      if (tx_failed) {
-        transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");
-        return expected::makeError(commands_errors_log);
-      }
-
-      transaction_->exec("RELEASE SAVEPOINT savepoint_;");
-      return {};
+          // in case of failed command, rollback and return
+          if (not execute_command(commands[i], i)
+                      .match([](expected::Value<void> &) { return true; },
+                             [&cmd_error](expected::Error<std::string> &error) {
+                               cmd_error = error.error;
+                               return false;
+                             })) {
+            transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");
+            return expected::makeError(cmd_error);
+          }
+        }
+        // success
+        transaction_->exec("RELEASE SAVEPOINT savepoint_;");
+        return {};
+      };
     }
 
     TemporaryWsvImpl::~TemporaryWsvImpl() {
