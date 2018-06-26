@@ -95,29 +95,24 @@ namespace iroha {
       };
 
       // Filter only valid transactions and accumulate errors
-      auto transactions_errors_log =
-          std::vector<std::pair<std::string, size_t>>{};
+      auto transactions_errors_log = iroha::validation::TransactionsErrors{};
       auto filter = [&temporaryWsv,
                      checking_transaction,
-                     &transactions_errors_log](auto &tx, size_t tx_index) {
+                     &transactions_errors_log](auto &tx) {
         return temporaryWsv.apply(tx, checking_transaction)
             .match([](expected::Value<void> &) { return true; },
                    [&transactions_errors_log,
-                    tx_index](expected::Error<std::string> &error) {
+                    &tx](expected::Error<std::string> &error) {
                      transactions_errors_log.push_back(
-                         std::make_pair(error.error, tx_index));
+                         std::make_pair(error.error, tx.hash()));
                      return false;
                    });
       };
 
       auto valid_proto_txs =
-          proposal.transactions() | boost::adaptors::indexed(0)
-          | boost::adaptors::filtered([&filter](auto indexed_tx) {
-              return filter(indexed_tx.value(), indexed_tx.index());
-            })
-          | boost::adaptors::transformed([](auto indexed_tx) {
-              return static_cast<const shared_model::proto::Transaction &>(
-                  indexed_tx.value());
+          proposal.transactions() | boost::adaptors::filtered(filter)
+          | boost::adaptors::transformed([](auto &tx) {
+              return static_cast<const shared_model::proto::Transaction &>(tx);
             });
 
       auto validated_proposal = shared_model::proto::ProposalBuilder()
