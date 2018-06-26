@@ -74,10 +74,10 @@ PermissionSet<Perm>::PermissionSet(std::initializer_list<Perm> list) {
 }
 
 template <typename Perm>
-PermissionSet<Perm>::PermissionSet(const std::string &s) : Parent(s) {}
+PermissionSet<Perm>::PermissionSet(const std::string &bitstring) : Parent(bitstring) {}
 
 template <typename Perm>
-std::string PermissionSet<Perm>::to_string() const {
+std::string PermissionSet<Perm>::toBitstring() const {
   return Parent::to_string();
 }
 

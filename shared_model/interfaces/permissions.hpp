@@ -99,9 +99,9 @@ namespace shared_model {
      public:
       PermissionSet();
       PermissionSet(std::initializer_list<Perm> list);
-      PermissionSet(const std::string &s);
+      explicit PermissionSet(const std::string &bitstring);
 
-      std::string to_string() const;
+      std::string toBitstring() const;
 
       static size_t size();
       PermissionSet &reset();

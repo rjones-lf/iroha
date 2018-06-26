@@ -76,7 +76,7 @@ namespace iroha {
     WsvCommandResult PostgresWsvCommand::insertRolePermissions(
         const shared_model::interface::types::RoleIdType &role_id,
         const shared_model::interface::RolePermissionSet &permissions) {
-      auto perm_str = permissions.to_string();
+      auto perm_str = permissions.toBitstring();
       auto result = execute_(
           "INSERT INTO role_has_permissions(role_id, permission) VALUES ("
           + transaction_.quote(role_id) + ", " + transaction_.quote(perm_str)
@@ -99,7 +99,7 @@ namespace iroha {
         shared_model::interface::permissions::Grantable permission) {
       const auto perm_str =
           shared_model::interface::GrantablePermissionSet({permission})
-              .to_string();
+              .toBitstring();
       auto query =
           (boost::format(
                "INSERT INTO account_has_grantable_permissions as "
@@ -132,7 +132,7 @@ namespace iroha {
       const auto perm_str = shared_model::interface::GrantablePermissionSet()
                                 .set()
                                 .unset(permission)
-                                .to_string();
+                                .toBitstring();
       auto query =
           (boost::format("UPDATE account_has_grantable_permissions as has_perm "
                          "SET permission=(SELECT has_perm.permission & %3% "
