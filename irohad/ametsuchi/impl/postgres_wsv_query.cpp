@@ -53,11 +53,6 @@ namespace iroha {
         const AccountIdType &permitee_account_id,
         const AccountIdType &account_id,
         shared_model::interface::permissions::Grantable permission) {
-      // TODO(@l4l) 25/06/18: remove with IR-1464
-      if (permission
-          == shared_model::interface::permissions::Grantable::COUNT) {
-        return false;
-      }
       const auto perm_str =
           shared_model::interface::GrantablePermissionSet({permission})
               .toBitstring();

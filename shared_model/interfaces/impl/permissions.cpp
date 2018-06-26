@@ -28,23 +28,6 @@ namespace shared_model {
         return Role::COUNT;
       }
 
-      Grantable permissionOf(Role g) {
-        switch (g) {
-          case Role::kAddMySignatory:
-            return Grantable::kAddMySignatory;
-          case Role::kRemoveMySignatory:
-            return Grantable::kRemoveMySignatory;
-          case Role::kSetMyQuorum:
-            return Grantable::kSetMyQuorum;
-          case Role::kSetMyAccountDetail:
-            return Grantable::kSetMyAccountDetail;
-          case Role::kTransferMyAssets:
-            return Grantable::kTransferMyAssets;
-          default:;
-        }
-        return Grantable::COUNT;
-      }
-
       bool isValid(Role perm) noexcept {
         auto p = static_cast<size_t>(perm);
         return p < static_cast<size_t>(Role::COUNT);

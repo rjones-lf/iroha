@@ -17,3 +17,10 @@ target_link_libraries(command_validate_execute_test
     command_execution
     shared_model_stateless_validation
     )
+
+addtest(query_execution_test query_execution_test.cpp)
+target_link_libraries(query_execution_test
+    query_execution
+    shared_model_interfaces
+    shared_model_stateless_validation
+    )
