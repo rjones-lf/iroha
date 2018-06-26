@@ -70,10 +70,14 @@ class ClientServerTest : public testing::Test {
     rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
         prop_notifier;
     rxcpp::subjects::subject<iroha::Commit> commit_notifier;
+    rxcpp::subjects::subject<iroha::validation::VerifiedProposalAndErrors>
+        verified_prop_notifier;
     EXPECT_CALL(*pcsMock, on_proposal())
         .WillRepeatedly(Return(prop_notifier.get_observable()));
     EXPECT_CALL(*pcsMock, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
+    EXPECT_CALL(*pcsMock, on_verified_proposal())
+        .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
     EXPECT_CALL(*mst, onPreparedTransactionsImpl())
         .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));

@@ -48,9 +48,10 @@ namespace iroha {
 
       notifier_.get_observable().subscribe(
           verified_proposal_subscription_,
-          [this](const std::shared_ptr<shared_model::interface::Proposal>
-                     &verified_proposal) {
-            this->process_verified_proposal(*verified_proposal);
+          [this](const iroha::validation::VerifiedProposalAndErrors
+                     &verified_proposal_and_errors) {
+            this->process_verified_proposal(
+                *verified_proposal_and_errors.first);
           });
     }
 
@@ -59,7 +60,7 @@ namespace iroha {
       verified_proposal_subscription_.unsubscribe();
     }
 
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
+    rxcpp::observable<iroha::validation::VerifiedProposalAndErrors>
     Simulator::on_verified_proposal() {
       return notifier_.get_observable();
     }
@@ -68,17 +69,24 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process proposal");
       // Get last block from local ledger
-      block_queries_->getTopBlocks(1)
-          .subscribe_on(rxcpp::observe_on_new_thread())
-          .as_blocking()
-          .subscribe([this](auto block) { last_block = block; });
-      if (not last_block) {
-        log_->warn("Could not fetch last block");
+      auto top_block_result = block_queries_->getTopBlock();
+      auto block_fetched = top_block_result.match(
+          [&](expected::Value<std::shared_ptr<shared_model::interface::Block>>
+                  &block) {
+            last_block = block.value;
+            return true;
+          },
+          [this](expected::Error<std::string> &error) {
+            log_->warn("Could not fetch last block: " + error.error);
+            return false;
+          });
+      if (not block_fetched) {
         return;
       }
-      if (last_block.value()->height() + 1 != proposal.height()) {
+
+      if (last_block->height() + 1 != proposal.height()) {
         log_->warn("Last block height: {}, proposal height: {}",
-                   last_block.value()->height(),
+                   last_block->height(),
                    proposal.height());
         return;
       }
@@ -88,15 +96,7 @@ namespace iroha {
                   &temporaryStorage) {
             auto validated_proposal_and_errors =
                 validator_->validate(proposal, *temporaryStorage.value);
-            // Temporary variant: errors are lost now, but then they are going
-            // to be handled upwards
-            notifier_.get_subscriber().on_next(
-                validated_proposal_and_errors.first);
-            for (const auto &transaction: validated_proposal_and_errors.second) {
-              for (const auto &command_error: transaction.first) {
-                log_->error(command_error);
-              }
-            }
+            notifier_.get_subscriber().on_next(validated_proposal_and_errors);
           },
           [&](expected::Error<std::string> &error) {
             log_->error(error.error);
@@ -126,7 +126,7 @@ namespace iroha {
         auto empty_block = std::make_shared<shared_model::proto::EmptyBlock>(
             shared_model::proto::UnsignedEmptyBlockBuilder()
                 .height(proposal.height())
-                .prevHash(last_block.value()->hash())
+                .prevHash(last_block->hash())
                 .createdTime(proposal.createdTime())
                 .build());
 
@@ -136,7 +136,7 @@ namespace iroha {
       auto block = std::make_shared<shared_model::proto::Block>(
           shared_model::proto::UnsignedBlockBuilder()
               .height(block_queries_->getTopBlockHeight() + 1)
-              .prevHash(last_block.value()->hash())
+              .prevHash(last_block->hash())
               .transactions(proto_txs)
               .createdTime(proposal.createdTime())
               .build());

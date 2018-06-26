@@ -6,7 +6,14 @@
 #ifndef IROHA_STATEFUL_VALIDATOR_COMMON_HPP
 #define IROHA_STATEFUL_VALIDATOR_COMMON_HPP
 
-#include "common/types.hpp"
+#include <vector>
+#include "interfaces/common_objects/types.hpp"
+
+namespace shared_model {
+  namespace interface {
+    class Proposal;
+  }
+}  // namespace shared_model
 
 namespace iroha {
   namespace validation {

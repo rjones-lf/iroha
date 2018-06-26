@@ -157,8 +157,10 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   auto proposal_wrapper =
       make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
   proposal_wrapper.subscribe([&proposal](auto verified_proposal) {
-    ASSERT_EQ(verified_proposal->height(), proposal->height());
-    ASSERT_EQ(verified_proposal->transactions(), proposal->transactions());
+    ASSERT_EQ(verified_proposal.first->height(), proposal->height());
+    ASSERT_EQ(verified_proposal.first->transactions(),
+              proposal->transactions());
+    ASSERT_TRUE(verified_proposal.second.empty());
   });
 
   auto block_wrapper =

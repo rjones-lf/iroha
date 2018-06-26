@@ -19,6 +19,7 @@
 #define IROHA_PEER_COMMUNICATION_SERVICE_HPP
 
 #include <rxcpp/rx.hpp>
+#include "validation/stateful_validator_common.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -62,7 +63,7 @@ namespace iroha {
        * @return verified proposal and list of stateful validation errors
        */
       virtual rxcpp::observable<
-          shared_model::interface::types::VerifiedProposalAndErrors>
+          validation::VerifiedProposalAndErrors>
       on_verified_proposal() const = 0;
 
       /**

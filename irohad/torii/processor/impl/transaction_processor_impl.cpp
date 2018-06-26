@@ -16,6 +16,7 @@
  */
 
 #include "torii/processor/transaction_processor_impl.hpp"
+#include "validation/stateful_validator_common.hpp"
 
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/block.hpp"
@@ -50,29 +51,18 @@ namespace iroha {
       });
 
       // process errors, which appeared during proposal verifying
-      pcs->on_verified_proposal().subscribe(
-          [this](shared_model::interface::types::VerifiedProposalAndErrors
-                     proposal_and_errors) {
-            // form the error message
-            std::string error_msg = "Stateful Validation Errors:\n";
+      pcs_->on_verified_proposal().subscribe(
+          [this](validation::VerifiedProposalAndErrors proposal_and_errors) {
             auto errors = proposal_and_errors.second;
             for (const auto &tx_error : errors) {
-              error_msg += std::string("=== Transaction ") + tx_error.second
-                  + std::string(" ===\n\n");
-              for (const auto &cmd_error : tx_error.first) {
-                error_msg +=
-                    std::string("==>") + cmd_error + std::string("<==\n\n");
-              }
+              std::lock_guard<std::mutex> lock(notifier_mutex_);
+              notifier_.get_subscriber().on_next(
+                  shared_model::builder::DefaultTransactionStatusBuilder()
+                      .statefulValidationFailed()
+                      .txHash(tx_error.second)
+                      .errorMsg(tx_error.first)
+                      .build());
             }
-
-            // send to client
-            std::lock_guard<std::mutex> lock(notifier_mutex_);
-            notifier_.get_subscriber().on_next(
-                shared_model::builder::DefaultTransactionStatusBuilder()
-                    .statefulValidationFailed()
-                    .errorMsg(error_msg)
-                    .txHash()
-                    .build());
           });
 
       // move commited txs from proposal to candidate map

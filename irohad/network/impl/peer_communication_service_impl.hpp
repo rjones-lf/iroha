@@ -22,6 +22,7 @@
 #include "network/peer_communication_service.hpp"
 #include "simulator/verified_proposal_creator.hpp"
 #include "synchronizer/synchronizer.hpp"
+#include "validation/stateful_validator_common.hpp"
 
 #include "logger/logger.hpp"
 
@@ -41,8 +42,7 @@ namespace iroha {
       rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
       on_proposal() const override;
 
-      rxcpp::observable<
-          shared_model::interface::types::VerifiedProposalAndErrors>
+      rxcpp::observable<validation::VerifiedProposalAndErrors>
       on_verified_proposal() const override;
 
       rxcpp::observable<Commit> on_commit() const override;

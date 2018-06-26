@@ -51,8 +51,12 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
   CustomPeerCommunicationServiceMock(
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::Proposal>> prop_notifier,
-      rxcpp::subjects::subject<Commit> commit_notifier)
-      : prop_notifier_(prop_notifier), commit_notifier_(commit_notifier){};
+      rxcpp::subjects::subject<Commit> commit_notifier,
+      rxcpp::subjects::subject<iroha::validation::VerifiedProposalAndErrors>
+          verified_prop_notifier)
+      : prop_notifier_(prop_notifier),
+        commit_notifier_(commit_notifier),
+        verified_prop_notifier_(verified_prop_notifier){};
 
   void propagate_transaction(
       std::shared_ptr<const shared_model::interface::Transaction> transaction)
@@ -66,10 +70,17 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
     return commit_notifier_.get_observable();
   }
 
+  rxcpp::observable<iroha::validation::VerifiedProposalAndErrors>
+  on_verified_proposal() const override{
+    return verified_prop_notifier_.get_observable();
+  };
+
  private:
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier_;
   rxcpp::subjects::subject<Commit> commit_notifier_;
+  rxcpp::subjects::subject<iroha::validation::VerifiedProposalAndErrors>
+      verified_prop_notifier_;
 };
 
 class ToriiServiceTest : public testing::Test {
@@ -79,7 +90,7 @@ class ToriiServiceTest : public testing::Test {
 
     // ----------- Command Service --------------
     pcsMock = std::make_shared<CustomPeerCommunicationServiceMock>(
-        prop_notifier_, commit_notifier_);
+        prop_notifier_, commit_notifier_, verified_prop_notifier_);
     mst = std::make_shared<iroha::MockMstProcessor>();
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
@@ -122,6 +133,8 @@ class ToriiServiceTest : public testing::Test {
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier_;
   rxcpp::subjects::subject<Commit> commit_notifier_;
+  rxcpp::subjects::subject<iroha::validation::VerifiedProposalAndErrors>
+      verified_prop_notifier_;
   rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 

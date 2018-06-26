@@ -19,6 +19,7 @@
 #define IROHA_VERIFIED_PROPOSAL_CREATOR_HPP
 
 #include <rxcpp/rx-observable.hpp>
+#include "validation/stateful_validator_common.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -45,8 +46,7 @@ namespace iroha {
        * Emit proposals that was verified by validation
        * @return
        */
-      virtual rxcpp::observable<
-          shared_model::interface::types::VerifiedProposalAndErrors>
+      virtual rxcpp::observable<iroha::validation::VerifiedProposalAndErrors>
       on_verified_proposal() = 0;
 
       virtual ~VerifiedProposalCreator() = default;
