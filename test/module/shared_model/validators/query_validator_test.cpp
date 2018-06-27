@@ -67,6 +67,22 @@ TEST_F(QueryValidatorTest, StatelessValidTest) {
 }
 
 /**
+ * @given Protobuf query object with unset query
+ * @when validate is called
+ * @then there is a error returned
+ */
+TEST_F(QueryValidatorTest, UnsetQuery) {
+  iroha::protocol::Query qry;
+  auto *meta = new iroha::protocol::QueryPayloadMeta();
+  meta->set_created_time(created_time);
+  meta->set_creator_account_id(account_id);
+  meta->set_query_counter(counter);
+  qry.mutable_payload()->set_allocated_meta(meta);
+  auto answer = query_validator.validate(proto::Query(qry));
+  ASSERT_TRUE(answer.hasErrors());
+}
+
+/**
  * @given Protobuf query object
  * @when Query has no fields set, and each query type has no fields set
  * @then Answer contains error

@@ -39,6 +39,7 @@ class TransactionValidatorTest : public ValidatorsTest {
                   .getTransport();
     return tx;
   }
+  shared_model::validation::DefaultTransactionValidator transaction_validator;
 };
 
 /**
@@ -49,10 +50,8 @@ class TransactionValidatorTest : public ValidatorsTest {
 TEST_F(TransactionValidatorTest, EmptyTransactionTest) {
   auto tx = generateEmptyTransaction();
   tx.mutable_payload()->set_created_time(created_time);
-  shared_model::validation::DefaultTransactionValidator transaction_validator;
   auto result = proto::Transaction(iroha::protocol::Transaction(tx));
-  auto answer =
-      transaction_validator.validate(result);
+  auto answer = transaction_validator.validate(result);
   ASSERT_EQ(answer.getReasonsMap().size(), 1);
 }
 
@@ -83,12 +82,23 @@ TEST_F(TransactionValidatorTest, StatelessValidTest) {
                    },
                    [] {});
 
-  shared_model::validation::DefaultTransactionValidator transaction_validator;
   auto result = proto::Transaction(iroha::protocol::Transaction(tx));
-  auto answer =
-      transaction_validator.validate(result);
+  auto answer = transaction_validator.validate(result);
 
   ASSERT_FALSE(answer.hasErrors()) << answer.reason();
+}
+
+/**
+ * @given Protobuf transaction object with unset command
+ * @when validate is called
+ * @then there is a error returned
+ */
+TEST_F(TransactionValidatorTest, UnsetCommand) {
+  iroha::protocol::Transaction tx = generateEmptyTransaction();
+  tx.mutable_payload()->set_creator_account_id(account_id);
+  tx.mutable_payload()->set_created_time(created_time);
+  auto answer = transaction_validator.validate(proto::Transaction(tx));
+  ASSERT_TRUE(answer.hasErrors());
 }
 
 /**
@@ -119,10 +129,8 @@ TEST_F(TransactionValidatorTest, StatelessInvalidTest) {
                    },
                    [] {});
 
-  shared_model::validation::DefaultTransactionValidator transaction_validator;
   auto result = proto::Transaction(iroha::protocol::Transaction(tx));
-  auto answer =
-      transaction_validator.validate(result);
+  auto answer = transaction_validator.validate(result);
 
   // in total there should be number_of_commands + 1 reasons of bad answer:
   // number_of_commands for each command + 1 for transaction metadata
