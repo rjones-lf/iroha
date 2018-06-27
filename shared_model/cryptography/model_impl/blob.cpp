@@ -18,7 +18,6 @@
 #include "cryptography/blob.hpp"
 
 #include "common/byteutils.hpp"
-#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace crypto {

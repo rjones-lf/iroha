@@ -32,7 +32,9 @@
 #include "builders/protobuf/common_objects/proto_domain_builder.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "builders/protobuf/query_responses/proto_block_query_response_builder.hpp"
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
+#include "builders/query_responses/block_query_response_builder.hpp"
 #include "builders/transaction_responses/transaction_status_builder.hpp"
 #include "validators/amount_true_validator.hpp"
 #include "validators/field_validator.hpp"
@@ -75,6 +77,10 @@ namespace shared_model {
     using AmountBuilderWithoutValidator = shared_model::builder::AmountBuilder<
         shared_model::proto::AmountBuilder,
         shared_model::validation::AmountTrueValidator>;
+
+    using DefaultBlockQueryResponseBuilder =
+        shared_model::builder::BlockQueryResponseBuilder<
+            shared_model::proto::BlockQueryResponseBuilder>;
   }  // namespace builder
 }  // namespace shared_model
 

@@ -18,19 +18,12 @@
 #ifndef IROHA_SHARED_MODEL_GET_TRANSACTIONS_HPP
 #define IROHA_SHARED_MODEL_GET_TRANSACTIONS_HPP
 
-#ifndef DISABLE_BACKWARD
-#include "model/queries/get_transactions.hpp"
-#endif
-
-#include <boost/range/algorithm/for_each.hpp>
-
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/transaction.hpp"
 
 namespace shared_model {
   namespace interface {
-    class GetTransactions : public PRIMITIVE(GetTransactions) {
+    class GetTransactions : public ModelPrimitive<GetTransactions> {
      public:
       /// type of hashes collection
       using TransactionHashesType = std::vector<interface::types::HashType>;
@@ -40,30 +33,9 @@ namespace shared_model {
        */
       virtual const TransactionHashesType &transactionHashes() const = 0;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new OldModelType;
-        boost::for_each(transactionHashes(), [&oldModel](const auto &hash) {
-          oldModel->tx_hashes.push_back(
-              hash.template makeOldModel<
-                  iroha::model::GetTransactions::TxHashType>());
-        });
-        return oldModel;
-      }
+      std::string toString() const override;
 
-#endif
-
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("GetTransactions")
-            .appendAll(transactionHashes(),
-                       [](const auto &s) { return s.toString(); })
-            .finalize();
-      }
-
-      bool operator==(const ModelType &rhs) const override {
-        return transactionHashes() == rhs.transactionHashes();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

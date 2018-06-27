@@ -1,28 +1,15 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_FLAT_FILE_HPP
 #define IROHA_FLAT_FILE_HPP
 
+#include "ametsuchi/key_value_storage.hpp"
+
 #include <atomic>
 #include <memory>
-#include <boost/optional.hpp>
-#include <string>
-#include <vector>
 
 #include "logger/logger.hpp"
 
@@ -32,7 +19,7 @@ namespace iroha {
     /**
      * Solid storage based on raw files
      */
-    class FlatFile {
+    class FlatFile : public KeyValueStorage {
       /**
        * Private tag used to construct unique and shared pointers
        * without new operator
@@ -41,11 +28,6 @@ namespace iroha {
 
      public:
       // ----------| public API |----------
-
-      /**
-       * Type of storage key
-       */
-      using Identifier = uint32_t;
 
       static const uint32_t DIGIT_CAPACITY = 16;
 
@@ -71,29 +53,13 @@ namespace iroha {
       static boost::optional<std::unique_ptr<FlatFile>> create(
           const std::string &path);
 
-      /**
-       * Add entity with binary data
-       * @param id - reference key
-       * @param blob - data associated with key
-       */
-      bool add(Identifier id, const std::vector<uint8_t> &blob);
+      bool add(Identifier id, const Bytes &blob) override;
 
-      /**
-       * Get data associated with
-       * @param id - reference key
-       * @return - blob, if exists
-       */
-      boost::optional<std::vector<uint8_t>> get(Identifier id) const;
+      boost::optional<Bytes> get(Identifier id) const override;
 
-      /**
-       * @return folder of storage
-       */
-      std::string directory() const;
+      std::string directory() const override;
 
-      /**
-       * @return maximal not null key
-       */
-      Identifier last_id() const;
+      Identifier last_id() const override;
 
       /**
        * Checking consistency of storage for provided folder
@@ -105,7 +71,7 @@ namespace iroha {
       static boost::optional<Identifier> check_consistency(
           const std::string &dump_dir);
 
-      void dropAll();
+      void dropAll() override;
 
       // ----------| modify operations |----------
 

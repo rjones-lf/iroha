@@ -30,7 +30,7 @@ namespace iroha {
       /**
        * All role's permissions
        */
-      std::vector<std::string> role_permissions{};
+      std::vector<int> role_permissions{};
     };
 
     /**

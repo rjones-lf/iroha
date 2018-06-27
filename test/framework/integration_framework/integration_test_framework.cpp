@@ -33,9 +33,7 @@
 #include "datetime/time.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
-// TODO (@l4l) IR-874 create more comfort way for permission-dependent proto
-// building
-#include "validators/permissions.hpp"
+#include "interfaces/permissions.hpp"
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
@@ -50,9 +48,15 @@ namespace integration_framework {
 
   IntegrationTestFramework::IntegrationTestFramework(
       size_t maximum_proposal_size,
+      const boost::optional<std::string> &dbname,
       std::function<void(integration_framework::IntegrationTestFramework &)>
-          deleter)
-      : maximum_proposal_size_(maximum_proposal_size), deleter_(deleter) {}
+          deleter,
+      bool mst_support,
+      const std::string &block_store_path)
+      : iroha_instance_(std::make_shared<IrohaInstance>(
+            mst_support, block_store_path, dbname)),
+        maximum_proposal_size_(maximum_proposal_size),
+        deleter_(deleter) {}
 
   IntegrationTestFramework::~IntegrationTestFramework() {
     if (deleter_) {
@@ -66,22 +70,24 @@ namespace integration_framework {
 
   shared_model::proto::Block IntegrationTestFramework::defaultBlock(
       const shared_model::crypto::Keypair &key) {
+    shared_model::interface::RolePermissionSet all_perms{};
+    for (size_t i = 0; i < all_perms.size(); ++i) {
+      auto perm = static_cast<shared_model::interface::permissions::Role>(i);
+      all_perms.set(perm);
+    }
     auto genesis_tx =
         shared_model::proto::TransactionBuilder()
             .creatorAccountId(kAdminId)
             .createdTime(iroha::time::now())
             .addPeer("0.0.0.0:50541", key.publicKey())
-            .createRole(kDefaultRole,
-                        // TODO (@l4l) IR-874 create more comfort way for
-                        // permission-dependent proto building
-                        std::vector<std::string>{
-                            shared_model::permissions::role_perm_group.begin(),
-                            shared_model::permissions::role_perm_group.end()})
+            .createRole(kDefaultRole, all_perms)
             .createDomain(kDefaultDomain, kDefaultRole)
             .createAccount(kAdminName, kDefaultDomain, key.publicKey())
             .createAsset(kAssetName, kDefaultDomain, 1)
+            .quorum(1)
             .build()
-            .signAndAddSignature(key);
+            .signAndAddSignature(key)
+            .finish();
     auto genesis_block =
         shared_model::proto::BlockBuilder()
             .transactions(
@@ -90,7 +96,8 @@ namespace integration_framework {
             .prevHash(DefaultHashProvider::makeHash(Blob("")))
             .createdTime(iroha::time::now())
             .build()
-            .signAndAddSignature(key);
+            .signAndAddSignature(key)
+            .finish();
     return genesis_block;
   }
 
@@ -102,16 +109,31 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::setInitialState(
       const Keypair &keypair, const shared_model::interface::Block &block) {
+    initPipeline(keypair);
+    iroha_instance_->makeGenesis(block);
+    log_->info("added genesis block");
+    subscribeQueuesAndRun();
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::recoverState(
+      const Keypair &keypair) {
+    initPipeline(keypair);
+    iroha_instance_->instance_->init();
+    subscribeQueuesAndRun();
+    return *this;
+  }
+
+  void IntegrationTestFramework::initPipeline(
+      const shared_model::crypto::Keypair &keypair) {
     log_->info("init state");
     // peer initialization
     iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
-    // iroha_instance_->clearLedger();
-    // log_->info("cleared ledger");
     iroha_instance_->instance_->resetOrderingService();
-    iroha_instance_->makeGenesis(block);
-    log_->info("added genesis block");
+  }
 
+  void IntegrationTestFramework::subscribeQueuesAndRun() {
     // subscribing for components
 
     iroha_instance_->getIrohaInstance()
@@ -139,7 +161,6 @@ namespace integration_framework {
     // start instance
     iroha_instance_->run();
     log_->info("run iroha");
-    return *this;
   }
 
   shared_model::proto::TransactionResponse
@@ -171,6 +192,13 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
       const shared_model::proto::Transaction &tx) {
     sendTx(tx, [](const auto &) {});
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::sendTxAwait(
+      const shared_model::proto::Transaction &tx,
+      std::function<void(const BlockType &)> check) {
+    sendTx(tx).skipProposal().checkBlock(check);
     return *this;
   }
 
@@ -229,6 +257,8 @@ namespace integration_framework {
 
   void IntegrationTestFramework::done() {
     log_->info("done");
-    iroha_instance_->instance_->storage->dropStorage();
+    if (iroha_instance_->instance_ and iroha_instance_->instance_->storage) {
+      iroha_instance_->instance_->storage->dropStorage();
+    }
   }
 }  // namespace integration_framework

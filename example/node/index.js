@@ -19,8 +19,6 @@ var iroha = require('iroha-lib')
 var txBuilder = new iroha.ModelTransactionBuilder()
 var queryBuilder = new iroha.ModelQueryBuilder()
 var crypto = new iroha.ModelCrypto()
-var protoTxHelper = new iroha.ModelProtoTransaction()
-var protoQueryHelper = new iroha.ModelProtoQuery()
 var fs = require('fs')
 var adminPriv = fs.readFileSync('../admin@test.priv').toString()
 var adminPub = fs.readFileSync('../admin@test.pub').toString()
@@ -40,7 +38,7 @@ var tx = txBuilder
   .build()
 
 // sign transaction and get its binary representation (Blob)
-var txblob = protoTxHelper.signAndAddSignature(tx, keys).blob()
+var txblob = new iroha.ModelProtoTransaction(tx).signAndAddSignature(keys).finish().blob()
 var txArray = blob2array(txblob)
 // create proto object and send to iroha
 var blockTransaction = require('iroha-lib/pb/block_pb.js').Transaction // block_pb2.Transaction()
@@ -108,7 +106,7 @@ p
       .queryCounter(startQueryCounter)
       .getAssetInfo('dollar#ru')
       .build()
-    let queryBlob = protoQueryHelper.signAndAddSignature(query, keys).blob()
+    let queryBlob = new iroha.ModelProtoQuery(query).signAndAddSignature(keys).finish().blob()
     let pbQuery = require('iroha-lib/pb/queries_pb.js').Query
     let queryArray = blob2array(queryBlob)
     let protoQuery = pbQuery.deserializeBinary(queryArray)

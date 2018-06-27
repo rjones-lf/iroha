@@ -18,12 +18,8 @@
 #ifndef IROHA_ABSTRACT_TX_RESPONSE_HPP
 #define IROHA_ABSTRACT_TX_RESPONSE_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "utils/string_builder.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/transaction_response.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -32,37 +28,19 @@ namespace shared_model {
      * @tparam Model - concrete model transaction response
      */
     template <typename Model>
-    class AbstractTxResponse
-        : public PRIMITIVE_WITH_OLD(Model, iroha::model::TransactionResponse) {
+    class AbstractTxResponse : public ModelPrimitive<Model> {
      private:
       /**
        * @return string representation of class name
        */
       virtual std::string className() const = 0;
 
-#ifndef DISABLE_BACKWARD
-      /**
-       * @return old model status
-       */
-      virtual iroha::model::TransactionResponse::Status oldModelStatus()
-          const = 0;
-
-#endif
      public:
       // ------------------------| Primitive override |-------------------------
 
       std::string toString() const override {
         return detail::PrettyStringBuilder().init(className()).finalize();
       }
-
-#ifndef DISABLE_BACKWARD
-      iroha::model::TransactionResponse *makeOldModel() const override {
-        auto tx_response = new iroha::model::TransactionResponse();
-        tx_response->current_status = oldModelStatus();
-        return tx_response;
-      }
-
-#endif
 
       bool operator==(const Model &rhs) const override {
         return true;

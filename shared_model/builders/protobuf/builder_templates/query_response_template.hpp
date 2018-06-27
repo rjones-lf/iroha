@@ -1,27 +1,17 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_PROTO_QUERY_RESPONSE_BUILDER_TEMPLATE_HPP
 #define IROHA_PROTO_QUERY_RESPONSE_BUILDER_TEMPLATE_HPP
 
+#include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/helpers.hpp"
 #include "common/visitor.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/permissions.hpp"
 #include "responses.pb.h"
 
 namespace shared_model {
@@ -54,9 +44,6 @@ namespace shared_model {
       using NextBuilder = TemplateQueryResponseBuilder<S | (1 << s)>;
 
       using ProtoQueryResponse = iroha::protocol::QueryResponse;
-
-      template <class T>
-      using w = shared_model::detail::PolymorphicWrapper<T>;
 
       template <int Sp>
       TemplateQueryResponseBuilder(const TemplateQueryResponseBuilder<Sp> &o)
@@ -92,24 +79,15 @@ namespace shared_model {
       TemplateQueryResponseBuilder() = default;
 
       auto accountAssetResponse(
-          const interface::types::AssetIdType &asset_id,
-          const interface::types::AccountIdType &account_id,
-          const interface::Amount &amount) const {
+          const std::vector<proto::AccountAsset> &assets) const {
         return queryResponseField([&](auto &proto_query_response) {
           iroha::protocol::AccountAssetResponse *query_response =
               proto_query_response.mutable_account_assets_response();
 
-          query_response->mutable_account_asset()->set_account_id(account_id);
-          query_response->mutable_account_asset()->set_asset_id(asset_id);
-          auto balance =
-              query_response->mutable_account_asset()->mutable_balance();
-          iroha::Amount tmp(amount.intValue(), amount.precision());
-          auto uint64s = tmp.to_uint64s();
-          balance->mutable_value()->set_first(uint64s.at(0));
-          balance->mutable_value()->set_second(uint64s.at(1));
-          balance->mutable_value()->set_third(uint64s.at(2));
-          balance->mutable_value()->set_fourth(uint64s.at(3));
-          balance->set_precision(tmp.getPrecision());
+          for (auto &asset : assets) {
+            query_response->add_account_assets()->CopyFrom(
+                asset.getTransport());
+          }
         });
       }
 
@@ -191,21 +169,22 @@ namespace shared_model {
       }
 
       auto rolePermissionsResponse(
-          const std::vector<interface::types::PermissionNameType>
-              &role_permissions) const {
+          const interface::RolePermissionSet &role_permissions) const {
         return queryResponseField([&](auto &proto_query_response) {
           iroha::protocol::RolePermissionsResponse *query_response =
               proto_query_response.mutable_role_permissions_response();
-          for (const auto &perm : role_permissions) {
-            query_response->add_permissions(perm);
+          for (size_t i = 0; i < role_permissions.size(); ++i) {
+            auto perm = static_cast<interface::permissions::Role>(i);
+            if (role_permissions.test(perm)) {
+              query_response->add_permissions(permissions::toTransport(perm));
+            }
           }
         });
       }
 
       auto queryHash(const interface::types::HashType &query_hash) const {
         return transform<QueryHash>([&](auto &proto_query_response) {
-          proto_query_response.set_query_hash(
-              query_hash.hex());
+          proto_query_response.set_query_hash(query_hash.hex());
         });
       }
 

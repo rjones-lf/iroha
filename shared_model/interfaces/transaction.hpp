@@ -18,17 +18,10 @@
 #ifndef IROHA_SHARED_MODEL_TRANSACTION_HPP
 #define IROHA_SHARED_MODEL_TRANSACTION_HPP
 
-#include <vector>
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "utils/string_builder.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/transaction.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -37,60 +30,38 @@ namespace shared_model {
      * Transaction class represent well-formed intent from client to change
      * state of ledger.
      */
-    class Transaction : public SIGNABLE(Transaction) {
+    class Transaction : public Signable<Transaction> {
      public:
       /**
        * @return creator of transaction
        */
       virtual const types::AccountIdType &creatorAccountId() const = 0;
 
-      /// Type of command
-      using CommandType = detail::PolymorphicWrapper<Command>;
+      /**
+       * @return quorum of transaction
+       */
+      virtual types::QuorumType quorum() const = 0;
 
       /// Type of ordered collection of commands
-      using CommandsType = std::vector<CommandType>;
+      using CommandsType = boost::any_range<Command,
+                                            boost::random_access_traversal_tag,
+                                            const Command &>;
 
       /**
        * @return attached commands
        */
-      virtual const CommandsType &commands() const = 0;
+      virtual CommandsType commands() const = 0;
 
-#ifndef DISABLE_BACKWARD
-      iroha::model::Transaction *makeOldModel() const override {
-        iroha::model::Transaction *oldStyleTransaction =
-            new iroha::model::Transaction();
-        oldStyleTransaction->created_ts = createdTime();
-        oldStyleTransaction->creator_account_id = creatorAccountId();
-
-        std::for_each(commands().begin(),
-                      commands().end(),
-                      [oldStyleTransaction](auto &command) {
-                        oldStyleTransaction->commands.emplace_back(
-                            std::shared_ptr<iroha::model::Command>(
-                                command->makeOldModel()));
-                      });
-
-        std::for_each(signatures().begin(),
-                      signatures().end(),
-                      [oldStyleTransaction](auto &sig) {
-                        std::unique_ptr<iroha::model::Signature> up_sig(
-                            sig.makeOldModel());
-                        oldStyleTransaction->signatures.emplace_back(*up_sig);
-                      });
-
-        return oldStyleTransaction;
-      }
-
-#endif
       std::string toString() const override {
         return detail::PrettyStringBuilder()
             .init("Transaction")
             .append("hash", hash().hex())
             .append("creatorAccountId", creatorAccountId())
             .append("createdTime", std::to_string(createdTime()))
+            .append("quorum", std::to_string(quorum()))
             .append("commands")
             .appendAll(commands(),
-                       [](auto &command) { return command->toString(); })
+                       [](auto &command) { return command.toString(); })
             .append("signatures")
             .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
             .finalize();

@@ -18,11 +18,11 @@
 #ifndef IROHA_SHARED_MODEL_PROTO_SIGNATORIES_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_PROTO_SIGNATORIES_RESPONSE_HPP
 
-#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/query_responses/signatories_response.hpp"
+
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -32,35 +32,21 @@ namespace shared_model {
                                SignatoriesResponse> {
      public:
       template <typename QueryResponseType>
-      explicit SignatoriesResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit SignatoriesResponse(QueryResponseType &&queryResponse);
 
-      SignatoriesResponse(const SignatoriesResponse &o)
-          : SignatoriesResponse(o.proto_) {}
+      SignatoriesResponse(const SignatoriesResponse &o);
 
-      SignatoriesResponse(SignatoriesResponse &&o)
-          : SignatoriesResponse(std::move(o.proto_)) {}
+      SignatoriesResponse(SignatoriesResponse &&o);
 
-      const interface::types::PublicKeyCollectionType &keys() const override {
-        return *keys_;
-      }
+      const interface::types::PublicKeyCollectionType &keys() const override;
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::SignatoriesResponse &signatoriesResponse_{
-          proto_->signatories_response()};
+      const iroha::protocol::SignatoriesResponse &signatoriesResponse_;
 
-      const Lazy<interface::types::PublicKeyCollectionType> keys_{[this] {
-        return boost::accumulate(
-            signatoriesResponse_.keys(),
-            interface::types::PublicKeyCollectionType{},
-            [](auto &&acc, const auto &key) {
-              acc.emplace_back(new interface::types::PubkeyType(key));
-              return std::move(acc);
-            });
-      }};
+      const Lazy<interface::types::PublicKeyCollectionType> keys_;
     };
   }  // namespace proto
 }  // namespace shared_model

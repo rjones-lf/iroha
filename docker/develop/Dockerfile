@@ -24,7 +24,7 @@ RUN set -e; \
         # dev dependencies
         libssl-dev zlib1g-dev libcurl4-openssl-dev libc6-dbg golang \
         # CI dependencies
-        git ssh tar gzip ca-certificates \
+        git ssh tar gzip ca-certificates gnupg \
         # Pythons
         python-pip python3-pip python3-setuptools python-dev \
         # SWIG dependencies

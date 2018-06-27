@@ -18,6 +18,9 @@
 #ifndef IROHA_PROTO_TRANSFER_ASSET_HPP
 #define IROHA_PROTO_TRANSFER_ASSET_HPP
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "commands.pb.h"
+#include "backend/protobuf/common_objects/amount.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
 
 namespace shared_model {
@@ -28,44 +31,30 @@ namespace shared_model {
                                                      TransferAsset> {
      public:
       template <typename CommandType>
-      explicit TransferAsset(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit TransferAsset(CommandType &&command);
 
-      TransferAsset(const TransferAsset &o) : TransferAsset(o.proto_) {}
+      TransferAsset(const TransferAsset &o);
 
-      TransferAsset(TransferAsset &&o) noexcept
-          : TransferAsset(std::move(o.proto_)) {}
+      TransferAsset(TransferAsset &&o) noexcept;
 
-      const interface::Amount &amount() const override {
-        return *amount_;
-      }
+      const interface::Amount &amount() const override;
 
-      const interface::types::AssetIdType &assetId() const override {
-        return transfer_asset_.asset_id();
-      }
+      const interface::types::AssetIdType &assetId() const override;
 
-      const interface::types::AccountIdType &srcAccountId() const override {
-        return transfer_asset_.src_account_id();
-      }
+      const interface::types::AccountIdType &srcAccountId() const override;
 
-      const interface::types::AccountIdType &destAccountId() const override {
-        return transfer_asset_.dest_account_id();
-      }
+      const interface::types::AccountIdType &destAccountId() const override;
 
-      const interface::types::DescriptionType &description() const override {
-        return transfer_asset_.description();
-      }
+      const interface::types::DescriptionType &description() const override;
 
      private:
       // lazy
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
 
-      const iroha::protocol::TransferAsset &transfer_asset_{
-          proto_->transfer_asset()};
+      const iroha::protocol::TransferAsset &transfer_asset_;
 
-      const Lazy<proto::Amount> amount_{
-          [this] { return proto::Amount(transfer_asset_.amount()); }};
+      const Lazy<proto::Amount> amount_;
     };
 
   }  // namespace proto

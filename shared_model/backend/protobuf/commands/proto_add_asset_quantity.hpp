@@ -24,7 +24,6 @@
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "commands.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -34,37 +33,26 @@ namespace shared_model {
                                AddAssetQuantity> {
      public:
       template <typename CommandType>
-      explicit AddAssetQuantity(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit AddAssetQuantity(CommandType &&command);
 
-      AddAssetQuantity(const AddAssetQuantity &o)
-          : AddAssetQuantity(o.proto_) {}
+      AddAssetQuantity(const AddAssetQuantity &o);
 
-      AddAssetQuantity(AddAssetQuantity &&o) noexcept
-          : AddAssetQuantity(std::move(o.proto_)) {}
+      AddAssetQuantity(AddAssetQuantity &&o) noexcept;
 
-      const interface::types::AccountIdType &accountId() const override {
-        return add_asset_quantity_.account_id();
-      }
+      const interface::types::AccountIdType &accountId() const override;
 
-      const interface::types::AssetIdType &assetId() const override {
-        return add_asset_quantity_.asset_id();
-      }
+      const interface::types::AssetIdType &assetId() const override;
 
-      const interface::Amount &amount() const override {
-        return *amount_;
-      }
+      const interface::Amount &amount() const override;
 
      private:
       // lazy
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::AddAssetQuantity &add_asset_quantity_{
-          proto_->add_asset_quantity()};
+      const iroha::protocol::AddAssetQuantity &add_asset_quantity_;
 
-      const Lazy<proto::Amount> amount_{
-          [this] { return proto::Amount(add_asset_quantity_.amount()); }};
+      const Lazy<proto::Amount> amount_;
     };
 
   }  // namespace proto

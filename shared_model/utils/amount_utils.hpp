@@ -18,74 +18,54 @@
 #ifndef IROHA_AMOUNT_UTILS_HPP
 #define IROHA_AMOUNT_UTILS_HPP
 
-#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
+#include <boost/multiprecision/cpp_int.hpp>
 
-/**
- * Sums up two amounts.
- * Requires to have the same scale.
- * Otherwise nullopt is returned
- * @param a left term
- * @param b right term
- */
-iroha::expected::Result<std::shared_ptr<shared_model::interface::Amount>,
-                        std::shared_ptr<std::string>>
-operator+(const shared_model::interface::Amount &a,
-          const shared_model::interface::Amount &b) {
-  // check precisions
-  if (a.precision() != b.precision()) {
-    return iroha::expected::makeError(
-        std::make_shared<std::string>("precision mismatch"));
-  }
-  if (a.intValue() + b.intValue() < a.intValue()
-      || a.intValue() + b.intValue() < b.intValue()) {
-    return iroha::expected::makeError(
-        std::make_shared<std::string>("addition overflows"));
-  }
-  return shared_model::builder::AmountBuilderWithoutValidator()
-      .precision(a.precision())
-      .intValue(a.intValue() + b.intValue())
-      .build();
-}
+#include "common/result.hpp"
 
-/**
- * Subtracts two amounts.
- * Requires to have the same scale.
- * Otherwise nullopt is returned
- * @param a left term
- * @param b right term
- */
-iroha::expected::Result<std::shared_ptr<shared_model::interface::Amount>,
-                        std::shared_ptr<std::string>>
-operator-(const shared_model::interface::Amount &a,
-          const shared_model::interface::Amount &b) {
-  // check precisions
-  if (a.precision() != b.precision()) {
-    return iroha::expected::makeError(
-        std::make_shared<std::string>("precision mismatch"));
-  }
-  // check if a greater than b
-  if (a.intValue() < b.intValue()) {
-    return iroha::expected::makeError(
-        std::make_shared<std::string>("minuend is smaller than subtrahend"));
-  }
-  return shared_model::builder::AmountBuilderWithoutValidator()
-      .precision(a.precision())
-      .intValue(a.intValue() - b.intValue())
-      .build();
-}
+namespace shared_model {
+  namespace interface {
+    class Amount;
+  }  // namespace interface
 
-int compareAmount(const shared_model::interface::Amount &a,
-                  const shared_model::interface::Amount &b) {
-  if (a.precision() == b.precision()) {
-    return (a.intValue() < b.intValue())
-        ? -1
-        : (a.intValue() > b.intValue()) ? 1 : 0;
-  }
-  // when different precisions transform to have the same scale
-  auto max_precision = std::max(a.precision(), b.precision());
-  auto val1 = a.intValue() * (int)std::pow(10, max_precision - a.precision());
-  auto val2 = b.intValue() * (int)std::pow(10, max_precision - b.precision());
-  return (val1 < val2) ? -1 : (val1 > val2) ? 1 : 0;
-}
+  namespace detail {
+    boost::multiprecision::uint256_t increaseValuePrecision(
+        boost::multiprecision::uint256_t value, int degree);
 
+    /**
+     * Sums up two amounts.
+     * Result is returned
+     * @param a left term
+     * @param b right term
+     */
+    iroha::expected::PolymorphicResult<shared_model::interface::Amount,
+                                       std::string>
+    operator+(const shared_model::interface::Amount &a,
+              const shared_model::interface::Amount &b);
+
+    /**
+     * Subtracts two amounts.
+     * Result is returned
+     * @param a left term
+     * @param b right term
+     */
+    iroha::expected::PolymorphicResult<shared_model::interface::Amount,
+                                       std::string>
+    operator-(const shared_model::interface::Amount &a,
+              const shared_model::interface::Amount &b);
+
+    /**
+     * Make amount with bigger precision
+     * Result is returned
+     * @param a amount
+     * @param b right term
+     */
+    iroha::expected::PolymorphicResult<shared_model::interface::Amount,
+                                       std::string>
+    makeAmountWithPrecision(const shared_model::interface::Amount &amount,
+                            const int new_precision);
+
+    int compareAmount(const shared_model::interface::Amount &a,
+                      const shared_model::interface::Amount &b);
+  }  // namespace detail
+}  // namespace shared_model
 #endif  // IROHA_AMOUNT_UTILS_HPP

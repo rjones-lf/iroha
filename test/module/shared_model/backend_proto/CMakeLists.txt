@@ -71,3 +71,10 @@ target_link_libraries(shared_proto_amount_test
     shared_model_proto_backend
     )
 
+addtest(permissions_test
+    permissions_test.cpp
+    )
+target_link_libraries(permissions_test
+    shared_model_proto_backend
+    )
+

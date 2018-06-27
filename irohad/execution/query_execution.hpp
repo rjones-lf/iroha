@@ -20,6 +20,8 @@
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/wsv_query.hpp"
 #include "builders/protobuf/builder_templates/query_response_template.hpp"
+#include "builders/protobuf/builder_templates/blocks_query_template.hpp"
+#include "interfaces/query_responses/block_query_response.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -49,6 +51,7 @@ namespace iroha {
      */
     std::shared_ptr<shared_model::interface::QueryResponse> validateAndExecute(
         const shared_model::interface::Query &query);
+
     /**
      *
      * @param wsvQuery
@@ -56,8 +59,9 @@ namespace iroha {
      */
     QueryProcessingFactory(std::shared_ptr<ametsuchi::WsvQuery> wsvQuery,
                            std::shared_ptr<ametsuchi::BlockQuery> blockQuery);
-
+    bool validate(const shared_model::interface::BlocksQuery &query);
    private:
+
     bool validate(const shared_model::interface::Query &query,
                   const shared_model::interface::GetAssetInfo &get_asset_info);
 

@@ -75,7 +75,7 @@ TEST(QueryResponseTest, AccountAsset) {
   ASSERT_EQ(account_asset.account_id, des_account_asset.account_id);
 
   model::AccountAssetResponse account_asset_response;
-  account_asset_response.acct_asset = account_asset;
+  account_asset_response.acct_assets = {account_asset};
 
   auto shrd_aar = std::make_shared<decltype(account_asset_response)>(
       account_asset_response);
@@ -84,11 +84,11 @@ TEST(QueryResponseTest, AccountAsset) {
   auto des_account_asset_response = pb_factory.deserializeAccountAssetResponse(
       query_response.account_assets_response());
 
-  ASSERT_EQ(des_account_asset_response.acct_asset.balance,
+  ASSERT_EQ(des_account_asset_response.acct_assets[0].balance,
             des_account_asset.balance);
-  ASSERT_EQ(des_account_asset_response.acct_asset.asset_id,
+  ASSERT_EQ(des_account_asset_response.acct_assets[0].asset_id,
             des_account_asset.asset_id);
-  ASSERT_EQ(des_account_asset_response.acct_asset.account_id,
+  ASSERT_EQ(des_account_asset_response.acct_assets[0].account_id,
             des_account_asset.account_id);
 }
 
@@ -175,7 +175,7 @@ TEST(QueryResponseTest, role_permissions) {
   model::converters::PbQueryResponseFactory pb_factory;
 
   model::RolePermissionsResponse response{};
-  response.role_permissions = {"can_read", "can_write"};
+  response.role_permissions = {1, 2};
 
   auto shrd_resp = std::make_shared<decltype(response)>(response);
   auto query_response = *pb_factory.serialize(shrd_resp);

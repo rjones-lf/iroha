@@ -43,6 +43,7 @@ namespace iroha {
         document.AddMember("created_ts", transaction.created_ts, allocator);
         document.AddMember(
             "creator_account_id", transaction.creator_account_id, allocator);
+        document.AddMember("quorum", transaction.quorum, allocator);
 
         Value commands;
         commands.SetArray();
@@ -82,6 +83,7 @@ namespace iroha {
             | des.Uint64(&Transaction::created_ts, "created_ts")
             | des.String(&Transaction::creator_account_id, "creator_account_id")
             | des.Array(&Transaction::signatures, "signatures")
+            | des.Uint(&Transaction::quorum, "quorum")
             | des.Array(&Transaction::commands, "commands", des_commands);
       }
 

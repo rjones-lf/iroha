@@ -28,6 +28,7 @@
 #include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
 #include "ametsuchi/wsv_query.hpp"
+#include "ametsuchi/key_value_storage.hpp"
 #include "common/result.hpp"
 #include "interfaces/common_objects/peer.hpp"
 
@@ -41,7 +42,7 @@ namespace iroha {
       MOCK_METHOD1(getAccountDetail,
                    boost::optional<std::string>(const std::string &account_id));
       MOCK_METHOD1(getRolePermissions,
-                   boost::optional<std::vector<std::string>>(
+                   boost::optional<shared_model::interface::RolePermissionSet>(
                        const std::string &role_name));
       MOCK_METHOD0(getRoles, boost::optional<std::vector<std::string>>());
       MOCK_METHOD1(
@@ -56,6 +57,10 @@ namespace iroha {
           getAsset,
           boost::optional<std::shared_ptr<shared_model::interface::Asset>>(
               const std::string &asset_id));
+      MOCK_METHOD1(getAccountAssets,
+                   boost::optional<std::vector<
+                       std::shared_ptr<shared_model::interface::AccountAsset>>>(
+                       const std::string &account_id));
       MOCK_METHOD2(getAccountAsset,
                    boost::optional<
                        std::shared_ptr<shared_model::interface::AccountAsset>>(
@@ -69,10 +74,11 @@ namespace iroha {
           getDomain,
           boost::optional<std::shared_ptr<shared_model::interface::Domain>>(
               const std::string &domain_id));
-      MOCK_METHOD3(hasAccountGrantablePermission,
-                   bool(const std::string &permitee_account_id,
-                        const std::string &account_id,
-                        const std::string &permission_id));
+      MOCK_METHOD3(
+          hasAccountGrantablePermission,
+          bool(const std::string &permitee_account_id,
+               const std::string &account_id,
+               shared_model::interface::permissions::Grantable permission));
     };
 
     class MockWsvCommand : public WsvCommand {
@@ -84,19 +90,25 @@ namespace iroha {
       MOCK_METHOD2(deleteAccountRole,
                    WsvCommandResult(const std::string &account_id,
                                     const std::string &role_name));
-      MOCK_METHOD2(insertRolePermissions,
-                   WsvCommandResult(const std::string &role_id,
-                                    const std::set<std::string> &permissions));
+      MOCK_METHOD2(
+          insertRolePermissions,
+          WsvCommandResult(
+              const std::string &role_id,
+              const shared_model::interface::RolePermissionSet &permissions));
 
-      MOCK_METHOD3(insertAccountGrantablePermission,
-                   WsvCommandResult(const std::string &permittee_account_id,
-                                    const std::string &account_id,
-                                    const std::string &permission_id));
+      MOCK_METHOD3(
+          insertAccountGrantablePermission,
+          WsvCommandResult(
+              const std::string &permittee_account_id,
+              const std::string &account_id,
+              shared_model::interface::permissions::Grantable permission));
 
-      MOCK_METHOD3(deleteAccountGrantablePermission,
-                   WsvCommandResult(const std::string &permittee_account_id,
-                                    const std::string &account_id,
-                                    const std::string &permission_id));
+      MOCK_METHOD3(
+          deleteAccountGrantablePermission,
+          WsvCommandResult(
+              const std::string &permittee_account_id,
+              const std::string &account_id,
+              shared_model::interface::permissions::Grantable permission));
       MOCK_METHOD1(insertAccount,
                    WsvCommandResult(const shared_model::interface::Account &));
       MOCK_METHOD1(updateAccount,
@@ -163,7 +175,9 @@ namespace iroha {
                    rxcpp::observable<wBlock>(
                        shared_model::interface::types::HeightType));
       MOCK_METHOD1(getTopBlocks, rxcpp::observable<wBlock>(uint32_t));
+      MOCK_METHOD0(getTopBlock, expected::Result<wBlock, std::string>(void));
       MOCK_METHOD1(hasTxWithHash, bool(const shared_model::crypto::Hash &hash));
+      MOCK_METHOD0(getTopBlockHeight, uint32_t(void));
     };
 
     class MockTemporaryFactory : public TemporaryFactory {
@@ -232,13 +246,26 @@ namespace iroha {
                    bool(const std::vector<
                         std::shared_ptr<shared_model::interface::Block>> &));
       MOCK_METHOD0(dropStorage, void(void));
-      MOCK_METHOD0(
-          on_commit,
-          rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>());
 
+      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+      on_commit() {
+        return notifier.get_observable();
+      }
       void commit(std::unique_ptr<MutableStorage> storage) override {
         doCommit(storage.get());
       }
+      rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+          notifier;
+    };
+
+    class MockKeyValueStorage : public KeyValueStorage {
+     public:
+      MOCK_METHOD2(add, bool(Identifier, const Bytes &));
+      MOCK_CONST_METHOD1(get,
+                         boost::optional<Bytes>(Identifier));
+      MOCK_CONST_METHOD0(directory, std::string(void));
+      MOCK_CONST_METHOD0(last_id, Identifier(void));
+      MOCK_METHOD0(dropAll, void(void));
     };
 
   }  // namespace ametsuchi

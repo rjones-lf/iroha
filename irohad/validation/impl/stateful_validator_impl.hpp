@@ -44,18 +44,6 @@ namespace iroha {
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) override;
 
-     private:
-      /**
-       * Checks if public keys of signatures are present in vector of pubkeys
-       * @param signatures - collection of signatures
-       * @param public_keys - collection of public keys
-       * @return true, if all public keys of signatures are present in vector of
-       * pubkeys
-       */
-      bool signaturesSubset(
-          const shared_model::interface::types::SignatureRangeType &signatures,
-          const std::vector<shared_model::crypto::PublicKey> &public_keys);
-
       logger::Logger log_;
     };
   }  // namespace validation

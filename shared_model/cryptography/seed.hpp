@@ -20,8 +20,6 @@
 
 #include "cryptography/blob.hpp"
 
-#include "common/types.hpp"
-
 namespace shared_model {
   namespace crypto {
     /**
@@ -30,9 +28,6 @@ namespace shared_model {
     class Seed : public Blob {
      public:
       explicit Seed(const std::string &seed);
-
-      /// Old model seed does not have a pretty-looking typedef
-      using OldSeedType = iroha::blob_t<32>;
 
       std::string toString() const override;
     };

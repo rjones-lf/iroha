@@ -17,11 +17,12 @@
 
 #include "ametsuchi/impl/storage_impl.hpp"
 #include <boost/format.hpp>
-#include "ametsuchi/impl/flat_file/flat_file.hpp"  // for FlatFile
+#include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
+#include "backend/protobuf/permissions.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "postgres_ordering_service_persistent_state.hpp"
 
@@ -33,44 +34,21 @@ namespace iroha {
     const char *kTmpWsv = "TemporaryWsv";
 
     ConnectionContext::ConnectionContext(
-        std::unique_ptr<FlatFile> block_store,
-        std::unique_ptr<pqxx::lazyconnection> pg_lazy,
-        std::unique_ptr<pqxx::nontransaction> pg_nontx)
-        : block_store(std::move(block_store)),
-          pg_lazy(std::move(pg_lazy)),
-          pg_nontx(std::move(pg_nontx)) {}
+        std::unique_ptr<KeyValueStorage> block_store)
+        : block_store(std::move(block_store)) {}
 
-    StorageImpl::~StorageImpl() {
-      wsv_transaction_->commit();
-      wsv_connection_->disconnect();
-      log_->info("PostgresQL connection closed");
-    }
-
-    StorageImpl::StorageImpl(
-        std::string block_store_dir,
-        std::string postgres_options,
-        std::unique_ptr<FlatFile> block_store,
-        std::unique_ptr<pqxx::lazyconnection> wsv_connection,
-        std::unique_ptr<pqxx::nontransaction> wsv_transaction)
+    StorageImpl::StorageImpl(std::string block_store_dir,
+                             PostgresOptions postgres_options,
+                             std::unique_ptr<KeyValueStorage> block_store)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
-          wsv_connection_(std::move(wsv_connection)),
-          wsv_transaction_(std::move(wsv_transaction)),
-          wsv_(std::make_shared<PostgresWsvQuery>(*wsv_transaction_)),
-          blocks_(std::make_shared<PostgresBlockQuery>(*wsv_transaction_,
-                                                       *block_store_)) {
-      log_ = logger::log("StorageImpl");
-
-      wsv_transaction_->exec(init_);
-      wsv_transaction_->exec(
-          "SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;");
-    }
+          log_(logger::log("StorageImpl")) {}
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
     StorageImpl::createTemporaryWsv() {
-      auto postgres_connection =
-          std::make_unique<pqxx::lazyconnection>(postgres_options_);
+      auto postgres_connection = std::make_unique<pqxx::lazyconnection>(
+          postgres_options_.optionsString());
       try {
         postgres_connection->activate();
       } catch (const pqxx::broken_connection &e) {
@@ -87,8 +65,8 @@ namespace iroha {
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
     StorageImpl::createMutableStorage() {
-      auto postgres_connection =
-          std::make_unique<pqxx::lazyconnection>(postgres_options_);
+      auto postgres_connection = std::make_unique<pqxx::lazyconnection>(
+          postgres_options_.optionsString());
       try {
         postgres_connection->activate();
       } catch (const pqxx::broken_connection &e) {
@@ -98,16 +76,17 @@ namespace iroha {
       auto wsv_transaction =
           std::make_unique<pqxx::nontransaction>(*postgres_connection, kTmpWsv);
 
-      boost::optional<shared_model::interface::types::HashType> top_hash;
-
-      blocks_->getTopBlocks(1)
-          .subscribe_on(rxcpp::observe_on_new_thread())
-          .as_blocking()
-          .subscribe([&top_hash](auto block) { top_hash = block->hash(); });
-
+      auto block_result = getBlockQuery()->getTopBlock();
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
           std::make_unique<MutableStorageImpl>(
-              top_hash.value_or(shared_model::interface::types::HashType("")),
+              block_result.match(
+                  [](expected::Value<
+                      std::shared_ptr<shared_model::interface::Block>> &block) {
+                    return block.value->hash();
+                  },
+                  [](expected::Error<std::string> &) {
+                    return shared_model::interface::types::HashType("");
+                  }),
               std::move(postgres_connection),
               std::move(wsv_transaction)));
     }
@@ -126,8 +105,6 @@ namespace iroha {
                                         const auto &top_hash) { return true; });
             log_->info("block inserted: {}", inserted);
             commit(std::move(storage.value));
-            notifier_.get_subscriber().on_next(
-                std::shared_ptr<shared_model::interface::Block>(clone(block)));
           },
           [&](expected::Error<std::string> &error) {
             log_->error(error.error);
@@ -167,9 +144,9 @@ namespace iroha {
       auto drop = R"(
 DROP TABLE IF EXISTS account_has_signatory;
 DROP TABLE IF EXISTS account_has_asset;
-DROP TABLE IF EXISTS role_has_permissions;
+DROP TABLE IF EXISTS role_has_permissions CASCADE;
 DROP TABLE IF EXISTS account_has_roles;
-DROP TABLE IF EXISTS account_has_grantable_permissions;
+DROP TABLE IF EXISTS account_has_grantable_permissions CASCADE;
 DROP TABLE IF EXISTS account;
 DROP TABLE IF EXISTS asset;
 DROP TABLE IF EXISTS domain;
@@ -183,8 +160,8 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 )";
 
       // erase db
-      log_->info("drop dp");
-      pqxx::connection connection(postgres_options_);
+      log_->info("drop db");
+      pqxx::connection connection(postgres_options_.optionsString());
       pqxx::work txn(connection);
       txn.exec(drop);
       txn.commit();
@@ -198,9 +175,30 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       block_store_->dropAll();
     }
 
+    expected::Result<bool, std::string> StorageImpl::createDatabaseIfNotExist(
+        const std::string &dbname,
+        const std::string &options_str_without_dbname) {
+      pqxx::lazyconnection temp_connection(options_str_without_dbname);
+      auto transaction =
+          std::make_unique<pqxx::nontransaction>(temp_connection);
+      // check if database dbname exists
+      try {
+        auto result = transaction->exec(
+            "SELECT datname FROM pg_catalog.pg_database WHERE datname = "
+            + transaction->quote(dbname));
+        if (result.size() == 0) {
+          transaction->exec("CREATE DATABASE " + dbname);
+          return expected::makeValue(true);
+        }
+        return expected::makeValue(false);
+      } catch (const pqxx::failure &e) {
+        return expected::makeError<std::string>(
+            std::string("Connection to PostgreSQL broken: ") + e.what());
+      }
+    }
+
     expected::Result<ConnectionContext, std::string>
-    StorageImpl::initConnections(std::string block_store_dir,
-                                 std::string postgres_options) {
+    StorageImpl::initConnections(std::string block_store_dir) {
       auto log_ = logger::log("StorageImpl:initConnection");
       log_->info("Start storage creation");
 
@@ -212,39 +210,37 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       }
       log_->info("block store created");
 
-      auto postgres_connection =
-          std::make_unique<pqxx::lazyconnection>(postgres_options);
-      try {
-        postgres_connection->activate();
-      } catch (const pqxx::broken_connection &e) {
-        return expected::makeError(
-            (boost::format(kPsqlBroken) % e.what()).str());
-      }
-      log_->info("connection to PostgreSQL completed");
-
-      auto wsv_transaction = std::make_unique<pqxx::nontransaction>(
-          *postgres_connection, "Storage");
-      log_->info("transaction to PostgreSQL initialized");
-
-      return expected::makeValue(
-          ConnectionContext(std::move(*block_store),
-                            std::move(postgres_connection),
-                            std::move(wsv_transaction)));
+      return expected::makeValue(ConnectionContext(std::move(*block_store)));
     }
 
     expected::Result<std::shared_ptr<StorageImpl>, std::string>
     StorageImpl::create(std::string block_store_dir,
                         std::string postgres_options) {
-      auto ctx_result = initConnections(block_store_dir, postgres_options);
+      boost::optional<std::string> string_res = boost::none;
+
+      PostgresOptions options(postgres_options);
+
+      // create database if
+      options.dbname() | [&options, &string_res](const std::string &dbname) {
+        createDatabaseIfNotExist(dbname, options.optionsStringWithoutDbName())
+            .match([](expected::Value<bool> &val) {},
+                   [&string_res](expected::Error<std::string> &error) {
+                     string_res = error.error;
+                   });
+      };
+
+      if (string_res) {
+        return expected::makeError(string_res.value());
+      }
+
+      auto ctx_result = initConnections(block_store_dir);
       expected::Result<std::shared_ptr<StorageImpl>, std::string> storage;
       ctx_result.match(
           [&](expected::Value<ConnectionContext> &ctx) {
             storage = expected::makeValue(std::shared_ptr<StorageImpl>(
                 new StorageImpl(block_store_dir,
-                                postgres_options,
-                                std::move(ctx.value.block_store),
-                                std::move(ctx.value.pg_lazy),
-                                std::move(ctx.value.pg_nontx))));
+                                options,
+                                std::move(ctx.value.block_store))));
           },
           [&](expected::Error<std::string> &error) { storage = error; });
       return storage;
@@ -260,6 +256,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
             stringToBytes(shared_model::converters::protobuf::modelToJson(
                 *std::static_pointer_cast<shared_model::proto::Block>(
                     block.second))));
+        notifier_.get_subscriber().on_next(block.second);
       }
 
       storage->transaction_->exec("COMMIT;");
@@ -267,8 +264,8 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
     }
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
-      auto postgres_connection =
-          std::make_unique<pqxx::lazyconnection>(postgres_options_);
+      auto postgres_connection = std::make_unique<pqxx::lazyconnection>(
+          postgres_options_.optionsString());
       try {
         postgres_connection->activate();
       } catch (const pqxx::broken_connection &e) {
@@ -283,11 +280,132 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
-      return blocks_;
+      auto postgres_connection = std::make_unique<pqxx::lazyconnection>(
+          postgres_options_.optionsString());
+      try {
+        postgres_connection->activate();
+      } catch (const pqxx::broken_connection &e) {
+        // TODO 29.03.2018 vdrobny IR-1184 Handle this exception
+        throw pqxx::broken_connection(e);
+      }
+      auto wsv_transaction =
+          std::make_unique<pqxx::nontransaction>(*postgres_connection);
+
+      return std::make_shared<PostgresBlockQuery>(
+          std::move(postgres_connection),
+          std::move(wsv_transaction),
+          *block_store_);
     }
+
     rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
     StorageImpl::on_commit() {
       return notifier_.get_observable();
     }
+
+    template <typename Perm>
+    static const std::string createPermissionTypes(
+        const std::string &type_name) {
+      std::string s =
+          "DO $$\nBEGIN\nIF NOT EXISTS (SELECT 1 FROM pg_type "
+          "WHERE typname='" + type_name + "')"
+          " THEN CREATE TYPE " + type_name + " AS ENUM (";
+      const auto count = static_cast<size_t>(Perm::COUNT);
+      for (size_t i = 0; i < count; ++i) {
+        s += "'"
+            + shared_model::proto::permissions::toString(static_cast<Perm>(i))
+            + "'";
+        if (i != count - 1) {
+          s += ',';
+        }
+      }
+      return s + ");\nEND IF;\nEND $$;";
+    }
+
+    const std::string &StorageImpl::init_ =
+        createPermissionTypes<shared_model::interface::permissions::Role>(
+            "role_perm")
+        + createPermissionTypes<
+              shared_model::interface::permissions::Grantable>("grantable_perm")
+        + R"(
+CREATE TABLE IF NOT EXISTS role (
+    role_id character varying(32),
+    PRIMARY KEY (role_id)
+);
+CREATE TABLE IF NOT EXISTS domain (
+    domain_id character varying(255),
+    default_role character varying(32) NOT NULL REFERENCES role(role_id),
+    PRIMARY KEY (domain_id)
+);
+CREATE TABLE IF NOT EXISTS signatory (
+    public_key bytea NOT NULL,
+    PRIMARY KEY (public_key)
+);
+CREATE TABLE IF NOT EXISTS account (
+    account_id character varying(288),
+    domain_id character varying(255) NOT NULL REFERENCES domain,
+    quorum int NOT NULL,
+    data JSONB,
+    PRIMARY KEY (account_id)
+);
+CREATE TABLE IF NOT EXISTS account_has_signatory (
+    account_id character varying(288) NOT NULL REFERENCES account,
+    public_key bytea NOT NULL REFERENCES signatory,
+    PRIMARY KEY (account_id, public_key)
+);
+CREATE TABLE IF NOT EXISTS peer (
+    public_key bytea NOT NULL,
+    address character varying(261) NOT NULL UNIQUE,
+    PRIMARY KEY (public_key)
+);
+CREATE TABLE IF NOT EXISTS asset (
+    asset_id character varying(288),
+    domain_id character varying(255) NOT NULL REFERENCES domain,
+    precision int NOT NULL,
+    data json,
+    PRIMARY KEY (asset_id)
+);
+CREATE TABLE IF NOT EXISTS account_has_asset (
+    account_id character varying(288) NOT NULL REFERENCES account,
+    asset_id character varying(288) NOT NULL REFERENCES asset,
+    amount decimal NOT NULL,
+    PRIMARY KEY (account_id, asset_id)
+);
+CREATE TABLE IF NOT EXISTS role_has_permissions (
+    role_id character varying(32) NOT NULL REFERENCES role,
+    permission role_perm,
+    PRIMARY KEY (role_id, permission)
+);
+CREATE TABLE IF NOT EXISTS account_has_roles (
+    account_id character varying(288) NOT NULL REFERENCES account,
+    role_id character varying(32) NOT NULL REFERENCES role,
+    PRIMARY KEY (account_id, role_id)
+);
+CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
+    permittee_account_id character varying(288) NOT NULL REFERENCES account,
+    account_id character varying(288) NOT NULL REFERENCES account,
+    permission grantable_perm,
+    PRIMARY KEY (permittee_account_id, account_id, permission)
+);
+CREATE TABLE IF NOT EXISTS height_by_hash (
+    hash bytea,
+    height text
+);
+CREATE TABLE IF NOT EXISTS height_by_account_set (
+    account_id text,
+    height text
+);
+CREATE TABLE IF NOT EXISTS index_by_creator_height (
+    id serial,
+    creator_id text,
+    height text,
+    index text
+);
+CREATE TABLE IF NOT EXISTS index_by_id_height_asset (
+    id text,
+    height text,
+    asset_id text,
+    index text
+);
+)";
   }  // namespace ametsuchi
 }  // namespace iroha

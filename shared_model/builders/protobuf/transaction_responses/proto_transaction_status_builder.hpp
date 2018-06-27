@@ -40,7 +40,9 @@ namespace shared_model {
 
       TransactionStatusBuilder notReceived();
 
-      TransactionStatusBuilder txHash(const crypto::Hash& hash);
+      TransactionStatusBuilder mstExpired();
+
+      TransactionStatusBuilder txHash(const crypto::Hash &hash);
 
      private:
       iroha::protocol::ToriiResponse tx_response_;

@@ -19,7 +19,6 @@
 #include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 #include <gtest/gtest.h>
 
@@ -36,6 +35,7 @@ iroha::protocol::Transaction generateEmptyTransaction() {
   auto &payload = *proto_tx.mutable_payload();
   payload.set_creator_account_id(creator_account_id);
   payload.set_created_time(created_time);
+  payload.set_quorum(1);
 
   return proto_tx;
 }
@@ -87,9 +87,10 @@ TEST(ProtoTransaction, Builder) {
                 .creatorAccountId(creator_account_id)
                 .addAssetQuantity(account_id, asset_id, amount)
                 .createdTime(created_time)
+                .quorum(1)
                 .build();
 
-  auto signedTx = tx.signAndAddSignature(keypair);
+  auto signedTx = tx.signAndAddSignature(keypair).finish();
   auto &proto = signedTx.getTransport();
 
   ASSERT_EQ(proto_tx.SerializeAsString(), proto.SerializeAsString());
@@ -111,6 +112,7 @@ TEST(ProtoTransaction, BuilderWithInvalidTx) {
           .creatorAccountId(invalid_account_id)
           .addAssetQuantity(invalid_account_id, invalid_asset_id, amount)
           .createdTime(created_time)
+          .quorum(1)
           .build(),
       std::invalid_argument);
 }

@@ -50,7 +50,8 @@ namespace iroha_cli {
       descriptionMap_ = {{GET_TX_INFO, "Get status of transaction"}};
       const auto tx_id = "Requested tx hash";
 
-      requestParamsDescriptions_ = {{GET_TX_INFO, {tx_id}}};
+      requestParamsDescriptions_ = {
+          {GET_TX_INFO, makeParamsDescription({tx_id})}};
       actionHandlers_ = {{GET_TX_INFO, &InteractiveStatusCli::parseGetHash}};
 
       menuPoints_ = formMenu(
@@ -76,7 +77,7 @@ namespace iroha_cli {
       printMenu("Choose action: ", menuPoints_);
       while (isParsing) {
         auto line = promptString("> ");
-        if (not line){
+        if (not line) {
           // line has terminating symbol
           isParsing = false;
           break;

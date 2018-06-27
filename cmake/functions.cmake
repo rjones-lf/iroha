@@ -27,8 +27,15 @@ function(addtest test_name SOURCES)
   add_executable(${test_name} ${SOURCES})
   target_link_libraries(${test_name} gtest gmock)
   target_include_directories(${test_name} PUBLIC ${PROJECT_SOURCE_DIR}/test)
+
+  # fetch directory after test in source dir call
+  # for example:
+  # "/Users/user/iroha/test/integration/acceptance"
+  # match to "integration"
+  string(REGEX REPLACE ".*test\\/([a-zA-Z]+).*" "\\1" output ${CMAKE_CURRENT_SOURCE_DIR})
+
   add_test(
-      NAME ${test_name}
+      NAME "${output}_${test_name}"
       COMMAND $<TARGET_FILE:${test_name}> ${test_xml_output}
   )
   if (NOT MSVC)
@@ -67,7 +74,7 @@ function(compile_proto_to_cpp PROTO)
       OUTPUT ${IROHA_SCHEMA_DIR}/${GEN_PB_HEADER} ${IROHA_SCHEMA_DIR}/${GEN_PB}
       COMMAND ${GEN_COMMAND}
       ARGS -I${GEN_ARGS} -I. --cpp_out=${IROHA_SCHEMA_DIR} ${PROTO}
-      DEPENDS protoc
+      DEPENDS protoc ${IROHA_SCHEMA_DIR}/${PROTO}
       WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
       )
 endfunction()
@@ -81,7 +88,7 @@ function(compile_proto_to_grpc_cpp PROTO)
       OUTPUT ${IROHA_SCHEMA_DIR}/${GEN_GRPC_PB_HEADER} ${IROHA_SCHEMA_DIR}/${GEN_GRPC_PB}
       COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}"
       ARGS -I${protobuf_INCLUDE_DIR} -I. --grpc_out=${IROHA_SCHEMA_DIR} --plugin=protoc-gen-grpc="${grpc_CPP_PLUGIN}" ${PROTO}
-      DEPENDS grpc_cpp_plugin
+      DEPENDS grpc_cpp_plugin ${IROHA_SCHEMA_DIR}/${PROTO}
       WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
       )
 endfunction()
@@ -89,11 +96,18 @@ endfunction()
 
 function(compile_proto_to_python PROTO)
   string(REGEX REPLACE "\\.proto$" "_pb2.py" PY_PB ${PROTO})
+  if (MSVC)
+    set(GEN_COMMAND "${Protobuf_PROTOC_EXECUTABLE}")
+    set(GEN_ARGS ${Protobuf_INCLUDE_DIR})
+  else()
+    set(GEN_COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}")
+    set(GEN_ARGS ${protobuf_INCLUDE_DIR})
+  endif()
   add_custom_command(
       OUTPUT ${SWIG_BUILD_DIR}/${PY_PB}
-      COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}"
-      ARGS -I${protobuf_INCLUDE_DIR} -I. --python_out=${SWIG_BUILD_DIR} ${PROTO}
-      DEPENDS protoc
+      COMMAND ${GEN_COMMAND}
+      ARGS -I${GEN_ARGS} -I. --python_out=${SWIG_BUILD_DIR} ${PROTO}
+      DEPENDS protoc ${IROHA_SCHEMA_DIR}/${PROTO}
       WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
       )
 endfunction()

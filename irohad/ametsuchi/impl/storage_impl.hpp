@@ -24,6 +24,8 @@
 #include <cmath>
 #include <pqxx/pqxx>
 #include <shared_mutex>
+#include "ametsuchi/impl/postgres_options.hpp"
+#include "ametsuchi/key_value_storage.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -32,19 +34,19 @@ namespace iroha {
     class FlatFile;
 
     struct ConnectionContext {
-      ConnectionContext(std::unique_ptr<FlatFile> block_store,
-                        std::unique_ptr<pqxx::lazyconnection> pg_lazy,
-                        std::unique_ptr<pqxx::nontransaction> pg_nontx);
+      explicit ConnectionContext(std::unique_ptr<KeyValueStorage> block_store);
 
-      std::unique_ptr<FlatFile> block_store;
-      std::unique_ptr<pqxx::lazyconnection> pg_lazy;
-      std::unique_ptr<pqxx::nontransaction> pg_nontx;
+      std::unique_ptr<KeyValueStorage> block_store;
     };
 
     class StorageImpl : public Storage {
      protected:
+      static expected::Result<bool, std::string> createDatabaseIfNotExist(
+          const std::string &dbname,
+          const std::string &options_str_without_dbname);
+
       static expected::Result<ConnectionContext, std::string> initConnections(
-          std::string block_store_dir, std::string postgres_options);
+          std::string block_store_dir);
 
      public:
       static expected::Result<std::shared_ptr<StorageImpl>, std::string> create(
@@ -84,14 +86,10 @@ namespace iroha {
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override;
 
-      ~StorageImpl() override;
-
      protected:
       StorageImpl(std::string block_store_dir,
-                  std::string postgres_options,
-                  std::unique_ptr<FlatFile> block_store,
-                  std::unique_ptr<pqxx::lazyconnection> wsv_connection,
-                  std::unique_ptr<pqxx::nontransaction> wsv_transaction);
+                  PostgresOptions postgres_options,
+                  std::unique_ptr<KeyValueStorage> block_store);
 
       /**
        * Folder with raw blocks
@@ -99,21 +97,10 @@ namespace iroha {
       const std::string block_store_dir_;
 
       // db info
-      const std::string postgres_options_;
+      const PostgresOptions postgres_options_;
 
      private:
-      std::unique_ptr<FlatFile> block_store_;
-
-      /**
-       * Pg connection with direct transaction management
-       */
-      std::unique_ptr<pqxx::lazyconnection> wsv_connection_;
-
-      std::unique_ptr<pqxx::nontransaction> wsv_transaction_;
-
-      std::shared_ptr<WsvQuery> wsv_;
-
-      std::shared_ptr<BlockQuery> blocks_;
+      std::unique_ptr<KeyValueStorage> block_store_;
 
       // Allows multiple readers and a single writer
       std::shared_timed_mutex rw_lock_;
@@ -124,87 +111,7 @@ namespace iroha {
           notifier_;
 
      protected:
-      const std::string init_ = R"(
-CREATE TABLE IF NOT EXISTS role (
-    role_id character varying(32),
-    PRIMARY KEY (role_id)
-);
-CREATE TABLE IF NOT EXISTS domain (
-    domain_id character varying(255),
-    default_role character varying(32) NOT NULL REFERENCES role(role_id),
-    PRIMARY KEY (domain_id)
-);
-CREATE TABLE IF NOT EXISTS signatory (
-    public_key bytea NOT NULL,
-    PRIMARY KEY (public_key)
-);
-CREATE TABLE IF NOT EXISTS account (
-    account_id character varying(288),
-    domain_id character varying(255) NOT NULL REFERENCES domain,
-    quorum int NOT NULL,
-    data JSONB,
-    PRIMARY KEY (account_id)
-);
-CREATE TABLE IF NOT EXISTS account_has_signatory (
-    account_id character varying(288) NOT NULL REFERENCES account,
-    public_key bytea NOT NULL REFERENCES signatory,
-    PRIMARY KEY (account_id, public_key)
-);
-CREATE TABLE IF NOT EXISTS peer (
-    public_key bytea NOT NULL,
-    address character varying(261) NOT NULL UNIQUE,
-    PRIMARY KEY (public_key)
-);
-CREATE TABLE IF NOT EXISTS asset (
-    asset_id character varying(288),
-    domain_id character varying(255) NOT NULL REFERENCES domain,
-    precision int NOT NULL,
-    data json,
-    PRIMARY KEY (asset_id)
-);
-CREATE TABLE IF NOT EXISTS account_has_asset (
-    account_id character varying(288) NOT NULL REFERENCES account,
-    asset_id character varying(288) NOT NULL REFERENCES asset,
-    amount decimal NOT NULL,
-    PRIMARY KEY (account_id, asset_id)
-);
-CREATE TABLE IF NOT EXISTS role_has_permissions (
-    role_id character varying(32) NOT NULL REFERENCES role,
-    permission_id character varying(45),
-    PRIMARY KEY (role_id, permission_id)
-);
-CREATE TABLE IF NOT EXISTS account_has_roles (
-    account_id character varying(288) NOT NULL REFERENCES account,
-    role_id character varying(32) NOT NULL REFERENCES role,
-    PRIMARY KEY (account_id, role_id)
-);
-CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
-    permittee_account_id character varying(288) NOT NULL REFERENCES account,
-    account_id character varying(288) NOT NULL REFERENCES account,
-    permission_id character varying(45),
-    PRIMARY KEY (permittee_account_id, account_id, permission_id)
-);
-CREATE TABLE IF NOT EXISTS height_by_hash (
-    hash bytea,
-    height text
-);
-CREATE TABLE IF NOT EXISTS height_by_account_set (
-    account_id text,
-    height text
-);
-CREATE TABLE IF NOT EXISTS index_by_creator_height (
-    id serial,
-    creator_id text,
-    height text,
-    index text
-);
-CREATE TABLE IF NOT EXISTS index_by_id_height_asset (
-    id text,
-    height text,
-    asset_id text,
-    index text
-);
-)";
+      static const std::string &init_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

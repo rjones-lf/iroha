@@ -26,9 +26,20 @@ namespace iroha {
   namespace ametsuchi {
 
     PostgresBlockQuery::PostgresBlockQuery(pqxx::nontransaction &transaction,
-                                           FlatFile &file_store)
+                                           KeyValueStorage &file_store)
         : block_store_(file_store),
           transaction_(transaction),
+          log_(logger::log("PostgresBlockIndex")),
+          execute_{makeExecuteOptional(transaction_, log_)} {}
+
+    PostgresBlockQuery::PostgresBlockQuery(
+        std::unique_ptr<pqxx::lazyconnection> connection,
+        std::unique_ptr<pqxx::nontransaction> transaction,
+        KeyValueStorage &file_store)
+        : connection_ptr_(std::move(connection)),
+          transaction_ptr_(std::move(transaction)),
+          block_store_(file_store),
+          transaction_(*transaction_ptr_),
           log_(logger::log("PostgresBlockIndex")),
           execute_{makeExecuteOptional(transaction_, log_)} {}
 
@@ -101,6 +112,7 @@ namespace iroha {
                  -> boost::optional<
                      shared_model::interface::types::HeightType> {
         if (result.size() == 0) {
+          log_->info("No block with transaction {}", hash.toString());
           return boost::none;
         }
         return result[0]
@@ -127,7 +139,7 @@ namespace iroha {
             }),
             [&](const auto &x) {
               subscriber.on_next(PostgresBlockQuery::wTransaction(
-                  clone(*block->transactions().at(x))));
+                  clone(block->transactions()[x])));
             });
       };
     }
@@ -213,10 +225,10 @@ namespace iroha {
       auto it =
           std::find_if(block->transactions().begin(),
                        block->transactions().end(),
-                       [&hash](const auto &tx) { return tx->hash() == hash; });
+                       [&hash](const auto &tx) { return tx.hash() == hash; });
       if (it != block->transactions().end()) {
         result = boost::optional<PostgresBlockQuery::wTransaction>(
-            PostgresBlockQuery::wTransaction(clone(**it)));
+            PostgresBlockQuery::wTransaction(clone(*it)));
       }
       return result;
     }
@@ -224,6 +236,25 @@ namespace iroha {
     bool PostgresBlockQuery::hasTxWithHash(
         const shared_model::crypto::Hash &hash) {
       return getBlockId(hash) != boost::none;
+    }
+
+    uint32_t PostgresBlockQuery::getTopBlockHeight() {
+      return block_store_.last_id();
+    }
+
+    expected::Result<BlockQuery::wBlock, std::string>
+    PostgresBlockQuery::getTopBlock() {
+      // TODO 18/06/18 Akvinikym: add dependency injection IR-937 IR-1040
+      auto block =
+          block_store_.get(block_store_.last_id()) | [](const auto &bytes) {
+            return shared_model::converters::protobuf::jsonToModel<
+                shared_model::proto::Block>(bytesToString(bytes));
+          };
+      if (not block) {
+        return expected::makeError("error while fetching the last block");
+      }
+      return expected::makeValue(std::make_shared<shared_model::proto::Block>(
+          std::move(block.value())));
     }
 
   }  // namespace ametsuchi

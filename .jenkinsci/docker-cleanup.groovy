@@ -3,7 +3,6 @@
 def doDockerCleanup() {
 
     sh """
-      docker rm -f $IROHA_POSTGRES_HOST || true
       # Check whether the image is the last-standing man
       # i.e., no other tags exist for this image
       docker rmi \$(docker images --no-trunc --format '{{.Repository}}:{{.Tag}}\\t{{.ID}}' | grep \$(docker images --no-trunc --format '{{.ID}}' ${iC.id}) | head -n -1 | cut -f 1) || true

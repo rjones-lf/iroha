@@ -18,63 +18,24 @@
 #ifndef IROHA_SHARED_MODEL_ASSET_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_ASSET_RESPONSE_HPP
 
-#include <new>
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/asset.hpp"
-#include "interfaces/common_objects/types.hpp"
-#include "utils/string_builder.hpp"
-#include "utils/visitor_apply_for_all.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/responses/asset_response.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Provide response with asset
      */
-    class AssetResponse : public PRIMITIVE(AssetResponse) {
+    class AssetResponse : public ModelPrimitive<AssetResponse> {
      public:
       /**
        * @return Attached asset
        */
       virtual const Asset &asset() const = 0;
 
-      /**
-       * Stringify the data.
-       * @return string representation of data.
-       */
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("AssetResponse")
-            .append(asset().toString())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      /**
-       * @return true if the data are same.
-       */
-      bool operator==(const ModelType &rhs) const override {
-        return asset() == rhs.asset();
-      }
-
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of asset response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        using OldAssetType = decltype(oldModel->asset);
-        /// Use shared_ptr and placement-new to copy new model field to
-        /// oldModel's field and to return raw pointer
-        auto p = std::shared_ptr<OldAssetType>(asset().makeOldModel());
-        new (&oldModel->asset) OldAssetType(*p);
-        return oldModel;
-      }
-
-#endif
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

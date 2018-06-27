@@ -25,7 +25,9 @@ using namespace iroha::consensus::yac;
 
 TEST(YacHashProviderTest, MakeYacHashTest) {
   YacHashProviderImpl hash_provider;
-  shared_model::proto::Block block = TestBlockBuilder().build();
+  shared_model::interface::BlockVariant block =
+      std::make_shared<shared_model::proto::Block>(TestBlockBuilder().build());
+
   block.addSignature(shared_model::crypto::Signed("data"),
                      shared_model::crypto::PublicKey("key"));
 
@@ -39,7 +41,9 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
 
 TEST(YacHashProviderTest, ToModelHashTest) {
   YacHashProviderImpl hash_provider;
-  shared_model::proto::Block block = TestBlockBuilder().build();
+  shared_model::interface::BlockVariant block =
+      std::make_shared<shared_model::proto::Block>(TestBlockBuilder().build());
+
   block.addSignature(shared_model::crypto::Signed("data"),
                      shared_model::crypto::PublicKey("key"));
 

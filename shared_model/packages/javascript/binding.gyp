@@ -58,6 +58,8 @@
             '<(SHARED_INTERMEDIATE_DIR)/amount/libiroha_amount.a',
             '<(SHARED_INTERMEDIATE_DIR)/schema/libschema.a',
             '<(SHARED_INTERMEDIATE_DIR)/validators/libshared_model_stateless_validation.a',
+            '<(SHARED_INTERMEDIATE_DIR)/interfaces/libshared_model_interfaces.a',
+            '<(SHARED_INTERMEDIATE_DIR)/backend/protobuf/libshared_model_proto_backend.a',
             '<(SHARED_INTERMEDIATE_DIR)/cryptography/ed25519_sha3_impl/libshared_model_cryptography.a',
             '<(SHARED_INTERMEDIATE_DIR)/cryptography/ed25519_sha3_impl/internal/libhash.a',
             '<(SHARED_INTERMEDIATE_DIR)/cryptography/ed25519_sha3_impl/internal/libed25519_crypto.a',
@@ -83,7 +85,7 @@
       'sources': [
         '<(SHARED_INTERMEDIATE_DIR)/bindings/bindingsJAVASCRIPT_wrap.cxx'
       ],
-      'cflags_cc': ['-std=c++14', '-fexceptions', '-DDISABLE_BACKWARD'],
+      'cflags_cc': ['-std=c++14', '-fexceptions'],
       'cflags_cc!': ['-fno-rtti'],
       'libraries': [
         '-L/usr/local/lib',
@@ -95,6 +97,8 @@
         '-liroha_amount',
         '-lschema',
         '-lshared_model_stateless_validation',
+        '-lshared_model_interfaces',
+        '-lshared_model_proto_backend',
         # Cryptography libs
         '-lshared_model_cryptography',
         '-lhash',
@@ -110,7 +114,7 @@
             'xcode_settings': {
               'GCC_ENABLE_CPP_RTTI': 'YES',
               'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
-              'OTHER_CFLAGS': ['-std=c++14', '-DDISABLE_BACKWARD']
+              'OTHER_CFLAGS': ['-std=c++14']
             }
           }
         ]

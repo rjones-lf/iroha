@@ -61,9 +61,8 @@ namespace shared_model {
     }
 
     ModelQueryBuilder ModelQueryBuilder::getAccountAssets(
-        const interface::types::AccountIdType &account_id,
-        const interface::types::AssetIdType &asset_id) {
-      return ModelQueryBuilder(builder_.getAccountAssets(account_id, asset_id));
+        const interface::types::AccountIdType &account_id) {
+      return ModelQueryBuilder(builder_.getAccountAssets(account_id));
     }
 
     ModelQueryBuilder ModelQueryBuilder::getRoles() {

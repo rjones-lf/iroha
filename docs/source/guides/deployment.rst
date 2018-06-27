@@ -54,6 +54,8 @@ In case of valid assumptions, the only thing that remains is to launch the daemo
 |               | used by peer to sign the blocks                                 |
 +---------------+-----------------------------------------------------------------+
 
+.. Attention:: Specifying a new genesis block using `--genesis_block` with blocks already present in ledger requires `--overwrite_ledger` flag to be set. The daemon will fail otherwise.
+
 An example of shell command, running Iroha daemon is 
 
 .. code-block:: shell
@@ -70,7 +72,7 @@ In order to run Iroha peer as a single instance in Docker, you should pull the i
 
 .. code-block:: shell
 
-    docker pull hyperledger/iroha-docker:latest
+    docker pull hyperledger/iroha:latest
 
 .. Hint:: Use *latest* tag for latest stable release, and *develop* for latest development version  
 
@@ -138,7 +140,7 @@ If they are met, you can move forward with the following command:
     -e KEY='node0' \
     # Docker network name
     --network=iroha-network \
-    hyperledger/iroha-docker:latest
+    hyperledger/iroha:latest
 
 Running multiple instances (peer network)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

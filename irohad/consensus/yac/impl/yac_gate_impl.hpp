@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <rxcpp/rx-observable.hpp>
+
 #include "consensus/yac/yac_gate.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "logger/logger.hpp"
@@ -48,14 +49,14 @@ namespace iroha {
                     std::shared_ptr<simulator::BlockCreator> block_creator,
                     std::shared_ptr<network::BlockLoader> block_loader,
                     uint64_t delay);
-        void vote(const shared_model::interface::Block &) override;
+        void vote(const shared_model::interface::BlockVariant &) override;
         /**
          * method called when commit recived
          * assumes to retrieve a block eventually
          * @return observable with the Block commited
          */
-        rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-        on_commit() override;
+        rxcpp::observable<shared_model::interface::BlockVariant> on_commit()
+            override;
 
        private:
         /**
@@ -74,7 +75,7 @@ namespace iroha {
 
         logger::Logger log_;
 
-        std::pair<YacHash, std::shared_ptr<shared_model::interface::Block>>
+        std::pair<YacHash, shared_model::interface::BlockVariant>
             current_block_;
       };
 

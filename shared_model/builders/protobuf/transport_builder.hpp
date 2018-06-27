@@ -19,7 +19,6 @@
 #define IROHA_TRANSPORT_BUILDER_HPP
 
 #include "common/result.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 namespace shared_model {
   namespace proto {

@@ -23,7 +23,6 @@
 #include <type_traits>
 #include "builders/protobuf/transaction.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 using namespace shared_model;
 
@@ -35,6 +34,7 @@ class TransactionValidatorTest : public ValidatorsTest {
     TestTransactionBuilder builder;
     auto tx = builder.creatorAccountId(creator_account_id)
                   .createdTime(created_time)
+                  .quorum(1)
                   .build()
                   .getTransport();
     return tx;

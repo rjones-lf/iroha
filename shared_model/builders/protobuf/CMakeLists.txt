@@ -15,6 +15,7 @@
 add_library(shared_model_proto_builders
     impl.cpp
     transaction_responses/proto_transaction_status_builder.cpp
+    query_responses/proto_block_query_response_builder.cpp
     )
 
 target_link_libraries(

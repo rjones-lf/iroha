@@ -33,9 +33,11 @@ using namespace shared_model;
  */
 TEST_F(QueryValidatorTest, StatelessValidTest) {
   iroha::protocol::Query qry;
-  qry.mutable_payload()->set_creator_account_id(account_id);
-  qry.mutable_payload()->set_created_time(created_time);
-  qry.mutable_payload()->set_query_counter(counter);
+  auto *meta = new iroha::protocol::QueryPayloadMeta();
+  meta->set_created_time(created_time);
+  meta->set_creator_account_id(account_id);
+  meta->set_query_counter(counter);
+  qry.mutable_payload()->set_allocated_meta(meta);
   auto payload = qry.mutable_payload();
 
   // Iterate through all query types, filling query fields with valid values

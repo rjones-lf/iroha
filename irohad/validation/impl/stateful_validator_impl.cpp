@@ -17,9 +17,10 @@
 
 #include "validation/impl/stateful_validator_impl.hpp"
 
+#include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
-
 #include "builders/protobuf/proposal.hpp"
+#include "validation/utils.hpp"
 
 namespace iroha {
   namespace validation {
@@ -34,7 +35,7 @@ namespace iroha {
         ametsuchi::TemporaryWsv &temporaryWsv) {
       log_->info("transactions in proposal: {}",
                  proposal.transactions().size());
-      auto checking_transaction = [this](const auto &tx, auto &queries) {
+      auto checking_transaction = [](const auto &tx, auto &queries) {
         return bool(queries.getAccount(tx.creatorAccountId()) |
                     [&](const auto &account) {
                       // Check if tx creator has account and has quorum to
@@ -47,37 +48,24 @@ namespace iroha {
                     [&](const auto &signatories) {
                       // Check if signatures in transaction are account
                       // signatory
-                      return this->signaturesSubset(tx.signatures(),
-                                                    signatories)
+                      return signaturesSubset(tx.signatures(), signatories)
                           ? boost::make_optional(signatories)
                           : boost::none;
                     });
       };
 
       // Filter only valid transactions
-      auto filter = [&temporaryWsv, checking_transaction](auto &acc,
-                                                          const auto &tx) {
-        auto answer =
-            temporaryWsv.apply(*(tx.operator->()), checking_transaction);
-        if (answer) {
-          acc.push_back(tx);
-        }
-        return acc;
+      auto filter = [&temporaryWsv, checking_transaction](auto &tx) {
+        return temporaryWsv.apply(tx, checking_transaction);
       };
-
-      auto &txs = proposal.transactions();
-      decltype(txs) valid = {};
-
-      auto valid_txs = std::accumulate(txs.begin(), txs.end(), valid, filter);
 
       // TODO: kamilsa IR-1010 20.02.2018 rework validation logic, so that this
       // cast is not needed and stateful validator does not know about the
       // transport
       auto valid_proto_txs =
-          valid_txs
-          | boost::adaptors::transformed([](const auto &polymorphic_tx) {
-              return static_cast<const shared_model::proto::Transaction &>(
-                  *polymorphic_tx.operator->());
+          proposal.transactions() | boost::adaptors::filtered(filter)
+          | boost::adaptors::transformed([](auto &tx) {
+              return static_cast<const shared_model::proto::Transaction &>(tx);
             });
       auto validated_proposal = shared_model::proto::ProposalBuilder()
                                     .createdTime(proposal.createdTime())
@@ -91,23 +79,5 @@ namespace iroha {
       return std::make_shared<decltype(validated_proposal)>(
           validated_proposal.getTransport());
     }
-
-    bool StatefulValidatorImpl::signaturesSubset(
-        const shared_model::interface::types::SignatureRangeType &signatures,
-        const std::vector<shared_model::crypto::PublicKey> &public_keys) {
-      // TODO 09/10/17 Lebedev: simplify the subset verification IR-510
-      // #goodfirstissue
-      std::unordered_set<std::string> txPubkeys;
-      for (auto &sign : signatures) {
-        txPubkeys.insert(sign.publicKey().toString());
-      }
-      return std::all_of(public_keys.begin(),
-                         public_keys.end(),
-                         [&txPubkeys](const auto &public_key) {
-                           return txPubkeys.find(public_key.toString())
-                               != txPubkeys.end();
-                         });
-    }
-
   }  // namespace validation
 }  // namespace iroha

@@ -23,6 +23,8 @@
 #include "datetime/time.hpp"
 #include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
+#include "interfaces/permissions.hpp"
+#include "interfaces/queries/query_payload_meta.hpp"
 #include "interfaces/transaction.hpp"
 #include "validators/answer.hpp"
 
@@ -106,13 +108,21 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::PrecisionType &precision) const;
 
-      void validatePermission(
+      void validateRolePermission(
           ReasonsGroupType &reason,
-          const interface::types::PermissionNameType &permission_name) const;
+          const interface::permissions::Role &permission) const;
 
-      void validatePermissions(
+      void validateGrantablePermission(
           ReasonsGroupType &reason,
-          const interface::CreateRole::PermissionsType &permissions) const;
+          const interface::permissions::Grantable &permission) const;
+
+      void validateRolePermissions(
+          ReasonsGroupType &reason,
+          const interface::RolePermissionSet &permissions) const;
+
+      void validateGrantablePermissions(
+          ReasonsGroupType &reason,
+          const interface::GrantablePermissionSet &permissions) const;
 
       void validateQuorum(ReasonsGroupType &reason,
                           const interface::types::QuorumType &quorum) const;
@@ -133,9 +143,19 @@ namespace shared_model {
           const interface::types::SignatureRangeType &signatures,
           const crypto::Blob &source) const;
 
+      void validateQueryPayloadMeta(
+          ReasonsGroupType &reason,
+          const interface::QueryPayloadMeta &meta) const;
+
       void validateDescription(
           ReasonsGroupType &reason,
           const interface::types::DescriptionType &description) const;
+
+      void validateHeight(ReasonsGroupType &reason,
+                          const interface::types::HeightType &height) const;
+
+      void validateHash(ReasonsGroupType &reason,
+                        const crypto::Hash &hash) const;
 
      private:
       const static std::string account_name_pattern_;
@@ -148,15 +168,15 @@ namespace shared_model {
       const static std::string detail_key_pattern_;
       const static std::string role_id_pattern_;
 
-      std::regex account_name_regex_;
-      std::regex asset_name_regex_;
-      std::regex domain_regex_;
-      std::regex ip_v4_regex_;
-      std::regex peer_address_regex_;
-      std::regex account_id_regex_;
-      std::regex asset_id_regex_;
-      std::regex detail_key_regex_;
-      std::regex role_id_regex_;
+      const static std::regex account_name_regex_;
+      const static std::regex asset_name_regex_;
+      const static std::regex domain_regex_;
+      const static std::regex ip_v4_regex_;
+      const static std::regex peer_address_regex_;
+      const static std::regex account_id_regex_;
+      const static std::regex asset_id_regex_;
+      const static std::regex detail_key_regex_;
+      const static std::regex role_id_regex_;
 
       // gap for future transactions
       time_t future_gap_;
@@ -169,6 +189,8 @@ namespace shared_model {
 
       // size of key
       static const size_t public_key_size;
+      static const size_t signature_size;
+      static const size_t hash_size;
       static const size_t value_size;
       static const size_t description_size;
     };

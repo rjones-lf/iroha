@@ -96,14 +96,12 @@ TEST(QuerySerializerTest, DeserializeGetAccountAssetsWhenValid) {
     "creator_account_id":"123",
     "query_counter":0,
     "query_type":"GetAccountAssets",
-    "account_id":"test@test",
-    "asset_id":"coin#test"
+    "account_id":"test@test"
   })";
   auto res = querySerializer.deserialize(json_query);
   ASSERT_TRUE(res);
   auto casted = std::static_pointer_cast<iroha::model::GetAccountAssets>(*res);
   ASSERT_EQ("test@test", casted->account_id);
-  ASSERT_EQ("coin#test", casted->asset_id);
 }
 
 /**

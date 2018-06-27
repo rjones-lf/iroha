@@ -24,7 +24,6 @@
 #include "interfaces/query_responses/transactions_response.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -34,37 +33,22 @@ namespace shared_model {
                                TransactionsResponse> {
      public:
       template <typename QueryResponseType>
-      explicit TransactionsResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit TransactionsResponse(QueryResponseType &&queryResponse);
 
-      TransactionsResponse(const TransactionsResponse &o)
-          : TransactionsResponse(o.proto_) {}
+      TransactionsResponse(const TransactionsResponse &o);
 
-      TransactionsResponse(TransactionsResponse &&o)
-          : TransactionsResponse(std::move(o.proto_)) {}
+      TransactionsResponse(TransactionsResponse &&o);
 
       interface::types::TransactionsCollectionType transactions()
-          const override {
-        return *transactions_;
-      }
+          const override;
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::TransactionsResponse &transactionResponse_{
-          proto_->transactions_response()};
+      const iroha::protocol::TransactionsResponse &transactionResponse_;
 
-      const Lazy<interface::types::TransactionsCollectionType> transactions_{
-          [this] {
-            return boost::accumulate(
-                transactionResponse_.transactions(),
-                interface::types::TransactionsCollectionType{},
-                [](auto &&txs, const auto &tx) {
-                  txs.emplace_back(new Transaction(tx));
-                  return std::move(txs);
-                });
-          }};
+      const Lazy<std::vector<proto::Transaction>> transactions_;
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -18,6 +18,7 @@ add_library(common_execution
 target_link_libraries(common_execution
         rxcpp
         boost
+        shared_model_proto_backend
         )
 
 add_library(command_execution
@@ -29,6 +30,7 @@ target_link_libraries(command_execution
         common_execution
         rxcpp
         shared_model_default_builders
+        shared_model_amount_utils
         )
 
 add_library(query_execution
@@ -38,4 +40,5 @@ add_library(query_execution
 target_link_libraries(query_execution
         rxcpp
         shared_model_default_builders
+        common_execution
         )

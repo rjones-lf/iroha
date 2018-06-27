@@ -18,9 +18,13 @@
 #ifndef IROHA_IROHA_INSTANCE_HPP
 #define IROHA_IROHA_INSTANCE_HPP
 
+#include <boost/optional.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <chrono>
 #include <memory>
 #include <string>
+#include "ametsuchi/impl/postgres_options.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -36,7 +40,14 @@ namespace integration_framework {
 
   class IrohaInstance {
    public:
-    IrohaInstance();
+    /**
+     * @param mst_support enables multisignature tx support
+     * @param block_store_path
+     * @param dbname is a name of postgres database
+     */
+    IrohaInstance(bool mst_support,
+                  const std::string &block_store_path,
+                  const boost::optional<std::string> &dbname = boost::none);
 
     void makeGenesis(const shared_model::interface::Block &block);
 
@@ -48,10 +59,8 @@ namespace integration_framework {
 
     std::shared_ptr<TestIrohad> &getIrohaInstance();
 
-    std::string getPostgreCredsOrDefault(const std::string &default_conn =
-                                             "host=localhost port=5432 "
-                                             "user=postgres "
-                                             "password=mysecretpassword");
+    std::string getPostgreCredsOrDefault(
+        const boost::optional<std::string> &dbname);
 
     std::shared_ptr<TestIrohad> instance_;
 
@@ -63,6 +72,7 @@ namespace integration_framework {
     const std::chrono::milliseconds proposal_delay_;
     const std::chrono::milliseconds vote_delay_;
     const std::chrono::milliseconds load_delay_;
+    const bool is_mst_supported_;
   };
 }  // namespace integration_framework
 #endif  // IROHA_IROHA_INSTANCE_HPP

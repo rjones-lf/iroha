@@ -44,9 +44,6 @@ namespace shared_model {
               typename BT = UnsignedWrapper<Block>>
     class TemplateBlockBuilder {
      private:
-      template <class T>
-      using w = detail::PolymorphicWrapper<T>;
-
       template <int, typename, typename>
       friend class TemplateBlockBuilder;
 

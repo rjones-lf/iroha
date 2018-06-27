@@ -18,6 +18,8 @@
 #ifndef IROHA_PROTO_GRANT_PERMISSION_HPP
 #define IROHA_PROTO_GRANT_PERMISSION_HPP
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "commands.pb.h"
 #include "interfaces/commands/grant_permission.hpp"
 
 namespace shared_model {
@@ -29,27 +31,20 @@ namespace shared_model {
                                GrantPermission> {
      public:
       template <typename CommandType>
-      explicit GrantPermission(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit GrantPermission(CommandType &&command);
 
-      GrantPermission(const GrantPermission &o) : GrantPermission(o.proto_) {}
+      GrantPermission(const GrantPermission &o);
 
-      GrantPermission(GrantPermission &&o) noexcept
-          : GrantPermission(std::move(o.proto_)) {}
+      GrantPermission(GrantPermission &&o) noexcept;
 
-      const interface::types::AccountIdType &accountId() const override {
-        return grant_permission_.account_id();
-      }
+      const interface::types::AccountIdType &accountId() const override;
 
-      const interface::types::PermissionNameType &permissionName()
-          const override {
-        return iroha::protocol::GrantablePermission_Name(
-            grant_permission_.permission());
-      }
+      interface::permissions::Grantable permissionName() const override;
+
+      std::string toString() const override;
 
      private:
-      const iroha::protocol::GrantPermission &grant_permission_{
-          proto_->grant_permission()};
+      const iroha::protocol::GrantPermission &grant_permission_;
     };
 
   }  // namespace proto

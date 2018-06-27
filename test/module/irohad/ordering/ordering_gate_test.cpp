@@ -139,10 +139,12 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
                 .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair());
+                        generateKeypair())
+                .finish();
   std::vector<shared_model::proto::Transaction> txs = {tx, tx};
   iroha::protocol::Proposal proposal = shared_model::proto::ProposalBuilder()
                                            .height(2)
@@ -211,10 +213,12 @@ TEST_F(QueueBehaviorTest, SendManyProposals) {
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
                 .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair());
+                        generateKeypair())
+                .finish();
   std::vector<shared_model::proto::Transaction> txs = {tx, tx};
   auto proposal1 = std::make_shared<shared_model::proto::Proposal>(
       shared_model::proto::ProposalBuilder()

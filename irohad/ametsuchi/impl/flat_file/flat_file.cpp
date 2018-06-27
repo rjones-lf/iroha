@@ -1,21 +1,10 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
+
 #include <boost/filesystem.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/algorithm/find_if.hpp>
@@ -50,7 +39,7 @@ boost::optional<std::unique_ptr<FlatFile>> FlatFile::create(
   return std::make_unique<FlatFile>(*res, path, private_tag{});
 }
 
-bool FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
+bool FlatFile::add(Identifier id, const Bytes &block) {
   // TODO(x3medima17): Change bool to generic Result return type
 
   if (id != current_id_ + 1) {
@@ -85,7 +74,7 @@ bool FlatFile::add(Identifier id, const std::vector<uint8_t> &block) {
   return true;
 }
 
-boost::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
+boost::optional<FlatFile::Bytes> FlatFile::get(Identifier id) const {
   const auto filename =
       boost::filesystem::path{dump_dir_} / FlatFile::id_to_name(id);
   if (not boost::filesystem::exists(filename)) {
@@ -93,7 +82,7 @@ boost::optional<std::vector<uint8_t>> FlatFile::get(Identifier id) const {
     return boost::none;
   }
   const auto fileSize = boost::filesystem::file_size(filename);
-  std::vector<uint8_t> buf;
+  Bytes buf;
   buf.resize(fileSize);
   boost::filesystem::ifstream file(filename, std::ifstream::binary);
   if (not file.is_open()) {
