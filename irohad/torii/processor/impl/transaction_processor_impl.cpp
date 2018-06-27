@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/algorithm/for_each.hpp>
+
 #include "torii/processor/transaction_processor_impl.hpp"
 #include "validation/stateful_validator_common.hpp"
 
@@ -33,11 +36,10 @@ namespace iroha {
         : pcs_(std::move(pcs)), mst_processor_(std::move(mst_processor)) {
       log_ = logger::log("TxProcessor");
 
-      // insert all txs from proposal to proposal set
+      // notify about stateless success
       pcs_->on_proposal().subscribe([this](auto model_proposal) {
         for (const auto &tx : model_proposal->transactions()) {
           auto hash = tx.hash();
-          proposal_set_.insert(hash);
           log_->info("on proposal stateless success: {}", hash.hex());
           // different on_next() calls (this one and below) can happen in
           // different threads and we don't expect emitting them concurrently
@@ -50,11 +52,14 @@ namespace iroha {
         }
       });
 
-      // process errors, which appeared during proposal verifying
+      // process stateful validation results
       pcs_->on_verified_proposal().subscribe(
           [this](validation::VerifiedProposalAndErrors proposal_and_errors) {
+            // notify about failed txs
             auto errors = proposal_and_errors.second;
             for (const auto &tx_error : errors) {
+              log_->info("on stateful validation failed: {}",
+                         tx_error.second.hex());
               std::lock_guard<std::mutex> lock(notifier_mutex_);
               notifier_.get_subscriber().on_next(
                   shared_model::builder::DefaultTransactionStatusBuilder()
@@ -63,40 +68,40 @@ namespace iroha {
                       .errorMsg(tx_error.first)
                       .build());
             }
+            // notify about success txs
+            for (const auto &successful_tx : proposal_and_errors.first->transactions()) {
+              log_->info("on stateful validation success: {}",
+                         successful_tx.hash().hex());
+              std::lock_guard<std::mutex> lock(notifier_mutex_);
+              notifier_.get_subscriber().on_next(
+                  shared_model::builder::DefaultTransactionStatusBuilder()
+                      .statefulValidationSuccess()
+                      .txHash(successful_tx.hash())
+                      .build());
+            }
+            current_proposal_ = proposal_and_errors.first;
           });
 
       // move commited txs from proposal to candidate map
       pcs_->on_commit().subscribe([this](Commit blocks) {
         blocks.subscribe(
-            // on next..
-            [this](auto model_block) {
-              for (const auto &tx : model_block->transactions()) {
-                auto hash = tx.hash();
-                if (this->proposal_set_.find(hash) != proposal_set_.end()) {
-                  candidate_set_.insert(hash);
-                  log_->info("on commit stateful success: {}", hash.hex());
+            // on next
+            [](auto model_block) {},
+            // on complete
+            [this]() {
+              if (not current_proposal_) {
+                log_->error("current proposal is empty");
+              } else {
+                for (auto &tx : current_proposal_->transactions()) {
+                  log_->info("on commit committed: {}", tx.hash().hex());
                   std::lock_guard<std::mutex> lock(notifier_mutex_);
                   notifier_.get_subscriber().on_next(
                       shared_model::builder::DefaultTransactionStatusBuilder()
-                          .statefulValidationSuccess()
-                          .txHash(hash)
+                          .committed()
+                          .txHash(tx.hash())
                           .build());
                 }
               }
-            },
-            // on complete
-            [this]() {
-              for (auto &tx_hash : candidate_set_) {
-                log_->info("on commit committed: {}", tx_hash.hex());
-                std::lock_guard<std::mutex> lock(notifier_mutex_);
-                notifier_.get_subscriber().on_next(
-                    shared_model::builder::DefaultTransactionStatusBuilder()
-                        .committed()
-                        .txHash(tx_hash)
-                        .build());
-              }
-              candidate_set_.clear();
-              proposal_set_.clear();
             });
       });
 

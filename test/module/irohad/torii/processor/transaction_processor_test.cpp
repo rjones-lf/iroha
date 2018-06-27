@@ -35,6 +35,8 @@ class TransactionProcessorTest : public ::testing::Test {
         .WillRepeatedly(Return(prop_notifier.get_observable()));
     EXPECT_CALL(*pcs, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
+    EXPECT_CALL(*pcs, on_verified_proposal())
+        .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
     EXPECT_CALL(*mp, onPreparedTransactionsImpl())
         .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
@@ -70,8 +72,7 @@ class TransactionProcessorTest : public ::testing::Test {
       auto tx_status = status_map.find(tx.hash());
       ASSERT_NE(tx_status, status_map.end());
       ASSERT_NO_THROW(boost::apply_visitor(
-          framework::SpecifiedVisitor<Status>(),
-          tx_status->second->get()));
+          framework::SpecifiedVisitor<Status>(), tx_status->second->get()));
     }
   }
 
@@ -90,6 +91,8 @@ class TransactionProcessorTest : public ::testing::Test {
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier;
   rxcpp::subjects::subject<Commit> commit_notifier;
+  rxcpp::subjects::subject<iroha::validation::VerifiedProposalAndErrors>
+      verified_prop_notifier;
 
   const size_t proposal_size = 5;
   const size_t block_size = 3;
@@ -173,6 +176,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
 
   prop_notifier.get_subscriber().on_next(proposal);
   prop_notifier.get_subscriber().on_completed();
+  verified_prop_notifier.get_subscriber().on_next(
+      std::make_pair(proposal, iroha::validation::TransactionsErrors{}));
 
   auto block = TestBlockBuilder().transactions(txs).build();
 
@@ -232,6 +237,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   prop_notifier.get_subscriber().on_next(proposal);
   prop_notifier.get_subscriber().on_completed();
+  verified_prop_notifier.get_subscriber().on_next(
+      std::make_pair(proposal, iroha::validation::TransactionsErrors{}));
 
   auto block = TestBlockBuilder().transactions(txs).build();
 
@@ -246,6 +253,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   validateStatuses<shared_model::interface::CommittedTxResponse>(txs);
 }
 
+// TODO: rework the test
 /**
  * @given transaction processor
  * @when transactions compose proposal which is sent to peer
@@ -295,6 +303,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
 
   prop_notifier.get_subscriber().on_next(proposal);
   prop_notifier.get_subscriber().on_completed();
+  verified_prop_notifier.get_subscriber().on_next(
+      std::make_pair(proposal, iroha::validation::TransactionsErrors{}));
 
   auto block = TestBlockBuilder().transactions(block_txs).build();
 
