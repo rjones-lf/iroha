@@ -15,11 +15,15 @@ namespace shared_model {
      * Unsigned transactions collection validator allows to some transaction
      * from the collection to be unsigned. Batch logic should be checked
      */
+    template <typename TransactionValidator>
     class UnsignedTransactionsCollectionValidator
         : public TransactionsCollectionValidator {
      public:
       Answer validate(const interface::types::TransactionsForwardCollectionType
                           &transactions) const override;
+
+     private:
+      TransactionValidator transaction_validator_;
     };
 
   }  // namespace validation
