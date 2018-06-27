@@ -266,16 +266,12 @@ namespace shared_model {
           answer.addReason(std::move(tx_reason));
         }
 
-        constexpr auto cmd_begin = iroha::protocol::Command::kAddAssetQuantity;
-        constexpr auto cmd_end = cmd_begin
-            + boost::mpl::size<shared_model::interface::Command::
-                                   CommandListType>::type::value;
         for (const auto &command : tx.commands()) {
           auto cmd_case =
               static_cast<const shared_model::proto::Command &>(command)
                   .getTransport()
                   .command_case();
-          if (cmd_begin > cmd_case || cmd_case >= cmd_end) {
+          if (iroha::protocol::Command::COMMAND_NOT_SET == cmd_case) {
             ReasonsGroupType reason;
             reason.first = "Undefined";
             reason.second.push_back("command is undefined");

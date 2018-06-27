@@ -174,16 +174,11 @@ namespace shared_model {
           answer.addReason(std::move(qry_reason));
         }
 
-        constexpr auto qry_begin = iroha::protocol::Query_Payload::kGetAccount;
-        constexpr auto qry_end =
-            qry_begin
-            + boost::mpl::size<
-                  shared_model::interface::Query::QueryListType>::type::value;
         auto qry_case = static_cast<const shared_model::proto::Query &>(qry)
                             .getTransport()
                             .payload()
                             .query_case();
-        if (qry_begin > qry_case || qry_case >= qry_end) {
+        if (iroha::protocol::Query_Payload::QUERY_NOT_SET == qry_case) {
           ReasonsGroupType reason;
           reason.first = "Undefined";
           reason.second.push_back("query is undefined");
