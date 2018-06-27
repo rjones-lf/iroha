@@ -75,12 +75,10 @@ namespace iroha {
 
       transaction_->exec("SAVEPOINT savepoint_;");
 
-      return expected::map_error<std::string>(
-                 apply_function(tx, *wsv_),
-                 [](std::string &error) { return error; })
-                 | [this,
-                    &execute_command,
-                    &tx]() -> expected::Result<void, std::string> {
+      return apply_function(tx, *wsv_) |
+                 [this,
+                  &execute_command,
+                  &tx]() -> expected::Result<void, std::string> {
         // check transaction's commands validness
         const auto &commands = tx.commands();
         std::string cmd_error;

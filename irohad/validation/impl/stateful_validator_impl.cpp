@@ -95,7 +95,7 @@ namespace iroha {
       };
 
       // Filter only valid transactions and accumulate errors
-      auto transactions_errors_log = iroha::validation::TransactionsErrors{};
+      auto transactions_errors_log = validation::TransactionsErrors{};
       auto filter = [&temporaryWsv,
                      checking_transaction,
                      &transactions_errors_log](auto &tx) {
@@ -109,6 +109,9 @@ namespace iroha {
                    });
       };
 
+      // TODO: kamilsa IR-1010 20.02.2018 rework validation logic, so that this
+      // cast is not needed and stateful validator does not know about the
+      // transport
       auto valid_proto_txs =
           proposal.transactions() | boost::adaptors::filtered(filter)
           | boost::adaptors::transformed([](auto &tx) {

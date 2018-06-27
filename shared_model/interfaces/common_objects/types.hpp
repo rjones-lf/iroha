@@ -34,7 +34,6 @@ namespace shared_model {
     class Signature;
     class Transaction;
     class AccountAsset;
-    class Proposal;
 
     namespace types {
       /// Type of hash
