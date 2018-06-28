@@ -215,7 +215,6 @@ namespace shared_model {
        * @return builder with subtract asset quantity command appended
        */
       ModelTransactionBuilder subtractAssetQuantity(
-          const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id,
           const std::string &amount);
 

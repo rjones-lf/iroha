@@ -597,42 +597,28 @@ class BuilderTest(unittest.TestCase):
   def test_subtract_asset_quantity(self):
     for domain in VALID_DOMAINS:
       for name in VALID_NAMES_1:
-        tx = self.builder.subtractAssetQuantity("{}@{}".format(name, domain), "{}#{}".format(name, domain), "10").build()
+        tx = self.builder.subtractAssetQuantity("{}#{}".format(name, domain), "10").build()
         self.assertTrue(self.check_proto_tx(self.proto(tx)))
-
-  def test_subtract_asset_quantity_invalid_account(self):
-    for name in INVALID_NAMES_1:
-      with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("{}@test".format(name), "coin#test", "10").build()
-
-  def test_subtract_asset_quantity_invalid_account_domain(self):
-    for domain in INVALID_DOMAINS:
-      with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("admin@{}".format(domain), "coin#test", "10").build()
-
-  def test_subtract_asset_quantity_with_empty_account(self):
-    with self.assertRaises(ValueError):
-      self.base().subtractAssetQuantity("", "coin#test", "10").build()
 
   def test_subtract_asset_quantity_invalid_asset_name(self):
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("admin@test", "{}#test".format(name), "10").build()
+        self.base().subtractAssetQuantity("{}#test".format(name), "10").build()
 
   def test_subtract_asset_quantity_invalid_asset_domain(self):
     for domain in INVALID_DOMAINS:
       with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("admin@test", "coin#{}".format(domain), "10").build()
+        self.base().subtractAssetQuantity("coin#{}".format(domain), "10").build()
 
   def test_subtract_asset_quantity_empty_account(self):
     with self.assertRaises(ValueError):
-      self.base().subtractAssetQuantity("admin@test", "", "10").build()
+      self.base().subtractAssetQuantity("", "10").build()
 
   def test_subtract_asset_quantity_invalid_amount(self):
     amounts = ["", "0", "chars", "-10", "10chars", "10.10.10"]
     for amount in amounts:
       with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("admin@test", "coin#test", amount).build()
+        self.base().subtractAssetQuantity("coin#test", amount).build()
 
 if __name__ == '__main__':
   unittest.main()

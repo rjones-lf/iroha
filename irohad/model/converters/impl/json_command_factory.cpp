@@ -563,8 +563,6 @@ namespace iroha {
         document.SetObject();
         document.AddMember("command_type", "SubtractAssetQuantity", allocator);
         document.AddMember(
-            "account_id", subtract_asset_quantity->account_id, allocator);
-        document.AddMember(
             "asset_id", subtract_asset_quantity->asset_id, allocator);
 
         Value amount;
@@ -586,7 +584,6 @@ namespace iroha {
           const Value &document) {
         auto des = makeFieldDeserializer(document);
         return make_optional_ptr<SubtractAssetQuantity>()
-            | des.String(&SubtractAssetQuantity::account_id, "account_id")
             | des.String(&SubtractAssetQuantity::asset_id, "asset_id")
             | des.Object(&SubtractAssetQuantity::amount, "amount") | toCommand;
       }

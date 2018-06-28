@@ -124,7 +124,6 @@ TEST_F(JsonCommandTest, add_asset_quantity) {
  */
 TEST_F(JsonCommandTest, subtract_asset_quantity) {
   auto orig_command = std::make_shared<SubtractAssetQuantity>();
-  orig_command->account_id = "23";
   iroha::Amount amount(150, 2);
 
   orig_command->amount = amount;

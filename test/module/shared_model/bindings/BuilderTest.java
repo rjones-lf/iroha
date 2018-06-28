@@ -918,32 +918,16 @@ public class BuilderTest {
     void subtractAssetQuantity() {
         for (String name: validNameSymbols1) {
             for (String domain: validDomains) {
-                UnsignedTx tx = builder.subtractAssetQuantity(name + "@" + domain, name + "#" + domain, "10.22").build();
+                UnsignedTx tx = builder.subtractAssetQuantity(name + "#" + domain, "10.22").build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
     }
 
     @Test
-    void subtractAssetQuantityInvalidAccount() {
-        for (String account: invalidNameSymbols1) {
-            ModelTransactionBuilder builder = base().subtractAssetQuantity(account + "@test", "coin#test", "10");
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
-    }
-
-    @Test
-    void subtractAssetQuantityInvalidAccountDomain() {
-        for (String domain: invalidDomains) {
-            ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@" + domain, "coin#test", "10");
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
-    }
-
-    @Test
     void subtractAssetQuantityInvalidAsset() {
         for (String asset: invalidNameSymbols1) {
-            ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@test", asset + "#test", "10");
+            ModelTransactionBuilder builder = base().subtractAssetQuantity(asset + "#test", "10");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -951,20 +935,14 @@ public class BuilderTest {
     @Test
     void subtractAssetQuantityInvalidAssetDomain() {
         for (String domain: invalidDomains) {
-            ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@test", "coin#" + domain, "10");
+            ModelTransactionBuilder builder = base().subtractAssetQuantity("coin#" + domain, "10");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
 
     @Test
-    void subtractAssetQuantityEmptyAccount() {
-        ModelTransactionBuilder builder = base().subtractAssetQuantity("", "coin#test", "10");
-        assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    @Test
     void subtractAssetQuantityEmptyAsset() {
-        ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@test", "", "10");
+        ModelTransactionBuilder builder = base().subtractAssetQuantity("", "10");
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
@@ -980,7 +958,7 @@ public class BuilderTest {
         };
 
         for (String amount: invalidAmounts) {
-            ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@test", "coin#test", amount);
+            ModelTransactionBuilder builder = base().subtractAssetQuantity("coin#test", amount);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }

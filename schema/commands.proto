@@ -83,9 +83,8 @@ message RevokePermission {
 }
 
 message SubtractAssetQuantity {
-    string account_id = 1;
-    string asset_id = 2;
-    Amount amount = 3;
+    string asset_id = 1;
+    Amount amount = 2;
 }
 
 message Command {

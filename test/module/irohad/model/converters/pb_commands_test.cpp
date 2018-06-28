@@ -68,7 +68,6 @@ TEST(CommandTest, add_asset_quantity) {
  */
 TEST(CommandTest, subtract_asset_quantity) {
   auto orig_command = iroha::model::SubtractAssetQuantity();
-  orig_command.account_id = "23";
   iroha::Amount amount(50, 1);
 
   orig_command.amount = amount;

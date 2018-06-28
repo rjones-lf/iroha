@@ -359,10 +359,10 @@ namespace iroha {
     auto command_amount =
         makeAmountWithPrecision(command.amount(), asset.value()->precision());
     auto account_asset =
-        queries->getAccountAsset(command.accountId(), command.assetId());
+        queries->getAccountAsset(creator_account_id, command.assetId());
     if (not account_asset) {
       return makeCommandError((boost::format("%s do not have %s")
-                               % command.accountId() % command.assetId())
+                               % creator_account_id % command.assetId())
                                   .str(),
                               command_name);
     }
@@ -841,23 +841,14 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto command_name = "SubtractAssetQuantity";
-    if (creator_account_id == command.accountId()) {
-      if (checkAccountRolePermission(
-              creator_account_id, queries, Role::kSubtractAssetQty)) {
-        return {};
-      } else {
-        return makeCommandError(
-            "has permission command validation failed: account "
-                + creator_account_id + " does not have permission "
-                + toString(Role::kSubtractAssetQty) + " for his own account",
-            command_name);
-      }
+    if (checkAccountRolePermission(
+            creator_account_id, queries, Role::kSubtractAssetQty)) {
+      return {};
     } else {
       return makeCommandError(
           "has permission command validation failed: account "
-              + creator_account_id
-              + " cannot subtract asset quantity from account "
-              + command.accountId(),
+              + creator_account_id + " does not have permission "
+              + toString(Role::kSubtractAssetQty) + " for his own account",
           command_name);
     }
   }
