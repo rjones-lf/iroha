@@ -65,7 +65,7 @@ if (NOT soci_FOUND)
   set(SOCI_INCLUDE_DIRS ${EP_PREFIX}/include ${EP_PREFIX}/include/soci)
   set(SOCI_LIBRARY ${binary_dir}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}soci_core${CMAKE_STATIC_LIBRARY_SUFFIX})
   set(SOCI_postgresql_PLUGIN ${binary_dir}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}soci_postgresql${CMAKE_STATIC_LIBRARY_SUFFIX})
-  file(MAKE_DIRECTORY ${EP_PREFIX})
+  file(MAKE_DIRECTORY ${EP_PREFIX}/include/soci)
 
   add_dependencies(SOCI::core soci_soci)
   add_dependencies(SOCI::postgresql soci_soci)
