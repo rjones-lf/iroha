@@ -488,7 +488,7 @@ pipeline {
               }
             }
             cleanup {
-              sh "rm -rf /tmp/${env.GIT_COMMIT}"
+              sh "sudo rm -rf /tmp/${env.GIT_COMMIT}"
             }
           }
         }
