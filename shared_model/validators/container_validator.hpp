@@ -84,8 +84,8 @@ namespace shared_model {
       }
 
      private:
-      TransactionValidator transaction_validator_;
       TransactionsCollectionValidator transactions_collection_validator_;
+      TransactionValidator transaction_validator_;
 
      protected:
       FieldValidator field_validator_;
