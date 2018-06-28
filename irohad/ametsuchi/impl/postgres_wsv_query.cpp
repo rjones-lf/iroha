@@ -56,8 +56,6 @@ namespace iroha {
       const auto perm_str =
           shared_model::interface::GrantablePermissionSet({permission})
               .toBitstring();
-      static const auto kEmpty =
-          shared_model::interface::GrantablePermissionSet().toBitstring();
       return execute_(
                  "SELECT * FROM account_has_grantable_permissions WHERE "
                  "permittee_account_id = "
