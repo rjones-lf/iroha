@@ -9,7 +9,7 @@ def notifyBuildResults() {
 		return
 	}
 	// merge commit build results
-	if ( params.Merge_PR ) {
+	if ( params.merge_pr ) {
 		if ( currentBuild.currentResult == "SUCCESS" ) {
 			mergeMessage = "Merge status to ${env.CHANGE_TARGET}: true"
 		}
