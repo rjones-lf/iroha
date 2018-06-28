@@ -15,9 +15,6 @@
  * limitations under the License.
  */
 
-#include <boost/range/adaptor/filtered.hpp>
-#include <boost/range/algorithm/for_each.hpp>
-
 #include "torii/processor/transaction_processor_impl.hpp"
 #include "validation/stateful_validator_common.hpp"
 
@@ -54,12 +51,15 @@ namespace iroha {
 
       // process stateful validation results
       pcs_->on_verified_proposal().subscribe(
-          [this](validation::VerifiedProposalAndErrors proposal_and_errors) {
+          [this](std::shared_ptr<validation::VerifiedProposalAndErrors>
+                     proposal_and_errors) {
             // notify about failed txs
-            auto errors = proposal_and_errors.second;
+            auto errors = proposal_and_errors->second;
             for (const auto &tx_error : errors) {
-              log_->info("on stateful validation failed: {}",
-                         tx_error.second.hex());
+              log_->info(
+                  "on stateful validation failed: {} with error message '{}'",
+                  tx_error.second.hex(),
+                  tx_error.first);
               std::lock_guard<std::mutex> lock(notifier_mutex_);
               notifier_.get_subscriber().on_next(
                   shared_model::builder::DefaultTransactionStatusBuilder()
@@ -69,7 +69,8 @@ namespace iroha {
                       .build());
             }
             // notify about success txs
-            for (const auto &successful_tx : proposal_and_errors.first->transactions()) {
+            for (const auto &successful_tx :
+                 proposal_and_errors->first->transactions()) {
               log_->info("on stateful validation success: {}",
                          successful_tx.hash().hex());
               std::lock_guard<std::mutex> lock(notifier_mutex_);
@@ -79,29 +80,33 @@ namespace iroha {
                       .txHash(successful_tx.hash())
                       .build());
             }
-            current_proposal_ = proposal_and_errors.first;
           });
 
-      // move commited txs from proposal to candidate map
+      // commit transactions
       pcs_->on_commit().subscribe([this](Commit blocks) {
         blocks.subscribe(
             // on next
-            [](auto model_block) {},
+            [this](auto model_block) {
+              for (const auto &tx : model_block->transactions()) {
+                current_txs_hashes_.emplace_back(tx.hash());
+              }
+            },
             // on complete
             [this]() {
-              if (not current_proposal_) {
-                log_->error("current proposal is empty");
+              if (current_txs_hashes_.empty()) {
+                log_->error("there are no transactions to be committed");
               } else {
-                for (auto &tx : current_proposal_->transactions()) {
-                  log_->info("on commit committed: {}", tx.hash().hex());
+                for (auto &tx_hash : current_txs_hashes_) {
+                  log_->info("on commit committed: {}", tx_hash.hex());
                   std::lock_guard<std::mutex> lock(notifier_mutex_);
                   notifier_.get_subscriber().on_next(
                       shared_model::builder::DefaultTransactionStatusBuilder()
                           .committed()
-                          .txHash(tx.hash())
+                          .txHash(tx_hash)
                           .build());
                 }
               }
+              current_txs_hashes_.clear();
             });
       });
 

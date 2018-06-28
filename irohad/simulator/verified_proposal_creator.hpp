@@ -46,7 +46,8 @@ namespace iroha {
        * Emit proposals that was verified by validation
        * @return
        */
-      virtual rxcpp::observable<iroha::validation::VerifiedProposalAndErrors>
+      virtual rxcpp::observable<
+          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       on_verified_proposal() = 0;
 
       virtual ~VerifiedProposalCreator() = default;

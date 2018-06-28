@@ -47,7 +47,8 @@ namespace iroha {
 
       MOCK_CONST_METHOD0(
           on_verified_proposal,
-          rxcpp::observable<validation::VerifiedProposalAndErrors>());
+          rxcpp::observable<
+              std::shared_ptr<validation::VerifiedProposalAndErrors>>());
     };
 
     class MockBlockLoader : public BlockLoader {

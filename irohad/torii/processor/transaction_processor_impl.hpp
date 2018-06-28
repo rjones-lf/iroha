@@ -52,7 +52,7 @@ namespace iroha {
 
       // processing
       std::shared_ptr<MstProcessor> mst_processor_;
-      std::shared_ptr<shared_model::interface::Proposal> current_proposal_;
+      std::vector<shared_model::interface::types::HashType> current_txs_hashes_;
 
       // internal
       rxcpp::subjects::subject<

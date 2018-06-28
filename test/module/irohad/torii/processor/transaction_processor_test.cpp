@@ -91,7 +91,8 @@ class TransactionProcessorTest : public ::testing::Test {
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier;
   rxcpp::subjects::subject<Commit> commit_notifier;
-  rxcpp::subjects::subject<iroha::validation::VerifiedProposalAndErrors>
+  rxcpp::subjects::subject<
+      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       verified_prop_notifier;
 
   const size_t proposal_size = 5;
@@ -179,7 +180,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
 
   // empty transactions errors - all txs are valid
   verified_prop_notifier.get_subscriber().on_next(
-      std::make_pair(proposal, iroha::validation::TransactionsErrors{}));
+      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
+          std::make_pair(proposal, iroha::validation::TransactionsErrors{})));
 
   auto block = TestBlockBuilder().transactions(txs).build();
 
@@ -242,7 +244,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   // empty transactions errors - all txs are valid
   verified_prop_notifier.get_subscriber().on_next(
-      std::make_pair(proposal, iroha::validation::TransactionsErrors{}));
+      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
+          std::make_pair(proposal, iroha::validation::TransactionsErrors{})));
 
   auto block = TestBlockBuilder().transactions(txs).build();
 
@@ -263,8 +266,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
  * communication service @and some transactions became part of block, while some
  * were not committed, failing stateful validation
  * @then for every transaction from block COMMIT status is returned @and
- * for every transaction, which failed stateful validation, STATEFUL_FAIL status
- * is returned
+ * for every transaction, which failed stateful validation,
+ * STATEFUL_INVALID_STATUS status is returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
   std::vector<shared_model::proto::Transaction> block_txs;
@@ -315,7 +318,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
     txs_errors.push_back(std::make_pair("", invalid_txs[i].hash()));
   }
   verified_prop_notifier.get_subscriber().on_next(
-      std::make_pair(verified_proposal, txs_errors));
+      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
+          std::make_pair(verified_proposal, txs_errors)));
 
   auto block = TestBlockBuilder().transactions(block_txs).build();
 

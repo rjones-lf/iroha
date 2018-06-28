@@ -140,15 +140,20 @@ namespace iroha_cli {
       }
 
       auto status = iroha::protocol::TxStatus::NOT_RECEIVED;
+      iroha::protocol::ToriiResponse answer;
       if (iroha::hexstringToBytestring(txHash_)) {
-        status = CliClient(address.value().first, address.value().second)
+        answer = CliClient(address.value().first, address.value().second)
                      .getTxStatus(*iroha::hexstringToBytestring(txHash_))
-                     .answer.tx_status();
+                     .answer;
+        status = answer.tx_status();
       }
 
       std::string message;
       try {
         message = userMessageMap.at(status);
+        if (not answer.error_message().empty()) {
+          message += " " + answer.error_message();
+        }
       } catch (const std::out_of_range &e) {
         message =
             "A problem detected while retrieving transaction status. Please "

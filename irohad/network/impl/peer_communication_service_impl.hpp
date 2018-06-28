@@ -42,7 +42,8 @@ namespace iroha {
       rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
       on_proposal() const override;
 
-      rxcpp::observable<validation::VerifiedProposalAndErrors>
+      rxcpp::observable<
+          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       on_verified_proposal() const override;
 
       rxcpp::observable<Commit> on_commit() const override;

@@ -63,7 +63,7 @@ namespace iroha {
        * @return verified proposal and list of stateful validation errors
        */
       virtual rxcpp::observable<
-          validation::VerifiedProposalAndErrors>
+          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       on_verified_proposal() const = 0;
 
       /**
