@@ -10,7 +10,6 @@
 #include <functional>
 #include <initializer_list>
 #include <string>
-#include <vector>
 
 namespace shared_model {
   namespace interface {
