@@ -409,7 +409,9 @@ pipeline {
           steps {
             script {
               def doxygen = load ".jenkinsci/doxygen.groovy"
-              docker.image("${env.DOCKER_IMAGE}").inside {
+              sh "docker load -i ${JENKINS_DOCKER_IMAGE_DIR}/${DOCKER_IMAGE_FILE}"
+              def iC = docker.image("${DOCKER_AGENT_IMAGE}")
+              iC.inside {
                 def scmVars = checkout scm
                 doxygen.doDoxygen()
               }
@@ -433,7 +435,7 @@ pipeline {
               def bindings = load ".jenkinsci/bindings.groovy"
               def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
               def platform = sh(script: 'uname -m', returnStdout: true).trim()
-              if (params.JavaBindings) {
+              if (params.JavaBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                 iC = dPullOrBuild.dockerPullOrUpdate("$platform-develop",
                                                      "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile",
                                                      "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile",
@@ -443,7 +445,7 @@ pipeline {
                   bindings.doJavaBindings(params.JBBuildType)
                 }
               }
-              if (params.PythonBindings) {
+              if (params.PythonBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                 iC = dPullOrBuild.dockerPullOrUpdate("$platform-develop",
                                                      "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/${platform}/Dockerfile",
                                                      "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/${platform}/Dockerfile",
@@ -453,7 +455,7 @@ pipeline {
                   bindings.doPythonBindings(params.PBBuildType)
                 }
               }
-              if (params.AndroidBindings) {
+              if (params.AndroidBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                 iC = dPullOrBuild.dockerPullOrUpdate("android-${params.ABPlatform}-${params.ABBuildType}",
                                                      "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/Dockerfile",
                                                      "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
@@ -473,15 +475,15 @@ pipeline {
                 if (currentBuild.currentResult == "SUCCESS") {
                   def artifacts = load ".jenkinsci/artifacts.groovy"
                   def commit = env.GIT_COMMIT
-                  if (params.JavaBindings) {
+                  if (params.JavaBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                     javaBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
                     artifacts.uploadArtifacts(javaBindingsFilePaths, '/iroha/bindings/java')
                   }
-                  if (params.PythonBindings) {
+                  if (params.PythonBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                     pythonBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
                     artifacts.uploadArtifacts(pythonBindingsFilePaths, '/iroha/bindings/python')
                   }
-                  if (params.AndroidBindings) {
+                  if (params.AndroidBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                     androidBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/android-bindings-*.zip' ]
                     artifacts.uploadArtifacts(androidBindingsFilePaths, '/iroha/bindings/android')
                   }
@@ -493,17 +495,19 @@ pipeline {
         stage ('windows_bindings') {
           when {
             beforeAgent true
-            expression { return params.x86_64_win }
-            expression { return REST_PR_CONDITIONS_SATISFIED == "true" }
+            anyOf {
+              expression { return params.x86_64_win }
+              expression { return REST_PR_CONDITIONS_SATISFIED == "true" }
+            }
           }
           agent { label 'win' }
           steps {
             script {
               def bindings = load ".jenkinsci/bindings.groovy"
-              if (params.JavaBindings) {
+              if (params.JavaBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                 bindings.doJavaBindings('windows', params.JBBuildType)
               }
-              if (params.PythonBindings) {
+              if (params.PythonBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                 bindings.doPythonBindings('windows', params.PBBuildType)
               }
             }
@@ -513,11 +517,11 @@ pipeline {
               script {
                 def artifacts = load ".jenkinsci/artifacts.groovy"
                 def commit = env.GIT_COMMIT
-                if (params.JavaBindings) {
+                if (params.JavaBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                   javaBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
                   artifacts.uploadArtifacts(javaBindingsFilePaths, '/iroha/bindings/java')
                 }
-                if (params.PythonBindings) {
+                if (params.PythonBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                   pythonBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
                   artifacts.uploadArtifacts(pythonBindingsFilePaths, '/iroha/bindings/python')
                 }
