@@ -329,8 +329,7 @@ namespace iroha_cli {
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseAddAssetQuantity(
         std::vector<std::string> params) {
-      auto account_id = params[0];
-      auto asset_id = params[1];
+      auto asset_id = params[0];
       auto val_int =
           parser::parseValue<boost::multiprecision::uint256_t>(params[2]);
       auto precision = parser::parseValue<uint32_t>(params[3]);
@@ -344,7 +343,7 @@ namespace iroha_cli {
       }
       std::cout << val_int.value() << " " << precision.value() << std::endl;
       iroha::Amount amount(val_int.value(), precision.value());
-      return generator_.generateAddAssetQuantity(account_id, asset_id, amount);
+      return generator_.generateAddAssetQuantity(asset_id, amount);
     }
 
     std::shared_ptr<iroha::model::Command>

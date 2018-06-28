@@ -48,7 +48,6 @@ void command_converter_test(iroha::model::Command &abstract_command) {
 
 TEST(CommandTest, add_asset_quantity) {
   auto orig_command = iroha::model::AddAssetQuantity();
-  orig_command.account_id = "23";
   iroha::Amount amount(50, 1);
 
   orig_command.amount = amount;

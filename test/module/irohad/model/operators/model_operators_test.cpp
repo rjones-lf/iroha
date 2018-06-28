@@ -58,7 +58,6 @@ TEST(ModelOperatorTest, AddPeerTest) {
 
 AddAssetQuantity createAddAssetQuantity() {
   AddAssetQuantity aaq;
-  aaq.account_id = "123";
   iroha::Amount amount(1010, 2);
   aaq.amount = amount;
   aaq.asset_id = "123";

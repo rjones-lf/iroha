@@ -30,7 +30,7 @@ class SubtractAssetQuantity : public AcceptanceFixture {
    * @return built tx that adds kAmount assets to the users
    */
   auto replenish() {
-    return complete(baseTx().addAssetQuantity(kUserId, kAsset, kAmount));
+    return complete(baseTx().addAssetQuantity(kAsset, kAmount));
   }
 
   const std::string kAmount = "1.0";

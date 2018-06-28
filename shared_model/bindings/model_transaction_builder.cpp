@@ -39,11 +39,10 @@ namespace shared_model {
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::addAssetQuantity(
-        const interface::types::AccountIdType &account_id,
         const interface::types::AssetIdType &asset_id,
         const std::string &amount) {
       return ModelTransactionBuilder(
-          builder_.addAssetQuantity(account_id, asset_id, amount));
+          builder_.addAssetQuantity(asset_id, amount));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::addPeer(

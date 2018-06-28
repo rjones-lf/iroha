@@ -31,10 +31,6 @@ namespace shared_model {
     class AddAssetQuantity : public ModelPrimitive<AddAssetQuantity> {
      public:
       /**
-       * @return Identity of user, that add quantity
-       */
-      virtual const types::AccountIdType &accountId() const = 0;
-      /**
        * @return asset identifier
        */
       virtual const types::AssetIdType &assetId() const = 0;

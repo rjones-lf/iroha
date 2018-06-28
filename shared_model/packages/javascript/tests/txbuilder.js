@@ -9,7 +9,7 @@ const assetId = 'coin#test'
 const testAccountId = 'test@test'
 
 test('ModelTransactionBuilder tests', function (t) {
-  t.plan(133)
+  t.plan(130)
 
   let crypto = new iroha.ModelCrypto()
   let keypair = crypto.convertFromExisting(publicKey, privateKey)
@@ -38,14 +38,11 @@ test('ModelTransactionBuilder tests', function (t) {
   t.comment('Testing addAssetQuantity()')
   t.throws(() => correctTx.addAssetQuantity(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctTx.addAssetQuantity(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctTx.addAssetQuantity('', ''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctTx.addAssetQuantity('', '', '').build(), /AddAssetQuantity: \[\[Wrongly formed account_id, passed value: ''(.*)Wrongly formed asset_id, passed value: ''(.*)Amount must be greater than 0, passed value: 0 \]\]/, 'Should throw wrongly formed account_id, asset_id, Amount must be greater than 0')
-  t.throws(() => correctTx.addAssetQuantity(adminAccountId, assetId, '0').build(), /AddAssetQuantity: \[\[Amount must be greater than 0, passed value: 0 \]\]/, 'Should throw Amount must be greater than 0')
-  t.throws(() => correctTx.addAssetQuantity('', assetId, '1000').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id')
-  t.throws(() => correctTx.addAssetQuantity('@@@', assetId, '1000').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id')
-  t.throws(() => correctTx.addAssetQuantity(adminAccountId, '', '1000').build(), /Wrongly formed asset_id, passed value: ''/, 'Should throw Wrongly formed asset_id')
-  t.throws(() => correctTx.addAssetQuantity(adminAccountId, '###', '1000').build(), /Wrongly formed asset_id, passed value: '###'/, 'Should throw Wrongly formed asset_id')
-  t.doesNotThrow(() => correctTx.addAssetQuantity(adminAccountId, assetId, '1000').build(), null, 'Should not throw any exceptions')
+  t.throws(() => correctTx.addAssetQuantity('', '').build(), /AddAssetQuantity: \[\[Wrongly formed asset_id, passed value: ''(.*)Amount must be greater than 0, passed value: 0 \]\]/, 'Should throw wrongly formed account_id, asset_id, Amount must be greater than 0')
+  t.throws(() => correctTx.addAssetQuantity(assetId, '0').build(), /AddAssetQuantity: \[\[Amount must be greater than 0, passed value: 0 \]\]/, 'Should throw Amount must be greater than 0')
+  t.throws(() => correctTx.addAssetQuantity('', '1000').build(), /Wrongly formed asset_id, passed value: ''/, 'Should throw Wrongly formed asset_id')
+  t.throws(() => correctTx.addAssetQuantity('###', '1000').build(), /Wrongly formed asset_id, passed value: '###'/, 'Should throw Wrongly formed asset_id')
+  t.doesNotThrow(() => correctTx.addAssetQuantity(assetId, '1000').build(), null, 'Should not throw any exceptions')
 
   // addPeer() tests
   t.comment('Testing addPeer()')

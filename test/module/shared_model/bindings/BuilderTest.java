@@ -284,54 +284,31 @@ public class BuilderTest {
 
     @Test
     void addAssetQuantity() {
-        UnsignedTx tx = builder.addAssetQuantity("admin@test", "asset#domain", "12.345").build();
+        UnsignedTx tx = builder.addAssetQuantity("asset#domain", "12.345").build();
         assertTrue(checkProtoTx(proto(tx)));
     }
 
     @Test
-    void addAssetQuantityValidAccountsAndAssets() {
+    void addAssetQuantityValidAssets() {
         for (String domain: validDomains) {
             for (String name: validNameSymbols1) {
-                UnsignedTx tx = builder.addAssetQuantity(name + "@" + domain, name + "#" + domain, "100").build();
+                UnsignedTx tx = builder.addAssetQuantity(name + "#" + domain, "100").build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
     }
 
     @Test
-    void addAssetQuantityInvalidAccountDomain() {
-        for (String domain: invalidDomains) {
-            ModelTransactionBuilder builder = base().addAssetQuantity("admin@" + domain, "asset#test", "10");
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
-    }
-
-    @Test
     void addAssetQuantityInvalidAssetDomain() {
         for (String domain: invalidDomains) {
-            ModelTransactionBuilder builder = base().addAssetQuantity("admin@test", "asset#" + domain, "10");
+            ModelTransactionBuilder builder = base().addAssetQuantity("asset#" + domain, "10");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
 
     @Test
     void addAssetZeroQuantity() {
-        ModelTransactionBuilder builder = base().addAssetQuantity("admin@test", "asset#domain", "0");
-        assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    @Test
-    void addAssetQuantityInvalidAccountName() {
-        for (String accountName: invalidNameSymbols1) {
-            String accountId = accountName + "@test";
-            ModelTransactionBuilder builder = base().addAssetQuantity(accountId, "asset#domain", "10");
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
-    }
-
-    @Test
-    void addAssetQuantityEmptyAccount() {
-        ModelTransactionBuilder builder = base().addAssetQuantity("", "asset#test", "10");
+        ModelTransactionBuilder builder = base().addAssetQuantity("asset#domain", "0");
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
@@ -339,21 +316,21 @@ public class BuilderTest {
     void addAssetQuantityInvalidAssetName() {
         for (String assetName: invalidNameSymbols1) {
             String assetId = assetName + "#test";
-            ModelTransactionBuilder builder = base().addAssetQuantity("account@test", assetId, "10");
+            ModelTransactionBuilder builder = base().addAssetQuantity(assetId, "10");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
 
     @Test
     void addAssetQuantityEmptyAsset() {
-        ModelTransactionBuilder builder = base().addAssetQuantity("account@test", "", "10");
+        ModelTransactionBuilder builder = base().addAssetQuantity("", "10");
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
     @Test
     void addAssetQuantityInvalidAmount() {
         for (String amount: new String[]{"", "-12", "-13.45", "chars", "chars10"}) {
-            ModelTransactionBuilder builder = base().addAssetQuantity("account@test", "asset#test", amount);
+            ModelTransactionBuilder builder = base().addAssetQuantity("asset#test", amount);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }

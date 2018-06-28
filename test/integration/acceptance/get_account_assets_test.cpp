@@ -31,8 +31,7 @@ class GetAccountAssets : public AcceptanceFixture {
 
   /// Create command for adding assets
   auto addAssets() {
-    return complete(
-        AcceptanceFixture::baseTx().addAssetQuantity(kUserId, kAsset, "1"));
+    return complete(AcceptanceFixture::baseTx().addAssetQuantity(kAsset, "1"));
   }
 
   /// Create command for removing assets
