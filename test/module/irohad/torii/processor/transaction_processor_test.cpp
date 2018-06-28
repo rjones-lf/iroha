@@ -176,6 +176,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
 
   prop_notifier.get_subscriber().on_next(proposal);
   prop_notifier.get_subscriber().on_completed();
+
+  // empty transactions errors - all txs are valid
   verified_prop_notifier.get_subscriber().on_next(
       std::make_pair(proposal, iroha::validation::TransactionsErrors{}));
 
@@ -237,6 +239,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
 
   prop_notifier.get_subscriber().on_next(proposal);
   prop_notifier.get_subscriber().on_completed();
+
+  // empty transactions errors - all txs are valid
   verified_prop_notifier.get_subscriber().on_next(
       std::make_pair(proposal, iroha::validation::TransactionsErrors{}));
 
@@ -253,14 +257,14 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   validateStatuses<shared_model::interface::CommittedTxResponse>(txs);
 }
 
-// TODO: rework the test
 /**
  * @given transaction processor
  * @when transactions compose proposal which is sent to peer
  * communication service @and some transactions became part of block, while some
- * were not committed
- * @then for every transaction from block COMMIT status is returned @and for
- * every transaction not from block STATEFUL_INVALID_STATUS was returned
+ * were not committed, failing stateful validation
+ * @then for every transaction from block COMMIT status is returned @and
+ * for every transaction, which failed stateful validation, STATEFUL_FAIL status
+ * is returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
   std::vector<shared_model::proto::Transaction> block_txs;
@@ -271,9 +275,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
         status_builder.notReceived().txHash(tx.hash()).build();
   }
 
-  std::vector<shared_model::proto::Transaction>
-      invalid_txs;  // transactions will be stateful invalid if appeared
-                    // in proposal but didn't appear in block
+  std::vector<shared_model::proto::Transaction> invalid_txs;
+
   for (size_t i = block_size; i < proposal_size; i++) {
     auto &&tx = TestTransactionBuilder().createdTime(i).build();
     invalid_txs.push_back(tx);
@@ -303,8 +306,16 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
 
   prop_notifier.get_subscriber().on_next(proposal);
   prop_notifier.get_subscriber().on_completed();
+
+  // trigger the verified event with txs, which we want to fail, as errors
+  auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
+      TestProposalBuilder().transactions(block_txs).build());
+  auto txs_errors = iroha::validation::TransactionsErrors{};
+  for (size_t i = 0; i < invalid_txs.size(); ++i) {
+    txs_errors.push_back(std::make_pair("", invalid_txs[i].hash()));
+  }
   verified_prop_notifier.get_subscriber().on_next(
-      std::make_pair(proposal, iroha::validation::TransactionsErrors{}));
+      std::make_pair(verified_proposal, txs_errors));
 
   auto block = TestBlockBuilder().transactions(block_txs).build();
 
