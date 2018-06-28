@@ -81,3 +81,8 @@ set_target_properties(SOCI::postgresql PROPERTIES
     IMPORTED_LOCATION "${SOCI_postgresql_PLUGIN}"
     INTERFACE_LINK_LIBRARIES pq
     )
+
+if(ENABLE_LIBS_PACKAGING)
+  add_install_step_for_lib(${SOCI_LIBRARY})
+  add_install_step_for_lib(${SOCI_postgresql_PLUGIN})
+endif()
