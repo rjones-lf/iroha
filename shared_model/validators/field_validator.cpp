@@ -250,24 +250,6 @@ namespace shared_model {
       }
     }
 
-    void FieldValidator::validateRolePermissions(
-        ReasonsGroupType &reason,
-        const interface::RolePermissionSet &permissions) const {
-      if (permissions.none()) {
-        reason.second.push_back(
-            "Permission set should contain at least one permission");
-      }
-    }
-
-    void FieldValidator::validateGrantablePermissions(
-        ReasonsGroupType &reason,
-        const interface::GrantablePermissionSet &permissions) const {
-      if (permissions.none()) {
-        reason.second.push_back(
-            "Permission set should contain at least one permission");
-      }
-    }
-
     void FieldValidator::validateQuorum(
         ReasonsGroupType &reason,
         const interface::types::QuorumType &quorum) const {

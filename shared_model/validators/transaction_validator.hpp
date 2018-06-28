@@ -118,7 +118,6 @@ namespace shared_model {
         addInvalidCommand(reason, "CreateRole");
 
         validator_.validateRoleId(reason, cr.roleName());
-        validator_.validateRolePermissions(reason, cr.rolePermissions());
 
         return reason;
       }
