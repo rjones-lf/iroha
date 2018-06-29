@@ -43,32 +43,22 @@ def mergePullRequest() {
 // - at least 2 "approved and NO "changes_requested" in reviews
 // - e-mail of the commit does not match Jenkins user who launched this build
 def checkMergeAcceptance() {
-	def approvalsRequired = 2
-	def gitCommitterEmail = sh(script: 'git --no-pager show -s --format=\'%ae\'', returnStdout: true).trim()
-	wrap([$class: 'BuildUser']) {
-		jenkinsCommitterEmail = env.BUILD_USER_EMAIL
-	}
+	def approvalsRequired = 0
 	// fill the map of user:review_status
   getPullRequestReviewers()
   pullRequestReviewers.each{ user, review_status -> 
   	if (review_status == GithubPRStatus.APPROVED.toString()) {
-  		approvalsRequired -= 1
+  		approvalsRequired += 1
   	}
   	else if (review_status == GithubPRStatus.CHANGES_REQUESTED.toString()) {
   		return false
   	}
   }
-	if (approvalsRequired > 0) {
+	if (approvalsRequired < 2) {
 		sh "echo 'Merge failed. Get more PR approvals before merging'"
 		return false
 	}
-	else if (gitCommitterEmail != jenkinsCommitterEmail) {
-		sh "echo 'Merge failed. Email of the commit does not match Jenkins user'"
-		return false
-	}
-	else {
-		return true
-	}
+	return true
 }
 
 // returns merge method based on target branch (squash&merge vs merge)
