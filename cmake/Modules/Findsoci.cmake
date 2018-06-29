@@ -76,6 +76,7 @@ endif ()
 set_target_properties(SOCI::core PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${SOCI_INCLUDE_DIRS}"
     IMPORTED_LOCATION "${SOCI_LIBRARY}"
+    INTERFACE_LINK_LIBRARIES dl
     )
 
 set_target_properties(SOCI::postgresql PROPERTIES

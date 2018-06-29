@@ -202,7 +202,7 @@ RUN set -e; \
         -DWITH_POSTGRESQL=ON \
         -DWITH_SQLITE3=OFF \
         -H/tmp/soci/src \
-        -B/tmp/soci/build; \
+        -B/tmp/soci/build \
         -DCMAKE_PREFIX_PATH="/opt/dependencies/libpq" \
         -DCMAKE_INSTALL_PREFIX=/opt/dependencies/soci; \
     cmake --build /tmp/soci/build --target install; \
