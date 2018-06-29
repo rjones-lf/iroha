@@ -214,7 +214,7 @@ namespace torii {
 
     log_->debug("StatusStream waiting finish, hash: {}", request_hash->hex());
 
-    if (not(*finished)) {
+    if (not*finished) {
       resp = cache_->findItem(shared_model::crypto::Hash(request.tx_hash()));
       if (not resp) {
         log_->warn("StatusStream request processing timeout, hash: {}",
@@ -235,7 +235,7 @@ namespace torii {
         cv->wait_for(lock, 2 * proposal_delay_);
 
         /// status can be in the cache if it was finalized before we subscribed
-        if (not(*finished)) {
+        if (not*finished) {
           log_->debug("Transaction {} still not finished", request_hash->hex());
           resp =
               cache_->findItem(shared_model::crypto::Hash(request.tx_hash()));

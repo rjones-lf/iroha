@@ -55,12 +55,12 @@ namespace iroha {
                      proposal_and_errors) {
             // notify about failed txs
             auto errors = proposal_and_errors->second;
+            std::lock_guard<std::mutex> lock(notifier_mutex_);
             for (const auto &tx_error : errors) {
               log_->info(
                   "on stateful validation failed: {} with error message '{}'",
                   tx_error.second.hex(),
                   tx_error.first);
-              std::lock_guard<std::mutex> lock(notifier_mutex_);
               notifier_.get_subscriber().on_next(
                   shared_model::builder::DefaultTransactionStatusBuilder()
                       .statefulValidationFailed()
@@ -73,7 +73,6 @@ namespace iroha {
                  proposal_and_errors->first->transactions()) {
               log_->info("on stateful validation success: {}",
                          successful_tx.hash().hex());
-              std::lock_guard<std::mutex> lock(notifier_mutex_);
               notifier_.get_subscriber().on_next(
                   shared_model::builder::DefaultTransactionStatusBuilder()
                       .statefulValidationSuccess()
@@ -87,18 +86,19 @@ namespace iroha {
         blocks.subscribe(
             // on next
             [this](auto model_block) {
-              for (const auto &tx : model_block->transactions()) {
-                current_txs_hashes_.emplace_back(tx.hash());
-              }
+              std::transform(model_block->transactions().begin(),
+                             model_block->transactions().end(),
+                             std::back_inserter(current_txs_hashes_),
+                             [](const auto &tx) { return tx.hash(); });
             },
             // on complete
             [this]() {
               if (current_txs_hashes_.empty()) {
-                log_->error("there are no transactions to be committed");
+                log_->info("there are no transactions to be committed");
               } else {
+                std::lock_guard<std::mutex> lock(notifier_mutex_);
                 for (auto &tx_hash : current_txs_hashes_) {
                   log_->info("on commit committed: {}", tx_hash.hex());
-                  std::lock_guard<std::mutex> lock(notifier_mutex_);
                   notifier_.get_subscriber().on_next(
                       shared_model::builder::DefaultTransactionStatusBuilder()
                           .committed()

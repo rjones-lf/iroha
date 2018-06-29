@@ -1176,7 +1176,6 @@ namespace iroha {
     // Amount is formed wrong
     if (command.amount().precision() > asset.value()->precision()) {
       return makeCommandError(
-
                "is valid command validation failed: account "
                + command.srcAccountId()
                + ",  precision of command's "
