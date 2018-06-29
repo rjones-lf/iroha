@@ -489,6 +489,7 @@ pipeline {
             }
             cleanup {
               sh "sudo rm -rf /tmp/${env.GIT_COMMIT}"
+              cleanWs()
             }
           }
         }
