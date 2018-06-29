@@ -128,7 +128,7 @@ test('ModelTransactionBuilder tests', function (t) {
   validPermissions.set(iroha.Role_kAddPeer)
   validPermissions.set(iroha.Role_kAddAssetQty)
 
-  t.throws(() => correctTx.createRole('new_user_role', emptyPerm).build(), /Permission set should contain at least one permission/, 'Should throw Permission set should contain at least one permission')
+  t.doesNotThrow(() => correctTx.createRole('new_user_role', emptyPerm).build(), null, 'Should not throw any exceptions')
   t.throws(() => correctTx.createRole('', validPermissions).build(), /Wrongly formed role_id, passed value: ''/, 'Should throw Wrongly formed role_id')
   t.throws(() => correctTx.createRole('@@@', validPermissions).build(), /Wrongly formed role_id, passed value: '@@@'/, 'Should throw Wrongly formed role_id')
   t.throws(() => correctTx.createRole('new_user_role', '').build(), /argument 3 of type 'shared_model::interface::RolePermissionSet/, 'Should throw ...argument 3 of type...')

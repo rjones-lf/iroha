@@ -819,11 +819,8 @@ public class BuilderTest {
 
     @Test
     void createRoleEmptyPermissions() {
-        RolePermissionSet permissions = new RolePermissionSet();
-
-        ModelTransactionBuilder builder = new ModelTransactionBuilder();
-        builder.createRole("new_role", permissions);
-        assertThrows(IllegalArgumentException.class, builder::build);
+        UnsignedTx tx = builder.createRole("new_role", new RolePermissionSet()).build();
+        assertTrue(checkProtoTx(proto(tx)));
     }
 
     /* ====================== DetachRole Tests ====================== */

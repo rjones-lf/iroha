@@ -532,8 +532,8 @@ class BuilderTest(unittest.TestCase):
         self.base().createRole(name, iroha.RolePermissionSet([iroha.Role_kReceive, iroha.Role_kGetRoles])).build()
 
   def test_create_role_with_empty_permissions(self):
-    with self.assertRaises(ValueError):
-      self.base().createRole("user", iroha.RolePermissionSet([])).build()
+    tx = self.builder.createRole("user", iroha.RolePermissionSet([])).build()
+    self.assertTrue(self.check_proto_tx(self.proto(tx)))
 
   # ====================== DetachRole Tests ======================
 
