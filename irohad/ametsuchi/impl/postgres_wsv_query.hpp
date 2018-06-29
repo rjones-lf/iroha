@@ -20,8 +20,6 @@
 
 #include "ametsuchi/wsv_query.hpp"
 
-#include <pqxx/connection>
-
 #include "postgres_wsv_common.hpp"
 
 namespace iroha {
