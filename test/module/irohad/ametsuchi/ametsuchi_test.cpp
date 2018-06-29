@@ -193,8 +193,6 @@ TEST_F(AmetsuchiTest, SampleTest) {
              user1id = "userone@ru", user2id = "usertwo@ru", assetname = "rub",
              assetid = "rub#ru";
 
-  std::string account, src_account, dest_account, asset;
-
   // Block 1
   auto block1 = TestBlockBuilder()
                     .transactions(std::vector<shared_model::proto::Transaction>(
@@ -290,8 +288,6 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
              user3id = "userthree@domain", asset1name = "assetone",
              asset2name = "assettwo", asset1id = "assetone#domain",
              asset2id = "assettwo#domain";
-
-  std::string account, src_account, dest_account, asset;
 
   // 1st tx
   auto txn1 =

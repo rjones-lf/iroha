@@ -209,7 +209,6 @@ namespace shared_model {
 
       /**
        * Subtracts asset quantity
-       * @param account_id - account id to subtract asset quantity from
        * @param asset_id - asset id to subtract
        * @param amount - amount to subtract
        * @return builder with subtract asset quantity command appended

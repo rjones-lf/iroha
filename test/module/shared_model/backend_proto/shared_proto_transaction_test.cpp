@@ -42,12 +42,11 @@ iroha::protocol::Transaction generateEmptyTransaction() {
 
 /**
  * Helper function to generate AddAssetQuantityCommand
- * @param account_id account id to add asset quantity to
  * @param asset_id asset id to add value to
  * @return AddAssetQuantity protocol command
  */
 iroha::protocol::AddAssetQuantity generateAddAssetQuantity(
-    std::string account_id, std::string asset_id) {
+    std::string asset_id) {
   iroha::protocol::AddAssetQuantity command;
 
   command.set_asset_id(asset_id);
@@ -65,12 +64,11 @@ iroha::protocol::AddAssetQuantity generateAddAssetQuantity(
 TEST(ProtoTransaction, Builder) {
   iroha::protocol::Transaction proto_tx = generateEmptyTransaction();
 
-  std::string account_id = "admin@test", asset_id = "coin#test",
-              amount = "10.00";
+  std::string asset_id = "coin#test", amount = "10.00";
   auto command =
       proto_tx.mutable_payload()->add_commands()->mutable_add_asset_quantity();
 
-  command->CopyFrom(generateAddAssetQuantity(account_id, asset_id));
+  command->CopyFrom(generateAddAssetQuantity(asset_id));
 
   auto keypair =
       shared_model::crypto::CryptoProviderEd25519Sha3::generateKeypair();
