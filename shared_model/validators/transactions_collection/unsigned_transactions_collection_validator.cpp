@@ -30,7 +30,9 @@ namespace shared_model {
       }
 
       Answer res;
-      res.addReason(std::move(reason));
+      if (not reason.second.empty()) {
+        res.addReason(std::move(reason));
+      }
       return res;
     }
 
