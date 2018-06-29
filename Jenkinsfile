@@ -426,7 +426,7 @@ pipeline {
               expression { return REST_PR_CONDITIONS_SATISFIED == "true" }
             }
           }
-          agent { label 'x86_64_aws_build' }
+          agent { label 'x86_64_aws_bindings' }
           environment {
             JAVA_HOME = '/usr/lib/jvm/java-8-oracle'
           }
