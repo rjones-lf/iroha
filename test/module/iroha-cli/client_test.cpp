@@ -195,6 +195,18 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
   ASSERT_NE(res.answer.error_message().size(), 0);
 }
 
+/**
+ * This test checks, if tx, which did not pass stateful validation, is shown to
+ * client with a corresponding status and error message
+ *
+ * @given real client and mocked pcs
+ * @when sending a stateless valid transaction @and failing it at stateful
+ * validation
+ * @then ensure that client sees:
+ *       - status of this transaction as STATEFUL_VALIDATION_FAILED
+ *       - error message is the same, as the one with which transaction was
+ *         failed
+ */
 TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
   iroha_cli::CliClient client(ip, port);
   EXPECT_CALL(*pcsMock, propagate_transaction(_)).Times(1);
@@ -218,10 +230,7 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
 
   // fail the tx
   auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
-      TestProposalBuilder()
-          .height(0)
-          .createdTime(iroha::time::now())
-          .build());
+      TestProposalBuilder().height(0).createdTime(iroha::time::now()).build());
   verified_prop_notifier.get_subscriber().on_next(
       std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
           std::make_pair(verified_proposal,
