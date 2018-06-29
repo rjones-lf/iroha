@@ -44,8 +44,9 @@ if (NOT soci_FOUND)
                       -G${CMAKE_GENERATOR}
                       -H${EP_PREFIX}/src/soci_soci/src
                       -B${EP_PREFIX}/src/soci_soci-build
-                      -DCMAKE_INCLUDE_PATH="${postgres_INCLUDE_DIR}\\\\\\\\\;${pq_INCLUDE_DIR}"
+                      -DCMAKE_INCLUDE_PATH=${pq_INCLUDE_DIR}
                       -DCMAKE_LIBRARY_PATH=${pq_INCLUDE_DIR}
+                      -DCMAKE_PROGRAM_PATH=${pg_config_EXECUTABLE_DIR}
                       -DCMAKE_CXX_FLAGS=-I${postgres_INCLUDE_DIR}
                       -DCMAKE_INSTALL_PREFIX=${EP_PREFIX}
                       -DWITH_BOOST=ON
@@ -67,6 +68,7 @@ if (NOT soci_FOUND)
   set(SOCI_postgresql_PLUGIN ${binary_dir}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}soci_postgresql${CMAKE_STATIC_LIBRARY_SUFFIX})
   file(MAKE_DIRECTORY ${EP_PREFIX}/include/soci)
 
+  add_dependencies(soci_soci pq)
   add_dependencies(SOCI::core soci_soci)
   add_dependencies(SOCI::postgresql soci_soci)
 endif ()
