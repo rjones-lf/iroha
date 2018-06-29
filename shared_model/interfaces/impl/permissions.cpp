@@ -57,13 +57,27 @@ PermissionSet<Perm>::PermissionSet(std::initializer_list<Perm> list) {
 }
 
 template <typename Perm>
-size_t PermissionSet<Perm>::size() const {
-  return Parent::size();
+PermissionSet<Perm>::PermissionSet(const std::string &bitstring) : Parent(bitstring) {}
+
+template <typename Perm>
+std::string PermissionSet<Perm>::toBitstring() const {
+  return Parent::to_string();
+}
+
+template <typename Perm>
+size_t PermissionSet<Perm>::size() {
+  return bit(Perm::COUNT);
 }
 
 template <typename Perm>
 PermissionSet<Perm> &PermissionSet<Perm>::reset() {
   Parent::reset();
+  return *this;
+}
+
+template <typename Perm>
+PermissionSet<Perm> &PermissionSet<Perm>::set() {
+  Parent::set();
   return *this;
 }
 

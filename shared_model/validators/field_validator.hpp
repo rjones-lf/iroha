@@ -116,14 +116,6 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::permissions::Grantable &permission) const;
 
-      void validateRolePermissions(
-          ReasonsGroupType &reason,
-          const interface::RolePermissionSet &permissions) const;
-
-      void validateGrantablePermissions(
-          ReasonsGroupType &reason,
-          const interface::GrantablePermissionSet &permissions) const;
-
       void validateQuorum(ReasonsGroupType &reason,
                           const interface::types::QuorumType &quorum) const;
 
