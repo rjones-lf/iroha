@@ -132,9 +132,10 @@ namespace shared_model {
         const interface::types::AddressType &address) const {
       if (not std::regex_match(address, peer_address_regex_)) {
         auto message =
-            (boost::format("Wrongly formed peer address, passed value: '%s'. "
-                           "Field should have valid IPv4 format or be a valid "
-                           "hostname following RFC1123 specification")
+            (boost::format(
+                 "Wrongly formed peer address, passed value: '%s'. "
+                 "Field should have 'host:port' format where host is IPv4 or a "
+                 "hostname following RFC1035, RFC1123 specifications")
              % address)
                 .str();
         reason.second.push_back(std::move(message));
