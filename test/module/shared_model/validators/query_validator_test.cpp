@@ -73,11 +73,9 @@ TEST_F(QueryValidatorTest, StatelessValidTest) {
  */
 TEST_F(QueryValidatorTest, UnsetQuery) {
   iroha::protocol::Query qry;
-  auto *meta = new iroha::protocol::QueryPayloadMeta();
-  meta->set_created_time(created_time);
-  meta->set_creator_account_id(account_id);
-  meta->set_query_counter(counter);
-  qry.mutable_payload()->set_allocated_meta(meta);
+  qry.mutable_payload()->mutable_meta()->set_created_time(created_time);
+  qry.mutable_payload()->mutable_meta()->set_creator_account_id(account_id);
+  qry.mutable_payload()->mutable_meta()->set_query_counter(counter);
   auto answer = query_validator.validate(proto::Query(qry));
   ASSERT_TRUE(answer.hasErrors());
 }
