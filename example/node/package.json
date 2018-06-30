@@ -14,7 +14,7 @@
   },
   "homepage": "https://github.com/hyperledger/iroha#readme",
   "dependencies": {
-    "iroha-lib": "^0.0.1"
+    "iroha-lib": "^0.1.4"
   },
   "main": "index.js"
 }

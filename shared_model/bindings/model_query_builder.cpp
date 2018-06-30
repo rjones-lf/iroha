@@ -17,6 +17,10 @@
 
 #include "bindings/model_query_builder.hpp"
 
+#ifdef EMSCRIPTEN
+#include "utils/emscripten_helpers.hpp"
+#endif
+
 namespace shared_model {
   namespace bindings {
     ModelQueryBuilder::ModelQueryBuilder() {
@@ -92,5 +96,17 @@ namespace shared_model {
     proto::UnsignedWrapper<proto::Query> ModelQueryBuilder::build() {
       return builder_.build();
     }
+
+  #ifdef EMSCRIPTEN
+    ModelQueryBuilder ModelQueryBuilder::createdTime(
+        const emscripten::val &created_time) {
+      return this->createdTime(convert_from_js_to_uint64(created_time));
+    }
+
+    ModelQueryBuilder ModelQueryBuilder::queryCounter(
+        const emscripten::val &query_counter) {
+      return this->queryCounter(convert_from_js_to_uint64(query_counter));
+    }
+  #endif
   }  // namespace bindings
 }  // namespace shared_model

@@ -81,6 +81,17 @@ namespace shared_model {
 
       interface::types::TimestampType createdTime() const override;
 
+    #ifdef EMSCRIPTEN
+     public:
+      const std::string getQueryCounter() {
+        return std::to_string(this->queryCounter());
+      }
+
+      const std::string getCreatedTime() {
+        return std::to_string(this->createdTime());
+      }
+    #endif
+
      private:
       /// lazy variant shortcut
       template <typename T>

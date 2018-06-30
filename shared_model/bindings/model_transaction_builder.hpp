@@ -18,6 +18,10 @@
 #ifndef IROHA_SHARED_MODEL_MODEL_TRANSACTION_BUILDER_HPP
 #define IROHA_SHARED_MODEL_MODEL_TRANSACTION_BUILDER_HPP
 
+#ifdef EMSCRIPTEN
+#include <emscripten/val.h>
+#endif
+
 #include "builders/protobuf/builder_templates/transaction_template.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
 #include "cryptography/public_key.hpp"
@@ -242,6 +246,12 @@ namespace shared_model {
        * @return wrapper on unsigned transaction
        */
       proto::UnsignedWrapper<proto::Transaction> build();
+
+    #ifdef EMSCRIPTEN
+     public:
+        ModelTransactionBuilder createdTime(
+          const emscripten::val &created_time);
+    #endif
 
      private:
       proto::TemplateTransactionBuilder<

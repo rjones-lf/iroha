@@ -27,7 +27,10 @@ if (NOT IROHA_ROOT_PROJECT)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
   if (NOT MSVC)
     set(CMAKE_CXX_FLAGS "-std=c++14 -Wall")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+    # We need to set the same flags as in cache vars from Emscripten.cmake
+    if (NOT EMSCRIPTEN)
+      set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+    endif()
     set(CMAKE_CXX_FLAGS_DEBUG "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
   endif ()
 

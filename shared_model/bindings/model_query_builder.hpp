@@ -18,6 +18,10 @@
 #ifndef IROHA_SHARED_MODEL_MODEL_QUERY_BUILDER_HPP
 #define IROHA_SHARED_MODEL_MODEL_QUERY_BUILDER_HPP
 
+#ifdef EMSCRIPTEN
+#include <emscripten/val.h>
+#endif
+
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
 
@@ -146,6 +150,15 @@ namespace shared_model {
        * @return wrapper on unsigned query
        */
       proto::UnsignedWrapper<proto::Query> build();
+
+    #ifdef EMSCRIPTEN
+     public:
+        ModelQueryBuilder createdTime(
+            const emscripten::val &created_time);
+
+        ModelQueryBuilder queryCounter(
+            const emscripten::val &query_counter);
+    #endif
 
      private:
       proto::TemplateQueryBuilder<

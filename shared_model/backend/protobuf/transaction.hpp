@@ -90,6 +90,13 @@ namespace shared_model {
         return payload_.quorum();
       }
 
+    #ifdef EMSCRIPTEN
+     public:
+      const std::string getCreatedTime() {
+        return std::to_string(this->createdTime());
+      }
+    #endif
+
      private:
       // lazy
       template <typename T>

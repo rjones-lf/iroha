@@ -43,7 +43,6 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
     
     set_source_files_properties(bindings.i PROPERTIES CPLUSPLUS ON)
     set_property(GLOBAL PROPERTY SWIG_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
-
     add_dependencies(bindings swig)
 
     macro (myswig_add_library target)
@@ -132,4 +131,23 @@ if (SWIG_NODE)
     target_include_directories(${SWIG_MODULE_irohanode_REAL_NAME} PUBLIC
         ${NODEJS_INCLUDE_DIRS}
         )
+endif()
+
+if (EMSCRIPTEN)
+    set_target_properties(bindings PROPERTIES SUFFIX ".bc")
+
+    add_executable(irohalib
+        model_crypto_embind.cpp
+        model_query_builder_embind.cpp
+        model_transaction_builder_embind.cpp
+    )
+
+    # Bind embind glue with compiled LLVM bytecode to get final js file  
+    set_target_properties(irohalib 
+        PROPERTIES LINK_FLAGS "--bind \
+                              --memory-init-file 0 \
+                              -s MODULARIZE_INSTANCE=1 \
+                              -s DISABLE_EXCEPTION_CATCHING=0 \
+                              -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"AsciiToString\"]'")
+    target_link_libraries(irohalib bindings)
 endif()

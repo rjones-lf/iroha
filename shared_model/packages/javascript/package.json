@@ -1,16 +1,12 @@
 {
   "name": "iroha-lib",
-  "version": "0.0.4",
+  "version": "0.1.7",
   "description": "Modern JavaScript library for Iroha. https://github.com/hyperledger/iroha",
   "main": "index.js",
   "scripts": {
-    "prepare": "sh scripts/generate-protobuf.sh",
+    "prepare": "sh scripts/prepare.sh",
     "prepublishOnly": "npm ls",
-    "install": "node-pre-gyp install --fallback-to-build",
-    "test": "tape tests/**/*.js | tap-dot",
-    "build": "node-pre-gyp build",
-    "rebuild": "node-pre-gyp rebuild",
-    "build-and-test": "npm install --build-from-source=iroha-lib && npm run test"
+    "test": "tape tests/**/*.js | tap-spec"
   },
   "repository": {
     "type": "git",
@@ -35,40 +31,18 @@
     "url": "https://github.com/hyperledger/iroha/issues"
   },
   "homepage": "https://github.com/hyperledger/iroha#readme",
-  "os": [
-    "darwin",
-    "linux"
-  ],
-  "cpu": [
-    "x64"
-  ],
   "dependencies": {
     "google-protobuf": "^3.5.0",
-    "grpc": "^1.9.1",
-    "node-pre-gyp": "^0.6.39",
-    "npm": "^5.8.0",
-    "run": "^1.4.0",
-    "test": "^0.6.0"
+    "grpc": "^1.11.3"
   },
   "devDependencies": {
     "grpc-tools": "^1.6.6",
-    "node-gyp": "^3.6.2",
-    "node-pre-gyp-github": "^1.3.1",
-    "tap-dot": "^1.0.5",
+    "standard": "^11.0.1",
+    "tap-spec": "^4.1.1",
     "tape": "^4.9.0"
   },
-  "bundledDependencies": [
-    "node-pre-gyp"
-  ],
   "directories": {
     "example": "example",
     "lib": "lib"
-  },
-  "binary": {
-    "module_name": "iroha_lib",
-    "module_path": "lib/{node_abi}-{platform}-{arch}-{libc}/",
-    "host": "https://github.com/hyperledger/iroha-javascript/releases/download/",
-    "remote_path": "{version}",
-    "package_name": "{node_abi}-{platform}-{arch}-{libc}.tar.gz"
   }
 }
