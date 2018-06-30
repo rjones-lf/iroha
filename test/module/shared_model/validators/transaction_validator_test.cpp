@@ -117,7 +117,7 @@ TEST_F(TransactionValidatorTest, UnsetCommand) {
   tx.mutable_payload()->set_creator_account_id(account_id);
   tx.mutable_payload()->set_created_time(created_time);
   auto answer = transaction_validator.validate(proto::Transaction(tx));
-  tx.mutable_payload()->add_commands()->clear_add_asset_quantity();
+  tx.mutable_payload()->add_commands();
   ASSERT_TRUE(answer.hasErrors());
 }
 
