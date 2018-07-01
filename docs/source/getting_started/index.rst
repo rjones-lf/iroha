@@ -227,7 +227,7 @@ Creating the First Query
 
 Now let's check if ``coolcoins`` were successfully transferred from
 ``admin@test`` to ``test@test``. Choose ``2. New query
-(qry)``. ``7. Get Account's Assets (get_acc_ast)`` can help you to check if
+(qry)``. ``8. Get Account's Assets (get_acc_ast)`` can help you to check if
 ``test@test`` now has ``coolcoin``. Form a query in a similar way you did with
 commands you did with commands and ``1. Send to Iroha peer (send)``. Now you
 can see information about how many ``coolcoin`` does ``test@test`` have.
@@ -265,8 +265,8 @@ accordingly). Send a transaction to Iroha peer as you did before. Well, it says
 
 `Your transaction was accepted for processing`. Does it mean that we
 had successfully cheated Iroha? Let's try to see transaction's status. Choose
-``3. New transaction status request (st)`` and enter transaction's hash which
-you can get in the console after the previous command. Let's send it to Iroha.
+``3. New transaction status request (st)``,``1. Get status of transaction (get_tx_info)``  and enter transaction's hash which
+you can get in the console after the previous command. Let's send it to Iroha by choosing ``1. Send to Iroha peer (send)``.
 It replies with:
 
 .. code::
