@@ -20,7 +20,9 @@ namespace shared_model {
       ReasonsGroupType reason;
       reason.first = "Transaction list";
       for (const auto &tx : transactions) {
-        auto answer = ParentType::transaction_validator_.validate(tx);
+        auto answer =
+            SignedTransactionsCollectionValidator::transaction_validator_
+                .validate(tx);
         if (answer.hasErrors()) {
           auto message =
               (boost::format("Tx %s : %s") % tx.hash().hex() % answer.reason())

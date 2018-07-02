@@ -18,12 +18,9 @@ namespace shared_model {
     template <typename TransactionValidator>
     class UnsignedTransactionsCollectionValidator
         : public TransactionsCollectionValidator<TransactionValidator> {
-     private:
-      using ParentType = TransactionsCollectionValidator<TransactionValidator>;
-
      public:
-      using ParentType::ParentType;
-
+      using TransactionsCollectionValidator<
+          TransactionValidator>::TransactionsCollectionValidator;
       Answer validate(const interface::types::TransactionsForwardCollectionType
                           &transactions) const override;
     };
