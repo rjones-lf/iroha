@@ -137,18 +137,22 @@ class CommandValidateExecuteTest : public ::testing::Test {
             });
   }
 
-  iroha::ExecutionResult validateAndExecute(
+  iroha::CommandResult validateAndExecute(
       const std::unique_ptr<shared_model::interface::Command> &command) {
     validator->setCreatorAccountId(creator->accountId());
 
-    if (boost::apply_visitor(*validator, command->get())) {
-      return execute(command);
-    }
-    return expected::makeError(
-        iroha::ExecutionError{"Validate", "validation of a command failed"});
+    return boost::apply_visitor(*validator, command->get())
+        .match(
+            [this, &command](expected::Value<void> &) -> iroha::CommandResult {
+              return execute(command);
+            },
+            [](const auto &) -> iroha::CommandResult {
+              return expected::makeError(iroha::CommandError{
+                  "Validate", "validation of a command failed"});
+            });
   }
 
-  iroha::ExecutionResult execute(
+  iroha::CommandResult execute(
       const std::unique_ptr<shared_model::interface::Command> &command) {
     executor->setCreatorAccountId(creator->accountId());
     return boost::apply_visitor(*executor, command->get());
@@ -160,9 +164,9 @@ class CommandValidateExecuteTest : public ::testing::Test {
   }
 
   /// Returns error from result or throws error in case result contains value
-  iroha::ExecutionResult::ErrorType checkErrorCase(
-      const iroha::ExecutionResult &result) {
-    return boost::get<iroha::ExecutionResult::ErrorType>(result);
+  iroha::CommandResult::ErrorType checkErrorCase(
+      const iroha::CommandResult &result) {
+    return boost::get<iroha::CommandResult::ErrorType>(result);
   }
 
   const std::string kMaxAmountStr =
@@ -1381,6 +1385,11 @@ TEST_F(TransferAssetTest, InvalidWhenNoPermissions) {
   EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->srcAccountId()))
       .WillOnce(Return(boost::none));
 
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
+      .WillOnce(Return(role_permissions));
+
   ASSERT_TRUE(err(validateAndExecute(command)));
 }
 
@@ -1398,11 +1407,6 @@ TEST_F(TransferAssetTest, InvalidWhenNoDestAccount) {
 
   EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
       .WillOnce(Return(boost::none));
-
-  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->srcAccountId()))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
-      .WillOnce(Return(role_permissions));
 
   ASSERT_TRUE(err(validateAndExecute(command)));
 }
@@ -1668,6 +1672,11 @@ TEST_F(TransferAssetTest, InvalidWhenCreatorHasNoPermission) {
       kAccountId, kAdminId, kAssetId, kDescription, kAmount));
   auto transfer_asset =
       getConcreteCommand<shared_model::interface::TransferAsset>(command);
+
+  EXPECT_CALL(*wsv_query, getAccountRoles(transfer_asset->destAccountId()))
+      .WillOnce(Return(admin_roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
+      .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*wsv_query,
               hasAccountGrantablePermission(

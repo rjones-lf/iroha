@@ -29,7 +29,7 @@ AcceptanceFixture::AcceptanceFixture()
             status.get()));
       }),
       initial_time(iroha::time::now()),
-      tx_counter(0){}
+      nonce_counter(0) {}
 
 TestUnsignedTransactionBuilder AcceptanceFixture::createUser(
     const std::string &user, const shared_model::crypto::PublicKey &key) {
@@ -94,7 +94,7 @@ auto AcceptanceFixture::baseTx()
 
 auto AcceptanceFixture::baseQry()
     -> decltype(base(TestUnsignedQueryBuilder())) {
-  return base(TestUnsignedQueryBuilder());
+  return base(TestUnsignedQueryBuilder()).queryCounter(nonce_counter);
 }
 
 template <typename Builder>
@@ -119,5 +119,5 @@ template auto AcceptanceFixture::complete<TestUnsignedQueryBuilder>(
             .finish());
 
 iroha::time::time_t AcceptanceFixture::getUniqueTime() {
-  return initial_time + tx_counter++;
+  return initial_time + nonce_counter++;
 }

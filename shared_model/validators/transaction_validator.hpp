@@ -22,7 +22,7 @@
 #include <boost/variant/static_visitor.hpp>
 
 #include "backend/protobuf/permissions.hpp"
-#include "interfaces/transaction.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -118,7 +118,14 @@ namespace shared_model {
         addInvalidCommand(reason, "CreateRole");
 
         validator_.validateRoleId(reason, cr.roleName());
-        validator_.validateRolePermissions(reason, cr.rolePermissions());
+        for (auto i : static_cast<const shared_model::proto::CreateRole &>(cr)
+                          .getTransport()
+                          .create_role()
+                          .permissions()) {
+          validator_.validateRolePermission(
+              reason,
+              static_cast<shared_model::interface::permissions::Role>(i));
+        }
 
         return reason;
       }

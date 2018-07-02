@@ -95,7 +95,7 @@ namespace iroha_cli {
       DescriptionMap description_map_;
 
       // Parameters descriptions of queries
-      ParamsMap query_params_descriptions_;
+      ParamsMap query_params_map_;
 
       /**
        * Parse line for query
@@ -127,7 +127,7 @@ namespace iroha_cli {
       std::unordered_map<QueryName, ResultHandler> result_handlers_;
 
       // Parameters descriptions of result commands
-      ParamsMap result_params_descriptions_;
+      ParamsMap result_params_map_;
 
       /**
        * Parse line for result

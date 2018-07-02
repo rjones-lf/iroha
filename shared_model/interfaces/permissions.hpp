@@ -9,7 +9,7 @@
 #include <bitset>
 #include <functional>
 #include <initializer_list>
-#include <vector>
+#include <string>
 
 namespace shared_model {
   namespace interface {
@@ -73,8 +73,6 @@ namespace shared_model {
       };
 
       Role permissionFor(Grantable);
-      // TODO(@l4l) 19/06/18: Remove with IR-1452
-      Grantable permissionOf(Role);
 
       /**
        * @param perm protocol object for checking
@@ -98,9 +96,13 @@ namespace shared_model {
      public:
       PermissionSet();
       PermissionSet(std::initializer_list<Perm> list);
+      explicit PermissionSet(const std::string &bitstring);
 
-      size_t size() const;
+      std::string toBitstring() const;
+
+      static size_t size();
       PermissionSet &reset();
+      PermissionSet &set();
       PermissionSet &set(Perm p);
       PermissionSet &unset(Perm p);
 

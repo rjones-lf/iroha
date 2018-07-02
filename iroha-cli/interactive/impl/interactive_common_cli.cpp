@@ -14,8 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <numeric>
 #include <utility>
 
+#include "common/types.hpp"
 #include "interactive/interactive_common_cli.hpp"
 #include "parser/parser.hpp"
 
@@ -35,12 +37,23 @@ namespace iroha_cli {
                                  int default_port) {
       return {
           // commonParamsMap
-          {SAVE_CODE, {"Path to save json file"}},
+          {SAVE_CODE, makeParamsDescription({"Path to save json file"})},
           {SEND_CODE,
-           {"Peer address (" + default_ip + ")",
-            "Peer port (" + std::to_string(default_port) + ")"}}
+           {ParamData({"Peer address", default_ip}),
+            ParamData({"Peer port", std::to_string(default_port)})}}
           // commonParamsMap
       };
+    }
+
+    ParamsDescription makeParamsDescription(
+        const std::vector<std::string> &params) {
+      return std::accumulate(params.begin(),
+                             params.end(),
+                             ParamsDescription{},
+                             [](auto &&acc, auto &el) {
+                               acc.push_back(ParamData({el, {}}));
+                               return std::forward<decltype(acc)>(acc);
+                             });
     }
 
     void handleEmptyCommand() {
@@ -57,16 +70,15 @@ namespace iroha_cli {
 
     bool isBackOption(std::string line) {
       auto command = parser::parseFirstCommand(std::move(line));
-      return command
-          and (*command == "0" or *command == BACK_CODE);
+      return command and (*command == "0" or *command == BACK_CODE);
     }
 
     void printCommandParameters(std::string &command,
-                                std::vector<std::string> parameters) {
+                                const ParamsDescription &parameters) {
       std::cout << "Run " << command
                 << " with following parameters: " << std::endl;
       std::for_each(parameters.begin(), parameters.end(), [](auto el) {
-        std::cout << "  " << el << std::endl;
+        std::cout << "  " << el.message << std::endl;
       });
     }
 
@@ -87,12 +99,20 @@ namespace iroha_cli {
       return line;
     }
 
+    boost::optional<std::string> promptString(const ParamData &param) {
+      std::string message = param.message;
+      if (not param.cache.empty()) {
+        message += " (" + param.cache + ")";
+      }
+      return promptString(message);
+    }
+
     void printEnd() {
       std::cout << "--------------------" << std::endl;
     }
 
     boost::optional<std::pair<std::string, uint16_t>> parseIrohaPeerParams(
-        ParamsDescription params,
+        std::vector<std::string> params,
         const std::string &default_ip,
         int default_port) {
       const auto &address = params[0].empty() ? default_ip : params[0];
@@ -107,9 +127,8 @@ namespace iroha_cli {
     }
 
     boost::optional<std::vector<std::string>> parseParams(
-        std::string line, std::string command_name, ParamsMap params_map) {
-      auto params_description =
-          findInHandlerMap(command_name, std::move(params_map));
+        std::string line, std::string command_name, ParamsMap &params_map) {
+      auto params_description = findInHandlerMap(command_name, params_map);
       if (not params_description) {
         // Report no params where found for this command
         std::cout << "Command params not found" << std::endl;
@@ -122,11 +141,18 @@ namespace iroha_cli {
         std::vector<std::string> params;
         std::for_each(params_description.value().begin(),
                       params_description.value().end(),
-                      [&params](auto param) {
-                        auto val = promptString(param);
-                        if (val and not val.value().empty()) {
-                          params.push_back(val.value());
-                        }
+                      [&params](auto &param) {
+                        using namespace iroha;
+                        promptString(param) | [&](auto &val) {
+                          if (not val.empty()) {
+                            // Update input cache
+                            param.cache = val;
+                            params.push_back(val);
+                          } else if (not param.cache.empty()) {
+                            // Input cache is not empty, use cached value
+                            params.push_back(param.cache);
+                          }
+                        };
                       });
         if (params.size() != params_description.value().size()) {
           // Wrong params passed

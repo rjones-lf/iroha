@@ -1,12 +1,14 @@
 properties([parameters([
-  booleanParam(defaultValue: true, description: 'Build `iroha`', name: 'iroha'),
-  booleanParam(defaultValue: false, description: 'Build `bindings`', name: 'bindings'),
   booleanParam(defaultValue: true, description: '', name: 'x86_64_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv7_linux'),
   booleanParam(defaultValue: false, description: '', name: 'armv8_linux'),
-  booleanParam(defaultValue: true, description: '', name: 'x86_64_macos'),
+  booleanParam(defaultValue: false, description: '', name: 'x86_64_macos'),
   booleanParam(defaultValue: false, description: '', name: 'x86_64_win'),
+  booleanParam(defaultValue: false, description: 'Build coverage', name: 'coverage'),
+  booleanParam(defaultValue: false, description: 'Merge this PR to target after success build', name: 'merge_pr'),
+  booleanParam(defaultValue: false, description: 'Scheduled nightly build', name: 'nightly'),
   choice(choices: 'Debug\nRelease', description: 'Iroha build type', name: 'build_type'),
+  booleanParam(defaultValue: false, description: 'Build `bindings`', name: 'bindings'),
   booleanParam(defaultValue: false, description: 'Build Java bindings', name: 'JavaBindings'),
   choice(choices: 'Release\nDebug', description: 'Java bindings build type', name: 'JBBuildType'),
   booleanParam(defaultValue: false, description: 'Build Python bindings', name: 'PythonBindings'),
@@ -19,7 +21,6 @@ properties([parameters([
   booleanParam(defaultValue: false, description: 'Build docs', name: 'Doxygen'),
   string(defaultValue: '4', description: 'How much parallelism should we exploit. "4" is optimal for machines with modest amount of memory and at least 4 cores', name: 'PARALLELISM')])])
 
-
 pipeline {
   environment {
     CCACHE_DIR = '/opt/.ccache'
@@ -28,12 +29,21 @@ pipeline {
     SONAR_TOKEN = credentials('SONAR_TOKEN')
     GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/iroha"
     DOCKER_REGISTRY_BASENAME = "hyperledger/iroha"
+    JENKINS_DOCKER_IMAGE_DIR = '/tmp/docker'
+    GIT_COMMITER_EMAIL = ''
 
     IROHA_NETWORK = "iroha-0${CHANGE_ID}-${GIT_COMMIT}-${BUILD_NUMBER}"
     IROHA_POSTGRES_HOST = "pg-0${CHANGE_ID}-${GIT_COMMIT}-${BUILD_NUMBER}"
     IROHA_POSTGRES_USER = "pguser${GIT_COMMIT}"
     IROHA_POSTGRES_PASSWORD = "${GIT_COMMIT}"
     IROHA_POSTGRES_PORT = 5432
+
+    DOCKER_AGENT_IMAGE = ''
+    DOCKER_IMAGE_FILE = ''
+    WORKSPACE_PATH = ''
+    MERGE_CONDITIONS_SATISFIED = ''
+    REST_PR_CONDITIONS_SATISFIED = ''
+    INITIAL_COMMIT_PR = ''
   }
 
   options {
@@ -43,10 +53,13 @@ pipeline {
 
   agent any
   stages {
-    stage ('Stop same job builds') {
+    stage ('Pre-build') {
       agent { label 'master' }
       steps {
         script {
+          load ".jenkinsci/enums.groovy"
+          def preBuildRoutine = load ".jenkinsci/pre-build.groovy"
+          preBuildRoutine.prepare()
           if (GIT_LOCAL_BRANCH != "develop") {
             def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
             builds.cancelSameJobBuilds()
@@ -54,41 +67,37 @@ pipeline {
         }
       }
     }
-    stage('Build Debug') {
-      when {
-        allOf {
-          expression { params.build_type == 'Debug' }
-          expression { return params.iroha }
-        }
-      }
+    stage('Build') {
       parallel {
         stage ('x86_64_linux') {
           when {
             beforeAgent true
-            expression { return params.x86_64_linux }
+            anyOf {
+              expression { return params.x86_64_linux }
+              expression { return MERGE_CONDITIONS_SATISFIED == "true" }
+            }
           }
-          agent { label 'x86_64' }
+          agent { label 'x86_64_aws_build' }
           steps {
             script {
-              debugBuild = load ".jenkinsci/debug-build.groovy"
-              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (coverage.selectedBranchesCoverage(['develop', 'master'])) {
-                debugBuild.doDebugBuild(true)
+              def debugBuild = load ".jenkinsci/debug-build.groovy"
+              def coverage = load ".jenkinsci/build-coverage.groovy"
+              if (params.build_type == 'Debug') {
+                debugBuild.doDebugBuild(coverage.checkCoverageConditions())
               }
-              else {
-                debugBuild.doDebugBuild()
-              }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
-                releaseBuild = load ".jenkinsci/release-build.groovy"
+              if (params.build_type == 'Release') {
+                def releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
             }
           }
           post {
-            always {
+            success {
               script {
-                post = load ".jenkinsci/linux-post-step.groovy"
-                post.linuxPostStep()
+                if (params.build_type == 'Release') {
+                  def post = load ".jenkinsci/post-step.groovy"
+                  post.postStep()
+                }
               }
             }
           }
@@ -96,30 +105,31 @@ pipeline {
         stage('armv7_linux') {
           when {
             beforeAgent true
-            expression { return params.armv7_linux }
+            anyOf {
+              expression { return params.armv7_linux }
+              // expression { return MERGE_CONDITIONS_SATISFIED == "true" }
+            }
           }
           agent { label 'armv7' }
           steps {
             script {
-              debugBuild = load ".jenkinsci/debug-build.groovy"
-              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && !params.armv8_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
-                debugBuild.doDebugBuild(true)
-              }
-              else {
+              if (params.build_type == 'Debug') {
+                def debugBuild = load ".jenkinsci/debug-build.groovy"
                 debugBuild.doDebugBuild()
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
-                releaseBuild = load ".jenkinsci/release-build.groovy"
+              else {
+                def releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
             }
           }
           post {
-            always {
+            success {
               script {
-                post = load ".jenkinsci/linux-post-step.groovy"
-                post.linuxPostStep()
+                if (params.build_type == 'Release') {
+                  def post = load ".jenkinsci/post-step.groovy"
+                  post.postStep()
+                }
               }
             }
           }
@@ -127,201 +137,31 @@ pipeline {
         stage('armv8_linux') {
           when {
             beforeAgent true
-            expression { return params.armv8_linux }
+            anyOf {
+              expression { return params.armv8_linux }
+              // expression { return MERGE_CONDITIONS_SATISFIED == "true" }
+            }
           }
           agent { label 'armv8' }
           steps {
             script {
-              debugBuild = load ".jenkinsci/debug-build.groovy"
-              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
-                debugBuild.doDebugBuild(true)
-              }
-              else {
+              if ( params.build_type == 'Debug') {
+                def debugBuild = load ".jenkinsci/debug-build.groovy"
                 debugBuild.doDebugBuild()
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
-                releaseBuild = load ".jenkinsci/release-build.groovy"
+              else {
+                def releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
             }
           }
           post {
-            always {
+            success {
               script {
-                post = load ".jenkinsci/linux-post-step.groovy"
-                post.linuxPostStep()
-              }
-            }
-          }
-        }
-        stage('x86_64_macos'){
-          when {
-            beforeAgent true
-            expression { return params.x86_64_macos }
-          }
-          agent { label 'mac' }
-          steps {
-            script {
-              def coverageEnabled = false
-              def cmakeOptions = ""
-              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
-                coverageEnabled = true
-                cmakeOptions = " -DCOVERAGE=ON "
-              }
-              def scmVars = checkout scm
-              env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
-              env.IROHA_HOME = "/opt/iroha"
-              env.IROHA_BUILD = "${env.IROHA_HOME}/build"
-
-              sh """
-                ccache --version
-                ccache --show-stats
-                ccache --zero-stats
-                ccache --max-size=5G
-              """
-              sh """
-                cmake \
-                  -DTESTING=ON \
-                  -H. \
-                  -Bbuild \
-                  -DCMAKE_BUILD_TYPE=${params.build_type} \
-                  -DIROHA_VERSION=${env.IROHA_VERSION} \
-                  ${cmakeOptions}
-              """
-              sh "cmake --build build -- -j${params.PARALLELISM}"
-              sh "ccache --show-stats"
-              if ( coverageEnabled ) {
-                sh "cmake --build build --target coverage.init.info"
-              }
-              sh """
-                export IROHA_POSTGRES_PASSWORD=${IROHA_POSTGRES_PASSWORD}; \
-                export IROHA_POSTGRES_USER=${IROHA_POSTGRES_USER}; \
-                mkdir -p /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}; \
-                initdb -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ -U ${IROHA_POSTGRES_USER} --pwfile=<(echo ${IROHA_POSTGRES_PASSWORD}); \
-                pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ -o '-p 5433' -l /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/events.log start; \
-                psql -h localhost -d postgres -p 5433 -U ${IROHA_POSTGRES_USER} --file=<(echo create database ${IROHA_POSTGRES_USER};)
-              """
-              def testExitCode = sh(script: """cd build && IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 ctest --output-on-failure """, returnStatus: true)
-              if (testExitCode != 0) {
-                currentBuild.result = "UNSTABLE"
-              }
-              if ( coverageEnabled ) {
-                sh "cmake --build build --target cppcheck"
-                // Sonar
-                if (env.CHANGE_ID != null) {
-                  sh """
-                    sonar-scanner \
-                      -Dsonar.github.disableInlineComments \
-                      -Dsonar.github.repository='hyperledger/iroha' \
-                      -Dsonar.analysis.mode=preview \
-                      -Dsonar.login=${SONAR_TOKEN} \
-                      -Dsonar.projectVersion=${BUILD_TAG} \
-                      -Dsonar.github.oauth=${SORABOT_TOKEN}
-                  """
+                if (params.build_type == 'Release') {
+                  def post = load ".jenkinsci/post-step.groovy"
+                  post.postStep()
                 }
-                sh "cmake --build build --target coverage.info"
-                sh "python /usr/local/bin/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
-                cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
-              }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
-                releaseBuild = load ".jenkinsci/mac-release-build.groovy"
-                releaseBuild.doReleaseBuild()
-              }
-            }
-          }
-          post {
-            always {
-              script {
-                timeout(time: 600, unit: "SECONDS") {
-                  try {
-                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
-                      def artifacts = load ".jenkinsci/artifacts.groovy"
-                      def commit = env.GIT_COMMIT
-                      filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
-                    }
-                  }
-                  finally {
-                    cleanWs()
-                    sh """
-                      pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
-                      rm -rf /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/
-                    """
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    stage('Build Release') {
-      when {
-        expression { params.build_type == 'Release' }
-        expression { return params.iroha }
-      }
-      parallel {
-        stage('x86_64_linux') {
-          when {
-            beforeAgent true
-            expression { return params.x86_64_linux }
-          }
-          agent { label 'x86_64' }
-          steps {
-            script {
-              def releaseBuild = load ".jenkinsci/release-build.groovy"
-              releaseBuild.doReleaseBuild()
-            }
-          }
-          post {
-            always {
-              script {
-                post = load ".jenkinsci/linux-post-step.groovy"
-                post.linuxPostStep()
-              }
-            }
-          }
-        }
-        stage('armv7_linux') {
-          when {
-            beforeAgent true
-            expression { return params.armv7_linux }
-          }
-          agent { label 'armv7' }
-          steps {
-            script {
-              def releaseBuild = load ".jenkinsci/release-build.groovy"
-              releaseBuild.doReleaseBuild()
-            }
-          }
-          post {
-            always {
-              script {
-                post = load ".jenkinsci/linux-post-step.groovy"
-                post.linuxPostStep()
-              }
-            }
-          }
-        }
-        stage('armv8_linux') {
-          when {
-            beforeAgent true
-            expression { return params.armv8_linux }
-          }
-          agent { label 'armv8' }
-          steps {
-            script {
-              def releaseBuild = load ".jenkinsci/release-build.groovy"
-              releaseBuild.doReleaseBuild()
-            }
-          }
-          post {
-            always {
-              script {
-                post = load ".jenkinsci/linux-post-step.groovy"
-                post.linuxPostStep()
               }
             }
           }
@@ -329,30 +169,31 @@ pipeline {
         stage('x86_64_macos') {
           when {
             beforeAgent true
-            expression { return params.x86_64_macos }
+            anyOf {
+              expression { return INITIAL_COMMIT_PR == "true" }
+              expression { return MERGE_CONDITIONS_SATISFIED == "true" }
+              expression { return params.x86_64_macos }
+            }
           }
           agent { label 'mac' }
           steps {
             script {
-              def releaseBuild = load ".jenkinsci/mac-release-build.groovy"
-              releaseBuild.doReleaseBuild()
+              if (params.build_type == 'Debug') {
+                def macDebugBuild = load ".jenkinsci/mac-debug-build.groovy"
+                macDebugBuild.doDebugBuild()
+              }
+              else {
+                def macReleaseBuild = load ".jenkinsci/mac-release-build.groovy"
+                macReleaseBuild.doReleaseBuild()
+              }
             }
           }
           post {
-            always {
+            success {
               script {
-                timeout(time: 600, unit: "SECONDS") {
-                  try {
-                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
-                      def artifacts = load ".jenkinsci/artifacts.groovy"
-                      def commit = env.GIT_COMMIT
-                      filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
-                    }
-                  }
-                  finally {
-                    cleanWs()
-                  }
+                if (params.build_type == 'Release') {
+                  def post = load ".jenkinsci/post-step.groovy"
+                  post.macPostStep()
                 }
               }
             }
@@ -360,66 +201,266 @@ pipeline {
         }
       }
     }
-    stage('Build docs') {
+    stage('Pre-Coverage') {
       when {
         beforeAgent true
-        allOf {
-          expression { return params.Doxygen }
-          expression { GIT_LOCAL_BRANCH ==~ /(master|develop)/ }
+        anyOf {
+          expression { params.coverage }  // by request
+          expression { return INITIAL_COMMIT_PR == "true" }
+          expression { return MERGE_CONDITIONS_SATISFIED == "true" }
+          allOf {
+            expression { return params.build_type == 'Debug' }
+            expression { return env.GIT_LOCAL_BRANCH ==~ /master/ }
+          }
         }
       }
-      // build docs on any vacant node. Prefer `x86_64` over
-      // others as nodes are more powerful
-      agent { label 'x86_64 || arm' }
+      agent { label 'x86_64_aws_cov'}
+      options { skipDefaultCheckout() }
       steps {
         script {
-          def doxygen = load ".jenkinsci/doxygen.groovy"
-          docker.image("${env.DOCKER_IMAGE}").inside {
-            def scmVars = checkout scm
-            doxygen.doDoxygen()
+          def coverage = load '.jenkinsci/debug-build.groovy'
+          coverage.doPreCoverageStep()
+        }
+      }
+    }
+    stage('Tests') {
+      when {
+        beforeAgent true
+        expression { return params.build_type == "Debug" }
+      }
+      parallel {
+        stage('x86_64_linux') {
+          when {
+            beforeAgent true
+            anyOf {
+              expression { return params.x86_64_linux }
+              expression { return MERGE_CONDITIONS_SATISFIED == "true" }
+            }
+          }
+          agent { label 'x86_64_aws_test' }
+          options { skipDefaultCheckout() }
+          steps {
+            script {
+              def debugBuild = load ".jenkinsci/debug-build.groovy"
+              def testSelect = load ".jenkinsci/test-launcher.groovy"
+              debugBuild.doTestStep(testSelect.chooseTestType())
+            }
+          }
+          post {
+            cleanup {
+              script {
+                def clean = load ".jenkinsci/docker-cleanup.groovy"
+                clean.doDockerNetworkCleanup()
+              }
+            }
+          }
+        }
+        stage('armv7_linux') {
+          when {
+            beforeAgent true
+            allOf {
+              expression { return params.armv7_linux }
+              // expression { return MERGE_CONDITIONS_SATISFIED == "false" }
+            }
+          }
+          agent { label 'armv7' }
+          options { skipDefaultCheckout() }
+          steps {
+            script {
+              def debugBuild = load ".jenkinsci/debug-build.groovy"
+              def testSelect = load ".jenkinsci/test-launcher.groovy"
+              debugBuild.doTestStep(testSelect.chooseTestType())
+            }
+          }
+          post {
+            cleanup {
+              script {
+                def clean = load ".jenkinsci/docker-cleanup.groovy"
+                clean.doDockerNetworkCleanup()
+              }
+            }
+          }
+        }
+        stage('armv8_linux') {
+          when {
+            beforeAgent true
+            allOf {
+              expression { return params.armv8_linux }
+              // expression { return MERGE_CONDITIONS_SATISFIED == "false" }
+            }
+          }
+          agent { label 'armv8' }
+          options { skipDefaultCheckout() }
+          steps {
+            script {
+              def debugBuild = load ".jenkinsci/debug-build.groovy"
+              def testSelect = load ".jenkinsci/test-launcher.groovy"
+              debugBuild.doTestStep(testSelect.chooseTestType())
+            }
+          }
+          post {
+            cleanup {
+              script {
+                def clean = load ".jenkinsci/docker-cleanup.groovy"
+                clean.doDockerNetworkCleanup()
+              }
+            }
+          }
+        }
+        stage('x86_64_macos') {
+          when {
+            beforeAgent true
+            allOf {
+              expression { return INITIAL_COMMIT_PR == "false" }
+              expression { return MERGE_CONDITIONS_SATISFIED == "false" }
+              expression { return params.x86_64_macos }
+            }
+          }
+          agent { label 'mac' }
+          options { skipDefaultCheckout() }
+          steps {
+            script {
+              def macDebugBuild = load ".jenkinsci/mac-debug-build.groovy"
+              def testSelect = load ".jenkinsci/test-launcher.groovy"
+              macDebugBuild.doTestStep(testSelect.chooseTestType())
+            }
+          }
+          post {
+            cleanup {
+              script {
+                sh "pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ stop"
+              }
+            }
           }
         }
       }
     }
-    stage('Build bindings') {
+    stage('Post-Coverage') {
       when {
         beforeAgent true
-        expression { return params.bindings }
+        anyOf {
+          expression { params.coverage }  // by request
+          expression { return INITIAL_COMMIT_PR == "true" }
+          expression { return MERGE_CONDITIONS_SATISFIED == "true" }
+          allOf {
+            expression { return params.build_type == 'Debug' }
+            expression { return env.GIT_LOCAL_BRANCH ==~ /master/ }
+          }
+        }
       }
       parallel {
-        stage('Linux bindings') {
+        stage('lcov_cobertura') {
+          agent { label 'x86_64_aws_cov' }
+          options { skipDefaultCheckout() }
+          steps {
+            script {
+              def coverage = load '.jenkinsci/debug-build.groovy'
+              coverage.doPostCoverageCoberturaStep()
+            }
+          }
+        }
+        stage('sonarqube') {
+          agent { label 'x86_64_aws_cov' }
+          options { skipDefaultCheckout() }
+          steps {
+            script {
+              def coverage = load '.jenkinsci/debug-build.groovy'
+              coverage.doPostCoverageSonarStep()
+            }
+          }
+        }
+      }
+    }
+    stage ('Build rest') {
+      parallel {
+        stage('linux_release') {
           when {
             beforeAgent true
-            expression { return params.x86_64_linux }
+            anyOf {
+              allOf {
+                expression { return params.x86_64_linux }
+                expression { return params.build_type == 'Debug' }
+                expression { return env.GIT_LOCAL_BRANCH ==~ /(develop|master|trunk)/ }
+              }
+              expression { return MERGE_CONDITIONS_SATISFIED == "true" }
+            }
           }
-          agent { label 'x86_64' }
+          agent { label 'x86_64_aws_build' }
+          options { skipDefaultCheckout() }
+          steps {
+            script {
+              def releaseBuild = load '.jenkinsci/release-build.groovy'
+              releaseBuild.doReleaseBuild()
+            }
+          }
+          post {
+            success {
+              script {
+                if (params.build_type == 'Release') {
+                  def post = load ".jenkinsci/post-step.groovy"
+                  post.postStep()
+                }
+              }
+            }
+          }
+        }
+        stage('docs') {
+          when {
+            beforeAgent true
+            anyOf {
+              expression { return params.Doxygen }
+              expression { return REST_PR_CONDITIONS_SATISFIED == "true" }
+            }
+          }
+          agent { label 'x86_64_aws_docs' }
+          steps {
+            script {
+              def doxygen = load ".jenkinsci/doxygen.groovy"
+              sh "docker load -i ${JENKINS_DOCKER_IMAGE_DIR}/${DOCKER_IMAGE_FILE}"
+              def iC = docker.image("${DOCKER_AGENT_IMAGE}")
+              iC.inside {
+                def scmVars = checkout scm
+                doxygen.doDoxygen()
+              }
+            }
+          }
+        }
+        stage('bindings') {
+          when {
+            beforeAgent true
+            anyOf {
+              expression { return params.bindings }
+              expression { return REST_PR_CONDITIONS_SATISFIED == "true" }
+            }
+          }
+          agent { label 'x86_64_aws_bindings' }
           environment {
-            JAVA_HOME = "/usr/lib/jvm/java-8-oracle"
+            JAVA_HOME = '/usr/lib/jvm/java-8-oracle'
           }
           steps {
             script {
               def bindings = load ".jenkinsci/bindings.groovy"
               def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
               def platform = sh(script: 'uname -m', returnStdout: true).trim()
-              if (params.JavaBindings || params.PythonBindings) {
+              if (params.JavaBindings || params.PythonBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                 def iC = dPullOrBuild.dockerPullOrUpdate(
                   "$platform-develop-build",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
                   "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM])
-                if (params.JavaBindings) {
-                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+                if (params.JavaBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
+                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact --user root") {
                     bindings.doJavaBindings('linux', params.JBBuildType)
                   }
                 }
-                if (params.PythonBindings) {
-                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+                if (params.PythonBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
+                  iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact --user root") {
                     bindings.doPythonBindings('linux', params.PBBuildType)
                   }
                 }
               }
-              if (params.AndroidBindings) {
+              if (params.AndroidBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                 def iC = dPullOrBuild.dockerPullOrUpdate(
                   "android-${params.ABPlatform}-${params.ABBuildType}",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/Dockerfile",
@@ -428,7 +469,7 @@ pipeline {
                   ['PARALLELISM': params.PARALLELISM, 'PLATFORM': params.ABPlatform, 'BUILD_TYPE': params.ABBuildType])
                 sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/entrypoint.sh"
                 sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
-                iC.inside("-v /tmp/${env.GIT_COMMIT}/entrypoint.sh:/entrypoint.sh:ro -v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
+                iC.inside("-v /tmp/${env.GIT_COMMIT}/entrypoint.sh:/entrypoint.sh:ro -v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact --user root") {
                   bindings.doAndroidBindings(params.ABABIVersion)
                 }
               }
@@ -439,39 +480,42 @@ pipeline {
               script {
                 def artifacts = load ".jenkinsci/artifacts.groovy"
                 def commit = env.GIT_COMMIT
-                if (params.JavaBindings) {
+                if (params.JavaBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                   javaBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
                   artifacts.uploadArtifacts(javaBindingsFilePaths, '/iroha/bindings/java')
                 }
-                if (params.PythonBindings) {
+                if (params.PythonBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                   pythonBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
                   artifacts.uploadArtifacts(pythonBindingsFilePaths, '/iroha/bindings/python')
                 }
-                if (params.AndroidBindings) {
+                if (params.AndroidBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                   androidBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/android-bindings-*.zip' ]
                   artifacts.uploadArtifacts(androidBindingsFilePaths, '/iroha/bindings/android')
                 }
               }
             }
             cleanup {
-              sh "rm -rf /tmp/${env.GIT_COMMIT}"
+              sh "sudo rm -rf /tmp/${env.GIT_COMMIT}"
               cleanWs()
             }
           }
         }
-        stage ('Windows bindings') {
+        stage ('windows_bindings') {
           when {
             beforeAgent true
-            expression { return params.x86_64_win }
+            anyOf {
+              expression { return params.x86_64_win }
+              expression { return REST_PR_CONDITIONS_SATISFIED == "true" }
+            }
           }
           agent { label 'win' }
           steps {
             script {
               def bindings = load ".jenkinsci/bindings.groovy"
-              if (params.JavaBindings) {
+              if (params.JavaBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                 bindings.doJavaBindings('windows', params.JBBuildType)
               }
-              if (params.PythonBindings) {
+              if (params.PythonBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                 bindings.doPythonBindings('windows', params.PBBuildType)
               }
             }
@@ -481,20 +525,70 @@ pipeline {
               script {
                 def artifacts = load ".jenkinsci/artifacts.groovy"
                 def commit = env.GIT_COMMIT
-                if (params.JavaBindings) {
+                if (params.JavaBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                   javaBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
                   artifacts.uploadArtifacts(javaBindingsFilePaths, '/iroha/bindings/java')
                 }
-                if (params.PythonBindings) {
+                if (params.PythonBindings || REST_PR_CONDITIONS_SATISFIED == "true") {
                   pythonBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
                   artifacts.uploadArtifacts(pythonBindingsFilePaths, '/iroha/bindings/python')
                 }
               }
             }
-            cleanup {
-              sh "rm -rf /tmp/${env.GIT_COMMIT}"
-              cleanWs()
-            }
+          }
+        }
+      }
+    }
+  }
+  post {
+    success {
+      script {
+        // merge pull request if everything is ok and clean stale docker images stored on EFS
+        if ( params.merge_pr ) {
+          def merge = load ".jenkinsci/github-api.groovy"
+          if (merge.mergePullRequest()) {
+            currentBuild.result = "SUCCESS"
+            def clean = load ".jenkinsci/docker-cleanup.groovy"
+            clean.doStaleDockerImagesCleanup()
+          }
+          else {
+            currentBuild.result = "FAILURE"
+          }
+        }
+      }
+    }
+    cleanup {
+      script {
+        def post = load ".jenkinsci/post-step.groovy"
+        def clean = load ".jenkinsci/docker-cleanup.groovy"
+        def notify = load ".jenkinsci/notifications.groovy"
+        notify.notifyBuildResults()
+
+        if (params.x86_64_linux || params.merge_pr) {
+          node ('x86_64_aws_test') {
+            post.cleanUp()
+          }
+        }
+        if (params.armv8_linux) {
+          node ('armv8') {
+            post.cleanUp()
+            clean.doDockerCleanup()
+          }
+        }
+        if (params.armv7_linux) {
+          node ('armv7') {
+            post.cleanUp()
+            clean.doDockerCleanup()
+          }
+        }
+        if (params.x86_64_macos || params.merge_pr) {
+          node ('mac') {
+            post.macCleanUp()
+          }
+        }
+        if (params.x86_64_win || params.merge_pr) {
+          node ('win') {
+            post.cleanUp()
           }
         }
       }

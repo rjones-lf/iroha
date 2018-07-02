@@ -140,6 +140,17 @@ namespace integration_framework {
         const shared_model::proto::Transaction &tx);
 
     /**
+     * Send transaction to Iroha with awaiting proposal
+     * and without status validation
+     * @param tx - transaction for sending
+     * @param check - callback for checking committed block
+     * @return this
+     */
+    IntegrationTestFramework &sendTxAwait(
+        const shared_model::proto::Transaction &tx,
+        std::function<void(const BlockType &)> check);
+
+    /**
      * Check current status of transaction
      * @param hash - hash of transaction to check
      * @return TransactonResponse object
