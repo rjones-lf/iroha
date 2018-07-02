@@ -289,8 +289,15 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
           .createdTime(iroha::time::now())
           .transactions(txs)
           .build());
-  auto errors = iroha::validation::TransactionsErrors{
-      std::make_pair("stateful validation failed", failed_tx_hash)};
+  auto errors = iroha::validation::TransactionsErrors{std::make_pair(
+      iroha::validation::CommandError{
+          "FailedCommand", "stateful validation failed", true, 2},
+      failed_tx_hash)};
+  auto stringified_error = "Stateful validation error in transaction "
+                           + failed_tx_hash.hex() + ": "
+                           "command 'FailedCommand' with index '2' "
+                           "did not pass verification with error 'stateful "
+                           "validation failed'";
   verified_prop_notifier_.get_subscriber().on_next(
       std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
           std::make_pair(verified_proposal, errors)));
@@ -341,8 +348,7 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   client5.Status(last_tx_request, stful_invalid_response);
   ASSERT_EQ(stful_invalid_response.tx_status(),
             iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED);
-  ASSERT_EQ(stful_invalid_response.error_message(),
-            "stateful validation failed");
+  ASSERT_EQ(stful_invalid_response.error_message(), stringified_error);
 }
 
 /**

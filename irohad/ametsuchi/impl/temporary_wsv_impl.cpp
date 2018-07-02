@@ -38,39 +38,30 @@ namespace iroha {
       transaction_->exec("BEGIN;");
     }
 
-    expected::Result<void, std::string> TemporaryWsvImpl::apply(
+    expected::Result<void, validation::CommandError> TemporaryWsvImpl::apply(
         const shared_model::interface::Transaction &tx,
-        std::function<expected::Result<void, std::string>(
+        std::function<expected::Result<void, validation::CommandError>(
             const shared_model::interface::Transaction &, WsvQuery &)>
             apply_function) {
       const auto &tx_creator = tx.creatorAccountId();
       command_executor_->setCreatorAccountId(tx_creator);
       command_validator_->setCreatorAccountId(tx_creator);
-      auto execute_command =
-          [this](auto &command,
-                 size_t command_index) -> expected::Result<void, std::string> {
+      auto execute_command = [this](auto &command, size_t command_index)
+          -> expected::Result<void, validation::CommandError> {
         // Validate command
-        return expected::map_error<std::string>(
+        return expected::map_error<validation::CommandError>(
                    boost::apply_visitor(*command_validator_, command.get()),
                    [command_index](CommandError &error) {
-                     return (boost::format("stateful validation error: could "
-                                           "not validate "
-                                           "command with index %d: %s")
-                             % command_index % error.toString())
-                         .str();
+                     return validation::CommandError{
+                         error.command_name, error.toString(), true, command_index};
                    })
-            | [this, command_index, &command] {
-                // Execute commands
-                return expected::map_error<std::string>(
-                    boost::apply_visitor(*command_executor_, command.get()),
-                    [command_index](CommandError &error) {
-                      return (boost::format(
-                                  "stateful validation error: could not "
-                                  "execute command with index %d: %s")
-                              % command_index % error.toString())
-                          .str();
-                    });
-              };
+            // Execute commands
+            .and_res(expected::map_error<validation::CommandError>(
+                boost::apply_visitor(*command_executor_, command.get()),
+                [command_index](CommandError &error) {
+                  return validation::CommandError{
+                      error.command_name, error.toString(), true, command_index};
+                }));
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
@@ -78,18 +69,20 @@ namespace iroha {
       return apply_function(tx, *wsv_) |
                  [this,
                   &execute_command,
-                  &tx]() -> expected::Result<void, std::string> {
+                  &tx]() -> expected::Result<void, validation::CommandError> {
         // check transaction's commands validness
         const auto &commands = tx.commands();
-        std::string cmd_error;
+        validation::CommandError cmd_error;
         for (size_t i = 0; i < commands.size(); ++i) {
           // in case of failed command, rollback and return
           if (not execute_command(commands[i], i)
-                      .match([](expected::Value<void> &) { return true; },
-                             [&cmd_error](expected::Error<std::string> &error) {
-                               cmd_error = error.error;
-                               return false;
-                             })) {
+                      .match(
+                          [](expected::Value<void> &) { return true; },
+                          [&cmd_error](expected::Error<validation::CommandError>
+                                           &error) {
+                            cmd_error = error.error;
+                            return false;
+                          })) {
             transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");
             return expected::makeError(cmd_error);
           }

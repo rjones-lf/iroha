@@ -37,18 +37,6 @@ namespace iroha {
 
       logger::Logger log_;
 
-     private:
-      /**
-       * Forms a readable error string from transaction signatures and account
-       * signatories
-       * @param signatures of the transaction
-       * @param signatories of the transaction creator
-       * @return well-formed error string
-       */
-      std::string formSignaturesErrorMsg(
-          const shared_model::interface::types::SignatureRangeType &signatures,
-          const std::vector<shared_model::interface::types::PubkeyType>
-              &signatories);
     };
   }  // namespace validation
 }  // namespace iroha

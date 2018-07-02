@@ -18,10 +18,26 @@ namespace shared_model {
 namespace iroha {
   namespace validation {
 
+    /// Type of command error report
+    struct CommandError {
+      /// Name of the failed command
+      std::string name;
+
+      /// Error, with which the command failed
+      std::string error;
+
+      /// Shows, if transaction has passed initial validation
+      bool tx_passed_initial_validation;
+
+      /// Position of the failed command in transaction
+      size_t index = 0;
+    };
+
     /// Type of per-transaction errors, which appeared during validation
-    /// process; contains errors themselves and transaction hashes
+    /// process; contains names of commands, commands errors themselves,
+    /// commands indices and transaction hashes
     using TransactionsErrors = std::vector<
-        std::pair<std::string, shared_model::interface::types::HashType>>;
+        std::pair<CommandError, shared_model::interface::types::HashType>>;
 
     /// Type of verified proposal and errors appeared in the process; first
     /// dimension of errors vector is transaction, second is error itself with

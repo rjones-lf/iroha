@@ -315,7 +315,10 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
       TestProposalBuilder().transactions(block_txs).build());
   auto txs_errors = iroha::validation::TransactionsErrors{};
   for (size_t i = 0; i < invalid_txs.size(); ++i) {
-    txs_errors.push_back(std::make_pair("", invalid_txs[i].hash()));
+    txs_errors.push_back(std::make_pair(
+        iroha::validation::CommandError{
+            "SomeCommandName", "SomeCommandError", true, i},
+        invalid_txs[i].hash()));
   }
   verified_prop_notifier.get_subscriber().on_next(
       std::make_shared<iroha::validation::VerifiedProposalAndErrors>(

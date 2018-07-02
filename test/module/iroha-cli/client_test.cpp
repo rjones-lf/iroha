@@ -235,7 +235,13 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
       std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
           std::make_pair(verified_proposal,
                          iroha::validation::TransactionsErrors{std::make_pair(
-                             "Failed transaction", tx.hash())})));
+                             iroha::validation::CommandError{
+                                 "CommandName", "CommandError", true, 2},
+                             tx.hash())})));
+  auto stringified_error = "Stateful validation error in transaction "
+                           + tx.hash().hex() + ": command 'CommandName' with "
+                           "index '2' did not pass verification with "
+                           "error 'CommandError'";
 
   // check it really failed with specific message
   auto answer =
@@ -243,7 +249,7 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
           .answer;
   ASSERT_EQ(answer.tx_status(),
             iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED);
-  ASSERT_EQ(answer.error_message(), "Failed transaction");
+  ASSERT_EQ(answer.error_message(), stringified_error);
 }
 
 TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {

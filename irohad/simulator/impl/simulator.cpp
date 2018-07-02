@@ -97,7 +97,9 @@ namespace iroha {
                   &temporaryStorage) {
             auto validated_proposal_and_errors =
                 validator_->validate(proposal, *temporaryStorage.value);
-            notifier_.get_subscriber().on_next(validated_proposal_and_errors);
+            notifier_.get_subscriber().on_next(
+                std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
+                    std::move(validated_proposal_and_errors)));
           },
           [&](expected::Error<std::string> &error) {
             log_->error(error.error);

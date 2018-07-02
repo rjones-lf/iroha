@@ -22,6 +22,7 @@
 
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
+#include "validation/stateful_validator_common.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -52,9 +53,9 @@ namespace iroha {
        * @return void result value, if transaction was successfully applied, and
        * vector of strings with errors of all failed command otherwise
        */
-      virtual expected::Result<void, std::string> apply(
+      virtual expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &,
-          std::function<expected::Result<void, std::string>(
+          std::function<expected::Result<void, validation::CommandError>(
               const shared_model::interface::Transaction &, WsvQuery &)>
               function) = 0;
 

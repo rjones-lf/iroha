@@ -257,15 +257,15 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
   // create a 3-height proposal, but validator returns only a 2-height verified
   // proposal
   auto tx = shared_model::proto::TransactionBuilder()
-      .createdTime(iroha::time::now())
-      .creatorAccountId("admin@ru")
-      .addAssetQuantity("admin@tu", "coin#coin", "1.0")
-      .quorum(1)
-      .build()
-      .signAndAddSignature(
-          shared_model::crypto::DefaultCryptoAlgorithmType::
-          generateKeypair())
-      .finish();
+                .createdTime(iroha::time::now())
+                .creatorAccountId("admin@ru")
+                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .quorum(1)
+                .build()
+                .signAndAddSignature(
+                    shared_model::crypto::DefaultCryptoAlgorithmType::
+                        generateKeypair())
+                .finish();
 
   std::vector<shared_model::proto::Transaction> txs = {tx, tx, tx};
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
@@ -281,8 +281,10 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
           .transactions(std::vector<shared_model::proto::Transaction>{tx})
           .build());
   auto tx_errors = iroha::validation::TransactionsErrors{
-      std::make_pair("", shared_model::crypto::Hash(std::string(32, '0'))),
-      std::make_pair("", shared_model::crypto::Hash(std::string(32, '0')))};
+      std::make_pair(CommandError{"SomeCommand", "SomeError", true},
+                     shared_model::crypto::Hash(std::string(32, '0'))),
+      std::make_pair(CommandError{"SomeCommand", "SomeError", true},
+                     shared_model::crypto::Hash(std::string(32, '0')))};
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
@@ -296,7 +298,7 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
-          std::shared_ptr<shared_model::interface::Proposal>>()));
+                       std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
               sign(A<shared_model::interface::Block &>()))
@@ -307,7 +309,7 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
   auto proposal_wrapper =
       make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
   proposal_wrapper.subscribe([&verified_proposal,
-                                 &tx_errors](auto verified_proposal_) {
+                              &tx_errors](auto verified_proposal_) {
     ASSERT_EQ(verified_proposal_->first->height(), verified_proposal->height());
     ASSERT_EQ(verified_proposal_->first->transactions(),
               verified_proposal->transactions());

@@ -16,11 +16,13 @@
  */
 
 #include "torii/processor/transaction_processor_impl.hpp"
-#include "validation/stateful_validator_common.hpp"
+
+#include <boost/format.hpp>
 
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "validation/stateful_validator_common.hpp"
 
 namespace iroha {
   namespace torii {
@@ -57,15 +59,30 @@ namespace iroha {
             auto errors = proposal_and_errors->second;
             std::lock_guard<std::mutex> lock(notifier_mutex_);
             for (const auto &tx_error : errors) {
-              log_->info(
-                  "on stateful validation failed: {} with error message '{}'",
-                  tx_error.second.hex(),
-                  tx_error.first);
+              std::string error_msg;
+              if (not tx_error.first.tx_passed_initial_validation) {
+                error_msg =
+                    (boost::format("Stateful validation error: transaction %s "
+                                   "did not pass initial verification: "
+                                   "checking '%s', error message '%s'")
+                     % tx_error.second.hex() % tx_error.first.name
+                     % tx_error.first.error)
+                        .str();
+              } else {
+                error_msg = (boost::format(
+                                 "Stateful validation error in transaction %s: "
+                                 "command '%s' with index '%d' did not pass "
+                                 "verification with error '%s'")
+                             % tx_error.second.hex() % tx_error.first.name
+                             % tx_error.first.index % tx_error.first.error)
+                                .str();
+              }
+              log_->info(error_msg);
               notifier_.get_subscriber().on_next(
                   shared_model::builder::DefaultTransactionStatusBuilder()
                       .statefulValidationFailed()
                       .txHash(tx_error.second)
-                      .errorMsg(tx_error.first)
+                      .errorMsg(error_msg)
                       .build());
             }
             // notify about success txs
