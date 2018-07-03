@@ -3,9 +3,9 @@
 def notifyBuildResults() {
 	def mergeMessage = ''
 	def receivers = ''
-	// notify commiter in case of branch commit
-	if ( env.CHANGE_ID == null ) { 
-		sendEmail(buildContent(mergeMessage), "${GIT_COMMITER_EMAIL}")
+	// notify commiter in case of branch commit and sorabot if it is a nightly build
+	if ( env.CHANGE_ID == null ) {
+		sendEmail(buildContent(mergeMessage), params.nightly ? "Bot@soramitsu.co.jp" : "${GIT_COMMITER_EMAIL}")
 		return
 	}
 	// merge commit build results
@@ -26,7 +26,6 @@ def notifyBuildResults() {
 		else {
 			receivers = "${GIT_COMMITER_EMAIL}"
 		}
-
 		sendEmail(buildContent(mergeMessage), receivers)
 	}
 	else {

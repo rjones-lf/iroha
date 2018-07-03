@@ -51,10 +51,11 @@ def doReleaseBuild() {
   sh "mv /tmp/${GIT_COMMIT}-${BUILD_NUMBER}/iroha.deb /tmp/${env.GIT_COMMIT}"
   sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
   iCRelease = docker.build("${DOCKER_REGISTRY_BASENAME}:${GIT_COMMIT}-${BUILD_NUMBER}-release", "--no-cache -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
-  if (env.GIT_LOCAL_BRANCH == 'develop') {
-    withDockerRegistry([ credentialsId: "docker-hub-credentials", url: "" ]) {
-      iCRelease.push("${platform}-develop")
+  withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
+      sh " docker login --username ${login} --password ${password}"
     }
+  if (env.GIT_LOCAL_BRANCH == 'develop') {
+    iCRelease.push("${platform}-develop")
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop",
         ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop",
@@ -75,9 +76,7 @@ def doReleaseBuild() {
     }
   }
   else if (env.GIT_LOCAL_BRANCH == 'master') {
-    withDockerRegistry([ credentialsId: "docker-hub-credentials", url: "" ]) {
-      iCRelease.push("${platform}-latest")
-    }
+    iCRelease.push("${platform}-latest")
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:latest",
         ["${DOCKER_REGISTRY_BASENAME}:x86_64-latest",
@@ -97,6 +96,7 @@ def doReleaseBuild() {
       }
     }
   }
+  sh "docker logout"
   sh "docker rmi ${iCRelease.id}"
 }
 return this

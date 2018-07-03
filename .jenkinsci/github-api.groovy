@@ -31,7 +31,7 @@ def mergePullRequest() {
 				 -w "%{http_code}" https://api.github.com/repos/hyperledger/iroha/pulls/${CHANGE_ID}/merge""", returnStdout: true)
 		def githubResponse = sh(script:"""set +x; printf '%s\n' "${jsonResponseMerge}" | tail -n 1; set -x""", returnStdout: true).trim()
 		jsonResponseMerge = slurper.parseText(jsonResponseMerge)
-		if (jsonResponseMerge.merged != "true" || !(githubResponse ==~ "200")) {
+		if (jsonResponseMerge.merged != "true") {
 			echo jsonResponseMerge.message
 			return false
 		}
