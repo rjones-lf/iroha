@@ -159,6 +159,44 @@ Response Structure
 
     "Transactions", "an array of transactions", "Committed transactions", "{tx1, tx2…}"
 
+Get Pending Transactions
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Purpose
+-------
+
+.. TODO, igor-egorov, 2018-07-03, IR-1356, add a link to MST description here
+
+GetPendingTransactions is used for retrieving a list of pending (not fully signed) multisignature transactions
+or batches of transactions issued by account of query creator.
+
+Request Schema
+--------------
+
+.. code-block:: proto
+
+    message GetPendingTransactions {
+    }
+
+Response Schema
+---------------
+
+.. code-block:: proto
+
+    message TransactionsResponse {
+        repeated Transaction transactions = 1;
+    }
+
+Response Structure
+------------------
+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+        "Transactions", "an array of transactions for given account", "Committed transactions", "{tx1, tx2…}"
+
+
 Get Account Transactions
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
