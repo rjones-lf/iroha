@@ -1054,7 +1054,37 @@ namespace iroha {
       const shared_model::interface::DetachRole &command,
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
-    return {};
+    auto command_name = "DetachRole";
+    auto role_permissions = queries.getRolePermissions(command.roleName());
+    auto account_roles = queries.getAccountRoles(creator_account_id);
+    auto subject_account_roles = queries.getAccountRoles(command.accountId());
+
+    if (not role_permissions or not account_roles
+        or not subject_account_roles) {
+      return makeCommandError(
+          "is valid command validation failed: unable to query roles info",
+          command_name);
+    }
+
+    if (subject_account_roles->size() == 1) {
+      return makeCommandError(
+          "is valid command validation failed: the last role cannot be "
+          "detached",
+          command_name);
+    }
+
+    shared_model::interface::RolePermissionSet account_permissions{};
+    for (const auto &role : *account_roles) {
+      auto permissions = queries.getRolePermissions(role);
+      if (not permissions)
+        continue;
+      account_permissions |= *permissions;
+    }
+
+    return role_permissions->isSubsetOf(account_permissions)
+        ? CommandResult{}
+        : makeCommandError("Account doesn't have proper permissions",
+                           command_name);
   }
 
   CommandResult CommandValidator::isValid(

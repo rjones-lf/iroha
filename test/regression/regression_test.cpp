@@ -88,6 +88,9 @@ TEST(RegressionTest, StateRecovery) {
                 .creatorAccountId("admin@test")
                 .createAccount("user", "test", userKeypair.publicKey())
                 .addAssetQuantity("admin@test", "coin#test", "133.0")
+                .appendRole(
+                    "user@test",
+                    integration_framework::IntegrationTestFramework::kAdminRole)
                 .transferAsset(
                     "admin@test", "user@test", "coin#test", "descrs", "97.8")
                 .quorum(1)

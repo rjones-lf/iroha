@@ -42,6 +42,7 @@ namespace integration_framework {
 
   const std::string IntegrationTestFramework::kDefaultDomain = "test";
   const std::string IntegrationTestFramework::kDefaultRole = "user";
+  const std::string IntegrationTestFramework::kAdminRole = "admin";
   const std::string IntegrationTestFramework::kAdminName = "admin";
   const std::string IntegrationTestFramework::kAdminId = "admin@test";
   const std::string IntegrationTestFramework::kAssetName = "coin";
@@ -80,9 +81,11 @@ namespace integration_framework {
             .creatorAccountId(kAdminId)
             .createdTime(iroha::time::now())
             .addPeer("0.0.0.0:50541", key.publicKey())
-            .createRole(kDefaultRole, all_perms)
+            .createRole(kDefaultRole, {})
+            .createRole(kAdminRole, all_perms)
             .createDomain(kDefaultDomain, kDefaultRole)
             .createAccount(kAdminName, kDefaultDomain, key.publicKey())
+            .appendRole(kAdminId, kAdminRole)
             .createAsset(kAssetName, kDefaultDomain, 1)
             .quorum(1)
             .build()

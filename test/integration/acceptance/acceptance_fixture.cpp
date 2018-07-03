@@ -52,8 +52,6 @@ TestUnsignedTransactionBuilder AcceptanceFixture::createUserWithPerms(
   const auto user_id = user + "@"
       + integration_framework::IntegrationTestFramework::kDefaultDomain;
   return createUser(user, key)
-      .detachRole(user_id,
-                  integration_framework::IntegrationTestFramework::kDefaultRole)
       .createRole(role_id, perms)
       .appendRole(user_id, role_id);
 }

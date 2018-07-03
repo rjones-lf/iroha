@@ -214,6 +214,7 @@ namespace integration_framework {
 
     static const std::string kDefaultDomain;
     static const std::string kDefaultRole;
+    static const std::string kAdminRole;
 
     static const std::string kAdminName;
     static const std::string kAdminId;
