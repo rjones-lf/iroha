@@ -1,20 +1,25 @@
 #!/usr/bin/env groovy
 
 def doReleaseBuild() {
+  def parallelism = params.PARALLELISM
   def manifest = load ".jenkinsci/docker-manifest.groovy"
   // params are always null unless job is started
   // this is the case for the FIRST build only.
   // So just set this to same value as default.
   // This is a known bug. See https://issues.jenkins-ci.org/browse/JENKINS-41929
-  def setter = load ".jenkinsci/set-parallelism.groovy"
-  def parallelism = setter.setParallelism(params.PARALLELISM)
+  if (!parallelism) {
+    parallelism = 4
+  }
+  if (env.NODE_NAME.contains('arm7')) {
+    parallelism = 1
+  }
   def platform = sh(script: 'uname -m', returnStdout: true).trim()
   sh "mkdir /tmp/${env.GIT_COMMIT}-${BUILD_NUMBER} || true"
   iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${platform}-develop-build")
   iC.pull()
   iC.inside(""
     + " -v /tmp/${GIT_COMMIT}-${BUILD_NUMBER}:/tmp/${GIT_COMMIT}"
-    + " -v ${CCACHE_RELEASE_DIR}:${CCACHE_DIR}") {
+    + " -v /var/jenkins/ccache:${CCACHE_RELEASE_DIR}") {
 
     def scmVars = checkout scm
     env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
@@ -31,7 +36,7 @@ def doReleaseBuild() {
       cmake \
         -H. \
         -Bbuild \
-        -DCMAKE_BUILD_TYPE=${params.build_type} \
+        -DCMAKE_BUILD_TYPE=Release \
         -DIROHA_VERSION=${env.IROHA_VERSION} \
         -DPACKAGE_DEB=ON \
         -DPACKAGE_TGZ=ON \
@@ -52,9 +57,7 @@ def doReleaseBuild() {
   sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
   iCRelease = docker.build("${DOCKER_REGISTRY_BASENAME}:${GIT_COMMIT}-${BUILD_NUMBER}-release", "--no-cache -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
   if (env.GIT_LOCAL_BRANCH == 'develop') {
-    withDockerRegistry([ credentialsId: "docker-hub-credentials", url: "" ]) {
-      iCRelease.push("${platform}-develop")
-    }
+    iCRelease.push("${platform}-develop")
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop",
         ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop",
@@ -75,9 +78,7 @@ def doReleaseBuild() {
     }
   }
   else if (env.GIT_LOCAL_BRANCH == 'master') {
-    withDockerRegistry([ credentialsId: "docker-hub-credentials", url: "" ]) {
-      iCRelease.push("${platform}-latest")
-    }
+    iCRelease.push("${platform}-latest")
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:latest",
         ["${DOCKER_REGISTRY_BASENAME}:x86_64-latest",
