@@ -32,6 +32,12 @@ set(URL https://github.com/grpc/grpc)
 set(VERSION bd44e485f69d70ca4095cea92decd98de3892aa6) # Release 1.11.0
 set_target_description(grpc "Remote Procedure Call library" ${URL} ${VERSION})
 
+if (NOT protobuf_FOUND)
+  set(PROTO_DEP -DgRPC_PROTOBUF_PACKAGE_TYPE=CONFIG -DProtobuf_DIR=${EP_PREFIX}/src/google_protobuf-build/lib/cmake/protobuf)
+else ()
+  set(PROTO_DEP -DgRPC_PROTOBUF_PACKAGE_TYPE=MODULE)
+endif ()
+
 if (NOT grpc_FOUND)
   find_package(Git REQUIRED)
   externalproject_add(grpc_grpc
@@ -39,8 +45,7 @@ if (NOT grpc_FOUND)
       GIT_TAG        ${VERSION}
       CMAKE_ARGS
         -DgRPC_PROTOBUF_PROVIDER=package
-        -DgRPC_PROTOBUF_PACKAGE_TYPE=CONFIG
-        -DProtobuf_DIR=${EP_PREFIX}/src/google_protobuf-build/lib/cmake/protobuf
+        ${PROTO_DEP}
         -DgRPC_ZLIB_PROVIDER=package
         -DBUILD_SHARED_LIBS=ON
       BUILD_BYPRODUCTS

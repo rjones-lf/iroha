@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-#include "simulator/impl/simulator.hpp"
+#include <vector>
+
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -27,6 +28,7 @@
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/cryptography/crypto_model_signer_mock.hpp"
+#include "simulator/impl/simulator.hpp"
 
 using namespace iroha;
 using namespace iroha::validation;
@@ -86,7 +88,7 @@ shared_model::proto::Proposal makeProposal(int height) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
-                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .addAssetQuantity("coin#coin", "1.0")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(
@@ -116,7 +118,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
-                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .addAssetQuantity("coin#coin", "1.0")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(
@@ -138,7 +140,9 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
 
   EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(1));
 
-  EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(proposal));
+  EXPECT_CALL(*validator, validate(_, _))
+      .WillOnce(Return(
+          std::make_pair(proposal, iroha::validation::TransactionsErrors{})));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<

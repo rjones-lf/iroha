@@ -10,7 +10,6 @@
 class AcceptanceTest : public AcceptanceFixture {
  public:
   const std::string kAdmin = "admin@test";
-  const std::string kNonUser = "nonuser@test";
 
   const std::function<void(const shared_model::proto::TransactionResponse &)>
       checkStatelessValid = [](auto &status) {
@@ -31,6 +30,20 @@ class AcceptanceTest : public AcceptanceFixture {
       const std::shared_ptr<shared_model::interface::Block> &)>
       checkStatefulValid =
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); };
+
+  template <typename Builder = TestUnsignedTransactionBuilder>
+  auto baseTx() {
+    return Builder()
+        .createdTime(getUniqueTime())
+        .creatorAccountId(kAdmin)
+        .addAssetQuantity(kAsset, "1.0")
+        .quorum(1);
+  }
+
+  template <typename T>
+  auto complete(T t) {
+    return t.build().signAndAddSignature(kAdminKeypair).finish();
+  }
 };
 
 /**
@@ -40,18 +53,11 @@ class AcceptanceTest : public AcceptanceFixture {
  *       AND STATEFUL_VALIDATION_FAILED on that tx
  */
 TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
-  auto tx = TestUnsignedTransactionBuilder()
-                .createdTime(iroha::time::now())
-                .creatorAccountId(kNonUser)
-                .addAssetQuantity(kAdmin, kAsset, "1.0")
-                .quorum(1)
-                .build()
-                .signAndAddSignature(kAdminKeypair)
-                .finish();
-
+  const std::string kNonUser = "nonuser@test";
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessValid)
+      .sendTx(complete(baseTx<>().creatorAccountId(kNonUser)),
+              checkStatelessValid)
       .checkProposal(checkProposal)
       .checkBlock(checkStatefulInvalid)
       .done();
@@ -64,17 +70,11 @@ TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
 TEST_F(AcceptanceTest, Transaction1HourOld) {
-  auto tx = TestUnsignedTransactionBuilder()
-                .createdTime(iroha::time::now(std::chrono::hours(-1)))
-                .creatorAccountId(kAdmin)
-                .addAssetQuantity(kAdmin, kAsset, "1.0")
-                .quorum(1)
-                .build()
-                .signAndAddSignature(kAdminKeypair)
-                .finish();
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessValid)
+      .sendTx(complete(baseTx<>().createdTime(
+                  iroha::time::now(std::chrono::hours(-1)))),
+              checkStatelessValid)
       .skipProposal()
       .checkBlock(checkStatefulValid)
       .done();
@@ -87,18 +87,11 @@ TEST_F(AcceptanceTest, Transaction1HourOld) {
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
 TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
-  auto tx = TestUnsignedTransactionBuilder()
-                .createdTime(iroha::time::now(std::chrono::hours(24)
-                                              - std::chrono::minutes(1)))
-                .creatorAccountId(kAdmin)
-                .addAssetQuantity(kAdmin, kAsset, "1.0")
-                .quorum(1)
-                .build()
-                .signAndAddSignature(kAdminKeypair)
-                .finish();
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessValid)
+      .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
+                  std::chrono::hours(24) - std::chrono::minutes(1)))),
+              checkStatelessValid)
       .skipProposal()
       .checkBlock(checkStatefulValid)
       .done();
@@ -110,18 +103,11 @@ TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
  * @then receive STATELESS_VALIDATION_FAILED status
  */
 TEST_F(AcceptanceTest, TransactionMore24HourOld) {
-  auto tx = TestUnsignedTransactionBuilder()
-                .createdTime(iroha::time::now(std::chrono::hours(24)
-                                              + std::chrono::minutes(1)))
-                .creatorAccountId(kAdmin)
-                .addAssetQuantity(kAdmin, kAsset, "1.0")
-                .quorum(1)
-                .build()
-                .signAndAddSignature(kAdminKeypair)
-                .finish();
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid)
+      .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
+                  std::chrono::hours(24) + std::chrono::minutes(1)))),
+              checkStatelessInvalid)
       .done();
 }
 
@@ -132,19 +118,11 @@ TEST_F(AcceptanceTest, TransactionMore24HourOld) {
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
 TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
-  auto tx = TestUnsignedTransactionBuilder()
-                .createdTime(iroha::time::now(std::chrono::minutes(5)
-                                              - std::chrono::seconds(10)))
-                .creatorAccountId(kAdmin)
-                .addAssetQuantity(kAdmin, kAsset, "1.0")
-                .quorum(1)
-                .build()
-                .signAndAddSignature(kAdminKeypair)
-                .finish();
-
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessValid)
+      .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
+                  std::chrono::minutes(5) - std::chrono::seconds(10)))),
+              checkStatelessValid)
       .skipProposal()
       .checkBlock(checkStatefulValid)
       .done();
@@ -156,17 +134,11 @@ TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
  * @then receive STATELESS_VALIDATION_FAILED status
  */
 TEST_F(AcceptanceTest, Transaction10MinutesFromFuture) {
-  auto tx = TestUnsignedTransactionBuilder()
-                .createdTime(iroha::time::now(std::chrono::minutes(10)))
-                .creatorAccountId(kAdmin)
-                .addAssetQuantity(kAdmin, kAsset, "1.0")
-                .quorum(1)
-                .build()
-                .signAndAddSignature(kAdminKeypair)
-                .finish();
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid)
+      .sendTx(complete(baseTx<>().createdTime(
+                  iroha::time::now(std::chrono::minutes(10)))),
+              checkStatelessInvalid)
       .done();
 }
 
@@ -177,12 +149,7 @@ TEST_F(AcceptanceTest, Transaction10MinutesFromFuture) {
  */
 TEST_F(AcceptanceTest, TransactionEmptyPubKey) {
   shared_model::proto::Transaction tx =
-      TestTransactionBuilder()
-          .createdTime(iroha::time::now())
-          .creatorAccountId(kAdmin)
-          .addAssetQuantity(kAdmin, kAsset, "1.0")
-          .quorum(1)
-          .build();
+      baseTx<TestTransactionBuilder>().build();
 
   auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
       shared_model::crypto::Blob(tx.payload()), kAdminKeypair);
@@ -200,12 +167,7 @@ TEST_F(AcceptanceTest, TransactionEmptyPubKey) {
  */
 TEST_F(AcceptanceTest, TransactionEmptySignedblob) {
   shared_model::proto::Transaction tx =
-      TestTransactionBuilder()
-          .createdTime(iroha::time::now())
-          .creatorAccountId(kAdmin)
-          .addAssetQuantity(kAdmin, kAsset, "1.0")
-          .quorum(1)
-          .build();
+      baseTx<TestTransactionBuilder>().build();
   tx.addSignature(shared_model::crypto::Signed(""), kAdminKeypair.publicKey());
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
@@ -220,12 +182,7 @@ TEST_F(AcceptanceTest, TransactionEmptySignedblob) {
  */
 TEST_F(AcceptanceTest, TransactionInvalidPublicKey) {
   shared_model::proto::Transaction tx =
-      TestTransactionBuilder()
-          .createdTime(iroha::time::now())
-          .creatorAccountId(kAdmin)
-          .addAssetQuantity(kAdmin, kAsset, "1.0")
-          .quorum(1)
-          .build();
+      baseTx<TestTransactionBuilder>().build();
   auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
       shared_model::crypto::Blob(tx.payload()), kAdminKeypair);
   tx.addSignature(
@@ -246,12 +203,7 @@ TEST_F(AcceptanceTest, TransactionInvalidPublicKey) {
  */
 TEST_F(AcceptanceTest, TransactionInvalidSignedBlob) {
   shared_model::proto::Transaction tx =
-      TestTransactionBuilder()
-          .createdTime(iroha::time::now())
-          .creatorAccountId(kAdmin)
-          .addAssetQuantity(kAdmin, kAsset, "1.0")
-          .quorum(1)
-          .build();
+      baseTx<TestTransactionBuilder>().build();
 
   auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
       shared_model::crypto::Blob(tx.payload()), kAdminKeypair);
@@ -274,18 +226,9 @@ TEST_F(AcceptanceTest, TransactionInvalidSignedBlob) {
  *       AND STATEFUL_VALIDATION_SUCCESS on that tx
  */
 TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
-  shared_model::proto::Transaction tx =
-      TestUnsignedTransactionBuilder()
-          .createdTime(iroha::time::now())
-          .creatorAccountId(kAdmin)
-          .addAssetQuantity(kAdmin, kAsset, "1.0")
-          .quorum(1)
-          .build()
-          .signAndAddSignature(kAdminKeypair)
-          .finish();
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessValid)
+      .sendTx(complete(baseTx<>()), checkStatelessValid)
       .skipProposal()
       .checkBlock(checkStatefulValid)
       .done();

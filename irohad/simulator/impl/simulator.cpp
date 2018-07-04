@@ -93,9 +93,15 @@ namespace iroha {
       temporaryStorageResult.match(
           [&](expected::Value<std::unique_ptr<ametsuchi::TemporaryWsv>>
                   &temporaryStorage) {
-            auto validated_proposal =
+            auto validated_proposal_and_errors =
                 validator_->validate(proposal, *temporaryStorage.value);
-            notifier_.get_subscriber().on_next(validated_proposal);
+            // Temporary variant; errors are lost now, but then they are going
+            // to be handled upwards
+            notifier_.get_subscriber().on_next(
+                validated_proposal_and_errors.first);
+            for (const auto &transaction_and_error: validated_proposal_and_errors.second) {
+              log_->error(transaction_and_error.first.second);
+            }
           },
           [&](expected::Error<std::string> &error) {
             log_->error(error.error);
@@ -116,7 +122,7 @@ namespace iroha {
             return static_cast<const shared_model::proto::Transaction &>(tx);
           });
 
-      auto sign_and_send = [this](const auto& any_block){
+      auto sign_and_send = [this](const auto &any_block) {
         crypto_signer_->sign(*any_block);
         block_notifier_.get_subscriber().on_next(any_block);
       };

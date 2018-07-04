@@ -21,7 +21,7 @@ TEST(BlockBuilderTest, BlockWithTransactions) {
           .createdTime(iroha::time::now())
           .creatorAccountId("admin@test")
           .quorum(1)
-          .addAssetQuantity("admin@test", "coin#test", "1.0")
+          .addAssetQuantity("coin#test", "1.0")
           .build();
 
   ASSERT_NO_THROW(

@@ -73,14 +73,10 @@ namespace iroha {
             const std::string &account_id, uint32_t quorum);
 
         std::shared_ptr<Command> generateAddAssetQuantity(
-            const std::string &account_id,
-            const std::string &asset_id,
-            const Amount &amount);
+            const std::string &asset_id, const Amount &amount);
 
         std::shared_ptr<Command> generateSubtractAssetQuantity(
-            const std::string &account_id,
-            const std::string &asset_id,
-            const Amount &amount);
+            const std::string &asset_id, const Amount &amount);
         /**
          * Generate transfer assets from source account_id to target account_id
          * @param src_account_id - source account identifier

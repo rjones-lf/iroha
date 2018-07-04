@@ -242,7 +242,7 @@ Create asset quantity:
 
   tx = tx_builder.creatorAccountId(creator) \
         .createdTime(current_time) \
-        .addAssetQuantity("admin@test", "coin#domain", "1000.2").build()
+        .addAssetQuantity("coin#domain", "1000.2").build()
 
   send_tx(tx, key_pair)
   print_status(tx)

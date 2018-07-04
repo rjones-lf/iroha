@@ -7,29 +7,42 @@ message Header {
   uint64 created_time = 1;
   repeated Signature signatures = 2;
 }
-
- message Transaction {
+message Transaction {
   message Payload {
-    repeated Command commands = 1;
-    string creator_account_id = 2;
-    uint64 created_time = 3;
-    uint32 quorum = 4;
-   }
+    message BatchMeta{
+      enum BatchType{
+        ATOMIC = 0;
+        ORDERED = 1;
+      }
+      BatchType type = 1;
+      repeated bytes tx_hashes = 2;
+    }
+    message ReducedPayload{
+      repeated Command commands = 1;
+      string creator_account_id = 2;
+      uint64 created_time = 3;
+      uint32 quorum = 4;
+    }
+    ReducedPayload reduced_payload = 1;
+    oneof optional_batch_meta{
+      BatchMeta batch = 5;
+    }
+  }
 
   Payload payload = 1;
   repeated Signature signatures = 2;
- }
+}
 
- message Block {
+message Block {
   // everything that should be signed:
   message Payload {
     repeated Transaction transactions = 1;
-    uint32 tx_number = 2; // the number of transactions inside. Maximum 16384 or 2^14
-    uint64 height = 3; // the current block number in a ledger
-    bytes prev_block_hash = 5; // Previous block hash
+    uint32 tx_number = 2;  // the number of transactions inside. Maximum 16384 or 2^14
+    uint64 height = 3;          // the current block number in a ledger
+    bytes prev_block_hash = 5;  // Previous block hash
     uint64 created_time = 6;
-   }
+  }
 
   Payload payload = 1;
   repeated Signature signatures = 2;
- }
+}

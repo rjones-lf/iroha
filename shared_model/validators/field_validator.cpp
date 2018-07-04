@@ -351,6 +351,10 @@ namespace shared_model {
                 .str());
       }
     }
+    void FieldValidator::validateBatchMeta(
+        shared_model::validation::ReasonsGroupType &reason,
+        const interface::BatchMeta &batch_meta)
+        const {}
 
     void FieldValidator::validateHeight(
         shared_model::validation::ReasonsGroupType &reason,
