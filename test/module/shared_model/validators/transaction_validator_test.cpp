@@ -148,11 +148,11 @@ TEST_F(TransactionValidatorTest, StatelessInvalidTest) {
       [&](auto field) {
         // Add new command to transaction
         auto command = payload->mutable_reduced_payload()->add_commands();
-        // Set concrete type for new commandg
+        // Set concrete type for new command
         return command->GetReflection()->MutableMessage(command, field);
       },
       [](auto, auto) {
-        // Note that no fields areg set
+        // Note that no fields are set
       },
       [] {});
 
