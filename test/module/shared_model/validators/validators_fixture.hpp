@@ -160,7 +160,7 @@ class ValidatorsTest : public ::testing::Test {
         void *ptr = new std::shared_ptr<google::protobuf::Message>(mcopy);
         std::shared_ptr<google::protobuf::Message> *m =
             static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
-        iterateContainerRecursive(*m, field_validators, field_op, validator);
+        this->iterateContainerRecursive(*m, field_validators, field_op, validator);
       }
     });
   }
