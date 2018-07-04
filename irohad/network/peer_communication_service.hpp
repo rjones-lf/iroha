@@ -19,6 +19,7 @@
 #define IROHA_PEER_COMMUNICATION_SERVICE_HPP
 
 #include <rxcpp/rx.hpp>
+
 #include "validation/stateful_validator_common.hpp"
 
 namespace shared_model {

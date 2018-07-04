@@ -45,11 +45,6 @@ namespace iroha {
        * @param transaction Transaction to be applied
        * @param function Function that specifies the logic used to apply the
        * transaction
-       * Function parameters:
-       *  - Transaction @see transaction
-       *  - WsvQuery - world state view query interface for temporary storage
-       * Function returns true if the transaction is successfully applied, false
-       * otherwise.
        * @return True if transaction was successfully applied, false otherwise
        */
       virtual expected::Result<void, validation::CommandError> apply(

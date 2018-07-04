@@ -57,7 +57,7 @@ namespace iroha {
                                                      true,
                                                      command_index};
                    })
-            // Execute commands
+            // Execute command
             .and_res(expected::map_error<validation::CommandError>(
                 boost::apply_visitor(*command_executor_, command.get()),
                 [command_index](CommandError &error) {
@@ -81,13 +81,12 @@ namespace iroha {
           // in case of failed command, rollback and return
           auto cmd_is_valid =
               execute_command(commands[i], i)
-                      .match(
-                          [](expected::Value<void> &) { return true; },
-                          [&cmd_error](expected::Error<validation::CommandError>
-                                           &error) {
-                            cmd_error = error.error;
-                            return false;
-                          });
+                  .match([](expected::Value<void> &) { return true; },
+                         [&cmd_error](
+                             expected::Error<validation::CommandError> &error) {
+                           cmd_error = error.error;
+                           return false;
+                         });
           if (not cmd_is_valid) {
             transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");
             return expected::makeError(cmd_error);

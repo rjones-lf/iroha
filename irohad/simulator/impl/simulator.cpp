@@ -96,10 +96,10 @@ namespace iroha {
           [&](expected::Value<std::unique_ptr<ametsuchi::TemporaryWsv>>
                   &temporaryStorage) {
             auto validated_proposal_and_errors =
-                validator_->validate(proposal, *temporaryStorage.value);
-            notifier_.get_subscriber().on_next(
                 std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
-                    std::move(validated_proposal_and_errors)));
+                    validator_->validate(proposal, *temporaryStorage.value));
+            notifier_.get_subscriber().on_next(
+                std::move(validated_proposal_and_errors));
           },
           [&](expected::Error<std::string> &error) {
             log_->error(error.error);

@@ -56,7 +56,7 @@ namespace iroha {
       // notify about stateless success
       pcs_->on_proposal().subscribe([this](auto model_proposal) {
         for (const auto &tx : model_proposal->transactions()) {
-          auto hash = tx.hash();
+          const auto &hash = tx.hash();
           log_->info("on proposal stateless success: {}", hash.hex());
           // different on_next() calls (this one and below) can happen in
           // different threads and we don't expect emitting them concurrently
@@ -74,7 +74,7 @@ namespace iroha {
           [this](std::shared_ptr<validation::VerifiedProposalAndErrors>
                      proposal_and_errors) {
             // notify about failed txs
-            auto errors = proposal_and_errors->second;
+            const auto &errors = proposal_and_errors->second;
             std::lock_guard<std::mutex> lock(notifier_mutex_);
             for (const auto &tx_error : errors) {
               auto error_msg = composeErrorMessage(tx_error);
