@@ -30,7 +30,7 @@ class SubtractAssetQuantity : public AcceptanceFixture {
    * @return built tx that adds kAmount assets to the users
    */
   auto replenish() {
-    return complete(baseTx().addAssetQuantity(kUserId, kAsset, kAmount));
+    return complete(baseTx().addAssetQuantity(kAsset, kAmount));
   }
 
   const std::string kAmount = "1.0";
@@ -50,8 +50,7 @@ TEST_F(SubtractAssetQuantity, Everything) {
       .sendTx(replenish())
       .skipProposal()
       .skipBlock()
-      .sendTx(
-          complete(baseTx().subtractAssetQuantity(kUserId, kAsset, kAmount)))
+      .sendTx(complete(baseTx().subtractAssetQuantity(kAsset, kAmount)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -73,7 +72,7 @@ TEST_F(SubtractAssetQuantity, Overdraft) {
       .sendTx(replenish())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().subtractAssetQuantity(kUserId, kAsset, "2.0")))
+      .sendTx(complete(baseTx().subtractAssetQuantity(kAsset, "2.0")))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
@@ -94,8 +93,7 @@ TEST_F(SubtractAssetQuantity, NoPermissions) {
       .sendTx(replenish())
       .skipProposal()
       .skipBlock()
-      .sendTx(
-          complete(baseTx().subtractAssetQuantity(kUserId, kAsset, kAmount)))
+      .sendTx(complete(baseTx().subtractAssetQuantity(kAsset, kAmount)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
@@ -117,7 +115,7 @@ TEST_F(SubtractAssetQuantity, NegativeAmount) {
       .sendTx(replenish())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().subtractAssetQuantity(kUserId, kAsset, "-1.0")),
+      .sendTx(complete(baseTx().subtractAssetQuantity(kAsset, "-1.0")),
               checkStatelessInvalid);
 }
 
@@ -136,31 +134,8 @@ TEST_F(SubtractAssetQuantity, ZeroAmount) {
       .sendTx(replenish())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().subtractAssetQuantity(kUserId, kAsset, "0.0")),
+      .sendTx(complete(baseTx().subtractAssetQuantity(kAsset, "0.0")),
               checkStatelessInvalid);
-}
-
-/**
- * @given some user with all required permissions
- * @when execute tx with SubtractAssetQuantity command with nonexitent account
- * @then there is an empty proposal
- */
-TEST_F(SubtractAssetQuantity, NonexistentAccount) {
-  std::string nonexistent = "inexist@test";
-  IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .skipBlock()
-      .sendTx(replenish())
-      .skipProposal()
-      .skipBlock()
-      .sendTx(complete(
-          baseTx().subtractAssetQuantity(nonexistent, kAsset, kAmount)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
 }
 
 /**
@@ -178,30 +153,7 @@ TEST_F(SubtractAssetQuantity, NonexistentAsset) {
       .sendTx(replenish())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(
-          baseTx().subtractAssetQuantity(kUserId, nonexistent, kAmount)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
-}
-
-/**
- * @given some user with all required permissions
- * @when execute tx with SubtractAssetQuantity command to some other user
- * @then there is no tx in proposal
- */
-TEST_F(SubtractAssetQuantity, OtherUser) {
-  IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .skipBlock()
-      .sendTx(replenish())
-      .skipProposal()
-      .skipBlock()
-      .sendTx(complete(baseTx().subtractAssetQuantity(
-          IntegrationTestFramework::kAdminId, kAsset, kAmount)))
+      .sendTx(complete(baseTx().subtractAssetQuantity(nonexistent, kAmount)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })

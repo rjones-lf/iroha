@@ -17,13 +17,9 @@
 
 #include "validation/impl/stateful_validator_impl.hpp"
 
-#include <boost/format.hpp>
 #include <boost/range/adaptor/filtered.hpp>
-#include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/adaptor/transformed.hpp>
-#include <string>
 #include "builders/protobuf/proposal.hpp"
-#include "common/result.hpp"
 #include "validation/utils.hpp"
 
 namespace iroha {
@@ -60,7 +56,8 @@ namespace iroha {
       log_ = logger::log("SFV");
     }
 
-    validation::VerifiedProposalAndErrors StatefulValidatorImpl::validate(
+    std::shared_ptr<shared_model::interface::Proposal>
+    StatefulValidatorImpl::validate(
         const shared_model::interface::Proposal &proposal,
         ametsuchi::TemporaryWsv &temporaryWsv) {
       log_->info("transactions in proposal: {}",
@@ -152,7 +149,6 @@ namespace iroha {
           | boost::adaptors::transformed([](auto &tx) {
               return static_cast<const shared_model::proto::Transaction &>(tx);
             });
-
       auto validated_proposal = shared_model::proto::ProposalBuilder()
                                     .createdTime(proposal.createdTime())
                                     .height(proposal.height())
@@ -162,10 +158,8 @@ namespace iroha {
 
       log_->info("transactions in verified proposal: {}",
                  validated_proposal.transactions().size());
-      return std::make_pair(std::make_shared<decltype(validated_proposal)>(
-                                validated_proposal.getTransport()),
-                            transactions_errors_log);
+      return std::make_shared<decltype(validated_proposal)>(
+          validated_proposal.getTransport());
     }
-
   }  // namespace validation
 }  // namespace iroha

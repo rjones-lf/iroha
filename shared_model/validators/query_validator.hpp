@@ -20,7 +20,7 @@
 
 #include <boost/variant/static_visitor.hpp>
 
-#include "interfaces/queries/query.hpp"
+#include "backend/protobuf/queries/proto_query.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -174,9 +174,20 @@ namespace shared_model {
           answer.addReason(std::move(qry_reason));
         }
 
-        auto reason = boost::apply_visitor(query_field_validator_, qry.get());
-        if (not reason.second.empty()) {
+        auto qry_case = static_cast<const shared_model::proto::Query &>(qry)
+                            .getTransport()
+                            .payload()
+                            .query_case();
+        if (iroha::protocol::Query_Payload::QUERY_NOT_SET == qry_case) {
+          ReasonsGroupType reason;
+          reason.first = "Undefined";
+          reason.second.push_back("query is undefined");
           answer.addReason(std::move(reason));
+        } else {
+          auto reason = boost::apply_visitor(query_field_validator_, qry.get());
+          if (not reason.second.empty()) {
+            answer.addReason(std::move(reason));
+          }
         }
 
         return answer;

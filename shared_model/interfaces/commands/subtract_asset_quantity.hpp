@@ -31,10 +31,6 @@ namespace shared_model {
     class SubtractAssetQuantity : public ModelPrimitive<SubtractAssetQuantity> {
      public:
       /**
-       * @return Identity of user to subtract quantity from
-       */
-      virtual const types::AccountIdType &accountId() const = 0;
-      /**
        * @return asset identifier
        */
       virtual const types::AssetIdType &assetId() const = 0;

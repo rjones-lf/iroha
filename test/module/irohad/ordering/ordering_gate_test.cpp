@@ -138,7 +138,7 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
-                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .addAssetQuantity("coin#coin", "1.0")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(
@@ -212,7 +212,7 @@ TEST_F(QueueBehaviorTest, SendManyProposals) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
-                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .addAssetQuantity("coin#coin", "1.0")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(

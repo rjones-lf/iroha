@@ -208,47 +208,33 @@ class BuilderTest(unittest.TestCase):
   # ====================== AddAssetQuantity Tests ======================
 
   def test_add_asset_quantity(self):
-    tx = self.builder.addAssetQuantity("admin@test", "asset#domain", "12.345").build()
+    tx = self.builder.addAssetQuantity("asset#domain", "12.345").build()
     self.assertTrue(self.check_proto_tx(self.proto(tx)))
 
-  def test_add_asset_quantity_valid_account_and_asset(self):
+  def test_add_asset_quantity_valid_asset(self):
     for name in VALID_NAMES_1:
       for domain in VALID_DOMAINS:
-        tx = self.builder.addAssetQuantity("{}@{}".format(name, domain), "{}#{}".format(name, domain), "100").build()
+        tx = self.builder.addAssetQuantity("{}#{}".format(name, domain), "100").build()
         self.assertTrue(self.check_proto_tx(self.proto(tx)))
-
-  def test_add_asset_quantity_invalid_account(self):
-    for name in INVALID_NAMES_1:
-      with self.assertRaises(ValueError):
-        self.base().addAssetQuantity("{}@test".format(name), "coin#test", "10").build()
-
-  def test_add_asset_quantity_invalid_account_domain(self):
-    for domain in INVALID_DOMAINS:
-      with self.assertRaises(ValueError):
-        self.base().addAssetQuantity("admin@{}".format(domain), "coin#test", "10").build()
-
-  def test_add_asset_quantity_empty_account(self):
-    with self.assertRaises(ValueError):
-      self.base().addAssetQuantity("", "coin#test", "10").build()
 
   def test_add_asset_quantity_invalid_asset(self):
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().addAssetQuantity("admin@test", "{}#test".format(name), "10").build()
+        self.base().addAssetQuantity("{}#test".format(name), "10").build()
 
   def test_add_asset_quantity_invalid_asset_domain(self):
     for domain in INVALID_DOMAINS:
       with self.assertRaises(ValueError):
-        self.base().addAssetQuantity("admin@test", "coin#{}".format(domain), "10").build()
+        self.base().addAssetQuantity("coin#{}".format(domain), "10").build()
 
   def test_add_asset_quantity_empty_asset(self):
     with self.assertRaises(ValueError):
-      self.base().addAssetQuantity("admin@test", "", "10").build()
+      self.base().addAssetQuantity("", "10").build()
 
   def test_add_asset_quantity_invalid_amount(self):
     for amount in ["", "-12", "-13.45", "chars", "chars10"]:
       with self.assertRaises(ValueError):
-        self.base().addAssetQuantity("admin@test", "coin#test", amount).build()
+        self.base().addAssetQuantity("coin#test", amount).build()
 
   # ====================== RemoveSignatory Tests ======================
 
@@ -532,8 +518,8 @@ class BuilderTest(unittest.TestCase):
         self.base().createRole(name, iroha.RolePermissionSet([iroha.Role_kReceive, iroha.Role_kGetRoles])).build()
 
   def test_create_role_with_empty_permissions(self):
-    with self.assertRaises(ValueError):
-      self.base().createRole("user", iroha.RolePermissionSet([])).build()
+    tx = self.builder.createRole("user", iroha.RolePermissionSet([])).build()
+    self.assertTrue(self.check_proto_tx(self.proto(tx)))
 
   # ====================== DetachRole Tests ======================
 
@@ -611,42 +597,28 @@ class BuilderTest(unittest.TestCase):
   def test_subtract_asset_quantity(self):
     for domain in VALID_DOMAINS:
       for name in VALID_NAMES_1:
-        tx = self.builder.subtractAssetQuantity("{}@{}".format(name, domain), "{}#{}".format(name, domain), "10").build()
+        tx = self.builder.subtractAssetQuantity("{}#{}".format(name, domain), "10").build()
         self.assertTrue(self.check_proto_tx(self.proto(tx)))
-
-  def test_subtract_asset_quantity_invalid_account(self):
-    for name in INVALID_NAMES_1:
-      with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("{}@test".format(name), "coin#test", "10").build()
-
-  def test_subtract_asset_quantity_invalid_account_domain(self):
-    for domain in INVALID_DOMAINS:
-      with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("admin@{}".format(domain), "coin#test", "10").build()
-
-  def test_subtract_asset_quantity_with_empty_account(self):
-    with self.assertRaises(ValueError):
-      self.base().subtractAssetQuantity("", "coin#test", "10").build()
 
   def test_subtract_asset_quantity_invalid_asset_name(self):
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("admin@test", "{}#test".format(name), "10").build()
+        self.base().subtractAssetQuantity("{}#test".format(name), "10").build()
 
   def test_subtract_asset_quantity_invalid_asset_domain(self):
     for domain in INVALID_DOMAINS:
       with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("admin@test", "coin#{}".format(domain), "10").build()
+        self.base().subtractAssetQuantity("coin#{}".format(domain), "10").build()
 
   def test_subtract_asset_quantity_empty_account(self):
     with self.assertRaises(ValueError):
-      self.base().subtractAssetQuantity("admin@test", "", "10").build()
+      self.base().subtractAssetQuantity("", "10").build()
 
   def test_subtract_asset_quantity_invalid_amount(self):
     amounts = ["", "0", "chars", "-10", "10chars", "10.10.10"]
     for amount in amounts:
       with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("admin@test", "coin#test", amount).build()
+        self.base().subtractAssetQuantity("coin#test", amount).build()
 
 if __name__ == '__main__':
   unittest.main()

@@ -5,14 +5,44 @@
 
 #include "validators/transactions_collection/unsigned_transactions_collection_validator.hpp"
 
+#include <boost/format.hpp>
+#include "validators/field_validator.hpp"
+#include "validators/transaction_validator.hpp"
+
 namespace shared_model {
   namespace validation {
 
-    Answer UnsignedTransactionsCollectionValidator::validate(
+    template <typename TransactionValidator>
+    Answer
+    UnsignedTransactionsCollectionValidator<TransactionValidator>::validate(
         const interface::types::TransactionsForwardCollectionType &transactions)
         const {
-      return Answer();
+      ReasonsGroupType reason;
+      reason.first = "Transaction list";
+      for (const auto &tx : transactions) {
+        auto answer =
+            UnsignedTransactionsCollectionValidator::transaction_validator_
+                .validate(tx);
+        if (answer.hasErrors()) {
+          auto message =
+              (boost::format("Tx %s : %s") % tx.hash().hex() % answer.reason())
+                  .str();
+          reason.second.push_back(message);
+        }
+      }
+
+      Answer res;
+      if (not reason.second.empty()) {
+        res.addReason(std::move(reason));
+      }
+      return res;
     }
+
+    template Answer UnsignedTransactionsCollectionValidator<
+        TransactionValidator<FieldValidator,
+                             CommandValidatorVisitor<FieldValidator>>>::
+        validate(const interface::types::TransactionsForwardCollectionType
+                     &transactions) const;
 
   }  // namespace validation
 }  // namespace shared_model

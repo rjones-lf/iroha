@@ -64,7 +64,8 @@ namespace iroha {
           rapidjson::Document dd;
           precision = des.document["precision"].GetUint();
 
-          return boost::make_optional(Amount(value, static_cast<uint8_t>(precision)));
+          return boost::make_optional(
+              Amount(value, static_cast<uint8_t>(precision)));
         }
       };
 
@@ -80,9 +81,10 @@ namespace iroha {
             return boost::none;
           }
 
-          return boost::make_optional(Peer(address.value(),
-               iroha::hexstringToArray<iroha::pubkey_t::size()>(pubkey.value())
-                   .value()));
+          return boost::make_optional(Peer(
+              address.value(),
+              iroha::hexstringToArray<iroha::pubkey_t::size()>(pubkey.value())
+                  .value()));
         }
       };
 
@@ -149,8 +151,6 @@ namespace iroha {
 
         document.SetObject();
         document.AddMember("command_type", "AddAssetQuantity", allocator);
-        document.AddMember(
-            "account_id", add_asset_quantity->account_id, allocator);
         document.AddMember("asset_id", add_asset_quantity->asset_id, allocator);
 
         Value amount;
@@ -169,7 +169,6 @@ namespace iroha {
           const Value &document) {
         auto des = makeFieldDeserializer(document);
         return make_optional_ptr<AddAssetQuantity>()
-            | des.String(&AddAssetQuantity::account_id, "account_id")
             | des.String(&AddAssetQuantity::asset_id, "asset_id")
             | des.Object(&AddAssetQuantity::amount, "amount") | toCommand;
       }
@@ -564,8 +563,6 @@ namespace iroha {
         document.SetObject();
         document.AddMember("command_type", "SubtractAssetQuantity", allocator);
         document.AddMember(
-            "account_id", subtract_asset_quantity->account_id, allocator);
-        document.AddMember(
             "asset_id", subtract_asset_quantity->asset_id, allocator);
 
         Value amount;
@@ -587,7 +584,6 @@ namespace iroha {
           const Value &document) {
         auto des = makeFieldDeserializer(document);
         return make_optional_ptr<SubtractAssetQuantity>()
-            | des.String(&SubtractAssetQuantity::account_id, "account_id")
             | des.String(&SubtractAssetQuantity::asset_id, "asset_id")
             | des.Object(&SubtractAssetQuantity::amount, "amount") | toCommand;
       }

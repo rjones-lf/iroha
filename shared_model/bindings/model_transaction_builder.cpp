@@ -39,11 +39,10 @@ namespace shared_model {
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::addAssetQuantity(
-        const interface::types::AccountIdType &account_id,
         const interface::types::AssetIdType &asset_id,
         const std::string &amount) {
       return ModelTransactionBuilder(
-          builder_.addAssetQuantity(account_id, asset_id, amount));
+          builder_.addAssetQuantity(asset_id, amount));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::addPeer(
@@ -140,11 +139,10 @@ namespace shared_model {
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::subtractAssetQuantity(
-        const interface::types::AccountIdType &account_id,
         const interface::types::AssetIdType &asset_id,
         const std::string &amount) {
       return ModelTransactionBuilder(
-          builder_.subtractAssetQuantity(account_id, asset_id, amount));
+          builder_.subtractAssetQuantity(asset_id, amount));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::transferAsset(

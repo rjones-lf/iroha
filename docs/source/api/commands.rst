@@ -19,9 +19,8 @@ Schema
 .. code-block:: proto
 
     message AddAssetQuantity {
-        string account_id = 1;
-        string asset_id = 2;
-        Amount amount = 3;
+        string asset_id = 1;
+        Amount amount = 2;
     }
 
     message uint256 {
@@ -48,7 +47,6 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "account id in which to add asset", "<account_name>@<domain_id>", "alex@morgan"
     "Asset ID", "id of the asset", "<asset_name>#<domain_id>", "usd#morgan"
     "Amount", "positive amount of the asset to add", "> 0", "200.02"
 
@@ -58,7 +56,6 @@ Validation
 1. Asset and account should exist
 2. Added quantity precision should be equal to asset precision
 3. Creator of a transaction should have a role which has permissions for issuing assets
-4. Creator of a transaction adds account quantity to his/her account only
 
 Add peer
 --------
@@ -557,10 +554,9 @@ Schema
 
 .. code-block:: proto
 
-    message AddAssetQuantity {
-        string account_id = 1;
-        string asset_id = 2;
-        Amount amount = 3;
+    message SubtractAssetQuantity {
+        string asset_id = 1;
+        Amount amount = 2;
     }
 
     message uint256 {
@@ -586,7 +582,6 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "account id from which to subtract asset", "already existent", "makoto@soramitsu"
     "Asset ID", "id of the asset", "<asset_name>#<domain_id>", "usd#morgan"
     "Amount", "positive amount of the asset to subtract", "> 0", "200"
 
@@ -596,7 +591,6 @@ Validation
 1. Asset and account should exist
 2. Added quantity precision should be equal to asset precision
 3. Creator of the transaction should have a role which has permissions for subtraction of assets
-4. Creator of transaction subtracts account quantity in his/her account only
 
 Transfer asset
 --------------

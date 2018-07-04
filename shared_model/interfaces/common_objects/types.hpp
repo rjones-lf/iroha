@@ -98,6 +98,8 @@ namespace shared_model {
                            const AccountAsset &>;
       /// Type of the transfer message
       using DescriptionType = std::string;
+
+      enum class BatchType { ATOMIC = 0, ORDERED = 1};
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model
