@@ -20,6 +20,7 @@
 
 #include <functional>
 
+#include "validation/stateful_validator_common.hpp"
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
 

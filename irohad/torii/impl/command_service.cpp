@@ -181,7 +181,8 @@ namespace torii {
         })
         .subscribe(
             subscription,
-            [&](std::shared_ptr<shared_model::interface::TransactionResponse>
+            [&, finished](
+                std::shared_ptr<shared_model::interface::TransactionResponse>
                     iroha_response) {
               auto proto_response = std::static_pointer_cast<
                   shared_model::proto::TransactionResponse>(iroha_response);

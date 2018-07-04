@@ -253,13 +253,21 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   ASSERT_TRUE(block_wrapper.validate());
 }
 
+/**
+ * Checks, that after failing a certain number of transactions in a proposal,
+ * returned verified proposal will have only valid transactions
+ *
+ * @given proposal consisting of several transactions
+ * @when failing some of the transactions in that proposal
+ * @then verified proposal consists of txs we did not fail
+ */
 TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
   // create a 3-height proposal, but validator returns only a 2-height verified
   // proposal
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
-                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .addAssetQuantity("coin#coin", "1.0")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(
@@ -310,6 +318,7 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
       make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
   proposal_wrapper.subscribe([&verified_proposal,
                               &tx_errors](auto verified_proposal_) {
+    // assure that txs in verified proposal do not include failed ones
     ASSERT_EQ(verified_proposal_->first->height(), verified_proposal->height());
     ASSERT_EQ(verified_proposal_->first->transactions(),
               verified_proposal->transactions());

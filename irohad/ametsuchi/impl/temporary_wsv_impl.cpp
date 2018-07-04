@@ -52,15 +52,19 @@ namespace iroha {
         return expected::map_error<validation::CommandError>(
                    boost::apply_visitor(*command_validator_, command.get()),
                    [command_index](CommandError &error) {
-                     return validation::CommandError{
-                         error.command_name, error.toString(), true, command_index};
+                     return validation::CommandError{error.command_name,
+                                                     error.toString(),
+                                                     true,
+                                                     command_index};
                    })
             // Execute commands
             .and_res(expected::map_error<validation::CommandError>(
                 boost::apply_visitor(*command_executor_, command.get()),
                 [command_index](CommandError &error) {
-                  return validation::CommandError{
-                      error.command_name, error.toString(), true, command_index};
+                  return validation::CommandError{error.command_name,
+                                                  error.toString(),
+                                                  true,
+                                                  command_index};
                 }));
       };
 
@@ -70,19 +74,21 @@ namespace iroha {
                  [this,
                   &execute_command,
                   &tx]() -> expected::Result<void, validation::CommandError> {
-        // check transaction's commands validness
+        // check transaction's commands validity
         const auto &commands = tx.commands();
         validation::CommandError cmd_error;
         for (size_t i = 0; i < commands.size(); ++i) {
           // in case of failed command, rollback and return
-          if (not execute_command(commands[i], i)
+          auto cmd_is_valid =
+              execute_command(commands[i], i)
                       .match(
                           [](expected::Value<void> &) { return true; },
                           [&cmd_error](expected::Error<validation::CommandError>
                                            &error) {
                             cmd_error = error.error;
                             return false;
-                          })) {
+                          });
+          if (not cmd_is_valid) {
             transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");
             return expected::makeError(cmd_error);
           }

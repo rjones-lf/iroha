@@ -118,6 +118,7 @@ TEST_F(TransactionValidatorTest, StatelessValidTest) {
  */
 TEST_F(TransactionValidatorTest, BatchValidTest) {
   std::string creator_account_id = "admin@test";
+}
 
 /**
  * @given transaction made of commands with invalid fields

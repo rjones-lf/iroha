@@ -29,6 +29,24 @@ namespace iroha {
 
     using network::PeerCommunicationService;
 
+    static std::string composeErrorMessage(
+        const validation::TransactionError &tx_error) {
+      if (not tx_error.first.tx_passed_initial_validation) {
+        return (boost::format("Stateful validation error: transaction %s "
+                              "did not pass initial verification: "
+                              "checking '%s', error message '%s'")
+                % tx_error.second.hex() % tx_error.first.name
+                % tx_error.first.error)
+            .str();
+      }
+      return (boost::format("Stateful validation error in transaction %s: "
+                            "command '%s' with index '%d' did not pass "
+                            "verification with error '%s'")
+              % tx_error.second.hex() % tx_error.first.name
+              % tx_error.first.index % tx_error.first.error)
+          .str();
+    }
+
     TransactionProcessorImpl::TransactionProcessorImpl(
         std::shared_ptr<PeerCommunicationService> pcs,
         std::shared_ptr<MstProcessor> mst_processor)
@@ -59,24 +77,7 @@ namespace iroha {
             auto errors = proposal_and_errors->second;
             std::lock_guard<std::mutex> lock(notifier_mutex_);
             for (const auto &tx_error : errors) {
-              std::string error_msg;
-              if (not tx_error.first.tx_passed_initial_validation) {
-                error_msg =
-                    (boost::format("Stateful validation error: transaction %s "
-                                   "did not pass initial verification: "
-                                   "checking '%s', error message '%s'")
-                     % tx_error.second.hex() % tx_error.first.name
-                     % tx_error.first.error)
-                        .str();
-              } else {
-                error_msg = (boost::format(
-                                 "Stateful validation error in transaction %s: "
-                                 "command '%s' with index '%d' did not pass "
-                                 "verification with error '%s'")
-                             % tx_error.second.hex() % tx_error.first.name
-                             % tx_error.first.index % tx_error.first.error)
-                                .str();
-              }
+              auto error_msg = composeErrorMessage(tx_error);
               log_->info(error_msg);
               notifier_.get_subscriber().on_next(
                   shared_model::builder::DefaultTransactionStatusBuilder()
@@ -103,6 +104,7 @@ namespace iroha {
         blocks.subscribe(
             // on next
             [this](auto model_block) {
+              current_txs_hashes_.reserve(model_block->transactions().size());
               std::transform(model_block->transactions().begin(),
                              model_block->transactions().end(),
                              std::back_inserter(current_txs_hashes_),
@@ -114,7 +116,7 @@ namespace iroha {
                 log_->info("there are no transactions to be committed");
               } else {
                 std::lock_guard<std::mutex> lock(notifier_mutex_);
-                for (auto &tx_hash : current_txs_hashes_) {
+                for (const auto &tx_hash : current_txs_hashes_) {
                   log_->info("on commit committed: {}", tx_hash.hex());
                   notifier_.get_subscriber().on_next(
                       shared_model::builder::DefaultTransactionStatusBuilder()
@@ -161,5 +163,6 @@ namespace iroha {
     TransactionProcessorImpl::transactionNotifier() {
       return notifier_.get_observable();
     }
+
   }  // namespace torii
 }  // namespace iroha
