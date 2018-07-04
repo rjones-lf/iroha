@@ -33,10 +33,10 @@ class TransactionValidatorTest : public ValidatorsTest {
 
     TestTransactionBuilder builder;
     auto tx = builder.creatorAccountId(creator_account_id)
-                  .createdTime(created_time)
-                  .quorum(1)
-                  .build()
-                  .getTransport();
+        .createdTime(created_time)
+        .quorum(1)
+        .build()
+        .getTransport();
     return tx;
   }
   shared_model::validation::DefaultTransactionValidator transaction_validator;
@@ -111,13 +111,22 @@ TEST_F(TransactionValidatorTest, StatelessValidTest) {
 
   ASSERT_FALSE(answer.hasErrors()) << answer.reason();
 }
+
 /**
- * @given transaction made of commands with valid fields
- * @when commands validation is invoked
- * @then answer has no errors
+ * @given Protobuf transaction object with unset command
+ * @when validate is called
+ * @then there is a error returned
  */
-TEST_F(TransactionValidatorTest, BatchValidTest) {
-  std::string creator_account_id = "admin@test";
+TEST_F(TransactionValidatorTest, UnsetCommand) {
+  iroha::protocol::Transaction tx = generateEmptyTransaction();
+  tx.mutable_payload()->mutable_reduced_payload()->set_creator_account_id(
+      account_id);
+  tx.mutable_payload()->mutable_reduced_payload()->set_created_time(
+      created_time);
+  auto answer = transaction_validator.validate(proto::Transaction(tx));
+  tx.mutable_payload()->mutable_reduced_payload()->add_commands();
+  ASSERT_TRUE(answer.hasErrors());
+}
 
 /**
  * @given transaction made of commands with invalid fields
@@ -139,11 +148,11 @@ TEST_F(TransactionValidatorTest, StatelessInvalidTest) {
       [&](auto field) {
         // Add new command to transaction
         auto command = payload->mutable_reduced_payload()->add_commands();
-        // Set concrete type for new command
+        // Set concrete type for new commandg
         return command->GetReflection()->MutableMessage(command, field);
       },
       [](auto, auto) {
-        // Note that no fields are set
+        // Note that no fields areg set
       },
       [] {});
 
@@ -155,3 +164,29 @@ TEST_F(TransactionValidatorTest, StatelessInvalidTest) {
   ASSERT_EQ(answer.getReasonsMap().size(),
             iroha::protocol::Command::descriptor()->field_count() + 1);
 }
+/**
+ * @given transaction made of commands with valid fields
+ * @when commands validation is invoked
+ * @then answer has no errors
+ */
+TEST_F(TransactionValidatorTest, BatchValidTest) {
+  std::string creator_account_id = "admin@test";
+
+  TestTransactionBuilder builder;
+  auto tx = builder.creatorAccountId(creator_account_id)
+      .createdTime(created_time)
+      .quorum(1)
+      .batchMeta(interface::types::BatchType::ATOMIC,
+                 std::vector<interface::types::HashType>())
+      .createDomain("test", "test")
+      .build()
+      .getTransport();
+  shared_model::validation::DefaultTransactionValidator transaction_validator;
+  auto result = proto::Transaction(iroha::protocol::Transaction(tx));
+  auto answer = transaction_validator.validate(result);
+
+  ASSERT_FALSE(answer.hasErrors()) << answer.reason();
+  ASSERT_EQ(tx.payload().batch().type(),
+            static_cast<int>(interface::types::BatchType::ATOMIC));
+}
+
