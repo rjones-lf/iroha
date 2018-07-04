@@ -11,7 +11,6 @@
 #include "builders/protobuf/builder_templates/blocks_query_template.hpp"
 #include "builders/protobuf/builder_templates/query_response_template.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/query_responses/block_query_response.hpp"
 
 namespace shared_model {
   namespace interface {

@@ -326,7 +326,7 @@ QueryProcessingFactory::executeGetPendingTransactions(
     const shared_model::interface::GetPendingTransactions &query,
     const shared_model::interface::types::AccountIdType &query_creator) {
   std::vector<shared_model::proto::Transaction> txs;
-
+  // TODO 2018-07-04, igor-egorov, IR-1486, the core logic is to be implemented
   auto response = QueryResponseBuilder().transactionsResponse(txs);
   return response;
 }

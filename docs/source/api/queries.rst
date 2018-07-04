@@ -190,11 +190,13 @@ Response Schema
 Response Structure
 ------------------
 
+The response contains a list of `pending transactions <../core_concepts/glossary.html#pending-transactions>`_.
+
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-        "Transactions", "an array of transactions for given account", "Committed transactions", "{tx1, tx2…}"
+        "Transactions", "an array of pending transactions", "Pending transactions", "{tx1, tx2…}"
 
 
 Get Account Transactions
