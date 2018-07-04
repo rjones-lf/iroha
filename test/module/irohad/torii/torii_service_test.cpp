@@ -475,3 +475,34 @@ TEST_F(ToriiServiceTest, StreamingNoTx) {
   ASSERT_EQ(torii_response.at(0).tx_status(),
             iroha::protocol::TxStatus::NOT_RECEIVED);
 }
+
+/**
+ * @given Torii service and the valid tx without signature
+ * @when sending tx to torii
+ * @then the response is STATELESS_VALIDATION_FAILED
+ */
+TEST_F(ToriiServiceTest, EmptySignatures) {
+  std::string kAccountId = "some@account";
+  auto proto_tx = shared_model::proto::TransactionBuilder()
+                      .creatorAccountId(kAccountId)
+                      .createdTime(iroha::time::now())
+                      .setAccountQuorum(kAccountId, 2)
+                      .quorum(1)
+                      .build()
+                      .signAndAddSignature(keypair)
+                      .finish()
+                      .getTransport();
+  proto_tx.clear_signatures();
+  auto tx = shared_model::proto::Transaction(proto_tx);
+
+  auto client = torii::CommandSyncClient(ip, port);
+
+  auto stat = client.Torii(proto_tx);
+
+  iroha::protocol::TxStatusRequest tx_request;
+  tx_request.set_tx_hash(shared_model::crypto::toBinaryString(tx.hash()));
+  iroha::protocol::ToriiResponse response;
+  client.Status(tx_request, response);
+  ASSERT_EQ(response.tx_status(),
+            iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
+}

@@ -310,6 +310,9 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::types::SignatureRangeType &signatures,
         const crypto::Blob &source) const {
+      if (boost::size(signatures) == 0) {
+        reason.second.push_back("Signatures cannot be empty");
+      }
       for (const auto &signature : signatures) {
         const auto &sign = signature.signedData();
         const auto &pkey = signature.publicKey();
