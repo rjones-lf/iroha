@@ -36,7 +36,7 @@ namespace iroha {
 
   expected::Error<CommandError> makeCommandError(
       const std::string &error_message,
-      const std::string command_name) noexcept {
+      const std::string &command_name) noexcept {
     return expected::makeError(CommandError{command_name, error_message});
   }
 
