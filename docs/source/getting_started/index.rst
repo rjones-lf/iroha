@@ -44,29 +44,17 @@ Starting PostgreSQL Container
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Now we need to run ``PostgreSQL`` in a container, attach it to the network you
-have created before, and expose ports for communication:
+have created before:
 
 .. code-block:: shell
 
   docker run --name some-postgres \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=mysecretpassword \
-  -p 5432:5432 \
   --network=iroha-network \
   -d postgres:9.5
 
-.. note:: If you already have Postgres running on a host system on default port
-  (5432), then you should pick another free port that will be occupied. For
-  example, 5433: ``-p 5433:5432 \``
-
-Creating Blockstore
-^^^^^^^^^^^^^^^^^^^
-Before we run Iroha container, we should create persistent volume to store
-files, storing blocks for the chain. It is done via the following command:
-
-.. code-block:: shell
-
-  docker volume create blockstore
+.. note:: Postgres port can be exposed for debugging. If you need this option, add ``-p 127.0.0.1:5432:5432`` to ``docker run`` command. It binds port 5432 to IP ``127.0.0.1`` on your local machine. You can then use Postgres client to connect and query database.
 
 Configuring Iroha Network
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -90,6 +78,13 @@ In order to get those files, you need to clone the
   save some time and bandwidth. If you want to get a full commit history, you
   can omit this option.
 
+We should adjust Iroha config to match Postgres host it will connect to. Edit ``host`` parameter of ``config.sample`` file in ``./iroha/example`` directory. Set it to ``some-postgres``.
+
+.. Attention:: In the usual situation, you need to provide a config file, generate
+  genesis block and keypair. However, as a part of this guide, we provide an
+  example configuration for you. Please do not use these settings in a
+  production.
+
 Starting Iroha Container
 ^^^^^^^^^^^^^^^^^^^^^^^^
 We are ready to launch our Iroha container. Let's do it with the following
@@ -97,50 +92,29 @@ command
 
 .. code-block:: shell
 
-  docker run -it --name iroha \
+  docker run -d --name iroha \
   -p 50051:50051 \
   -v $(pwd)/iroha/example:/opt/iroha_data \
   -v blockstore:/tmp/block_store \
+  -e KEY=node0 \
   --network=iroha-network \
-  --entrypoint=/bin/bash \
   hyperledger/iroha:develop
 
 Let's look in detail what this command does:
 
-- ``docker run -it --name iroha \`` attaches you to docker container called
-  ``iroha``
+- ``docker run -d --name iroha \`` instructs Docker to run container called
+  ``iroha`` in detached state.
+- ``-p 50051:50051 \`` maps container's port 50051 to the corresponding one on the host.
 - with ``$(pwd)/iroha/example:/opt/iroha_data \`` we add a folder containing
   our prepared configuration to a docker container into ``/opt/iroha_data``.
-- ``-v blockstore:/tmp/block_store \`` adds a persistent block storage which
-  we created before to a container, so our blocks won't be lost after we stop
-  the container
+- ``-v blockstore:/tmp/block_store \`` adds a persistent block storage to a container, so our blocks won't be lost after we stop the container.
+- ``-e KEY=node0 \`` instructs Iroha to use keys from ``example`` directory (``node0.priv`` and ``node0.pub``).
 - ``--network=iroha-network \`` adds our container to previously created
-  ``iroha-network``, so Iroha and Postgres could see each other.
-- ``--entrypoint=/bin/bash \`` Because ``hyperledger/iroha`` has
-  the custom script which runs after starting the container, we want to
-  override it so we can start Iroha Daemon manually.
-- ``hyperledger/iroha:develop`` is the image which has the ``develop``
-  branch.
-
-Launching Iroha Daemon
-^^^^^^^^^^^^^^^^^^^^^^
-Now you are in the interactive shell of Iroha's container. To actually run
-Iroha, we need to launch Iroha daemon – ``irohad``.
-
-.. code-block:: shell
-
-  irohad --config config.docker --genesis_block genesis.block --keypair_name node0
-
-.. Attention:: In the usual situation, you need to provide a config file, generate
-  genesis block and keypair. However, as a part of this guide, we provide an
-  example configuration for you. Please do not use these settings in a
-  production. You can read more about configuration here.
+  ``iroha-network``, so Iroha and Postgres could communicate with each other.
+- ``hyperledger/iroha:develop`` is the image which contains Iroha binaries built from the latest ``develop`` branch.
 
 Congratulations! You have an Iroha node up and running! In the next section, we
 will test it by sending some transactions.
-
-.. hint:: You can get more information about ``irohad`` and its launch options
-  in this section
 
 Interacting with Iroha Network
 ------------------------------
@@ -160,14 +134,13 @@ let's get familiar with ``iroha-cli``
 
   <script src="https://asciinema.org/a/6dFA3CWHQOgaYbKfQXtzApDob.js" id="asciicast-6dFA3CWHQOgaYbKfQXtzApDob" async></script>
 
-Open a new terminal (note that Iroha container and ``irohad`` should be up and
-running) and attach to an ``iroha`` docker container:
+Attach to an ``iroha`` docker container:
 
 .. code-block:: shell
 
-  docker exec -it iroha /bin/bash
+  docker exec -it iroha bash
 
-Now you are in the interactive shell of Iroha's container again. We need to
+Now you are in the interactive shell of Iroha's container. We need to
 launch ``iroha-cli`` and pass an account name of the desired user. In our example,
 the account ``admin`` is already created in a ``test`` domain. Let's use this
 account to work with Iroha.
