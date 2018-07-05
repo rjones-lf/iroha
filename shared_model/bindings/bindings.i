@@ -124,6 +124,7 @@ namespace std {
 #include "bindings/model_crypto.hpp"
 #include "bindings/model_proto.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
+#include "bindings/client_api.hpp"
 %}
 
 %include "cryptography/blob.hpp"
@@ -146,6 +147,7 @@ namespace std {
 %include "bindings/model_blocks_query_builder.hpp"
 %include "bindings/model_crypto.hpp"
 %include "bindings/model_proto.hpp"
+%include "bindings/client_api.hpp"
 
 %template (UnsignedTx) shared_model::proto::UnsignedWrapper<shared_model::proto::Transaction>;
 %template (UnsignedQuery) shared_model::proto::UnsignedWrapper<shared_model::proto::Query>;

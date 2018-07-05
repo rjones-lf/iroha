@@ -18,6 +18,7 @@ add_library(bindings
         model_query_builder.cpp
         model_blocks_query_builder.cpp
         model_crypto.cpp
+        client_api.cpp
         )
 
 target_link_libraries(bindings
@@ -26,6 +27,7 @@ target_link_libraries(bindings
         generator
         shared_model_stateless_validation
         iroha_amount
+        logger
         )
 
 
