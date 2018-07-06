@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#pragma once
+
 #include <boost/range/any_range.hpp>
 #include <string>
 #include <vector>
