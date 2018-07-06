@@ -88,5 +88,11 @@ namespace shared_model {
       return copy;
     }
 
+    TransactionStatusBuilder TransactionStatusBuilder::errorMsg(const std::string &msg) {
+      TransactionStatusBuilder copy(*this);
+      copy.tx_response_.set_error_message(msg);
+      return copy;
+    }
+
   }  // namespace proto
 }  // namespace shared_model

@@ -14,30 +14,6 @@
                         }
                      },
                      {
-                        "addPeer":{
-                           "peer":{
-                              "address":"0.0.0.0:20001",
-                              "peerKey":"D1Faq417+ORUHAU9clPBphAJxj6Bn1nJhhQf4eCuMj8="
-                           }
-                        }
-                     },
-                     {
-                        "addPeer":{
-                           "peer":{
-                              "address":"0.0.0.0:30001",
-                              "peerKey":"MMpE7CK12zY3K/0cvfCuupow/y0euzaF4frTJTCiQ10="
-                           }
-                        }
-                     },
-                     {
-                        "addPeer":{
-                           "peer":{
-                              "address":"0.0.0.0:40001",
-                              "peerKey":"C65E+6pjV8bQP4VYovMU8Yb6Q3G9UWGUH5THnIvKCEo="
-                           }
-                        }
-                     },
-                     {
                         "createRole":{
                            "roleName":"admin",
                            "permissions":[

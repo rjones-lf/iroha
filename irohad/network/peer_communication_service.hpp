@@ -20,6 +20,8 @@
 
 #include <rxcpp/rx.hpp>
 
+#include "validation/stateful_validator_common.hpp"
+
 namespace shared_model {
   namespace interface {
     class Block;
@@ -56,6 +58,14 @@ namespace iroha {
       virtual rxcpp::observable<
           std::shared_ptr<shared_model::interface::Proposal>>
       on_proposal() const = 0;
+
+      /**
+       * Event is triggered when verified proposal arrives
+       * @return verified proposal and list of stateful validation errors
+       */
+      virtual rxcpp::observable<
+          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+      on_verified_proposal() const = 0;
 
       /**
        * Event is triggered when commit block arrives.

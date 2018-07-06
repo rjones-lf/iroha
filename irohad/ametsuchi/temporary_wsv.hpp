@@ -20,9 +20,9 @@
 
 #include <functional>
 
+#include "validation/stateful_validator_common.hpp"
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
-#include "validation/stateful_validator_common.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -45,17 +45,11 @@ namespace iroha {
        * @param transaction Transaction to be applied
        * @param function Function that specifies the logic used to apply the
        * transaction
-       * Function parameters:
-       *  - Transaction @see transaction
-       *  - WsvQuery - world state view query interface for temporary storage
-       * Function returns void result value, if transaction is successfully
-       * applied, and string result error otherwise
-       * @return void result value, if transaction was successfully applied, and
-       * vector of strings with errors of all failed command otherwise
+       * @return True if transaction was successfully applied, false otherwise
        */
-      virtual expected::Result<void, validation::CommandNameAndError> apply(
+      virtual expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &,
-          std::function<expected::Result<void, validation::CommandNameAndError>(
+          std::function<expected::Result<void, validation::CommandError>(
               const shared_model::interface::Transaction &, WsvQuery &)>
               function) = 0;
 
