@@ -46,26 +46,14 @@ namespace iroha {
       const auto &tx_creator = tx.creatorAccountId();
       command_executor_->setCreatorAccountId(tx_creator);
       command_validator_->setCreatorAccountId(tx_creator);
-      auto execute_command = [this](auto &command, size_t command_index)
-          -> expected::Result<void, validation::CommandError> {
+      auto execute_command =
+          [this](auto &command) -> expected::Result<void, CommandError> {
         // Validate command
-        return expected::map_error<validation::CommandError>(
-                   boost::apply_visitor(*command_validator_, command.get()),
-                   [command_index](CommandError &error) {
-                     return validation::CommandError{error.command_name,
-                                                     error.toString(),
-                                                     true,
-                                                     command_index};
-                   })
+        return boost::apply_visitor(*command_validator_, command.get())
             // Execute command
-            .and_res(expected::map_error<validation::CommandError>(
-                boost::apply_visitor(*command_executor_, command.get()),
-                [command_index](CommandError &error) {
-                  return validation::CommandError{error.command_name,
-                                                  error.toString(),
-                                                  true,
-                                                  command_index};
-                }));
+            | [this, &command] {
+                return boost::apply_visitor(*command_executor_, command.get());
+              };
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
@@ -80,11 +68,13 @@ namespace iroha {
         for (size_t i = 0; i < commands.size(); ++i) {
           // in case of failed command, rollback and return
           auto cmd_is_valid =
-              execute_command(commands[i], i)
+              execute_command(commands[i])
                   .match([](expected::Value<void> &) { return true; },
-                         [&cmd_error](
-                             expected::Error<validation::CommandError> &error) {
-                           cmd_error = error.error;
+                         [i, &cmd_error](expected::Error<CommandError> &error) {
+                           cmd_error = {error.error.command_name,
+                                        error.error.toString(),
+                                        true,
+                                        i};
                            return false;
                          });
           if (not cmd_is_valid) {
