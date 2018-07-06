@@ -4,12 +4,24 @@
  */
 
 #include <gtest/gtest.h>
+
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "validation/impl/stateful_validator_impl.hpp"
 #include "validation/utils.hpp"
+#include "interfaces/transaction.hpp"
+#include "interfaces/iroha_internal/batch_meta.hpp"
 
 using namespace iroha::validation;
 using namespace shared_model::crypto;
+
+using ::testing::_;
+using ::testing::A;
+using ::testing::Return;
+using ::testing::ReturnArg;
 
 class SignaturesSubset : public testing::Test {
  public:
@@ -77,4 +89,72 @@ TEST_F(SignaturesSubset, PublickeyUniqueness) {
   signatures.push_back(makeSignature(PublicKey("a"), ""));
   signatures.push_back(makeSignature(PublicKey("c"), ""));
   ASSERT_FALSE(signaturesSubset(signatures, keys));
+}
+
+class Validator : public testing::Test {
+ public:
+  void SetUp() override {
+    sfv = std::make_shared<StatefulValidator>(StatefulValidatorImpl());
+    temp_wsv_mock = std::make_shared<iroha::ametsuchi::MockTemporaryWsv>();
+  }
+
+  std::shared_ptr<StatefulValidator> sfv;
+  std::shared_ptr<iroha::ametsuchi::MockTemporaryWsv> temp_wsv_mock;
+};
+
+/**
+ * @given several valid transactions
+ * @when statefully validating these transactions
+ * @then all of them will appear in verified proposal @and errors will be empty
+ */
+TEST_F(Validator, AllTxsValid) {
+  auto tx = TestTransactionBuilder().createAsset("doge", "coin", 1).build();
+  auto proposal =
+      TestProposalBuilder().transactions(std::vector{tx, tx, tx}).build();
+
+  EXPECT_CALL(*temp_wsv_mock, apply(_, _)).WillRepeatedly(Return(true));
+
+  auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
+  ASSERT_EQ(verified_proposal_and_errors.first->height(), 3);
+  ASSERT_TRUE(verified_proposal_and_errors.second.empty());
+}
+
+/**
+ * @given several valid and a couple of invalid transactions
+ * @when statefully validating these transactions
+ * @then valid transactions will appear in verified proposal @and invalid ones
+ * will appear in errors
+ */
+TEST_F(Validator, SomeTxsFail) {
+  auto valid_tx =
+      TestTransactionBuilder().createAsset("doge", "coin", 1).build();
+  auto invalid_tx =
+      TestTransactionBuilder().createAsset("cate", "coin", 1).build();
+  auto proposal =
+      TestProposalBuilder()
+          .transactions(std::vector{valid_tx, valid_tx, invalid_tx, valid_tx})
+          .build();
+
+  EXPECT_CALL(*temp_wsv_mock, apply(valid_tx, _)).WillRepeatedly(Return(true));
+  EXPECT_CALL(*temp_wsv_mock, apply(invalid_tx, _)).WillOnce(Return(false));
+
+  auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
+  ASSERT_EQ(verified_proposal_and_errors.first->height(), 3);
+  ASSERT_EQ(verified_proposal_and_errors.second.size(), 1);
+}
+
+/**
+ * @given two atomic batches @and one ordered @and several single transactions
+ * @when failing one of the atomic batched @and transaction from ordered batch
+ * @and transaction from single group
+ * @then verified proposal will contain transactions from non-failed atomic
+ * batch, non-failed part of ordered batch, non-failed transactions from single
+ * group @and errors will contain the rest
+ */
+TEST_F(Validator, Batches) {
+  // Coming soon: when it will be possible to create batch meta
+//  auto single_valid_tx = TestTransactionBuilder().createAsset("doge", "coin", 1).build();
+//  auto single_invalid_tx = TestTransactionBuilder().createAsset("cate", "coin", 1).build();
+//
+//  auto first_atomic_batch =
 }

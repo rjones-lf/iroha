@@ -21,6 +21,7 @@
 #include <gmock/gmock.h>
 #include <boost/optional.hpp>
 #include "ametsuchi/block_query.hpp"
+#include "ametsuchi/key_value_storage.hpp"
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/mutable_storage.hpp"
 #include "ametsuchi/peer_query.hpp"
@@ -28,7 +29,6 @@
 #include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
 #include "ametsuchi/wsv_query.hpp"
-#include "ametsuchi/key_value_storage.hpp"
 #include "common/result.hpp"
 #include "interfaces/common_objects/peer.hpp"
 
@@ -187,6 +187,19 @@ namespace iroha {
           expected::Result<std::unique_ptr<TemporaryWsv>, std::string>(void));
     };
 
+    class MockTemporaryWsv : public TemporaryWsv {
+     public:
+      MOCK_METHOD2(
+          apply,
+          expected::Result<void, validation::CommandError>(
+              const shared_model::interface::Transaction &,
+              std::function<expected::Result<void, validation::CommandError>(
+                  const shared_model::interface::Transaction &, WsvQuery &)>));
+      MOCK_METHOD1(createSavepoint, void(const std::string &));
+      MOCK_METHOD1(releaseSavepoint, void(const std::string &));
+      MOCK_METHOD1(rollbackToSavepoint, void(const std::string &));
+    };
+
     class MockMutableStorage : public MutableStorage {
      public:
       MOCK_METHOD2(
@@ -261,8 +274,7 @@ namespace iroha {
     class MockKeyValueStorage : public KeyValueStorage {
      public:
       MOCK_METHOD2(add, bool(Identifier, const Bytes &));
-      MOCK_CONST_METHOD1(get,
-                         boost::optional<Bytes>(Identifier));
+      MOCK_CONST_METHOD1(get, boost::optional<Bytes>(Identifier));
       MOCK_CONST_METHOD0(directory, std::string(void));
       MOCK_CONST_METHOD0(last_id, Identifier(void));
       MOCK_METHOD0(dropAll, void(void));
