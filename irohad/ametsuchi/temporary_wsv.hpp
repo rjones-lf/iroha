@@ -53,6 +53,24 @@ namespace iroha {
               const shared_model::interface::Transaction &, WsvQuery &)>
               function) = 0;
 
+      /**
+       * Create a savepoint for wsv state
+       * @param name of savepoint to be created
+       */
+      virtual void createSavepoint(const std::string &name) = 0;
+
+      /**
+       * Release a savepoint
+       * @param name of savepoint to be released
+       */
+      virtual void releaseSavepoint(const std::string &name) = 0;
+
+      /**
+       * Rollback to the state of savepoint
+       * @param name of savepoint to be rollbacked to
+       */
+      virtual void rollbackToSavepoint(const std::string &name) = 0;
+
       virtual ~TemporaryWsv() = default;
     };
   }  // namespace ametsuchi

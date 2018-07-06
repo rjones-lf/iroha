@@ -39,6 +39,12 @@ namespace iroha {
               const shared_model::interface::Transaction &, WsvQuery &)>
               function) override;
 
+      void createSavepoint(const std::string &name) override ;
+
+      void releaseSavepoint(const std::string &name) override ;
+
+      void rollbackToSavepoint(const std::string &name) override;
+
       ~TemporaryWsvImpl() override;
 
      private:

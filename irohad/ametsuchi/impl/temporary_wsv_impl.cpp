@@ -68,7 +68,7 @@ namespace iroha {
                 }));
       };
 
-      transaction_->exec("SAVEPOINT savepoint_;");
+      createSavepoint("savepoint_");
 
       return apply_function(tx, *wsv_) |
                  [this,
@@ -88,14 +88,26 @@ namespace iroha {
                            return false;
                          });
           if (not cmd_is_valid) {
-            transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");
+            rollbackToSavepoint("savepoint_");
             return expected::makeError(cmd_error);
           }
         }
         // success
-        transaction_->exec("RELEASE SAVEPOINT savepoint_;");
+        releaseSavepoint("savepoint_");
         return {};
       };
+    }
+
+    void TemporaryWsvImpl::createSavepoint(const std::string &name) {
+      transaction_->exec("SAVEPOINT " + name + ";");
+    }
+
+    void TemporaryWsvImpl::releaseSavepoint(const std::string &name) {
+      transaction_->exec("RELEASE SAVEPOINT " + name + ";");
+    }
+
+    void TemporaryWsvImpl::rollbackToSavepoint(const std::string &name) {
+      transaction_->exec("ROLLBACK TO SAVEPOINT " + name + ";");
     }
 
     TemporaryWsvImpl::~TemporaryWsvImpl() {
