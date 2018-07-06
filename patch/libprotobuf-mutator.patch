@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index c018d45..c5f5868 100644
+index c018d45..9497144 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -18,6 +18,7 @@ project(LibProtobufMutator CXX)
@@ -10,7 +10,7 @@ index c018d45..c5f5868 100644
  option(LIB_PROTO_MUTATOR_DOWNLOAD_PROTOBUF
         "Automatically download working protobuf" OFF)
  option(LIB_PROTO_MUTATOR_WITH_ASAN "Enable address sanitizer" OFF)
-@@ -110,15 +111,19 @@ else()
+@@ -110,20 +111,19 @@ else()
    include_directories(${CMAKE_CURRENT_BINARY_DIR})
  endif()
  
@@ -37,6 +37,11 @@ index c018d45..c5f5868 100644
  
  add_subdirectory(src)
  
+-if (NOT "${LIB_PROTO_MUTATOR_FUZZER_LIBRARIES}" STREQUAL "" OR
+-    NOT "${FUZZING_FLAGS}" STREQUAL "")
+-  add_subdirectory(examples EXCLUDE_FROM_ALL)
+-endif()
+-
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
 index 5c13d2d..624f8b6 100644
 --- a/src/CMakeLists.txt
