@@ -21,6 +21,7 @@
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/algorithm_ext/push_back.hpp>
 #include <string>
 
 #include "builders/protobuf/proposal.hpp"
@@ -148,33 +149,59 @@ namespace iroha {
                      &temporaryWsv,
                      checking_transaction,
                      &transactions_errors_log](auto &tx) {
-        if (not batchlyProcessTx(tx)) {
+        if (not batchlyProcessTx(tx, temporaryWsv)) {
           // if tx is from failed batch, just skip it
           return false;
         }
         return temporaryWsv.apply(tx, checking_transaction)
             .match(
-                [](expected::Value<void> &) {
-                  processSuccessTx(tx);
+                [this, &tx, &temporaryWsv](expected::Value<void> &) {
+                  processSuccessTx(tx, temporaryWsv);
                   return true;
                 },
-                [&transactions_errors_log,
-                 &tx](expected::Error<validation::CommandError> &error) {
-                  processFailedTx(tx);
+                [this, &tx, &temporaryWsv, &transactions_errors_log](
+                    expected::Error<validation::CommandError> &error) {
+                  processFailedTx(tx, temporaryWsv);
                   transactions_errors_log.push_back(
                       std::make_pair(error.error, tx.hash()));
                   return false;
                 });
       };
 
-      // TODO: kamilsa IR-1010 20.02.2018 rework validation logic, so that this
+      std::vector<std::shared_ptr<shared_model::interface::Transaction>>
+          batch_acc{}, valid_txs{};
+      for (const auto &tx : proposal.transactions()) {
+        if (filter(tx)) {
+          if (current_atomic_batch_) {
+            if (not current_atomic_batch_->isLastTxInBatch(tx)) {
+              // another successful batch tx; add it to accumulator
+              batch_acc.push_back(std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
+            } else {
+              // successful and last tx in the batch; add batch to verified
+              // proposal
+              valid_txs.insert(
+                  std::end(valid_txs), std::begin(batch_acc), std::end(batch_acc));
+              valid_txs.push_back(std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
+              batch_acc.clear();
+            }
+          } else {
+            // no special conditions, just add the successful tx to verified
+            // proposal
+            valid_txs.push_back(std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
+          }
+        } else {
+          if (not batch_acc.empty()) {
+            batch_acc.clear();
+          }
+        }
+      }
+
+      // TODO: kamilsa IR-1010 20.02.2018 rework validation logic, so that
       // cast is not needed and stateful validator does not know about the
       // transport
-      auto valid_proto_txs =
-          proposal.transactions() | boost::adaptors::filtered(filter)
-          | boost::adaptors::transformed([](auto &tx) {
-              return static_cast<const shared_model::proto::Transaction &>(tx);
-            });
+      auto valid_proto_txs = valid_txs | boost::adaptors::transformed([] (auto &valid_tx_ptr) {
+        return static_cast<const shared_model::proto::Transaction &>(*valid_tx_ptr);
+      });
 
       auto validated_proposal = shared_model::proto::ProposalBuilder()
                                     .createdTime(proposal.createdTime())

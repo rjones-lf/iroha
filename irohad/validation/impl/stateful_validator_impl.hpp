@@ -77,7 +77,7 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::types::HashType> last_batch_tx;
         bool batch_failed;
 
-        bool isLastTxInBatch(const shared_model::interface::Transaction &tx) {
+        bool isLastTxInBatch(const shared_model::interface::Transaction &tx) const {
           return *last_batch_tx == tx.hash();
         }
       };
