@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,19 +22,32 @@
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
+#include "builders/default_builders.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "framework/result_fixture.hpp"
 #include "framework/test_subscriber.hpp"
-#include "validators/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace framework::test_subscriber;
+using namespace shared_model::interface::permissions;
 
 auto zero_string = std::string(32, '0');
 auto fake_hash = shared_model::crypto::Hash(zero_string);
 auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
+using AmountBuilder = shared_model::builder::AmountBuilderWithoutValidator;
+
+/**
+ * Return shared pointer to amount from result, or throw exception
+ * @return amount from result
+ */
+std::shared_ptr<shared_model::interface::Amount> getAmount(
+    const shared_model::builder::BuilderResult<shared_model::interface::Amount>
+        &result) {
+  return framework::expected::val(result)->value;
+}
 
 /**
  * Shortcut to create CallExact observable wrapper, subscribe with given lambda,
@@ -110,14 +123,12 @@ template <typename W>
 void validateAccountAsset(W &&wsv,
                           const std::string &account,
                           const std::string &asset,
-                          const iroha::Amount &amount) {
+                          const shared_model::interface::Amount &amount) {
   auto account_asset = wsv->getAccountAsset(account, asset);
   ASSERT_TRUE(account_asset);
   ASSERT_EQ((*account_asset)->accountId(), account);
   ASSERT_EQ((*account_asset)->assetId(), asset);
-  ASSERT_EQ(*std::unique_ptr<iroha::Amount>(
-                (*account_asset)->balance().makeOldModel()),
-            amount);
+  ASSERT_EQ((*account_asset)->balance(), amount);
 }
 
 /**
@@ -182,28 +193,21 @@ TEST_F(AmetsuchiTest, SampleTest) {
              user1id = "userone@ru", user2id = "usertwo@ru", assetname = "rub",
              assetid = "rub#ru";
 
-  std::string account, src_account, dest_account, asset;
-  iroha::Amount amount;
-
   // Block 1
-  // TODO: 26/04/2018 x3medima17 replace string permissions IR-999
-  auto block1 =
-      TestBlockBuilder()
-          .transactions(std::vector<shared_model::proto::Transaction>(
-              {TestTransactionBuilder()
-                   .creatorAccountId("admin1")
-                   .createRole(
-                       "user",
-                       shared_model::interface::types::PermissionSetType{
-                           iroha::model::can_add_peer,
-                           iroha::model::can_create_asset,
-                           iroha::model::can_get_my_account})
-                   .createDomain(domain, "user")
-                   .createAccount(user1name, domain, fake_pubkey)
-                   .build()}))
-          .height(1)
-          .prevHash(fake_hash)
-          .build();
+  auto block1 = TestBlockBuilder()
+                    .transactions(std::vector<shared_model::proto::Transaction>(
+                        {TestTransactionBuilder()
+                             .creatorAccountId("admin1")
+                             .createRole("user",
+                                         {Role::kAddPeer,
+                                          Role::kCreateAsset,
+                                          Role::kGetMyAccount})
+                             .createDomain(domain, "user")
+                             .createAccount(user1name, domain, fake_pubkey)
+                             .build()}))
+                    .height(1)
+                    .prevHash(fake_hash)
+                    .build();
 
   apply(storage, block1);
 
@@ -214,10 +218,10 @@ TEST_F(AmetsuchiTest, SampleTest) {
       TestBlockBuilder()
           .transactions(std::vector<shared_model::proto::Transaction>(
               {TestTransactionBuilder()
-                   .creatorAccountId("admin2")
+                   .creatorAccountId(user1id)
                    .createAccount(user2name, domain, fake_pubkey)
                    .createAsset(assetname, domain, 1)
-                   .addAssetQuantity(user1id, assetid, "150.0")
+                   .addAssetQuantity(assetid, "150.0")
                    .transferAsset(
                        user1id, user2id, assetid, "Transfer asset", "100.0")
                    .build()}))
@@ -227,9 +231,9 @@ TEST_F(AmetsuchiTest, SampleTest) {
 
   apply(storage, block2);
   validateAccountAsset(
-      wsv, user1id, assetid, *iroha::Amount::createFromString("50.0"));
+      wsv, user1id, assetid, *getAmount(AmountBuilder::fromString("50.0")));
   validateAccountAsset(
-      wsv, user2id, assetid, *iroha::Amount::createFromString("100.0"));
+      wsv, user2id, assetid, *getAmount(AmountBuilder::fromString("100.0")));
 
   // Block store tests
   auto hashes = {block1.hash(), block2.hash()};
@@ -241,7 +245,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
                 2);
 
   validateAccountTransactions(blocks, "admin1", 1, 3);
-  validateAccountTransactions(blocks, "admin2", 1, 4);
+  validateAccountTransactions(blocks, user1id, 1, 4);
   validateAccountTransactions(blocks, "non_existing_user", 0, 0);
 
   validateAccountAssetTransactions(blocks, user1id, assetid, 1, 4);
@@ -285,33 +289,34 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
              asset2name = "assettwo", asset1id = "assetone#domain",
              asset2id = "assettwo#domain";
 
-  std::string account, src_account, dest_account, asset;
-  iroha::Amount amount;
-
   // 1st tx
   auto txn1 =
       TestTransactionBuilder()
           .creatorAccountId(admin)
           .createRole("user",
-                      std::set<std::string>{iroha::model::can_add_peer,
-                                            iroha::model::can_create_asset,
-                                            iroha::model::can_get_my_account})
+                      {Role::kAddPeer, Role::kCreateAsset, Role::kGetMyAccount})
           .createDomain(domain, "user")
           .createAccount(user1name, domain, fake_pubkey)
           .createAccount(user2name, domain, fake_pubkey)
           .createAccount(user3name, domain, fake_pubkey)
           .createAsset(asset1name, domain, 1)
           .createAsset(asset2name, domain, 1)
-          .addAssetQuantity(user1id, asset1id, "300.0")
-          .addAssetQuantity(user2id, asset2id, "250.0")
           .build();
 
-  auto block1 =
-      TestBlockBuilder()
-          .height(1)
-          .transactions(std::vector<shared_model::proto::Transaction>({txn1}))
-          .prevHash(fake_hash)
-          .build();
+  auto block1 = TestBlockBuilder()
+                    .height(1)
+                    .transactions(std::vector<shared_model::proto::Transaction>(
+                        {txn1,
+                         TestTransactionBuilder()
+                             .creatorAccountId(user1id)
+                             .addAssetQuantity(asset1id, "300.0")
+                             .build(),
+                         TestTransactionBuilder()
+                             .creatorAccountId(user2id)
+                             .addAssetQuantity(asset2id, "250.0")
+                             .build()}))
+                    .prevHash(fake_hash)
+                    .build();
 
   apply(storage, block1);
 
@@ -322,9 +327,9 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   // Check querying assets for users
   validateAccountAsset(
-      wsv, user1id, asset1id, *iroha::Amount::createFromString("300.0"));
+      wsv, user1id, asset1id, *getAmount(AmountBuilder::fromString("300.0")));
   validateAccountAsset(
-      wsv, user2id, asset2id, *iroha::Amount::createFromString("250.0"));
+      wsv, user2id, asset2id, *getAmount(AmountBuilder::fromString("250.0")));
 
   // 2th tx (user1 -> user2 # asset1)
   auto txn2 =
@@ -343,9 +348,9 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   // Check account asset after transfer assets
   validateAccountAsset(
-      wsv, user1id, asset1id, *iroha::Amount::createFromString("180.0"));
+      wsv, user1id, asset1id, *getAmount(AmountBuilder::fromString("180.0")));
   validateAccountAsset(
-      wsv, user2id, asset1id, *iroha::Amount::createFromString("120.0"));
+      wsv, user2id, asset1id, *getAmount(AmountBuilder::fromString("120.0")));
 
   // 3rd tx
   //   (user2 -> user3 # asset2)
@@ -367,11 +372,11 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   apply(storage, block3);
 
   validateAccountAsset(
-      wsv, user2id, asset2id, *iroha::Amount::createFromString("90.0"));
+      wsv, user2id, asset2id, *getAmount(AmountBuilder::fromString("90.0")));
   validateAccountAsset(
-      wsv, user3id, asset2id, *iroha::Amount::createFromString("150.0"));
+      wsv, user3id, asset2id, *getAmount(AmountBuilder::fromString("150.0")));
   validateAccountAsset(
-      wsv, user1id, asset2id, *iroha::Amount::createFromString("10.0"));
+      wsv, user1id, asset2id, *getAmount(AmountBuilder::fromString("10.0")));
 
   // Block store test
   auto hashes = {block1.hash(), block2.hash(), block3.hash()};
@@ -382,9 +387,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
                 },
                 3);
 
-  validateAccountTransactions(blocks, admin, 1, 9);
-  validateAccountTransactions(blocks, user1id, 1, 1);
-  validateAccountTransactions(blocks, user2id, 1, 2);
+  validateAccountTransactions(blocks, admin, 1, 7);
   validateAccountTransactions(blocks, user3id, 0, 0);
 
   // (user1 -> user2 # asset1)
@@ -402,8 +405,8 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   ASSERT_TRUE(storage);
   auto wsv = storage->getWsvQuery();
 
-  shared_model::crypto::PublicKey pubkey1(std::string("1", 32));
-  shared_model::crypto::PublicKey pubkey2(std::string("2", 32));
+  shared_model::crypto::PublicKey pubkey1(std::string(32, '1'));
+  shared_model::crypto::PublicKey pubkey2(std::string(32, '2'));
 
   auto user1id = "userone@domain";
   auto user2id = "usertwo@domain";
@@ -413,9 +416,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
       TestTransactionBuilder()
           .creatorAccountId("adminone")
           .createRole("user",
-                      std::set<std::string>{iroha::model::can_add_peer,
-                                            iroha::model::can_create_asset,
-                                            iroha::model::can_get_my_account})
+                      {Role::kAddPeer, Role::kCreateAsset, Role::kGetMyAccount})
           .createDomain("domain", "user")
           .createAccount("userone", "domain", pubkey1)
           .build();
@@ -610,6 +611,8 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
       "=> insert block "
       "=> assert that inserted");
   ASSERT_TRUE(storage);
+  auto wrapper = make_test_subscriber<CallExact>(storage->on_commit(), 1);
+  wrapper.subscribe();
   auto wsv = storage->getWsvQuery();
   ASSERT_EQ(0, wsv->getPeers().value().size());
 
@@ -625,6 +628,43 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
   log->info("Drop ledger");
 
   storage->dropStorage();
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given created storage
+ * @when commit block
+ * @then committed block is emitted to observable
+ */
+TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
+  ASSERT_TRUE(storage);
+
+  auto expected_block = getBlock();
+
+  // create test subscriber to check if committed block is as expected
+  auto wrapper = make_test_subscriber<CallExact>(storage->on_commit(), 1);
+  wrapper.subscribe([&expected_block](const auto &block) {
+    ASSERT_EQ(*block, expected_block);
+  });
+
+  std::unique_ptr<MutableStorage> mutable_storage;
+  storage->createMutableStorage().match(
+      [&mutable_storage](iroha::expected::Value<std::unique_ptr<MutableStorage>>
+                             &mut_storage) {
+        mutable_storage = std::move(mut_storage.value);
+      },
+      [](const auto &) { FAIL() << "Mutable storage cannot be created"; });
+
+  mutable_storage->apply(
+      expected_block,
+      [](const auto &, const auto &, const auto &) { return true; });
+
+  storage->commit(std::move(mutable_storage));
+
+  storage->dropStorage();
+
+  ASSERT_TRUE(wrapper.validate());
 }
 
 TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {
@@ -691,16 +731,14 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
   ASSERT_TRUE(storage);
   auto blocks = storage->getBlockQuery();
 
-  shared_model::crypto::PublicKey pubkey1(std::string("1", 32));
-  shared_model::crypto::PublicKey pubkey2(std::string("2", 32));
+  shared_model::crypto::PublicKey pubkey1(std::string(32, '1'));
+  shared_model::crypto::PublicKey pubkey2(std::string(32, '2'));
 
   auto txn1 =
       TestTransactionBuilder()
           .creatorAccountId("admin1")
           .createRole("user",
-                      std::set<std::string>{iroha::model::can_add_peer,
-                                            iroha::model::can_create_asset,
-                                            iroha::model::can_get_my_account})
+                      {Role::kAddPeer, Role::kCreateAsset, Role::kGetMyAccount})
           .createDomain("domain", "user")
           .createAccount("userone", "domain", pubkey1)
           .build();
@@ -709,9 +747,7 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
       TestTransactionBuilder()
           .creatorAccountId("admin1")
           .createRole("usertwo",
-                      std::set<std::string>{iroha::model::can_add_peer,
-                                            iroha::model::can_create_asset,
-                                            iroha::model::can_get_my_account})
+                      {Role::kAddPeer, Role::kCreateAsset, Role::kGetMyAccount})
           .createDomain("domaintwo", "user")
           .build();
 
@@ -730,13 +766,14 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
   auto tx2hash = txn2.hash();
   auto tx3hash = shared_model::crypto::Hash("some garbage");
 
-  auto tx1check = *blocks->getTxByHashSync(tx1hash);
+  auto tx1 = blocks->getTxByHashSync(tx1hash);
+  ASSERT_TRUE(tx1);
 
-  auto tx1 = *blocks->getTxByHashSync(tx1hash);
-  auto tx2 = *blocks->getTxByHashSync(tx2hash);
+  auto tx2 = blocks->getTxByHashSync(tx2hash);
+  ASSERT_TRUE(tx2);
 
-  ASSERT_EQ(*tx1.operator->(), txn1);
-  ASSERT_EQ(*tx2.operator->(), txn2);
+  ASSERT_EQ(**tx1, txn1);
+  ASSERT_EQ(**tx2, txn2);
   ASSERT_EQ(blocks->getTxByHashSync(tx3hash), boost::none);
 }
 
@@ -860,23 +897,23 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
   // initialize storage with genesis block
   std::string default_domain = "test";
   std::string default_role = "admin";
-  auto genesis_tx =
-      shared_model::proto::TransactionBuilder()
-          .creatorAccountId("admin@test")
-          .txCounter(1)
-          .createdTime(iroha::time::now())
-          .createRole(default_role,
-                      std::vector<std::string>{iroha::model::can_create_domain,
-                                               iroha::model::can_create_account,
-                                               iroha::model::can_add_asset_qty,
-                                               iroha::model::can_add_peer,
-                                               iroha::model::can_receive,
-                                               iroha::model::can_transfer})
-          .createDomain(default_domain, default_role)
-          .build()
-          .signAndAddSignature(
-              shared_model::crypto::DefaultCryptoAlgorithmType::
-                  generateKeypair());
+  auto genesis_tx = shared_model::proto::TransactionBuilder()
+                        .creatorAccountId("admin@test")
+                        .createdTime(iroha::time::now())
+                        .quorum(1)
+                        .createRole(default_role,
+                                    {Role::kCreateDomain,
+                                     Role::kCreateAccount,
+                                     Role::kAddAssetQty,
+                                     Role::kAddPeer,
+                                     Role::kReceive,
+                                     Role::kTransfer})
+                        .createDomain(default_domain, default_role)
+                        .build()
+                        .signAndAddSignature(
+                            shared_model::crypto::DefaultCryptoAlgorithmType::
+                                generateKeypair())
+                        .finish();
 
   auto genesis_block =
       TestBlockBuilder()

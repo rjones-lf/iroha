@@ -20,7 +20,6 @@
 #include <csignal>
 #include <fstream>
 #include <thread>
-#include "backend/protobuf/from_old_model.hpp"
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
@@ -74,6 +73,11 @@ DEFINE_string(keypair_name, "", "Specify name of .pub and .priv files");
  */
 DEFINE_validator(keypair_name, &validate_keypair_name);
 
+/**
+ * Creating boolean flag for overwriting already existing block storage
+ */
+DEFINE_bool(overwrite_ledger, false, "Overwrite ledger data if existing");
+
 std::promise<void> exit_requested;
 
 int main(int argc, char *argv[]) {
@@ -100,11 +104,9 @@ int main(int argc, char *argv[]) {
 
   // Reading public and private key files
   iroha::KeysManagerImpl keysManager(FLAGS_keypair_name);
-  iroha::keypair_t keypair{};
+  auto keypair = keysManager.loadKeys();
   // Check if both keys are read properly
-  if (auto loadedKeypair = keysManager.loadKeys()) {
-    keypair = *loadedKeypair;
-  } else {
+  if (not keypair) {
     // Abort execution if not
     log->error("Failed to load keypair");
     return EXIT_FAILURE;
@@ -119,7 +121,8 @@ int main(int argc, char *argv[]) {
                 std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()),
                 std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()),
                 std::chrono::milliseconds(config[mbr::LoadDelay].GetUint()),
-                keypair);
+                *keypair,
+                config[mbr::MstSupport].GetBool());
 
   // Check if iroha daemon storage was successfully initialized
   if (not irohad.storage) {
@@ -142,6 +145,18 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
 
+    // check if ledger data already existing
+    auto ledger_not_empty =
+        irohad.storage->getBlockQuery()->getTopBlockHeight() != 0;
+
+    // Check if force flag to overwrite ledger is specified
+    if (ledger_not_empty && not FLAGS_overwrite_ledger) {
+      log->error(
+          "Block store not empty. Use '--overwrite_ledger' to force "
+          "overwrite it. Shutting down...");
+      return EXIT_FAILURE;
+    }
+
     // clear previous storage if any
     irohad.dropStorage();
 
@@ -151,9 +166,20 @@ int main(int argc, char *argv[]) {
     log->info("Block is parsed");
 
     // Applying transactions from genesis block to iroha storage
-    irohad.storage->insertBlock(shared_model::proto::from_old(block.value()));
+    irohad.storage->insertBlock(*block.value());
     log->info("Genesis block inserted, number of transactions: {}",
-              block.value().transactions.size());
+              block.value()->transactions().size());
+  }
+
+  // check if at least one block is available in the ledger
+  auto blocks_exist = irohad.storage->getBlockQuery()->getTopBlock().match(
+      [](const auto &) { return true; },
+      [](iroha::expected::Error<std::string> &) { return false; });
+
+  if (not blocks_exist) {
+    log->error(
+        "There are no blocks in the ledger. Use --genesis_block parameter.");
+    return EXIT_FAILURE;
   }
 
   // init pipeline components

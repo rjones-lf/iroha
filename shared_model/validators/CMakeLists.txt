@@ -15,9 +15,11 @@
 add_library(shared_model_stateless_validation
         default_validator.cpp
         field_validator.cpp
+        transactions_collection/signed_transactions_collection_validator.cpp
+        transactions_collection/unsigned_transactions_collection_validator.cpp
         )
 
 target_link_libraries(shared_model_stateless_validation
         schema
-        model_interfaces
+        shared_model_interfaces
         )

@@ -18,6 +18,8 @@
 #ifndef IROHA_PROTO_SET_QUORUM_HPP
 #define IROHA_PROTO_SET_QUORUM_HPP
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "commands.pb.h"
 #include "interfaces/commands/set_quorum.hpp"
 
 namespace shared_model {
@@ -27,31 +29,22 @@ namespace shared_model {
                                                  SetQuorum> {
      public:
       template <typename CommandType>
-      explicit SetQuorum(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit SetQuorum(CommandType &&command);
 
-      SetQuorum(const SetQuorum &o) : SetQuorum(o.proto_) {}
+      SetQuorum(const SetQuorum &o);
 
-      SetQuorum(SetQuorum &&o) noexcept : SetQuorum(std::move(o.proto_)) {}
+      SetQuorum(SetQuorum &&o) noexcept;
 
-      const interface::types::AccountIdType &accountId() const override {
-        return set_quorum_.account_id();
-      }
+      const interface::types::AccountIdType &accountId() const override;
 
-      const interface::types::QuorumType &newQuorum() const override {
-        return *new_quorum_;
-      }
+      interface::types::QuorumType newQuorum() const override;
 
      private:
       // lazy
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::SetAccountQuorum &set_quorum_{
-          proto_->set_quorum()};
-
-      const Lazy<const interface::types::QuorumType> new_quorum_{
-          [this] { return set_quorum_.quorum(); }};
+      const iroha::protocol::SetAccountQuorum &set_quorum_;
     };
 
   }  // namespace proto

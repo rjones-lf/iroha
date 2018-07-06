@@ -20,7 +20,7 @@
 namespace shared_model {
   namespace bindings {
     ModelTransactionBuilder::ModelTransactionBuilder() {
-      *this = creatorAccountId("").createdTime(0).txCounter(0);
+      *this = creatorAccountId("").createdTime(0).quorum(1);
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::creatorAccountId(
@@ -28,22 +28,21 @@ namespace shared_model {
       return ModelTransactionBuilder(builder_.creatorAccountId(account_id));
     }
 
-    ModelTransactionBuilder ModelTransactionBuilder::txCounter(
-        interface::types::CounterType tx_counter) {
-      return ModelTransactionBuilder(builder_.txCounter(tx_counter));
-    }
-
     ModelTransactionBuilder ModelTransactionBuilder::createdTime(
         interface::types::TimestampType created_time) {
       return ModelTransactionBuilder(builder_.createdTime(created_time));
     }
 
+    ModelTransactionBuilder ModelTransactionBuilder::quorum(
+        interface::types::QuorumType quorum) {
+      return ModelTransactionBuilder(builder_.quorum(quorum));
+    }
+
     ModelTransactionBuilder ModelTransactionBuilder::addAssetQuantity(
-        const interface::types::AccountIdType &account_id,
         const interface::types::AssetIdType &asset_id,
         const std::string &amount) {
       return ModelTransactionBuilder(
-          builder_.addAssetQuantity(account_id, asset_id, amount));
+          builder_.addAssetQuantity(asset_id, amount));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::addPeer(
@@ -98,7 +97,7 @@ namespace shared_model {
 
     ModelTransactionBuilder ModelTransactionBuilder::createRole(
         const interface::types::RoleIdType &role_name,
-        const std::vector<interface::types::PermissionNameType> &permissions) {
+        const interface::RolePermissionSet &permissions) {
       return ModelTransactionBuilder(
           builder_.createRole(role_name, permissions));
     }
@@ -112,14 +111,14 @@ namespace shared_model {
 
     ModelTransactionBuilder ModelTransactionBuilder::grantPermission(
         const interface::types::AccountIdType &account_id,
-        const interface::types::PermissionNameType &permission) {
+        interface::permissions::Grantable permission) {
       return ModelTransactionBuilder(
           builder_.grantPermission(account_id, permission));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::revokePermission(
         const interface::types::AccountIdType &account_id,
-        const interface::types::PermissionNameType &permission) {
+        interface::permissions::Grantable permission) {
       return ModelTransactionBuilder(
           builder_.revokePermission(account_id, permission));
     }
@@ -140,11 +139,10 @@ namespace shared_model {
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::subtractAssetQuantity(
-        const interface::types::AccountIdType &account_id,
         const interface::types::AssetIdType &asset_id,
         const std::string &amount) {
       return ModelTransactionBuilder(
-          builder_.subtractAssetQuantity(account_id, asset_id, amount));
+          builder_.subtractAssetQuantity(asset_id, amount));
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::transferAsset(

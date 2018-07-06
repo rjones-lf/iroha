@@ -38,7 +38,7 @@ to the directory of your choice.
 
   git clone -b develop https://github.com/hyperledger/iroha --depth=1
 
-.. hint:: ``--depth-1`` option allows us to download only latest commit and
+.. hint:: ``--depth=1`` option allows us to download only latest commit and
   save some time and bandwidth. If you want to get a full commit history, you
   can omit this option.
 
@@ -57,8 +57,8 @@ After you execute this script, following things happen:
 
 1. The script checks if you don't have containers with Iroha already running.
 Successful completion finishes with the new container shell.  
-2. The script will download ``iroha-docker-develop`` and ``postgres`` images. 
-``iroha-docker-develop`` image contains all development dependencies and is 
+2. The script will download ``hyperledger/iroha:develop-build`` and ``postgres`` images.
+``hyperledger/iroha:develop-build`` image contains all development dependencies and is
 based on top of ``ubuntu:16.04``. ``postgres`` image is required for starting 
 and running Iroha.
 3. Two containers are created and launched.

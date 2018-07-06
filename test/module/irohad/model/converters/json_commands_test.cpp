@@ -36,13 +36,14 @@
 #include "model/commands/subtract_asset_quantity.hpp"
 #include "model/commands/transfer_asset.hpp"
 #include "model/converters/json_command_factory.hpp"
-#include "validators/permissions.hpp"
 #include "model/sha3_hash.hpp"
+#include "validators/permissions.hpp"
 
 using namespace rapidjson;
 using namespace iroha;
 using namespace iroha::model;
 using namespace iroha::model::converters;
+using namespace shared_model::permissions;
 
 class JsonCommandTest : public ::testing::Test {
  public:
@@ -103,7 +104,6 @@ TEST_F(JsonCommandTest, create_domain) {
 
 TEST_F(JsonCommandTest, add_asset_quantity) {
   auto orig_command = std::make_shared<AddAssetQuantity>();
-  orig_command->account_id = "23";
   iroha::Amount amount(150, 2);
 
   orig_command->amount = amount;
@@ -124,7 +124,6 @@ TEST_F(JsonCommandTest, add_asset_quantity) {
  */
 TEST_F(JsonCommandTest, subtract_asset_quantity) {
   auto orig_command = std::make_shared<SubtractAssetQuantity>();
-  orig_command->account_id = "23";
   iroha::Amount amount(150, 2);
 
   orig_command->amount = amount;

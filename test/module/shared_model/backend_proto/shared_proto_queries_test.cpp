@@ -55,13 +55,13 @@ TEST(ProtoQueryBuilder, Builder) {
 
   iroha::protocol::Query proto_query;
   auto &payload = *proto_query.mutable_payload();
-  payload.set_created_time(created_time);
-  payload.set_creator_account_id(account_id);
-  payload.set_query_counter(query_counter);
+  auto *meta = payload.mutable_meta();
+  meta->set_created_time(created_time);
+  meta->set_creator_account_id(account_id);
+  meta->set_query_counter(query_counter);
   {
     auto &query = *payload.mutable_get_account_assets();
     query.set_account_id(account_id);
-    query.set_asset_id(asset_id);
   }
 
   auto keypair =
@@ -77,10 +77,45 @@ TEST(ProtoQueryBuilder, Builder) {
   auto query = shared_model::proto::QueryBuilder()
                    .createdTime(created_time)
                    .creatorAccountId(account_id)
-                   .getAccountAssets(account_id, asset_id)
+                   .getAccountAssets(account_id)
                    .queryCounter(query_counter)
                    .build();
 
-  auto proto = query.signAndAddSignature(keypair).getTransport();
+  auto proto = query.signAndAddSignature(keypair).finish().getTransport();
+  ASSERT_EQ(proto_query.SerializeAsString(), proto.SerializeAsString());
+}
+
+/**
+ * @given query field values and sample command values, reference query
+ * @when create query with sample command using query builder
+ * @then query is built correctly
+ */
+TEST(ProtoQueryBuilder, BlocksQueryBuilder) {
+  uint64_t created_time = iroha::time::now(), query_counter = 1;
+  std::string account_id = "admin@test", asset_id = "coin#test";
+
+  iroha::protocol::BlocksQuery proto_query;
+  auto *meta = proto_query.mutable_meta();
+  meta->set_created_time(created_time);
+  meta->set_creator_account_id(account_id);
+  meta->set_query_counter(query_counter);
+
+  auto keypair =
+      shared_model::crypto::CryptoProviderEd25519Sha3::generateKeypair();
+  auto signedProto = shared_model::crypto::CryptoSigner<>::sign(
+      shared_model::crypto::Blob(proto_query.meta().SerializeAsString()),
+      keypair);
+
+  auto sig = proto_query.mutable_signature();
+  sig->set_pubkey(shared_model::crypto::toBinaryString(keypair.publicKey()));
+  sig->set_signature(shared_model::crypto::toBinaryString(signedProto));
+
+  auto query = shared_model::proto::BlocksQueryBuilder()
+                   .createdTime(created_time)
+                   .creatorAccountId(account_id)
+                   .queryCounter(query_counter)
+                   .build();
+
+  auto proto = query.signAndAddSignature(keypair).finish().getTransport();
   ASSERT_EQ(proto_query.SerializeAsString(), proto.SerializeAsString());
 }

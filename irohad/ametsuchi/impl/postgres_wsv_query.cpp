@@ -16,6 +16,7 @@
  */
 
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "backend/protobuf/permissions.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -24,7 +25,6 @@ namespace iroha {
     using shared_model::interface::types::AssetIdType;
     using shared_model::interface::types::DomainIdType;
     using shared_model::interface::types::JsonType;
-    using shared_model::interface::types::PermissionNameType;
     using shared_model::interface::types::PubkeyType;
     using shared_model::interface::types::RoleIdType;
 
@@ -52,14 +52,17 @@ namespace iroha {
     bool PostgresWsvQuery::hasAccountGrantablePermission(
         const AccountIdType &permitee_account_id,
         const AccountIdType &account_id,
-        const PermissionNameType &permission_id) {
+        shared_model::interface::permissions::Grantable permission) {
+      const auto perm_str =
+          shared_model::interface::GrantablePermissionSet({permission})
+              .toBitstring();
       return execute_(
                  "SELECT * FROM account_has_grantable_permissions WHERE "
                  "permittee_account_id = "
                  + transaction_.quote(permitee_account_id)
                  + " AND account_id = " + transaction_.quote(account_id)
-                 + " AND permission_id = " + transaction_.quote(permission_id)
-                 + ";")
+                 + " AND permission & " + transaction_.quote(perm_str) + " = "
+                 + transaction_.quote(perm_str) + ";")
           | [](const auto &result) { return result.size() == 1; };
     }
 
@@ -75,17 +78,21 @@ namespace iroha {
             };
     }
 
-    boost::optional<std::vector<PermissionNameType>>
+    boost::optional<shared_model::interface::RolePermissionSet>
     PostgresWsvQuery::getRolePermissions(const RoleIdType &role_name) {
       return execute_(
-                 "SELECT permission_id FROM role_has_permissions WHERE role_id "
-                 "= "
+                 "SELECT permission FROM role_has_permissions WHERE role_id = "
                  + transaction_.quote(role_name) + ";")
-          | [&](const auto &result) {
-              return transform<std::string>(result, [](const auto &row) {
-                return row.at("permission_id").c_str();
-              });
-            };
+                 | [&](const auto &result)
+                 -> boost::optional<
+                     shared_model::interface::RolePermissionSet> {
+        // TODO(@l4l) 26/06/18 remove with IR-1480
+        if (result.empty()) {
+          return shared_model::interface::RolePermissionSet();
+        }
+        return shared_model::interface::RolePermissionSet(
+            std::string(result.at(0).at("permission").c_str()));
+      };
     }
 
     boost::optional<std::vector<RoleIdType>> PostgresWsvQuery::getRoles() {
@@ -163,6 +170,31 @@ namespace iroha {
       };
     }
 
+    boost::optional<
+        std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>>
+    PostgresWsvQuery::getAccountAssets(const AccountIdType &account_id) {
+      return execute_("SELECT * FROM account_has_asset WHERE account_id = "
+                      + transaction_.quote(account_id) + ";")
+                 | [&](const auto &result)
+                 -> boost::optional<std::vector<
+                     std::shared_ptr<shared_model::interface::AccountAsset>>> {
+        auto results = transform<shared_model::builder::BuilderResult<
+            shared_model::interface::AccountAsset>>(result, makeAccountAsset);
+        std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
+            assets;
+        for (auto &r : results) {
+          r.match(
+              [&](expected::Value<
+                  std::shared_ptr<shared_model::interface::AccountAsset>> &v) {
+                assets.push_back(v.value);
+              },
+              [&](expected::Error<std::shared_ptr<std::string>> &e) {
+                log_->info(*e.error);
+              });
+        }
+        return assets;
+      };
+    }
     boost::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
     PostgresWsvQuery::getAccountAsset(const AccountIdType &account_id,
                                       const AssetIdType &asset_id) {

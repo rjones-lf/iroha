@@ -19,6 +19,7 @@
 #include <memory>
 #include <unordered_set>
 
+#include "block.pb.h"
 #include <gmock/gmock-matchers.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/dynamic_message.h>
@@ -27,12 +28,14 @@
 #include <boost/range/join.hpp>
 
 #include "backend/protobuf/common_objects/peer.hpp"
+#include "backend/protobuf/permissions.hpp"
+#include "backend/protobuf/queries/proto_query_payload_meta.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
-#include "validators/permissions.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
 #include "utils/lazy_initializer.hpp"
 #include "validators/field_validator.hpp"
+#include "validators/permissions.hpp"
 
 using namespace shared_model;
 
@@ -113,11 +116,11 @@ class FieldValidatorTest : public ValidatorsTest {
                                           &FieldValidator::validateDomainId,
                                           &FieldValidatorTest::domain_id,
                                           domain_id_test_cases));
-    for (const auto &field : {"tx_counter", "query_counter"}) {
+    for (const auto &field : {"query_counter"}) {
       field_validators.insert(makeValidator(field,
                                             &FieldValidator::validateCounter,
                                             &FieldValidatorTest::counter,
-                                            tx_counter_test_cases));
+                                            counter_test_cases));
     }
 
     field_validators.insert(makeValidator("quorum",
@@ -125,10 +128,16 @@ class FieldValidatorTest : public ValidatorsTest {
                                           &FieldValidatorTest::quorum,
                                           quorum_test_cases));
 
-    field_validators.insert(makeValidator("permission",
-                                          &FieldValidator::validatePermission,
-                                          &FieldValidatorTest::permission,
-                                          permission_test_cases));
+    field_validators.insert(
+        makeValidator("permission",
+                      &FieldValidator::validateGrantablePermission,
+                      &FieldValidatorTest::model_grantable_permission,
+                      grantable_permission_test_cases));
+
+    field_validators.insert(makeValidator("precision",
+                                          &FieldValidator::validatePrecision,
+                                          &FieldValidatorTest::precision,
+                                          precision_test_cases));
 
     // TODO: add validation to all fields
     for (const auto &field : {"value",
@@ -136,7 +145,8 @@ class FieldValidatorTest : public ValidatorsTest {
                               "commands",
                               "quorum",
                               "tx_hashes",
-                              "precision"}) {
+                              // permissions are always valid
+                              "permissions"}) {
       field_validators.insert(makeNullValidator(field));
     }
   }
@@ -348,44 +358,44 @@ class FieldValidatorTest : public ValidatorsTest {
   std::vector<FieldTestCase> peer_test_cases{
       // clang-format off
       // ip addresses
-      makeValidPeerAddressTestCase("zeros_ip","0.0.0.0:0", std::string(32, '0')),
-      makeValidPeerAddressTestCase("max_ip", "255.255.255.255:65535", std::string(32, '0')),
-      makeValidPeerAddressTestCase("common_ip","192.168.0.1:8080", std::string(32, '0')),
+      makeValidPeerAddressTestCase("zeros_ip","0.0.0.0:0", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeValidPeerAddressTestCase("max_ip", "255.255.255.255:65535", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeValidPeerAddressTestCase("common_ip","192.168.0.1:8080", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
 
-      makeInvalidPeerAddressTestCase("invalid_peer_address", "182.13.35.1:3040xx", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("invalid symbol in ip", "-0.0.0.0:0", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("too big number in ip", "256.256.256.255:65535", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("too big port", "192.168.0.1:65536", std::string(32, '0')),
+      makeInvalidPeerAddressTestCase("invalid_peer_address", "182.13.35.1:3040xx", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("invalid symbol in ip", "-0.0.0.0:0", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("too big number in ip", "256.256.256.255:65535", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("too big port", "192.168.0.1:65536", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
 
       // hostname
-      makeValidPeerAddressTestCase("valid hostname with port", "abc.efg:0", std::string(32, '0')),
-      makeValidPeerAddressTestCase("valid hostname with max port", "abc.efg.hij:65535", std::string(32, '0')),
-      makeValidPeerAddressTestCase("hostname with hyphen", "a-hyphen.ru-i:8080", std::string(32, '0')),
-      makeValidPeerAddressTestCase("common hostname with port", "altplus.com.jp:80", std::string(32, '0')),
-      makeValidPeerAddressTestCase("max label length in hostname with port", "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad:8080", std::string(32, '0')),
+      makeValidPeerAddressTestCase("valid hostname with port", "abc.efg:0", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeValidPeerAddressTestCase("valid hostname with max port", "abc.efg.hij:65535", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeValidPeerAddressTestCase("hostname with hyphen", "a-hyphen.ru-i:8080", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeValidPeerAddressTestCase("common hostname with port", "altplus.com.jp:80", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeValidPeerAddressTestCase("max label length in hostname with port", "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad:8080", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
       makeValidPeerAddressTestCase("max domain name length in hostname with port",
                                    "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
                                    "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
                                    "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
-                                   "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad:256", std::string(32, '0')),
+                                   "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad:256", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
 
 
-      makeInvalidPeerAddressTestCase("hostname starting with nonletter", "9.start.with.non.letter:0", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("hostname starting with dash", "-startWithDash:65535", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("hostname starting with at", "@.is.not.allowed:8080", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("hostname with space", "no space is allowed:80", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("hostname with too big port", "too.big.port:65536", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("hostname with not allowed character", "some\u2063host:123", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("hostname ending with hyphen", "endWith-:909", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("hostname with too large label", "aLabelMustNotExceeds63charactersALabelMustNotExceeds63characters:9090", std::string(32, '0')),
+      makeInvalidPeerAddressTestCase("hostname starting with nonletter", "9.start.with.non.letter:0", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname starting with dash", "-startWithDash:65535", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname starting with at", "@.is.not.allowed:8080", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname with space", "no space is allowed:80", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname with too big port", "too.big.port:65536", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname with not allowed character", "some\u2063host:123", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname ending with hyphen", "endWith-:909", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname with too large label", "aLabelMustNotExceeds63charactersALabelMustNotExceeds63characters:9090", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
       makeInvalidPeerAddressTestCase("hostname with more than 256 character domain",
       "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
       "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
       "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
-      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP:256", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("empty address", "", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("empty domain", ":6565", std::string(32, '0')),
-      makeInvalidPeerAddressTestCase("empty domain two : symbols", "::6565:", std::string(32, '0')),
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP:256", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("empty address", "", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("empty domain", ":6565", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("empty domain two : symbols", "::6565:", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
 
       // invalid pubkey
       makeInvalidPeerPubkeyTestCase("invalid_peer_pubkey_length",
@@ -466,7 +476,7 @@ class FieldValidatorTest : public ValidatorsTest {
       makeValidCase(&FieldValidatorTest::role_permission,
                     iroha::protocol::RolePermission::can_append_role)};
 
-  std::vector<FieldTestCase> tx_counter_test_cases{
+  std::vector<FieldTestCase> counter_test_cases{
       makeValidCase(&FieldValidatorTest::counter, 5),
       makeTestCase("zero_counter",
                    &FieldValidatorTest::counter,
@@ -495,10 +505,12 @@ class FieldValidatorTest : public ValidatorsTest {
       makeValidCase(&FieldValidatorTest::detail_value, "valid value"),
       makeValidCase(&FieldValidatorTest::detail_value, std::string(4096, '0')),
       makeValidCase(&FieldValidatorTest::detail_value, ""),
-      makeInvalidCase("long_value",
-                      "value",
-                      &FieldValidatorTest::detail_value,
-                      std::string(4097, '0'))};
+      makeInvalidCase(
+          "long_value",
+          "value",
+          &FieldValidatorTest::detail_value,
+          // 5 Mb, value greater than can put into one setAccountDetail
+          std::string(5 * 1024 * 1024, '0'))};
 
   std::vector<FieldTestCase> description_test_cases{
       makeValidCase(&FieldValidatorTest::description, "valid description"),
@@ -515,28 +527,77 @@ class FieldValidatorTest : public ValidatorsTest {
       makeTestCase(
           "too big quorum size", &FieldValidatorTest::quorum, 129, false, "")};
 
-  std::vector<FieldTestCase> permissionTestCases() {
-    auto valid_cases = iroha::model::role_perm_group
-        | boost::adaptors::transformed([&](const auto &permission) {
-                         return this->makeTestCase(permission,
-                                             &FieldValidatorTest::permission,
-                                             permission,
-                                             true,
-                                             "");
-                       });
-    std::vector<FieldTestCase> invalid_cases = {
-        makeInvalidCase("non existing permission",
-                        "permission",
-                        &FieldValidatorTest::permission,
-                        "non_existing_permission")};
-    // merge valid and invalid cases
-    std::vector<FieldTestCase> all_cases;
-    all_cases.insert(all_cases.begin(), valid_cases.begin(), valid_cases.end());
-    all_cases.insert(
-        all_cases.begin(), invalid_cases.begin(), invalid_cases.end());
-    return all_cases;
+  template <typename PermType, typename F>
+  std::vector<FieldTestCase> permissionTestCases(F ValidatorsTest::*field) {
+    std::vector<FieldTestCase> cases;
+
+    // using PermType = shared_model::interface::permissions::Role;
+    for (size_t i = 0; i < static_cast<size_t>(PermType::COUNT); ++i) {
+      cases.push_back(makeValidCase(field, static_cast<PermType>(i)));
+    }
+
+    cases.push_back(makeTestCase("non-existing permission",
+                                 field,
+                                 static_cast<PermType>(PermType::COUNT),
+                                 false,
+                                 ""));
+
+    return cases;
   }
-  std::vector<FieldTestCase> permission_test_cases = permissionTestCases();
+
+  std::vector<FieldTestCase> role_permission_test_cases =
+      permissionTestCases<shared_model::interface::permissions::Role>(
+          &FieldValidatorTest::model_role_permission);
+  std::vector<FieldTestCase> grantable_permission_test_cases =
+      permissionTestCases<shared_model::interface::permissions::Grantable>(
+          &FieldValidatorTest::model_grantable_permission);
+
+  std::vector<FieldTestCase> meta_test_cases = [&]() {
+    iroha::protocol::QueryPayloadMeta meta;
+    meta.set_created_time(iroha::time::now());
+    meta.set_creator_account_id("admin@test");
+    meta.set_query_counter(5);
+    std::vector<FieldTestCase> all_cases;
+    all_cases.push_back(
+        makeTestCase("meta test", &FieldValidatorTest::meta, meta, true, ""));
+    return all_cases;
+  }();
+
+  std::vector<FieldTestCase> batch_meta_test_cases = [&]() {
+    iroha::protocol::Transaction::Payload::BatchMeta meta;
+    meta.set_type(iroha::protocol::Transaction::Payload::BatchMeta::BatchType::
+                      Transaction_Payload_BatchMeta_BatchType_ATOMIC);
+    meta.add_tx_hashes("tst");
+    std::vector<FieldTestCase> all_cases;
+    all_cases.push_back(makeTestCase(
+        "batch meta test", &FieldValidatorTest::batch_meta, meta, true, ""));
+    return all_cases;
+  }();
+
+  std::vector<FieldTestCase> precision_test_cases{
+      makeValidCase(&FieldValidatorTest::precision, 0),
+      makeValidCase(&FieldValidatorTest::precision, 1),
+      makeValidCase(&FieldValidatorTest::precision, 255),
+
+      // The following cases are written because the type of PrecisionType is
+      // going to be changed.
+
+      // The case is disabled till PrecisionType will become a signed type,
+      // now it is unsigned char.
+      //      makeTestCase("negative precision",
+      //                   &FieldValidatorTest::precision,
+      //                   -3,
+      //                   false,
+      //                   "negative precision"),
+
+      // Disabled, because PrecisionType is 1 byte type. The case should be
+      // enabled when PrecisionType will be 2 bytes int or more.
+      //      makeTestCase("precision value is more than max",
+      //                   &FieldValidatorTest::precision,
+      //                   256,
+      //                   false,
+      //                   "more than max")
+  };
 
   /**************************************************************************/
 
@@ -605,22 +666,26 @@ class FieldValidatorTest : public ValidatorsTest {
                     &FieldValidator::validateAssetName,
                     &FieldValidatorTest::asset_name,
                     asset_name_test_cases),
-      makeTransformValidator("permissions",
-                             &FieldValidator::validatePermissions,
-                             &FieldValidatorTest::role_permission,
-                             [](auto &&x) {
-                               return interface::CreateRole::PermissionsType{
-                                   iroha::protocol::RolePermission_Name(x)};
-                             },
-                             permissions_test_cases),
       makeValidator("created_time",
                     &FieldValidator::validateCreatedTime,
                     &FieldValidatorTest::created_time,
                     created_time_test_cases),
+      makeTransformValidator(
+          "meta",
+          &FieldValidator::validateQueryPayloadMeta,
+          &FieldValidatorTest::meta,
+          [](auto &&x) { return shared_model::proto::QueryPayloadMeta(x); },
+          meta_test_cases),
       makeValidator("description",
                     &FieldValidator::validateDescription,
                     &FieldValidatorTest::description,
-                    description_test_cases)};
+                    description_test_cases),
+      makeTransformValidator(
+          "batch",
+          &FieldValidator::validateBatchMeta,
+          &FieldValidatorTest::batch_meta,
+          [](auto &&x) { return shared_model::proto::BatchMeta(x); },
+          batch_meta_test_cases)};
 };
 
 /**
@@ -638,7 +703,7 @@ TEST_F(FieldValidatorTest, CommandFieldsValidation) {
       [] { return iroha::protocol::Command::descriptor(); },
       [&](auto field) {
         // Add new command to transaction
-        auto command = payload->add_commands();
+        auto command = payload->mutable_reduced_payload()->add_commands();
         //  // Set concrete type for new command
         return command->GetReflection()->MutableMessage(command, field);
       },
@@ -653,18 +718,11 @@ TEST_F(FieldValidatorTest, CommandFieldsValidation) {
  * meaningful message
  */
 TEST_F(FieldValidatorTest, TransactionFieldsValidation) {
-  iroha::protocol::Transaction proto_tx;
-  proto_tx.add_signature();  // at least one signature in message
-
+    auto proto_tx = std::make_shared<iroha::protocol::Transaction>();
+  proto_tx->add_signatures();  // at least one signature in message
+  proto_tx->mutable_payload()->mutable_reduced_payload()->add_commands();
   // iterate over all fields in transaction
-  iterateContainer(
-      [] { return iroha::protocol::Transaction::descriptor(); },
-      [&](auto field) {
-        return field->is_repeated()
-            ? proto_tx.GetReflection()->MutableRepeatedMessage(
-                  &proto_tx, field, 0)
-            : proto_tx.GetReflection()->MutableMessage(&proto_tx, field);
-      },
+  iterateContainerRecursive(proto_tx, field_validators,
       [this](auto field, auto transaction_field) { this->runTestCases(field); },
       [] {});
 }

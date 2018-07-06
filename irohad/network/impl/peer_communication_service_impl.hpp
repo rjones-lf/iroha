@@ -20,7 +20,9 @@
 
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
+#include "simulator/verified_proposal_creator.hpp"
 #include "synchronizer/synchronizer.hpp"
+#include "validation/stateful_validator_common.hpp"
 
 #include "logger/logger.hpp"
 
@@ -30,7 +32,8 @@ namespace iroha {
      public:
       PeerCommunicationServiceImpl(
           std::shared_ptr<OrderingGate> ordering_gate,
-          std::shared_ptr<synchronizer::Synchronizer> synchronizer);
+          std::shared_ptr<synchronizer::Synchronizer> synchronizer,
+          std::shared_ptr<simulator::VerifiedProposalCreator> proposal_creator);
 
       void propagate_transaction(
           std::shared_ptr<const shared_model::interface::Transaction>
@@ -39,11 +42,16 @@ namespace iroha {
       rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
       on_proposal() const override;
 
+      rxcpp::observable<
+          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+      on_verified_proposal() const override;
+
       rxcpp::observable<Commit> on_commit() const override;
 
      private:
       std::shared_ptr<OrderingGate> ordering_gate_;
       std::shared_ptr<synchronizer::Synchronizer> synchronizer_;
+      std::shared_ptr<simulator::VerifiedProposalCreator> proposal_creator_;
       logger::Logger log_;
     };
   }  // namespace network

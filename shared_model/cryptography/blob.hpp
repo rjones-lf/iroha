@@ -82,21 +82,6 @@ namespace shared_model {
 
       bool operator==(const Blob &rhs) const override;
 
-#ifndef DISABLE_BACKWARD
-      /**
-       * Method perform transforming object to old-fashion blob_t format
-       * @tparam BlobType - type of blob
-       * @return blob_t array with own data
-       * Design note: this method is deprecated and should be removed after
-       * migration to shared model in whole project
-       */
-
-      template <typename BlobType>
-      DEPRECATED BlobType makeOldModel() const {
-        return BlobType::from_string(toBinaryString(*this));
-      }
-#endif
-
      protected:
       Blob *clone() const override;
 

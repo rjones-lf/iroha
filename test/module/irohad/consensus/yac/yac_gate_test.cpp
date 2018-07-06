@@ -1,5 +1,5 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
  * http://soramitsu.co.jp
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,19 +18,17 @@
 #include <memory>
 #include <rxcpp/rx-observable.hpp>
 
-#include "backend/protobuf/from_old_model.hpp"
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "builders/protobuf/transaction.hpp"
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
-#include "cryptography/hash.hpp"
-#include "cryptography/hash_providers/sha3_256.hpp"
+#include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/simulator/simulator_mocks.hpp"
-#include "cryptography/hash.hpp"
 
 using namespace iroha::consensus::yac;
 using namespace iroha::network;
@@ -51,6 +49,13 @@ class YacGateTest : public ::testing::Test {
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
     expected_hash = YacHash("proposal", "block");
+    auto tx = shared_model::proto::TransactionBuilder()
+                  .creatorAccountId("account@domain")
+                  .setAccountQuorum("account@domain", 1)
+                  .createdTime(iroha::time::now())
+                  .quorum(1)
+                  .build()
+                  .signAndAddSignature(keypair);
     shared_model::proto::Block tmp =
         shared_model::proto::BlockBuilder()
             .height(1)
@@ -58,18 +63,15 @@ class YacGateTest : public ::testing::Test {
             .transactions(std::vector<shared_model::proto::Transaction>{})
             .prevHash(Sha3_256::makeHash(Blob("block")))
             .build()
-            .signAndAddSignature(keypair);
+            .signAndAddSignature(keypair)
+            .finish();
 
     expected_block = clone(tmp);
-    const auto &wrapped_sig = *(expected_block->signatures().begin());
-    const auto &signature = *wrapped_sig;
-    // TODO: 24/04/2018 x3medima17 remove makeOldModel in next PR
-    const auto old_signature =
-        *std::unique_ptr<iroha::model::Signature>(signature.makeOldModel());
+    const auto &signature = *(expected_block->signatures().begin());
 
     expected_hash.block_signature = clone(signature);
     message.hash = expected_hash;
-    message.signature = old_signature;
+    message.signature = clone(signature);
     commit_message = CommitMessage({message});
     expected_commit = rxcpp::observable<>::just(commit_message);
 
@@ -127,14 +129,21 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+      .WillOnce(Return(
+          rxcpp::observable<>::just<shared_model::interface::BlockVariant>(
+              expected_block)));
 
   init();
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe([this](auto block) {
-    ASSERT_EQ(*block, *expected_block);
+  gate_wrapper.subscribe([this](const auto &block_variant) {
+    ASSERT_NO_THROW({
+      auto block = boost::apply_visitor(
+          framework::SpecifiedVisitor<decltype(expected_block)>(),
+          block_variant);
+      ASSERT_EQ(*block, *expected_block);
+    });
   });
 
   ASSERT_TRUE(gate_wrapper.validate());
@@ -157,7 +166,9 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+      .WillOnce(Return(
+          rxcpp::observable<>::just<shared_model::interface::BlockVariant>(
+              expected_block)));
 
   init();
 }
@@ -167,7 +178,9 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+      .WillOnce(Return(
+          rxcpp::observable<>::just<shared_model::interface::BlockVariant>(
+              expected_block)));
 
   // make hash from block
   EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
@@ -195,7 +208,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
 
   // load block
   auto sig = expected_block->signatures().begin();
-  auto &pubkey = (*sig)->publicKey();
+  auto &pubkey = sig->publicKey();
   EXPECT_CALL(*block_loader, retrieveBlock(pubkey, expected_block->hash()))
       .WillOnce(Return(expected_block));
 
@@ -203,8 +216,76 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe(
-      [this](auto block) { ASSERT_EQ(*block, *expected_block); });
+  gate_wrapper.subscribe([this](const auto &block_variant) {
+    ASSERT_NO_THROW({
+      auto block = boost::apply_visitor(
+          framework::SpecifiedVisitor<decltype(expected_block)>(),
+          block_variant);
+      ASSERT_EQ(*block, *expected_block);
+    });
+  });
+
+  ASSERT_TRUE(gate_wrapper.validate());
+}
+
+/**
+ * @given yac gate
+ * @when recives new commit different to the one it voted for
+ * @then polls nodes for the block with corresponding hash until it succeed,
+ * (reciving none on the first poll)
+ */
+TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
+  // Vote for block => receive different block => load committed block
+
+  // make blocks
+  EXPECT_CALL(*block_creator, on_block())
+      .WillOnce(Return(
+          rxcpp::observable<>::just<shared_model::interface::BlockVariant>(
+              expected_block)));
+
+  // make hash from block
+  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
+
+  // generate order of peers
+  EXPECT_CALL(*peer_orderer, getOrdering(_))
+      .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
+
+  EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
+
+  // expected values
+  expected_hash = YacHash("actual_proposal", "actual_block");
+
+  message.hash = expected_hash;
+
+  commit_message = CommitMessage({message});
+  expected_commit = rxcpp::observable<>::just(commit_message);
+
+  // yac consensus
+  EXPECT_CALL(*hash_gate, on_commit()).WillOnce(Return(expected_commit));
+
+  // convert yac hash to model hash
+  EXPECT_CALL(*hash_provider, toModelHash(expected_hash))
+      .WillOnce(Return(expected_block->hash()));
+
+  // load block
+  auto sig = expected_block->signatures().begin();
+  auto &pubkey = sig->publicKey();
+  EXPECT_CALL(*block_loader, retrieveBlock(pubkey, expected_block->hash()))
+      .WillOnce(Return(boost::none))
+      .WillOnce(Return(expected_block));
+
+  init();
+
+  // verify that yac gate emit expected block
+  auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
+  gate_wrapper.subscribe([this](const auto &block_variant) {
+    ASSERT_NO_THROW({
+      auto block = boost::apply_visitor(
+          framework::SpecifiedVisitor<decltype(expected_block)>(),
+          block_variant);
+      ASSERT_EQ(*block, *expected_block);
+    });
+  });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }

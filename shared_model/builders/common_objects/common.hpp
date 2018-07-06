@@ -19,7 +19,6 @@
 #define IROHA_BUILDERS_COMMON_HPP
 
 #include "common/result.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "validators/answer.hpp"
 
 // TODO: 16.02.2018 nickaleks: Add validators for common_objects IR-986
@@ -65,6 +64,8 @@ namespace shared_model {
         }
 
         if (answer) {
+          // TODO 15.04.2018 x3medima17 IR-1240: rework with std::string instead
+          // of pointer to string
           return iroha::expected::makeError(
               std::make_shared<std::string>(answer.reason()));
         }

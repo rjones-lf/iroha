@@ -18,12 +18,15 @@
 #ifndef IROHA_SHARED_MODEL_PROTO_ACCOUNT_ASSET_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_PROTO_ACCOUNT_ASSET_RESPONSE_HPP
 
+#include <boost/range/numeric.hpp>
+
 #include "backend/protobuf/common_objects/account_asset.hpp"
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
 #include "responses.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
+
 
 namespace shared_model {
   namespace proto {
@@ -33,29 +36,21 @@ namespace shared_model {
                                AccountAssetResponse> {
      public:
       template <typename QueryResponseType>
-      explicit AccountAssetResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit AccountAssetResponse(QueryResponseType &&queryResponse);
 
-      AccountAssetResponse(const AccountAssetResponse &o)
-          : AccountAssetResponse(o.proto_) {}
+      AccountAssetResponse(const AccountAssetResponse &o);
 
-      AccountAssetResponse(AccountAssetResponse &&o)
-          : AccountAssetResponse(std::move(o.proto_)) {}
+      AccountAssetResponse(AccountAssetResponse &&o);
 
-      const interface::AccountAsset &accountAsset() const override {
-        return *accountAsset_;
-      }
+      const interface::types::AccountAssetCollectionType accountAssets() const override;
 
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::AccountAssetResponse &accountAssetResponse_{
-          proto_->account_assets_response()};
+      const iroha::protocol::AccountAssetResponse &accountAssetResponse_;
 
-      const Lazy<AccountAsset> accountAsset_{[this] {
-        return AccountAsset(accountAssetResponse_.account_asset());
-      }};
+      const Lazy<std::vector<AccountAsset>> accountAssets_;
     };
   }  // namespace proto
 }  // namespace shared_model

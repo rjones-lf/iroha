@@ -40,6 +40,16 @@ namespace shared_model {
 
       explicit Hash(const std::string &hash);
 
+      explicit Hash(const Blob &blob);
+
+      /**
+       * Creates new Hash object from provided hex string
+       * @param hex - string in hex format to create Hash from
+       * @return Hash from provided hex string if it was correct or
+       * Hash from empty string if provided string was not a correct hex string
+       */
+      static Hash fromHexString(const std::string &hex);
+
       std::string toString() const override;
     };
   }  // namespace crypto

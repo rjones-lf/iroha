@@ -29,11 +29,6 @@ namespace iroha {
      */
     struct SubtractAssetQuantity : public Command {
       /**
-       * Account where to subtract assets
-       */
-      std::string account_id;
-
-      /**
        * Asset to issue
        * Note: must exist in the system
        */
@@ -48,10 +43,8 @@ namespace iroha {
 
       SubtractAssetQuantity() {}
 
-      SubtractAssetQuantity(const std::string &account_id,
-                            const std::string &asset_id,
-                            Amount amount)
-          : account_id(account_id), asset_id(asset_id), amount(amount) {}
+      SubtractAssetQuantity(const std::string &asset_id, Amount amount)
+          : asset_id(asset_id), amount(amount) {}
     };
   }  // namespace model
 }  // namespace iroha

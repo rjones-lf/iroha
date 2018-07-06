@@ -18,9 +18,11 @@
 #ifndef IROHA_ANSWER_HPP
 #define IROHA_ANSWER_HPP
 
-#include <boost/range/numeric.hpp>
+#include <ciso646>
 #include <map>
 #include <vector>
+
+#include <boost/range/numeric.hpp>
 #include "utils/string_builder.hpp"
 
 namespace shared_model {

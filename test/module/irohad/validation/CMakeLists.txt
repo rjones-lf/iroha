@@ -15,14 +15,14 @@
 # limitations under the License.
 #
 
-addtest(query_execution query_execution.cpp)
-target_link_libraries(query_execution
-    model
-    shared_model_stateless_validation
-    )
-
 addtest(chain_validation_test chain_validation_test.cpp)
 target_link_libraries(chain_validation_test
     chain_validator
     shared_model_stateless_validation
+    shared_model_proto_backend
     )
+
+addtest(stateful_validator_test stateful_validator_test.cpp)
+target_link_libraries(stateful_validator_test
+  shared_model_default_builders
+  )

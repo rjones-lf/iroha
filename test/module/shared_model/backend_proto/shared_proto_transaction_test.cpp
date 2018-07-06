@@ -19,25 +19,11 @@
 #include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 
 #include <gtest/gtest.h>
 
-/**
- * @given protobuf transaction with transaction counter set
- * @when converted to shared model
- * @then shared model is created correctly
- */
-TEST(ProtoTransaction, Create) {
-  iroha::protocol::Transaction transaction;
-  transaction.mutable_payload()->set_tx_counter(1);
-  shared_model::proto::Transaction proto(transaction);
-  ASSERT_EQ(proto.transactionCounter(), transaction.payload().tx_counter());
-}
-
 // common data for tests
 auto created_time = iroha::time::now();
-shared_model::interface::types::CounterType tx_counter = 1;
 std::string creator_account_id = "admin@test";
 
 /**
@@ -46,25 +32,23 @@ std::string creator_account_id = "admin@test";
  */
 iroha::protocol::Transaction generateEmptyTransaction() {
   iroha::protocol::Transaction proto_tx;
-  auto &payload = *proto_tx.mutable_payload();
-  payload.set_tx_counter(tx_counter);
+  auto &payload = *proto_tx.mutable_payload()->mutable_reduced_payload();
   payload.set_creator_account_id(creator_account_id);
   payload.set_created_time(created_time);
+  payload.set_quorum(1);
 
   return proto_tx;
 }
 
 /**
  * Helper function to generate AddAssetQuantityCommand
- * @param account_id account id to add asset quantity to
  * @param asset_id asset id to add value to
  * @return AddAssetQuantity protocol command
  */
 iroha::protocol::AddAssetQuantity generateAddAssetQuantity(
-    std::string account_id, std::string asset_id) {
+    std::string asset_id) {
   iroha::protocol::AddAssetQuantity command;
 
-  command.set_account_id(account_id);
   command.set_asset_id(asset_id);
   command.mutable_amount()->mutable_value()->set_fourth(1000);
   command.mutable_amount()->set_precision(2);
@@ -82,10 +66,12 @@ TEST(ProtoTransaction, Builder) {
 
   std::string account_id = "admin@test", asset_id = "coin#test",
               amount = "10.00";
-  auto command =
-      proto_tx.mutable_payload()->add_commands()->mutable_add_asset_quantity();
+  auto command = proto_tx.mutable_payload()
+                     ->mutable_reduced_payload()
+                     ->add_commands()
+                     ->mutable_add_asset_quantity();
 
-  command->CopyFrom(generateAddAssetQuantity(account_id, asset_id));
+  command->CopyFrom(generateAddAssetQuantity(asset_id));
 
   auto keypair =
       shared_model::crypto::CryptoProviderEd25519Sha3::generateKeypair();
@@ -93,18 +79,18 @@ TEST(ProtoTransaction, Builder) {
       shared_model::crypto::Blob(proto_tx.payload().SerializeAsString()),
       keypair);
 
-  auto sig = proto_tx.add_signature();
+  auto sig = proto_tx.add_signatures();
   sig->set_pubkey(shared_model::crypto::toBinaryString(keypair.publicKey()));
   sig->set_signature(shared_model::crypto::toBinaryString(signedProto));
 
   auto tx = shared_model::proto::TransactionBuilder()
-                .txCounter(tx_counter)
                 .creatorAccountId(creator_account_id)
-                .addAssetQuantity(account_id, asset_id, amount)
+                .addAssetQuantity(asset_id, amount)
                 .createdTime(created_time)
+                .quorum(1)
                 .build();
 
-  auto signedTx = tx.signAndAddSignature(keypair);
+  auto signedTx = tx.signAndAddSignature(keypair).finish();
   auto &proto = signedTx.getTransport();
 
   ASSERT_EQ(proto_tx.SerializeAsString(), proto.SerializeAsString());
@@ -121,12 +107,11 @@ TEST(ProtoTransaction, BuilderWithInvalidTx) {
   std::string invalid_asset_id = "cointest",     // invalid asset_id without #
       amount = "10.00";
 
-  ASSERT_THROW(
-      shared_model::proto::TransactionBuilder()
-          .txCounter(tx_counter)
-          .creatorAccountId(invalid_account_id)
-          .addAssetQuantity(invalid_account_id, invalid_asset_id, amount)
-          .createdTime(created_time)
-          .build(),
-      std::invalid_argument);
+  ASSERT_THROW(shared_model::proto::TransactionBuilder()
+                   .creatorAccountId(invalid_account_id)
+                   .addAssetQuantity(invalid_asset_id, amount)
+                   .createdTime(created_time)
+                   .quorum(1)
+                   .build(),
+               std::invalid_argument);
 }

@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.lang.Thread;
 
+import jp.co.soramitsu.iroha.*;
+
 class TransactionExample {
     static {
         try {
@@ -41,8 +43,6 @@ class TransactionExample {
     private static ModelCrypto crypto = new ModelCrypto();
     private static ModelTransactionBuilder txBuilder = new ModelTransactionBuilder();
     private static ModelQueryBuilder queryBuilder = new ModelQueryBuilder();
-    private static ModelProtoTransaction protoTxHelper = new ModelProtoTransaction();
-    private static ModelProtoQuery protoQueryHelper = new ModelProtoQuery();
 
     public static byte[] toByteArray(ByteVector blob) {
         byte bs[] = new byte[(int)blob.size()];
@@ -69,17 +69,16 @@ class TransactionExample {
         long currentTime = System.currentTimeMillis();
         String creator = "admin@test";
 
-        long startTxCounter = 1, startQueryCounter = 1;
+        long startQueryCounter = 1;
 
         // build transaction (still unsigned)
         UnsignedTx utx = txBuilder.creatorAccountId(creator)
             .createdTime(BigInteger.valueOf(currentTime))
-            .txCounter(BigInteger.valueOf(startTxCounter))
             .createDomain("ru", "user")
             .createAsset("dollar", "ru", (short)2).build();
 
         // sign transaction and get its binary representation (Blob)
-        ByteVector txblob = protoTxHelper.signAndAddSignature(utx, keys).blob();
+        ByteVector txblob = new ModelProtoTransaction(utx).signAndAddSignature(keys).finish().blob();
 
         // Convert ByteVector to byte array
         byte bs[] = toByteArray(txblob);
@@ -129,7 +128,7 @@ class TransactionExample {
             .createdTime(BigInteger.valueOf(currentTime))
             .getAssetInfo("dollar#ru")
             .build();
-        ByteVector queryBlob = protoQueryHelper.signAndAddSignature(uquery, keys).blob();
+        ByteVector queryBlob = new ModelProtoQuery(uquery).signAndAddSignature(keys).finish().blob();
         byte bquery[] = toByteArray(queryBlob);
 
         Query protoQuery = null;

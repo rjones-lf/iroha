@@ -15,7 +15,8 @@ at ``example/config.sample``
     "max_proposal_size": 10,
     "proposal_delay": 5000,
     "vote_delay": 5000,
-    "load_delay": 5000
+    "load_delay": 5000,
+    "mst_enable" : false
   }
 
 As you can see, configuration file is a valid ``json`` structure. Let's go 
@@ -54,3 +55,6 @@ Environment-specific parameters
 - ``load_delay`` is a waiting time in milliseconds before loading committed 
   block from next peer. We recommend setting this number the same value as 
   ``proposal_delay`` or even higher.
+- ``mst_enable`` enables or disables multisignature transaction support in
+  Iroha. We recommend setting this parameter to ``false`` at the moment until
+  you really need it.

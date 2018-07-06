@@ -37,7 +37,7 @@ namespace shared_model {
 
       /**
        * Creates keypair (ed25519) from provided private key
-       * @param private_key - ed25519 hex-encoded private key
+       * @param private_key - ed25519 hex-encoded private key with length 64
        * @return created keypair
        */
       crypto::Keypair fromPrivateKey(const std::string &private_key);

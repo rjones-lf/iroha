@@ -184,6 +184,14 @@ A request to Iroha that does **not** change the `state <#world-state-view>`__.
 By performing a query, a client can get request data from the state,
 for example a balance of his account, a history of transactions, etc.
 
+Quorum
+======
+
+In the context of transactions signing, quorum number is a minimum amount
+of signatures required to consider a transaction signed.
+The default value is 1.
+Each account can link additional public keys and increase own quorum number.
+
 Synchronizer
 ============
 
@@ -207,6 +215,40 @@ An ordered set of `commands <#command>`__, which is applied to the ledger atomic
 Any nonvalid command within a transaction leads to rejection of the whole
 transaction during the validation process.
 
+Transaction structure
+---------------------
+
+**Payload** stores all transaction fields, except signatures:
+
+    - Time of creation (unix time, in milliseconds)
+    - Account ID of transaction creator (username@domain)
+    - Quorum field (indicates required number of signatures)
+    - Repeated commands which are described in details in commands section <../api/commands.html>`__
+
+
+**Signatures** contain one or many signatures (ed25519 public key + signature)
+
+Transaction statuses
+--------------------
+
+Hyperledger Iroha supports both push and pull interaction mode with a client.
+A client that uses pull mode requests status updates about transactions from
+Iroha peer by sending transaction hashes and awaiting a response. In contrary push
+interaction is done over the listening of an event stream for each transaction.
+In any of these modes, the set of transaction statuses is the same:
+
+ .. image:: ./../../image_assets/tx_status.png
+
+Transaction status set
+^^^^^^^^^^^^^^^^^^^^^^
+
+ - NOT_RECEIVED: requested peer does not have this transaction.
+ - MST_EXPIRED: this transactions is a part of MST pipeline and has expired.
+ - STATELESS_VALIDATION_FAILED: the transaction was formed with some fields, not meeting stateless validation constraints. This status is returned to a client, who formed transaction, right after the transaction was sent. It would also return the reason — what rule was violated.
+ - STATELESS_VALIDATION_SUCCESS: the transaction has successfully passed stateless validation. This status is returned to a client, who formed transaction, right after the transaction was sent.
+ - STATEFUL_VALIDATION_FAILED: the transaction has commands, which violate validation rules, checking state of the chain (e.g. asset balance, account permissions, etc.). It would also return the reason — what rule was violated.
+ - STATEFUL_VALIDATION_SUCCESS: the transaction has successfully passed stateful validation.
+ - COMMITTED: the transaction is the part of a block, which gained enough votes and is in the block store at the moment.
 
 Validator
 =========

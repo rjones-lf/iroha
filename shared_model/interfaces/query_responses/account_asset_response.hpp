@@ -18,66 +18,24 @@
 #ifndef IROHA_SHARED_MODEL_ACCOUNT_ASSET_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_ACCOUNT_ASSET_RESPONSE_HPP
 
-#include <new>
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
-#include "interfaces/common_objects/types.hpp"
-#include "utils/string_builder.hpp"
-#include "utils/visitor_apply_for_all.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/responses/account_assets_response.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Provide response with account asset
      */
-    class AccountAssetResponse : public PRIMITIVE(AccountAssetResponse) {
+    class AccountAssetResponse : public ModelPrimitive<AccountAssetResponse> {
      public:
       /**
        * @return Account has Asset model
        */
-      virtual const AccountAsset &accountAsset() const = 0;
+      virtual const types::AccountAssetCollectionType accountAssets() const = 0;
 
-      /**
-       * Stringify the data.
-       * @return string representation of data.
-       */
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("AccountAssetResponse")
-            .append(accountAsset().toString())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      /**
-       * Implementation of operator ==
-       * @param rhs - the right-hand side of AccountAssetResponse object
-       * @return true if they are same.
-       */
-      bool operator==(const ModelType &rhs) const override {
-        return accountAsset() == rhs.accountAsset();
-      }
-
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of account asset response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        using OldAccountAssetType = decltype(oldModel->acct_asset);
-        /// Use shared_ptr and placement-new to copy new model field to
-        /// oldModel's field and to return raw pointer
-        auto p =
-            std::shared_ptr<OldAccountAssetType>(accountAsset().makeOldModel());
-        new (&oldModel->acct_asset) OldAccountAssetType(*p);
-        return oldModel;
-      }
-
-#endif
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

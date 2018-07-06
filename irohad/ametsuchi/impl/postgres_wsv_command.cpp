@@ -18,6 +18,7 @@
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 
 #include <boost/format.hpp>
+#include "backend/protobuf/permissions.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -75,32 +76,22 @@ namespace iroha {
 
     WsvCommandResult PostgresWsvCommand::insertRolePermissions(
         const shared_model::interface::types::RoleIdType &role_id,
-        const std::set<shared_model::interface::types::PermissionNameType>
-            &permissions) {
-      auto entry = [this, &role_id](auto permission) {
-        return "(" + transaction_.quote(role_id) + ", "
-            + transaction_.quote(permission) + ")";
-      };
-
-      // generate string with all permissions,
-      // applying transform_func to each permission
-      auto generate_perm_string = [&permissions](auto transform_func) {
-        return std::accumulate(std::next(permissions.begin()),
-                               permissions.end(),
-                               transform_func(*permissions.begin()),
-                               [&transform_func](auto &res, auto &perm) {
-                                 return res + ", " + transform_func(perm);
-                               });
-      };
-
+        const shared_model::interface::RolePermissionSet &permissions) {
+      auto perm_str = permissions.toBitstring();
       auto result = execute_(
-          "INSERT INTO role_has_permissions(role_id, permission_id) VALUES "
-          + generate_perm_string(entry) + ";");
+          "INSERT INTO role_has_permissions(role_id, permission) VALUES ("
+          + transaction_.quote(role_id) + ", " + transaction_.quote(perm_str)
+          + " );");
 
       auto message_gen = [&] {
+        // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
+        const auto &str =
+            shared_model::proto::permissions::toString(permissions);
+        const auto perm_debug_str =
+            std::accumulate(str.begin(), str.end(), std::string());
         return (boost::format("failed to insert role permissions, role "
                               "id: '%s', permissions: [%s]")
-                % role_id % generate_perm_string([](auto &a) { return a; }))
+                % role_id % perm_debug_str)
             .str();
       };
 
@@ -111,22 +102,32 @@ namespace iroha {
         const shared_model::interface::types::AccountIdType
             &permittee_account_id,
         const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::PermissionNameType
-            &permission_id) {
-      auto result = execute_(
-          "INSERT INTO "
-          "account_has_grantable_permissions(permittee_account_id, "
-          "account_id, permission_id) VALUES ("
-          + transaction_.quote(permittee_account_id) + ", "
-          + transaction_.quote(account_id) + ", "
-          + transaction_.quote(permission_id) + ");");
+        shared_model::interface::permissions::Grantable permission) {
+      const auto perm_str =
+          shared_model::interface::GrantablePermissionSet({permission})
+              .toBitstring();
+      auto query =
+          (boost::format(
+               "INSERT INTO account_has_grantable_permissions as "
+               "has_perm(permittee_account_id, account_id, permission) VALUES "
+               "(%1%, %2%, %3%) ON CONFLICT (permittee_account_id, account_id) "
+               // SELECT will end up with a error, if the permission exists
+               "DO UPDATE SET permission=(SELECT has_perm.permission | %3% "
+               "WHERE (has_perm.permission & %3%) <> %3%);")
+           % transaction_.quote(permittee_account_id)
+           % transaction_.quote(account_id) % transaction_.quote(perm_str))
+              .str();
+      auto result = execute_(query);
 
       auto message_gen = [&] {
         return (boost::format("failed to insert account grantable permission, "
                               "permittee account id: '%s', "
                               "account id: '%s', "
-                              "permission id: '%s'")
-                % permittee_account_id % account_id % permission_id)
+                              "permission: '%s'")
+                % permittee_account_id
+                % account_id
+                // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
+                % shared_model::proto::permissions::toString(permission))
             .str();
       };
 
@@ -137,21 +138,32 @@ namespace iroha {
         const shared_model::interface::types::AccountIdType
             &permittee_account_id,
         const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::PermissionNameType
-            &permission_id) {
-      auto result = execute_(
-          "DELETE FROM public.account_has_grantable_permissions WHERE "
-          "permittee_account_id="
-          + transaction_.quote(permittee_account_id)
-          + " AND account_id=" + transaction_.quote(account_id)
-          + " AND permission_id=" + transaction_.quote(permission_id) + " ;");
+        shared_model::interface::permissions::Grantable permission) {
+      const auto perm_str = shared_model::interface::GrantablePermissionSet()
+                                .set()
+                                .unset(permission)
+                                .toBitstring();
+      auto query =
+          (boost::format("UPDATE account_has_grantable_permissions as has_perm "
+                         // SELECT will end up with a error, if the permission
+                         // doesn't exists
+                         "SET permission=(SELECT has_perm.permission & %3% "
+                         "WHERE has_perm.permission & %3% = %3%) WHERE "
+                         "permittee_account_id=%1% AND account_id=%2%;")
+           % transaction_.quote(permittee_account_id)
+           % transaction_.quote(account_id) % transaction_.quote(perm_str))
+              .str();
+      auto result = execute_(query);
 
       auto message_gen = [&] {
         return (boost::format("failed to delete account grantable permission, "
                               "permittee account id: '%s', "
                               "account id: '%s', "
                               "permission id: '%s'")
-                % permittee_account_id % account_id % permission_id)
+                % permittee_account_id
+                % account_id
+                // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
+                % shared_model::proto::permissions::toString(permission))
             .str();
       };
 
@@ -162,13 +174,10 @@ namespace iroha {
         const shared_model::interface::Account &account) {
       auto result = execute_(
           "INSERT INTO account(account_id, domain_id, quorum, "
-          "transaction_count, data) VALUES ("
+          "data) VALUES ("
           + transaction_.quote(account.accountId()) + ", "
           + transaction_.quote(account.domainId()) + ", "
-          + transaction_.quote(account.quorum())
-          + ", "
-          // Transaction counter
-          + transaction_.quote(default_tx_counter) + ", "
+          + transaction_.quote(account.quorum()) + ", "
           + transaction_.quote(account.jsonData()) + ");");
 
       auto message_gen = [&] {
@@ -176,10 +185,9 @@ namespace iroha {
                               "account id: '%s', "
                               "domain id: '%s', "
                               "quorum: '%d', "
-                              "transaction counter: '%d', "
                               "json_data: %s")
                 % account.accountId() % account.domainId() % account.quorum()
-                % default_tx_counter % account.jsonData())
+                % account.jsonData())
             .str();
       };
 
@@ -359,8 +367,6 @@ namespace iroha {
             "UPDATE account\n"
             "   SET quorum=" +
             transaction_.quote(account.quorum()) +
-            ", transaction_count=" +
-            /*account.transaction_count*/ transaction_.quote(default_tx_counter) +
             "\n"
             " WHERE account_id=" +
             transaction_.quote(account.accountId()) + ";");

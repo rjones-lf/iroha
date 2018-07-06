@@ -22,11 +22,13 @@
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
+#include "cryptography/keypair.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
+#include "multi_sig_transactions/mst_processor.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/impl/peer_communication_service_impl.hpp"
@@ -67,6 +69,7 @@ class Irohad {
    * @param load_delay - waiting time before loading committed block from next
    * peer
    * @param keypair - public and private keys for crypto signer
+   * @param is_mst_supported - enable or disable mst processing support
    */
   Irohad(const std::string &block_store_dir,
          const std::string &pg_conn,
@@ -76,7 +79,8 @@ class Irohad {
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
          std::chrono::milliseconds load_delay,
-         const iroha::keypair_t &keypair);
+         const shared_model::crypto::Keypair &keypair,
+         bool is_mst_supported);
 
   /**
    * Initialization of whole objects in system
@@ -111,7 +115,7 @@ class Irohad {
 
   virtual void initStorage();
 
-  virtual void initPeerQuery();
+  virtual std::unique_ptr<iroha::ametsuchi::PeerQuery> initPeerQuery();
 
   virtual void initCryptoProvider();
 
@@ -128,6 +132,8 @@ class Irohad {
   virtual void initSynchronizer();
 
   virtual void initPeerCommunicationService();
+
+  virtual void initMstProcessor();
 
   virtual void initTransactionCommandService();
 
@@ -147,6 +153,7 @@ class Irohad {
   std::chrono::milliseconds proposal_delay_;
   std::chrono::milliseconds vote_delay_;
   std::chrono::milliseconds load_delay_;
+  bool is_mst_supported_;
 
   // ------------------------| internal dependencies |-------------------------
 
@@ -156,9 +163,6 @@ class Irohad {
   // validators
   std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;
   std::shared_ptr<iroha::validation::ChainValidator> chain_validator;
-
-  // peer query
-  std::shared_ptr<iroha::ametsuchi::PeerQuery> wsv;
 
   // WSV restorer
   std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;
@@ -180,6 +184,9 @@ class Irohad {
 
   // pcs
   std::shared_ptr<iroha::network::PeerCommunicationService> pcs;
+
+  // mst
+  std::shared_ptr<iroha::MstProcessor> mst_processor;
 
   // transaction service
   std::shared_ptr<torii::CommandService> command_service;
@@ -204,7 +211,7 @@ class Irohad {
  public:
   std::shared_ptr<iroha::ametsuchi::Storage> storage;
 
-  iroha::keypair_t keypair;
+  shared_model::crypto::Keypair keypair;
   grpc::ServerBuilder builder;
 };
 

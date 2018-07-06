@@ -22,6 +22,8 @@ limitations under the License.
 #include <memory>
 #include <thread>
 
+#include "logger/logger.hpp"
+
 namespace torii {
 
   /**
@@ -67,6 +69,7 @@ namespace torii {
     std::string ip_;
     size_t port_;
     std::unique_ptr<iroha::protocol::CommandService::Stub> stub_;
+    logger::Logger log_;
   };
 
 }  // namespace torii

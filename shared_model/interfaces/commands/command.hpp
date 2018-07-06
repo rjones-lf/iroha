@@ -21,7 +21,7 @@
 #include <boost/variant.hpp>
 #include <utility>
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"
 #include "interfaces/commands/add_signatory.hpp"
@@ -38,12 +38,7 @@
 #include "interfaces/commands/set_quorum.hpp"
 #include "interfaces/commands/subtract_asset_quantity.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "utils/visitor_apply_for_all.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/command.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -52,11 +47,11 @@ namespace shared_model {
      * Class provides commands container for all commands in system.
      * General note: this class is container for commands, not a base class.
      */
-    class Command : public PRIMITIVE(Command) {
+    class Command : public ModelPrimitive<Command> {
      private:
-      /// PolymorphicWrapper shortcut type
+      /// const reference shortcut type
       template <typename... Value>
-      using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
+      using wrap = boost::variant<const Value &...>;
 
      public:
       /// Type of variant, that handle concrete command
@@ -87,20 +82,9 @@ namespace shared_model {
 
       // ------------------------| Primitive override |-------------------------
 
-      std::string toString() const override {
-        return boost::apply_visitor(detail::ToStringVisitor(), get());
-      }
+      std::string toString() const override;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        return boost::apply_visitor(
-            detail::OldModelCreatorVisitor<OldModelType *>(), get());
-      }
-#endif
-
-      bool operator==(const ModelType &rhs) const override {
-        return this->get() == rhs.get();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
 
   }  // namespace interface

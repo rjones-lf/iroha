@@ -24,6 +24,7 @@
 #include "common/result.hpp"
 #include "common/types.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/permissions.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -96,37 +97,34 @@ namespace iroha {
        */
       virtual WsvCommandResult insertRolePermissions(
           const shared_model::interface::types::RoleIdType &role_id,
-          const std::set<shared_model::interface::types::PermissionNameType>
-              &permissions) = 0;
+          const shared_model::interface::RolePermissionSet &permissions) = 0;
 
       /**
        * Insert grantable permission
        * @param permittee_account_id to who give the grant permission
        * @param account_id on which account
-       * @param permission_id what permission
+       * @param permission what permission
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult insertAccountGrantablePermission(
           const shared_model::interface::types::AccountIdType
               &permittee_account_id,
           const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::PermissionNameType
-              &permission_id) = 0;
+          shared_model::interface::permissions::Grantable permission) = 0;
 
       /**
        * Delete grantable permission
        * @param permittee_account_id to who the grant permission was previously
        * granted
        * @param account_id on which account
-       * @param permission_id what permission
+       * @param permission what permission
        * @return WsvCommandResult, which will contain error in case of failure
        */
       virtual WsvCommandResult deleteAccountGrantablePermission(
           const shared_model::interface::types::AccountIdType
               &permittee_account_id,
           const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::PermissionNameType
-              &permission_id) = 0;
+          shared_model::interface::permissions::Grantable permission) = 0;
 
       /**
        *git

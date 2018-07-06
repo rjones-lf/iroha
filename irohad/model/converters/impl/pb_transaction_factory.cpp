@@ -16,7 +16,6 @@
  */
 
 #include "model/converters/pb_transaction_factory.hpp"
-#include <cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp>
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/converters/pb_command_factory.hpp"
 
@@ -27,14 +26,12 @@ namespace iroha {
       protocol::Transaction PbTransactionFactory::serialize(
           const model::Transaction &tx) {
         model::converters::PbCommandFactory factory;
-        protocol::Transaction pb_tx;
-
         protocol::Transaction pbtx;
 
-        auto pl = pbtx.mutable_payload();
+        auto pl = pbtx.mutable_payload()->mutable_reduced_payload();
         pl->set_created_time(tx.created_ts);
         pl->set_creator_account_id(tx.creator_account_id);
-        pl->set_tx_counter(tx.tx_counter);
+        pl->set_quorum(tx.quorum);
 
         for (const auto &command : tx.commands) {
           auto cmd = pl->add_commands();
@@ -43,7 +40,7 @@ namespace iroha {
         }
 
         for (const auto &sig_obj : tx.signatures) {
-          auto proto_signature = pbtx.add_signature();
+          auto proto_signature = pbtx.add_signatures();
           proto_signature->set_pubkey(sig_obj.pubkey.to_string());
           proto_signature->set_signature(sig_obj.signature.to_string());
         }
@@ -55,12 +52,12 @@ namespace iroha {
         model::converters::PbCommandFactory commandFactory;
         model::Transaction tx;
 
-        const auto &pl = pb_tx.payload();
-        tx.tx_counter = pl.tx_counter();
+        const auto &pl = pb_tx.payload().reduced_payload();
         tx.creator_account_id = pl.creator_account_id();
         tx.created_ts = pl.created_time();
+        tx.quorum = static_cast<uint8_t>(pl.quorum());
 
-        for (const auto &pb_sig : pb_tx.signature()) {
+        for (const auto &pb_sig : pb_tx.signatures()) {
           model::Signature sig{};
           sig.pubkey = pubkey_t::from_string(pb_sig.pubkey());
           sig.signature = sig_t::from_string(pb_sig.signature());
@@ -71,7 +68,6 @@ namespace iroha {
           tx.commands.push_back(
               commandFactory.deserializeAbstractCommand(pb_command));
         }
-
         return std::make_shared<model::Transaction>(tx);
       }
 

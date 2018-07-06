@@ -32,6 +32,7 @@
 #include "validators/permissions.hpp"
 
 using namespace generator;
+using namespace shared_model::permissions;
 
 namespace iroha {
   namespace model {
@@ -100,18 +101,13 @@ namespace iroha {
       }
 
       std::shared_ptr<Command> CommandGenerator::generateAddAssetQuantity(
-          const std::string &account_id,
-          const std::string &asset_id,
-          const Amount &amount) {
-        return generateCommand<AddAssetQuantity>(account_id, asset_id, amount);
+          const std::string &asset_id, const Amount &amount) {
+        return generateCommand<AddAssetQuantity>(asset_id, amount);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateSubtractAssetQuantity(
-          const std::string &account_id,
-          const std::string &asset_id,
-          const Amount &amount) {
-        return generateCommand<SubtractAssetQuantity>(
-            account_id, asset_id, amount);
+          const std::string &asset_id, const Amount &amount) {
+        return generateCommand<SubtractAssetQuantity>(asset_id, amount);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateSetQuorum(

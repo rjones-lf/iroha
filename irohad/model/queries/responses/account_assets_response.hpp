@@ -26,7 +26,7 @@ namespace iroha {
   namespace model {
 
     struct AccountAssetResponse : public QueryResponse {
-      AccountAsset acct_asset{};
+      std::vector<AccountAsset> acct_assets{};
     };
   }  // namespace model
 }  // namespace iroha

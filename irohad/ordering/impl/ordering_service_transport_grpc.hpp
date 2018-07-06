@@ -50,7 +50,6 @@ namespace iroha {
 
      private:
       std::weak_ptr<iroha::network::OrderingServiceNotification> subscriber_;
-      logger::Logger log_;
     };
 
   }  // namespace ordering

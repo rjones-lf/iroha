@@ -18,8 +18,10 @@
 #ifndef IROHA_PROTO_CREATE_ROLE_HPP
 #define IROHA_PROTO_CREATE_ROLE_HPP
 
-#include <boost/range/numeric.hpp>
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "commands.pb.h"
 #include "interfaces/commands/create_role.hpp"
+#include "interfaces/permissions.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -28,38 +30,26 @@ namespace shared_model {
                                                   CreateRole> {
      public:
       template <typename CommandType>
-      explicit CreateRole(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit CreateRole(CommandType &&command);
 
-      CreateRole(const CreateRole &o) : CreateRole(o.proto_) {}
+      CreateRole(const CreateRole &o);
 
-      CreateRole(CreateRole &&o) noexcept : CreateRole(std::move(o.proto_)) {}
+      CreateRole(CreateRole &&o) noexcept;
 
-      const interface::types::RoleIdType &roleName() const override {
-        return create_role_.role_name();
-      }
+      const interface::types::RoleIdType &roleName() const override;
 
-      const PermissionsType &rolePermissions() const override {
-        return *role_permissions_;
-      }
+      const interface::RolePermissionSet &rolePermissions() const override;
+
+      std::string toString() const override;
 
      private:
       // lazy
       template <typename Value>
       using Lazy = detail::LazyInitializer<Value>;
 
-      const iroha::protocol::CreateRole &create_role_{proto_->create_role()};
+      const iroha::protocol::CreateRole &create_role_;
 
-      const Lazy<PermissionsType> role_permissions_{[this] {
-        return boost::accumulate(
-            create_role_.permissions(),
-            PermissionsType{},
-            [](auto &&acc, const auto &perm) {
-              acc.insert(iroha::protocol::RolePermission_Name(
-                  static_cast<iroha::protocol::RolePermission>(perm)));
-              return std::forward<decltype(acc)>(acc);
-            });
-      }};
+      const Lazy<interface::RolePermissionSet> role_permissions_;
     };
   }  // namespace proto
 }  // namespace shared_model

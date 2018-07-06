@@ -18,16 +18,11 @@
 #ifndef IROHA_SHARED_MODEL_SIGNATURE_HPP
 #define IROHA_SHARED_MODEL_SIGNATURE_HPP
 
-#include "common/byteutils.hpp"
 #include "cryptography/blob.hpp"
 #include "cryptography/public_key.hpp"
 #include "cryptography/signed.hpp"
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "utils/string_builder.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/signature.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -35,7 +30,7 @@ namespace shared_model {
     /**
      * Class represents signature of high-level domain objects.
      */
-    class Signature : public PRIMITIVE(Signature) {
+    class Signature : public ModelPrimitive<Signature> {
      public:
       /**
        * Type of public key
@@ -58,23 +53,8 @@ namespace shared_model {
       virtual const SignedType &signedData() const = 0;
 
       bool operator==(const Signature &rhs) const override {
-        return publicKey() == rhs.publicKey()
-            and signedData() == rhs.signedData();
+        return publicKey() == rhs.publicKey();
       }
-
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        iroha::model::Signature *oldStyleSignature =
-            new iroha::model::Signature();
-        oldStyleSignature->signature = *iroha::hexstringToArray<
-            iroha::model::Signature::SignatureType::size()>(signedData().hex());
-        oldStyleSignature->pubkey =
-            *iroha::hexstringToArray<iroha::model::Signature::KeyType::size()>(
-                publicKey().hex());
-        return oldStyleSignature;
-      }
-
-#endif
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()

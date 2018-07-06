@@ -18,19 +18,15 @@
 #ifndef IROHA_SHARED_MODEL_REMOVE_SIGNATORY_HPP
 #define IROHA_SHARED_MODEL_REMOVE_SIGNATORY_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/remove_signatory.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Remove signatory from the account
      */
-    class RemoveSignatory : public PRIMITIVE(RemoveSignatory) {
+    class RemoveSignatory : public ModelPrimitive<RemoveSignatory> {
      public:
       /**
        * @return account from which remove signatory
@@ -41,27 +37,9 @@ namespace shared_model {
        */
       virtual const types::PubkeyType &pubkey() const = 0;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("RemoveSignatory")
-            .append("account_id", accountId())
-            .append(pubkey().toString())
-            .finalize();
-      }
+      std::string toString() const override;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::RemoveSignatory;
-        oldModel->account_id = accountId();
-        oldModel->pubkey = pubkey().makeOldModel<decltype(oldModel->pubkey)>();
-        return oldModel;
-      }
-
-#endif
-
-      bool operator==(const ModelType &rhs) const override {
-        return accountId() == rhs.accountId() and pubkey() == rhs.pubkey();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

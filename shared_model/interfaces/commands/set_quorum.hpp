@@ -18,19 +18,15 @@
 #ifndef IROHA_SHARED_MODEL_SET_QUORUM_HPP
 #define IROHA_SHARED_MODEL_SET_QUORUM_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/set_quorum.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Set quorum of the account
      */
-    class SetQuorum : public PRIMITIVE(SetQuorum) {
+    class SetQuorum : public ModelPrimitive<SetQuorum> {
      public:
       /**
        * @return Id of the account to set quorum
@@ -39,29 +35,11 @@ namespace shared_model {
       /**
        * @return value of a new quorum
        */
-      virtual const types::QuorumType &newQuorum() const = 0;
+      virtual types::QuorumType newQuorum() const = 0;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("SetQuorum")
-            .append("account_id", accountId())
-            .append("quorum", std::to_string(newQuorum()))
-            .finalize();
-      }
+      std::string toString() const override;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::SetQuorum;
-        oldModel->account_id = accountId();
-        oldModel->new_quorum = newQuorum();
-        return oldModel;
-      }
-#endif
-
-      bool operator==(const ModelType &rhs) const override {
-        return accountId() == rhs.accountId()
-            and newQuorum() == rhs.newQuorum();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

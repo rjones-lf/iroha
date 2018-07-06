@@ -13,6 +13,8 @@ limitations under the License.
 
 #include "torii/query_client.hpp"
 
+#include "network/impl/grpc_channel_builder.hpp"
+
 namespace torii_utils {
 
   using iroha::protocol::Query;
@@ -21,9 +23,8 @@ namespace torii_utils {
   QuerySyncClient::QuerySyncClient(const std::string &ip, size_t port)
       : ip_(ip),
         port_(port),
-        stub_(iroha::protocol::QueryService::NewStub(
-            grpc::CreateChannel(ip + ":" + std::to_string(port),
-                                grpc::InsecureChannelCredentials()))) {}
+        stub_(iroha::network::createClient<iroha::protocol::QueryService>(
+            ip + ":" + std::to_string(port))) {}
 
   QuerySyncClient::QuerySyncClient(const QuerySyncClient &rhs)
       : QuerySyncClient(rhs.ip_, rhs.port_) {}
@@ -52,6 +53,20 @@ namespace torii_utils {
                                      QueryResponse &response) const {
     grpc::ClientContext context;
     return stub_->Find(&context, query, &response);
+  }
+
+  std::vector<iroha::protocol::BlockQueryResponse>
+  QuerySyncClient::FetchCommits(
+      const iroha::protocol::BlocksQuery &blocks_query) const {
+    grpc::ClientContext context;
+    auto reader = stub_->FetchCommits(&context, blocks_query);
+    std::vector<iroha::protocol::BlockQueryResponse> responses;
+    iroha::protocol::BlockQueryResponse resp;
+    while (reader->Read(&resp)) {
+      responses.push_back(resp);
+    }
+    reader->Finish();
+    return responses;
   }
 
   void QuerySyncClient::swap(QuerySyncClient &lhs, QuerySyncClient &rhs) {

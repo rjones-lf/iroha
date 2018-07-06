@@ -18,6 +18,8 @@
 #include <boost/algorithm/string.hpp>
 #include <fstream>
 
+#include "backend/protobuf/queries/proto_query.hpp"
+
 #include "client.hpp"
 #include "common/byteutils.hpp"
 #include "crypto/keys_manager_impl.hpp"
@@ -26,6 +28,7 @@
 #include "grpc_response_handler.hpp"
 #include "interactive/interactive_query_cli.hpp"
 #include "model/converters/json_query_factory.hpp"
+#include "model/converters/pb_query_factory.hpp"
 #include "model/model_crypto_provider.hpp"  // for ModelCryptoProvider
 #include "model/queries/get_asset_info.hpp"
 #include "model/queries/get_roles.hpp"
@@ -40,6 +43,7 @@ namespace iroha_cli {
       description_map_ = {
           {GET_ACC, "Get Account Information"},
           {GET_ACC_AST, "Get Account's Assets"},
+          {GET_ACC_AST_TX, "Get Account's Asset Transactions"},
           {GET_ACC_TX, "Get Account's Transactions"},
           {GET_TX, "Get Transactions by transactions' hashes"},
           {GET_ACC_SIGN, "Get Account's Signatories"},
@@ -54,21 +58,24 @@ namespace iroha_cli {
       const auto role_id = "Requested role name";
       const auto tx_hashes = "Requested tx hashes";
 
-      query_params_descriptions_ = {
-          {GET_ACC, {acc_id}},
-          {GET_ACC_AST, {acc_id, ast_id}},
-          {GET_ACC_TX, {acc_id}},
-          {GET_TX, {tx_hashes}},
-          {GET_ACC_SIGN, {acc_id}},
-          {GET_ROLES, {}},
-          {GET_AST_INFO, {ast_id}},
-          {GET_ROLE_PERM, {role_id}}
-          // query_params_descriptions_
+      query_params_map_ = {
+          {GET_ACC, makeParamsDescription({acc_id})},
+          {GET_ACC_AST, makeParamsDescription({acc_id, ast_id})},
+          {GET_ACC_AST_TX, makeParamsDescription({acc_id, ast_id})},
+          {GET_ACC_TX, makeParamsDescription({acc_id})},
+          {GET_TX, makeParamsDescription({tx_hashes})},
+          {GET_ACC_SIGN, makeParamsDescription({acc_id})},
+          {GET_ROLES, makeParamsDescription({})},
+          {GET_AST_INFO, makeParamsDescription({ast_id})},
+          {GET_ROLE_PERM, makeParamsDescription({role_id})}
+          // query_params_map_
       };
 
       query_handlers_ = {
           {GET_ACC, &InteractiveQueryCli::parseGetAccount},
           {GET_ACC_AST, &InteractiveQueryCli::parseGetAccountAssets},
+          {GET_ACC_AST_TX,
+           &InteractiveQueryCli::parseGetAccountAssetTransactions},
           {GET_ACC_TX, &InteractiveQueryCli::parseGetAccountTransactions},
           {GET_TX, &InteractiveQueryCli::parseGetTransactions},
           {GET_ACC_SIGN, &InteractiveQueryCli::parseGetSignatories},
@@ -78,8 +85,8 @@ namespace iroha_cli {
           // query_handlers_
       };
 
-      menu_points_ = formMenu(
-          query_handlers_, query_params_descriptions_, description_map_);
+      menu_points_ =
+          formMenu(query_handlers_, query_params_map_, description_map_);
       // Add "go back" option
       addBackOption(menu_points_);
     }
@@ -87,12 +94,10 @@ namespace iroha_cli {
     void InteractiveQueryCli::create_result_menu() {
       result_handlers_ = {{SAVE_CODE, &InteractiveQueryCli::parseSaveFile},
                           {SEND_CODE, &InteractiveQueryCli::parseSendToIroha}};
-      result_params_descriptions_ =
-          getCommonParamsMap(default_peer_ip_, default_port_);
+      result_params_map_ = getCommonParamsMap(default_peer_ip_, default_port_);
 
-      result_points_ = formMenu(result_handlers_,
-                                result_params_descriptions_,
-                                getCommonDescriptionMap());
+      result_points_ = formMenu(
+          result_handlers_, result_params_map_, getCommonDescriptionMap());
       addBackOption(result_points_);
     }
 
@@ -153,7 +158,7 @@ namespace iroha_cli {
       }
 
       auto res = handleParse<std::shared_ptr<iroha::model::Query>>(
-          this, line, query_handlers_, query_params_descriptions_);
+          this, line, query_handlers_, query_params_map_);
       if (not res) {
         // Continue parsing
         return true;
@@ -182,6 +187,14 @@ namespace iroha_cli {
     }
 
     std::shared_ptr<iroha::model::Query>
+    InteractiveQueryCli::parseGetAccountAssetTransactions(QueryParams params) {
+      auto account_id = params[0];
+      auto asset_id = params[1];
+      return generator_.generateGetAccountAssetTransactions(
+          local_time_, creator_, counter_, account_id, asset_id);
+    }
+
+    std::shared_ptr<iroha::model::Query>
     InteractiveQueryCli::parseGetAccountTransactions(QueryParams params) {
       auto account_id = params[0];
       return generator_.generateGetAccountTransactions(
@@ -194,9 +207,8 @@ namespace iroha_cli {
       GetTransactions::TxHashCollectionType tx_hashes;
       std::for_each(
           params.begin(), params.end(), [&tx_hashes](auto const &hex_hash) {
-            if (auto opt = iroha::
-                    hexstringToArray<GetTransactions::TxHashType::size()>(
-                        hex_hash)) {
+            if (auto opt = iroha::hexstringToArray<
+                    GetTransactions::TxHashType::size()>(hex_hash)) {
               tx_hashes.push_back(*opt);
             }
           });
@@ -246,8 +258,8 @@ namespace iroha_cli {
         return true;
       }
 
-      auto res = handleParse<bool>(
-          this, line, result_handlers_, result_params_descriptions_);
+      auto res =
+          handleParse<bool>(this, line, result_handlers_, result_params_map_);
 
       return res.get_value_or(true);
     }
@@ -262,7 +274,9 @@ namespace iroha_cli {
       provider_->sign(*query_);
 
       CliClient client(address.value().first, address.value().second);
-      GrpcResponseHandler{}.handle(client.sendQuery(query_));
+      auto query = shared_model::proto::Query(
+          *iroha::model::converters::PbQueryFactory().serialize(query_));
+      GrpcResponseHandler{}.handle(client.sendQuery(query));
       printEnd();
       // Stop parsing
       return false;

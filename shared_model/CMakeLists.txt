@@ -25,9 +25,11 @@ include_directories(
 
 if (NOT IROHA_ROOT_PROJECT)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-  set(CMAKE_CXX_FLAGS "-std=c++14 -Wall")
-  set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-  set(CMAKE_CXX_FLAGS_DEBUG "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
+  if (NOT MSVC)
+    set(CMAKE_CXX_FLAGS "-std=c++14 -Wall")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
+  endif ()
 
   if(CMAKE_GENERATOR MATCHES "Make")
     set(MAKE "$(MAKE)")
@@ -39,9 +41,6 @@ if (NOT IROHA_ROOT_PROJECT)
 
   set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules)
 
-  set(SHARED_MODEL_DISABLE_COMPATIBILITY ON)
-  add_definitions(-DDISABLE_BACKWARD)
-
   include(FeatureSummary)
   include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/functions.cmake)
   include(cmake/dependencies.cmake)
@@ -50,13 +49,6 @@ if (NOT IROHA_ROOT_PROJECT)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs/generator generator)
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs/amount amount)
 endif ()
-add_library(old_model INTERFACE)
-
-if (NOT SHARED_MODEL_DISABLE_COMPATIBILITY)
-  target_link_libraries(old_model INTERFACE
-      model
-      )
-endif ()
 
 add_subdirectory(backend)
 add_subdirectory(bindings)
@@ -64,6 +56,7 @@ add_subdirectory(builders)
 add_subdirectory(converters)
 add_subdirectory(cryptography)
 add_subdirectory(interfaces)
+add_subdirectory(utils)
 add_subdirectory(validators)
 
 if (NOT IROHA_ROOT_PROJECT)

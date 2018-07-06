@@ -19,7 +19,7 @@ add_library(supermajority_check
     impl/supermajority_checker_impl.cpp
     )
 target_link_libraries(supermajority_check
-    model
+    shared_model_interfaces
     )
 
 add_library(yac
@@ -43,4 +43,5 @@ target_link_libraries(yac
     yac_grpc
     logger
     hash
+    shared_model_proto_backend
     )

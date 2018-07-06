@@ -18,25 +18,43 @@
 #ifndef IROHA_SHARED_MODEL_DEFAULT_VALIDATOR_HPP
 #define IROHA_SHARED_MODEL_DEFAULT_VALIDATOR_HPP
 
+#include "validators/any_block_validator.hpp"
 #include "validators/block_validator.hpp"
+#include "validators/blocks_query_validator.hpp"
+#include "validators/empty_block_validator.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/proposal_validator.hpp"
 #include "validators/query_validator.hpp"
 #include "validators/signable_validator.hpp"
 #include "validators/transaction_validator.hpp"
+#include "validators/transactions_collection/signed_transactions_collection_validator.hpp"
+#include "validators/transactions_collection/unsigned_transactions_collection_validator.hpp"
 
 namespace shared_model {
   namespace validation {
     using DefaultTransactionValidator =
         TransactionValidator<FieldValidator,
                              CommandValidatorVisitor<FieldValidator>>;
+
     using DefaultQueryValidator =
         QueryValidator<FieldValidator, QueryValidatorVisitor<FieldValidator>>;
-    using DefaultProposalValidator =
-        ProposalValidator<FieldValidator, DefaultTransactionValidator>;
 
-    using DefaultBlockValidator =
-        BlockValidator<FieldValidator, DefaultTransactionValidator>;
+    using DefaultBlocksQueryValidator = BlocksQueryValidator<FieldValidator>;
+
+    using DefaultProposalValidator = ProposalValidator<
+        FieldValidator,
+        DefaultTransactionValidator,
+        UnsignedTransactionsCollectionValidator<DefaultTransactionValidator>>;
+
+    using DefaultBlockValidator = BlockValidator<
+        FieldValidator,
+        DefaultTransactionValidator,
+        SignedTransactionsCollectionValidator<DefaultTransactionValidator>>;
+
+    using DefaultEmptyBlockValidator = EmptyBlockValidator<FieldValidator>;
+
+    using DefaultAnyBlockValidator =
+        AnyBlockValidator<DefaultBlockValidator, DefaultEmptyBlockValidator>;
 
     using DefaultSignableTransactionValidator =
         SignableModelValidator<DefaultTransactionValidator,
@@ -46,11 +64,6 @@ namespace shared_model {
     using DefaultSignableQueryValidator =
         SignableModelValidator<DefaultQueryValidator,
                                const interface::Query &,
-                               FieldValidator>;
-
-    using DefaultSignableProposalValidator =
-        SignableModelValidator<DefaultProposalValidator,
-                               const interface::Proposal &,
                                FieldValidator>;
 
     using DefaultSignableBlockValidator =

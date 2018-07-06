@@ -16,17 +16,20 @@
  */
 
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
+#include <boost/range/adaptors.hpp>
 #include "interfaces/common_objects/peer.hpp"
+#include "interfaces/common_objects/signature.hpp"
+#include "validation/utils.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
       bool SupermajorityCheckerImpl::hasSupermajority(
-          const shared_model::interface::SignatureSetType &signatures,
+          const shared_model::interface::types::SignatureRangeType &signatures,
           const std::vector<std::shared_ptr<shared_model::interface::Peer>>
               &peers) const {
-        return checkSize(signatures.size(), peers.size())
+        return checkSize(boost::size(signatures), peers.size())
             and peersSubset(signatures, peers);
       }
 
@@ -40,20 +43,16 @@ namespace iroha {
       }
 
       bool SupermajorityCheckerImpl::peersSubset(
-          const shared_model::interface::SignatureSetType &signatures,
+          const shared_model::interface::types::SignatureRangeType &signatures,
           const std::vector<std::shared_ptr<shared_model::interface::Peer>>
               &peers) const {
-        return std::all_of(
-            signatures.begin(), signatures.end(), [&peers](auto signature) {
-              return std::find_if(
-                         peers.begin(),
-                         peers.end(),
-                         [&signature](const std::shared_ptr<
-                                      shared_model::interface::Peer> &peer) {
-                           return signature->publicKey() == peer->pubkey();
-                         })
-                  != peers.end();
-            });
+        return validation::signaturesSubset(
+            signatures,
+            peers
+                | boost::adaptors::transformed(
+                      [](const auto &p) -> decltype(auto) {
+                        return p->pubkey();
+                      }));
       }
 
       bool SupermajorityCheckerImpl::hasReject(uint64_t frequent,

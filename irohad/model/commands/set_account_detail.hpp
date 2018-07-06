@@ -18,6 +18,7 @@
 #ifndef IROHA_ADDACCOUNTDETAIL_HPP
 #define IROHA_ADDACCOUNTDETAIL_HPP
 
+#include <string>
 #include "model/command.hpp"
 
 namespace iroha {

@@ -13,15 +13,17 @@ import time
 tx_builder = iroha.ModelTransactionBuilder()
 query_builder = iroha.ModelQueryBuilder()
 crypto = iroha.ModelCrypto()
-proto_tx_helper = iroha.ModelProtoTransaction()
-proto_query_helper = iroha.ModelProtoQuery()
 
 admin_priv = open("../admin@test.priv", "r").read()
 admin_pub = open("../admin@test.pub", "r").read()
 key_pair = crypto.convertFromExisting(admin_pub, admin_priv)
 
+user1_kp = crypto.generateKeypair()
+
 current_time = int(round(time.time() * 1000)) - 10**5
 creator = "admin@test"
+
+query_counter = 1
 
 def get_status(tx):
     # Create status request
@@ -79,7 +81,7 @@ def print_status_streaming(tx):
 
 
 def send_tx(tx, key_pair):
-    tx_blob = proto_tx_helper.signAndAddSignature(tx, key_pair).blob()
+    tx_blob = iroha.ModelProtoTransaction(tx).signAndAddSignature(key_pair).finish().blob()
     proto_tx = block_pb2.Transaction()
 
     if sys.version_info[0] == 2:
@@ -96,7 +98,7 @@ def send_tx(tx, key_pair):
 
 
 def send_query(query, key_pair):
-    query_blob = proto_query_helper.signAndAddSignature(query, key_pair).blob()
+    query_blob = iroha.ModelProtoQuery(query).signAndAddSignature(key_pair).finish().blob()
 
     proto_query = queries_pb2.Query()
 
@@ -114,9 +116,11 @@ def send_query(query, key_pair):
     return query_response
 
 
-def tx1():
+def create_asset_coin():
+    """
+    Create domain "domain" and asset "coin#domain" with precision 2
+    """
     tx = tx_builder.creatorAccountId(creator) \
-            .txCounter(1) \
             .createdTime(current_time) \
             .createDomain("domain", "user") \
             .createAsset("coin", "domain", 2).build()
@@ -125,42 +129,73 @@ def tx1():
     print_status_streaming(tx)
 
 
-def tx2():
+def add_coin_to_admin():
+    """
+    Add 1000.00 asset quantity of asset coin to admin
+    """
     tx = tx_builder.creatorAccountId(creator) \
-        .txCounter(2) \
         .createdTime(current_time) \
-        .addAssetQuantity("admin@test", "coin#domain", "1000.00").build()
+        .addAssetQuantity("coin#domain", "1000.00").build()
 
     send_tx(tx, key_pair)
     print_status_streaming(tx)
 
 
-def tx3():
-    user1_kp = crypto.generateKeypair()
-
+def create_account_userone():
+    """
+    Create account "userone@domain"
+    """
     tx = tx_builder.creatorAccountId(creator) \
-        .txCounter(3) \
         .createdTime(current_time) \
         .createAccount("userone", "domain", user1_kp.publicKey()).build()
 
     send_tx(tx, key_pair)
     print_status_streaming(tx)
 
-
-def tx4():
+def transfer_coin_from_admin_to_userone():
+    """
+    Transfer 2.00 of coin from admin@test to userone@domain
+    """
     tx = tx_builder.creatorAccountId(creator) \
-        .txCounter(4) \
         .createdTime(current_time) \
         .transferAsset("admin@test", "userone@domain", "coin#domain", "Some message", "2.00").build()
 
     send_tx(tx, key_pair)
     print_status_streaming(tx)
 
+def grant_admin_to_add_detail_to_userone():
+    """
+    Grant admin@test to be able to set details information to userone@domain
+    """
+    tx = tx_builder.creatorAccountId("userone@domain") \
+        .createdTime(current_time) \
+        .grantPermission(creator, iroha.Grantable_kSetMyAccountDetail) \
+        .build()
 
-def get_asset():
+    send_tx(tx, user1_kp)
+    print_status_streaming(tx)
+
+def set_age_to_userone_by_admin():
+    """
+    Set age to userone@domain by admin@test
+    """
+    tx = tx_builder.creatorAccountId(creator) \
+        .createdTime(current_time) \
+        .setAccountDetail("userone@domain", "age", "18") \
+        .build()
+
+    send_tx(tx, key_pair)
+    print_status_streaming(tx)
+
+def get_coin_info():
+    """
+    Get information about asset coin#domain
+    """
+    global query_counter
+    query_counter += 1
     query = query_builder.creatorAccountId(creator) \
         .createdTime(current_time) \
-        .queryCounter(1) \
+        .queryCounter(query_counter) \
         .getAssetInfo("coin#domain") \
         .build()
 
@@ -178,21 +213,45 @@ def get_asset():
 
 
 def get_account_asset():
+    """
+    Get list of transactions done by userone@domain with asset coin#domain
+    """
+    global query_counter
+    query_counter += 1
     query = query_builder.creatorAccountId(creator) \
         .createdTime(current_time) \
-        .queryCounter(11) \
-        .getAccountAssets("userone@domain", "coin#domain") \
+        .queryCounter(query_counter) \
+        .getAccountAssets("userone@domain") \
         .build()
 
     query_response = send_query(query, key_pair)
 
     print(query_response)
 
+def get_userone_info():
+    """
+    Get userone's key value information
+    """
+    global query_counter
+    query_counter += 1
+    query = query_builder.creatorAccountId(creator) \
+        .createdTime(current_time) \
+        .queryCounter(query_counter) \
+        .getAccountDetail("userone@domain") \
+        .build()
 
-tx1()
-tx2()
-tx3()
-tx4()
-get_asset()
+    query_response = send_query(query, key_pair)
+    print(query_response.account_detail_response.detail)
+
+
+
+create_asset_coin()
+add_coin_to_admin()
+create_account_userone()
+transfer_coin_from_admin_to_userone()
+grant_admin_to_add_detail_to_userone()
+set_age_to_userone_by_admin()
+get_coin_info()
 get_account_asset()
+get_userone_info()
 print("done!")

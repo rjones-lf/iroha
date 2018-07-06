@@ -6,8 +6,13 @@ mkdir dist
 
 # build native library
 ./prepare.sh
-cp build/shared_model/bindings/libirohajava.jnilib dist/libirohajava.jnilib
 
+unamestr=`uname`
+if [[ "$unamestr" == 'Linux' ]]; then
+    cp build/shared_model/bindings/libirohajava.so dist/libirohajava.so
+elif [[ "$unamestr" == 'Darwin' ]]; then
+    cp build/shared_model/bindings/libirohajava.jnilib dist/libirohajava.jnilib
+fi
 
 # build jar
 gradle jar
@@ -17,7 +22,7 @@ gradle javaDocJar
 cp build/shared_model/bindings/libs/* dist/
 
 cd build/shared_model/bindings
-jar -cvf iroha_lib.jar *.java
+jar -cvf iroha_lib.jar jp/co/soramitsu/iroha/*.java
 
 cd ../../../
 cp build/shared_model/bindings/iroha_lib.jar dist

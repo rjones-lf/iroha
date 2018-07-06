@@ -22,22 +22,34 @@
 
 namespace framework {
   namespace expected {
+    template <typename ResultType>
+    using ValueOf = iroha::expected::ValueOf<ResultType>;
+    template <typename ResultType>
+    using ErrorOf = iroha::expected::ErrorOf<ResultType>;
     /**
-     * @throws bad_get exception if result contains error
-     * @return value from result
+     * @return optional with value if present
+     *         otherwise none
      */
     template <typename ResultType>
-    typename ResultType::ValueType checkValueCase(const ResultType &result) {
-      return boost::get<typename ResultType::ValueType>(result);
+    boost::optional<ValueOf<ResultType>> val(const ResultType &res) noexcept {
+      using RetType = boost::optional<ValueOf<ResultType>>;
+      return iroha::visit_in_place(
+          res,
+          [](ValueOf<ResultType> v) { return RetType(v); },
+          [](ErrorOf<ResultType> e) -> RetType { return {}; });
     }
 
     /**
-     * @throws bad_get exception if result contains value
-     * @return error from result
+     * @return optional with error if present
+     *         otherwise none
      */
     template <typename ResultType>
-    typename ResultType::ErrorType checkErrorCase(const ResultType &result) {
-      return boost::get<typename ResultType::ErrorType>(result);
+    boost::optional<ErrorOf<ResultType>> err(const ResultType &res) noexcept {
+      using RetType = boost::optional<ErrorOf<ResultType>>;
+      return iroha::visit_in_place(
+          res,
+          [](ValueOf<ResultType> v) -> RetType { return {}; },
+          [](ErrorOf<ResultType> e) { return RetType(e); });
     }
   }  // namespace expected
 }  // namespace framework

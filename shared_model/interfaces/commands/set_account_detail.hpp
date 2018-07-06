@@ -18,11 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_SET_ACCOUNT_DETAIL_HPP
 #define IROHA_SHARED_MODEL_SET_ACCOUNT_DETAIL_HPP
 
-#ifndef DISABLE_BACKWARD
-#include "model/commands/set_account_detail.hpp"
-#endif
-
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
@@ -31,7 +27,7 @@ namespace shared_model {
     /**
      * Set key-value pair of given account
      */
-    class SetAccountDetail : public PRIMITIVE(SetAccountDetail) {
+    class SetAccountDetail : public ModelPrimitive<SetAccountDetail> {
      public:
       /**
        * @return Identity of user to set account detail
@@ -48,30 +44,9 @@ namespace shared_model {
        */
       virtual const types::AccountDetailValueType &value() const = 0;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("SetAccountDetail")
-            .append("account_id", accountId())
-            .append("key", key())
-            .append("value", value())
-            .finalize();
-      }
+      std::string toString() const override;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new OldModelType;
-        oldModel->account_id = accountId();
-        oldModel->key = key();
-        oldModel->value = value();
-        return oldModel;
-      }
-
-#endif
-
-      bool operator==(const ModelType &rhs) const override {
-        return accountId() == rhs.accountId() and key() == rhs.key()
-            and value() == rhs.value();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

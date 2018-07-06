@@ -19,12 +19,12 @@
 #define IROHA_POSTGRES_FLAT_BLOCK_QUERY_HPP
 
 #include <boost/optional.hpp>
+#include <pqxx/connection>
 #include <pqxx/nontransaction>
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "logger/logger.hpp"
-#include "model/converters/json_block_factory.hpp"
 #include "postgres_wsv_common.hpp"
 
 namespace iroha {
@@ -38,7 +38,10 @@ namespace iroha {
     class PostgresBlockQuery : public BlockQuery {
      public:
       PostgresBlockQuery(pqxx::nontransaction &transaction_,
-                         FlatFile &file_store);
+                         KeyValueStorage &file_store);
+      PostgresBlockQuery(std::unique_ptr<pqxx::lazyconnection> connection,
+                         std::unique_ptr<pqxx::nontransaction> transaction,
+                         KeyValueStorage &file_store);
 
       rxcpp::observable<wTransaction> getAccountTransactions(
           const shared_model::interface::types::AccountIdType &account_id)
@@ -62,6 +65,12 @@ namespace iroha {
           shared_model::interface::types::HeightType height) override;
 
       rxcpp::observable<wBlock> getTopBlocks(uint32_t count) override;
+
+      uint32_t getTopBlockHeight() override;
+
+      bool hasTxWithHash(const shared_model::crypto::Hash &hash) override;
+
+      expected::Result<wBlock, std::string> getTopBlock() override;
 
      private:
       /**
@@ -90,12 +99,14 @@ namespace iroha {
       std::function<void(pqxx::result &result)> callback(
           const rxcpp::subscriber<wTransaction> &s, uint64_t block_id);
 
-      FlatFile &block_store_;
+      std::unique_ptr<pqxx::lazyconnection> connection_ptr_;
+      std::unique_ptr<pqxx::nontransaction> transaction_ptr_;
+
+      KeyValueStorage &block_store_;
       pqxx::nontransaction &transaction_;
       logger::Logger log_;
       using ExecuteType = decltype(makeExecuteOptional(transaction_, log_));
       ExecuteType execute_;
-      model::converters::JsonBlockFactory serializer_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

@@ -23,7 +23,6 @@
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/wsv_command.hpp"
-#include "backend/protobuf/from_old_model.hpp"
 #include "model/sha3_hash.hpp"
 
 namespace iroha {
@@ -54,18 +53,17 @@ namespace iroha {
                            const shared_model::interface::types::HashType &)>
             function) {
       auto execute_transaction = [this](auto &transaction) {
-        command_executor_->setCreatorAccountId(transaction->creatorAccountId());
-        auto execute_command = [this](auto command) {
-          auto result =
-              boost::apply_visitor(*command_executor_, command->get());
+        command_executor_->setCreatorAccountId(transaction.creatorAccountId());
+        auto execute_command = [this](auto &command) {
+          auto result = boost::apply_visitor(*command_executor_, command.get());
           return result.match([](expected::Value<void> &v) { return true; },
-                              [&](expected::Error<ExecutionError> &e) {
+                              [&](expected::Error<CommandError> &e) {
                                 log_->error(e.error.toString());
                                 return false;
                               });
         };
-        return std::all_of(transaction->commands().begin(),
-                           transaction->commands().end(),
+        return std::all_of(transaction.commands().begin(),
+                           transaction.commands().end(),
                            execute_command);
       };
 
@@ -76,9 +74,7 @@ namespace iroha {
                           execute_transaction);
 
       if (result) {
-        block_store_.insert(std::make_pair(
-            block.height(),
-            clone(block)));
+        block_store_.insert(std::make_pair(block.height(), clone(block)));
         block_index_->index(block);
 
         top_hash_ = block.hash();

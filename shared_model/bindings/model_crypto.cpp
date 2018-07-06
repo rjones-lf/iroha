@@ -17,7 +17,7 @@
 
 #include "bindings/model_crypto.hpp"
 #include "common/byteutils.hpp"
-#include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "generator/generator.hpp"
 
 namespace shared_model {
@@ -28,9 +28,14 @@ namespace shared_model {
 
     crypto::Keypair ModelCrypto::fromPrivateKey(
         const std::string &private_key) {
+      if (private_key.size()
+          != crypto::DefaultCryptoAlgorithmType::kPrivateKeyLength) {
+        throw std::invalid_argument("input string has incorrect length "
+                                    + std::to_string(private_key.length()));
+      }
       auto byte_string = iroha::hexstringToBytestring(private_key);
       if (not byte_string) {
-        throw std::runtime_error("invalid seed");
+        throw std::invalid_argument("invalid seed");
       }
       return crypto::CryptoProviderEd25519Sha3::generateKeypair(
           crypto::Seed(*byte_string));

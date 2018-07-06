@@ -19,6 +19,12 @@
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy.hpp"
+#include "multi_sig_transactions/mst_processor_impl.hpp"
+#include "multi_sig_transactions/mst_processor_stub.hpp"
+#include "multi_sig_transactions/mst_time_provider_impl.hpp"
+#include "multi_sig_transactions/storage/mst_storage_impl.hpp"
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -42,7 +48,8 @@ Irohad::Irohad(const std::string &block_store_dir,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
                std::chrono::milliseconds load_delay,
-               const keypair_t &keypair)
+               const shared_model::crypto::Keypair &keypair,
+               bool is_mst_supported)
     : block_store_dir_(block_store_dir),
       pg_conn_(pg_conn),
       torii_port_(torii_port),
@@ -51,6 +58,7 @@ Irohad::Irohad(const std::string &block_store_dir,
       proposal_delay_(proposal_delay),
       vote_delay_(vote_delay),
       load_delay_(load_delay),
+      is_mst_supported_(is_mst_supported),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
   log_->info("created");
@@ -76,6 +84,7 @@ void Irohad::init() {
   initConsensusGate();
   initSynchronizer();
   initPeerCommunicationService();
+  initMstProcessor();
 
   // Torii
   initTransactionCommandService();
@@ -87,6 +96,7 @@ void Irohad::init() {
  */
 void Irohad::dropStorage() {
   storage->dropStorage();
+  ordering_service_storage_->resetState();
 }
 
 /**
@@ -126,21 +136,16 @@ bool Irohad::restoreWsv() {
 /**
  * Initializing peer query interface
  */
-void Irohad::initPeerQuery() {
-  wsv = std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery());
-
-  log_->info("[Init] => peer query");
+std::unique_ptr<iroha::ametsuchi::PeerQuery> Irohad::initPeerQuery() {
+  return std::make_unique<ametsuchi::PeerQueryWsv>(storage->getWsvQuery());
 }
 
 /**
  * Initializing crypto provider
  */
 void Irohad::initCryptoProvider() {
-  shared_model::crypto::Keypair keypair_(
-      shared_model::crypto::PublicKey(keypair.pubkey.to_string()),
-      shared_model::crypto::PrivateKey(keypair.privkey.to_string()));
   crypto_signer_ =
-      std::make_shared<shared_model::crypto::CryptoModelSigner<>>(keypair_);
+      std::make_shared<shared_model::crypto::CryptoModelSigner<>>(keypair);
 
   log_->info("[Init] => crypto provider");
 }
@@ -160,8 +165,11 @@ void Irohad::initValidators() {
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
-  ordering_gate = ordering_init.initOrderingGate(
-      wsv, max_proposal_size_, proposal_delay_, ordering_service_storage_);
+  ordering_gate = ordering_init.initOrderingGate(initPeerQuery(),
+                                                 max_proposal_size_,
+                                                 proposal_delay_,
+                                                 ordering_service_storage_,
+                                                 storage->getBlockQuery());
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -183,8 +191,8 @@ void Irohad::initSimulator() {
  * Initializing block loader
  */
 void Irohad::initBlockLoader() {
-  block_loader = loader_init.initBlockLoader(
-      wsv, storage->getBlockQuery());
+  block_loader =
+      loader_init.initBlockLoader(initPeerQuery(), storage->getBlockQuery());
 
   log_->info("[Init] => block loader");
 }
@@ -193,8 +201,12 @@ void Irohad::initBlockLoader() {
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
-  consensus_gate = yac_init.initConsensusGate(
-      wsv, simulator, block_loader, keypair, vote_delay_, load_delay_);
+  consensus_gate = yac_init.initConsensusGate(initPeerQuery(),
+                                              simulator,
+                                              block_loader,
+                                              keypair,
+                                              vote_delay_,
+                                              load_delay_);
 
   log_->info("[Init] => consensus gate");
 }
@@ -213,8 +225,8 @@ void Irohad::initSynchronizer() {
  * Initializing peer communication service
  */
 void Irohad::initPeerCommunicationService() {
-  pcs = std::make_shared<PeerCommunicationServiceImpl>(ordering_gate,
-                                                       synchronizer);
+  pcs = std::make_shared<PeerCommunicationServiceImpl>(
+      ordering_gate, synchronizer, simulator);
 
   pcs->on_proposal().subscribe(
       [this](auto) { log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ "); });
@@ -228,14 +240,35 @@ void Irohad::initPeerCommunicationService() {
   log_->info("[Init] => pcs");
 }
 
+void Irohad::initMstProcessor() {
+  if (is_mst_supported_) {
+    auto mst_transport = std::make_shared<MstTransportGrpc>();
+    auto mst_completer = std::make_shared<DefaultCompleter>();
+    auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
+    // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
+    // cli parameters
+    auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
+        std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery()),
+        std::chrono::seconds(5) /*emitting period*/,
+        2 /*amount per once*/);
+    auto mst_time = std::make_shared<MstTimeProviderImpl>();
+    mst_processor = std::make_shared<FairMstProcessor>(
+        mst_transport, mst_storage, mst_propagation, mst_time);
+  } else {
+    mst_processor = std::make_shared<MstProcessorStub>();
+  }
+  log_->info("[Init] => MST processor");
+}
+
 /**
  * Initializing transaction command service
  */
 void Irohad::initTransactionCommandService() {
-  auto tx_processor = std::make_shared<TransactionProcessorImpl>(pcs);
+  auto tx_processor =
+      std::make_shared<TransactionProcessorImpl>(pcs, mst_processor);
 
   command_service = std::make_shared<::torii::CommandService>(
-      tx_processor, storage->getBlockQuery(), proposal_delay_);
+      tx_processor, storage, proposal_delay_);
 
   log_->info("[Init] => command service");
 }

@@ -18,6 +18,8 @@
 #ifndef IROHA_PROTO_REVOKE_PERMISSION_HPP
 #define IROHA_PROTO_REVOKE_PERMISSION_HPP
 
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "commands.pb.h"
 #include "interfaces/commands/revoke_permission.hpp"
 
 namespace shared_model {
@@ -28,28 +30,20 @@ namespace shared_model {
                                RevokePermission> {
      public:
       template <typename CommandType>
-      explicit RevokePermission(CommandType &&command)
-          : CopyableProto(std::forward<CommandType>(command)) {}
+      explicit RevokePermission(CommandType &&command);
 
-      RevokePermission(const RevokePermission &o)
-          : RevokePermission(o.proto_) {}
+      RevokePermission(const RevokePermission &o);
 
-      RevokePermission(RevokePermission &&o) noexcept
-          : RevokePermission(std::move(o.proto_)) {}
+      RevokePermission(RevokePermission &&o) noexcept;
 
-      const interface::types::AccountIdType &accountId() const override {
-        return revoke_permission_.account_id();
-      }
+      const interface::types::AccountIdType &accountId() const override;
 
-      const interface::types::PermissionNameType &permissionName()
-          const override {
-        return iroha::protocol::GrantablePermission_Name(
-            revoke_permission_.permission());
-      }
+      interface::permissions::Grantable permissionName() const override;
+
+      std::string toString() const override;
 
      private:
-      const iroha::protocol::RevokePermission &revoke_permission_{
-          proto_->revoke_permission()};
+      const iroha::protocol::RevokePermission &revoke_permission_;
     };
 
   }  // namespace proto

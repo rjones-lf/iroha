@@ -47,14 +47,6 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id);
 
       /**
-       * Sets transaction counter field
-       * @param tx_counter - transaction counter
-       * @return builder with tx_counter field appended
-       */
-      ModelTransactionBuilder txCounter(
-          interface::types::CounterType tx_counter);
-
-      /**
        * Sets time of creation
        * @param created_time - time of creation
        * @return builder with created_time field appended
@@ -63,14 +55,19 @@ namespace shared_model {
           interface::types::TimestampType created_time);
 
       /**
+       * Sets transaction quorum
+       * @param quorum to set
+       * @return builder with quorum field appended
+       */
+      ModelTransactionBuilder quorum(interface::types::QuorumType quorum);
+
+      /**
        * Adds given quantity of given asset to account
-       * @param account_id - account id
        * @param asset_id - asset id
        * @param amount - amount of asset to add
        * @return builder with asset quantity command appended
        */
       ModelTransactionBuilder addAssetQuantity(
-          const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id,
           const std::string &amount);
 
@@ -156,7 +153,7 @@ namespace shared_model {
        */
       ModelTransactionBuilder createRole(
           const interface::types::RoleIdType &role_name,
-          const std::vector<interface::types::PermissionNameType> &permissions);
+          const interface::RolePermissionSet &permissions);
 
       /**
        * Detaches role
@@ -176,7 +173,7 @@ namespace shared_model {
        */
       ModelTransactionBuilder grantPermission(
           const interface::types::AccountIdType &account_id,
-          const interface::types::PermissionNameType &permission);
+          interface::permissions::Grantable permission);
 
       /**
        * Revokes permission
@@ -186,7 +183,7 @@ namespace shared_model {
        */
       ModelTransactionBuilder revokePermission(
           const interface::types::AccountIdType &account_id,
-          const interface::types::PermissionNameType &permission);
+          interface::permissions::Grantable permission);
 
       /**
        * Sets account detail
@@ -212,13 +209,11 @@ namespace shared_model {
 
       /**
        * Subtracts asset quantity
-       * @param account_id - account id to subtract asset quantity from
        * @param asset_id - asset id to subtract
        * @param amount - amount to subtract
        * @return builder with subtract asset quantity command appended
        */
       ModelTransactionBuilder subtractAssetQuantity(
-          const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id,
           const std::string &amount);
 

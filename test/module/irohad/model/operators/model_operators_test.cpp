@@ -58,7 +58,6 @@ TEST(ModelOperatorTest, AddPeerTest) {
 
 AddAssetQuantity createAddAssetQuantity() {
   AddAssetQuantity aaq;
-  aaq.account_id = "123";
   iroha::Amount amount(1010, 2);
   aaq.amount = amount;
   aaq.asset_id = "123";
@@ -78,7 +77,6 @@ TEST(ModelOperatorTest, AddAssetQuantityTest) {
 
 SubtractAssetQuantity createSubtractAssetQuantity() {
   SubtractAssetQuantity saq;
-  saq.account_id = "acc";
   iroha::Amount amount(1010, 2);
   saq.amount = amount;
   saq.asset_id = "ast";
@@ -313,7 +311,15 @@ TEST(ModelOperatorTest, SignatureTest) {
 
   ASSERT_EQ(sig1, sig2);
   sig1.signature[0] = 0x23;
-  ASSERT_NE(sig1, sig2);
+
+  // equals because public keys are same
+  ASSERT_EQ(sig1, sig2);
+
+  auto sig3 = createSignature();
+  sig3.pubkey[0] = 0x23;
+
+  // not equals because public keys are different
+  ASSERT_NE(sig1, sig3);
 }
 
 // -----|Transaction|-----
@@ -321,8 +327,8 @@ TEST(ModelOperatorTest, SignatureTest) {
 Transaction createTransaction() {
   Transaction transaction;
   transaction.created_ts = 1;
+  transaction.quorum = 1;
   transaction.creator_account_id = "132";
-  transaction.tx_counter = 5;
   transaction.signatures.push_back(createSignature());
 
   // commands
@@ -352,7 +358,7 @@ TEST(ModelOperatorTest, TransactionTest) {
 
   ASSERT_EQ(tx1, tx2);
   tx1.signatures.push_back(createSignature());
-  ASSERT_NE(tx1, tx2);
+  ASSERT_EQ(tx1, tx2);  // signatures not affect on equality
 }
 
 // -----|Block|-----

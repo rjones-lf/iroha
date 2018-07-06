@@ -10,18 +10,17 @@ add_library(ametsuchi
     impl/postgres_block_index.cpp
     impl/postgres_ordering_service_persistent_state.cpp
     impl/wsv_restorer_impl.cpp
+    impl/postgres_options.cpp
     )
 
 target_link_libraries(ametsuchi
-    json_model_converters
     logger
     rxcpp
     pqxx
     libs_common
     command_execution
-    boost
-    model_interfaces
+    query_execution
+    shared_model_interfaces
     shared_model_proto_backend
-    shared_model_proto_builders
     shared_model_stateless_validation
     )

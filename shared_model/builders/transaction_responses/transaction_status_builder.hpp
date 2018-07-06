@@ -73,9 +73,21 @@ namespace shared_model {
         return copy;
       }
 
+      TransactionStatusBuilder mstExpired() {
+        TransactionStatusBuilder copy(*this);
+        copy.builder_ = this->builder_.mstExpired();
+        return copy;
+      }
+
       TransactionStatusBuilder txHash(const crypto::Hash &hash) {
         TransactionStatusBuilder copy(*this);
         copy.builder_ = this->builder_.txHash(hash);
+        return copy;
+      }
+
+      TransactionStatusBuilder errorMsg(const std::string &msg) {
+        TransactionStatusBuilder copy(*this);
+        copy.builder_ = this->builder_.errorMsg(msg);
         return copy;
       }
 

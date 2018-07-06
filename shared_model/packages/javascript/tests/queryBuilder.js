@@ -5,7 +5,7 @@ const accountId = 'admin@test'
 const assetId = 'coin#test'
 
 test('ModelQueryBuilder tests', function (t) {
-  t.plan(49)
+  t.plan(48)
 
   let queryBuilder = new iroha.ModelQueryBuilder()
   const time = (new Date()).getTime()
@@ -57,12 +57,9 @@ test('ModelQueryBuilder tests', function (t) {
   // getAccountAssets() tests
   t.comment('Testing getAccountAssets()')
   t.throws(() => correctQuery.getAccountAssets(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctQuery.getAccountAssets(''), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
-  t.throws(() => correctQuery.getAccountAssets('', assetId).build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id,')
-  t.throws(() => correctQuery.getAccountAssets('@@@', assetId).build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id,')
-  t.throws(() => correctQuery.getAccountAssets(accountId, '').build(), /Wrongly formed asset_id, passed value: ''/, 'Should throw Wrongly formed asset_id,')
-  t.throws(() => correctQuery.getAccountAssets(accountId, '@@@').build(), /Wrongly formed asset_id, passed value: '@@@'/, 'Should throw Wrongly formed asset_id,')
-  t.doesNotThrow(() => correctQuery.getAccountAssets(accountId, assetId).build(), null, 'Should not throw any exceptions')
+  t.throws(() => correctQuery.getAccountAssets('').build(), /Wrongly formed account_id, passed value: ''/, 'Should throw Wrongly formed account_id,')
+  t.throws(() => correctQuery.getAccountAssets('@@@').build(), /Wrongly formed account_id, passed value: '@@@'/, 'Should throw Wrongly formed account_id,')
+  t.doesNotThrow(() => correctQuery.getAccountAssets(accountId).build(), null, 'Should not throw any exceptions')
 
   // getRoles() tests
   t.comment('Testing getRoles()')
@@ -86,10 +83,17 @@ test('ModelQueryBuilder tests', function (t) {
   t.comment('Testing getTransactions()')
   t.throws(() => correctQuery.getTransactions(), /Error: Illegal number of arguments/, 'Should throw Illegal number of arguments')
   t.throws(() => correctQuery.getTransactions(''), /argument 2 of type 'std::vector< shared_model::crypto::Hash >/, 'Should throw ...argument 2 of type...')
+
   let hv = new iroha.HashVector()
   hv.add(new iroha.Hash('11111111111111111111111111111111'))
   hv.add(new iroha.Hash('22222222222222222222222222222222'))
-  t.doesNotThrow(() => correctQuery.getTransactions(hv), null, 'Should not throw any exceptions')
+  let invalidHv = new iroha.HashVector()
+  invalidHv.add(new iroha.Hash(''))
+  let emptyHv = new iroha.HashVector()
+
+  t.throws(() => correctQuery.getTransactions(emptyHv).build(), /tx_hashes cannot be empty/, 'Should throw tx_hashes cannot be empty')
+  t.throws(() => correctQuery.getTransactions(invalidHv).build(), /Hash has invalid size: 0/, 'Should throw Hash has invalid size')
+  t.doesNotThrow(() => correctQuery.getTransactions(hv).build(), null, 'Should not throw any exceptions')
 
   // getAccountDetail() tests
   t.comment('Testing getAccountDetail()')

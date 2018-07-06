@@ -18,19 +18,15 @@
 #ifndef IROHA_SHARED_MODEL_CREATE_DOMAIN_HPP
 #define IROHA_SHARED_MODEL_CREATE_DOMAIN_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/create_domain.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Create domain in Iroha
      */
-    class CreateDomain : public PRIMITIVE(CreateDomain) {
+    class CreateDomain : public ModelPrimitive<CreateDomain> {
      public:
       /**
        * @return Id of the domain to create
@@ -41,27 +37,9 @@ namespace shared_model {
        */
       virtual const types::RoleIdType &userDefaultRole() const = 0;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("CreateDomain")
-            .append("domain_id", domainId())
-            .append("user_default_role", userDefaultRole())
-            .finalize();
-      }
+      std::string toString() const override;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::CreateDomain;
-        oldModel->domain_id = domainId();
-        oldModel->user_default_role = userDefaultRole();
-        return oldModel;
-      }
-#endif
-
-      bool operator==(const ModelType &rhs) const override {
-        return domainId() == rhs.domainId()
-            and userDefaultRole() == rhs.userDefaultRole();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

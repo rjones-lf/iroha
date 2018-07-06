@@ -21,10 +21,10 @@ add_library(ordering_service
 
 
 target_link_libraries(ordering_service
-    pb_model_converters
     rxcpp
     tbb
-    model
+    shared_model_interfaces
+    shared_model_proto_backend
     ordering_grpc
     logger
     )

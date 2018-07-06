@@ -16,6 +16,9 @@
  */
 
 #include "client.hpp"
+
+#include "backend/protobuf/queries/proto_query.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "model/converters/json_query_factory.hpp"
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_query_factory.hpp"
@@ -27,13 +30,12 @@ namespace iroha_cli {
       : command_client_(target_ip, port), query_client_(target_ip, port) {}
 
   CliClient::Response<CliClient::TxStatus> CliClient::sendTx(
-      iroha::model::Transaction tx) {
+      const shared_model::interface::Transaction &tx) {
+    const auto proto_tx =
+        static_cast<const shared_model::proto::Transaction &>(tx);
     CliClient::Response<CliClient::TxStatus> response;
-    // Convert to protobuf
-    iroha::model::converters::PbTransactionFactory factory;
-    auto pb_tx = factory.serialize(tx);
     // Send to iroha:
-    response.status = command_client_.Torii(pb_tx);
+    response.status = command_client_.Torii(proto_tx.getTransport());
 
     // TODO 12/10/2017 neewy implement return of real transaction status IR-494
     response.answer = TxStatus::OK;
@@ -55,13 +57,14 @@ namespace iroha_cli {
   }
 
   CliClient::Response<iroha::protocol::QueryResponse> CliClient::sendQuery(
-      std::shared_ptr<iroha::model::Query> query) {
+      const shared_model::interface::Query &query) {
     CliClient::Response<iroha::protocol::QueryResponse> response;
     // Convert to proto and send to Iroha
     iroha::model::converters::PbQueryFactory pb_factory;
-    auto pb_query = pb_factory.serialize(query);
+    auto proto_query = static_cast<const shared_model::proto::Query &>(query);
     iroha::protocol::QueryResponse query_response;
-    response.status = query_client_.Find(pb_query.value(), query_response);
+    response.status =
+        query_client_.Find(proto_query.getTransport(), query_response);
     response.answer = query_response;
     return response;
   }

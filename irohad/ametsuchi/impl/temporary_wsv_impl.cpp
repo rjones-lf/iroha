@@ -38,37 +38,64 @@ namespace iroha {
       transaction_->exec("BEGIN;");
     }
 
-    bool TemporaryWsvImpl::apply(
+    expected::Result<void, validation::CommandError> TemporaryWsvImpl::apply(
         const shared_model::interface::Transaction &tx,
-        std::function<bool(const shared_model::interface::Transaction &,
-                           WsvQuery &)> apply_function) {
+        std::function<expected::Result<void, validation::CommandError>(
+            const shared_model::interface::Transaction &, WsvQuery &)>
+            apply_function) {
       const auto &tx_creator = tx.creatorAccountId();
       command_executor_->setCreatorAccountId(tx_creator);
       command_validator_->setCreatorAccountId(tx_creator);
-      auto execute_command = [this, &tx_creator](auto command) {
-        auto account = wsv_->getAccount(tx_creator).value();
-        if (not boost::apply_visitor(*command_validator_, command->get())) {
-          return false;
-        }
-        auto result = boost::apply_visitor(*command_executor_, command->get());
-        return result.match([](expected::Value<void> &v) { return true; },
-                            [this](expected::Error<ExecutionError> &e) {
-                              log_->error(e.error.toString());
-                              return false;
-                            });
+      auto execute_command = [this](auto &command, size_t command_index)
+          -> expected::Result<void, validation::CommandError> {
+        // Validate command
+        return expected::map_error<validation::CommandError>(
+                   boost::apply_visitor(*command_validator_, command.get()),
+                   [command_index](CommandError &error) {
+                     return validation::CommandError{error.command_name,
+                                                     error.toString(),
+                                                     true,
+                                                     command_index};
+                   })
+            // Execute command
+            .and_res(expected::map_error<validation::CommandError>(
+                boost::apply_visitor(*command_executor_, command.get()),
+                [command_index](CommandError &error) {
+                  return validation::CommandError{error.command_name,
+                                                  error.toString(),
+                                                  true,
+                                                  command_index};
+                }));
       };
 
       transaction_->exec("SAVEPOINT savepoint_;");
-      auto result =
-          apply_function(tx, *wsv_)
-          and std::all_of(
-                  tx.commands().begin(), tx.commands().end(), execute_command);
-      if (result) {
+
+      return apply_function(tx, *wsv_) |
+                 [this,
+                  &execute_command,
+                  &tx]() -> expected::Result<void, validation::CommandError> {
+        // check transaction's commands validity
+        const auto &commands = tx.commands();
+        validation::CommandError cmd_error;
+        for (size_t i = 0; i < commands.size(); ++i) {
+          // in case of failed command, rollback and return
+          auto cmd_is_valid =
+              execute_command(commands[i], i)
+                  .match([](expected::Value<void> &) { return true; },
+                         [&cmd_error](
+                             expected::Error<validation::CommandError> &error) {
+                           cmd_error = error.error;
+                           return false;
+                         });
+          if (not cmd_is_valid) {
+            transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");
+            return expected::makeError(cmd_error);
+          }
+        }
+        // success
         transaction_->exec("RELEASE SAVEPOINT savepoint_;");
-      } else {
-        transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");
-      }
-      return result;
+        return {};
+      };
     }
 
     TemporaryWsvImpl::~TemporaryWsvImpl() {

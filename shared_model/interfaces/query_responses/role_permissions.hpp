@@ -18,62 +18,30 @@
 #ifndef IROHA_SHARED_MODEL_ROLE_PERMISSIONS_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_ROLE_PERMISSIONS_RESPONSE_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/string_builder.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/responses/roles_response.hpp"
-#endif
+#include "interfaces/permissions.hpp"
 
 namespace shared_model {
   namespace interface {
     /**
      * Response with all permissions related to role
      */
-    class RolePermissionsResponse : public PRIMITIVE(RolePermissionsResponse) {
+    class RolePermissionsResponse
+        : public ModelPrimitive<RolePermissionsResponse> {
      public:
-      /// type of role permissions collection
-      using PermissionNameCollectionType =
-          std::vector<types::PermissionNameType>;
-
       /**
        * @return role permissions
        */
-      virtual const PermissionNameCollectionType &rolePermissions() const = 0;
+      virtual const RolePermissionSet &rolePermissions() const = 0;
 
       /**
        * Stringify the data.
        * @return string representation of data.
        */
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("RolePermissionsResponse")
-            .appendAll(rolePermissions(), [](auto perm) { return perm; })
-            .finalize();
-      }
+      std::string toString() const override = 0;
 
-      /**
-       * Implementation of operator ==
-       * @param rhs - the right hand-side of RolePermissionsResponse
-       * @return true if they have same values.
-       */
-      bool operator==(const ModelType &rhs) const override {
-        return rolePermissions() == rhs.rolePermissions();
-      }
-
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of role permissions response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->role_permissions = rolePermissions();
-        return oldModel;
-      }
-
-#endif
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

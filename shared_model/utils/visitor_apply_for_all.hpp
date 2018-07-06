@@ -19,7 +19,7 @@
 #define IROHA_VISITOR_APPLY_FOR_ALL_HPP
 
 #include <boost/variant/static_visitor.hpp>
-#include <type_traits>
+#include <string>
 
 namespace shared_model {
   namespace detail {
@@ -30,25 +30,10 @@ namespace shared_model {
     class ToStringVisitor : public boost::static_visitor<std::string> {
      public:
       template <typename InputType>
-      std::string operator()(const InputType &operand) const {
-        return operand->toString();
+      auto operator()(const InputType &operand) const {
+        return operand.toString();
       }
     };
-
-#ifndef DISABLE_BACKWARD
-    /**
-     * Class provides generic converter for old-fashion domain objects
-     * @tparam T abstract return type
-     */
-    template <typename T>
-    class OldModelCreatorVisitor : public boost::static_visitor<T> {
-     public:
-      template <typename InputType>
-      T operator()(const InputType &operand) const {
-        return operand->makeOldModel();
-      }
-    };
-#endif
 
   }  // namespace detail
 }  // namespace shared_model

@@ -19,6 +19,7 @@
 #define IROHA_TEST_PROPOSAL_BUILDER_HPP
 
 #include "builders/protobuf/builder_templates/proposal_template.hpp"
+#include "module/shared_model/validators/validators.hpp"
 
 /**
  * Builder alias, to build shared model proto proposal object avoiding "required
@@ -26,6 +27,6 @@
  */
 using TestProposalBuilder = shared_model::proto::TemplateProposalBuilder<
     (1 << shared_model::proto::TemplateProposalBuilder<>::total) - 1,
-    shared_model::validation::DefaultProposalValidator>;
+    shared_model::validation::AlwaysValidValidator>;
 
 #endif  // IROHA_TEST_PROPOSAL_BUILDER_HPP

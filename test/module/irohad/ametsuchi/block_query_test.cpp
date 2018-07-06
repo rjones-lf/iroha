@@ -19,14 +19,18 @@
 #include <boost/optional.hpp>
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
-#include "backend/protobuf/from_old_model.hpp"
+#include "converters/protobuf/json_proto_converter.hpp"
 #include "framework/test_subscriber.hpp"
+#include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace framework::test_subscriber;
+
+using testing::Return;
 
 class BlockQueryTest : public AmetsuchiTest {
  protected:
@@ -36,6 +40,7 @@ class BlockQueryTest : public AmetsuchiTest {
     auto tmp = FlatFile::create(block_store_path);
     ASSERT_TRUE(tmp);
     file = std::move(*tmp);
+    mock_file = std::make_shared<MockKeyValueStorage>();
     postgres_connection = std::make_unique<pqxx::lazyconnection>(pgopt_);
     try {
       postgres_connection->activate();
@@ -47,6 +52,8 @@ class BlockQueryTest : public AmetsuchiTest {
 
     index = std::make_shared<PostgresBlockIndex>(*transaction);
     blocks = std::make_shared<PostgresBlockQuery>(*transaction, *file);
+    empty_blocks =
+        std::make_shared<PostgresBlockQuery>(*transaction, *mock_file);
 
     transaction->exec(init_);
 
@@ -83,13 +90,9 @@ class BlockQueryTest : public AmetsuchiTest {
             .build();
 
     for (const auto &b : {block1, block2}) {
-      // TODO IR-975 victordrobny 12.02.2018 convert from
-      // shared_model::proto::Block after FlatFile will be reworked to new
-      // model
-      auto old_block = *std::unique_ptr<iroha::model::Block>(b.makeOldModel());
       file->add(b.height(),
-                iroha::stringToBytes(iroha::model::converters::jsonToString(
-                    iroha::model::converters::JsonBlockFactory().serialize(old_block))));
+                iroha::stringToBytes(
+                    shared_model::converters::protobuf::modelToJson(b)));
       index->index(b);
       blocks_total++;
     }
@@ -99,12 +102,14 @@ class BlockQueryTest : public AmetsuchiTest {
   std::unique_ptr<pqxx::nontransaction> transaction;
   std::vector<shared_model::crypto::Hash> tx_hashes;
   std::shared_ptr<BlockQuery> blocks;
+  std::shared_ptr<BlockQuery> empty_blocks;
   std::shared_ptr<BlockIndex> index;
   std::unique_ptr<FlatFile> file;
+  std::shared_ptr<MockKeyValueStorage> mock_file;
   std::string creator1 = "user1@test";
   std::string creator2 = "user2@test";
   std::size_t blocks_total{0};
-  std::string zero_string = std::string("0", 32);
+  std::string zero_string = std::string(32, '0');
 };
 
 /**
@@ -167,10 +172,10 @@ TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
     static auto subs_cnt = 0;
     subs_cnt++;
     if (subs_cnt == 1) {
-      EXPECT_TRUE(tx);
+      ASSERT_TRUE(tx);
       EXPECT_EQ(tx_hashes[1], (*tx)->hash());
     } else {
-      EXPECT_TRUE(tx);
+      ASSERT_TRUE(tx);
       EXPECT_EQ(tx_hashes[3], (*tx)->hash());
     }
   });
@@ -186,7 +191,8 @@ TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
  */
 TEST_F(BlockQueryTest, GetTransactionsIncludesNonExistingTxHashes) {
   shared_model::crypto::Hash invalid_tx_hash_1(zero_string),
-      invalid_tx_hash_2(std::string("9", 32));
+      invalid_tx_hash_2(std::string(
+          shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength, '9'));
   auto wrapper = make_test_subscriber<CallExact>(
       blocks->getTransactions({invalid_tx_hash_1, invalid_tx_hash_2}), 2);
   wrapper.subscribe(
@@ -369,4 +375,52 @@ TEST_F(BlockQueryTest, GetTop2Blocks) {
       [&counter](const auto &b) { ASSERT_EQ(b->height(), counter++); });
 
   ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given block store with preinserted blocks
+ * @when hasTxWithHash is invoked on existing transaction hash
+ * @then True is returned
+ */
+TEST_F(BlockQueryTest, HasTxWithExistingHash) {
+  for (const auto &hash : tx_hashes) {
+    EXPECT_TRUE(blocks->hasTxWithHash(hash));
+  }
+}
+
+/**
+ * @given block store with preinserted blocks
+ * user1@test AND 1 tx created by user2@test
+ * @when hasTxWithHash is invoked on non-existing hash
+ * @then False is returned
+ */
+TEST_F(BlockQueryTest, HasTxWithInvalidHash) {
+  shared_model::crypto::Hash invalid_tx_hash(zero_string);
+  EXPECT_FALSE(blocks->hasTxWithHash(invalid_tx_hash));
+}
+
+/**
+ * @given block store with preinserted blocks
+ * @when getTopBlock is invoked on this block store
+ * @then returned top block's height is equal to the inserted one's
+ */
+TEST_F(BlockQueryTest, GetTopBlockSuccess) {
+  auto top_block_opt = framework::expected::val(blocks->getTopBlock());
+  ASSERT_TRUE(top_block_opt);
+  ASSERT_EQ(top_block_opt.value().value->height(), 2);
+}
+
+/**
+ * @given empty block store
+ * @when getTopBlock is invoked on this block store
+ * @then result must be a string error, because no block was fetched
+ */
+TEST_F(BlockQueryTest, GetTopBlockFail) {
+  EXPECT_CALL(*mock_file, last_id()).WillRepeatedly(Return(0));
+  EXPECT_CALL(*mock_file, get(mock_file->last_id()))
+      .WillOnce(Return(boost::none));
+
+  auto top_block_error = framework::expected::err(empty_blocks->getTopBlock());
+  ASSERT_TRUE(top_block_error);
+  ASSERT_EQ(top_block_error.value().error, "error while fetching the last block");
 }

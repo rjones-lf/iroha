@@ -21,6 +21,8 @@
 
 #include "model/converters/pb_common.hpp"
 
+using namespace shared_model::permissions;
+
 namespace iroha {
   namespace model {
     namespace converters {
@@ -85,19 +87,24 @@ namespace iroha {
             // Can get all account assets
             (protocol::RolePermission::can_get_all_acc_ast, can_get_all_acc_ast)
             // Can get domain account assets
-            (protocol::RolePermission::can_get_domain_acc_ast, can_get_domain_acc_ast)
+            (protocol::RolePermission::can_get_domain_acc_ast,
+             can_get_domain_acc_ast)
             // Can get my account detail
-            (protocol::RolePermission::can_get_my_acc_detail, can_get_my_acc_detail)
+            (protocol::RolePermission::can_get_my_acc_detail,
+             can_get_my_acc_detail)
             // Can get all account detail
-            (protocol::RolePermission::can_get_all_acc_detail, can_get_all_acc_detail)
+            (protocol::RolePermission::can_get_all_acc_detail,
+             can_get_all_acc_detail)
             // Can get domain account detail
-            (protocol::RolePermission::can_get_domain_acc_detail, can_get_domain_acc_detail)
+            (protocol::RolePermission::can_get_domain_acc_detail,
+             can_get_domain_acc_detail)
             // Can get my account transactions
             (protocol::RolePermission::can_get_my_acc_txs, can_get_my_acc_txs)
             // Can get all account transactions
             (protocol::RolePermission::can_get_all_acc_txs, can_get_all_acc_txs)
             // Can get domain account transactions
-            (protocol::RolePermission::can_get_domain_acc_txs, can_get_domain_acc_txs)
+            (protocol::RolePermission::can_get_domain_acc_txs,
+             can_get_domain_acc_txs)
             // Can get my account assets transactions
             (protocol::RolePermission::can_get_my_acc_ast_txs,
              can_get_my_acc_ast_txs)
@@ -113,20 +120,23 @@ namespace iroha {
             (protocol::RolePermission::can_get_all_txs, can_get_all_txs)
 
             // Can grant set quorum
-            (protocol::RolePermission::can_grant_can_set_quorum,
-             can_grant + can_set_quorum)
+            (protocol::RolePermission::can_grant_can_set_my_quorum,
+             can_grant + can_set_my_quorum)
             // Can grant add signatory
-            (protocol::RolePermission::can_grant_can_add_signatory,
-             can_grant + can_add_signatory)
+            (protocol::RolePermission::can_grant_can_add_my_signatory,
+             can_grant + can_add_my_signatory)
             // Can grant remove signatory
-            (protocol::RolePermission::can_grant_can_remove_signatory,
-             can_grant + can_remove_signatory)
+            (protocol::RolePermission::can_grant_can_remove_my_signatory,
+             can_grant + can_remove_my_signatory)
             // Can grant can_transfer
-            (protocol::RolePermission::can_grant_can_transfer,
-             can_grant + can_transfer)
+            (protocol::RolePermission::can_grant_can_transfer_my_assets,
+             can_grant + can_transfer_my_assets)
             // Can write details to other accounts
-            (protocol::RolePermission::can_grant_can_set_detail,
-             can_grant + can_set_detail);
+            (protocol::RolePermission::can_grant_can_set_my_account_detail,
+             can_grant + can_set_my_account_detail)
+
+            // Can get blocks
+            (protocol::RolePermission::can_get_blocks, can_get_blocks);
 
         boost::assign::insert(pb_grant_map_)
             // Can add my signatory
@@ -142,14 +152,13 @@ namespace iroha {
              can_set_detail)
             // Can transfer my assets
             (protocol::GrantablePermission::can_transfer_my_assets,
-                can_transfer);
+             can_transfer);
       }
 
       // asset quantity
       protocol::AddAssetQuantity PbCommandFactory::serializeAddAssetQuantity(
           const model::AddAssetQuantity &add_asset_quantity) {
         protocol::AddAssetQuantity pb_add_asset_quantity;
-        pb_add_asset_quantity.set_account_id(add_asset_quantity.account_id);
         pb_add_asset_quantity.set_asset_id(add_asset_quantity.asset_id);
         auto amount = pb_add_asset_quantity.mutable_amount();
         amount->CopyFrom(serializeAmount(add_asset_quantity.amount));
@@ -159,7 +168,6 @@ namespace iroha {
       model::AddAssetQuantity PbCommandFactory::deserializeAddAssetQuantity(
           const protocol::AddAssetQuantity &pb_add_asset_quantity) {
         model::AddAssetQuantity add_asset_quantity;
-        add_asset_quantity.account_id = pb_add_asset_quantity.account_id();
         add_asset_quantity.asset_id = pb_add_asset_quantity.asset_id();
         add_asset_quantity.amount =
             deserializeAmount(pb_add_asset_quantity.amount());
@@ -172,8 +180,6 @@ namespace iroha {
       PbCommandFactory::serializeSubtractAssetQuantity(
           const model::SubtractAssetQuantity &subtract_asset_quantity) {
         protocol::SubtractAssetQuantity pb_subtract_asset_quantity;
-        pb_subtract_asset_quantity.set_account_id(
-            subtract_asset_quantity.account_id);
         pb_subtract_asset_quantity.set_asset_id(
             subtract_asset_quantity.asset_id);
         auto amount = pb_subtract_asset_quantity.mutable_amount();
@@ -185,8 +191,6 @@ namespace iroha {
       PbCommandFactory::deserializeSubtractAssetQuantity(
           const protocol::SubtractAssetQuantity &pb_subtract_asset_quantity) {
         model::SubtractAssetQuantity subtract_asset_quantity;
-        subtract_asset_quantity.account_id =
-            pb_subtract_asset_quantity.account_id();
         subtract_asset_quantity.asset_id =
             pb_subtract_asset_quantity.asset_id();
         subtract_asset_quantity.amount =

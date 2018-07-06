@@ -4,9 +4,10 @@ add_library(processors
     )
 
 target_link_libraries(processors PUBLIC
-    model
     rxcpp
     logger
     endpoint
+    mst_processor
     shared_model_proto_builders
+    query_execution
     )

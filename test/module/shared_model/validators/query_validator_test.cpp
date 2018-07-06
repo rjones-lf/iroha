@@ -33,9 +33,11 @@ using namespace shared_model;
  */
 TEST_F(QueryValidatorTest, StatelessValidTest) {
   iroha::protocol::Query qry;
-  qry.mutable_payload()->set_creator_account_id(account_id);
-  qry.mutable_payload()->set_created_time(created_time);
-  qry.mutable_payload()->set_query_counter(counter);
+  auto *meta = new iroha::protocol::QueryPayloadMeta();
+  meta->set_created_time(created_time);
+  meta->set_creator_account_id(account_id);
+  meta->set_query_counter(counter);
+  qry.mutable_payload()->set_allocated_meta(meta);
   auto payload = qry.mutable_payload();
 
   // Iterate through all query types, filling query fields with valid values
@@ -62,6 +64,20 @@ TEST_F(QueryValidatorTest, StatelessValidTest) {
 
         ASSERT_FALSE(answer.hasErrors()) << answer.reason();
       });
+}
+
+/**
+ * @given Protobuf query object with unset query
+ * @when validate is called
+ * @then there is a error returned
+ */
+TEST_F(QueryValidatorTest, UnsetQuery) {
+  iroha::protocol::Query qry;
+  qry.mutable_payload()->mutable_meta()->set_created_time(created_time);
+  qry.mutable_payload()->mutable_meta()->set_creator_account_id(account_id);
+  qry.mutable_payload()->mutable_meta()->set_query_counter(counter);
+  auto answer = query_validator.validate(proto::Query(qry));
+  ASSERT_TRUE(answer.hasErrors());
 }
 
 /**

@@ -16,37 +16,12 @@
  */
 
 #include "torii/processor/query_processor_impl.hpp"
-#include "backend/protobuf/from_old_model.hpp"
-#include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "boost/range/size.hpp"
+#include "builders/protobuf/query_responses/proto_block_query_response_builder.hpp"
+#include "validation/utils.hpp"
 
 namespace iroha {
   namespace torii {
-
-    /**
-     * Checks if public keys are subset of given signaturies
-     * @param signatures user signatories, an iterable collection
-     * @param public_keys vector of public keys
-     * @return true if user has needed signatories, false instead
-     */
-    bool signaturesSubset(
-        const shared_model::interface::SignatureSetType &signatures,
-        const std::vector<shared_model::crypto::PublicKey> &public_keys) {
-      // TODO 09/10/17 Lebedev: simplify the subset verification IR-510
-      // #goodfirstissue
-      // TODO 30/04/2018 x3medima17: remove code duplication in query_processor
-      // IR-1192 and stateful_validator
-      std::unordered_set<std::string> txPubkeys;
-      for (auto sign : signatures) {
-        txPubkeys.insert(sign->publicKey().toString());
-      }
-      return std::all_of(public_keys.begin(),
-                         public_keys.end(),
-                         [&txPubkeys](const auto &public_key) {
-                           return txPubkeys.find(public_key.toString())
-                               != txPubkeys.end();
-                         });
-    }
-
     /**
      * Builds QueryResponse that contains StatefulError
      * @param hash - original query hash
@@ -61,45 +36,90 @@ namespace iroha {
                   shared_model::interface::StatefulFailedErrorResponse>()
               .build());
     }
+    std::shared_ptr<shared_model::interface::BlockQueryResponse>
+    buildBlocksQueryError(const std::string &message) {
+      return clone(shared_model::proto::BlockQueryResponseBuilder()
+                       .errorResponse(message)
+                       .build());
+    }
+
+    std::shared_ptr<shared_model::interface::BlockQueryResponse>
+    buildBlocksQueryBlock(shared_model::interface::Block &block) {
+      return clone(shared_model::proto::BlockQueryResponseBuilder()
+                       .blockResponse(block)
+                       .build());
+    }
 
     QueryProcessorImpl::QueryProcessorImpl(
         std::shared_ptr<ametsuchi::Storage> storage)
-        : storage_(storage) {}
-
-    bool QueryProcessorImpl::checkSignatories(
-        const shared_model::interface::Query &qry) {
-      const auto &sig = *qry.signatures().begin();
-
-      const auto &wsv_query = storage_->getWsvQuery();
-      auto qpf =
-          model::QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
-      auto signatories = wsv_query->getSignatories(qry.creatorAccountId());
-      if (not signatories) {
-        return false;
-      }
-      bool result = signaturesSubset({sig}, *signatories);
-      return result;
+        : storage_(storage) {
+      storage_->on_commit().subscribe(
+          [this](std::shared_ptr<shared_model::interface::Block> block) {
+            auto response = buildBlocksQueryBlock(*block);
+            blocksQuerySubject_.get_subscriber().on_next(response);
+          });
     }
+    template <class Q>
+    bool QueryProcessorImpl::checkSignatories(const Q &qry) {
+      const auto &wsv_query = storage_->getWsvQuery();
+
+      auto signatories = wsv_query->getSignatories(qry.creatorAccountId());
+      const auto &sig = qry.signatures();
+
+      return boost::size(sig) == 1
+          and signatories | [&sig](const auto &signatories) {
+                return validation::signaturesSubset(sig, signatories);
+              };
+    }
+
+    template bool QueryProcessorImpl::checkSignatories<
+        shared_model::interface::Query>(const shared_model::interface::Query &);
+    template bool
+    QueryProcessorImpl::checkSignatories<shared_model::interface::BlocksQuery>(
+        const shared_model::interface::BlocksQuery &);
 
     void QueryProcessorImpl::queryHandle(
         std::shared_ptr<shared_model::interface::Query> qry) {
       if (not checkSignatories(*qry)) {
         auto response = buildStatefulError(qry->hash());
+        std::lock_guard<std::mutex> lock(notifier_mutex_);
         subject_.get_subscriber().on_next(response);
         return;
       }
 
       const auto &wsv_query = storage_->getWsvQuery();
-      auto qpf =
-          model::QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
-      auto qpf_response = qpf.execute(*qry);
+      auto qpf = QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
+      auto qpf_response = qpf.validateAndExecute(*qry);
       auto qry_resp =
           std::static_pointer_cast<shared_model::proto::QueryResponse>(
               qpf_response);
+      std::lock_guard<std::mutex> lock(notifier_mutex_);
       subject_.get_subscriber().on_next(
           std::make_shared<shared_model::proto::QueryResponse>(
               qry_resp->getTransport()));
     }
+
+    rxcpp::observable<
+        std::shared_ptr<shared_model::interface::BlockQueryResponse>>
+    QueryProcessorImpl::blocksQueryHandle(
+        std::shared_ptr<shared_model::interface::BlocksQuery> qry) {
+      if (not checkSignatories(*qry)) {
+        auto response = buildBlocksQueryError("Wrong signatories");
+        return rxcpp::observable<>::just(
+            std::shared_ptr<shared_model::interface::BlockQueryResponse>(
+                response));
+      }
+      const auto &wsv_query = storage_->getWsvQuery();
+      auto qpf = QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
+      if (not qpf.validate(*qry)) {
+        auto response = buildBlocksQueryError("Stateful invalid");
+        return rxcpp::observable<>::just(
+            std::shared_ptr<shared_model::interface::BlockQueryResponse>(
+                response));
+      }
+      return blocksQuerySubject_.get_observable();
+    }
+
     rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>
     QueryProcessorImpl::queryNotifier() {
       return subject_.get_observable();

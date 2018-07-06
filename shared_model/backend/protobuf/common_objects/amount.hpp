@@ -58,10 +58,20 @@ namespace shared_model {
         ValueType &value,
         const boost::multiprecision::uint256_t &amount) noexcept {
       constexpr auto offset = 64u;
-      value.set_first((amount >> offset * 3).template convert_to<uint64_t>());
-      value.set_second((amount >> offset * 2).template convert_to<uint64_t>());
-      value.set_third((amount >> offset).template convert_to<uint64_t>());
-      value.set_fourth(amount.template convert_to<uint64_t>());
+      constexpr boost::multiprecision::uint256_t mask_bits =
+          std::numeric_limits<uint64_t>::max();
+      auto convert = [&](auto i) {
+        // Select two middle bits from 011011 and offset = 2
+        // 011011 >> (2 * 1) = 000110
+        // Have to mask 2 high bits to prevent any overflows
+        // 000110 & 000011 = 000010
+        return ((amount >> (offset * i)) & mask_bits)
+            .template convert_to<uint64_t>();
+      };
+      value.set_first(convert(3));
+      value.set_second(convert(2));
+      value.set_third(convert(1));
+      value.set_fourth(convert(0));
     }
 
     class Amount final : public CopyableProto<interface::Amount,
