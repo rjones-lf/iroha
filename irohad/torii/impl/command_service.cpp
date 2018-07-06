@@ -175,7 +175,7 @@ namespace torii {
    */
   template <typename T>
   constexpr bool FinalStatusValue =
-      iroha::is_any<std::remove_const_t<std::remove_reference_t<T>>,
+      iroha::is_any<std::decay_t<T>,
                     shared_model::interface::StatelessFailedTxResponse,
                     shared_model::interface::StatefulFailedTxResponse,
                     shared_model::interface::CommittedTxResponse,
@@ -183,13 +183,11 @@ namespace torii {
 
   rxcpp::observable<
       std::shared_ptr<shared_model::interface::TransactionResponse>>
-  CommandService::StatusStream(
-      const iroha::protocol::TxStatusRequest &request) {
-    auto hash = shared_model::crypto::Hash(request.tx_hash());
+  CommandService::StatusStream(const shared_model::crypto::Hash &hash) {
     std::shared_ptr<shared_model::interface::TransactionResponse>
         initial_status = clone(shared_model::proto::TransactionResponse(
             cache_->findItem(hash).value_or([&] {
-              log_->info("tx not received");
+              log_->debug("tx not received");
               return shared_model::proto::TransactionStatusBuilder()
                   .txHash(hash)
                   .notReceived()
@@ -197,9 +195,8 @@ namespace torii {
                   .getTransport();
             }())));
     return responses_.start_with(initial_status)
-        .filter([hash = std::move(hash)](auto response) {
-          return response->transactionHash() == hash;
-        })
+        .filter(
+            [&](auto response) { return response->transactionHash() == hash; })
         .lift<std::shared_ptr<shared_model::interface::TransactionResponse>>(
             [](rxcpp::subscriber<std::shared_ptr<
                    shared_model::interface::TransactionResponse>> dest) {
@@ -229,12 +226,14 @@ namespace torii {
       grpc::ServerWriter<iroha::protocol::ToriiResponse> *response_writer) {
     rxcpp::schedulers::run_loop rl;
 
-    auto main_thread =
+    auto current_thread =
         rxcpp::observe_on_one_worker(rxcpp::schedulers::make_run_loop(rl));
 
     rxcpp::composite_subscription subscription;
 
-    StatusStream(*request)
+    auto hash = shared_model::crypto::Hash(request->tx_hash());
+
+    StatusStream(hash)
         .map([](auto response) {
           return std::static_pointer_cast<
                      shared_model::proto::TransactionResponse>(response)
@@ -248,7 +247,7 @@ namespace torii {
                       ? start_tx_processing_duration_
                       : 2 * proposal_delay_;
                 },
-                main_thread))
+                current_thread))
         .take_while([=](const auto &) { return not context->IsCancelled(); })
         .subscribe(
             subscription,
@@ -257,7 +256,7 @@ namespace torii {
               response_writer->Write(response);
             },
             [&](std::exception_ptr ep) { log_->debug("processing timeout"); },
-            [&] { log_->info("stream done"); });
+            [&] { log_->debug("stream done"); });
 
     // run loop while subscription is active or there are pending events in the
     // queue

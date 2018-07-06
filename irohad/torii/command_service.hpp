@@ -106,7 +106,7 @@ namespace torii {
      */
     rxcpp::observable<
         std::shared_ptr<shared_model::interface::TransactionResponse>>
-    StatusStream(const iroha::protocol::TxStatusRequest &request);
+    StatusStream(const shared_model::crypto::Hash &hash);
 
     /**
      * StatusStream call via grpc
