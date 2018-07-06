@@ -6,10 +6,11 @@
 import iroha
 import commons
 
-admin = commons.user('admin@test')
-alice = commons.user('alice@test')
+admin = commons.new_user('admin@test')
+alice = commons.new_user('alice@test')
 
 
+@commons.hex
 def genesis_tx():
     test_permissions = iroha.RolePermissionSet([iroha.Role_kAddPeer])
     tx = iroha.ModelTransactionBuilder() \
@@ -27,6 +28,7 @@ def genesis_tx():
         .signAndAddSignature(admin['key']).finish()
 
 
+@commons.hex
 def add_peer_tx():
     peer_key = iroha.ModelCrypto().generateKeypair()
     tx = iroha.ModelTransactionBuilder() \
@@ -36,8 +38,3 @@ def add_peer_tx():
         .build()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(alice['key']).finish()
-
-
-print(admin['key'].privateKey().hex())
-print(genesis_tx().hex())
-print(add_peer_tx().hex())

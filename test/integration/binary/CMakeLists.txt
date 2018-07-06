@@ -10,6 +10,7 @@ if (SWIG_PYTHON)
     find_package(PythonInterp 3.5 REQUIRED)
   endif ()
 
+  # TODO, igor-egorov, 2018-06-27, IR-1481, move that foreach to a separate target
   foreach (item "block" "commands" "primitive" "queries")
     compile_proto_to_python("${item}.proto")
     list(APPEND PROTO_SWIG_DEPS "${SWIG_BUILD_DIR}/${item}_pb2.py")
@@ -17,14 +18,12 @@ if (SWIG_PYTHON)
 
   add_executable(binary_test
       launchers.cpp
-      binaries_test.cpp)
+      binaries_test.cpp
+      )
   target_link_libraries(binary_test
       gtest
       gmock
-      boost
-      schema
       shared_model_proto_backend
-      shared_model_interfaces
       integration_framework
       bindings
       )

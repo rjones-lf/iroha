@@ -6,9 +6,11 @@
 import iroha
 import commons
 
-admin = commons.user('admin@test')
-alice = commons.user('alice@test')
+admin = commons.new_user('admin@test')
+alice = commons.new_user('alice@test')
 
+
+@commons.hex
 def genesis_tx():
     test_permissions = iroha.RolePermissionSet([iroha.Role_kReadAssets])
     tx = iroha.ModelTransactionBuilder() \
@@ -26,6 +28,7 @@ def genesis_tx():
         .signAndAddSignature(admin['key']).finish()
 
 
+@commons.hex
 def get_asset_query():
     tx = iroha.ModelQueryBuilder() \
         .createdTime(commons.now()) \
@@ -35,8 +38,3 @@ def get_asset_query():
         .build()
     return iroha.ModelProtoQuery(tx) \
         .signAndAddSignature(alice['key']).finish()
-
-
-print(admin['key'].privateKey().hex())
-print(genesis_tx().hex())
-print(get_asset_query().hex())

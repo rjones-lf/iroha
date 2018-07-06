@@ -6,10 +6,11 @@
 import iroha
 import commons
 
-admin = commons.user('admin@test')
-alice = commons.user('alice@test')
+admin = commons.new_user('admin@test')
+alice = commons.new_user('alice@test')
 
 
+@commons.hex
 def genesis_tx():
     test_permissions = iroha.RolePermissionSet([iroha.Role_kAddAssetQty])
     tx = iroha.ModelTransactionBuilder() \
@@ -28,16 +29,12 @@ def genesis_tx():
         .signAndAddSignature(admin['key']).finish()
 
 
+@commons.hex
 def add_asset_tx():
     tx = iroha.ModelTransactionBuilder() \
         .createdTime(commons.now()) \
         .creatorAccountId(alice['id']) \
-        .addAssetQuantity(alice['id'], 'coin#test', '5000.99') \
+        .addAssetQuantity('coin#test', '5000.99') \
         .build()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(alice['key']).finish()
-
-
-print(admin['key'].privateKey().hex())
-print(genesis_tx().hex())
-print(add_asset_tx().hex())

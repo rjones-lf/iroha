@@ -6,12 +6,14 @@
 import iroha
 import commons
 
-admin = commons.user('admin@first')
-alice = commons.user('alice@second')
+admin = commons.new_user('admin@first')
+alice = commons.new_user('alice@second')
 
 alice_tx1_hash = None
 alice_tx2_hash_blob = None
 
+
+@commons.hex
 def genesis_tx():
     test_permissions = iroha.RolePermissionSet([
         iroha.Role_kGetMyTxs,
@@ -33,6 +35,7 @@ def genesis_tx():
         .signAndAddSignature(admin['key']).finish()
 
 
+@commons.hex
 def alice_action_1_tx():
     global alice_tx1_hash
     tx = iroha.ModelTransactionBuilder() \
@@ -45,18 +48,20 @@ def alice_action_1_tx():
         .signAndAddSignature(alice['key']).finish()
 
 
+@commons.hex
 def alice_action_2_tx():
     global alice_tx2_hash_blob
     tx = iroha.ModelTransactionBuilder() \
         .createdTime(commons.now()) \
         .creatorAccountId(alice['id']) \
-        .addAssetQuantity(alice['id'], 'coin#first', '600.30') \
+        .addAssetQuantity('coin#first', '600.30') \
         .build()
     alice_tx2_hash_blob = tx.hash().blob()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(alice['key']).finish()
 
 
+@commons.hex
 def transactions_query():
     hashes = iroha.HashVector()
     hashes.append(alice_tx1_hash)
@@ -69,10 +74,3 @@ def transactions_query():
         .build()
     return iroha.ModelProtoQuery(tx) \
         .signAndAddSignature(alice['key']).finish()
-
-
-print(admin['key'].privateKey().hex())
-print(genesis_tx().hex())
-print(alice_action_1_tx().hex())
-print(alice_action_2_tx().hex())
-print(transactions_query().hex())

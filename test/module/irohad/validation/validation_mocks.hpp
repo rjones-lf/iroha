@@ -21,6 +21,7 @@
 #include <gmock/gmock.h>
 
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "validation/chain_validator.hpp"
 #include "validation/stateful_validator.hpp"
 
@@ -29,7 +30,7 @@ namespace iroha {
     class MockStatefulValidator : public validation::StatefulValidator {
      public:
       MOCK_METHOD2(validate,
-                   std::shared_ptr<shared_model::interface::Proposal>(
+                   VerifiedProposalAndErrors(
                        const shared_model::interface::Proposal &,
                        ametsuchi::TemporaryWsv &));
     };

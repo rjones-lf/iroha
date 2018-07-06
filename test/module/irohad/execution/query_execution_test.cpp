@@ -55,9 +55,6 @@ class QueryValidateExecuteTest : public ::testing::Test {
     block_query = std::make_shared<StrictMock<MockBlockQuery>>();
     factory = std::make_shared<QueryProcessingFactory>(wsv_query, block_query);
 
-    EXPECT_CALL(*wsv_query, hasAccountGrantablePermission(_, _, _))
-        .WillRepeatedly(Return(false));
-
     creator = clone(shared_model::proto::AccountBuilder()
                         .accountId(admin_id)
                         .domainId(domain_id)
@@ -215,40 +212,6 @@ TEST_F(GetAccountTest, DomainAccountValidCase) {
 }
 
 /**
- * @given initialized storage, granted permission
- * @when get account information about other user
- * @then Return users account
- */
-TEST_F(GetAccountTest, GrantAccountValidCase) {
-  auto query = TestQueryBuilder()
-                   .creatorAccountId(admin_id)
-                   .getAccount(account_id)
-                   .build();
-
-  role_permissions = {};
-
-  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  admin_id, account_id, permissionOf(Role::kGetMyAccount)))
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(*wsv_query, getAccount(account_id)).WillOnce(Return(account));
-  EXPECT_CALL(*wsv_query, getAccountRoles(account_id))
-      .WillOnce(Return(admin_roles));
-  auto response = validateAndExecute(query);
-  ASSERT_NO_THROW({
-    const auto &cast_resp = boost::apply_visitor(
-        framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
-        response->get());
-    ASSERT_EQ(cast_resp.account().accountId(), account_id);
-  });
-}
-
-/**
  * @given initialized storage, domain permission
  * @when get account information about other user in the other domain
  * @then Return users account
@@ -265,10 +228,6 @@ TEST_F(GetAccountTest, DifferentDomainAccountInValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  admin_id, "test@test2", permissionOf(Role::kGetMyAccount)))
-      .WillOnce(Return(false));
 
   auto response = validateAndExecute(query);
 
@@ -471,50 +430,6 @@ TEST_F(GetAccountAssetsTest, DomainAccountValidCase) {
 }
 
 /**
- * @given initialized storage, granted permission
- * @when get account information about other user
- * @then Return account assets
- */
-TEST_F(GetAccountAssetsTest, GrantAccountValidCase) {
-  auto query = TestQueryBuilder()
-                   .creatorAccountId(admin_id)
-                   .getAccountAssets(account_id)
-                   .build();
-
-  accountAsset = clone(shared_model::proto::AccountAssetBuilder()
-                           .assetId(accountAsset->assetId())
-                           .accountId(account_id)
-                           .balance(accountAsset->balance())
-                           .build());
-  role_permissions = {};
-
-  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  admin_id, account_id, permissionOf(Role::kGetMyAccAst)))
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(*wsv_query, getAccountAssets(account_id))
-      .WillOnce(Return(
-          std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>(
-              {accountAsset})));
-
-  auto response = validateAndExecute(query);
-  ASSERT_NO_THROW({
-    const auto &cast_resp = boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            shared_model::interface::AccountAssetResponse>(),
-        response->get());
-
-    ASSERT_EQ(cast_resp.accountAssets()[0].accountId(), account_id);
-    ASSERT_EQ(cast_resp.accountAssets()[0].assetId(), asset_id);
-  });
-}
-
-/**
  * @given initialized storage, domain permission
  * @when get account information about other user in the other domain
  * @then Return account assets
@@ -544,10 +459,6 @@ TEST_F(GetAccountAssetsTest, DifferentDomainAccountInValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  admin_id, "test@test2", permissionOf(Role::kGetMyAccAst)))
-      .WillOnce(Return(false));
 
   auto response = validateAndExecute(query);
 
@@ -699,41 +610,6 @@ TEST_F(GetSignatoriesTest, DomainAccountValidCase) {
 }
 
 /**
- * @given initialized storage, granted permission
- * @when get account information about other user
- * @then Return signatories
- */
-TEST_F(GetSignatoriesTest, GrantAccountValidCase) {
-  auto query = TestQueryBuilder()
-                   .creatorAccountId(admin_id)
-                   .getSignatories(account_id)
-                   .build();
-
-  role_permissions = {};
-
-  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  admin_id, account_id, permissionOf(Role::kGetMySignatories)))
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(*wsv_query, getSignatories(account_id)).WillOnce(Return(signs));
-
-  auto response = validateAndExecute(query);
-  ASSERT_NO_THROW({
-    const auto &cast_resp = boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            shared_model::interface::SignatoriesResponse>(),
-        response->get());
-
-    ASSERT_EQ(cast_resp.keys().size(), 1);
-  });
-}
-
-/**
  * @given initialized storage, domain permission
  * @when get account information about other user in the other domain
  * @then Return signatories
@@ -750,11 +626,6 @@ TEST_F(GetSignatoriesTest, DifferentDomainAccountInValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          admin_id, "test@test2", permissionOf(Role::kGetMySignatories)))
-      .WillOnce(Return(false));
 
   auto response = validateAndExecute(query);
 
@@ -911,45 +782,6 @@ TEST_F(GetAccountTransactionsTest, DomainAccountValidCase) {
 }
 
 /**
- * @given initialized storage, granted permission
- * @when get account information about other user
- * @then Return error
- */
-TEST_F(GetAccountTransactionsTest, GrantAccountValidCase) {
-  auto query = TestQueryBuilder()
-                   .creatorAccountId(admin_id)
-                   .getAccountTransactions(account_id)
-                   .build();
-
-  role_permissions = {};
-
-  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  admin_id, account_id, permissionOf(Role::kGetMyAccTxs)))
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(*block_query, getAccountTransactions(account_id))
-      .WillOnce(Return(txs_observable));
-
-  auto response = validateAndExecute(query);
-  ASSERT_NO_THROW({
-    const auto &cast_resp = boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            shared_model::interface::TransactionsResponse>(),
-        response->get());
-
-    ASSERT_EQ(cast_resp.transactions().size(), N);
-    for (const auto &tx : cast_resp.transactions()) {
-      EXPECT_EQ(account_id, tx.creatorAccountId());
-    }
-  });
-}
-
-/**
  * @given initialized storage, domain permission
  * @when get account information about other user in the other domain
  * @then Return error
@@ -966,10 +798,6 @@ TEST_F(GetAccountTransactionsTest, DifferentDomainAccountInValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  admin_id, "test@test2", permissionOf(Role::kGetMyAccTxs)))
-      .WillOnce(Return(false));
 
   auto response = validateAndExecute(query);
 
@@ -1126,45 +954,6 @@ TEST_F(GetAccountAssetsTransactionsTest, DomainAccountValidCase) {
 }
 
 /**
- * @given initialized storage, granted permission
- * @when get account information about other user
- * @then Return error
- */
-TEST_F(GetAccountAssetsTransactionsTest, GrantAccountValidCase) {
-  auto query = TestQueryBuilder()
-                   .creatorAccountId(admin_id)
-                   .getAccountAssetTransactions(account_id, asset_id)
-                   .build();
-
-  role_permissions = {};
-
-  EXPECT_CALL(*wsv_query, getAccountRoles(admin_id))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  admin_id, account_id, permissionOf(Role::kGetMyAccAstTxs)))
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(*block_query, getAccountAssetTransactions(account_id, asset_id))
-      .WillOnce(Return(txs_observable));
-
-  auto response = validateAndExecute(query);
-  ASSERT_NO_THROW({
-    const auto &cast_resp = boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            shared_model::interface::TransactionsResponse>(),
-        response->get());
-
-    ASSERT_EQ(cast_resp.transactions().size(), N);
-    for (const auto &tx : cast_resp.transactions()) {
-      EXPECT_EQ(account_id, tx.creatorAccountId());
-    }
-  });
-}
-
-/**
  * @given initialized storage, domain permission
  * @when get account information about other user in the other domain
  * @then Return error
@@ -1181,10 +970,6 @@ TEST_F(GetAccountAssetsTransactionsTest, DifferentDomainAccountInValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  admin_id, "test@test2", permissionOf(Role::kGetMyAccAstTxs)))
-      .WillOnce(Return(false));
 
   auto response = validateAndExecute(query);
 

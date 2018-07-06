@@ -52,12 +52,7 @@ namespace iroha {
 
       // processing
       std::shared_ptr<MstProcessor> mst_processor_;
-      std::unordered_set<shared_model::crypto::Hash,
-                         shared_model::crypto::Hash::Hasher>
-          proposal_set_;
-      std::unordered_set<shared_model::crypto::Hash,
-                         shared_model::crypto::Hash::Hasher>
-          candidate_set_;
+      std::vector<shared_model::interface::types::HashType> current_txs_hashes_;
 
       // internal
       rxcpp::subjects::subject<

@@ -6,10 +6,11 @@
 import iroha
 import commons
 
-admin = commons.user('admin@test')
-alice = commons.user('alice@test')
+admin = commons.new_user('admin@test')
+alice = commons.new_user('alice@test')
 
 
+@commons.hex
 def genesis_tx():
     test_permissions = iroha.RolePermissionSet([iroha.Role_kSubtractAssetQty])
     tx = iroha.ModelTransactionBuilder() \
@@ -23,23 +24,19 @@ def genesis_tx():
         .createAccount('alice', 'test', alice['key'].publicKey()) \
         .appendRole(admin['id'], 'admin_role') \
         .createAsset('coin', 'test', 2) \
-        .addAssetQuantity(admin['id'], 'coin#test', '1000.00') \
+        .addAssetQuantity('coin#test', '1000.00') \
         .transferAsset(admin['id'], alice['id'], 'coin#test', 'init top up', '999.99') \
         .build()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(admin['key']).finish()
 
 
+@commons.hex
 def subtract_asset_tx():
     tx = iroha.ModelTransactionBuilder() \
         .createdTime(commons.now()) \
         .creatorAccountId(alice['id']) \
-        .subtractAssetQuantity(alice['id'], 'coin#test', '999.99') \
+        .subtractAssetQuantity('coin#test', '999.99') \
         .build()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(alice['key']).finish()
-
-
-print(admin['key'].privateKey().hex())
-print(genesis_tx().hex())
-print(subtract_asset_tx().hex())

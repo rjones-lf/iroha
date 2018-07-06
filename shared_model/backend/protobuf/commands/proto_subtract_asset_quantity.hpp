@@ -39,8 +39,6 @@ namespace shared_model {
 
       SubtractAssetQuantity(SubtractAssetQuantity &&o) noexcept;
 
-      const interface::types::AccountIdType &accountId() const override;
-
       const interface::types::AssetIdType &assetId() const override;
 
       const interface::Amount &amount() const override;

@@ -30,11 +30,6 @@ namespace shared_model {
         SubtractAssetQuantity &&o) noexcept
         : SubtractAssetQuantity(std::move(o.proto_)) {}
 
-    const interface::types::AccountIdType &SubtractAssetQuantity::accountId()
-        const {
-      return subtract_asset_quantity_.account_id();
-    }
-
     const interface::types::AssetIdType &SubtractAssetQuantity::assetId()
         const {
       return subtract_asset_quantity_.asset_id();

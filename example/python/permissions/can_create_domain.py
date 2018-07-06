@@ -6,10 +6,11 @@
 import iroha
 import commons
 
-admin = commons.user('admin@test')
-alice = commons.user('alice@test')
+admin = commons.new_user('admin@test')
+alice = commons.new_user('alice@test')
 
 
+@commons.hex
 def genesis_tx():
     test_permissions = iroha.RolePermissionSet([iroha.Role_kCreateDomain])
     tx = iroha.ModelTransactionBuilder() \
@@ -27,6 +28,7 @@ def genesis_tx():
         .signAndAddSignature(admin['key']).finish()
 
 
+@commons.hex
 def create_domain_tx():
     # 'test_role' was created in genesis transaction
     tx = iroha.ModelTransactionBuilder() \
@@ -36,8 +38,3 @@ def create_domain_tx():
         .build()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(alice['key']).finish()
-
-
-print(admin['key'].privateKey().hex())
-print(genesis_tx().hex())
-print(create_domain_tx().hex())

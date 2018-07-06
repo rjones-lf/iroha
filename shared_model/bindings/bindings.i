@@ -28,6 +28,7 @@
 
 %{
 #include "cryptography/hash.hpp"
+#include "interfaces/common_objects/signature.hpp"
 %}
 
 namespace std {
@@ -36,6 +37,7 @@ namespace std {
   %ignore vector<shared_model::crypto::Hash>::vector(size_type);
   %template(HashVector) vector<shared_model::crypto::Hash>;
   %template(IntVector) vector<int>;
+  %template(SignatureVector) vector<const shared_model::interface::Signature*>;
 };
 
 %exception {
@@ -48,11 +50,51 @@ namespace std {
   }
 }
 
+%ignore shared_model::proto::Query::get;
+%ignore shared_model::proto::Transaction::commands;
+%ignore shared_model::proto::Query::signatures;
+%ignore shared_model::proto::BlocksQuery::signatures;
+%ignore shared_model::proto::Transaction::signatures;
+
+%extend shared_model::proto::Query {
+  std::vector<const shared_model::interface::Signature*> signs() {
+    std::vector<const shared_model::interface::Signature*> sigs;
+
+    for (const auto &s : $self->signatures()) {
+      sigs.push_back(&s);
+    }
+    return sigs;
+  }
+}
+
+%extend shared_model::proto::BlocksQuery {
+  std::vector<const shared_model::interface::Signature*> signs() {
+    std::vector<const shared_model::interface::Signature*> sigs;
+
+    for (const auto &s : $self->signatures()) {
+      sigs.push_back(&s);
+    }
+    return sigs;
+  }
+}
+
+%extend shared_model::proto::Transaction {
+  std::vector<const shared_model::interface::Signature*> signs() {
+    std::vector<const shared_model::interface::Signature*> sigs;
+
+    for (const auto &s : $self->signatures()) {
+      sigs.push_back(&s);
+    }
+    return sigs;
+  }
+}
+
 %rename(ModelTransaction) iroha::protocol::Transaction;
 %rename(_interface) interface;
 %rename(b_equal) shared_model::crypto::Blob::operator==;
 %rename(kp_equal) shared_model::crypto::Keypair::operator==;
 %rename(hash_invoke) shared_model::crypto::Hash::Hasher::operator();
+%rename(Signature) shared_model::interface::Signature;
 
 %ignore shared_model::interface::PermissionSet::PermissionSet(std::initializer_list<shared_model::interface::permissions::Role>);
 %ignore shared_model::interface::PermissionSet::PermissionSet(std::initializer_list<shared_model::interface::permissions::Grantable>);
@@ -61,8 +103,8 @@ namespace std {
 %rename(bset_xor) shared_model::interface::PermissionSet::operator^=;
 
 #if defined(SWIGJAVA) || defined(SWIGJAVASCRIPT)
-%rename(equal) shared_model::interface::PermissionSet::operator==;
-%rename(not_equal) shared_model::interface::PermissionSet::operator!=;
+%rename(equal) operator==;
+%rename(not_equal) operator!=;
 #endif
 
 %extend shared_model::interface::PermissionSet {
@@ -86,6 +128,7 @@ namespace std {
 
 %include "cryptography/blob.hpp"
 %include "interfaces/common_objects/types.hpp"
+%include "interfaces/common_objects/signature.hpp"
 %include "interfaces/base/signable.hpp"
 %include "interfaces/permissions.hpp"
 %include "cryptography/public_key.hpp"
@@ -93,7 +136,6 @@ namespace std {
 %include "cryptography/hash.hpp"
 %include "cryptography/keypair.hpp"
 %include "cryptography/signed.hpp"
-%include "backend/protobuf/permissions.hpp"
 %include "backend/protobuf/transaction.hpp"
 %include "backend/protobuf/queries/proto_query.hpp"
 %include "backend/protobuf/queries/proto_blocks_query.hpp"

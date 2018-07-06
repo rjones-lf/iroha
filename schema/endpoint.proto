@@ -37,4 +37,5 @@ service CommandService {
 
 service QueryService {
   rpc Find (Query) returns (QueryResponse);
+  rpc FetchCommits (BlocksQuery) returns (stream BlockQueryResponse);
 }

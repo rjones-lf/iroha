@@ -63,7 +63,7 @@ namespace shared_model {
       /// Permission set
       using PermissionSetType = std::set<PermissionNameType>;
       /// Type of Quorum used in transaction and set quorum
-      using QuorumType = uint32_t;
+      using QuorumType = uint16_t;
       /// Type of signature range, which returns when signatures are invoked
       using SignatureRangeType = boost::any_range<const interface::Signature &,
                                                   boost::forward_traversal_tag>;
@@ -98,6 +98,8 @@ namespace shared_model {
                            const AccountAsset &>;
       /// Type of the transfer message
       using DescriptionType = std::string;
+
+      enum class BatchType { ATOMIC = 0, ORDERED = 1};
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model

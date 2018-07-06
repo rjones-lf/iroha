@@ -1,7 +1,8 @@
 # Ignore everything
 *
 !.gitignore
-!.tx-example.py
+!tx-example.py
+!blocks-query.py
 !permissions/
 !permissions/*
 !prepare.sh

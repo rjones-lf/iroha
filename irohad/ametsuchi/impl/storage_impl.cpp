@@ -76,17 +76,17 @@ namespace iroha {
       auto wsv_transaction =
           std::make_unique<pqxx::nontransaction>(*postgres_connection, kTmpWsv);
 
-      boost::optional<shared_model::interface::types::HashType> top_hash;
-
-      getBlockQuery()
-          ->getTopBlocks(1)
-          .subscribe_on(rxcpp::observe_on_new_thread())
-          .as_blocking()
-          .subscribe([&top_hash](auto block) { top_hash = block->hash(); });
-
+      auto block_result = getBlockQuery()->getTopBlock();
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
           std::make_unique<MutableStorageImpl>(
-              top_hash.value_or(shared_model::interface::types::HashType("")),
+              block_result.match(
+                  [](expected::Value<
+                      std::shared_ptr<shared_model::interface::Block>> &block) {
+                    return block.value->hash();
+                  },
+                  [](expected::Error<std::string> &) {
+                    return shared_model::interface::types::HashType("");
+                  }),
               std::move(postgres_connection),
               std::move(wsv_transaction)));
     }
@@ -105,8 +105,6 @@ namespace iroha {
                                         const auto &top_hash) { return true; });
             log_->info("block inserted: {}", inserted);
             commit(std::move(storage.value));
-            notifier_.get_subscriber().on_next(
-                std::shared_ptr<shared_model::interface::Block>(clone(block)));
           },
           [&](expected::Error<std::string> &error) {
             log_->error(error.error);
@@ -258,6 +256,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
             stringToBytes(shared_model::converters::protobuf::modelToJson(
                 *std::static_pointer_cast<shared_model::proto::Block>(
                     block.second))));
+        notifier_.get_subscriber().on_next(block.second);
       }
 
       storage->transaction_->exec("COMMIT;");
@@ -303,31 +302,8 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       return notifier_.get_observable();
     }
 
-    template <typename Perm>
-    static const std::string createPermissionTypes(
-        const std::string &type_name) {
-      std::string s =
-          "DO $$\nBEGIN\nIF NOT EXISTS (SELECT 1 FROM pg_type "
-          "WHERE typname='" + type_name + "')"
-          " THEN CREATE TYPE " + type_name + " AS ENUM (";
-      const auto count = static_cast<size_t>(Perm::COUNT);
-      for (size_t i = 0; i < count; ++i) {
-        s += "'"
-            + shared_model::proto::permissions::toString(static_cast<Perm>(i))
-            + "'";
-        if (i != count - 1) {
-          s += ',';
-        }
-      }
-      return s + ");\nEND IF;\nEND $$;";
-    }
-
     const std::string &StorageImpl::init_ =
-        createPermissionTypes<shared_model::interface::permissions::Role>(
-            "role_perm")
-        + createPermissionTypes<
-              shared_model::interface::permissions::Grantable>("grantable_perm")
-        + R"(
+        R"(
 CREATE TABLE IF NOT EXISTS role (
     role_id character varying(32),
     PRIMARY KEY (role_id)
@@ -373,8 +349,10 @@ CREATE TABLE IF NOT EXISTS account_has_asset (
 );
 CREATE TABLE IF NOT EXISTS role_has_permissions (
     role_id character varying(32) NOT NULL REFERENCES role,
-    permission role_perm,
-    PRIMARY KEY (role_id, permission)
+    permission bit()"
+        + std::to_string(shared_model::interface::RolePermissionSet::size())
+        + R"() NOT NULL,
+    PRIMARY KEY (role_id)
 );
 CREATE TABLE IF NOT EXISTS account_has_roles (
     account_id character varying(288) NOT NULL REFERENCES account,
@@ -384,8 +362,11 @@ CREATE TABLE IF NOT EXISTS account_has_roles (
 CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
     permittee_account_id character varying(288) NOT NULL REFERENCES account,
     account_id character varying(288) NOT NULL REFERENCES account,
-    permission grantable_perm,
-    PRIMARY KEY (permittee_account_id, account_id, permission)
+    permission bit()"
+        + std::to_string(
+              shared_model::interface::GrantablePermissionSet::size())
+        + R"() NOT NULL,
+    PRIMARY KEY (permittee_account_id, account_id)
 );
 CREATE TABLE IF NOT EXISTS height_by_hash (
     hash bytea,

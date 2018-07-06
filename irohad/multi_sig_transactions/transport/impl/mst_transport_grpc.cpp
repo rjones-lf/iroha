@@ -54,7 +54,7 @@ grpc::Status MstTransportGrpc::SendState(
   auto from = std::make_shared<shared_model::proto::Peer>(
       shared_model::proto::PeerBuilder()
           .address(peer.address())
-          .pubkey(shared_model::crypto::PublicKey(peer.pubkey()))
+          .pubkey(shared_model::crypto::PublicKey(peer.peer_key()))
           .build());
   subscriber_.lock()->onNewState(std::move(from), std::move(newState));
 
@@ -76,7 +76,7 @@ void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
 
   transport::MstState protoState;
   auto peer = protoState.mutable_peer();
-  peer->set_pubkey(shared_model::crypto::toBinaryString(to.pubkey()));
+  peer->set_peer_key(shared_model::crypto::toBinaryString(to.pubkey()));
   peer->set_address(to.address());
   for (auto &tx : providing_state.getTransactions()) {
     auto addtxs = protoState.add_transactions();

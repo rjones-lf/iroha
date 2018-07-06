@@ -5,7 +5,7 @@ const accountId = 'admin@test'
 const assetId = 'coin#test'
 
 test('ModelQueryBuilder tests', function (t) {
-  t.plan(47)
+  t.plan(48)
 
   let queryBuilder = new iroha.ModelQueryBuilder()
   const time = (new Date()).getTime()
@@ -87,10 +87,13 @@ test('ModelQueryBuilder tests', function (t) {
   let hv = new iroha.HashVector()
   hv.add(new iroha.Hash('11111111111111111111111111111111'))
   hv.add(new iroha.Hash('22222222222222222222222222222222'))
+  let invalidHv = new iroha.HashVector()
+  invalidHv.add(new iroha.Hash(''))
   let emptyHv = new iroha.HashVector()
 
-  t.throws(() => correctQuery.getTransactions(emptyHv), /Hash set should contain at least one hash/, 'Should throw Hash set should contain at least one hash')
-  t.doesNotThrow(() => correctQuery.getTransactions(hv), null, 'Should not throw any exceptions')
+  t.throws(() => correctQuery.getTransactions(emptyHv).build(), /tx_hashes cannot be empty/, 'Should throw tx_hashes cannot be empty')
+  t.throws(() => correctQuery.getTransactions(invalidHv).build(), /Hash has invalid size: 0/, 'Should throw Hash has invalid size')
+  t.doesNotThrow(() => correctQuery.getTransactions(hv).build(), null, 'Should not throw any exceptions')
 
   // getAccountDetail() tests
   t.comment('Testing getAccountDetail()')

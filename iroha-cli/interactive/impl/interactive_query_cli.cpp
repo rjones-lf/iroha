@@ -58,23 +58,24 @@ namespace iroha_cli {
       const auto role_id = "Requested role name";
       const auto tx_hashes = "Requested tx hashes";
 
-      query_params_descriptions_ = {
-          {GET_ACC, {acc_id}},
-          {GET_ACC_AST, {acc_id, ast_id}},
-          {GET_ACC_AST_TX, {acc_id, ast_id}},
-          {GET_ACC_TX, {acc_id}},
-          {GET_TX, {tx_hashes}},
-          {GET_ACC_SIGN, {acc_id}},
-          {GET_ROLES, {}},
-          {GET_AST_INFO, {ast_id}},
-          {GET_ROLE_PERM, {role_id}}
-          // query_params_descriptions_
+      query_params_map_ = {
+          {GET_ACC, makeParamsDescription({acc_id})},
+          {GET_ACC_AST, makeParamsDescription({acc_id, ast_id})},
+          {GET_ACC_AST_TX, makeParamsDescription({acc_id, ast_id})},
+          {GET_ACC_TX, makeParamsDescription({acc_id})},
+          {GET_TX, makeParamsDescription({tx_hashes})},
+          {GET_ACC_SIGN, makeParamsDescription({acc_id})},
+          {GET_ROLES, makeParamsDescription({})},
+          {GET_AST_INFO, makeParamsDescription({ast_id})},
+          {GET_ROLE_PERM, makeParamsDescription({role_id})}
+          // query_params_map_
       };
 
       query_handlers_ = {
           {GET_ACC, &InteractiveQueryCli::parseGetAccount},
           {GET_ACC_AST, &InteractiveQueryCli::parseGetAccountAssets},
-          {GET_ACC_AST_TX, &InteractiveQueryCli::parseGetAccountAssetTransactions},
+          {GET_ACC_AST_TX,
+           &InteractiveQueryCli::parseGetAccountAssetTransactions},
           {GET_ACC_TX, &InteractiveQueryCli::parseGetAccountTransactions},
           {GET_TX, &InteractiveQueryCli::parseGetTransactions},
           {GET_ACC_SIGN, &InteractiveQueryCli::parseGetSignatories},
@@ -84,8 +85,8 @@ namespace iroha_cli {
           // query_handlers_
       };
 
-      menu_points_ = formMenu(
-          query_handlers_, query_params_descriptions_, description_map_);
+      menu_points_ =
+          formMenu(query_handlers_, query_params_map_, description_map_);
       // Add "go back" option
       addBackOption(menu_points_);
     }
@@ -93,12 +94,10 @@ namespace iroha_cli {
     void InteractiveQueryCli::create_result_menu() {
       result_handlers_ = {{SAVE_CODE, &InteractiveQueryCli::parseSaveFile},
                           {SEND_CODE, &InteractiveQueryCli::parseSendToIroha}};
-      result_params_descriptions_ =
-          getCommonParamsMap(default_peer_ip_, default_port_);
+      result_params_map_ = getCommonParamsMap(default_peer_ip_, default_port_);
 
-      result_points_ = formMenu(result_handlers_,
-                                result_params_descriptions_,
-                                getCommonDescriptionMap());
+      result_points_ = formMenu(
+          result_handlers_, result_params_map_, getCommonDescriptionMap());
       addBackOption(result_points_);
     }
 
@@ -159,7 +158,7 @@ namespace iroha_cli {
       }
 
       auto res = handleParse<std::shared_ptr<iroha::model::Query>>(
-          this, line, query_handlers_, query_params_descriptions_);
+          this, line, query_handlers_, query_params_map_);
       if (not res) {
         // Continue parsing
         return true;
@@ -259,8 +258,8 @@ namespace iroha_cli {
         return true;
       }
 
-      auto res = handleParse<bool>(
-          this, line, result_handlers_, result_params_descriptions_);
+      auto res =
+          handleParse<bool>(this, line, result_handlers_, result_params_map_);
 
       return res.get_value_or(true);
     }

@@ -6,9 +6,11 @@
 import iroha
 import commons
 
-admin = commons.user('admin@first')
-alice = commons.user('alice@second')
+admin = commons.new_user('admin@first')
+alice = commons.new_user('alice@second')
 
+
+@commons.hex
 def genesis_tx():
     test_permissions = iroha.RolePermissionSet([iroha.Role_kGetAllSignatories])
     tx = iroha.ModelTransactionBuilder() \
@@ -26,6 +28,7 @@ def genesis_tx():
         .signAndAddSignature(admin['key']).finish()
 
 
+@commons.hex
 def signatories_query():
     tx = iroha.ModelQueryBuilder() \
         .createdTime(commons.now()) \
@@ -35,8 +38,3 @@ def signatories_query():
         .build()
     return iroha.ModelProtoQuery(tx) \
         .signAndAddSignature(alice['key']).finish()
-
-
-print(admin['key'].privateKey().hex())
-print(genesis_tx().hex())
-print(signatories_query().hex())

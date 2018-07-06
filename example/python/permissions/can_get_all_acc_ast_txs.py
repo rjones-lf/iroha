@@ -6,9 +6,11 @@
 import iroha
 import commons
 
-admin = commons.user('admin@first')
-alice = commons.user('alice@second')
+admin = commons.new_user('admin@first')
+alice = commons.new_user('alice@second')
 
+
+@commons.hex
 def genesis_tx():
     test_permissions = iroha.RolePermissionSet([
         iroha.Role_kGetAllAccAstTxs,
@@ -26,13 +28,14 @@ def genesis_tx():
         .createAccount('admin', 'first', admin['key'].publicKey()) \
         .createAccount('alice', 'second', alice['key'].publicKey()) \
         .createAsset('coin', 'first', 2) \
-        .addAssetQuantity(admin['id'], 'coin#first', '300.00') \
+        .addAssetQuantity('coin#first', '300.00') \
         .transferAsset(admin['id'], alice['id'], 'coin#first', 'top up', '200.00') \
         .build()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(admin['key']).finish()
 
 
+@commons.hex
 def account_asset_transactions_query():
     tx = iroha.ModelQueryBuilder() \
         .createdTime(commons.now()) \
@@ -42,8 +45,3 @@ def account_asset_transactions_query():
         .build()
     return iroha.ModelProtoQuery(tx) \
         .signAndAddSignature(alice['key']).finish()
-
-
-print(admin['key'].privateKey().hex())
-print(genesis_tx().hex())
-print(account_asset_transactions_query().hex())

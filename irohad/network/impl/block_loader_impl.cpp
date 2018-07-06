@@ -49,13 +49,15 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
     const PublicKey &peer_pubkey) {
   return rxcpp::observable<>::create<std::shared_ptr<Block>>(
       [this, peer_pubkey](auto subscriber) {
-        boost::optional<std::shared_ptr<Block>> top_block;
-        block_query_->getTopBlocks(1)
-            .subscribe_on(rxcpp::observe_on_new_thread())
-            .as_blocking()
-            .subscribe([&top_block](auto block) { top_block = block; });
+        std::shared_ptr<Block> top_block;
+        block_query_->getTopBlock().match(
+            [&top_block](
+                expected::Value<std::shared_ptr<shared_model::interface::Block>>
+                    block) { top_block = block.value; },
+            [this](expected::Error<std::string> error) {
+              log_->error(kTopBlockRetrieveFail + std::string{": "} + error.error);
+            });
         if (not top_block) {
-          log_->error(kTopBlockRetrieveFail);
           subscriber.on_completed();
           return;
         }
@@ -72,7 +74,7 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
         protocol::Block block;
 
         // request next block to our top
-        request.set_height((*top_block)->height() + 1);
+        request.set_height(top_block->height() + 1);
 
         auto reader =
             this->getPeerStub(**peer).retrieveBlocks(&context, request);

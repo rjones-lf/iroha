@@ -27,20 +27,29 @@
 #include "validators/query_validator.hpp"
 #include "validators/signable_validator.hpp"
 #include "validators/transaction_validator.hpp"
+#include "validators/transactions_collection/signed_transactions_collection_validator.hpp"
+#include "validators/transactions_collection/unsigned_transactions_collection_validator.hpp"
 
 namespace shared_model {
   namespace validation {
     using DefaultTransactionValidator =
         TransactionValidator<FieldValidator,
                              CommandValidatorVisitor<FieldValidator>>;
+
     using DefaultQueryValidator =
         QueryValidator<FieldValidator, QueryValidatorVisitor<FieldValidator>>;
-    using DefaultBlocksQueryValidator = BlocksQueryValidator<FieldValidator>;
-    using DefaultProposalValidator =
-        ProposalValidator<FieldValidator, DefaultTransactionValidator>;
 
-    using DefaultBlockValidator =
-        BlockValidator<FieldValidator, DefaultTransactionValidator>;
+    using DefaultBlocksQueryValidator = BlocksQueryValidator<FieldValidator>;
+
+    using DefaultProposalValidator = ProposalValidator<
+        FieldValidator,
+        DefaultTransactionValidator,
+        UnsignedTransactionsCollectionValidator<DefaultTransactionValidator>>;
+
+    using DefaultBlockValidator = BlockValidator<
+        FieldValidator,
+        DefaultTransactionValidator,
+        SignedTransactionsCollectionValidator<DefaultTransactionValidator>>;
 
     using DefaultEmptyBlockValidator = EmptyBlockValidator<FieldValidator>;
 
@@ -55,11 +64,6 @@ namespace shared_model {
     using DefaultSignableQueryValidator =
         SignableModelValidator<DefaultQueryValidator,
                                const interface::Query &,
-                               FieldValidator>;
-
-    using DefaultSignableProposalValidator =
-        SignableModelValidator<DefaultProposalValidator,
-                               const interface::Proposal &,
                                FieldValidator>;
 
     using DefaultSignableBlockValidator =

@@ -5,7 +5,6 @@
 
 #include "backend/protobuf/query_responses/proto_role_permissions_response.hpp"
 #include <boost/range/numeric.hpp>
-#include "backend/protobuf/from_old.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "utils/string_builder.hpp"
 

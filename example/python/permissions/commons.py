@@ -59,9 +59,21 @@ def all_permissions():
     ])
 
 
-def user(user_id):
+def new_user(user_id):
+    key = iroha.ModelCrypto().generateKeypair()
+    if user_id.lower().startswith('admin'):
+        print('K{}'.format(key.privateKey().hex()))
     return {
         'id': user_id,
-        'key': iroha.ModelCrypto().generateKeypair()
+        'key': key
     }
 
+
+def hex(generator):
+    """
+    Decorator for transactions' and queries generators.
+
+    Allows preserving the type of binaries for Binary Testing Framework.
+    """
+    prefix = 'T' if generator.__name__.lower().endswith('tx') else 'Q'
+    print('{}{}'.format(prefix, generator().hex()))

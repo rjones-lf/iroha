@@ -6,11 +6,12 @@
 import iroha
 import commons
 
-admin = commons.user('admin@test')
-alice = commons.user('alice@test')
-bob = commons.user('bob@test')
+admin = commons.new_user('admin@test')
+alice = commons.new_user('alice@test')
+bob = commons.new_user('bob@test')
 
 
+@commons.hex
 def genesis_tx():
     test_permissions = iroha.RolePermissionSet([iroha.Role_kAddMySignatory])
     tx = iroha.ModelTransactionBuilder() \
@@ -29,6 +30,7 @@ def genesis_tx():
         .signAndAddSignature(admin['key']).finish()
 
 
+@commons.hex
 def grant_can_add_my_signatory_tx():
     tx = iroha.ModelTransactionBuilder() \
         .createdTime(commons.now()) \
@@ -39,6 +41,7 @@ def grant_can_add_my_signatory_tx():
         .signAndAddSignature(alice['key']).finish()
 
 
+@commons.hex
 def add_signatory_tx():
     extra_key = iroha.ModelCrypto().generateKeypair()
     tx = iroha.ModelTransactionBuilder() \
@@ -48,9 +51,3 @@ def add_signatory_tx():
         .build()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(bob['key']).finish()
-
-
-print(admin['key'].privateKey().hex())
-print(genesis_tx().hex())
-print(grant_can_add_my_signatory_tx().hex())
-print(add_signatory_tx().hex())

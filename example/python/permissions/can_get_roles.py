@@ -6,9 +6,11 @@
 import iroha
 import commons
 
-admin = commons.user('admin@test')
-alice = commons.user('alice@test')
+admin = commons.new_user('admin@test')
+alice = commons.new_user('alice@test')
 
+
+@commons.hex
 def genesis_tx():
     test_permissions = iroha.RolePermissionSet([iroha.Role_kGetRoles])
     tx = iroha.ModelTransactionBuilder() \
@@ -20,11 +22,13 @@ def genesis_tx():
         .createDomain('test', 'test_role') \
         .createAccount('admin', 'test', admin['key'].publicKey()) \
         .createAccount('alice', 'test', alice['key'].publicKey()) \
+        .createAsset('coin', 'test', 2) \
         .build()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(admin['key']).finish()
 
 
+@commons.hex
 def get_system_roles_query():
     tx = iroha.ModelQueryBuilder() \
         .createdTime(commons.now()) \
@@ -36,6 +40,7 @@ def get_system_roles_query():
         .signAndAddSignature(alice['key']).finish()
 
 
+@commons.hex
 def get_role_permissions_query():
     tx = iroha.ModelQueryBuilder() \
         .createdTime(commons.now()) \
@@ -45,9 +50,3 @@ def get_role_permissions_query():
         .build()
     return iroha.ModelProtoQuery(tx) \
         .signAndAddSignature(alice['key']).finish()
-
-
-print(admin['key'].privateKey().hex())
-print(genesis_tx().hex())
-print(get_system_roles_query().hex())
-print(get_role_permissions_query().hex())

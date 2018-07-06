@@ -22,6 +22,7 @@ limitations under the License.
 #include "endpoint.pb.h"
 #include "responses.pb.h"
 
+#include "backend/protobuf/queries/proto_blocks_query.hpp"
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "cache/cache.hpp"
@@ -53,6 +54,12 @@ namespace torii {
     grpc::Status Find(grpc::ServerContext *context,
                       const iroha::protocol::Query *request,
                       iroha::protocol::QueryResponse *response) override;
+
+    grpc::Status FetchCommits(
+        grpc::ServerContext *context,
+        const iroha::protocol::BlocksQuery *request,
+        grpc::ServerWriter<::iroha::protocol::BlockQueryResponse> *writer)
+        override;
 
    private:
     std::shared_ptr<iroha::torii::QueryProcessor> query_processor_;

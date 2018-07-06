@@ -6,11 +6,12 @@
 import iroha
 import commons
 
-admin = commons.user('admin@test')
-alice = commons.user('alice@test')
-bob = commons.user('bob@test')
+admin = commons.new_user('admin@test')
+alice = commons.new_user('alice@test')
+bob = commons.new_user('bob@test')
 
 
+@commons.hex
 def genesis_tx():
     test_permissions = iroha.RolePermissionSet([
         iroha.Role_kTransferMyAssets,
@@ -29,13 +30,14 @@ def genesis_tx():
         .createAccount('bob', 'test', bob['key'].publicKey()) \
         .appendRole(admin['id'], 'admin_role') \
         .createAsset('coin', 'test', 2) \
-        .addAssetQuantity(admin['id'], 'coin#test', '100.00') \
+        .addAssetQuantity('coin#test', '100.00') \
         .transferAsset(admin['id'], alice['id'], 'coin#test', 'init top up', '90.00') \
         .build()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(admin['key']).finish()
 
 
+@commons.hex
 def grant_can_transfer_my_assets_tx():
     tx = iroha.ModelTransactionBuilder() \
         .createdTime(commons.now()) \
@@ -44,8 +46,3 @@ def grant_can_transfer_my_assets_tx():
         .build()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(alice['key']).finish()
-
-
-print(admin['key'].privateKey().hex())
-print(genesis_tx().hex())
-print(grant_can_transfer_my_assets_tx().hex())

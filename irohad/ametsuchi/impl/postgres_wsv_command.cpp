@@ -77,34 +77,21 @@ namespace iroha {
     WsvCommandResult PostgresWsvCommand::insertRolePermissions(
         const shared_model::interface::types::RoleIdType &role_id,
         const shared_model::interface::RolePermissionSet &permissions) {
-      auto entry = [this, &role_id](auto permission) {
-        return "(" + transaction_.quote(role_id) + ", "
-            + transaction_.quote(permission) + ")";
-      };
-
-      // generate string with all permissions,
-      // applying transform_func to each permission
-      auto generate_perm_string = [&permissions](auto transform_func) {
-        std::string s;
-        permissions.iterate([&](auto perm) {
-          s += transform_func(shared_model::proto::permissions::toString(perm))
-              + ',';
-        });
-        if (s.size() > 0) {
-          // remove last comma
-          s.resize(s.size() - 1);
-        }
-        return s;
-      };
-
+      auto perm_str = permissions.toBitstring();
       auto result = execute_(
-          "INSERT INTO role_has_permissions(role_id, permission) VALUES "
-          + generate_perm_string(entry) + ";");
+          "INSERT INTO role_has_permissions(role_id, permission) VALUES ("
+          + transaction_.quote(role_id) + ", " + transaction_.quote(perm_str)
+          + " );");
 
       auto message_gen = [&] {
+        // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
+        const auto &str =
+            shared_model::proto::permissions::toString(permissions);
+        const auto perm_debug_str =
+            std::accumulate(str.begin(), str.end(), std::string());
         return (boost::format("failed to insert role permissions, role "
                               "id: '%s', permissions: [%s]")
-                % role_id % generate_perm_string([](auto a) { return a; }))
+                % role_id % perm_debug_str)
             .str();
       };
 
@@ -116,22 +103,30 @@ namespace iroha {
             &permittee_account_id,
         const shared_model::interface::types::AccountIdType &account_id,
         shared_model::interface::permissions::Grantable permission) {
-      auto result = execute_(
-          "INSERT INTO "
-          "account_has_grantable_permissions(permittee_account_id, "
-          "account_id, permission) VALUES ("
-          + transaction_.quote(permittee_account_id) + ", "
-          + transaction_.quote(account_id) + ", "
-          + transaction_.quote(
-                shared_model::proto::permissions::toString(permission))
-          + ");");
+      const auto perm_str =
+          shared_model::interface::GrantablePermissionSet({permission})
+              .toBitstring();
+      auto query =
+          (boost::format(
+               "INSERT INTO account_has_grantable_permissions as "
+               "has_perm(permittee_account_id, account_id, permission) VALUES "
+               "(%1%, %2%, %3%) ON CONFLICT (permittee_account_id, account_id) "
+               // SELECT will end up with a error, if the permission exists
+               "DO UPDATE SET permission=(SELECT has_perm.permission | %3% "
+               "WHERE (has_perm.permission & %3%) <> %3%);")
+           % transaction_.quote(permittee_account_id)
+           % transaction_.quote(account_id) % transaction_.quote(perm_str))
+              .str();
+      auto result = execute_(query);
 
       auto message_gen = [&] {
         return (boost::format("failed to insert account grantable permission, "
                               "permittee account id: '%s', "
                               "account id: '%s', "
                               "permission: '%s'")
-                % permittee_account_id % account_id
+                % permittee_account_id
+                % account_id
+                // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
                 % shared_model::proto::permissions::toString(permission))
             .str();
       };
@@ -144,21 +139,30 @@ namespace iroha {
             &permittee_account_id,
         const shared_model::interface::types::AccountIdType &account_id,
         shared_model::interface::permissions::Grantable permission) {
-      auto result = execute_(
-          "DELETE FROM public.account_has_grantable_permissions WHERE "
-          "permittee_account_id="
-          + transaction_.quote(permittee_account_id) + " AND account_id="
-          + transaction_.quote(account_id) + " AND permission="
-          + transaction_.quote(
-                shared_model::proto::permissions::toString(permission))
-          + " ;");
+      const auto perm_str = shared_model::interface::GrantablePermissionSet()
+                                .set()
+                                .unset(permission)
+                                .toBitstring();
+      auto query =
+          (boost::format("UPDATE account_has_grantable_permissions as has_perm "
+                         // SELECT will end up with a error, if the permission
+                         // doesn't exists
+                         "SET permission=(SELECT has_perm.permission & %3% "
+                         "WHERE has_perm.permission & %3% = %3%) WHERE "
+                         "permittee_account_id=%1% AND account_id=%2%;")
+           % transaction_.quote(permittee_account_id)
+           % transaction_.quote(account_id) % transaction_.quote(perm_str))
+              .str();
+      auto result = execute_(query);
 
       auto message_gen = [&] {
         return (boost::format("failed to delete account grantable permission, "
                               "permittee account id: '%s', "
                               "account id: '%s', "
                               "permission id: '%s'")
-                % permittee_account_id % account_id
+                % permittee_account_id
+                % account_id
+                // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
                 % shared_model::proto::permissions::toString(permission))
             .str();
       };

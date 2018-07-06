@@ -20,9 +20,12 @@ namespace iroha {
   namespace network {
     PeerCommunicationServiceImpl::PeerCommunicationServiceImpl(
         std::shared_ptr<OrderingGate> ordering_gate,
-        std::shared_ptr<synchronizer::Synchronizer> synchronizer)
+        std::shared_ptr<synchronizer::Synchronizer> synchronizer,
+        std::shared_ptr<iroha::simulator::VerifiedProposalCreator>
+            proposal_creator)
         : ordering_gate_(std::move(ordering_gate)),
-          synchronizer_(std::move(synchronizer)) {
+          synchronizer_(std::move(synchronizer)),
+          proposal_creator_(std::move(proposal_creator)) {
       log_ = logger::log("PCS");
     }
 
@@ -36,6 +39,12 @@ namespace iroha {
     rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
     PeerCommunicationServiceImpl::on_proposal() const {
       return ordering_gate_->on_proposal();
+    }
+
+    rxcpp::observable<
+        std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+    PeerCommunicationServiceImpl::on_verified_proposal() const {
+      return proposal_creator_->on_verified_proposal();
     }
 
     rxcpp::observable<Commit> PeerCommunicationServiceImpl::on_commit() const {

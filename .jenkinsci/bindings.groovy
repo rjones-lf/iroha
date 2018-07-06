@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-def doJavaBindings(os, buildType=Release) {
+def doJavaBindings(os, packageName, buildType=Release) {
   def currentPath = sh(script: "pwd", returnStdout: true).trim()
   def commit = env.GIT_COMMIT
   def artifactsPath = sprintf('%1$s/java-bindings-%2$s-%3$s-%4$s-%5$s.zip',
@@ -20,11 +20,15 @@ def doJavaBindings(os, buildType=Release) {
       -Bbuild \
       -DCMAKE_BUILD_TYPE=$buildType \
       -DSWIG_JAVA=ON \
+      -DSWIG_JAVA_PKG="$packageName" \
       ${cmakeOptions}
   """
-  sh "cmake --build build --target irohajava -- -j${params.PARALLELISM}"
+  def parallelismParam = (os == 'windows') ? '' : "-j${params.PARALLELISM}"
+  sh "cmake --build build --target irohajava -- ${parallelismParam}"
   // TODO 29.05.18 @bakhtin Java tests never finishes on Windows Server 2016. IR-1380
-  sh "zip -j $artifactsPath build/bindings/*.java build/bindings/*.dll build/bindings/libirohajava.so"
+  sh "pushd build/bindings; \
+      zip -r $artifactsPath *.dll *.lib *.manifest *.exp libirohajava.so \$(echo ${packageName} | cut -d '.' -f1); \
+      popd"
   if (os == 'windows') {
     sh "cp $artifactsPath /tmp/${env.GIT_COMMIT}/bindings-artifact"
   }
@@ -59,7 +63,8 @@ def doPythonBindings(os, buildType=Release) {
       -DSUPPORT_PYTHON2=$supportPython2 \
       ${cmakeOptions}
   """
-  sh "cmake --build build --target irohapy -- -j${params.PARALLELISM}"
+  def parallelismParam = (os == 'windows') ? '' : "-j${params.PARALLELISM}"
+  sh "cmake --build build --target irohapy -- ${parallelismParam}"
   sh "cmake --build build --target python_tests"
   sh "cd build; ctest -R python --output-on-failure"
   if (os == 'linux') {
@@ -108,7 +113,7 @@ def doAndroidBindings(abiVersion) {
     [currentPath, "\$PLATFORM", abiVersion, "\$BUILD_TYPE_A", sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
   sh """
     (cd /iroha; git init; git remote add origin https://github.com/hyperledger/iroha.git; \
-    git fetch --depth 1 origin develop; git checkout -t origin/develop)
+    git fetch origin ${GIT_COMMIT}; git checkout FETCH_HEAD)
   """
   sh """
     . /entrypoint.sh; \

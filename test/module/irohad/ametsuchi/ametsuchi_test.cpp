@@ -193,8 +193,6 @@ TEST_F(AmetsuchiTest, SampleTest) {
              user1id = "userone@ru", user2id = "usertwo@ru", assetname = "rub",
              assetid = "rub#ru";
 
-  std::string account, src_account, dest_account, asset;
-
   // Block 1
   auto block1 = TestBlockBuilder()
                     .transactions(std::vector<shared_model::proto::Transaction>(
@@ -220,10 +218,10 @@ TEST_F(AmetsuchiTest, SampleTest) {
       TestBlockBuilder()
           .transactions(std::vector<shared_model::proto::Transaction>(
               {TestTransactionBuilder()
-                   .creatorAccountId("admin2")
+                   .creatorAccountId(user1id)
                    .createAccount(user2name, domain, fake_pubkey)
                    .createAsset(assetname, domain, 1)
-                   .addAssetQuantity(user1id, assetid, "150.0")
+                   .addAssetQuantity(assetid, "150.0")
                    .transferAsset(
                        user1id, user2id, assetid, "Transfer asset", "100.0")
                    .build()}))
@@ -247,7 +245,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
                 2);
 
   validateAccountTransactions(blocks, "admin1", 1, 3);
-  validateAccountTransactions(blocks, "admin2", 1, 4);
+  validateAccountTransactions(blocks, user1id, 1, 4);
   validateAccountTransactions(blocks, "non_existing_user", 0, 0);
 
   validateAccountAssetTransactions(blocks, user1id, assetid, 1, 4);
@@ -291,8 +289,6 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
              asset2name = "assettwo", asset1id = "assetone#domain",
              asset2id = "assettwo#domain";
 
-  std::string account, src_account, dest_account, asset;
-
   // 1st tx
   auto txn1 =
       TestTransactionBuilder()
@@ -305,16 +301,22 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
           .createAccount(user3name, domain, fake_pubkey)
           .createAsset(asset1name, domain, 1)
           .createAsset(asset2name, domain, 1)
-          .addAssetQuantity(user1id, asset1id, "300.0")
-          .addAssetQuantity(user2id, asset2id, "250.0")
           .build();
 
-  auto block1 =
-      TestBlockBuilder()
-          .height(1)
-          .transactions(std::vector<shared_model::proto::Transaction>({txn1}))
-          .prevHash(fake_hash)
-          .build();
+  auto block1 = TestBlockBuilder()
+                    .height(1)
+                    .transactions(std::vector<shared_model::proto::Transaction>(
+                        {txn1,
+                         TestTransactionBuilder()
+                             .creatorAccountId(user1id)
+                             .addAssetQuantity(asset1id, "300.0")
+                             .build(),
+                         TestTransactionBuilder()
+                             .creatorAccountId(user2id)
+                             .addAssetQuantity(asset2id, "250.0")
+                             .build()}))
+                    .prevHash(fake_hash)
+                    .build();
 
   apply(storage, block1);
 
@@ -385,9 +387,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
                 },
                 3);
 
-  validateAccountTransactions(blocks, admin, 1, 9);
-  validateAccountTransactions(blocks, user1id, 1, 1);
-  validateAccountTransactions(blocks, user2id, 1, 2);
+  validateAccountTransactions(blocks, admin, 1, 7);
   validateAccountTransactions(blocks, user3id, 0, 0);
 
   // (user1 -> user2 # asset1)
@@ -626,6 +626,41 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
   ASSERT_NE(0, wsv->getPeers().value().size());
 
   log->info("Drop ledger");
+
+  storage->dropStorage();
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given created storage
+ * @when commit block
+ * @then committed block is emitted to observable
+ */
+TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
+  ASSERT_TRUE(storage);
+
+  auto expected_block = getBlock();
+
+  // create test subscriber to check if committed block is as expected
+  auto wrapper = make_test_subscriber<CallExact>(storage->on_commit(), 1);
+  wrapper.subscribe([&expected_block](const auto &block) {
+    ASSERT_EQ(*block, expected_block);
+  });
+
+  std::unique_ptr<MutableStorage> mutable_storage;
+  storage->createMutableStorage().match(
+      [&mutable_storage](iroha::expected::Value<std::unique_ptr<MutableStorage>>
+                             &mut_storage) {
+        mutable_storage = std::move(mut_storage.value);
+      },
+      [](const auto &) { FAIL() << "Mutable storage cannot be created"; });
+
+  mutable_storage->apply(
+      expected_block,
+      [](const auto &, const auto &, const auto &) { return true; });
+
+  storage->commit(std::move(mutable_storage));
 
   storage->dropStorage();
 

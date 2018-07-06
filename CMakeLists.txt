@@ -9,7 +9,7 @@ endif()
 PROJECT(iroha C CXX)
 
 SET(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-SET(CMAKE_CXX_FLAGS "-std=c++1y -Wall")
+SET(CMAKE_CXX_FLAGS "-std=c++1y -Wall -fdiagnostics-color=always")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
 SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
 SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
@@ -108,6 +108,8 @@ include_directories(
   ${IROHA_SCHEMA_DIR}
 )
 
+SET(IROHA_ROOT_PROJECT ON)
+
 include(FeatureSummary)
 include(cmake/functions.cmake)
 include(cmake/dependencies.cmake)
@@ -116,8 +118,6 @@ include(cmake/clang-cxx-dev-tools.cmake)
 if(PACKAGE_TGZ OR PACKAGE_ZIP OR PACKAGE_RPM OR PACKAGE_DEB)
   include(cmake/release.cmake)
 endif()
-
-SET(IROHA_ROOT_PROJECT ON)
 
 add_subdirectory(schema)
 add_subdirectory(libs)

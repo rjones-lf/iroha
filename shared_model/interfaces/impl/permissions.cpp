@@ -28,23 +28,6 @@ namespace shared_model {
         return Role::COUNT;
       }
 
-      Grantable permissionOf(Role g) {
-        switch (g) {
-          case Role::kAddMySignatory:
-            return Grantable::kAddMySignatory;
-          case Role::kRemoveMySignatory:
-            return Grantable::kRemoveMySignatory;
-          case Role::kSetMyQuorum:
-            return Grantable::kSetMyQuorum;
-          case Role::kSetMyAccountDetail:
-            return Grantable::kSetMyAccountDetail;
-          case Role::kTransferMyAssets:
-            return Grantable::kTransferMyAssets;
-          default:;
-        }
-        return Grantable::COUNT;
-      }
-
       bool isValid(Role perm) noexcept {
         auto p = static_cast<size_t>(perm);
         return p < static_cast<size_t>(Role::COUNT);
@@ -74,13 +57,27 @@ PermissionSet<Perm>::PermissionSet(std::initializer_list<Perm> list) {
 }
 
 template <typename Perm>
-size_t PermissionSet<Perm>::size() const {
-  return Parent::size();
+PermissionSet<Perm>::PermissionSet(const std::string &bitstring) : Parent(bitstring) {}
+
+template <typename Perm>
+std::string PermissionSet<Perm>::toBitstring() const {
+  return Parent::to_string();
+}
+
+template <typename Perm>
+size_t PermissionSet<Perm>::size() {
+  return bit(Perm::COUNT);
 }
 
 template <typename Perm>
 PermissionSet<Perm> &PermissionSet<Perm>::reset() {
   Parent::reset();
+  return *this;
+}
+
+template <typename Perm>
+PermissionSet<Perm> &PermissionSet<Perm>::set() {
+  Parent::set();
   return *this;
 }
 
