@@ -159,7 +159,6 @@ namespace iroha {
       protocol::AddAssetQuantity PbCommandFactory::serializeAddAssetQuantity(
           const model::AddAssetQuantity &add_asset_quantity) {
         protocol::AddAssetQuantity pb_add_asset_quantity;
-        pb_add_asset_quantity.set_account_id(add_asset_quantity.account_id);
         pb_add_asset_quantity.set_asset_id(add_asset_quantity.asset_id);
         auto amount = pb_add_asset_quantity.mutable_amount();
         amount->CopyFrom(serializeAmount(add_asset_quantity.amount));
@@ -169,7 +168,6 @@ namespace iroha {
       model::AddAssetQuantity PbCommandFactory::deserializeAddAssetQuantity(
           const protocol::AddAssetQuantity &pb_add_asset_quantity) {
         model::AddAssetQuantity add_asset_quantity;
-        add_asset_quantity.account_id = pb_add_asset_quantity.account_id();
         add_asset_quantity.asset_id = pb_add_asset_quantity.asset_id();
         add_asset_quantity.amount =
             deserializeAmount(pb_add_asset_quantity.amount());
@@ -182,8 +180,6 @@ namespace iroha {
       PbCommandFactory::serializeSubtractAssetQuantity(
           const model::SubtractAssetQuantity &subtract_asset_quantity) {
         protocol::SubtractAssetQuantity pb_subtract_asset_quantity;
-        pb_subtract_asset_quantity.set_account_id(
-            subtract_asset_quantity.account_id);
         pb_subtract_asset_quantity.set_asset_id(
             subtract_asset_quantity.asset_id);
         auto amount = pb_subtract_asset_quantity.mutable_amount();
@@ -195,8 +191,6 @@ namespace iroha {
       PbCommandFactory::deserializeSubtractAssetQuantity(
           const protocol::SubtractAssetQuantity &pb_subtract_asset_quantity) {
         model::SubtractAssetQuantity subtract_asset_quantity;
-        subtract_asset_quantity.account_id =
-            pb_subtract_asset_quantity.account_id();
         subtract_asset_quantity.asset_id =
             pb_subtract_asset_quantity.asset_id();
         subtract_asset_quantity.amount =

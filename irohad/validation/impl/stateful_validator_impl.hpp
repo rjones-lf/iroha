@@ -31,20 +31,12 @@ namespace iroha {
      public:
       StatefulValidatorImpl();
 
-      /**
-       * Function perform stateful validation on proposal
-       * and return proposal with valid transactions
-       * @param proposal - proposal for validation
-       * @param wsv  - temporary wsv for validation,
-       * this wsv not affected on ledger,
-       * all changes after removing wsv will be ignored
-       * @return proposal with valid transactions
-       */
-      std::shared_ptr<shared_model::interface::Proposal> validate(
+      VerifiedProposalAndErrors validate(
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) override;
 
       logger::Logger log_;
+
     };
   }  // namespace validation
 }  // namespace iroha

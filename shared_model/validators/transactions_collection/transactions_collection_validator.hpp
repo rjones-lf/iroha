@@ -16,8 +16,17 @@ namespace shared_model {
      * Validator of transaction's collection, this is not fair implementation
      * now, it always returns empty answer
      */
+    template <typename TransactionValidator>
     class TransactionsCollectionValidator {
+     protected:
+      TransactionValidator transaction_validator_;
+
      public:
+      TransactionsCollectionValidator(
+          const TransactionValidator &transactions_validator =
+              TransactionValidator())
+          : transaction_validator_(transactions_validator) {}
+
       /**
        * Validates collection of transactions
        * @param transactions collection of transactions

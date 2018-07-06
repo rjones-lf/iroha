@@ -225,8 +225,8 @@ void Irohad::initSynchronizer() {
  * Initializing peer communication service
  */
 void Irohad::initPeerCommunicationService() {
-  pcs = std::make_shared<PeerCommunicationServiceImpl>(ordering_gate,
-                                                       synchronizer);
+  pcs = std::make_shared<PeerCommunicationServiceImpl>(
+      ordering_gate, synchronizer, simulator);
 
   pcs->on_proposal().subscribe(
       [this](auto) { log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ "); });

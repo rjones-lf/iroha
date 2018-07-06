@@ -47,11 +47,18 @@ namespace torii {
         log_(logger::log("CommandService")) {
     // Notifier for all clients
     tx_processor_->transactionNotifier().subscribe([this](auto iroha_response) {
-      // Find response in cache
+      // find response for this tx in cache; if status of received response
+      // isn't "greater" than cached one, dismiss received one
       auto proto_response =
           std::static_pointer_cast<shared_model::proto::TransactionResponse>(
               iroha_response);
       auto tx_hash = proto_response->transactionHash();
+      auto cached_tx_state = cache_->findItem(tx_hash);
+      if (cached_tx_state
+          and proto_response->getTransport().tx_status()
+              <= cached_tx_state->tx_status()) {
+        return;
+      }
       cache_->addItem(tx_hash, proto_response->getTransport());
     });
   }
@@ -174,7 +181,8 @@ namespace torii {
         })
         .subscribe(
             subscription,
-            [&](std::shared_ptr<shared_model::interface::TransactionResponse>
+            [&, finished](
+                std::shared_ptr<shared_model::interface::TransactionResponse>
                     iroha_response) {
               auto proto_response = std::static_pointer_cast<
                   shared_model::proto::TransactionResponse>(iroha_response);
@@ -207,7 +215,7 @@ namespace torii {
 
     log_->debug("StatusStream waiting finish, hash: {}", request_hash->hex());
 
-    if (not *finished) {
+    if (not*finished) {
       resp = cache_->findItem(shared_model::crypto::Hash(request.tx_hash()));
       if (not resp) {
         log_->warn("StatusStream request processing timeout, hash: {}",
@@ -228,7 +236,7 @@ namespace torii {
         cv->wait_for(lock, 2 * proposal_delay_);
 
         /// status can be in the cache if it was finalized before we subscribed
-        if (not *finished) {
+        if (not*finished) {
           log_->debug("Transaction {} still not finished", request_hash->hex());
           resp =
               cache_->findItem(shared_model::crypto::Hash(request.tx_hash()));

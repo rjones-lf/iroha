@@ -28,7 +28,7 @@ namespace iroha {
         model::converters::PbCommandFactory factory;
         protocol::Transaction pbtx;
 
-        auto pl = pbtx.mutable_payload();
+        auto pl = pbtx.mutable_payload()->mutable_reduced_payload();
         pl->set_created_time(tx.created_ts);
         pl->set_creator_account_id(tx.creator_account_id);
         pl->set_quorum(tx.quorum);
@@ -52,7 +52,7 @@ namespace iroha {
         model::converters::PbCommandFactory commandFactory;
         model::Transaction tx;
 
-        const auto &pl = pb_tx.payload();
+        const auto &pl = pb_tx.payload().reduced_payload();
         tx.creator_account_id = pl.creator_account_id();
         tx.created_ts = pl.created_time();
         tx.quorum = static_cast<uint8_t>(pl.quorum());

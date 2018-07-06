@@ -133,8 +133,9 @@ namespace shared_model {
       if (not std::regex_match(address, peer_address_regex_)) {
         auto message =
             (boost::format("Wrongly formed peer address, passed value: '%s'. "
-                           "Field should have valid IPv4 format or be a valid "
-                           "hostname following RFC1123 specification")
+                           "Field should have a valid 'host:port' format where "
+                           "host is IPv4 or a "
+                           "hostname following RFC1035, RFC1123 specifications")
              % address)
                 .str();
         reason.second.push_back(std::move(message));
@@ -250,24 +251,6 @@ namespace shared_model {
       }
     }
 
-    void FieldValidator::validateRolePermissions(
-        ReasonsGroupType &reason,
-        const interface::RolePermissionSet &permissions) const {
-      if (permissions.none()) {
-        reason.second.push_back(
-            "Permission set should contain at least one permission");
-      }
-    }
-
-    void FieldValidator::validateGrantablePermissions(
-        ReasonsGroupType &reason,
-        const interface::GrantablePermissionSet &permissions) const {
-      if (permissions.none()) {
-        reason.second.push_back(
-            "Permission set should contain at least one permission");
-      }
-    }
-
     void FieldValidator::validateQuorum(
         ReasonsGroupType &reason,
         const interface::types::QuorumType &quorum) const {
@@ -368,6 +351,10 @@ namespace shared_model {
                 .str());
       }
     }
+    void FieldValidator::validateBatchMeta(
+        shared_model::validation::ReasonsGroupType &reason,
+        const interface::BatchMeta &batch_meta)
+        const {}
 
     void FieldValidator::validateHeight(
         shared_model::validation::ReasonsGroupType &reason,

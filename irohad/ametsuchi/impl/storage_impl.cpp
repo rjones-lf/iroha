@@ -302,31 +302,8 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       return notifier_.get_observable();
     }
 
-    template <typename Perm>
-    static const std::string createPermissionTypes(
-        const std::string &type_name) {
-      std::string s =
-          "DO $$\nBEGIN\nIF NOT EXISTS (SELECT 1 FROM pg_type "
-          "WHERE typname='" + type_name + "')"
-          " THEN CREATE TYPE " + type_name + " AS ENUM (";
-      const auto count = static_cast<size_t>(Perm::COUNT);
-      for (size_t i = 0; i < count; ++i) {
-        s += "'"
-            + shared_model::proto::permissions::toString(static_cast<Perm>(i))
-            + "'";
-        if (i != count - 1) {
-          s += ',';
-        }
-      }
-      return s + ");\nEND IF;\nEND $$;";
-    }
-
     const std::string &StorageImpl::init_ =
-        createPermissionTypes<shared_model::interface::permissions::Role>(
-            "role_perm")
-        + createPermissionTypes<
-              shared_model::interface::permissions::Grantable>("grantable_perm")
-        + R"(
+        R"(
 CREATE TABLE IF NOT EXISTS role (
     role_id character varying(32),
     PRIMARY KEY (role_id)
@@ -372,8 +349,10 @@ CREATE TABLE IF NOT EXISTS account_has_asset (
 );
 CREATE TABLE IF NOT EXISTS role_has_permissions (
     role_id character varying(32) NOT NULL REFERENCES role,
-    permission role_perm,
-    PRIMARY KEY (role_id, permission)
+    permission bit()"
+        + std::to_string(shared_model::interface::RolePermissionSet::size())
+        + R"() NOT NULL,
+    PRIMARY KEY (role_id)
 );
 CREATE TABLE IF NOT EXISTS account_has_roles (
     account_id character varying(288) NOT NULL REFERENCES account,
@@ -383,8 +362,11 @@ CREATE TABLE IF NOT EXISTS account_has_roles (
 CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
     permittee_account_id character varying(288) NOT NULL REFERENCES account,
     account_id character varying(288) NOT NULL REFERENCES account,
-    permission grantable_perm,
-    PRIMARY KEY (permittee_account_id, account_id, permission)
+    permission bit()"
+        + std::to_string(
+              shared_model::interface::GrantablePermissionSet::size())
+        + R"() NOT NULL,
+    PRIMARY KEY (permittee_account_id, account_id)
 );
 CREATE TABLE IF NOT EXISTS height_by_hash (
     hash bytea,

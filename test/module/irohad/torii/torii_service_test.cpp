@@ -51,8 +51,13 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
   CustomPeerCommunicationServiceMock(
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::Proposal>> prop_notifier,
-      rxcpp::subjects::subject<Commit> commit_notifier)
-      : prop_notifier_(prop_notifier), commit_notifier_(commit_notifier){};
+      rxcpp::subjects::subject<Commit> commit_notifier,
+      rxcpp::subjects::subject<
+          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+          verified_prop_notifier)
+      : prop_notifier_(prop_notifier),
+        commit_notifier_(commit_notifier),
+        verified_prop_notifier_(verified_prop_notifier){};
 
   void propagate_transaction(
       std::shared_ptr<const shared_model::interface::Transaction> transaction)
@@ -66,10 +71,19 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
     return commit_notifier_.get_observable();
   }
 
+  rxcpp::observable<
+      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+  on_verified_proposal() const override {
+    return verified_prop_notifier_.get_observable();
+  };
+
  private:
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier_;
   rxcpp::subjects::subject<Commit> commit_notifier_;
+  rxcpp::subjects::subject<
+      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+      verified_prop_notifier_;
 };
 
 class ToriiServiceTest : public testing::Test {
@@ -79,7 +93,7 @@ class ToriiServiceTest : public testing::Test {
 
     // ----------- Command Service --------------
     pcsMock = std::make_shared<CustomPeerCommunicationServiceMock>(
-        prop_notifier_, commit_notifier_);
+        prop_notifier_, commit_notifier_, verified_prop_notifier_);
     mst = std::make_shared<iroha::MockMstProcessor>();
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
@@ -122,6 +136,9 @@ class ToriiServiceTest : public testing::Test {
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier_;
   rxcpp::subjects::subject<Commit> commit_notifier_;
+  rxcpp::subjects::subject<
+      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+      verified_prop_notifier_;
   rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 
@@ -254,6 +271,7 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   }
 
   // create block from the all transactions but the last one
+  auto failed_tx_hash = txs.back().hash();
   txs.pop_back();
   auto block =
       clone(TestBlockBuilder()
@@ -262,6 +280,27 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
                 .createdTime(0)
                 .prevHash(shared_model::crypto::Hash(std::string(32, '0')))
                 .build());
+
+  // notify the verified proposal event about txs, which passed stateful
+  // validation
+  auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
+      TestProposalBuilder()
+          .height(1)
+          .createdTime(iroha::time::now())
+          .transactions(txs)
+          .build());
+  auto errors = iroha::validation::TransactionsErrors{std::make_pair(
+      iroha::validation::CommandError{
+          "FailedCommand", "stateful validation failed", true, 2},
+      failed_tx_hash)};
+  auto stringified_error = "Stateful validation error in transaction "
+                           + failed_tx_hash.hex() + ": "
+                           "command 'FailedCommand' with index '2' "
+                           "did not pass verification with error 'stateful "
+                           "validation failed'";
+  verified_prop_notifier_.get_subscriber().on_next(
+      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
+          std::make_pair(verified_proposal, errors)));
 
   // create commit from block notifier's observable
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
@@ -309,6 +348,7 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   client5.Status(last_tx_request, stful_invalid_response);
   ASSERT_EQ(stful_invalid_response.tx_status(),
             iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED);
+  ASSERT_EQ(stful_invalid_response.error_message(), stringified_error);
 }
 
 /**
@@ -385,6 +425,9 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
                                             .height(1)
                                             .build());
   prop_notifier_.get_subscriber().on_next(proposal);
+  verified_prop_notifier_.get_subscriber().on_next(
+      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
+          std::make_pair(proposal, iroha::validation::TransactionsErrors{})));
 
   auto block = clone(proto::BlockBuilder()
                          .height(1)

@@ -86,37 +86,40 @@ namespace iroha_cli {
       const auto can_asset_creator = "Can create/add new assets";
       const auto can_roles = "Can create/append roles";
 
-      command_params_descriptions_ = {
-          {ADD_ASSET_QTY, {acc_id, ast_id, amount_a, amount_b}},
-          {ADD_PEER, {peer_id, pub_key}},
-          {ADD_SIGN, {acc_id, pub_key}},
-          {CREATE_ACC, {acc_name, dom_id, pub_key}},
-          {CREATE_DOMAIN, {dom_id, std::string("Default ") + role}},
-          {CREATE_ASSET, {ast_name, dom_id, ast_precision}},
-          {REMOVE_SIGN, {acc_id, pub_key}},
-          {SET_QUO, {acc_id, quorum}},
-          {SUB_ASSET_QTY, {}},
+      command_params_map_ = {
+          {ADD_ASSET_QTY,
+           makeParamsDescription({acc_id, ast_id, amount_a, amount_b})},
+          {ADD_PEER, makeParamsDescription({peer_id, pub_key})},
+          {ADD_SIGN, makeParamsDescription({acc_id, pub_key})},
+          {CREATE_ACC, makeParamsDescription({acc_name, dom_id, pub_key})},
+          {CREATE_DOMAIN,
+           makeParamsDescription({dom_id, std::string("Default ") + role})},
+          {CREATE_ASSET,
+           makeParamsDescription({ast_name, dom_id, ast_precision})},
+          {REMOVE_SIGN, makeParamsDescription({acc_id, pub_key})},
+          {SET_QUO, makeParamsDescription({acc_id, quorum})},
+          {SUB_ASSET_QTY, makeParamsDescription({})},
           {TRAN_ASSET,
-           {std::string("Src") + acc_id,
-            std::string("Dest") + acc_id,
-            ast_id,
-            amount_a,
-            amount_b}},
+           makeParamsDescription({std::string("Src") + acc_id,
+                                  std::string("Dest") + acc_id,
+                                  ast_id,
+                                  amount_a,
+                                  amount_b})},
           {CREATE_ROLE,
-           {role,
-            can_read_self,
-            can_edit_self,
-            can_read_all,
-            can_transfer_receive,
-            can_asset_creator,
-            can_create_domain,
-            can_roles,
-            can_create_account}},
-          {APPEND_ROLE, {acc_id, role}},
-          {DETACH_ROLE, {acc_id, role}},
-          {GRANT_PERM, {acc_id, perm}},
-          {REVOKE_PERM, {acc_id, perm}},
-          {SET_ACC_KV, {acc_id, "key", "value"}}
+           makeParamsDescription({role,
+                                  can_read_self,
+                                  can_edit_self,
+                                  can_read_all,
+                                  can_transfer_receive,
+                                  can_asset_creator,
+                                  can_create_domain,
+                                  can_roles,
+                                  can_create_account})},
+          {APPEND_ROLE, makeParamsDescription({acc_id, role})},
+          {DETACH_ROLE, makeParamsDescription({acc_id, role})},
+          {GRANT_PERM, makeParamsDescription({acc_id, perm})},
+          {REVOKE_PERM, makeParamsDescription({acc_id, perm})},
+          {SET_ACC_KV, makeParamsDescription({acc_id, "key", "value"})}
           // command parameters descriptions
       };
 
@@ -141,9 +144,8 @@ namespace iroha_cli {
           // Command parsers
       };
 
-      commands_menu_ = formMenu(command_handlers_,
-                                command_params_descriptions_,
-                                commands_description_map_);
+      commands_menu_ = formMenu(
+          command_handlers_, command_params_map_, commands_description_map_);
       // Add "go back" option
       addBackOption(commands_menu_);
     }
@@ -159,11 +161,10 @@ namespace iroha_cli {
       result_desciption.insert(
           {BACK_CODE, "Go back and start a new transaction"});
 
-      result_params_descriptions =
-          getCommonParamsMap(default_peer_ip_, default_port_);
+      result_params_map = getCommonParamsMap(default_peer_ip_, default_port_);
 
-      result_params_descriptions.insert({ADD_CMD, {}});
-      result_params_descriptions.insert({BACK_CODE, {}});
+      result_params_map.insert({ADD_CMD, {}});
+      result_params_map.insert({BACK_CODE, {}});
 
       result_handlers_ = {
           {SAVE_CODE, &InteractiveTransactionCli::parseSaveFile},
@@ -173,8 +174,8 @@ namespace iroha_cli {
           // Parsers for result
       };
 
-      result_menu_ = formMenu(
-          result_handlers_, result_params_descriptions, result_desciption);
+      result_menu_ =
+          formMenu(result_handlers_, result_params_map, result_desciption);
     }
 
     InteractiveTransactionCli::InteractiveTransactionCli(
@@ -227,7 +228,7 @@ namespace iroha_cli {
       }
 
       auto res = handleParse<std::shared_ptr<iroha::model::Command>>(
-          this, line, command_handlers_, command_params_descriptions_);
+          this, line, command_handlers_, command_params_map_);
 
       if (not res) {
         // Continue parsing
@@ -328,8 +329,7 @@ namespace iroha_cli {
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseAddAssetQuantity(
         std::vector<std::string> params) {
-      auto account_id = params[0];
-      auto asset_id = params[1];
+      auto asset_id = params[0];
       auto val_int =
           parser::parseValue<boost::multiprecision::uint256_t>(params[2]);
       auto precision = parser::parseValue<uint32_t>(params[3]);
@@ -343,7 +343,7 @@ namespace iroha_cli {
       }
       std::cout << val_int.value() << " " << precision.value() << std::endl;
       iroha::Amount amount(val_int.value(), precision.value());
-      return generator_.generateAddAssetQuantity(account_id, asset_id, amount);
+      return generator_.generateAddAssetQuantity(asset_id, amount);
     }
 
     std::shared_ptr<iroha::model::Command>
@@ -457,8 +457,8 @@ namespace iroha_cli {
 
     bool InteractiveTransactionCli::parseResult(std::string line) {
       // Find in result handler map
-      auto res = handleParse<bool>(
-          this, line, result_handlers_, result_params_descriptions);
+      auto res =
+          handleParse<bool>(this, line, result_handlers_, result_params_map);
       return res.get_value_or(true);
     }
 

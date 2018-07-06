@@ -49,7 +49,7 @@ class TransferAsset : public AcceptanceFixture {
   }
 
   proto::Transaction addAssets(const std::string &amount) {
-    return complete(baseTx().addAssetQuantity(kUserId, kAsset, amount));
+    return complete(baseTx().addAssetQuantity(kAsset, amount));
   }
 
   proto::Transaction makeTransfer(const std::string &amount) {
@@ -304,8 +304,7 @@ TEST_F(TransferAsset, InterDomain) {
           .build()
           .signAndAddSignature(kAdminKeypair)
           .finish();
-  auto add_assets =
-      complete(baseTx().addAssetQuantity(kUserId, kNewAssetId, kAmount));
+  auto add_assets = complete(baseTx().addAssetQuantity(kNewAssetId, kAmount));
   auto make_transfer = complete(
       baseTx().transferAsset(kUserId, kUser2Id, kNewAssetId, kDesc, kAmount));
 
@@ -342,8 +341,7 @@ TEST_F(TransferAsset, BigPrecision) {
           .build()
           .signAndAddSignature(kAdminKeypair)
           .finish();
-  auto add_assets =
-      complete(baseTx().addAssetQuantity(kUserId, kNewAssetId, kInitial));
+  auto add_assets = complete(baseTx().addAssetQuantity(kNewAssetId, kInitial));
   auto make_transfer = complete(baseTx().transferAsset(
       kUserId, kUser2Id, kNewAssetId, kDesc, kForTransfer));
 

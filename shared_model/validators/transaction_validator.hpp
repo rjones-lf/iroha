@@ -21,8 +21,9 @@
 #include <boost/format.hpp>
 #include <boost/variant/static_visitor.hpp>
 
+#include "backend/protobuf/commands/proto_command.hpp"
 #include "backend/protobuf/permissions.hpp"
-#include "interfaces/transaction.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -45,7 +46,6 @@ namespace shared_model {
         ReasonsGroupType reason;
         addInvalidCommand(reason, "AddAssetQuantity");
 
-        validator_.validateAccountId(reason, aaq.accountId());
         validator_.validateAssetId(reason, aaq.assetId());
         validator_.validateAmount(reason, aaq.amount());
 
@@ -118,7 +118,14 @@ namespace shared_model {
         addInvalidCommand(reason, "CreateRole");
 
         validator_.validateRoleId(reason, cr.roleName());
-        validator_.validateRolePermissions(reason, cr.rolePermissions());
+        for (auto i : static_cast<const shared_model::proto::CreateRole &>(cr)
+                          .getTransport()
+                          .create_role()
+                          .permissions()) {
+          validator_.validateRolePermission(
+              reason,
+              static_cast<shared_model::interface::permissions::Role>(i));
+        }
 
         return reason;
       }
@@ -189,7 +196,6 @@ namespace shared_model {
         ReasonsGroupType reason;
         addInvalidCommand(reason, "SubtractAssetQuantity");
 
-        validator_.validateAccountId(reason, saq.accountId());
         validator_.validateAssetId(reason, saq.assetId());
         validator_.validateAmount(reason, saq.amount());
 
@@ -260,12 +266,25 @@ namespace shared_model {
                                                   tx.creatorAccountId());
         field_validator_.validateCreatedTime(tx_reason, tx.createdTime());
         field_validator_.validateQuorum(tx_reason, tx.quorum());
+        if (tx.batch_meta() != boost::none)
+          field_validator_.validateBatchMeta(tx_reason, **tx.batch_meta());
 
         if (not tx_reason.second.empty()) {
           answer.addReason(std::move(tx_reason));
         }
 
         for (const auto &command : tx.commands()) {
+          auto cmd_case =
+              static_cast<const shared_model::proto::Command &>(command)
+                  .getTransport()
+                  .command_case();
+          if (iroha::protocol::Command::COMMAND_NOT_SET == cmd_case) {
+            ReasonsGroupType reason;
+            reason.first = "Undefined";
+            reason.second.push_back("command is undefined");
+            answer.addReason(std::move(reason));
+            continue;
+          }
           auto reason = boost::apply_visitor(command_validator_, command.get());
           if (not reason.second.empty()) {
             answer.addReason(std::move(reason));

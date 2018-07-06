@@ -19,6 +19,7 @@
 #include <memory>
 #include <unordered_set>
 
+#include "block.pb.h"
 #include <gmock/gmock-matchers.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/dynamic_message.h>
@@ -562,6 +563,17 @@ class FieldValidatorTest : public ValidatorsTest {
     return all_cases;
   }();
 
+  std::vector<FieldTestCase> batch_meta_test_cases = [&]() {
+    iroha::protocol::Transaction::Payload::BatchMeta meta;
+    meta.set_type(iroha::protocol::Transaction::Payload::BatchMeta::BatchType::
+                      Transaction_Payload_BatchMeta_BatchType_ATOMIC);
+    meta.add_tx_hashes("tst");
+    std::vector<FieldTestCase> all_cases;
+    all_cases.push_back(makeTestCase(
+        "batch meta test", &FieldValidatorTest::batch_meta, meta, true, ""));
+    return all_cases;
+  }();
+
   std::vector<FieldTestCase> precision_test_cases{
       makeValidCase(&FieldValidatorTest::precision, 0),
       makeValidCase(&FieldValidatorTest::precision, 1),
@@ -667,7 +679,13 @@ class FieldValidatorTest : public ValidatorsTest {
       makeValidator("description",
                     &FieldValidator::validateDescription,
                     &FieldValidatorTest::description,
-                    description_test_cases)};
+                    description_test_cases),
+      makeTransformValidator(
+          "batch",
+          &FieldValidator::validateBatchMeta,
+          &FieldValidatorTest::batch_meta,
+          [](auto &&x) { return shared_model::proto::BatchMeta(x); },
+          batch_meta_test_cases)};
 };
 
 /**
@@ -685,7 +703,7 @@ TEST_F(FieldValidatorTest, CommandFieldsValidation) {
       [] { return iroha::protocol::Command::descriptor(); },
       [&](auto field) {
         // Add new command to transaction
-        auto command = payload->add_commands();
+        auto command = payload->mutable_reduced_payload()->add_commands();
         //  // Set concrete type for new command
         return command->GetReflection()->MutableMessage(command, field);
       },
@@ -700,18 +718,11 @@ TEST_F(FieldValidatorTest, CommandFieldsValidation) {
  * meaningful message
  */
 TEST_F(FieldValidatorTest, TransactionFieldsValidation) {
-  iroha::protocol::Transaction proto_tx;
-  proto_tx.add_signatures();  // at least one signature in message
-
+    auto proto_tx = std::make_shared<iroha::protocol::Transaction>();
+  proto_tx->add_signatures();  // at least one signature in message
+  proto_tx->mutable_payload()->mutable_reduced_payload()->add_commands();
   // iterate over all fields in transaction
-  iterateContainer(
-      [] { return iroha::protocol::Transaction::descriptor(); },
-      [&](auto field) {
-        return field->is_repeated()
-            ? proto_tx.GetReflection()->MutableRepeatedMessage(
-                  &proto_tx, field, 0)
-            : proto_tx.GetReflection()->MutableMessage(&proto_tx, field);
-      },
+  iterateContainerRecursive(proto_tx, field_validators,
       [this](auto field, auto transaction_field) { this->runTestCases(field); },
       [] {});
 }

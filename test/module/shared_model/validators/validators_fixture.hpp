@@ -23,6 +23,7 @@
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
 
+#include "block.pb.h"
 #include "datetime/time.hpp"
 #include "interfaces/permissions.hpp"
 #include "primitive.pb.h"
@@ -118,6 +119,51 @@ class ValidatorsTest : public ::testing::Test {
       validator();
     });
   }
+  // TODO: IR-1490 02.07.2018 Rewrite interator for all containters
+  /**
+   * Iterate the container recursively (transaction or query),
+   * generating concrete subtypes
+   * and doing operation on concrete subtype fields. Call validator after each
+   * subtype
+   * @tparam FieldMap map of validators which are not nessery to traverse but
+   * validate as a whole
+   * @tparam FieldOp field operation type
+   * @tparam Validator validator type
+   * @param m protobuf message to iterate
+   * @param field_validators map of validators which are not nessery to traverse
+   * but validate as a whole
+   * @param field_op field operation callable object
+   * @param validator validator callable object
+   */
+  template <typename FieldOp, typename FieldMap, typename Validator>
+  void iterateContainerRecursive(std::shared_ptr<google::protobuf::Message> m,
+                                 FieldMap &field_validators,
+                                 FieldOp &&field_op,
+                                 Validator &&validator) {
+    const google::protobuf::Descriptor *desc = m->GetDescriptor();
+    const google::protobuf::Reflection *refl = m->GetReflection();
+    // Get field descriptor for concrete type
+    const auto &range = boost::irange(0, desc->field_count())
+        | boost::adaptors::transformed([&](auto i) { return desc->field(i); });
+    // Iterate through all concrete types
+    boost::for_each(range, [&](auto field) {
+      if (field->type() != google::protobuf::FieldDescriptor::TYPE_MESSAGE
+          or field_validators.count(field->name())) {
+        field_op(field, m);
+        validator();
+      } else {
+        const google::protobuf::Message *mfield = field->is_repeated()
+            ? refl->MutableRepeatedMessage(m.get(), field, 0)
+            : refl->MutableMessage(m.get(), field);
+        google::protobuf::Message *mcopy = mfield->New();
+        mcopy->CopyFrom(*mfield);
+        void *ptr = new std::shared_ptr<google::protobuf::Message>(mcopy);
+        std::shared_ptr<google::protobuf::Message> *m =
+            static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
+        this->iterateContainerRecursive(*m, field_validators, field_op, validator);
+      }
+    });
+  }
 
  protected:
   void SetUp() override {
@@ -168,6 +214,7 @@ class ValidatorsTest : public ::testing::Test {
   std::string description;
   std::string public_key;
   std::string hash;
+  iroha::protocol::Transaction::Payload::BatchMeta batch_meta;
   shared_model::interface::permissions::Role model_role_permission;
   shared_model::interface::permissions::Grantable model_grantable_permission;
   iroha::protocol::RolePermission role_permission;

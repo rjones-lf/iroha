@@ -16,7 +16,6 @@
  */
 
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
-#include "backend/protobuf/from_old.hpp"
 #include "backend/protobuf/permissions.hpp"
 
 namespace iroha {
@@ -54,15 +53,16 @@ namespace iroha {
         const AccountIdType &permitee_account_id,
         const AccountIdType &account_id,
         shared_model::interface::permissions::Grantable permission) {
+      const auto perm_str =
+          shared_model::interface::GrantablePermissionSet({permission})
+              .toBitstring();
       return execute_(
                  "SELECT * FROM account_has_grantable_permissions WHERE "
                  "permittee_account_id = "
                  + transaction_.quote(permitee_account_id)
                  + " AND account_id = " + transaction_.quote(account_id)
-                 + " AND permission = "
-                 + transaction_.quote(
-                       shared_model::proto::permissions::toString(permission))
-                 + ";")
+                 + " AND permission & " + transaction_.quote(perm_str) + " = "
+                 + transaction_.quote(perm_str) + ";")
           | [](const auto &result) { return result.size() == 1; };
     }
 
@@ -81,17 +81,18 @@ namespace iroha {
     boost::optional<shared_model::interface::RolePermissionSet>
     PostgresWsvQuery::getRolePermissions(const RoleIdType &role_name) {
       return execute_(
-                 "SELECT permission FROM role_has_permissions WHERE role_id "
-                 "= "
+                 "SELECT permission FROM role_has_permissions WHERE role_id = "
                  + transaction_.quote(role_name) + ";")
-          | [&](const auto &result) {
-              shared_model::interface::RolePermissionSet set;
-              for (const auto &r : result) {
-                set.set(shared_model::interface::permissions::fromOldR(
-                    r.at("permission").c_str()));
-              }
-              return set;
-            };
+                 | [&](const auto &result)
+                 -> boost::optional<
+                     shared_model::interface::RolePermissionSet> {
+        // TODO(@l4l) 26/06/18 remove with IR-1480
+        if (result.empty()) {
+          return shared_model::interface::RolePermissionSet();
+        }
+        return shared_model::interface::RolePermissionSet(
+            std::string(result.at(0).at("permission").c_str()));
+      };
     }
 
     boost::optional<std::vector<RoleIdType>> PostgresWsvQuery::getRoles() {

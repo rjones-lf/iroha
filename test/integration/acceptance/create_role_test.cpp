@@ -98,7 +98,9 @@ TEST_F(CreateRole, EmptyPerms) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx({})), checkStatelessInvalid);
+      .sendTxAwait(complete(baseTx({})), [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
+      });
 }
 
 /**

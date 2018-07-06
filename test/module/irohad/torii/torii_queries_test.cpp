@@ -154,12 +154,6 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
       shared_model::proto::AccountBuilder().accountId("b@domain").build();
   auto creator = "a@domain";
 
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          creator, account.accountId(), permissionOf(Role::kGetMyAccount)))
-      .WillOnce(Return(false));
-
   EXPECT_CALL(*wsv_query, getSignatories(creator))
       .WillRepeatedly(Return(signatories));
   EXPECT_CALL(*wsv_query, getAccountRoles(creator))
@@ -199,11 +193,6 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
 
   EXPECT_CALL(*wsv_query, getSignatories(creator))
       .WillRepeatedly(Return(signatories));
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(
-          creator, accountB->accountId(), permissionOf(Role::kGetMyAccount)))
-      .WillOnce(Return(true));
 
   // Should be called once, after successful stateful validation
   EXPECT_CALL(*wsv_query, getAccount(accountB->accountId()))
@@ -211,6 +200,9 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
 
   std::vector<std::string> roles = {"user"};
   EXPECT_CALL(*wsv_query, getAccountRoles(_)).WillRepeatedly(Return(roles));
+  EXPECT_CALL(*wsv_query, getRolePermissions(_))
+      .WillOnce(Return(shared_model::interface::RolePermissionSet(
+          {shared_model::interface::permissions::Role::kGetAllAccounts})));
 
   iroha::protocol::QueryResponse response;
 
@@ -296,10 +288,6 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
 
   EXPECT_CALL(*wsv_query, getSignatories(creator))
       .WillRepeatedly(Return(signatories));
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  creator, accountb_id, permissionOf(Role::kGetMyAccAst)))
-      .WillOnce(Return(false));
   EXPECT_CALL(*wsv_query, getAccountRoles(creator))
       .WillOnce(Return(boost::none));
 
@@ -415,10 +403,6 @@ TEST_F(ToriiQueriesTest, FindSignatoriesWhenNoGrantPermissions) {
   auto creator = "a@domain";
   EXPECT_CALL(*wsv_query, getSignatories(creator))
       .WillRepeatedly(Return(signatories));
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  creator, "b@domain", permissionOf(Role::kGetMySignatories)))
-      .WillOnce(Return(false));
   EXPECT_CALL(*wsv_query, getAccountRoles(creator))
       .WillOnce(Return(boost::none));
 

@@ -36,7 +36,7 @@ namespace iroha {
 
   expected::Error<CommandError> makeCommandError(
       const std::string &error_message,
-      const std::string command_name) noexcept {
+      const std::string &command_name) noexcept {
     return expected::makeError(CommandError{command_name, error_message});
   }
 
@@ -81,13 +81,13 @@ namespace iroha {
     }
     auto command_amount =
         makeAmountWithPrecision(command.amount(), asset.value()->precision());
-    if (not queries->getAccount(command.accountId())) {
+    if (not queries->getAccount(creator_account_id)) {
       return makeCommandError(
-          (boost::format("account %s is absent") % command.accountId()).str(),
+          (boost::format("account %s is absent") % creator_account_id).str(),
           command_name);
     }
     auto account_asset =
-        queries->getAccountAsset(command.accountId(), command.assetId());
+        queries->getAccountAsset(creator_account_id, command.assetId());
 
     auto new_balance = command_amount | [this](const auto &amount) {
       return amount_builder_.precision(amount->precision())
@@ -109,13 +109,13 @@ namespace iroha {
             result = (*new_balance_val.value + account_asset.value()->balance())
                 | [this, &command](const auto &balance) {
                     return account_asset_builder_.balance(*balance)
-                        .accountId(command.accountId())
+                        .accountId(creator_account_id)
                         .assetId(command.assetId())
                         .build();
                   };
           } else {
             result = account_asset_builder_.balance(*new_balance_val.value)
-                         .accountId(command.accountId())
+                         .accountId(creator_account_id)
                          .assetId(command.assetId())
                          .build();
           }
@@ -359,10 +359,10 @@ namespace iroha {
     auto command_amount =
         makeAmountWithPrecision(command.amount(), asset.value()->precision());
     auto account_asset =
-        queries->getAccountAsset(command.accountId(), command.assetId());
+        queries->getAccountAsset(creator_account_id, command.assetId());
     if (not account_asset) {
       return makeCommandError((boost::format("%s do not have %s")
-                               % command.accountId() % command.assetId())
+                               % creator_account_id % command.assetId())
                                   .str(),
                               command_name);
     }
@@ -495,18 +495,9 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto command_name = "AddAssetQuantity";
-    // Check if creator has MoneyCreator permission.
-    // One can only add to his/her account
     // TODO: 03.02.2018 grimadas IR-935, Separate asset creation for distinct
     // asset types, now: anyone having permission "can_add_asset_qty" can add
     // any asset
-    if (creator_account_id != command.accountId()) {
-      return makeCommandError(
-          "has permission command validation failed: creator account "
-              + creator_account_id + " is not command account "
-              + command.accountId(),
-          command_name);
-    }
     if (not checkAccountRolePermission(
             creator_account_id, queries, Role::kAddAssetQty)) {
       return makeCommandError(
@@ -850,23 +841,14 @@ namespace iroha {
       ametsuchi::WsvQuery &queries,
       const shared_model::interface::types::AccountIdType &creator_account_id) {
     auto command_name = "SubtractAssetQuantity";
-    if (creator_account_id == command.accountId()) {
-      if (checkAccountRolePermission(
-              creator_account_id, queries, Role::kSubtractAssetQty)) {
-        return {};
-      } else {
-        return makeCommandError(
-            "has permission command validation failed: account "
-                + creator_account_id + " does not have permission "
-                + toString(Role::kSubtractAssetQty) + " for his own account",
-            command_name);
-      }
+    if (checkAccountRolePermission(
+            creator_account_id, queries, Role::kSubtractAssetQty)) {
+      return {};
     } else {
       return makeCommandError(
           "has permission command validation failed: account "
-              + creator_account_id
-              + " cannot subtract asset quantity from account "
-              + command.accountId(),
+              + creator_account_id + " does not have permission "
+              + toString(Role::kSubtractAssetQty) + " for his own account",
           command_name);
     }
   }
@@ -1176,7 +1158,6 @@ namespace iroha {
     // Amount is formed wrong
     if (command.amount().precision() > asset.value()->precision()) {
       return makeCommandError(
-
                "is valid command validation failed: account "
                + command.srcAccountId()
                + ",  precision of command's "

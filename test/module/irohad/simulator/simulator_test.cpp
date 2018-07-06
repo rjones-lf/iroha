@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-#include "simulator/impl/simulator.hpp"
+#include <vector>
+
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -27,6 +28,7 @@
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/cryptography/crypto_model_signer_mock.hpp"
+#include "simulator/impl/simulator.hpp"
 
 using namespace iroha;
 using namespace iroha::validation;
@@ -86,7 +88,7 @@ shared_model::proto::Proposal makeProposal(int height) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
-                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .addAssetQuantity("coin#coin", "1.0")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(
@@ -116,7 +118,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
-                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .addAssetQuantity("coin#coin", "1.0")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(
@@ -138,7 +140,9 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
 
   EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(1));
 
-  EXPECT_CALL(*validator, validate(_, _)).WillOnce(Return(proposal));
+  EXPECT_CALL(*validator, validate(_, _))
+      .WillOnce(Return(
+          std::make_pair(proposal, iroha::validation::TransactionsErrors{})));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
@@ -153,8 +157,10 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   auto proposal_wrapper =
       make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
   proposal_wrapper.subscribe([&proposal](auto verified_proposal) {
-    ASSERT_EQ(verified_proposal->height(), proposal->height());
-    ASSERT_EQ(verified_proposal->transactions(), proposal->transactions());
+    ASSERT_EQ(verified_proposal->first->height(), proposal->height());
+    ASSERT_EQ(verified_proposal->first->transactions(),
+              proposal->transactions());
+    ASSERT_TRUE(verified_proposal->second.empty());
   });
 
   auto block_wrapper =
@@ -245,4 +251,81 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
+}
+
+/**
+ * Checks, that after failing a certain number of transactions in a proposal,
+ * returned verified proposal will have only valid transactions
+ *
+ * @given proposal consisting of several transactions
+ * @when failing some of the transactions in that proposal
+ * @then verified proposal consists of txs we did not fail
+ */
+TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
+  // create a 3-height proposal, but validator returns only a 2-height verified
+  // proposal
+  auto tx = shared_model::proto::TransactionBuilder()
+                .createdTime(iroha::time::now())
+                .creatorAccountId("admin@ru")
+                .addAssetQuantity("coin#coin", "1.0")
+                .quorum(1)
+                .build()
+                .signAndAddSignature(
+                    shared_model::crypto::DefaultCryptoAlgorithmType::
+                        generateKeypair())
+                .finish();
+
+  std::vector<shared_model::proto::Transaction> txs = {tx, tx, tx};
+  auto proposal = std::make_shared<shared_model::proto::Proposal>(
+      shared_model::proto::ProposalBuilder()
+          .height(3)
+          .createdTime(iroha::time::now())
+          .transactions(txs)
+          .build());
+  auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
+      shared_model::proto::ProposalBuilder()
+          .height(2)
+          .createdTime(iroha::time::now())
+          .transactions(std::vector<shared_model::proto::Transaction>{tx})
+          .build());
+  auto tx_errors = iroha::validation::TransactionsErrors{
+      std::make_pair(CommandError{"SomeCommand", "SomeError", true},
+                     shared_model::crypto::Hash(std::string(32, '0'))),
+      std::make_pair(CommandError{"SomeCommand", "SomeError", true},
+                     shared_model::crypto::Hash(std::string(32, '0')))};
+  shared_model::proto::Block block = makeBlock(proposal->height() - 1);
+
+  EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
+  EXPECT_CALL(*query, getTopBlock())
+      .WillOnce(Return(expected::makeValue(wBlock(clone(block)))));
+
+  EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(2));
+
+  EXPECT_CALL(*validator, validate(_, _))
+      .WillOnce(Return(std::make_pair(verified_proposal, tx_errors)));
+
+  EXPECT_CALL(*ordering_gate, on_proposal())
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Proposal>>()));
+
+  EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
+              sign(A<shared_model::interface::Block &>()))
+      .Times(1);
+
+  init();
+
+  auto proposal_wrapper =
+      make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
+  proposal_wrapper.subscribe([&verified_proposal,
+                              &tx_errors](auto verified_proposal_) {
+    // assure that txs in verified proposal do not include failed ones
+    ASSERT_EQ(verified_proposal_->first->height(), verified_proposal->height());
+    ASSERT_EQ(verified_proposal_->first->transactions(),
+              verified_proposal->transactions());
+    ASSERT_TRUE(verified_proposal_->second.size() == tx_errors.size());
+  });
+
+  simulator->process_proposal(*proposal);
+
+  ASSERT_TRUE(proposal_wrapper.validate());
 }

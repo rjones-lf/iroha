@@ -103,9 +103,9 @@ class GrantPermissionTest : public AcceptanceFixture {
         permitee_account_name + "@" + kDomain;
     const std::string account_id = account_name + "@" + kDomain;
     return (TxBuilder()
-        .creatorAccountId(permitee_account_id)
-        .createdTime(getUniqueTime())
-        .*f)(account_id, permitee_key.publicKey())
+                .creatorAccountId(permitee_account_id)
+                .createdTime(getUniqueTime())
+            .*f)(account_id, permitee_key.publicKey())
         .quorum(1)
         .build()
         .signAndAddSignature(permitee_key)
@@ -185,7 +185,7 @@ class GrantPermissionTest : public AcceptanceFixture {
     return TxBuilder()
         .creatorAccountId(creator_account_id)
         .createdTime(getUniqueTime())
-        .addAssetQuantity(creator_account_id, asset_id, amount)
+        .addAssetQuantity(asset_id, amount)
         .transferAsset(
             creator_account_id, receiver_account_id, asset_id, "", amount)
         .quorum(1)
@@ -293,19 +293,19 @@ class GrantPermissionTest : public AcceptanceFixture {
                                 int quantity,
                                 bool is_contained) {
     return [&signatory, quantity, is_contained](
-        const shared_model::proto::QueryResponse &query_response) {
+               const shared_model::proto::QueryResponse &query_response) {
       ASSERT_NO_THROW({
-                        const auto &resp = boost::apply_visitor(
-                            framework::SpecifiedVisitor<interface::SignatoriesResponse>(),
-                            query_response.get());
+        const auto &resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<interface::SignatoriesResponse>(),
+            query_response.get());
 
-                        ASSERT_EQ(resp.keys().size(), quantity);
-                        auto &keys = resp.keys();
+        ASSERT_EQ(resp.keys().size(), quantity);
+        auto &keys = resp.keys();
 
-                        ASSERT_EQ((std::find(keys.begin(), keys.end(), signatory.publicKey())
-                                      != keys.end()),
-                                  is_contained);
-                      });
+        ASSERT_EQ((std::find(keys.begin(), keys.end(), signatory.publicKey())
+                   != keys.end()),
+                  is_contained);
+      });
     };
   }
 
@@ -317,14 +317,14 @@ class GrantPermissionTest : public AcceptanceFixture {
    */
   static auto checkQuorum(int quorum_quantity) {
     return [quorum_quantity](
-        const shared_model::proto::QueryResponse &query_response) {
+               const shared_model::proto::QueryResponse &query_response) {
       ASSERT_NO_THROW({
-                        const auto &resp = boost::apply_visitor(
-                            framework::SpecifiedVisitor<interface::AccountResponse>(),
-                            query_response.get());
+        const auto &resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<interface::AccountResponse>(),
+            query_response.get());
 
-                        ASSERT_EQ(resp.account().quorum(), quorum_quantity);
-                      });
+        ASSERT_EQ(resp.account().quorum(), quorum_quantity);
+      });
     };
   }
 
@@ -337,14 +337,14 @@ class GrantPermissionTest : public AcceptanceFixture {
   static auto checkAccountDetail(const std::string &key,
                                  const std::string &detail) {
     return [&key,
-        &detail](const shared_model::proto::QueryResponse &query_response) {
+            &detail](const shared_model::proto::QueryResponse &query_response) {
       ASSERT_NO_THROW({
-                        const auto &resp = boost::apply_visitor(
-                            framework::SpecifiedVisitor<interface::AccountDetailResponse>(),
-                            query_response.get());
-                        ASSERT_TRUE(resp.detail().find(key) != std::string::npos);
-                        ASSERT_TRUE(resp.detail().find(detail) != std::string::npos);
-                      });
+        const auto &resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<interface::AccountDetailResponse>(),
+            query_response.get());
+        ASSERT_TRUE(resp.detail().find(key) != std::string::npos);
+        ASSERT_TRUE(resp.detail().find(detail) != std::string::npos);
+      });
     };
   }
 
@@ -424,7 +424,7 @@ TEST_F(GrantPermissionTest, GrantAddSignatoryPermission) {
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-          // Add signatory
+      // Add signatory
       .sendTx(
           permiteeModifySignatory(&TestUnsignedTransactionBuilder::addSignatory,
                                   kAccount2,
@@ -629,7 +629,7 @@ TEST_F(GrantPermissionTest, GrantWithoutGrantPermissions) {
   createTwoAccounts(itf, {Role::kReceive}, {Role::kReceive});
   for (auto &perm : kAllGrantable) {
     itf.sendTx(
-            accountGrantToAccount(kAccount1, kAccount1Keypair, kAccount2, perm))
+           accountGrantToAccount(kAccount1, kAccount1Keypair, kAccount2, perm))
         .skipProposal()
         .checkBlock(
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });

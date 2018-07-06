@@ -99,7 +99,7 @@ namespace iroha_cli {
       std::unordered_map<std::string, CommandHandler> command_handlers_;
 
       // Descriptions for commands parameters
-      ParamsMap command_params_descriptions_;
+      ParamsMap command_params_map_;
 
       // Descriptions for commands
       DescriptionMap commands_description_map_;
@@ -151,7 +151,7 @@ namespace iroha_cli {
       std::unordered_map<std::string, ResultHandler> result_handlers_;
 
       // Description for result command
-      ParamsMap result_params_descriptions;
+      ParamsMap result_params_map;
 
       /**
        * Parse line for result

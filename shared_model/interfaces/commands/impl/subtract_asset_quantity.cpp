@@ -11,15 +11,13 @@ namespace shared_model {
     std::string SubtractAssetQuantity::toString() const {
       return detail::PrettyStringBuilder()
           .init("SubtractAssetQuantity")
-          .append("account_id", accountId())
           .append("asset_id", assetId())
           .append("amount", amount().toString())
           .finalize();
     }
 
     bool SubtractAssetQuantity::operator==(const ModelType &rhs) const {
-      return accountId() == rhs.accountId() and assetId() == rhs.assetId()
-          and amount() == rhs.amount();
+      return assetId() == rhs.assetId() and amount() == rhs.amount();
     }
 
   }  // namespace interface
