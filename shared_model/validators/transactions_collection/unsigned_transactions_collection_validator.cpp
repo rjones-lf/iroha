@@ -5,7 +5,6 @@
 
 #include "validators/transactions_collection/unsigned_transactions_collection_validator.hpp"
 
-#include <boost/format.hpp>
 #include "validators/field_validator.hpp"
 #include "validators/transaction_validator.hpp"
 
@@ -17,15 +16,25 @@ namespace shared_model {
     UnsignedTransactionsCollectionValidator<TransactionValidator>::validate(
         const interface::types::TransactionsForwardCollectionType &transactions)
         const {
+      auto txs = transactions | boost::adaptors::transformed([](auto &tx) {
+                   return std::shared_ptr<interface::Transaction>(clone(tx));
+                 });
+      return validatePointers(txs);
+    }
+
+    template <typename TransactionValidator>
+    Answer UnsignedTransactionsCollectionValidator<TransactionValidator>::
+        validatePointers(const interface::types::SharedTxsCollectionType
+                             &transactions) const {
       ReasonsGroupType reason;
       reason.first = "Transaction list";
       for (const auto &tx : transactions) {
         auto answer =
             UnsignedTransactionsCollectionValidator::transaction_validator_
-                .validate(tx);
+                .validate(*tx);
         if (answer.hasErrors()) {
           auto message =
-              (boost::format("Tx %s : %s") % tx.hash().hex() % answer.reason())
+              (boost::format("Tx %s : %s") % tx->hash().hex() % answer.reason())
                   .str();
           reason.second.push_back(message);
         }
@@ -38,11 +47,9 @@ namespace shared_model {
       return res;
     }
 
-    template Answer UnsignedTransactionsCollectionValidator<
+    template class UnsignedTransactionsCollectionValidator<
         TransactionValidator<FieldValidator,
-                             CommandValidatorVisitor<FieldValidator>>>::
-        validate(const interface::types::TransactionsForwardCollectionType
-                     &transactions) const;
+                             CommandValidatorVisitor<FieldValidator>>>;
 
   }  // namespace validation
 }  // namespace shared_model

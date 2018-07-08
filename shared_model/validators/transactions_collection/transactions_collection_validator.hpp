@@ -27,6 +27,8 @@ namespace shared_model {
               TransactionValidator())
           : transaction_validator_(transactions_validator) {}
 
+      // TODO: IR-1505, igor-egorov, 2018-07-05 Remove method below when
+      // proposal and block will return collection of shared transactions
       /**
        * Validates collection of transactions
        * @param transactions collection of transactions
@@ -35,6 +37,10 @@ namespace shared_model {
       virtual Answer validate(
           const interface::types::TransactionsForwardCollectionType
               &transactions) const = 0;
+
+      virtual Answer validatePointers(
+          const interface::types::SharedTxsCollectionType &transactions)
+          const = 0;
     };
 
   }  // namespace validation

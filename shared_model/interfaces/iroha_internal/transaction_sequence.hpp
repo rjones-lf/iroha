@@ -21,17 +21,19 @@ namespace shared_model {
      */
     class TransactionSequence {
      public:
+      TransactionSequence() = delete;
+
       /**
        * Creator of transaction sequence
        * @param transactions collection of transactions
        * @param validator validator of the collections
-       * @return Result containing transaction sequence if validation successful
-       * and string message containing error otherwise
+       * @return Result containing transaction sequence if validation
+       * successful and string message containing error otherwise
        */
       template <typename TransactionValidator>
       static iroha::expected::Result<TransactionSequence, std::string>
       createTransactionSequence(
-          const types::TransactionsForwardCollectionType &transactions,
+          const types::SharedTxsCollectionType &transactions,
           const validation::TransactionsCollectionValidator<
               TransactionValidator> &validator);
 
@@ -39,13 +41,18 @@ namespace shared_model {
        * Get transactions collection
        * @return transactions collection
        */
-      types::TransactionsForwardCollectionType transactions();
+      types::SharedTxsCollectionType transactions();
+      const types::BatchesType& batches();
 
      private:
       explicit TransactionSequence(
-          const types::TransactionsForwardCollectionType &transactions);
+          const types::SharedTxsCollectionType &transactions);
 
-      types::TransactionsForwardCollectionType transactions_;
+      std::string calculateBatchHash(std::vector<types::HashType> reduced_hashes);
+
+      types::SharedTxsCollectionType transactions_;
+
+      detail::LazyInitializer<types::BatchesType> batches_;
     };
 
   }  // namespace interface

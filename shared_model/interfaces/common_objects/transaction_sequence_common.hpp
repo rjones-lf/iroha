@@ -19,8 +19,16 @@ namespace shared_model {
           boost::any_range<Transaction,
                            boost::forward_traversal_tag,
                            const Transaction &>;
-    }
-  }  // namespace interface
+
+      using SharedTxsCollectionType =
+          boost::any_range<std::shared_ptr<Transaction>,
+                           boost::forward_traversal_tag>;
+
+      using BatchesType = boost::any_range<SharedTxsCollectionType,
+                                           boost::forward_traversal_tag,
+                                           const SharedTxsCollectionType&>;
+    }  // namespace types
+  }    // namespace interface
 }  // namespace shared_model
 
 #endif  // IROHA_TRANSACTION_SEQUENCE_COMMON_HPP
