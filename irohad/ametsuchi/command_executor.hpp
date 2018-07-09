@@ -40,7 +40,7 @@ namespace iroha {
           const shared_model::interface::types::AccountIdType &account_id,
           const shared_model::interface::types::AssetIdType &asset_id,
           const std::string &amount,
-          const int precision) = 0;
+          const shared_model::interface::types::PrecisionType precision) = 0;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

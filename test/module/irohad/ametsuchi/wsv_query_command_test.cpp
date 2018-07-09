@@ -496,6 +496,9 @@ namespace iroha {
       }
 
      public:
+      /**
+       * Add default asset and check that it is done
+       */
       void addAsset() {
         auto asset = clone(TestAccountAssetBuilder()
                                .domainId(domain->domainId())

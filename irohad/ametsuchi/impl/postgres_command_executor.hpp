@@ -21,7 +21,7 @@ namespace iroha {
           const shared_model::interface::types::AccountIdType &account_id,
           const shared_model::interface::types::AssetIdType &asset_id,
           const std::string &amount,
-          const int precision) override;
+          const shared_model::interface::types::PrecisionType precision) override;
 
      private:
       pqxx::nontransaction &transaction_;

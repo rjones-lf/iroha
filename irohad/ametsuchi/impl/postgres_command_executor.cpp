@@ -18,7 +18,7 @@ namespace iroha {
         const shared_model::interface::types::AccountIdType &account_id,
         const shared_model::interface::types::AssetIdType &asset_id,
         const std::string &amount,
-        const int precision) {
+        const shared_model::interface::types::PrecisionType precision) {
       std::string query = (boost::format(
                                // clang-format off
           R"(
@@ -59,7 +59,7 @@ namespace iroha {
       auto result = execute_(query);
 
       return result.match(
-          [](expected::Value<pqxx::result> error_code) -> WsvCommandResult {
+          [](expected::Value<pqxx::result> &error_code) -> WsvCommandResult {
             int code = error_code.value[0].at("result").template as<int>();
             if (code == 0) {
               return {};
