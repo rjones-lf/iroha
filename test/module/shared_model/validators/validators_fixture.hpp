@@ -23,11 +23,11 @@
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
 
-#include "block.pb.h"
 #include "datetime/time.hpp"
 #include "interfaces/permissions.hpp"
 #include "primitive.pb.h"
 #include "queries.pb.h"
+#include "transaction.pb.h"
 
 class ValidatorsTest : public ::testing::Test {
  public:
@@ -160,7 +160,8 @@ class ValidatorsTest : public ::testing::Test {
         void *ptr = new std::shared_ptr<google::protobuf::Message>(mcopy);
         std::shared_ptr<google::protobuf::Message> *m =
             static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
-        this->iterateContainerRecursive(*m, field_validators, field_op, validator);
+        this->iterateContainerRecursive(
+            *m, field_validators, field_op, validator);
       }
     });
   }

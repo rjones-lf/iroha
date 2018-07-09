@@ -6,7 +6,7 @@
 syntax = "proto3";
 package iroha.protocol;
 
-import "block.proto";
+import "transaction.proto";
 
 message Proposal {
     uint64 height = 1;

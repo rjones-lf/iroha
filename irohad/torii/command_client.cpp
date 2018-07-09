@@ -15,10 +15,10 @@ limitations under the License.
 
 #include <grpc++/grpc++.h>
 
-#include "block.pb.h"
-#include "network/impl/grpc_channel_builder.hpp"
 #include "common/byteutils.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 #include "torii/command_client.hpp"
+#include "transaction.pb.h"
 
 namespace torii {
 
