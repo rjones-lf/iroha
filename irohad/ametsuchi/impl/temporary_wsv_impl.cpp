@@ -17,6 +17,7 @@
 
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
 
+#include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "amount/amount.hpp"
@@ -33,7 +34,8 @@ namespace iroha {
           log_(logger::log("TemporaryWSV")) {
       auto query = std::make_shared<PostgresWsvQuery>(*transaction_);
       auto command = std::make_shared<PostgresWsvCommand>(*transaction_);
-      command_executor_ = std::make_shared<CommandExecutor>(query, command);
+      auto command_executor = std::make_shared<PostgresCommandExecutor>(*transaction_);
+      command_executor_ = std::make_shared<iroha::CommandExecutor>(query, command, command_executor);
       command_validator_ = std::make_shared<CommandValidator>(query);
       transaction_->exec("BEGIN;");
     }

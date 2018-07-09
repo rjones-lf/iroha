@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "framework/result_fixture.hpp"
@@ -60,6 +61,7 @@ namespace iroha {
 
         command = std::make_unique<PostgresWsvCommand>(*wsv_transaction);
         query = std::make_unique<PostgresWsvQuery>(*wsv_transaction);
+        executor = std::make_unique<PostgresCommandExecutor>(*wsv_transaction);
 
         wsv_transaction->exec(init_);
       }
@@ -75,6 +77,7 @@ namespace iroha {
 
       std::unique_ptr<WsvCommand> command;
       std::unique_ptr<WsvQuery> query;
+      std::unique_ptr<CommandExecutor> executor;
     };
 
     class RoleTest : public WsvQueryCommandTest {};
@@ -515,13 +518,13 @@ namespace iroha {
     TEST_F(AddAccountAssetTest, ValidAddAccountAssetTest) {
       addAsset();
       ASSERT_TRUE(val(
-          command->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
+          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
       auto account_asset =
           query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ("1", account_asset.get()->balance().toStringRepr());
       ASSERT_TRUE(val(
-          command->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
+          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
       account_asset =
           query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
@@ -531,11 +534,11 @@ namespace iroha {
     /**
      * @given WSV command
      * @when trying to add account asset with non-existing asset
-     * @then account asset fails to added
+     * @then account asset fails to be added
      */
     TEST_F(AddAccountAssetTest, AddAccountAssetTestInvalidAsset) {
       ASSERT_FALSE(val(
-          command->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
+          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
     }
 
     /**
@@ -546,7 +549,7 @@ namespace iroha {
     TEST_F(AddAccountAssetTest, AddAccountAssetTestInvalidAccount) {
       addAsset();
       ASSERT_FALSE(
-          val(command->addAssetQuantity("some@domain", asset_id, "1", 1)));
+          val(executor->addAssetQuantity("some@domain", asset_id, "1", 1)));
     }
 
     /**
@@ -557,7 +560,7 @@ namespace iroha {
     TEST_F(AddAccountAssetTest, AddAccountAssetTestInvalidPrecision) {
       addAsset();
       ASSERT_FALSE(val(
-          command->addAssetQuantity(account->accountId(), asset_id, "1", 5)));
+          executor->addAssetQuantity(account->accountId(), asset_id, "1", 5)));
     }
 
     /**
@@ -571,9 +574,9 @@ namespace iroha {
           "7060"
           "2495.0";  // 2**252 - 1
       addAsset();
-      ASSERT_TRUE(val(command->addAssetQuantity(
+      ASSERT_TRUE(val(executor->addAssetQuantity(
           account->accountId(), asset_id, uint256_halfmax, 1)));
-      ASSERT_FALSE(val(command->addAssetQuantity(
+      ASSERT_FALSE(val(executor->addAssetQuantity(
           account->accountId(), asset_id, uint256_halfmax, 1)));
     }
   }  // namespace ametsuchi

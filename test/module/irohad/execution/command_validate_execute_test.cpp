@@ -55,8 +55,9 @@ class CommandValidateExecuteTest : public ::testing::Test {
   void SetUp() override {
     wsv_query = std::make_shared<StrictMock<MockWsvQuery>>();
     wsv_command = std::make_shared<StrictMock<MockWsvCommand>>();
+    sql_executor = std::make_shared<StrictMock<MockCommandExecutor>>();
 
-    executor = std::make_unique<iroha::CommandExecutor>(wsv_query, wsv_command);
+    executor = std::make_unique<iroha::CommandExecutor>(wsv_query, wsv_command, sql_executor);
     validator = std::make_unique<iroha::CommandValidator>(wsv_query);
 
     shared_model::builder::AccountBuilder<
@@ -204,6 +205,7 @@ class CommandValidateExecuteTest : public ::testing::Test {
 
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockWsvCommand> wsv_command;
+  std::shared_ptr<MockCommandExecutor> sql_executor;
 
   std::unique_ptr<iroha::CommandExecutor> executor;
   std::unique_ptr<iroha::CommandValidator> validator;
@@ -236,7 +238,7 @@ TEST_F(AddAssetQuantityTest, ValidWhenNewWallet) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_command, addAssetQuantity(_, _, _, _))
+  EXPECT_CALL(*sql_executor, addAssetQuantity(_, _, _, _))
       .WillOnce(Return(WsvCommandResult()));
 
   ASSERT_TRUE(val(validateAndExecute(command)));
@@ -248,7 +250,7 @@ TEST_F(AddAssetQuantityTest, ValidWhenNewWallet) {
  * @then executor will be passed
  */
 TEST_F(AddAssetQuantityTest, ValidWhenExistingWallet) {
-  EXPECT_CALL(*wsv_command, addAssetQuantity(_, _, _, _))
+  EXPECT_CALL(*sql_executor, addAssetQuantity(_, _, _, _))
       .WillOnce(Return(WsvCommandResult()));
   EXPECT_CALL(*wsv_query, getAccountRoles(creator->accountId()))
       .WillOnce(Return(admin_roles));
@@ -285,7 +287,7 @@ TEST_F(AddAssetQuantityTest, InvalidWhenWrongPrecision) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_command, addAssetQuantity(_, _, _, _))
+  EXPECT_CALL(*sql_executor, addAssetQuantity(_, _, _, _))
       .WillOnce(Return(expected::makeError("Asset with given precision does not exist")));
   ASSERT_TRUE(err(validateAndExecute(command)));
 }
@@ -301,7 +303,7 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoAccount) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_command, addAssetQuantity(_, _, _, _))
+  EXPECT_CALL(*sql_executor, addAssetQuantity(_, _, _, _))
       .WillOnce(Return(expected::makeError("Account does not exist")));
 
   ASSERT_TRUE(err(validateAndExecute(command)));
@@ -325,7 +327,7 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoAsset) {
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
 
-  EXPECT_CALL(*wsv_command, addAssetQuantity(_, _, _, _))
+  EXPECT_CALL(*sql_executor, addAssetQuantity(_, _, _, _))
       .WillOnce(Return(expected::makeError("Asset with given precision does not exist")));
 
   ASSERT_TRUE(err(validateAndExecute(command)));
@@ -347,7 +349,7 @@ TEST_F(AddAssetQuantityTest, InvalidWhenAssetAdditionFails) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_command, addAssetQuantity(_, _, _, _))
+  EXPECT_CALL(*sql_executor, addAssetQuantity(_, _, _, _))
       .WillOnce(Return(expected::makeError("Summation overflows uint256")));
 
   ASSERT_TRUE(err(validateAndExecute(command)));

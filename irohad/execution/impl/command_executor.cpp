@@ -52,8 +52,9 @@ namespace iroha {
 
   CommandExecutor::CommandExecutor(
       std::shared_ptr<ametsuchi::WsvQuery> queries,
-      std::shared_ptr<ametsuchi::WsvCommand> commands)
-      : queries(queries), commands(commands) {}
+      std::shared_ptr<ametsuchi::WsvCommand> commands,
+      std::shared_ptr<ametsuchi::CommandExecutor> executor)
+      : queries(queries), commands(commands), executor(executor) {}
 
   void CommandExecutor::setCreatorAccountId(
       const shared_model::interface::types::AccountIdType &creator_account_id) {
@@ -63,7 +64,7 @@ namespace iroha {
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::AddAssetQuantity &command) {
     std::string command_name = "AddAssetQuantity";
-    auto result = commands->addAssetQuantity(creator_account_id,
+    auto result = executor->addAssetQuantity(creator_account_id,
                                              command.assetId(),
                                              command.amount().toStringRepr(),
                                              command.amount().precision());
