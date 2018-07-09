@@ -181,7 +181,6 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       pqxx::lazyconnection temp_connection(options_str_without_dbname);
       auto transaction =
           std::make_unique<pqxx::nontransaction>(temp_connection);
-      std::cout << "DB: " << dbname << std::endl;
       // check if database dbname exists
       try {
         auto result = transaction->exec(

@@ -416,7 +416,7 @@ namespace iroha {
               R"(
           WITH has_account AS (SELECT account_id FROM account WHERE account_id = '%s' LIMIT 1),
                has_asset AS (SELECT asset_id FROM asset WHERE asset_id = '%s' AND precision = %d LIMIT 1),
-               amount AS (SELECT amount FROM account_has_asset WHERE asset_id = '%s' LIMIT 1),
+               amount AS (SELECT amount FROM account_has_asset WHERE asset_id = '%s' AND account_id = '%s' LIMIT 1),
                new_value AS (SELECT %s +
                               (SELECT
                                   CASE WHEN EXISTS (SELECT amount FROM amount LIMIT 1) THEN (SELECT amount FROM amount LIMIT 1)
@@ -444,7 +444,7 @@ namespace iroha {
           END AS result;)"
            // clang-format on
           )
-           % account_id % asset_id % precision % asset_id % amount % account_id
+           % account_id % asset_id % precision % asset_id % account_id % amount % account_id
            % asset_id)
               .str();
 
