@@ -21,8 +21,6 @@ namespace shared_model {
      public:
       using TransactionsCollectionValidator<
           TransactionValidator>::TransactionsCollectionValidator;
-      Answer validate(const interface::types::TransactionsForwardCollectionType
-                          &transactions) const override;
 
       Answer validatePointers(const interface::types::SharedTxsCollectionType
                                   &transactions) const override;

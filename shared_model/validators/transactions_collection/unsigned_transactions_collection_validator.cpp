@@ -12,22 +12,6 @@ namespace shared_model {
   namespace validation {
 
     template <typename TransactionValidator>
-    Answer
-    UnsignedTransactionsCollectionValidator<TransactionValidator>::validate(
-        const interface::types::TransactionsForwardCollectionType &transactions)
-        const {
-      interface::types::SharedTxsCollectionType res;
-      std::transform(
-          transactions.begin(),
-          transactions.end(),
-          res.begin(),
-          [](const auto &tx) {
-            return std::shared_ptr<interface::Transaction>(clone(tx));
-          });
-      return validatePointers(res);
-    }
-
-    template <typename TransactionValidator>
     Answer UnsignedTransactionsCollectionValidator<TransactionValidator>::
         validatePointers(const interface::types::SharedTxsCollectionType
                              &transactions) const {

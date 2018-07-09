@@ -22,11 +22,6 @@ class MockTransactionCollectionValidator
                                                validation::FieldValidator>>> {
  public:
   MOCK_CONST_METHOD1(
-      validate,
-      validation::Answer(
-          const interface::types::TransactionsForwardCollectionType &));
-
-  MOCK_CONST_METHOD1(
       validatePointers,
       validation::Answer(const interface::types::SharedTxsCollectionType &));
 };

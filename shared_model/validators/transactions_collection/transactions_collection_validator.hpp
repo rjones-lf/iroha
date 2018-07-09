@@ -8,6 +8,7 @@
 
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "validators/answer.hpp"
+#include <algorithm>
 
 namespace shared_model {
   namespace validation {
@@ -36,7 +37,17 @@ namespace shared_model {
        */
       virtual Answer validate(
           const interface::types::TransactionsForwardCollectionType
-              &transactions) const = 0;
+              &transactions) {
+        interface::types::SharedTxsCollectionType res;
+        std::transform(
+            transactions.begin(),
+            transactions.end(),
+            res.begin(),
+            [](const auto &tx) {
+              return std::shared_ptr<interface::Transaction>(clone(tx));
+            });
+        return validatePointers(res);
+      }
 
       virtual Answer validatePointers(
           const interface::types::SharedTxsCollectionType &transactions)

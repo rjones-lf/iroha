@@ -5,28 +5,11 @@
 
 #include "validators/transactions_collection/signed_transactions_collection_validator.hpp"
 
-#include <algorithm>
 #include "validators/field_validator.hpp"
 #include "validators/transaction_validator.hpp"
 
 namespace shared_model {
   namespace validation {
-
-    template <typename TransactionValidator>
-    Answer
-    SignedTransactionsCollectionValidator<TransactionValidator>::validate(
-        const interface::types::TransactionsForwardCollectionType &transactions)
-        const {
-      interface::types::SharedTxsCollectionType res;
-      std::transform(
-          transactions.begin(),
-          transactions.end(),
-          res.begin(),
-          [](const auto &tx) {
-            return std::shared_ptr<interface::Transaction>(clone(tx));
-          });
-      return validatePointers(res);
-    }
 
     template <typename TransactionValidator>
     Answer SignedTransactionsCollectionValidator<TransactionValidator>::
