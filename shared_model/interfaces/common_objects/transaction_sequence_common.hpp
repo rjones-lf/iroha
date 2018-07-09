@@ -22,6 +22,8 @@ namespace shared_model {
 
       using SharedTxsCollectionType = std::vector<std::shared_ptr<Transaction>>;
 
+      // TODO: IR-1514 kamilsa 09.07.2018 Introduce batch type with batch
+      // invariant and return range of them
       using BatchesType = boost::any_range<SharedTxsCollectionType,
                                            boost::forward_traversal_tag,
                                            const SharedTxsCollectionType &>;
