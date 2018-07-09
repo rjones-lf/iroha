@@ -52,7 +52,7 @@ namespace iroha {
           END AS result;)"
                                // clang-format on
                                )
-                           % account_id % asset_id % precision % asset_id
+                           % account_id % asset_id % ((int)precision) % asset_id
                            % account_id % amount % account_id % asset_id)
                               .str();
 

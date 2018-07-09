@@ -157,7 +157,7 @@ namespace iroha {
                    WsvCommandResult(const std::string &,
                                     const std::string &,
                                     const std::string &,
-                                    const int));
+                                    const shared_model::interface::types::PrecisionType));
     };
 
     class MockBlockQuery : public BlockQuery {
