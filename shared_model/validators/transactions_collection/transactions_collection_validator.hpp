@@ -37,7 +37,7 @@ namespace shared_model {
        */
       virtual Answer validate(
           const interface::types::TransactionsForwardCollectionType
-              &transactions) {
+              &transactions) const {
         interface::types::SharedTxsCollectionType res;
         std::transform(
             transactions.begin(),
