@@ -36,6 +36,10 @@ namespace shared_model {
       return transactions_;
     }
 
+    TransactionSequence::TransactionSequence(
+        const types::SharedTxsCollectionType &transactions)
+        : transactions_(transactions) {}
+
     types::BatchesType TransactionSequence::batches() const {
       if (batches_) {
         return batches_.value();
