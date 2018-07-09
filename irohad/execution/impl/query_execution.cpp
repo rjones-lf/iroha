@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "execution/query_execution.hpp"
@@ -332,6 +320,17 @@ QueryProcessingFactory::executeGetSignatories(
   auto response = QueryResponseBuilder().signatoriesResponse(*signs);
   return response;
 }
+
+QueryProcessingFactory::QueryResponseBuilderDone
+QueryProcessingFactory::executeGetPendingTransactions(
+    const shared_model::interface::GetPendingTransactions &query,
+    const shared_model::interface::types::AccountIdType &query_creator) {
+  std::vector<shared_model::proto::Transaction> txs;
+  // TODO 2018-07-04, igor-egorov, IR-1486, the core logic is to be implemented
+  auto response = QueryResponseBuilder().transactionsResponse(txs);
+  return response;
+}
+
 std::shared_ptr<shared_model::interface::QueryResponse>
 QueryProcessingFactory::validateAndExecute(
     const shared_model::interface::Query &query) {
@@ -418,6 +417,11 @@ QueryProcessingFactory::validateAndExecute(
         } else {
           builder = executeGetAssetInfo(q);
         }
+        return clone(builder.queryHash(query_hash).build());
+      },
+      [&](const shared_model::interface::GetPendingTransactions &q) {
+        // the query does not require validation
+        builder = executeGetPendingTransactions(q, query.creatorAccountId());
         return clone(builder.queryHash(query_hash).build());
       }
 

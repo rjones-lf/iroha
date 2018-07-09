@@ -32,12 +32,8 @@ namespace iroha {
   namespace network {
     class BlockLoaderImpl : public BlockLoader {
      public:
-      BlockLoaderImpl(
-          std::shared_ptr<ametsuchi::PeerQuery> peer_query,
-          std::shared_ptr<ametsuchi::BlockQuery> block_query,
-          std::shared_ptr<shared_model::validation::DefaultBlockValidator> =
-              std::make_shared<
-                  shared_model::validation::DefaultBlockValidator>());
+      BlockLoaderImpl(std::shared_ptr<ametsuchi::PeerQuery> peer_query,
+                      std::shared_ptr<ametsuchi::BlockQuery> block_query);
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlocks(
@@ -70,8 +66,6 @@ namespace iroha {
           peer_connections_;
       std::shared_ptr<ametsuchi::PeerQuery> peer_query_;
       std::shared_ptr<ametsuchi::BlockQuery> block_query_;
-      std::shared_ptr<shared_model::validation::DefaultBlockValidator>
-          stateless_validator_;
 
       logger::Logger log_;
     };
