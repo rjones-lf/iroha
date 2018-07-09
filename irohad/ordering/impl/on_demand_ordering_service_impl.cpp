@@ -4,6 +4,7 @@
  */
 
 #include "ordering/impl/on_demand_ordering_service_impl.hpp"
+#include <boost/range/algorithm/for_each.hpp>
 
 #include "builders/protobuf/proposal.hpp"
 #include "datetime/time.hpp"
@@ -11,6 +12,11 @@
 #include "interfaces/transaction.hpp"
 
 using namespace iroha::ordering;
+
+/**
+ * First round after successful committing block
+ */
+const iroha::ordering::transport::RejectRoundType kFirstRound = 1;
 
 OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
     size_t transaction_limit,
@@ -39,15 +45,14 @@ void OnDemandOrderingServiceImpl::onCollaborationOutcome(
 // ----------------------------| OdOsNotification |-----------------------------
 
 void OnDemandOrderingServiceImpl::onTransactions(
-    const CollectionType &transactions) {
+    CollectionType &&transactions) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
   log_->info("onTransactions => collections size = {}", transactions.size());
 
-  std::for_each(
-      transactions.begin(), transactions.end(), [this](const auto &obj) {
-        current_proposal_.second.push(obj);
-      });
+  std::for_each(transactions.begin(), transactions.end(), [this](auto &obj) {
+    current_proposal_.second.push(std::move(obj));
+  });
   log_->info("onTransactions => collection is inserted");
 }
 
@@ -57,7 +62,7 @@ OnDemandOrderingServiceImpl::onRequestProposal(transport::RoundType round) {
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
   auto proposal = proposal_map_.find(round);
   if (proposal != proposal_map_.end()) {
-    return proposal->second;
+    return boost::make_optional(clone(*proposal->second));
   } else {
     return boost::none;
   }
@@ -82,7 +87,7 @@ void OnDemandOrderingServiceImpl::packNextProposal(
   decltype(current_round) next_round;
   switch (outcome) {
     case RoundOutput::SUCCESSFUL:
-      next_round = std::make_pair(current_round.first + 1, 1);
+      next_round = std::make_pair(current_round.first + 1, kFirstRound);
       break;
     case RoundOutput::REJECT:
       next_round =
@@ -98,27 +103,32 @@ void OnDemandOrderingServiceImpl::packNextProposal(
 
 OnDemandOrderingServiceImpl::ProposalType
 OnDemandOrderingServiceImpl::emitProposal() {
-  auto mutable_proposal = shared_model::proto::ProposalBuilder()
-                              .height(current_proposal_.first.first)
-                              .createdTime(iroha::time::now());
-  log_->info("Mutable proposal created");
+  iroha::protocol::Proposal proto_proposal;
+  proto_proposal.set_height(current_proposal_.first.first);
+  proto_proposal.set_created_time(iroha::time::now());
+  log_->info("Mutable proposal generation");
 
   TransactionType current_tx;
   using ProtoTxType = shared_model::proto::Transaction;
   std::vector<TransactionType> collection;
 
   // outer method should guarantee availability of at least one transaction in
-  // queue
+  // queue, also, code shouldn't fetch all transactions from queue. The rest
+  // will be lost.
   while (current_proposal_.second.try_pop(current_tx)
          and collection.size() < transaction_limit_) {
-    collection.emplace_back(current_tx);
+    collection.emplace_back(std::move(current_tx));
   }
+  log_->info("Number of transaction in proposal  = {}", collection.size());
   auto proto_txes = collection | boost::adaptors::transformed([](auto &tx) {
                       return static_cast<const ProtoTxType &>(*tx);
                     });
-  log_->info("Number of transaction in proposal  = {}", collection.size());
-  return std::make_shared<decltype(mutable_proposal.build())>(
-      mutable_proposal.transactions(proto_txes).build());
+  boost::for_each(proto_txes, [&proto_proposal](auto &&proto_tx) {
+    *(proto_proposal.add_transactions()) = std::move(proto_tx.getTransport());
+  });
+
+  return std::make_unique<shared_model::proto::Proposal>(
+      std::move(proto_proposal));
 }
 
 void OnDemandOrderingServiceImpl::tryErase() {
@@ -126,12 +136,13 @@ void OnDemandOrderingServiceImpl::tryErase() {
     return;
   }
 
-  if (round_queue_.empty() and round_queue_.front().second == 1) {
+  if (round_queue_.empty() and round_queue_.front().second == kFirstRound) {
     proposal_map_.erase(round_queue_.front());
     round_queue_.pop();
     return;
   } else {
-    while (not round_queue_.empty() and round_queue_.front().second != 1) {
+    while (not round_queue_.empty()
+           and round_queue_.front().second != kFirstRound) {
       proposal_map_.erase(round_queue_.front());
       round_queue_.pop();
     }

@@ -20,6 +20,14 @@ namespace iroha {
   namespace ordering {
     class OnDemandOrderingServiceImpl : public OnDemandOrderingService {
      public:
+      /**
+       * Create on_demand ordering service with following options:
+       * @param transaction_limit - number of maximum transactions in a one
+       * proposal
+       * @param number_of_proposals - number of stored proposals, older will be
+       * removed
+       * @param initial_round - first round of agreement
+       */
       OnDemandOrderingServiceImpl(
           size_t transaction_limit,
           size_t number_of_proposals = 3,
@@ -32,18 +40,12 @@ namespace iroha {
 
       // ----------------------- | OdOsNotification | --------------------------
 
-      void onTransactions(const CollectionType &transactions) override;
+      void onTransactions(CollectionType &&transactions) override;
 
       boost::optional<ProposalType> onRequestProposal(
           transport::RoundType round) override;
 
      private:
-      /**
-       * Type of stored transactions
-       */
-      using TransactionType =
-          std::shared_ptr<shared_model::interface::Transaction>;
-
       /**
        * Packs new proposal and creates new round
        * Note: method is not thread-safe
@@ -70,7 +72,7 @@ namespace iroha {
       size_t transaction_limit_;
 
       /**
-       * Max number of available proposals in one OS`1234567890'
+       * Max number of available proposals in one OS
        */
       size_t number_of_proposals_;
 

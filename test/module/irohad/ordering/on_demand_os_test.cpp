@@ -36,7 +36,7 @@ class OnDemandOsTest : public ::testing::Test {
       OnDemandOrderingService &os, std::pair<uint64_t, uint64_t> range) {
     OnDemandOrderingService::CollectionType collection;
     for (auto i = range.first; i < range.second; ++i) {
-      collection.push_back(std::make_shared<shared_model::proto::Transaction>(
+      collection.push_back(std::make_unique<shared_model::proto::Transaction>(
           shared_model::proto::TransactionBuilder()
               .createdTime(iroha::time::now())
               .creatorAccountId("foo@bar")
@@ -48,7 +48,7 @@ class OnDemandOsTest : public ::testing::Test {
                       generateKeypair())
               .finish()));
     }
-    os.onTransactions(collection);
+    os.onTransactions(std::move(collection));
   }
 };
 

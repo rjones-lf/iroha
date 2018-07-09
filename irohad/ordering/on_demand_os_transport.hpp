@@ -58,13 +58,13 @@ namespace iroha {
         /**
          * Type of stored proposals
          */
-        using ProposalType = std::shared_ptr<shared_model::interface::Proposal>;
+        using ProposalType = std::unique_ptr<shared_model::interface::Proposal>;
 
         /**
          * Type of stored transactions
          */
         using TransactionType =
-            std::shared_ptr<shared_model::interface::Transaction>;
+            std::unique_ptr<shared_model::interface::Transaction>;
 
         /**
          * Type of inserted collections
@@ -75,7 +75,7 @@ namespace iroha {
          * Callback on receiving transactions
          * @param transactions - vector of passed transactions
          */
-        virtual void onTransactions(const CollectionType &transactions) = 0;
+        virtual void onTransactions(CollectionType &&transactions) = 0;
 
         /**
          * Callback on request about proposal
