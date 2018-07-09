@@ -22,6 +22,8 @@
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm_ext/push_back.hpp>
+#include <boost/range/begin.hpp>
+#include <boost/range/end.hpp>
 #include <string>
 
 #include "builders/protobuf/proposal.hpp"
@@ -56,18 +58,6 @@ namespace iroha {
                   "signatories: %s")
               % signatures_string % signatories_string)
           .str();
-    }
-
-    /**
-     * Check, if this tx belongs to any atomic batch
-     * @param tx we want to check
-     * @return if tx belongs to atomic batch
-     */
-    static bool txIsFromAtomicBatch(
-        const shared_model::interface::Transaction &tx) {
-      return tx.batch_meta()
-          and tx.batch_meta()->get()->type()
-          == shared_model::interface::types::BatchType::ATOMIC;
     }
 
     StatefulValidatorImpl::StatefulValidatorImpl() {
@@ -145,63 +135,64 @@ namespace iroha {
 
       // Filter only valid transactions and accumulate errors
       auto transactions_errors_log = validation::TransactionsErrors{};
-      auto filter = [this,
-                     &temporaryWsv,
-                     checking_transaction,
-                     &transactions_errors_log](auto &tx) {
-        if (not batchlyProcessTx(tx, temporaryWsv)) {
-          // if tx is from failed batch, just skip it
-          return false;
-        }
+      auto is_valid_tx = [&temporaryWsv,
+                          checking_transaction,
+                          &transactions_errors_log](auto &tx) {
         return temporaryWsv.apply(tx, checking_transaction)
-            .match(
-                [this, &tx, &temporaryWsv](expected::Value<void> &) {
-                  processSuccessTx(tx, temporaryWsv);
-                  return true;
-                },
-                [this, &tx, &temporaryWsv, &transactions_errors_log](
-                    expected::Error<validation::CommandError> &error) {
-                  processFailedTx(tx, temporaryWsv);
-                  transactions_errors_log.push_back(
-                      std::make_pair(error.error, tx.hash()));
-                  return false;
-                });
+            .match([](expected::Value<void> &) { return true; },
+                   [&tx, &transactions_errors_log](
+                       expected::Error<validation::CommandError> &error) {
+                     transactions_errors_log.push_back(
+                         std::make_pair(error.error, tx.hash()));
+                     return false;
+                   });
       };
 
-      std::vector<std::shared_ptr<shared_model::interface::Transaction>>
-          batch_acc{}, valid_txs{};
-      for (const auto &tx : proposal.transactions()) {
-        if (filter(tx)) {
-          if (current_atomic_batch_) {
-            if (not current_atomic_batch_->isLastTxInBatch(tx)) {
-              // another successful batch tx; add it to accumulator
-              batch_acc.push_back(std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
-            } else {
-              // successful and last tx in the batch; add batch to verified
-              // proposal
-              valid_txs.insert(
-                  std::end(valid_txs), std::begin(batch_acc), std::end(batch_acc));
-              valid_txs.push_back(std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
-              batch_acc.clear();
-            }
-          } else {
-            // no special conditions, just add the successful tx to verified
-            // proposal
-            valid_txs.push_back(std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
+      // TODO: kamilsa IR-1010 20.02.2018 rework validation logic, so that
+      // casts to proto are not needed and stateful validator does not know
+      // about the transport
+      std::vector<shared_model::proto::Transaction> valid_proto_txs{};
+      auto txs_end = std::end(proposal.transactions());
+      for (size_t i = 0; i < proposal.transactions().size(); ++i) {
+        auto current_tx_it = std::begin(proposal.transactions()) + i;
+        auto current_tx = *current_tx_it;
+        if (not current_tx_it->batch_meta()
+            or current_tx_it->batch_meta()->get()->type()
+                != shared_model::interface::types::BatchType::ATOMIC) {
+          if (is_valid_tx(*current_tx_it)) {
+            // add tx to list of valid_txs
+            valid_proto_txs.push_back(
+                static_cast<const shared_model::proto::Transaction &>(
+                    *current_tx_it));
           }
         } else {
-          if (not batch_acc.empty()) {
-            batch_acc.clear();
+          auto batch_end_hash =
+              current_tx_it->batch_meta()->get()->transactionHashes().back();
+          auto batch_end_it =
+              std::find_if(current_tx_it, txs_end, [&batch_end_hash](auto &tx) {
+                return tx.hash() == batch_end_hash;
+              });
+          if (batch_end_it == txs_end) {
+            // for peer review: adequate exception variants?
+            throw std::runtime_error("Batch is formed incorrectly");
           }
+          if (std::all_of(
+                  current_tx_it, batch_end_it, [&is_valid_tx](auto &tx) {
+                    return is_valid_tx(tx);
+                  })) {
+            // batch is successful; add it to the list of valid_txs
+            std::transform(
+                current_tx_it,
+                batch_end_it,
+                std::back_inserter(valid_proto_txs),
+                [](const auto &tx) {
+                  return static_cast<const shared_model::proto::Transaction &>(
+                      tx);
+                });
+          }
+          i += std::distance(current_tx_it, batch_end_it);
         }
       }
-
-      // TODO: kamilsa IR-1010 20.02.2018 rework validation logic, so that
-      // cast is not needed and stateful validator does not know about the
-      // transport
-      auto valid_proto_txs = valid_txs | boost::adaptors::transformed([] (auto &valid_tx_ptr) {
-        return static_cast<const shared_model::proto::Transaction &>(*valid_tx_ptr);
-      });
 
       auto validated_proposal = shared_model::proto::ProposalBuilder()
                                     .createdTime(proposal.createdTime())
@@ -215,72 +206,6 @@ namespace iroha {
       return std::make_pair(std::make_shared<decltype(validated_proposal)>(
                                 validated_proposal.getTransport()),
                             transactions_errors_log);
-    }
-
-    bool StatefulValidatorImpl::batchlyProcessTx(
-        const shared_model::interface::Transaction &tx,
-        ametsuchi::TemporaryWsv &temporaryWsv) {
-      if (not txIsFromAtomicBatch(tx)) {
-        // it tx is not from atomic batch, we're not interested
-        return true;
-      }
-
-      if (not current_atomic_batch_) {
-        // if this tx is from atomic batch, which is new for us, remember it and
-        // create a savepoint in case of future failure
-        current_atomic_batch_ = std::make_shared<BatchData>(BatchData{tx});
-        temporaryWsv.createSavepoint(current_atomic_batch_->savepoint_name);
-        return true;
-      }
-
-      if (current_atomic_batch_ and current_atomic_batch_->batch_failed) {
-        if (current_atomic_batch_->isLastTxInBatch(tx)) {
-          // if this is last tx from failed batch, nullify the batch
-          current_atomic_batch_ = nullptr;
-        }
-        return false;
-      }
-
-      return true;
-    }
-
-    void StatefulValidatorImpl::processSuccessTx(
-        const shared_model::interface::Transaction &tx,
-        ametsuchi::TemporaryWsv &temporaryWsv) {
-      if (not txIsFromAtomicBatch(tx)) {
-        // it tx is not from atomic batch, we're not interested
-        return;
-      }
-
-      if (current_atomic_batch_->isLastTxInBatch(tx)) {
-        // if this is last tx in the batch, it finished successfully; nullify
-        // the batch and release a savepoint
-        temporaryWsv.releaseSavepoint(current_atomic_batch_->savepoint_name);
-        current_atomic_batch_ = nullptr;
-      }
-    }
-
-    void StatefulValidatorImpl::processFailedTx(
-        const shared_model::interface::Transaction &tx,
-        ametsuchi::TemporaryWsv &temporaryWsv) {
-      if (not txIsFromAtomicBatch(tx)) {
-        // it tx is not from atomic batch, we're not interested
-        return;
-      }
-
-      if (current_atomic_batch_) {
-        // this is the first failed tx in this batch; cancel all txs before it
-        temporaryWsv.rollbackToSavepoint(current_atomic_batch_->savepoint_name);
-
-        // if this is also a last tx, dismiss current batch; otherwise, just
-        // fail it
-        if (current_atomic_batch_->isLastTxInBatch(tx)) {
-          current_atomic_batch_ = nullptr;
-        } else {
-          current_atomic_batch_->batch_failed = true;
-        }
-        return;
-      }
     }
 
   }  // namespace validation

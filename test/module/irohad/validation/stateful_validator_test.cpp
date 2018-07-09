@@ -4,22 +4,28 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/algorithm_ext/push_back.hpp>
 
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "common/result.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "interfaces/iroha_internal/batch_meta.hpp"
+#include "interfaces/transaction.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validation/impl/stateful_validator_impl.hpp"
+#include "validation/stateful_validator.hpp"
 #include "validation/utils.hpp"
-#include "interfaces/transaction.hpp"
-#include "interfaces/iroha_internal/batch_meta.hpp"
 
 using namespace iroha::validation;
 using namespace shared_model::crypto;
 
 using ::testing::_;
 using ::testing::A;
+using ::testing::ByRef;
+using ::testing::Eq;
 using ::testing::Return;
 using ::testing::ReturnArg;
 
@@ -94,8 +100,27 @@ TEST_F(SignaturesSubset, PublickeyUniqueness) {
 class Validator : public testing::Test {
  public:
   void SetUp() override {
-    sfv = std::make_shared<StatefulValidator>(StatefulValidatorImpl());
+    sfv = std::make_shared<StatefulValidatorImpl>();
     temp_wsv_mock = std::make_shared<iroha::ametsuchi::MockTemporaryWsv>();
+  }
+
+  auto createBatch(std::vector<std::string> creators,
+                   shared_model::interface::types::BatchType batch_type) {
+    std::vector<shared_model::interface::types::HashType> reduced_hashes;
+
+    for (const auto &creator : creators) {
+      auto tx = TestTransactionBuilder().creatorAccountId(creator).build();
+      reduced_hashes.push_back(tx.reduced_hash());
+    }
+
+    return creators
+        | boost::adaptors::transformed(
+               [reduced_hashes, batch_type](const auto &creator) {
+                 return TestTransactionBuilder()
+                     .creatorAccountId(creator)
+                     .batchMeta(batch_type, reduced_hashes)
+                     .build();
+               });
   }
 
   std::shared_ptr<StatefulValidator> sfv;
@@ -108,14 +133,25 @@ class Validator : public testing::Test {
  * @then all of them will appear in verified proposal @and errors will be empty
  */
 TEST_F(Validator, AllTxsValid) {
-  auto tx = TestTransactionBuilder().createAsset("doge", "coin", 1).build();
+  auto tx = TestTransactionBuilder()
+                .creatorAccountId("doge@master")
+                .createdTime(iroha::time::now())
+                .quorum(1)
+                .createAsset("doge", "coin", 1)
+                .build();
   auto proposal =
-      TestProposalBuilder().transactions(std::vector{tx, tx, tx}).build();
+      TestProposalBuilder()
+          .createdTime(iroha::time::now())
+          .height(3)
+          .transactions(
+              std::vector<shared_model::proto::Transaction>{tx, tx, tx})
+          .build();
 
-  EXPECT_CALL(*temp_wsv_mock, apply(_, _)).WillRepeatedly(Return(true));
+  EXPECT_CALL(*temp_wsv_mock, apply(_, _))
+      .WillRepeatedly(Return(iroha::expected::Value<void>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
-  ASSERT_EQ(verified_proposal_and_errors.first->height(), 3);
+  ASSERT_EQ(verified_proposal_and_errors.first->transactions().size(), 3);
   ASSERT_TRUE(verified_proposal_and_errors.second.empty());
 }
 
@@ -126,20 +162,33 @@ TEST_F(Validator, AllTxsValid) {
  * will appear in errors
  */
 TEST_F(Validator, SomeTxsFail) {
-  auto valid_tx =
-      TestTransactionBuilder().createAsset("doge", "coin", 1).build();
-  auto invalid_tx =
-      TestTransactionBuilder().createAsset("cate", "coin", 1).build();
+  auto valid_tx = TestTransactionBuilder()
+                      .creatorAccountId("doge@master")
+                      .createdTime(iroha::time::now())
+                      .quorum(1)
+                      .createAsset("doge", "coin", 1)
+                      .build();
+  auto invalid_tx = TestTransactionBuilder()
+      .creatorAccountId("doge@master")
+      .createdTime(iroha::time::now())
+      .quorum(1)
+      .createAsset("cate", "coin", 1)
+      .build();
   auto proposal =
       TestProposalBuilder()
-          .transactions(std::vector{valid_tx, valid_tx, invalid_tx, valid_tx})
+          .createdTime(iroha::time::now())
+          .height(3)
+          .transactions(std::vector<shared_model::proto::Transaction>{
+              valid_tx, invalid_tx, valid_tx})
           .build();
 
-  EXPECT_CALL(*temp_wsv_mock, apply(valid_tx, _)).WillRepeatedly(Return(true));
-  EXPECT_CALL(*temp_wsv_mock, apply(invalid_tx, _)).WillOnce(Return(false));
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(invalid_tx)), _))
+      .WillOnce(Return(iroha::expected::Error<CommandError>({})));
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(valid_tx)), _))
+      .WillRepeatedly(Return(iroha::expected::Value<void>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
-  ASSERT_EQ(verified_proposal_and_errors.first->height(), 3);
+  ASSERT_EQ(verified_proposal_and_errors.first->transactions().size(), 2);
   ASSERT_EQ(verified_proposal_and_errors.second.size(), 1);
 }
 
@@ -152,9 +201,46 @@ TEST_F(Validator, SomeTxsFail) {
  * group @and errors will contain the rest
  */
 TEST_F(Validator, Batches) {
-  // Coming soon: when it will be possible to create batch meta
-//  auto single_valid_tx = TestTransactionBuilder().createAsset("doge", "coin", 1).build();
-//  auto single_invalid_tx = TestTransactionBuilder().createAsset("cate", "coin", 1).build();
-//
-//  auto first_atomic_batch =
+  auto single_tx = TestTransactionBuilder()
+                       .creatorAccountId("doge@master")
+                       .createdTime(iroha::time::now())
+                       .quorum(1)
+                       .createAsset("doge", "coin", 1)
+                       .build();
+  auto success_atomic_batch =
+      createBatch(std::vector<std::string>{"creator1", "creator2"},
+                  shared_model::interface::types::BatchType::ATOMIC);
+  auto failed_atomic_batch =
+      createBatch(std::vector<std::string>{"creator3", "creator4"},
+                  shared_model::interface::types::BatchType::ATOMIC);
+  auto ordered_batch =
+      createBatch(std::vector<std::string>{"creator5", "creator6"},
+                  shared_model::interface::types::BatchType::ORDERED);
+  std::vector<shared_model::proto::Transaction> txs{
+      {single_tx,
+       *std::begin(ordered_batch),
+       *(std::begin(ordered_batch) + 1),
+       *failed_atomic_batch.begin(),
+       *(std::begin(failed_atomic_batch) + 1),
+       *success_atomic_batch.begin(),
+       *(std::begin(success_atomic_batch) + 1)}};
+
+  auto proposal = TestProposalBuilder()
+                      .createdTime(iroha::time::now())
+                      .height(7)
+                      .transactions(txs)
+                      .build();
+
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[0])), _))
+      .WillOnce(Return(iroha::expected::Value<void>({})));
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[1])), _))
+      .WillRepeatedly(Return(iroha::expected::Value<void>({})));
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[3])), _))
+      .WillRepeatedly(Return(iroha::expected::Error<CommandError>({})));
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[5])), _))
+      .WillRepeatedly(Return(iroha::expected::Value<void>({})));
+
+  auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
+  ASSERT_EQ(verified_proposal_and_errors.first->height(), 5);
+  ASSERT_EQ(verified_proposal_and_errors.second.size(), 2);
 }
