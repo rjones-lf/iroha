@@ -32,18 +32,16 @@
 namespace shared_model {
   namespace proto {
     class Block final : public NonCopyableProto<interface::Block,
-                                             iroha::protocol::Block,
-                                             Block> {
+                                                iroha::protocol::Block,
+                                                Block> {
      public:
       using NonCopyableProto::NonCopyableProto;
-
-      Block(const Block &o) = delete;
-      Block &operator=(const Block &o) = delete;
 
       Block(Block &&o) noexcept;
       Block &operator=(Block &&o) noexcept;
 
-      interface::types::TransactionsCollectionType transactions() const override;
+      interface::types::TransactionsCollectionType transactions()
+          const override;
 
       interface::types::HeightType height() const override;
 
@@ -75,20 +73,21 @@ namespace shared_model {
             payload_.mutable_transactions()->end());
       }};
 
-      Lazy<interface::types::BlobType> blob_{[this] { return makeBlob(proto_); }};
+      Lazy<interface::types::BlobType> blob_{
+          [this] { return makeBlob(proto_); }};
 
       Lazy<interface::types::HashType> prev_hash_{[this] {
         return interface::types::HashType(proto_.payload().prev_block_hash());
       }};
 
       Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
-          auto signatures =
-              proto_.signatures() | boost::adaptors::transformed([](const auto &x) {
-                return proto::Signature(x);
-              });
-          return SignatureSetType<proto::Signature>(signatures.begin(),
-                                                    signatures.end());
-        }};
+        auto signatures = proto_.signatures()
+            | boost::adaptors::transformed([](const auto &x) {
+                            return proto::Signature(x);
+                          });
+        return SignatureSetType<proto::Signature>(signatures.begin(),
+                                                  signatures.end());
+      }};
 
       Lazy<interface::types::BlobType> payload_blob_{
           [this] { return makeBlob(payload_); }};
