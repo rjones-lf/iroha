@@ -6,9 +6,9 @@
 #ifndef IROHA_TRANSACTION_SEQUENCE_VALIDATOR_HPP
 #define IROHA_TRANSACTION_SEQUENCE_VALIDATOR_HPP
 
+#include <algorithm>
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "validators/answer.hpp"
-#include <algorithm>
 
 namespace shared_model {
   namespace validation {
@@ -39,12 +39,9 @@ namespace shared_model {
           const interface::types::TransactionsForwardCollectionType
               &transactions) const {
         interface::types::SharedTxsCollectionType res;
-        std::transform(
-            transactions.begin(),
-            transactions.end(),
-            res.begin(),
-            [](const auto &tx) {
-              return std::shared_ptr<interface::Transaction>(clone(tx));
+        std::for_each(
+            transactions.begin(), transactions.end(), [&res](const auto &tx) {
+              return res.emplace_back(clone(tx));
             });
         return validatePointers(res);
       }

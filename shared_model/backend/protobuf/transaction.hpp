@@ -59,7 +59,7 @@ namespace shared_model {
         return *blobTypePayload_;
       }
 
-      const interface::types::BlobType &reduced_payload() const override {
+      const interface::types::BlobType &reducedPayload() const override {
         return *blobTypeReducedPayload_;
       }
 

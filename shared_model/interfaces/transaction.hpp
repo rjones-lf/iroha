@@ -57,11 +57,11 @@ namespace shared_model {
       /**
        * @return object payload (everything except signatures)
        */
-      virtual const types::BlobType &reduced_payload() const = 0;
+      virtual const types::BlobType &reducedPayload() const = 0;
 
-      const types::HashType &reduced_hash() const {
+      const types::HashType &reducedHash() const {
         if (reduced_hash_ == boost::none) {
-          reduced_hash_.emplace(HashProvider::makeHash(reduced_payload()));
+          reduced_hash_.emplace(HashProvider::makeHash(reducedPayload()));
         }
         return *reduced_hash_;
       }
@@ -71,19 +71,24 @@ namespace shared_model {
       virtual boost::optional<std::shared_ptr<BatchMeta>> batchMeta() const = 0;
 
       std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("Transaction")
-            .append("hash", hash().hex())
-            .append("creatorAccountId", creatorAccountId())
-            .append("createdTime", std::to_string(createdTime()))
-            .append("quorum", std::to_string(quorum()))
-            .append("commands")
-            .appendAll(commands(),
-                       [](auto &command) { return command.toString(); })
-            .append(batchMeta()->get()->toString())
-            .append("signatures")
-            .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
-            .finalize();
+        auto &&res =
+            detail::PrettyStringBuilder()
+                .init("Transaction")
+                .append("hash", hash().hex())
+                .append("creatorAccountId", creatorAccountId())
+                .append("createdTime", std::to_string(createdTime()))
+                .append("quorum", std::to_string(quorum()))
+                .append("commands")
+                .appendAll(commands(),
+                           [](auto &command) { return command.toString(); })
+                .append("signatures")
+                .appendAll(signatures(),
+                           [](auto &sig) { return sig.toString(); });
+
+        if (const auto &batch = batchMeta()) {
+          return res.append(batch->get()->toString()).finalize();
+        }
+        return res.finalize();
       }
 
      private:

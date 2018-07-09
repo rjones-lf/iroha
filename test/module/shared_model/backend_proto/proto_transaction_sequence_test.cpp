@@ -44,7 +44,7 @@ auto createAtomicBatch(std::vector<std::string> creators) {
 
   for (const auto &creator : creators) {
     auto tx = prepareTransactionBuilder(creator).build();
-    reduced_hashes.push_back(tx.reduced_hash());
+    reduced_hashes.push_back(tx.reducedHash());
   }
 
   return creators
