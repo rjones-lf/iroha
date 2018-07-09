@@ -57,7 +57,7 @@ OnDemandOrderingServiceImpl::onRequestProposal(transport::RoundType round) {
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
   auto proposal = proposal_map_.find(round);
   if (proposal != proposal_map_.end()) {
-    return (*proposal).second;
+    return proposal->second;
   } else {
     return boost::none;
   }

@@ -75,7 +75,7 @@ namespace iroha {
       size_t number_of_proposals_;
 
       /**
-       * Queue which holds all round in linear order
+       * Queue which holds all rounds in linear order
        */
       std::queue<transport::RoundType> round_queue_;
 
