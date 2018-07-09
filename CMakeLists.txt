@@ -1,3 +1,6 @@
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 cmake_minimum_required(VERSION 3.5.1)
 
 find_program(CCACHE_PROGRAM ccache)
@@ -101,11 +104,11 @@ message(STATUS "-DSWIG_CSHARP=${SWIG_CSHARP}")
 message(STATUS "-DSWIG_NODE=${SWIG_NODE}")
 
 SET(IROHA_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/schema")
+set(SCHEMA_OUT_DIR ${CMAKE_BINARY_DIR}/schema)
 include_directories(
   ${PROJECT_SOURCE_DIR}/irohad
   ${PROJECT_SOURCE_DIR}/shared_model
   ${PROJECT_SOURCE_DIR}/libs
-  ${IROHA_SCHEMA_DIR}
 )
 
 SET(IROHA_ROOT_PROJECT ON)

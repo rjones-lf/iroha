@@ -3,10 +3,6 @@ package iroha.protocol;
 import "commands.proto";
 import "primitive.proto";
 
-message Header {
-  uint64 created_time = 1;
-  repeated Signature signatures = 2;
-}
 message Transaction {
   message Payload {
     message BatchMeta{
