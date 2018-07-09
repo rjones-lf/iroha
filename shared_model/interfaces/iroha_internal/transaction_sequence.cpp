@@ -32,39 +32,37 @@ namespace shared_model {
                 validation::CommandValidatorVisitor<
                     validation::FieldValidator>>> &validator);
 
-    types::SharedTxsCollectionType TransactionSequence::transactions() {
+    types::SharedTxsCollectionType TransactionSequence::transactions() const {
       return transactions_;
     }
 
-    const types::BatchesType &TransactionSequence::batches() {
-      return *batches_;
+    types::BatchesType TransactionSequence::batches() const {
+      if (batches_) {
+        return batches_.value();
+      }
+
+      std::unordered_map<std::string, std::vector<std::shared_ptr<Transaction>>>
+          extracted_batches;
+      std::vector<types::SharedTxsCollectionType> batches;
+      for (const auto &tx : transactions_) {
+        if (auto meta = tx->batchMeta()) {
+          auto hashes = meta.get()->transactionHashes();
+          auto batch_hash = this->calculateBatchHash(hashes);
+          extracted_batches[batch_hash].push_back(tx);
+        } else {
+          batches.emplace_back(std::vector<std::shared_ptr<Transaction>>{tx});
+        }
+      }
+      for (auto it : extracted_batches) {
+        batches.emplace_back(it.second);
+      }
+
+      batches_.emplace(batches);
+      return batches;
     }
 
-    TransactionSequence::TransactionSequence(
-        const types::SharedTxsCollectionType &transactions)
-        : transactions_(transactions), batches_{[this]() -> types::BatchesType {
-            std::unordered_map<std::string,
-                               std::vector<std::shared_ptr<Transaction>>>
-                extracted_batches;
-            std::vector<types::SharedTxsCollectionType> batches;
-            for (const auto &tx : transactions_) {
-              if (auto meta = tx->batch_meta()) {
-                auto hashes = meta.get()->transactionHashes();
-                auto batch_hash = this->calculateBatchHash(hashes);
-                extracted_batches[batch_hash].push_back(tx);
-              } else {
-                batches.push_back(std::vector<std::shared_ptr<Transaction>>{tx});
-              }
-            }
-            for (auto it : extracted_batches) {
-              batches.push_back(it.second);
-            }
-            types::SharedTxsCollectionType s = batches.at(0);
-            return batches;
-          }} {}
-
     std::string TransactionSequence::calculateBatchHash(
-        std::vector<types::HashType> reduced_hashes) {
+        std::vector<types::HashType> reduced_hashes) const {
       std::stringstream concatenated_hashes_stream;
       for (const auto &hash : reduced_hashes) {
         concatenated_hashes_stream << hash.hex();

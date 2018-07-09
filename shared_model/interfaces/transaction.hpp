@@ -68,8 +68,7 @@ namespace shared_model {
       /*
        * @return Batch Meta if exists
        */
-      virtual boost::optional<std::shared_ptr<BatchMeta>> batch_meta()
-          const = 0;
+      virtual boost::optional<std::shared_ptr<BatchMeta>> batchMeta() const = 0;
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()
@@ -81,7 +80,7 @@ namespace shared_model {
             .append("commands")
             .appendAll(commands(),
                        [](auto &command) { return command.toString(); })
-            .append(batch_meta()->get()->toString())
+            .append(batchMeta()->get()->toString())
             .append("signatures")
             .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
             .finalize();

@@ -95,7 +95,7 @@ namespace shared_model {
         return reduced_payload_.quorum();
       }
 
-      boost::optional<std::shared_ptr<interface::BatchMeta>> batch_meta()
+      boost::optional<std::shared_ptr<interface::BatchMeta>> batchMeta()
           const override {
         return *meta_;
       }
@@ -125,7 +125,7 @@ namespace shared_model {
           [this] { return makeBlob(reduced_payload_); }};
 
       const Lazy<boost::optional<std::shared_ptr<interface::BatchMeta>>> meta_{
-          [this] () -> boost::optional<std::shared_ptr<interface::BatchMeta>> {
+          [this]() -> boost::optional<std::shared_ptr<interface::BatchMeta>> {
             if (payload_.has_batch()) {
               std::shared_ptr<interface::BatchMeta> b =
                   std::make_shared<proto::BatchMeta>(payload_.batch());

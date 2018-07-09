@@ -6,6 +6,7 @@
 #ifndef IROHA_TRANSACTION_SEQUENCE_HPP
 #define IROHA_TRANSACTION_SEQUENCE_HPP
 
+#include <unordered_map>
 #include "common/result.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "validators/transactions_collection/transactions_collection_validator.hpp"
@@ -41,18 +42,20 @@ namespace shared_model {
        * Get transactions collection
        * @return transactions collection
        */
-      types::SharedTxsCollectionType transactions();
-      const types::BatchesType& batches();
+      types::SharedTxsCollectionType transactions() const;
+      types::BatchesType batches() const;
 
      private:
       explicit TransactionSequence(
-          const types::SharedTxsCollectionType &transactions);
+          const types::SharedTxsCollectionType &transactions)
+          : transactions_(transactions) {}
 
-      std::string calculateBatchHash(std::vector<types::HashType> reduced_hashes);
+      std::string calculateBatchHash(
+          std::vector<types::HashType> reduced_hashes) const;
 
       types::SharedTxsCollectionType transactions_;
 
-      detail::LazyInitializer<types::BatchesType> batches_;
+      mutable boost::optional<types::BatchesType> batches_;
     };
 
   }  // namespace interface
