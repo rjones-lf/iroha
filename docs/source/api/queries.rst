@@ -431,9 +431,11 @@ Let's again consider the example of details from the beginning and see, how diff
     }
 
 **account_id is not set**
+
 If account_id is not set - other fields can be empty or not - it will automatically be substituted with query creator's account, which will lead to one of the next cases.
 
-**Only account_id is set**
+**only account_id is set**
+
 In this case, all details about that account are going to be returned, leading to the following response:
 
 .. code-block:: json
@@ -450,6 +452,7 @@ In this case, all details about that account are going to be returned, leading t
     }
 
 **account_id and key are set**
+
 Here, details added by all writers under the key are going to be returned. For example, if we asked for the key "age", that's the response we would get:
 
 .. code-block:: json
@@ -464,6 +467,7 @@ Here, details added by all writers under the key are going to be returned. For e
     }
 
 **account_id and writer are set**
+
 Now, the response will contain all details about this account, added by one specific writer. For example, if we asked for writer "account@b_domain", we would get:
 
 .. code-block:: json
@@ -476,6 +480,7 @@ Now, the response will contain all details about this account, added by one spec
     }
 
 **account_id, key and writer are set**
+
 Lastly, if all three field are set, result will contain details, added the specific writer and under the specific key, for example, if we asked for key "age" and writer "account@a_domain", we would get:
 
 .. code-block:: json
