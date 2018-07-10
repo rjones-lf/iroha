@@ -16,6 +16,7 @@
 #
 
 add_subdirectory(acceptance)
+add_subdirectory(binary)
 add_subdirectory(consensus)
 add_subdirectory(pipeline)
 add_subdirectory(transport)
