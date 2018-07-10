@@ -11,8 +11,7 @@ compile_proto_to_grpc_cpp(loader.proto "-I${SM_SCHEMA_PATH}")
 compile_proto_to_grpc_cpp(mst.proto "-I${SM_SCHEMA_PATH}")
 
 add_library(endpoint
-    # ${SCHEMA_OUT_DIR}/endpoint.pb.cc
-    ${SCHEMA_OUT_DIR}/endpoint.grpc.pb.cc
+    endpoint.grpc.pb.cc
     )
 target_link_libraries(endpoint
     protobuf

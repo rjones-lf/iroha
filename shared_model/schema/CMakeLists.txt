@@ -9,7 +9,7 @@ compile_proto_to_cpp(primitive.proto)
 compile_proto_to_cpp(proposal.proto)
 compile_proto_to_cpp(qry_responses.proto)
 compile_proto_to_cpp(queries.proto)
-compile_proto_to_cpp(endpoint.proto "")
+compile_proto_to_cpp(endpoint.proto)
 
 add_library(schema
     ${SCHEMA_OUT_DIR}/block.pb.cc
