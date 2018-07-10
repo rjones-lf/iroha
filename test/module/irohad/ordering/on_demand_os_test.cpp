@@ -104,7 +104,7 @@ TEST_F(OnDemandOsTest, OverflowRound) {
  * AND initiate next round
  * @then  check that all transactions are appeared in proposal
  */
-TEST_F(OnDemandOsTest, ConcurrentInsert) {
+TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
   auto large_tx_limit = 10000u;
   auto concurrent_os = std::make_shared<OnDemandOrderingServiceImpl>(
       large_tx_limit, proposal_limit, target_round);
