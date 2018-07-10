@@ -10,6 +10,7 @@
 
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "common/result.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -19,12 +20,14 @@ namespace shared_model {
      */
     class CommonObjectsFactory {
      public:
+      template <typename T>
+      using FactoryResult = iroha::expected::Result<T, std::string>;
       /**
        * Creates peer instance
        * @param address - ip address of the peer
        * @param public_key - public key of the peer
        */
-      virtual std::unique_ptr<Peer> createPeer(
+      virtual FactoryResult<std::unique_ptr<Peer>> createPeer(
           const types::AddressType &address,
           const types::PubkeyType &public_key) = 0;
 

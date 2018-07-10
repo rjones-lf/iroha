@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-add_subdirectory(common_objects)
-
 add_library(shared_model_proto_backend
     impl/permissions.cpp
     commands/impl/proto_add_asset_quantity.cpp
@@ -62,5 +60,4 @@ target_link_libraries(shared_model_proto_backend
     schema
     shared_model_interfaces
     iroha_amount
-    proto_common_objects
     )

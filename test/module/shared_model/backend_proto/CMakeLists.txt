@@ -78,11 +78,10 @@ target_link_libraries(permissions_test
     shared_model_proto_backend
     )
 
-addtest(proto_common_objects_test
+addtest(proto_common_objects_factory_test
     common_objects/proto_common_objects_factory_test.cpp
     )
-target_link_libraries(proto_common_objects_test
-    proto_common_objects
+target_link_libraries(proto_common_objects_factory_test
     shared_model_cryptography
     schema)
 
