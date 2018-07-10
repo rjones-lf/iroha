@@ -152,44 +152,50 @@ namespace iroha {
       // casts to proto are not needed and stateful validator does not know
       // about the transport
       std::vector<shared_model::proto::Transaction> valid_proto_txs{};
+      auto txs_begin = std::begin(proposal.transactions());
       auto txs_end = std::end(proposal.transactions());
       for (size_t i = 0; i < proposal.transactions().size(); ++i) {
-        auto current_tx_it = std::begin(proposal.transactions()) + i;
-        auto current_tx = *current_tx_it;
+        auto current_tx_it = txs_begin + i;
         if (not current_tx_it->batch_meta()
             or current_tx_it->batch_meta()->get()->type()
                 != shared_model::interface::types::BatchType::ATOMIC) {
+          // if transaction does not belong to atomic batch
           if (is_valid_tx(*current_tx_it)) {
-            // add tx to list of valid_txs
+            // and it is valid
             valid_proto_txs.push_back(
                 static_cast<const shared_model::proto::Transaction &>(
                     *current_tx_it));
           }
         } else {
+          // find the batch end in proposal's transactions
           auto batch_end_hash =
               current_tx_it->batch_meta()->get()->transactionHashes().back();
           auto batch_end_it =
               std::find_if(current_tx_it, txs_end, [&batch_end_hash](auto &tx) {
-                return tx.hash() == batch_end_hash;
+                return tx.reduced_hash() == batch_end_hash;
               });
           if (batch_end_it == txs_end) {
             // for peer review: adequate exception variants?
             throw std::runtime_error("Batch is formed incorrectly");
           }
+
+          // check all batch's transactions for validness
           if (std::all_of(
-                  current_tx_it, batch_end_it, [&is_valid_tx](auto &tx) {
+                  current_tx_it, batch_end_it + 1, [&is_valid_tx](auto &tx) {
                     return is_valid_tx(tx);
                   })) {
             // batch is successful; add it to the list of valid_txs
             std::transform(
                 current_tx_it,
-                batch_end_it,
+                batch_end_it + 1,
                 std::back_inserter(valid_proto_txs),
                 [](const auto &tx) {
                   return static_cast<const shared_model::proto::Transaction &>(
                       tx);
                 });
           }
+
+          // move directly to transaction after batch
           i += std::distance(current_tx_it, batch_end_it);
         }
       }
