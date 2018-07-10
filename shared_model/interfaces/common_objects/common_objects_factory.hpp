@@ -8,9 +8,10 @@
 
 #include <memory>
 
+#include "common/result.hpp"
+#include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "common/result.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -22,14 +23,21 @@ namespace shared_model {
      public:
       template <typename T>
       using FactoryResult = iroha::expected::Result<T, std::string>;
+
       /**
-       * Creates peer instance
-       * @param address - ip address of the peer
-       * @param public_key - public key of the peer
+       * Create peer instance
        */
       virtual FactoryResult<std::unique_ptr<Peer>> createPeer(
           const types::AddressType &address,
           const types::PubkeyType &public_key) = 0;
+
+      /**
+       * Create account instance
+       */
+      virtual FactoryResult<std::unique_ptr<Account>> createAccount(
+          const types::AccountIdType &account_id,
+          const types::DomainIdType &domain_id,
+          types::QuorumType quorum, const types::JsonType &jsonData) = 0;
 
       virtual ~CommonObjectsFactory() = default;
     };

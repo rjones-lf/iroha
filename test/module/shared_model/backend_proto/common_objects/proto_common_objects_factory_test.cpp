@@ -55,3 +55,50 @@ TEST_F(PeerTest, InvalidPeerInitialization) {
       [](const ValueOf<decltype(peer)> &v) { FAIL() << "Expected error case"; },
       [](const ErrorOf<decltype(peer)> &e) { SUCCEED(); });
 }
+
+class AccountTest : public ::testing::Test {
+ public:
+  interface::types::AccountIdType valid_account_id = "hello@world";
+  interface::types::DomainIdType valid_domain_id = "bit.connect";
+  interface::types::QuorumType valid_quorum = 1;
+  interface::types::JsonType valid_json = R"({"name": "json" })";
+
+  interface::types::AccountIdType invalid_account_id = "hello123";
+};
+
+/**
+ * @given valid data for account
+ * @when account is created via factory
+ * @then account is successfully initialized
+ */
+TEST_F(AccountTest, ValidAccountInitialization) {
+  proto::ProtoCommonObjectsFactory<validation::FieldValidator> factory;
+
+  auto account = factory.createAccount(
+      valid_account_id, valid_domain_id, valid_quorum, valid_json);
+
+  account.match(
+      [&](const ValueOf<decltype(account)> &v) {
+        ASSERT_EQ(v.value->accountId(), valid_account_id);
+        ASSERT_EQ(v.value->domainId(), valid_domain_id);
+        ASSERT_EQ(v.value->quorum(), valid_quorum);
+        ASSERT_EQ(v.value->jsonData(), valid_json);
+      },
+      [](const ErrorOf<decltype(account)> &e) { FAIL() << e.error; });
+}
+
+/**
+ * @given valid data for account
+ * @when account is created via factory
+ * @then account is successfully initialized
+ */
+TEST_F(AccountTest, InvalidAccountInitialization) {
+  proto::ProtoCommonObjectsFactory<validation::FieldValidator> factory;
+
+  auto account = factory.createAccount(
+      invalid_account_id, valid_domain_id, valid_quorum, valid_json);
+
+  account.match(
+      [](const ValueOf<decltype(account)> &v) { FAIL() << "Expected error case"; },
+      [](const ErrorOf<decltype(account)> &e) { SUCCEED(); });
+}
