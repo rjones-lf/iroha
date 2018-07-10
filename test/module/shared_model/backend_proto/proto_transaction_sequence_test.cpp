@@ -30,7 +30,7 @@ class MockTransactionCollectionValidator
  * Creates transaction builder with set creator
  * @return prepared transaction builder
  */
-auto prepareTransactionBuilder(std::string creator) {
+auto prepareTransactionBuilder(const std::string &creator) {
   return TestTransactionBuilder().creatorAccountId(creator);
 }
 
