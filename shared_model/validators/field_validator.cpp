@@ -70,8 +70,9 @@ namespace shared_model {
     const std::regex FieldValidator::detail_key_regex_(detail_key_pattern_);
     const std::regex FieldValidator::role_id_regex_(role_id_pattern_);
 
-    FieldValidator::FieldValidator(time_t future_gap)
-        : future_gap_(future_gap) {}
+    FieldValidator::FieldValidator(time_t future_gap,
+                                   TimeFunction time_provider)
+        : future_gap_(future_gap), time_provider_(time_provider) {}
 
     void FieldValidator::validateAccountId(
         ReasonsGroupType &reason,
@@ -275,7 +276,7 @@ namespace shared_model {
     void FieldValidator::validateCreatedTime(
         ReasonsGroupType &reason,
         const interface::types::TimestampType &timestamp) const {
-      iroha::ts64_t now = iroha::time::now();
+      iroha::ts64_t now = time_provider_();
 
       if (now + future_gap_ < timestamp) {
         auto message = (boost::format("bad timestamp: sent from future, "
@@ -285,7 +286,7 @@ namespace shared_model {
         reason.second.push_back(std::move(message));
       }
 
-      if (now > max_delay + timestamp) {
+      if (now > kMaxDelay + timestamp) {
         auto message =
             (boost::format("bad timestamp: too old, timestamp: %llu, now: %llu")
              % timestamp % now)
@@ -309,6 +310,9 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::types::SignatureRangeType &signatures,
         const crypto::Blob &source) const {
+      if (boost::empty(signatures)) {
+        reason.second.push_back("Signatures cannot be empty");
+      }
       for (const auto &signature : signatures) {
         const auto &sign = signature.signedData();
         const auto &pkey = signature.publicKey();
@@ -353,8 +357,7 @@ namespace shared_model {
     }
     void FieldValidator::validateBatchMeta(
         shared_model::validation::ReasonsGroupType &reason,
-        const interface::BatchMeta &batch_meta)
-        const {}
+        const interface::BatchMeta &batch_meta) const {}
 
     void FieldValidator::validateHeight(
         shared_model::validation::ReasonsGroupType &reason,

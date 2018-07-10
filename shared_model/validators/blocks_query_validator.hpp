@@ -18,7 +18,8 @@ namespace shared_model {
     template <typename FieldValidator>
     class BlocksQueryValidator {
      public:
-      BlocksQueryValidator(const FieldValidator &field_validator = FieldValidator())
+      BlocksQueryValidator(
+          const FieldValidator &field_validator = FieldValidator())
           : field_validator_(field_validator) {}
 
       /**
@@ -42,7 +43,7 @@ namespace shared_model {
         return answer;
       }
 
-     private:
+     protected:
       Answer answer_;
       FieldValidator field_validator_;
     };

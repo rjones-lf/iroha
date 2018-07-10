@@ -23,6 +23,9 @@ struct CommandFixture {
 
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier_;
+  rxcpp::subjects::subject<
+      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+      vprop_notifier_;
   rxcpp::subjects::subject<iroha::Commit> commit_notifier_;
   rxcpp::subjects::subject<iroha::DataType> mst_notifier_;
 
@@ -32,6 +35,8 @@ struct CommandFixture {
         .WillRepeatedly(Return(prop_notifier_.get_observable()));
     EXPECT_CALL(*pcs_, on_commit())
         .WillRepeatedly(Return(commit_notifier_.get_observable()));
+    EXPECT_CALL(*pcs_, on_verified_proposal())
+        .WillRepeatedly(Return(vprop_notifier_.get_observable()));
 
     mst_processor_ = std::make_shared<iroha::MockMstProcessor>();
     EXPECT_CALL(*mst_processor_, onPreparedTransactionsImpl())
