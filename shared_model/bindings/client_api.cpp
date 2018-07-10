@@ -42,7 +42,6 @@ namespace shared_model {
       return std::string("unknown object");
     }
 
-    using namespace iroha;
     std::string validateQuery(const Blob &b) {
       auto blob = convert(b);
       auto s = get<iroha::protocol::Query>(blob) | [](auto qry) {
