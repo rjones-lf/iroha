@@ -132,19 +132,9 @@ OnDemandOrderingServiceImpl::emitProposal() {
 }
 
 void OnDemandOrderingServiceImpl::tryErase() {
-  if (round_queue_.size() < number_of_proposals_) {
-    return;
-  }
-
-  if (round_queue_.empty() and round_queue_.front().second == kFirstRound) {
+  if (round_queue_.size() >= number_of_proposals_
+      and round_queue_.front().second == kFirstRound) {
     proposal_map_.erase(round_queue_.front());
     round_queue_.pop();
-    return;
-  } else {
-    while (not round_queue_.empty()
-           and round_queue_.front().second != kFirstRound) {
-      proposal_map_.erase(round_queue_.front());
-      round_queue_.pop();
-    }
   }
 }
