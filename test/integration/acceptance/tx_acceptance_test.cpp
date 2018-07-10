@@ -241,8 +241,7 @@ TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
  */
 TEST_F(AcceptanceTest, EmptySignatures) {
   std::string kAccountId = "some@account";
-  shared_model::proto::Transaction proto_tx =
-      baseTx<TestTransactionBuilder>().build().getTransport();
+  auto proto_tx = baseTx<TestTransactionBuilder>().build().getTransport();
   proto_tx.clear_signatures();
   auto tx = shared_model::proto::Transaction(proto_tx);
 
