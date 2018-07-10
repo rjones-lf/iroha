@@ -31,8 +31,6 @@ namespace iroha {
      public:
       StatefulValidatorImpl();
 
-      ~StatefulValidatorImpl() override {};
-
       VerifiedProposalAndErrors validate(
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) override;

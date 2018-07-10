@@ -18,12 +18,6 @@
 #include "validation/impl/stateful_validator_impl.hpp"
 
 #include <boost/format.hpp>
-#include <boost/range/adaptor/filtered.hpp>
-#include <boost/range/adaptor/indexed.hpp>
-#include <boost/range/adaptor/transformed.hpp>
-#include <boost/range/algorithm_ext/push_back.hpp>
-#include <boost/range/begin.hpp>
-#include <boost/range/end.hpp>
 #include <string>
 
 #include "builders/protobuf/proposal.hpp"
@@ -180,13 +174,15 @@ namespace iroha {
           }
 
           // check all batch's transactions for validness
-          std::string wsv_savepoint_name = "batch_" + current_tx_it->hash().hex();
+          std::string wsv_savepoint_name =
+              "batch_" + current_tx_it->hash().hex();
           temporaryWsv.createSavepoint(wsv_savepoint_name);
           if (std::all_of(
                   current_tx_it, batch_end_it + 1, [&is_valid_tx](auto &tx) {
                     return is_valid_tx(tx);
                   })) {
-            // batch is successful; add it to the list of valid_txs and release savepoint
+            // batch is successful; add it to the list of valid_txs and release
+            // savepoint
             std::transform(
                 current_tx_it,
                 batch_end_it + 1,
