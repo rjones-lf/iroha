@@ -85,6 +85,12 @@ namespace shared_model {
         return copy;
       }
 
+      TransactionStatusBuilder errorMsg(const std::string &msg) {
+        TransactionStatusBuilder copy(*this);
+        copy.builder_ = this->builder_.errorMsg(msg);
+        return copy;
+      }
+
      private:
       BuilderImpl builder_;
     };

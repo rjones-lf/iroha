@@ -36,7 +36,7 @@ namespace iroha {
 
   expected::Error<CommandError> makeCommandError(
       const std::string &error_message,
-      const std::string command_name) noexcept {
+      const std::string &command_name) noexcept {
     return expected::makeError(CommandError{command_name, error_message});
   }
 
@@ -1158,7 +1158,6 @@ namespace iroha {
     // Amount is formed wrong
     if (command.amount().precision() > asset.value()->precision()) {
       return makeCommandError(
-
                "is valid command validation failed: account "
                + command.srcAccountId()
                + ",  precision of command's "

@@ -16,11 +16,13 @@
  */
 
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
+#include "builders/protobuf/proposal.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
@@ -74,6 +76,8 @@ class ClientServerTest : public testing::Test {
         .WillRepeatedly(Return(prop_notifier.get_observable()));
     EXPECT_CALL(*pcsMock, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
+    EXPECT_CALL(*pcsMock, on_verified_proposal())
+        .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
     EXPECT_CALL(*mst, onPreparedTransactionsImpl())
         .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
@@ -119,6 +123,9 @@ class ClientServerTest : public testing::Test {
   std::shared_ptr<MockPeerCommunicationService> pcsMock;
   std::shared_ptr<iroha::MockMstProcessor> mst;
 
+  rxcpp::subjects::subject<
+      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+      verified_prop_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 
@@ -186,6 +193,63 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
   ASSERT_EQ(res.answer.tx_status(),
             iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
   ASSERT_NE(res.answer.error_message().size(), 0);
+}
+
+/**
+ * This test checks, if tx, which did not pass stateful validation, is shown to
+ * client with a corresponding status and error message
+ *
+ * @given real client and mocked pcs
+ * @when sending a stateless valid transaction @and failing it at stateful
+ * validation
+ * @then ensure that client sees:
+ *       - status of this transaction as STATEFUL_VALIDATION_FAILED
+ *       - error message is the same, as the one with which transaction was
+ *         failed
+ */
+TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
+  iroha_cli::CliClient client(ip, port);
+  EXPECT_CALL(*pcsMock, propagate_transaction(_)).Times(1);
+
+  // creating stateful invalid tx
+  auto tx = TransactionBuilder()
+                .creatorAccountId("some@account")
+                .createdTime(iroha::time::now())
+                .transferAsset("some@account",
+                               "another@account",
+                               "doge#doge",
+                               "some transfer",
+                               "100.0")
+                .quorum(1)
+                .build()
+                .signAndAddSignature(
+                    shared_model::crypto::DefaultCryptoAlgorithmType::
+                        generateKeypair())
+                .finish();
+  ASSERT_EQ(client.sendTx(tx).answer, iroha_cli::CliClient::OK);
+
+  // fail the tx
+  auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
+      TestProposalBuilder().height(0).createdTime(iroha::time::now()).build());
+  verified_prop_notifier.get_subscriber().on_next(
+      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
+          std::make_pair(verified_proposal,
+                         iroha::validation::TransactionsErrors{std::make_pair(
+                             iroha::validation::CommandError{
+                                 "CommandName", "CommandError", true, 2},
+                             tx.hash())})));
+  auto stringified_error = "Stateful validation error in transaction "
+                           + tx.hash().hex() + ": command 'CommandName' with "
+                           "index '2' did not pass verification with "
+                           "error 'CommandError'";
+
+  // check it really failed with specific message
+  auto answer =
+      client.getTxStatus(shared_model::crypto::toBinaryString(tx.hash()))
+          .answer;
+  ASSERT_EQ(answer.tx_status(),
+            iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED);
+  ASSERT_EQ(answer.error_message(), stringified_error);
 }
 
 TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {

@@ -59,12 +59,12 @@ namespace shared_model {
 
      public:
       explicit ContainerValidator(
+          const FieldValidator &field_validator = FieldValidator(),
           const TransactionsCollectionValidator
               &transactions_collection_validator =
                   TransactionsCollectionValidator(),
           const TransactionValidator &transaction_validator =
-              TransactionValidator(),
-          const FieldValidator &field_validator = FieldValidator())
+              TransactionValidator())
           : transactions_collection_validator_(
                 transactions_collection_validator),
             transaction_validator_(transaction_validator),
