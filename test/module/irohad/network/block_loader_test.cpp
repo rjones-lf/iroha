@@ -131,7 +131,7 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
   // Current block height 1 => Other block height 2 => one block received
 
   // time validation should work based on the block field
-  // so it should pass statless BlockLoader validation
+  // so it should pass stateless BlockLoader validation
   auto block = getBaseBlockBuilder()
                    .createdTime(228)
                    .build()
@@ -169,7 +169,7 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
   // Current block height 1 => Other block height n => n-1 blocks received
 
   // time validation should work based on the block field
-  // so it should pass statless BlockLoader validation
+  // so it should pass stateless BlockLoader validation
   auto block = getBaseBlockBuilder()
                    .createdTime(1337)
                    .build()
