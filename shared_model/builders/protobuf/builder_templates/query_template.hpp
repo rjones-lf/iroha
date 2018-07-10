@@ -158,7 +158,7 @@ namespace shared_model {
       auto getAccountDetail(const interface::types::AccountIdType &account_id = "",
                             const interface::types::AccountDetailKeyType &key = "",
                             const interface::types::AccountIdType &writer = "") {
-        return queryField([&](auto proto_query) {
+        return queryField([&](auto &proto_query) {
           auto query = proto_query->mutable_get_account_detail();
           if (not account_id.empty()) {
             query->set_account_id(account_id);

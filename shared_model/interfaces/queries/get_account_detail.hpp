@@ -26,7 +26,16 @@
 namespace shared_model {
   namespace interface {
     /**
-     * Query for get all account's assets and balance
+     * Query for get all account's details; the algorithm of retrieving them is
+     * the following:
+     *  - if query has only accountId, all details about the specified account
+     *    will be returned
+     *  - if there is a key in a query, details written by all writers under
+     *    this key will be returned
+     *  - if there is a writer in a query, all details written by this writer
+     *    will be returned
+     *  - if there are both key and writer in a query, details written by this
+     *    writer AND under this key will be returned
      */
     class GetAccountDetail : public ModelPrimitive<GetAccountDetail> {
      public:
