@@ -83,5 +83,6 @@ addtest(proto_common_objects_factory_test
     )
 target_link_libraries(proto_common_objects_factory_test
     shared_model_cryptography
+    shared_model_stateless_validation
     schema)
 
