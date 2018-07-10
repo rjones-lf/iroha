@@ -14,7 +14,6 @@ add_library(endpoint
     endpoint.grpc.pb.cc
     )
 target_link_libraries(endpoint
-    protobuf
     grpc++
     schema
     )
