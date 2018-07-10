@@ -24,6 +24,6 @@ add_library(schema
 target_link_libraries(schema
     protobuf
     )
-set_target_properties(schema PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${SCHEMA_OUT_DIR}
+target_include_directories(schema PUBLIC
+    ${SCHEMA_OUT_DIR}
     )
