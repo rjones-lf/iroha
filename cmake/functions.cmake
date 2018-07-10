@@ -25,7 +25,7 @@ function(addtest test_name SOURCES)
     set(test_xml_output --gtest_output=xml:${REPORT_DIR}/xunit-${test_name}.xml)
   endif ()
   add_executable(${test_name} ${SOURCES})
-  target_link_libraries(${test_name} gtest gmock)
+  target_link_libraries(${test_name} gtest::main gmock::main)
   target_include_directories(${test_name} PUBLIC ${PROJECT_SOURCE_DIR}/test)
 
   # fetch directory after test in source dir call

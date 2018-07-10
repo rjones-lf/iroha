@@ -8,8 +8,8 @@ find_package(protobuf-mutator REQUIRED)
 add_executable(torii_fuzzing torii_fuzz.cpp)
 target_link_libraries(torii_fuzzing
   rxcpp
-  gtest
-  gmock
+  gtest::gtest
+  gmock::gmock
   ametsuchi
   libs_common
   torii_service
@@ -19,8 +19,8 @@ target_link_libraries(torii_fuzzing
 add_executable(status_fuzzing status_fuzz.cpp)
 target_link_libraries(status_fuzzing
   rxcpp
-  gtest
-  gmock
+  gtest::gtest
+  gmock::gmock
   ametsuchi
   libs_common
   torii_service
@@ -30,8 +30,8 @@ target_link_libraries(status_fuzzing
 add_executable(find_fuzzing find_fuzz.cpp)
 target_link_libraries(find_fuzzing
   rxcpp
-  gtest
-  gmock
+  gtest::gtest
+  gmock::gmock
   ametsuchi
   libs_common
   torii_service
