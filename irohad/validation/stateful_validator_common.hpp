@@ -6,32 +6,42 @@
 #ifndef IROHA_STATEFUL_VALIDATOR_COMMON_HPP
 #define IROHA_STATEFUL_VALIDATOR_COMMON_HPP
 
-#include "common/types.hpp"
+#include <vector>
+
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
     class Proposal;
   }
-}
+}  // namespace shared_model
 
 namespace iroha {
   namespace validation {
 
-    /// Name of the failed command
-    using CommandName = std::string;
+    /// Type of command error report
+    struct CommandError {
+      /// Name of the failed command
+      std::string name;
 
-    /// Error, with which the command failed
-    using CommandError = std::string;
+      /// Error, with which the command failed
+      std::string error;
 
-    /// Failed command's name and error
-    using CommandNameAndError = std::pair<CommandName, CommandError>;
+      /// Shows, if transaction has passed initial validation
+      bool tx_passed_initial_validation;
 
-    /// Type of per-transaction errors, which appeared during validation
-    /// process; contains names of commands, commands errors themselves and
-    /// transaction hashes
-    using TransactionsErrors =
-        std::vector<std::pair<CommandNameAndError,
-                              shared_model::interface::types::HashType>>;
+      /// Position of the failed command in transaction
+      size_t index = 0;
+    };
+
+    /// Type of transaction error, which appeared during validation
+    /// process; contains names of commands, commands errors themselves,
+    /// commands indices and transaction hashes
+    using TransactionError =
+        std::pair<CommandError, shared_model::interface::types::HashType>;
+
+    /// Collection of transactions errors
+    using TransactionsErrors = std::vector<TransactionError>;
 
     /// Type of verified proposal and errors appeared in the process; first
     /// dimension of errors vector is transaction, second is error itself with

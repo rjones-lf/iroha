@@ -49,7 +49,8 @@ namespace iroha {
       void process_proposal(
           const shared_model::interface::Proposal &proposal) override;
 
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
+      rxcpp::observable<
+          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       on_verified_proposal() override;
 
       void process_verified_proposal(
@@ -61,7 +62,7 @@ namespace iroha {
      private:
       // internal
       rxcpp::subjects::subject<
-          std::shared_ptr<shared_model::interface::Proposal>>
+          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
           notifier_;
       rxcpp::subjects::subject<shared_model::interface::BlockVariant>
           block_notifier_;

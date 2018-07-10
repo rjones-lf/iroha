@@ -20,17 +20,14 @@
 #include <grpc++/server_builder.h>
 #include <gtest/gtest.h>
 
-#include "backend/protobuf/block.hpp"
-#include "backend/protobuf/common_objects/peer.hpp"
 #include "builders/common_objects/peer_builder.hpp"
-#include "builders/protobuf/block.hpp"
-#include "builders/protobuf/builder_templates/block_template.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/hash.hpp"
 #include "datetime/time.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
 #include "validators/default_validator.hpp"
@@ -51,10 +48,7 @@ class BlockLoaderTest : public testing::Test {
   void SetUp() override {
     peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
-    loader = std::make_shared<BlockLoaderImpl>(
-        peer_query,
-        storage,
-        std::make_shared<shared_model::validation::DefaultBlockValidator>());
+    loader = std::make_shared<BlockLoaderImpl>(peer_query, storage);
     service = std::make_shared<BlockLoaderService>(storage);
 
     grpc::ServerBuilder builder;
@@ -82,17 +76,12 @@ class BlockLoaderTest : public testing::Test {
   }
 
   auto getBaseBlockBuilder() const {
-    constexpr auto kTotal = (1 << 4) - 1;
-    return shared_model::proto::TemplateBlockBuilder<
-               kTotal,
-               shared_model::validation::DefaultBlockValidator,
-               shared_model::proto::Block>()
-        .height(1)
-        .prevHash(Hash(std::string(
-            shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength,
-            '0')))
-        .createdTime(iroha::time::now());
+    return TestBlockBuilder().height(1).prevHash(kPrevHash).createdTime(
+        iroha::time::now());
   }
+
+  const Hash kPrevHash =
+      Hash(std::string(DefaultCryptoAlgorithmType::kHashLength, '0'));
 
   std::shared_ptr<shared_model::interface::Peer> peer;
   PublicKey peer_key =
@@ -133,9 +122,15 @@ TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
  */
 TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
   // Current block height 1 => Other block height 2 => one block received
-  auto block = getBaseBlockBuilder().build();
 
-  auto top_block = getBaseBlockBuilder().height(block.height() + 1).build();
+  // time validation should work based on the block field
+  // so it should pass statless BlockLoader validation
+  auto block = getBaseBlockBuilder().createdTime(228).build();
+
+  auto top_block = getBaseBlockBuilder()
+                       .createdTime(block.createdTime() + 1)
+                       .height(block.height() + 1)
+                       .build();
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
@@ -159,7 +154,10 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
  */
 TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
   // Current block height 1 => Other block height n => n-1 blocks received
-  auto block = getBaseBlockBuilder().build();
+
+  // time validation should work based on the block field
+  // so it should pass statless BlockLoader validation
+  auto block = getBaseBlockBuilder().createdTime(1337).build();
 
   auto num_blocks = 2;
   auto next_height = block.height() + 1;
@@ -219,7 +217,7 @@ TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
   EXPECT_CALL(*storage, getBlocksFrom(1))
       .WillOnce(Return(rxcpp::observable<>::just(present).map(
           [](auto &&x) { return wBlock(clone(x)); })));
-  auto block = loader->retrieveBlock(peer_key, Hash(std::string(32, '0')));
+  auto block = loader->retrieveBlock(peer_key, kPrevHash);
 
   ASSERT_FALSE(block);
 }

@@ -33,9 +33,9 @@ namespace iroha {
       TemporaryWsvImpl(std::unique_ptr<pqxx::lazyconnection> connection,
                        std::unique_ptr<pqxx::nontransaction> transaction);
 
-      expected::Result<void, validation::CommandNameAndError> apply(
+      expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &,
-          std::function<expected::Result<void, validation::CommandNameAndError>(
+          std::function<expected::Result<void, validation::CommandError>(
               const shared_model::interface::Transaction &, WsvQuery &)>
               function) override;
 
