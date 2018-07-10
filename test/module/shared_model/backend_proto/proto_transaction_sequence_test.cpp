@@ -47,15 +47,18 @@ auto createAtomicBatch(std::vector<std::string> creators) {
     reduced_hashes.push_back(tx.reducedHash());
   }
 
-  return creators
-      | boost::adaptors::transformed([reduced_hashes](const auto &creator) {
-           auto res = std::shared_ptr<interface::Transaction>(
-               clone(prepareTransactionBuilder(creator)
-                         .batchMeta(interface::types::BatchType::ATOMIC,
-                                    reduced_hashes)
-                         .build()));
-           return res;
-         });
+  interface::types::SharedTxsCollectionType txs;
+  std::for_each(
+      creators.begin(),
+      creators.end(),
+      [&txs, &reduced_hashes](const auto &creator) {
+        txs.emplace_back(clone(
+            prepareTransactionBuilder(creator)
+                .batchMeta(interface::types::BatchType::ATOMIC, reduced_hashes)
+                .build()));
+      });
+
+  return txs;
 }
 
 /**
