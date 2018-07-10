@@ -149,3 +149,27 @@ TEST_F(OnDemandOsTest, Erase) {
     round = {round.first + 1, round.second};
   }
 }
+
+/**
+ * @given initialized on-demand OS
+ * @when  insert proposal_limit rounds twice
+ * AND outcome is REJECT
+ * @then  on second rounds check that old proposals are expired
+ */
+TEST_F(OnDemandOsTest, EraseReject) {
+  auto round = target_round;
+  for (auto i = target_round.second; i < proposal_limit + 1; ++i) {
+    generateTransactionsAndInsert(*os, {1, proposal_limit});
+    os->onCollaborationOutcome(RoundOutput::REJECT, round);
+    round = {round.first, i};
+    ASSERT_TRUE(os->onRequestProposal({round.first, i}));
+  }
+
+  for (uint64_t i = proposal_limit + 1, j = 1; i < 2 * proposal_limit;
+       ++i, ++j) {
+    generateTransactionsAndInsert(*os, {1, proposal_limit});
+    ASSERT_FALSE(os->onRequestProposal({round.first, i}));
+    os->onCollaborationOutcome(RoundOutput::REJECT, round);
+    round = {round.first, round.second};
+  }
+}

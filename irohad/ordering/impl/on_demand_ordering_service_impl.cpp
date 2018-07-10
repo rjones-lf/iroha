@@ -132,8 +132,7 @@ OnDemandOrderingServiceImpl::emitProposal() {
 }
 
 void OnDemandOrderingServiceImpl::tryErase() {
-  if (round_queue_.size() >= number_of_proposals_
-      and round_queue_.front().second == kFirstRound) {
+  if (round_queue_.size() >= number_of_proposals_) {
     proposal_map_.erase(round_queue_.front());
     round_queue_.pop();
   }
