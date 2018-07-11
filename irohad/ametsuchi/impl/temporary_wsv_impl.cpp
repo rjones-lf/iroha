@@ -56,7 +56,7 @@ namespace iroha {
               };
       };
 
-      createSavepoint("savepoint_");
+      auto savepoint_wrapper = createSavepoint("savepoint_");
 
       return apply_function(tx, *wsv_) |
                  [this,
@@ -78,30 +78,42 @@ namespace iroha {
                            return false;
                          });
           if (not cmd_is_valid) {
-            rollbackToSavepoint("savepoint_");
             return expected::makeError(cmd_error);
           }
         }
         // success
-        releaseSavepoint("savepoint_");
+        savepoint_wrapper->release();
         return {};
       };
     }
 
-    void TemporaryWsvImpl::createSavepoint(const std::string &name) {
-      transaction_->exec("SAVEPOINT " + name + ";");
-    }
-
-    void TemporaryWsvImpl::releaseSavepoint(const std::string &name) {
-      transaction_->exec("RELEASE SAVEPOINT " + name + ";");
-    }
-
-    void TemporaryWsvImpl::rollbackToSavepoint(const std::string &name) {
-      transaction_->exec("ROLLBACK TO SAVEPOINT " + name + ";");
+    std::shared_ptr<TemporaryWsv::SavepointWrapper>
+    TemporaryWsvImpl::createSavepoint(const std::string &name) {
+      return std::make_shared<SavepointWrapper>{SavepointWrapper{this, name}};
     }
 
     TemporaryWsvImpl::~TemporaryWsvImpl() {
       transaction_->exec("ROLLBACK;");
     }
+
+    TemporaryWsvImpl::SavepointWrapper::SavepointWrapper(
+        const iroha::ametsuchi::TemporaryWsvImpl &wsv,
+        std::string savepoint_name)
+        : transaction_{wsv.transaction_},
+          savepoint_name_{std::move(savepoint_name)},
+          is_released_{false} {};
+
+    void TemporaryWsvImpl::SavepointWrapper::release() {
+      is_released_ = true;
+    }
+
+    TemporaryWsvImpl::SavepointWrapper::~SavepointWrapper() {
+      if (not is_released_) {
+        transaction_->exec("ROLLBACK TO SAVEPOINT " + savepoint_name_ + ";");
+      } else {
+        transaction_->exec("RELEASE SAVEPOINT " + savepoint_name_ + ";");
+      }
+    }
+
   }  // namespace ametsuchi
 }  // namespace iroha

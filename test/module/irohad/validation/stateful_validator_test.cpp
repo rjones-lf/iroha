@@ -7,6 +7,7 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm_ext/push_back.hpp>
 
+#include "ametsuchi/impl/temporary_wsv_impl.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "common/result.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
@@ -239,6 +240,10 @@ TEST_F(Validator, Batches) {
                       .transactions(txs)
                       .build();
 
+  EXPECT_CALL(*temp_wsv_mock, createSavepoint(_))
+      .WillRepeatedly(
+          Return(std::make_shared<
+                 iroha::ametsuchi::MockTemporaryWsvSavepointWrapper>()));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[0])), _))
       .WillOnce(Return(iroha::expected::Value<void>({})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[1])), _))

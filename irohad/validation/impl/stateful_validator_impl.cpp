@@ -174,9 +174,8 @@ namespace iroha {
           }
 
           // check all batch's transactions for validness
-          std::string wsv_savepoint_name =
-              "batch_" + current_tx_it->hash().hex();
-          temporaryWsv.createSavepoint(wsv_savepoint_name);
+          auto savepoint = temporaryWsv.createSavepoint(
+              "batch_" + current_tx_it->hash().hex());
           if (std::all_of(
                   current_tx_it, batch_end_it + 1, [&is_valid_tx](auto &tx) {
                     return is_valid_tx(tx);
@@ -191,9 +190,7 @@ namespace iroha {
                   return static_cast<const shared_model::proto::Transaction &>(
                       tx);
                 });
-            temporaryWsv.releaseSavepoint(wsv_savepoint_name);
-          } else {
-            temporaryWsv.rollbackToSavepoint(wsv_savepoint_name);
+            savepoint->release();
           }
 
           // move directly to transaction after batch

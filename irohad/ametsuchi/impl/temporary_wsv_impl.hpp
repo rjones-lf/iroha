@@ -20,7 +20,7 @@
 
 #include <pqxx/connection>
 #include <pqxx/nontransaction>
-
+#include <utility>
 #include "ametsuchi/temporary_wsv.hpp"
 #include "execution/command_executor.hpp"
 #include "logger/logger.hpp"
@@ -30,6 +30,20 @@ namespace iroha {
   namespace ametsuchi {
     class TemporaryWsvImpl : public TemporaryWsv {
      public:
+      struct SavepointWrapper : public TemporaryWsv::SavepointWrapper {
+        SavepointWrapper(const TemporaryWsvImpl &wsv,
+                         std::string savepoint_name);
+
+        void release() override;
+
+        ~SavepointWrapper() override;
+
+       private:
+        std::shared_ptr<pqxx::nontransaction> transaction_;
+        std::string savepoint_name_;
+        bool is_released_;
+      };
+
       TemporaryWsvImpl(std::unique_ptr<pqxx::lazyconnection> connection,
                        std::unique_ptr<pqxx::nontransaction> transaction);
 
@@ -39,17 +53,14 @@ namespace iroha {
               const shared_model::interface::Transaction &, WsvQuery &)>
               function) override;
 
-      void createSavepoint(const std::string &name) override ;
-
-      void releaseSavepoint(const std::string &name) override ;
-
-      void rollbackToSavepoint(const std::string &name) override;
+      std::shared_ptr<TemporaryWsv::SavepointWrapper> createSavepoint(
+          const std::string &name) override;
 
       ~TemporaryWsvImpl() override;
 
      private:
       std::unique_ptr<pqxx::lazyconnection> connection_;
-      std::unique_ptr<pqxx::nontransaction> transaction_;
+      std::shared_ptr<pqxx::nontransaction> transaction_;
       std::unique_ptr<WsvQuery> wsv_;
       std::unique_ptr<WsvCommand> executor_;
       std::shared_ptr<CommandExecutor> command_executor_;
