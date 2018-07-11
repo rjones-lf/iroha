@@ -12,6 +12,7 @@
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/common_objects/domain.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -49,7 +50,7 @@ namespace shared_model {
           const Amount &balance) = 0;
 
       /**
-       * Create amount instance
+       * Create amount instance from string
        *
        * @param value integer will be divided by 10 * precision,
        * so value 123 with precision 2 will become Amount of 1.23
@@ -57,6 +58,30 @@ namespace shared_model {
       virtual FactoryResult<std::unique_ptr<Amount>> createAmount(
           boost::multiprecision::uint256_t value,
           types::PrecisionType precision) = 0;
+
+      /**
+       * Create amount instance from string
+       *
+       * @param value must represent valid number.
+       * For example: "1.23", "10" etc.
+       */
+      virtual FactoryResult<std::unique_ptr<Amount>> createAmount(
+          std::string amount) = 0;
+
+      /**
+       * Create asset instance
+       */
+      virtual FactoryResult<std::unique_ptr<Asset>> createAsset(
+          const types::AssetIdType &asset_id,
+          const types::DomainIdType &domain_id,
+          types::PrecisionType precision) = 0;
+
+      /**
+       * Create domain instance
+       */
+      virtual FactoryResult<std::unique_ptr<Domain>> createDomain(
+          const types::DomainIdType &domain_id,
+          const types::RoleIdType &default_role) = 0;
 
       virtual ~CommonObjectsFactory() = default;
     };

@@ -6,9 +6,13 @@
 #ifndef IROHA_PROTO_COMMON_OBJECTS_FACTORY_HPP
 #define IROHA_PROTO_COMMON_OBJECTS_FACTORY_HPP
 
+#include <regex>
+
 #include "backend/protobuf/common_objects/account.hpp"
 #include "backend/protobuf/common_objects/account_asset.hpp"
+#include "backend/protobuf/common_objects/asset.hpp"
 #include "backend/protobuf/common_objects/peer.hpp"
+#include "backend/protobuf/common_objects/domain.hpp"
 #include "common/result.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "primitive.pb.h"
@@ -105,18 +109,96 @@ namespace shared_model {
 
         auto proto_amount = std::make_unique<Amount>(std::move(amount));
 
+        auto answer = validate(*proto_amount, [](const auto &, auto &) {
+          // no validation needed,
+          // since any amount is valid in general context
+        });
+
+        if (answer) {
+          return iroha::expected::makeError(answer.reason());
+        }
+
+        return iroha::expected::makeValue<std::unique_ptr<interface::Amount>>(
+            std::move(proto_amount));
+      }
+
+      FactoryResult<std::unique_ptr<interface::Amount>> createAmount(
+          std::string amount) override {
+        // taken from iroha::model::Amount
+        // check if valid number
+        const static std::regex e("([0-9]*\\.[0-9]+|[0-9]+)");
+        if (!std::regex_match(amount, e)) {
+          return iroha::expected::makeError("number string is invalid");
+        }
+
+        // get precision
+        auto dot_place = amount.find('.');
+        interface::types::PrecisionType precision;
+        if (dot_place > amount.size()) {
+          precision = 0;
+        } else {
+          precision = amount.size() - dot_place - 1;
+          // erase dot from the string
+          amount.erase(std::remove(amount.begin(), amount.end(), '.'),
+                       amount.end());
+        }
+
+        auto begin = amount.find_first_not_of('0');
+
+        // create uint256 value from obtained string
+        boost::multiprecision::uint256_t value = 0;
+        if (begin <= amount.size()) {
+          value = boost::multiprecision::uint256_t(amount.substr(begin));
+        }
+
+        return createAmount(value, precision);
+      }
+
+      FactoryResult<std::unique_ptr<interface::Asset>> createAsset(
+          const interface::types::AssetIdType &asset_id,
+          const interface::types::DomainIdType &domain_id,
+          interface::types::PrecisionType precision) override {
+        iroha::protocol::Asset asset;
+        asset.set_asset_id(asset_id);
+        asset.set_domain_id(domain_id);
+        asset.set_precision(precision);
+
+        auto proto_asset = std::make_unique<Asset>(std::move(asset));
+
         auto answer =
-            validate(*proto_amount, [](const auto &, auto &) {
-              // no validation needed,
-              // since any amount is valid in general context
+            validate(*proto_asset, [this](const auto &asset, auto &reasons) {
+              validator_.validateAssetId(reasons, asset.assetId());
+              validator_.validateDomainId(reasons, asset.domainId());
             });
 
         if (answer) {
           return iroha::expected::makeError(answer.reason());
         }
 
-        return iroha::expected::makeValue<
-            std::unique_ptr<interface::Amount>>(std::move(proto_amount));
+        return iroha::expected::makeValue<std::unique_ptr<interface::Asset>>(
+            std::move(proto_asset));
+      }
+
+      FactoryResult<std::unique_ptr<interface::Domain>> createDomain(
+          const interface::types::DomainIdType &domain_id,
+          const interface::types::RoleIdType &default_role) override {
+        iroha::protocol::Domain domain;
+        domain.set_domain_id(domain_id);
+        domain.set_default_role(default_role);
+
+        auto proto_domain = std::make_unique<Domain>(std::move(domain));
+
+        auto answer = validate(*proto_domain, [this](const auto &domain, auto &reason) {
+          validator_.validateDomainId(reason, domain.domainId());
+          validator_.validateRoleId(reason, domain.defaultRole());
+        });
+
+        if (answer) {
+          return iroha::expected::makeError(answer.reason());
+        }
+
+        return iroha::expected::makeValue<std::unique_ptr<interface::Domain>>(
+            std::move(proto_domain));
       }
 
      private:
