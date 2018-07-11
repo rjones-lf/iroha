@@ -6,9 +6,9 @@
 #include <gmock/gmock.h>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/irange.hpp>
+#include "framework/batch_helper.hpp"
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
-#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace shared_model;
 using ::testing::_;
@@ -27,41 +27,6 @@ class MockTransactionCollectionValidator
 };
 
 /**
- * Creates transaction builder with set creator
- * @return prepared transaction builder
- */
-auto prepareTransactionBuilder(const std::string &creator) {
-  return TestTransactionBuilder().creatorAccountId(creator);
-}
-
-/**
- * Creates atomic batch from provided creator accounts
- * @param creators vector of creator account ids
- * @return atomic batch of the same size as the size of creator account ids
- */
-auto createAtomicBatch(std::vector<std::string> creators) {
-  std::vector<interface::types::HashType> reduced_hashes;
-
-  for (const auto &creator : creators) {
-    auto tx = prepareTransactionBuilder(creator).build();
-    reduced_hashes.push_back(tx.reducedHash());
-  }
-
-  interface::types::SharedTxsCollectionType txs;
-  std::for_each(
-      creators.begin(),
-      creators.end(),
-      [&txs, &reduced_hashes](const auto &creator) {
-        txs.emplace_back(clone(
-            prepareTransactionBuilder(creator)
-                .batchMeta(interface::types::BatchType::ATOMIC, reduced_hashes)
-                .build()));
-      });
-
-  return txs;
-}
-
-/**
  * @given Transaction collection of several transactions
  * @when create transaction sequence
  * @and transactions validator returns empty answer
@@ -73,8 +38,8 @@ TEST(TransactionSequenceTest, CreateTransactionSequenceWhenValid) {
   EXPECT_CALL(transactions_validator, validatePointers(_))
       .WillOnce(Return(validation::Answer()));
 
-  std::shared_ptr<interface::Transaction> tx(
-      clone(prepareTransactionBuilder("account@domain").build()));
+  std::shared_ptr<interface::Transaction> tx(clone(
+      framework::batch::prepareTransactionBuilder("account@domain").build()));
 
   auto tx_sequence = interface::TransactionSequence::createTransactionSequence(
       std::vector<decltype(tx)>{tx, tx, tx}, transactions_validator);
@@ -97,8 +62,8 @@ TEST(TransactionSequenceTest, CreateTransactionSequenceWhenInvalid) {
 
   EXPECT_CALL(res, validatePointers(_)).WillOnce(Return(answer));
 
-  std::shared_ptr<interface::Transaction> tx(
-      clone(prepareTransactionBuilder("account@domain").build()));
+  std::shared_ptr<interface::Transaction> tx(clone(
+      framework::batch::prepareTransactionBuilder("account@domain").build()));
 
   auto tx_sequence = interface::TransactionSequence::createTransactionSequence(
       std::vector<decltype(tx)>{tx, tx, tx}, res);
@@ -131,13 +96,15 @@ TEST(TransactionSequenceTest, CreateBatches) {
                          + std::to_string(j) + "@domain");
     }
 
-    auto batch = createAtomicBatch(creators);
+    auto batch = framework::batch::createUnsignedBatch(
+        shared_model::interface::types::BatchType::ATOMIC, creators);
     tx_collection.insert(tx_collection.begin(), batch.begin(), batch.end());
   }
+
   for (size_t i = 0; i < single_transactions; i++) {
     tx_collection.emplace_back(
-        clone(prepareTransactionBuilder("single_tx_account@domain"
-                                        + std::to_string(i))
+        clone(framework::batch::prepareTransactionBuilder(
+                  "single_tx_account@domain" + std::to_string(i))
                   .build()));
   }
 
