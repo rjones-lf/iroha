@@ -42,30 +42,41 @@ namespace iroha {
       boost::optional<std::shared_ptr<shared_model::interface::Account>>
       getAccount(const shared_model::interface::types::AccountIdType
                      &account_id) override;
+
       boost::optional<std::string> getAccountDetail(
-          const shared_model::interface::types::AccountIdType &account_id)
-          override;
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::AccountDetailKeyType &key = "",
+          const shared_model::interface::types::AccountIdType &writer =
+              "") override;
+
       boost::optional<std::vector<shared_model::interface::types::PubkeyType>>
       getSignatories(const shared_model::interface::types::AccountIdType
                          &account_id) override;
+
       boost::optional<std::shared_ptr<shared_model::interface::Asset>> getAsset(
           const shared_model::interface::types::AssetIdType &asset_id) override;
+
       boost::optional<
           std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>>
       getAccountAssets(const shared_model::interface::types::AccountIdType
                            &account_id) override;
+
       boost::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
       getAccountAsset(
           const shared_model::interface::types::AccountIdType &account_id,
           const shared_model::interface::types::AssetIdType &asset_id) override;
+
       boost::optional<
           std::vector<std::shared_ptr<shared_model::interface::Peer>>>
       getPeers() override;
+
       boost::optional<std::vector<shared_model::interface::types::RoleIdType>>
       getRoles() override;
+
       boost::optional<std::shared_ptr<shared_model::interface::Domain>>
       getDomain(const shared_model::interface::types::DomainIdType &domain_id)
           override;
+
       bool hasAccountGrantablePermission(
           const shared_model::interface::types::AccountIdType
               &permitee_account_id,

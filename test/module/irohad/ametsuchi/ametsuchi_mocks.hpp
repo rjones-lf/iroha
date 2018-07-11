@@ -39,8 +39,11 @@ namespace iroha {
       MOCK_METHOD1(getAccountRoles,
                    boost::optional<std::vector<std::string>>(
                        const std::string &account_id));
-      MOCK_METHOD1(getAccountDetail,
-                   boost::optional<std::string>(const std::string &account_id));
+      MOCK_METHOD3(
+          getAccountDetail,
+          boost::optional<std::string>(const std::string &account_id,
+                                       const std::string &key,
+                                       const std::string &writer));
       MOCK_METHOD1(getRolePermissions,
                    boost::optional<shared_model::interface::RolePermissionSet>(
                        const std::string &role_name));
