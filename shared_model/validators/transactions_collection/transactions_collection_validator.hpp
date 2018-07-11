@@ -35,14 +35,13 @@ namespace shared_model {
        * @param transactions collection of transactions
        * @return Answer containing errors if any
        */
-      virtual Answer validate(
-          const interface::types::TransactionsForwardCollectionType
-              &transactions) const {
+      Answer validate(const interface::types::TransactionsForwardCollectionType
+                          &transactions) const {
         interface::types::SharedTxsCollectionType res;
-        std::for_each(
-            transactions.begin(), transactions.end(), [&res](const auto &tx) {
-              return res.emplace_back(clone(tx));
-            });
+        std::transform(std::begin(transactions),
+                       std::end(transactions),
+                       std::back_inserter(res),
+                       [](const auto &tx) { return clone(tx); });
         return validatePointers(res);
       }
 

@@ -103,7 +103,7 @@ TEST(TransactionSequenceTest, CreateTransactionSequenceWhenInvalid) {
   auto tx_sequence = interface::TransactionSequence::createTransactionSequence(
       std::vector<decltype(tx)>{tx, tx, tx}, res);
 
-  ASSERT_FALSE(framework::expected::val(tx_sequence));
+  ASSERT_TRUE(framework::expected::err(tx_sequence));
 }
 
 /**
