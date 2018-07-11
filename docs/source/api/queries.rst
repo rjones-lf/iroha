@@ -391,7 +391,7 @@ Request Structure
     :widths: 15, 30, 20, 15
 
         "Account ID", "account id to get details from", "<account_name>@<domain_id>", "account@domain"
-        "Key", "key, under which to ger details", "string", "age"
+        "Key", "key, under which to get details", "string", "age"
         "Writer", "account id of writer", "<account_name>@<domain_id>", "account@domain"
 
 Response Schema
