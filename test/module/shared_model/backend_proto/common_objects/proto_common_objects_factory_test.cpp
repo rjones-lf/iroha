@@ -144,3 +144,25 @@ TEST_F(AccountAssetTest, InvalidAccountAssetInitialization) {
       },
       [](const ErrorOf<decltype(account_asset)> &e) { SUCCEED(); });
 }
+
+class AmountTest : public ::testing::Test {
+ public:
+  boost::multiprecision::uint256_t valid_value = 123;
+  interface::types::PrecisionType valid_precision = 2;
+};
+
+/**
+ * @given valid data for amount
+ * @when amount is created via factory
+ * @then amount is successfully initialized
+ */
+TEST_F(AmountTest, ValidAccountAssetInitialization) {
+  auto amount = factory.createAmount(valid_value, valid_precision);
+
+  amount.match(
+      [&](const ValueOf<decltype(amount)> &v) {
+        ASSERT_EQ(v.value->intValue(), valid_value);
+        ASSERT_EQ(v.value->precision(), valid_precision);
+      },
+      [](const ErrorOf<decltype(amount)> &e) { FAIL() << e.error; });
+}

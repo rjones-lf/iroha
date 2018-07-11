@@ -48,6 +48,16 @@ namespace shared_model {
           const types::AssetIdType &asset_id,
           const Amount &balance) = 0;
 
+      /**
+       * Create amount instance
+       *
+       * @param value integer will be divided by 10 * precision,
+       * so value 123 with precision 2 will become Amount of 1.23
+       */
+      virtual FactoryResult<std::unique_ptr<Amount>> createAmount(
+          boost::multiprecision::uint256_t value,
+          types::PrecisionType precision) = 0;
+
       virtual ~CommonObjectsFactory() = default;
     };
   }  // namespace interface

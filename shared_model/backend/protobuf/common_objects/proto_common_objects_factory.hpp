@@ -27,14 +27,10 @@ namespace shared_model {
         peer.set_peer_key(crypto::toBinaryString(public_key));
         auto proto_peer = std::make_unique<Peer>(std::move(peer));
 
-        shared_model::validation::Answer answer;
-
-        validation::ReasonsGroupType reasons;
-        validator_.validatePeer(reasons, *proto_peer);
-
-        if (not reasons.second.empty()) {
-          answer.addReason(std::move(reasons));
-        }
+        auto answer =
+            validate(*proto_peer, [this](const auto &peer, auto &reasons) {
+              validator_.validatePeer(reasons, peer);
+            });
 
         if (answer) {
           return iroha::expected::makeError(answer.reason());
@@ -57,16 +53,12 @@ namespace shared_model {
 
         auto proto_account = std::make_unique<Account>(std::move(account));
 
-        shared_model::validation::Answer answer;
-
-        validation::ReasonsGroupType reasons;
-        validator_.validateAccountId(reasons, proto_account->accountId());
-        validator_.validateDomainId(reasons, proto_account->domainId());
-        validator_.validateQuorum(reasons, proto_account->quorum());
-
-        if (not reasons.second.empty()) {
-          answer.addReason(std::move(reasons));
-        }
+        auto answer = validate(
+            *proto_account, [this](const auto &account, auto &reasons) {
+              validator_.validateAccountId(reasons, account.accountId());
+              validator_.validateDomainId(reasons, account.domainId());
+              validator_.validateQuorum(reasons, account.quorum());
+            });
 
         if (answer) {
           return iroha::expected::makeError(answer.reason());
@@ -90,15 +82,11 @@ namespace shared_model {
 
         auto proto_asset = std::make_unique<AccountAsset>(std::move(asset));
 
-        shared_model::validation::Answer answer;
-
-        validation::ReasonsGroupType reasons;
-        validator_.validateAccountId(reasons, proto_asset->accountId());
-        validator_.validateAssetId(reasons, proto_asset->assetId());
-
-        if (not reasons.second.empty()) {
-          answer.addReason(std::move(reasons));
-        }
+        auto answer =
+            validate(*proto_asset, [this](const auto &asset, auto &reasons) {
+              validator_.validateAccountId(reasons, asset.accountId());
+              validator_.validateAssetId(reasons, asset.assetId());
+            });
 
         if (answer) {
           return iroha::expected::makeError(answer.reason());
@@ -108,7 +96,48 @@ namespace shared_model {
             std::unique_ptr<interface::AccountAsset>>(std::move(proto_asset));
       }
 
+      FactoryResult<std::unique_ptr<interface::Amount>> createAmount(
+          boost::multiprecision::uint256_t value,
+          interface::types::PrecisionType precision) override {
+        iroha::protocol::Amount amount;
+        amount.set_precision(precision);
+        convertToProtoAmount(*amount.mutable_value(), value);
+
+        auto proto_amount = std::make_unique<Amount>(std::move(amount));
+
+        auto answer =
+            validate(*proto_amount, [](const auto &, auto &) {
+              // no validation needed,
+              // since any amount is valid in general context
+            });
+
+        if (answer) {
+          return iroha::expected::makeError(answer.reason());
+        }
+
+        return iroha::expected::makeValue<
+            std::unique_ptr<interface::Amount>>(std::move(proto_amount));
+      }
+
      private:
+      /**
+       * Perform validation of a given object
+       * @param o - object to be validated
+       * @param f - function which populates reason parameter with errors.
+       * second parameter (reasons) must be passed by non-const reference
+       * @return validation result
+       */
+      template <typename T, typename ValidationFunc>
+      validation::Answer validate(const T &o, ValidationFunc &&f) const {
+        shared_model::validation::Answer answer;
+        validation::ReasonsGroupType reasons;
+        f(o, reasons);
+        if (not reasons.second.empty()) {
+          answer.addReason(std::move(reasons));
+        }
+        return answer;
+      }
+
       Validator validator_;
     };
   }  // namespace proto
