@@ -153,9 +153,7 @@ namespace iroha_cli {
     for (auto &acc_asset : acc_assets) {
       log_->info(prefix.at(kAccountId), acc_asset.account_id());
       log_->info(prefix.at(kAssetId), acc_asset.asset_id());
-      auto balance =
-          iroha::model::converters::deserializeAmount(acc_asset.balance());
-      log_->info(prefix.at(kAmount), balance.to_string());
+      log_->info(prefix.at(kAmount), acc_asset.balance());
     }
   }
 

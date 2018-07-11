@@ -137,15 +137,12 @@ namespace iroha {
         shared_model::interface::AccountAsset>
     makeAccountAsset(const pqxx::row &row) noexcept {
       return tryBuild([&row] {
-        auto balance = shared_model::builder::DefaultAmountBuilder::fromString(
-            row.at("amount").template as<std::string>());
-        return balance | [&](const auto &balance_ptr) {
-          return shared_model::builder::DefaultAccountAssetBuilder()
-              .accountId(row.at("account_id").template as<std::string>())
-              .assetId(row.at("asset_id").template as<std::string>())
-              .balance(*balance_ptr)
-              .build();
-        };
+        return shared_model::builder::DefaultAccountAssetBuilder()
+            .accountId(row.at("account_id").template as<std::string>())
+            .assetId(row.at("asset_id").template as<std::string>())
+            .balance(shared_model::interface::Amount(
+                row.at("amount").template as<std::string>()))
+            .build();
       });
     }
 
@@ -189,9 +186,7 @@ namespace iroha {
             return boost::make_optional(v.value);
           },
           [](const expected::Error<std::shared_ptr<std::string>> &e)
-              -> boost::optional<std::shared_ptr<T>> {
-            return boost::none;
-          });
+              -> boost::optional<std::shared_ptr<T>> { return boost::none; });
     }
   }  // namespace ametsuchi
 }  // namespace iroha

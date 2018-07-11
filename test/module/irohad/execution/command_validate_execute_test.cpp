@@ -105,20 +105,7 @@ class CommandValidateExecuteTest : public ::testing::Test {
               FAIL() << *e.error;
             });
 
-    shared_model::builder::AmountBuilder<
-        shared_model::proto::AmountBuilder,
-        shared_model::validation::FieldValidator>()
-        .intValue(150)
-        .precision(2)
-        .build()
-        .match(
-            [&](expected::Value<
-                std::shared_ptr<shared_model::interface::Amount>> &v) {
-              balance = v.value;
-            },
-            [](expected::Error<std::shared_ptr<std::string>> &e) {
-              FAIL() << *e.error;
-            });
+    balance = std::make_shared<shared_model::interface::Amount>("1.50");
 
     shared_model::builder::AccountAssetBuilder<
         shared_model::proto::AccountAssetBuilder,
@@ -1616,19 +1603,14 @@ TEST_F(TransferAssetTest, InvalidWhenWrongPrecisionDuringExecute) {
  * @then execute fails
  */
 TEST_F(TransferAssetTest, InvalidWhenAmountOverflow) {
-  std::shared_ptr<shared_model::interface::Amount> max_balance = clone(
-      shared_model::proto::AmountBuilder()
-          .intValue(
-              std::numeric_limits<boost::multiprecision::uint256_t>::max())
-          .precision(2)
+  std::shared_ptr<shared_model::interface::AccountAsset> max_wallet = clone(
+      shared_model::proto::AccountAssetBuilder()
+          .assetId(src_wallet->assetId())
+          .accountId(src_wallet->accountId())
+          .balance(shared_model::interface::Amount(
+              std::numeric_limits<boost::multiprecision::uint256_t>::max().str()
+              + ".00"))
           .build());
-
-  std::shared_ptr<shared_model::interface::AccountAsset> max_wallet =
-      clone(shared_model::proto::AccountAssetBuilder()
-                .assetId(src_wallet->assetId())
-                .accountId(src_wallet->accountId())
-                .balance(*max_balance)
-                .build());
 
   EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
       .WillOnce(Return(asset));

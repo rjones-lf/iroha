@@ -1,8 +1,7 @@
 /**
  * Messages related to primitive types, used in Commands and Queries
  *
- * Contains RolePermission, GrantablePermission, Signature,
- * uint256, Amount, and Peer.
+ * Contains RolePermission, GrantablePermission, Signature, and Peer.
  */
 
 syntax = "proto3";
@@ -86,17 +85,18 @@ message Signature {
   bytes signature = 2;
 }
 
-message uint256 {
-  uint64 first = 1;
-  uint64 second = 2;
-  uint64 third = 3;
-  uint64 fourth = 4;
-}
+// message uint256 {
+//   uint64 first = 1;
+//   uint64 second = 2;
+//   uint64 third = 3;
+//   uint64 fourth = 4;
+// }
 
-message Amount {
-  uint256 value = 1;
-  uint32 precision = 2;
-}
+// message Amount {
+  // string value = 1;
+  // uint256 value = 1;
+  // uint32 precision = 2;
+// }
 
 message Peer {
   string address = 1;

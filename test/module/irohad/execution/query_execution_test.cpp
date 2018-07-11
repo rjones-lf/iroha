@@ -19,11 +19,9 @@
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 #include "builders/common_objects/account_asset_builder.hpp"
-#include "builders/common_objects/amount_builder.hpp"
 #include "builders/common_objects/asset_builder.hpp"
 #include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/query_responses/block_query_response_builder.hpp"
@@ -271,26 +269,12 @@ class GetAccountAssetsTest : public QueryValidateExecuteTest {
   void SetUp() override {
     QueryValidateExecuteTest::SetUp();
 
-    std::shared_ptr<shared_model::interface::Amount> amount;
-    shared_model::builder::AmountBuilder<
-        shared_model::proto::AmountBuilder,
-        shared_model::validation::FieldValidator>()
-        .intValue(100)
-        .precision(2)
-        .build()
-        .match(
-            [&](iroha::expected::Value<
-                std::shared_ptr<shared_model::interface::Amount>> &v) {
-              amount = v.value;
-            },
-            [](iroha::expected::Error<std::shared_ptr<std::string>>) {});
-
     shared_model::builder::AccountAssetBuilder<
         shared_model::proto::AccountAssetBuilder,
         shared_model::validation::FieldValidator>()
         .assetId(asset_id)
         .accountId(admin_id)
-        .balance(*amount)
+        .balance(shared_model::interface::Amount("1.00"))
         .build()
         .match(
             [&](iroha::expected::Value<

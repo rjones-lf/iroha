@@ -21,7 +21,6 @@ limitations under the License.
 
 #include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -323,14 +322,11 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
   auto account =
       shared_model::proto::AccountBuilder().accountId("accountA").build();
 
-  auto amount =
-      shared_model::proto::AmountBuilder().intValue(100).precision(2).build();
-
   std::shared_ptr<shared_model::interface::AccountAsset> account_asset =
       clone(shared_model::proto::AccountAssetBuilder()
                 .accountId("accountA")
                 .assetId("usd")
-                .balance(amount)
+                .balance(shared_model::interface::Amount("1.00"))
                 .build());
 
   auto asset = shared_model::proto::AssetBuilder()

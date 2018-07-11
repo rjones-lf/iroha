@@ -21,6 +21,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 
 #include "common/result.hpp"
+#include "interfaces/common_objects/amount.hpp"
 
 namespace shared_model {
   namespace interface {

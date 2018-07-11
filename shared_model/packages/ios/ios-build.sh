@@ -109,7 +109,6 @@ mkdir lib
 mkdir include
 cp "$DEPS_DIR"/lib/lib${PROTOBUF_LIB_NAME}.a \
  "$DEPS_DIR"/lib/libed25519.a \
- ./iroha/shared_model/build/amount/libiroha_amount.a \
  ./iroha/shared_model/build/generator/libgenerator.a \
  ./iroha/shared_model/build/bindings/libbindings.a \
  ./iroha/shared_model/build/cryptography/ed25519_sha3_impl/internal/libed25519_crypto.a \
