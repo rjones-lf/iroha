@@ -92,7 +92,8 @@ namespace torii {
               }
 
               // setting response
-              response.set_tx_hash(tx_hash.toString());
+              response.set_tx_hash(
+                  shared_model::crypto::toBinaryString(tx_hash));
               response.set_tx_status(
                   iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
 
