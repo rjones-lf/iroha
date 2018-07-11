@@ -22,7 +22,8 @@ namespace shared_model {
       std::string toString() const override {
         return detail::PrettyStringBuilder()
             .init("BatchMeta")
-            .append("Type", type() == types::BatchType::ATOMIC ? "ATOMIC" : "ORDERED")
+            .append("Type",
+                    type() == types::BatchType::ATOMIC ? "ATOMIC" : "ORDERED")
             .appendAll(transactionHashes(),
                        [](auto &hash) { return hash.toString(); })
             .finalize();
@@ -40,7 +41,8 @@ namespace shared_model {
        * @return true, if wrapped objects are same
        */
       bool operator==(const ModelType &rhs) const override {
-        return type() == rhs.type();
+        return type() == rhs.type()
+            and transactionHashes() == rhs.transactionHashes();
       }
     };
   }  // namespace interface

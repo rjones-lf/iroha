@@ -22,26 +22,11 @@ namespace shared_model {
     class TransactionSequence {
      public:
       /**
-       * Creator of transaction sequence
-       * @param transactions collection of transactions
-       * @param validator validator of the collections
-       * @return Result containing transaction sequence if validation successful
-       * and string message containing error otherwise
-       */
-      template <typename TransactionValidator>
-      static iroha::expected::Result<TransactionSequence, std::string>
-      createTransactionSequence(
-          const types::TransactionsForwardCollectionType &transactions,
-          const validation::TransactionsCollectionValidator<
-              TransactionValidator> &validator);
-
-      /**
        * Get transactions collection
        * @return transactions collection
        */
       types::TransactionsForwardCollectionType transactions();
 
-     private:
       explicit TransactionSequence(
           const types::TransactionsForwardCollectionType &transactions);
 

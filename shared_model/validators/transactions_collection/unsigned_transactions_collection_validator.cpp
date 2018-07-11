@@ -8,15 +8,19 @@
 #include <boost/format.hpp>
 #include "validators/field_validator.hpp"
 #include "validators/transaction_validator.hpp"
+#include "validators/transactions_collection/batch_order_validator.hpp"
 
 namespace shared_model {
   namespace validation {
 
-    template <typename TransactionValidator>
-    Answer
-    UnsignedTransactionsCollectionValidator<TransactionValidator>::validate(
-        const interface::types::TransactionsForwardCollectionType &transactions)
-        const {
+    template <typename TransactionValidator, typename OrderValidator>
+    Answer UnsignedTransactionsCollectionValidator<TransactionValidator,
+                                                   OrderValidator>::
+        validate(const interface::types::TransactionsForwardCollectionType
+                     &transactions) const {
+      Answer res =
+          UnsignedTransactionsCollectionValidator::order_validator_.validate(
+              transactions);
       ReasonsGroupType reason;
       reason.first = "Transaction list";
       for (const auto &tx : transactions) {
@@ -31,7 +35,6 @@ namespace shared_model {
         }
       }
 
-      Answer res;
       if (not reason.second.empty()) {
         res.addReason(std::move(reason));
       }

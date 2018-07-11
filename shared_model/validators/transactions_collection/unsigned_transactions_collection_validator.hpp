@@ -7,6 +7,7 @@
 #define IROHA_UNSIGNED_TRANSACTIONS_SEQUENCE_VALIDATOR_HPP
 
 #include "validators/transactions_collection/transactions_collection_validator.hpp"
+#include "validators/transactions_collection/any_order_validator.hpp"
 
 namespace shared_model {
   namespace validation {
@@ -15,12 +16,15 @@ namespace shared_model {
      * Unsigned transactions collection validator allows to some transaction
      * from the collection to be unsigned. Batch logic should be checked
      */
-    template <typename TransactionValidator>
+    template <typename TransactionValidator,
+              typename OrderValidator = AnyOrderValidator>
     class UnsignedTransactionsCollectionValidator
-        : public TransactionsCollectionValidator<TransactionValidator> {
+        : public TransactionsCollectionValidator<TransactionValidator,
+                                                 OrderValidator> {
      public:
       using TransactionsCollectionValidator<
-          TransactionValidator>::TransactionsCollectionValidator;
+          TransactionValidator,
+          OrderValidator>::TransactionsCollectionValidator;
       Answer validate(const interface::types::TransactionsForwardCollectionType
                           &transactions) const override;
     };
