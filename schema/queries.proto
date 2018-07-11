@@ -44,6 +44,10 @@ message GetRolePermissions{
   string role_id = 1;
 }
 
+message GetPendingTransactions {
+
+}
+
 message QueryPayloadMeta {
   uint64 created_time = 1;
   string creator_account_id = 2;
@@ -66,6 +70,7 @@ message Query {
        GetRoles get_roles = 10;
        GetRolePermissions get_role_permissions = 11;
        GetAssetInfo get_asset_info = 12;
+       GetPendingTransactions get_pending_transactions = 13;
      }
   }
 

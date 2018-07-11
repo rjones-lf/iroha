@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-def doJavaBindings(os, buildType=Release) {
+def doJavaBindings(os, packageName, buildType=Release) {
   def currentPath = sh(script: "pwd", returnStdout: true).trim()
   def commit = env.GIT_COMMIT
   def artifactsPath = sprintf('%1$s/java-bindings-%2$s-%3$s-%4$s-%5$s.zip',
@@ -20,12 +20,15 @@ def doJavaBindings(os, buildType=Release) {
       -Bbuild \
       -DCMAKE_BUILD_TYPE=$buildType \
       -DSWIG_JAVA=ON \
+      -DSWIG_JAVA_PKG="$packageName" \
       ${cmakeOptions}
   """
   def parallelismParam = (os == 'windows') ? '' : "-j${params.PARALLELISM}"
   sh "cmake --build build --target irohajava -- ${parallelismParam}"
   // TODO 29.05.18 @bakhtin Java tests never finishes on Windows Server 2016. IR-1380
-  sh "zip -j $artifactsPath build/bindings/*.java build/bindings/*.dll build/bindings/libirohajava.so"
+  sh "pushd build/bindings; \
+      zip -r $artifactsPath *.dll *.lib *.manifest *.exp libirohajava.so \$(echo ${packageName} | cut -d '.' -f1); \
+      popd"
   if (os == 'windows') {
     sh "cp $artifactsPath /tmp/${env.GIT_COMMIT}/bindings-artifact"
   }
