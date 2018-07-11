@@ -4,6 +4,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <ed25519/ed25519.h>
 
 #include "backend/protobuf/common_objects/amount.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
@@ -47,9 +48,7 @@ TEST_F(PeerTest, ValidPeerInitialization) {
  * @then peer is not initialized correctly
  */
 TEST_F(PeerTest, InvalidPeerInitialization) {
-  auto keypair = crypto::DefaultCryptoAlgorithmType::generateKeypair();
-
-  auto peer = factory.createPeer(invalid_address, keypair.publicKey());
+  auto peer = factory.createPeer(invalid_address, valid_pubkey);
 
   peer.match(
       [](const ValueOf<decltype(peer)> &v) { FAIL() << "Expected error case"; },
@@ -283,4 +282,45 @@ TEST_F(DomainTest, InvalidDomainInitialization) {
         FAIL() << "Expected error case";
       },
       [](const ErrorOf<decltype(domain)> &e) { SUCCEED(); });
+}
+
+class SignatureTest : public ::testing::Test {
+ public:
+  crypto::PublicKey valid_pubkey =
+      crypto::DefaultCryptoAlgorithmType::generateKeypair().publicKey();
+  crypto::Signed valid_data{"hello"};
+  crypto::PublicKey invalid_pubkey{"1234"};
+};
+
+/**
+ * @given valid data for signature
+ * @when signature is created via factory
+ * @then signature is successfully initialized
+ */
+TEST_F(SignatureTest, ValidSignatureInitialization) {
+  auto signature =
+      factory.createSignature(valid_pubkey, valid_data);
+
+  signature.match(
+      [&](const ValueOf<decltype(signature)> &v) {
+        ASSERT_EQ(v.value->publicKey().hex(), valid_pubkey.hex());
+        ASSERT_EQ(v.value->signedData().hex(), valid_data.hex());
+      },
+      [](const ErrorOf<decltype(signature)> &e) { FAIL() << e.error; });
+}
+
+/**
+ * @given invalid data for signature
+ * @when signature is created via factory
+ * @then signature is not initialized correctly
+ */
+TEST_F(SignatureTest, InvalidSignatureInitialization) {
+  auto signature =
+      factory.createSignature(invalid_pubkey, valid_data);
+
+  signature.match(
+      [](const ValueOf<decltype(signature)> &v) {
+        FAIL() << "Expected error case";
+      },
+      [](const ErrorOf<decltype(signature)> &e) { SUCCEED(); });
 }

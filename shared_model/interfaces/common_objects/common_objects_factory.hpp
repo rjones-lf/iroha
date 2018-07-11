@@ -83,6 +83,13 @@ namespace shared_model {
           const types::DomainIdType &domain_id,
           const types::RoleIdType &default_role) = 0;
 
+      /**
+       * Create signature instance
+       */
+      virtual FactoryResult<std::unique_ptr<Signature>> createSignature(
+          const interface::types::PubkeyType &key,
+          const interface::Signature::SignedType &signed_data) = 0;
+
       virtual ~CommonObjectsFactory() = default;
     };
   }  // namespace interface

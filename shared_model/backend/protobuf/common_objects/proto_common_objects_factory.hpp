@@ -11,8 +11,9 @@
 #include "backend/protobuf/common_objects/account.hpp"
 #include "backend/protobuf/common_objects/account_asset.hpp"
 #include "backend/protobuf/common_objects/asset.hpp"
-#include "backend/protobuf/common_objects/peer.hpp"
 #include "backend/protobuf/common_objects/domain.hpp"
+#include "backend/protobuf/common_objects/peer.hpp"
+#include "backend/protobuf/common_objects/signature.hpp"
 #include "common/result.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "primitive.pb.h"
@@ -188,10 +189,11 @@ namespace shared_model {
 
         auto proto_domain = std::make_unique<Domain>(std::move(domain));
 
-        auto answer = validate(*proto_domain, [this](const auto &domain, auto &reason) {
-          validator_.validateDomainId(reason, domain.domainId());
-          validator_.validateRoleId(reason, domain.defaultRole());
-        });
+        auto answer =
+            validate(*proto_domain, [this](const auto &domain, auto &reason) {
+              validator_.validateDomainId(reason, domain.domainId());
+              validator_.validateRoleId(reason, domain.defaultRole());
+            });
 
         if (answer) {
           return iroha::expected::makeError(answer.reason());
@@ -199,6 +201,29 @@ namespace shared_model {
 
         return iroha::expected::makeValue<std::unique_ptr<interface::Domain>>(
             std::move(proto_domain));
+      }
+
+      FactoryResult<std::unique_ptr<interface::Signature>> createSignature(
+          const interface::types::PubkeyType &key,
+          const interface::Signature::SignedType &signed_data) override {
+        iroha::protocol::Signature signature;
+        signature.set_pubkey(crypto::toBinaryString(key));
+        signature.set_signature(crypto::toBinaryString(signed_data));
+
+        auto proto_singature =
+            std::make_unique<Signature>(std::move(signature));
+
+        auto answer = validate(
+            *proto_singature, [this](const auto &signature, auto &reason) {
+              validator_.validatePubkey(reason, signature.publicKey());
+            });
+
+        if (answer) {
+          return iroha::expected::makeError(answer.reason());
+        }
+
+        return iroha::expected::makeValue<
+            std::unique_ptr<interface::Signature>>(std::move(proto_singature));
       }
 
      private:
