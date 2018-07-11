@@ -53,7 +53,8 @@ using namespace iroha::validation;
 using namespace shared_model::proto;
 
 using namespace std::chrono_literals;
-constexpr std::chrono::milliseconds proposal_delay = 10s;
+constexpr std::chrono::milliseconds initial_timeout = 1s;
+constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
 
 class ClientServerTest : public testing::Test {
  public:
@@ -100,7 +101,7 @@ class ClientServerTest : public testing::Test {
     //----------- Server run ----------------
     runner
         ->append(std::make_unique<torii::CommandService>(
-            tx_processor, storage, proposal_delay))
+            tx_processor, storage, initial_timeout, nonfinal_timeout))
         .append(std::make_unique<torii::QueryService>(qpi))
         .run()
         .match(

@@ -1,16 +1,20 @@
 /**
  * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_TORII_IMPL_TIMEOUT_HPP
-#define IROHA_TORII_IMPL_TIMEOUT_HPP
+#ifndef IROHA_TIMEOUT_HPP
+#define IROHA_TIMEOUT_HPP
 
 #include <rxcpp/operators/rx-timeout.hpp>
 
-namespace torii {
+namespace iroha {
 
   /**
+   * This class is mostly the same as rxcpp::operators::timeout,
+   * the only change is that it accepts a selector lambda which generates
+   * a duration based on observable value instead of a fixed duration
    * Return an observable that terminates with timeout_error if a particular
    * timespan has passed without emitting another item from the source
    * observable
@@ -26,8 +30,6 @@ namespace torii {
     typedef rxcpp::util::decay_t<Coordination> coordination_type;
     typedef typename coordination_type::coordinator_type coordinator_type;
     typedef rxcpp::util::decay_t<Selector> select_type;
-    typedef decltype(
-        (*(select_type *)nullptr)(*(source_value_type *)nullptr)) value_type;
 
     struct timeout_values {
       timeout_values(select_type s, coordination_type c)
@@ -199,7 +201,7 @@ namespace torii {
       typename Coordination,
       class ResolvedSelector = rxcpp::util::decay_t<Selector>,
       class Duration = decltype(
-          (*(ResolvedSelector *)nullptr)(*(rxcpp::util::decay_t<T> *)nullptr)),
+          std::declval<ResolvedSelector>()((std::declval<std::decay_t<T>>()))),
       class Enabled = rxcpp::util::enable_if_all_true_type_t<
           rxcpp::is_coordination<Coordination>,
           rxcpp::util::is_duration<Duration>>,
@@ -209,6 +211,6 @@ namespace torii {
     return Timeout(std::forward<Selector>(s), std::forward<Coordination>(cn));
   };
 
-}  // namespace torii
+}  // namespace iroha
 
-#endif  // IROHA_TORII_IMPL_TIMEOUT_HPP
+#endif  // IROHA_TIMEOUT_HPP

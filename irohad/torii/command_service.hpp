@@ -41,12 +41,14 @@ namespace torii {
      * @param pb_factory - model->protobuf and vice versa converter
      * @param tx_processor - processor of received transactions
      * @param block_query - to query transactions outside the cache
-     * @param proposal_delay - time of a one proposal propagation.
+     * @param initial_timeout - streaming timeout when tx is not received
+     * @param nonfinal_timeout - streaming timeout when tx is being processed
      */
     CommandService(
         std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
         std::shared_ptr<iroha::ametsuchi::Storage> storage,
-        std::chrono::milliseconds proposal_delay);
+        std::chrono::milliseconds initial_timeout,
+        std::chrono::milliseconds nonfinal_timeout);
 
     /**
      * Disable copying in any way to prevent potential issues with common
@@ -123,20 +125,40 @@ namespace torii {
                                   *response_writer) override;
 
    private:
+    /**
+     * Execute events scheduled in run loop until it is not empty and the
+     * subscriber is active
+     * @param subscription - tx status subscription
+     * @param run_loop - gRPC thread run loop
+     */
+    inline void handleEvents(rxcpp::composite_subscription &subscription,
+                             rxcpp::schedulers::run_loop &run_loop);
+
     using CacheType = iroha::cache::Cache<shared_model::crypto::Hash,
                                           iroha::protocol::ToriiResponse,
                                           shared_model::crypto::Hash::Hasher>;
 
     std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor_;
     std::shared_ptr<iroha::ametsuchi::Storage> storage_;
-    std::chrono::milliseconds proposal_delay_;
-    std::chrono::milliseconds start_tx_processing_duration_;
+    std::chrono::milliseconds initial_timeout_;
+    std::chrono::milliseconds nonfinal_timeout_;
     std::shared_ptr<CacheType> cache_;
 
-    std::mutex notifier_mutex_;
+    /**
+     * Mutex for propagating stateless validation status
+     */
+    std::mutex stateless_tx_status_notifier_mutex_;
+
+    /**
+     * Subject with stateless validation statuses
+     */
     rxcpp::subjects::subject<
         std::shared_ptr<shared_model::interface::TransactionResponse>>
-        notifier_;
+        stateless_notifier_;
+
+    /**
+     * Observable with all transaction statuses
+     */
     rxcpp::observable<
         std::shared_ptr<shared_model::interface::TransactionResponse>>
         responses_;

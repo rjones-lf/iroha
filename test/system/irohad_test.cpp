@@ -89,7 +89,7 @@ class IrohadTest : public testing::Test {
   void setPaths() {
     path_irohad_ = boost::filesystem::path(PATHIROHAD);
     irohad_executable = path_irohad_ / "irohad";
-    path_example_ = path_irohad_.parent_path().parent_path() / "example";
+    path_example_ = boost::filesystem::path(PATHEXAMPLE);
     path_config_ = path_example_ / "config.sample";
     path_genesis_ = path_example_ / "genesis.block";
     path_keypair_ = path_example_ / "node0";

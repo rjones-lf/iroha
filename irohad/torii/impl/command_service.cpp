@@ -27,31 +27,31 @@
 #include "builders/protobuf/transport_builder.hpp"
 #include "common/byteutils.hpp"
 #include "common/is_any.hpp"
+#include "common/timeout.hpp"
 #include "common/types.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "endpoint.pb.h"
-#include "torii/impl/timeout.hpp"
 #include "validators/default_validator.hpp"
-
-using namespace std::chrono_literals;
 
 namespace torii {
 
   CommandService::CommandService(
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
       std::shared_ptr<iroha::ametsuchi::Storage> storage,
-      std::chrono::milliseconds proposal_delay)
+      std::chrono::milliseconds initial_timeout,
+      std::chrono::milliseconds nonfinal_timeout)
       : tx_processor_(tx_processor),
         storage_(storage),
-        proposal_delay_(proposal_delay),
-        start_tx_processing_duration_(1s),
+        initial_timeout_(initial_timeout),
+        nonfinal_timeout_(nonfinal_timeout),
         cache_(std::make_shared<CacheType>()),
         // merge with mutex, since notifications can be made from different
         // threads
+        // TODO 11.07.2018 andrei rework status handling with event bus IR-1517
         responses_(tx_processor_->transactionNotifier().merge(
             rxcpp::serialize_one_worker(
                 rxcpp::schedulers::make_current_thread()),
-            notifier_.get_observable())),
+            stateless_notifier_.get_observable())),
         log_(logger::log("CommandService")) {
     // Notifier for all clients
     responses_.subscribe([this](auto iroha_response) {
@@ -123,8 +123,8 @@ namespace torii {
                 response.tx_status());
     // transactions can be handled from multiple threads, therefore a lock is
     // required
-    std::lock_guard<std::mutex> lock(notifier_mutex_);
-    notifier_.get_subscriber().on_next(
+    std::lock_guard<std::mutex> lock(stateless_tx_status_notifier_mutex_);
+    stateless_notifier_.get_subscriber().on_next(
         std::make_shared<shared_model::proto::TransactionResponse>(
             std::move(response)));
   }
@@ -184,8 +184,10 @@ namespace torii {
   rxcpp::observable<
       std::shared_ptr<shared_model::interface::TransactionResponse>>
   CommandService::StatusStream(const shared_model::crypto::Hash &hash) {
-    std::shared_ptr<shared_model::interface::TransactionResponse>
-        initial_status = clone(shared_model::proto::TransactionResponse(
+    using ResponsePtrType =
+        std::shared_ptr<shared_model::interface::TransactionResponse>;
+    ResponsePtrType initial_status =
+        clone(shared_model::proto::TransactionResponse(
             cache_->findItem(hash).value_or([&] {
               log_->debug("tx not received");
               return shared_model::proto::TransactionStatusBuilder()
@@ -194,30 +196,29 @@ namespace torii {
                   .build()
                   .getTransport();
             }())));
-    return responses_.start_with(initial_status)
+    return responses_
+        // prepend initial status
+        .start_with(initial_status)
+        // select statuses with requested hash
         .filter(
             [&](auto response) { return response->transactionHash() == hash; })
-        .lift<std::shared_ptr<shared_model::interface::TransactionResponse>>(
-            [](rxcpp::subscriber<std::shared_ptr<
-                   shared_model::interface::TransactionResponse>> dest) {
-              return rxcpp::make_subscriber<std::shared_ptr<
-                  shared_model::interface::TransactionResponse>>(
-                  dest,
-                  [=](std::shared_ptr<
-                      shared_model::interface::TransactionResponse> response) {
-                    dest.on_next(response);
-                    iroha::visit_in_place(
-                        response->get(),
-                        [dest](const auto &resp)
-                            -> std::enable_if_t<
-                                FinalStatusValue<decltype(resp)>> {
-                          dest.on_completed();
-                        },
-                        [](const auto &resp)
-                            -> std::enable_if_t<
-                                not FinalStatusValue<decltype(resp)>>{});
-                  });
-            });
+        // successfully complete the observable if final status is received
+        // final status is included in the observable
+        .lift<ResponsePtrType>([](rxcpp::subscriber<ResponsePtrType> dest) {
+          return rxcpp::make_subscriber<ResponsePtrType>(
+              dest, [=](ResponsePtrType response) {
+                dest.on_next(response);
+                iroha::visit_in_place(
+                    response->get(),
+                    [dest](const auto &resp)
+                        -> std::enable_if_t<FinalStatusValue<decltype(resp)>> {
+                      dest.on_completed();
+                    },
+                    [](const auto &resp)
+                        -> std::enable_if_t<
+                            not FinalStatusValue<decltype(resp)>>{});
+              });
+        });
   }
 
   grpc::Status CommandService::StatusStream(
@@ -234,38 +235,53 @@ namespace torii {
     auto hash = shared_model::crypto::Hash(request->tx_hash());
 
     StatusStream(hash)
+        // convert to transport objects
         .map([](auto response) {
           return std::static_pointer_cast<
                      shared_model::proto::TransactionResponse>(response)
               ->getTransport();
         })
+        // set a corresponding observable timeout based on status value
         .lift<iroha::protocol::ToriiResponse>(
-            makeTimeout<iroha::protocol::ToriiResponse>(
+            iroha::makeTimeout<iroha::protocol::ToriiResponse>(
                 [&](const auto &response) {
                   return response.tx_status()
                           == iroha::protocol::TxStatus::NOT_RECEIVED
-                      ? start_tx_processing_duration_
-                      : 2 * proposal_delay_;
+                      ? initial_timeout_
+                      : nonfinal_timeout_;
                 },
                 current_thread))
-        .take_while([=](const auto &) { return not context->IsCancelled(); })
+        // complete the observable if client is disconnected
+        .take_while([=](const auto &) {
+          auto is_cancelled = context->IsCancelled();
+          if (is_cancelled) {
+            log_->debug("client unsubscribed");
+          }
+          return not is_cancelled;
+        })
         .subscribe(
             subscription,
             [&](iroha::protocol::ToriiResponse response) {
-              log_->debug("writing status");
-              response_writer->Write(response);
+              if (response_writer->Write(response)) {
+                log_->debug("status written");
+              }
             },
             [&](std::exception_ptr ep) { log_->debug("processing timeout"); },
             [&] { log_->debug("stream done"); });
 
     // run loop while subscription is active or there are pending events in the
     // queue
-    while (subscription.is_subscribed() or not rl.empty()) {
-      rl.dispatch();
-    }
+    handleEvents(subscription, rl);
 
     log_->debug("status stream done");
     return grpc::Status::OK;
+  }
+
+  void CommandService::handleEvents(rxcpp::composite_subscription &subscription,
+                                    rxcpp::schedulers::run_loop &run_loop) {
+    while (subscription.is_subscribed() or not run_loop.empty()) {
+      run_loop.dispatch();
+    }
   }
 
 }  // namespace torii
