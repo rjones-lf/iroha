@@ -44,7 +44,7 @@ namespace iroha {
       auto command = std::make_shared<PostgresWsvCommand>(*transaction_);
       auto command_executor = std::make_shared<PostgresCommandExecutor>(*transaction_);
       command_executor_ =
-          std::make_shared<iroha::CommandExecutor>(iroha::CommandExecutor(query, command, command_executor));
+          std::make_shared<iroha::CommandExecutor>(query, command, command_executor);
       transaction_->exec("BEGIN;");
     }
 
