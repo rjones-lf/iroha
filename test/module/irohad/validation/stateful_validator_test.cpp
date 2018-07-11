@@ -242,8 +242,8 @@ TEST_F(Validator, Batches) {
 
   EXPECT_CALL(*temp_wsv_mock, createSavepoint(_))
       .WillRepeatedly(
-          Return(std::make_shared<
-                 iroha::ametsuchi::MockTemporaryWsvSavepointWrapper>()));
+          Return(std::unique_ptr<
+                 iroha::ametsuchi::TemporaryWsv::SavepointWrapper>()));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[0])), _))
       .WillOnce(Return(iroha::expected::Value<void>({})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[1])), _))

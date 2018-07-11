@@ -54,107 +54,124 @@ namespace iroha {
           .str();
     }
 
-    StatefulValidatorImpl::StatefulValidatorImpl() {
-      log_ = logger::log("SFV");
-    }
-
-    validation::VerifiedProposalAndErrors StatefulValidatorImpl::validate(
-        const shared_model::interface::Proposal &proposal,
-        ametsuchi::TemporaryWsv &temporaryWsv) {
-      log_->info("transactions in proposal: {}",
-                 proposal.transactions().size());
-      auto checking_transaction = [](const auto &tx, auto &queries) {
-        return expected::Result<void, validation::CommandError>(
-            [&]() -> expected::Result<
-                         std::shared_ptr<shared_model::interface::Account>,
-                         validation::CommandError> {
-              // Check if tx creator has account
-              auto account = queries.getAccount(tx.creatorAccountId());
-              if (account) {
-                return expected::makeValue(*account);
-              }
-              return expected::makeError(
-                  validation::CommandError{"looking up tx creator's account",
-                                           (boost::format("could not fetch "
-                                                          "account with id %s")
-                                            % tx.creatorAccountId())
-                                               .str(),
-                                           false});
-            }() |
-                [&](const auto &account)
-                      -> expected::Result<
-                             std::vector<
-                                 shared_model::interface::types::PubkeyType>,
-                             validation::CommandError> {
-              // Check if account has signatories and quorum to execute
-              // transaction
-              if (boost::size(tx.signatures()) >= account->quorum()) {
-                auto signatories =
-                    queries.getSignatories(tx.creatorAccountId());
-                if (signatories) {
-                  return expected::makeValue(*signatories);
-                }
-                return expected::makeError(validation::CommandError{
-                    "looking up tx creator's signatories",
-                    (boost::format("could not fetch "
-                                   "signatories of "
-                                   "account %s")
-                     % tx.creatorAccountId())
-                        .str(),
-                    false});
+    /**
+     * Initially checks the transaction: its creator, signatures etc
+     * @param tx to be checked
+     * @param queries to get data from
+     * @return result with void, if check is succesfull, command error otherwise
+     */
+    static expected::Result<void, validation::CommandError>
+    initiallyCheckTransaction(const shared_model::interface::Transaction &tx,
+                              ametsuchi::WsvQuery &queries) {
+      return expected::Result<void, validation::CommandError>(
+          [&]() -> expected::Result<
+                       std::shared_ptr<shared_model::interface::Account>,
+                       validation::CommandError> {
+            // Check if tx creator has account
+            auto account = queries.getAccount(tx.creatorAccountId());
+            if (account) {
+              return expected::makeValue(*account);
+            }
+            return expected::makeError(
+                validation::CommandError{"looking up tx creator's account",
+                                         (boost::format("could not fetch "
+                                                        "account with id %s")
+                                          % tx.creatorAccountId())
+                                             .str(),
+                                         false});
+          }() |
+              [&](const auto &account)
+                    -> expected::Result<
+                           std::vector<
+                               shared_model::interface::types::PubkeyType>,
+                           validation::CommandError> {
+            // Check if account has signatories and quorum to execute
+            // transaction
+            if (boost::size(tx.signatures()) >= account->quorum()) {
+              auto signatories = queries.getSignatories(tx.creatorAccountId());
+              if (signatories) {
+                return expected::makeValue(*signatories);
               }
               return expected::makeError(validation::CommandError{
-                  "comparing number of tx signatures to account's quorum",
-                  (boost::format(
-                       "not enough "
-                       "signatures in transaction; account's quorum %d, "
-                       "transaction's "
-                       "signatures amount %d")
-                   % account->quorum() % boost::size(tx.signatures()))
+                  "looking up tx creator's signatories",
+                  (boost::format("could not fetch "
+                                 "signatories of "
+                                 "account %s")
+                   % tx.creatorAccountId())
                       .str(),
                   false});
-            } | [&tx](const auto &signatories)
-                          -> expected::Result<void, validation::CommandError> {
-              // Check if signatures in transaction are in account
-              // signatory
-              if (signaturesSubset(tx.signatures(), signatories)) {
-                return {};
-              }
-              return expected::makeError(validation::CommandError{
-                  "signatures are a subset of signatories",
-                  formSignaturesErrorMsg(tx.signatures(), signatories),
-                  false});
-            });
-      };
+            }
+            return expected::makeError(validation::CommandError{
+                "comparing number of tx signatures to account's quorum",
+                (boost::format(
+                     "not enough "
+                     "signatures in transaction; account's quorum %d, "
+                     "transaction's "
+                     "signatures amount %d")
+                 % account->quorum() % boost::size(tx.signatures()))
+                    .str(),
+                false});
+          } | [&tx](const auto &signatories)
+                        -> expected::Result<void, validation::CommandError> {
+            // Check if signatures in transaction are in account
+            // signatory
+            if (signaturesSubset(tx.signatures(), signatories)) {
+              return {};
+            }
+            return expected::makeError(validation::CommandError{
+                "signatures are a subset of signatories",
+                formSignaturesErrorMsg(tx.signatures(), signatories),
+                false});
+          });
+    }
 
-      // Filter only valid transactions and accumulate errors
-      auto transactions_errors_log = validation::TransactionsErrors{};
-      auto is_valid_tx = [&temporaryWsv,
-                          checking_transaction,
-                          &transactions_errors_log](auto &tx) {
-        return temporaryWsv.apply(tx, checking_transaction)
-            .match([](expected::Value<void> &) { return true; },
-                   [&tx, &transactions_errors_log](
-                       expected::Error<validation::CommandError> &error) {
-                     transactions_errors_log.push_back(
-                         std::make_pair(error.error, tx.hash()));
-                     return false;
-                   });
-      };
+    /**
+     * Complements initial transaction check with command-by-command check
+     * @param temporary_wsv to apply commands on
+     * @param transactions_errors_log to write errors to
+     * @param tx to be checked
+     * @return empty result, if check is succesfull, command error otherwise
+     */
+    static bool checkTransactions(
+        ametsuchi::TemporaryWsv &temporary_wsv,
+        validation::TransactionsErrors &transactions_errors_log,
+        const shared_model::interface::Transaction &tx) {
+      return temporary_wsv.apply(tx, initiallyCheckTransaction)
+          .match([](expected::Value<void> &) { return true; },
+                 [&tx, &transactions_errors_log](
+                     expected::Error<validation::CommandError> &error) {
+                   transactions_errors_log.push_back(
+                       std::make_pair(error.error, tx.hash()));
+                   return false;
+                 });
+    };
 
+    /**
+     * Validate all transactions supplied; includes special rules, such as batch
+     * validation etc
+     * @param txs to be validated
+     * @param temporary_wsv to apply transactions on
+     * @param transactions_errors_log to write errors to
+     * @return vector of proto transactions, which passed stateful validation
+     */
+    static std::vector<shared_model::proto::Transaction> validateTransactions(
+        const shared_model::interface::types::TransactionsCollectionType &txs,
+        ametsuchi::TemporaryWsv &temporary_wsv,
+        validation::TransactionsErrors &transactions_errors_log) {
+      std::vector<shared_model::proto::Transaction> valid_proto_txs{};
       // TODO: kamilsa IR-1010 20.02.2018 rework validation logic, so that
       // casts to proto are not needed and stateful validator does not know
       // about the transport
-      std::vector<shared_model::proto::Transaction> valid_proto_txs{};
-      auto txs_begin = std::begin(proposal.transactions());
-      auto txs_end = std::end(proposal.transactions());
-      for (size_t i = 0; i < proposal.transactions().size(); ++i) {
+      auto txs_begin = std::begin(txs);
+      auto txs_end = std::end(txs);
+      for (size_t i = 0; i < txs.size(); ++i) {
         auto current_tx_it = txs_begin + i;
         if (not current_tx_it->batch_meta()
             or current_tx_it->batch_meta()->get()->type()
                 != shared_model::interface::types::BatchType::ATOMIC) {
           // if transaction does not belong to atomic batch
-          if (is_valid_tx(*current_tx_it)) {
+          if (checkTransactions(
+                  temporary_wsv, transactions_errors_log, *current_tx_it)) {
             // and it is valid
             valid_proto_txs.push_back(
                 static_cast<const shared_model::proto::Transaction &>(
@@ -174,14 +191,14 @@ namespace iroha {
           }
 
           // check all batch's transactions for validness
-          auto savepoint = temporaryWsv.createSavepoint(
+          auto savepoint = temporary_wsv.createSavepoint(
               "batch_" + current_tx_it->hash().hex());
-          if (std::all_of(
-                  current_tx_it, batch_end_it + 1, [&is_valid_tx](auto &tx) {
-                    return is_valid_tx(tx);
-                  })) {
-            // batch is successful; add it to the list of valid_txs and release
-            // savepoint
+          if (std::all_of(current_tx_it, batch_end_it + 1, [&temporary_wsv, &transactions_errors_log](auto &tx) {
+                return checkTransactions(
+                    temporary_wsv, transactions_errors_log, tx);
+              })) {
+            // batch is successful; add it to the list of valid_txs and
+            // release savepoint
             std::transform(
                 current_tx_it,
                 batch_end_it + 1,
@@ -197,7 +214,22 @@ namespace iroha {
           i += std::distance(current_tx_it, batch_end_it);
         }
       }
+      return valid_proto_txs;
+    }
 
+    StatefulValidatorImpl::StatefulValidatorImpl() {
+      log_ = logger::log("SFV");
+    }
+
+    validation::VerifiedProposalAndErrors StatefulValidatorImpl::validate(
+        const shared_model::interface::Proposal &proposal,
+        ametsuchi::TemporaryWsv &temporaryWsv) {
+      log_->info("transactions in proposal: {}",
+                 proposal.transactions().size());
+
+      auto transactions_errors_log = validation::TransactionsErrors{};
+      auto valid_proto_txs = validateTransactions(
+          proposal.transactions(), temporaryWsv, transactions_errors_log);
       auto validated_proposal = shared_model::proto::ProposalBuilder()
                                     .createdTime(proposal.createdTime())
                                     .height(proposal.height())

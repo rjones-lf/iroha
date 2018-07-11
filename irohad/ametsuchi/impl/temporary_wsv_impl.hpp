@@ -30,13 +30,13 @@ namespace iroha {
   namespace ametsuchi {
     class TemporaryWsvImpl : public TemporaryWsv {
      public:
-      struct SavepointWrapper : public TemporaryWsv::SavepointWrapper {
-        SavepointWrapper(const TemporaryWsvImpl &wsv,
+      struct SavepointWrapperImpl : public TemporaryWsv::SavepointWrapper {
+        SavepointWrapperImpl(const TemporaryWsvImpl &wsv,
                          std::string savepoint_name);
 
         void release() override;
 
-        ~SavepointWrapper() override;
+        ~SavepointWrapperImpl() override;
 
        private:
         std::shared_ptr<pqxx::nontransaction> transaction_;
@@ -53,7 +53,7 @@ namespace iroha {
               const shared_model::interface::Transaction &, WsvQuery &)>
               function) override;
 
-      std::shared_ptr<TemporaryWsv::SavepointWrapper> createSavepoint(
+      std::unique_ptr<TemporaryWsv::SavepointWrapper> createSavepoint(
           const std::string &name) override;
 
       ~TemporaryWsvImpl() override;

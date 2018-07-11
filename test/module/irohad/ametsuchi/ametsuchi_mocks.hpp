@@ -199,7 +199,7 @@ namespace iroha {
                   const shared_model::interface::Transaction &, WsvQuery &)>));
       MOCK_METHOD1(
           createSavepoint,
-          std::shared_ptr<TemporaryWsv::SavepointWrapper>(const std::string &));
+          std::unique_ptr<TemporaryWsv::SavepointWrapper>(const std::string &));
     };
 
     class MockTemporaryWsvSavepointWrapper

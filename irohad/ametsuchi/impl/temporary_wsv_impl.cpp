@@ -87,27 +87,27 @@ namespace iroha {
       };
     }
 
-    std::shared_ptr<TemporaryWsv::SavepointWrapper>
+    std::unique_ptr<TemporaryWsv::SavepointWrapper>
     TemporaryWsvImpl::createSavepoint(const std::string &name) {
-      return std::make_shared<SavepointWrapper>{SavepointWrapper{this, name}};
+      return std::make_unique<SavepointWrapperImpl>{SavepointWrapperImpl{this, name}};
     }
 
     TemporaryWsvImpl::~TemporaryWsvImpl() {
       transaction_->exec("ROLLBACK;");
     }
 
-    TemporaryWsvImpl::SavepointWrapper::SavepointWrapper(
+    TemporaryWsvImpl::SavepointWrapperImpl::SavepointWrapperImpl(
         const iroha::ametsuchi::TemporaryWsvImpl &wsv,
         std::string savepoint_name)
         : transaction_{wsv.transaction_},
           savepoint_name_{std::move(savepoint_name)},
           is_released_{false} {};
 
-    void TemporaryWsvImpl::SavepointWrapper::release() {
+    void TemporaryWsvImpl::SavepointWrapperImpl::release() {
       is_released_ = true;
     }
 
-    TemporaryWsvImpl::SavepointWrapper::~SavepointWrapper() {
+    TemporaryWsvImpl::SavepointWrapperImpl::~SavepointWrapperImpl() {
       if (not is_released_) {
         transaction_->exec("ROLLBACK TO SAVEPOINT " + savepoint_name_ + ";");
       } else {
