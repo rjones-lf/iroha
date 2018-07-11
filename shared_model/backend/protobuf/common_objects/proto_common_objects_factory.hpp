@@ -7,6 +7,7 @@
 #define IROHA_PROTO_COMMON_OBJECTS_FACTORY_HPP
 
 #include "backend/protobuf/common_objects/account.hpp"
+#include "backend/protobuf/common_objects/account_asset.hpp"
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "common/result.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
@@ -59,9 +60,9 @@ namespace shared_model {
         shared_model::validation::Answer answer;
 
         validation::ReasonsGroupType reasons;
-        validator_.validateAccountId(reasons, account_id);
-        validator_.validateDomainId(reasons, domain_id);
-        validator_.validateQuorum(reasons, quorum);
+        validator_.validateAccountId(reasons, proto_account->accountId());
+        validator_.validateDomainId(reasons, proto_account->domainId());
+        validator_.validateQuorum(reasons, proto_account->quorum());
 
         if (not reasons.second.empty()) {
           answer.addReason(std::move(reasons));
@@ -73,6 +74,38 @@ namespace shared_model {
 
         return iroha::expected::makeValue<std::unique_ptr<interface::Account>>(
             std::move(proto_account));
+      }
+
+      FactoryResult<std::unique_ptr<interface::AccountAsset>>
+      createAccountAsset(const interface::types::AccountIdType &account_id,
+                         const interface::types::AssetIdType &asset_id,
+                         const interface::Amount &balance) override {
+        iroha::protocol::AccountAsset asset;
+        asset.set_account_id(account_id);
+        asset.set_asset_id(asset_id);
+        auto proto_balance = asset.mutable_balance();
+        convertToProtoAmount(*proto_balance->mutable_value(),
+                             balance.intValue());
+        proto_balance->set_precision(balance.precision());
+
+        auto proto_asset = std::make_unique<AccountAsset>(std::move(asset));
+
+        shared_model::validation::Answer answer;
+
+        validation::ReasonsGroupType reasons;
+        validator_.validateAccountId(reasons, proto_asset->accountId());
+        validator_.validateAssetId(reasons, proto_asset->assetId());
+
+        if (not reasons.second.empty()) {
+          answer.addReason(std::move(reasons));
+        }
+
+        if (answer) {
+          return iroha::expected::makeError(answer.reason());
+        }
+
+        return iroha::expected::makeValue<
+            std::unique_ptr<interface::AccountAsset>>(std::move(proto_asset));
       }
 
      private:

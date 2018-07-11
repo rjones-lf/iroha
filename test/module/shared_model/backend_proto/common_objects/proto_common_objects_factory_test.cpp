@@ -5,13 +5,17 @@
 
 #include <gtest/gtest.h>
 
+#include "backend/protobuf/common_objects/amount.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
+#include "builders/default_builders.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/result_fixture.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace shared_model;
 using namespace framework::expected;
+
+proto::ProtoCommonObjectsFactory<validation::FieldValidator> factory;
 
 class PeerTest : public ::testing::Test {
  public:
@@ -27,8 +31,6 @@ class PeerTest : public ::testing::Test {
  * @then peer is successfully initialized
  */
 TEST_F(PeerTest, ValidPeerInitialization) {
-  proto::ProtoCommonObjectsFactory<validation::FieldValidator> factory;
-
   auto peer = factory.createPeer(valid_address, valid_pubkey);
 
   peer.match(
@@ -45,8 +47,6 @@ TEST_F(PeerTest, ValidPeerInitialization) {
  * @then peer is not initialized correctly
  */
 TEST_F(PeerTest, InvalidPeerInitialization) {
-  proto::ProtoCommonObjectsFactory<validation::FieldValidator> factory;
-
   auto keypair = crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
   auto peer = factory.createPeer(invalid_address, keypair.publicKey());
@@ -69,11 +69,9 @@ class AccountTest : public ::testing::Test {
 /**
  * @given valid data for account
  * @when account is created via factory
- * @then account is successfully initialized
+ * @then peer is successfully initialized
  */
 TEST_F(AccountTest, ValidAccountInitialization) {
-  proto::ProtoCommonObjectsFactory<validation::FieldValidator> factory;
-
   auto account = factory.createAccount(
       valid_account_id, valid_domain_id, valid_quorum, valid_json);
 
@@ -88,17 +86,61 @@ TEST_F(AccountTest, ValidAccountInitialization) {
 }
 
 /**
- * @given valid data for account
+ * @given invalid data for account
  * @when account is created via factory
- * @then account is successfully initialized
+ * @then account is not initialized correctly
  */
 TEST_F(AccountTest, InvalidAccountInitialization) {
-  proto::ProtoCommonObjectsFactory<validation::FieldValidator> factory;
-
   auto account = factory.createAccount(
       invalid_account_id, valid_domain_id, valid_quorum, valid_json);
 
   account.match(
-      [](const ValueOf<decltype(account)> &v) { FAIL() << "Expected error case"; },
+      [](const ValueOf<decltype(account)> &v) {
+        FAIL() << "Expected error case";
+      },
       [](const ErrorOf<decltype(account)> &e) { SUCCEED(); });
+}
+
+class AccountAssetTest : public ::testing::Test {
+ public:
+  interface::types::AccountIdType valid_account_id = "hello@world";
+  interface::types::AssetIdType valid_asset_id = "bit#connect";
+  std::shared_ptr<interface::Amount> valid_amount =
+      val(builder::DefaultAmountBuilder::fromString("10.00"))->value;
+
+  interface::types::AccountIdType invalid_account_id = "hello123";
+};
+
+/**
+ * @given valid data for account asset
+ * @when account asset is created via factory
+ * @then account asset is successfully initialized
+ */
+TEST_F(AccountAssetTest, ValidAccountAssetInitialization) {
+  auto account_asset = factory.createAccountAsset(
+      valid_account_id, valid_asset_id, *valid_amount);
+
+  account_asset.match(
+      [&](const ValueOf<decltype(account_asset)> &v) {
+        ASSERT_EQ(v.value->accountId(), valid_account_id);
+        ASSERT_EQ(v.value->assetId(), valid_asset_id);
+        ASSERT_EQ(v.value->balance(), *valid_amount);
+      },
+      [](const ErrorOf<decltype(account_asset)> &e) { FAIL() << e.error; });
+}
+
+/**
+ * @given invalid data for account asset
+ * @when account asset is created via factory
+ * @then account asset is not initialized correctly
+ */
+TEST_F(AccountAssetTest, InvalidAccountAssetInitialization) {
+  auto account_asset = factory.createAccountAsset(
+      invalid_account_id, valid_asset_id, *valid_amount);
+
+  account_asset.match(
+      [](const ValueOf<decltype(account_asset)> &v) {
+        FAIL() << "Expected error case";
+      },
+      [](const ErrorOf<decltype(account_asset)> &e) { SUCCEED(); });
 }

@@ -37,7 +37,16 @@ namespace shared_model {
       virtual FactoryResult<std::unique_ptr<Account>> createAccount(
           const types::AccountIdType &account_id,
           const types::DomainIdType &domain_id,
-          types::QuorumType quorum, const types::JsonType &jsonData) = 0;
+          types::QuorumType quorum,
+          const types::JsonType &jsonData) = 0;
+
+      /**
+       * Create account asset instance
+       */
+      virtual FactoryResult<std::unique_ptr<AccountAsset>> createAccountAsset(
+          const types::AccountIdType &account_id,
+          const types::AssetIdType &asset_id,
+          const Amount &balance) = 0;
 
       virtual ~CommonObjectsFactory() = default;
     };
