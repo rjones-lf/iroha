@@ -71,24 +71,20 @@ namespace shared_model {
       virtual boost::optional<std::shared_ptr<BatchMeta>> batchMeta() const = 0;
 
       std::string toString() const override {
-        auto &&res =
-            detail::PrettyStringBuilder()
-                .init("Transaction")
-                .append("hash", hash().hex())
-                .append("creatorAccountId", creatorAccountId())
-                .append("createdTime", std::to_string(createdTime()))
-                .append("quorum", std::to_string(quorum()))
-                .append("commands")
-                .appendAll(commands(),
-                           [](auto &command) { return command.toString(); })
-                .append("signatures")
-                .appendAll(signatures(),
-                           [](auto &sig) { return sig.toString(); });
-
-        if (const auto &batch = batchMeta()) {
-          return res.append(batch->get()->toString()).finalize();
-        }
-        return res.finalize();
+        return detail::PrettyStringBuilder()
+            .init("Transaction")
+            .append("hash", hash().hex())
+            .append("creatorAccountId", creatorAccountId())
+            .append("createdTime", std::to_string(createdTime()))
+            .append("quorum", std::to_string(quorum()))
+            .append("commands")
+            .appendAll(commands(),
+                       [](auto &command) { return command.toString(); })
+            .append("batch_meta",
+                    batchMeta() ? batchMeta()->get()->toString() : "")
+            .append("signatures")
+            .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
+            .finalize();
       }
 
      private:
