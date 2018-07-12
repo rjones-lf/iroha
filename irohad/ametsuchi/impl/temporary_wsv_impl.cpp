@@ -56,7 +56,7 @@ namespace iroha {
               };
       };
 
-      auto savepoint_wrapper = createSavepoint("savepoint_");
+      auto savepoint_wrapper = createSavepoint("savepoint_temp_wsv");
 
       return apply_function(tx, *wsv_) |
                  [savepoint = std::move(savepoint_wrapper),
@@ -102,7 +102,9 @@ namespace iroha {
         std::string savepoint_name)
         : transaction_{wsv.transaction_},
           savepoint_name_{std::move(savepoint_name)},
-          is_released_{false} {};
+          is_released_{false} {
+      transaction_->exec("SAVEPOINT " + savepoint_name_ + ";");
+    };
 
     void TemporaryWsvImpl::SavepointWrapperImpl::release() {
       is_released_ = true;
