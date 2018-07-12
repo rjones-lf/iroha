@@ -5,16 +5,22 @@
 
 #include "validators/transactions_collection/signed_transactions_collection_validator.hpp"
 
+#include <boost/format.hpp>
 #include "validators/field_validator.hpp"
 #include "validators/transaction_validator.hpp"
+#include "validators/transactions_collection/batch_order_validator.hpp"
 
 namespace shared_model {
   namespace validation {
 
-    template <typename TransactionValidator>
-    Answer SignedTransactionsCollectionValidator<TransactionValidator>::
-        validatePointers(const interface::types::SharedTxsCollectionType
-                             &transactions) const {
+    template <typename TransactionValidator, typename OrderValidator>
+    Answer SignedTransactionsCollectionValidator<TransactionValidator,
+                                                 OrderValidator>::
+        validatePointers(const interface::types::TransactionsForwardCollectionType
+                     &transactions) const {
+      Answer res =
+          SignedTransactionsCollectionValidator::order_validator_.validate(
+              transactions);
       ReasonsGroupType reason;
       reason.first = "Transaction list";
       for (const auto &tx : transactions) {
@@ -28,8 +34,6 @@ namespace shared_model {
           reason.second.push_back(message);
         }
       }
-
-      Answer res;
       if (not reason.second.empty()) {
         res.addReason(std::move(reason));
       }

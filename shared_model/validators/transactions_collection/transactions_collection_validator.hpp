@@ -9,6 +9,7 @@
 #include <algorithm>
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "validators/answer.hpp"
+#include "validators/transactions_collection/any_order_validator.hpp"
 
 namespace shared_model {
   namespace validation {
@@ -17,16 +18,19 @@ namespace shared_model {
      * Validator of transaction's collection, this is not fair implementation
      * now, it always returns empty answer
      */
-    template <typename TransactionValidator>
+    template <typename TransactionValidator,
+              typename OrderValidator = AnyOrderValidator>
     class TransactionsCollectionValidator {
      protected:
       TransactionValidator transaction_validator_;
+      OrderValidator order_validator_;
 
      public:
       TransactionsCollectionValidator(
           const TransactionValidator &transactions_validator =
-              TransactionValidator())
-          : transaction_validator_(transactions_validator) {}
+              TransactionValidator(),
+          const OrderValidator &order_validator = OrderValidator())
+          : order_validator_(order_validator) {}
 
       // TODO: IR-1505, igor-egorov, 2018-07-05 Remove method below when
       // proposal and block will return collection of shared transactions

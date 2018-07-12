@@ -21,6 +21,7 @@
 namespace iroha {
   namespace ametsuchi {
 
+    using shared_model::interface::types::AccountDetailKeyType;
     using shared_model::interface::types::AccountIdType;
     using shared_model::interface::types::AssetIdType;
     using shared_model::interface::types::DomainIdType;
@@ -119,20 +120,65 @@ namespace iroha {
     }
 
     boost::optional<std::string> PostgresWsvQuery::getAccountDetail(
-        const std::string &account_id) {
-      return execute_("SELECT data#>>" + transaction_.quote("{}")
-                      + " FROM account WHERE account_id = "
-                      + transaction_.quote(account_id) + ";")
-                 | [&](const auto &result) -> boost::optional<std::string> {
+        const std::string &account_id,
+        const AccountDetailKeyType &key,
+        const AccountIdType &writer) {
+      return [this, &account_id, &key, &writer]() {
+        if (key.empty() and writer.empty()) {
+          // retrieve all values for a specified account
+          return execute_("SELECT data#>>" + transaction_.quote("{}")
+                          + " FROM account WHERE account_id = "
+                          + transaction_.quote(account_id) + ";");
+        } else if (not key.empty() and not writer.empty()) {
+          // retrieve values for the account, under the key and added by the
+          // writer
+          return execute_(
+              "SELECT json_build_object("
+                + transaction_.quote(writer) + ", json_build_object("
+                  + transaction_.quote(key) + ", ("
+                    "SELECT data #>> '{\"" + writer + "\""
+                      + ", \"" + key + "\"}' "
+                    "FROM account "
+                    "WHERE account_id = " + transaction_.quote(account_id)
+                  + ")));");
+        } else if (not writer.empty()) {
+          // retrieve values added by the writer under all keys
+          return execute_(
+              "SELECT json_build_object("
+                + transaction_.quote(writer) + ", ("
+                  "SELECT data -> " + transaction_.quote(writer) + " "
+                  "FROM account "
+                  "WHERE account_id = " + transaction_.quote(account_id)
+                + "));");
+        } else {
+          // retrieve values from all writers under the key
+          return execute_(
+              "SELECT json_object_agg(key, value) AS json "
+              "FROM ("
+                "SELECT json_build_object("
+                  "kv.key, "
+                  "json_build_object("
+                    + transaction_.quote(key) + ", "
+                    "kv.value -> " + transaction_.quote(key) + ")) "
+                "FROM jsonb_each(("
+                  "SELECT data "
+                  "FROM account "
+                  "WHERE account_id = "
+                    + transaction_.quote(account_id) + ")) kv "
+              "WHERE kv.value ? " + transaction_.quote(key) + ") "
+              "AS jsons, json_each(json_build_object);");
+        }
+      }() | [&](const auto &result) -> boost::optional<std::string> {
         if (result.empty()) {
+          // result will be empty iff account id is not found
           log_->info(kAccountNotFound, account_id);
           return boost::none;
         }
-        auto row = result.at(0);
         std::string res;
+        auto row = result.at(0);
         row.at(0) >> res;
 
-        // if res is empty, then that key does not exist for this account
+        // if res is empty, then there is no data for this account
         if (res.empty()) {
           return boost::none;
         }

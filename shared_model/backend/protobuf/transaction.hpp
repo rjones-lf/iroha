@@ -25,7 +25,6 @@
 #include "backend/protobuf/commands/proto_command.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "batch_meta.hpp"
-#include "block.pb.h"
 #include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
