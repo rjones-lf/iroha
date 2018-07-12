@@ -115,7 +115,7 @@ namespace iroha {
     boost::optional<std::shared_ptr<shared_model::interface::Account>>
     PostgresWsvQuery::getAccount(const AccountIdType &account_id) {
       boost::optional<std::string> domain_id, data;
-      boost::optional<shared_model::interface::types::QuorumType> quorum;
+      boost::optional<uint32_t> quorum;
       soci::statement st = sql_.prepare
           << "SELECT domain_id, quorum, data FROM account WHERE account_id = "
              ":account_id";
@@ -169,7 +169,6 @@ namespace iroha {
     PostgresWsvQuery::getAsset(const AssetIdType &asset_id) {
       boost::optional<std::string> domain_id, data;
       boost::optional<int32_t> precision;
-      boost::optional<shared_model::interface::types::QuorumType> quorum;
       soci::statement st = sql_.prepare
           << "SELECT domain_id, precision FROM asset WHERE asset_id = "
              ":account_id";
@@ -190,21 +189,17 @@ namespace iroha {
     boost::optional<
         std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>>
     PostgresWsvQuery::getAccountAssets(const AccountIdType &account_id) {
-      soci::indicator ind;
-      soci::row row;
-      soci::statement st = (sql_.prepare << "SELECT * FROM account_has_asset "
+      using T = boost::tuple<std::string, std::string, std::string>;
+      soci::rowset<T> st = (sql_.prepare << "SELECT * FROM account_has_asset "
                                             "WHERE account_id = :account_id",
-                            soci::into(row, ind),
                             soci::use(account_id));
-      st.execute();
       std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
           assets;
+      for (auto &t : st) {
+        fromResult(makeAccountAsset(account_id, t.get<1>(), t.get<2>())) |
+            [&assets](const auto &asset) { assets.push_back(asset); };
+      }
 
-      processSoci(st, ind, row, [&assets, &account_id](soci::row &row) {
-        fromResult(makeAccountAsset(
-            account_id, row.get<std::string>(1), row.get<std::string>(2)))
-            | [&assets](const auto &asset) { assets.push_back(asset); };
-      });
       return boost::make_optional(assets);
     }
 

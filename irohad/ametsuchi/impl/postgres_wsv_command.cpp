@@ -183,9 +183,10 @@ namespace iroha {
       soci::statement st = sql_.prepare
           << "INSERT INTO account(account_id, domain_id, quorum,"
              "data) VALUES (:id, :domain_id, :quorum, :data)";
+      uint32_t quorum = account.quorum();
       st.exchange(soci::use(account.accountId()));
       st.exchange(soci::use(account.domainId()));
-      st.exchange(soci::use(account.quorum()));
+      st.exchange(soci::use(quorum));
       st.exchange(soci::use(account.jsonData()));
 
       auto msg = [&] {
@@ -365,7 +366,8 @@ namespace iroha {
         const shared_model::interface::Account &account) {
       soci::statement st = sql_.prepare
           << "UPDATE account SET quorum=:quorum WHERE account_id=:account_id";
-      st.exchange(soci::use(account.quorum()));
+      uint32_t quorum = account.quorum();
+      st.exchange(soci::use(quorum));
       st.exchange(soci::use(account.accountId()));
 
       auto msg = [&] {

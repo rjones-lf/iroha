@@ -21,6 +21,8 @@
 #include <boost/optional.hpp>
 
 #define SOCI_USE_BOOST
+#define HAVE_BOOST
+#include <soci/boost-tuple.h>
 #include <soci/soci.h>
 
 #include "builders/default_builders.hpp"
