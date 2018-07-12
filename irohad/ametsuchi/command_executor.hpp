@@ -33,9 +33,9 @@ namespace iroha {
       virtual ~CommandExecutor() = default;
 
       /**
-     * AddAssetQuantity sql executor
-     * @return WsvCommandResult, which will contain error in case of failure
-     */
+       * AddAssetQuantity sql executor
+       * @return WsvCommandResult, which will contain error in case of failure
+       */
       virtual WsvCommandResult addAssetQuantity(
           const shared_model::interface::types::AccountIdType &account_id,
           const shared_model::interface::types::AssetIdType &asset_id,
