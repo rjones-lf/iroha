@@ -59,7 +59,7 @@ namespace iroha {
       auto savepoint_wrapper = createSavepoint("savepoint_");
 
       return apply_function(tx, *wsv_) |
-                 [this,
+                 [savepoint = std::move(savepoint_wrapper),
                   &execute_command,
                   &tx]() -> expected::Result<void, validation::CommandError> {
         // check transaction's commands validity
@@ -82,14 +82,15 @@ namespace iroha {
           }
         }
         // success
-        savepoint_wrapper->release();
+        savepoint->release();
         return {};
       };
     }
 
     std::unique_ptr<TemporaryWsv::SavepointWrapper>
     TemporaryWsvImpl::createSavepoint(const std::string &name) {
-      return std::make_unique<SavepointWrapperImpl>{SavepointWrapperImpl{this, name}};
+      return std::make_unique<TemporaryWsvImpl::SavepointWrapperImpl>(
+          SavepointWrapperImpl(*this, name));
     }
 
     TemporaryWsvImpl::~TemporaryWsvImpl() {

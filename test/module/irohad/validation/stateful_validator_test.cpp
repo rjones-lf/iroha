@@ -25,11 +25,11 @@ using namespace shared_model::crypto;
 
 using ::testing::_;
 using ::testing::A;
+using ::testing::ByMove;
 using ::testing::ByRef;
 using ::testing::Eq;
 using ::testing::Return;
 using ::testing::ReturnArg;
-using ::testing::ByMove;
 
 class SignaturesSubset : public testing::Test {
  public:
@@ -241,20 +241,21 @@ TEST_F(Validator, Batches) {
                       .transactions(txs)
                       .build();
 
-  auto foo = "batch_" + failed_atomic_batch[0].hash().hex();
-  EXPECT_CALL(*temp_wsv_mock, createSavepoint("batch_" + failed_atomic_batch[0].hash().hex()))
-      .WillOnce(
-          Return(ByMove(std::unique_ptr<
+  // calls to create savepoints, one per each atomic batch
+  EXPECT_CALL(*temp_wsv_mock,
+              createSavepoint("batch_" + failed_atomic_batch[0].hash().hex()))
+      .WillOnce(Return(
+          ByMove(std::make_unique<
                  iroha::ametsuchi::MockTemporaryWsvSavepointWrapper>())));
-  EXPECT_CALL(*temp_wsv_mock, createSavepoint("batch_" + success_atomic_batch[0].hash().hex()))
-      .WillOnce(
-          Return(ByMove(std::unique_ptr<
-              iroha::ametsuchi::MockTemporaryWsvSavepointWrapper>())));
-  EXPECT_CALL(*temp_wsv_mock, createSavepoint("batch_" + success_atomic_batch[1].hash().hex()))
-      .WillOnce(
-          Return(ByMove(std::unique_ptr<
-              iroha::ametsuchi::MockTemporaryWsvSavepointWrapper>())));
+  EXPECT_CALL(*temp_wsv_mock,
+              createSavepoint("batch_" + success_atomic_batch[0].hash().hex()))
+      .WillOnce(Return(
+          ByMove(std::make_unique<
+                 iroha::ametsuchi::MockTemporaryWsvSavepointWrapper>())));
 
+  // calls to validate transactions, one per each transaction except those,
+  // which are in failed atomic batch - there only calls before the failed
+  // transaction are needed
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[0])), _))
       .WillOnce(Return(iroha::expected::Value<void>({})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[1])), _))

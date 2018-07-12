@@ -193,7 +193,6 @@ namespace iroha {
           // check all batch's transactions for validness
           auto savepoint = temporary_wsv.createSavepoint(
               "batch_" + current_tx_it->hash().hex());
-          auto foo = "batch_" + current_tx_it->hash().hex();
           if (std::all_of(current_tx_it, batch_end_it + 1, [&temporary_wsv, &transactions_errors_log](auto &tx) {
                 return checkTransactions(
                     temporary_wsv, transactions_errors_log, tx);

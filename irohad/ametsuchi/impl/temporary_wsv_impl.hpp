@@ -32,7 +32,7 @@ namespace iroha {
      public:
       struct SavepointWrapperImpl : public TemporaryWsv::SavepointWrapper {
         SavepointWrapperImpl(const TemporaryWsvImpl &wsv,
-                         std::string savepoint_name);
+                             std::string savepoint_name);
 
         void release() override;
 

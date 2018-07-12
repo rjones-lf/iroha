@@ -71,7 +71,7 @@ namespace iroha {
        * @param name of savepoint to be created
        * @return RAII wrapper for savepoints
        */
-      virtual std::unique_ptr<SavepointWrapper> createSavepoint(
+      virtual std::unique_ptr<TemporaryWsv::SavepointWrapper> createSavepoint(
           const std::string &name) = 0;
 
       virtual ~TemporaryWsv() = default;
