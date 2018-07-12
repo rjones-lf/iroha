@@ -20,13 +20,12 @@ namespace shared_model {
        * @return empty string if order is correct or error message
        */
       std::string canFollow(
-          boost::optional<const interface::Transaction &> tr1,
-          boost::optional<const interface::Transaction &> tr2) const;
+          boost::optional<std::shared_ptr<interface::Transaction>> tr1,
+          boost::optional<std::shared_ptr<interface::Transaction>> tr2) const;
 
      public:
-      virtual Answer validate(
-          const interface::types::TransactionsForwardCollectionType
-              &transactions) const override;
+      virtual Answer validate(const interface::types::SharedTxsCollectionType
+                                  &transactions) const override;
     };
   }  // namespace validation
 }  // namespace shared_model

@@ -12,12 +12,12 @@
 namespace shared_model {
   namespace validation {
     std::string BatchOrderValidator::canFollow(
-        boost::optional<const interface::Transaction &> tr1,
-        boost::optional<const interface::Transaction &> tr2) const {
+        boost::optional<std::shared_ptr<interface::Transaction>> tr1,
+        boost::optional<std::shared_ptr<interface::Transaction>> tr2) const {
       boost::optional<std::shared_ptr<interface::BatchMeta>> batch1 =
-          tr1 ? tr1->batch_meta() : boost::none;
+          tr1 ? tr1.value()->batchMeta() : boost::none;
       boost::optional<std::shared_ptr<interface::BatchMeta>> batch2 =
-          tr2 ? tr2->batch_meta() : boost::none;
+          tr2 ? tr2.value()->batchMeta() : boost::none;
       // both transactions are not a part of any batch
       if (not batch1 and not batch2) {
         return "";
@@ -26,38 +26,40 @@ namespace shared_model {
       if (not batch1) {
         if (batch2.get()->transactionHashes().size() == 0) {
           return (boost::format("Tx %s has a batch of 0 transactions")
-                  % tr2->hash().hex())
+                  % tr2.value()->hash().hex())
               .str();
         }
-        if (batch2.get()->transactionHashes().front() != tr2->reduced_hash()) {
+        if (batch2.get()->transactionHashes().front()
+            != tr2.value()->reducedHash()) {
           return (boost::format("Tx %s is a first transaction of a batch, but "
                                 "it's reduced hash %s doesn't match the first "
                                 "reduced hash in batch %s")
-                  % tr2->hash().hex()
+                  % tr2.value()->hash().hex()
                   % batch2.get()->transactionHashes().front().hex()
-                  % tr2->reduced_hash().hex())
+                  % tr2.value()->reducedHash().hex())
               .str();
         }
         return "";
       }
       // end of a batch
       if (not batch2) {
-        if (batch1.get()->transactionHashes().back() != tr1->reduced_hash()) {
+        if (batch1.get()->transactionHashes().back()
+            != tr1.value()->reducedHash()) {
           return (boost::format("Tx %s is a last transaction of a batch, but "
                                 "it's reduced hash %s doesn't match the last "
                                 "reduced hash in batch %s")
-                  % tr1->hash().hex()
+                  % tr1.value()->hash().hex()
                   % batch1.get()->transactionHashes().back().hex()
-                  % tr1->reduced_hash().hex())
+                  % tr1.value()->reducedHash().hex())
               .str();
         }
         return "";
       }
       // inside of a batch
-      auto it1 =
-          boost::find(batch1.get()->transactionHashes(), tr1->reduced_hash());
-      auto it2 =
-          boost::find(batch2.get()->transactionHashes(), tr2->reduced_hash());
+      auto it1 = boost::find(batch1.get()->transactionHashes(),
+                             tr1.value()->reducedHash());
+      auto it2 = boost::find(batch2.get()->transactionHashes(),
+                             tr2.value()->reducedHash());
       if (it1 == end(batch1.get()->transactionHashes())
           or it2 == end(batch2.get()->transactionHashes())
           or next(it1) == end(batch1.get()->transactionHashes())
@@ -70,26 +72,25 @@ namespace shared_model {
         return (boost::format("Tx %s is followed by %s, but their reduced"
                               "hashed doesn't follow each other in their batch"
                               "meta")
-                % tr1->hash().hex() % tr2->hash().hex())
+                % tr1.value()->hash().hex() % tr2.value()->hash().hex())
             .str();
       }
       if (**batch1 != **batch2) {
         return (boost::format("Tx %s and %s are part of the same batch, but "
                               "their batch metas doesn't match")
-                % tr1->hash().hex() % tr2->hash().hex())
+                % tr1.value()->hash().hex() % tr2.value()->hash().hex())
             .str();
       }
       return "";
     }
 
     Answer BatchOrderValidator::validate(
-        const interface::types::TransactionsForwardCollectionType &transactions)
-        const {
+        const interface::types::SharedTxsCollectionType &transactions) const {
       Answer res;
       ReasonsGroupType reason;
       reason.first = "Transaction order";
-      boost::optional<const interface::Transaction &> prev_transaction =
-          boost::none;
+      boost::optional<interface::types::SharedTxsCollectionType::value_type>
+          prev_transaction = boost::none;
 
       for (auto &transaction : transactions) {
         auto message = canFollow(prev_transaction, transaction);

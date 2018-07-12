@@ -16,8 +16,8 @@ namespace shared_model {
     template <typename TransactionValidator, typename OrderValidator>
     Answer SignedTransactionsCollectionValidator<TransactionValidator,
                                                  OrderValidator>::
-        validatePointers(const interface::types::TransactionsForwardCollectionType
-                     &transactions) const {
+        validatePointers(const interface::types::SharedTxsCollectionType
+                             &transactions) const {
       Answer res =
           SignedTransactionsCollectionValidator::order_validator_.validate(
               transactions);
@@ -42,7 +42,13 @@ namespace shared_model {
 
     template class SignedTransactionsCollectionValidator<
         TransactionValidator<FieldValidator,
-                             CommandValidatorVisitor<FieldValidator>>>;
+                             CommandValidatorVisitor<FieldValidator>>,
+        AnyOrderValidator>;
+
+    template class SignedTransactionsCollectionValidator<
+        TransactionValidator<FieldValidator,
+                             CommandValidatorVisitor<FieldValidator>>,
+        BatchOrderValidator>;
 
   }  // namespace validation
 }  // namespace shared_model

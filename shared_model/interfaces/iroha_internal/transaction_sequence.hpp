@@ -30,12 +30,13 @@ namespace shared_model {
        * @return Result containing transaction sequence if validation
        * successful and string message containing error otherwise
        */
-      template <typename TransactionValidator>
+      template <typename TransactionValidator, typename OrderValidator>
       static iroha::expected::Result<TransactionSequence, std::string>
       createTransactionSequence(
           const types::SharedTxsCollectionType &transactions,
           const validation::TransactionsCollectionValidator<
-              TransactionValidator> &validator);
+              TransactionValidator,
+              OrderValidator> &validator);
 
       /**
        * Get transactions collection

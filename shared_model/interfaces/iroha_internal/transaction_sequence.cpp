@@ -6,15 +6,18 @@
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/transaction_validator.hpp"
+#include "validators/transactions_collection/any_order_validator.hpp"
+#include "validators/transactions_collection/batch_order_validator.hpp"
 
 namespace shared_model {
   namespace interface {
 
-    template <typename TransactionValidator>
+    template <typename TransactionValidator, typename OrderValidator>
     iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequence::createTransactionSequence(
         const types::SharedTxsCollectionType &transactions,
-        const validation::TransactionsCollectionValidator<TransactionValidator>
+        const validation::TransactionsCollectionValidator<TransactionValidator,
+                                                          OrderValidator>
             &validator) {
       auto answer = validator.validatePointers(transactions);
       if (answer.hasErrors()) {
@@ -30,7 +33,18 @@ namespace shared_model {
             validation::TransactionValidator<
                 validation::FieldValidator,
                 validation::CommandValidatorVisitor<
-                    validation::FieldValidator>>> &validator);
+                    validation::FieldValidator>>,
+            validation::AnyOrderValidator> &validator);
+
+    template iroha::expected::Result<TransactionSequence, std::string>
+    TransactionSequence::createTransactionSequence(
+        const types::SharedTxsCollectionType &transactions,
+        const validation::TransactionsCollectionValidator<
+            validation::TransactionValidator<
+                validation::FieldValidator,
+                validation::CommandValidatorVisitor<
+                    validation::FieldValidator>>,
+            validation::BatchOrderValidator> &validator);
 
     types::SharedTxsCollectionType TransactionSequence::transactions() const {
       return transactions_;
