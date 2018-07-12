@@ -329,8 +329,8 @@ TEST_F(TransferAsset, BigPrecision) {
       kNewAsset + "#" + IntegrationTestFramework::kDefaultDomain;
   const auto kPrecision = 5;
   const std::string kInitial = "500.00000";
-  const std::string kForTransfer = "1";
-  const std::string kLeft = "499";
+  const std::string kForTransfer = "1.00000";
+  const std::string kLeft = "499.00000";
 
   auto create_asset =
       baseTx()
@@ -347,7 +347,7 @@ TEST_F(TransferAsset, BigPrecision) {
 
   auto check_balance = [](std::string account_id, std::string val) {
     return [a = std::move(account_id),
-            v = val + "." + std::string(kPrecision, '0')](auto &resp) {
+            v = val](auto &resp) {
       auto &acc_ast = boost::apply_visitor(
           framework::SpecifiedVisitor<interface::AccountAssetResponse>(),
           resp.get());

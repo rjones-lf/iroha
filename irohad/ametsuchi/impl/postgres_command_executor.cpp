@@ -669,13 +669,13 @@ namespace iroha {
           R"(
           WITH has_src_account AS (SELECT account_id FROM account WHERE account_id = '%s' LIMIT 1),
                has_dest_account AS (SELECT account_id FROM account WHERE account_id = '%s' LIMIT 1),
-               has_asset AS (SELECT asset_id FROM asset WHERE asset_id = '%s' AND precision = %d LIMIT 1),
+               has_asset AS (SELECT asset_id FROM asset WHERE asset_id = '%s' LIMIT 1),
                src_amount AS (SELECT amount FROM account_has_asset WHERE asset_id = '%s' AND account_id = '%s' LIMIT 1),
                dest_amount AS (SELECT amount FROM account_has_asset WHERE asset_id = '%s' AND account_id = '%s' LIMIT 1),
                new_src_value AS (SELECT
                               (SELECT
-                                  CASE WHEN EXISTS (SELECT amount FROM new_src_value LIMIT 1) THEN
-                                      (SELECT amount FROM new_src_value LIMIT 1)
+                                  CASE WHEN EXISTS (SELECT amount FROM src_amount LIMIT 1) THEN
+                                      (SELECT amount FROM src_amount LIMIT 1)
                                   ELSE 0::decimal
                               END) - %s AS value
                           ),
@@ -694,17 +694,17 @@ namespace iroha {
                       WHERE EXISTS (SELECT * FROM has_src_account LIMIT 1) AND
                         EXISTS (SELECT * FROM has_dest_account LIMIT 1) AND
                         EXISTS (SELECT * FROM has_asset LIMIT 1) AND
-                        EXISTS (SELECT value FROM new_value WHERE value >= 0 LIMIT 1)
+                        EXISTS (SELECT value FROM new_src_value WHERE value >= 0 LIMIT 1)
                   )
                   ON CONFLICT (account_id, asset_id) DO UPDATE SET amount = EXCLUDED.amount
                   RETURNING (1)
-               )
+               ),
                insert_dest AS
                (
                   INSERT INTO account_has_asset(account_id, asset_id, amount)
                   (
                       SELECT '%s', '%s', value FROM new_dest_value
-                      WHERE EXISTS (SELECT * FROM insert_src)
+                      WHERE EXISTS (SELECT * FROM insert_src) AND
                         EXISTS (SELECT * FROM has_src_account LIMIT 1) AND
                         EXISTS (SELECT * FROM has_dest_account LIMIT 1) AND
                         EXISTS (SELECT * FROM has_asset LIMIT 1) AND
@@ -724,7 +724,7 @@ namespace iroha {
           END AS result;)"
                // clang-format on
                )
-           % src_account_id % dest_account_id % asset_id % precision % asset_id
+           % src_account_id % dest_account_id % asset_id % asset_id
            % src_account_id % asset_id % dest_account_id % amount % amount
            % src_account_id % asset_id % dest_account_id % asset_id)
               .str();

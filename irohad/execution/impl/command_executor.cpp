@@ -175,89 +175,12 @@ namespace iroha {
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::TransferAsset &command) {
-    std::string command_name = "TransferAsset";
-
-    auto src_account_asset =
-        queries->getAccountAsset(command.srcAccountId(), command.assetId());
-    if (not src_account_asset) {
-      return makeCommandError((boost::format("asset %s is absent of %s")
-                               % command.assetId() % command.srcAccountId())
-                                  .str(),
-                              command_name);
-    }
-    auto dest_account_asset =
-        queries->getAccountAsset(command.destAccountId(), command.assetId());
-    auto asset = queries->getAsset(command.assetId());
-    if (not asset) {
-      return makeCommandError((boost::format("asset %s is absent of %s")
-                               % command.assetId() % command.destAccountId())
-                                  .str(),
-                              command_name);
-    }
-    auto precision = asset.value()->precision();
-    if (command.amount().precision() > precision) {
-      return makeCommandError(
-          (boost::format("command precision is greater than asset precision: "
-                         "expected %d, but got %d")
-           % precision % command.amount().precision())
-              .str(),
-          command_name);
-    }
-    auto command_amount =
-        makeAmountWithPrecision(command.amount(), asset.value()->precision());
-    // Set new balance for source account
-    auto src_account_asset_new = command_amount |
-        [&src_account_asset](const auto &amount) {
-          return src_account_asset.value()->balance() - *amount;
-        }
-        | [this, &src_account_asset](const auto &new_src_balance) {
-            return account_asset_builder_
-                .assetId(src_account_asset.value()->assetId())
-                .accountId(src_account_asset.value()->accountId())
-                .balance(*new_src_balance)
-                .build();
-          };
-
-    auto dest_account_asset_new = command_amount | [&](const auto &amount) {
-      const auto kZero = boost::get<
-          expected::Value<std::shared_ptr<shared_model::interface::Amount>>>(
-          amount_builder_.precision(asset.value()->precision())
-              .intValue(0)
-              .build());
-      auto new_amount =
-          (dest_account_asset | [](const auto &ast)
-               -> boost::optional<const shared_model::interface::Amount &> {
-            return {ast->balance()};
-          })
-              .get_value_or(*kZero.value)
-          + *amount;
-      return new_amount | [this, &command](const auto &new_dest_balance) {
-        return account_asset_builder_.assetId(command.assetId())
-            .accountId(command.destAccountId())
-            .balance(*new_dest_balance)
-            .build();
-      };
-    };
-
-    auto map_error = [&command_name](const auto &t) {
-      return expected::map_error<
-          CommandError>(t, [&command_name](const auto &error) -> CommandError {
-        return {"account asset builder failed. reason " + *error, command_name};
-      });
-    };
-
-    return (map_error(src_account_asset_new) |
-                [&](std::shared_ptr<shared_model::interface::AccountAsset>
-                        src_amount) -> CommandResult {
-      return map_error(dest_account_asset_new) |
-                 [&](std::shared_ptr<shared_model::interface::AccountAsset>
-                         dst_amount) -> CommandResult {
-        return makeCommandResult(
-            commands->upsertAccountAsset(*src_amount) |
-                [&] { return commands->upsertAccountAsset(*dst_amount); },
-            command_name);
-      };
-    });
+    auto result = executor->transferAsset(command.srcAccountId(),
+                                          command.destAccountId(),
+                                                  command.assetId(),
+                                                  command.amount().toStringRepr(),
+                                                  command.amount().precision());
+    return makeCommandResult(result, "TransferAsset");
   }
 
   // ----------------------| Validator |----------------------
