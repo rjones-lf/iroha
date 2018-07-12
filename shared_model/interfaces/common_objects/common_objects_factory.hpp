@@ -62,7 +62,7 @@ namespace shared_model {
       /**
        * Create amount instance from string
        *
-       * @param value must represent valid number.
+       * @param amount must represent valid number.
        * For example: "1.23", "10" etc.
        */
       virtual FactoryResult<std::unique_ptr<Amount>> createAmount(
