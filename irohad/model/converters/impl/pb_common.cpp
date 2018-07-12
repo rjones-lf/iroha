@@ -19,7 +19,7 @@
 #include "model/command.hpp"
 #include "model/commands/all.hpp"
 #include "model/domain.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 
 namespace iroha {
   namespace model {

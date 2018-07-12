@@ -206,7 +206,7 @@ namespace iroha {
 
     /**
      * @given inserted role, domain, account
-     * @when update  json data in account
+     * @when update json data in account
      * @then get account and check json data is the same
      */
     TEST_F(AccountTest, UpdateAccountJSONData) {
@@ -233,7 +233,96 @@ namespace iroha {
      * @then getAccountDetail will return nullopt
      */
     TEST_F(AccountTest, GetAccountDetailInvalidWhenNotFound) {
-      EXPECT_FALSE(query->getAccountDetail("invalid account id"));
+      EXPECT_FALSE(query->getAccountDetail("invalid account id", "", ""));
+    }
+
+    /**
+     * @given details, inserted for one account
+     * @when performing query to retrieve all account's details
+     * @then getAccountDetail will return all details of this account
+     */
+    TEST_F(AccountTest, GetAccountDetailWithAccount) {
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), account->accountId(), "some_key", "some_val")));
+
+      auto acc_details = query->getAccountDetail(account->accountId(), "", "");
+      ASSERT_TRUE(acc_details);
+      ASSERT_EQ(R"({"id@domain": {"key": "value", "some_key": "some_val"}})",
+                *acc_details);
+    }
+
+    /**
+     * @given details, inserted into one account by two writers, with one of the
+     * keys repeated
+     * @when performing query to retrieve details under this key
+     * @then getAccountDetail will return details from both writers under the
+     * specified key
+     */
+    TEST_F(AccountTest, GetAccountDetailWithKey) {
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), account->accountId(), "some_key", "some_val")));
+      ASSERT_TRUE(val(command->setAccountKV(account->accountId(),
+                                            account->accountId(),
+                                            "another_key",
+                                            "another_val")));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), "admin", "some_key", "even_third_val")));
+
+      auto acc_details =
+          query->getAccountDetail(account->accountId(), "some_key", "");
+      ASSERT_TRUE(acc_details);
+      ASSERT_EQ(
+          "{ \"admin\" : {\"some_key\" : \"even_third_val\"}, "
+            "\"id@domain\" : {\"some_key\" : \"some_val\"} }",
+          *acc_details);
+    }
+
+    /**
+     * @given details, inserted into one account by two writers
+     * @when performing query to retrieve details, added by one of the writers
+     * @then getAccountDetail will return only details, added by the specified
+     * writer
+     */
+    TEST_F(AccountTest, GetAccountDetailWithWriter) {
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), account->accountId(), "some_key", "some_val")));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), "admin", "another_key", "another_val")));
+
+      auto acc_details =
+          query->getAccountDetail(account->accountId(), "", "admin");
+      ASSERT_TRUE(acc_details);
+      ASSERT_EQ(R"({"admin" : {"another_key": "another_val"}})",
+                *acc_details);
+    }
+
+    /**
+     * @given details, inserted into one account by two writers, with one of the
+     * keys repeated
+     * @when performing query to retrieve details under this key and added by
+     * one of the writers
+     * @then getAccountDetail will return only details, which are under the
+     * specified key and added by the specified writer
+     */
+    TEST_F(AccountTest, GetAccountDetailWithKeyAndWriter) {
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), account->accountId(), "some_key", "some_val")));
+      ASSERT_TRUE(val(command->setAccountKV(account->accountId(),
+                                            account->accountId(),
+                                            "another_key",
+                                            "another_val")));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), "admin", "some_key", "even_third_val")));
+
+      auto acc_details = query->getAccountDetail(
+          account->accountId(), "some_key", account->accountId());
+      ASSERT_TRUE(acc_details);
+      ASSERT_EQ(R"({"id@domain" : {"some_key" : "some_val"}})",
+                *acc_details);
     }
 
     class AccountRoleTest : public WsvQueryCommandTest {

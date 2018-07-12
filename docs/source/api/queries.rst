@@ -340,6 +340,157 @@ Response Structure
     "Account ID", "account which has this balance", "<account_name>@<domain_id>", "makoto@soramitsu"
     "Balance", "balance of the asset", "Not less than 0", "200.20"
 
+Get Account Detail
+^^^^^^^^^^^^^^^^^^
+
+Purpose
+-------
+
+To get details of the account, `GetAccountDetail` query can be used. Account details are key-value pairs, splitted into writers categories. Writers are accounts, which added the corresponding account detail. Example of such structure is:
+
+.. code-block:: json
+
+    {
+        "account@a_domain": {
+            "age": 18,
+            "hobbies": "crypto"
+        },
+        "account@b_domain": {
+            "age": 20,
+            "sports": "basketball"
+        }
+    }
+
+Here, one can see four account details - "age", "hobbies" and "sports" - added by two writers - "account@a_domain" and "account@b_domain". All of these details, obviously, are about the same account.
+
+Request Schema
+--------------
+
+.. code-block:: proto
+
+    message GetAccountDetail {
+      oneof opt_account_id {
+        string account_id = 1;
+      }
+      oneof opt_key {
+        string key = 2;
+      }
+      oneof opt_writer {
+        string writer = 3;
+      }
+    }
+
+.. note::
+    Pay attention, that all fields are optional. Reasons will be described later.
+
+Request Structure
+-----------------
+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+        "Account ID", "account id to get details from", "<account_name>@<domain_id>", "account@domain"
+        "Key", "key, under which to get details", "string", "age"
+        "Writer", "account id of writer", "<account_name>@<domain_id>", "account@domain"
+
+Response Schema
+---------------
+
+.. code-block:: proto
+
+    message AccountDetailResponse {
+      string detail = 1;
+    }
+
+Response Structure
+------------------
+
+.. csv-table::
+    :header: "Field", "Description", "Constraint", "Example"
+    :widths: 15, 30, 20, 15
+
+        "Detail", "key-value pairs with account details", "JSON", "see below"
+
+Usage Examples
+--------------
+
+Let's again consider the example of details from the beginning and see, how different variants of `GetAccountDetail` queries will change the resulting response.
+
+.. code-block:: json
+
+    {
+        "account@a_domain": {
+            "age": 18,
+            "hobbies": "crypto"
+        },
+        "account@b_domain": {
+            "age": 20,
+            "sports": "basketball"
+        }
+    }
+
+**account_id is not set**
+
+If account_id is not set - other fields can be empty or not - it will automatically be substituted with query creator's account, which will lead to one of the next cases.
+
+**only account_id is set**
+
+In this case, all details about that account are going to be returned, leading to the following response:
+
+.. code-block:: json
+
+    {
+        "account@a_domain": {
+            "age": 18,
+            "hobbies": "crypto"
+        },
+        "account@b_domain": {
+            "age": 20,
+            "sports": "basketball"
+        }
+    }
+
+**account_id and key are set**
+
+Here, details added by all writers under the key are going to be returned. For example, if we asked for the key "age", that's the response we would get:
+
+.. code-block:: json
+
+    {
+        "account@a_domain": {
+            "age": 18
+        },
+        "account@b_domain": {
+            "age": 20
+        }
+    }
+
+**account_id and writer are set**
+
+Now, the response will contain all details about this account, added by one specific writer. For example, if we asked for writer "account@b_domain", we would get:
+
+.. code-block:: json
+
+    {
+        "account@b_domain": {
+            "age": 20,
+            "sports": "basketball"
+        }
+    }
+
+**account_id, key and writer are set**
+
+Lastly, if all three field are set, result will contain details, added the specific writer and under the specific key, for example, if we asked for key "age" and writer "account@a_domain", we would get:
+
+.. code-block:: json
+
+    {
+        "account@a_domain": {
+            "age": 18
+        }
+    }
+
 Get Asset Info
 ^^^^^^^^^^^^^^
 

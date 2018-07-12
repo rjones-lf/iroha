@@ -247,7 +247,10 @@ QueryProcessingFactory::executeGetAccountAssets(
 QueryProcessingFactory::QueryResponseBuilderDone
 QueryProcessingFactory::executeGetAccountDetail(
     const shared_model::interface::GetAccountDetail &query) {
-  auto acct_detail = _wsvQuery->getAccountDetail(query.accountId());
+  auto acct_detail =
+      _wsvQuery->getAccountDetail(query.accountId(),
+                                  query.key() ? *query.key() : "",
+                                  query.writer() ? *query.writer() : "");
   if (not acct_detail) {
     return buildError<shared_model::interface::NoAccountDetailErrorResponse>();
   }

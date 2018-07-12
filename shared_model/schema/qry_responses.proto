@@ -1,6 +1,12 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 syntax = "proto3";
 package iroha.protocol;
 import "block.proto";
+import "transaction.proto";
 import "primitive.proto";
 
 // *** WSV data structure *** //

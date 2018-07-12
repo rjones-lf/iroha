@@ -266,8 +266,8 @@ namespace shared_model {
                                                   tx.creatorAccountId());
         field_validator_.validateCreatedTime(tx_reason, tx.createdTime());
         field_validator_.validateQuorum(tx_reason, tx.quorum());
-        if (tx.batch_meta() != boost::none)
-          field_validator_.validateBatchMeta(tx_reason, **tx.batch_meta());
+        if (tx.batchMeta() != boost::none)
+          field_validator_.validateBatchMeta(tx_reason, **tx.batchMeta());
 
         if (not tx_reason.second.empty()) {
           answer.addReason(std::move(tx_reason));
