@@ -29,8 +29,8 @@ namespace shared_model {
      * Class for holding built but still unsigned objects
      * @tparam T - type of object received from builder
      *
-     * NOTE: finish() moves internal object, so it is unsafe to call it more
-     * than once on the single instance.
+     * NOTE: finish() moves internal object, so calling methods after
+     * finish() throws an exception
      */
     template <typename T>
     class UnsignedWrapper {
@@ -53,6 +53,9 @@ namespace shared_model {
       UnsignedWrapper &signAndAddSignature(const crypto::Keypair &keypair) {
         auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
             shared_model::crypto::Blob(object_.payload()), keypair);
+        if (object_finalized_) {
+          throw std::runtime_error("object has already been finalized");
+        }
         object_.addSignature(signedBlob, keypair.publicKey());
         // TODO: 05.12.2017 luckychess think about false case
         return *this;
@@ -66,6 +69,11 @@ namespace shared_model {
         if (boost::size(object_.signatures()) == 0) {
           throw std::invalid_argument("Cannot get object without signatures");
         }
+        if (object_finalized_) {
+          throw std::runtime_error("object has already been finalized");
+        }
+
+        object_finalized_ = true;
         return std::move(object_);
       }
 
@@ -75,6 +83,7 @@ namespace shared_model {
 
      private:
       T object_;
+      bool object_finalized_{false};
     };
   }  // namespace proto
 }  // namespace shared_model

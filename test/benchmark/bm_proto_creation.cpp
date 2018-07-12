@@ -113,6 +113,9 @@ void runBenchmark(benchmark::State &st, Func &&f) {
   st.SetIterationTime(elapsed_seconds.count());
 }
 
+/**
+ * Benchmark block creation by copying protobuf object
+ */
 BENCHMARK_DEFINE_F(BlockBenchmark, TransportCopyTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
     auto block = complete_builder.build();
@@ -124,6 +127,9 @@ BENCHMARK_DEFINE_F(BlockBenchmark, TransportCopyTest)(benchmark::State &st) {
   }
 }
 
+/**
+ * Benchmark block creation by moving protobuf object
+ */
 BENCHMARK_DEFINE_F(BlockBenchmark, TransportMoveTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
     auto block = complete_builder.build();
@@ -136,6 +142,9 @@ BENCHMARK_DEFINE_F(BlockBenchmark, TransportMoveTest)(benchmark::State &st) {
   }
 }
 
+/**
+ * Benchmark block creation by moving another block
+ */
 BENCHMARK_DEFINE_F(BlockBenchmark, MoveTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
     auto block = complete_builder.build();
@@ -147,6 +156,9 @@ BENCHMARK_DEFINE_F(BlockBenchmark, MoveTest)(benchmark::State &st) {
   }
 }
 
+/**
+ * Benchmark block creation by cloning another block
+ */
 BENCHMARK_DEFINE_F(BlockBenchmark, CloneTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
     auto block = complete_builder.build();
@@ -158,6 +170,9 @@ BENCHMARK_DEFINE_F(BlockBenchmark, CloneTest)(benchmark::State &st) {
   }
 }
 
+/**
+ * Benchmark proposal creation by copying another proposal
+ */
 BENCHMARK_DEFINE_F(ProposalBenchmark, CopyTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
     auto proposal = complete_builder.build();
@@ -169,6 +184,9 @@ BENCHMARK_DEFINE_F(ProposalBenchmark, CopyTest)(benchmark::State &st) {
   }
 }
 
+/**
+ * Benchmark proposal creation by moving another proposal
+ */
 BENCHMARK_DEFINE_F(ProposalBenchmark, MoveTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
     auto proposal = complete_builder.build();
@@ -180,6 +198,9 @@ BENCHMARK_DEFINE_F(ProposalBenchmark, MoveTest)(benchmark::State &st) {
   }
 }
 
+/**
+ * Benchmark proposal creation by cloning another proposal
+ */
 BENCHMARK_DEFINE_F(ProposalBenchmark, CloneTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
     auto proposal = complete_builder.build();
@@ -190,7 +211,6 @@ BENCHMARK_DEFINE_F(ProposalBenchmark, CloneTest)(benchmark::State &st) {
     });
   }
 }
-
 
 BENCHMARK_REGISTER_F(BlockBenchmark, MoveTest)->UseManualTime();
 BENCHMARK_REGISTER_F(BlockBenchmark, TransportMoveTest)->UseManualTime();

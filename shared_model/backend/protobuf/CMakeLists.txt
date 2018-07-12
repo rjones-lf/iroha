@@ -1,5 +1,5 @@
 add_library(shared_model_proto_backend
-    block.cpp
+    impl/block.cpp
     impl/permissions.cpp
     commands/impl/proto_add_asset_quantity.cpp
     commands/impl/proto_add_peer.cpp
