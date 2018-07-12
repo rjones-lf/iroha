@@ -21,7 +21,6 @@
 
 namespace shared_model {
   namespace proto {
-
   /**
    * ProtoCommonObjectsFactory constructs protobuf-based objects.
    * It performs stateful validation with provided validator
@@ -38,13 +37,13 @@ namespace shared_model {
         peer.set_peer_key(crypto::toBinaryString(public_key));
         auto proto_peer = std::make_unique<Peer>(std::move(peer));
 
-        auto answer =
+        auto errors =
             validate(*proto_peer, [this](const auto &peer, auto &reasons) {
               validator_.validatePeer(reasons, peer);
             });
 
-        if (answer) {
-          return iroha::expected::makeError(answer.reason());
+        if (errors) {
+          return iroha::expected::makeError(errors.reason());
         }
 
         return iroha::expected::makeValue<std::unique_ptr<interface::Peer>>(
@@ -64,15 +63,15 @@ namespace shared_model {
 
         auto proto_account = std::make_unique<Account>(std::move(account));
 
-        auto answer = validate(
+        auto errors = validate(
             *proto_account, [this](const auto &account, auto &reasons) {
               validator_.validateAccountId(reasons, account.accountId());
               validator_.validateDomainId(reasons, account.domainId());
               validator_.validateQuorum(reasons, account.quorum());
             });
 
-        if (answer) {
-          return iroha::expected::makeError(answer.reason());
+        if (errors) {
+          return iroha::expected::makeError(errors.reason());
         }
 
         return iroha::expected::makeValue<std::unique_ptr<interface::Account>>(
@@ -93,14 +92,14 @@ namespace shared_model {
 
         auto proto_asset = std::make_unique<AccountAsset>(std::move(asset));
 
-        auto answer =
+        auto errors =
             validate(*proto_asset, [this](const auto &asset, auto &reasons) {
               validator_.validateAccountId(reasons, asset.accountId());
               validator_.validateAssetId(reasons, asset.assetId());
             });
 
-        if (answer) {
-          return iroha::expected::makeError(answer.reason());
+        if (errors) {
+          return iroha::expected::makeError(errors.reason());
         }
 
         return iroha::expected::makeValue<
@@ -116,13 +115,13 @@ namespace shared_model {
 
         auto proto_amount = std::make_unique<Amount>(std::move(amount));
 
-        auto answer = validate(*proto_amount, [](const auto &, auto &) {
+        auto errors = validate(*proto_amount, [](const auto &, auto &) {
           // no validation needed,
           // since any amount is valid in general context
         });
 
-        if (answer) {
-          return iroha::expected::makeError(answer.reason());
+        if (errors) {
+          return iroha::expected::makeError(errors.reason());
         }
 
         return iroha::expected::makeValue<std::unique_ptr<interface::Amount>>(
@@ -172,14 +171,14 @@ namespace shared_model {
 
         auto proto_asset = std::make_unique<Asset>(std::move(asset));
 
-        auto answer =
+        auto errors =
             validate(*proto_asset, [this](const auto &asset, auto &reasons) {
               validator_.validateAssetId(reasons, asset.assetId());
               validator_.validateDomainId(reasons, asset.domainId());
             });
 
-        if (answer) {
-          return iroha::expected::makeError(answer.reason());
+        if (errors) {
+          return iroha::expected::makeError(errors.reason());
         }
 
         return iroha::expected::makeValue<std::unique_ptr<interface::Asset>>(
@@ -195,14 +194,14 @@ namespace shared_model {
 
         auto proto_domain = std::make_unique<Domain>(std::move(domain));
 
-        auto answer =
+        auto errors =
             validate(*proto_domain, [this](const auto &domain, auto &reason) {
               validator_.validateDomainId(reason, domain.domainId());
               validator_.validateRoleId(reason, domain.defaultRole());
             });
 
-        if (answer) {
-          return iroha::expected::makeError(answer.reason());
+        if (errors) {
+          return iroha::expected::makeError(errors.reason());
         }
 
         return iroha::expected::makeValue<std::unique_ptr<interface::Domain>>(
@@ -219,13 +218,13 @@ namespace shared_model {
         auto proto_singature =
             std::make_unique<Signature>(std::move(signature));
 
-        auto answer = validate(
+        auto errors = validate(
             *proto_singature, [this](const auto &signature, auto &reason) {
               validator_.validatePubkey(reason, signature.publicKey());
             });
 
-        if (answer) {
-          return iroha::expected::makeError(answer.reason());
+        if (errors) {
+          return iroha::expected::makeError(errors.reason());
         }
 
         return iroha::expected::makeValue<
@@ -242,13 +241,13 @@ namespace shared_model {
        */
       template <typename T, typename ValidationFunc>
       validation::Answer validate(const T &o, ValidationFunc &&f) const {
-        shared_model::validation::Answer answer;
+        shared_model::validation::Answer errors;
         validation::ReasonsGroupType reasons;
         f(o, reasons);
         if (not reasons.second.empty()) {
-          answer.addReason(std::move(reasons));
+          errors.addReason(std::move(reasons));
         }
-        return answer;
+        return errors;
       }
 
       Validator validator_;

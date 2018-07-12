@@ -17,7 +17,7 @@
 namespace shared_model {
   namespace interface {
     /**
-     * CommonObjectsFactory provides methods to construct simple objects
+     * CommonObjectsFactory provides methods to construct common objects
      * such as peer, account etc.
      */
     class CommonObjectsFactory {
