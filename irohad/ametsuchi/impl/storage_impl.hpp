@@ -20,12 +20,15 @@
 
 #include "ametsuchi/storage.hpp"
 
-#include <boost/optional.hpp>
 #include <cmath>
-#include <pqxx/pqxx>
 #include <shared_mutex>
+
+#include <boost/optional.hpp>
+#include <pqxx/pqxx>
+
 #include "ametsuchi/impl/postgres_options.hpp"
 #include "ametsuchi/key_value_storage.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -50,7 +53,10 @@ namespace iroha {
 
      public:
       static expected::Result<std::shared_ptr<StorageImpl>, std::string> create(
-          std::string block_store_dir, std::string postgres_connection);
+          std::string block_store_dir,
+          std::string postgres_connection,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory_);
 
       expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
       createTemporaryWsv() override;
@@ -89,7 +95,9 @@ namespace iroha {
      protected:
       StorageImpl(std::string block_store_dir,
                   PostgresOptions postgres_options,
-                  std::unique_ptr<KeyValueStorage> block_store);
+                  std::unique_ptr<KeyValueStorage> block_store,
+                  std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                      factory_);
 
       /**
        * Folder with raw blocks
@@ -109,6 +117,8 @@ namespace iroha {
 
       rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
           notifier_;
+
+      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
 
      protected:
       static const std::string &init_;

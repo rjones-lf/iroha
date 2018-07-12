@@ -93,7 +93,7 @@ namespace iroha {
                  + transaction_.quote(account_id) + ";")
                  | [&](const auto &result)
                  -> std::vector<shared_model::interface::types::HeightType> {
-        return transform<shared_model::interface::types::HeightType>(
+        return transform(
             result, [&](const auto &row) {
               return row.at("height")
                   .template as<shared_model::interface::types::HeightType>();

@@ -22,15 +22,25 @@
 
 #include <pqxx/connection>
 
+#include "ametsuchi/impl/postgres_result_converter.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "postgres_wsv_common.hpp"
 
 namespace iroha {
   namespace ametsuchi {
     class PostgresWsvQuery : public WsvQuery {
      public:
-      explicit PostgresWsvQuery(pqxx::nontransaction &transaction);
-      PostgresWsvQuery(std::unique_ptr<pqxx::lazyconnection> connection,
-                       std::unique_ptr<pqxx::nontransaction> transaction);
+      explicit PostgresWsvQuery(
+          pqxx::nontransaction &transaction,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory);
+
+      PostgresWsvQuery(
+          std::unique_ptr<pqxx::lazyconnection> connection,
+          std::unique_ptr<pqxx::nontransaction> transaction,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory);
+
       boost::optional<std::vector<shared_model::interface::types::RoleIdType>>
       getAccountRoles(const shared_model::interface::types::AccountIdType
                           &account_id) override;
@@ -73,6 +83,8 @@ namespace iroha {
           shared_model::interface::permissions::Grantable permission) override;
 
      private:
+      std::unique_ptr<PostgresResultConverter> converter_;
+
       std::unique_ptr<pqxx::lazyconnection> connection_ptr_;
       std::unique_ptr<pqxx::nontransaction> transaction_ptr_;
 

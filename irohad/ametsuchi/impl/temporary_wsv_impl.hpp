@@ -23,6 +23,7 @@
 
 #include "ametsuchi/temporary_wsv.hpp"
 #include "execution/command_executor.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -30,8 +31,11 @@ namespace iroha {
   namespace ametsuchi {
     class TemporaryWsvImpl : public TemporaryWsv {
      public:
-      TemporaryWsvImpl(std::unique_ptr<pqxx::lazyconnection> connection,
-                       std::unique_ptr<pqxx::nontransaction> transaction);
+      TemporaryWsvImpl(
+          std::unique_ptr<pqxx::lazyconnection> connection,
+          std::unique_ptr<pqxx::nontransaction> transaction,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory);
 
       expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &,

@@ -22,12 +22,17 @@
 #include <pqxx/nontransaction>
 #include <pqxx/result>
 
-#include "builders/default_builders.hpp"
 #include "common/result.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
   namespace ametsuchi {
+
+    template <typename T>
+    inline T as(const pqxx::field &field) {
+      return field.as<T>();
+    }
 
     /**
      * Return function which can execute SQL statements on provided transaction
@@ -71,17 +76,17 @@ namespace iroha {
 
     /**
      * Transforms pqxx::result to vector of Ts by applying transform_func
-     * @tparam T - type to transform to
-     * @tparam Operator - type of transformation function, must return T
+     * @tparam Operator - type of transformation function
      * @param result - pqxx::result which contains several rows from the
      * database
-     * @param transform_func - function which transforms result row to T
-     * @return vector of target type
+     * @param transform_func - function which transforms result row to some type
+     * @return vector of objects of type returned by transform_func
      */
-    template <typename T, typename Operator>
-    std::vector<T> transform(const pqxx::result &result,
-                             Operator &&transform_func) noexcept {
-      std::vector<T> values;
+    template <typename Operator>
+    auto transform(const pqxx::result &result, Operator &&transform_func) noexcept {
+      using ReturnType = decltype(transform_func(*result.begin()));
+
+      std::vector<ReturnType> values;
       values.reserve(result.size());
       std::transform(result.begin(),
                      result.end(),
@@ -91,87 +96,69 @@ namespace iroha {
       return values;
     }
 
-    /**
-     * Execute build function and return error in case it throws
-     * @tparam T - result value type
-     * @param f - function which returns BuilderResult
-     * @return whatever f returns, or error in case exception has been thrown
-     */
-    template <typename BuildFunc>
-    static inline auto tryBuild(BuildFunc &&f) noexcept -> decltype(f()) {
-      try {
-        return f();
-      } catch (std::exception &e) {
-        return expected::makeError(std::make_shared<std::string>(e.what()));
-      }
-    }
+//    inline shared_model::interface::CommonObjectsFactory::FactoryResult<
+//        std::unique_ptr<shared_model::interface::Account>>
+//    makeAccount(
+//        const pqxx::row &row,
+//        const shared_model::interface::CommonObjectsFactory &factory) noexcept {
+//      return factory.createAccount(
+//          as<std::string>(row.at("account_id")),
+//          as<std::string>(row.at("domain_id")),
+//          as<shared_model::interface::types::QuorumType>(row.at("quorum")),
+//          as<shared_model::interface::types::JsonType>(row.at("data")));
+//    }
 
-    static inline shared_model::builder::BuilderResult<
-        shared_model::interface::Account>
-    makeAccount(const pqxx::row &row) noexcept {
-      return tryBuild([&row] {
-        return shared_model::builder::DefaultAccountBuilder()
-            .accountId(row.at("account_id").template as<std::string>())
-            .domainId(row.at("domain_id").template as<std::string>())
-            .quorum(
-                row.at("quorum")
-                    .template as<shared_model::interface::types::QuorumType>())
-            .jsonData(row.at("data").template as<std::string>())
-            .build();
-      });
-    }
-
-    static inline shared_model::builder::BuilderResult<
-        shared_model::interface::Asset>
-    makeAsset(const pqxx::row &row) noexcept {
-      return tryBuild([&row] {
-        return shared_model::builder::DefaultAssetBuilder()
-            .assetId(row.at("asset_id").template as<std::string>())
-            .domainId(row.at("domain_id").template as<std::string>())
-            .precision(row.at("precision").template as<int32_t>())
-            .build();
-      });
-    }
-
-    static inline shared_model::builder::BuilderResult<
-        shared_model::interface::AccountAsset>
-    makeAccountAsset(const pqxx::row &row) noexcept {
-      return tryBuild([&row] {
-        auto balance = shared_model::builder::DefaultAmountBuilder::fromString(
-            row.at("amount").template as<std::string>());
-        return balance | [&](const auto &balance_ptr) {
-          return shared_model::builder::DefaultAccountAssetBuilder()
-              .accountId(row.at("account_id").template as<std::string>())
-              .assetId(row.at("asset_id").template as<std::string>())
-              .balance(*balance_ptr)
-              .build();
-        };
-      });
-    }
-
-    static inline shared_model::builder::BuilderResult<
-        shared_model::interface::Peer>
-    makePeer(const pqxx::row &row) noexcept {
-      return tryBuild([&row] {
-        pqxx::binarystring public_key_str(row.at("public_key"));
-        shared_model::interface::types::PubkeyType pubkey(public_key_str.str());
-        return shared_model::builder::DefaultPeerBuilder()
-            .pubkey(pubkey)
-            .address(row.at("address").template as<std::string>())
-            .build();
-      });
-    }
-
-    static inline shared_model::builder::BuilderResult<
-        shared_model::interface::Domain>
-    makeDomain(const pqxx::row &row) noexcept {
-      return tryBuild([&row] {
-        return shared_model::builder::DefaultDomainBuilder()
-            .domainId(row.at("domain_id").template as<std::string>())
-            .defaultRole(row.at("default_role").template as<std::string>())
-            .build();
-      });
-    }
+//    static inline shared_model::builder::BuilderResult<
+//        shared_model::interface::Asset>
+//    makeAsset(const pqxx::row &row) noexcept {
+//      return tryBuild([&row] {
+//        return shared_model::builder::DefaultAssetBuilder()
+//            .assetId(row.at("asset_id").template as<std::string>())
+//            .domainId(row.at("domain_id").template as<std::string>())
+//            .precision(row.at("precision").template as<int32_t>())
+//            .build();
+//      });
+//    }
+//
+//    static inline shared_model::builder::BuilderResult<
+//        shared_model::interface::AccountAsset>
+//    makeAccountAsset(const pqxx::row &row) noexcept {
+//      return tryBuild([&row] {
+//        auto balance = shared_model::builder::DefaultAmountBuilder::fromString(
+//            row.at("amount").template as<std::string>());
+//        return balance | [&](const auto &balance_ptr) {
+//          return shared_model::builder::DefaultAccountAssetBuilder()
+//              .accountId(row.at("account_id").template as<std::string>())
+//              .assetId(row.at("asset_id").template as<std::string>())
+//              .balance(*balance_ptr)
+//              .build();
+//        };
+//      });
+//    }
+//
+//    static inline shared_model::builder::BuilderResult<
+//        shared_model::interface::Peer>
+//    makePeer(const pqxx::row &row) noexcept {
+//      return tryBuild([&row] {
+//        pqxx::binarystring public_key_str(row.at("public_key"));
+//        shared_model::interface::types::PubkeyType pubkey(public_key_str.str());
+//        return shared_model::builder::DefaultPeerBuilder()
+//            .pubkey(pubkey)
+//            .address(row.at("address").template as<std::string>())
+//            .build();
+//      });
+//    }
+//
+//    static inline shared_model::builder::BuilderResult<
+//        shared_model::interface::Domain>
+//    makeDomain(const pqxx::row &row) noexcept {
+//      return tryBuild([&row] {
+//        return shared_model::builder::DefaultDomainBuilder()
+//            .domainId(row.at("domain_id").template as<std::string>())
+//            .defaultRole(row.at("default_role").template as<std::string>())
+//            .build();
+//      });
+//    }
 
     /**
      * Transforms result to optional
@@ -181,18 +168,16 @@ namespace iroha {
      * @param result BuilderResult
      * @return optional<T>
      */
-    template <typename T>
-    static inline boost::optional<std::shared_ptr<T>> fromResult(
-        const shared_model::builder::BuilderResult<T> &result) {
-      return result.match(
-          [](const expected::Value<std::shared_ptr<T>> &v) {
-            return boost::make_optional(v.value);
-          },
-          [](const expected::Error<std::shared_ptr<std::string>> &e)
-              -> boost::optional<std::shared_ptr<T>> {
-            return boost::none;
-          });
-    }
+//    template <typename T>
+//    static inline boost::optional<std::shared_ptr<T>> fromResult(
+//        const shared_model::builder::BuilderResult<T> &result) {
+//      return result.match(
+//          [](const expected::Value<std::shared_ptr<T>> &v) {
+//            return boost::make_optional(v.value);
+//          },
+//          [](const expected::Error<std::shared_ptr<std::string>> &e)
+//              -> boost::optional<std::shared_ptr<T>> { return boost::none; });
+//    }
   }  // namespace ametsuchi
 }  // namespace iroha
 #endif  // IROHA_POSTGRES_WSV_COMMON_HPP

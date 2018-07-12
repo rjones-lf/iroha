@@ -24,6 +24,7 @@
 
 #include "ametsuchi/mutable_storage.hpp"
 #include "execution/command_executor.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -40,7 +41,9 @@ namespace iroha {
       MutableStorageImpl(
           shared_model::interface::types::HashType top_hash,
           std::unique_ptr<pqxx::lazyconnection> connection,
-          std::unique_ptr<pqxx::nontransaction> transaction);
+          std::unique_ptr<pqxx::nontransaction> transaction,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory);
 
       bool apply(
           const shared_model::interface::Block &block,

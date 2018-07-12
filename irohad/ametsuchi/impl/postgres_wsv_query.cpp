@@ -17,9 +17,46 @@
 
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "backend/protobuf/permissions.hpp"
+#include "common/result.hpp"
 
 namespace iroha {
   namespace ametsuchi {
+
+    namespace {
+      template <typename T>
+      auto fromResult(PostgresResultConverter::ConverterResult<T> &&result) {
+        // pointer to put into optional
+        using ReturnPtr = std::shared_ptr<typename T::element_type>;
+
+        return result.match(
+            [](expected::Value<T> &v) {
+              return boost::make_optional(ReturnPtr(std::move(v.value)));
+            },
+            [](const expected::Error<std::string> &)
+                -> boost::optional<ReturnPtr> { return boost::none; });
+      }
+
+    template <typename T>
+    auto fromResults(PostgresResultConverter::ConverterResult<T> &&result) {
+      // pointer to put into optional
+      using ReturnPtr = std::shared_ptr<typename T::value_type::element_type>;
+
+      return result.match(
+          [](expected::Value<T> &v) {
+            std::vector<ReturnPtr> elements;
+            elements.reserve(v.value.size());
+            std::transform(v.value.begin(),
+                           v.value.end(),
+                           std::back_inserter(elements),
+                           [](auto &o) {
+              return ReturnPtr(std::move(o));
+            });
+            return boost::make_optional(elements);
+          },
+          [](const expected::Error<std::string> &)
+              -> boost::optional<std::vector<ReturnPtr>> { return boost::none; });
+    }
+    }  // namespace
 
     using shared_model::interface::types::AccountIdType;
     using shared_model::interface::types::AssetIdType;
@@ -35,15 +72,20 @@ namespace iroha {
     const std::string kAccountId = "account_id";
     const std::string kDomainId = "domain_id";
 
-    PostgresWsvQuery::PostgresWsvQuery(pqxx::nontransaction &transaction)
-        : transaction_(transaction),
+    PostgresWsvQuery::PostgresWsvQuery(
+        pqxx::nontransaction &transaction,
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+        : converter_(std::make_unique<PostgresResultConverter>(factory)),
+          transaction_(transaction),
           log_(logger::log("PostgresWsvQuery")),
           execute_{makeExecuteOptional(transaction_, log_)} {}
 
     PostgresWsvQuery::PostgresWsvQuery(
         std::unique_ptr<pqxx::lazyconnection> connection,
-        std::unique_ptr<pqxx::nontransaction> transaction)
-        : connection_ptr_(std::move(connection)),
+        std::unique_ptr<pqxx::nontransaction> transaction,
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+        : converter_(std::make_unique<PostgresResultConverter>(factory)),
+          connection_ptr_(std::move(connection)),
           transaction_ptr_(std::move(transaction)),
           transaction_(*transaction_ptr_),
           log_(logger::log("PostgresWsvQuery")),
@@ -72,8 +114,8 @@ namespace iroha {
                  "SELECT role_id FROM account_has_roles WHERE account_id = "
                  + transaction_.quote(account_id) + ";")
           | [&](const auto &result) {
-              return transform<std::string>(result, [](const auto &row) {
-                return row.at(kRoleId).c_str();
+              return transform(result, [](const auto &row) {
+                return std::string(row.at(kRoleId).c_str());
               });
             };
     }
@@ -81,7 +123,8 @@ namespace iroha {
     boost::optional<shared_model::interface::RolePermissionSet>
     PostgresWsvQuery::getRolePermissions(const RoleIdType &role_name) {
       return execute_(
-                 "SELECT permission FROM role_has_permissions WHERE role_id = "
+                 "SELECT permission FROM role_has_permissions WHERE role_id "
+                 "= "
                  + transaction_.quote(role_name) + ";")
                  | [&](const auto &result)
                  -> boost::optional<
@@ -97,8 +140,9 @@ namespace iroha {
 
     boost::optional<std::vector<RoleIdType>> PostgresWsvQuery::getRoles() {
       return execute_("SELECT role_id FROM role;") | [&](const auto &result) {
-        return transform<std::string>(
-            result, [](const auto &row) { return row.at(kRoleId).c_str(); });
+        return transform(result, [](const auto &row) {
+          return std::string(row.at(kRoleId).c_str());
+        });
       };
     }
 
@@ -106,7 +150,7 @@ namespace iroha {
     PostgresWsvQuery::getAccount(const AccountIdType &account_id) {
       return execute_("SELECT * FROM account WHERE account_id = "
                       + transaction_.quote(account_id) + ";")
-                 | [&](const auto &result)
+                 | [&](auto &result)
                  -> boost::optional<
                      std::shared_ptr<shared_model::interface::Account>> {
         if (result.empty()) {
@@ -114,7 +158,7 @@ namespace iroha {
           return boost::none;
         }
 
-        return fromResult(makeAccount(result.at(0)));
+        return fromResult(converter_->createAccount(result.at(0)));
       };
     }
 
@@ -147,7 +191,7 @@ namespace iroha {
                  "account_id = "
                  + transaction_.quote(account_id) + ";")
           | [&](const auto &result) {
-              return transform<PubkeyType>(result, [&](const auto &row) {
+              return transform(result, [&](const auto &row) {
                 pqxx::binarystring public_key_str(row.at(kPublicKey));
                 return PubkeyType(public_key_str.str());
               });
@@ -159,14 +203,14 @@ namespace iroha {
       pqxx::result result;
       return execute_("SELECT * FROM asset WHERE asset_id = "
                       + transaction_.quote(asset_id) + ";")
-                 | [&](const auto &result)
+                 | [&]( auto &result)
                  -> boost::optional<
                      std::shared_ptr<shared_model::interface::Asset>> {
         if (result.empty()) {
           log_->info("Asset {} not found", asset_id);
           return boost::none;
         }
-        return fromResult(makeAsset(result.at(0)));
+        return fromResult(converter_->createAsset(result.at(0)));
       };
     }
 
@@ -175,24 +219,10 @@ namespace iroha {
     PostgresWsvQuery::getAccountAssets(const AccountIdType &account_id) {
       return execute_("SELECT * FROM account_has_asset WHERE account_id = "
                       + transaction_.quote(account_id) + ";")
-                 | [&](const auto &result)
+                 | [&](auto &result)
                  -> boost::optional<std::vector<
                      std::shared_ptr<shared_model::interface::AccountAsset>>> {
-        auto results = transform<shared_model::builder::BuilderResult<
-            shared_model::interface::AccountAsset>>(result, makeAccountAsset);
-        std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
-            assets;
-        for (auto &r : results) {
-          r.match(
-              [&](expected::Value<
-                  std::shared_ptr<shared_model::interface::AccountAsset>> &v) {
-                assets.push_back(v.value);
-              },
-              [&](expected::Error<std::shared_ptr<std::string>> &e) {
-                log_->info(*e.error);
-              });
-        }
-        return assets;
+        return fromResults(converter_->createAccountAssets(result));
       };
     }
     boost::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
@@ -201,7 +231,7 @@ namespace iroha {
       return execute_("SELECT * FROM account_has_asset WHERE account_id = "
                       + transaction_.quote(account_id)
                       + " AND asset_id = " + transaction_.quote(asset_id) + ";")
-                 | [&](const auto &result)
+                 | [&](auto &result)
                  -> boost::optional<
                      std::shared_ptr<shared_model::interface::AccountAsset>> {
         if (result.empty()) {
@@ -209,7 +239,7 @@ namespace iroha {
           return boost::none;
         }
 
-        return fromResult(makeAccountAsset(result.at(0)));
+        return fromResult(converter_->createAccountAsset(result.at(0)));
       };
     }
 
@@ -217,37 +247,24 @@ namespace iroha {
     PostgresWsvQuery::getDomain(const DomainIdType &domain_id) {
       return execute_("SELECT * FROM domain WHERE domain_id = "
                       + transaction_.quote(domain_id) + ";")
-                 | [&](const auto &result)
+                 | [&](auto &result)
                  -> boost::optional<
                      std::shared_ptr<shared_model::interface::Domain>> {
         if (result.empty()) {
           log_->info("Domain {} not found", domain_id);
           return boost::none;
         }
-        return fromResult(makeDomain(result.at(0)));
+        return fromResult(converter_->createDomain(result.at(0)));
       };
     }
 
     boost::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>>
     PostgresWsvQuery::getPeers() {
       pqxx::result result;
-      return execute_("SELECT * FROM peer;") | [&](const auto &result)
+      return execute_("SELECT * FROM peer;") | [&](auto &result)
                  -> boost::optional<std::vector<
                      std::shared_ptr<shared_model::interface::Peer>>> {
-        auto results = transform<shared_model::builder::BuilderResult<
-            shared_model::interface::Peer>>(result, makePeer);
-        std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
-        for (auto &r : results) {
-          r.match(
-              [&](expected::Value<
-                  std::shared_ptr<shared_model::interface::Peer>> &v) {
-                peers.push_back(v.value);
-              },
-              [&](expected::Error<std::shared_ptr<std::string>> &e) {
-                log_->info(*e.error);
-              });
-        }
-        return peers;
+        return fromResults(converter_->createPeers(result));
       };
     }
   }  // namespace ametsuchi

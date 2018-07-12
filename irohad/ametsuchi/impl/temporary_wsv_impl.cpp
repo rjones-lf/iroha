@@ -25,13 +25,15 @@ namespace iroha {
   namespace ametsuchi {
     TemporaryWsvImpl::TemporaryWsvImpl(
         std::unique_ptr<pqxx::lazyconnection> connection,
-        std::unique_ptr<pqxx::nontransaction> transaction)
+        std::unique_ptr<pqxx::nontransaction> transaction,
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+        factory)
         : connection_(std::move(connection)),
           transaction_(std::move(transaction)),
-          wsv_(std::make_unique<PostgresWsvQuery>(*transaction_)),
+          wsv_(std::make_unique<PostgresWsvQuery>(*transaction_, factory)),
           executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
           log_(logger::log("TemporaryWSV")) {
-      auto query = std::make_shared<PostgresWsvQuery>(*transaction_);
+      auto query = std::make_shared<PostgresWsvQuery>(*transaction_, factory);
       auto command = std::make_shared<PostgresWsvCommand>(*transaction_);
       command_executor_ = std::make_shared<CommandExecutor>(query, command);
       command_validator_ = std::make_shared<CommandValidator>(query);

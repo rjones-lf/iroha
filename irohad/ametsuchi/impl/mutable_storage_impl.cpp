@@ -23,6 +23,7 @@
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/wsv_command.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "model/sha3_hash.hpp"
 
 namespace iroha {
@@ -30,16 +31,17 @@ namespace iroha {
     MutableStorageImpl::MutableStorageImpl(
         shared_model::interface::types::HashType top_hash,
         std::unique_ptr<pqxx::lazyconnection> connection,
-        std::unique_ptr<pqxx::nontransaction> transaction)
+        std::unique_ptr<pqxx::nontransaction> transaction,
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
         : top_hash_(top_hash),
           connection_(std::move(connection)),
           transaction_(std::move(transaction)),
-          wsv_(std::make_unique<PostgresWsvQuery>(*transaction_)),
+          wsv_(std::make_unique<PostgresWsvQuery>(*transaction_, factory)),
           executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
           block_index_(std::make_unique<PostgresBlockIndex>(*transaction_)),
           committed(false),
           log_(logger::log("MutableStorage")) {
-      auto query = std::make_shared<PostgresWsvQuery>(*transaction_);
+      auto query = std::make_shared<PostgresWsvQuery>(*transaction_, factory);
       auto command = std::make_shared<PostgresWsvCommand>(*transaction_);
       command_executor_ =
           std::make_shared<CommandExecutor>(CommandExecutor(query, command));
