@@ -5,7 +5,6 @@
 
 #include <gtest/gtest.h>
 
-#include "block.pb.h"
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/block_variant_transport_builder.hpp"
 #include "builders/protobuf/empty_block.hpp"

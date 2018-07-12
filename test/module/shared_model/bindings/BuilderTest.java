@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Disabled;
 import java.math.BigInteger;
 
 import iroha.protocol.Commands;
-import iroha.protocol.BlockOuterClass;
+import iroha.protocol.TransactionOuterClass;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -150,7 +150,7 @@ public class BuilderTest {
         }
 
         try {
-            BlockOuterClass.Transaction.parseFrom(bs);
+            TransactionOuterClass.Transaction.parseFrom(bs);
         } catch (InvalidProtocolBufferException e) {
             System.out.print("Exception: ");
             System.out.println(e.getMessage());

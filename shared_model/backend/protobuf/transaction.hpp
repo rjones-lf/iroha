@@ -25,7 +25,6 @@
 #include "backend/protobuf/commands/proto_command.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "batch_meta.hpp"
-#include "block.pb.h"
 #include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
@@ -125,7 +124,7 @@ namespace shared_model {
           [this] { return makeBlob(reduced_payload_); }};
 
       const Lazy<boost::optional<std::shared_ptr<interface::BatchMeta>>> meta_{
-          [this] () -> boost::optional<std::shared_ptr<interface::BatchMeta>> {
+          [this]() -> boost::optional<std::shared_ptr<interface::BatchMeta>> {
             if (payload_.has_batch()) {
               std::shared_ptr<interface::BatchMeta> b =
                   std::make_shared<proto::BatchMeta>(payload_.batch());

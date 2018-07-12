@@ -251,7 +251,7 @@ namespace iroha {
       MOCK_METHOD0(dropStorage, void(void));
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-      on_commit() {
+      on_commit() override {
         return notifier.get_observable();
       }
       void commit(std::unique_ptr<MutableStorage> storage) override {

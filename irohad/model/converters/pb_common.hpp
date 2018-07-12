@@ -28,7 +28,7 @@
 #include "model/domain.hpp"
 #include "model/peer.hpp"
 #include "model/signature.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 
 namespace iroha {
   namespace model {
