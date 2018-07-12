@@ -23,6 +23,78 @@ namespace iroha {
           const std::string &amount,
           const shared_model::interface::types::PrecisionType precision) override;
 
+      WsvCommandResult addPeer(
+          const shared_model::interface::Peer &peer) override;
+
+      WsvCommandResult addSignatory(
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::PubkeyType &signatory) override;
+
+      WsvCommandResult appendRole(
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::RoleIdType &role_name) override;
+
+      WsvCommandResult createAccount(
+          const shared_model::interface::types::AccountIdType &account_name,
+          const shared_model::interface::types::DomainIdType &domain_id,
+          const shared_model::interface::types::PubkeyType &pubkey) override;
+
+      WsvCommandResult createAsset(
+          const shared_model::interface::types::AssetIdType &asset_id,
+          const shared_model::interface::types::DomainIdType &domain_id,
+          const shared_model::interface::types::PrecisionType precision) override;
+
+      WsvCommandResult createDomain(
+          const shared_model::interface::types::DomainIdType &domain_id,
+          const shared_model::interface::types::RoleIdType &default_role) override;
+
+      WsvCommandResult createRole(
+          const shared_model::interface::types::RoleIdType &role_id,
+          const shared_model::interface::RolePermissionSet &default_role) override;
+
+      WsvCommandResult detachRole(
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::RoleIdType &role_name) override;
+
+      WsvCommandResult grantPermission(
+          const shared_model::interface::types::AccountIdType &permittee_account_id,
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::permissions::Grantable &permission) override;
+
+      WsvCommandResult removeSignatory(
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::PubkeyType &pubkey) override;
+
+      WsvCommandResult revokePermission(
+          const shared_model::interface::types::AccountIdType
+          &permittee_account_id,
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::permissions::Grantable &permission) override;
+
+      WsvCommandResult setAccountDetail(
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::AccountIdType
+          &creator_account_id,
+          const std::string &key,
+          const std::string &value) override;
+
+      WsvCommandResult setQuorum(
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::QuorumType quorum) override;
+
+      WsvCommandResult subtractAssetQuantity(
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::AssetIdType &asset_id,
+          const std::string &amount,
+          const shared_model::interface::types::PrecisionType precision) override;
+
+      WsvCommandResult transferAsset(
+          const shared_model::interface::types::AccountIdType &src_account_id,
+          const shared_model::interface::types::AccountIdType &dest_account_id,
+          const shared_model::interface::types::AssetIdType &asset_id,
+          const std::string &amount,
+          const shared_model::interface::types::PrecisionType precision) override;
+
      private:
       pqxx::nontransaction &transaction_;
 

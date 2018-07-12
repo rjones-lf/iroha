@@ -73,245 +73,104 @@ namespace iroha {
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::AddPeer &command) {
-    return makeCommandResult(commands->insertPeer(command.peer()), "AddPeer");
+    return makeCommandResult(executor->addPeer(command.peer()), "AddPeer");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::AddSignatory &command) {
-    auto result = commands->insertSignatory(command.pubkey()) | [&] {
-      return commands->insertAccountSignatory(command.accountId(),
-                                              command.pubkey());
-    };
+    auto result = executor->addSignatory(command.accountId(), command.pubkey());
     return makeCommandResult(result, "AddSignatory");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::AppendRole &command) {
     return makeCommandResult(
-        commands->insertAccountRole(command.accountId(), command.roleName()),
+        executor->appendRole(command.accountId(), command.roleName()),
         "AppendRole");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::CreateAccount &command) {
-    std::string command_name = "CreateAccount";
-    auto account =
-        account_builder_
-            .accountId(command.accountName() + "@" + command.domainId())
-            .domainId(command.domainId())
-            .quorum(1)
-            .jsonData("{}")
-            .build();
-    return account.match(
-        [&](const expected::Value<
-            std::shared_ptr<shared_model::interface::Account>> &account_val)
-            -> CommandResult {
-          auto domain = queries->getDomain(command.domainId());
-          if (not domain) {
-            return makeCommandError(
-                (boost::format("Domain %s not found") % command.domainId())
-                    .str(),
-                command_name);
-          }
-          std::string domain_default_role = domain.value()->defaultRole();
-          // Account must have unique initial pubkey
-          auto result = commands->insertSignatory(command.pubkey()) | [&] {
-            return commands->insertAccount(*account_val.value);
-          } | [&] {
-            return commands->insertAccountSignatory(
-                (*account_val.value).accountId(), command.pubkey());
-          } | [&] {
-            return commands->insertAccountRole((*account_val.value).accountId(),
-                                               domain_default_role);
-          };
-          return makeCommandResult(result, command_name);
-        },
-        [&command_name](const auto &error) -> CommandResult {
-          return makeCommandError(
-              "account builder failed. reason " + *error.error, command_name);
-        });
+    return makeCommandResult(
+        executor->createAccount(
+            command.accountName(), command.domainId(), command.pubkey()),
+        "CreateAccount");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::CreateAsset &command) {
-    std::string command_name = "CreateAsset";
-    auto new_asset =
-        asset_builder_.assetId(command.assetName() + "#" + command.domainId())
-            .domainId(command.domainId())
-            .precision(command.precision())
-            .build();
-    return new_asset.match(
-        [&](const expected::Value<
-            std::shared_ptr<shared_model::interface::Asset>> &new_asset_val)
-            -> CommandResult {
-          // The insert will fail if asset already exists
-          return makeCommandResult(commands->insertAsset(*new_asset_val.value),
-                                   command_name);
-        },
-        [&command_name](const auto &error) -> CommandResult {
-          return makeCommandError(
-              "asset builder failed. reason " + *error.error, command_name);
-        });
+    return makeCommandResult(
+        executor->createAsset(
+            command.assetName(), command.domainId(), command.precision()),
+        "CreateAsset");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::CreateDomain &command) {
-    std::string command_name = "CreateDomain";
-    auto new_domain = domain_builder_.domainId(command.domainId())
-                          .defaultRole(command.userDefaultRole())
-                          .build();
-    return new_domain.match(
-        [&](const expected::Value<
-            std::shared_ptr<shared_model::interface::Domain>> &new_domain_val)
-            -> CommandResult {
-          // The insert will fail if domain already exist
-          return makeCommandResult(
-              commands->insertDomain(*new_domain_val.value), command_name);
-        },
-        [&command_name](const auto &error) -> CommandResult {
-          return makeCommandError(
-              "domain builder failed. reason " + *error.error, command_name);
-        });
+    return makeCommandResult(
+        executor->createDomain(command.domainId(), command.userDefaultRole()),
+        "CreateDomain");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::CreateRole &command) {
-    std::string command_name = "CreateRole";
-    auto result = commands->insertRole(command.roleName()) | [&] {
-      return commands->insertRolePermissions(command.roleName(),
-                                             command.rolePermissions());
-    };
-    return makeCommandResult(result, command_name);
+    return makeCommandResult(
+        executor->createRole(command.roleName(), command.rolePermissions()),
+        "CreateRole");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::DetachRole &command) {
     return makeCommandResult(
-        commands->deleteAccountRole(command.accountId(), command.roleName()),
+        executor->detachRole(command.accountId(), command.roleName()),
         "DetachRole");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::GrantPermission &command) {
     return makeCommandResult(
-        commands->insertAccountGrantablePermission(
+        executor->grantPermission(
             command.accountId(), creator_account_id, command.permissionName()),
         "GrantPermission");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::RemoveSignatory &command) {
-    std::string command_name = "RemoveSignatory";
-
-    // Delete will fail if account signatory doesn't exist
-    auto result =
-        commands->deleteAccountSignatory(command.accountId(), command.pubkey())
-        | [&] { return commands->deleteSignatory(command.pubkey()); };
-    return makeCommandResult(result, command_name);
+    auto result = executor->removeSignatory(command.accountId(), command.pubkey());
+    return makeCommandResult(result, "RemoveSignatory");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::RevokePermission &command) {
     return makeCommandResult(
-        commands->deleteAccountGrantablePermission(
+        executor->revokePermission(
             command.accountId(), creator_account_id, command.permissionName()),
         "RevokePermission");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::SetAccountDetail &command) {
-    auto creator = creator_account_id;
-    if (creator_account_id.empty()) {
-      // When creator is not known, it is genesis block
-      creator = "genesis";
-    }
     return makeCommandResult(
-        commands->setAccountKV(
-            command.accountId(), creator, command.key(), command.value()),
+        executor->setAccountDetail(
+            command.accountId(), creator_account_id, command.key(), command.value()),
         "SetAccountDetail");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::SetQuorum &command) {
-    std::string command_name = "SetQuorum";
-
-    auto account = queries->getAccount(command.accountId());
-    if (not account) {
-      return makeCommandError(
-          (boost::format("absent account %s") % command.accountId()).str(),
-          command_name);
-    }
-    auto account_new = account_builder_.domainId(account.value()->domainId())
-                           .accountId(account.value()->accountId())
-                           .jsonData(account.value()->jsonData())
-                           .quorum(command.newQuorum())
-                           .build();
-
-    return account_new.match(
-        [&](const expected::Value<
-            std::shared_ptr<shared_model::interface::Account>> &account_new_val)
-            -> CommandResult {
-          return makeCommandResult(
-              commands->updateAccount(*account_new_val.value), command_name);
-        },
-        [&command_name](const auto &error) -> CommandResult {
-          return makeCommandError(
-              "account builder failed. reason " + *error.error, command_name);
-        });
+    return makeCommandResult(
+        executor->setQuorum(
+            command.accountId(), command.newQuorum()),
+        "SetQuorum");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::SubtractAssetQuantity &command) {
-    std::string command_name = "SubtractAssetQuantity";
-    auto asset = queries->getAsset(command.assetId());
-    if (not asset) {
-      return makeCommandError(
-          (boost::format("asset %s is absent") % command.assetId()).str(),
-          command_name);
-    }
-    auto precision = asset.value()->precision();
-    if (command.amount().precision() > precision) {
-      return makeCommandError(
-          (boost::format("command precision is greater than asset precision: "
-                         "expected %d, but got %d")
-           % precision % command.amount().precision())
-              .str(),
-          command_name);
-    }
-    auto command_amount =
-        makeAmountWithPrecision(command.amount(), asset.value()->precision());
-    auto account_asset =
-        queries->getAccountAsset(creator_account_id, command.assetId());
-    if (not account_asset) {
-      return makeCommandError((boost::format("%s do not have %s")
-                               % creator_account_id % command.assetId())
-                                  .str(),
-                              command_name);
-    }
-    auto account_asset_new = command_amount |
-        [&account_asset](const auto &amount) {
-          return account_asset.value()->balance() - *amount;
-        }
-        | [this, &account_asset](const auto &new_balance) {
-            return account_asset_builder_.balance(*new_balance)
-                .accountId(account_asset.value()->accountId())
-                .assetId(account_asset.value()->assetId())
-                .build();
-          };
-
-    return account_asset_new.match(
-        [&](const expected::Value<
-            std::shared_ptr<shared_model::interface::AccountAsset>>
-                &account_asset_new_val) -> CommandResult {
-          return makeCommandResult(
-              commands->upsertAccountAsset(*account_asset_new_val.value),
-              command_name);
-        },
-        [&command_name](const auto &error) -> CommandResult {
-          return makeCommandError(
-              "account asset builder failed. reason " + *error.error,
-              command_name);
-        });
+    auto result = executor->subtractAssetQuantity(creator_account_id,
+                                             command.assetId(),
+                                             command.amount().toStringRepr(),
+                                             command.amount().precision());
+    return makeCommandResult(result, "SubtractAssetQuantity");
   }
 
   CommandResult CommandExecutor::operator()(

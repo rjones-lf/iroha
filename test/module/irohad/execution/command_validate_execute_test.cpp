@@ -57,7 +57,8 @@ class CommandValidateExecuteTest : public ::testing::Test {
     wsv_command = std::make_shared<StrictMock<MockWsvCommand>>();
     sql_executor = std::make_shared<StrictMock<MockCommandExecutor>>();
 
-    executor = std::make_unique<iroha::CommandExecutor>(wsv_query, wsv_command, sql_executor);
+    executor = std::make_unique<iroha::CommandExecutor>(
+        wsv_query, wsv_command, sql_executor);
     validator = std::make_unique<iroha::CommandValidator>(wsv_query);
 
     shared_model::builder::AccountBuilder<
@@ -288,7 +289,8 @@ TEST_F(AddAssetQuantityTest, InvalidWhenWrongPrecision) {
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
   EXPECT_CALL(*sql_executor, addAssetQuantity(_, _, _, _))
-      .WillOnce(Return(expected::makeError("Asset with given precision does not exist")));
+      .WillOnce(Return(
+          expected::makeError("Asset with given precision does not exist")));
   ASSERT_TRUE(err(validateAndExecute(command)));
 }
 
@@ -328,7 +330,8 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoAsset) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*sql_executor, addAssetQuantity(_, _, _, _))
-      .WillOnce(Return(expected::makeError("Asset with given precision does not exist")));
+      .WillOnce(Return(
+          expected::makeError("Asset with given precision does not exist")));
 
   ASSERT_TRUE(err(validateAndExecute(command)));
 }
@@ -374,23 +377,6 @@ class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
       subtract_asset_quantity;
 };
 
-/**
- * @given SubtractAssetQuantity
- * @when account doesn't have wallet of target asset
- * @then executor will be failed
- */
-TEST_F(SubtractAssetQuantityTest, InvalidWhenNoWallet) {
-  EXPECT_CALL(
-      *wsv_query,
-      getAccountAsset(creator->accountId(), subtract_asset_quantity->assetId()))
-      .WillOnce(Return(boost::none));
-  EXPECT_CALL(*wsv_query, getAccountRoles(creator->accountId()))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getAsset(kAssetId)).WillOnce(Return(asset));
-  ASSERT_TRUE(err(validateAndExecute(command)));
-}
 
 /**
  * @given SubtractAssetQuantity
@@ -398,100 +384,13 @@ TEST_F(SubtractAssetQuantityTest, InvalidWhenNoWallet) {
  * @then executor will be passed
  */
 TEST_F(SubtractAssetQuantityTest, ValidWhenExistingWallet) {
-  EXPECT_CALL(
-      *wsv_query,
-      getAccountAsset(creator->accountId(), subtract_asset_quantity->assetId()))
-      .WillOnce(Return(wallet));
-  EXPECT_CALL(*wsv_query, getAsset(kAssetId)).WillOnce(Return(asset));
-  EXPECT_CALL(*wsv_command, upsertAccountAsset(_))
+  EXPECT_CALL(*sql_executor, subtractAssetQuantity(_, _, _, _))
       .WillOnce(Return(WsvCommandResult()));
   EXPECT_CALL(*wsv_query, getAccountRoles(creator->accountId()))
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
   ASSERT_TRUE(val(validateAndExecute(command)));
-}
-
-/**
- * @given SubtractAssetQuantity
- * @when arguments amount is greater than wallet's amount
- * @then executor will be failed
- */
-TEST_F(SubtractAssetQuantityTest, InvalidWhenOverAmount) {
-  // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
-      kAssetId, kAmountOverflow));
-  subtract_asset_quantity =
-      getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
-          command);
-
-  EXPECT_CALL(
-      *wsv_query,
-      getAccountAsset(creator->accountId(), subtract_asset_quantity->assetId()))
-      .WillOnce(Return(wallet));
-
-  EXPECT_CALL(*wsv_query, getAccountRoles(creator->accountId()))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getAsset(kAssetId)).WillOnce(Return(asset));
-
-  ASSERT_TRUE(err(validateAndExecute(command)));
-}
-
-/**
- * @given SubtractAssetQuantity
- * @when account doesn't have role
- * @then executor will be failed
- */
-TEST_F(SubtractAssetQuantityTest, InvalidWhenNoRoles) {
-  EXPECT_CALL(*wsv_query, getAccountRoles(creator->accountId()))
-      .WillOnce(Return(boost::none));
-  ASSERT_TRUE(err(validateAndExecute(command)));
-}
-
-/**
- * @given SubtractAssetQuantity
- * @when arguments amount precision is invalid (greater than 2)
- * @then executor will be failed
- */
-TEST_F(SubtractAssetQuantityTest, InvalidWhenWrongPrecision) {
-  // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = buildCommand(TestTransactionBuilder().subtractAssetQuantity(
-      kAssetId, kAmountWrongPrecision));
-  subtract_asset_quantity =
-      getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
-          command);
-
-  EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getAsset(kAssetId)).WillOnce(Return(asset));
-  ASSERT_TRUE(err(validateAndExecute(command)));
-}
-
-/**
- * @given SubtractAssetQuantity
- * @when asset doesn't exist
- * @then executor will be failed
- */
-TEST_F(SubtractAssetQuantityTest, InvalidWhenNoAsset) {
-  // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command = buildCommand(
-      TestTransactionBuilder().subtractAssetQuantity(kNoAssetId, kAmount));
-  subtract_asset_quantity =
-      getConcreteCommand<shared_model::interface::SubtractAssetQuantity>(
-          command);
-
-  EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getAsset(subtract_asset_quantity->assetId()))
-      .WillOnce(Return(boost::none));
-
-  ASSERT_TRUE(err(validateAndExecute(command)));
 }
 
 class AddSignatoryTest : public CommandValidateExecuteTest {
@@ -522,11 +421,8 @@ TEST_F(AddSignatoryTest, ValidWhenCreatorHasPermissions) {
       hasAccountGrantablePermission(
           kAdminId, add_signatory->accountId(), Grantable::kAddMySignatory))
       .WillOnce(Return(true));
-  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey()))
-      .WillOnce(Return(WsvCommandResult()));
-  EXPECT_CALL(*wsv_command,
-              insertAccountSignatory(add_signatory->accountId(),
-                                     add_signatory->pubkey()))
+  EXPECT_CALL(*sql_executor,
+              addSignatory(add_signatory->accountId(), add_signatory->pubkey()))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_TRUE(val(validateAndExecute(command)));
 }
@@ -547,11 +443,8 @@ TEST_F(AddSignatoryTest, ValidWhenSameAccount) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey()))
-      .WillOnce(Return(WsvCommandResult()));
-  EXPECT_CALL(*wsv_command,
-              insertAccountSignatory(add_signatory->accountId(),
-                                     add_signatory->pubkey()))
+  EXPECT_CALL(*sql_executor,
+              addSignatory(add_signatory->accountId(), add_signatory->pubkey()))
       .WillOnce(Return(WsvCommandResult()));
 
   ASSERT_TRUE(val(validateAndExecute(command)));
@@ -610,7 +503,8 @@ TEST_F(AddSignatoryTest, InvalidWhenSameKey) {
       hasAccountGrantablePermission(
           kAdminId, add_signatory->accountId(), Grantable::kAddMySignatory))
       .WillOnce(Return(true));
-  EXPECT_CALL(*wsv_command, insertSignatory(add_signatory->pubkey()))
+  EXPECT_CALL(*sql_executor,
+              addSignatory(add_signatory->accountId(), add_signatory->pubkey()))
       .WillOnce(Return(makeEmptyError()));
 
   ASSERT_TRUE(err(validateAndExecute(command)));
@@ -650,17 +544,10 @@ TEST_F(CreateAccountTest, ValidWhenNewAccount) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getDomain(kDomainId))
-      .WillOnce(Return(default_domain));
-  EXPECT_CALL(*wsv_command, insertSignatory(create_account->pubkey()))
-      .Times(1)
-      .WillOnce(Return(WsvCommandResult()));
-  EXPECT_CALL(*wsv_command, insertAccount(_))
-      .WillOnce(Return(WsvCommandResult()));
-  EXPECT_CALL(*wsv_command,
-              insertAccountSignatory(kAccountId, create_account->pubkey()))
-      .WillOnce(Return(WsvCommandResult()));
-  EXPECT_CALL(*wsv_command, insertAccountRole(kAccountId, kAdminRole))
+  EXPECT_CALL(*sql_executor,
+              createAccount(create_account->accountName(),
+                            create_account->domainId(),
+                            create_account->pubkey()))
       .WillOnce(Return(WsvCommandResult()));
 
   ASSERT_TRUE(val(validateAndExecute(command)));
@@ -688,7 +575,11 @@ TEST_F(CreateAccountTest, InvalidWhenNoDomain) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getDomain(kDomainId)).WillOnce(Return(boost::none));
+  EXPECT_CALL(*sql_executor,
+              createAccount(create_account->accountName(),
+                            create_account->domainId(),
+                            create_account->pubkey()))
+      .WillOnce(Return(makeEmptyError()));
 
   ASSERT_TRUE(err(validateAndExecute(command)));
 }
@@ -720,7 +611,7 @@ TEST_F(CreateAssetTest, ValidWhenCreatorHasPermissions) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_command, insertAsset(_))
+  EXPECT_CALL(*sql_executor, createAsset(_, _, _))
       .WillOnce(Return(WsvCommandResult()));
 
   ASSERT_TRUE(val(validateAndExecute(command)));
@@ -746,7 +637,8 @@ TEST_F(CreateAssetTest, InvalidWhenNoPermissions) {
  * @then execute() fails
  */
 TEST_F(CreateAssetTest, InvalidWhenAssetInsertionFails) {
-  EXPECT_CALL(*wsv_command, insertAsset(_)).WillOnce(Return(makeEmptyError()));
+  EXPECT_CALL(*sql_executor, createAsset(_, _, _))
+      .WillOnce(Return(makeEmptyError()));
 
   ASSERT_TRUE(err(execute(command)));
 }
@@ -779,7 +671,7 @@ TEST_F(CreateDomainTest, ValidWhenCreatorHasPermissions) {
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
 
-  EXPECT_CALL(*wsv_command, insertDomain(_))
+  EXPECT_CALL(*sql_executor, createDomain(_, _))
       .WillOnce(Return(WsvCommandResult()));
 
   ASSERT_TRUE(val(validateAndExecute(command)));
@@ -802,7 +694,8 @@ TEST_F(CreateDomainTest, InvalidWhenNoPermissions) {
  * @then execute() fails
  */
 TEST_F(CreateDomainTest, InvalidWhenDomainInsertionFails) {
-  EXPECT_CALL(*wsv_command, insertDomain(_)).WillOnce(Return(makeEmptyError()));
+  EXPECT_CALL(*sql_executor, createDomain(_, _))
+      .WillOnce(Return(makeEmptyError()));
 
   ASSERT_TRUE(err(execute(command)));
 }
@@ -852,11 +745,9 @@ TEST_F(RemoveSignatoryTest, ValidWhenMultipleKeys) {
   EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->accountId()))
       .WillOnce(Return(many_pubkeys));
 
-  EXPECT_CALL(*wsv_command,
-              deleteAccountSignatory(remove_signatory->accountId(),
+  EXPECT_CALL(*sql_executor,
+              removeSignatory(remove_signatory->accountId(),
                                      remove_signatory->pubkey()))
-      .WillOnce(Return(WsvCommandResult()));
-  EXPECT_CALL(*wsv_command, deleteSignatory(remove_signatory->pubkey()))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_TRUE(val(validateAndExecute(command)));
 }
@@ -1032,10 +923,10 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissionToRemoveFromSelf) {
  * @then execute() fails
  */
 TEST_F(RemoveSignatoryTest, InvalidWhenAccountSignatoryDeletionFails) {
-  EXPECT_CALL(*wsv_command,
-              deleteAccountSignatory(remove_signatory->accountId(),
-                                     remove_signatory->pubkey()))
-      .WillOnce(Return(makeEmptyError()));
+  EXPECT_CALL(*sql_executor,
+              removeSignatory(remove_signatory->accountId(),
+                              remove_signatory->pubkey()))
+      .WillOnce(Return(makeEmptyError()));;
 
   ASSERT_TRUE(err(execute(command)));
 }
@@ -1078,11 +969,9 @@ TEST_F(SetQuorumTest, ValidWhenCreatorHasPermissions) {
               hasAccountGrantablePermission(
                   kAdminId, set_quorum->accountId(), Grantable::kSetMyQuorum))
       .WillOnce(Return(true));
-  EXPECT_CALL(*wsv_query, getAccount(set_quorum->accountId()))
-      .WillOnce(Return(account));
   EXPECT_CALL(*wsv_query, getSignatories(set_quorum->accountId()))
       .WillOnce(Return(account_pubkeys));
-  EXPECT_CALL(*wsv_command, updateAccount(_))
+  EXPECT_CALL(*sql_executor, setQuorum(_, _))
       .WillOnce(Return(WsvCommandResult()));
 
   ASSERT_TRUE(val(validateAndExecute(command)));
@@ -1098,11 +987,9 @@ TEST_F(SetQuorumTest, ValidWhenSameAccount) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getAccount(creator_set_quorum->accountId()))
-      .WillOnce(Return(account));
   EXPECT_CALL(*wsv_query, getSignatories(creator_set_quorum->accountId()))
       .WillOnce(Return(account_pubkeys));
-  EXPECT_CALL(*wsv_command, updateAccount(_))
+  EXPECT_CALL(*sql_executor, setQuorum(_, _))
       .WillOnce(Return(WsvCommandResult()));
 
   ASSERT_TRUE(val(validateAndExecute(creator_command)));
@@ -1151,9 +1038,9 @@ TEST_F(SetQuorumTest, InvalidWhenNoAccountButPassedPermissions) {
       .WillOnce(Return(role_permissions));
   EXPECT_CALL(*wsv_query, getSignatories(creator_set_quorum->accountId()))
       .WillOnce(Return(account_pubkeys));
+  EXPECT_CALL(*sql_executor, setQuorum(_, _))
+      .WillOnce(Return(makeEmptyError()));
 
-  EXPECT_CALL(*wsv_query, getAccount(creator_set_quorum->accountId()))
-      .WillOnce(Return(boost::none));
 
   ASSERT_TRUE(err(validateAndExecute(creator_command)));
 }
@@ -1677,7 +1564,7 @@ TEST_F(AddPeerTest, ValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_command, insertPeer(_)).WillOnce(Return(WsvCommandResult()));
+  EXPECT_CALL(*sql_executor, addPeer(_)).WillOnce(Return(WsvCommandResult()));
 
   ASSERT_TRUE(val(validateAndExecute(command)));
 }
@@ -1702,7 +1589,7 @@ TEST_F(AddPeerTest, InvalidCaseWhenNoPermissions) {
  * @then execute failed
  */
 TEST_F(AddPeerTest, InvalidCaseWhenInsertPeerFails) {
-  EXPECT_CALL(*wsv_command, insertPeer(_)).WillOnce(Return(makeEmptyError()));
+  EXPECT_CALL(*sql_executor, addPeer(_)).WillOnce(Return(makeEmptyError()));
 
   ASSERT_TRUE(err(execute(command)));
 }
@@ -1734,11 +1621,9 @@ TEST_F(CreateRoleTest, ValidCase) {
       .WillRepeatedly(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillRepeatedly(Return(role_permissions));
-  EXPECT_CALL(*wsv_command, insertRole(create_role->roleName()))
-      .WillOnce(Return(WsvCommandResult()));
-  EXPECT_CALL(*wsv_command,
-              insertRolePermissions(create_role->roleName(),
-                                    create_role->rolePermissions()))
+  EXPECT_CALL(
+      *sql_executor,
+      createRole(create_role->roleName(), create_role->rolePermissions()))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_TRUE(val(validateAndExecute(command)));
 }
@@ -1781,7 +1666,9 @@ TEST_F(CreateRoleTest, InvalidCaseWhenRoleSuperset) {
  * @then execute failed
  */
 TEST_F(CreateRoleTest, InvalidCaseWhenRoleInsertionFails) {
-  EXPECT_CALL(*wsv_command, insertRole(create_role->roleName()))
+  EXPECT_CALL(
+      *sql_executor,
+      createRole(create_role->roleName(), create_role->rolePermissions()))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_TRUE(err(execute(command)));
 }
@@ -1818,9 +1705,8 @@ TEST_F(AppendRoleTest, ValidCase) {
   EXPECT_CALL(*wsv_query, getRolePermissions(kMasterRole))
       .WillOnce(Return(role_permissions));
 
-  EXPECT_CALL(
-      *wsv_command,
-      insertAccountRole(append_role->accountId(), append_role->roleName()))
+  EXPECT_CALL(*sql_executor,
+              appendRole(append_role->accountId(), append_role->roleName()))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_TRUE(val(validateAndExecute(command)));
 }
@@ -1901,9 +1787,8 @@ TEST_F(AppendRoleTest, InvalidCaseRoleHasNoPermissions) {
  * @then execute() fails
  */
 TEST_F(AppendRoleTest, InvalidCaseInsertAccountRoleFails) {
-  EXPECT_CALL(
-      *wsv_command,
-      insertAccountRole(append_role->accountId(), append_role->roleName()))
+  EXPECT_CALL(*sql_executor,
+              appendRole(append_role->accountId(), append_role->roleName()))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_TRUE(err(execute(command)));
 }
@@ -1934,9 +1819,8 @@ TEST_F(DetachRoleTest, ValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(
-      *wsv_command,
-      deleteAccountRole(detach_role->accountId(), detach_role->roleName()))
+  EXPECT_CALL(*sql_executor,
+              detachRole(detach_role->accountId(), detach_role->roleName()))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_TRUE(val(validateAndExecute(command)));
 }
@@ -1960,9 +1844,8 @@ TEST_F(DetachRoleTest, InvalidCase) {
  * @then execute fails()
  */
 TEST_F(DetachRoleTest, InvalidCaseWhenDeleteAccountRoleFails) {
-  EXPECT_CALL(
-      *wsv_command,
-      deleteAccountRole(detach_role->accountId(), detach_role->roleName()))
+  EXPECT_CALL(*sql_executor,
+              detachRole(detach_role->accountId(), detach_role->roleName()))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_TRUE(err(execute(command)));
 }
@@ -1995,10 +1878,10 @@ TEST_F(GrantPermissionTest, ValidCase) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_command,
-              insertAccountGrantablePermission(grant_permission->accountId(),
-                                               creator->accountId(),
-                                               expected_permission))
+  EXPECT_CALL(*sql_executor,
+              grantPermission(grant_permission->accountId(),
+                              creator->accountId(),
+                              expected_permission))
       .WillOnce(Return(WsvCommandResult()));
   ASSERT_TRUE(val(validateAndExecute(command)));
 }
@@ -2022,10 +1905,10 @@ TEST_F(GrantPermissionTest, InvalidCaseWhenNoPermissions) {
  * @then execute() fails
  */
 TEST_F(GrantPermissionTest, InvalidCaseWhenInsertGrantablePermissionFails) {
-  EXPECT_CALL(*wsv_command,
-              insertAccountGrantablePermission(grant_permission->accountId(),
-                                               creator->accountId(),
-                                               expected_permission))
+  EXPECT_CALL(*sql_executor,
+              grantPermission(grant_permission->accountId(),
+                              creator->accountId(),
+                              expected_permission))
       .WillOnce(Return(makeEmptyError()));
   ASSERT_TRUE(err(execute(command)));
 }
@@ -2059,8 +1942,8 @@ TEST_F(RevokePermissionTest, ValidCase) {
       hasAccountGrantablePermission(
           revoke_permission->accountId(), kAdminId, expected_permission))
       .WillOnce(Return(true));
-  EXPECT_CALL(*wsv_command,
-              deleteAccountGrantablePermission(revoke_permission->accountId(),
+  EXPECT_CALL(*sql_executor,
+              revokePermission(revoke_permission->accountId(),
                                                creator->accountId(),
                                                expected_permission))
       .WillOnce(Return(WsvCommandResult()));
@@ -2087,8 +1970,8 @@ TEST_F(RevokePermissionTest, InvalidCaseNoPermissions) {
  * @then execute fails
  */
 TEST_F(RevokePermissionTest, InvalidCaseDeleteAccountPermissionvFails) {
-  EXPECT_CALL(*wsv_command,
-              deleteAccountGrantablePermission(revoke_permission->accountId(),
+  EXPECT_CALL(*sql_executor,
+              revokePermission(revoke_permission->accountId(),
                                                creator->accountId(),
                                                expected_permission))
       .WillOnce(Return(makeEmptyError()));
@@ -2122,8 +2005,8 @@ class SetAccountDetailTest : public CommandValidateExecuteTest {
  * @then successfully execute the command
  */
 TEST_F(SetAccountDetailTest, ValidWhenSetOwnAccount) {
-  EXPECT_CALL(*wsv_command,
-              setAccountKV(set_account_detail->accountId(),
+  EXPECT_CALL(*sql_executor,
+              setAccountDetail(set_account_detail->accountId(),
                            creator->accountId(),
                            set_account_detail->key(),
                            set_account_detail->value()))
@@ -2169,8 +2052,8 @@ TEST_F(SetAccountDetailTest, ValidWhenHasRolePermission) {
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
 
-  EXPECT_CALL(*wsv_command,
-              setAccountKV(set_account_detail->accountId(),
+  EXPECT_CALL(*sql_executor,
+              setAccountDetail(set_account_detail->accountId(),
                            creator->accountId(),
                            set_account_detail->key(),
                            set_account_detail->value()))
@@ -2196,8 +2079,8 @@ TEST_F(SetAccountDetailTest, ValidWhenHasGrantblePermission) {
               hasAccountGrantablePermission(
                   kAdminId, set_account_detail->accountId(), kNeededPermission))
       .WillOnce(Return(true));
-  EXPECT_CALL(*wsv_command,
-              setAccountKV(set_account_detail->accountId(),
+  EXPECT_CALL(*sql_executor,
+              setAccountDetail(set_account_detail->accountId(),
                            creator->accountId(),
                            set_account_detail->key(),
                            set_account_detail->value()))
@@ -2211,8 +2094,8 @@ TEST_F(SetAccountDetailTest, ValidWhenHasGrantblePermission) {
  * @then execute fails
  */
 TEST_F(SetAccountDetailTest, InvalidWhenSetAccountKVFails) {
-  EXPECT_CALL(*wsv_command,
-              setAccountKV(set_account_detail->accountId(),
+  EXPECT_CALL(*sql_executor,
+              setAccountDetail(set_account_detail->accountId(),
                            creator->accountId(),
                            set_account_detail->key(),
                            set_account_detail->value()))
