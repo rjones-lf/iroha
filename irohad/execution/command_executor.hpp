@@ -21,6 +21,7 @@
 #include <boost/format.hpp>
 #include <boost/variant/static_visitor.hpp>
 
+#include "ametsuchi/command_executor.hpp"
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
 #include "builders/default_builders.hpp"
@@ -74,7 +75,8 @@ namespace iroha {
   class CommandExecutor : public boost::static_visitor<CommandResult> {
    public:
     CommandExecutor(std::shared_ptr<iroha::ametsuchi::WsvQuery> queries,
-                    std::shared_ptr<iroha::ametsuchi::WsvCommand> commands);
+                    std::shared_ptr<iroha::ametsuchi::WsvCommand> commands,
+                    std::shared_ptr<iroha::ametsuchi::CommandExecutor> executor);
 
     CommandResult operator()(
         const shared_model::interface::AddAssetQuantity &command);
@@ -128,6 +130,7 @@ namespace iroha {
    private:
     std::shared_ptr<iroha::ametsuchi::WsvQuery> queries;
     std::shared_ptr<iroha::ametsuchi::WsvCommand> commands;
+    std::shared_ptr<iroha::ametsuchi::CommandExecutor> executor;
     shared_model::interface::types::AccountIdType creator_account_id;
 
     shared_model::builder::AmountBuilderWithoutValidator amount_builder_;

@@ -19,6 +19,7 @@
 
 #include <boost/variant/apply_visitor.hpp>
 
+#include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
@@ -41,8 +42,9 @@ namespace iroha {
           log_(logger::log("MutableStorage")) {
       auto query = std::make_shared<PostgresWsvQuery>(*transaction_);
       auto command = std::make_shared<PostgresWsvCommand>(*transaction_);
+      auto command_executor = std::make_shared<PostgresCommandExecutor>(*transaction_);
       command_executor_ =
-          std::make_shared<CommandExecutor>(CommandExecutor(query, command));
+          std::make_shared<iroha::CommandExecutor>(query, command, command_executor);
       transaction_->exec("BEGIN;");
     }
 

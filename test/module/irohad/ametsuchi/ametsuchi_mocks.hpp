@@ -21,6 +21,8 @@
 #include <gmock/gmock.h>
 #include <boost/optional.hpp>
 #include "ametsuchi/block_query.hpp"
+#include "ametsuchi/command_executor.hpp"
+#include "ametsuchi/key_value_storage.hpp"
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/mutable_storage.hpp"
 #include "ametsuchi/peer_query.hpp"
@@ -28,7 +30,6 @@
 #include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
 #include "ametsuchi/wsv_query.hpp"
-#include "ametsuchi/key_value_storage.hpp"
 #include "common/result.hpp"
 #include "interfaces/common_objects/peer.hpp"
 
@@ -150,6 +151,15 @@ namespace iroha {
                                     const std::string &));
     };
 
+    class MockCommandExecutor : public iroha::ametsuchi::CommandExecutor {
+     public:
+      MOCK_METHOD4(addAssetQuantity,
+                   WsvCommandResult(const std::string &,
+                                    const std::string &,
+                                    const std::string &,
+                                    const shared_model::interface::types::PrecisionType));
+    };
+
     class MockBlockQuery : public BlockQuery {
      public:
       MOCK_METHOD1(
@@ -261,8 +271,7 @@ namespace iroha {
     class MockKeyValueStorage : public KeyValueStorage {
      public:
       MOCK_METHOD2(add, bool(Identifier, const Bytes &));
-      MOCK_CONST_METHOD1(get,
-                         boost::optional<Bytes>(Identifier));
+      MOCK_CONST_METHOD1(get, boost::optional<Bytes>(Identifier));
       MOCK_CONST_METHOD0(directory, std::string(void));
       MOCK_CONST_METHOD0(last_id, Identifier(void));
       MOCK_METHOD0(dropAll, void(void));

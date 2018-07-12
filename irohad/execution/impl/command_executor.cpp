@@ -52,8 +52,9 @@ namespace iroha {
 
   CommandExecutor::CommandExecutor(
       std::shared_ptr<ametsuchi::WsvQuery> queries,
-      std::shared_ptr<ametsuchi::WsvCommand> commands)
-      : queries(queries), commands(commands) {}
+      std::shared_ptr<ametsuchi::WsvCommand> commands,
+      std::shared_ptr<ametsuchi::CommandExecutor> executor)
+      : queries(queries), commands(commands), executor(executor) {}
 
   void CommandExecutor::setCreatorAccountId(
       const shared_model::interface::types::AccountIdType &creator_account_id) {
@@ -63,90 +64,11 @@ namespace iroha {
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::AddAssetQuantity &command) {
     std::string command_name = "AddAssetQuantity";
-    auto asset = queries->getAsset(command.assetId());
-    if (not asset) {
-      return makeCommandError(
-          (boost::format("asset %s is absent") % command.assetId()).str(),
-          command_name);
-    }
-
-    auto precision = asset.value()->precision();
-    if (command.amount().precision() > precision) {
-      return makeCommandError(
-          (boost::format("command precision is greater than asset precision: "
-                         "expected %d, but got %d")
-           % precision % command.amount().precision())
-              .str(),
-          command_name);
-    }
-    auto command_amount =
-        makeAmountWithPrecision(command.amount(), asset.value()->precision());
-    if (not queries->getAccount(creator_account_id)) {
-      return makeCommandError(
-          (boost::format("account %s is absent") % creator_account_id).str(),
-          command_name);
-    }
-    auto account_asset =
-        queries->getAccountAsset(creator_account_id, command.assetId());
-
-    auto new_balance = command_amount | [this](const auto &amount) {
-      return amount_builder_.precision(amount->precision())
-          .intValue(amount->intValue())
-          .build();
-    };
-    using AccountAssetResult =
-        expected::Result<std::shared_ptr<shared_model::interface::AccountAsset>,
-                         iroha::CommandError>;
-    auto account_asset_new = new_balance.match(
-        [this, &account_asset, &command_name, &command](
-            const expected::Value<
-                std::shared_ptr<shared_model::interface::Amount>>
-                &new_balance_val) -> AccountAssetResult {
-          expected::PolymorphicResult<shared_model::interface::AccountAsset,
-                                      std::string>
-              result;
-          if (account_asset) {
-            result = (*new_balance_val.value + account_asset.value()->balance())
-                | [this, &command](const auto &balance) {
-                    return account_asset_builder_.balance(*balance)
-                        .accountId(creator_account_id)
-                        .assetId(command.assetId())
-                        .build();
-                  };
-          } else {
-            result = account_asset_builder_.balance(*new_balance_val.value)
-                         .accountId(creator_account_id)
-                         .assetId(command.assetId())
-                         .build();
-          }
-          return result.match(
-              [](expected::Value<
-                  std::shared_ptr<shared_model::interface::AccountAsset>>
-                     &new_account_asset_val) -> AccountAssetResult {
-                return expected::makeValue(new_account_asset_val.value);
-              },
-              [&command_name](const auto &error) -> AccountAssetResult {
-                return makeCommandError(*error.error, command_name);
-              });
-        },
-        [&command_name](const auto &error) -> AccountAssetResult {
-          return makeCommandError(
-              "amount builder failed. reason " + *error.error, command_name);
-        });
-
-    return account_asset_new.match(
-        [&](const expected::Value<
-            std::shared_ptr<shared_model::interface::AccountAsset>>
-                &account_asset_new_val) -> CommandResult {
-          return makeCommandResult(
-              commands->upsertAccountAsset(*account_asset_new_val.value),
-              command_name);
-        },
-        [&command_name](const auto &account_asset_error) -> CommandResult {
-          return makeCommandError("account asset builder failed. reason "
-                                      + account_asset_error.error.toString(),
-                                  command_name);
-        });
+    auto result = executor->addAssetQuantity(creator_account_id,
+                                             command.assetId(),
+                                             command.amount().toStringRepr(),
+                                             command.amount().precision());
+    return makeCommandResult(result, command_name);
   }
 
   CommandResult CommandExecutor::operator()(

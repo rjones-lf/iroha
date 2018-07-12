@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
+#ifndef IROHA_TEST_ASSET_BUILDER_HPP
+#define IROHA_TEST_ASSET_BUILDER_HPP
 
-#ifndef IROHA_TEST_ACCOUNT_BUILDER_HPP
-#define IROHA_TEST_ACCOUNT_BUILDER_HPP
+#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
 
 /**
  * Builder alias, to build shared model proto block object avoiding validation
  * and "required fields" check
  */
-using TestAccountAssetBuilder = shared_model::proto::AccountAssetBuilder;
+using TestAccountAssetBuilder = shared_model::proto::AssetBuilder;
 
-#endif //IROHA_TEST_ACCOUNT_BUILDER_HPP
+#endif //IROHA_TEST_ASSET_BUILDER_HPP
