@@ -45,6 +45,23 @@ namespace shared_model {
 
       explicit UnsignedWrapper(T &&o) : object_(std::move(o)) {}
 
+      UnsignedWrapper(UnsignedWrapper<T> &&w)
+          : object_(std::move(w.object_)),
+            object_finalized_(w.object_finalized_) {
+        w.object_finalized_ = true;
+      }
+
+      UnsignedWrapper<T> &operator=(UnsignedWrapper<T> &&w) {
+        object_ = std::move(w.object_);
+        object_finalized_ = w.object_finalized_;
+        w.object_finalized_ = true;
+
+        return *this;
+      }
+
+      UnsignedWrapper(const UnsignedWrapper<T> &o) = default;
+      UnsignedWrapper<T> &operator=(const UnsignedWrapper<T> &w) = default;
+
       /**
        * Add signature and retrieve signed result
        * @param signature - signature to add
