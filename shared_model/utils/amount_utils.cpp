@@ -38,7 +38,7 @@ namespace shared_model {
                 .str()));
       }
       std::string val = (val_a + val_b).str();
-      if (max_precision) {
+      if (max_precision != 0) {
         val.insert((val.rbegin() + max_precision).base(), '.');
       }
       return iroha::expected::makeValue(
@@ -72,7 +72,7 @@ namespace shared_model {
             std::make_shared<std::string>("new precision overflows number"));
       }
       std::string val = (val_a - val_b).str();
-      if (max_precision) {
+      if (max_precision != 0) {
         val.insert((val.rbegin() + max_precision).base(), '.');
       }
       return iroha::expected::makeValue(
@@ -102,7 +102,7 @@ namespace shared_model {
             std::make_shared<std::string>("operation overflows number"));
       }
       std::string val = val_amount.str();
-      if (new_precision) {
+      if (new_precision != 0) {
         val.insert((val.rbegin() + new_precision).base(), '.');
       }
       return iroha::expected::makeValue(

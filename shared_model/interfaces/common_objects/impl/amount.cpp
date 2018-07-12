@@ -4,6 +4,7 @@
  */
 
 #include "interfaces/common_objects/amount.hpp"
+
 #include <regex>
 
 #include <boost/multiprecision/cpp_dec_float.hpp>

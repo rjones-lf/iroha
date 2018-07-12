@@ -105,14 +105,12 @@ class CommandValidateExecuteTest : public ::testing::Test {
               FAIL() << *e.error;
             });
 
-    balance = std::make_shared<shared_model::interface::Amount>("1.50");
-
     shared_model::builder::AccountAssetBuilder<
         shared_model::proto::AccountAssetBuilder,
         shared_model::validation::FieldValidator>()
         .assetId(kAssetId)
         .accountId(kAccountId)
-        .balance(*balance)
+        .balance(balance)
         .build()
         .match(
             [&](expected::Value<
@@ -183,7 +181,8 @@ class CommandValidateExecuteTest : public ::testing::Test {
 
   shared_model::interface::RolePermissionSet role_permissions;
   std::shared_ptr<shared_model::interface::Account> creator, account;
-  std::shared_ptr<shared_model::interface::Amount> balance;
+  shared_model::interface::Amount balance =
+      shared_model::interface::Amount("1.50");
   std::shared_ptr<shared_model::interface::Asset> asset;
   std::shared_ptr<shared_model::interface::AccountAsset> wallet;
 
@@ -1208,13 +1207,13 @@ class TransferAssetTest : public CommandValidateExecuteTest {
     src_wallet = clone(shared_model::proto::AccountAssetBuilder()
                            .assetId(kAssetId)
                            .accountId(kAdminId)
-                           .balance(*balance)
+                           .balance(balance)
                            .build());
 
     dst_wallet = clone(shared_model::proto::AccountAssetBuilder()
                            .assetId(kAssetId)
                            .accountId(kAccountId)
-                           .balance(*balance)
+                           .balance(balance)
                            .build());
 
     role_permissions = {Role::kTransfer, Role::kReceive};
