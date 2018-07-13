@@ -20,7 +20,7 @@
 
 #include <boost/optional.hpp>
 #include <list>
-#include <mutex>
+#include <shared_mutex>
 #include <string>
 
 namespace iroha {
@@ -41,6 +41,8 @@ namespace iroha {
        * @return high border of cache limit (@see AbstractCache#addItem)
        */
       uint32_t getIndexSizeHigh() const {
+        // shared lock
+        std::shared_lock<std::shared_timed_mutex> lock(access_mutex_);
         return constUnderlying().getIndexSizeHighImpl();
       }
 
@@ -48,6 +50,8 @@ namespace iroha {
        * @return low border of cache limit (@see AbstractCache#addItem)
        */
       uint32_t getIndexSizeLow() const {
+        // shared lock
+        std::shared_lock<std::shared_timed_mutex> lock(access_mutex_);
         return constUnderlying().getIndexSizeLowImpl();
       }
 
@@ -55,6 +59,8 @@ namespace iroha {
        * @return amount of items in cache
        */
       uint32_t getCacheItemCount() const {
+        // shared lock
+        std::shared_lock<std::shared_timed_mutex> lock(access_mutex_);
         return constUnderlying().getCacheItemCountImpl();
       }
 
@@ -69,7 +75,8 @@ namespace iroha {
        * @param value - value to insert
        */
       void addItem(const KeyType &key, const ValueType &value) {
-        std::lock_guard<std::mutex> lock(access_mutex_);
+        // exclusive lock
+        std::lock_guard<std::shared_timed_mutex> lock(access_mutex_);
         underlying().addItemImpl(key, value);
       }
 
@@ -79,7 +86,8 @@ namespace iroha {
        * @return Optional of ValueType
        */
       boost::optional<ValueType> findItem(const KeyType &key) const {
-        std::lock_guard<std::mutex> lock(access_mutex_);
+        // shared lock
+        std::shared_lock<std::shared_timed_mutex> lock(access_mutex_);
         return constUnderlying().findItemImpl(key);
       }
 
@@ -91,7 +99,7 @@ namespace iroha {
         return static_cast<T &>(*this);
       }
 
-      mutable std::mutex access_mutex_;
+      mutable std::shared_timed_mutex access_mutex_;
     };
   }  // namespace cache
 }  // namespace iroha

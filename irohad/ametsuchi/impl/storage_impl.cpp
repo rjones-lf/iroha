@@ -16,7 +16,10 @@
  */
 
 #include "ametsuchi/impl/storage_impl.hpp"
+
 #include <boost/format.hpp>
+#include <soci/postgresql/soci-postgresql.h>
+
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
@@ -39,43 +42,27 @@ namespace iroha {
 
     StorageImpl::StorageImpl(std::string block_store_dir,
                              PostgresOptions postgres_options,
-                             std::unique_ptr<KeyValueStorage> block_store)
+                             std::unique_ptr<KeyValueStorage> block_store,
+                             std::shared_ptr<soci::connection_pool> connection)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
+          connection_(connection),
           log_(logger::log("StorageImpl")) {}
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
     StorageImpl::createTemporaryWsv() {
-      auto postgres_connection = std::make_unique<pqxx::lazyconnection>(
-          postgres_options_.optionsString());
-      try {
-        postgres_connection->activate();
-      } catch (const pqxx::broken_connection &e) {
-        return expected::makeError(
-            (boost::format(kPsqlBroken) % e.what()).str());
-      }
-      auto wsv_transaction =
-          std::make_unique<pqxx::nontransaction>(*postgres_connection, kTmpWsv);
+      auto sql = std::make_unique<soci::session>(*connection_);
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
-          std::make_unique<TemporaryWsvImpl>(std::move(postgres_connection),
-                                             std::move(wsv_transaction)));
+          std::make_unique<TemporaryWsvImpl>(std::move(sql)));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
     StorageImpl::createMutableStorage() {
-      auto postgres_connection = std::make_unique<pqxx::lazyconnection>(
-          postgres_options_.optionsString());
-      try {
-        postgres_connection->activate();
-      } catch (const pqxx::broken_connection &e) {
-        return expected::makeError(
-            (boost::format(kPsqlBroken) % e.what()).str());
-      }
-      auto wsv_transaction =
-          std::make_unique<pqxx::nontransaction>(*postgres_connection, kTmpWsv);
+      boost::optional<shared_model::interface::types::HashType> top_hash;
 
+      auto sql = std::make_unique<soci::session>(*connection_);
       auto block_result = getBlockQuery()->getTopBlock();
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
           std::make_unique<MutableStorageImpl>(
@@ -87,8 +74,7 @@ namespace iroha {
                   [](expected::Error<std::string> &) {
                     return shared_model::interface::types::HashType("");
                   }),
-              std::move(postgres_connection),
-              std::move(wsv_transaction)));
+              std::move(sql)));
     }
 
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
@@ -161,14 +147,10 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
       // erase db
       log_->info("drop db");
-      pqxx::connection connection(postgres_options_.optionsString());
-      pqxx::work txn(connection);
-      txn.exec(drop);
-      txn.commit();
 
-      pqxx::work init_txn(connection);
-      init_txn.exec(init_);
-      init_txn.commit();
+      soci::session sql(*connection_);
+      sql << drop;
+      sql << init_;
 
       // erase blocks
       log_->info("drop block store");
@@ -178,20 +160,24 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
     expected::Result<bool, std::string> StorageImpl::createDatabaseIfNotExist(
         const std::string &dbname,
         const std::string &options_str_without_dbname) {
-      pqxx::lazyconnection temp_connection(options_str_without_dbname);
-      auto transaction =
-          std::make_unique<pqxx::nontransaction>(temp_connection);
-      // check if database dbname exists
       try {
-        auto result = transaction->exec(
-            "SELECT datname FROM pg_catalog.pg_database WHERE datname = "
-            + transaction->quote(dbname));
-        if (result.size() == 0) {
-          transaction->exec("CREATE DATABASE " + dbname);
+        soci::session sql(soci::postgresql, options_str_without_dbname);
+
+        int size;
+        std::string name = dbname;
+
+        sql << "SELECT count(datname) FROM pg_catalog.pg_database WHERE "
+               "datname = :dbname",
+            soci::into(size), soci::use(name);
+
+        if (size == 0) {
+          std::string query = "CREATE DATABASE ";
+          query += dbname;
+          sql << query;
           return expected::makeValue(true);
         }
         return expected::makeValue(false);
-      } catch (const pqxx::failure &e) {
+      } catch (std::exception &e) {
         return expected::makeError<std::string>(
             std::string("Connection to PostgreSQL broken: ") + e.what());
       }
@@ -212,6 +198,18 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
       return expected::makeValue(ConnectionContext(std::move(*block_store)));
     }
+
+    expected::Result<std::shared_ptr<soci::connection_pool>, std::string>
+    StorageImpl::initPostgresConnection(std::string &options_str,
+                                        size_t pool_size) {
+      auto pool = std::make_shared<soci::connection_pool>(pool_size);
+
+      for (size_t i = 0; i != pool_size; i++) {
+        soci::session &session = pool->at(i);
+        session.open(soci::postgresql, options_str);
+      }
+      return expected::makeValue(pool);
+    };
 
     expected::Result<std::shared_ptr<StorageImpl>, std::string>
     StorageImpl::create(std::string block_store_dir,
@@ -234,13 +232,20 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       }
 
       auto ctx_result = initConnections(block_store_dir);
+      auto db_result = initPostgresConnection(postgres_options);
       expected::Result<std::shared_ptr<StorageImpl>, std::string> storage;
       ctx_result.match(
           [&](expected::Value<ConnectionContext> &ctx) {
-            storage = expected::makeValue(std::shared_ptr<StorageImpl>(
-                new StorageImpl(block_store_dir,
-                                options,
-                                std::move(ctx.value.block_store))));
+            db_result.match(
+                [&](expected::Value<std::shared_ptr<soci::connection_pool>>
+                        &connection) {
+                  storage = expected::makeValue(std::shared_ptr<StorageImpl>(
+                      new StorageImpl(block_store_dir,
+                                      options,
+                                      std::move(ctx.value.block_store),
+                                      connection.value)));
+                },
+                [&](expected::Error<std::string> &error) { storage = error; });
           },
           [&](expected::Error<std::string> &error) { storage = error; });
       return storage;
@@ -259,42 +264,21 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
         notifier_.get_subscriber().on_next(block.second);
       }
 
-      storage->transaction_->exec("COMMIT;");
+      *(storage->sql_) << "COMMIT";
       storage->committed = true;
     }
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
-      auto postgres_connection = std::make_unique<pqxx::lazyconnection>(
-          postgres_options_.optionsString());
-      try {
-        postgres_connection->activate();
-      } catch (const pqxx::broken_connection &e) {
-        // TODO 29.03.2018 vdrobny IR-1184 Handle this exception
-        throw pqxx::broken_connection(e);
-      }
-      auto wsv_transaction =
-          std::make_unique<pqxx::nontransaction>(*postgres_connection);
-
-      return std::make_shared<PostgresWsvQuery>(std::move(postgres_connection),
-                                                std::move(wsv_transaction));
+      auto sql = std::make_unique<soci::session>(*connection_);
+      return std::make_shared<PostgresWsvQuery>(std::move(sql));
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
-      auto postgres_connection = std::make_unique<pqxx::lazyconnection>(
-          postgres_options_.optionsString());
-      try {
-        postgres_connection->activate();
-      } catch (const pqxx::broken_connection &e) {
-        // TODO 29.03.2018 vdrobny IR-1184 Handle this exception
-        throw pqxx::broken_connection(e);
-      }
-      auto wsv_transaction =
-          std::make_unique<pqxx::nontransaction>(*postgres_connection);
+      auto sql = std::make_unique<soci::session>(
+          soci::postgresql, postgres_options_.optionsString());
 
-      return std::make_shared<PostgresBlockQuery>(
-          std::move(postgres_connection),
-          std::move(wsv_transaction),
-          *block_store_);
+      return std::make_shared<PostgresBlockQuery>(std::move(sql),
+                                                  *block_store_);
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
@@ -314,7 +298,7 @@ CREATE TABLE IF NOT EXISTS domain (
     PRIMARY KEY (domain_id)
 );
 CREATE TABLE IF NOT EXISTS signatory (
-    public_key bytea NOT NULL,
+    public_key varchar NOT NULL,
     PRIMARY KEY (public_key)
 );
 CREATE TABLE IF NOT EXISTS account (
@@ -326,11 +310,11 @@ CREATE TABLE IF NOT EXISTS account (
 );
 CREATE TABLE IF NOT EXISTS account_has_signatory (
     account_id character varying(288) NOT NULL REFERENCES account,
-    public_key bytea NOT NULL REFERENCES signatory,
+    public_key varchar NOT NULL REFERENCES signatory,
     PRIMARY KEY (account_id, public_key)
 );
 CREATE TABLE IF NOT EXISTS peer (
-    public_key bytea NOT NULL,
+    public_key varchar NOT NULL,
     address character varying(261) NOT NULL UNIQUE,
     PRIMARY KEY (public_key)
 );
@@ -369,7 +353,7 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
     PRIMARY KEY (permittee_account_id, account_id)
 );
 CREATE TABLE IF NOT EXISTS height_by_hash (
-    hash bytea,
+    hash varchar,
     height text
 );
 CREATE TABLE IF NOT EXISTS height_by_account_set (

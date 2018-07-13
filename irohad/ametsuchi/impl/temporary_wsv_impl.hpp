@@ -18,9 +18,8 @@
 #ifndef IROHA_TEMPORARY_WSV_IMPL_HPP
 #define IROHA_TEMPORARY_WSV_IMPL_HPP
 
-#include <pqxx/connection>
-#include <pqxx/nontransaction>
-#include <utility>
+#include <soci/soci.h>
+
 #include "ametsuchi/temporary_wsv.hpp"
 #include "execution/command_executor.hpp"
 #include "logger/logger.hpp"
@@ -39,13 +38,12 @@ namespace iroha {
         ~SavepointWrapperImpl() override;
 
        private:
-        std::shared_ptr<pqxx::nontransaction> transaction_;
+        std::shared_ptr<soci::session> sql_;
         std::string savepoint_name_;
         bool is_released_;
       };
 
-      TemporaryWsvImpl(std::unique_ptr<pqxx::lazyconnection> connection,
-                       std::unique_ptr<pqxx::nontransaction> transaction);
+      explicit TemporaryWsvImpl(std::unique_ptr<soci::session> sql);
 
       expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &,
@@ -59,10 +57,9 @@ namespace iroha {
       ~TemporaryWsvImpl() override;
 
      private:
-      std::unique_ptr<pqxx::lazyconnection> connection_;
-      std::shared_ptr<pqxx::nontransaction> transaction_;
-      std::unique_ptr<WsvQuery> wsv_;
-      std::unique_ptr<WsvCommand> executor_;
+      std::shared_ptr<soci::session> sql_;
+      std::shared_ptr<WsvQuery> wsv_;
+      std::shared_ptr<WsvCommand> executor_;
       std::shared_ptr<CommandExecutor> command_executor_;
       std::shared_ptr<CommandValidator> command_validator_;
 

@@ -931,11 +931,7 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
   EXPECT_TRUE(res);
 
   // spoil WSV
-  pqxx::work txn(*connection);
-  txn.exec(R"(
-DELETE FROM domain;
-)");
-  txn.commit();
+  *sql << "DELETE FROM domain";
 
   // check there is no data in WSV
   res = storage->getWsvQuery()->getDomain("test");

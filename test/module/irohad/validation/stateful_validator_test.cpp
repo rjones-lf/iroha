@@ -118,7 +118,7 @@ class Validator : public testing::Test {
                     .quorum(1)
                     .createAsset("doge", "coin", 1)
                     .build();
-      reduced_hashes.push_back(tx.reduced_hash());
+      reduced_hashes.push_back(tx.reducedHash());
     }
 
     for (const auto &creator : creators) {
