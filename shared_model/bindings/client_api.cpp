@@ -9,7 +9,6 @@
 #include "common/types.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
-#include "logger/logger.hpp"
 #include "validators/default_validator.hpp"
 
 namespace shared_model {
@@ -68,7 +67,6 @@ namespace shared_model {
       if (s) {
         return proto::makeBlob(s.value()).blob();
       }
-      logger::log("client_api")->warn("Unknown protobuf object");
       return {};
     }
 
@@ -86,7 +84,6 @@ namespace shared_model {
       if (s) {
         return proto::makeBlob(s.value()).blob();
       }
-      logger::log("client_api")->warn("Unknown protobuf object");
       return {};
     }
 
@@ -100,7 +97,6 @@ namespace shared_model {
       if (s) {
         return Blob(s->begin(), s->end());
       }
-      logger::log("client_api")->warn("Unknown protobuf object");
       return {};
     }
 
@@ -114,7 +110,6 @@ namespace shared_model {
       if (s) {
         return Blob(s->begin(), s->end());
       }
-      logger::log("client_api")->warn("Unknown protobuf object");
       return {};
     }
   }  // namespace bindings

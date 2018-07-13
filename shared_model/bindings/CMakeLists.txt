@@ -27,7 +27,6 @@ target_link_libraries(bindings
         generator
         shared_model_stateless_validation
         iroha_amount
-        logger
         )
 
 
