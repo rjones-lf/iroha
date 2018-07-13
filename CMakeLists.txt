@@ -113,6 +113,11 @@ include_directories(
 
 SET(IROHA_ROOT_PROJECT ON)
 
+# Boost uses RTTI to perform some actions (such as type erasure).
+# This is slow. This flag forces boost to use other methods,
+# which are generally faster
+add_definitions(-DBOOST_NO_RTTI)
+
 include(FeatureSummary)
 include(cmake/functions.cmake)
 include(cmake/dependencies.cmake)

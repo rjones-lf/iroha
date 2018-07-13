@@ -89,7 +89,7 @@ class BlockQueryTest : public AmetsuchiTest {
             .prevHash(block1.hash())
             .build();
 
-    for (const auto &b : {block1, block2}) {
+    for (const auto &b : {std::move(block1), std::move(block2)}) {
       file->add(b.height(),
                 iroha::stringToBytes(
                     shared_model::converters::protobuf::modelToJson(b)));
