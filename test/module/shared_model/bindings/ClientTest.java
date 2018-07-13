@@ -12,7 +12,7 @@ import java.io.InputStream;
 import java.io.IOException;
 
 import iroha.protocol.*;
-import iroha.protocol.BlockOuterClass.Transaction;
+import iroha.protocol.TransactionOuterClass.Transaction;
 import iroha.protocol.Commands.Command;
 import com.google.protobuf.ByteString;
 

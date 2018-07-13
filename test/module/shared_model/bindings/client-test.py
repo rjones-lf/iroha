@@ -6,7 +6,7 @@
 from time import time
 import unittest
 
-import block_pb2 as blk
+import transaction_pb2 as trx
 import commands_pb2 as cmd
 import iroha
 
@@ -21,7 +21,7 @@ class ClientTest(unittest.TestCase):
     return command
 
   def unsigned_tx(self):
-    tx = blk.Transaction()
+    tx = trx.Transaction()
     tx.payload.reduced_payload.creator_account_id = "admin@test"
     tx.payload.reduced_payload.created_time = int(time() * 1000)
     tx.payload.reduced_payload.quorum = 1
@@ -38,7 +38,7 @@ class ClientTest(unittest.TestCase):
     tx.payload.reduced_payload.commands.extend([self.valid_add_peer_command()])
     self.assertEqual(len(tx.signatures), 0)
     tx_blob = iroha.signTransaction(tx.SerializeToString(), self.keys)
-    signed_tx = blk.Transaction()
+    signed_tx = trx.Transaction()
     signed_tx.ParseFromString(bytearray(tx_blob))
     self.assertEqual(len(signed_tx.signatures), 1)
 

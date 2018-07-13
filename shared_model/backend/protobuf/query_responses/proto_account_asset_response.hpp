@@ -24,9 +24,8 @@
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 #include "utils/lazy_initializer.hpp"
-
 
 namespace shared_model {
   namespace proto {
@@ -42,7 +41,8 @@ namespace shared_model {
 
       AccountAssetResponse(AccountAssetResponse &&o);
 
-      const interface::types::AccountAssetCollectionType accountAssets() const override;
+      const interface::types::AccountAssetCollectionType accountAssets()
+          const override;
 
      private:
       template <typename T>

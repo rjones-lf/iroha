@@ -23,19 +23,14 @@
 
 namespace iroha {
   namespace ametsuchi {
-    TemporaryWsvImpl::TemporaryWsvImpl(
-        std::unique_ptr<pqxx::lazyconnection> connection,
-        std::unique_ptr<pqxx::nontransaction> transaction)
-        : connection_(std::move(connection)),
-          transaction_(std::move(transaction)),
-          wsv_(std::make_unique<PostgresWsvQuery>(*transaction_)),
-          executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
+    TemporaryWsvImpl::TemporaryWsvImpl(std::unique_ptr<soci::session> sql)
+        : sql_(std::move(sql)),
+          wsv_(std::make_shared<PostgresWsvQuery>(*sql_)),
+          executor_(std::make_shared<PostgresWsvCommand>(*sql_)),
+          command_executor_(std::make_shared<CommandExecutor>(wsv_, executor_)),
+          command_validator_(std::make_shared<CommandValidator>(wsv_)),
           log_(logger::log("TemporaryWSV")) {
-      auto query = std::make_shared<PostgresWsvQuery>(*transaction_);
-      auto command = std::make_shared<PostgresWsvCommand>(*transaction_);
-      command_executor_ = std::make_shared<CommandExecutor>(query, command);
-      command_validator_ = std::make_shared<CommandValidator>(query);
-      transaction_->exec("BEGIN;");
+      *sql_ << "BEGIN";
     }
 
     expected::Result<void, validation::CommandError> TemporaryWsvImpl::apply(
@@ -56,7 +51,7 @@ namespace iroha {
               };
       };
 
-      transaction_->exec("SAVEPOINT savepoint_;");
+      *sql_ << "SAVEPOINT savepoint_";
 
       return apply_function(tx, *wsv_) |
                  [this,
@@ -78,18 +73,19 @@ namespace iroha {
                            return false;
                          });
           if (not cmd_is_valid) {
-            transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");
+            *sql_ << "ROLLBACK TO SAVEPOINT savepoint_";
             return expected::makeError(cmd_error);
           }
         }
         // success
-        transaction_->exec("RELEASE SAVEPOINT savepoint_;");
+        *sql_ << "RELEASE SAVEPOINT savepoint_";
+
         return {};
       };
     }
 
     TemporaryWsvImpl::~TemporaryWsvImpl() {
-      transaction_->exec("ROLLBACK;");
+      *sql_ << "ROLLBACK";
     }
   }  // namespace ametsuchi
 }  // namespace iroha

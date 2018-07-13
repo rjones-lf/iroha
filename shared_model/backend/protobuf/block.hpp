@@ -23,7 +23,7 @@
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/util.hpp"
-#include "common_objects/trivial_proto.hpp"
+#include "common_objects/noncopyable_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 #include "block.pb.h"
@@ -31,95 +31,57 @@
 
 namespace shared_model {
   namespace proto {
-    class Block final : public CopyableProto<interface::Block,
-                                             iroha::protocol::Block,
-                                             Block> {
+    class Block final : public NonCopyableProto<interface::Block,
+                                                iroha::protocol::Block,
+                                                Block> {
      public:
-      template <class BlockType>
-      explicit Block(BlockType &&block)
-          : CopyableProto(std::forward<BlockType>(block)) {}
+      using NonCopyableProto::NonCopyableProto;
 
-      Block(const Block &o) : Block(o.proto_) {}
-
-      Block(Block &&o) noexcept : Block(std::move(o.proto_)) {}
+      Block(Block &&o) noexcept;
+      Block &operator=(Block &&o) noexcept;
 
       interface::types::TransactionsCollectionType transactions()
-          const override {
-        return *transactions_;
-      }
+          const override;
 
-      interface::types::HeightType height() const override {
-        return payload_.height();
-      }
+      interface::types::HeightType height() const override;
 
-      const interface::types::HashType &prevHash() const override {
-        return *prev_hash_;
-      }
+      const interface::types::HashType &prevHash() const override;
 
-      const interface::types::BlobType &blob() const override {
-        return *blob_;
-      }
+      const interface::types::BlobType &blob() const override;
 
-      interface::types::SignatureRangeType signatures() const override {
-        return *signatures_;
-      }
+      interface::types::SignatureRangeType signatures() const override;
 
-      // TODO Alexey Chernyshov - 2018-03-28 -
-      // rework code duplication after fix protobuf
-      // https://soramitsu.atlassian.net/browse/IR-1175
       bool addSignature(const crypto::Signed &signed_blob,
-                        const crypto::PublicKey &public_key) override {
-        // if already has such signature
-        if (std::find_if(signatures_->begin(),
-                         signatures_->end(),
-                         [&public_key](const auto &signature) {
-                           return signature.publicKey() == public_key;
-                         })
-            != signatures_->end()) {
-          return false;
-        }
+                        const crypto::PublicKey &public_key) override;
 
-        auto sig = proto_->add_signatures();
-        sig->set_signature(crypto::toBinaryString(signed_blob));
-        sig->set_pubkey(crypto::toBinaryString(public_key));
+      interface::types::TimestampType createdTime() const override;
 
-        signatures_.invalidate();
-        return true;
-      }
+      interface::types::TransactionsNumberType txsNumber() const override;
 
-      interface::types::TimestampType createdTime() const override {
-        return payload_.created_time();
-      }
-
-      interface::types::TransactionsNumberType txsNumber() const override {
-        return payload_.tx_number();
-      }
-
-      const interface::types::BlobType &payload() const override {
-        return *payload_blob_;
-      }
+      const interface::types::BlobType &payload() const override;
 
      private:
       // lazy
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const iroha::protocol::Block::Payload &payload_{proto_->payload()};
+      iroha::protocol::Block::Payload &payload_{*proto_.mutable_payload()};
 
-      const Lazy<std::vector<proto::Transaction>> transactions_{[this] {
-        return std::vector<proto::Transaction>(payload_.transactions().begin(),
-                                               payload_.transactions().end());
+      Lazy<std::vector<proto::Transaction>> transactions_{[this] {
+        return std::vector<proto::Transaction>(
+            payload_.mutable_transactions()->begin(),
+            payload_.mutable_transactions()->end());
       }};
 
-      const Lazy<interface::types::BlobType> blob_{
-          [this] { return makeBlob(*proto_); }};
+      Lazy<interface::types::BlobType> blob_{
+          [this] { return makeBlob(proto_); }};
 
-      const Lazy<interface::types::HashType> prev_hash_{[this] {
-        return interface::types::HashType(proto_->payload().prev_block_hash());
+      Lazy<interface::types::HashType> prev_hash_{[this] {
+        return interface::types::HashType(proto_.payload().prev_block_hash());
       }};
 
-      const Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
-        auto signatures = proto_->signatures()
+      Lazy<SignatureSetType<proto::Signature>> signatures_{[this] {
+        auto signatures = proto_.signatures()
             | boost::adaptors::transformed([](const auto &x) {
                             return proto::Signature(x);
                           });
@@ -127,7 +89,7 @@ namespace shared_model {
                                                   signatures.end());
       }};
 
-      const Lazy<interface::types::BlobType> payload_blob_{
+      Lazy<interface::types::BlobType> payload_blob_{
           [this] { return makeBlob(payload_); }};
     };
   }  // namespace proto

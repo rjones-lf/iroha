@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_SHARED_MODEL_MODEL_QUERY_BUILDER_HPP
@@ -135,11 +123,21 @@ namespace shared_model {
       /**
        * Retrieves details for a given account
        * @param account_id - account to retrieve details from
-       * @param detail - key to retrieve
+       * @param key - under which keys data should be returned
+       * @param writer - from which writers details should be returned
        * @return builder with getAccountDetail query inside
        */
       ModelQueryBuilder getAccountDetail(
-          const interface::types::AccountIdType &account_id);
+          const interface::types::AccountIdType &account_id = "",
+          const interface::types::AccountDetailKeyType &key = "",
+          const interface::types::AccountIdType &writer = "");
+
+      /**
+       * Retrieves all pending (not fully signed) multisignature transactions or
+       * batches of transactions.
+       * @return builder with getPendingTransactions query inside
+       */
+      ModelQueryBuilder getPendingTransactions();
 
       /**
        * Builds result with all appended fields
