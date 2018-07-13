@@ -190,7 +190,7 @@ namespace torii {
     ResponsePtrType initial_status =
         clone(shared_model::proto::TransactionResponse(
             cache_->findItem(hash).value_or([&] {
-              log_->debug("tx not received");
+              log_->debug("tx not received: {}", hash.toString());
               return shared_model::proto::TransactionStatusBuilder()
                   .txHash(hash)
                   .notReceived()
@@ -203,7 +203,7 @@ namespace torii {
         // select statuses with requested hash
         .filter(
             [&](auto response) { return response->transactionHash() == hash; })
-        // successfully complete the observable if final status is received
+        // successfully complete the observable if final status is received.
         // final status is included in the observable
         .lift<ResponsePtrType>([](rxcpp::subscriber<ResponsePtrType> dest) {
           return rxcpp::make_subscriber<ResponsePtrType>(
@@ -235,9 +235,14 @@ namespace torii {
 
     auto hash = shared_model::crypto::Hash(request->tx_hash());
 
+    static auto client_id_format = boost::format("Peer: '%s', %s");
+    std::string client_id =
+        (client_id_format % context->peer() % hash.toString()).str();
+
     StatusStream(hash)
         // convert to transport objects
-        .map([](auto response) {
+        .map([&](auto response) {
+          log_->debug("mapped {}, {}", response->toString(), client_id);
           return std::static_pointer_cast<
                      shared_model::proto::TransactionResponse>(response)
               ->getTransport();
@@ -256,25 +261,26 @@ namespace torii {
         .take_while([=](const auto &) {
           auto is_cancelled = context->IsCancelled();
           if (is_cancelled) {
-            log_->debug("client unsubscribed");
+            log_->debug("client unsubscribed, {}", client_id);
           }
           return not is_cancelled;
         })
-        .subscribe(
-            subscription,
-            [&](iroha::protocol::ToriiResponse response) {
-              if (response_writer->Write(response)) {
-                log_->debug("status written");
-              }
-            },
-            [&](std::exception_ptr ep) { log_->debug("processing timeout"); },
-            [&] { log_->debug("stream done"); });
+        .subscribe(subscription,
+                   [&](iroha::protocol::ToriiResponse response) {
+                     if (response_writer->Write(response)) {
+                       log_->debug("status written, {}", client_id);
+                     }
+                   },
+                   [&](std::exception_ptr ep) {
+                     log_->debug("processing timeout, {}", client_id);
+                   },
+                   [&] { log_->debug("stream done, {}", client_id); });
 
     // run loop while subscription is active or there are pending events in the
     // queue
     handleEvents(subscription, rl);
 
-    log_->debug("status stream done");
+    log_->debug("status stream done, {}", client_id);
     return grpc::Status::OK;
   }
 
