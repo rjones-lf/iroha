@@ -187,18 +187,27 @@ RUN set -e; \
     # remove
     rm -rf /tmp/postgresql
 
-# install pqxx
+# install soci 3.2.3
 RUN set -e; \
-    export PATH="/opt/dependencies/libpq/bin:$PATH"; \
-    git clone https://github.com/jtv/libpqxx /tmp/libpqxx; \
-    (cd /tmp/libpqxx ; git checkout 5b17abce5ac2b1a2f8278718405b7ade8bb30ae9); \
-    curl -L -o /tmp/libpqxx/config/config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=6b2374c79506ee82a8b440f6d1ca293e2e2e2463'; \
-    curl -L -o /tmp/libpqxx/config/config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=6b2374c79506ee82a8b440f6d1ca293e2e2e2463'; \
-    (cd /tmp/libpqxx ; /tmp/libpqxx/configure --disable-documentation --with-pic --prefix=/opt/dependencies/libpqxx); \
-    make -j${PARALLELISM} -C /tmp/libpqxx; \
-    make -C /tmp/libpqxx install; \
+    git clone https://github.com/SOCI/soci /tmp/soci; \
+    (cd /tmp/soci ; git checkout 111b50af8c3876ea392367640b4bd83b4f903ab8); \
+    cmake \
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+        -DWITH_BOOST=ON \
+        -DWITH_DB2=OFF \
+        -DWITH_FIREBIRD=OFF \
+        -DWITH_MYSQL=OFF \
+        -DWITH_ODBC=OFF \
+        -DWITH_ORACLE=OFF \
+        -DWITH_POSTGRESQL=ON \
+        -DWITH_SQLITE3=OFF \
+        -H/tmp/soci/src \
+        -B/tmp/soci/build \
+        -DCMAKE_PREFIX_PATH="/opt/dependencies/libpq" \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/soci; \
+    cmake --build /tmp/soci/build --target install; \
     ldconfig; \
-    rm -rf /tmp/libpqxx
+    rm -rf /tmp/soci
 
 # install tbb
 RUN set -e; \

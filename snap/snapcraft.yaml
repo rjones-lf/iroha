@@ -42,7 +42,7 @@ parts:
       - rxcpp
       - rapidjson
       - libpq
-      - pqxx
+      - soci
       - tbb
       - ed25519
   cmake:
@@ -120,12 +120,21 @@ parts:
       make -C src/bin/pg_config install DESTDIR=$SNAPCRAFT_PART_INSTALL
       make -C src/interfaces/libpq install DESTDIR=$SNAPCRAFT_PART_INSTALL
       make -C src/include install DESTDIR=$SNAPCRAFT_PART_INSTALL
-  pqxx:
-    source: https://github.com/jtv/libpqxx.git
-    source-commit: 5b17abce5ac2b1a2f8278718405b7ade8bb30ae9
-    plugin: autotools
-    configflags: [--disable-documentation, --with-pic]
-    after: [libpq]
+  soci:
+    source: https://github.com/SOCI/soci.git
+    source-commit: 111b50af8c3876ea392367640b4bd83b4f903ab8
+    plugin: cmake
+    configflags:
+     - -DWITH_BOOST=ON
+     - -DWITH_DB2=OFF
+     - -DWITH_FIREBIRD=OFF
+     - -DWITH_MYSQL=OFF
+     - -DWITH_ODBC=OFF
+     - -DWITH_ORACLE=OFF
+     - -DWITH_POSTGRESQL=ON
+     - -DWITH_SQLITE3=OFF
+     - -DCMAKE_INSTALL_PREFIX=/
+    after: [cmake, boost, libpq]
   tbb:
     source: https://github.com/01org/tbb.git
     source-commit: eb6336ad29450f2a64af5123ca1b9429ff6bc11d

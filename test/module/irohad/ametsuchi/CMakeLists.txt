@@ -57,6 +57,7 @@ target_link_libraries(postgres_options_test
 
 add_library(ametsuchi_fixture INTERFACE)
 target_link_libraries(ametsuchi_fixture INTERFACE
-    pqxx
     integration_framework_config_helper
+    SOCI::core
+    SOCI::postgresql
     )
