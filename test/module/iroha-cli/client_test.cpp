@@ -301,7 +301,7 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));
 
-  EXPECT_CALL(*wsv_query, getAccountDetail("test@test"))
+  EXPECT_CALL(*wsv_query, getAccountDetail("test@test", "", ""))
       .WillOnce(Return(boost::make_optional(std::string("value"))));
 
   const std::vector<std::string> kRole{"role"};

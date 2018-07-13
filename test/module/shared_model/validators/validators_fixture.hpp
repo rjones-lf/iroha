@@ -23,11 +23,11 @@
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
 
-#include "block.pb.h"
 #include "datetime/time.hpp"
 #include "interfaces/permissions.hpp"
 #include "primitive.pb.h"
 #include "queries.pb.h"
+#include "transaction.pb.h"
 
 class ValidatorsTest : public ::testing::Test {
  public:
@@ -67,6 +67,7 @@ class ValidatorsTest : public ::testing::Test {
     field_setters["permission"] = setEnum(role_permission);
     field_setters["grantable_permission"] = setEnum(grantable_permission);
     field_setters["key"] = setString(detail_key);
+    field_setters["writer"] = setString(writer);
     field_setters["detail"] = setString(detail_key);
     field_setters["value"] = setString("");
     field_setters["tx_hashes"] = addString(hash);
@@ -160,7 +161,8 @@ class ValidatorsTest : public ::testing::Test {
         void *ptr = new std::shared_ptr<google::protobuf::Message>(mcopy);
         std::shared_ptr<google::protobuf::Message> *m =
             static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
-        this->iterateContainerRecursive(*m, field_validators, field_op, validator);
+        this->iterateContainerRecursive(
+            *m, field_validators, field_op, validator);
       }
     });
   }
@@ -186,6 +188,7 @@ class ValidatorsTest : public ::testing::Test {
     account_name = "admin";
     domain_id = "ru";
     detail_key = "key";
+    writer = "account@domain";
     public_key = std::string(public_key_size, '0');
     hash = std::string(public_key_size, '0');
     role_permission = iroha::protocol::RolePermission::can_append_role;
@@ -214,6 +217,7 @@ class ValidatorsTest : public ::testing::Test {
   std::string description;
   std::string public_key;
   std::string hash;
+  std::string writer;
   iroha::protocol::Transaction::Payload::BatchMeta batch_meta;
   shared_model::interface::permissions::Role model_role_permission;
   shared_model::interface::permissions::Grantable model_grantable_permission;

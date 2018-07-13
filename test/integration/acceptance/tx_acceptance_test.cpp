@@ -233,3 +233,20 @@ TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
       .checkBlock(checkStatefulValid)
       .done();
 }
+
+/**
+ * @given some user
+ * @when sending transaction without any signature
+ * @then the response is STATELESS_VALIDATION_FAILED
+ */
+TEST_F(AcceptanceTest, EmptySignatures) {
+  std::string kAccountId = "some@account";
+  auto proto_tx = baseTx<TestTransactionBuilder>().build().getTransport();
+  proto_tx.clear_signatures();
+  auto tx = shared_model::proto::Transaction(proto_tx);
+
+  integration_framework::IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
+      .sendTx(tx, checkStatelessInvalid)
+      .done();
+}

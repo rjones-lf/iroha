@@ -167,16 +167,6 @@ Verified Proposal
 A set of transactions that have been passed `stateless <#stateless-validation>`__
 and `stateful <#stateful-validation>`__ validation, but were not committed yet.
 
-Role
-====
-
-A named abstraction that holds a set of `permissions <#permission>`__.
-
-Simulator
-=========
-
-See `Verified Proposal Creator <#verified-proposal-creator>`__.
-
 Query
 =====
 
@@ -191,6 +181,16 @@ In the context of transactions signing, quorum number is a minimum amount
 of signatures required to consider a transaction signed.
 The default value is 1.
 Each account can link additional public keys and increase own quorum number.
+
+Role
+====
+
+A named abstraction that holds a set of `permissions <#permission>`__.
+
+Simulator
+=========
+
+See `Verified Proposal Creator <#verified-proposal-creator>`__.
 
 Synchronizer
 ============
@@ -215,7 +215,7 @@ An ordered set of `commands <#command>`__, which is applied to the ledger atomic
 Any nonvalid command within a transaction leads to rejection of the whole
 transaction during the validation process.
 
-Transaction structure
+Transaction Structure
 ---------------------
 
 **Payload** stores all transaction fields, except signatures:
@@ -223,12 +223,20 @@ Transaction structure
     - Time of creation (unix time, in milliseconds)
     - Account ID of transaction creator (username@domain)
     - Quorum field (indicates required number of signatures)
-    - Repeated commands which are described in details in commands section <../api/commands.html>`__
+    - Repeated commands which are described in details in `commands section <../api/commands.html>`__
+    - Batch meta information (optional part). See `Batch of Transactions`_ for details
 
 
 **Signatures** contain one or many signatures (ed25519 public key + signature)
 
-Transaction statuses
+Reduced Transaction Hash
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Reduced hash is calculated over transaction payload excluding batch meta information.
+Used in `Batch of Transactions`_.
+
+
+Transaction Statuses
 --------------------
 
 Hyperledger Iroha supports both push and pull interaction mode with a client.
@@ -239,7 +247,7 @@ In any of these modes, the set of transaction statuses is the same:
 
  .. image:: ./../../image_assets/tx_status.png
 
-Transaction status set
+Transaction Status Set
 ^^^^^^^^^^^^^^^^^^^^^^
 
  - NOT_RECEIVED: requested peer does not have this transaction.
@@ -249,6 +257,48 @@ Transaction status set
  - STATEFUL_VALIDATION_FAILED: the transaction has commands, which violate validation rules, checking state of the chain (e.g. asset balance, account permissions, etc.). It would also return the reason — what rule was violated.
  - STATEFUL_VALIDATION_SUCCESS: the transaction has successfully passed stateful validation.
  - COMMITTED: the transaction is the part of a block, which gained enough votes and is in the block store at the moment.
+
+Pending Transactions
+^^^^^^^^^^^^^^^^^^^^
+
+.. TODO igor-egorov, 2018-07-04, IR-1356, add here a link to MST docs
+
+Any transaction that has lesser signatures at the moment than `quorum`_ of transaction creator account is considered as pending.
+Pending transaction will be submitted for stateful validation as soon as multi signature mechanism (*to be documented*)
+will collect required amount of signatures for quorum.
+
+Transaction that already has quorum of signatures can also be considered as pending in cases
+when the transaction is a part of `batch of transactions`_ and there is a not fully signed transaction.
+
+Batch of Transactions
+=====================
+
+*The feature is to be released.*
+
+Transactions batch is a feature that allows sending several transactions to Iroha at once preserving their order.
+
+Each transaction within a batch includes batch meta information.
+Batch meta contains batch type identifier (atomic or ordered) and a list of `reduced hashes <#reduced-transaction-hash>`_
+of all transactions within a batch.
+The order of hashes prescribes transactions sequence.
+
+.. TODO igor-egorov, 2018-07-04, IR-1356, add here a link to MST docs
+
+Batch can contain transactions created by different accounts.
+Any transaction within a batch can require single or multiple signatures (depends on quorum set for an account of transaction creator).
+At least one transaction inside a batch should have at least one signature to let the batch pass `stateful validation`_.
+
+Atomic Batch
+------------
+
+All the transactions within an atomic batch should pass `stateful validation`_ for the batch to be applied to a ledger.
+
+Ordered Batch
+-------------
+
+Ordered batch preserves only the sequence of transactions applying to a ledger.
+All the transactions that able to pass stateful validation within a batch will be applied to a ledger.
+Validation failure of one transaction would NOT directly imply the failure of the whole batch.
 
 Validator
 =========

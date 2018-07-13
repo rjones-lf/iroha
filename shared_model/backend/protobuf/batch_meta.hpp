@@ -11,9 +11,9 @@
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "backend/protobuf/util.hpp"
-#include "block.pb.h"
 #include "interfaces/common_objects/amount.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "transaction.pb.h"
 #include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
