@@ -19,7 +19,7 @@
 #define IROHA_PROTO_ACCOUNT_BUILDER_HPP
 
 #include "backend/protobuf/common_objects/account.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 
 namespace shared_model {
   namespace proto {

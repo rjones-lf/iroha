@@ -21,6 +21,7 @@
 namespace iroha {
   namespace ametsuchi {
 
+    using shared_model::interface::types::AccountDetailKeyType;
     using shared_model::interface::types::AccountIdType;
     using shared_model::interface::types::AssetIdType;
     using shared_model::interface::types::DomainIdType;
@@ -137,13 +138,50 @@ namespace iroha {
     }
 
     boost::optional<std::string> PostgresWsvQuery::getAccountDetail(
-        const std::string &account_id) {
+        const std::string &account_id,
+        const AccountDetailKeyType &key,
+        const AccountIdType &writer) {
       boost::optional<std::string> detail;
 
-      sql_ << "SELECT data FROM account WHERE account_id = :account_id",
-          soci::into(detail), soci::use(account_id);
+      if (key.empty() and writer.empty()) {
+        // retrieve all values for a specified account
+        std::string empty_json = "{}";
+        sql_ << "SELECT data#>>:empty_json FROM account WHERE account_id = "
+                ":account_id;",
+            soci::into(detail), soci::use(empty_json), soci::use(account_id);
+      } else if (not key.empty() and not writer.empty()) {
+        // retrieve values for the account, under the key and added by the
+        // writer
+        std::string filled_json = "{\"" + writer + "\"" + ", \"" + key + "\"}";
+        sql_ << "SELECT json_build_object(:writer::text, "
+                "json_build_object(:key::text, (SELECT data #>> :filled_json "
+                "FROM account WHERE account_id = :account_id)));",
+            soci::into(detail), soci::use(writer), soci::use(key),
+            soci::use(filled_json), soci::use(account_id);
+      } else if (not writer.empty()) {
+        // retrieve values added by the writer under all keys
+        sql_ << "SELECT json_build_object(:writer::text, (SELECT data -> "
+                ":writer FROM account WHERE account_id = :account_id));",
+            soci::into(detail), soci::use(writer, "writer"),
+            soci::use(account_id, "account_id");
+      } else {
+        // retrieve values from all writers under the key
+        sql_ << "SELECT json_object_agg(key, value) AS json FROM (SELECT "
+                "json_build_object(kv.key, json_build_object(:key::text, "
+                "kv.value -> :key)) FROM jsonb_each((SELECT data FROM account "
+                "WHERE account_id = :account_id)) kv WHERE kv.value ? :key) AS "
+                "jsons, json_each(json_build_object);",
+            soci::into(detail), soci::use(key, "key"),
+            soci::use(account_id, "account_id");
+      }
 
-      return detail;
+      return detail | [](auto &val) -> boost::optional<std::string> {
+        // if val is empty, then there is no data for this account
+        if (not val.empty()) {
+          return val;
+        }
+        return boost::none;
+      };
     }
 
     boost::optional<std::vector<PubkeyType>> PostgresWsvQuery::getSignatories(

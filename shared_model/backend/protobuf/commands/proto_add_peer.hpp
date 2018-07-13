@@ -19,6 +19,7 @@
 #define IROHA_PROTO_ADD_PEER_HPP
 
 #include "backend/protobuf/common_objects/peer.hpp"
+#include "commands.pb.h"
 #include "interfaces/commands/add_peer.hpp"
 #include "interfaces/common_objects/peer.hpp"
 

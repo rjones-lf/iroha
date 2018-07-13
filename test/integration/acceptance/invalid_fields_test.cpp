@@ -4,9 +4,9 @@
  */
 
 #include <gtest/gtest.h>
-#include "block.pb.h"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "transaction.pb.h"
 
 using namespace integration_framework;
 using namespace shared_model;
