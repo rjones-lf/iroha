@@ -505,19 +505,24 @@ namespace iroha {
             &permittee_account_id,
         const shared_model::interface::types::AccountIdType &account_id,
         const shared_model::interface::permissions::Grantable &permission) {
-      const auto perm_str = shared_model::interface::GrantablePermissionSet()
+      const auto without_perm_str = shared_model::interface::GrantablePermissionSet()
                                 .set()
                                 .unset(permission)
                                 .toBitstring();
+      const auto with_perm_str = shared_model::interface::GrantablePermissionSet()
+          .set(permission)
+          .toBitstring();
       auto query =
           (boost::format("UPDATE account_has_grantable_permissions as has_perm "
                          // SELECT will end up with a error, if the permission
                          // doesn't exists
                          "SET permission=(SELECT has_perm.permission & %3% "
-                         "WHERE has_perm.permission & %3% = %3%) WHERE "
+                         "WHERE has_perm.permission & %4% = %4% AND "
+                         "has_perm.permittee_account_id=%1% AND has_perm.account_id=%2%) WHERE "
                          "permittee_account_id=%1% AND account_id=%2%;")
            % transaction_.quote(permittee_account_id)
-           % transaction_.quote(account_id) % transaction_.quote(perm_str))
+           % transaction_.quote(account_id) % transaction_.quote(without_perm_str)
+           % transaction_.quote(with_perm_str))
               .str();
       auto result = execute_(query);
 
