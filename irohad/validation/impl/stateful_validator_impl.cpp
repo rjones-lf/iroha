@@ -166,8 +166,8 @@ namespace iroha {
       auto txs_end = std::end(txs);
       for (size_t i = 0; i < txs.size(); ++i) {
         auto current_tx_it = txs_begin + i;
-        if (not current_tx_it->batch_meta()
-            or current_tx_it->batch_meta()->get()->type()
+        if (not current_tx_it->batchMeta()
+            or current_tx_it->batchMeta()->get()->type()
                 != shared_model::interface::types::BatchType::ATOMIC) {
           // if transaction does not belong to atomic batch
           if (checkTransactions(
@@ -180,10 +180,10 @@ namespace iroha {
         } else {
           // find the batch end in proposal's transactions
           auto batch_end_hash =
-              current_tx_it->batch_meta()->get()->transactionHashes().back();
+              current_tx_it->batchMeta()->get()->transactionHashes().back();
           auto batch_end_it =
               std::find_if(current_tx_it, txs_end, [&batch_end_hash](auto &tx) {
-                return tx.reduced_hash() == batch_end_hash;
+                return tx.reducedHash() == batch_end_hash;
               });
           if (batch_end_it == txs_end) {
             // for peer review: adequate exception variants?
