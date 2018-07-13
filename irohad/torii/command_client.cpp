@@ -56,6 +56,12 @@ namespace torii {
     return stub_->Torii(&context, tx, &a);
   }
 
+  grpc::Status CommandSyncClient::ListTorii(const iroha::protocol::TxList &tx_list) const {
+    google::protobuf::Empty a;
+    grpc::ClientContext context;
+    return stub_->ListTorii(&context, tx_list, &a);
+  }
+
   grpc::Status CommandSyncClient::Status(
       const iroha::protocol::TxStatusRequest &request,
       iroha::protocol::ToriiResponse &response) const {

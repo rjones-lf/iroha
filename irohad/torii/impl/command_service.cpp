@@ -29,6 +29,7 @@
 #include "common/types.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
+#include "builders/protobuf/transaction_sequence_builder.hpp"
 #include "validators/default_validator.hpp"
 
 using namespace std::chrono_literals;
@@ -121,7 +122,7 @@ namespace torii {
   void CommandService::ListTorii(const iroha::protocol::TxList &tx_list) {
     shared_model::proto::TransportBuilder<
         shared_model::interface::TransactionSequence,
-        shared_model::validation::UnsignedTransactionsCollectionValidator>()
+        shared_model::validation::DefaultBatchValidator>()
         .build(tx_list)
         .match(
             [this](
@@ -147,14 +148,13 @@ namespace torii {
                                                STATELESS_VALIDATION_SUCCESS);
 
                     // Send transaction to iroha
-                    tx_processor_->transactionHandle(
-                            tx);
+                    tx_processor_->transactionHandle(tx);
 
                     addTxToCacheAndLog(
                         "ToriiList", std::move(tx_hash), std::move(response));
                   });
             },
-            [this, &tx_list](const auto &error) {
+            [this, &tx_list](auto &error) {
               auto &txs = tx_list.transactions();
               // form an error message, shared between all txs in a sequence
               auto first_tx_blob =
@@ -167,12 +167,10 @@ namespace torii {
               auto last_tx_hash =
                   shared_model::crypto::DefaultHashProvider::makeHash(
                       last_tx_blob);
-              auto sequence_error = std::string(
-                  "Stateless invalid tx in transaction sequence: {}, hash "
-                  "of the first: {}, hash of the last: {}",
-                  error.error,
-                  first_tx_hash.hex(),
-                  last_tx_hash.hex());
+              auto sequence_error =
+                  "Stateless invalid tx in transaction sequence: " + error.error
+                  + ", hash of the first: " + first_tx_hash.hex()
+                  + ", hash of the last: " + last_tx_hash.hex();
 
               // set error response for each transaction in a sequence
               std::for_each(
@@ -374,9 +372,10 @@ namespace torii {
         != std::end(final_statuses);
   }
 
-  void CommandService::addTxToCacheAndLog(const std::string &who,
-                          const shared_model::crypto::Hash &hash,
-                          const iroha::protocol::ToriiResponse &response) {
+  void CommandService::addTxToCacheAndLog(
+      const std::string &who,
+      const shared_model::crypto::Hash &hash,
+      const iroha::protocol::ToriiResponse &response) {
     log_->debug("{}: adding item to cache: {}, status {} ",
                 who,
                 hash.hex(),
