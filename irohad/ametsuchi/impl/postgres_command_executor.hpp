@@ -17,92 +17,69 @@ namespace iroha {
      public:
       explicit PostgresCommandExecutor(pqxx::nontransaction &transaction);
 
-      WsvCommandResult addAssetQuantity(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::AssetIdType &asset_id,
-          const std::string &amount,
-          const shared_model::interface::types::PrecisionType precision) override;
-
-      WsvCommandResult addPeer(
-          const shared_model::interface::Peer &peer) override;
-
-      WsvCommandResult addSignatory(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::PubkeyType &signatory) override;
-
-      WsvCommandResult appendRole(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::RoleIdType &role_name) override;
-
-      WsvCommandResult createAccount(
-          const shared_model::interface::types::AccountIdType &account_name,
-          const shared_model::interface::types::DomainIdType &domain_id,
-          const shared_model::interface::types::PubkeyType &pubkey) override;
-
-      WsvCommandResult createAsset(
-          const shared_model::interface::types::AssetIdType &asset_id,
-          const shared_model::interface::types::DomainIdType &domain_id,
-          const shared_model::interface::types::PrecisionType precision) override;
-
-      WsvCommandResult createDomain(
-          const shared_model::interface::types::DomainIdType &domain_id,
-          const shared_model::interface::types::RoleIdType &default_role) override;
-
-      WsvCommandResult createRole(
-          const shared_model::interface::types::RoleIdType &role_id,
-          const shared_model::interface::RolePermissionSet &default_role) override;
-
-      WsvCommandResult detachRole(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::RoleIdType &role_name) override;
-
-      WsvCommandResult grantPermission(
-          const shared_model::interface::types::AccountIdType &permittee_account_id,
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::permissions::Grantable &permission) override;
-
-      WsvCommandResult removeSignatory(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::PubkeyType &pubkey) override;
-
-      WsvCommandResult revokePermission(
+      void setCreatorAccountId(
           const shared_model::interface::types::AccountIdType
-          &permittee_account_id,
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::permissions::Grantable &permission) override;
+              &creator_account_id) override;
 
-      WsvCommandResult setAccountDetail(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::AccountIdType
-          &creator_account_id,
-          const std::string &key,
-          const std::string &value) override;
+      CommandResult operator()(
+          const shared_model::interface::AddAssetQuantity &command) override;
 
-      WsvCommandResult setQuorum(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::QuorumType quorum) override;
+      CommandResult operator()(
+          const shared_model::interface::AddPeer &command) override;
 
-      WsvCommandResult subtractAssetQuantity(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::AssetIdType &asset_id,
-          const std::string &amount,
-          const shared_model::interface::types::PrecisionType precision) override;
+      CommandResult operator()(
+          const shared_model::interface::AddSignatory &command) override;
 
-      WsvCommandResult transferAsset(
-          const shared_model::interface::types::AccountIdType &src_account_id,
-          const shared_model::interface::types::AccountIdType &dest_account_id,
-          const shared_model::interface::types::AssetIdType &asset_id,
-          const std::string &amount,
-          const shared_model::interface::types::PrecisionType precision) override;
+      CommandResult operator()(
+          const shared_model::interface::AppendRole &command) override;
+
+      CommandResult operator()(
+          const shared_model::interface::CreateAccount &command) override;
+
+      CommandResult operator()(
+          const shared_model::interface::CreateAsset &command) override;
+
+      CommandResult operator()(
+          const shared_model::interface::CreateDomain &command) override;
+
+      CommandResult operator()(
+          const shared_model::interface::CreateRole &command) override;
+
+      CommandResult operator()(
+          const shared_model::interface::DetachRole &command) override;
+
+      CommandResult operator()(
+          const shared_model::interface::GrantPermission &command) override;
+
+      CommandResult operator()(
+          const shared_model::interface::RemoveSignatory &command) override;
+
+      CommandResult operator()(
+          const shared_model::interface::RevokePermission &command) override;
+
+      CommandResult operator()(
+          const shared_model::interface::SetAccountDetail &command) override;
+
+      CommandResult operator()(
+          const shared_model::interface::SetQuorum &command) override;
+
+      CommandResult operator()(
+          const shared_model::interface::SubtractAssetQuantity &command)
+          override;
+
+      CommandResult operator()(
+          const shared_model::interface::TransferAsset &command) override;
 
      private:
       pqxx::nontransaction &transaction_;
+
+      shared_model::interface::types::AccountIdType creator_account_id_;
 
       using ExecuteType = decltype(makeExecuteResult(transaction_));
       ExecuteType execute_;
 
       /**
-       * Transforms result which contains pqxx to WsvCommandResult,
+       * Transforms result which contains pqxx to CommandResult,
        * which will have error message generated by error_generator
        * appended to error received from given result
        * @param result which can be received by calling execute_
@@ -110,19 +87,17 @@ namespace iroha {
        * to be used as a return error.
        * Function is passed instead of string to avoid overhead of string
        * construction in successful case.
-       * @return WsvCommandResult with combined error message
+       * @return CommandResult with combined error message
        * in case of result contains error
        */
       template <typename Function>
-      WsvCommandResult makeCommandResult(
+      CommandResult makeCommandResult(
           expected::Result<pqxx::result, std::string> &&result,
           Function &&error_generator) const noexcept {
         return result.match(
-            [](expected::Value<pqxx::result> v) -> WsvCommandResult {
-              return {};
-            },
+            [](expected::Value<pqxx::result> v) -> CommandResult { return {}; },
             [&error_generator](
-                expected::Error<std::string> e) -> WsvCommandResult {
+                expected::Error<std::string> e) -> CommandResult {
               return expected::makeError(error_generator() + "\n" + e.error);
             });
       }
@@ -130,4 +105,4 @@ namespace iroha {
   }  // namespace ametsuchi
 }  // namespace iroha
 
-#endif //IROHA_POSTGRES_COMMAND_EXECUTOR_HPP
+#endif  // IROHA_POSTGRES_COMMAND_EXECUTOR_HPP

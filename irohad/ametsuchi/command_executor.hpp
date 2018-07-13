@@ -8,6 +8,22 @@
 
 #include "backend/protobuf/permissions.hpp"
 #include "common/result.hpp"
+#include "interfaces/commands/add_asset_quantity.hpp"
+#include "interfaces/commands/add_peer.hpp"
+#include "interfaces/commands/add_signatory.hpp"
+#include "interfaces/commands/append_role.hpp"
+#include "interfaces/commands/create_account.hpp"
+#include "interfaces/commands/create_asset.hpp"
+#include "interfaces/commands/create_domain.hpp"
+#include "interfaces/commands/create_role.hpp"
+#include "interfaces/commands/detach_role.hpp"
+#include "interfaces/commands/grant_permission.hpp"
+#include "interfaces/commands/remove_signatory.hpp"
+#include "interfaces/commands/revoke_permission.hpp"
+#include "interfaces/commands/set_account_detail.hpp"
+#include "interfaces/commands/set_quorum.hpp"
+#include "interfaces/commands/subtract_asset_quantity.hpp"
+#include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
@@ -20,170 +36,141 @@ namespace iroha {
   namespace ametsuchi {
 
     /**
-     * Error returned by wsv command.
+     * Error returned by command.
      * It is a string which contains what action has failed (e.g, "failed to
      * insert role"), and an error which was provided by underlying
      * implementation (e.g, database exception info)
      */
-    using WsvError = std::string;
+    using Error = std::string;
 
     /**
      *  If command is successful, we assume changes are made,
      *  and do not need anything
-     *  If something goes wrong, Result will contain WsvError
+     *  If something goes wrong, Result will contain Error
      *  with additional information
      */
-    using WsvCommandResult = expected::Result<void, WsvError>;
+    using CommandResult = expected::Result<void, Error>;
 
-    class CommandExecutor {
+    class CommandExecutor : public boost::static_visitor<CommandResult> {
      public:
       virtual ~CommandExecutor() = default;
 
+      virtual void setCreatorAccountId(
+          const shared_model::interface::types::AccountIdType
+              &creator_account_id) = 0;
+
       /**
        * AddAssetQuantity sql executor
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult addAssetQuantity(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::AssetIdType &asset_id,
-          const std::string &amount,
-          const shared_model::interface::types::PrecisionType) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::AddAssetQuantity &command) = 0;
 
       /**
        *
        * @param peer
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult addPeer(
-          const shared_model::interface::Peer &peer) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::AddPeer &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult addSignatory(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::PubkeyType &signatory) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::AddSignatory &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult appendRole(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::RoleIdType &role_name) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::AppendRole &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult createAccount(
-          const shared_model::interface::types::AccountIdType &account_name,
-          const shared_model::interface::types::DomainIdType &domain_id,
-          const shared_model::interface::types::PubkeyType &pubkey) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::CreateAccount &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult createAsset(
-          const shared_model::interface::types::AssetIdType &asset_id,
-          const shared_model::interface::types::DomainIdType &domain_id,
-          const shared_model::interface::types::PrecisionType precision) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::CreateAsset &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult createDomain(
-          const shared_model::interface::types::DomainIdType &domain_id,
-          const shared_model::interface::types::RoleIdType &default_role) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::CreateDomain &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult createRole(
-          const shared_model::interface::types::RoleIdType &role_id,
-          const shared_model::interface::RolePermissionSet &default_role) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::CreateRole &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult detachRole(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::RoleIdType &role_name) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::DetachRole &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult grantPermission(
-          const shared_model::interface::types::AccountIdType
-              &permittee_account_id,
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::permissions::Grantable
-              &permission) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::GrantPermission &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult removeSignatory(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::PubkeyType &pubkey) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::RemoveSignatory &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult revokePermission(
-          const shared_model::interface::types::AccountIdType
-              &permittee_account_id,
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::permissions::Grantable
-              &permission) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::RevokePermission &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult setAccountDetail(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::AccountIdType
-              &creator_account_id,
-          const std::string &key,
-          const std::string &value) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::SetAccountDetail &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult setQuorum(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::QuorumType quorum) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::SetQuorum &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult subtractAssetQuantity(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::AssetIdType &asset_id,
-          const std::string &amount,
-          const shared_model::interface::types::PrecisionType) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::SubtractAssetQuantity &command) = 0;
 
       /**
        *
-       * @return WsvCommandResult, which will contain error in case of failure
+       * @return CommandResult, which will contain error in case of failure
        */
-      virtual WsvCommandResult transferAsset(
-          const shared_model::interface::types::AccountIdType &src_account_id,
-          const shared_model::interface::types::AccountIdType &dest_account_id,
-          const shared_model::interface::types::AssetIdType &asset_id,
-          const std::string &amount,
-          const shared_model::interface::types::PrecisionType precision) = 0;
+      virtual CommandResult operator()(
+          const shared_model::interface::TransferAsset &command) = 0;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

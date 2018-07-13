@@ -15,11 +15,19 @@ namespace iroha {
         : transaction_(transaction),
           execute_{makeExecuteResult(transaction_)} {}
 
-    WsvCommandResult PostgresCommandExecutor::addAssetQuantity(
-        const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::AssetIdType &asset_id,
-        const std::string &amount,
-        const shared_model::interface::types::PrecisionType precision) {
+    void PostgresCommandExecutor::setCreatorAccountId(
+        const shared_model::interface::types::AccountIdType
+        &creator_account_id) {
+        creator_account_id_ = creator_account_id;
+    }
+
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::AddAssetQuantity &command
+        ) {
+      auto &account_id = creator_account_id_;
+      auto &asset_id = command.assetId();
+      auto amount = command.amount().toStringRepr();
+      auto precision = command.amount().precision();
       std::string query = (boost::format(
                                // clang-format off
           R"(
@@ -60,7 +68,7 @@ namespace iroha {
       auto result = execute_(query);
 
       return result.match(
-          [](expected::Value<pqxx::result> &error_code) -> WsvCommandResult {
+          [](expected::Value<pqxx::result> &error_code) -> CommandResult {
             int code = error_code.value[0].at("result").template as<int>();
             if (code == 0) {
               return {};
@@ -82,13 +90,14 @@ namespace iroha {
             }
             return expected::makeError(error_msg);
           },
-          [](const auto &e) -> WsvCommandResult {
+          [](const auto &e) -> CommandResult {
             return expected::makeError(e.error);
           });
     }
 
-    WsvCommandResult PostgresCommandExecutor::addPeer(
-        const shared_model::interface::Peer &peer) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::AddPeer &command) {
+      auto &peer = command.peer();
       auto result =
           execute_("INSERT INTO peer(public_key, address) VALUES ("
                    + transaction_.quote(pqxx::binarystring(
@@ -104,9 +113,11 @@ namespace iroha {
       return makeCommandResult(std::move(result), message_gen);
     }
 
-    WsvCommandResult PostgresCommandExecutor::addSignatory(
-        const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::PubkeyType &signatory) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::AddSignatory &command
+        ) {
+      auto &account_id = command.accountId();
+      auto &signatory = command.pubkey();
       auto pubkey = transaction_.quote(
           pqxx::binarystring(signatory.blob().data(), signatory.blob().size()));
       std::string query = (boost::format(
@@ -136,7 +147,7 @@ namespace iroha {
 
       return result.match(
           [&signatory, &account_id](
-              expected::Value<pqxx::result> &error_code) -> WsvCommandResult {
+              expected::Value<pqxx::result> &error_code) -> CommandResult {
             int code = error_code.value[0].at("result").template as<int>();
             if (code == 0) {
               return {};
@@ -160,14 +171,16 @@ namespace iroha {
             }
             return expected::makeError(error_msg);
           },
-          [](const auto &e) -> WsvCommandResult {
+          [](const auto &e) -> CommandResult {
             return expected::makeError(e.error);
           });
     }
 
-    WsvCommandResult PostgresCommandExecutor::appendRole(
-        const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::RoleIdType &role_name) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::AppendRole &command
+        ) {
+      auto &account_id = command.accountId();
+      auto &role_name = command.roleName();
       auto result =
           execute_("INSERT INTO account_has_roles(account_id, role_id) VALUES ("
                    + transaction_.quote(account_id) + ", "
@@ -182,10 +195,11 @@ namespace iroha {
       return makeCommandResult(std::move(result), message_gen);
     }
 
-    WsvCommandResult PostgresCommandExecutor::createAccount(
-        const shared_model::interface::types::AccountIdType &account_name,
-        const shared_model::interface::types::DomainIdType &domain_id,
-        const shared_model::interface::types::PubkeyType &pubkey) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::CreateAccount &command) {
+      auto &account_name = command.accountName();
+      auto &domain_id = command.domainId();
+      auto &pubkey = command.pubkey();
       std::string account_id = account_name + "@" + domain_id;
       auto pk = transaction_.quote(
           pqxx::binarystring(pubkey.blob().data(), pubkey.blob().size()));
@@ -239,7 +253,7 @@ namespace iroha {
       auto result = execute_(query);
 
       return result.match(
-          [&](expected::Value<pqxx::result> &error_code) -> WsvCommandResult {
+          [&](expected::Value<pqxx::result> &error_code) -> CommandResult {
             int code = error_code.value[0].at("result").template as<int>();
             if (code == 0) {
               return {};
@@ -277,15 +291,17 @@ namespace iroha {
             }
             return expected::makeError(error_msg);
           },
-          [](const auto &e) -> WsvCommandResult {
+          [](const auto &e) -> CommandResult {
             return expected::makeError(e.error);
           });
     }
 
-    WsvCommandResult PostgresCommandExecutor::createAsset(
-        const shared_model::interface::types::AssetIdType &asset_name,
-        const shared_model::interface::types::DomainIdType &domain_id,
-        const shared_model::interface::types::PrecisionType precision) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::CreateAsset &command) {
+
+      auto &asset_name = command.assetName();
+      auto &domain_id = command.domainId();
+      auto precision = command.precision();
       shared_model::interface::types::AssetIdType asset_id =
           asset_name + "#" + domain_id;
       auto result = execute_(
@@ -304,9 +320,10 @@ namespace iroha {
       return makeCommandResult(std::move(result), message_gen);
     }
 
-    WsvCommandResult PostgresCommandExecutor::createDomain(
-        const shared_model::interface::types::DomainIdType &domain_id,
-        const shared_model::interface::types::RoleIdType &default_role) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::CreateDomain &command) {
+      auto &domain_id = command.domainId();
+      auto &default_role = command.userDefaultRole();
       auto result =
           execute_("INSERT INTO domain(domain_id, default_role) VALUES ("
                    + transaction_.quote(domain_id) + ", "
@@ -321,9 +338,10 @@ namespace iroha {
       return makeCommandResult(std::move(result), message_gen);
     }
 
-    WsvCommandResult PostgresCommandExecutor::createRole(
-        const shared_model::interface::types::RoleIdType &role_id,
-        const shared_model::interface::RolePermissionSet &permissions) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::CreateRole &command) {
+      auto &role_id = command.roleName();
+      auto &permissions = command.rolePermissions();
       auto perm_str = permissions.toBitstring();
       std::string query = (boost::format(
                                R"(
@@ -347,7 +365,7 @@ namespace iroha {
       auto result = execute_(query);
 
       return result.match(
-          [&](expected::Value<pqxx::result> &error_code) -> WsvCommandResult {
+          [&](expected::Value<pqxx::result> &error_code) -> CommandResult {
             int code = error_code.value[0].at("result").template as<int>();
             if (code == 0) {
               return {};
@@ -377,14 +395,16 @@ namespace iroha {
             }
             return expected::makeError(error_msg);
           },
-          [](const auto &e) -> WsvCommandResult {
+          [](const auto &e) -> CommandResult {
             return expected::makeError(e.error);
           });
     }
 
-    WsvCommandResult PostgresCommandExecutor::detachRole(
-        const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::RoleIdType &role_name) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::DetachRole &command
+        ) {
+      auto &account_id = command.accountId();
+      auto &role_name = command.roleName();
       auto result = execute_("DELETE FROM account_has_roles WHERE account_id="
                              + transaction_.quote(account_id) + "AND role_id="
                              + transaction_.quote(role_name) + ";");
@@ -399,11 +419,13 @@ namespace iroha {
       return makeCommandResult(std::move(result), message_gen);
     }
 
-    WsvCommandResult PostgresCommandExecutor::grantPermission(
-        const shared_model::interface::types::AccountIdType
-            &permittee_account_id,
-        const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::permissions::Grantable &permission) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::GrantPermission &command
+        ) {
+      auto
+          &permittee_account_id = command.accountId();
+      auto &account_id = creator_account_id_;
+      auto permission = command.permissionName();
       const auto perm_str =
           shared_model::interface::GrantablePermissionSet({permission})
               .toBitstring();
@@ -435,9 +457,10 @@ namespace iroha {
       return makeCommandResult(std::move(result), message_gen);
     }
 
-    WsvCommandResult PostgresCommandExecutor::removeSignatory(
-        const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::PubkeyType &pubkey) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::RemoveSignatory &command) {
+      auto &account_id = command.accountId();
+      auto &pubkey = command.pubkey();
       auto pk = transaction_.quote(
           pqxx::binarystring(pubkey.blob().data(), pubkey.blob().size()));
       std::string query = (boost::format(
@@ -468,7 +491,7 @@ namespace iroha {
       auto result = execute_(query);
 
       return result.match(
-          [&](expected::Value<pqxx::result> &error_code) -> WsvCommandResult {
+          [&](expected::Value<pqxx::result> &error_code) -> CommandResult {
             int code = error_code.value[0].at("result").template as<int>();
             if (code == 0) {
               return {};
@@ -495,16 +518,17 @@ namespace iroha {
             }
             return expected::makeError(error_msg);
           },
-          [](const auto &e) -> WsvCommandResult {
+          [](const auto &e) -> CommandResult {
             return expected::makeError(e.error);
           });
     }
 
-    WsvCommandResult PostgresCommandExecutor::revokePermission(
-        const shared_model::interface::types::AccountIdType
-            &permittee_account_id,
-        const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::permissions::Grantable &permission) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::RevokePermission &command) {
+      auto
+          &permittee_account_id = command.accountId();
+      auto &account_id = creator_account_id_;
+      auto permission = command.permissionName();
       const auto without_perm_str = shared_model::interface::GrantablePermissionSet()
                                 .set()
                                 .unset(permission)
@@ -541,21 +565,20 @@ namespace iroha {
       return makeCommandResult(std::move(result), message_gen);
     }
 
-    WsvCommandResult PostgresCommandExecutor::setAccountDetail(
-        const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::AccountIdType &creator_account_id,
-        const std::string &key,
-        const std::string &value) {
-      shared_model::interface::types::AccountIdType id = creator_account_id;
-      if (id.empty()) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::SetAccountDetail &command) {
+      auto &account_id = command.accountId();
+      auto &key = command.key();
+      auto &value = command.value();
+      if (creator_account_id_.empty()) {
         // When creator is not known, it is genesis block
-        id = "genesis";
+        creator_account_id_ = "genesis";
       }
       auto result = execute_(
           "UPDATE account SET data = jsonb_set(CASE WHEN data ?"
-          + transaction_.quote(id) + " THEN data ELSE jsonb_set(data, "
-          + transaction_.quote("{" + id + "}") + "," + transaction_.quote("{}")
-          + ") END," + transaction_.quote("{" + id + ", " + key + "}") + ","
+          + transaction_.quote(creator_account_id_) + " THEN data ELSE jsonb_set(data, "
+          + transaction_.quote("{" + creator_account_id_ + "}") + "," + transaction_.quote("{}")
+          + ") END," + transaction_.quote("{" + creator_account_id_ + ", " + key + "}") + ","
           + transaction_.quote("\"" + value + "\"")
           + ") WHERE account_id=" + transaction_.quote(account_id) + ";");
 
@@ -563,15 +586,16 @@ namespace iroha {
         return (boost::format(
                     "failed to set account key-value, account id: '%s', "
                     "creator account id: '%s',\n key: '%s', value: '%s'")
-                % account_id % id % key % value)
+                % account_id % creator_account_id_ % key % value)
             .str();
       };
       return makeCommandResult(std::move(result), message_gen);
     }
 
-    WsvCommandResult PostgresCommandExecutor::setQuorum(
-        const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::QuorumType quorum) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::SetQuorum &command) {
+      auto &account_id = command.accountId();
+      auto quorum = command.newQuorum();
       auto result = execute_(
           "UPDATE account\n"
               "   SET quorum=" +
@@ -590,11 +614,13 @@ namespace iroha {
       return makeCommandResult(std::move(result), message_gen);
     }
 
-    WsvCommandResult PostgresCommandExecutor::subtractAssetQuantity(
-        const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::AssetIdType &asset_id,
-        const std::string &amount,
-        const shared_model::interface::types::PrecisionType precision) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::SubtractAssetQuantity &command) {
+
+      auto &account_id = creator_account_id_;
+      auto &asset_id = command.assetId();
+      auto amount = command.amount().toStringRepr();
+      auto precision = command.amount().precision();
       std::string query = (boost::format(
                                // clang-format off
           R"(
@@ -635,7 +661,7 @@ namespace iroha {
       auto result = execute_(query);
 
       return result.match(
-          [](expected::Value<pqxx::result> &error_code) -> WsvCommandResult {
+          [](expected::Value<pqxx::result> &error_code) -> CommandResult {
             int code = error_code.value[0].at("result").template as<int>();
             if (code == 0) {
               return {};
@@ -657,17 +683,19 @@ namespace iroha {
             }
             return expected::makeError(error_msg);
           },
-          [](const auto &e) -> WsvCommandResult {
+          [](const auto &e) -> CommandResult {
             return expected::makeError(e.error);
           });
     }
 
-    WsvCommandResult PostgresCommandExecutor::transferAsset(
-        const shared_model::interface::types::AccountIdType &src_account_id,
-        const shared_model::interface::types::AccountIdType &dest_account_id,
-        const shared_model::interface::types::AssetIdType &asset_id,
-        const std::string &amount,
-        const shared_model::interface::types::PrecisionType precision) {
+    CommandResult PostgresCommandExecutor::operator()(
+        const shared_model::interface::TransferAsset &command) {
+
+      auto &src_account_id = command.srcAccountId();
+      auto &dest_account_id = command.destAccountId();
+      auto &asset_id = command.assetId();
+      auto amount = command.amount().toStringRepr();
+      auto precision = command.amount().precision();
       std::string query =
           (boost::format(
                // clang-format off
@@ -737,7 +765,7 @@ namespace iroha {
       auto result = execute_(query);
 
       return result.match(
-          [](expected::Value<pqxx::result> &error_code) -> WsvCommandResult {
+          [](expected::Value<pqxx::result> &error_code) -> CommandResult {
             int code = error_code.value[0].at("result").template as<int>();
             if (code == 0) {
               return {};
@@ -765,7 +793,7 @@ namespace iroha {
             }
             return expected::makeError(error_msg);
           },
-          [](const auto &e) -> WsvCommandResult {
+          [](const auto &e) -> CommandResult {
             return expected::makeError(e.error);
           });
     }

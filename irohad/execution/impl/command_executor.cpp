@@ -63,123 +63,123 @@ namespace iroha {
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::AddAssetQuantity &command) {
+    executor->setCreatorAccountId(creator_account_id);
     std::string command_name = "AddAssetQuantity";
-    auto result = executor->addAssetQuantity(creator_account_id,
-                                             command.assetId(),
-                                             command.amount().toStringRepr(),
-                                             command.amount().precision());
+    auto result = executor->operator()(command);
     return makeCommandResult(result, command_name);
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::AddPeer &command) {
-    return makeCommandResult(executor->addPeer(command.peer()), "AddPeer");
+    executor->setCreatorAccountId(creator_account_id);
+    return makeCommandResult(executor->operator()(command), "AddPeer");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::AddSignatory &command) {
-    auto result = executor->addSignatory(command.accountId(), command.pubkey());
+    executor->setCreatorAccountId(creator_account_id);
+    auto result = executor->operator()(command);
     return makeCommandResult(result, "AddSignatory");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::AppendRole &command) {
+    executor->setCreatorAccountId(creator_account_id);
     return makeCommandResult(
-        executor->appendRole(command.accountId(), command.roleName()),
+        executor->operator()(command),
         "AppendRole");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::CreateAccount &command) {
+    executor->setCreatorAccountId(creator_account_id);
     return makeCommandResult(
-        executor->createAccount(
-            command.accountName(), command.domainId(), command.pubkey()),
+        executor->operator()(command),
         "CreateAccount");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::CreateAsset &command) {
+    executor->setCreatorAccountId(creator_account_id);
     return makeCommandResult(
-        executor->createAsset(
-            command.assetName(), command.domainId(), command.precision()),
+        executor->operator()(command),
         "CreateAsset");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::CreateDomain &command) {
+    executor->setCreatorAccountId(creator_account_id);
     return makeCommandResult(
-        executor->createDomain(command.domainId(), command.userDefaultRole()),
+        executor->operator()(command),
         "CreateDomain");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::CreateRole &command) {
+    executor->setCreatorAccountId(creator_account_id);
     return makeCommandResult(
-        executor->createRole(command.roleName(), command.rolePermissions()),
+        executor->operator()(command),
         "CreateRole");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::DetachRole &command) {
+    executor->setCreatorAccountId(creator_account_id);
     return makeCommandResult(
-        executor->detachRole(command.accountId(), command.roleName()),
+        executor->operator()(command),
         "DetachRole");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::GrantPermission &command) {
+    executor->setCreatorAccountId(creator_account_id);
     return makeCommandResult(
-        executor->grantPermission(
-            command.accountId(), creator_account_id, command.permissionName()),
+        executor->operator()(command),
         "GrantPermission");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::RemoveSignatory &command) {
-    auto result = executor->removeSignatory(command.accountId(), command.pubkey());
+    executor->setCreatorAccountId(creator_account_id);
+    auto result = executor->operator()(command);
     return makeCommandResult(result, "RemoveSignatory");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::RevokePermission &command) {
+    executor->setCreatorAccountId(creator_account_id);
     return makeCommandResult(
-        executor->revokePermission(
-            command.accountId(), creator_account_id, command.permissionName()),
+        executor->operator()(command),
         "RevokePermission");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::SetAccountDetail &command) {
+    executor->setCreatorAccountId(creator_account_id);
     return makeCommandResult(
-        executor->setAccountDetail(
-            command.accountId(), creator_account_id, command.key(), command.value()),
+        executor->operator()(command),
         "SetAccountDetail");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::SetQuorum &command) {
+    executor->setCreatorAccountId(creator_account_id);
     return makeCommandResult(
-        executor->setQuorum(
-            command.accountId(), command.newQuorum()),
+        executor->operator()(command),
         "SetQuorum");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::SubtractAssetQuantity &command) {
-    auto result = executor->subtractAssetQuantity(creator_account_id,
-                                             command.assetId(),
-                                             command.amount().toStringRepr(),
-                                             command.amount().precision());
+    executor->setCreatorAccountId(creator_account_id);
+    auto result = executor->operator()(command);
     return makeCommandResult(result, "SubtractAssetQuantity");
   }
 
   CommandResult CommandExecutor::operator()(
       const shared_model::interface::TransferAsset &command) {
-    auto result = executor->transferAsset(command.srcAccountId(),
-                                          command.destAccountId(),
-                                                  command.assetId(),
-                                                  command.amount().toStringRepr(),
-                                                  command.amount().precision());
+    executor->setCreatorAccountId(creator_account_id);
+    auto result = executor->operator()(command);
     return makeCommandResult(result, "TransferAsset");
   }
 
