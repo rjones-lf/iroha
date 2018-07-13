@@ -54,16 +54,16 @@ namespace iroha {
       return rxcpp::observable<>::range(height, to)
           .flat_map([this](const auto &i) {
             return rxcpp::observable<>::create<PostgresBlockQuery::wBlock>(
-                [i, this](const auto &block_observer) {
+                [i, this](const auto &block_subscriber) {
                   block_store_.get(i) | [](const auto &bytes) {
                     return shared_model::converters::protobuf::jsonToModel<
                         shared_model::proto::Block>(bytesToString(bytes));
-                  } | [&block_observer](auto &&block) {
-                    block_observer.on_next(
+                  } | [&block_subscriber](auto &&block) {
+                    block_subscriber.on_next(
                         std::make_shared<shared_model::proto::Block>(
                             std::move(block)));
                   };
-                  block_observer.on_completed();
+                  block_subscriber.on_completed();
                 });
           });
     }

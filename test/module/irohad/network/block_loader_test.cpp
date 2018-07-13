@@ -214,7 +214,7 @@ TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
       .WillOnce(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*storage, getBlocksFrom(1))
       .WillOnce(Return(rxcpp::observable<>::just(wBlock(clone(present)))));
-  auto block = loader->retrieveBlock(peer_key, Hash(std::string(32, '0')));
+  auto block = loader->retrieveBlock(peer_key, kPrevHash);
 
   ASSERT_FALSE(block);
 }
