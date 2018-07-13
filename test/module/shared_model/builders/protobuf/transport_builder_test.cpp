@@ -183,7 +183,7 @@ class TransportBuilderTest : public ::testing::Test {
                             .setAccountQuorum(account_id, quorum)
                             .creatorAccountId(account_id);
       builders.push_back(reduced_tr);
-      batch_hashes.push_back(reduced_tr.build().reducedHash());
+      batch_hashes.push_back(reduced_tr.build().reduced_hash());
     }
     for (auto &builder : builders) {
       auto tr = builder.batchMeta(type, batch_hashes)
