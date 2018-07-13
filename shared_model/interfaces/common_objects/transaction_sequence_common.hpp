@@ -19,8 +19,16 @@ namespace shared_model {
           boost::any_range<Transaction,
                            boost::forward_traversal_tag,
                            const Transaction &>;
-    }
-  }  // namespace interface
+
+      using SharedTxsCollectionType = std::vector<std::shared_ptr<Transaction>>;
+
+      // TODO: IR-1514 kamilsa 09.07.2018 Introduce batch type with batch
+      // invariant and return range of them
+      using BatchesType = boost::any_range<SharedTxsCollectionType,
+                                           boost::forward_traversal_tag,
+                                           const SharedTxsCollectionType &>;
+    }  // namespace types
+  }    // namespace interface
 }  // namespace shared_model
 
 #endif  // IROHA_TRANSACTION_SEQUENCE_COMMON_HPP

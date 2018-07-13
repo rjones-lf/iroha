@@ -41,8 +41,8 @@ namespace shared_model {
        * @return true, if wrapped objects are same
        */
       bool operator==(const ModelType &rhs) const override {
-        return type() == rhs.type()
-            and transactionHashes() == rhs.transactionHashes();
+        return boost::equal(transactionHashes(), rhs.transactionHashes())
+            and type() == rhs.type();
       }
     };
   }  // namespace interface

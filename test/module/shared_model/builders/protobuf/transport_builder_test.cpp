@@ -5,7 +5,6 @@
 
 #include <gtest/gtest.h>
 
-#include "block.pb.h"
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/block_variant_transport_builder.hpp"
 #include "builders/protobuf/empty_block.hpp"
@@ -475,7 +474,7 @@ TEST_F(TransportBuilderTest, BlockVariantWithInvalidBlock) {
  * AND it containcs 0 transactions
  */
 TEST_F(TransportBuilderTest, TransactionSequenceEmpty) {
-  std::vector<proto::Transaction> tr;
+  std::vector<iroha::protocol::Transaction> tr;
   auto val = framework::expected::val(
       TransportBuilder<interface::TransactionSequence,
                        validation::SignedTransactionsCollectionValidator<

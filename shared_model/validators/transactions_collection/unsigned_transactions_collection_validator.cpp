@@ -16,8 +16,8 @@ namespace shared_model {
     template <typename TransactionValidator, typename OrderValidator>
     Answer UnsignedTransactionsCollectionValidator<TransactionValidator,
                                                    OrderValidator>::
-        validate(const interface::types::TransactionsForwardCollectionType
-                     &transactions) const {
+        validatePointers(const interface::types::SharedTxsCollectionType
+                             &transactions) const {
       Answer res =
           UnsignedTransactionsCollectionValidator::order_validator_.validate(
               transactions);
@@ -26,10 +26,10 @@ namespace shared_model {
       for (const auto &tx : transactions) {
         auto answer =
             UnsignedTransactionsCollectionValidator::transaction_validator_
-                .validate(tx);
+                .validate(*tx);
         if (answer.hasErrors()) {
           auto message =
-              (boost::format("Tx %s : %s") % tx.hash().hex() % answer.reason())
+              (boost::format("Tx %s : %s") % tx->hash().hex() % answer.reason())
                   .str();
           reason.second.push_back(message);
         }
@@ -41,11 +41,15 @@ namespace shared_model {
       return res;
     }
 
-    template Answer UnsignedTransactionsCollectionValidator<
+    template class UnsignedTransactionsCollectionValidator<
         TransactionValidator<FieldValidator,
-                             CommandValidatorVisitor<FieldValidator>>>::
-        validate(const interface::types::TransactionsForwardCollectionType
-                     &transactions) const;
+                             CommandValidatorVisitor<FieldValidator>>,
+        AnyOrderValidator>;
+
+    template class UnsignedTransactionsCollectionValidator<
+        TransactionValidator<FieldValidator,
+                             CommandValidatorVisitor<FieldValidator>>,
+        BatchOrderValidator>;
 
   }  // namespace validation
 }  // namespace shared_model

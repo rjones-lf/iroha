@@ -19,7 +19,7 @@
 #define IROHA_PROTO_ASSET_BUILDER_HPP
 
 #include "backend/protobuf/common_objects/asset.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 
 namespace shared_model {
   namespace proto {

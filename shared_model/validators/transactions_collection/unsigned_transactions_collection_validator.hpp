@@ -6,8 +6,8 @@
 #ifndef IROHA_UNSIGNED_TRANSACTIONS_SEQUENCE_VALIDATOR_HPP
 #define IROHA_UNSIGNED_TRANSACTIONS_SEQUENCE_VALIDATOR_HPP
 
-#include "validators/transactions_collection/transactions_collection_validator.hpp"
 #include "validators/transactions_collection/any_order_validator.hpp"
+#include "validators/transactions_collection/transactions_collection_validator.hpp"
 
 namespace shared_model {
   namespace validation {
@@ -25,8 +25,8 @@ namespace shared_model {
       using TransactionsCollectionValidator<
           TransactionValidator,
           OrderValidator>::TransactionsCollectionValidator;
-      Answer validate(const interface::types::TransactionsForwardCollectionType
-                          &transactions) const override;
+      Answer validatePointers(const interface::types::SharedTxsCollectionType
+                                  &transactions) const override;
     };
 
   }  // namespace validation

@@ -12,11 +12,14 @@ namespace shared_model {
       return detail::PrettyStringBuilder()
           .init("GetAccountDetail")
           .append("account_id", accountId())
+          .append("key", key() ? *key() : "")
+          .append("writer", writer() ? *writer() : "")
           .finalize();
     }
 
     bool GetAccountDetail::operator==(const ModelType &rhs) const {
-      return accountId() == rhs.accountId();
+      return accountId() == rhs.accountId() and key() == rhs.key()
+          and writer() == rhs.writer();
     }
 
   }  // namespace interface

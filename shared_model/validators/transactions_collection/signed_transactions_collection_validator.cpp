@@ -16,8 +16,8 @@ namespace shared_model {
     template <typename TransactionValidator, typename OrderValidator>
     Answer SignedTransactionsCollectionValidator<TransactionValidator,
                                                  OrderValidator>::
-        validate(const interface::types::TransactionsForwardCollectionType
-                     &transactions) const {
+        validatePointers(const interface::types::SharedTxsCollectionType
+                             &transactions) const {
       Answer res =
           SignedTransactionsCollectionValidator::order_validator_.validate(
               transactions);
@@ -26,10 +26,10 @@ namespace shared_model {
       for (const auto &tx : transactions) {
         auto answer =
             SignedTransactionsCollectionValidator::transaction_validator_
-                .validate(tx);
+                .validate(*tx);
         if (answer.hasErrors()) {
           auto message =
-              (boost::format("Tx %s : %s") % tx.hash().hex() % answer.reason())
+              (boost::format("Tx %s : %s") % tx->hash().hex() % answer.reason())
                   .str();
           reason.second.push_back(message);
         }
@@ -40,18 +40,15 @@ namespace shared_model {
       return res;
     }
 
-    template Answer SignedTransactionsCollectionValidator<
-        TransactionValidator<FieldValidator,
-                             CommandValidatorVisitor<FieldValidator>>>::
-        validate(const interface::types::TransactionsForwardCollectionType
-                     &transactions) const;
-
-    template Answer SignedTransactionsCollectionValidator<
+    template class SignedTransactionsCollectionValidator<
         TransactionValidator<FieldValidator,
                              CommandValidatorVisitor<FieldValidator>>,
-        BatchOrderValidator>::
-        validate(const interface::types::TransactionsForwardCollectionType
-                     &transactions) const;
+        AnyOrderValidator>;
+
+    template class SignedTransactionsCollectionValidator<
+        TransactionValidator<FieldValidator,
+                             CommandValidatorVisitor<FieldValidator>>,
+        BatchOrderValidator>;
 
   }  // namespace validation
 }  // namespace shared_model
