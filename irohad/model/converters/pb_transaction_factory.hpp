@@ -19,8 +19,8 @@
 #define IROHA_PB_TRANSACTION_FACTORY_HPP
 
 #include <memory>
-#include "block.pb.h"
 #include "model/transaction.hpp"
+#include "transaction.pb.h"
 
 namespace iroha {
   namespace model {

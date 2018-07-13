@@ -382,9 +382,9 @@ class BuilderTest(unittest.TestCase):
       with self.assertRaises(ValueError):
         self.base().getAccountDetail("admin@{}".format(domain)).build()
 
-  def test_get_account_detail_with_empty_name(self):
-    with self.assertRaises(ValueError):
-      self.base().getAccountDetail("").build()
+  def test_get_account_detail_with_no_args(self):
+    query = self.builder.getAccountDetail().build()
+    self.assertTrue(self.check_proto_query(self.proto(query)))
 
 if __name__ == '__main__':
   unittest.main()

@@ -21,31 +21,52 @@ namespace shared_model {
      */
     class TransactionSequence {
      public:
+      TransactionSequence() = delete;
+
       /**
        * Creator of transaction sequence
        * @param transactions collection of transactions
        * @param validator validator of the collections
-       * @return Result containing transaction sequence if validation successful
-       * and string message containing error otherwise
+       * @return Result containing transaction sequence if validation
+       * successful and string message containing error otherwise
        */
-      template <typename TransactionValidator>
+      template <typename TransactionValidator, typename OrderValidator>
       static iroha::expected::Result<TransactionSequence, std::string>
       createTransactionSequence(
-          const types::TransactionsForwardCollectionType &transactions,
+          const types::SharedTxsCollectionType &transactions,
           const validation::TransactionsCollectionValidator<
-              TransactionValidator> &validator);
+              TransactionValidator,
+              OrderValidator> &validator);
 
       /**
        * Get transactions collection
        * @return transactions collection
        */
-      types::TransactionsForwardCollectionType transactions();
+      types::SharedTxsCollectionType transactions() const;
+
+      /**
+       * Get batches in transaction sequence
+       * Note that transaction without batch meta are returned as batch with
+       * single transaction
+       * @return collection of batches from transaction sequence
+       */
+      types::BatchesType batches() const;
 
      private:
       explicit TransactionSequence(
-          const types::TransactionsForwardCollectionType &transactions);
+          const types::SharedTxsCollectionType &transactions);
 
-      types::TransactionsForwardCollectionType transactions_;
+      /**
+       * Get the concatenation of reduced hashes
+       * @param reduced_hashes collection of reduced hashes
+       * @return concatenated redueced hashes
+       */
+      std::string calculateBatchHash(
+          std::vector<types::HashType> reduced_hashes) const;
+
+      types::SharedTxsCollectionType transactions_;
+
+      mutable boost::optional<types::BatchesType> batches_;
     };
 
   }  // namespace interface

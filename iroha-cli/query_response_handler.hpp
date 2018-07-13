@@ -23,7 +23,7 @@
 #include <typeindex>
 #include <unordered_map>
 
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 
 namespace spdlog {
   class logger;

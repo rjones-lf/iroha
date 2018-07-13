@@ -28,7 +28,7 @@
 #include "model/queries/responses/roles_response.hpp"
 #include "model/queries/responses/signatories_response.hpp"
 #include "model/queries/responses/transactions_response.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 
 namespace iroha {
   namespace model {

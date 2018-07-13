@@ -57,19 +57,18 @@ namespace shared_model {
       /**
        * @return object payload (everything except signatures)
        */
-      virtual const types::BlobType &reduced_payload() const = 0;
+      virtual const types::BlobType &reducedPayload() const = 0;
 
-      const types::HashType &reduced_hash() const {
+      const types::HashType &reducedHash() const {
         if (reduced_hash_ == boost::none) {
-          reduced_hash_.emplace(HashProvider::makeHash(reduced_payload()));
+          reduced_hash_.emplace(HashProvider::makeHash(reducedPayload()));
         }
         return *reduced_hash_;
       }
       /*
        * @return Batch Meta if exists
        */
-      virtual boost::optional<std::shared_ptr<BatchMeta>> batch_meta()
-          const = 0;
+      virtual boost::optional<std::shared_ptr<BatchMeta>> batchMeta() const = 0;
 
       std::string toString() const override {
         return detail::PrettyStringBuilder()
@@ -81,7 +80,8 @@ namespace shared_model {
             .append("commands")
             .appendAll(commands(),
                        [](auto &command) { return command.toString(); })
-            .append(batch_meta()->get()->toString())
+            .append("batch_meta",
+                    batchMeta() ? batchMeta()->get()->toString() : "")
             .append("signatures")
             .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
             .finalize();

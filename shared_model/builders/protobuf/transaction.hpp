@@ -18,19 +18,6 @@
 #ifndef IROHA_PROTO_TRANSACTION_BUILDER_HPP
 #define IROHA_PROTO_TRANSACTION_BUILDER_HPP
 
-#include "backend/protobuf/transaction.hpp"
-
-#include <boost/range/algorithm/for_each.hpp>
-
-#include "block.pb.h"
-#include "commands.pb.h"
-#include "primitive.pb.h"
-
-#include "amount/amount.hpp"
-#include "builders/protobuf/helpers.hpp"
-#include "builders/protobuf/unsigned_proto.hpp"
-#include "interfaces/common_objects/types.hpp"
-#include "validators/default_validator.hpp"
 #include "builders/protobuf/builder_templates/transaction_template.hpp"
 
 namespace shared_model {

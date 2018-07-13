@@ -1,3 +1,8 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 syntax = "proto3";
 package iroha.protocol;
 
@@ -29,7 +34,15 @@ message GetAccountAssets {
 }
 
 message GetAccountDetail {
-  string account_id = 1;
+  oneof opt_account_id{
+    string account_id = 1;
+  }
+  oneof opt_key{
+    string key = 2;
+  }
+  oneof opt_writer{
+    string writer = 3;
+  }
 }
 
 message GetAssetInfo {
