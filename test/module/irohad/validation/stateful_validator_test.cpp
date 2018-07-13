@@ -7,7 +7,6 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm_ext/push_back.hpp>
 
-#include "ametsuchi/impl/temporary_wsv_impl.hpp"
 #include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "common/result.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
