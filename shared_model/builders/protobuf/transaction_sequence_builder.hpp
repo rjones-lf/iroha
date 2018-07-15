@@ -31,15 +31,16 @@ namespace shared_model {
        */
       template <class T>
       iroha::expected::Result<interface::TransactionSequence, std::string>
-      build(T &transport) {
+      build(const T &transport) {
         std::vector<std::shared_ptr<interface::Transaction>> shm_txs;
-        std::transform(
-            transport.begin(),
-            transport.end(),
-            std::back_inserter(shm_txs),
-            [](const auto &tx) { return std::make_shared<Transaction>(tx); });
+        std::transform(transport.begin(),
+                       transport.end(),
+                       std::back_inserter(shm_txs),
+                       [](const iroha::protocol::Transaction &tx) {
+                         return std::make_shared<Transaction>(tx);
+                       });
         return interface::TransactionSequence::createTransactionSequence(
-            shm_txs, stateless_validator_);
+            shm_txs, SV());
       }
 
      private:

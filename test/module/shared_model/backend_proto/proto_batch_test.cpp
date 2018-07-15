@@ -58,7 +58,7 @@ auto createInvalidUnsignedTransaction(
  * @then transaction batch is created
  */
 TEST(TransactionBatchTest, CreateTransactionBatchWhenValid) {
-  auto txs = framework::batch::createUnsignedBatch(
+  auto txs = framework::batch::createUnsignedBatchTransactions(
       interface::types::BatchType::ATOMIC,
       std::vector<std::string>{"a@domain", "b@domain"});
   auto transaction_batch =
@@ -79,7 +79,7 @@ TEST(TransactionBatchTest, CreateTransactionBatchWhenDifferentBatchType) {
   auto tx2_fields = std::make_pair(interface::types::BatchType::ATOMIC,
                                    std::string("b@domain"));
 
-  auto txs = framework::batch::createUnsignedBatch(
+  auto txs = framework::batch::createUnsignedBatchTransactions(
       std::vector<decltype(tx1_fields)>{tx1_fields, tx2_fields});
 
   auto transaction_batch =
@@ -94,7 +94,7 @@ TEST(TransactionBatchTest, CreateTransactionBatchWhenDifferentBatchType) {
  * @then transaction batch is not created
  */
 TEST(TransactionBatchTest, CreateBatchWithValidAndInvalidTx) {
-  auto txs = framework::batch::createUnsignedBatch(
+  auto txs = framework::batch::createUnsignedBatchTransactions(
       interface::types::BatchType::ATOMIC,
       std::vector<std::string>{"valid@name", "invalid#@name"});
 

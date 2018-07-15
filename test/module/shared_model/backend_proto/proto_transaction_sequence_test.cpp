@@ -107,7 +107,7 @@ TEST(TransactionSequenceTest, CreateBatches) {
                          + std::to_string(j) + "@domain");
     }
 
-    auto batch = framework::batch::createUnsignedBatch(
+    auto batch = framework::batch::createUnsignedBatchTransactions(
         shared_model::interface::types::BatchType::ATOMIC, creators);
     tx_collection.insert(tx_collection.begin(), batch.begin(), batch.end());
   }
