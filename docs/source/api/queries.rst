@@ -165,10 +165,8 @@ Get Pending Transactions
 Purpose
 -------
 
-.. TODO, igor-egorov, 2018-07-03, IR-1356, add a link to MST description here
-
-GetPendingTransactions is used for retrieving a list of pending (not fully signed) multisignature transactions
-or batches of transactions issued by account of query creator.
+GetPendingTransactions is used for retrieving a list of pending (not fully signed) `multisignature transactions <../core_concepts/glossary.html#multisignature-transactions>`_
+or `batches of transactions <../core_concepts/glossary.html#batch-of-transactions>`__ issued by account of query creator.
 
 Request Schema
 --------------
