@@ -19,7 +19,7 @@ namespace shared_model {
      * @tparam SV Stateless validator type
      */
     template <typename SV>
-    class TransportBuilder<interface::BlockVariant, SV> {
+    class DEPRECATED TransportBuilder<interface::BlockVariant, SV> {
      private:
       /**
        * Create container type (i.e. Block or EmptyBlock)

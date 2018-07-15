@@ -28,7 +28,7 @@ namespace shared_model {
      * AmountBuilder is used to construct Amount proto objects with initialized
      * protobuf implementation
      */
-    class AmountBuilder {
+    class DEPRECATED AmountBuilder {
      public:
       shared_model::proto::Amount build() {
         return shared_model::proto::Amount(iroha::protocol::Amount(amount_));

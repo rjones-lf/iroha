@@ -28,7 +28,7 @@ namespace shared_model {
      * AccountBuilder is used to construct Account proto objects with
      * initialized protobuf implementation
      */
-    class AccountBuilder {
+    class DEPRECATED AccountBuilder {
      public:
       shared_model::proto::Account build() {
         return shared_model::proto::Account(iroha::protocol::Account(account_));

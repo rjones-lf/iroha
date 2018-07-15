@@ -28,7 +28,7 @@ namespace shared_model {
      * set
      */
     template <int S = 0>
-    class TemplateQueryResponseBuilder {
+    class DEPRECATED TemplateQueryResponseBuilder {
      public:
       template <int Sp>
       TemplateQueryResponseBuilder(TemplateQueryResponseBuilder<Sp> &&o)

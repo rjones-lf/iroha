@@ -20,6 +20,7 @@
 
 #include "common/result.hpp"
 #include "validators/answer.hpp"
+#include "utils/swig_keyword_hider.hpp"
 
 // TODO: 16.02.2018 nickaleks: Add validators for common_objects IR-986
 
@@ -43,7 +44,7 @@ namespace shared_model {
      * @tparam Validator - validation object
      */
     template <typename ModelType, typename BuilderImpl, typename Validator>
-    class CommonObjectBuilder {
+    class DEPRECATED CommonObjectBuilder {
      public:
       /**
        * build() constructs specified object and performs stateless validation

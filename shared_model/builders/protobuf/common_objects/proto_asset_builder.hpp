@@ -28,7 +28,7 @@ namespace shared_model {
      * AssetBuilder is used to construct Asset proto objects with initialized
      * protobuf implementation
      */
-    class AssetBuilder {
+    class DEPRECATED AssetBuilder {
      public:
       shared_model::proto::Asset build() {
         return shared_model::proto::Asset(iroha::protocol::Asset(asset_));

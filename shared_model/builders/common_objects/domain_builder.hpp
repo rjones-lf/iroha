@@ -25,7 +25,7 @@
 namespace shared_model {
   namespace builder {
     template <typename BuilderImpl, typename Validator>
-    class DomainBuilder : public CommonObjectBuilder<interface::Domain,
+    class DEPRECATED DomainBuilder : public CommonObjectBuilder<interface::Domain,
                                                      BuilderImpl,
                                                      Validator> {
      public:

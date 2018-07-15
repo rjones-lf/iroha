@@ -37,7 +37,7 @@ namespace shared_model {
      * to perform stateless validation on model fields
      */
     template <typename BuilderImpl, typename Validator>
-    class AmountBuilder : public CommonObjectBuilder<interface::Amount,
+    class DEPRECATED AmountBuilder : public CommonObjectBuilder<interface::Amount,
                                                      BuilderImpl,
                                                      Validator> {
      public:
