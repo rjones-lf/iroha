@@ -230,8 +230,9 @@ namespace iroha_cli {
       auto res = handleParse<std::shared_ptr<iroha::model::Command>>(
           this, line, command_handlers_, command_params_map_);
 
-      if (not res) {
+      if (not res and not *res) {
         // Continue parsing
+        std::cout << "Unable to parse the result" << std::endl;
         return true;
       }
 
@@ -338,7 +339,7 @@ namespace iroha_cli {
         return nullptr;
       }
       if (precision.value() > 255) {
-        std::cout << "Too big precision (should be less than 256)" << std::endl;
+        std::cout << "Too big precision (should be between 0 and 256)" << std::endl;
         return nullptr;
       }
       std::cout << val_int.value() << " " << precision.value() << std::endl;
