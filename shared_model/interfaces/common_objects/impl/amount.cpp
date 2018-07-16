@@ -15,6 +15,7 @@ namespace shared_model {
     Amount::Amount(const std::string &amount) : Amount(std::string(amount)) {}
     Amount::Amount(std::string &&amount)
         : amount_(std::move(amount)),
+          precision_(0),
           multiprecision_repr_([this] {
             static const std::regex r("([0-9]+)(\\.([0-9]+))?");
             // 123.456 will have the following groups:
@@ -32,8 +33,7 @@ namespace shared_model {
               return boost::multiprecision::uint256_t(str);
             }
             return std::numeric_limits<boost::multiprecision::uint256_t>::min();
-          }),
-          precision_(0) {}
+          }()) {}
 
     Amount::Amount(const Amount &o) : Amount(std::string(o.amount_)) {}
 
@@ -41,11 +41,10 @@ namespace shared_model {
         : Amount(std::move(const_cast<std::string &>(o.amount_))) {}
 
     const boost::multiprecision::uint256_t &Amount::intValue() const {
-      return *multiprecision_repr_;
+      return multiprecision_repr_;
     }
 
     types::PrecisionType Amount::precision() const {
-      *multiprecision_repr_;
       return precision_;
     }
 

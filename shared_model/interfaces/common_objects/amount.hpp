@@ -60,13 +60,10 @@ namespace shared_model {
       Amount *clone() const override;
 
      private:
-      // lazy
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
       const std::string amount_;
 
-      const Lazy<boost::multiprecision::uint256_t> multiprecision_repr_;
       interface::types::PrecisionType precision_;
+      const boost::multiprecision::uint256_t multiprecision_repr_;
     };
   }  // namespace interface
 }  // namespace shared_model
