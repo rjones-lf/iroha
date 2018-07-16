@@ -26,7 +26,8 @@ namespace shared_model {
                 && match.size() == 4) {
               this->precision_ = match[3].length();
               auto str = match[0].str();
-              decltype(str.size()) pos = match[1].length();
+              size_t pos = match[1].length();
+              // remove dot if it exist
               if (pos < str.size()) {
                 str.erase(str.begin() + pos);
               }
