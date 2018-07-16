@@ -72,7 +72,7 @@ namespace shared_model {
                                const interface::Block &,
                                FieldValidator>;
 
-    using DefaultBatchValidator =
+    using DefaultUnsignedTxCollectionValidator =
         UnsignedTransactionsCollectionValidator<DefaultTransactionValidator,
                                                 BatchOrderValidator>;
 

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <endpoint.pb.h>
 #include <gtest/gtest.h>
 
+#include "endpoint.pb.h"
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/block_variant_transport_builder.hpp"
 #include "builders/protobuf/empty_block.hpp"

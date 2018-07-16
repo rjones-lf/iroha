@@ -22,18 +22,13 @@
 #include "ametsuchi/block_query.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
-// breaking sequence of this two includes will break the build
-// clang-format off
-#include "builders/protobuf/transport_builder.hpp"
-#include "builders/protobuf/transaction_sequence_builder.hpp"
-// clang-format on
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
+#include "builders/protobuf/transaction_sequence_builder.hpp"
 #include "common/byteutils.hpp"
 #include "common/is_any.hpp"
 #include "common/timeout.hpp"
 #include "common/types.hpp"
 #include "cryptography/default_hash_provider.hpp"
-#include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "validators/default_validator.hpp"
 
 namespace torii {
@@ -103,7 +98,7 @@ namespace torii {
                   std::make_shared<shared_model::proto::Transaction>(
                       std::move(iroha_tx.value)));
 
-              addTxToCacheAndLog(
+              this->addTxToCacheAndLog(
                   "Torii", std::move(tx_hash), std::move(response));
             },
             [this, &request](const auto &error) {
@@ -125,7 +120,7 @@ namespace torii {
                   iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
               response.set_error_message(std::move(error.error));
 
-              addTxToCacheAndLog(
+              this->addTxToCacheAndLog(
                   "Torii", std::move(tx_hash), std::move(response));
             });
   }
@@ -133,7 +128,7 @@ namespace torii {
   void CommandService::ListTorii(const iroha::protocol::TxList &tx_list) {
     shared_model::proto::TransportBuilder<
         shared_model::interface::TransactionSequence,
-        shared_model::validation::DefaultBatchValidator>()
+        shared_model::validation::DefaultUnsignedTxCollectionValidator>()
         .build(tx_list)
         .match(
             [this](
@@ -160,7 +155,7 @@ namespace torii {
                 // Send transaction to iroha
                 tx_processor_->transactionHandle(tx);
 
-                addTxToCacheAndLog(
+                this->addTxToCacheAndLog(
                     "ToriiList", std::move(tx_hash), std::move(response));
               });
             },
@@ -197,7 +192,7 @@ namespace torii {
                         iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
                     response.set_error_message(sequence_error);
 
-                    addTxToCacheAndLog(
+                    this->addTxToCacheAndLog(
                         "ToriiList", std::move(hash), std::move(response));
                   });
             });
@@ -234,7 +229,8 @@ namespace torii {
                    iroha::bytestringToHexstring(request.tx_hash()));
         response.set_tx_status(iroha::protocol::TxStatus::NOT_RECEIVED);
       }
-      addTxToCacheAndLog("Status", std::move(tx_hash), std::move(response));
+      this->addTxToCacheAndLog(
+          "Status", std::move(tx_hash), std::move(response));
     }
   }
 
