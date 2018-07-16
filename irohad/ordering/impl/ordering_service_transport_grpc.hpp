@@ -19,11 +19,11 @@
 
 #include <google/protobuf/empty.pb.h>
 
-#include "block.pb.h"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_service_transport.hpp"
 #include "ordering.grpc.pb.h"
+#include "transaction.pb.h"
 
 namespace iroha {
   namespace ordering {

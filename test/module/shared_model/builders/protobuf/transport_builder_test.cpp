@@ -1,42 +1,41 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
 
-#include "block.pb.h"
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/block_variant_transport_builder.hpp"
 #include "builders/protobuf/empty_block.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "builders/protobuf/transaction_sequence_builder.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "common/types.hpp"
 #include "framework/result_fixture.hpp"
+#include "interfaces/common_objects/types.hpp"
+#include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_empty_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "validators/transactions_collection/batch_order_validator.hpp"
 
 using namespace shared_model;
 using namespace shared_model::proto;
 using namespace iroha::expected;
 using iroha::operator|;
+
+using TransactionSequenceBuilder = TransportBuilder<
+    interface::TransactionSequence,
+    validation::SignedTransactionsCollectionValidator<
+        validation::TransactionValidator<
+            validation::FieldValidator,
+            validation::CommandValidatorVisitor<validation::FieldValidator>>,
+        validation::BatchOrderValidator>>;
 
 class TransportBuilderTest : public ::testing::Test {
  protected:
@@ -44,6 +43,7 @@ class TransportBuilderTest : public ::testing::Test {
     created_time = iroha::time::now();
     invalid_created_time = 123;
     account_id = "account@domain";
+    account_id2 = "acccount@domain";
     quorum = 2;
     counter = 1048576;
     hash = std::string(32, '0');
@@ -59,7 +59,10 @@ class TransportBuilderTest : public ::testing::Test {
         .quorum(quorum)
         .setAccountQuorum(account_id, quorum);
   }
-
+  auto createUnbuildTransaction() {
+    return getBaseTransactionBuilder<shared_model::proto::TransactionBuilder>()
+        .creatorAccountId(account_id);
+  }
   auto createTransaction() {
     return getBaseTransactionBuilder<shared_model::proto::TransactionBuilder>()
         .creatorAccountId(account_id)
@@ -165,6 +168,32 @@ class TransportBuilderTest : public ::testing::Test {
         .build();
   }
 
+  //--------------------------------Batch---------------------------------------
+  auto getValidBatch(
+      int seed,
+      int size,
+      interface::types::BatchType type = interface::types::BatchType::ATOMIC) {
+    std::vector<proto::Transaction> transactions;
+    std::vector<decltype(createUnbuildTransaction())> builders;
+    std::vector<interface::types::HashType> batch_hashes;
+    for (int i = 0; i < size; i++) {
+      auto reduced_tr = TestUnsignedTransactionBuilder()
+                            .createdTime(created_time + seed + i)
+                            .quorum(quorum)
+                            .setAccountQuorum(account_id, quorum)
+                            .creatorAccountId(account_id);
+      builders.push_back(reduced_tr);
+      batch_hashes.push_back(reduced_tr.build().reduced_hash());
+    }
+    for (auto &builder : builders) {
+      auto tr = builder.batchMeta(type, batch_hashes)
+                    .build()
+                    .signAndAddSignature(keypair)
+                    .finish();
+      transactions.push_back(tr);
+    }
+    return transactions;
+  }
   /**
    * Receives model object, gets transport from it, converts transport into
    * model object and checks if original and obtained model objects are the same
@@ -174,10 +203,13 @@ class TransportBuilderTest : public ::testing::Test {
    * @param successCase function invoking if value exists
    * @param failCase function invoking when error returned
    */
-  template <typename T, typename SV>
-  void testTransport(T orig_model,
-                     std::function<void(const Value<T> &)> successCase,
-                     std::function<void(const Error<std::string> &)> failCase) {
+  template <typename SV,
+            typename T,
+            typename SuccessCase,
+            typename FailCase>
+  void testTransport(const T &orig_model,
+                     SuccessCase &&successCase,
+                     FailCase &&failCase) {
     auto proto_model = orig_model.getTransport();
 
     auto built_model = TransportBuilder<T, SV>().build(proto_model);
@@ -189,6 +221,7 @@ class TransportBuilderTest : public ::testing::Test {
   decltype(iroha::time::now()) created_time;
   decltype(created_time) invalid_created_time;
   std::string account_id;
+  std::string account_id2;
   uint8_t quorum;
   uint64_t counter;
   std::string hash;
@@ -208,8 +241,7 @@ class TransportBuilderTest : public ::testing::Test {
  */
 TEST_F(TransportBuilderTest, TransactionCreationTest) {
   auto orig_model = createTransaction();
-  testTransport<decltype(orig_model),
-                validation::DefaultSignableTransactionValidator>(
+  testTransport<validation::DefaultSignableTransactionValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -228,8 +260,7 @@ TEST_F(TransportBuilderTest, TransactionCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidTransactionCreationTest) {
   auto orig_model = createInvalidTransaction();
-  testTransport<decltype(orig_model),
-                validation::DefaultSignableTransactionValidator>(
+  testTransport<validation::DefaultSignableTransactionValidator>(
       orig_model,
       [](const Value<decltype(orig_model)>) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
@@ -244,8 +275,7 @@ TEST_F(TransportBuilderTest, InvalidTransactionCreationTest) {
  */
 TEST_F(TransportBuilderTest, QueryCreationTest) {
   auto orig_model = createQuery();
-  testTransport<decltype(orig_model),
-                validation::DefaultSignableQueryValidator>(
+  testTransport<validation::DefaultSignableQueryValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -261,8 +291,7 @@ TEST_F(TransportBuilderTest, QueryCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidQueryCreationTest) {
   auto orig_model = createInvalidQuery();
-  testTransport<decltype(orig_model),
-                validation::DefaultSignableQueryValidator>(
+  testTransport<validation::DefaultSignableQueryValidator>(
       orig_model,
       [](const Value<decltype(orig_model)>) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
@@ -277,7 +306,7 @@ TEST_F(TransportBuilderTest, InvalidQueryCreationTest) {
  */
 TEST_F(TransportBuilderTest, BlockCreationTest) {
   auto orig_model = createBlock();
-  testTransport<decltype(orig_model), validation::DefaultBlockValidator>(
+  testTransport<validation::DefaultBlockValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -293,10 +322,10 @@ TEST_F(TransportBuilderTest, BlockCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidBlockCreationTest) {
   auto orig_model = createInvalidBlock();
-  testTransport<decltype(orig_model), validation::DefaultBlockValidator>(
+  testTransport<validation::DefaultBlockValidator>(
       orig_model,
-      [](const Value<decltype(orig_model)>) { FAIL(); },
-      [](const Error<std::string> &) { SUCCEED(); });
+      [](const Value<std::decay_t<decltype(orig_model)>> &) { FAIL(); },
+      [](const Error<const std::string> &) { SUCCEED(); });
 }
 
 //-------------------------------------PROPOSAL-------------------------------------
@@ -308,7 +337,7 @@ TEST_F(TransportBuilderTest, InvalidBlockCreationTest) {
  */
 TEST_F(TransportBuilderTest, ProposalCreationTest) {
   auto orig_model = createProposal();
-  testTransport<decltype(orig_model), validation::DefaultProposalValidator>(
+  testTransport<validation::DefaultProposalValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -325,7 +354,7 @@ TEST_F(TransportBuilderTest, ProposalCreationTest) {
  */
 TEST_F(TransportBuilderTest, DISABLED_EmptyProposalCreationTest) {
   auto orig_model = createEmptyProposal();
-  testTransport<decltype(orig_model), validation::DefaultProposalValidator>(
+  testTransport<validation::DefaultProposalValidator>(
       orig_model,
       [](const Value<decltype(orig_model)>) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
@@ -340,7 +369,7 @@ TEST_F(TransportBuilderTest, DISABLED_EmptyProposalCreationTest) {
  */
 TEST_F(TransportBuilderTest, EmptyBlockCreationTest) {
   auto orig_model = createEmptyBlock();
-  testTransport<decltype(orig_model), validation::DefaultEmptyBlockValidator>(
+  testTransport<validation::DefaultEmptyBlockValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -432,5 +461,90 @@ TEST_F(TransportBuilderTest, BlockVariantWithInvalidBlock) {
       TransportBuilder<interface::BlockVariant,
                        validation::DefaultAnyBlockValidator>()
           .build(block.getTransport()));
+  ASSERT_TRUE(error);
+}
+
+//---------------------------Transaction Sequence-------------------------------
+
+/**
+ * @given empty range of transactions
+ * @when TransportBuilder tries to build TransactionSequence object
+ * @then built object contains TransactionSequence shared model object
+ * AND it containcs 0 transactions
+ */
+TEST_F(TransportBuilderTest, TransactionSequenceEmpty) {
+  std::vector<iroha::protocol::Transaction> tr;
+  auto val = framework::expected::val(
+      TransportBuilder<interface::TransactionSequence,
+                       validation::SignedTransactionsCollectionValidator<
+                           validation::TransactionValidator<
+                               validation::FieldValidator,
+                               validation::CommandValidatorVisitor<
+                                   validation::FieldValidator>>,
+                           validation::BatchOrderValidator>>()
+          .build(tr));
+  ASSERT_TRUE(val);
+  val | [](auto &seq) { ASSERT_EQ(boost::size(seq.value.transactions()), 0); };
+}
+
+/**
+ * @given sequence of transaction with a right order
+ * @when TransportBuilder tries to build TransactionSequence object
+ * @then  built object contains TransactionSequence shared model object
+ */
+TEST_F(TransportBuilderTest, TransactionSequenceCorrect) {
+  std::vector<proto::Transaction> transactions;
+  auto batch1 = getValidBatch(0, 10);
+  auto batch2 = getValidBatch(20, 5);
+  auto batch3 = getValidBatch(30, 5);
+  std::move(
+      std::begin(batch1), std::end(batch1), std::back_inserter(transactions));
+  std::move(
+      std::begin(batch2), std::end(batch2), std::back_inserter(transactions));
+  transactions.push_back(createTransaction());
+  transactions.push_back(createTransaction());
+  transactions.push_back(createTransaction());
+  std::move(
+      std::begin(batch3), std::end(batch3), std::back_inserter(transactions));
+  transactions.push_back(createTransaction());
+  auto val = framework::expected::val(
+      TransactionSequenceBuilder().build(transactions));
+  ASSERT_TRUE(val);
+  val | [](auto &seq) { ASSERT_EQ(boost::size(seq.value.transactions()), 24); };
+}
+/**
+ * @given batch of transaction with transaction in the middle
+ * @when TransportBuilder tries to build TransactionSequence object
+ * @then  built an error
+ */
+TEST_F(TransportBuilderTest, TransactionInteraptedBatch) {
+  std::vector<proto::Transaction> transactions;
+  auto batch = getValidBatch(0, 10);
+  std::move(std::begin(batch),
+            std::begin(batch) + 3,
+            std::back_inserter(transactions));
+  transactions.push_back(createTransaction());
+  std::move(
+      std::begin(batch) + 3, std::end(batch), std::back_inserter(transactions));
+  auto error = framework::expected::err(
+      TransactionSequenceBuilder().build(transactions));
+  ASSERT_TRUE(error);
+}
+
+/**
+ * @given batch of transaction with wrong order
+ * @when TransportBuilder tries to build TransactionSequence object
+ * @then  built an error
+ */
+TEST_F(TransportBuilderTest, BatchWrongOrder) {
+  std::vector<proto::Transaction> transactions;
+  auto batch = getValidBatch(0, 10);
+  std::move(
+      std::begin(batch) + 3, std::end(batch), std::back_inserter(transactions));
+  std::move(std::begin(batch),
+            std::begin(batch) + 3,
+            std::back_inserter(transactions));
+  auto error = framework::expected::err(
+      TransactionSequenceBuilder().build(transactions));
   ASSERT_TRUE(error);
 }

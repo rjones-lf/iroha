@@ -2,7 +2,7 @@ import sys
 sys.path.insert(0, 'build/shared_model/bindings')
 import iroha
 
-import block_pb2
+import transaction_pb2
 import endpoint_pb2
 import endpoint_pb2_grpc
 import queries_pb2
@@ -82,7 +82,7 @@ def print_status_streaming(tx):
 
 def send_tx(tx, key_pair):
     tx_blob = iroha.ModelProtoTransaction(tx).signAndAddSignature(key_pair).finish().blob()
-    proto_tx = block_pb2.Transaction()
+    proto_tx = transaction_pb2.Transaction()
 
     if sys.version_info[0] == 2:
         tmp = ''.join(map(chr, tx_blob))

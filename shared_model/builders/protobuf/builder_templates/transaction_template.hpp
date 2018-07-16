@@ -22,9 +22,9 @@
 
 #include <boost/range/algorithm/for_each.hpp>
 
-#include "block.pb.h"
 #include "commands.pb.h"
 #include "primitive.pb.h"
+#include "transaction.pb.h"
 
 #include "amount/amount.hpp"
 #include "backend/protobuf/permissions.hpp"
@@ -47,7 +47,7 @@ namespace shared_model {
     template <int S = 0,
               typename SV = validation::DefaultTransactionValidator,
               typename BT = UnsignedWrapper<Transaction>>
-    class TemplateTransactionBuilder {
+    class DEPRECATED TemplateTransactionBuilder {
      private:
       template <int, typename, typename>
       friend class TemplateTransactionBuilder;

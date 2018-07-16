@@ -135,10 +135,10 @@ TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
  */
 TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   // Valid previous hash, has supermajority, correct peers subset => valid
-  auto block = getBlockBuilder().build();
+  auto block = std::make_shared<shared_model::proto::Block>(getBlockBuilder().build());
   rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       block_observable = rxcpp::observable<>::just(block).map([](auto &&x) {
-        return std::shared_ptr<shared_model::interface::Block>(clone(x));
+        return std::shared_ptr<shared_model::interface::Block>(x);
       });
 
   EXPECT_CALL(*supermajority_checker, hasSupermajority(_, _))
@@ -149,10 +149,10 @@ TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   EXPECT_CALL(
       *storage,
       apply(testing::Truly([&](const shared_model::interface::Block &rhs) {
-              return rhs == block;
+              return rhs == *block;
             }),
             _))
-      .WillOnce(InvokeArgument<1>(ByRef(block), ByRef(*query), ByRef(hash)));
+      .WillOnce(InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateChain(block_observable, *storage));
 }

@@ -22,7 +22,7 @@
 
 namespace shared_model {
   namespace proto {
-    class TransactionStatusBuilder {
+    class DEPRECATED TransactionStatusBuilder {
      public:
       shared_model::proto::TransactionResponse build() &&;
 

@@ -116,7 +116,7 @@ to install all dependencies with Homebrew.
 .. code-block:: shell
 
   xcode-select --install
-  brew install cmake boost postgres grpc autoconf automake libtool golang libpqxx
+  brew install cmake boost postgres grpc autoconf automake libtool golang soci
 
 .. hint:: To install the Homebrew itself please run 
 

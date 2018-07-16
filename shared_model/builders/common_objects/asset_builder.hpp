@@ -36,7 +36,7 @@ namespace shared_model {
      * to perform stateless validation on model fields
      */
     template <typename BuilderImpl, typename Validator>
-    class AssetBuilder
+    class DEPRECATED AssetBuilder
         : public CommonObjectBuilder<interface::Asset, BuilderImpl, Validator> {
      public:
       AssetBuilder assetId(const interface::types::AccountIdType &asset_id) {

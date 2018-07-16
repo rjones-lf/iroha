@@ -102,10 +102,16 @@ namespace iroha {
       /**
        * Get accounts information from its key-value storage
        * @param account_id - account to get details about
+       * @param key - only values under this key from Json are returned; default
+       * empty
+       * @param writer - only values, added by the writer's account, are
+       * returned; default empty
        * @return optional of account details
        */
       virtual boost::optional<std::string> getAccountDetail(
-          const std::string &account_id) = 0;
+          const std::string &account_id,
+          const std::string &key = "",
+          const std::string &writer = "") = 0;
 
       /**
        * Get signatories of account by user account_id

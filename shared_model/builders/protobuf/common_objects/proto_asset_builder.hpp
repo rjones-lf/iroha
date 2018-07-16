@@ -19,7 +19,7 @@
 #define IROHA_PROTO_ASSET_BUILDER_HPP
 
 #include "backend/protobuf/common_objects/asset.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 
 namespace shared_model {
   namespace proto {
@@ -28,7 +28,7 @@ namespace shared_model {
      * AssetBuilder is used to construct Asset proto objects with initialized
      * protobuf implementation
      */
-    class AssetBuilder {
+    class DEPRECATED AssetBuilder {
      public:
       shared_model::proto::Asset build() {
         return shared_model::proto::Asset(iroha::protocol::Asset(asset_));
