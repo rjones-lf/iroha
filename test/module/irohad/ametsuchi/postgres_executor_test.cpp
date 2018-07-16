@@ -800,9 +800,12 @@ namespace iroha {
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ("2.0", account_asset.get()->balance().toStringRepr());
-      ASSERT_TRUE(val(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .transferAsset(account->accountId(), account2->accountId(), asset_id, "desc", "1.0")))));
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder().transferAsset(account->accountId(),
+                                                 account2->accountId(),
+                                                 asset_id,
+                                                 "desc",
+                                                 "1.0")))));
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
@@ -817,9 +820,12 @@ namespace iroha {
      * @then account asset fails to be transfered
      */
     TEST_F(TransferAccountAssetTest, TransferAccountAssetTestInvalidAsset) {
-      ASSERT_TRUE(err(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .transferAsset(account->accountId(), account2->accountId(), asset_id, "desc", "1.0")))));
+      ASSERT_TRUE(err(execute(buildCommand(
+          TestTransactionBuilder().transferAsset(account->accountId(),
+                                                 account2->accountId(),
+                                                 asset_id,
+                                                 "desc",
+                                                 "1.0")))));
     }
 
     /**
@@ -833,12 +839,15 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .addAssetQuantity(asset_id, "1.0")
                                    .creatorAccountId(account->accountId())))));
-      ASSERT_TRUE(err(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .transferAsset(account->accountId(), "some@domain", asset_id, "desc", "1.0")))));
-      ASSERT_TRUE(err(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .transferAsset("some@domain", account2->accountId(), asset_id, "desc", "1.0")))));
+      ASSERT_TRUE(
+          err(execute(buildCommand(TestTransactionBuilder().transferAsset(
+              account->accountId(), "some@domain", asset_id, "desc", "1.0")))));
+      ASSERT_TRUE(err(execute(buildCommand(
+          TestTransactionBuilder().transferAsset("some@domain",
+                                                 account2->accountId(),
+                                                 asset_id,
+                                                 "desc",
+                                                 "1.0")))));
     }
 
     /**
@@ -852,9 +861,12 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .addAssetQuantity(asset_id, "1.0")
                                    .creatorAccountId(account->accountId())))));
-      ASSERT_TRUE(err(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .transferAsset(account->accountId(), account2->accountId(), asset_id, "desc", "2.0")))));
+      ASSERT_TRUE(err(execute(buildCommand(
+          TestTransactionBuilder().transferAsset(account->accountId(),
+                                                 account2->accountId(),
+                                                 asset_id,
+                                                 "desc",
+                                                 "2.0")))));
     }
 
   }  // namespace ametsuchi
