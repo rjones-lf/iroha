@@ -130,9 +130,10 @@ namespace torii {
                 iroha::expected::Value<
                     shared_model::interface::TransactionSequence>
                     &tx_sequence) {
+              auto txs = tx_sequence.value.transactions();
               std::for_each(
-                  std::begin(tx_sequence.value.transactions()),
-                  std::end(tx_sequence.value.transactions()),
+                  txs.begin(),
+                  txs.end(),
                   [this](auto &tx) {
                     auto tx_hash = tx->hash();
                     if (cache_->findItem(tx_hash) and tx->quorum() < 2) {

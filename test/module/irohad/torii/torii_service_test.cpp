@@ -503,10 +503,14 @@ TEST_F(ToriiServiceTest, ListOfTxs) {
                           shared_model::crypto::DefaultCryptoAlgorithmType::
                               generateKeypair())
                       .finish();
-    tx_hashes.push_back(shm_tx.hash());
-//    tx_list.add_transactions()->CopyFrom(shm_tx.getTransport());
-    new (tx_list.add_transactions()) iroha::protocol::Transaction(shm_tx.getTransport());
+    tx_hashes[i] = shm_tx.hash();
+    //    tx_list.add_transactions()->CopyFrom(shm_tx.getTransport());
+    new (tx_list.add_transactions())
+        iroha::protocol::Transaction(shm_tx.getTransport());
   }
+
+  auto i = tx_list.transactions_size();
+  std::cerr << i;
 
   // send the txs
   client.ListTorii(tx_list);
