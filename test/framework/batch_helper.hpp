@@ -35,9 +35,8 @@ namespace framework {
      * @return batch with the same size as size of range of pairs
      */
     auto createUnsignedBatchTransactions(
-        boost::any_range<
-            std::pair<shared_model::interface::types::BatchType, std::string>,
-            boost::forward_traversal_tag> btype_creator_pairs,
+        std::vector<std::pair<shared_model::interface::types::BatchType,
+                              std::string>> btype_creator_pairs,
         size_t now = iroha::time::now()) {
       std::vector<shared_model::interface::types::HashType> reduced_hashes;
       for (const auto &btype_creator : btype_creator_pairs) {
@@ -46,14 +45,19 @@ namespace framework {
       }
 
       shared_model::interface::types::SharedTxsCollectionType txs;
-      std::for_each(btype_creator_pairs.begin(),
-                    btype_creator_pairs.end(),
-                    [&now, &txs, &reduced_hashes](const auto &btype_creator) {
-                      txs.emplace_back(clone(
-                          prepareTransactionBuilder(btype_creator.second, now)
-                              .batchMeta(btype_creator.first, reduced_hashes)
-                              .build()));
-                    });
+
+      std::transform(
+          btype_creator_pairs.begin(),
+          btype_creator_pairs.end(),
+          std::back_inserter(txs),
+          [&now, &reduced_hashes](const auto &btype_creator)
+              -> shared_model::interface::types::SharedTxsCollectionType::
+                  value_type {
+                    return clone(
+                        prepareTransactionBuilder(btype_creator.second, now)
+                            .batchMeta(btype_creator.first, reduced_hashes)
+                            .build());
+                  });
       return txs;
     }
 
@@ -67,12 +71,14 @@ namespace framework {
         shared_model::interface::types::BatchType batch_type,
         const std::vector<std::string> &creators,
         size_t now = iroha::time::now()) {
-      return createUnsignedBatchTransactions(
-          creators
-              | boost::adaptors::transformed([&batch_type](const auto creator) {
-                  return std::make_pair(batch_type, creator);
-                }),
-          now);
+      std::vector<std::pair<decltype(batch_type), std::string>> fields;
+      std::transform(creators.begin(),
+                     creators.end(),
+                     std::back_inserter(fields),
+                     [&batch_type](const auto creator) {
+                       return std::make_pair(batch_type, creator);
+                     });
+      return createUnsignedBatchTransactions(fields, now);
     }
 
     /**

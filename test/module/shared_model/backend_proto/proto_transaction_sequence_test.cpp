@@ -100,15 +100,12 @@ TEST(TransactionSequenceTest, CreateBatches) {
       .WillRepeatedly(Return(validation::Answer()));
 
   interface::types::SharedTxsCollectionType tx_collection;
+  auto now = iroha::time::now();
   for (size_t i = 0; i < batches_number; i++) {
-    std::vector<std::string> creators;
-    for (size_t j = 0; j < txs_in_batch; j++) {
-      creators.push_back("batch" + std::to_string(i) + "account"
-                         + std::to_string(j) + "@domain");
-    }
-
     auto batch = framework::batch::createUnsignedBatchTransactions(
-        shared_model::interface::types::BatchType::ATOMIC, creators);
+        shared_model::interface::types::BatchType::ATOMIC,
+        txs_in_batch,
+        now + i);
     tx_collection.insert(tx_collection.begin(), batch.begin(), batch.end());
   }
 
