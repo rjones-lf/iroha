@@ -82,7 +82,7 @@ For example, ``gangreen`` is a registered farmer ``tomato`` asset creator, he se
 We simplified asset creation to just a single command ``CreateAsset`` without the need to create complex smart contracts. One the major advantages of Hyperledger Iroha is in its ease, that allows developers to focus on the provided value of their applications. 
 
 Fund Management
---------------
+---------------
 
 With the support of multisignature transactions it is possible to maintain a fund by many managers. In that scheme investment can only be made after the confirmation of the quorum participants.
 
