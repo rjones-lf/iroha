@@ -40,7 +40,7 @@ Allows creating new `accounts <../core_concepts/glossary.html#account>`__.
 .. literalinclude:: ../../../example/python/permissions/can_create_account.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 9-42
 
 can_set_detail
 ^^^^^^^^^^^^^^
@@ -64,7 +64,7 @@ The `permission <../core_concepts/glossary.html#permission>`__ allows setting de
 .. literalinclude:: ../../../example/python/permissions/can_set_detail.py
     :language: python
     :linenos:
-    :lines: 9-37
+    :lines: 9-39
 
 can_set_my_account_detail
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -88,7 +88,7 @@ can_set_my_account_detail
 .. literalinclude:: ../../../example/python/permissions/can_set_my_account_detail.py
     :language: python
     :linenos:
-    :lines: 9-51
+    :lines: 9-54
 
 Asset
 -----
@@ -111,7 +111,7 @@ Allows creating new `assets <../core_concepts/glossary.html#asset>`__.
 .. literalinclude:: ../../../example/python/permissions/can_create_asset.py
     :language: python
     :linenos:
-    :lines: 9-36
+    :lines: 9-39
 
 can_receive
 ^^^^^^^^^^^
@@ -131,7 +131,7 @@ Allows `account <../core_concepts/glossary.html#account>`__ receive `assets <../
 .. literalinclude:: ../../../example/python/permissions/can_receive.py
     :language: python
     :linenos:
-    :lines: 9-44
+    :lines: 9-47
 
 can_transfer
 ^^^^^^^^^^^^
@@ -174,7 +174,7 @@ See the example (to be done) for the usage details.
 .. literalinclude:: ../../../example/python/permissions/can_transfer_my_assets.py
     :language: python
     :linenos:
-    :lines: 9-56
+    :lines: 9-59
 
 Asset Quantity
 --------------
@@ -199,7 +199,7 @@ The corresponding `command <../core_concepts/glossary.html#command>`__ can be ex
 .. literalinclude:: ../../../example/python/permissions/can_add_asset_qty.py
     :language: python
     :linenos:
-    :lines: 9-38
+    :lines: 9-40
 
 can_subtract_asset_qty
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -221,7 +221,7 @@ The corresponding `command <../core_concepts/glossary.html#command>`__ can be ex
 .. literalinclude:: ../../../example/python/permissions/can_subtract_asset_qty.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 9-42
 
 Domain
 ------
@@ -244,7 +244,7 @@ Allows creating new `domains <../core_concepts/glossary.html#domain>`__ within t
 .. literalinclude:: ../../../example/python/permissions/can_create_domain.py
     :language: python
     :linenos:
-    :lines: 9-38
+    :lines: 9-40
 
 Grant
 -----
@@ -267,7 +267,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_add_my_s
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_add_my_signatory.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 9-41
 
 can_grant_can_remove_my_signatory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -287,7 +287,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_remove_m
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_remove_my_signatory.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 9-41
 
 can_grant_can_set_my_account_detail
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -307,7 +307,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_a
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_set_my_account_detail.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 9-41
 
 can_grant_can_set_my_quorum
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -327,7 +327,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_q
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_set_my_quorum.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 9-41
 
 can_grant_can_transfer_my_assets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -347,7 +347,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_transfer
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_transfer_my_assets.py
     :language: python
     :linenos:
-    :lines: 9-46
+    :lines: 9-48
 
 Peer
 ----
@@ -372,7 +372,7 @@ A new peer will be a valid participant in the next `consensus <../core_concepts/
 .. literalinclude:: ../../../example/python/permissions/can_add_peer.py
     :language: python
     :linenos:
-    :lines: 9-38
+    :lines: 9-40
 
 Role
 ----
@@ -397,7 +397,7 @@ You can append only that role that has lesser or the same set of privileges as `
 .. literalinclude:: ../../../example/python/permissions/can_append_role.py
     :language: python
     :linenos:
-    :lines: 9-46
+    :lines: 9-48
 
 can_create_role
 ^^^^^^^^^^^^^^^
@@ -420,7 +420,7 @@ Possible set of `permissions <../core_concepts/glossary.html#permission>`__ for 
 .. literalinclude:: ../../../example/python/permissions/can_create_role.py
     :language: python
     :linenos:
-    :lines: 9-41
+    :lines: 9-44
 
 can_detach_role
 ^^^^^^^^^^^^^^^
@@ -442,7 +442,7 @@ Allows revoking a `role <../core_concepts/glossary.html#role>`__ from a user.
 .. literalinclude:: ../../../example/python/permissions/can_detach_role.py
     :language: python
     :linenos:
-    :lines: 9-37
+    :lines: 9-39
 
 Signatory
 ---------
@@ -467,7 +467,7 @@ can_add_my_signatory
 .. literalinclude:: ../../../example/python/permissions/can_add_my_signatory.py
     :language: python
     :linenos:
-    :lines: 9-50
+    :lines: 9-53
 
 can_add_signatory
 ^^^^^^^^^^^^^^^^^
@@ -489,7 +489,7 @@ The corresponding `command <../core_concepts/glossary.html#command>`__ can be ex
 .. literalinclude:: ../../../example/python/permissions/can_add_signatory.py
     :language: python
     :linenos:
-    :lines: 9-38
+    :lines: 9-40
 
 can_remove_my_signatory
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -513,7 +513,7 @@ See the example (to be done) for the usage details.
 .. literalinclude:: ../../../example/python/permissions/can_remove_my_signatory.py
     :language: python
     :linenos:
-    :lines: 9-54
+    :lines: 9-57
 
 can_remove_signatory
 ^^^^^^^^^^^^^^^^^^^^
@@ -535,7 +535,7 @@ The corresponding `command <../core_concepts/glossary.html#command>`__ can be ex
 .. literalinclude:: ../../../example/python/permissions/can_remove_signatory.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 9-41
 
 can_set_my_quorum
 ^^^^^^^^^^^^^^^^^
@@ -559,7 +559,7 @@ Account should have greater or equal amount of keys than quorum.
 .. literalinclude:: ../../../example/python/permissions/can_set_my_quorum.py
     :language: python
     :linenos:
-    :lines: 9-54
+    :lines: 9-57
 
 can_set_quorum
 ^^^^^^^^^^^^^^
@@ -581,7 +581,7 @@ At least the same number (or more) of public keys should be already linked to an
 .. literalinclude:: ../../../example/python/permissions/can_set_quorum.py
     :language: python
     :linenos:
-    :lines: 9-40
+    :lines: 9-42
 
 Query-related permissions
 =========================
@@ -607,7 +607,7 @@ Allows getting all the details set to any `account <../core_concepts/glossary.ht
 .. literalinclude:: ../../../example/python/permissions/can_get_all_acc_detail.py
     :language: python
     :linenos:
-    :lines: 9-37
+    :lines: 9-40
 
 can_get_all_accounts
 ^^^^^^^^^^^^^^^^^^^^
@@ -631,7 +631,7 @@ All the details (set by the account owner or owners of other accounts) will be r
 .. literalinclude:: ../../../example/python/permissions/can_get_all_accounts.py
     :language: python
     :linenos:
-    :lines: 9-37
+    :lines: 9-40
 
 can_get_domain_acc_detail
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -651,7 +651,7 @@ Allows getting all the details set to any `account <../core_concepts/glossary.ht
 .. literalinclude:: ../../../example/python/permissions/can_get_domain_acc_detail.py
     :language: python
     :linenos:
-    :lines: 9-36
+    :lines: 9-39
 
 can_get_domain_accounts
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -675,7 +675,7 @@ All the details (set by the account owner or owners of other accounts) will be r
 .. literalinclude:: ../../../example/python/permissions/can_get_domain_accounts.py
     :language: python
     :linenos:
-    :lines: 9-36
+    :lines: 9-39
 
 can_get_my_acc_detail
 ^^^^^^^^^^^^^^^^^^^^^
@@ -695,7 +695,7 @@ Allows getting all the details set to the `account <../core_concepts/glossary.ht
 .. literalinclude:: ../../../example/python/permissions/can_get_my_acc_detail.py
     :language: python
     :linenos:
-    :lines: 9-36
+    :lines: 9-39
 
 can_get_my_account
 ^^^^^^^^^^^^^^^^^^
@@ -719,7 +719,7 @@ All the details (set by the account owner or owners of other accounts) will be r
 .. literalinclude:: ../../../example/python/permissions/can_get_my_account.py
     :language: python
     :linenos:
-    :lines: 9-36
+    :lines: 9-39
 
 Account Asset
 -------------
@@ -744,7 +744,7 @@ Allows getting a balance of `assets <../core_concepts/glossary.html#asset>`__ on
 .. literalinclude:: ../../../example/python/permissions/can_get_all_acc_ast.py
     :language: python
     :linenos:
-    :lines: 9-37
+    :lines: 9-40
 
 can_get_domain_acc_ast
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -766,7 +766,7 @@ Query response will contain information about all the assets that ever been assi
 .. literalinclude:: ../../../example/python/permissions/can_get_domain_acc_ast.py
     :language: python
     :linenos:
-    :lines: 9-36
+    :lines: 9-39
 
 can_get_my_acc_ast
 ^^^^^^^^^^^^^^^^^^
@@ -788,7 +788,7 @@ Query response will contain information about all the assets that ever been assi
 .. literalinclude:: ../../../example/python/permissions/can_get_my_acc_ast.py
     :language: python
     :linenos:
-    :lines: 9-36
+    :lines: 9-39
 
 Account Asset Transaction
 -------------------------
@@ -813,7 +813,7 @@ Allows getting `transactions <../core_concepts/glossary.html#transaction>`__ ass
 .. literalinclude:: ../../../example/python/permissions/can_get_all_acc_ast_txs.py
     :language: python
     :linenos:
-    :lines: 9-44
+    :lines: 9-47
 
 can_get_domain_acc_ast_txs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -835,7 +835,7 @@ Allows getting `transactions <../core_concepts/glossary.html#transaction>`__ ass
 .. literalinclude:: ../../../example/python/permissions/can_get_domain_acc_ast_txs.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 9-42
 
 can_get_my_acc_ast_txs
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -857,7 +857,7 @@ Allows getting `transactions <../core_concepts/glossary.html#transaction>`__ ass
 .. literalinclude:: ../../../example/python/permissions/can_get_my_acc_ast_txs.py
     :language: python
     :linenos:
-    :lines: 9-39
+    :lines: 9-42
 
 Account Transaction
 -------------------
@@ -882,7 +882,7 @@ Allows getting all `transactions <../core_concepts/glossary.html#transaction>`__
 .. literalinclude:: ../../../example/python/permissions/can_get_all_acc_txs.py
     :language: python
     :linenos:
-    :lines: 9-37
+    :lines: 9-40
 
 can_get_domain_acc_txs
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -904,7 +904,7 @@ Allows getting all `transactions <../core_concepts/glossary.html#transaction>`__
 .. literalinclude:: ../../../example/python/permissions/can_get_domain_acc_txs.py
     :language: python
     :linenos:
-    :lines: 9-36
+    :lines: 9-39
 
 can_get_my_acc_txs
 ^^^^^^^^^^^^^^^^^^
@@ -926,7 +926,7 @@ Allows getting all `transactions <../core_concepts/glossary.html#transaction>`__
 .. literalinclude:: ../../../example/python/permissions/can_get_my_acc_txs.py
     :language: python
     :linenos:
-    :lines: 9-36
+    :lines: 9-39
 
 Asset
 -----
@@ -949,7 +949,7 @@ Allows getting information about `asset <../core_concepts/glossary.html#asset>`_
 .. literalinclude:: ../../../example/python/permissions/can_read_assets.py
     :language: python
     :linenos:
-    :lines: 9-37
+    :lines: 9-40
 
 Block Stream
 ------------
@@ -985,7 +985,7 @@ Allows getting a list of `permissions <../core_concepts/glossary.html#permission
 .. literalinclude:: ../../../example/python/permissions/can_get_roles.py
     :language: python
     :linenos:
-    :lines: 9-47
+    :lines: 9-52
 
 Signatory
 ---------
@@ -1008,7 +1008,7 @@ Allows getting a list of public keys linked to an `account <../core_concepts/glo
 .. literalinclude:: ../../../example/python/permissions/can_get_all_signatories.py
     :language: python
     :linenos:
-    :lines: 9-37
+    :lines: 9-40
 
 can_get_domain_signatories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1028,7 +1028,7 @@ Allows getting a list of public keys of any `account <../core_concepts/glossary.
 .. literalinclude:: ../../../example/python/permissions/can_get_domain_signatories.py
     :language: python
     :linenos:
-    :lines: 9-36
+    :lines: 9-39
 
 can_get_my_signatories
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -1048,7 +1048,7 @@ Allows getting a list of public keys of `query <../core_concepts/glossary.html#q
 .. literalinclude:: ../../../example/python/permissions/can_get_my_signatories.py
     :language: python
     :linenos:
-    :lines: 9-36
+    :lines: 9-39
 
 Transaction
 -----------
@@ -1071,7 +1071,7 @@ Allows getting any `transaction <../core_concepts/glossary.html#transaction>`__ 
 .. literalinclude:: ../../../example/python/permissions/can_get_all_txs.py
     :language: python
     :linenos:
-    :lines: 9-67
+    :lines: 9-72
 
 can_get_my_txs
 ^^^^^^^^^^^^^^
@@ -1091,7 +1091,7 @@ Allows getting `transaction <../core_concepts/glossary.html#transaction>`__ (tha
 .. literalinclude:: ../../../example/python/permissions/can_get_my_txs.py
     :language: python
     :linenos:
-    :lines: 9-71
+    :lines: 9-76
 
 Supplementary Sources
 =====================
