@@ -4,9 +4,7 @@
  */
 
 #include <gtest/gtest.h>
-#include <ed25519/ed25519.h>
 
-#include "backend/protobuf/common_objects/amount.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "builders/default_builders.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"

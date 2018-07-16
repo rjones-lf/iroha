@@ -10,6 +10,7 @@
 
 #include "backend/protobuf/common_objects/account.hpp"
 #include "backend/protobuf/common_objects/account_asset.hpp"
+#include "backend/protobuf/common_objects/amount.hpp"
 #include "backend/protobuf/common_objects/asset.hpp"
 #include "backend/protobuf/common_objects/domain.hpp"
 #include "backend/protobuf/common_objects/peer.hpp"
@@ -21,11 +22,11 @@
 
 namespace shared_model {
   namespace proto {
-  /**
-   * ProtoCommonObjectsFactory constructs protobuf-based objects.
-   * It performs stateful validation with provided validator
-   * @tparam Validator
-   */
+    /**
+     * ProtoCommonObjectsFactory constructs protobuf-based objects.
+     * It performs stateless validation with provided validator
+     * @tparam Validator
+     */
     template <typename Validator>
     class ProtoCommonObjectsFactory : public interface::CommonObjectsFactory {
      public:
@@ -115,10 +116,10 @@ namespace shared_model {
 
         auto proto_amount = std::make_unique<Amount>(std::move(amount));
 
-        auto errors = validate(*proto_amount, [](const auto &, auto &) {
-          // no validation needed,
-          // since any amount is valid in general context
-        });
+        auto errors =
+            validate(*proto_amount, [this](const auto &amount, auto &reasons) {
+              validator_.validateAmount(reasons, amount);
+            });
 
         if (errors) {
           return iroha::expected::makeError(errors.reason());
