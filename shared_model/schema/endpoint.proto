@@ -1,12 +1,16 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 syntax = "proto3";
 
 package iroha.protocol;
 
-import "block.proto";
+import "transaction.proto";
 import "queries.proto";
+import "qry_responses.proto";
 import "google/protobuf/empty.proto";
-import "responses.proto";
-
 
 enum TxStatus {
   STATELESS_VALIDATION_FAILED = 0;
@@ -33,7 +37,6 @@ service CommandService {
   rpc Status (TxStatusRequest) returns (ToriiResponse);
   rpc StatusStream(TxStatusRequest) returns (stream ToriiResponse);
 }
-
 
 service QueryService {
   rpc Find (Query) returns (QueryResponse);

@@ -1,7 +1,7 @@
 syntax = "proto3";
 package iroha.ordering.proto;
 
-import "block.proto";
+import "transaction.proto";
 import "proposal.proto";
 import "google/protobuf/empty.proto";
 

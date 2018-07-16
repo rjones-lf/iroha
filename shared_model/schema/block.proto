@@ -1,0 +1,23 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+syntax = "proto3";
+package iroha.protocol;
+import "primitive.proto";
+import "transaction.proto";
+
+message Block {
+  // everything that should be signed:
+  message Payload {
+    repeated Transaction transactions = 1;
+    uint32 tx_number = 2;  // the number of transactions inside. Maximum 16384 or 2^14
+    uint64 height = 3;          // the current block number in a ledger
+    bytes prev_block_hash = 5;  // Previous block hash
+    uint64 created_time = 6;
+  }
+
+  Payload payload = 1;
+  repeated Signature signatures = 2;
+}

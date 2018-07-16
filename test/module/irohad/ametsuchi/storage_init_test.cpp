@@ -4,6 +4,8 @@
  */
 
 #include <gtest/gtest.h>
+#include <soci/postgresql/soci-postgresql.h>
+#include <soci/soci.h>
 #include <boost/filesystem.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -33,10 +35,9 @@ class StorageInitTest : public ::testing::Test {
   std::string pgopt_;
 
   void TearDown() override {
-    auto temp_connection =
-        std::make_unique<pqxx::lazyconnection>(pg_opt_without_dbname_);
-    auto nontx = std::make_unique<pqxx::nontransaction>(*temp_connection);
-    nontx->exec("DROP DATABASE IF EXISTS " + dbname_);
+    soci::session sql(soci::postgresql, pg_opt_without_dbname_);
+    std::string query = "DROP DATABASE IF EXISTS " + dbname_;
+    sql << query;
   }
 };
 
@@ -49,13 +50,12 @@ TEST_F(StorageInitTest, CreateStorageWithDatabase) {
   StorageImpl::create(block_store_path, pgopt_)
       .match([](const Value<std::shared_ptr<StorageImpl>> &) { SUCCEED(); },
              [](const Error<std::string> &error) { FAIL() << error.error; });
-  auto temp_connection =
-      std::make_unique<pqxx::lazyconnection>(pg_opt_without_dbname_);
-  auto transaction = std::make_unique<pqxx::nontransaction>(*temp_connection);
-  auto result = transaction->exec(
-      "SELECT datname FROM pg_catalog.pg_database WHERE datname = "
-      + transaction->quote(dbname_));
-  ASSERT_EQ(result.size(), 1);
+  soci::session sql(soci::postgresql, pg_opt_without_dbname_);
+  int size;
+  sql << "SELECT COUNT(datname) FROM pg_catalog.pg_database WHERE datname = "
+         ":dbname",
+      soci::into(size), soci::use(dbname_);
+  ASSERT_EQ(size, 1);
 }
 
 /**

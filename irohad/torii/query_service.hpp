@@ -20,7 +20,7 @@ limitations under the License.
 #include <unordered_map>
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 
 #include "backend/protobuf/queries/proto_blocks_query.hpp"
 #include "backend/protobuf/queries/proto_query.hpp"

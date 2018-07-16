@@ -22,9 +22,9 @@
 
 #include <boost/range/algorithm/for_each.hpp>
 
-#include "block.pb.h"
 #include "commands.pb.h"
 #include "primitive.pb.h"
+#include "transaction.pb.h"
 
 #include "amount/amount.hpp"
 #include "backend/protobuf/permissions.hpp"

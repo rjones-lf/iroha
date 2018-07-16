@@ -1,4 +1,10 @@
+#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 add_library(shared_model_proto_backend
+    impl/block.cpp
     impl/permissions.cpp
     commands/impl/proto_add_asset_quantity.cpp
     commands/impl/proto_add_peer.cpp
@@ -28,6 +34,7 @@ add_library(shared_model_proto_backend
     queries/impl/proto_get_roles.cpp
     queries/impl/proto_get_signatories.cpp
     queries/impl/proto_get_transactions.cpp
+    queries/impl/proto_get_pending_transactions.cpp
     queries/impl/proto_blocks_query.cpp
     queries/impl/proto_query_payload_meta.cpp
     )

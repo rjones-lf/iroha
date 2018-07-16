@@ -1,5 +1,5 @@
 import iroha.protocol.Commands;
-import iroha.protocol.BlockOuterClass;
+import iroha.protocol.TransactionOuterClass;
 import iroha.protocol.Endpoint;
 import iroha.protocol.Queries;
 import iroha.protocol.Queries.Query;
@@ -12,9 +12,9 @@ import iroha.protocol.CommandServiceGrpc.CommandServiceBlockingStub;
 import iroha.protocol.Endpoint.TxStatus;
 import iroha.protocol.Endpoint.TxStatusRequest;
 import iroha.protocol.Endpoint.ToriiResponse;
-import iroha.protocol.Responses.QueryResponse;
-import iroha.protocol.Responses.AssetResponse;
-import iroha.protocol.Responses.Asset;
+import iroha.protocol.QryResponses.QueryResponse;
+import iroha.protocol.QryResponses.AssetResponse;
+import iroha.protocol.QryResponses.Asset;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.ManagedChannel;
@@ -84,9 +84,9 @@ class TransactionExample {
         byte bs[] = toByteArray(txblob);
 
         // create proto object
-        BlockOuterClass.Transaction protoTx = null;
+        TransactionOuterClass.Transaction protoTx = null;
         try {
-            protoTx = BlockOuterClass.Transaction.parseFrom(bs);
+            protoTx = TransactionOuterClass.Transaction.parseFrom(bs);
         } catch (InvalidProtocolBufferException e) {
             System.err.println("Exception while converting byte array to protobuf:" + e.getMessage());
             System.exit(1);

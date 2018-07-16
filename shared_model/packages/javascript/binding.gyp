@@ -77,9 +77,9 @@
       'dependencies': [ 'shared_model' ],
       'include_dirs': [
         '<(iroha_lib_dir)',
+        '<(iroha_lib_dir)/schema',
         # TODO: Remove these include directories when Shared Model 
         # will be completely separated from Iroha
-        '<(iroha_lib_dir)/../schema',
         '<(iroha_lib_dir)/../libs'
       ],
       'sources': [

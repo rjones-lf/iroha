@@ -1,7 +1,7 @@
 syntax = "proto3";
 package iroha.network.transport;
 
-import "block.proto";
+import "transaction.proto";
 import "primitive.proto";
 import "google/protobuf/empty.proto";
 
