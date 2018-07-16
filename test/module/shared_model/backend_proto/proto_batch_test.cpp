@@ -4,12 +4,12 @@
  */
 
 #include <gmock/gmock.h>
-#include <validators/transactions_collection/batch_order_validator.hpp>
 #include "framework/batch_helper.hpp"
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/transaction_validator.hpp"
+#include "validators/transactions_collection/batch_order_validator.hpp"
 #include "validators/transactions_collection/unsigned_transactions_collection_validator.hpp"
 
 using namespace shared_model;

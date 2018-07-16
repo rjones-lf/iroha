@@ -4,6 +4,7 @@
  */
 
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
+
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/transaction_validator.hpp"
