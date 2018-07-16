@@ -40,7 +40,7 @@ namespace shared_model {
                          return std::make_shared<Transaction>(tx);
                        });
         return interface::TransactionSequence::createTransactionSequence(
-            shm_txs, SV());
+            shm_txs, stateless_validator_);
       }
 
      private:
