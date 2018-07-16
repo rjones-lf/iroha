@@ -53,14 +53,21 @@ namespace shared_model {
        * Get transactions list
        * @return list of transactions from the batch
        */
-      const types::SharedTxsCollectionType& transactions() const;
+      const types::SharedTxsCollectionType &transactions() const;
 
       /**
        * Get the concatenation of reduced hashes as a single hash
        * @param reduced_hashes collection of reduced hashes
        * @return concatenated reduced hashes
        */
-      const types::HashType& reducedHash() const;
+      const types::HashType &reducedHash() const;
+
+      /**
+       * Checks if every transaction has quorum signatures
+       * @return true if every transaction has quorum signatures, false
+       * otherwise
+       */
+      bool hasAllSignatures() const;
 
       /**
        * Get the concatenation of reduced hashes as a single hash

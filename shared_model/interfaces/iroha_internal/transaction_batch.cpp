@@ -115,6 +115,13 @@ namespace shared_model {
       return reduced_hash_.value();
     }
 
+    bool TransactionBatch::hasAllSignatures() const {
+      return std::all_of(
+          transactions_.begin(), transactions_.end(), [](const auto tx) {
+            return boost::size(tx->signatures()) >= tx->quorum();
+          });
+    }
+
     types::HashType TransactionBatch::calculateReducedBatchHash(
         const boost::any_range<types::HashType, boost::forward_traversal_tag>
             &reduced_hashes) {

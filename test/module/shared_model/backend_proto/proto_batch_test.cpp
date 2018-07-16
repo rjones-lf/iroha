@@ -135,3 +135,59 @@ TEST(TransactionBatchTest, CreateSingleTxBatchWhenInvalid) {
 
   ASSERT_TRUE(framework::expected::err(transaction_batch));
 }
+
+/**
+ * Creates batch from transactions with provided quorum size and one signature
+ * @param quorum quorum size
+ * @return batch with transactions with one signature and quorum size
+ */
+auto createBatchWithTransactionsWithQuorum(
+    const interface::types::QuorumType &quorum) {
+  auto keypair = crypto::DefaultCryptoAlgorithmType::generateKeypair();
+
+  auto now = iroha::time::now();
+
+  auto batch_type = shared_model::interface::types::BatchType::ATOMIC;
+  std::string userone = "a@domain";
+  std::string usertwo = "b@domain";
+
+  auto transactions = framework::batch::createBatchOneSignTransactions(
+      std::vector<std::pair<decltype(batch_type), std::string>>{
+          std::make_pair(batch_type, userone),
+          std::make_pair(batch_type, usertwo)},
+      now,
+      quorum);
+
+  return interface::TransactionBatch::createTransactionBatch(transactions,
+                                                             TxsValidator());
+}
+
+/**
+ * @given transactions with transaction with quorum size 1 @and signatures size
+ * equals 1, @and all transactions are from the same batch
+ * @when transaction batch is created from that transactions
+ * @then created batch has all signatures
+ */
+TEST(TransactionBatchTest, BatchWithAllSignatures) {
+  auto quorum = 1;
+  auto transaction_batch = createBatchWithTransactionsWithQuorum(quorum);
+  auto transaction_batch_val = framework::expected::val(transaction_batch);
+  ASSERT_TRUE(transaction_batch_val)
+      << framework::expected::err(transaction_batch).value().error;
+  ASSERT_TRUE(transaction_batch_val->value.hasAllSignatures());
+}
+
+/**
+ * @given transactions with transaction with quorum size 2 @and signatures size
+ * equals 1, @and all transactions are from the same batch
+ * @when transaction batch is created from that transactions
+ * @then created batch does not have all signatures
+ */
+TEST(TransactionBatchTest, BatchWithMissingSignatures) {
+  auto quorum = 2;
+  auto transaction_batch = createBatchWithTransactionsWithQuorum(quorum);
+  auto transaction_batch_val = framework::expected::val(transaction_batch);
+  ASSERT_TRUE(transaction_batch_val)
+      << framework::expected::err(transaction_batch).value().error;
+  ASSERT_FALSE(transaction_batch_val->value.hasAllSignatures());
+}
