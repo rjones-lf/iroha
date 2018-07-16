@@ -43,7 +43,7 @@ namespace shared_model {
        * Retrieves transactions from all batches as single collection
        * @return all batches transactions
        */
-      types::SharedTxsCollectionType transactions() const;
+      const types::SharedTxsCollectionType &transactions() const;
 
       /**
        * Get batches in transaction sequence
@@ -51,7 +51,7 @@ namespace shared_model {
        * single transaction
        * @return collection of batches from transaction sequence
        */
-      types::BatchesCollectionType batches() const;
+      const types::BatchesCollectionType &batches() const;
 
      private:
       explicit TransactionSequence(const types::BatchesCollectionType &batches);

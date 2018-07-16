@@ -100,11 +100,12 @@ namespace shared_model {
             validation::CommandValidatorVisitor<validation::FieldValidator>>
             &validator);
 
-    types::SharedTxsCollectionType TransactionBatch::transactions() const {
+    const types::SharedTxsCollectionType &TransactionBatch::transactions()
+        const {
       return transactions_;
     }
 
-    types::HashType TransactionBatch::reducedHash() const {
+    const types::HashType &TransactionBatch::reducedHash() const {
       if (not reduced_hash_) {
         reduced_hash_ = TransactionBatch::calculateReducedBatchHash(
             transactions_ | boost::adaptors::transformed([](const auto &tx) {

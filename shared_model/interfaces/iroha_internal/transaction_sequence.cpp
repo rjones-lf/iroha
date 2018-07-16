@@ -84,7 +84,8 @@ namespace shared_model {
                     validation::FieldValidator>>,
             validation::BatchOrderValidator> &validator);
 
-    types::SharedTxsCollectionType TransactionSequence::transactions() const {
+    const types::SharedTxsCollectionType &TransactionSequence::transactions()
+        const {
       types::SharedTxsCollectionType result;
       auto transactions_amount = 0u;
       for (const auto &batch : batches_) {
@@ -100,7 +101,7 @@ namespace shared_model {
       return result;
     }
 
-    types::BatchesCollectionType TransactionSequence::batches() const {
+    const types::BatchesCollectionType &TransactionSequence::batches() const {
       return batches_;
     }
 
