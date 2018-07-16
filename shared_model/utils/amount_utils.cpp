@@ -11,7 +11,7 @@ namespace shared_model {
     const boost::multiprecision::uint256_t ten = 10;
 
     boost::multiprecision::uint256_t increaseValuePrecision(
-        boost::multiprecision::uint256_t value, int degree) {
+        const boost::multiprecision::uint256_t &value, int degree) {
       return value * pow(ten, degree);
     }
 
@@ -71,9 +71,11 @@ namespace shared_model {
         return iroha::expected::makeError(
             std::make_shared<std::string>("new precision overflows number"));
       }
-      std::string val = (val_a - val_b).str();
-      if (max_precision != 0) {
-        val.insert((val.rbegin() + max_precision).base(), '.');
+      auto diff = val_a - val_b;
+      std::string val = diff.str();
+      if (max_precision != 0 && val.size() > max_precision + 1) {
+        auto ptr = val.rbegin() + max_precision;
+        val.insert(ptr.base(), '.');
       }
       return iroha::expected::makeValue(
           std::make_shared<shared_model::interface::Amount>(std::move(val)));
