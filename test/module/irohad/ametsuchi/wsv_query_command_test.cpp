@@ -58,7 +58,7 @@ namespace iroha {
             std::make_unique<pqxx::nontransaction>(*postgres_connection);
 
         command = std::make_unique<PostgresWsvCommand>(*wsv_transaction);
-        query = std::make_unique<PostgresWsvQuery>(*wsv_transaction);
+        query = std::make_unique<PostgresWsvQuery>(*wsv_transaction, factory);
 
         wsv_transaction->exec(init_);
       }
@@ -469,7 +469,7 @@ namespace iroha {
             std::make_unique<pqxx::nontransaction>(*postgres_connection);
 
         command = std::make_unique<PostgresWsvCommand>(*wsv_transaction);
-        query = std::make_unique<PostgresWsvQuery>(*wsv_transaction);
+        query = std::make_unique<PostgresWsvQuery>(*wsv_transaction, factory);
       }
     };
 

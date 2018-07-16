@@ -682,7 +682,7 @@ TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {
       "=> insert block "
       "=> assert that inserted");
   std::shared_ptr<StorageImpl> storage;
-  auto storageResult = StorageImpl::create(block_store_path, pgopt_);
+  auto storageResult = StorageImpl::create(block_store_path, pgopt_, factory);
   storageResult.match(
       [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
         storage = _storage.value;
@@ -709,7 +709,8 @@ TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {
 
   ASSERT_EQ(0, wsv->getPeers().value().size());
   std::shared_ptr<StorageImpl> new_storage;
-  auto new_storageResult = StorageImpl::create(block_store_path, pgopt_);
+  auto new_storageResult =
+      StorageImpl::create(block_store_path, pgopt_, factory);
   storageResult.match(
       [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
         new_storage = _storage.value;
