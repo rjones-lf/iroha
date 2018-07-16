@@ -23,7 +23,6 @@
 
 #include "interfaces/base/model_primitive.hpp"
 #include "utils/lazy_initializer.hpp"
-#include "utils/swig_keyword_hider.hpp"
 
 namespace shared_model {
   namespace crypto {

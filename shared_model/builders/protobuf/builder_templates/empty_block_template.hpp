@@ -26,7 +26,7 @@ namespace shared_model {
     template <int S = 0,
               typename SV = validation::DefaultEmptyBlockValidator,
               typename BT = UnsignedWrapper<proto::EmptyBlock>>
-    class TemplateEmptyBlockBuilder {
+    class DEPRECATED TemplateEmptyBlockBuilder {
      private:
       template <int, typename, typename>
       friend class TemplateEmptyBlockBuilder;

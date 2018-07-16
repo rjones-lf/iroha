@@ -29,6 +29,20 @@ namespace iroha {
   namespace ametsuchi {
     class TemporaryWsvImpl : public TemporaryWsv {
      public:
+      struct SavepointWrapperImpl : public TemporaryWsv::SavepointWrapper {
+        SavepointWrapperImpl(const TemporaryWsvImpl &wsv,
+                             std::string savepoint_name);
+
+        void release() override;
+
+        ~SavepointWrapperImpl() override;
+
+       private:
+        std::shared_ptr<soci::session> sql_;
+        std::string savepoint_name_;
+        bool is_released_;
+      };
+
       explicit TemporaryWsvImpl(std::unique_ptr<soci::session> sql);
 
       expected::Result<void, validation::CommandError> apply(
@@ -37,10 +51,13 @@ namespace iroha {
               const shared_model::interface::Transaction &, WsvQuery &)>
               function) override;
 
+      std::unique_ptr<TemporaryWsv::SavepointWrapper> createSavepoint(
+          const std::string &name) override;
+
       ~TemporaryWsvImpl() override;
 
      private:
-      std::unique_ptr<soci::session> sql_;
+      std::shared_ptr<soci::session> sql_;
       std::shared_ptr<WsvQuery> wsv_;
       std::shared_ptr<WsvCommand> executor_;
       std::shared_ptr<CommandExecutor> command_executor_;

@@ -145,6 +145,8 @@ A named rule that gives the privilege to perform a command.
 Permission **cannot** be granted to an `account <#account>`__ directly,
 instead, an account has roles, which are the collection of permissions.
 
+`List of Iroha permissions <../maintenance/permissions.html>`_.
+
 Grantable Permission
 --------------------
 

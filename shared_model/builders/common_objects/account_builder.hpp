@@ -35,9 +35,10 @@ namespace shared_model {
      * to perform stateless validation on model fields
      */
     template <typename BuilderImpl, typename Validator>
-    class AccountBuilder : public CommonObjectBuilder<interface::Account,
-                                                      BuilderImpl,
-                                                      Validator> {
+    class DEPRECATED AccountBuilder
+        : public CommonObjectBuilder<interface::Account,
+                                     BuilderImpl,
+                                     Validator> {
      public:
       AccountBuilder accountId(
           const interface::types::AccountIdType &account_id) {

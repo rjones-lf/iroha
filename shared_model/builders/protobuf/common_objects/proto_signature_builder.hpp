@@ -29,7 +29,7 @@ namespace shared_model {
      * SignatureBuilder is used to construct Signature proto objects with
      * initialized protobuf implementation
      */
-    class SignatureBuilder {
+    class DEPRECATED SignatureBuilder {
      public:
       shared_model::proto::Signature build() {
         return shared_model::proto::Signature(
