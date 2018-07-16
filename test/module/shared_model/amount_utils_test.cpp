@@ -102,3 +102,23 @@ TEST_F(AmountTest, PlusOverflowsTest) {
         SUCCEED() << *e.error;
       });
 }
+
+/**
+ * @given two amounts
+ * @when tries to sum it up
+ * @then correct amount is given
+ */
+TEST_F(AmountTest, LeadingZeroPlusTest) {
+  shared_model::interface::Amount a("12.3"), b("03.21");
+
+  auto c = a + b;
+  c.match(
+      [](const iroha::expected::Value<
+          std::shared_ptr<shared_model::interface::Amount>> &c_value) {
+        ASSERT_EQ(c_value.value->intValue(), 1551);
+        ASSERT_EQ(c_value.value->precision(), 2);
+      },
+      [](const iroha::expected::Error<std::shared_ptr<std::string>> &e) {
+        FAIL() << *e.error;
+      });
+}

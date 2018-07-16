@@ -31,6 +31,9 @@ namespace shared_model {
               if (pos < str.size()) {
                 str.erase(str.begin() + pos);
               }
+              // remove leading zeroes
+              str.erase(0,
+                        std::min(str.find_first_not_of('0'), str.size() - 1));
               return boost::multiprecision::uint256_t(str);
             }
             return std::numeric_limits<boost::multiprecision::uint256_t>::min();
