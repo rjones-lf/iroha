@@ -178,9 +178,10 @@ namespace torii {
                   shared_model::crypto::DefaultHashProvider::makeHash(
                       last_tx_blob);
               auto sequence_error =
-                  "Stateless invalid tx in transaction sequence: " + error.error
-                  + ", hash of the first: " + first_tx_hash.hex()
-                  + ", hash of the last: " + last_tx_hash.hex();
+                  "Stateless invalid tx in transaction sequence, beginning "
+                  "with tx : "
+                  + first_tx_hash.hex() + " and ending with tx "
+                  + last_tx_hash.hex() + ". Error is: " + error.error;
 
               // set error response for each transaction in a sequence
               std::for_each(
