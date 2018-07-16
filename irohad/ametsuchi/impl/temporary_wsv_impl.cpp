@@ -29,14 +29,11 @@ namespace iroha {
         std::unique_ptr<pqxx::nontransaction> transaction)
         : connection_(std::move(connection)),
           transaction_(std::move(transaction)),
-          wsv_(std::make_unique<PostgresWsvQuery>(*transaction_)),
+          wsv_(std::make_shared<PostgresWsvQuery>(*transaction_)),
           executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
+          command_executor_(std::make_shared<PostgresCommandExecutor>(*transaction_)),
+          command_validator_(std::make_shared<CommandValidator>(wsv_)),
           log_(logger::log("TemporaryWSV")) {
-      auto query = std::make_shared<PostgresWsvQuery>(*transaction_);
-      auto command = std::make_shared<PostgresWsvCommand>(*transaction_);
-      auto command_executor = std::make_shared<PostgresCommandExecutor>(*transaction_);
-      command_executor_ = std::make_shared<iroha::CommandExecutor>(query, command, command_executor);
-      command_validator_ = std::make_shared<CommandValidator>(query);
       transaction_->exec("BEGIN;");
     }
 
@@ -69,8 +66,9 @@ namespace iroha {
         validation::CommandError cmd_error;
         for (size_t i = 0; i < commands.size(); ++i) {
           // in case of failed command, rollback and return
+          auto tmp = execute_command(commands[i]);
           auto cmd_is_valid =
-              execute_command(commands[i])
+              tmp
                   .match([](expected::Value<void> &) { return true; },
                          [i, &cmd_error](expected::Error<CommandError> &error) {
                            cmd_error = {error.error.command_name,

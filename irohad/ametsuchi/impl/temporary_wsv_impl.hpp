@@ -44,9 +44,9 @@ namespace iroha {
      private:
       std::unique_ptr<pqxx::lazyconnection> connection_;
       std::unique_ptr<pqxx::nontransaction> transaction_;
-      std::unique_ptr<WsvQuery> wsv_;
+      std::shared_ptr<WsvQuery> wsv_;
       std::unique_ptr<WsvCommand> executor_;
-      std::shared_ptr<iroha::CommandExecutor> command_executor_;
+      std::shared_ptr<CommandExecutor> command_executor_;
       std::shared_ptr<CommandValidator> command_validator_;
 
       logger::Logger log_;

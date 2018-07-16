@@ -6,6 +6,8 @@
 #ifndef IROHA_AMETSUCHI_COMMAND_EXECUTOR_HPP
 #define IROHA_AMETSUCHI_COMMAND_EXECUTOR_HPP
 
+#include <boost/format.hpp>
+
 #include "backend/protobuf/permissions.hpp"
 #include "common/result.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
@@ -36,12 +38,17 @@ namespace iroha {
   namespace ametsuchi {
 
     /**
-     * Error returned by command.
-     * It is a string which contains what action has failed (e.g, "failed to
-     * insert role"), and an error which was provided by underlying
-     * implementation (e.g, database exception info)
+     * Error for command execution or validation
+     * Contains command name, as well as an error message
      */
-    using Error = std::string;
+    struct CommandError {
+      std::string command_name;
+      std::string error_message;
+
+      std::string toString() const {
+        return (boost::format("%s: %s") % command_name % error_message).str();
+      }
+    };
 
     /**
      *  If command is successful, we assume changes are made,
@@ -49,7 +56,7 @@ namespace iroha {
      *  If something goes wrong, Result will contain Error
      *  with additional information
      */
-    using CommandResult = expected::Result<void, Error>;
+    using CommandResult = expected::Result<void, CommandError>;
 
     class CommandExecutor : public boost::static_visitor<CommandResult> {
      public:

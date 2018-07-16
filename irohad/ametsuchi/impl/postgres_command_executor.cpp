@@ -17,13 +17,12 @@ namespace iroha {
 
     void PostgresCommandExecutor::setCreatorAccountId(
         const shared_model::interface::types::AccountIdType
-        &creator_account_id) {
-        creator_account_id_ = creator_account_id;
+            &creator_account_id) {
+      creator_account_id_ = creator_account_id;
     }
 
     CommandResult PostgresCommandExecutor::operator()(
-        const shared_model::interface::AddAssetQuantity &command
-        ) {
+        const shared_model::interface::AddAssetQuantity &command) {
       auto &account_id = creator_account_id_;
       auto &asset_id = command.assetId();
       auto amount = command.amount().toStringRepr();
@@ -67,32 +66,15 @@ namespace iroha {
 
       auto result = execute_(query);
 
-      return result.match(
-          [](expected::Value<pqxx::result> &error_code) -> CommandResult {
-            int code = error_code.value[0].at("result").template as<int>();
-            if (code == 0) {
-              return {};
-            }
-            std::string error_msg;
-            switch (code) {
-              case 1:
-                error_msg = "Account does not exist";
-                break;
-              case 2:
-                error_msg = "Asset with given precision does not exist";
-                break;
-              case 3:
-                error_msg = "Summation overflows uint256.";
-                break;
-              default:
-                error_msg = "Unexpected error. Something went wrong!";
-                break;
-            }
-            return expected::makeError(error_msg);
+      std::vector<std::function<std::string()>> message_gen = {
+          [] { return std::string("Account does not exist"); },
+          [] {
+            return std::string("Asset with given precision does not exist");
           },
-          [](const auto &e) -> CommandResult {
-            return expected::makeError(e.error);
-          });
+          [] { return std::string("Summation overflows uint256"); },
+      };
+      return makeCommandResultByValue(
+          std::move(result), "AddAssetQuantity", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -110,12 +92,11 @@ namespace iroha {
                 % peer.pubkey().hex() % peer.address())
             .str();
       };
-      return makeCommandResult(std::move(result), message_gen);
+      return makeCommandResult(std::move(result), "AddPeer", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
-        const shared_model::interface::AddSignatory &command
-        ) {
+        const shared_model::interface::AddSignatory &command) {
       auto &account_id = command.accountId();
       auto &signatory = command.pubkey();
       auto pubkey = transaction_.quote(
@@ -144,41 +125,27 @@ namespace iroha {
                               .str();
 
       auto result = execute_(query);
-
-      return result.match(
-          [&signatory, &account_id](
-              expected::Value<pqxx::result> &error_code) -> CommandResult {
-            int code = error_code.value[0].at("result").template as<int>();
-            if (code == 0) {
-              return {};
-            }
-            std::string error_msg;
-            switch (code) {
-              case 1:
-                error_msg =
-                    (boost::format(
-                         "failed to insert account signatory, account id: "
-                         "'%s', signatory hex string: '%s")
-                     % account_id % signatory.hex())
-                        .str();
-                break;
-              case 2:
-                error_msg = (boost::format("failed to insert signatory, "
-                                           "signatory hex string: '%s'")
-                             % signatory.hex())
-                                .str();
-                break;
-            }
-            return expected::makeError(error_msg);
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return (boost::format(
+                        "failed to insert account signatory, account id: "
+                        "'%s', signatory hex string: '%s")
+                    % account_id % signatory.hex())
+                .str();
           },
-          [](const auto &e) -> CommandResult {
-            return expected::makeError(e.error);
-          });
+          [&] {
+            return (boost::format("failed to insert signatory, "
+                                  "signatory hex string: '%s'")
+                    % signatory.hex())
+                .str();
+          },
+      };
+      return makeCommandResultByValue(
+          std::move(result), "AddSignatory", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
-        const shared_model::interface::AppendRole &command
-        ) {
+        const shared_model::interface::AppendRole &command) {
       auto &account_id = command.accountId();
       auto &role_name = command.roleName();
       auto result =
@@ -192,7 +159,7 @@ namespace iroha {
                 % account_id % role_name)
             .str();
       };
-      return makeCommandResult(std::move(result), message_gen);
+      return makeCommandResult(std::move(result), "AppendRole", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -251,54 +218,37 @@ namespace iroha {
                            % account_id % account_id % pk % account_id)
                               .str();
       auto result = execute_(query);
-
-      return result.match(
-          [&](expected::Value<pqxx::result> &error_code) -> CommandResult {
-            int code = error_code.value[0].at("result").template as<int>();
-            if (code == 0) {
-              return {};
-            }
-            std::string error_msg;
-            switch (code) {
-              case 1:
-                error_msg = (boost::format("failed to insert account, "
-                                           "account id: '%s', "
-                                           "domain id: '%s', "
-                                           "quorum: '1', "
-                                           "json_data: {}")
-                             % account_id % domain_id)
-                                .str();
-                break;
-              case 2:
-                error_msg =
-                    (boost::format(
-                         "failed to insert account signatory, account id: "
-                         "'%s', signatory hex string: '%s")
-                     % account_id % pubkey.hex())
-                        .str();
-                break;
-              case 3:
-                error_msg =
-                    (boost::format(
-                         "failed to insert account role, account: '%s' "
-                         "with default domain role name for domain: '%s'")
-                     % account_id % domain_id)
-                        .str();
-                break;
-              default:
-                error_msg = "Unexpected error";
-                break;
-            }
-            return expected::makeError(error_msg);
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return (boost::format("failed to insert account, "
+                                  "account id: '%s', "
+                                  "domain id: '%s', "
+                                  "quorum: '1', "
+                                  "json_data: {}")
+                    % account_id % domain_id)
+                .str();
           },
-          [](const auto &e) -> CommandResult {
-            return expected::makeError(e.error);
-          });
+          [&] {
+            return (boost::format(
+                        "failed to insert account signatory, account id: "
+                        "'%s', signatory hex string: '%s")
+                    % account_id % pubkey.hex())
+                .str();
+          },
+          [&] {
+            return (boost::format(
+                        "failed to insert account role, account: '%s' "
+                        "with default domain role name for domain: '%s'")
+                    % account_id % domain_id)
+                .str();
+          },
+      };
+      return makeCommandResultByValue(
+          std::move(result), "CreateAccount", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
         const shared_model::interface::CreateAsset &command) {
-
       auto &asset_name = command.assetName();
       auto &domain_id = command.domainId();
       auto precision = command.precision();
@@ -317,7 +267,7 @@ namespace iroha {
             .str();
       };
 
-      return makeCommandResult(std::move(result), message_gen);
+      return makeCommandResult(std::move(result), "CreateAsset", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -335,7 +285,7 @@ namespace iroha {
                 % domain_id % default_role)
             .str();
       };
-      return makeCommandResult(std::move(result), message_gen);
+      return makeCommandResult(std::move(result), "CreateDomain", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -363,46 +313,29 @@ namespace iroha {
                               .str();
 
       auto result = execute_(query);
-
-      return result.match(
-          [&](expected::Value<pqxx::result> &error_code) -> CommandResult {
-            int code = error_code.value[0].at("result").template as<int>();
-            if (code == 0) {
-              return {};
-            }
-            std::string error_msg;
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
             // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
             const auto &str =
                 shared_model::proto::permissions::toString(permissions);
             const auto perm_debug_str =
                 std::accumulate(str.begin(), str.end(), std::string());
-            switch (code) {
-              case 1:
-                error_msg =
-                    (boost::format("failed to insert role permissions, role "
-                                   "id: '%s', permissions: [%s]")
-                     % role_id % perm_debug_str)
-                        .str();
-                break;
-              case 2:
-                error_msg =
-                    (boost::format("failed to insert role: '%s'") % role_id)
-                        .str();
-                break;
-              default:
-                error_msg = "Unexpected error";
-                break;
-            }
-            return expected::makeError(error_msg);
+            return (boost::format("failed to insert role permissions, role "
+                                      "id: '%s', permissions: [%s]")
+                % role_id % perm_debug_str)
+                .str();
           },
-          [](const auto &e) -> CommandResult {
-            return expected::makeError(e.error);
-          });
+          [&] {
+            return (boost::format("failed to insert role: '%s'") % role_id)
+                .str();
+          },
+      };
+      return makeCommandResultByValue(
+          std::move(result), "CreateRole", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
-        const shared_model::interface::DetachRole &command
-        ) {
+        const shared_model::interface::DetachRole &command) {
       auto &account_id = command.accountId();
       auto &role_name = command.roleName();
       auto result = execute_("DELETE FROM account_has_roles WHERE account_id="
@@ -416,14 +349,12 @@ namespace iroha {
             .str();
       };
 
-      return makeCommandResult(std::move(result), message_gen);
+      return makeCommandResult(std::move(result), "DetachRole", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
-        const shared_model::interface::GrantPermission &command
-        ) {
-      auto
-          &permittee_account_id = command.accountId();
+        const shared_model::interface::GrantPermission &command) {
+      auto &permittee_account_id = command.accountId();
       auto &account_id = creator_account_id_;
       auto permission = command.permissionName();
       const auto perm_str =
@@ -454,7 +385,8 @@ namespace iroha {
             .str();
       };
 
-      return makeCommandResult(std::move(result), message_gen);
+      return makeCommandResult(
+          std::move(result), "GrantPermission", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -489,63 +421,51 @@ namespace iroha {
                               .str();
 
       auto result = execute_(query);
-
-      return result.match(
-          [&](expected::Value<pqxx::result> &error_code) -> CommandResult {
-            int code = error_code.value[0].at("result").template as<int>();
-            if (code == 0) {
-              return {};
-            }
-            std::string error_msg;
-            switch (code) {
-              case 1:
-                error_msg =
-                    (boost::format(
-                         "failed to delete account signatory, account id: "
-                         "'%s', signatory hex string: '%s'")
-                     % account_id % pubkey.hex())
-                        .str();
-                break;
-              case 2:
-                error_msg = (boost::format("failed to delete signatory, "
-                                           "signatory hex string: '%s'")
-                             % pubkey.hex())
-                                .str();
-                break;
-              default:
-                error_msg = "Unexpected error";
-                break;
-            }
-            return expected::makeError(error_msg);
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return (boost::format(
+                "failed to delete account signatory, account id: "
+                    "'%s', signatory hex string: '%s'")
+                % account_id % pubkey.hex())
+                .str();
           },
-          [](const auto &e) -> CommandResult {
-            return expected::makeError(e.error);
-          });
+          [&] {
+            return (boost::format("failed to delete signatory, "
+                               "signatory hex string: '%s'")
+                % pubkey.hex())
+                .str();
+          },
+      };
+      return makeCommandResultByValue(
+          std::move(result), "RemoveSignatory", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
         const shared_model::interface::RevokePermission &command) {
-      auto
-          &permittee_account_id = command.accountId();
+      auto &permittee_account_id = command.accountId();
       auto &account_id = creator_account_id_;
       auto permission = command.permissionName();
-      const auto without_perm_str = shared_model::interface::GrantablePermissionSet()
-                                .set()
-                                .unset(permission)
-                                .toBitstring();
-      const auto with_perm_str = shared_model::interface::GrantablePermissionSet()
-          .set(permission)
-          .toBitstring();
+      const auto without_perm_str =
+          shared_model::interface::GrantablePermissionSet()
+              .set()
+              .unset(permission)
+              .toBitstring();
+      const auto with_perm_str =
+          shared_model::interface::GrantablePermissionSet()
+              .set(permission)
+              .toBitstring();
       auto query =
           (boost::format("UPDATE account_has_grantable_permissions as has_perm "
                          // SELECT will end up with a error, if the permission
                          // doesn't exists
                          "SET permission=(SELECT has_perm.permission & %3% "
                          "WHERE has_perm.permission & %4% = %4% AND "
-                         "has_perm.permittee_account_id=%1% AND has_perm.account_id=%2%) WHERE "
+                         "has_perm.permittee_account_id=%1% AND "
+                         "has_perm.account_id=%2%) WHERE "
                          "permittee_account_id=%1% AND account_id=%2%;")
            % transaction_.quote(permittee_account_id)
-           % transaction_.quote(account_id) % transaction_.quote(without_perm_str)
+           % transaction_.quote(account_id)
+           % transaction_.quote(without_perm_str)
            % transaction_.quote(with_perm_str))
               .str();
       auto result = execute_(query);
@@ -562,7 +482,8 @@ namespace iroha {
             .str();
       };
 
-      return makeCommandResult(std::move(result), message_gen);
+      return makeCommandResult(
+          std::move(result), "RevokePermission", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -576,10 +497,12 @@ namespace iroha {
       }
       auto result = execute_(
           "UPDATE account SET data = jsonb_set(CASE WHEN data ?"
-          + transaction_.quote(creator_account_id_) + " THEN data ELSE jsonb_set(data, "
-          + transaction_.quote("{" + creator_account_id_ + "}") + "," + transaction_.quote("{}")
-          + ") END," + transaction_.quote("{" + creator_account_id_ + ", " + key + "}") + ","
-          + transaction_.quote("\"" + value + "\"")
+          + transaction_.quote(creator_account_id_)
+          + " THEN data ELSE jsonb_set(data, "
+          + transaction_.quote("{" + creator_account_id_ + "}") + ","
+          + transaction_.quote("{}") + ") END,"
+          + transaction_.quote("{" + creator_account_id_ + ", " + key + "}")
+          + "," + transaction_.quote("\"" + value + "\"")
           + ") WHERE account_id=" + transaction_.quote(account_id) + ";");
 
       auto message_gen = [&] {
@@ -589,7 +512,8 @@ namespace iroha {
                 % account_id % creator_account_id_ % key % value)
             .str();
       };
-      return makeCommandResult(std::move(result), message_gen);
+      return makeCommandResult(
+          std::move(result), "SetAccountDetail", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -611,12 +535,11 @@ namespace iroha {
                 % account_id % quorum)
             .str();
       };
-      return makeCommandResult(std::move(result), message_gen);
+      return makeCommandResult(std::move(result), "SetQuorum", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
         const shared_model::interface::SubtractAssetQuantity &command) {
-
       auto &account_id = creator_account_id_;
       auto &asset_id = command.assetId();
       auto amount = command.amount().toStringRepr();
@@ -659,38 +582,23 @@ namespace iroha {
                               .str();
 
       auto result = execute_(query);
-
-      return result.match(
-          [](expected::Value<pqxx::result> &error_code) -> CommandResult {
-            int code = error_code.value[0].at("result").template as<int>();
-            if (code == 0) {
-              return {};
-            }
-            std::string error_msg;
-            switch (code) {
-              case 1:
-                error_msg = "Account does not exist";
-                break;
-              case 2:
-                error_msg = "Asset with given precision does not exist";
-                break;
-              case 3:
-                error_msg = "Subtracts more than have.";
-                break;
-              default:
-                error_msg = "Unexpected error. Something went wrong!";
-                break;
-            }
-            return expected::makeError(error_msg);
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return "Account does not exist";
           },
-          [](const auto &e) -> CommandResult {
-            return expected::makeError(e.error);
-          });
+          [&] {
+            return "Asset with given precision does not exist";
+          },
+          [&] {
+            return "Subtracts overdrafts account asset";
+          },
+      };
+      return makeCommandResultByValue(
+          std::move(result), "SubtractAssetQuantity", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
         const shared_model::interface::TransferAsset &command) {
-
       auto &src_account_id = command.srcAccountId();
       auto &dest_account_id = command.destAccountId();
       auto &asset_id = command.assetId();
@@ -763,39 +671,25 @@ namespace iroha {
               .str();
 
       auto result = execute_(query);
-
-      return result.match(
-          [](expected::Value<pqxx::result> &error_code) -> CommandResult {
-            int code = error_code.value[0].at("result").template as<int>();
-            if (code == 0) {
-              return {};
-            }
-            std::string error_msg;
-            switch (code) {
-              case 1:
-                error_msg = "Destanation account does not exist";
-                break;
-              case 2:
-                error_msg = "Source account does not exist";
-                break;
-              case 3:
-                error_msg = "Asset with given precision does not exist";
-                break;
-              case 4:
-                error_msg = "Transfer overdrafts source account asset";
-                break;
-              case 5:
-                error_msg = "Transfer overflows destanation account asset";
-                break;
-              default:
-                error_msg = "Unexpected error. Something went wrong!";
-                break;
-            }
-            return expected::makeError(error_msg);
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return "Destanation account does not exist";
           },
-          [](const auto &e) -> CommandResult {
-            return expected::makeError(e.error);
-          });
+          [&] {
+            return "Source account does not exist";
+          },
+          [&] {
+            return "Asset with given precision does not exist";
+          },
+          [&] {
+            return "Transfer overdrafts source account asset";
+          },
+          [&] {
+            return "Transfer overflows destanation account asset";
+          },
+      };
+      return makeCommandResultByValue(
+          std::move(result), "TransferAsset", message_gen);
     }
   }  // namespace ametsuchi
 }  // namespace iroha

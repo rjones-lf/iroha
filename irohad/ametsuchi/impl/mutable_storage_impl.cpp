@@ -38,13 +38,9 @@ namespace iroha {
           wsv_(std::make_unique<PostgresWsvQuery>(*transaction_)),
           executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
           block_index_(std::make_unique<PostgresBlockIndex>(*transaction_)),
+          command_executor_(std::make_shared<PostgresCommandExecutor>(*transaction_)),
           committed(false),
           log_(logger::log("MutableStorage")) {
-      auto query = std::make_shared<PostgresWsvQuery>(*transaction_);
-      auto command = std::make_shared<PostgresWsvCommand>(*transaction_);
-      auto command_executor = std::make_shared<PostgresCommandExecutor>(*transaction_);
-      command_executor_ =
-          std::make_shared<iroha::CommandExecutor>(iroha::CommandExecutor(query, command, command_executor));
       transaction_->exec("BEGIN;");
     }
 

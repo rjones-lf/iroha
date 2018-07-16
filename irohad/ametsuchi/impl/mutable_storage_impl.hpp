@@ -63,7 +63,7 @@ namespace iroha {
       std::unique_ptr<WsvQuery> wsv_;
       std::unique_ptr<WsvCommand> executor_;
       std::unique_ptr<BlockIndex> block_index_;
-      std::shared_ptr<iroha::CommandExecutor> command_executor_;
+      std::shared_ptr<CommandExecutor> command_executor_;
 
       bool committed;
 
