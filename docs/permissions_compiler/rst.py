@@ -161,10 +161,9 @@ def excerpt_boundaries(path):
 
 def excerpt(permission):
     """
-
-    :param permission:
-    :param example_description: list of strings
-    :return:
+    Renders source file listing
+    :param permission: name of permission to list, used as a part of filename
+    :return: rst lines
     """
     compile_time_path = [os.path.pardir, os.path.pardir, 'example', 'python', 'permissions', '{}.py'.format(permission)]
     path = os.path.join(*compile_time_path)
