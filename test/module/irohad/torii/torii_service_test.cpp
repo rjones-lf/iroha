@@ -509,9 +509,6 @@ TEST_F(ToriiServiceTest, ListOfTxs) {
         iroha::protocol::Transaction(shm_tx.getTransport());
   }
 
-  auto i = tx_list.transactions_size();
-  std::cerr << i;
-
   // send the txs
   client.ListTorii(tx_list);
 
