@@ -87,19 +87,22 @@ namespace shared_model {
 
     const types::SharedTxsCollectionType &TransactionSequence::transactions()
         const {
-      types::SharedTxsCollectionType result;
-      auto transactions_amount = 0u;
-      for (const auto &batch : batches_) {
-        transactions_amount += batch.transactions().size();
+      if (not transactions_) {
+        types::SharedTxsCollectionType result;
+        auto transactions_amount = 0u;
+        for (const auto &batch : batches_) {
+          transactions_amount += batch.transactions().size();
+        }
+        result.reserve(transactions_amount);
+        for (const auto &batch : batches_) {
+          auto transactions = batch.transactions();
+          std::copy(transactions.begin(),
+                    transactions.end(),
+                    std::back_inserter(result));
+        }
+        transactions_.emplace(std::move(result));
       }
-      result.reserve(transactions_amount);
-      for (const auto &batch : batches_) {
-        auto transactions = batch.transactions();
-        std::copy(transactions.begin(),
-                  transactions.end(),
-                  std::back_inserter(result));
-      }
-      return result;
+      return transactions_.value();
     }
 
     const types::BatchesCollectionType &TransactionSequence::batches() const {

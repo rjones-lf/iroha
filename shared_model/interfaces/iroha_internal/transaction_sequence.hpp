@@ -57,6 +57,7 @@ namespace shared_model {
       explicit TransactionSequence(const types::BatchesCollectionType &batches);
 
       types::BatchesCollectionType batches_;
+      mutable boost::optional<types::SharedTxsCollectionType> transactions_;
     };
 
   }  // namespace interface
