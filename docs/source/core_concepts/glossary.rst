@@ -295,10 +295,12 @@ Ordered batch preserves only the sequence of transactions applying to a ledger.
 All the transactions that able to pass stateful validation within a batch will be applied to a ledger.
 Validation failure of one transaction would NOT directly imply the failure of the whole batch.
 
-Multisignature transactions
+Multisignature Transactions
 ===========================
 
-Transaction which has the `quorum`_ greater than one is considered as multisig (also called mst). For its `stateful validity <#stateful-validation>`__ it is required to be confirmed by the signatories of creator account. These participants need to send the same transaction with their own signature.
+A transaction which has the `quorum`_ greater than one is considered as multisignature (also called mst).
+For its `stateful validity <#stateful-validation>`__ it is required to be confirmed by the signatories of the creator account.
+These participants need to send the same transaction with their signature.
 
 Validator
 =========
