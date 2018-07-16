@@ -36,19 +36,13 @@ namespace iroha {
     const std::string kAccountId = "account_id";
     const std::string kDomainId = "domain_id";
 
-    PostgresWsvQuery::PostgresWsvQuery(pqxx::nontransaction &transaction)
-        : transaction_(transaction),
-          log_(logger::log("PostgresWsvQuery")),
-          execute_{makeExecuteOptional(transaction_, log_)} {}
+    PostgresWsvQuery::PostgresWsvQuery(soci::session &sql)
+        : sql_(sql), log_(logger::log("PostgresWsvQuery")) {}
 
-    PostgresWsvQuery::PostgresWsvQuery(
-        std::unique_ptr<pqxx::lazyconnection> connection,
-        std::unique_ptr<pqxx::nontransaction> transaction)
-        : connection_ptr_(std::move(connection)),
-          transaction_ptr_(std::move(transaction)),
-          transaction_(*transaction_ptr_),
-          log_(logger::log("PostgresWsvQuery")),
-          execute_{makeExecuteOptional(transaction_, log_)} {}
+    PostgresWsvQuery::PostgresWsvQuery(std::unique_ptr<soci::session> sql_ptr)
+        : sql_ptr_(std::move(sql_ptr)),
+          sql_(*sql_ptr_),
+          log_(logger::log("PostgresWsvQuery")) {}
 
     bool PostgresWsvQuery::hasAccountGrantablePermission(
         const AccountIdType &permitee_account_id,
@@ -57,244 +51,251 @@ namespace iroha {
       const auto perm_str =
           shared_model::interface::GrantablePermissionSet({permission})
               .toBitstring();
-      return execute_(
-                 "SELECT * FROM account_has_grantable_permissions WHERE "
-                 "permittee_account_id = "
-                 + transaction_.quote(permitee_account_id)
-                 + " AND account_id = " + transaction_.quote(account_id)
-                 + " AND permission & " + transaction_.quote(perm_str) + " = "
-                 + transaction_.quote(perm_str) + ";")
-          | [](const auto &result) { return result.size() == 1; };
+      int size;
+      soci::statement st = sql_.prepare
+          << "SELECT count(*) FROM account_has_grantable_permissions WHERE "
+             "permittee_account_id = :permittee_account_id AND account_id = "
+             ":account_id "
+             " AND permission & :permission = :permission ";
+
+      st.exchange(soci::into(size));
+      st.exchange(soci::use(permitee_account_id, "permittee_account_id"));
+      st.exchange(soci::use(account_id, "account_id"));
+      st.exchange(soci::use(perm_str, "permission"));
+      st.define_and_bind();
+      st.execute(true);
+
+      return size == 1;
     }
 
     boost::optional<std::vector<RoleIdType>> PostgresWsvQuery::getAccountRoles(
         const AccountIdType &account_id) {
-      return execute_(
-                 "SELECT role_id FROM account_has_roles WHERE account_id = "
-                 + transaction_.quote(account_id) + ";")
-          | [&](const auto &result) {
-              return transform<std::string>(result, [](const auto &row) {
-                return row.at(kRoleId).c_str();
-              });
-            };
+      std::vector<RoleIdType> roles;
+      soci::indicator ind;
+      std::string row;
+      soci::statement st =
+          (sql_.prepare << "SELECT role_id FROM account_has_roles WHERE "
+                           "account_id = :account_id",
+           soci::into(row, ind),
+           soci::use(account_id));
+      st.execute();
+
+      processSoci(
+          st, ind, row, [&roles](std::string &row) { roles.push_back(row); });
+      return roles;
     }
 
     boost::optional<shared_model::interface::RolePermissionSet>
     PostgresWsvQuery::getRolePermissions(const RoleIdType &role_name) {
-      return execute_(
-                 "SELECT permission FROM role_has_permissions WHERE role_id = "
-                 + transaction_.quote(role_name) + ";")
-                 | [&](const auto &result)
-                 -> boost::optional<
-                     shared_model::interface::RolePermissionSet> {
-        // TODO(@l4l) 26/06/18 remove with IR-1480
-        if (result.empty()) {
-          return shared_model::interface::RolePermissionSet();
-        }
-        return shared_model::interface::RolePermissionSet(
-            std::string(result.at(0).at("permission").c_str()));
-      };
+      shared_model::interface::RolePermissionSet set;
+      soci::indicator ind;
+      std::string row;
+      soci::statement st =
+          (sql_.prepare << "SELECT permission FROM role_has_permissions WHERE "
+                           "role_id = :role_name",
+           soci::into(row, ind),
+           soci::use(role_name));
+      st.execute();
+
+      processSoci(st, ind, row, [&set](std::string &row) {
+        set = shared_model::interface::RolePermissionSet(row);
+      });
+      return set;
     }
 
     boost::optional<std::vector<RoleIdType>> PostgresWsvQuery::getRoles() {
-      return execute_("SELECT role_id FROM role;") | [&](const auto &result) {
-        return transform<std::string>(
-            result, [](const auto &row) { return row.at(kRoleId).c_str(); });
-      };
+      soci::rowset<RoleIdType> roles =
+          (sql_.prepare << "SELECT role_id FROM role");
+      std::vector<RoleIdType> result;
+      for (const auto &role : roles) {
+        result.push_back(role);
+      }
+      return boost::make_optional(result);
     }
 
     boost::optional<std::shared_ptr<shared_model::interface::Account>>
     PostgresWsvQuery::getAccount(const AccountIdType &account_id) {
-      return execute_("SELECT * FROM account WHERE account_id = "
-                      + transaction_.quote(account_id) + ";")
-                 | [&](const auto &result)
-                 -> boost::optional<
-                     std::shared_ptr<shared_model::interface::Account>> {
-        if (result.empty()) {
-          log_->info(kAccountNotFound, account_id);
-          return boost::none;
-        }
+      boost::optional<std::string> domain_id, data;
+      boost::optional<uint32_t> quorum;
+      soci::statement st = sql_.prepare
+          << "SELECT domain_id, quorum, data FROM account WHERE account_id = "
+             ":account_id";
 
-        return fromResult(makeAccount(result.at(0)));
-      };
+      st.exchange(soci::into(domain_id));
+      st.exchange(soci::into(quorum));
+      st.exchange(soci::into(data));
+      st.exchange(soci::use(account_id, "account_id"));
+
+      st.define_and_bind();
+      st.execute(true);
+
+      if (not domain_id) {
+        return boost::none;
+      }
+
+      return fromResult(
+          makeAccount(account_id, domain_id.get(), quorum.get(), data.get()));
     }
 
     boost::optional<std::string> PostgresWsvQuery::getAccountDetail(
         const std::string &account_id,
         const AccountDetailKeyType &key,
         const AccountIdType &writer) {
-      return [this, &account_id, &key, &writer]() {
-        if (key.empty() and writer.empty()) {
-          // retrieve all values for a specified account
-          return execute_("SELECT data#>>" + transaction_.quote("{}")
-                          + " FROM account WHERE account_id = "
-                          + transaction_.quote(account_id) + ";");
-        } else if (not key.empty() and not writer.empty()) {
-          // retrieve values for the account, under the key and added by the
-          // writer
-          return execute_(
-              "SELECT json_build_object("
-                + transaction_.quote(writer) + ", json_build_object("
-                  + transaction_.quote(key) + ", ("
-                    "SELECT data #>> '{\"" + writer + "\""
-                      + ", \"" + key + "\"}' "
-                    "FROM account "
-                    "WHERE account_id = " + transaction_.quote(account_id)
-                  + ")));");
-        } else if (not writer.empty()) {
-          // retrieve values added by the writer under all keys
-          return execute_(
-              "SELECT json_build_object("
-                + transaction_.quote(writer) + ", ("
-                  "SELECT data -> " + transaction_.quote(writer) + " "
-                  "FROM account "
-                  "WHERE account_id = " + transaction_.quote(account_id)
-                + "));");
-        } else {
-          // retrieve values from all writers under the key
-          return execute_(
-              "SELECT json_object_agg(key, value) AS json "
-              "FROM ("
-                "SELECT json_build_object("
-                  "kv.key, "
-                  "json_build_object("
-                    + transaction_.quote(key) + ", "
-                    "kv.value -> " + transaction_.quote(key) + ")) "
-                "FROM jsonb_each(("
-                  "SELECT data "
-                  "FROM account "
-                  "WHERE account_id = "
-                    + transaction_.quote(account_id) + ")) kv "
-              "WHERE kv.value ? " + transaction_.quote(key) + ") "
-              "AS jsons, json_each(json_build_object);");
-        }
-      }() | [&](const auto &result) -> boost::optional<std::string> {
-        if (result.empty()) {
-          // result will be empty iff account id is not found
-          log_->info(kAccountNotFound, account_id);
-          return boost::none;
-        }
-        std::string res;
-        auto row = result.at(0);
-        row.at(0) >> res;
+      boost::optional<std::string> detail;
 
-        // if res is empty, then there is no data for this account
-        if (res.empty()) {
-          return boost::none;
+      if (key.empty() and writer.empty()) {
+        // retrieve all values for a specified account
+        std::string empty_json = "{}";
+        sql_ << "SELECT data#>>:empty_json FROM account WHERE account_id = "
+                ":account_id;",
+            soci::into(detail), soci::use(empty_json), soci::use(account_id);
+      } else if (not key.empty() and not writer.empty()) {
+        // retrieve values for the account, under the key and added by the
+        // writer
+        std::string filled_json = "{\"" + writer + "\"" + ", \"" + key + "\"}";
+        sql_ << "SELECT json_build_object(:writer::text, "
+                "json_build_object(:key::text, (SELECT data #>> :filled_json "
+                "FROM account WHERE account_id = :account_id)));",
+            soci::into(detail), soci::use(writer), soci::use(key),
+            soci::use(filled_json), soci::use(account_id);
+      } else if (not writer.empty()) {
+        // retrieve values added by the writer under all keys
+        sql_ << "SELECT json_build_object(:writer::text, (SELECT data -> "
+                ":writer FROM account WHERE account_id = :account_id));",
+            soci::into(detail), soci::use(writer, "writer"),
+            soci::use(account_id, "account_id");
+      } else {
+        // retrieve values from all writers under the key
+        sql_ << "SELECT json_object_agg(key, value) AS json FROM (SELECT "
+                "json_build_object(kv.key, json_build_object(:key::text, "
+                "kv.value -> :key)) FROM jsonb_each((SELECT data FROM account "
+                "WHERE account_id = :account_id)) kv WHERE kv.value ? :key) AS "
+                "jsons, json_each(json_build_object);",
+            soci::into(detail), soci::use(key, "key"),
+            soci::use(account_id, "account_id");
+      }
+
+      return detail | [](auto &val) -> boost::optional<std::string> {
+        // if val is empty, then there is no data for this account
+        if (not val.empty()) {
+          return val;
         }
-        return res;
+        return boost::none;
       };
     }
 
     boost::optional<std::vector<PubkeyType>> PostgresWsvQuery::getSignatories(
         const AccountIdType &account_id) {
-      return execute_(
-                 "SELECT public_key FROM account_has_signatory WHERE "
-                 "account_id = "
-                 + transaction_.quote(account_id) + ";")
-          | [&](const auto &result) {
-              return transform<PubkeyType>(result, [&](const auto &row) {
-                pqxx::binarystring public_key_str(row.at(kPublicKey));
-                return PubkeyType(public_key_str.str());
-              });
-            };
+      std::vector<PubkeyType> pubkeys;
+      soci::indicator ind;
+      std::string row;
+      soci::statement st =
+          (sql_.prepare << "SELECT public_key FROM account_has_signatory WHERE "
+                           "account_id = :account_id",
+           soci::into(row, ind),
+           soci::use(account_id));
+      st.execute();
+
+      processSoci(st, ind, row, [&pubkeys](std::string &row) {
+        pubkeys.push_back(shared_model::crypto::PublicKey(
+            shared_model::crypto::Blob::fromHexString(row)));
+      });
+      return boost::make_optional(pubkeys);
     }
 
     boost::optional<std::shared_ptr<shared_model::interface::Asset>>
     PostgresWsvQuery::getAsset(const AssetIdType &asset_id) {
-      pqxx::result result;
-      return execute_("SELECT * FROM asset WHERE asset_id = "
-                      + transaction_.quote(asset_id) + ";")
-                 | [&](const auto &result)
-                 -> boost::optional<
-                     std::shared_ptr<shared_model::interface::Asset>> {
-        if (result.empty()) {
-          log_->info("Asset {} not found", asset_id);
-          return boost::none;
-        }
-        return fromResult(makeAsset(result.at(0)));
-      };
+      boost::optional<std::string> domain_id, data;
+      boost::optional<int32_t> precision;
+      soci::statement st = sql_.prepare
+          << "SELECT domain_id, precision FROM asset WHERE asset_id = "
+             ":account_id";
+      st.exchange(soci::into(domain_id));
+      st.exchange(soci::into(precision));
+      st.exchange(soci::use(asset_id));
+
+      st.define_and_bind();
+      st.execute(true);
+
+      if (not domain_id) {
+        return boost::none;
+      }
+
+      return fromResult(makeAsset(asset_id, domain_id.get(), precision.get()));
     }
 
     boost::optional<
         std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>>
     PostgresWsvQuery::getAccountAssets(const AccountIdType &account_id) {
-      return execute_("SELECT * FROM account_has_asset WHERE account_id = "
-                      + transaction_.quote(account_id) + ";")
-                 | [&](const auto &result)
-                 -> boost::optional<std::vector<
-                     std::shared_ptr<shared_model::interface::AccountAsset>>> {
-        auto results = transform<shared_model::builder::BuilderResult<
-            shared_model::interface::AccountAsset>>(result, makeAccountAsset);
-        std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
-            assets;
-        for (auto &r : results) {
-          r.match(
-              [&](expected::Value<
-                  std::shared_ptr<shared_model::interface::AccountAsset>> &v) {
-                assets.push_back(v.value);
-              },
-              [&](expected::Error<std::shared_ptr<std::string>> &e) {
-                log_->info(*e.error);
-              });
-        }
-        return assets;
-      };
+      using T = boost::tuple<std::string, std::string, std::string>;
+      soci::rowset<T> st = (sql_.prepare << "SELECT * FROM account_has_asset "
+                                            "WHERE account_id = :account_id",
+                            soci::use(account_id));
+      std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
+          assets;
+      for (auto &t : st) {
+        fromResult(makeAccountAsset(account_id, t.get<1>(), t.get<2>())) |
+            [&assets](const auto &asset) { assets.push_back(asset); };
+      }
+
+      return boost::make_optional(assets);
     }
+
     boost::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
     PostgresWsvQuery::getAccountAsset(const AccountIdType &account_id,
                                       const AssetIdType &asset_id) {
-      return execute_("SELECT * FROM account_has_asset WHERE account_id = "
-                      + transaction_.quote(account_id)
-                      + " AND asset_id = " + transaction_.quote(asset_id) + ";")
-                 | [&](const auto &result)
-                 -> boost::optional<
-                     std::shared_ptr<shared_model::interface::AccountAsset>> {
-        if (result.empty()) {
-          log_->info("Account {} does not have asset {}", account_id, asset_id);
-          return boost::none;
-        }
+      boost::optional<std::string> amount;
+      soci::statement st = sql_.prepare
+          << "SELECT amount FROM account_has_asset WHERE account_id = "
+             ":account_id AND asset_id = :asset_id";
+      st.exchange(soci::into(amount));
+      st.exchange(soci::use(account_id));
+      st.exchange(soci::use(asset_id));
+      st.define_and_bind();
+      st.execute(true);
 
-        return fromResult(makeAccountAsset(result.at(0)));
-      };
+      if (not amount) {
+        return boost::none;
+      }
+
+      return fromResult(makeAccountAsset(account_id, asset_id, amount.get()));
     }
 
     boost::optional<std::shared_ptr<shared_model::interface::Domain>>
     PostgresWsvQuery::getDomain(const DomainIdType &domain_id) {
-      return execute_("SELECT * FROM domain WHERE domain_id = "
-                      + transaction_.quote(domain_id) + ";")
-                 | [&](const auto &result)
-                 -> boost::optional<
-                     std::shared_ptr<shared_model::interface::Domain>> {
-        if (result.empty()) {
-          log_->info("Domain {} not found", domain_id);
-          return boost::none;
-        }
-        return fromResult(makeDomain(result.at(0)));
-      };
+      boost::optional<std::string> role;
+      soci::statement st = sql_.prepare
+          << "SELECT default_role FROM domain WHERE domain_id = :id LIMIT 1";
+      st.exchange(soci::into(role));
+      st.exchange(soci::use(domain_id));
+      st.define_and_bind();
+      st.execute(true);
+
+      if (not role) {
+        return boost::none;
+      }
+
+      return fromResult(makeDomain(domain_id, role.get()));
     }
 
     boost::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>>
     PostgresWsvQuery::getPeers() {
-      pqxx::result result;
-      return execute_("SELECT * FROM peer;") | [&](const auto &result)
-                 -> boost::optional<std::vector<
-                     std::shared_ptr<shared_model::interface::Peer>>> {
-        auto results = transform<shared_model::builder::BuilderResult<
-            shared_model::interface::Peer>>(result, makePeer);
-        std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
-        for (auto &r : results) {
-          r.match(
-              [&](expected::Value<
-                  std::shared_ptr<shared_model::interface::Peer>> &v) {
-                peers.push_back(v.value);
-              },
-              [&](expected::Error<std::shared_ptr<std::string>> &e) {
-                log_->info(*e.error);
-              });
-        }
-        return peers;
-      };
+      soci::rowset<soci::row> rows =
+          (sql_.prepare << "SELECT public_key, address FROM peer");
+      std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
+
+      auto results = transform<
+          shared_model::builder::BuilderResult<shared_model::interface::Peer>>(
+          rows, makePeer);
+      for (auto &r : results) {
+        r.match(
+            [&](expected::Value<std::shared_ptr<shared_model::interface::Peer>>
+                    &v) { peers.push_back(v.value); },
+            [&](expected::Error<std::shared_ptr<std::string>> &e) {
+              log_->info(*e.error);
+            });
+      }
+      return peers;
     }
   }  // namespace ametsuchi
 }  // namespace iroha

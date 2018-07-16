@@ -42,7 +42,8 @@ using namespace iroha::ametsuchi;
 using namespace iroha::torii;
 
 using namespace std::chrono_literals;
-constexpr std::chrono::milliseconds proposal_delay = 10s;
+constexpr std::chrono::milliseconds initial_timeout = 1s;
+constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
 
 using iroha::Commit;
 
@@ -114,7 +115,7 @@ class ToriiServiceTest : public testing::Test {
     //----------- Server run ----------------
     runner
         ->append(std::make_unique<torii::CommandService>(
-            tx_processor, storage, proposal_delay))
+            tx_processor, storage, initial_timeout, nonfinal_timeout))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {

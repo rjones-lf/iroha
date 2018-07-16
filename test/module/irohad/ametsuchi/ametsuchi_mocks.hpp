@@ -39,11 +39,10 @@ namespace iroha {
       MOCK_METHOD1(getAccountRoles,
                    boost::optional<std::vector<std::string>>(
                        const std::string &account_id));
-      MOCK_METHOD3(
-          getAccountDetail,
-          boost::optional<std::string>(const std::string &account_id,
-                                       const std::string &key,
-                                       const std::string &writer));
+      MOCK_METHOD3(getAccountDetail,
+                   boost::optional<std::string>(const std::string &account_id,
+                                                const std::string &key,
+                                                const std::string &writer));
       MOCK_METHOD1(getRolePermissions,
                    boost::optional<shared_model::interface::RolePermissionSet>(
                        const std::string &role_name));
@@ -188,6 +187,24 @@ namespace iroha {
       MOCK_METHOD0(
           createTemporaryWsv,
           expected::Result<std::unique_ptr<TemporaryWsv>, std::string>(void));
+    };
+
+    class MockTemporaryWsv : public TemporaryWsv {
+     public:
+      MOCK_METHOD2(
+          apply,
+          expected::Result<void, validation::CommandError>(
+              const shared_model::interface::Transaction &,
+              std::function<expected::Result<void, validation::CommandError>(
+                  const shared_model::interface::Transaction &, WsvQuery &)>));
+      MOCK_METHOD1(
+          createSavepoint,
+          std::unique_ptr<TemporaryWsv::SavepointWrapper>(const std::string &));
+    };
+
+    class MockTemporaryWsvSavepointWrapper
+        : public TemporaryWsv::SavepointWrapper {
+      MOCK_METHOD0(release, void(void));
     };
 
     class MockMutableStorage : public MutableStorage {

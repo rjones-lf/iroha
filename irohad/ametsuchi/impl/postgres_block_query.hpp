@@ -19,8 +19,6 @@
 #define IROHA_POSTGRES_FLAT_BLOCK_QUERY_HPP
 
 #include <boost/optional.hpp>
-#include <pqxx/connection>
-#include <pqxx/nontransaction>
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
@@ -37,11 +35,10 @@ namespace iroha {
      */
     class PostgresBlockQuery : public BlockQuery {
      public:
-      PostgresBlockQuery(pqxx::nontransaction &transaction_,
-                         KeyValueStorage &file_store);
-      PostgresBlockQuery(std::unique_ptr<pqxx::lazyconnection> connection,
-                         std::unique_ptr<pqxx::nontransaction> transaction,
-                         KeyValueStorage &file_store);
+      explicit PostgresBlockQuery(soci::session &sql,
+                                  KeyValueStorage &file_store);
+      explicit PostgresBlockQuery(std::unique_ptr<soci::session> sql_ptr,
+                                  KeyValueStorage &file_store);
 
       rxcpp::observable<wTransaction> getAccountTransactions(
           const shared_model::interface::types::AccountIdType &account_id)
@@ -96,17 +93,14 @@ namespace iroha {
        * @param block_id
        * @return
        */
-      std::function<void(pqxx::result &result)> callback(
+      std::function<void(std::vector<std::string> &result)> callback(
           const rxcpp::subscriber<wTransaction> &s, uint64_t block_id);
 
-      std::unique_ptr<pqxx::lazyconnection> connection_ptr_;
-      std::unique_ptr<pqxx::nontransaction> transaction_ptr_;
+      std::unique_ptr<soci::session> sql_ptr_;
+      soci::session &sql_;
 
       KeyValueStorage &block_store_;
-      pqxx::nontransaction &transaction_;
       logger::Logger log_;
-      using ExecuteType = decltype(makeExecuteOptional(transaction_, log_));
-      ExecuteType execute_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha
