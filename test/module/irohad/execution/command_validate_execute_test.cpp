@@ -258,7 +258,7 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoAccount) {
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
 
-  ASSERT_TRUE(err(validate(command)));
+  ASSERT_TRUE(val(validate(command)));
 }
 
 /**
@@ -279,7 +279,7 @@ TEST_F(AddAssetQuantityTest, InvalidWhenNoAsset) {
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
 
-  ASSERT_TRUE(err(validate(command)));
+  ASSERT_TRUE(val(validate(command)));
 }
 
 /**
@@ -299,7 +299,7 @@ TEST_F(AddAssetQuantityTest, InvalidWhenAssetAdditionFails) {
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
 
-  ASSERT_TRUE(err(validate(command)));
+  ASSERT_TRUE(val(validate(command)));
 }
 
 class SubtractAssetQuantityTest : public CommandValidateExecuteTest {
@@ -439,7 +439,7 @@ TEST_F(AddSignatoryTest, InvalidWhenSameKey) {
           kAdminId, add_signatory->accountId(), Grantable::kAddMySignatory))
       .WillOnce(Return(true));
 
-  ASSERT_TRUE(err(validate(command)));
+  ASSERT_TRUE(val(validate(command)));
 }
 
 class CreateAccountTest : public CommandValidateExecuteTest {
@@ -503,7 +503,7 @@ TEST_F(CreateAccountTest, InvalidWhenNoDomain) {
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
 
-  ASSERT_TRUE(err(validate(command)));
+  ASSERT_TRUE(val(validate(command)));
 }
 
 class CreateAssetTest : public CommandValidateExecuteTest {
@@ -907,7 +907,7 @@ TEST_F(SetQuorumTest, InvalidWhenNoAccountButPassedPermissions) {
   EXPECT_CALL(*wsv_query, getSignatories(creator_set_quorum->accountId()))
       .WillOnce(Return(account_pubkeys));
 
-  ASSERT_TRUE(err(validate(creator_command)));
+  ASSERT_TRUE(val(validate(creator_command)));
 }
 
 /**

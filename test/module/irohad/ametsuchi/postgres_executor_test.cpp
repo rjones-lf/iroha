@@ -3,10 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "framework/result_fixture.hpp"
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
-
+#include "framework/result_fixture.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "module/shared_model/builders/protobuf/test_account_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_asset_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_domain_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_peer_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -15,7 +20,7 @@ namespace iroha {
 
     class CommandExecutorTest : public AmetsuchiTest {
      public:
-      WsvQueryCommandTest() {
+      CommandExecutorTest() {
         domain = clone(
             TestDomainBuilder().domainId("domain").defaultRole(role).build());
 
@@ -29,6 +34,8 @@ namespace iroha {
             shared_model::interface::permissions::Role::kAddMySignatory);
         grantable_permission =
             shared_model::interface::permissions::Grantable::kAddMySignatory;
+        pubkey = std::make_unique<shared_model::interface::types::PubkeyType>(
+            std::string('1', 32));
       }
 
       void SetUp() override {
@@ -49,9 +56,24 @@ namespace iroha {
       }
 
       CommandResult execute(
-          const std::unique_ptr<shared_model::interface::Command> &command) {
-        executor->setCreatorAccountId(creator->accountId());
+          const std::unique_ptr<shared_model::interface::Command> &command,
+          const shared_model::interface::types::AccountIdType &creator =
+              "id@domain") {
+        executor->setCreatorAccountId(creator);
         return boost::apply_visitor(*executor, command->get());
+      }
+
+      // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework function with
+      // CommandBuilder
+      /**
+       * Hepler function to build command and wrap it into
+       * std::unique_ptr<>
+       * @param builder command builder
+       * @return command
+       */
+      std::unique_ptr<shared_model::interface::Command> buildCommand(
+          const TestTransactionBuilder &builder) {
+        return clone(builder.build().commands().front());
       }
 
       std::string role = "role";
@@ -59,25 +81,29 @@ namespace iroha {
       shared_model::interface::permissions::Grantable grantable_permission;
       std::unique_ptr<shared_model::interface::Account> account;
       std::unique_ptr<shared_model::interface::Domain> domain;
+      std::unique_ptr<shared_model::interface::types::PubkeyType> pubkey;
 
       std::unique_ptr<pqxx::lazyconnection> postgres_connection;
       std::unique_ptr<pqxx::nontransaction> wsv_transaction;
+
+      std::unique_ptr<shared_model::interface::Command> command;
 
       std::unique_ptr<WsvQuery> query;
       std::unique_ptr<CommandExecutor> executor;
     };
 
-    class AddAccountAssetTest : public WsvQueryCommandTest {
+    class AddAccountAssetTest : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
+        CommandExecutorTest::SetUp();
 
-        iroha::protocol::CreateRole create_role;
-        create_role.set_role_name(role);
-
-        ASSERT_TRUE(val(command->insertRole(role)));
-        ASSERT_TRUE(val(command->insertDomain(*domain)));
-        ASSERT_TRUE(val(command->insertAccount(*account)));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole(role, role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createDomain(domain->domainId(), role)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                "id", domain->domainId(), *pubkey)))));
       }
       /**
        * Add default asset and check that it is done
@@ -89,7 +115,9 @@ namespace iroha {
                                .precision(1)
                                .build());
 
-        ASSERT_TRUE(val(command->insertAsset(*asset)));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAsset(
+                "coin", domain->domainId(), 1)))));
       }
 
       shared_model::interface::types::AssetIdType asset_id =
@@ -104,16 +132,20 @@ namespace iroha {
     TEST_F(AddAccountAssetTest, ValidAddAccountAssetTest) {
       addAsset();
       ASSERT_TRUE(val(
-          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())))));
       auto account_asset =
           query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ("1", account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
       ASSERT_TRUE(val(
-          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())))));
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ("2", account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ("2.0", account_asset.get()->balance().toStringRepr());
     }
 
     /**
@@ -122,8 +154,10 @@ namespace iroha {
      * @then account asset fails to be added
      */
     TEST_F(AddAccountAssetTest, AddAccountAssetTestInvalidAsset) {
-      ASSERT_FALSE(val(
-          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
+      ASSERT_TRUE(err(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())))));
     }
 
     /**
@@ -133,19 +167,11 @@ namespace iroha {
      */
     TEST_F(AddAccountAssetTest, AddAccountAssetTestInvalidAccount) {
       addAsset();
-      ASSERT_FALSE(
-          val(executor->addAssetQuantity("some@domain", asset_id, "1", 1)));
-    }
-
-    /**
-     * @given  command
-     * @when trying to add account asset with wrong precision
-     * @then account asset fails to added
-     */
-    TEST_F(AddAccountAssetTest, AddAccountAssetTestInvalidPrecision) {
-      addAsset();
-      ASSERT_FALSE(val(
-          executor->addAssetQuantity(account->accountId(), asset_id, "1", 5)));
+      ASSERT_TRUE(
+          err(execute(buildCommand(TestTransactionBuilder()
+                                       .addAssetQuantity(asset_id, "1.0")
+                                       .creatorAccountId("some@domain")),
+                      "some@domain")));
     }
 
     /**
@@ -159,16 +185,20 @@ namespace iroha {
           "7060"
           "2495.0";  // 2**252 - 1
       addAsset();
-      ASSERT_TRUE(val(executor->addAssetQuantity(
-          account->accountId(), asset_id, uint256_halfmax, 1)));
-      ASSERT_FALSE(val(executor->addAssetQuantity(
-          account->accountId(), asset_id, uint256_halfmax, 1)));
+      ASSERT_TRUE(val(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, uint256_halfmax)
+                                   .creatorAccountId(account->accountId())))));
+      ASSERT_TRUE(err(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, uint256_halfmax)
+                                   .creatorAccountId(account->accountId())))));
     }
 
-    class AddPeer : public WsvQueryCommandTest {
+    class AddPeer : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
+        CommandExecutorTest::SetUp();
         peer = clone(TestPeerBuilder().build());
       }
       std::unique_ptr<shared_model::interface::Peer> peer;
@@ -180,20 +210,25 @@ namespace iroha {
      * @then peer is successfully added
      */
     TEST_F(AddPeer, ValidAddPeerTest) {
-      ASSERT_TRUE(val(executor->addPeer(*peer)));
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder().addPeer(peer->address(), peer->pubkey())))));
     }
 
-    class AddSignatory : public WsvQueryCommandTest {
+    class AddSignatory : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
-        pubkey = std::make_unique<shared_model::interface::types::PubkeyType>(
-            std::string('1', 32));
-        ASSERT_TRUE(val(command->insertRole(role)));
-        ASSERT_TRUE(val(command->insertDomain(*domain)));
-        ASSERT_TRUE(val(command->insertAccount(*account)));
+        CommandExecutorTest::SetUp();
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole(role, role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createDomain(domain->domainId(), role)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                "id",
+                domain->domainId(),
+                shared_model::interface::types::PubkeyType(
+                    std::string('5', 32)))))));
       }
-      std::unique_ptr<shared_model::interface::types::PubkeyType> pubkey;
     };
 
     /**
@@ -202,20 +237,28 @@ namespace iroha {
      * @then signatory is successfully added
      */
     TEST_F(AddSignatory, ValidAddSignatoryTest) {
-      ASSERT_TRUE(val(executor->addSignatory(account->accountId(), *pubkey)));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+              account->accountId(), *pubkey)))));
       auto signatories = query->getSignatories(account->accountId());
       ASSERT_TRUE(signatories);
       ASSERT_TRUE(std::find(signatories->begin(), signatories->end(), *pubkey)
                   != signatories->end());
     }
 
-    class AppendRole : public WsvQueryCommandTest {
+    class AppendRole : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
-        ASSERT_TRUE(val(command->insertRole(role)));
-        ASSERT_TRUE(val(command->insertDomain(*domain)));
-        ASSERT_TRUE(val(command->insertAccount(*account)));
+        CommandExecutorTest::SetUp();
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole(role, role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole("role2", role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createDomain(domain->domainId(), role)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                "id", domain->domainId(), *pubkey)))));
       }
     };
 
@@ -225,17 +268,18 @@ namespace iroha {
      * @then role is successfully appended
      */
     TEST_F(AppendRole, ValidAppendRoleTest) {
-      ASSERT_TRUE(val(executor->appendRole(account->accountId(), role)));
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().appendRole(
+          account->accountId(), "role2")))));
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
-      ASSERT_TRUE(std::find(roles->begin(), roles->end(), role)
+      ASSERT_TRUE(std::find(roles->begin(), roles->end(), "role2")
                   != roles->end());
     }
 
-    class CreateAccount : public WsvQueryCommandTest {
+    class CreateAccount : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
+        CommandExecutorTest::SetUp();
         account = clone(TestAccountBuilder()
                             .domainId(domain->domainId())
                             .accountId("id@" + domain->domainId())
@@ -251,10 +295,9 @@ namespace iroha {
      * @then account is not created
      */
     TEST_F(CreateAccount, InvalidCreateAccountNoDomainTest) {
-      ASSERT_TRUE(err(executor->createAccount(
-          "id",
-          domain->domainId(),
-          shared_model::interface::types::PubkeyType(std::string('1', 32)))));
+      ASSERT_TRUE(
+          err(execute(buildCommand(TestTransactionBuilder().createAccount(
+              "id", domain->domainId(), *pubkey)))));
     }
 
     /**
@@ -263,22 +306,24 @@ namespace iroha {
      * @then account is created
      */
     TEST_F(CreateAccount, ValidCreateAccountWithDomainTest) {
-      ASSERT_TRUE(val(command->insertRole(role)));
-      ASSERT_TRUE(val(command->insertDomain(*domain)));
-      ASSERT_TRUE(val(executor->createAccount(
-          "id",
-          domain->domainId(),
-          shared_model::interface::types::PubkeyType(std::string('1', 32)))));
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder().createRole(role, role_permissions)))));
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder().createDomain(domain->domainId(), role)))));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().createAccount(
+              "id", domain->domainId(), *pubkey)))));
       auto acc = query->getAccount(account->accountId());
       ASSERT_TRUE(acc);
       ASSERT_EQ(*account.get(), *acc.get());
     }
 
-    class CreateAsset : public WsvQueryCommandTest {
+    class CreateAsset : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
+        CommandExecutorTest::SetUp();
       }
+      shared_model::interface::types::AssetIdType asset_name = "coin";
       shared_model::interface::types::AssetIdType asset_id =
           "coin#" + domain->domainId();
     };
@@ -289,7 +334,8 @@ namespace iroha {
      * @then asset is not created
      */
     TEST_F(CreateAsset, InvalidCreateAssetNoDomainTest) {
-      ASSERT_TRUE(err(executor->createAsset("coin", domain->domainId(), 1)));
+      ASSERT_TRUE(err(execute(buildCommand(TestTransactionBuilder().createAsset(
+          asset_name, domain->domainId(), 1)))));
     }
 
     /**
@@ -298,23 +344,26 @@ namespace iroha {
      * @then asset is created
      */
     TEST_F(CreateAsset, ValidCreateAssetWithDomainTest) {
-      ASSERT_TRUE(val(command->insertRole(role)));
-      ASSERT_TRUE(val(command->insertDomain(*domain)));
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder().createRole(role, role_permissions)))));
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder().createDomain(domain->domainId(), role)))));
       auto asset = clone(TestAccountAssetBuilder()
                              .domainId(domain->domainId())
                              .assetId(asset_id)
                              .precision(1)
                              .build());
-      ASSERT_TRUE(val(executor->createAsset("coin", domain->domainId(), 1)));
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createAsset(
+          "coin", domain->domainId(), 1)))));
       auto ass = query->getAsset(asset->assetId());
       ASSERT_TRUE(ass);
       ASSERT_EQ(*asset.get(), *ass.get());
     }
 
-    class CreateDomain : public WsvQueryCommandTest {
+    class CreateDomain : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
+        CommandExecutorTest::SetUp();
       }
     };
 
@@ -324,7 +373,8 @@ namespace iroha {
      * @then domain is not created
      */
     TEST_F(CreateDomain, InvalidCreateDomainWhenNoRoleTest) {
-      ASSERT_TRUE(err(executor->createDomain(account->accountId(), role)));
+      ASSERT_TRUE(err(execute(buildCommand(
+          TestTransactionBuilder().createDomain(domain->domainId(), role)))));
     }
 
     /**
@@ -333,17 +383,19 @@ namespace iroha {
      * @then domain is not created
      */
     TEST_F(CreateDomain, ValidCreateDomainTest) {
-      ASSERT_TRUE(val(command->insertRole(role)));
-      ASSERT_TRUE(val(executor->createDomain(domain->domainId(), role)));
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder().createRole(role, role_permissions)))));
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder().createDomain(domain->domainId(), role)))));
       auto dom = query->getDomain(domain->domainId());
       ASSERT_TRUE(dom);
       ASSERT_EQ(*dom.get(), *domain.get());
     }
 
-    class CreateRole : public WsvQueryCommandTest {
+    class CreateRole : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
+        CommandExecutorTest::SetUp();
       }
     };
 
@@ -353,27 +405,29 @@ namespace iroha {
      * @then role is created
      */
     TEST_F(CreateRole, ValidCreateRoleTest) {
-      ASSERT_TRUE(val(executor->createRole(
-          role, shared_model::interface::RolePermissionSet())));
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder().createRole(role, role_permissions)))));
       auto rl = query->getRolePermissions(role);
       ASSERT_TRUE(rl);
-      ASSERT_EQ(rl.get(), shared_model::interface::RolePermissionSet());
+      ASSERT_EQ(rl.get(), role_permissions);
     }
 
-    class DetachRole : public WsvQueryCommandTest {
+    class DetachRole : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
-        ASSERT_TRUE(val(executor->createRole(
-            role, shared_model::interface::RolePermissionSet())));
-        ASSERT_TRUE(val(executor->createRole(
-            "role2", shared_model::interface::RolePermissionSet())));
-        ASSERT_TRUE(val(executor->createDomain(domain->domainId(), "role2")));
-        ASSERT_TRUE(val(executor->createAccount(
-            "id",
-            domain->domainId(),
-            shared_model::interface::types::PubkeyType(std::string('1', 32)))));
-        ASSERT_TRUE(val(executor->appendRole(account->accountId(), role)));
+        CommandExecutorTest::SetUp();
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole(role, role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole("role2", role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createDomain(domain->domainId(), role)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                "id", domain->domainId(), *pubkey)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().appendRole(
+                account->accountId(), "role2")))));
       }
     };
 
@@ -383,26 +437,27 @@ namespace iroha {
      * @then role is detached
      */
     TEST_F(DetachRole, ValidDetachRoleTest) {
-      ASSERT_TRUE(val(executor->detachRole(account->accountId(), role)));
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().detachRole(
+          account->accountId(), "role2")))));
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
-      ASSERT_TRUE(std::find(roles->begin(), roles->end(), role)
+      ASSERT_TRUE(std::find(roles->begin(), roles->end(), "role2")
                   == roles->end());
     }
 
-    class GrantPermission : public WsvQueryCommandTest {
+    class GrantPermission : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
-        ASSERT_TRUE(val(executor->createRole(
-            role, shared_model::interface::RolePermissionSet())));
-        ASSERT_TRUE(val(executor->createRole(
-            "role2", shared_model::interface::RolePermissionSet())));
-        ASSERT_TRUE(val(executor->createDomain(domain->domainId(), role)));
-        ASSERT_TRUE(val(executor->createAccount(
-            "id",
-            domain->domainId(),
-            shared_model::interface::types::PubkeyType(std::string('1', 32)))));
+        CommandExecutorTest::SetUp();
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole(role, role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole("role2", role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createDomain(domain->domainId(), role)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                "id", domain->domainId(), *pubkey)))));
       }
     };
 
@@ -413,27 +468,33 @@ namespace iroha {
      */
     TEST_F(GrantPermission, ValidGrantPermissionTest) {
       auto perm = shared_model::interface::permissions::Grantable::kSetMyQuorum;
-      ASSERT_TRUE(val(executor->grantPermission(
-          account->accountId(), account->accountId(), perm)));
+      ASSERT_TRUE(val(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .grantPermission(account->accountId(), perm)
+                                   .creatorAccountId(account->accountId())))));
       auto has_perm = query->hasAccountGrantablePermission(
           account->accountId(), account->accountId(), perm);
       ASSERT_TRUE(has_perm);
     }
 
-    class RemoveSignatory : public WsvQueryCommandTest {
+    class RemoveSignatory : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
+        CommandExecutorTest::SetUp();
         pubkey = std::make_unique<shared_model::interface::types::PubkeyType>(
             std::string('1', 32));
-        ASSERT_TRUE(val(executor->createRole(
-            role, shared_model::interface::RolePermissionSet())));
-        ASSERT_TRUE(val(executor->createDomain(domain->domainId(), role)));
-        ASSERT_TRUE(val(executor->createAccount(
-            "id",
-            domain->domainId(),
-            shared_model::interface::types::PubkeyType(std::string('2', 32)))));
-        ASSERT_TRUE(val(executor->addSignatory(account->accountId(), *pubkey)));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole(role, role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createDomain(domain->domainId(), role)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                "id", domain->domainId(), *pubkey)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+                account->accountId(),
+                shared_model::interface::types::PubkeyType(
+                    std::string('5', 32)))))));
       }
       std::unique_ptr<shared_model::interface::types::PubkeyType> pubkey;
     };
@@ -445,26 +506,29 @@ namespace iroha {
      */
     TEST_F(RemoveSignatory, ValidRemoveSignatoryTest) {
       ASSERT_TRUE(
-          val(executor->removeSignatory(account->accountId(), *pubkey)));
+          val(execute(buildCommand(TestTransactionBuilder().removeSignatory(
+              account->accountId(), *pubkey)))));
       auto signatories = query->getSignatories(account->accountId());
       ASSERT_TRUE(signatories);
       ASSERT_TRUE(std::find(signatories->begin(), signatories->end(), *pubkey)
                   == signatories->end());
     }
 
-    class RevokePermission : public WsvQueryCommandTest {
+    class RevokePermission : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
-        ASSERT_TRUE(val(executor->createRole(
-            role, shared_model::interface::RolePermissionSet())));
-        ASSERT_TRUE(val(executor->createDomain(domain->domainId(), role)));
-        ASSERT_TRUE(val(executor->createAccount(
-            "id",
-            domain->domainId(),
-            shared_model::interface::types::PubkeyType(std::string('1', 32)))));
-        ASSERT_TRUE(val(executor->grantPermission(
-            account->accountId(), account->accountId(), grantable_permission)));
+        CommandExecutorTest::SetUp();
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole(role, role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createDomain(domain->domainId(), role)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                "id", domain->domainId(), *pubkey)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder()
+                .grantPermission(account->accountId(), grantable_permission)
+                .creatorAccountId(account->accountId())))));
       }
     };
 
@@ -479,32 +543,36 @@ namespace iroha {
       ASSERT_TRUE(query->hasAccountGrantablePermission(
           account->accountId(), account->accountId(), grantable_permission));
 
-      ASSERT_TRUE(val(executor->grantPermission(
-          account->accountId(), account->accountId(), perm)));
+      ASSERT_TRUE(val(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .grantPermission(account->accountId(), perm)
+                                   .creatorAccountId(account->accountId())))));
       ASSERT_TRUE(query->hasAccountGrantablePermission(
           account->accountId(), account->accountId(), grantable_permission));
       ASSERT_TRUE(query->hasAccountGrantablePermission(
           account->accountId(), account->accountId(), perm));
 
-      ASSERT_TRUE(val(executor->revokePermission(
-          account->accountId(), account->accountId(), grantable_permission)));
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder()
+              .revokePermission(account->accountId(), grantable_permission)
+              .creatorAccountId(account->accountId())))));
       ASSERT_FALSE(query->hasAccountGrantablePermission(
           account->accountId(), account->accountId(), grantable_permission));
       ASSERT_TRUE(query->hasAccountGrantablePermission(
           account->accountId(), account->accountId(), perm));
     }
 
-    class SetAccountDetail : public WsvQueryCommandTest {
+    class SetAccountDetail : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
-        ASSERT_TRUE(val(executor->createRole(
-            role, shared_model::interface::RolePermissionSet())));
-        ASSERT_TRUE(val(executor->createDomain(domain->domainId(), role)));
-        ASSERT_TRUE(val(executor->createAccount(
-            "id",
-            domain->domainId(),
-            shared_model::interface::types::PubkeyType(std::string('1', 32)))));
+        CommandExecutorTest::SetUp();
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole(role, role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createDomain(domain->domainId(), role)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                "id", domain->domainId(), *pubkey)))));
       }
     };
 
@@ -514,24 +582,26 @@ namespace iroha {
      * @then kv is set
      */
     TEST_F(SetAccountDetail, ValidSetAccountDetailTest) {
-      ASSERT_TRUE(val(executor->setAccountDetail(
-          account->accountId(), account->accountId(), "key", "value")));
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder()
+              .setAccountDetail(account->accountId(), "key", "value")
+              .creatorAccountId(account->accountId())))));
       auto kv = query->getAccountDetail(account->accountId());
       ASSERT_TRUE(kv);
       ASSERT_EQ(kv.get(), "{\"id@domain\": {\"key\": \"value\"}}");
     }
 
-    class SetQuorum : public WsvQueryCommandTest {
+    class SetQuorum : public CommandExecutorTest {
      public:
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
-        ASSERT_TRUE(val(executor->createRole(
-            role, shared_model::interface::RolePermissionSet())));
-        ASSERT_TRUE(val(executor->createDomain(domain->domainId(), role)));
-        ASSERT_TRUE(val(executor->createAccount(
-            "id",
-            domain->domainId(),
-            shared_model::interface::types::PubkeyType(std::string('1', 32)))));
+        CommandExecutorTest::SetUp();
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole(role, role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createDomain(domain->domainId(), role)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                "id", domain->domainId(), *pubkey)))));
       }
     };
 
@@ -541,16 +611,21 @@ namespace iroha {
      * @then kv is set
      */
     TEST_F(SetQuorum, ValidSetQuorumTest) {
-      ASSERT_TRUE(val(executor->setQuorum(account->accountId(), 3)));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(
+              account->accountId(), 3)))));
     }
 
-    class SubtractAccountAssetTest : public WsvQueryCommandTest {
+    class SubtractAccountAssetTest : public CommandExecutorTest {
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
-
-        ASSERT_TRUE(val(command->insertRole(role)));
-        ASSERT_TRUE(val(command->insertDomain(*domain)));
-        ASSERT_TRUE(val(command->insertAccount(*account)));
+        CommandExecutorTest::SetUp();
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole(role, role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createDomain(domain->domainId(), role)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                "id", domain->domainId(), *pubkey)))));
       }
 
      public:
@@ -564,7 +639,9 @@ namespace iroha {
                                .precision(1)
                                .build());
 
-        ASSERT_TRUE(val(command->insertAsset(*asset)));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAsset(
+                "coin", domain->domainId(), 1)))));
       }
 
       shared_model::interface::types::AssetIdType asset_id =
@@ -579,21 +656,27 @@ namespace iroha {
     TEST_F(SubtractAccountAssetTest, ValidSubtractAccountAssetTest) {
       addAsset();
       ASSERT_TRUE(val(
-          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())))));
       auto account_asset =
           query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ("1", account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
       ASSERT_TRUE(val(
-          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())))));
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ("2", account_asset.get()->balance().toStringRepr());
-      ASSERT_TRUE(val(executor->subtractAssetQuantity(
-          account->accountId(), asset_id, "1", 1)));
+      ASSERT_EQ("2.0", account_asset.get()->balance().toStringRepr());
+      ASSERT_TRUE(val(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .subtractAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())))));
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ("1", account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
     }
 
     /**
@@ -602,8 +685,10 @@ namespace iroha {
      * @then account asset fails to be subtracted
      */
     TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestInvalidAsset) {
-      ASSERT_FALSE(val(executor->subtractAssetQuantity(
-          account->accountId(), asset_id, "1", 1)));
+      ASSERT_TRUE(err(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .subtractAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())))));
     }
 
     /**
@@ -613,8 +698,10 @@ namespace iroha {
      */
     TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestInvalidAccount) {
       addAsset();
-      ASSERT_FALSE(val(
-          executor->subtractAssetQuantity("some@domain", asset_id, "1", 1)));
+      ASSERT_TRUE(
+          err(execute(buildCommand(TestTransactionBuilder()
+                                       .subtractAssetQuantity(asset_id, "1.0")
+                                       .creatorAccountId("some@domain")))));
     }
 
     /**
@@ -624,8 +711,10 @@ namespace iroha {
      */
     TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestInvalidPrecision) {
       addAsset();
-      ASSERT_FALSE(val(executor->subtractAssetQuantity(
-          account->accountId(), asset_id, "1", 5)));
+      ASSERT_TRUE(err(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .subtractAssetQuantity(asset_id, "1.0000")
+                                   .creatorAccountId(account->accountId())))));
     }
 
     /**
@@ -636,14 +725,18 @@ namespace iroha {
     TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestUint256Overflow) {
       addAsset();
       ASSERT_TRUE(val(
-          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
-      ASSERT_FALSE(val(executor->subtractAssetQuantity(
-          account->accountId(), asset_id, "2", 1)));
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())))));
+      ASSERT_TRUE(err(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .subtractAssetQuantity(asset_id, "2.0")
+                                   .creatorAccountId(account->accountId())))));
     }
 
-    class TransferAccountAssetTest : public WsvQueryCommandTest {
+    class TransferAccountAssetTest : public CommandExecutorTest {
       void SetUp() override {
-        WsvQueryCommandTest::SetUp();
+        CommandExecutorTest::SetUp();
 
         account2 = clone(TestAccountBuilder()
                              .domainId(domain->domainId())
@@ -652,10 +745,16 @@ namespace iroha {
                              .jsonData("{}")
                              .build());
 
-        ASSERT_TRUE(val(command->insertRole(role)));
-        ASSERT_TRUE(val(command->insertDomain(*domain)));
-        ASSERT_TRUE(val(command->insertAccount(*account)));
-        ASSERT_TRUE(val(command->insertAccount(*account2)));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createRole(role, role_permissions)))));
+        ASSERT_TRUE(val(execute(buildCommand(
+            TestTransactionBuilder().createDomain(domain->domainId(), role)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                "id", domain->domainId(), *pubkey)))));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                "id2", domain->domainId(), *pubkey)))));
       }
 
      public:
@@ -669,7 +768,9 @@ namespace iroha {
                                .precision(1)
                                .build());
 
-        ASSERT_TRUE(val(command->insertAsset(*asset)));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().createAsset(
+                "coin", domain->domainId(), 1)))));
       }
 
       shared_model::interface::types::AssetIdType asset_id =
@@ -685,24 +786,29 @@ namespace iroha {
     TEST_F(TransferAccountAssetTest, ValidTransferAccountAssetTest) {
       addAsset();
       ASSERT_TRUE(val(
-          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())))));
       auto account_asset =
           query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ("1", account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
       ASSERT_TRUE(val(
-          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())))));
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ("2", account_asset.get()->balance().toStringRepr());
-      ASSERT_TRUE(val(executor->transferAsset(
-          account->accountId(), account2->accountId(), asset_id, "1", 1)));
+      ASSERT_EQ("2.0", account_asset.get()->balance().toStringRepr());
+      ASSERT_TRUE(val(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .transferAsset(account->accountId(), account2->accountId(), asset_id, "desc", "1.0")))));
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ("1", account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
       account_asset = query->getAccountAsset(account2->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ("1", account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
     }
 
     /**
@@ -711,8 +817,9 @@ namespace iroha {
      * @then account asset fails to be transfered
      */
     TEST_F(TransferAccountAssetTest, TransferAccountAssetTestInvalidAsset) {
-      ASSERT_FALSE(val(executor->transferAsset(
-          account->accountId(), account2->accountId(), asset_id, "1", 1)));
+      ASSERT_TRUE(err(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .transferAsset(account->accountId(), account2->accountId(), asset_id, "desc", "1.0")))));
     }
 
     /**
@@ -723,11 +830,15 @@ namespace iroha {
     TEST_F(TransferAccountAssetTest, TransferAccountAssetTestInvalidAccount) {
       addAsset();
       ASSERT_TRUE(val(
-          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
-      ASSERT_FALSE(val(executor->transferAsset(
-          account->accountId(), "some@domain", asset_id, "1", 1)));
-      ASSERT_FALSE(val(executor->transferAsset(
-          "some@domain", account->accountId(), asset_id, "1", 1)));
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())))));
+      ASSERT_TRUE(err(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .transferAsset(account->accountId(), "some@domain", asset_id, "desc", "1.0")))));
+      ASSERT_TRUE(err(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .transferAsset("some@domain", account2->accountId(), asset_id, "desc", "1.0")))));
     }
 
     /**
@@ -738,9 +849,12 @@ namespace iroha {
     TEST_F(TransferAccountAssetTest, TransferAccountAssetOwerdraftTest) {
       addAsset();
       ASSERT_TRUE(val(
-          executor->addAssetQuantity(account->accountId(), asset_id, "1", 1)));
-      ASSERT_FALSE(val(executor->transferAsset(
-          account->accountId(), account2->accountId(), asset_id, "2", 1)));
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())))));
+      ASSERT_TRUE(err(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .transferAsset(account->accountId(), account2->accountId(), asset_id, "desc", "2.0")))));
     }
 
   }  // namespace ametsuchi
