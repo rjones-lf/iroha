@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#pragma once
+#ifndef IROHA_VALIDATION_UTILS
+#define IROHA_VALIDATION_UTILS
 
 #include <boost/range/any_range.hpp>
 #include <string>
@@ -39,3 +40,5 @@ namespace iroha {
 
   }  // namespace validation
 }  // namespace iroha
+
+#endif

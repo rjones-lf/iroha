@@ -21,8 +21,8 @@ struct BlockMock : public iface::Block {
   MOCK_CONST_METHOD0(payload, const iface::types::BlobType &());
   MOCK_CONST_METHOD0(blob, const iface::types::BlobType &());
   MOCK_METHOD2(addSignature,
-               bool(const shared_model::crypto::Signed &signed_blob,
-                    const shared_model::crypto::PublicKey &public_key));
+               bool(const shared_model::crypto::Signed &,
+                    const shared_model::crypto::PublicKey &));
   MOCK_CONST_METHOD0(clone, BlockMock *());
 };
 
@@ -38,8 +38,8 @@ struct TransactionMock : public iface::Transaction {
   MOCK_CONST_METHOD0(payload, const iface::types::BlobType &());
   MOCK_CONST_METHOD0(blob, const iface::types::BlobType &());
   MOCK_METHOD2(addSignature,
-               bool(const shared_model::crypto::Signed &signed_blob,
-                    const shared_model::crypto::PublicKey &public_key));
+               bool(const shared_model::crypto::Signed &,
+                    const shared_model::crypto::PublicKey &));
   MOCK_CONST_METHOD0(clone, TransactionMock *());
 };
 
