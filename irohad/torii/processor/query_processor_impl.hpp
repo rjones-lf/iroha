@@ -44,8 +44,8 @@ namespace iroha {
        * Register client query
        * @param query - client intent
        */
-      void queryHandle(
-          std::shared_ptr<shared_model::interface::Query> qry) override;
+      std::unique_ptr<shared_model::interface::QueryResponse> queryHandle(
+          const shared_model::interface::Query &qry) override;
 
       /**
        * Register client block query
@@ -55,24 +55,13 @@ namespace iroha {
       rxcpp::observable<
           std::shared_ptr<shared_model::interface::BlockQueryResponse>>
       blocksQueryHandle(
-          std::shared_ptr<shared_model::interface::BlocksQuery> qry) override;
-
-      /**
-       * Subscribe for query responses
-       * @return observable with query responses
-       */
-      rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>
-      queryNotifier() override;
+          const shared_model::interface::BlocksQuery &qry) override;
 
      private:
-      rxcpp::subjects::subject<
-          std::shared_ptr<shared_model::interface::QueryResponse>>
-          subject_;
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::BlockQueryResponse>>
           blocksQuerySubject_;
       std::shared_ptr<ametsuchi::Storage> storage_;
-      std::mutex notifier_mutex_;
     };
   }  // namespace torii
 }  // namespace iroha
