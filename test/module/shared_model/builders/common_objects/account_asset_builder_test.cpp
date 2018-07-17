@@ -19,7 +19,6 @@
 
 #include "builders/common_objects/account_asset_builder.hpp"
 #include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "builders_test_fixture.hpp"
 #include "validators/field_validator.hpp"
 
@@ -39,8 +38,7 @@ TEST(AccountAssetBuilderTest, StatelessValidAllFields) {
 
   auto valid_account_id = "account@name";
   auto valid_asset_id = "asset#coin";
-  auto valid_balance =
-      shared_model::proto::AmountBuilder().intValue(100).precision(2).build();
+  auto valid_balance = shared_model::interface::Amount("1.00");
 
   auto account_asset = builder.accountId(valid_account_id)
                            .assetId(valid_asset_id)
@@ -73,8 +71,7 @@ TEST(AccountAssetBuilderTest, SeveralObjectsFromOneBuilder) {
 
   auto valid_account_id = "account@name";
   auto valid_asset_id = "asset#coin";
-  auto valid_balance =
-      shared_model::proto::AmountBuilder().intValue(100).precision(2).build();
+  auto valid_balance = shared_model::interface::Amount("1.00");
 
   auto state = builder.accountId(valid_account_id)
                    .assetId(valid_asset_id)

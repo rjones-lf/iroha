@@ -19,18 +19,16 @@
 
 #include <thread>
 
-#include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
-
 #include "ametsuchi/block_query.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
-#include "builders/protobuf/transport_builder.hpp"
+#include "builders/protobuf/transaction_sequence_builder.hpp"
 #include "common/byteutils.hpp"
 #include "common/is_any.hpp"
 #include "common/timeout.hpp"
 #include "common/types.hpp"
 #include "cryptography/default_hash_provider.hpp"
-#include "endpoint.pb.h"
 #include "validators/default_validator.hpp"
 
 namespace torii {
@@ -72,19 +70,16 @@ namespace torii {
   }
 
   void CommandService::Torii(const iroha::protocol::Transaction &request) {
-    shared_model::crypto::Hash tx_hash;
-    iroha::protocol::ToriiResponse response;
-
     shared_model::proto::TransportBuilder<
         shared_model::proto::Transaction,
         shared_model::validation::DefaultSignableTransactionValidator>()
         .build(request)
         .match(
-            [this, &tx_hash, &response](
+            [this](
                 // success case
                 iroha::expected::Value<shared_model::proto::Transaction>
                     &iroha_tx) {
-              tx_hash = iroha_tx.value.hash();
+              auto tx_hash = iroha_tx.value.hash();
               if (cache_->findItem(tx_hash) and iroha_tx.value.quorum() < 2) {
                 log_->warn("Found transaction {} in cache, ignoring",
                            tx_hash.hex());
@@ -92,6 +87,7 @@ namespace torii {
               }
 
               // setting response
+              iroha::protocol::ToriiResponse response;
               response.set_tx_hash(
                   shared_model::crypto::toBinaryString(tx_hash));
               response.set_tx_status(
@@ -101,33 +97,105 @@ namespace torii {
               tx_processor_->transactionHandle(
                   std::make_shared<shared_model::proto::Transaction>(
                       std::move(iroha_tx.value)));
+
+              this->addTxToCacheAndLog(
+                  "Torii", std::move(tx_hash), std::move(response));
             },
-            [this, &tx_hash, &request, &response](const auto &error) {
+            [this, &request](const auto &error) {
               // getting hash from invalid transaction
               auto blobPayload =
                   shared_model::proto::makeBlob(request.payload());
-              tx_hash = shared_model::crypto::DefaultHashProvider::makeHash(
-                  blobPayload);
+              auto tx_hash =
+                  shared_model::crypto::DefaultHashProvider::makeHash(
+                      blobPayload);
               log_->warn("Stateless invalid tx: {}, hash: {}",
                          error.error,
                          tx_hash.hex());
 
               // setting response
+              iroha::protocol::ToriiResponse response;
               response.set_tx_hash(
                   shared_model::crypto::toBinaryString(tx_hash));
               response.set_tx_status(
                   iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
               response.set_error_message(std::move(error.error));
+
+              this->addTxToCacheAndLog(
+                  "Torii", std::move(tx_hash), std::move(response));
             });
-    log_->debug("Torii: adding item to cache: {}, status {} ",
-                tx_hash.hex(),
-                response.tx_status());
-    // transactions can be handled from multiple threads, therefore a lock is
-    // required
-    std::lock_guard<std::mutex> lock(stateless_tx_status_notifier_mutex_);
-    stateless_notifier_.get_subscriber().on_next(
-        std::make_shared<shared_model::proto::TransactionResponse>(
-            std::move(response)));
+  }
+
+  void CommandService::ListTorii(const iroha::protocol::TxList &tx_list) {
+    shared_model::proto::TransportBuilder<
+        shared_model::interface::TransactionSequence,
+        shared_model::validation::DefaultUnsignedTxCollectionValidator>()
+        .build(tx_list)
+        .match(
+            [this](
+                // success case
+                iroha::expected::Value<
+                    shared_model::interface::TransactionSequence>
+                    &tx_sequence) {
+              auto txs = tx_sequence.value.transactions();
+              std::for_each(txs.begin(), txs.end(), [this](auto &tx) {
+                auto tx_hash = tx->hash();
+                if (cache_->findItem(tx_hash) and tx->quorum() < 2) {
+                  log_->warn("Found transaction {} in cache, ignoring",
+                             tx_hash.hex());
+                  return;
+                }
+
+                // setting response
+                iroha::protocol::ToriiResponse response;
+                response.set_tx_hash(
+                    shared_model::crypto::toBinaryString(tx_hash));
+                response.set_tx_status(
+                    iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+
+                // Send transaction to iroha
+                tx_processor_->transactionHandle(tx);
+
+                this->addTxToCacheAndLog(
+                    "ToriiList", std::move(tx_hash), std::move(response));
+              });
+            },
+            [this, &tx_list](auto &error) {
+              auto &txs = tx_list.transactions();
+              // form an error message, shared between all txs in a sequence
+              auto first_tx_blob =
+                  shared_model::proto::makeBlob(txs[0].payload());
+              auto first_tx_hash =
+                  shared_model::crypto::DefaultHashProvider::makeHash(
+                      first_tx_blob);
+              auto last_tx_blob =
+                  shared_model::proto::makeBlob(txs[txs.size() - 1].payload());
+              auto last_tx_hash =
+                  shared_model::crypto::DefaultHashProvider::makeHash(
+                      last_tx_blob);
+              auto sequence_error =
+                  "Stateless invalid tx in transaction sequence, beginning "
+                  "with tx : "
+                  + first_tx_hash.hex() + " and ending with tx "
+                  + last_tx_hash.hex() + ". Error is: " + error.error;
+
+              // set error response for each transaction in a sequence
+              std::for_each(
+                  txs.begin(), txs.end(), [this, &sequence_error](auto &tx) {
+                    auto hash =
+                        shared_model::crypto::DefaultHashProvider::makeHash(
+                            shared_model::proto::makeBlob(tx.payload()));
+
+                    iroha::protocol::ToriiResponse response;
+                    response.set_tx_hash(
+                        shared_model::crypto::toBinaryString(hash));
+                    response.set_tx_status(
+                        iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
+                    response.set_error_message(sequence_error);
+
+                    this->addTxToCacheAndLog(
+                        "ToriiList", std::move(hash), std::move(response));
+                  });
+            });
   }
 
   grpc::Status CommandService::Torii(
@@ -135,6 +203,13 @@ namespace torii {
       const iroha::protocol::Transaction *request,
       google::protobuf::Empty *response) {
     Torii(*request);
+    return grpc::Status::OK;
+  }
+
+  grpc::Status CommandService::ListTorii(grpc::ServerContext *context,
+                                         const iroha::protocol::TxList *request,
+                                         google::protobuf::Empty *response) {
+    ListTorii(*request);
     return grpc::Status::OK;
   }
 
@@ -154,10 +229,8 @@ namespace torii {
                    iroha::bytestringToHexstring(request.tx_hash()));
         response.set_tx_status(iroha::protocol::TxStatus::NOT_RECEIVED);
       }
-      log_->debug("Status: adding item to cache: {}, status {}",
-                  tx_hash.hex(),
-                  response.tx_status());
-      cache_->addItem(tx_hash, response);
+      this->addTxToCacheAndLog(
+          "Status", std::move(tx_hash), std::move(response));
     }
   }
 
@@ -289,6 +362,22 @@ namespace torii {
     while (subscription.is_subscribed() or not run_loop.empty()) {
       run_loop.dispatch();
     }
+  }
+
+  void CommandService::addTxToCacheAndLog(
+      const std::string &who,
+      const shared_model::crypto::Hash &hash,
+      const iroha::protocol::ToriiResponse &response) {
+    log_->debug("{}: adding item to cache: {}, status {} ",
+                who,
+                hash.hex(),
+                response.tx_status());
+    // transactions can be handled from multiple threads, therefore a lock is
+    // required
+    std::lock_guard<std::mutex> lock(stateless_tx_status_notifier_mutex_);
+    stateless_notifier_.get_subscriber().on_next(
+        std::make_shared<shared_model::proto::TransactionResponse>(
+            std::move(response)));
   }
 
 }  // namespace torii

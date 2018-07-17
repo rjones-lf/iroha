@@ -19,13 +19,9 @@
 #define IROHA_COMMAND_GENERATOR_HPP
 
 #include <memory>
-#include "amount/amount.hpp"
 #include "generator/generator.hpp"
 
 namespace iroha {
-
-  class Amount;
-
   namespace model {
 
     struct Peer;
@@ -73,10 +69,10 @@ namespace iroha {
             const std::string &account_id, uint32_t quorum);
 
         std::shared_ptr<Command> generateAddAssetQuantity(
-            const std::string &asset_id, const Amount &amount);
+            const std::string &asset_id, const std::string &amount);
 
         std::shared_ptr<Command> generateSubtractAssetQuantity(
-            const std::string &asset_id, const Amount &amount);
+            const std::string &asset_id, const std::string &amount);
         /**
          * Generate transfer assets from source account_id to target account_id
          * @param src_account_id - source account identifier
@@ -89,7 +85,7 @@ namespace iroha {
             const std::string &src_account_id,
             const std::string &target_account_id,
             const std::string &asset_id,
-            const Amount &amount);
+            const std::string &amount);
 
         std::shared_ptr<Command> generateAppendRole(
             const std::string &account_id, const std::string &role_name);

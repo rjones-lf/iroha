@@ -5,6 +5,7 @@
 
 add_library(shared_model_proto_backend
     impl/block.cpp
+    impl/proposal.cpp
     impl/permissions.cpp
     commands/impl/proto_add_asset_quantity.cpp
     commands/impl/proto_add_peer.cpp
@@ -60,5 +61,4 @@ endif ()
 target_link_libraries(shared_model_proto_backend
     schema
     shared_model_interfaces
-    iroha_amount
     )

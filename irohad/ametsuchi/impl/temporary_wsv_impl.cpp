@@ -19,7 +19,6 @@
 
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
-#include "amount/amount.hpp"
 
 namespace iroha {
   namespace ametsuchi {

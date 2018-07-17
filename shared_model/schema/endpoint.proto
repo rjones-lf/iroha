@@ -32,8 +32,13 @@ message TxStatusRequest{
   bytes tx_hash = 1;
 }
 
+message TxList {
+  repeated Transaction transactions = 1;
+}
+
 service CommandService {
   rpc Torii (Transaction) returns (google.protobuf.Empty);
+  rpc ListTorii (TxList) returns (google.protobuf.Empty);
   rpc Status (TxStatusRequest) returns (ToriiResponse);
   rpc StatusStream(TxStatusRequest) returns (stream ToriiResponse);
 }
