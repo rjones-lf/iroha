@@ -25,6 +25,7 @@
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "network/peer_communication_service.hpp"
 #include "torii/processor/transaction_processor.hpp"
+#include "torii/status_bus.hpp"
 
 namespace iroha {
   namespace torii {
@@ -33,10 +34,12 @@ namespace iroha {
       /**
        * @param pcs - provide information proposals and commits
        * @param mst_processor is a handler for multisignature transactions
+       * @param status_bus is a common notifier for tx statuses
        */
       TransactionProcessorImpl(
           std::shared_ptr<network::PeerCommunicationService> pcs,
-          std::shared_ptr<MstProcessor> mst_processor);
+          std::shared_ptr<MstProcessor> mst_processor,
+          std::shared_ptr<iroha::torii::StatusBus> status_bus);
 
       void transactionHandle(
           std::shared_ptr<shared_model::interface::Transaction> transaction)
@@ -46,10 +49,6 @@ namespace iroha {
           const shared_model::interface::TransactionSequence
               &transaction_sequence) const override;
 
-      rxcpp::observable<
-          std::shared_ptr<shared_model::interface::TransactionResponse>>
-      transactionNotifier() override;
-
      private:
       // connections
       std::shared_ptr<network::PeerCommunicationService> pcs_;
@@ -57,6 +56,8 @@ namespace iroha {
       // processing
       std::shared_ptr<MstProcessor> mst_processor_;
       std::vector<shared_model::interface::types::HashType> current_txs_hashes_;
+
+      std::shared_ptr<iroha::torii::StatusBus> status_bus_;
 
       // internal
       rxcpp::subjects::subject<

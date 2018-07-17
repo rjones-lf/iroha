@@ -133,6 +133,8 @@ class Irohad {
 
   virtual void initPeerCommunicationService();
 
+  virtual void initStatusBus();
+
   virtual void initMstProcessor();
 
   virtual void initTransactionCommandService();
@@ -187,6 +189,8 @@ class Irohad {
 
   // mst
   std::shared_ptr<iroha::MstProcessor> mst_processor;
+
+  std::shared_ptr<iroha::torii::StatusBus> status_bus_;
 
   // transaction service
   std::shared_ptr<torii::CommandService> command_service;

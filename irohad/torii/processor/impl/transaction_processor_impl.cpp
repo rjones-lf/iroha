@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "torii/processor/transaction_processor_impl.hpp"
@@ -50,10 +38,12 @@ namespace iroha {
 
     TransactionProcessorImpl::TransactionProcessorImpl(
         std::shared_ptr<PeerCommunicationService> pcs,
-        std::shared_ptr<MstProcessor> mst_processor)
-        : pcs_(std::move(pcs)), mst_processor_(std::move(mst_processor)) {
-      log_ = logger::log("TxProcessor");
-
+        std::shared_ptr<MstProcessor> mst_processor,
+        std::shared_ptr<iroha::torii::StatusBus> status_bus)
+        : pcs_(std::move(pcs)),
+          mst_processor_(std::move(mst_processor)),
+          status_bus_(std::move(status_bus)),
+          log_(logger::log("TxProcessor")) {
       // notify about stateless success
       pcs_->on_proposal().subscribe([this](auto model_proposal) {
         for (const auto &tx : model_proposal->transactions()) {
@@ -61,8 +51,7 @@ namespace iroha {
           log_->info("on proposal stateless success: {}", hash.hex());
           // different on_next() calls (this one and below) can happen in
           // different threads and we don't expect emitting them concurrently
-          std::lock_guard<std::mutex> lock(notifier_mutex_);
-          notifier_.get_subscriber().on_next(
+          status_bus_->publish(
               shared_model::builder::DefaultTransactionStatusBuilder()
                   .statelessValidationSuccess()
                   .txHash(hash)
@@ -80,7 +69,7 @@ namespace iroha {
             for (const auto &tx_error : errors) {
               auto error_msg = composeErrorMessage(tx_error);
               log_->info(error_msg);
-              notifier_.get_subscriber().on_next(
+              status_bus_->publish(
                   shared_model::builder::DefaultTransactionStatusBuilder()
                       .statefulValidationFailed()
                       .txHash(tx_error.second)
@@ -92,7 +81,7 @@ namespace iroha {
                  proposal_and_errors->first->transactions()) {
               log_->info("on stateful validation success: {}",
                          successful_tx.hash().hex());
-              notifier_.get_subscriber().on_next(
+              status_bus_->publish(
                   shared_model::builder::DefaultTransactionStatusBuilder()
                       .statefulValidationSuccess()
                       .txHash(successful_tx.hash())
@@ -119,7 +108,7 @@ namespace iroha {
                 std::lock_guard<std::mutex> lock(notifier_mutex_);
                 for (const auto &tx_hash : current_txs_hashes_) {
                   log_->info("on commit committed: {}", tx_hash.hex());
-                  notifier_.get_subscriber().on_next(
+                  status_bus_->publish(
                       shared_model::builder::DefaultTransactionStatusBuilder()
                           .committed()
                           .txHash(tx_hash)
@@ -137,7 +126,7 @@ namespace iroha {
       mst_processor_->onExpiredTransactions().subscribe([this](auto &&tx) {
         log_->info("MST tx expired");
         std::lock_guard<std::mutex> lock(notifier_mutex_);
-        this->notifier_.get_subscriber().on_next(
+        this->status_bus_->publish(
             shared_model::builder::DefaultTransactionStatusBuilder()
                 .mstExpired()
                 .txHash(tx->hash())
@@ -174,12 +163,6 @@ namespace iroha {
           }
         }
       }
-    }
-
-    rxcpp::observable<
-        std::shared_ptr<shared_model::interface::TransactionResponse>>
-    TransactionProcessorImpl::transactionNotifier() {
-      return notifier_.get_observable();
     }
 
   }  // namespace torii
