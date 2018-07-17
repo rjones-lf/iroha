@@ -16,7 +16,7 @@ namespace shared_model {
      * @param txs transactions to be checked
      * @return true if all transactions from the same batch and false otherwise
      */
-    bool allTxsInSameBatch(const types::SharedTxsCollectionType &txs) {
+    static bool allTxsInSameBatch(const types::SharedTxsCollectionType &txs) {
       // if txs is empty then true
       if (txs.empty()) {
         return true;
