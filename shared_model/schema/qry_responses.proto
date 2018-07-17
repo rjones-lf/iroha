@@ -31,7 +31,7 @@ message Account {
 message AccountAsset {
   string asset_id = 1;
   string account_id = 2;
-  Amount balance = 3;
+  string balance = 3;
 }
 
 // *** Responses *** //

@@ -19,7 +19,6 @@
 #define IROHA_ADD_ASSET_QUANTITY_HPP
 
 #include <string>
-#include "amount/amount.hpp"
 #include "model/command.hpp"
 
 namespace iroha {
@@ -38,13 +37,13 @@ namespace iroha {
       /**
        * Amount to add to account asset
        */
-      Amount amount;
+      std::string amount;
 
       bool operator==(const Command &command) const override;
 
       AddAssetQuantity() {}
 
-      AddAssetQuantity(const std::string &asset_id, Amount amount)
+      AddAssetQuantity(const std::string &asset_id, const std::string &amount)
           : asset_id(asset_id), amount(amount) {}
     };
   }  // namespace model

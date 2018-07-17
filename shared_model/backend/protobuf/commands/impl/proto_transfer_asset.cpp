@@ -12,7 +12,8 @@ namespace shared_model {
     TransferAsset::TransferAsset(CommandType &&command)
         : CopyableProto(std::forward<CommandType>(command)),
           transfer_asset_{proto_->transfer_asset()},
-          amount_{[this] { return proto::Amount(transfer_asset_.amount()); }} {}
+          amount_{
+              [this] { return interface::Amount(transfer_asset_.amount()); }} {}
 
     template TransferAsset::TransferAsset(TransferAsset::TransportType &);
     template TransferAsset::TransferAsset(const TransferAsset::TransportType &);

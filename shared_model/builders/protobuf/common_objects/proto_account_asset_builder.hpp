@@ -27,7 +27,7 @@ namespace shared_model {
      * AccountAssetBuilder is used to construct AccountAsset proto objects with
      * initialized protobuf implementation
      */
-    class AccountAssetBuilder {
+    class DEPRECATED AccountAssetBuilder {
      public:
       shared_model::proto::AccountAsset build() {
         return shared_model::proto::AccountAsset(
@@ -50,9 +50,7 @@ namespace shared_model {
 
       AccountAssetBuilder balance(const interface::Amount &amount) {
         AccountAssetBuilder copy(*this);
-        auto *amount_proto = copy.account_asset_.mutable_balance();
-        convertToProtoAmount(*amount_proto->mutable_value(), amount.intValue());
-        amount_proto->set_precision(amount.precision());
+        *copy.account_asset_.mutable_balance() = amount.toStringRepr();
         return copy;
       }
 

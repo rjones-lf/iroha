@@ -11,8 +11,8 @@
  *
  * The purpose of this benchmark is to keep track of performance costs related
  * to blocks and proposals copying/moving.
- *
- * Each benchmark runs transaction() and commands() call to
+ * 
+ * Each benchmark runs transaction() and commands() call to 
  * initialize possibly lazy fields.
  */
 
@@ -171,14 +171,29 @@ BENCHMARK_DEFINE_F(BlockBenchmark, CloneTest)(benchmark::State &st) {
 }
 
 /**
- * Benchmark proposal creation by copying another proposal
+ * Benchmark proposal creation by copying protobuf object
  */
-BENCHMARK_DEFINE_F(ProposalBenchmark, CopyTest)(benchmark::State &st) {
+BENCHMARK_DEFINE_F(ProposalBenchmark, TransportCopyTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
     auto proposal = complete_builder.build();
 
     runBenchmark(st, [&proposal] {
       shared_model::proto::Proposal copy(proposal.getTransport());
+      checkLoop(copy);
+    });
+  }
+}
+
+/**
+ * Benchmark proposal creation by moving protobuf object
+ */
+BENCHMARK_DEFINE_F(ProposalBenchmark, TransportMoveTest)(benchmark::State &st) {
+  while (st.KeepRunning()) {
+    auto proposal = complete_builder.build();
+    iroha::protocol::Proposal proto_proposal = proposal.getTransport();
+
+    runBenchmark(st, [&proto_proposal] {
+      shared_model::proto::Proposal copy(std::move(proto_proposal));
       checkLoop(copy);
     });
   }
@@ -213,11 +228,12 @@ BENCHMARK_DEFINE_F(ProposalBenchmark, CloneTest)(benchmark::State &st) {
 }
 
 BENCHMARK_REGISTER_F(BlockBenchmark, MoveTest)->UseManualTime();
+BENCHMARK_REGISTER_F(BlockBenchmark, CloneTest)->UseManualTime();
 BENCHMARK_REGISTER_F(BlockBenchmark, TransportMoveTest)->UseManualTime();
 BENCHMARK_REGISTER_F(BlockBenchmark, TransportCopyTest)->UseManualTime();
-BENCHMARK_REGISTER_F(BlockBenchmark, CloneTest)->UseManualTime();
-BENCHMARK_REGISTER_F(ProposalBenchmark, CopyTest)->UseManualTime();
 BENCHMARK_REGISTER_F(ProposalBenchmark, MoveTest)->UseManualTime();
 BENCHMARK_REGISTER_F(ProposalBenchmark, CloneTest)->UseManualTime();
+BENCHMARK_REGISTER_F(ProposalBenchmark, TransportMoveTest)->UseManualTime();
+BENCHMARK_REGISTER_F(ProposalBenchmark, TransportCopyTest)->UseManualTime();
 
 BENCHMARK_MAIN();

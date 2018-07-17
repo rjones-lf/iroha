@@ -101,12 +101,12 @@ namespace iroha {
       }
 
       std::shared_ptr<Command> CommandGenerator::generateAddAssetQuantity(
-          const std::string &asset_id, const Amount &amount) {
+          const std::string &asset_id, const std::string &amount) {
         return generateCommand<AddAssetQuantity>(asset_id, amount);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateSubtractAssetQuantity(
-          const std::string &asset_id, const Amount &amount) {
+          const std::string &asset_id, const std::string &amount) {
         return generateCommand<SubtractAssetQuantity>(asset_id, amount);
       }
 
@@ -119,7 +119,7 @@ namespace iroha {
           const std::string &src_account,
           const std::string &dest_account,
           const std::string &asset_id,
-          const Amount &amount) {
+          const std::string &amount) {
         return generateCommand<TransferAsset>(
             src_account, dest_account, asset_id, amount);
       }

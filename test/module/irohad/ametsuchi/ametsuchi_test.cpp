@@ -37,17 +37,6 @@ using namespace shared_model::interface::permissions;
 auto zero_string = std::string(32, '0');
 auto fake_hash = shared_model::crypto::Hash(zero_string);
 auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
-using AmountBuilder = shared_model::builder::AmountBuilderWithoutValidator;
-
-/**
- * Return shared pointer to amount from result, or throw exception
- * @return amount from result
- */
-std::shared_ptr<shared_model::interface::Amount> getAmount(
-    const shared_model::builder::BuilderResult<shared_model::interface::Amount>
-        &result) {
-  return framework::expected::val(result)->value;
-}
 
 /**
  * Shortcut to create CallExact observable wrapper, subscribe with given lambda,
@@ -231,9 +220,9 @@ TEST_F(AmetsuchiTest, SampleTest) {
 
   apply(storage, block2);
   validateAccountAsset(
-      wsv, user1id, assetid, *getAmount(AmountBuilder::fromString("50.0")));
+      wsv, user1id, assetid, shared_model::interface::Amount("50.0"));
   validateAccountAsset(
-      wsv, user2id, assetid, *getAmount(AmountBuilder::fromString("100.0")));
+      wsv, user2id, assetid, shared_model::interface::Amount("100.0"));
 
   // Block store tests
   auto hashes = {block1.hash(), block2.hash()};
@@ -327,9 +316,9 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   // Check querying assets for users
   validateAccountAsset(
-      wsv, user1id, asset1id, *getAmount(AmountBuilder::fromString("300.0")));
+      wsv, user1id, asset1id, shared_model::interface::Amount("300.0"));
   validateAccountAsset(
-      wsv, user2id, asset2id, *getAmount(AmountBuilder::fromString("250.0")));
+      wsv, user2id, asset2id, shared_model::interface::Amount("250.0"));
 
   // 2th tx (user1 -> user2 # asset1)
   auto txn2 =
@@ -348,9 +337,9 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   // Check account asset after transfer assets
   validateAccountAsset(
-      wsv, user1id, asset1id, *getAmount(AmountBuilder::fromString("180.0")));
+      wsv, user1id, asset1id, shared_model::interface::Amount("180.0"));
   validateAccountAsset(
-      wsv, user2id, asset1id, *getAmount(AmountBuilder::fromString("120.0")));
+      wsv, user2id, asset1id, shared_model::interface::Amount("120.0"));
 
   // 3rd tx
   //   (user2 -> user3 # asset2)
@@ -372,11 +361,11 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   apply(storage, block3);
 
   validateAccountAsset(
-      wsv, user2id, asset2id, *getAmount(AmountBuilder::fromString("90.0")));
+      wsv, user2id, asset2id, shared_model::interface::Amount("90.0"));
   validateAccountAsset(
-      wsv, user3id, asset2id, *getAmount(AmountBuilder::fromString("150.0")));
+      wsv, user3id, asset2id, shared_model::interface::Amount("150.0"));
   validateAccountAsset(
-      wsv, user1id, asset2id, *getAmount(AmountBuilder::fromString("10.0")));
+      wsv, user1id, asset2id, shared_model::interface::Amount("10.0"));
 
   // Block store test
   auto hashes = {block1.hash(), block2.hash(), block3.hash()};

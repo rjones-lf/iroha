@@ -160,8 +160,7 @@ namespace iroha {
           const model::AddAssetQuantity &add_asset_quantity) {
         protocol::AddAssetQuantity pb_add_asset_quantity;
         pb_add_asset_quantity.set_asset_id(add_asset_quantity.asset_id);
-        auto amount = pb_add_asset_quantity.mutable_amount();
-        amount->CopyFrom(serializeAmount(add_asset_quantity.amount));
+        pb_add_asset_quantity.set_amount(add_asset_quantity.amount);
         return pb_add_asset_quantity;
       }
 
@@ -169,8 +168,7 @@ namespace iroha {
           const protocol::AddAssetQuantity &pb_add_asset_quantity) {
         model::AddAssetQuantity add_asset_quantity;
         add_asset_quantity.asset_id = pb_add_asset_quantity.asset_id();
-        add_asset_quantity.amount =
-            deserializeAmount(pb_add_asset_quantity.amount());
+        add_asset_quantity.amount = pb_add_asset_quantity.amount();
 
         return add_asset_quantity;
       }
@@ -182,8 +180,7 @@ namespace iroha {
         protocol::SubtractAssetQuantity pb_subtract_asset_quantity;
         pb_subtract_asset_quantity.set_asset_id(
             subtract_asset_quantity.asset_id);
-        auto amount = pb_subtract_asset_quantity.mutable_amount();
-        amount->CopyFrom(serializeAmount(subtract_asset_quantity.amount));
+        pb_subtract_asset_quantity.set_amount(subtract_asset_quantity.amount);
         return pb_subtract_asset_quantity;
       }
 
@@ -193,8 +190,7 @@ namespace iroha {
         model::SubtractAssetQuantity subtract_asset_quantity;
         subtract_asset_quantity.asset_id =
             pb_subtract_asset_quantity.asset_id();
-        subtract_asset_quantity.amount =
-            deserializeAmount(pb_subtract_asset_quantity.amount());
+        subtract_asset_quantity.amount = pb_subtract_asset_quantity.amount();
 
         return subtract_asset_quantity;
       }
@@ -337,8 +333,7 @@ namespace iroha {
         pb_transfer_asset.set_dest_account_id(transfer_asset.dest_account_id);
         pb_transfer_asset.set_asset_id(transfer_asset.asset_id);
         pb_transfer_asset.set_description(transfer_asset.description);
-        auto amount = pb_transfer_asset.mutable_amount();
-        amount->CopyFrom(serializeAmount(transfer_asset.amount));
+        pb_transfer_asset.set_amount(transfer_asset.amount);
         return pb_transfer_asset;
       }
 
@@ -351,8 +346,7 @@ namespace iroha {
             pb_subtract_asset_quantity.dest_account_id();
         transfer_asset.asset_id = pb_subtract_asset_quantity.asset_id();
         transfer_asset.description = pb_subtract_asset_quantity.description();
-        transfer_asset.amount =
-            deserializeAmount(pb_subtract_asset_quantity.amount());
+        transfer_asset.amount = pb_subtract_asset_quantity.amount();
         return transfer_asset;
       }
 

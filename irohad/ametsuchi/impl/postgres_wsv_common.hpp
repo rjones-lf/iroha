@@ -121,15 +121,11 @@ namespace iroha {
                      const std::string &asset_id,
                      const std::string &amount) noexcept {
       return tryBuild([&] {
-        auto balance =
-            shared_model::builder::DefaultAmountBuilder::fromString(amount);
-        return balance | [&](const auto &balance_ptr) {
-          return shared_model::builder::DefaultAccountAssetBuilder()
-              .accountId(account_id)
-              .assetId(asset_id)
-              .balance(*balance_ptr)
-              .build();
-        };
+        return shared_model::builder::DefaultAccountAssetBuilder()
+            .accountId(account_id)
+            .assetId(asset_id)
+            .balance(shared_model::interface::Amount(amount))
+            .build();
       });
     }
 

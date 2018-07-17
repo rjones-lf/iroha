@@ -16,7 +16,7 @@ namespace shared_model {
      * @tparam BuilderImpl
      */
     template <typename BuilderImpl>
-    class BlockQueryResponseBuilder {
+    class DEPRECATED BlockQueryResponseBuilder {
      public:
       std::shared_ptr<shared_model::interface::BlockQueryResponse> build() {
         return clone(builder_.build());

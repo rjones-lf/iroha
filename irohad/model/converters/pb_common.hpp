@@ -18,7 +18,6 @@
 #ifndef IROHA_PB_COMMON_HPP
 #define IROHA_PB_COMMON_HPP
 
-#include "amount/amount.hpp"
 #include "commands.pb.h"
 #include "common/types.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
@@ -33,10 +32,6 @@
 namespace iroha {
   namespace model {
     namespace converters {
-      // amount
-      protocol::Amount serializeAmount(iroha::Amount iroha_amount);
-      iroha::Amount deserializeAmount(protocol::Amount pb_amount);
-
       // peer
       protocol::Peer serializePeer(iroha::model::Peer iroha_peer);
       iroha::model::Peer deserializePeer(protocol::Peer pb_peer);

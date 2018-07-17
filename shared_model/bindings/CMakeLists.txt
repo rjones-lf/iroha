@@ -26,7 +26,6 @@ target_link_libraries(bindings
         shared_model_cryptography
         generator
         shared_model_stateless_validation
-        iroha_amount
         )
 
 

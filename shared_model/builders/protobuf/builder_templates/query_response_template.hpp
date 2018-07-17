@@ -8,7 +8,6 @@
 
 #include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
-#include "builders/protobuf/helpers.hpp"
 #include "common/visitor.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/permissions.hpp"
@@ -28,7 +27,7 @@ namespace shared_model {
      * set
      */
     template <int S = 0>
-    class TemplateQueryResponseBuilder {
+    class DEPRECATED TemplateQueryResponseBuilder {
      public:
       template <int Sp>
       TemplateQueryResponseBuilder(TemplateQueryResponseBuilder<Sp> &&o)

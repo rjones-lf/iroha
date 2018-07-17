@@ -36,8 +36,8 @@ namespace iroha {
           ametsuchi::TemporaryWsv &temporaryWsv) override;
 
       logger::Logger log_;
-
     };
+
   }  // namespace validation
 }  // namespace iroha
 

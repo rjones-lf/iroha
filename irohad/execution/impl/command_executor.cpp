@@ -89,15 +89,10 @@ namespace iroha {
     auto account_asset =
         queries->getAccountAsset(creator_account_id, command.assetId());
 
-    auto new_balance = command_amount | [this](const auto &amount) {
-      return amount_builder_.precision(amount->precision())
-          .intValue(amount->intValue())
-          .build();
-    };
     using AccountAssetResult =
         expected::Result<std::shared_ptr<shared_model::interface::AccountAsset>,
                          iroha::CommandError>;
-    auto account_asset_new = new_balance.match(
+    auto account_asset_new = command_amount.match(
         [this, &account_asset, &command_name, &command](
             const expected::Value<
                 std::shared_ptr<shared_model::interface::Amount>>
@@ -438,17 +433,13 @@ namespace iroha {
           };
 
     auto dest_account_asset_new = command_amount | [&](const auto &amount) {
-      const auto kZero = boost::get<
-          expected::Value<std::shared_ptr<shared_model::interface::Amount>>>(
-          amount_builder_.precision(asset.value()->precision())
-              .intValue(0)
-              .build());
+      static const shared_model::interface::Amount kZero("0");
       auto new_amount =
           (dest_account_asset | [](const auto &ast)
                -> boost::optional<const shared_model::interface::Amount &> {
             return {ast->balance()};
           })
-              .get_value_or(*kZero.value)
+              .get_value_or(kZero)
           + *amount;
       return new_amount | [this, &command](const auto &new_dest_balance) {
         return account_asset_builder_.assetId(command.assetId())
