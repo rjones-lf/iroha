@@ -66,116 +66,51 @@ namespace iroha {
           const shared_model::interface::types::AccountIdType
               &creator_account_id) = 0;
 
-      /**
-       * AddAssetQuantity sql executor
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::AddAssetQuantity &command) = 0;
 
-      /**
-       *
-       * @param peer
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::AddPeer &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::AddSignatory &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::AppendRole &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::CreateAccount &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::CreateAsset &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::CreateDomain &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::CreateRole &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::DetachRole &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::GrantPermission &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::RemoveSignatory &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::RevokePermission &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::SetAccountDetail &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::SetQuorum &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::SubtractAssetQuantity &command) = 0;
 
-      /**
-       *
-       * @return CommandResult, which will contain error in case of failure
-       */
       virtual CommandResult operator()(
           const shared_model::interface::TransferAsset &command) = 0;
     };
