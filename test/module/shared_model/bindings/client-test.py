@@ -30,21 +30,21 @@ class ClientTest(unittest.TestCase):
   def test_hash(self):
     tx = self.unsigned_tx()
     tx.payload.reduced_payload.commands.extend([self.valid_add_peer_command()])
-    h = iroha.hashTransaction(tx.SerializeToString())
+    h = iroha.hashTransaction(iroha.Blob(tx.SerializeToString()).blob())
     self.assertEqual(len(h), 32)
 
   def test_sign(self):
     tx = self.unsigned_tx()
     tx.payload.reduced_payload.commands.extend([self.valid_add_peer_command()])
     self.assertEqual(len(tx.signatures), 0)
-    tx_blob = iroha.signTransaction(tx.SerializeToString(), self.keys)
+    tx_blob = iroha.signTransaction(iroha.Blob(tx.SerializeToString()).blob(), self.keys)
     signed_tx = trx.Transaction()
     signed_tx.ParseFromString(bytearray(tx_blob))
     self.assertEqual(len(signed_tx.signatures), 1)
 
   def test_validate_without_cmd(self):
     tx = self.unsigned_tx()
-    tx_blob = iroha.signTransaction(tx.SerializeToString(), self.keys)
+    tx_blob = iroha.signTransaction(iroha.Blob(tx.SerializeToString()).blob(), self.keys)
     print(iroha.validateTransaction(tx_blob))
     self.assertNotEqual(iroha.validateTransaction(tx_blob).find('Transaction should contain at least one command'), -1)
 
@@ -52,14 +52,14 @@ class ClientTest(unittest.TestCase):
     tx = self.unsigned_tx()
     tx.payload.reduced_payload.commands.extend([self.valid_add_peer_command()])
     self.assertEqual(len(tx.signatures), 0)
-    print(iroha.validateTransaction(tx.SerializeToString()))
-    self.assertNotEqual(iroha.validateTransaction(tx.SerializeToString()).find('Signatures cannot be empty'), -1)
+    print(iroha.validateTransaction(iroha.Blob(tx.SerializeToString()).blob()))
+    self.assertNotEqual(iroha.validateTransaction(iroha.Blob(tx.SerializeToString()).blob()).find('Signatures cannot be empty'), -1)
 
   def test_validate_correct_tx(self):
     tx = self.unsigned_tx()
     tx.payload.reduced_payload.commands.extend([self.valid_add_peer_command()])
     self.assertEqual(len(tx.signatures), 0)
-    tx_blob = iroha.signTransaction(tx.SerializeToString(), self.keys)
+    tx_blob = iroha.signTransaction(iroha.Blob(tx.SerializeToString()).blob(), self.keys)
     self.assertEqual(iroha.validateTransaction(tx_blob), '')
 
 
