@@ -48,7 +48,6 @@ namespace iroha {
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
-          log_(logger::log("StorageImpl")),
           connection_(connection),
           factory_(factory),
           log_(logger::log("StorageImpl")) {}
@@ -278,7 +277,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
       auto sql = std::make_unique<soci::session>(*connection_);
-      return std::make_shared<PostgresWsvQuery>(std::move(sql), factory);
+      return std::make_shared<PostgresWsvQuery>(std::move(sql), factory_);
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {

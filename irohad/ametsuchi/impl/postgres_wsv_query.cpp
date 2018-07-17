@@ -37,17 +37,17 @@ namespace iroha {
     const std::string kAccountId = "account_id";
     const std::string kDomainId = "domain_id";
 
-    PostgresWsvQuery::PostgresWsvQuery(soci::session &sql,
-                                       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
-        : sql_(sql),
-          converter_(std::make_unique<PostgresResultConverter>(factory)),
-          log_(logger::log("PostgresWsvQuery")) {}
+    PostgresWsvQuery::PostgresWsvQuery(
+        soci::session &sql,
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+        : sql_(sql), factory_(factory), log_(logger::log("PostgresWsvQuery")) {}
 
-    PostgresWsvQuery::PostgresWsvQuery(std::unique_ptr<soci::session> sql_ptr,
-                                       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+    PostgresWsvQuery::PostgresWsvQuery(
+        std::unique_ptr<soci::session> sql_ptr,
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
         : sql_ptr_(std::move(sql_ptr)),
           sql_(*sql_ptr_),
-          converter_(std::make_unique<PostgresResultConverter>(factory)),
+          factory_(factory),
           log_(logger::log("PostgresWsvQuery")) {}
 
     bool PostgresWsvQuery::hasAccountGrantablePermission(
@@ -139,8 +139,8 @@ namespace iroha {
         return boost::none;
       }
 
-      return fromResult(
-          makeAccount(account_id, domain_id.get(), quorum.get(), data.get()));
+      return fromResult(factory_->createAccount(
+          account_id, domain_id.get(), quorum.get(), data.get()));
     }
 
     boost::optional<std::string> PostgresWsvQuery::getAccountDetail(
@@ -227,7 +227,8 @@ namespace iroha {
         return boost::none;
       }
 
-      return fromResult(makeAsset(asset_id, domain_id.get(), precision.get()));
+      return fromResult(
+          factory_->createAsset(asset_id, domain_id.get(), precision.get()));
     }
 
     boost::optional<
@@ -240,8 +241,9 @@ namespace iroha {
       std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
           assets;
       for (auto &t : st) {
-        fromResult(makeAccountAsset(account_id, t.get<1>(), t.get<2>())) |
-            [&assets](const auto &asset) { assets.push_back(asset); };
+        fromResult(
+            factory_->createAccountAsset(account_id, t.get<1>(), t.get<2>()))
+            | [&assets](const auto &asset) { assets.push_back(asset); };
       }
 
       return boost::make_optional(assets);
@@ -264,7 +266,8 @@ namespace iroha {
         return boost::none;
       }
 
-      return fromResult(makeAccountAsset(account_id, asset_id, amount.get()));
+      return fromResult(
+          factory_->createAccountAsset(account_id, asset_id, amount.get()));
     }
 
     boost::optional<std::shared_ptr<shared_model::interface::Domain>>
@@ -281,7 +284,7 @@ namespace iroha {
         return boost::none;
       }
 
-      return fromResult(makeDomain(domain_id, role.get()));
+      return fromResult(factory_->createDomain(domain_id, role.get()));
     }
 
     boost::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>>
@@ -290,15 +293,17 @@ namespace iroha {
           (sql_.prepare << "SELECT public_key, address FROM peer");
       std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
 
-      auto results = transform<
-          shared_model::builder::BuilderResult<shared_model::interface::Peer>>(
-          rows, makePeer);
-      for (auto &r : results) {
-        r.match(
-            [&](expected::Value<std::shared_ptr<shared_model::interface::Peer>>
-                    &v) { peers.push_back(v.value); },
-            [&](expected::Error<std::shared_ptr<std::string>> &e) {
-              log_->info(*e.error);
+      for (auto &row : rows) {
+        auto address = row.get<std::string>(1);
+        auto key = shared_model::crypto::PublicKey(
+            shared_model::crypto::Blob::fromHexString(row.get<std::string>(0)));
+
+        auto peer = factory_->createPeer(address, key);
+        peer.match(
+            [&](expected::Value<std::unique_ptr<shared_model::interface::Peer>>
+                    &v) { peers.push_back(std::move(v.value)); },
+            [&](expected::Error<std::string> &e) {
+              log_->info(e.error);
             });
       }
       return peers;

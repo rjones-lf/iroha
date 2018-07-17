@@ -20,7 +20,8 @@
 
 #include "ametsuchi/wsv_query.hpp"
 
-#include "ametsuchi/impl/postgres_result_converter.hpp"
+//#include <soci/soci.h>
+
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "postgres_wsv_common.hpp"
 
@@ -93,7 +94,7 @@ namespace iroha {
      private:
       std::unique_ptr<soci::session> sql_ptr_;
       soci::session &sql_;
-      std::unique_ptr<PostgresResultConverter> converter_;
+      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
       logger::Logger log_;
     };
   }  // namespace ametsuchi

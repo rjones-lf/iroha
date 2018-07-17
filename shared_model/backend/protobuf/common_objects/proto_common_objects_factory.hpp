@@ -21,11 +21,11 @@
 
 namespace shared_model {
   namespace proto {
-  /**
-   * ProtoCommonObjectsFactory constructs protobuf-based objects.
-   * It performs stateful validation with provided validator
-   * @tparam Validator
-   */
+    /**
+     * ProtoCommonObjectsFactory constructs protobuf-based objects.
+     * It performs stateful validation with provided validator
+     * @tparam Validator
+     */
     template <typename Validator>
     class ProtoCommonObjectsFactory : public interface::CommonObjectsFactory {
      public:
@@ -78,6 +78,28 @@ namespace shared_model {
             std::move(proto_account));
       }
 
+      FactoryResult<std::unique_ptr<interface::Amount>> createAmount(
+          boost::multiprecision::uint256_t value,
+          interface::types::PrecisionType precision) override {
+        iroha::protocol::Amount amount;
+        amount.set_precision(precision);
+        convertToProtoAmount(*amount.mutable_value(), value);
+
+        auto proto_amount = std::make_unique<Amount>(std::move(amount));
+
+        auto errors = validate(*proto_amount, [](const auto &, auto &) {
+          // no validation needed,
+          // since any amount is valid in general context
+        });
+
+        if (errors) {
+          return iroha::expected::makeError(errors.reason());
+        }
+
+        return iroha::expected::makeValue<std::unique_ptr<interface::Amount>>(
+            std::move(proto_amount));
+      }
+
       FactoryResult<std::unique_ptr<interface::AccountAsset>>
       createAccountAsset(const interface::types::AccountIdType &account_id,
                          const interface::types::AssetIdType &asset_id,
@@ -106,26 +128,14 @@ namespace shared_model {
             std::unique_ptr<interface::AccountAsset>>(std::move(proto_asset));
       }
 
-      FactoryResult<std::unique_ptr<interface::Amount>> createAmount(
-          boost::multiprecision::uint256_t value,
-          interface::types::PrecisionType precision) override {
-        iroha::protocol::Amount amount;
-        amount.set_precision(precision);
-        convertToProtoAmount(*amount.mutable_value(), value);
-
-        auto proto_amount = std::make_unique<Amount>(std::move(amount));
-
-        auto errors = validate(*proto_amount, [](const auto &, auto &) {
-          // no validation needed,
-          // since any amount is valid in general context
-        });
-
-        if (errors) {
-          return iroha::expected::makeError(errors.reason());
-        }
-
-        return iroha::expected::makeValue<std::unique_ptr<interface::Amount>>(
-            std::move(proto_amount));
+      FactoryResult<std::unique_ptr<interface::AccountAsset>>
+      createAccountAsset(const interface::types::AccountIdType &account_id,
+                         const interface::types::AssetIdType &asset_id,
+                         std::string balance) override {
+        return createAmount(balance) |
+            [this, &account_id, &asset_id](const auto &amount) {
+              return createAccountAsset(account_id, asset_id, *amount);
+            };
       }
 
       FactoryResult<std::unique_ptr<interface::Amount>> createAmount(

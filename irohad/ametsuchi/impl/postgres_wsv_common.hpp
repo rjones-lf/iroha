@@ -60,14 +60,15 @@ namespace iroha {
      * @param f - function which returns BuilderResult
      * @return whatever f returns, or error in case exception has been thrown
      */
-    template <typename BuildFunc>
-    static inline auto tryBuild(BuildFunc &&f) noexcept -> decltype(f()) {
-      try {
-        return f();
-      } catch (std::exception &e) {
-        return expected::makeError(std::make_shared<std::string>(e.what()));
-      }
-    }
+    //    template <typename BuildFunc>
+    //    static inline auto tryBuild(BuildFunc &&f) noexcept -> decltype(f()) {
+    //      try {
+    //        return f();
+    //      } catch (std::exception &e) {
+    //        return
+    //        expected::makeError(std::make_shared<std::string>(e.what()));
+    //      }
+    //    }
 
     template <typename ParamType, typename Function>
     void processSoci(soci::statement &st,
@@ -85,78 +86,6 @@ namespace iroha {
       }
     }
 
-    static inline shared_model::builder::BuilderResult<
-        shared_model::interface::Account>
-    makeAccount(const std::string &account_id,
-                const std::string &domain_id,
-                const shared_model::interface::types::QuorumType &quorum,
-                const std::string &data) noexcept {
-      return tryBuild([&] {
-        return shared_model::builder::DefaultAccountBuilder()
-            .accountId(account_id)
-            .domainId(domain_id)
-            .quorum(quorum)
-            .jsonData(data)
-            .build();
-      });
-    }
-
-    static inline shared_model::builder::BuilderResult<
-        shared_model::interface::Asset>
-    makeAsset(const std::string &asset_id,
-              const std::string &domain_id,
-              const int32_t precision) noexcept {
-      return tryBuild([&] {
-        return shared_model::builder::DefaultAssetBuilder()
-            .assetId(asset_id)
-            .domainId(domain_id)
-            .precision(precision)
-            .build();
-      });
-    }
-
-    static inline shared_model::builder::BuilderResult<
-        shared_model::interface::AccountAsset>
-    makeAccountAsset(const std::string &account_id,
-                     const std::string &asset_id,
-                     const std::string &amount) noexcept {
-      return tryBuild([&] {
-        auto balance =
-            shared_model::builder::DefaultAmountBuilder::fromString(amount);
-        return balance | [&](const auto &balance_ptr) {
-          return shared_model::builder::DefaultAccountAssetBuilder()
-              .accountId(account_id)
-              .assetId(asset_id)
-              .balance(*balance_ptr)
-              .build();
-        };
-      });
-    }
-
-    static inline shared_model::builder::BuilderResult<
-        shared_model::interface::Peer>
-    makePeer(const soci::row &row) noexcept {
-      return tryBuild([&row] {
-        return shared_model::builder::DefaultPeerBuilder()
-            .pubkey(shared_model::crypto::PublicKey(
-                shared_model::crypto::Blob::fromHexString(
-                    row.get<std::string>(0))))
-            .address(row.get<std::string>(1))
-            .build();
-      });
-    }
-
-    static inline shared_model::builder::BuilderResult<
-        shared_model::interface::Domain>
-    makeDomain(const std::string &domain_id, const std::string &role) noexcept {
-      return tryBuild([&domain_id, &role] {
-        return shared_model::builder::DefaultDomainBuilder()
-            .domainId(domain_id)
-            .defaultRole(role)
-            .build();
-      });
-    }
-
     /**
      * Transforms result to optional
      * value -> optional<value>
@@ -166,13 +95,15 @@ namespace iroha {
      * @return optional<T>
      */
     template <typename T>
-    static inline boost::optional<std::shared_ptr<T>> fromResult(
-        const shared_model::builder::BuilderResult<T> &result) {
+    inline boost::optional<std::shared_ptr<T>> fromResult(
+        shared_model::interface::CommonObjectsFactory::FactoryResult<
+            std::unique_ptr<T>> &&result) {
       return result.match(
-          [](const expected::Value<std::shared_ptr<T>> &v) {
-            return boost::make_optional(v.value);
+          [](expected::Value<std::unique_ptr<T>> &v)
+              -> boost::optional<std::shared_ptr<T>> {
+            return std::shared_ptr<T>(std::move(v.value));
           },
-          [](const expected::Error<std::shared_ptr<std::string>> &e)
+          [](expected::Error<std::string>)
               -> boost::optional<std::shared_ptr<T>> { return boost::none; });
     }
   }  // namespace ametsuchi

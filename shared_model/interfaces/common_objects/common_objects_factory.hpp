@@ -54,6 +54,14 @@ namespace shared_model {
           const Amount &balance) = 0;
 
       /**
+       * Create account asset instance using string
+       */
+      virtual FactoryResult<std::unique_ptr<AccountAsset>> createAccountAsset(
+          const types::AccountIdType &account_id,
+          const types::AssetIdType &asset_id,
+          std::string balance) = 0;
+
+      /**
        * Create amount instance from string
        *
        * @param value integer will be divided by 10 * precision,

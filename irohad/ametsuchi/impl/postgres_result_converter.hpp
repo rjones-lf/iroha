@@ -18,7 +18,7 @@ namespace iroha {
      public:
       explicit PostgresResultConverter(
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory) {}
+              factory);
 
       template <typename T>
       using ConverterResult =
