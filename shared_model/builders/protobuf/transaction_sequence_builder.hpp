@@ -8,6 +8,7 @@
 
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
+#include "builders/protobuf/transport_builder.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -32,10 +33,11 @@ namespace shared_model {
       template <class T>
       iroha::expected::Result<interface::TransactionSequence, std::string>
       build(T &transport) {
+        const auto &txs = transport.transactions();
         std::vector<std::shared_ptr<interface::Transaction>> shm_txs;
         std::transform(
-            transport.begin(),
-            transport.end(),
+            txs.begin(),
+            txs.end(),
             std::back_inserter(shm_txs),
             [](const auto &tx) { return std::make_shared<Transaction>(tx); });
         return interface::TransactionSequence::createTransactionSequence(
