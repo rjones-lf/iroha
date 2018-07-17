@@ -102,8 +102,7 @@ class AccountAssetTest : public ::testing::Test {
  public:
   interface::types::AccountIdType valid_account_id = "hello@world";
   interface::types::AssetIdType valid_asset_id = "bit#connect";
-  std::shared_ptr<interface::Amount> valid_amount =
-      val(builder::DefaultAmountBuilder::fromString("10.00"))->value;
+  interface::Amount valid_amount = interface::Amount("10.00");
 
   interface::types::AccountIdType invalid_account_id = "hello123";
 };
@@ -115,13 +114,13 @@ class AccountAssetTest : public ::testing::Test {
  */
 TEST_F(AccountAssetTest, ValidAccountAssetInitialization) {
   auto account_asset = factory.createAccountAsset(
-      valid_account_id, valid_asset_id, *valid_amount);
+      valid_account_id, valid_asset_id, valid_amount);
 
   account_asset.match(
       [&](const ValueOf<decltype(account_asset)> &v) {
         ASSERT_EQ(v.value->accountId(), valid_account_id);
         ASSERT_EQ(v.value->assetId(), valid_asset_id);
-        ASSERT_EQ(v.value->balance(), *valid_amount);
+        ASSERT_EQ(v.value->balance(), valid_amount);
       },
       [](const ErrorOf<decltype(account_asset)> &e) { FAIL() << e.error; });
 }
@@ -133,69 +132,13 @@ TEST_F(AccountAssetTest, ValidAccountAssetInitialization) {
  */
 TEST_F(AccountAssetTest, InvalidAccountAssetInitialization) {
   auto account_asset = factory.createAccountAsset(
-      invalid_account_id, valid_asset_id, *valid_amount);
+      invalid_account_id, valid_asset_id, valid_amount);
 
   account_asset.match(
       [](const ValueOf<decltype(account_asset)> &v) {
         FAIL() << "Expected error case";
       },
       [](const ErrorOf<decltype(account_asset)> &e) { SUCCEED(); });
-}
-
-class AmountTest : public ::testing::Test {
- public:
-  boost::multiprecision::uint256_t valid_value = 123;
-  interface::types::PrecisionType valid_precision = 2;
-
-  std::string valid_amount_str = "1.23";
-  std::string invalid_amount_str = "hello there";
-};
-
-/**
- * @given valid data for amount
- * @when amount is created via factory
- * @then amount is successfully initialized
- */
-TEST_F(AmountTest, ValidAmountInitialization) {
-  auto amount = factory.createAmount(valid_value, valid_precision);
-
-  amount.match(
-      [&](const ValueOf<decltype(amount)> &v) {
-        ASSERT_EQ(v.value->intValue(), valid_value);
-        ASSERT_EQ(v.value->precision(), valid_precision);
-      },
-      [](const ErrorOf<decltype(amount)> &e) { FAIL() << e.error; });
-}
-
-/**
- * @given valid string for amount
- * @when amount is created via factory
- * @then amount is successfully initialized
- */
-TEST_F(AmountTest, ValidStringAmountInitialization) {
-  auto amount = factory.createAmount(valid_amount_str);
-
-  amount.match(
-      [&](const ValueOf<decltype(amount)> &v) {
-        ASSERT_EQ(v.value->intValue(), valid_value);
-        ASSERT_EQ(v.value->precision(), valid_precision);
-      },
-      [](const ErrorOf<decltype(amount)> &e) { FAIL() << e.error; });
-}
-
-/**
- * @given invalid string for amount
- * @when amount is created via factory
- * @then amount is not initialized correctly
- */
-TEST_F(AmountTest, InvalidStringAmountInitialization) {
-  auto amount = factory.createAmount(invalid_amount_str);
-
-  amount.match(
-      [](const ValueOf<decltype(amount)> &v) {
-        FAIL() << "Expected error case";
-      },
-      [](const ErrorOf<decltype(amount)> &e) { SUCCEED(); });
 }
 
 class AssetTest : public ::testing::Test {
