@@ -64,7 +64,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
       std::shared_ptr<const shared_model::interface::Transaction> transaction)
       override {}
 
-  void propagateBatch(
+  void propagate_batch(
       const shared_model::interface::types::SharedTxsCollectionType
           &transactions) override {}
 
