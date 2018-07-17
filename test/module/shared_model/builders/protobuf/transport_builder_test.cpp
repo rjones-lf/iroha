@@ -5,7 +5,6 @@
 
 #include <gtest/gtest.h>
 
-#include "endpoint.pb.h"
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/block_variant_transport_builder.hpp"
 #include "builders/protobuf/empty_block.hpp"
@@ -15,6 +14,7 @@
 #include "builders/protobuf/transaction_sequence_builder.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "common/types.hpp"
+#include "endpoint.pb.h"
 #include "framework/result_fixture.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
@@ -198,19 +198,24 @@ class TransportBuilderTest : public ::testing::Test {
   /**
    * Receives model object, gets transport from it, converts transport into
    * model object and checks if original and obtained model objects are the same
-   * @tparam T model object type
-   * @tparam SV validator type
+   * @tparam ObjectOriginalModel - model object type
+   * @tparam Validator - validator type
    * @param orig_model
    * @param successCase function invoking if value exists
    * @param failCase function invoking when error returned
    */
-  template <typename SV, typename T, typename SuccessCase, typename FailCase>
-  void testTransport(const T &orig_model,
+  template <typename Validator,
+            typename ObjectOriginalModel,
+            typename SuccessCase,
+            typename FailCase>
+  void testTransport(const ObjectOriginalModel &orig_model,
                      SuccessCase &&successCase,
                      FailCase &&failCase) {
     auto proto_model = orig_model.getTransport();
 
-    auto built_model = TransportBuilder<T, SV>().build(proto_model);
+    auto built_model =
+        TransportBuilder<ObjectOriginalModel, Validator>().build(
+            proto_model);
 
     built_model.match(successCase, failCase);
   }
@@ -496,10 +501,12 @@ TEST_F(TransportBuilderTest, TransactionSequenceCorrect) {
   auto batch2 = getValidBatch(20, 5);
   auto batch3 = getValidBatch(30, 5);
   std::for_each(std::begin(batch1), std::end(batch1), [&tx_list](auto &tx) {
-    new (tx_list.add_transactions()) iroha::protocol::Transaction(tx.getTransport());
+    new (tx_list.add_transactions())
+        iroha::protocol::Transaction(tx.getTransport());
   });
   std::for_each(std::begin(batch2), std::end(batch2), [&tx_list](auto &tx) {
-    new (tx_list.add_transactions()) iroha::protocol::Transaction(tx.getTransport());
+    new (tx_list.add_transactions())
+        iroha::protocol::Transaction(tx.getTransport());
   });
   new (tx_list.add_transactions())
       iroha::protocol::Transaction(createTransaction().getTransport());
@@ -508,7 +515,8 @@ TEST_F(TransportBuilderTest, TransactionSequenceCorrect) {
   new (tx_list.add_transactions())
       iroha::protocol::Transaction(createTransaction().getTransport());
   std::for_each(std::begin(batch3), std::end(batch3), [&tx_list](auto &tx) {
-    new (tx_list.add_transactions()) iroha::protocol::Transaction(tx.getTransport());
+    new (tx_list.add_transactions())
+        iroha::protocol::Transaction(tx.getTransport());
   });
   new (tx_list.add_transactions())
       iroha::protocol::Transaction(createTransaction().getTransport());
@@ -527,16 +535,18 @@ TEST_F(TransportBuilderTest, TransactionInteraptedBatch) {
   iroha::protocol::TxList tx_list;
   auto batch = getValidBatch(0, 10);
   std::for_each(std::begin(batch), std::begin(batch) + 3, [&tx_list](auto &tx) {
-    new (tx_list.add_transactions()) iroha::protocol::Transaction(tx.getTransport());
+    new (tx_list.add_transactions())
+        iroha::protocol::Transaction(tx.getTransport());
   });
   new (tx_list.add_transactions())
       iroha::protocol::Transaction(createTransaction().getTransport());
   std::for_each(std::begin(batch) + 3, std::end(batch), [&tx_list](auto &tx) {
-    new (tx_list.add_transactions()) iroha::protocol::Transaction(tx.getTransport());
+    new (tx_list.add_transactions())
+        iroha::protocol::Transaction(tx.getTransport());
   });
 
-  auto error = framework::expected::err(
-      TransactionSequenceBuilder().build(tx_list));
+  auto error =
+      framework::expected::err(TransactionSequenceBuilder().build(tx_list));
   ASSERT_TRUE(error);
 }
 
@@ -549,12 +559,14 @@ TEST_F(TransportBuilderTest, BatchWrongOrder) {
   iroha::protocol::TxList tx_list;
   auto batch = getValidBatch(0, 10);
   std::for_each(std::begin(batch) + 3, std::end(batch), [&tx_list](auto &tx) {
-    new (tx_list.add_transactions()) iroha::protocol::Transaction(tx.getTransport());
+    new (tx_list.add_transactions())
+        iroha::protocol::Transaction(tx.getTransport());
   });
   std::for_each(std::begin(batch), std::begin(batch) + 3, [&tx_list](auto &tx) {
-    new (tx_list.add_transactions()) iroha::protocol::Transaction(tx.getTransport());
+    new (tx_list.add_transactions())
+        iroha::protocol::Transaction(tx.getTransport());
   });
-  auto error = framework::expected::err(
-      TransactionSequenceBuilder().build(tx_list));
+  auto error =
+      framework::expected::err(TransactionSequenceBuilder().build(tx_list));
   ASSERT_TRUE(error);
 }
