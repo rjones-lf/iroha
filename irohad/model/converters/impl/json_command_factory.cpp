@@ -37,38 +37,10 @@
 #include "model/commands/transfer_asset.hpp"
 
 using namespace rapidjson;
-using namespace boost::multiprecision;
 
 namespace iroha {
   namespace model {
     namespace converters {
-      template <>
-      struct Convert<Amount> {
-        template <typename T>
-        boost::optional<Amount> operator()(T &&x) {
-          auto des = makeFieldDeserializer(x);
-          auto str_int_value = des.String("value");
-
-          if (not str_int_value) {
-            return boost::none;
-          }
-
-          // check if value is actually number
-          std::regex e("\\d+");
-          if (not std::regex_match(str_int_value.value(), e)) {
-            return boost::none;
-          }
-
-          uint256_t value(str_int_value.value());
-          uint8_t precision;
-          rapidjson::Document dd;
-          precision = des.document["precision"].GetUint();
-
-          return boost::make_optional(
-              Amount(value, static_cast<uint8_t>(precision)));
-        }
-      };
-
       template <>
       struct Convert<Peer> {
         template <typename T>
@@ -152,15 +124,7 @@ namespace iroha {
         document.SetObject();
         document.AddMember("command_type", "AddAssetQuantity", allocator);
         document.AddMember("asset_id", add_asset_quantity->asset_id, allocator);
-
-        Value amount;
-        amount.SetObject();
-        amount.AddMember(
-            "value", add_asset_quantity->amount.getIntValue().str(), allocator);
-        amount.AddMember(
-            "precision", add_asset_quantity->amount.getPrecision(), allocator);
-
-        document.AddMember("amount", amount, allocator);
+        document.AddMember("amount", add_asset_quantity->amount, allocator);
 
         return document;
       }
@@ -170,7 +134,7 @@ namespace iroha {
         auto des = makeFieldDeserializer(document);
         return make_optional_ptr<AddAssetQuantity>()
             | des.String(&AddAssetQuantity::asset_id, "asset_id")
-            | des.Object(&AddAssetQuantity::amount, "amount") | toCommand;
+            | des.String(&AddAssetQuantity::amount, "amount") | toCommand;
       }
 
       // AddPeer
@@ -400,15 +364,7 @@ namespace iroha {
         document.AddMember("asset_id", transfer_asset->asset_id, allocator);
         document.AddMember(
             "description", transfer_asset->description, allocator);
-
-        Value amount;
-        amount.SetObject();
-        amount.AddMember(
-            "value", transfer_asset->amount.getIntValue().str(), allocator);
-        amount.AddMember(
-            "precision", transfer_asset->amount.getPrecision(), allocator);
-
-        document.AddMember("amount", amount, allocator);
+        document.AddMember("amount", transfer_asset->amount, allocator);
 
         return document;
       }
@@ -421,7 +377,7 @@ namespace iroha {
             | des.String(&TransferAsset::dest_account_id, "dest_account_id")
             | des.String(&TransferAsset::asset_id, "asset_id")
             | des.String(&TransferAsset::description, "description")
-            | des.Object(&TransferAsset::amount, "amount") | toCommand;
+            | des.String(&TransferAsset::amount, "amount") | toCommand;
       }
 
       rapidjson::Document JsonCommandFactory::serializeAppendRole(
@@ -564,17 +520,8 @@ namespace iroha {
         document.AddMember("command_type", "SubtractAssetQuantity", allocator);
         document.AddMember(
             "asset_id", subtract_asset_quantity->asset_id, allocator);
-
-        Value amount;
-        amount.SetObject();
-        amount.AddMember("value",
-                         subtract_asset_quantity->amount.getIntValue().str(),
-                         allocator);
-        amount.AddMember("precision",
-                         subtract_asset_quantity->amount.getPrecision(),
-                         allocator);
-
-        document.AddMember("amount", amount, allocator);
+        document.AddMember(
+            "amount", subtract_asset_quantity->amount, allocator);
 
         return document;
       }
@@ -585,7 +532,7 @@ namespace iroha {
         auto des = makeFieldDeserializer(document);
         return make_optional_ptr<SubtractAssetQuantity>()
             | des.String(&SubtractAssetQuantity::asset_id, "asset_id")
-            | des.Object(&SubtractAssetQuantity::amount, "amount") | toCommand;
+            | des.String(&SubtractAssetQuantity::amount, "amount") | toCommand;
       }
 
       // Abstract

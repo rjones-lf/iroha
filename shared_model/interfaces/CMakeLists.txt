@@ -36,6 +36,7 @@ add_library(shared_model_interfaces
     queries/impl/get_pending_transactions.cpp
     queries/impl/blocks_query.cpp
     queries/impl/query_payload_meta.cpp
+    common_objects/impl/amount.cpp
     )
 
 if (IROHA_ROOT_PROJECT)
@@ -60,5 +61,6 @@ endif ()
 
 target_link_libraries(shared_model_interfaces
     shared_model_cryptography
+    schema
     ${Boost_LIBRARIES}
     )

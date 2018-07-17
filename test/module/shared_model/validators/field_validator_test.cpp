@@ -19,13 +19,13 @@
 #include <memory>
 #include <unordered_set>
 
-#include "block.pb.h"
 #include <gmock/gmock-matchers.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/dynamic_message.h>
 #include <boost/format.hpp>
 #include <boost/range/algorithm.hpp>
 #include <boost/range/join.hpp>
+#include "block.pb.h"
 
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "backend/protobuf/permissions.hpp"
@@ -268,12 +268,9 @@ class FieldValidatorTest : public ValidatorsTest {
       idTestCases("asset_id", &FieldValidatorTest::asset_id, '#');
 
   std::vector<FieldTestCase> amount_test_cases{
-      {"valid_amount",
-       [&] { amount.mutable_value()->set_fourth(100); },
-       true,
-       ""},
+      {"valid_amount", [&] { amount = "100"; }, true, ""},
       {"zero_amount",
-       [&] { amount.mutable_value()->set_fourth(0); },
+       [&] { amount = "0"; },
        false,
        "Amount must be greater than 0, passed value: 0"}};
 
@@ -644,11 +641,12 @@ class FieldValidatorTest : public ValidatorsTest {
                     &FieldValidator::validateAssetId,
                     &FieldValidatorTest::asset_id,
                     asset_id_test_cases),
-      makeTransformValidator("amount",
-                             &FieldValidator::validateAmount,
-                             &FieldValidatorTest::amount,
-                             [](auto &&x) { return proto::Amount(x); },
-                             amount_test_cases),
+      makeTransformValidator(
+          "amount",
+          &FieldValidator::validateAmount,
+          &FieldValidatorTest::amount,
+          [](auto &&x) { return shared_model::interface::Amount(x); },
+          amount_test_cases),
       makeTransformValidator("peer",
                              &FieldValidator::validatePeer,
                              &FieldValidatorTest::peer,
@@ -658,6 +656,10 @@ class FieldValidatorTest : public ValidatorsTest {
                     &FieldValidator::validateAccountName,
                     &FieldValidatorTest::account_name,
                     account_name_test_cases),
+      makeValidator("writer",
+                    &FieldValidator::validateAccountId,
+                    &FieldValidatorTest::account_id,
+                    account_id_test_cases),
       makeValidator("domain_id",
                     &FieldValidator::validateDomainId,
                     &FieldValidatorTest::domain_id,
@@ -718,11 +720,13 @@ TEST_F(FieldValidatorTest, CommandFieldsValidation) {
  * meaningful message
  */
 TEST_F(FieldValidatorTest, TransactionFieldsValidation) {
-    auto proto_tx = std::make_shared<iroha::protocol::Transaction>();
+  auto proto_tx = std::make_shared<iroha::protocol::Transaction>();
   proto_tx->add_signatures();  // at least one signature in message
   proto_tx->mutable_payload()->mutable_reduced_payload()->add_commands();
   // iterate over all fields in transaction
-  iterateContainerRecursive(proto_tx, field_validators,
+  iterateContainerRecursive(
+      proto_tx,
+      field_validators,
       [this](auto field, auto transaction_field) { this->runTestCases(field); },
       [] {});
 }

@@ -28,7 +28,7 @@
 #include "interfaces/query_responses/error_responses/not_supported_error_response.hpp"
 #include "interfaces/query_responses/error_responses/stateful_failed_error_response.hpp"
 #include "interfaces/query_responses/error_responses/stateless_failed_error_response.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 
 namespace shared_model {
   namespace proto {

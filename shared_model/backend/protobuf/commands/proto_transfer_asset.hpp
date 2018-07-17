@@ -20,8 +20,8 @@
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "commands.pb.h"
-#include "backend/protobuf/common_objects/amount.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
+#include "interfaces/common_objects/amount.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -54,7 +54,7 @@ namespace shared_model {
 
       const iroha::protocol::TransferAsset &transfer_asset_;
 
-      const Lazy<proto::Amount> amount_;
+      const Lazy<interface::Amount> amount_;
     };
 
   }  // namespace proto

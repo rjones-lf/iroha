@@ -20,9 +20,9 @@
 
 #include "ametsuchi/storage.hpp"
 
+#include <soci/soci.h>
 #include <boost/optional.hpp>
 #include <cmath>
-#include <pqxx/pqxx>
 #include <shared_mutex>
 #include "ametsuchi/impl/postgres_options.hpp"
 #include "ametsuchi/key_value_storage.hpp"
@@ -47,6 +47,10 @@ namespace iroha {
 
       static expected::Result<ConnectionContext, std::string> initConnections(
           std::string block_store_dir);
+
+      static expected::Result<std::shared_ptr<soci::connection_pool>,
+                              std::string>
+      initPostgresConnection(std::string &options_str, size_t pool_size = 10);
 
      public:
       static expected::Result<std::shared_ptr<StorageImpl>, std::string> create(
@@ -89,7 +93,8 @@ namespace iroha {
      protected:
       StorageImpl(std::string block_store_dir,
                   PostgresOptions postgres_options,
-                  std::unique_ptr<KeyValueStorage> block_store);
+                  std::unique_ptr<KeyValueStorage> block_store,
+                  std::shared_ptr<soci::connection_pool> connection);
 
       /**
        * Folder with raw blocks
@@ -101,6 +106,8 @@ namespace iroha {
 
      private:
       std::unique_ptr<KeyValueStorage> block_store_;
+
+      std::shared_ptr<soci::connection_pool> connection_;
 
       // Allows multiple readers and a single writer
       std::shared_timed_mutex rw_lock_;

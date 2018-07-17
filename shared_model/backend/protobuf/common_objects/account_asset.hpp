@@ -18,11 +18,10 @@
 #ifndef IROHA_PROTO_ACCOUNT_ASSET_HPP
 #define IROHA_PROTO_ACCOUNT_ASSET_HPP
 
-#include "backend/protobuf/common_objects/amount.hpp"
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "backend/protobuf/util.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 #include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
@@ -57,7 +56,8 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<Amount> balance_{[this] { return Amount(proto_->balance()); }};
+      const Lazy<interface::Amount> balance_{
+          [this] { return interface::Amount(proto_->balance()); }};
     };
   }  // namespace proto
 }  // namespace shared_model

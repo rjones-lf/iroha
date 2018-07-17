@@ -73,8 +73,11 @@ namespace shared_model {
     }
 
     ModelQueryBuilder ModelQueryBuilder::getAccountDetail(
-        const interface::types::AccountIdType &account_id) {
-      return ModelQueryBuilder(builder_.getAccountDetail(account_id));
+        const interface::types::AccountIdType &account_id,
+        const interface::types::AccountDetailKeyType &key,
+        const interface::types::AccountIdType &writer) {
+      return ModelQueryBuilder(
+          builder_.getAccountDetail(account_id, key, writer));
     }
 
     ModelQueryBuilder ModelQueryBuilder::getPendingTransactions() {

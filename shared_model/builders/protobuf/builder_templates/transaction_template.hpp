@@ -22,13 +22,11 @@
 
 #include <boost/range/algorithm/for_each.hpp>
 
-#include "block.pb.h"
 #include "commands.pb.h"
 #include "primitive.pb.h"
+#include "transaction.pb.h"
 
-#include "amount/amount.hpp"
 #include "backend/protobuf/permissions.hpp"
-#include "builders/protobuf/helpers.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/permissions.hpp"
@@ -47,7 +45,7 @@ namespace shared_model {
     template <int S = 0,
               typename SV = validation::DefaultTransactionValidator,
               typename BT = UnsignedWrapper<Transaction>>
-    class TemplateTransactionBuilder {
+    class DEPRECATED TemplateTransactionBuilder {
      private:
       template <int, typename, typename>
       friend class TemplateTransactionBuilder;
@@ -145,7 +143,7 @@ namespace shared_model {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_add_asset_quantity();
           command->set_asset_id(asset_id);
-          initializeProtobufAmount(command->mutable_amount(), amount);
+          command->set_amount(amount);
         });
       }
 
@@ -288,7 +286,7 @@ namespace shared_model {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_subtract_asset_quantity();
           command->set_asset_id(asset_id);
-          initializeProtobufAmount(command->mutable_amount(), amount);
+          command->set_amount(amount);
         });
       }
 
@@ -303,7 +301,7 @@ namespace shared_model {
           command->set_dest_account_id(dest_account_id);
           command->set_asset_id(asset_id);
           command->set_description(description);
-          initializeProtobufAmount(command->mutable_amount(), amount);
+          command->set_amount(amount);
         });
       }
 

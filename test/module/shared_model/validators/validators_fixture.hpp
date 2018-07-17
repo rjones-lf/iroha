@@ -23,11 +23,11 @@
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
 
-#include "block.pb.h"
 #include "datetime/time.hpp"
 #include "interfaces/permissions.hpp"
 #include "primitive.pb.h"
 #include "queries.pb.h"
+#include "transaction.pb.h"
 
 class ValidatorsTest : public ::testing::Test {
  public:
@@ -67,14 +67,13 @@ class ValidatorsTest : public ::testing::Test {
     field_setters["permission"] = setEnum(role_permission);
     field_setters["grantable_permission"] = setEnum(grantable_permission);
     field_setters["key"] = setString(detail_key);
+    field_setters["writer"] = setString(writer);
     field_setters["detail"] = setString(detail_key);
     field_setters["value"] = setString("");
     field_setters["tx_hashes"] = addString(hash);
     field_setters["quorum"] = setUInt32(quorum);
     field_setters["description"] = setString("");
-    field_setters["amount"] = [&](auto refl, auto msg, auto field) {
-      refl->MutableMessage(msg, field)->CopyFrom(amount);
-    };
+    field_setters["amount"] = setString(amount);
     field_setters["peer"] = [&](auto refl, auto msg, auto field) {
       refl->MutableMessage(msg, field)->CopyFrom(peer);
     };
@@ -160,7 +159,8 @@ class ValidatorsTest : public ::testing::Test {
         void *ptr = new std::shared_ptr<google::protobuf::Message>(mcopy);
         std::shared_ptr<google::protobuf::Message> *m =
             static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
-        this->iterateContainerRecursive(*m, field_validators, field_op, validator);
+        this->iterateContainerRecursive(
+            *m, field_validators, field_op, validator);
       }
     });
   }
@@ -170,8 +170,7 @@ class ValidatorsTest : public ::testing::Test {
     // Fill fields with valid values
     created_time = iroha::time::now();
     precision = 2;
-    amount.set_precision(precision);
-    amount.mutable_value()->set_fourth(1000);
+    amount = "10.00";
     public_key_size = 32;
     hash_size = 32;
     counter = 1048576;
@@ -186,6 +185,7 @@ class ValidatorsTest : public ::testing::Test {
     account_name = "admin";
     domain_id = "ru";
     detail_key = "key";
+    writer = "account@domain";
     public_key = std::string(public_key_size, '0');
     hash = std::string(public_key_size, '0');
     role_permission = iroha::protocol::RolePermission::can_append_role;
@@ -214,6 +214,7 @@ class ValidatorsTest : public ::testing::Test {
   std::string description;
   std::string public_key;
   std::string hash;
+  std::string writer;
   iroha::protocol::Transaction::Payload::BatchMeta batch_meta;
   shared_model::interface::permissions::Role model_role_permission;
   shared_model::interface::permissions::Grantable model_grantable_permission;
@@ -221,7 +222,7 @@ class ValidatorsTest : public ::testing::Test {
   iroha::protocol::GrantablePermission grantable_permission;
   uint8_t quorum;
   uint8_t precision;
-  iroha::protocol::Amount amount;
+  std::string amount;
   iroha::protocol::Peer peer;
   decltype(iroha::time::now()) created_time;
   iroha::protocol::QueryPayloadMeta meta;

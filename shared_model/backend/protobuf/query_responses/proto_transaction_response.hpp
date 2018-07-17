@@ -22,7 +22,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 #include "utils/lazy_initializer.hpp"
 
 namespace shared_model {

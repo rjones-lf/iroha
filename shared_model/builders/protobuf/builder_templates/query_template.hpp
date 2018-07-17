@@ -29,7 +29,7 @@ namespace shared_model {
     template <int S = 0,
               typename SV = validation::DefaultQueryValidator,
               typename BT = UnsignedWrapper<Query>>
-    class TemplateQueryBuilder {
+    class DEPRECATED TemplateQueryBuilder {
      private:
       template <int, typename, typename>
       friend class TemplateQueryBuilder;
@@ -143,10 +143,21 @@ namespace shared_model {
         });
       }
 
-      auto getAccountDetail(const interface::types::AccountIdType &account_id) {
+      auto getAccountDetail(
+          const interface::types::AccountIdType &account_id = "",
+          const interface::types::AccountDetailKeyType &key = "",
+          const interface::types::AccountIdType &writer = "") {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_account_detail();
-          query->set_account_id(account_id);
+          if (not account_id.empty()) {
+            query->set_account_id(account_id);
+          }
+          if (not key.empty()) {
+            query->set_key(key);
+          }
+          if (not writer.empty()) {
+            query->set_writer(writer);
+          }
         });
       }
 

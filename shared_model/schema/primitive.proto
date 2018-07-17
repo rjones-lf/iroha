@@ -1,8 +1,12 @@
 /**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
  * Messages related to primitive types, used in Commands and Queries
  *
- * Contains RolePermission, GrantablePermission, Signature,
- * uint256, Amount, and Peer.
+ * Contains RolePermission, GrantablePermission, Signature, and Peer.
  */
 
 syntax = "proto3";
@@ -84,18 +88,6 @@ enum GrantablePermission {
 message Signature {
   bytes pubkey    = 1;
   bytes signature = 2;
-}
-
-message uint256 {
-  uint64 first = 1;
-  uint64 second = 2;
-  uint64 third = 3;
-  uint64 fourth = 4;
-}
-
-message Amount {
-  uint256 value = 1;
-  uint32 precision = 2;
 }
 
 message Peer {

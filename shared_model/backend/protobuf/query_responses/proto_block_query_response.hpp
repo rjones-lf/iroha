@@ -12,7 +12,7 @@
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 #include "utils/lazy_initializer.hpp"
 #include "utils/variant_deserializer.hpp"
 

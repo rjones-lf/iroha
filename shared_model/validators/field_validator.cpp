@@ -310,6 +310,9 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::types::SignatureRangeType &signatures,
         const crypto::Blob &source) const {
+      if (boost::empty(signatures)) {
+        reason.second.push_back("Signatures cannot be empty");
+      }
       for (const auto &signature : signatures) {
         const auto &sign = signature.signedData();
         const auto &pkey = signature.publicKey();
@@ -354,8 +357,7 @@ namespace shared_model {
     }
     void FieldValidator::validateBatchMeta(
         shared_model::validation::ReasonsGroupType &reason,
-        const interface::BatchMeta &batch_meta)
-        const {}
+        const interface::BatchMeta &batch_meta) const {}
 
     void FieldValidator::validateHeight(
         shared_model::validation::ReasonsGroupType &reason,
