@@ -87,7 +87,7 @@ TEST_F(QueryServiceTest, ValidWhenUniqueHash) {
                   Truly([this](const shared_model::interface::Query &rhs) {
                     return rhs == *query;
                   })))
-      .WillOnce(Invoke([this](auto &) { return getResponse(); }));
+      .WillOnce(Invoke([this](auto &) { return this->getResponse(); }));
   init();
 
   protocol::QueryResponse response;
@@ -105,7 +105,7 @@ TEST_F(QueryServiceTest, ValidWhenUniqueHash) {
 TEST_F(QueryServiceTest, InvalidWhenDuplicateHash) {
   // two same queries => only first query handled by query processor
   EXPECT_CALL(*query_processor, queryHandle(_)).WillOnce(Invoke([this](auto &) {
-    return getResponse();
+    return this->getResponse();
   }));
 
   init();
