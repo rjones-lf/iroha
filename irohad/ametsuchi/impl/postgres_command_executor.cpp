@@ -34,7 +34,7 @@ namespace iroha {
                                WHERE account_id = :account_id LIMIT 1),
                has_asset AS (SELECT asset_id FROM asset
                              WHERE asset_id = :asset_id AND
-                             precision = :precision LIMIT 1),
+                             precision >= :precision LIMIT 1),
                amount AS (SELECT amount FROM account_has_asset
                           WHERE asset_id = :asset_id AND
                           account_id = :account_id LIMIT 1),
@@ -552,7 +552,7 @@ namespace iroha {
                                WHERE account_id = :account_id LIMIT 1),
                has_asset AS (SELECT asset_id FROM asset
                              WHERE asset_id = :asset_id
-                             AND precision = :precision LIMIT 1),
+                             AND precision >= :precision LIMIT 1),
                amount AS (SELECT amount FROM account_has_asset
                           WHERE asset_id = :asset_id
                           AND account_id = :account_id LIMIT 1),
@@ -592,7 +592,7 @@ namespace iroha {
       st.exchange(soci::use(precision, "precision"));
 
       std::vector<std::function<std::string()>> message_gen = {
-          [&] { return "Account does not exist"; },
+          [&] { return "Account does not exist with given precision"; },
           [&] { return "Asset with given precision does not exist"; },
           [&] { return "Subtracts overdrafts account asset"; },
       };
@@ -615,7 +615,8 @@ namespace iroha {
                                     WHERE account_id = :dest_account_id
                                     LIMIT 1),
                has_asset AS (SELECT asset_id FROM asset
-                             WHERE asset_id = :asset_id LIMIT 1),
+                             WHERE asset_id = :asset_id AND
+                             precision >= :precision LIMIT 1),
                src_amount AS (SELECT amount FROM account_has_asset
                               WHERE asset_id = :asset_id AND
                               account_id = :src_account_id LIMIT 1),

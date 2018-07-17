@@ -328,9 +328,9 @@ TEST_F(TransferAsset, BigPrecision) {
   const std::string kNewAssetId =
       kNewAsset + "#" + IntegrationTestFramework::kDefaultDomain;
   const auto kPrecision = 5;
-  const std::string kInitial = "500.00000";
-  const std::string kForTransfer = "1.00000";
-  const std::string kLeft = "499.00000";
+  const std::string kInitial = "500";
+  const std::string kForTransfer = "1";
+  const std::string kLeft = "499";
 
   auto create_asset =
       baseTx()
