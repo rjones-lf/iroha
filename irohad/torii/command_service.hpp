@@ -38,9 +38,8 @@ namespace torii {
    public:
     /**
      * Creates a new instance of CommandService
-     * @param pb_factory - model->protobuf and vice versa converter
      * @param tx_processor - processor of received transactions
-     * @param block_query - to query transactions outside the cache
+     * @param storage - to query transactions outside the cache
      * @param initial_timeout - streaming timeout when tx is not received
      * @param nonfinal_timeout - streaming timeout when tx is being processed
      */
@@ -64,6 +63,12 @@ namespace torii {
     void Torii(const iroha::protocol::Transaction &tx);
 
     /**
+     * Actual implementation of sync Torii in CommandService
+     * @param tx_lis - transactions we've received
+     */
+    void ListTorii(const iroha::protocol::TxList &tx_list);
+
+    /**
      * Torii call via grpc
      * @param context - call context (see grpc docs for details)
      * @param request - transaction received
@@ -73,6 +78,17 @@ namespace torii {
     virtual grpc::Status Torii(grpc::ServerContext *context,
                                const iroha::protocol::Transaction *request,
                                google::protobuf::Empty *response) override;
+
+    /**
+     * Torii call for transactions list via grpc
+     * @param context - call context (see grpc docs for details)
+     * @param request - list of transactions received
+     * @param response - no actual response (grpc stub for empty answer)
+     * @return - grpc::Status
+     */
+    virtual grpc::Status ListTorii(grpc::ServerContext *context,
+                                   const iroha::protocol::TxList *request,
+                                   google::protobuf::Empty *response) override;
 
     /**
      * Request to retrieve a status of any particular transaction
@@ -134,6 +150,11 @@ namespace torii {
     inline void handleEvents(rxcpp::composite_subscription &subscription,
                              rxcpp::schedulers::run_loop &run_loop);
 
+    void addTxToCacheAndLog(const std::string &who,
+                            const shared_model::crypto::Hash &hash,
+                            const iroha::protocol::ToriiResponse &response);
+
+   private:
     using CacheType = iroha::cache::Cache<shared_model::crypto::Hash,
                                           iroha::protocol::ToriiResponse,
                                           shared_model::crypto::Hash::Hasher>;
