@@ -24,17 +24,14 @@
 
 namespace iroha {
   namespace ametsuchi {
-    TemporaryWsvImpl::TemporaryWsvImpl(
-        std::unique_ptr<pqxx::lazyconnection> connection,
-        std::unique_ptr<pqxx::nontransaction> transaction)
-        : connection_(std::move(connection)),
-          transaction_(std::move(transaction)),
-          wsv_(std::make_shared<PostgresWsvQuery>(*transaction_)),
-          executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
-          command_executor_(std::make_shared<PostgresCommandExecutor>(*transaction_)),
+    TemporaryWsvImpl::TemporaryWsvImpl(std::unique_ptr<soci::session> sql)
+        : sql_(std::move(sql)),
+          wsv_(std::make_shared<PostgresWsvQuery>(*sql_)),
+          executor_(std::make_shared<PostgresWsvCommand>(*sql_)),
+          command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
           command_validator_(std::make_shared<CommandValidator>(wsv_)),
           log_(logger::log("TemporaryWSV")) {
-      transaction_->exec("BEGIN;");
+      *sql_ << "BEGIN";
     }
 
     expected::Result<void, validation::CommandError> TemporaryWsvImpl::apply(
@@ -55,10 +52,10 @@ namespace iroha {
               };
       };
 
-      transaction_->exec("SAVEPOINT savepoint_;");
+      auto savepoint_wrapper = createSavepoint("savepoint_temp_wsv");
 
       return apply_function(tx, *wsv_) |
-                 [this,
+                 [savepoint = std::move(savepoint_wrapper),
                   &execute_command,
                   &tx]() -> expected::Result<void, validation::CommandError> {
         // check transaction's commands validity
@@ -66,9 +63,8 @@ namespace iroha {
         validation::CommandError cmd_error;
         for (size_t i = 0; i < commands.size(); ++i) {
           // in case of failed command, rollback and return
-          auto tmp = execute_command(commands[i]);
           auto cmd_is_valid =
-              tmp
+              execute_command(commands[i])
                   .match([](expected::Value<void> &) { return true; },
                          [i, &cmd_error](expected::Error<CommandError> &error) {
                            cmd_error = {error.error.command_name,
@@ -78,18 +74,45 @@ namespace iroha {
                            return false;
                          });
           if (not cmd_is_valid) {
-            transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");
             return expected::makeError(cmd_error);
           }
         }
         // success
-        transaction_->exec("RELEASE SAVEPOINT savepoint_;");
+        savepoint->release();
         return {};
       };
     }
 
-    TemporaryWsvImpl::~TemporaryWsvImpl() {
-      transaction_->exec("ROLLBACK;");
+    std::unique_ptr<TemporaryWsv::SavepointWrapper>
+    TemporaryWsvImpl::createSavepoint(const std::string &name) {
+      return std::make_unique<TemporaryWsvImpl::SavepointWrapperImpl>(
+          SavepointWrapperImpl(*this, name));
     }
+
+    TemporaryWsvImpl::~TemporaryWsvImpl() {
+      *sql_ << "ROLLBACK";
+    }
+
+    TemporaryWsvImpl::SavepointWrapperImpl::SavepointWrapperImpl(
+        const iroha::ametsuchi::TemporaryWsvImpl &wsv,
+        std::string savepoint_name)
+        : sql_{wsv.sql_},
+          savepoint_name_{std::move(savepoint_name)},
+          is_released_{false} {
+      *sql_ << "SAVEPOINT " + savepoint_name_ + ";";
+    };
+
+    void TemporaryWsvImpl::SavepointWrapperImpl::release() {
+      is_released_ = true;
+    }
+
+    TemporaryWsvImpl::SavepointWrapperImpl::~SavepointWrapperImpl() {
+      if (not is_released_) {
+        *sql_ << "ROLLBACK TO SAVEPOINT " + savepoint_name_ + ";";
+      } else {
+        *sql_ << "RELEASE SAVEPOINT " + savepoint_name_ + ";";
+      }
+    }
+
   }  // namespace ametsuchi
 }  // namespace iroha

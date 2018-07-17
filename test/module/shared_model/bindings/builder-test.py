@@ -9,7 +9,7 @@ import time
 import sys
 
 from google.protobuf.message import DecodeError
-import block_pb2 as blk
+import transaction_pb2 as trx
 
 # TODO luckychess 8.08.2018 add test for number of methods
 # in interface and proto implementation IR-1080
@@ -121,7 +121,7 @@ class BuilderTest(unittest.TestCase):
         tmp = ''.join(map(chr, blob.blob()))
       else:
         tmp = bytes(blob.blob())
-      blk.Transaction.FromString(tmp)
+      trx.Transaction.FromString(tmp)
     except DecodeError as e:
       print(e)
       return False

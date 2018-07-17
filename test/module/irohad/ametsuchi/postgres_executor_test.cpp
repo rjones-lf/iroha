@@ -40,19 +40,12 @@ namespace iroha {
 
       void SetUp() override {
         AmetsuchiTest::SetUp();
-        postgres_connection = std::make_unique<pqxx::lazyconnection>(pgopt_);
-        try {
-          postgres_connection->activate();
-        } catch (const pqxx::broken_connection &e) {
-          FAIL() << "Connection to PostgreSQL broken: " << e.what();
-        }
-        wsv_transaction =
-            std::make_unique<pqxx::nontransaction>(*postgres_connection);
+        sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
 
-        query = std::make_unique<PostgresWsvQuery>(*wsv_transaction);
-        executor = std::make_unique<PostgresCommandExecutor>(*wsv_transaction);
+        query = std::make_unique<PostgresWsvQuery>(*sql);
+        executor = std::make_unique<PostgresCommandExecutor>(*sql);
 
-        wsv_transaction->exec(init_);
+        *sql << init_;
       }
 
       CommandResult execute(
@@ -83,8 +76,7 @@ namespace iroha {
       std::unique_ptr<shared_model::interface::Domain> domain;
       std::unique_ptr<shared_model::interface::types::PubkeyType> pubkey;
 
-      std::unique_ptr<pqxx::lazyconnection> postgres_connection;
-      std::unique_ptr<pqxx::nontransaction> wsv_transaction;
+      std::unique_ptr<soci::session> sql;
 
       std::unique_ptr<shared_model::interface::Command> command;
 

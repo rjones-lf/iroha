@@ -15,7 +15,7 @@ namespace iroha {
 
     class PostgresCommandExecutor : public CommandExecutor {
      public:
-      explicit PostgresCommandExecutor(pqxx::nontransaction &transaction);
+      explicit PostgresCommandExecutor(soci::session &transaction);
 
       void setCreatorAccountId(
           const shared_model::interface::types::AccountIdType
@@ -71,12 +71,9 @@ namespace iroha {
           const shared_model::interface::TransferAsset &command) override;
 
      private:
-      pqxx::nontransaction &transaction_;
+      soci::session &sql_;
 
       shared_model::interface::types::AccountIdType creator_account_id_;
-
-      using ExecuteType = decltype(makeExecuteResult(transaction_));
-      ExecuteType execute_;
 
       static expected::Error<CommandError> makeCommandError(
           const std::string &error_message,
@@ -98,16 +95,17 @@ namespace iroha {
        */
       template <typename Function>
       CommandResult makeCommandResult(
-          expected::Result<pqxx::result, std::string> &&result,
+          soci::statement &st,
           std::string command_name,
           Function &&error_generator) const noexcept {
-        return result.match(
-            [](expected::Value<pqxx::result> v) -> CommandResult { return {}; },
-            [&error_generator,
-             &command_name](expected::Error<std::string> e) -> CommandResult {
-              return makeCommandError(error_generator() + "\n" + e.error,
-                                      command_name);
-            });
+        st.define_and_bind();
+        try {
+          st.execute(true);
+        } catch (std::exception &e) {
+          return makeCommandError(error_generator() + "\n" + e.what(),
+                                  command_name);
+        }
+        return {};
       }
 
       /**
@@ -123,24 +121,24 @@ namespace iroha {
        * in case of result contains error
        */
       CommandResult makeCommandResultByValue(
-          expected::Result<pqxx::result, std::string> &&result,
+          soci::statement &st,
           std::string command_name,
           std::vector<std::function<std::string()>> &error_generator) const noexcept {
-        return result.match(
-            [&error_generator,
-             &command_name](expected::Value<pqxx::result> v) -> CommandResult {
-              size_t code = v.value[0].at("result").template as<size_t>();
-              for (size_t i = 0; i < error_generator.size(); i++) {
-                // Since success code is 0 and error codes starts with 1
-                if (code == i + 1) {
-                  return makeCommandError(error_generator[i](), command_name);
-                }
-              }
-              return {};
-            },
-            [&command_name](expected::Error<std::string> e) -> CommandResult {
-              return makeCommandError(e.error, command_name);
-            });
+        uint32_t result;
+        st.exchange(soci::into(result));
+        st.define_and_bind();
+        try {
+          st.execute(true);
+          for (size_t i = 0; i < error_generator.size(); i++) {
+            // Since success code is 0 and error codes starts with 1
+            if (result == i + 1) {
+              return makeCommandError(error_generator[i](), command_name);
+            }
+          }
+          return {};
+        } catch (std::exception &e) {
+          return makeCommandError(e.what(), command_name);
+        }
       }
     };
   }  // namespace ametsuchi

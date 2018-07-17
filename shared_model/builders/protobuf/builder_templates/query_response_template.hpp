@@ -12,7 +12,7 @@
 #include "common/visitor.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/permissions.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 
 namespace shared_model {
   namespace proto {
@@ -28,7 +28,7 @@ namespace shared_model {
      * set
      */
     template <int S = 0>
-    class TemplateQueryResponseBuilder {
+    class DEPRECATED TemplateQueryResponseBuilder {
      public:
       template <int Sp>
       TemplateQueryResponseBuilder(TemplateQueryResponseBuilder<Sp> &&o)

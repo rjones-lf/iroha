@@ -16,7 +16,7 @@
  */
 
 #include "backend/protobuf/util.hpp"
-#include "block.pb.h"
+#include "commands.pb.h"
 
 #include <gtest/gtest.h>
 
@@ -30,10 +30,10 @@ using shared_model::crypto::toBinaryString;
  * @then make sure that the deserialized from string is the same
  */
 TEST(UtilTest, StringFromMakeBlob) {
-  protocol::Header base, deserialized;
-  base.set_created_time(100);
+  protocol::SetAccountQuorum base, deserialized;
+  base.set_quorum(100);
   auto blob = makeBlob(base);
 
   ASSERT_TRUE(deserialized.ParseFromString(toBinaryString(blob)));
-  ASSERT_EQ(deserialized.created_time(), base.created_time());
+  ASSERT_EQ(deserialized.quorum(), base.quorum());
 }

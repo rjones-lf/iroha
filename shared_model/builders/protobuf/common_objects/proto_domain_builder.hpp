@@ -19,11 +19,11 @@
 #define IROHA_PROTO_DOMAIN_BUILDER_HPP
 
 #include "backend/protobuf/common_objects/domain.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 
 namespace shared_model {
   namespace proto {
-    class DomainBuilder {
+    class DEPRECATED DomainBuilder {
      public:
       shared_model::proto::Domain build() {
         return shared_model::proto::Domain(iroha::protocol::Domain(domain_));

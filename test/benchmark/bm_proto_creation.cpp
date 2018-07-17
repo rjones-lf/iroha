@@ -11,8 +11,8 @@
  *
  * The purpose of this benchmark is to keep track of performance costs related
  * to blocks and proposals copying/moving.
- * 
- * Each benchmark runs transaction() and commands() call to 
+ *
+ * Each benchmark runs transaction() and commands() call to
  * initialize possibly lazy fields.
  */
 
@@ -97,64 +97,127 @@ void checkLoop(const T &obj) {
   }
 }
 
-BENCHMARK_F(BlockBenchmark, CopyTest)(benchmark::State &st) {
-  auto block = complete_builder.build();
+/**
+ * Runs a function and updates timer of the given state
+ */
+template <typename Func>
+void runBenchmark(benchmark::State &st, Func &&f) {
+  auto start = std::chrono::high_resolution_clock::now();
+  f();
+  auto end   = std::chrono::high_resolution_clock::now();
 
+  auto elapsed_seconds =
+      std::chrono::duration_cast<std::chrono::duration<double>>(
+          end - start);
+
+  st.SetIterationTime(elapsed_seconds.count());
+}
+
+/**
+ * Benchmark block creation by copying protobuf object
+ */
+BENCHMARK_DEFINE_F(BlockBenchmark, TransportCopyTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
-    shared_model::proto::Block copy(block.getTransport());
+    auto block = complete_builder.build();
 
-    checkLoop(copy);
+    runBenchmark(st, [&block] {
+      shared_model::proto::Block copy(block.getTransport());
+      checkLoop(copy);
+    });
   }
 }
 
-BENCHMARK_F(BlockBenchmark, MoveTest)(benchmark::State &st) {
-  auto block = complete_builder.build();
-
+/**
+ * Benchmark block creation by moving protobuf object
+ */
+BENCHMARK_DEFINE_F(BlockBenchmark, TransportMoveTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
-    shared_model::proto::Block copy(std::move(block.getTransport()));
+    auto block = complete_builder.build();
+    iroha::protocol::Block proto_block = block.getTransport();
 
-    checkLoop(copy);
+    runBenchmark(st, [&proto_block] {
+      shared_model::proto::Block copy(std::move(proto_block));
+      checkLoop(copy);
+    });
   }
 }
 
-BENCHMARK_F(BlockBenchmark, CloneTest)(benchmark::State &st) {
-  auto block = complete_builder.build();
-
+/**
+ * Benchmark block creation by moving another block
+ */
+BENCHMARK_DEFINE_F(BlockBenchmark, MoveTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
-    auto copy = clone(block);
+    auto block = complete_builder.build();
 
-    checkLoop(*copy);
+    runBenchmark(st, [&block] {
+      shared_model::proto::Block copy = std::move(block);
+      checkLoop(copy);
+    });
   }
 }
 
-BENCHMARK_F(ProposalBenchmark, CopyTest)(benchmark::State &st) {
-  auto proposal = complete_builder.build();
-
+/**
+ * Benchmark block creation by cloning another block
+ */
+BENCHMARK_DEFINE_F(BlockBenchmark, CloneTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
-    shared_model::proto::Proposal copy(proposal.getTransport());
+    auto block = complete_builder.build();
 
-    checkLoop(copy);
+    runBenchmark(st, [&block] {
+      auto copy = clone(block);
+      checkLoop(*copy);
+    });
   }
 }
 
-BENCHMARK_F(ProposalBenchmark, MoveTest)(benchmark::State &state) {
-  auto proposal = complete_builder.build();
-
-  while (state.KeepRunning()) {
-    shared_model::proto::Proposal copy(std::move(proposal.getTransport()));
-
-    checkLoop(copy);
-  }
-}
-
-BENCHMARK_F(ProposalBenchmark, CloneTest)(benchmark::State &st) {
-  auto proposal = complete_builder.build();
-
+/**
+ * Benchmark proposal creation by copying another proposal
+ */
+BENCHMARK_DEFINE_F(ProposalBenchmark, CopyTest)(benchmark::State &st) {
   while (st.KeepRunning()) {
-    auto copy = clone(proposal);
+    auto proposal = complete_builder.build();
 
-    checkLoop(*copy);
+    runBenchmark(st, [&proposal] {
+      shared_model::proto::Proposal copy(proposal.getTransport());
+      checkLoop(copy);
+    });
   }
 }
+
+/**
+ * Benchmark proposal creation by moving another proposal
+ */
+BENCHMARK_DEFINE_F(ProposalBenchmark, MoveTest)(benchmark::State &st) {
+  while (st.KeepRunning()) {
+    auto proposal = complete_builder.build();
+
+    runBenchmark(st, [&] {
+      shared_model::proto::Proposal copy(std::move(proposal.getTransport()));
+      checkLoop(copy);
+    });
+  }
+}
+
+/**
+ * Benchmark proposal creation by cloning another proposal
+ */
+BENCHMARK_DEFINE_F(ProposalBenchmark, CloneTest)(benchmark::State &st) {
+  while (st.KeepRunning()) {
+    auto proposal = complete_builder.build();
+
+    runBenchmark(st, [&proposal] {
+      auto copy = clone(proposal);
+      checkLoop(*copy);
+    });
+  }
+}
+
+BENCHMARK_REGISTER_F(BlockBenchmark, MoveTest)->UseManualTime();
+BENCHMARK_REGISTER_F(BlockBenchmark, TransportMoveTest)->UseManualTime();
+BENCHMARK_REGISTER_F(BlockBenchmark, TransportCopyTest)->UseManualTime();
+BENCHMARK_REGISTER_F(BlockBenchmark, CloneTest)->UseManualTime();
+BENCHMARK_REGISTER_F(ProposalBenchmark, CopyTest)->UseManualTime();
+BENCHMARK_REGISTER_F(ProposalBenchmark, MoveTest)->UseManualTime();
+BENCHMARK_REGISTER_F(ProposalBenchmark, CloneTest)->UseManualTime();
 
 BENCHMARK_MAIN();

@@ -76,8 +76,14 @@ class BlockLoaderTest : public testing::Test {
   }
 
   auto getBaseBlockBuilder() const {
-    return TestBlockBuilder().height(1).prevHash(kPrevHash).createdTime(
-        iroha::time::now());
+    return shared_model::proto::TemplateBlockBuilder<
+               (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
+               shared_model::validation::AlwaysValidValidator,
+               shared_model::proto::UnsignedWrapper<
+                   shared_model::proto::Block>>()
+        .height(1)
+        .prevHash(kPrevHash)
+        .createdTime(iroha::time::now());
   }
 
   const Hash kPrevHash =
@@ -86,6 +92,7 @@ class BlockLoaderTest : public testing::Test {
   std::shared_ptr<shared_model::interface::Peer> peer;
   PublicKey peer_key =
       DefaultCryptoAlgorithmType::generateKeypair().publicKey();
+  Keypair key = DefaultCryptoAlgorithmType::generateKeypair();
   std::shared_ptr<MockPeerQuery> peer_query;
   std::shared_ptr<MockBlockQuery> storage;
   std::shared_ptr<BlockLoaderImpl> loader;
@@ -100,7 +107,7 @@ class BlockLoaderTest : public testing::Test {
  */
 TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
   // Current block height 1 => Other block height 1 => no blocks received
-  auto block = getBaseBlockBuilder().build();
+  auto block = getBaseBlockBuilder().build().signAndAddSignature(key).finish();
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
@@ -122,23 +129,27 @@ TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
  */
 TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
   // Current block height 1 => Other block height 2 => one block received
-
   // time validation should work based on the block field
-  // so it should pass statless BlockLoader validation
-  auto block = getBaseBlockBuilder().createdTime(228).build();
+  // so it should pass stateless BlockLoader validation
+  auto block = getBaseBlockBuilder()
+                   .createdTime(228)
+                   .build()
+                   .signAndAddSignature(key)
+                   .finish();
 
   auto top_block = getBaseBlockBuilder()
                        .createdTime(block.createdTime() + 1)
                        .height(block.height() + 1)
-                       .build();
+                       .build()
+                       .signAndAddSignature(key)
+                       .finish();
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*storage, getTopBlock())
       .WillOnce(Return(iroha::expected::makeValue(wBlock(clone(block)))));
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
-      .WillOnce(Return(rxcpp::observable<>::just(top_block).map(
-          [](auto &&x) { return wBlock(clone(x)); })));
+      .WillOnce(Return(rxcpp::observable<>::just(wBlock(clone(top_block)))));
   auto wrapper =
       make_test_subscriber<CallExact>(loader->retrieveBlocks(peer_key), 1);
   wrapper.subscribe(
@@ -154,17 +165,24 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
  */
 TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
   // Current block height 1 => Other block height n => n-1 blocks received
-
   // time validation should work based on the block field
-  // so it should pass statless BlockLoader validation
-  auto block = getBaseBlockBuilder().createdTime(1337).build();
+  // so it should pass stateless BlockLoader validation
+  auto block = getBaseBlockBuilder()
+                   .createdTime(1337)
+                   .build()
+                   .signAndAddSignature(key)
+                   .finish();
 
   auto num_blocks = 2;
   auto next_height = block.height() + 1;
 
   std::vector<wBlock> blocks;
   for (auto i = next_height; i < next_height + num_blocks; ++i) {
-    auto blk = getBaseBlockBuilder().height(i).build();
+    auto blk = getBaseBlockBuilder()
+                   .height(i)
+                   .build()
+                   .signAndAddSignature(key)
+                   .finish();
     blocks.emplace_back(clone(blk));
   }
 
@@ -190,13 +208,13 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
  */
 TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   // Request existing block => success
-  auto requested = getBaseBlockBuilder().build();
+  auto requested =
+      getBaseBlockBuilder().build().signAndAddSignature(key).finish();
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*storage, getBlocksFrom(1))
-      .WillOnce(Return(rxcpp::observable<>::just(requested).map(
-          [](auto &&x) { return wBlock(clone(x)); })));
+      .WillOnce(Return(rxcpp::observable<>::just(wBlock(clone(requested)))));
   auto block = loader->retrieveBlock(peer_key, requested.hash());
 
   ASSERT_TRUE(block);
@@ -210,13 +228,13 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
  */
 TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
   // Request nonexisting block => failure
-  auto present = getBaseBlockBuilder().build();
+  auto present =
+      getBaseBlockBuilder().build().signAndAddSignature(key).finish();
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*storage, getBlocksFrom(1))
-      .WillOnce(Return(rxcpp::observable<>::just(present).map(
-          [](auto &&x) { return wBlock(clone(x)); })));
+      .WillOnce(Return(rxcpp::observable<>::just(wBlock(clone(present)))));
   auto block = loader->retrieveBlock(peer_key, kPrevHash);
 
   ASSERT_FALSE(block);

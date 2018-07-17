@@ -35,6 +35,23 @@ namespace shared_model {
       using GeneratorType = std::function<Target()>;
 
      public:
+      /**
+       * Default constructor prevents compilation error in pre 7.2 gcc.
+       *
+       * Short explanation: gcc needs default constructor
+       * when the constructor is inherited (via using Base::Base)
+       * if the inherited class has default initalizers for any of its members.
+       * This can be found in shared_model/backend/protobuf/protobuf/block.hpp
+       * where Lazy fields are initialized via default initializers.
+       *
+       * Note that this does not result in default constructor being called, so
+       * the resulting code is still correct. This is an issue of gcc compiler
+       * which is resolved in 7.2
+       *
+       * For more details: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=67054
+       */
+      LazyInitializer();
+
       template <typename T>
       explicit LazyInitializer(T &&generator)
           : generator_(std::forward<T>(generator)) {}

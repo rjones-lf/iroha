@@ -21,8 +21,7 @@ if (SWIG_PYTHON)
       binaries_test.cpp
       )
   target_link_libraries(binary_test
-      gtest
-      gmock
+      gtest::main
       shared_model_proto_backend
       integration_framework
       bindings
