@@ -5,6 +5,7 @@ The purpose of this documentation is to convey design and architecture aspects o
 ## Principles
 
  * modify only the contents of `image_assets` and `source` folders
+ * do `make permissions` in case of any change inside `source/permissions` folder
  * if new section/file is added — it should be placed in the list of contents
  * if any new principle is added — it should be discussed in GitHub issues first, as an improvement proposal
  * reference images or assets using GitHub download link or an external service, since our localized docs can't use relative path to image assets or other resources
@@ -22,6 +23,7 @@ The purpose of this documentation is to convey design and architecture aspects o
 ### Build steps
 
 1. `cd docs/source`
+1. `make permissions`
 1. `make html`
 
 After that, the documentation is generated in html format in `_build` folder. You can check another formats on Sphinx website or just by typing `make`. In order to get familiar with the syntax of theme used in the project please go to their [demo website](https://sphinx-rtd-theme.readthedocs.io/en/latest/demo/demo.html)

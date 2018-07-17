@@ -168,8 +168,7 @@ namespace iroha {
         protocol::AccountAsset pb_account_asset;
         pb_account_asset.set_account_id(account_asset.account_id);
         pb_account_asset.set_asset_id(account_asset.asset_id);
-        auto pb_balance = pb_account_asset.mutable_balance();
-        pb_balance->CopyFrom(serializeAmount(account_asset.balance));
+        pb_account_asset.set_balance(account_asset.balance);
         return pb_account_asset;
       }
 
@@ -177,7 +176,7 @@ namespace iroha {
           const protocol::AccountAsset &account_asset) const {
         model::AccountAsset res;
         res.account_id = account_asset.account_id();
-        res.balance = deserializeAmount(account_asset.balance());
+        res.balance = account_asset.balance();
         res.asset_id = account_asset.asset_id();
         return res;
       }
@@ -187,15 +186,11 @@ namespace iroha {
           const model::AccountAssetResponse &accountAssetResponse) const {
         protocol::AccountAssetResponse pb_response;
         auto pb_account_asset = pb_response.mutable_account_assets();
-        for (auto &asset: accountAssetResponse.acct_assets) {
+        for (auto &asset : accountAssetResponse.acct_assets) {
           auto pb_asset = new iroha::protocol::AccountAsset();
-          pb_asset->set_asset_id(
-              asset.asset_id);
-          pb_asset->set_account_id(
-              asset.account_id);
-          auto pb_amount = pb_asset->mutable_balance();
-          pb_amount->CopyFrom(
-              serializeAmount(asset.balance));
+          pb_asset->set_asset_id(asset.asset_id);
+          pb_asset->set_account_id(asset.account_id);
+          pb_asset->set_balance(asset.balance);
           pb_account_asset->AddAllocated(pb_asset);
         }
         return pb_response;
@@ -205,10 +200,11 @@ namespace iroha {
       PbQueryResponseFactory::deserializeAccountAssetResponse(
           const protocol::AccountAssetResponse &account_asset_response) const {
         model::AccountAssetResponse res;
-        for (int i = 0; i < account_asset_response.account_assets().size(); i++) {
+        for (int i = 0; i < account_asset_response.account_assets().size();
+             i++) {
           auto model_asset = iroha::model::AccountAsset();
-          model_asset.balance = deserializeAmount(
-              account_asset_response.account_assets(i).balance());
+          model_asset.balance =
+              account_asset_response.account_assets(i).balance();
           model_asset.account_id =
               account_asset_response.account_assets(i).account_id();
           model_asset.asset_id =

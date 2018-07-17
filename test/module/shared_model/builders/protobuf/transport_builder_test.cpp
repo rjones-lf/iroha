@@ -178,10 +178,13 @@ class TransportBuilderTest : public ::testing::Test {
    * @param successCase function invoking if value exists
    * @param failCase function invoking when error returned
    */
-  template <typename T, typename SV>
-  void testTransport(T orig_model,
-                     std::function<void(const Value<T> &)> successCase,
-                     std::function<void(const Error<std::string> &)> failCase) {
+  template <typename SV,
+            typename T,
+            typename SuccessCase,
+            typename FailCase>
+  void testTransport(const T &orig_model,
+                     SuccessCase &&successCase,
+                     FailCase &&failCase) {
     auto proto_model = orig_model.getTransport();
 
     auto built_model = TransportBuilder<T, SV>().build(proto_model);
@@ -213,8 +216,7 @@ class TransportBuilderTest : public ::testing::Test {
  */
 TEST_F(TransportBuilderTest, TransactionCreationTest) {
   auto orig_model = createTransaction();
-  testTransport<decltype(orig_model),
-                validation::DefaultSignableTransactionValidator>(
+  testTransport<validation::DefaultSignableTransactionValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -233,8 +235,7 @@ TEST_F(TransportBuilderTest, TransactionCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidTransactionCreationTest) {
   auto orig_model = createInvalidTransaction();
-  testTransport<decltype(orig_model),
-                validation::DefaultSignableTransactionValidator>(
+  testTransport<validation::DefaultSignableTransactionValidator>(
       orig_model,
       [](const Value<decltype(orig_model)>) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
@@ -249,8 +250,7 @@ TEST_F(TransportBuilderTest, InvalidTransactionCreationTest) {
  */
 TEST_F(TransportBuilderTest, QueryCreationTest) {
   auto orig_model = createQuery();
-  testTransport<decltype(orig_model),
-                validation::DefaultSignableQueryValidator>(
+  testTransport<validation::DefaultSignableQueryValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -266,8 +266,7 @@ TEST_F(TransportBuilderTest, QueryCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidQueryCreationTest) {
   auto orig_model = createInvalidQuery();
-  testTransport<decltype(orig_model),
-                validation::DefaultSignableQueryValidator>(
+  testTransport<validation::DefaultSignableQueryValidator>(
       orig_model,
       [](const Value<decltype(orig_model)>) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
@@ -282,7 +281,7 @@ TEST_F(TransportBuilderTest, InvalidQueryCreationTest) {
  */
 TEST_F(TransportBuilderTest, BlockCreationTest) {
   auto orig_model = createBlock();
-  testTransport<decltype(orig_model), validation::DefaultBlockValidator>(
+  testTransport<validation::DefaultBlockValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -298,10 +297,10 @@ TEST_F(TransportBuilderTest, BlockCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidBlockCreationTest) {
   auto orig_model = createInvalidBlock();
-  testTransport<decltype(orig_model), validation::DefaultBlockValidator>(
+  testTransport<validation::DefaultBlockValidator>(
       orig_model,
-      [](const Value<decltype(orig_model)>) { FAIL(); },
-      [](const Error<std::string> &) { SUCCEED(); });
+      [](const Value<std::decay_t<decltype(orig_model)>> &) { FAIL(); },
+      [](const Error<const std::string> &) { SUCCEED(); });
 }
 
 //-------------------------------------PROPOSAL-------------------------------------
@@ -313,7 +312,7 @@ TEST_F(TransportBuilderTest, InvalidBlockCreationTest) {
  */
 TEST_F(TransportBuilderTest, ProposalCreationTest) {
   auto orig_model = createProposal();
-  testTransport<decltype(orig_model), validation::DefaultProposalValidator>(
+  testTransport<validation::DefaultProposalValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -330,7 +329,7 @@ TEST_F(TransportBuilderTest, ProposalCreationTest) {
  */
 TEST_F(TransportBuilderTest, DISABLED_EmptyProposalCreationTest) {
   auto orig_model = createEmptyProposal();
-  testTransport<decltype(orig_model), validation::DefaultProposalValidator>(
+  testTransport<validation::DefaultProposalValidator>(
       orig_model,
       [](const Value<decltype(orig_model)>) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
@@ -345,7 +344,7 @@ TEST_F(TransportBuilderTest, DISABLED_EmptyProposalCreationTest) {
  */
 TEST_F(TransportBuilderTest, EmptyBlockCreationTest) {
   auto orig_model = createEmptyBlock();
-  testTransport<decltype(orig_model), validation::DefaultEmptyBlockValidator>(
+  testTransport<validation::DefaultEmptyBlockValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),

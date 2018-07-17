@@ -20,9 +20,9 @@
 
 #include "interfaces/commands/subtract_asset_quantity.hpp"
 
-#include "backend/protobuf/common_objects/amount.hpp"
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "commands.pb.h"
+#include "interfaces/common_objects/amount.hpp"
 #include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
@@ -50,7 +50,7 @@ namespace shared_model {
 
       const iroha::protocol::SubtractAssetQuantity &subtract_asset_quantity_;
 
-      const Lazy<proto::Amount> amount_;
+      const Lazy<interface::Amount> amount_;
     };
 
   }  // namespace proto

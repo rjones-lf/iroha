@@ -98,16 +98,15 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
               .build(block)
               .match(
                   // success case
-                  [&subscriber](
-                      const iroha::expected::Value<shared_model::proto::Block>
+                  [&subscriber](iroha::expected::Value<shared_model::proto::Block>
                           &result) {
                     subscriber.on_next(
                         std::move(std::make_shared<shared_model::proto::Block>(
-                            result.value)));
+                            std::move(result.value))));
                   },
                   // fail case
                   [this,
-                   &context](const iroha::expected::Error<std::string> &error) {
+                   &context](iroha::expected::Error<std::string> &error) {
                     log_->error(error.error);
                     context.TryCancel();
                   });

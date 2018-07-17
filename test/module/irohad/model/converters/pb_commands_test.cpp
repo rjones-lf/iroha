@@ -48,9 +48,8 @@ void command_converter_test(iroha::model::Command &abstract_command) {
 
 TEST(CommandTest, add_asset_quantity) {
   auto orig_command = iroha::model::AddAssetQuantity();
-  iroha::Amount amount(50, 1);
 
-  orig_command.amount = amount;
+  orig_command.amount = "5.0";
   orig_command.asset_id = "23";
 
   auto factory = iroha::model::converters::PbCommandFactory();
@@ -68,9 +67,8 @@ TEST(CommandTest, add_asset_quantity) {
  */
 TEST(CommandTest, subtract_asset_quantity) {
   auto orig_command = iroha::model::SubtractAssetQuantity();
-  iroha::Amount amount(50, 1);
 
-  orig_command.amount = amount;
+  orig_command.amount = "5.0";
   orig_command.asset_id = "23";
 
   auto factory = iroha::model::converters::PbCommandFactory();

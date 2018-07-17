@@ -10,7 +10,7 @@
 
 namespace shared_model {
   namespace proto {
-    class BlockQueryResponseBuilder {
+    class DEPRECATED BlockQueryResponseBuilder {
      public:
       shared_model::proto::BlockQueryResponse build() &&;
 

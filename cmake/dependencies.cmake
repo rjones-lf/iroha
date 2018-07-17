@@ -44,10 +44,10 @@ find_package(rapidjson)
 ##########################
 find_package(pq)
 
-##########################a
-#          pqxx          #
 ##########################
-find_package(pqxx)
+#          SOCI          #
+##########################
+find_package(soci)
 
 ################################
 #            gflags            #

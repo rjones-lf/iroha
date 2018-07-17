@@ -73,9 +73,7 @@ class ValidatorsTest : public ::testing::Test {
     field_setters["tx_hashes"] = addString(hash);
     field_setters["quorum"] = setUInt32(quorum);
     field_setters["description"] = setString("");
-    field_setters["amount"] = [&](auto refl, auto msg, auto field) {
-      refl->MutableMessage(msg, field)->CopyFrom(amount);
-    };
+    field_setters["amount"] = setString(amount);
     field_setters["peer"] = [&](auto refl, auto msg, auto field) {
       refl->MutableMessage(msg, field)->CopyFrom(peer);
     };
@@ -172,8 +170,7 @@ class ValidatorsTest : public ::testing::Test {
     // Fill fields with valid values
     created_time = iroha::time::now();
     precision = 2;
-    amount.set_precision(precision);
-    amount.mutable_value()->set_fourth(1000);
+    amount = "10.00";
     public_key_size = 32;
     hash_size = 32;
     counter = 1048576;
@@ -225,7 +222,7 @@ class ValidatorsTest : public ::testing::Test {
   iroha::protocol::GrantablePermission grantable_permission;
   uint8_t quorum;
   uint8_t precision;
-  iroha::protocol::Amount amount;
+  std::string amount;
   iroha::protocol::Peer peer;
   decltype(iroha::time::now()) created_time;
   iroha::protocol::QueryPayloadMeta meta;

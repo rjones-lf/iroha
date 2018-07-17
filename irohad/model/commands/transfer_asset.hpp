@@ -21,7 +21,6 @@
 #include <string>
 #include "common/types.hpp"
 #include "model/command.hpp"
-#include "amount/amount.hpp"
 
 namespace iroha {
   namespace model {
@@ -53,7 +52,7 @@ namespace iroha {
       /**
        * Amount of transferred asset
        */
-      Amount amount;
+      std::string amount;
 
       bool operator==(const Command &command) const override;
 
@@ -62,7 +61,7 @@ namespace iroha {
       TransferAsset(const std::string &src_account_id,
                     const std::string &dest_account_id,
                     const std::string &asset_id,
-                    const Amount &amount)
+                    const std::string &amount)
           : src_account_id(src_account_id),
             dest_account_id(dest_account_id),
             asset_id(asset_id),

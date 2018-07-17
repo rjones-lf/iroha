@@ -20,9 +20,9 @@
 
 #include <functional>
 
-#include "validation/stateful_validator_common.hpp"
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
+#include "validation/stateful_validator_common.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -40,6 +40,19 @@ namespace iroha {
     class TemporaryWsv {
      public:
       /**
+       * Wrapper for savepoints in wsv state; rollbacks to savepoint, if
+       * destroyed without explicit release, releases it otherwise
+       */
+      struct SavepointWrapper {
+        /**
+         * Release the savepoint
+         */
+        virtual void release() = 0;
+
+        virtual ~SavepointWrapper() = default;
+      };
+
+      /**
        * Applies a transaction to current state
        * using logic specified in function
        * @param transaction Transaction to be applied
@@ -53,9 +66,18 @@ namespace iroha {
               const shared_model::interface::Transaction &, WsvQuery &)>
               function) = 0;
 
+      /**
+       * Create a savepoint for wsv state
+       * @param name of savepoint to be created
+       * @return RAII wrapper for savepoints
+       */
+      virtual std::unique_ptr<TemporaryWsv::SavepointWrapper> createSavepoint(
+          const std::string &name) = 0;
+
       virtual ~TemporaryWsv() = default;
+
     };
-  }  // namespace ametsuchi
+  }     // namespace ametsuchi
 }  // namespace iroha
 
 #endif  // IROHA_TEMPORARYWSV_HPP
