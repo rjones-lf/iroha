@@ -548,7 +548,7 @@ public class QueryTest {
 
     @Test
     void getAccountDetailWithNoArgs() {
-        UnsignedQuery query = base().getAccountDetail();
+        UnsignedQuery query = base().getAccountDetail().build();
         assertTrue(checkProtoQuery(proto(query)));
     }
 }

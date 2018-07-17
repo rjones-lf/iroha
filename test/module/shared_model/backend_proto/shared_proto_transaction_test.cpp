@@ -50,8 +50,7 @@ iroha::protocol::AddAssetQuantity generateAddAssetQuantity(
   iroha::protocol::AddAssetQuantity command;
 
   command.set_asset_id(asset_id);
-  command.mutable_amount()->mutable_value()->set_fourth(1000);
-  command.mutable_amount()->set_precision(2);
+  command.set_amount("10.00");
 
   return command;
 }

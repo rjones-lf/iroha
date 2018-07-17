@@ -103,27 +103,12 @@ class CommandValidateExecuteTest : public ::testing::Test {
               FAIL() << *e.error;
             });
 
-    shared_model::builder::AmountBuilder<
-        shared_model::proto::AmountBuilder,
-        shared_model::validation::FieldValidator>()
-        .intValue(150)
-        .precision(2)
-        .build()
-        .match(
-            [&](expected::Value<
-                std::shared_ptr<shared_model::interface::Amount>> &v) {
-              balance = v.value;
-            },
-            [](expected::Error<std::shared_ptr<std::string>> &e) {
-              FAIL() << *e.error;
-            });
-
     shared_model::builder::AccountAssetBuilder<
         shared_model::proto::AccountAssetBuilder,
         shared_model::validation::FieldValidator>()
         .assetId(kAssetId)
         .accountId(kAccountId)
-        .balance(*balance)
+        .balance(balance)
         .build()
         .match(
             [&](expected::Value<
@@ -179,7 +164,8 @@ class CommandValidateExecuteTest : public ::testing::Test {
 
   shared_model::interface::RolePermissionSet role_permissions;
   std::shared_ptr<shared_model::interface::Account> creator, account;
-  std::shared_ptr<shared_model::interface::Amount> balance;
+  shared_model::interface::Amount balance =
+      shared_model::interface::Amount("1.50");
   std::shared_ptr<shared_model::interface::Asset> asset;
   std::shared_ptr<shared_model::interface::AccountAsset> wallet;
 
@@ -957,13 +943,13 @@ class TransferAssetTest : public CommandValidateExecuteTest {
     src_wallet = clone(shared_model::proto::AccountAssetBuilder()
                            .assetId(kAssetId)
                            .accountId(kAdminId)
-                           .balance(*balance)
+                           .balance(balance)
                            .build());
 
     dst_wallet = clone(shared_model::proto::AccountAssetBuilder()
                            .assetId(kAssetId)
                            .accountId(kAccountId)
-                           .balance(*balance)
+                           .balance(balance)
                            .build());
 
     role_permissions = {Role::kTransfer, Role::kReceive};

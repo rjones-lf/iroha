@@ -50,9 +50,7 @@ namespace shared_model {
 
       AccountAssetBuilder balance(const interface::Amount &amount) {
         AccountAssetBuilder copy(*this);
-        auto *amount_proto = copy.account_asset_.mutable_balance();
-        convertToProtoAmount(*amount_proto->mutable_value(), amount.intValue());
-        amount_proto->set_precision(amount.precision());
+        *copy.account_asset_.mutable_balance() = amount.toStringRepr();
         return copy;
       }
 
