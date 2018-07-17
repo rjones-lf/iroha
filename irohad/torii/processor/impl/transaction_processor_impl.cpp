@@ -22,6 +22,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "validation/stateful_validator_common.hpp"
 
 namespace iroha {
@@ -156,6 +157,22 @@ namespace iroha {
 
       log_->info("propagating tx");
       pcs_->propagate_transaction(transaction);
+    }
+
+    void TransactionProcessorImpl::transactionSequenceHandle(
+        const shared_model::interface::TransactionSequence
+            &transaction_sequence) {
+      for (const auto &batch : transaction_sequence.batches()) {
+        if (batch.hasAllSignatures()) {
+          pcs_->propagate_batch(batch);
+        } else {
+          // TODO kamilsa 16.07.18 propagate full batch to mst when its
+          // interface is updated
+          for (const auto tx : batch.transactions()) {
+            mst_processor_->propagateTransaction(tx);
+          }
+        }
+      }
     }
 
     rxcpp::observable<

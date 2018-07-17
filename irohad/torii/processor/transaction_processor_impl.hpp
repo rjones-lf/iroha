@@ -42,6 +42,10 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::Transaction> transaction)
           override;
 
+      void transactionSequenceHandle(
+          const shared_model::interface::TransactionSequence
+              &transaction_sequence) override;
+
       rxcpp::observable<
           std::shared_ptr<shared_model::interface::TransactionResponse>>
       transactionNotifier() override;

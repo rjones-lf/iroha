@@ -27,6 +27,7 @@ namespace shared_model {
     class Block;
     class Proposal;
     class Transaction;
+    class TransactionBatch;
   }  // namespace interface
 }  // namespace shared_model
 
@@ -49,6 +50,9 @@ namespace iroha {
       virtual void propagate_transaction(
           std::shared_ptr<const shared_model::interface::Transaction>
               transaction) = 0;
+
+      virtual void propagate_batch(
+          const shared_model::interface::TransactionBatch &batch) = 0;
 
       /**
        * Event is triggered when proposal arrives from network.

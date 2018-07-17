@@ -39,6 +39,9 @@ namespace iroha {
           std::shared_ptr<const shared_model::interface::Transaction>
               transaction) override;
 
+      void propagate_batch(
+          const shared_model::interface::TransactionBatch &batch) override;
+
       rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
       on_proposal() const override;
 
