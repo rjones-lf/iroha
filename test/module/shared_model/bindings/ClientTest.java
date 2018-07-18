@@ -18,7 +18,6 @@ import com.google.protobuf.ByteString;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ClientTest {
   static {
@@ -117,7 +116,7 @@ public class ClientTest {
                 .setPayload(Transaction.Payload.newBuilder().setReducedPayload(defaultPayload()))
                 .build()),
         keys));
-    assertTrue(iroha.validateTransaction(serialize(tx)).contains("Transaction should contain at least one command"));
+    assertThrows(IllegalArgumentException.class, () -> iroha.validateTransaction(serialize(tx)));
   }
 
   @Test
@@ -126,7 +125,7 @@ public class ClientTest {
                          .setPayload(Transaction.Payload.newBuilder().setReducedPayload(
                              defaultPayload().addCommands(validAddPeer())))
                          .build();
-    assertTrue(iroha.validateTransaction(serialize(tx)).contains("Signatures cannot be empty"));
+    assertThrows(IllegalArgumentException.class, () -> iroha.validateTransaction(serialize(tx)));
   }
 
   @Test
@@ -137,6 +136,6 @@ public class ClientTest {
                                      defaultPayload().addCommands(validAddPeer())))
                                  .build()),
             keys));
-    assertEquals(iroha.validateTransaction(serialize(tx)), "");
+    iroha.validateTransaction(serialize(tx));
   }
 }

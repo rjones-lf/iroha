@@ -14,14 +14,14 @@ namespace shared_model {
      * @param blob to validate
      * @return string with errors, empty if none
      */
-    std::string validateTransaction(const Blob &);
+    void validateTransaction(const Blob &);
 
     /**
      * Validate protobuf query
      * @param blob to validate
      * @return string with errors, empty if none
      */
-    std::string validateQuery(const Blob &);
+    void validateQuery(const Blob &);
 
     /**
      * Signs protobuf transaction

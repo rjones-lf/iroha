@@ -28,7 +28,7 @@ namespace shared_model {
     }
 
     using namespace iroha;
-    std::string validateTransaction(const Blob &b) {
+    void validateTransaction(const Blob &b) {
       auto blob = convert(b);
       auto s = get<iroha::protocol::Transaction>(blob) | [](auto tx) {
         static validation::DefaultSignableTransactionValidator val;
@@ -36,21 +36,29 @@ namespace shared_model {
             val.validate(proto::Transaction(tx)).reason());
       };
       if (s) {
-        return s.value();
+        auto &r = s.value();
+        if (r == "") {
+          return;
+        }
+        throw std::invalid_argument(r);
       }
-      return std::string("unknown object");
+      throw std::invalid_argument("unknown object");
     }
 
-    std::string validateQuery(const Blob &b) {
+    void validateQuery(const Blob &b) {
       auto blob = convert(b);
       auto s = get<iroha::protocol::Query>(blob) | [](auto qry) {
         static validation::DefaultSignableQueryValidator val;
         return boost::make_optional(val.validate(proto::Query(qry)).reason());
       };
       if (s) {
-        return s.value();
+        auto &r = s.value();
+        if (r == "") {
+          return;
+        }
+        throw std::invalid_argument(r);
       }
-      return std::string("unknown object");
+      throw std::invalid_argument("unknown object");
     }
 
     Blob signTransaction(const Blob &b, const crypto::Keypair &key) {
@@ -67,7 +75,7 @@ namespace shared_model {
       if (s) {
         return proto::makeBlob(s.value()).blob();
       }
-      return {};
+      throw std::invalid_argument("unknown object");
     }
 
     Blob signQuery(const Blob &b, const crypto::Keypair &key) {
@@ -84,7 +92,7 @@ namespace shared_model {
       if (s) {
         return proto::makeBlob(s.value()).blob();
       }
-      return {};
+      throw std::invalid_argument("unknown object");
     }
 
     Blob hashTransaction(const Blob &b) {
@@ -97,7 +105,7 @@ namespace shared_model {
       if (s) {
         return Blob(s->begin(), s->end());
       }
-      return {};
+      throw std::invalid_argument("unknown object");
     }
 
     Blob hashQuery(const Blob &b) {
@@ -110,7 +118,7 @@ namespace shared_model {
       if (s) {
         return Blob(s->begin(), s->end());
       }
-      return {};
+      throw std::invalid_argument("unknown object");
     }
   }  // namespace bindings
 }  // namespace shared_model

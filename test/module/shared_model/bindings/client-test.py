@@ -45,23 +45,21 @@ class ClientTest(unittest.TestCase):
   def test_validate_without_cmd(self):
     tx = self.unsigned_tx()
     tx_blob = iroha.signTransaction(iroha.Blob(tx.SerializeToString()).blob(), self.keys)
-    print(iroha.validateTransaction(tx_blob))
-    self.assertNotEqual(iroha.validateTransaction(tx_blob).find('Transaction should contain at least one command'), -1)
+    with self.assertRaises(ValueError):
+      iroha.validateTransaction(tx_blob)
 
   def test_validate_unsigned_tx(self):
     tx = self.unsigned_tx()
     tx.payload.reduced_payload.commands.extend([self.valid_add_peer_command()])
     self.assertEqual(len(tx.signatures), 0)
-    print(iroha.validateTransaction(iroha.Blob(tx.SerializeToString()).blob()))
-    self.assertNotEqual(iroha.validateTransaction(iroha.Blob(tx.SerializeToString()).blob()).find('Signatures cannot be empty'), -1)
+    with self.assertRaises(ValueError):
+      iroha.validateTransaction(iroha.Blob(tx.SerializeToString()).blob())
 
   def test_validate_correct_tx(self):
     tx = self.unsigned_tx()
     tx.payload.reduced_payload.commands.extend([self.valid_add_peer_command()])
     self.assertEqual(len(tx.signatures), 0)
-    tx_blob = iroha.signTransaction(iroha.Blob(tx.SerializeToString()).blob(), self.keys)
-    self.assertEqual(iroha.validateTransaction(tx_blob), '')
-
+    iroha.signTransaction(iroha.Blob(tx.SerializeToString()).blob(), self.keys)
 
 if __name__ == '__main__':
   unittest.main()
