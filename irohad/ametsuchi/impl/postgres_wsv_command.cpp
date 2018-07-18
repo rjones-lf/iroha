@@ -18,9 +18,9 @@
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 
 #include <boost/format.hpp>
+
 #include "backend/protobuf/permissions.hpp"
 #include "interfaces/common_objects/asset.hpp"
-#include "interfaces/common_objects/account_asset.hpp"
 
 namespace iroha {
   namespace ametsuchi {

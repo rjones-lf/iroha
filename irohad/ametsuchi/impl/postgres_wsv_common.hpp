@@ -54,22 +54,6 @@ namespace iroha {
       return values;
     }
 
-    /**
-     * Execute build function and return error in case it throws
-     * @tparam T - result value type
-     * @param f - function which returns BuilderResult
-     * @return whatever f returns, or error in case exception has been thrown
-     */
-    //    template <typename BuildFunc>
-    //    static inline auto tryBuild(BuildFunc &&f) noexcept -> decltype(f()) {
-    //      try {
-    //        return f();
-    //      } catch (std::exception &e) {
-    //        return
-    //        expected::makeError(std::make_shared<std::string>(e.what()));
-    //      }
-    //    }
-
     template <typename ParamType, typename Function>
     void processSoci(soci::statement &st,
                      soci::indicator &ind,
@@ -99,9 +83,8 @@ namespace iroha {
         shared_model::interface::CommonObjectsFactory::FactoryResult<
             std::unique_ptr<T>> &&result) {
       return result.match(
-          [](expected::Value<std::unique_ptr<T>> &v)
-              -> boost::optional<std::shared_ptr<T>> {
-            return std::shared_ptr<T>(std::move(v.value));
+          [](expected::Value<std::unique_ptr<T>> &v) {
+            return boost::make_optional(std::shared_ptr<T>(std::move(v.value)));
           },
           [](expected::Error<std::string>)
               -> boost::optional<std::shared_ptr<T>> { return boost::none; });
