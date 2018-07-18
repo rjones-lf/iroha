@@ -17,7 +17,7 @@ namespace shared_model {
      * @return true if all transactions from the same batch and false otherwise
      */
     static bool allTxsInSameBatch(const types::SharedTxsCollectionType &txs) {
-      // if txs is empty then true
+      // Empty batch is still batch, so txs can be empty
       if (txs.empty()) {
         return true;
       }
@@ -29,13 +29,14 @@ namespace shared_model {
         return false;
       }
 
-      for (auto &it = ++txs.begin(); it < txs.end(); it++) {
-        auto rhs_batch_meta = it->get()->batchMeta();
-        if (not rhs_batch_meta or **batch_meta != **rhs_batch_meta) {
-          return false;
-        }
-      }
-      return true;
+      return std::none_of(++txs.begin(),
+                   txs.end(),
+                   [front_batch_meta = batch_meta.value()](
+                       const std::shared_ptr<Transaction> tx) {
+                     return tx->batchMeta()
+                         ? **tx->batchMeta() != *front_batch_meta
+                         : false;
+                   });
     };
 
     template <typename TransactionValidator, typename OrderValidator>

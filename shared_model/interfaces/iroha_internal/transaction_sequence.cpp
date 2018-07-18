@@ -43,7 +43,7 @@ namespace shared_model {
           TransactionBatch::createTransactionBatch(tx, transaction_validator)
               .match(insert_batch, [&tx, &result](const auto &err) {
                 result.addReason(
-                    std::make_pair(std::string("Transaction reduced hash: ")
+                    std::make_pair(std::string("Error in transaction with reduced hash: ")
                                        + tx->reducedHash().hex(),
                                    std::vector<std::string>{err.error}));
               });
