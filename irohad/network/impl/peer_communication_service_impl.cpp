@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 #include "network/impl/peer_communication_service_impl.hpp"
+
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 
 namespace iroha {

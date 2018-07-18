@@ -7,6 +7,7 @@
 #define IROHA_BATCH_HELPER_HPP
 
 #include <boost/range/irange.hpp>
+
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
@@ -181,10 +182,9 @@ namespace framework {
       auto batch_type = shared_model::interface::types::BatchType::ATOMIC;
       std::vector<std::pair<decltype(batch_type), std::string>>
           transaction_fields;
-      for (size_t i = 0; i < size; i++) {
+      for (size_t i = 0; i < size; ++i) {
         transaction_fields.push_back(std::make_pair(
-            batch_type,
-            std::string("account") + std::to_string(i) + "@domain"));
+            batch_type, "account" + std::to_string(i) + "@domain"));
       }
 
       auto txs = createBatchOneSignTransactions(transaction_fields);

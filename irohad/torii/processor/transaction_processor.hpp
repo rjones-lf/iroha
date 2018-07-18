@@ -45,6 +45,11 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::Transaction>
               transaction) = 0;
 
+      /**
+       * Process transaction sequence and propagate batches from it either to
+       * the MST or PCS
+       * @param transaction_sequence - transaction sequence for processing
+       */
       virtual void transactionSequenceHandle(
           const shared_model::interface::TransactionSequence
               &transaction_sequence) = 0;
