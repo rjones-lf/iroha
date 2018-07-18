@@ -173,9 +173,8 @@ namespace iroha {
      */
     TEST_F(AddAccountAssetTest, AddAccountAssetTestUint256Overflow) {
       std::string uint256_halfmax =
-          "72370055773322622139731865630429942408293740416025352524660990004945"
-          "7060"
-          "2495.0";  // 2**252 - 1
+          "578960446186580977117854925043439539266349923328202820197287920039565648"
+              "19966.0";  // 2**255 - 2tra
       addAsset();
       ASSERT_TRUE(val(
           execute(buildCommand(TestTransactionBuilder()

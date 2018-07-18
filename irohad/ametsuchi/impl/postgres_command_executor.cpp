@@ -135,7 +135,8 @@ namespace iroha {
                       WHERE EXISTS (SELECT * FROM has_account LIMIT 1) AND
                         EXISTS (SELECT * FROM has_asset LIMIT 1) AND
                         EXISTS (SELECT value FROM new_value
-                                WHERE value < 2 ^ 253 - 1 LIMIT 1)
+                                WHERE value < 2::decimal ^ (256 - :precision)
+                                LIMIT 1)
                   )
                   ON CONFLICT (account_id, asset_id) DO UPDATE
                   SET amount = EXCLUDED.amount
@@ -146,7 +147,8 @@ namespace iroha {
               WHEN NOT EXISTS (SELECT * FROM has_account LIMIT 1) THEN 1
               WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 2
               WHEN NOT EXISTS (SELECT value FROM new_value
-                               WHERE value < 2 ^ 253 - 1 LIMIT 1) THEN 3
+                               WHERE value < 2::decimal ^ (256 - :precision)
+                               LIMIT 1) THEN 3
               ELSE 4
           END AS result;)");
       // clang-format on
@@ -752,7 +754,8 @@ namespace iroha {
                         EXISTS (SELECT * FROM has_dest_account LIMIT 1) AND
                         EXISTS (SELECT * FROM has_asset LIMIT 1) AND
                         EXISTS (SELECT value FROM new_dest_value
-                                WHERE value < 2 ^ 253 - 1 LIMIT 1)
+                                WHERE value < 2::decimal ^ (256 - :precision)
+                                LIMIT 1)
                   )
                   ON CONFLICT (account_id, asset_id)
                   DO UPDATE SET amount = EXCLUDED.amount
@@ -766,7 +769,8 @@ namespace iroha {
               WHEN NOT EXISTS (SELECT value FROM new_src_value
                                WHERE value >= 0 LIMIT 1) THEN 4
               WHEN NOT EXISTS (SELECT value FROM new_dest_value
-                               WHERE value < 2 ^ 253 - 1 LIMIT 1) THEN 5
+                               WHERE value < 2::decimal ^ (256 - :precision)
+                               LIMIT 1) THEN 5
               ELSE 6
           END AS result;)";
       // clang-format on
