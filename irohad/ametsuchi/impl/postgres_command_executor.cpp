@@ -27,12 +27,14 @@
 #include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
 
-iroha::expected::Error<iroha::ametsuchi::CommandError> makeCommandError(
-    const std::string &error_message,
-    const std::string &command_name) noexcept {
-  return iroha::expected::makeError(
-      iroha::ametsuchi::CommandError{command_name, error_message});
-}
+
+namespace {
+  iroha::expected::Error<iroha::ametsuchi::CommandError> makeCommandError(
+      const std::string &error_message,
+      const std::string &command_name) noexcept {
+    return iroha::expected::makeError(
+        iroha::ametsuchi::CommandError{command_name, error_message});
+  }
 
 /**
  * Transforms soci statement to CommandResult,
@@ -46,19 +48,19 @@ iroha::expected::Error<iroha::ametsuchi::CommandError> makeCommandError(
  * @return CommandResult with combined error message
  * in case of result contains error
  */
-template <typename Function>
-iroha::ametsuchi::CommandResult makeCommandResult(
-    soci::statement &st,
-    std::string command_name,
-    Function &&error_generator) noexcept {
-  st.define_and_bind();
-  try {
-    st.execute(true);
-  } catch (std::exception &e) {
-    return makeCommandError(error_generator() + "\n" + e.what(), command_name);
+  template<typename Function>
+  iroha::ametsuchi::CommandResult makeCommandResult(
+      soci::statement &st,
+      std::string command_name,
+      Function &&error_generator) noexcept {
+    st.define_and_bind();
+    try {
+      st.execute(true);
+    } catch (std::exception &e) {
+      return makeCommandError(error_generator() + "\n" + e.what(), command_name);
+    }
+    return {};
   }
-  return {};
-}
 
 /**
  * Transforms soci statement to CommandResult,
@@ -72,21 +74,22 @@ iroha::ametsuchi::CommandResult makeCommandResult(
  * @return CommandResult with combined error message
  * in case of result contains error
  */
-iroha::ametsuchi::CommandResult makeCommandResultByReturnedValue(
-    soci::statement &st,
-    std::string command_name,
-    std::vector<std::function<std::string()>> &error_generator) noexcept {
-  uint32_t result;
-  st.exchange(soci::into(result));
-  st.define_and_bind();
-  try {
-    st.execute(true);
-    if (result != 0) {
-      return makeCommandError(error_generator[result - 1](), command_name);
+  iroha::ametsuchi::CommandResult makeCommandResultByReturnedValue(
+      soci::statement &st,
+      std::string command_name,
+      std::vector<std::function<std::string()>> &error_generator) noexcept {
+    uint32_t result;
+    st.exchange(soci::into(result));
+    st.define_and_bind();
+    try {
+      st.execute(true);
+      if (result != 0) {
+        return makeCommandError(error_generator[result - 1](), command_name);
+      }
+      return {};
+    } catch (std::exception &e) {
+      return makeCommandError(e.what(), command_name);
     }
-    return {};
-  } catch (std::exception &e) {
-    return makeCommandError(e.what(), command_name);
   }
 }
 
