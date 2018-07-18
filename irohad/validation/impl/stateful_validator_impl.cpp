@@ -186,17 +186,30 @@ namespace iroha {
                 return tx.reducedHash() == batch_end_hash;
               });
           if (batch_end_it == txs_end) {
-            // for peer review: adequate exception variants?
-            throw std::runtime_error("Batch is formed incorrectly");
+            // exceptional case, such batch should not have passed stateless
+            // validation, so fail the whole proposal
+            transactions_errors_log.push_back(validation::TransactionError{
+                validation::CommandError{
+                    "batch stateful validation",
+                    "batch is formed incorrectly: could not find end of batch; "
+                    "first transaction is "
+                        + current_tx_it->hash().hex()
+                        + ", supposed last transaction is "
+                        + batch_end_hash.hex(),
+                    true},
+                current_tx_it->hash()});
+            return std::vector<shared_model::proto::Transaction>{};
           }
 
           // check all batch's transactions for validness
           auto savepoint = temporary_wsv.createSavepoint(
               "batch_" + current_tx_it->hash().hex());
-          if (std::all_of(current_tx_it, batch_end_it + 1, [&temporary_wsv, &transactions_errors_log](auto &tx) {
-                return checkTransactions(
-                    temporary_wsv, transactions_errors_log, tx);
-              })) {
+          if (std::all_of(current_tx_it,
+                          batch_end_it + 1,
+                          [&temporary_wsv, &transactions_errors_log](auto &tx) {
+                            return checkTransactions(
+                                temporary_wsv, transactions_errors_log, tx);
+                          })) {
             // batch is successful; add it to the list of valid_txs and
             // release savepoint
             std::transform(
