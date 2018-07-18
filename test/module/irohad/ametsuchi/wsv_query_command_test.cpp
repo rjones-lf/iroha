@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-#include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "framework/result_fixture.hpp"
@@ -54,7 +53,6 @@ namespace iroha {
 
         command = std::make_unique<PostgresWsvCommand>(*sql);
         query = std::make_unique<PostgresWsvQuery>(*sql);
-        executor = std::make_unique<PostgresCommandExecutor>(*sql);
 
         *sql << init_;
       }
@@ -69,7 +67,6 @@ namespace iroha {
 
       std::unique_ptr<WsvCommand> command;
       std::unique_ptr<WsvQuery> query;
-      std::unique_ptr<CommandExecutor> executor;
     };
 
     class RoleTest : public WsvQueryCommandTest {};

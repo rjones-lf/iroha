@@ -8,29 +8,27 @@
 
 #include <boost/format.hpp>
 
-#include "backend/protobuf/permissions.hpp"
 #include "common/result.hpp"
-#include "interfaces/commands/add_asset_quantity.hpp"
-#include "interfaces/commands/add_peer.hpp"
-#include "interfaces/commands/add_signatory.hpp"
-#include "interfaces/commands/append_role.hpp"
-#include "interfaces/commands/create_account.hpp"
-#include "interfaces/commands/create_asset.hpp"
-#include "interfaces/commands/create_domain.hpp"
-#include "interfaces/commands/create_role.hpp"
-#include "interfaces/commands/detach_role.hpp"
-#include "interfaces/commands/grant_permission.hpp"
-#include "interfaces/commands/remove_signatory.hpp"
-#include "interfaces/commands/revoke_permission.hpp"
-#include "interfaces/commands/set_account_detail.hpp"
-#include "interfaces/commands/set_quorum.hpp"
-#include "interfaces/commands/subtract_asset_quantity.hpp"
-#include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
-    class Peer;
+    class AddAssetQuantity;
+    class AddPeer;
+    class AddSignatory;
+    class AppendRole;
+    class CreateAccount;
+    class CreateAsset;
+    class CreateDomain;
+    class CreateRole;
+    class DetachRole;
+    class GrantPermission;
+    class RemoveSignatory;
+    class RevokePermission;
+    class SetAccountDetail;
+    class SetQuorum;
+    class SubtractAssetQuantity;
+    class TransferAsset;
   }
 }  // namespace shared_model
 
