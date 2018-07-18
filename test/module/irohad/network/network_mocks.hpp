@@ -35,11 +35,11 @@ namespace iroha {
   namespace network {
     class MockPeerCommunicationService : public PeerCommunicationService {
      public:
-      MOCK_METHOD1(
+      MOCK_CONST_METHOD1(
           propagate_transaction,
           void(std::shared_ptr<const shared_model::interface::Transaction>));
 
-      MOCK_METHOD1(propagate_batch,
+      MOCK_CONST_METHOD1(propagate_batch,
                    void(const shared_model::interface::TransactionBatch &));
 
       MOCK_CONST_METHOD0(

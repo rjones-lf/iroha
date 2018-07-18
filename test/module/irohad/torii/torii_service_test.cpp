@@ -62,10 +62,10 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
 
   void propagate_transaction(
       std::shared_ptr<const shared_model::interface::Transaction> transaction)
-      override {}
+      const override {}
 
   void propagate_batch(
-      const shared_model::interface::TransactionBatch &batch) override {}
+      const shared_model::interface::TransactionBatch &batch) const override {}
 
   rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
   on_proposal() const override {
@@ -579,7 +579,8 @@ TEST_F(ToriiServiceTest, FailedListOfTxs) {
         tx_request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
         iroha::protocol::ToriiResponse toriiResponse;
         client.Status(tx_request, toriiResponse);
-        auto error_beginning = toriiResponse.error_message().substr(0, toriiResponse.error_message().find_first_of('.'));
+        auto error_beginning = toriiResponse.error_message().substr(
+            0, toriiResponse.error_message().find_first_of('.'));
 
         ASSERT_EQ(toriiResponse.tx_status(),
                   iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
