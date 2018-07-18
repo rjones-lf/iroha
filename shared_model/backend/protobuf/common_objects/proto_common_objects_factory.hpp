@@ -78,28 +78,6 @@ namespace shared_model {
             std::move(proto_account));
       }
 
-      FactoryResult<std::unique_ptr<interface::Amount>> createAmount(
-          boost::multiprecision::uint256_t value,
-          interface::types::PrecisionType precision) override {
-        iroha::protocol::Amount amount;
-        amount.set_precision(precision);
-        convertToProtoAmount(*amount.mutable_value(), value);
-
-        auto proto_amount = std::make_unique<Amount>(std::move(amount));
-
-        auto errors = validate(*proto_amount, [](const auto &, auto &) {
-          // no validation needed,
-          // since any amount is valid in general context
-        });
-
-        if (errors) {
-          return iroha::expected::makeError(errors.reason());
-        }
-
-        return iroha::expected::makeValue<std::unique_ptr<interface::Amount>>(
-            std::move(proto_amount));
-      }
-
       FactoryResult<std::unique_ptr<interface::AccountAsset>>
       createAccountAsset(const interface::types::AccountIdType &account_id,
                          const interface::types::AssetIdType &asset_id,
@@ -107,10 +85,7 @@ namespace shared_model {
         iroha::protocol::AccountAsset asset;
         asset.set_account_id(account_id);
         asset.set_asset_id(asset_id);
-        auto proto_balance = asset.mutable_balance();
-        convertToProtoAmount(*proto_balance->mutable_value(),
-                             balance.intValue());
-        proto_balance->set_precision(balance.precision());
+        asset.set_balance(balance.toStringRepr());
 
         auto proto_asset = std::make_unique<AccountAsset>(std::move(asset));
 
@@ -126,48 +101,6 @@ namespace shared_model {
 
         return iroha::expected::makeValue<
             std::unique_ptr<interface::AccountAsset>>(std::move(proto_asset));
-      }
-
-      FactoryResult<std::unique_ptr<interface::AccountAsset>>
-      createAccountAsset(const interface::types::AccountIdType &account_id,
-                         const interface::types::AssetIdType &asset_id,
-                         std::string balance) override {
-        return createAmount(balance) |
-            [this, &account_id, &asset_id](const auto &amount) {
-              return createAccountAsset(account_id, asset_id, *amount);
-            };
-      }
-
-      FactoryResult<std::unique_ptr<interface::Amount>> createAmount(
-          std::string amount) override {
-        // taken from iroha::model::Amount
-        // check if valid number
-        const static std::regex e("([0-9]*\\.[0-9]+|[0-9]+)");
-        if (!std::regex_match(amount, e)) {
-          return iroha::expected::makeError("number string is invalid");
-        }
-
-        // get precision
-        auto dot_place = amount.find('.');
-        interface::types::PrecisionType precision;
-        if (dot_place > amount.size()) {
-          precision = 0;
-        } else {
-          precision = amount.size() - dot_place - 1;
-          // erase dot from the string
-          amount.erase(std::remove(amount.begin(), amount.end(), '.'),
-                       amount.end());
-        }
-
-        auto begin = amount.find_first_not_of('0');
-
-        // create uint256 value from obtained string
-        boost::multiprecision::uint256_t value = 0;
-        if (begin <= amount.size()) {
-          value = boost::multiprecision::uint256_t(amount.substr(begin));
-        }
-
-        return createAmount(value, precision);
       }
 
       FactoryResult<std::unique_ptr<interface::Asset>> createAsset(

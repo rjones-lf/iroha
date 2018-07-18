@@ -241,8 +241,10 @@ namespace iroha {
       std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
           assets;
       for (auto &t : st) {
-        fromResult(
-            factory_->createAccountAsset(account_id, t.get<1>(), t.get<2>()))
+        fromResult(factory_->createAccountAsset(
+            account_id,
+            t.get<1>(),
+            shared_model::interface::Amount(t.get<2>())))
             | [&assets](const auto &asset) { assets.push_back(asset); };
       }
 
@@ -266,8 +268,8 @@ namespace iroha {
         return boost::none;
       }
 
-      return fromResult(
-          factory_->createAccountAsset(account_id, asset_id, amount.get()));
+      return fromResult(factory_->createAccountAsset(
+          account_id, asset_id, shared_model::interface::Amount(amount.get())));
     }
 
     boost::optional<std::shared_ptr<shared_model::interface::Domain>>
@@ -302,9 +304,7 @@ namespace iroha {
         peer.match(
             [&](expected::Value<std::unique_ptr<shared_model::interface::Peer>>
                     &v) { peers.push_back(std::move(v.value)); },
-            [&](expected::Error<std::string> &e) {
-              log_->info(e.error);
-            });
+            [&](expected::Error<std::string> &e) { log_->info(e.error); });
       }
       return peers;
     }

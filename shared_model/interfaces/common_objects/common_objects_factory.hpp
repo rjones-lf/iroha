@@ -54,33 +54,6 @@ namespace shared_model {
           const Amount &balance) = 0;
 
       /**
-       * Create account asset instance using string
-       */
-      virtual FactoryResult<std::unique_ptr<AccountAsset>> createAccountAsset(
-          const types::AccountIdType &account_id,
-          const types::AssetIdType &asset_id,
-          std::string balance) = 0;
-
-      /**
-       * Create amount instance from string
-       *
-       * @param value integer will be divided by 10 * precision,
-       * so value 123 with precision 2 will become Amount of 1.23
-       */
-      virtual FactoryResult<std::unique_ptr<Amount>> createAmount(
-          boost::multiprecision::uint256_t value,
-          types::PrecisionType precision) = 0;
-
-      /**
-       * Create amount instance from string
-       *
-       * @param amount must represent valid number.
-       * For example: "1.23", "10" etc.
-       */
-      virtual FactoryResult<std::unique_ptr<Amount>> createAmount(
-          std::string amount) = 0;
-
-      /**
        * Create asset instance
        */
       virtual FactoryResult<std::unique_ptr<Asset>> createAsset(
