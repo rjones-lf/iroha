@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <ed25519/ed25519.h>
 #include <gtest/gtest.h>
 
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
@@ -199,7 +198,8 @@ class DomainTest : public ::testing::Test {
  * @then domain is successfully initialized
  */
 TEST_F(DomainTest, ValidDomainInitialization) {
-  auto domain = factory.createDomain(valid_domain_id, valid_role_id);
+  auto domain =
+      factory.createDomain(valid_domain_id, valid_role_id);
 
   domain.match(
       [&](const ValueOf<decltype(domain)> &v) {
@@ -215,7 +215,8 @@ TEST_F(DomainTest, ValidDomainInitialization) {
  * @then domain is not initialized correctly
  */
 TEST_F(DomainTest, InvalidDomainInitialization) {
-  auto domain = factory.createDomain(invalid_domain_id, valid_role_id);
+  auto domain =
+      factory.createDomain(invalid_domain_id, valid_role_id);
 
   domain.match(
       [](const ValueOf<decltype(domain)> &v) {
@@ -238,7 +239,8 @@ class SignatureTest : public ::testing::Test {
  * @then signature is successfully initialized
  */
 TEST_F(SignatureTest, ValidSignatureInitialization) {
-  auto signature = factory.createSignature(valid_pubkey, valid_data);
+  auto signature =
+      factory.createSignature(valid_pubkey, valid_data);
 
   signature.match(
       [&](const ValueOf<decltype(signature)> &v) {
@@ -254,7 +256,8 @@ TEST_F(SignatureTest, ValidSignatureInitialization) {
  * @then signature is not initialized correctly
  */
 TEST_F(SignatureTest, InvalidSignatureInitialization) {
-  auto signature = factory.createSignature(invalid_pubkey, valid_data);
+  auto signature =
+      factory.createSignature(invalid_pubkey, valid_data);
 
   signature.match(
       [](const ValueOf<decltype(signature)> &v) {

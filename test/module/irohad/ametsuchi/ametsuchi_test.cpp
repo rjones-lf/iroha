@@ -216,7 +216,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
                    .build()}))
           .height(2)
           .prevHash(block1.hash())
-          .build();
+          .build(); 
 
   apply(storage, block2);
   validateAccountAsset(
@@ -698,9 +698,9 @@ TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {
 
   ASSERT_EQ(0, wsv->getPeers().value().size());
   std::shared_ptr<StorageImpl> new_storage;
-  auto new_storageResult =
+  auto new_storage_result =
       StorageImpl::create(block_store_path, pgopt_, factory);
-  storageResult.match(
+  new_storage_result.match(
       [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
         new_storage = _storage.value;
       },

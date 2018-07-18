@@ -23,7 +23,7 @@ namespace shared_model {
   namespace proto {
     /**
      * ProtoCommonObjectsFactory constructs protobuf-based objects.
-     * It performs stateful validation with provided validator
+     * It performs stateless validation with provided validator
      * @tparam Validator
      */
     template <typename Validator>

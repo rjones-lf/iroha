@@ -121,12 +121,12 @@ namespace iroha {
       // Allows multiple readers and a single writer
       std::shared_timed_mutex rw_lock_;
 
-      logger::Logger log_;
+      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
 
       rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
           notifier_;
 
-      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
+      logger::Logger log_;
 
      protected:
       static const std::string &init_;
