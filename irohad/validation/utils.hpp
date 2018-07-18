@@ -6,9 +6,11 @@
 #ifndef IROHA_VALIDATION_UTILS
 #define IROHA_VALIDATION_UTILS
 
-#include <boost/range/any_range.hpp>
 #include <string>
 #include <vector>
+
+#include <boost/range/any_range.hpp>
+
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/types.hpp"
 
@@ -41,4 +43,4 @@ namespace iroha {
   }  // namespace validation
 }  // namespace iroha
 
-#endif
+#endif  // IROHA_VALIDATION_UTILS
