@@ -43,7 +43,7 @@ namespace iroha {
        */
       virtual void transactionHandle(
           std::shared_ptr<shared_model::interface::Transaction>
-              transaction) = 0;
+              transaction) const = 0;
 
       /**
        * Process transaction sequence and propagate batches from it either to
@@ -52,7 +52,7 @@ namespace iroha {
        */
       virtual void transactionSequenceHandle(
           const shared_model::interface::TransactionSequence
-              &transaction_sequence) = 0;
+              &transaction_sequence) const = 0;
 
       /**
        * Subscribers will be notified with transaction status
