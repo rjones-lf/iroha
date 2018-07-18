@@ -42,10 +42,10 @@ namespace shared_model {
         } else {
           TransactionBatch::createTransactionBatch(tx, transaction_validator)
               .match(insert_batch, [&tx, &result](const auto &err) {
-                result.addReason(
-                    std::make_pair(std::string("Error in transaction with reduced hash: ")
-                                       + tx->reducedHash().hex(),
-                                   std::vector<std::string>{err.error}));
+                result.addReason(std::make_pair(
+                    std::string("Error in transaction with reduced hash: ")
+                        + tx->reducedHash().hex(),
+                    std::vector<std::string>{err.error}));
               });
         }
       }
@@ -95,7 +95,7 @@ namespace shared_model {
         }
         result.reserve(transactions_amount);
         for (const auto &batch : batches_) {
-          auto transactions = batch.transactions();
+          auto &transactions = batch.transactions();
           std::copy(transactions.begin(),
                     transactions.end(),
                     std::back_inserter(result));
