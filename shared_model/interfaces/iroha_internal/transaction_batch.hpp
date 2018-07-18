@@ -15,7 +15,6 @@ namespace shared_model {
 
     class TransactionBatch {
      public:
-      TransactionBatch() = delete;
 
       /**
        * Create transaction batch out of collection of transactions

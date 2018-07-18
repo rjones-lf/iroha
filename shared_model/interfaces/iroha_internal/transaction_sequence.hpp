@@ -22,7 +22,6 @@ namespace shared_model {
      */
     class TransactionSequence {
      public:
-      TransactionSequence() = delete;
 
       /**
        * Creator of transaction sequence
