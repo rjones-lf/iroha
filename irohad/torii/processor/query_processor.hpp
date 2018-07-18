@@ -34,8 +34,9 @@ namespace iroha {
     class QueryProcessor {
      public:
       /**
-       * Register client query
-       * @param query - client intent
+       * Perform client query
+       * @param qry - client intent
+       * @return resulted response
        */
       virtual std::unique_ptr<shared_model::interface::QueryResponse>
       queryHandle(const shared_model::interface::Query &qry) = 0;

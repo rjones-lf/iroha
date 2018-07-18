@@ -26,7 +26,7 @@ namespace iroha {
   namespace torii {
 
     /**
-     * QueryProcessor provides start point for queries in the whole system
+     * QueryProcessorImpl provides implementation of QueryProcessor
      */
     class QueryProcessorImpl : public QueryProcessor {
      public:
@@ -40,18 +40,9 @@ namespace iroha {
       template <class Q>
       bool checkSignatories(const Q &qry);
 
-      /**
-       * Register client query
-       * @param query - client intent
-       */
       std::unique_ptr<shared_model::interface::QueryResponse> queryHandle(
           const shared_model::interface::Query &qry) override;
 
-      /**
-       * Register client block query
-       * @param query - client intent
-       * @return observable with block query responses
-       */
       rxcpp::observable<
           std::shared_ptr<shared_model::interface::BlockQueryResponse>>
       blocksQueryHandle(

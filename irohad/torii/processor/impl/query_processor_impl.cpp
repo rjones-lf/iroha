@@ -27,7 +27,7 @@ namespace iroha {
      * @param hash - original query hash
      * @return QueryRepsonse
      */
-    std::unique_ptr<shared_model::interface::QueryResponse> buildStatefulError(
+    auto buildStatefulError(
         const shared_model::interface::types::HashType &hash) {
       return clone(
           shared_model::proto::TemplateQueryResponseBuilder<>()
