@@ -30,18 +30,8 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
     ::google::protobuf::Empty *response) {
   log_->info("receive proposal");
 
-  std::vector<shared_model::proto::Transaction> transactions;
-  for (const auto &tx : request->transactions()) {
-    transactions.emplace_back(tx);
-  }
-  log_->info("transactions in proposal: {}", transactions.size());
-
-  auto proposal = std::make_shared<shared_model::proto::Proposal>(
-      shared_model::proto::ProposalBuilder()
-          .transactions(transactions)
-          .height(request->height())
-          .createdTime(request->created_time())
-          .build());
+  auto proposal = std::make_shared<shared_model::proto::Proposal>(*request);
+  log_->info("transactions in proposal: {}", proposal->transactions().size());
 
   if (not subscriber_.expired()) {
     subscriber_.lock()->onProposal(std::move(proposal));
