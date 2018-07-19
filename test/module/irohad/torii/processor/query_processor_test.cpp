@@ -115,15 +115,11 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
   EXPECT_CALL(*wsv_queries, getSignatories(account_id))
       .WillRepeatedly(Return(signatories));
 
-  auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
-  wrapper.subscribe([](auto response) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
-        response->get()));
-  });
-  qpi.queryHandle(
-      std::make_shared<shared_model::proto::Query>(query.getTransport()));
-  ASSERT_TRUE(wrapper.validate());
+  auto response = qpi.queryHandle(query);
+  ASSERT_TRUE(response);
+  ASSERT_NO_THROW(boost::apply_visitor(
+      framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
+      response->get()));
 }
 
 /**
@@ -162,16 +158,12 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
   EXPECT_CALL(*wsv_queries, getSignatories(account_id))
       .WillRepeatedly(Return(signatories));
 
-  auto wrapper = make_test_subscriber<CallExact>(qpi.queryNotifier(), 1);
-  wrapper.subscribe([](auto response) {
-    ASSERT_TRUE(boost::apply_visitor(
-        shared_model::interface::QueryErrorResponseChecker<
-            shared_model::interface::StatefulFailedErrorResponse>(),
-        response->get()));
-  });
-  qpi.queryHandle(
-      std::make_shared<shared_model::proto::Query>(query.getTransport()));
-  ASSERT_TRUE(wrapper.validate());
+  auto response = qpi.queryHandle(query);
+  ASSERT_TRUE(response);
+  ASSERT_NO_THROW(boost::apply_visitor(
+      shared_model::interface::QueryErrorResponseChecker<
+          shared_model::interface::StatefulFailedErrorResponse>(),
+      response->get()));
 }
 
 /**
@@ -214,9 +206,7 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
       .WillRepeatedly(Return(signatories));
 
   auto wrapper = make_test_subscriber<CallExact>(
-      qpi.blocksQueryHandle(std::make_shared<shared_model::proto::BlocksQuery>(
-          blockQuery.getTransport())),
-      blockNumber);
+      qpi.blocksQueryHandle(blockQuery), blockNumber);
   wrapper.subscribe([](auto response) {
     ASSERT_NO_THROW({
       boost::apply_visitor(
@@ -249,13 +239,7 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
 
   iroha::torii::QueryProcessorImpl qpi(storage);
 
-  auto blockQuery = TestUnsignedBlocksQueryBuilder()
-                        .createdTime(created_time)
-                        .creatorAccountId(account_id)
-                        .queryCounter(counter)
-                        .build()
-                        .signAndAddSignature(keypair)
-                        .finish();
+  auto blockQuery = getBlocksQuery(account_id);
 
   std::shared_ptr<shared_model::interface::Account> shared_account = clone(
       shared_model::proto::AccountBuilder().accountId(account_id).build());
@@ -271,10 +255,8 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
   EXPECT_CALL(*wsv_queries, getSignatories(account_id))
       .WillRepeatedly(Return(signatories));
 
-  auto wrapper = make_test_subscriber<CallExact>(
-      qpi.blocksQueryHandle(std::make_shared<shared_model::proto::BlocksQuery>(
-          blockQuery.getTransport())),
-      1);
+  auto wrapper =
+      make_test_subscriber<CallExact>(qpi.blocksQueryHandle(blockQuery), 1);
   wrapper.subscribe([](auto response) {
     ASSERT_NO_THROW({
       boost::apply_visitor(framework::SpecifiedVisitor<
@@ -357,9 +339,7 @@ TEST_F(QueryProcessorTest, NoOneSeesStatefulInvalidButCaller) {
 
   // check that admin can get block and do not get anything but block responses
   auto admin_wrapper = make_test_subscriber<CallExact>(
-      qpi.blocksQueryHandle(std::make_shared<shared_model::proto::BlocksQuery>(
-          admin_block_query.getTransport())),
-      1);
+      qpi.blocksQueryHandle(admin_block_query), 1);
   admin_wrapper.subscribe([&expected_block](
                               const std::shared_ptr<
                                   shared_model::interface::BlockQueryResponse>
@@ -377,9 +357,7 @@ TEST_F(QueryProcessorTest, NoOneSeesStatefulInvalidButCaller) {
   // check that user without can_get_blocks permission will not get anything but
   // block error response
   auto user_wrapper = make_test_subscriber<CallExact>(
-      qpi.blocksQueryHandle(std::make_shared<shared_model::proto::BlocksQuery>(
-          user_block_query.getTransport())),
-      1);
+      qpi.blocksQueryHandle(user_block_query), 1);
   user_wrapper.subscribe(
       [](const std::shared_ptr<shared_model::interface::BlockQueryResponse>
              &block) {
