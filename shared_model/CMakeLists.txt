@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.5.1)
 project(shared_model C CXX)
 
 set(IROHA_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/schema")
+set(SM_SCHEMA_DIR "${IROHA_SCHEMA_DIR}")
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../libs
     ${CMAKE_CURRENT_SOURCE_DIR}
