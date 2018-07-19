@@ -15,6 +15,9 @@ namespace shared_model {
 
     class Proposal;
 
+    /**
+     * ProposalFactory creates proposal
+     */
     class ProposalFactory {
      public:
       template <typename T>

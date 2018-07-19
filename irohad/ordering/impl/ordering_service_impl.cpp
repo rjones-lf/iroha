@@ -110,10 +110,11 @@ namespace iroha {
       // extract transactions until the queue is empty
       // or maximum limit of transactions in proposal is achieved
       while (txs.size() < max_size_) {
-        txs.emplace_back();
-        if (not queue_.try_pop(txs.back())) {
+        std::shared_ptr<shared_model::interface::Transaction> tx;
+        if (not queue_.try_pop(tx)) {
           break;
         }
+        txs.push_back(std::move(tx));
       }
       auto tx_range = txs | boost::adaptors::indirected;
       auto proposal = factory_->createProposal(

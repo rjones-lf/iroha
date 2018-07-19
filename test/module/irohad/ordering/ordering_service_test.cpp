@@ -6,6 +6,7 @@
 #include <grpc++/grpc++.h>
 
 #include "backend/protobuf/common_objects/peer.hpp"
+#include "backend/protobuf/proto_proposal_factory.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "framework/batch_helper.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
@@ -74,6 +75,7 @@ class OrderingServiceTest : public ::testing::Test {
         proposal_timeout.get_observable(),
         fake_transport,
         fake_persistent_state,
+        factory,
         false);
   }
 
@@ -88,6 +90,9 @@ class OrderingServiceTest : public ::testing::Test {
   std::string address{"0.0.0.0:50051"};
   std::shared_ptr<shared_model::interface::Peer> peer;
   std::shared_ptr<MockPeerQuery> wsv;
+  std::shared_ptr<shared_model::interface::ProposalFactory> factory =
+      std::make_shared<shared_model::proto::ProtoProposalFactory<
+          shared_model::validation::AlwaysValidValidator>>();
   rxcpp::subjects::subject<OrderingServiceImpl::TimeoutType> proposal_timeout;
 };
 
@@ -271,6 +276,7 @@ TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
                                       rxcpp::observe_on_new_thread()),
         fake_transport,
         fake_persistent_state,
+        factory,
         true);
 
     auto on_tx = [&]() {
