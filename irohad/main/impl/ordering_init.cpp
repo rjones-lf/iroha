@@ -40,6 +40,7 @@ namespace iroha {
         std::shared_ptr<network::OrderingServiceTransport> transport,
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
             persistent_state) {
+      auto factory = std::make_shared<
       return std::make_shared<ordering::OrderingServiceImpl>(
           wsv,
           max_size,

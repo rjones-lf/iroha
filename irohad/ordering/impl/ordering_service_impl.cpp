@@ -8,10 +8,10 @@
 #include <algorithm>
 #include <iterator>
 
+#include <boost/range/adaptor/indirected.hpp>
+
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "ametsuchi/peer_query.hpp"
-#include "backend/protobuf/proposal.hpp"
-#include "backend/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
 #include "network/ordering_service_transport.hpp"
 
@@ -24,14 +24,15 @@ namespace iroha {
         std::shared_ptr<network::OrderingServiceTransport> transport,
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
             persistent_state,
+        std::shared_ptr<shared_model::interface::ProposalFactory> factory,
         bool is_async)
         : wsv_(wsv),
           max_size_(max_size),
           current_size_(0),
           transport_(transport),
-          persistent_state_(persistent_state){
-      log_ = logger::log("OrderingServiceImpl");
-
+          persistent_state_(persistent_state),
+          factory_(factory),
+          log_(logger::log("OrderingServiceImpl")) {
       // restore state of ordering service from persistent storage
       proposal_height_ = persistent_state_->loadProposalHeight().value();
 
@@ -104,21 +105,38 @@ namespace iroha {
                       ->getTransport();
               current_size_--;
             });
+      std::vector<std::shared_ptr<shared_model::interface::Transaction>> txs;
+      // nikita
+      // extract transactions until the queue is empty
+      // or maximum limit of transactions in proposal is achieved
+      while (txs.size() < max_size_) {
+        txs.emplace_back();
+        if (not queue_.try_pop(txs.back())) {
+          break;
+        }
       }
+      auto tx_range = txs | boost::adaptors::indirected;
+      auto proposal = factory_->createProposal(
+          proposal_height_++, iroha::time::now(), tx_range);
 
-      auto proposal = std::make_unique<shared_model::proto::Proposal>(
-          std::move(proto_proposal));
-
-      // Save proposal height to the persistent storage.
-      // In case of restart it reloads state.
-      if (persistent_state_->saveProposalHeight(proposal_height_)) {
-        publishProposal(std::move(proposal));
-      } else {
-        // TODO(@l4l) 23/03/18: publish proposal independent of psql status
-        // IR-1162
-        log_->warn(
-            "Proposal height cannot be saved. Skipping proposal publish");
-      }
+      proposal.match(
+          [this](expected::Value<
+                 std::unique_ptr<shared_model::interface::Proposal>> &v) {
+            // Save proposal height to the persistent storage.
+            // In case of restart it reloads state.
+            if (persistent_state_->saveProposalHeight(proposal_height_)) {
+              publishProposal(std::move(v.value));
+            } else {
+              // TODO(@l4l) 23/03/18: publish proposal independent of psql
+              // status IR-1162
+              log_->warn(
+                  "Proposal height cannot be saved. Skipping proposal publish");
+            }
+          },
+          [this](expected::Error<std::string> &e) {
+            log_->warn("Failed to initialize proposal: {}", e.error);
+          });
+        // nikita
     }
 
     void OrderingServiceImpl::publishProposal(
