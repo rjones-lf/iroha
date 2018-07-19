@@ -27,7 +27,7 @@ namespace shared_model {
     class SetQuorum;
     class SubtractAssetQuantity;
     class TransferAsset;
-  }
+  } // namespace interface
 }  // namespace shared_model
 
 namespace iroha {
