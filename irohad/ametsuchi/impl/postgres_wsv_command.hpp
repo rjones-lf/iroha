@@ -20,7 +20,7 @@
 
 #include "ametsuchi/wsv_command.hpp"
 
-#include "ametsuchi/impl/postgres_wsv_common.hpp"
+#include "ametsuchi/impl/soci_utils.hpp"
 
 namespace iroha {
   namespace ametsuchi {

@@ -20,8 +20,10 @@
 
 #include "ametsuchi/wsv_query.hpp"
 
+#include <soci/soci.h>
+
 #include "interfaces/common_objects/common_objects_factory.hpp"
-#include "postgres_wsv_common.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace ametsuchi {

@@ -16,8 +16,34 @@
  */
 
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+
+#include <soci/boost-tuple.h>
+
+#include "ametsuchi/impl/soci_utils.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "common/result.hpp"
+
+namespace {
+  /**
+   * Transforms result to optional
+   * value -> optional<value>
+   * error -> nullopt
+   * @tparam T type of object inside
+   * @param result BuilderResult
+   * @return optional<T>
+   */
+  template <typename T>
+  boost::optional<std::shared_ptr<T>> fromResult(
+      shared_model::interface::CommonObjectsFactory::FactoryResult<
+          std::unique_ptr<T>> &&result) {
+    return result.match(
+        [](iroha::expected::Value<std::unique_ptr<T>> &v) {
+          return boost::make_optional(std::shared_ptr<T>(std::move(v.value)));
+        },
+        [](iroha::expected::Error<std::string>)
+            -> boost::optional<std::shared_ptr<T>> { return boost::none; });
+  }
+}  // namespace
 
 namespace iroha {
   namespace ametsuchi {
