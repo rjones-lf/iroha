@@ -52,8 +52,8 @@ struct CommandFixture {
     EXPECT_CALL(*storage_, getBlockQuery()).WillRepeatedly(Return(bq_));
     tx_processor_ = std::make_shared<iroha::torii::TransactionProcessorImpl>(
         pcs_, mst_processor_);
-    service_ =
-        std::make_shared<torii::CommandService>(tx_processor_, storage_, 15s);
+    service_ = std::make_shared<torii::CommandService>(
+        tx_processor_, storage_, 15s, 15s);
   }
 };
 
