@@ -216,7 +216,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
                    .build()}))
           .height(2)
           .prevHash(block1.hash())
-          .build(); 
+          .build();
 
   apply(storage, block2);
   validateAccountAsset(

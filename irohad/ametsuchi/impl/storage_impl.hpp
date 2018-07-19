@@ -20,11 +20,10 @@
 
 #include "ametsuchi/storage.hpp"
 
-#include <soci/soci.h>
-#include <boost/optional.hpp>
 #include <cmath>
 #include <shared_mutex>
 
+#include <soci/soci.h>
 #include <boost/optional.hpp>
 
 #include "ametsuchi/impl/postgres_options.hpp"
