@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "common/result.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {

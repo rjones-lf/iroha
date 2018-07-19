@@ -33,7 +33,15 @@ namespace shared_model {
                   .getTransport();
         }
 
-        auto proto_proposal = std::make_unique<Proposal>(std::move(proposal));
+        return createProposal(std::move(proposal));
+      }
+
+      /**
+       * Create and validate proposal using protobuf object
+       */
+      FactoryResult<std::unique_ptr<interface::Proposal>> createProposal(
+          const iroha::protocol::Proposal &proposal) {
+        auto proto_proposal = std::make_unique<Proposal>(proposal);
 
         auto errors = validator_.validate(*proto_proposal);
 

@@ -30,14 +30,23 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
     ::google::protobuf::Empty *response) {
   log_->info("receive proposal");
 
-  auto proposal = std::make_shared<shared_model::proto::Proposal>(*request);
-  log_->info("transactions in proposal: {}", proposal->transactions().size());
+  auto proposal_res = factory_->createProposal(std::move(*request));
+  proposal_res.match(
+      [this](
+          iroha::expected::Value<std::unique_ptr<shared_model::interface::Proposal>>
+              &v) {
+        log_->info("transactions in proposal: {}",
+                   v.value->transactions().size());
 
-  if (not subscriber_.expired()) {
-    subscriber_.lock()->onProposal(std::move(proposal));
-  } else {
-    log_->error("(onProposal) No subscriber");
-  }
+        if (not subscriber_.expired()) {
+          subscriber_.lock()->onProposal(std::move(v.value));
+        } else {
+          log_->error("(onProposal) No subscriber");
+        }
+      },
+      [this](iroha::expected::Error<std::string> &e) {
+        log_->error("Received invalid proposal: {}", e.error);
+      });
 
   return grpc::Status::OK;
 }
@@ -47,7 +56,9 @@ OrderingGateTransportGrpc::OrderingGateTransportGrpc(
     : network::AsyncGrpcClient<google::protobuf::Empty>(
           logger::log("OrderingGate")),
       client_(network::createClient<proto::OrderingServiceTransportGrpc>(
-          server_address)) {}
+          server_address)),
+      factory_(std::make_shared<shared_model::proto::ProtoProposalFactory<
+                   shared_model::validation::DefaultProposalValidator>>()) {}
 
 void OrderingGateTransportGrpc::propagateTransaction(
     std::shared_ptr<const shared_model::interface::Transaction> transaction) {
