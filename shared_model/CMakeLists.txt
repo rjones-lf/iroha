@@ -35,7 +35,6 @@ if (NOT IROHA_ROOT_PROJECT)
   set(SCHEMA_OUT_DIR ${CMAKE_BINARY_DIR}/schema)
 
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs/generator generator)
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs/amount amount)
 endif ()
 
 add_subdirectory(backend)
