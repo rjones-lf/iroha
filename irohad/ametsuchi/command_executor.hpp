@@ -6,8 +6,6 @@
 #ifndef IROHA_AMETSUCHI_COMMAND_EXECUTOR_HPP
 #define IROHA_AMETSUCHI_COMMAND_EXECUTOR_HPP
 
-#include <boost/format.hpp>
-
 #include "common/result.hpp"
 #include "interfaces/common_objects/types.hpp"
 
@@ -43,9 +41,7 @@ namespace iroha {
       std::string command_name;
       std::string error_message;
 
-      std::string toString() const {
-        return (boost::format("%s: %s") % command_name % error_message).str();
-      }
+      std::string toString() const;
     };
 
     /**
