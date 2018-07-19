@@ -25,19 +25,7 @@ namespace torii {
 
   QueryService::QueryService(
       std::shared_ptr<iroha::torii::QueryProcessor> query_processor)
-      : query_processor_(query_processor), log_(logger::log("Query Service")) {
-    //    Subscribe on result from iroha
-    query_processor_->queryNotifier().subscribe(
-        [this](const std::shared_ptr<shared_model::interface::QueryResponse>
-                   &iroha_response) {
-          auto proto_response =
-              static_cast<shared_model::proto::QueryResponse &>(*iroha_response)
-                  .getTransport();
-
-          auto hash = iroha_response->queryHash();
-          cache_.addItem(hash, proto_response);
-        });
-  }
+      : query_processor_(query_processor), log_(logger::log("Query Service")) {}
 
   void QueryService::Find(iroha::protocol::Query const &request,
                           iroha::protocol::QueryResponse &response) {
@@ -61,16 +49,12 @@ namespace torii {
                 const iroha::expected::Value<shared_model::proto::Query>
                     &query) {
               // Send query to iroha
-              query_processor_->queryHandle(
-                  std::make_shared<shared_model::proto::Query>(query.value));
-              auto result_response = cache_.findItem(hash);
-              if (result_response) {
-                response.CopyFrom(result_response.value());
-              } else {
-                response.mutable_error_response()->set_reason(
-                    iroha::protocol::ErrorResponse::NOT_SUPPORTED);
-                cache_.addItem(hash, response);
-              }
+              auto result_response =
+                  static_cast<shared_model::proto::QueryResponse &>(
+                      *query_processor_->queryHandle(query.value))
+                      .getTransport();
+              response.CopyFrom(result_response);
+              cache_.addItem(hash, response);
             },
             [&hash,
              &response](const iroha::expected::Error<std::string> &error) {
@@ -103,10 +87,7 @@ namespace torii {
                 const iroha::expected::Value<shared_model::proto::BlocksQuery>
                     &query) {
               rxcpp::composite_subscription sub;
-              query_processor_
-                  ->blocksQueryHandle(
-                      std::make_shared<shared_model::proto::BlocksQuery>(
-                          query.value))
+              query_processor_->blocksQueryHandle(query.value)
                   .as_blocking()
                   .subscribe(
                       sub,

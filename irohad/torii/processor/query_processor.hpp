@@ -34,11 +34,12 @@ namespace iroha {
     class QueryProcessor {
      public:
       /**
-       * Register client query
-       * @param query - client intent
+       * Perform client query
+       * @param qry - client intent
+       * @return resulted response
        */
-      virtual void queryHandle(
-          std::shared_ptr<shared_model::interface::Query> qry) = 0;
+      virtual std::unique_ptr<shared_model::interface::QueryResponse>
+      queryHandle(const shared_model::interface::Query &qry) = 0;
       /**
        * Register client blocks query
        * @param query - client intent
@@ -46,15 +47,7 @@ namespace iroha {
        */
       virtual rxcpp::observable<
           std::shared_ptr<shared_model::interface::BlockQueryResponse>>
-      blocksQueryHandle(
-          std::shared_ptr<shared_model::interface::BlocksQuery> qry) = 0;
-      /**
-       * Subscribe for query responses
-       * @return observable with query responses
-       */
-      virtual rxcpp::observable<
-          std::shared_ptr<shared_model::interface::QueryResponse>>
-      queryNotifier() = 0;
+      blocksQueryHandle(const shared_model::interface::BlocksQuery &qry) = 0;
 
       virtual ~QueryProcessor(){};
     };

@@ -109,21 +109,22 @@ class Validator : public testing::Test {
                    shared_model::interface::types::BatchType batch_type) {
     std::vector<shared_model::interface::types::HashType> reduced_hashes;
     std::vector<shared_model::proto::Transaction> txs;
+    auto current_time = iroha::time::now();
 
-    for (const auto &creator : creators) {
+    for (size_t i = 0; i < creators.size(); ++i) {
       auto tx = TestTransactionBuilder()
-                    .creatorAccountId(creator)
-                    .createdTime(iroha::time::now())
+                    .creatorAccountId(creators[i])
+                    .createdTime(current_time + i)
                     .quorum(1)
                     .createAsset("doge", "coin", 1)
                     .build();
       reduced_hashes.push_back(tx.reducedHash());
     }
 
-    for (const auto &creator : creators) {
+    for (size_t i = 0; i < creators.size(); ++i) {
       txs.push_back(TestTransactionBuilder()
-                        .creatorAccountId(creator)
-                        .createdTime(iroha::time::now())
+                        .creatorAccountId(creators[i])
+                        .createdTime(current_time + i)
                         .quorum(1)
                         .createAsset("doge", "coin", 1)
                         .batchMeta(batch_type, reduced_hashes)

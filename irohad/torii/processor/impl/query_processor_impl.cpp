@@ -27,7 +27,7 @@ namespace iroha {
      * @param hash - original query hash
      * @return QueryRepsonse
      */
-    std::shared_ptr<shared_model::interface::QueryResponse> buildStatefulError(
+    auto buildStatefulError(
         const shared_model::interface::types::HashType &hash) {
       return clone(
           shared_model::proto::TemplateQueryResponseBuilder<>()
@@ -78,32 +78,27 @@ namespace iroha {
     QueryProcessorImpl::checkSignatories<shared_model::interface::BlocksQuery>(
         const shared_model::interface::BlocksQuery &);
 
-    void QueryProcessorImpl::queryHandle(
-        std::shared_ptr<shared_model::interface::Query> qry) {
-      if (not checkSignatories(*qry)) {
-        auto response = buildStatefulError(qry->hash());
-        std::lock_guard<std::mutex> lock(notifier_mutex_);
-        subject_.get_subscriber().on_next(response);
-        return;
+    std::unique_ptr<shared_model::interface::QueryResponse>
+    QueryProcessorImpl::queryHandle(const shared_model::interface::Query &qry) {
+      if (not checkSignatories(qry)) {
+        return buildStatefulError(qry.hash());
       }
 
       const auto &wsv_query = storage_->getWsvQuery();
       auto qpf = QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
-      auto qpf_response = qpf.validateAndExecute(*qry);
+      auto qpf_response = qpf.validateAndExecute(qry);
       auto qry_resp =
           std::static_pointer_cast<shared_model::proto::QueryResponse>(
               qpf_response);
-      std::lock_guard<std::mutex> lock(notifier_mutex_);
-      subject_.get_subscriber().on_next(
-          std::make_shared<shared_model::proto::QueryResponse>(
-              qry_resp->getTransport()));
+      return std::make_unique<shared_model::proto::QueryResponse>(
+          qry_resp->getTransport());
     }
 
     rxcpp::observable<
         std::shared_ptr<shared_model::interface::BlockQueryResponse>>
     QueryProcessorImpl::blocksQueryHandle(
-        std::shared_ptr<shared_model::interface::BlocksQuery> qry) {
-      if (not checkSignatories(*qry)) {
+        const shared_model::interface::BlocksQuery &qry) {
+      if (not checkSignatories(qry)) {
         auto response = buildBlocksQueryError("Wrong signatories");
         return rxcpp::observable<>::just(
             std::shared_ptr<shared_model::interface::BlockQueryResponse>(
@@ -111,18 +106,13 @@ namespace iroha {
       }
       const auto &wsv_query = storage_->getWsvQuery();
       auto qpf = QueryProcessingFactory(wsv_query, storage_->getBlockQuery());
-      if (not qpf.validate(*qry)) {
+      if (not qpf.validate(qry)) {
         auto response = buildBlocksQueryError("Stateful invalid");
         return rxcpp::observable<>::just(
             std::shared_ptr<shared_model::interface::BlockQueryResponse>(
                 response));
       }
       return blocksQuerySubject_.get_observable();
-    }
-
-    rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>
-    QueryProcessorImpl::queryNotifier() {
-      return subject_.get_observable();
     }
 
   }  // namespace torii

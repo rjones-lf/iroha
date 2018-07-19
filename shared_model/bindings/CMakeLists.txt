@@ -18,6 +18,7 @@ add_library(bindings
         model_query_builder.cpp
         model_blocks_query_builder.cpp
         model_crypto.cpp
+        client_api.cpp
         )
 
 target_link_libraries(bindings
