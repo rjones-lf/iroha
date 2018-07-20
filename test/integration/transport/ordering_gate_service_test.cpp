@@ -17,6 +17,7 @@
 
 #include <gtest/gtest.h>
 
+#include "backend/protobuf/proto_proposal_factory.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/test_subscriber.hpp"
@@ -44,6 +45,8 @@ using wPeer = std::shared_ptr<shared_model::interface::Peer>;
 class OrderingGateServiceTest : public ::testing::Test {
  public:
   OrderingGateServiceTest() {
+    factory_ = std::make_shared<shared_model::proto::ProtoProposalFactory<
+        shared_model::validation::DefaultProposalValidator>>();
     pcs_ = std::make_shared<MockPeerCommunicationService>();
     EXPECT_CALL(*pcs_, on_commit())
         .WillRepeatedly(Return(commit_subject_.get_observable()));
@@ -64,7 +67,8 @@ class OrderingGateServiceTest : public ::testing::Test {
                                               max_proposal,
                                               proposal_timeout.get_observable(),
                                               service_transport,
-                                              fake_persistent_state);
+                                              fake_persistent_state,
+                                              factory_);
     service_transport->subscribe(service);
   }
 
@@ -189,6 +193,8 @@ class OrderingGateServiceTest : public ::testing::Test {
 
   std::shared_ptr<OrderingGateTransportGrpc> gate_transport;
   std::shared_ptr<OrderingServiceTransportGrpc> service_transport;
+
+  std::shared_ptr<shared_model::interface::ProposalFactory> factory_;
 
   const std::string kAddress = "127.0.0.1";
 };
