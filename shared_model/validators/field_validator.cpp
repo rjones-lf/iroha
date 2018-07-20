@@ -95,6 +95,29 @@ namespace shared_model {
 
     void FieldValidator::validateAmount(ReasonsGroupType &reason,
                                         const interface::Amount &amount) const {
+      // parsed uint256_t
+      std::string value = amount.intValue().str();
+      // might contain dot
+      std::string real_value = amount.toStringRepr();
+      // find dot
+      auto pos = real_value.find('.');
+      // set right boundary before dot, or just string ending
+      auto end_f = pos != std::string::npos ? value.size() - pos : value.size();
+      // set left boundary after dot
+      auto start_s = pos != std::string::npos ? end_f + 1 : end_f;
+      // overflow present when one of is true:
+      // - difference between string sizes is more than 1
+      // - strings parts before dot are different
+      // - strings parts after dot are different
+      if (real_value.size() - value.size() > 1
+          || not std::equal(
+                 value.begin(), value.begin() + end_f, real_value.begin())
+          || not std::equal(value.begin() + start_s,
+                            value.end(),
+                            real_value.begin() + start_s)) {
+        reason.second.push_back("Amount value overflow");
+      }
+
       if (amount.intValue() <= 0) {
         auto message =
             (boost::format("Amount must be greater than 0, passed value: %d")

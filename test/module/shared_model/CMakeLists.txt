@@ -22,12 +22,6 @@ target_link_libraries(reference_holder_test
     boost
     )
 
-AddTest(amount_utils_test amount_utils_test.cpp)
-target_link_libraries(amount_utils_test
-    shared_model_default_builders
-    shared_model_amount_utils
-    )
-
 AddTest(interface_test
     interface_test.cpp
     )
