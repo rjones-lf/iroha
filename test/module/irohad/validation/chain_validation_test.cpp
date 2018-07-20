@@ -28,11 +28,12 @@ class ChainValidationTest : public ::testing::Test {
 
     EXPECT_CALL(*block, height()).WillRepeatedly(Return(1));
     EXPECT_CALL(*block, prevHash()).WillRepeatedly(testing::ReturnRef(hash));
-    EXPECT_CALL(*block, signatures()).WillRepeatedly(testing::Return(sigs));
+    EXPECT_CALL(*block, signatures())
+        .WillRepeatedly(
+            testing::Return(std::initializer_list<SignatureMock>{}));
     EXPECT_CALL(*block, payload()).WillRepeatedly(testing::ReturnRef(payload));
   }
 
-  std::array<SignatureMock, 0> sigs;
   shared_model::crypto::Blob payload{"blob"};
 
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
