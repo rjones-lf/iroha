@@ -43,8 +43,8 @@ namespace iroha {
                           switch (v) {
                             case ProposalEvent::kTimerEvent:
                               return not queue_.empty();
-                            case ProposalEvent::kTransactionEvent:
-                              return queue_.unsafe_size() >= max_size_;
+                            case ProposalEvent::kBatchEvent:
+                              return current_size_.load() >= max_size_;
                             default:
                               BOOST_ASSERT_MSG(false, "Unknown value");
                           }
@@ -64,14 +64,16 @@ namespace iroha {
       }
     }
 
-    void OrderingServiceImpl::onTransaction(
-        std::shared_ptr<shared_model::interface::Transaction> transaction) {
-      queue_.push(transaction);
-      log_->info("Queue size is {}", queue_.unsafe_size());
+    void OrderingServiceImpl::onTransactions(
+        shared_model::interface::TransactionBatch &&batch) {
+      current_size_.fetch_add(batch.transactions().size());
+      queue_.push(std::make_unique<shared_model::interface::TransactionBatch>(
+          std::move(batch)));
+      log_->info("Queue size is {}", current_size_.load());
 
       // on_next calls should not be concurrent
       std::lock_guard<std::mutex> lk(mutex_);
-      transactions_.get_subscriber().on_next(ProposalEvent::kTransactionEvent);
+      transactions_.get_subscriber().on_next(ProposalEvent::kBatchEvent);
     }
 
     void OrderingServiceImpl::generateProposal() {
@@ -81,12 +83,17 @@ namespace iroha {
       proto_proposal.set_height(proposal_height_++);
       proto_proposal.set_created_time(iroha::time::now());
       log_->info("Start proposal generation");
-      for (std::shared_ptr<shared_model::interface::Transaction> tx;
+      for (std::unique_ptr<shared_model::interface::TransactionBatch> batch;
            static_cast<size_t>(proto_proposal.transactions_size()) < max_size_
-           and queue_.try_pop(tx);) {
-        *proto_proposal.add_transactions() =
-            std::move(static_cast<shared_model::proto::Transaction *>(tx.get())
-                          ->getTransport());
+           and queue_.try_pop(batch);) {
+        std::for_each(
+            batch->transactions().begin(),
+            batch->transactions().end(),
+            [&proto_proposal](auto &tx) {
+              *proto_proposal.add_transactions() = std::move(
+                  static_cast<shared_model::proto::Transaction *>(tx.get())
+                      ->getTransport());
+            });
       }
 
       auto proposal = std::make_unique<shared_model::proto::Proposal>(

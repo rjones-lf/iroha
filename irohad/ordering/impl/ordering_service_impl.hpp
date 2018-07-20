@@ -52,12 +52,11 @@ namespace iroha {
           bool is_async = true);
 
       /**
-       * Process transaction received from network
-       * Enqueues transaction and publishes corresponding event
-       * @param transaction
+       * Process transaction(s) received from network
+       * Enqueues transactions and publishes corresponding event
+       * @param batch, in which transactions are packed
        */
-      void onTransaction(std::shared_ptr<shared_model::interface::Transaction>
-                             transaction) override;
+      void onTransactions(shared_model::interface::TransactionBatch &&batch) override;
 
       ~OrderingServiceImpl() override;
 
@@ -73,7 +72,7 @@ namespace iroha {
       /**
        * Events for queue check strategy
        */
-      enum class ProposalEvent { kTransactionEvent, kTimerEvent };
+      enum class ProposalEvent { kBatchEvent, kTimerEvent };
 
       /**
        * Collect transactions from queue
@@ -84,13 +83,18 @@ namespace iroha {
       std::shared_ptr<ametsuchi::PeerQuery> wsv_;
 
       tbb::concurrent_queue<
-          std::shared_ptr<shared_model::interface::Transaction>>
+          std::unique_ptr<shared_model::interface::TransactionBatch>>
           queue_;
 
       /**
        * max number of txs in proposal
        */
       const size_t max_size_;
+
+      /**
+       * current number of transactions in a queue
+       */
+      std::atomic_ulong current_size_;
 
       std::shared_ptr<network::OrderingServiceTransport> transport_;
 
