@@ -207,14 +207,15 @@ namespace framework {
        * @param builders - initializer list which contains all builders
        * @return vector with transactions hashes
        */
-      template <typename TxBuilderCollection>
+      template <typename TxBuilder>
       auto fetchReducedHashes(
-          const std::initializer_list<TxBuilderCollection> &builders) {
+          const std::initializer_list<TxBuilder> &builders) {
         std::vector<shared_model::interface::types::HashType> hashes;
-        std::for_each(
-            builders.begin(), builders.end(), [&hashes](const auto &builder) {
-              hashes.push_back(builder.build().reducedHash());
-            });
+        std::transform(
+            builders.begin(),
+            builders.end(),
+            std::back_inserter(hashes),
+            [](const auto &builder) { return builder.build().reducedHash(); });
         return hashes;
       }
 
@@ -239,12 +240,13 @@ namespace framework {
           std::initializer_list<TxBuildersCollection> builders) {
         shared_model::interface::types::SharedTxsCollectionType transactions;
 
-        std::for_each(
+        std::transform(
             builders.begin(),
             builders.end(),
-            [&transactions, &hashes](const auto &builder) {
-              transactions.push_back(makePolyTxFromBuilder(builder.batchMeta(
-                  shared_model::interface::types::BatchType::ATOMIC, hashes)));
+            std::back_inserter(transactions),
+            [&hashes](const auto &builder) {
+              return makePolyTxFromBuilder(builder.batchMeta(
+                  shared_model::interface::types::BatchType::ATOMIC, hashes));
             });
         return transactions;
       }

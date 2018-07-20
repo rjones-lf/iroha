@@ -45,7 +45,7 @@ using TestUnsignedTransactionBuilder =
         shared_model::proto::UnsignedWrapper<ProtoTxType>>;
 
 /**
- * Wrapper for making shared_ptr from the passed builder
+ * Wrapper for making shared_ptr on transaction from the passed builder
  * @tparam Builder - universal reference type of the passed builder
  * @param builder - instance of the passed builder
  * @return shared_ptr to completed object

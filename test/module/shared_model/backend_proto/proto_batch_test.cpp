@@ -4,7 +4,8 @@
  */
 
 #include <gmock/gmock.h>
-#include <builders/protobuf/transaction.hpp>
+
+#include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
@@ -200,7 +201,7 @@ TEST(TransactionBatchTest, BatchWithMissingSignatures) {
  * @param quorum - tx quorum number
  * @return test tx builder
  */
-inline auto makeTx(
+inline auto makeTxBuilder(
     const shared_model::interface::types::QuorumType &acc_quorum = 1,
     uint64_t created_time = iroha::time::now(),
     uint8_t quorum = 3) {
@@ -217,7 +218,9 @@ inline auto makeTx(
  * @then  got only one hash
  */
 TEST(TransactionBatchTest, TemplateHasherOne) {
-  ASSERT_EQ(1, framework::batch::internal::fetchReducedHashes(makeTx()).size());
+  ASSERT_EQ(
+      1,
+      framework::batch::internal::fetchReducedHashes(makeTxBuilder()).size());
 }
 
 /**
@@ -228,7 +231,7 @@ TEST(TransactionBatchTest, TemplateHasherOne) {
 TEST(TransactionBatchTest, TemplateHasherVariadic) {
   ASSERT_EQ(3,
             framework::batch::internal::fetchReducedHashes(
-                makeTx(), makeTx(), makeTx())
+                makeTxBuilder(), makeTxBuilder(), makeTxBuilder())
                 .size());
 }
 
@@ -239,7 +242,8 @@ TEST(TransactionBatchTest, TemplateHasherVariadic) {
  */
 TEST(TransactionBatchTest, MakeTxBatchCollectionOne) {
   ASSERT_EQ(1,
-            framework::batch::internal::makeTxBatchCollection(makeTx()).size());
+            framework::batch::internal::makeTxBatchCollection(makeTxBuilder())
+                .size());
 }
 
 /**
@@ -250,7 +254,7 @@ TEST(TransactionBatchTest, MakeTxBatchCollectionOne) {
 TEST(TransactionBatchTest, MakeTxBatchCollectionMany) {
   ASSERT_EQ(3,
             framework::batch::internal::makeTxBatchCollection(
-                makeTx(), makeTx(), makeTx())
+                makeTxBuilder(), makeTxBuilder(), makeTxBuilder())
                 .size());
 }
 
@@ -261,7 +265,7 @@ TEST(TransactionBatchTest, MakeTxBatchCollectionMany) {
  */
 TEST(TransactionBatchTest, CreateTestBatchTest) {
   ASSERT_EQ(2,
-            framework::batch::makeTestBatch(makeTx(), makeTx())
+            framework::batch::makeTestBatch(makeTxBuilder(), makeTxBuilder())
                 ->transactions()
                 .size());
 }
