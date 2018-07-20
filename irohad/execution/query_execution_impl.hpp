@@ -24,7 +24,7 @@ namespace iroha {
         shared_model::proto::TemplateQueryResponseBuilder<1>;
 
    public:
-    QueryExecutionImpl(std::shared_ptr<ametsuchi::Storage> storage);
+    explicit QueryExecutionImpl(std::shared_ptr<ametsuchi::Storage> storage);
 
     std::unique_ptr<shared_model::interface::QueryResponse> validateAndExecute(
         const shared_model::interface::Query &query) override;
