@@ -25,6 +25,7 @@ namespace iroha {
         bool is_async)
         : wsv_(wsv),
           max_size_(max_size),
+          current_size_(0),
           transport_(transport),
           persistent_state_(persistent_state) {
       log_ = logger::log("OrderingServiceImpl");
@@ -64,7 +65,7 @@ namespace iroha {
       }
     }
 
-    void OrderingServiceImpl::onTransactions(
+    void OrderingServiceImpl::onBatch(
         shared_model::interface::TransactionBatch &&batch) {
       current_size_.fetch_add(batch.transactions().size());
       queue_.push(std::make_unique<shared_model::interface::TransactionBatch>(
@@ -89,10 +90,11 @@ namespace iroha {
         std::for_each(
             batch->transactions().begin(),
             batch->transactions().end(),
-            [&proto_proposal](auto &tx) {
+            [this, &proto_proposal](auto &tx) {
               *proto_proposal.add_transactions() = std::move(
                   static_cast<shared_model::proto::Transaction *>(tx.get())
                       ->getTransport());
+              current_size_--;
             });
       }
 

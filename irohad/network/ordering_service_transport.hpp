@@ -34,7 +34,7 @@ namespace iroha {
        * Callback on receiving transaction(s)
        * @param batch object, in which transaction(s) are packed
        */
-      virtual void onTransactions(
+      virtual void onBatch(
           shared_model::interface::TransactionBatch &&batch) = 0;
 
       virtual ~OrderingServiceNotification() = default;

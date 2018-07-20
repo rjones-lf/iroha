@@ -44,7 +44,7 @@ grpc::Status OrderingServiceTransportGrpc::onTransaction(
     batch_result.match(
         [this](iroha::expected::Value<shared_model::interface::TransactionBatch>
                    &batch) {
-          subscriber_.lock()->onTransactions(std::move(batch.value));
+          subscriber_.lock()->onBatch(std::move(batch.value));
         },
         [this](const iroha::expected::Error<std::string> &error) {
           log_->error(
@@ -85,7 +85,7 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
     batch_result.match(
         [this](iroha::expected::Value<shared_model::interface::TransactionBatch>
                    &batch) {
-          subscriber_.lock()->onTransactions(std::move(batch.value));
+          subscriber_.lock()->onBatch(std::move(batch.value));
         },
         [this](const iroha::expected::Error<std::string> &error) {
           log_->error(

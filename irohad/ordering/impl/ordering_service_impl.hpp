@@ -56,7 +56,7 @@ namespace iroha {
        * Enqueues transactions and publishes corresponding event
        * @param batch, in which transactions are packed
        */
-      void onTransactions(shared_model::interface::TransactionBatch &&batch) override;
+      void onBatch(shared_model::interface::TransactionBatch &&batch) override;
 
       ~OrderingServiceImpl() override;
 
