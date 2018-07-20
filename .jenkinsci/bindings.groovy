@@ -70,26 +70,24 @@ def doPythonBindings(os, buildType=Release) {
   if (os == 'linux') {
     sh """
       protoc --proto_path=shared_model/schema \
-        --python_out=build/bindings \
-        block.proto transaction.proto primitive.proto commands.proto queries.proto responses.proto endpoint.proto
+        --python_out=build/bindings shared_model/schema/*.proto
     """
     sh """
       ${env.PBVersion} -m grpc_tools.protoc --proto_path=shared_model/schema --python_out=build/bindings \
-        --grpc_python_out=build/bindings endpoint.proto yac.proto ordering.proto loader.proto
+        --grpc_python_out=build/bindings shared_model/schema/endpoint.proto
     """
   }
   else if (os == 'windows') {
     sh """
       protoc --proto_path=shared_model/schema \
         --proto_path=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/buildtrees/protobuf/src/protobuf-3.5.1-win32/include \
-        --python_out=build/bindings \
-        block.proto transaction.proto primitive.proto commands.proto queries.proto responses.proto endpoint.proto
+        --python_out=build/bindings shared_model/schema/*.proto
     """
     sh """
       ${env.PBVersion} -m grpc_tools.protoc \
         --proto_path=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/buildtrees/protobuf/src/protobuf-3.5.1-win32/include \
-        --proto_path=schema --python_out=build/bindings --grpc_python_out=build/bindings \
-        endpoint.proto yac.proto ordering.proto loader.proto
+        --proto_path=shared_model/schema --python_out=build/bindings --grpc_python_out=build/bindings \
+        shared_model/schema/endpoint.proto
     """
   }
   sh """
