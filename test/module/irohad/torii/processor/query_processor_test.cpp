@@ -11,6 +11,7 @@
 #include "execution/query_execution.hpp"
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
+#include "interfaces/query_responses/block_query_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/execution/execution_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"

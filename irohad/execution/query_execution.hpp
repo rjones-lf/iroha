@@ -6,9 +6,15 @@
 #ifndef IROHA_QUERY_EXECUTION_HPP
 #define IROHA_QUERY_EXECUTION_HPP
 
-#include "interfaces/queries/blocks_query.hpp"
-#include "interfaces/queries/query.hpp"
-#include "interfaces/query_responses/query_response.hpp"
+#include <memory>
+
+namespace shared_model {
+  namespace interface {
+    class Query;
+    class BlocksQuery;
+    class QueryResponse;
+  }  // namespace interface
+}  // namespace shared_model
 
 namespace iroha {
 

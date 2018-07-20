@@ -14,13 +14,6 @@
 #include "builders/protobuf/builder_templates/query_response_template.hpp"
 #include "interfaces/common_objects/types.hpp"
 
-namespace shared_model {
-  namespace interface {
-    class QueryResponse;
-    class Query;
-  }  // namespace interface
-}  // namespace shared_model
-
 namespace iroha {
 
   class QueryExecutionImpl : public QueryExecution {

@@ -10,6 +10,10 @@
 #include "ametsuchi/wsv_query.hpp"
 #include "builders/protobuf/builder_templates/query_response_template.hpp"
 #include "builders/protobuf/query_responses/proto_block_query_response_builder.hpp"
+#include "interfaces/queries/blocks_query.hpp"
+#include "interfaces/queries/query.hpp"
+#include "interfaces/query_responses/block_query_response.hpp"
+#include "interfaces/query_responses/query_response.hpp"
 #include "validation/utils.hpp"
 
 namespace iroha {

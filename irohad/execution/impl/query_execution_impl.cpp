@@ -10,6 +10,9 @@
 #include "builders/protobuf/builder_templates/blocks_query_template.hpp"
 #include "execution/common_executor.hpp"
 #include "interfaces/permissions.hpp"
+#include "interfaces/queries/blocks_query.hpp"
+#include "interfaces/queries/query.hpp"
+#include "interfaces/query_responses/query_response.hpp"
 
 using namespace shared_model::interface::permissions;
 using namespace iroha;
