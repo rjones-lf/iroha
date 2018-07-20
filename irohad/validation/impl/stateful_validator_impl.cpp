@@ -20,9 +20,9 @@
 #include <boost/format.hpp>
 #include <string>
 
-#include "builders/protobuf/proposal.hpp"
 #include "common/result.hpp"
 #include "validation/utils.hpp"
+#include "backend/protobuf/transaction.hpp"
 
 namespace iroha {
   namespace validation {
@@ -234,9 +234,9 @@ namespace iroha {
       return valid_proto_txs;
     }
 
-    StatefulValidatorImpl::StatefulValidatorImpl() {
-      log_ = logger::log("SFV");
-    }
+    StatefulValidatorImpl::StatefulValidatorImpl(
+        std::shared_ptr<shared_model::interface::ProposalFactory> factory)
+        : factory_(std::move(factory)), log_(logger::log("SFV")) {}
 
     validation::VerifiedProposalAndErrors StatefulValidatorImpl::validate(
         const shared_model::interface::Proposal &proposal,
@@ -247,19 +247,26 @@ namespace iroha {
       auto transactions_errors_log = validation::TransactionsErrors{};
       auto valid_proto_txs = validateTransactions(
           proposal.transactions(), temporaryWsv, transactions_errors_log, log_);
-      auto validated_proposal = shared_model::proto::ProposalBuilder()
-                                    .createdTime(proposal.createdTime())
-                                    .height(proposal.height())
-                                    .transactions(valid_proto_txs)
-                                    .createdTime(proposal.createdTime())
-                                    .build();
 
-      log_->info("transactions in verified proposal: {}",
-                 validated_proposal.transactions().size());
-      return std::make_pair(std::make_shared<decltype(validated_proposal)>(
-                                validated_proposal.getTransport()),
+      auto validated_proposal = factory_->createProposal(
+          proposal.height(), proposal.createdTime(), valid_proto_txs);
+
+      auto validated_proposal_ptr = validated_proposal.match(
+          [this](expected::Value<
+                 std::unique_ptr<shared_model::interface::Proposal>> &v) {
+            log_->info("transactions in verified proposal: {}",
+                       v.value->transactions().size());
+            return std::shared_ptr<shared_model::interface::Proposal>(
+                std::move(v.value));
+          },
+          [this](const expected::Error<std::string> &e)
+              -> std::shared_ptr<shared_model::interface::Proposal> {
+            log_->warn("Failed to create verified proposal: {}", e.error);
+            return nullptr;
+          });
+
+      return std::make_pair(std::move(validated_proposal_ptr),
                             transactions_errors_log);
     }
-
   }  // namespace validation
 }  // namespace iroha

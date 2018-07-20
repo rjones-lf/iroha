@@ -30,7 +30,7 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
     ::google::protobuf::Empty *response) {
   log_->info("receive proposal");
 
-  auto proposal_res = factory_->createProposal(std::move(*request));
+  auto proposal_res = factory_->createProposal(*request);
   proposal_res.match(
       [this](
           iroha::expected::Value<std::unique_ptr<shared_model::interface::Proposal>>

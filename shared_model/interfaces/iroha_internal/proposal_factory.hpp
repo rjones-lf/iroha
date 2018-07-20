@@ -28,6 +28,8 @@ namespace shared_model {
           types::HeightType height,
           types::TimestampType created_time,
           const types::TransactionsCollectionType &transactions) = 0;
+
+      virtual ~ProposalFactory() = default;
     };
   }  // namespace interface
 }  // namespace shared_model

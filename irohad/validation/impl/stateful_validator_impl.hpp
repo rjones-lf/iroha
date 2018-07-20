@@ -18,6 +18,7 @@
 #define IROHA_STATEFUL_VALIDATIOR_IMPL_HPP
 
 #include "validation/stateful_validator.hpp"
+#include "interfaces/iroha_internal/proposal_factory.hpp"
 
 #include "logger/logger.hpp"
 
@@ -29,12 +30,13 @@ namespace iroha {
      */
     class StatefulValidatorImpl : public StatefulValidator {
      public:
-      StatefulValidatorImpl();
+      explicit StatefulValidatorImpl(std::shared_ptr<shared_model::interface::ProposalFactory> factory);
 
       VerifiedProposalAndErrors validate(
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) override;
 
+      std::shared_ptr<shared_model::interface::ProposalFactory> factory_;
       logger::Logger log_;
     };
 
