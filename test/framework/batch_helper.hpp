@@ -208,7 +208,6 @@ namespace framework {
        * @return vector with transactions hashes
        */
       template <typename TxBuilderCollection>
-      // forward decl
       auto fetchReducedHashes(
           const std::initializer_list<TxBuilderCollection> &builders) {
         std::vector<shared_model::interface::types::HashType> hashes;
