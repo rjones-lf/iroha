@@ -21,6 +21,7 @@
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/transaction.hpp"
+#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -47,16 +48,28 @@ namespace shared_model {
             and createdTime() == rhs.createdTime();
       }
 
+      virtual const types::BlobType &blob() const = 0;
+
+      const types::HashType &hash() const {
+        return *hash_;
+      }
+
       std::string toString() const override {
         return detail::PrettyStringBuilder()
             .init("Proposal")
             .append("height", std::to_string(height()))
             .append("transactions")
-            .appendAll(
-                transactions(),
-                [](auto &transaction) { return transaction.toString(); })
+            .appendAll(transactions(),
+                       [](auto &transaction) { return transaction.toString(); })
             .finalize();
       }
+
+     protected:
+      template <typename T>
+      using Lazy = detail::LazyInitializer<T>;
+
+      const Lazy<types::HashType> hash_{
+          [this] { return HashProvider::makeHash(blob()); }};
     };
 
   }  // namespace interface
