@@ -10,9 +10,12 @@
 
 #include "common/result.hpp"
 #include "interfaces/common_objects/account.hpp"
-#include "interfaces/common_objects/peer.hpp"
-#include "interfaces/common_objects/types.hpp"
+#include "interfaces/common_objects/account_asset.hpp"
+#include "interfaces/common_objects/asset.hpp"
 #include "interfaces/common_objects/domain.hpp"
+#include "interfaces/common_objects/peer.hpp"
+#include "interfaces/common_objects/signature.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {

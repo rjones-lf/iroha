@@ -21,7 +21,7 @@
 #include <boost/format.hpp>
 
 #include "ametsuchi/impl/block_index.hpp"
-#include "ametsuchi/impl/postgres_wsv_common.hpp"
+#include "ametsuchi/impl/soci_utils.hpp"
 #include "interfaces/transaction.hpp"
 #include "logger/logger.hpp"
 
