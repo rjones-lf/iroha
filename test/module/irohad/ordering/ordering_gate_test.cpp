@@ -54,6 +54,8 @@ class MockOrderingGateTransport : public OrderingGateTransport {
   MOCK_METHOD1(
       propagateTransaction,
       void(std::shared_ptr<const shared_model::interface::Transaction>));
+  MOCK_METHOD1(propagateBatch,
+               void(const shared_model::interface::TransactionBatch &));
 };
 
 class OrderingGateTest : public ::testing::Test {
