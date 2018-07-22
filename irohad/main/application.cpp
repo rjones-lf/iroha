@@ -97,7 +97,7 @@ void Irohad::init() {
  * Dropping iroha daemon storage
  */
 void Irohad::dropStorage() {
-  storage->dropStorage();
+  storage->reset();
   ordering_service_storage_->resetState();
 }
 

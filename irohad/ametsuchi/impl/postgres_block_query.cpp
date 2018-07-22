@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "ametsuchi/impl/postgres_block_query.hpp"
@@ -28,13 +16,6 @@ namespace iroha {
     PostgresBlockQuery::PostgresBlockQuery(soci::session &sql,
                                            KeyValueStorage &file_store)
         : sql_(sql),
-          block_store_(file_store),
-          log_(logger::log("PostgresBlockIndex")) {}
-
-    PostgresBlockQuery::PostgresBlockQuery(
-        std::unique_ptr<soci::session> sql_ptr, KeyValueStorage &file_store)
-        : sql_ptr_(std::move(sql_ptr)),
-          sql_(*sql_ptr_),
           block_store_(file_store),
           log_(logger::log("PostgresBlockIndex")) {}
 

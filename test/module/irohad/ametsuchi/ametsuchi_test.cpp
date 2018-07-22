@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
@@ -614,10 +602,6 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
 
   ASSERT_NE(0, wsv->getPeers().value().size());
 
-  log->info("Drop ledger");
-
-  storage->dropStorage();
-
   ASSERT_TRUE(wrapper.validate());
 }
 
@@ -651,64 +635,7 @@ TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
 
   storage->commit(std::move(mutable_storage));
 
-  storage->dropStorage();
-
   ASSERT_TRUE(wrapper.validate());
-}
-
-TEST_F(AmetsuchiTest, TestingStorageWhenDropAll) {
-  auto logger = logger::testLog("TestStorage");
-  logger->info(
-      "Test case: create storage "
-      "=> insert block "
-      "=> assert that written"
-      " => drop all "
-      "=> assert that all deleted ");
-
-  auto log = logger::testLog("TestStorage");
-  log->info(
-      "Test case: create storage "
-      "=> insert block "
-      "=> assert that inserted");
-  std::shared_ptr<StorageImpl> storage;
-  auto storageResult = StorageImpl::create(block_store_path, pgopt_, factory);
-  storageResult.match(
-      [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
-        storage = _storage.value;
-      },
-      [](iroha::expected::Error<std::string> &error) {
-        FAIL() << "StorageImpl: " << error.error;
-      });
-  ASSERT_TRUE(storage);
-  auto wsv = storage->getWsvQuery();
-  ASSERT_EQ(0, wsv->getPeers().value().size());
-
-  log->info("Try insert block");
-
-  auto inserted = storage->insertBlock(getBlock());
-  ASSERT_TRUE(inserted);
-
-  log->info("Request ledger information");
-
-  ASSERT_NE(0, wsv->getPeers().value().size());
-
-  log->info("Drop ledger");
-
-  storage->dropStorage();
-
-  ASSERT_EQ(0, wsv->getPeers().value().size());
-  std::shared_ptr<StorageImpl> new_storage;
-  auto new_storage_result =
-      StorageImpl::create(block_store_path, pgopt_, factory);
-  new_storage_result.match(
-      [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
-        new_storage = _storage.value;
-      },
-      [](iroha::expected::Error<std::string> &error) {
-        FAIL() << "StorageImpl: " << error.error;
-      });
-  ASSERT_EQ(0, wsv->getPeers().value().size());
-  new_storage->dropStorage();
 }
 
 /**
