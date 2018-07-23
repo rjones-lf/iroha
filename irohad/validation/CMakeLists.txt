@@ -22,7 +22,6 @@ target_link_libraries(stateful_validator
     rxcpp
     shared_model_interfaces
     logger
-    shared_model_proto_backend
     )
 
 add_library(chain_validator
