@@ -5,7 +5,7 @@ def doDoxygen() {
     sh "doxygen Doxyfile"
     
     sshagent(['jenkins-artifact']) {
-    sh "ssh-agent"
+        sh "ssh-agent"
         sh "rsync -auzc docs/doxygen/html/* ubuntu@nexus.soramitsu.co.jp:/var/nexus-efs/doxygen/develop"
     }
 

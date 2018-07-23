@@ -371,20 +371,28 @@ pipeline {
     stage('Build docs') {
       when {
         beforeAgent true
-        allOf {
-          expression { return params.Doxygen }
-        }
+        expression { return params.Doxygen }
       }
       // build docs on any vacant node. Prefer `x86_64` over
       // others as nodes are more powerful
-      agent { label 'x86_64 || arm' }
+      agent { label 'x86_64' }
       steps {
         script {
           def doxygen = load ".jenkinsci/doxygen.groovy"
-          docker.image("${env.DOCKER_IMAGE}").inside {
-            def scmVars = checkout scm
-            doxygen.doDoxygen()
-          }
+          def dPullOrBuild = load ".jenkinsci/docker-pull-or-build.groovy"
+          def platform = sh(script: 'uname -m', returnStdout: true).trim()
+          def iC = dPullOrBuild.dockerPullOrUpdate(
+            "$platform-develop-build",
+            "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
+            "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
+            "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
+            ['PARALLELISM': params.PARALLELISM])
+          doxygen.doDoxygen()
+        }
+      }
+      post {
+        cleanup {
+          cleanWs()
         }
       }
     }
