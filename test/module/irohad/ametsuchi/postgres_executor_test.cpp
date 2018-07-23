@@ -41,8 +41,10 @@ namespace iroha {
       void SetUp() override {
         AmetsuchiTest::SetUp();
         sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
-
-        query = std::make_unique<PostgresWsvQuery>(*sql);
+        auto factory =
+            std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
+                shared_model::validation::FieldValidator>>();
+        query = std::make_unique<PostgresWsvQuery>(*sql, factory);
         executor = std::make_unique<PostgresCommandExecutor>(*sql);
 
         *sql << init_;

@@ -7,7 +7,6 @@
 
 #include <boost/format.hpp>
 
-#include "ametsuchi/impl/postgres_wsv_common.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"

@@ -8,7 +8,7 @@
 
 #include "ametsuchi/command_executor.hpp"
 
-#include "ametsuchi/impl/postgres_wsv_common.hpp"
+#include "ametsuchi/impl/soci_utils.hpp"
 
 namespace iroha {
   namespace ametsuchi {
