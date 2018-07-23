@@ -109,7 +109,7 @@ namespace iroha {
       friend class Deleter;
 
       template <typename Query, typename Backend>
-      std::unique_ptr<Query> setupQuery(Backend &b) const;
+      std::shared_ptr<Query> setupQuery(Backend &b) const;
 
       std::unique_ptr<KeyValueStorage> block_store_;
 

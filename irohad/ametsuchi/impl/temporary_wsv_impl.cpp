@@ -12,15 +12,15 @@
 namespace iroha {
   namespace ametsuchi {
     TemporaryWsvImpl::TemporaryWsvImpl(
-        soci::session &sql,
+        std::unique_ptr<soci::session> sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
-        : sql_(sql),
-          wsv_(std::make_shared<PostgresWsvQuery>(sql_, factory)),
-          executor_(std::make_shared<PostgresWsvCommand>(sql_)),
-          command_executor_(std::make_shared<PostgresCommandExecutor>(sql_)),
+        : sql_(std::move(sql)),
+          wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
+          executor_(std::make_shared<PostgresWsvCommand>(*sql_)),
+          command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
           command_validator_(std::make_shared<CommandValidator>(wsv_)),
           log_(logger::log("TemporaryWSV")) {
-      sql_ << "BEGIN";
+      *sql_ << "BEGIN";
     }
 
     expected::Result<void, validation::CommandError> TemporaryWsvImpl::apply(
@@ -79,7 +79,7 @@ namespace iroha {
     }
 
     TemporaryWsvImpl::~TemporaryWsvImpl() {
-      sql_ << "ROLLBACK";
+      *sql_ << "ROLLBACK";
     }
 
     TemporaryWsvImpl::SavepointWrapperImpl::SavepointWrapperImpl(
@@ -88,7 +88,7 @@ namespace iroha {
         : sql_{wsv.sql_},
           savepoint_name_{std::move(savepoint_name)},
           is_released_{false} {
-      sql_ << "SAVEPOINT " + savepoint_name_ + ";";
+      *sql_ << "SAVEPOINT " + savepoint_name_ + ";";
     };
 
     void TemporaryWsvImpl::SavepointWrapperImpl::release() {
@@ -97,9 +97,9 @@ namespace iroha {
 
     TemporaryWsvImpl::SavepointWrapperImpl::~SavepointWrapperImpl() {
       if (not is_released_) {
-        sql_ << "ROLLBACK TO SAVEPOINT " + savepoint_name_ + ";";
+        *sql_ << "ROLLBACK TO SAVEPOINT " + savepoint_name_ + ";";
       } else {
-        sql_ << "RELEASE SAVEPOINT " + savepoint_name_ + ";";
+        *sql_ << "RELEASE SAVEPOINT " + savepoint_name_ + ";";
       }
     }
 

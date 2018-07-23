@@ -66,7 +66,6 @@ void Irohad::init() {
   initWsvRestorer();
   restoreWsv();
 
-  initPeerQuery();
   initCryptoProvider();
   initValidators();
   initOrderingGate();

@@ -5,8 +5,6 @@
 
 #include "ametsuchi/impl/storage_impl.hpp"
 
-#include <memory>
-
 #include <soci/postgresql/soci-postgresql.h>
 #include <boost/format.hpp>
 
@@ -48,8 +46,14 @@ namespace iroha {
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
     StorageImpl::createTemporaryWsv() {
-      return expected::makeValue(std::unique_ptr<TemporaryWsv>(
-          setupQuery<TemporaryWsvImpl>(factory_)));
+      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+      if (connection_ == nullptr) {
+        return expected::makeError("Connection was closed");
+      }
+      auto sql = std::make_unique<soci::session>(*connection_);
+
+      return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
+          std::make_unique<TemporaryWsvImpl>(std::move(sql), factory_));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
@@ -277,12 +281,12 @@ WHERE pg_stat_activity.datname = :dbname
     }
 
     template <typename Query>
-    class StorageImpl::Deleter : public std::default_delete<Query> {
+    class StorageImpl::Deleter {
      public:
       Deleter(const StorageImpl *ptr, soci::session &conn, size_t pool_pos)
           : ptr_(ptr), conn_(conn), pool_pos_(pool_pos) {}
 
-      void operator()(Query *q) {
+      void operator()(Query *q) const {
         if (ptr_->connection_ != nullptr) {
           ptr_->connection_->give_back(pool_pos_);
         }
@@ -296,7 +300,7 @@ WHERE pg_stat_activity.datname = :dbname
     };
 
     template <typename Query, typename Backend>
-    std::unique_ptr<Query> StorageImpl::setupQuery(Backend &b) const {
+    std::shared_ptr<Query> StorageImpl::setupQuery(Backend &b) const {
       std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
       if (connection_ == nullptr) {
         log_->warn("Storage was deleted, cannot perform setup");
