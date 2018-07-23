@@ -74,8 +74,8 @@ Building Protobuf Files
     echo "schema" >> iroha-schema/.git/info/sparse-checkout
     git -C iroha-schema pull schema develop
     cd iroha-schema
-    protoc --proto_path=schema --python_out=. block.proto primitive.proto commands.proto queries.proto responses.proto endpoint.proto
-    python -m grpc_tools.protoc --proto_path=schema --python_out=. --grpc_python_out=. endpoint.proto yac.proto ordering.proto loader.proto
+    protoc --proto_path=shared_model/schema --python_out=. shared_model/schema/*.proto
+    python -m grpc_tools.protoc --proto_path=shared_model/schema --python_out=. --grpc_python_out=. shared_model/schema/endpoint.proto
 
 Protobuf files can be found in **iroha-schema** folder ('\*_pb2\*.py' files)
 

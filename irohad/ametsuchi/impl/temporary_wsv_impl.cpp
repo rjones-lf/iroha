@@ -5,6 +5,7 @@
 
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
 
+#include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 
@@ -16,7 +17,7 @@ namespace iroha {
         : sql_(sql),
           wsv_(std::make_shared<PostgresWsvQuery>(sql_, factory)),
           executor_(std::make_shared<PostgresWsvCommand>(sql_)),
-          command_executor_(std::make_shared<CommandExecutor>(wsv_, executor_)),
+          command_executor_(std::make_shared<PostgresCommandExecutor>(sql_)),
           command_validator_(std::make_shared<CommandValidator>(wsv_)),
           log_(logger::log("TemporaryWSV")) {
       sql_ << "BEGIN";

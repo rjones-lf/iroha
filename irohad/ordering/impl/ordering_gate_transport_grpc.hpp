@@ -19,6 +19,7 @@
 
 #include <google/protobuf/empty.pb.h>
 
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_gate_transport.hpp"
@@ -46,6 +47,9 @@ namespace iroha {
       void propagateTransaction(
           std::shared_ptr<const shared_model::interface::Transaction>
               transaction) override;
+
+      void propagateBatch(
+          const shared_model::interface::TransactionBatch &batch) override;
 
       void subscribe(std::shared_ptr<iroha::network::OrderingGateNotification>
                          subscriber) override;

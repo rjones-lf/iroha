@@ -97,8 +97,8 @@ TEST_F(AddAssetQuantity, ZeroAmount) {
  */
 TEST_F(AddAssetQuantity, Uint256DestOverflow) {
   std::string uint256_halfmax =
-      "723700557733226221397318656304299424082937404160253525246609900049457060"
-      "2495.0";  // 2**252 - 1
+      "578960446186580977117854925043439539266349923328202820197287920039565648"
+      "19966.0";  // 2**255 - 2
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())

@@ -21,6 +21,7 @@
 #include <gmock/gmock.h>
 #include <boost/optional.hpp>
 #include "ametsuchi/block_query.hpp"
+#include "ametsuchi/command_executor.hpp"
 #include "ametsuchi/key_value_storage.hpp"
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/mutable_storage.hpp"

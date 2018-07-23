@@ -46,8 +46,8 @@ struct CommandFixture {
 
     tx_processor_ = std::make_shared<iroha::torii::TransactionProcessorImpl>(
         pcs_, mst_processor_);
-    service_ =
-        std::make_shared<torii::CommandService>(tx_processor_, nullptr, 15s);
+    service_ = std::make_shared<torii::CommandService>(
+        tx_processor_, nullptr, 15s, 15s);
   }
 };
 

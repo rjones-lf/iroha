@@ -232,6 +232,7 @@ namespace iroha {
        */
       virtual WsvCommandResult insertDomain(
           const shared_model::interface::Domain &domain) = 0;
+
     };
 
   }  // namespace ametsuchi

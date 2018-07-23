@@ -39,8 +39,9 @@ namespace iroha {
           propagate_transaction,
           void(std::shared_ptr<const shared_model::interface::Transaction>));
 
-      MOCK_CONST_METHOD1(propagate_batch,
-                   void(const shared_model::interface::TransactionBatch &));
+      MOCK_CONST_METHOD1(
+          propagate_batch,
+          void(const shared_model::interface::TransactionBatch &));
 
       MOCK_CONST_METHOD0(
           on_proposal,
@@ -70,10 +71,14 @@ namespace iroha {
 
     class MockOrderingGate : public OrderingGate {
      public:
-      MOCK_METHOD1(
+      MOCK_CONST_METHOD1(
           propagateTransaction,
           void(std::shared_ptr<const shared_model::interface::Transaction>
                    transaction));
+
+      MOCK_CONST_METHOD1(
+          propagateBatch,
+          void(const shared_model::interface::TransactionBatch &));
 
       MOCK_METHOD0(on_proposal,
                    rxcpp::observable<

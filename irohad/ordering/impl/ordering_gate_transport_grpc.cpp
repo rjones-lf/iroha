@@ -18,6 +18,7 @@
 
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
+#include "endpoint.pb.h"
 #include "interfaces/common_objects/types.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 
@@ -69,6 +70,23 @@ void OrderingGateTransportGrpc::propagateTransaction(
   log_->debug("Propagating: '{}'", transaction_transport.DebugString());
   call->response_reader =
       client_->AsynconTransaction(&call->context, transaction_transport, &cq_);
+
+  call->response_reader->Finish(&call->reply, &call->status, call);
+}
+
+void OrderingGateTransportGrpc::propagateBatch(
+    const shared_model::interface::TransactionBatch &batch) {
+  log_->info("Propagate transaction batch (on transport)");
+  auto call = new AsyncClientCall;
+
+  iroha::protocol::TxList batch_transport;
+  for (const auto tx : batch.transactions()) {
+    new (batch_transport.add_transactions()) iroha::protocol::Transaction(
+        std::static_pointer_cast<shared_model::proto::Transaction>(tx)
+            ->getTransport());
+  }
+  call->response_reader =
+      client_->AsynconBatch(&call->context, batch_transport, &cq_);
 
   call->response_reader->Finish(&call->reply, &call->status, call);
 }

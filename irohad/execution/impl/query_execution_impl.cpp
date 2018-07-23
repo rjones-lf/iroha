@@ -3,22 +3,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "execution/query_execution.hpp"
+#include "execution/query_execution_impl.hpp"
 
 #include <boost/algorithm/string.hpp>
 
-#include "backend/protobuf/permissions.hpp"
+#include "builders/protobuf/builder_templates/blocks_query_template.hpp"
 #include "execution/common_executor.hpp"
+#include "interfaces/permissions.hpp"
+#include "interfaces/queries/blocks_query.hpp"
+#include "interfaces/queries/query.hpp"
+#include "interfaces/query_responses/query_response.hpp"
 
 using namespace shared_model::interface::permissions;
-using namespace shared_model::proto::permissions;
 using namespace iroha;
 using namespace iroha::ametsuchi;
 
-QueryProcessingFactory::QueryProcessingFactory(
-    std::shared_ptr<ametsuchi::WsvQuery> wsvQuery,
-    std::shared_ptr<ametsuchi::BlockQuery> blockQuery)
-    : _wsvQuery(std::move(wsvQuery)), _blockQuery(std::move(blockQuery)) {}
+QueryExecutionImpl::QueryExecutionImpl(
+    std::shared_ptr<ametsuchi::Storage> storage)
+    : storage_(storage) {}
 
 std::string getDomainFromName(const std::string &account_id) {
   std::vector<std::string> res;
@@ -69,113 +71,125 @@ static bool hasQueryPermission(const std::string &creator,
        and set.test(domain_permission_id));
 }
 
-bool QueryProcessingFactory::validate(
+bool QueryExecutionImpl::validate(
     const shared_model::interface::BlocksQuery &query) {
   return checkAccountRolePermission(
-      query.creatorAccountId(), *_wsvQuery, Role::kGetBlocks);
+      query.creatorAccountId(), *storage_->getWsvQuery(), Role::kGetBlocks);
 }
-bool QueryProcessingFactory::validate(
+bool QueryExecutionImpl::validate(
+    ametsuchi::WsvQuery &wq,
     const shared_model::interface::Query &query,
     const shared_model::interface::GetAssetInfo &get_asset_info) {
   return checkAccountRolePermission(
-      query.creatorAccountId(), *_wsvQuery, Role::kReadAssets);
+      query.creatorAccountId(), wq, Role::kReadAssets);
 }
 
-bool QueryProcessingFactory::validate(
+bool QueryExecutionImpl::validate(
+    ametsuchi::WsvQuery &wq,
     const shared_model::interface::Query &query,
     const shared_model::interface::GetRoles &get_roles) {
   return checkAccountRolePermission(
-      query.creatorAccountId(), *_wsvQuery, Role::kGetRoles);
+      query.creatorAccountId(), wq, Role::kGetRoles);
 }
 
-bool QueryProcessingFactory::validate(
+bool QueryExecutionImpl::validate(
+    ametsuchi::WsvQuery &wq,
     const shared_model::interface::Query &query,
     const shared_model::interface::GetRolePermissions &get_role_permissions) {
   return checkAccountRolePermission(
-      query.creatorAccountId(), *_wsvQuery, Role::kGetRoles);
+      query.creatorAccountId(), wq, Role::kGetRoles);
 }
 
-bool QueryProcessingFactory::validate(
+bool QueryExecutionImpl::validate(
+    ametsuchi::WsvQuery &wq,
     const shared_model::interface::Query &query,
     const shared_model::interface::GetAccount &get_account) {
   return hasQueryPermission(query.creatorAccountId(),
                             get_account.accountId(),
-                            *_wsvQuery,
+                            wq,
                             Role::kGetMyAccount,
                             Role::kGetAllAccounts,
                             Role::kGetDomainAccounts);
 }
 
-bool QueryProcessingFactory::validate(
+bool QueryExecutionImpl::validate(
+    ametsuchi::WsvQuery &wq,
     const shared_model::interface::Query &query,
     const shared_model::interface::GetSignatories &get_signatories) {
   return hasQueryPermission(query.creatorAccountId(),
                             get_signatories.accountId(),
-                            *_wsvQuery,
+                            wq,
                             Role::kGetMySignatories,
                             Role::kGetAllSignatories,
                             Role::kGetDomainSignatories);
 }
 
-bool QueryProcessingFactory::validate(
+bool QueryExecutionImpl::validate(
+    ametsuchi::WsvQuery &wq,
     const shared_model::interface::Query &query,
     const shared_model::interface::GetAccountAssets &get_account_assets) {
   return hasQueryPermission(query.creatorAccountId(),
                             get_account_assets.accountId(),
-                            *_wsvQuery,
+                            wq,
                             Role::kGetMyAccAst,
                             Role::kGetAllAccAst,
                             Role::kGetDomainAccAst);
 }
 
-bool QueryProcessingFactory::validate(
+bool QueryExecutionImpl::validate(
+    ametsuchi::WsvQuery &wq,
     const shared_model::interface::Query &query,
     const shared_model::interface::GetAccountDetail &get_account_detail) {
   return hasQueryPermission(query.creatorAccountId(),
                             get_account_detail.accountId(),
-                            *_wsvQuery,
+                            wq,
                             Role::kGetMyAccDetail,
                             Role::kGetAllAccDetail,
                             Role::kGetDomainAccDetail);
 }
 
-bool QueryProcessingFactory::validate(
+bool QueryExecutionImpl::validate(
+    ametsuchi::WsvQuery &wq,
     const shared_model::interface::Query &query,
     const shared_model::interface::GetAccountTransactions
         &get_account_transactions) {
   return hasQueryPermission(query.creatorAccountId(),
                             get_account_transactions.accountId(),
-                            *_wsvQuery,
+                            wq,
                             Role::kGetMyAccTxs,
                             Role::kGetAllAccTxs,
                             Role::kGetDomainAccTxs);
 }
 
-bool QueryProcessingFactory::validate(
+bool QueryExecutionImpl::validate(
+    ametsuchi::WsvQuery &wq,
     const shared_model::interface::Query &query,
     const shared_model::interface::GetAccountAssetTransactions
         &get_account_asset_transactions) {
   return hasQueryPermission(query.creatorAccountId(),
                             get_account_asset_transactions.accountId(),
-                            *_wsvQuery,
+                            wq,
                             Role::kGetMyAccAstTxs,
                             Role::kGetAllAccAstTxs,
                             Role::kGetDomainAccAstTxs);
 }
 
-bool QueryProcessingFactory::validate(
+bool QueryExecutionImpl::validate(
+    ametsuchi::WsvQuery &wq,
     const shared_model::interface::Query &query,
     const shared_model::interface::GetTransactions &get_transactions) {
   return checkAccountRolePermission(
-             query.creatorAccountId(), *_wsvQuery, Role::kGetMyTxs)
+             query.creatorAccountId(), wq, Role::kGetMyTxs)
       or checkAccountRolePermission(
-             query.creatorAccountId(), *_wsvQuery, Role::kGetAllTxs);
+             query.creatorAccountId(), wq, Role::kGetAllTxs);
 }
 
-QueryProcessingFactory::QueryResponseBuilderDone
-QueryProcessingFactory::executeGetAssetInfo(
+QueryExecutionImpl::QueryResponseBuilderDone
+QueryExecutionImpl::executeGetAssetInfo(
+    ametsuchi::WsvQuery &wq,
+    ametsuchi::BlockQuery &,
     const shared_model::interface::GetAssetInfo &query) {
-  auto ast = _wsvQuery->getAsset(query.assetId());
+  auto ast = wq.getAsset(query.assetId());
 
   if (not ast) {
     return buildError<shared_model::interface::NoAssetErrorResponse>();
@@ -187,10 +201,12 @@ QueryProcessingFactory::executeGetAssetInfo(
   return response;
 }
 
-QueryProcessingFactory::QueryResponseBuilderDone
-QueryProcessingFactory::executeGetRoles(
+QueryExecutionImpl::QueryResponseBuilderDone
+QueryExecutionImpl::executeGetRoles(
+    ametsuchi::WsvQuery &wq,
+    ametsuchi::BlockQuery &,
     const shared_model::interface::GetRoles &queryQueryResponseBuilder) {
-  auto roles = _wsvQuery->getRoles();
+  auto roles = wq.getRoles();
   if (not roles) {
     return buildError<shared_model::interface::NoRolesErrorResponse>();
   }
@@ -198,10 +214,12 @@ QueryProcessingFactory::executeGetRoles(
   return response;
 }
 
-QueryProcessingFactory::QueryResponseBuilderDone
-QueryProcessingFactory::executeGetRolePermissions(
+QueryExecutionImpl::QueryResponseBuilderDone
+QueryExecutionImpl::executeGetRolePermissions(
+    ametsuchi::WsvQuery &wq,
+    ametsuchi::BlockQuery &,
     const shared_model::interface::GetRolePermissions &query) {
-  auto perm = _wsvQuery->getRolePermissions(query.roleId());
+  auto perm = wq.getRolePermissions(query.roleId());
   if (not perm) {
     return buildError<shared_model::interface::NoRolesErrorResponse>();
   }
@@ -210,12 +228,14 @@ QueryProcessingFactory::executeGetRolePermissions(
   return response;
 }
 
-QueryProcessingFactory::QueryResponseBuilderDone
-QueryProcessingFactory::executeGetAccount(
+QueryExecutionImpl::QueryResponseBuilderDone
+QueryExecutionImpl::executeGetAccount(
+    ametsuchi::WsvQuery &wq,
+    ametsuchi::BlockQuery &,
     const shared_model::interface::GetAccount &query) {
-  auto acc = _wsvQuery->getAccount(query.accountId());
+  auto acc = wq.getAccount(query.accountId());
 
-  auto roles = _wsvQuery->getAccountRoles(query.accountId());
+  auto roles = wq.getAccountRoles(query.accountId());
   if (not acc or not roles) {
     return buildError<shared_model::interface::NoAccountErrorResponse>();
   }
@@ -225,10 +245,12 @@ QueryProcessingFactory::executeGetAccount(
   return response;
 }
 
-QueryProcessingFactory::QueryResponseBuilderDone
-QueryProcessingFactory::executeGetAccountAssets(
+QueryExecutionImpl::QueryResponseBuilderDone
+QueryExecutionImpl::executeGetAccountAssets(
+    ametsuchi::WsvQuery &wq,
+    ametsuchi::BlockQuery &,
     const shared_model::interface::GetAccountAssets &query) {
-  auto acct_assets = _wsvQuery->getAccountAssets(query.accountId());
+  auto acct_assets = wq.getAccountAssets(query.accountId());
 
   if (not acct_assets) {
     return buildError<shared_model::interface::NoAccountAssetsErrorResponse>();
@@ -244,13 +266,14 @@ QueryProcessingFactory::executeGetAccountAssets(
   return response;
 }
 
-QueryProcessingFactory::QueryResponseBuilderDone
-QueryProcessingFactory::executeGetAccountDetail(
+QueryExecutionImpl::QueryResponseBuilderDone
+QueryExecutionImpl::executeGetAccountDetail(
+    ametsuchi::WsvQuery &wq,
+    ametsuchi::BlockQuery &,
     const shared_model::interface::GetAccountDetail &query) {
-  auto acct_detail =
-      _wsvQuery->getAccountDetail(query.accountId(),
-                                  query.key() ? *query.key() : "",
-                                  query.writer() ? *query.writer() : "");
+  auto acct_detail = wq.getAccountDetail(query.accountId(),
+                                         query.key() ? *query.key() : "",
+                                         query.writer() ? *query.writer() : "");
   if (not acct_detail) {
     return buildError<shared_model::interface::NoAccountDetailErrorResponse>();
   }
@@ -258,11 +281,13 @@ QueryProcessingFactory::executeGetAccountDetail(
   return response;
 }
 
-QueryProcessingFactory::QueryResponseBuilderDone
-QueryProcessingFactory::executeGetAccountAssetTransactions(
+QueryExecutionImpl::QueryResponseBuilderDone
+QueryExecutionImpl::executeGetAccountAssetTransactions(
+    ametsuchi::WsvQuery &,
+    ametsuchi::BlockQuery &bq,
     const shared_model::interface::GetAccountAssetTransactions &query) {
-  auto acc_asset_tx = _blockQuery->getAccountAssetTransactions(
-      query.accountId(), query.assetId());
+  auto acc_asset_tx =
+      bq.getAccountAssetTransactions(query.accountId(), query.assetId());
 
   std::vector<shared_model::proto::Transaction> txs;
   acc_asset_tx.subscribe([&](const auto &tx) {
@@ -274,10 +299,12 @@ QueryProcessingFactory::executeGetAccountAssetTransactions(
   return response;
 }
 
-QueryProcessingFactory::QueryResponseBuilderDone
-QueryProcessingFactory::executeGetAccountTransactions(
+QueryExecutionImpl::QueryResponseBuilderDone
+QueryExecutionImpl::executeGetAccountTransactions(
+    ametsuchi::WsvQuery &,
+    ametsuchi::BlockQuery &bq,
     const shared_model::interface::GetAccountTransactions &query) {
-  auto acc_tx = _blockQuery->getAccountTransactions(query.accountId());
+  auto acc_tx = bq.getAccountTransactions(query.accountId());
 
   std::vector<shared_model::proto::Transaction> txs;
   acc_tx.subscribe([&](const auto &tx) {
@@ -289,17 +316,19 @@ QueryProcessingFactory::executeGetAccountTransactions(
   return response;
 }
 
-QueryProcessingFactory::QueryResponseBuilderDone
-QueryProcessingFactory::executeGetTransactions(
+QueryExecutionImpl::QueryResponseBuilderDone
+QueryExecutionImpl::executeGetTransactions(
+    ametsuchi::WsvQuery &wq,
+    ametsuchi::BlockQuery &bq,
     const shared_model::interface::GetTransactions &q,
     const shared_model::interface::types::AccountIdType &accountId) {
   const std::vector<shared_model::crypto::Hash> &hashes = q.transactionHashes();
 
-  auto transactions = _blockQuery->getTransactions(hashes);
+  auto transactions = bq.getTransactions(hashes);
 
   std::vector<shared_model::proto::Transaction> txs;
   bool can_get_all =
-      checkAccountRolePermission(accountId, *_wsvQuery, Role::kGetAllTxs);
+      checkAccountRolePermission(accountId, wq, Role::kGetAllTxs);
   transactions.subscribe([&](const auto &tx) {
     if (tx) {
       auto proto_tx =
@@ -313,10 +342,12 @@ QueryProcessingFactory::executeGetTransactions(
   return response;
 }
 
-QueryProcessingFactory::QueryResponseBuilderDone
-QueryProcessingFactory::executeGetSignatories(
+QueryExecutionImpl::QueryResponseBuilderDone
+QueryExecutionImpl::executeGetSignatories(
+    ametsuchi::WsvQuery &wq,
+    ametsuchi::BlockQuery &,
     const shared_model::interface::GetSignatories &query) {
-  auto signs = _wsvQuery->getSignatories(query.accountId());
+  auto signs = wq.getSignatories(query.accountId());
   if (not signs) {
     return buildError<shared_model::interface::NoSignatoriesErrorResponse>();
   }
@@ -324,8 +355,10 @@ QueryProcessingFactory::executeGetSignatories(
   return response;
 }
 
-QueryProcessingFactory::QueryResponseBuilderDone
-QueryProcessingFactory::executeGetPendingTransactions(
+QueryExecutionImpl::QueryResponseBuilderDone
+QueryExecutionImpl::executeGetPendingTransactions(
+    ametsuchi::WsvQuery &,
+    ametsuchi::BlockQuery &,
     const shared_model::interface::GetPendingTransactions &query,
     const shared_model::interface::types::AccountIdType &query_creator) {
   std::vector<shared_model::proto::Transaction> txs;
@@ -334,97 +367,101 @@ QueryProcessingFactory::executeGetPendingTransactions(
   return response;
 }
 
-std::shared_ptr<shared_model::interface::QueryResponse>
-QueryProcessingFactory::validateAndExecute(
+std::unique_ptr<shared_model::interface::QueryResponse>
+QueryExecutionImpl::validateAndExecute(
     const shared_model::interface::Query &query) {
   const auto &query_hash = query.hash();
   QueryResponseBuilderDone builder;
+  auto wq = storage_->getWsvQuery();
+  auto bq = storage_->getBlockQuery();
   // TODO: 29/04/2018 x3medima18, Add visitor class, IR-1185
   return visit_in_place(
       query.get(),
       [&](const shared_model::interface::GetAccount &q) {
-        if (not validate(query, q)) {
+        if (not validate(*wq, query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetAccount(q);
+          builder = executeGetAccount(*wq, *bq, q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
       [&](const shared_model::interface::GetSignatories &q) {
-        if (not validate(query, q)) {
+        if (not validate(*wq, query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetSignatories(q);
+          builder = executeGetSignatories(*wq, *bq, q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
       [&](const shared_model::interface::GetAccountTransactions &q) {
-        if (not validate(query, q)) {
+        if (not validate(*wq, query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetAccountTransactions(q);
+          builder = executeGetAccountTransactions(*wq, *bq, q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
       [&](const shared_model::interface::GetTransactions &q) {
-        if (not validate(query, q)) {
+        if (not validate(*wq, query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetTransactions(q, query.creatorAccountId());
+          builder =
+              executeGetTransactions(*wq, *bq, q, query.creatorAccountId());
         }
         return clone(builder.queryHash(query_hash).build());
       },
       [&](const shared_model::interface::GetAccountAssetTransactions &q) {
-        if (not validate(query, q)) {
+        if (not validate(*wq, query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetAccountAssetTransactions(q);
+          builder = executeGetAccountAssetTransactions(*wq, *bq, q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
       [&](const shared_model::interface::GetAccountAssets &q) {
-        if (not validate(query, q)) {
+        if (not validate(*wq, query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetAccountAssets(q);
+          builder = executeGetAccountAssets(*wq, *bq, q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
       [&](const shared_model::interface::GetAccountDetail &q) {
-        if (not validate(query, q)) {
+        if (not validate(*wq, query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetAccountDetail(q);
+          builder = executeGetAccountDetail(*wq, *bq, q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
       [&](const shared_model::interface::GetRoles &q) {
-        if (not validate(query, q)) {
+        if (not validate(*wq, query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetRoles(q);
+          builder = executeGetRoles(*wq, *bq, q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
       [&](const shared_model::interface::GetRolePermissions &q) {
-        if (not validate(query, q)) {
+        if (not validate(*wq, query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetRolePermissions(q);
+          builder = executeGetRolePermissions(*wq, *bq, q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
       [&](const shared_model::interface::GetAssetInfo &q) {
-        if (not validate(query, q)) {
+        if (not validate(*wq, query, q)) {
           builder = statefulFailed();
         } else {
-          builder = executeGetAssetInfo(q);
+          builder = executeGetAssetInfo(*wq, *bq, q);
         }
         return clone(builder.queryHash(query_hash).build());
       },
       [&](const shared_model::interface::GetPendingTransactions &q) {
         // the query does not require validation
-        builder = executeGetPendingTransactions(q, query.creatorAccountId());
+        builder = executeGetPendingTransactions(
+            *wq, *bq, q, query.creatorAccountId());
         return clone(builder.queryHash(query_hash).build());
       }
 

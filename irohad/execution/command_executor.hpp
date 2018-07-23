@@ -21,6 +21,7 @@
 #include <boost/format.hpp>
 #include <boost/variant/static_visitor.hpp>
 
+#include "ametsuchi/command_executor.hpp"
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
 #include "builders/default_builders.hpp"
@@ -44,18 +45,7 @@
 
 namespace iroha {
 
-  /**
-   * Error for command execution or validation
-   * Contains command name, as well as an error message
-   */
-  struct CommandError {
-    std::string command_name;
-    std::string error_message;
-
-    std::string toString() const {
-      return (boost::format("%s: %s") % command_name % error_message).str();
-    }
-  };
+  using CommandError = ametsuchi::CommandError;
 
   /**
    * CommandResult is a return type of all execute and validate functions.
@@ -71,70 +61,6 @@ namespace iroha {
    */
   using CommandResult = iroha::expected::Result<void, CommandError>;
 
-  class CommandExecutor : public boost::static_visitor<CommandResult> {
-   public:
-    CommandExecutor(std::shared_ptr<iroha::ametsuchi::WsvQuery> queries,
-                    std::shared_ptr<iroha::ametsuchi::WsvCommand> commands);
-
-    CommandResult operator()(
-        const shared_model::interface::AddAssetQuantity &command);
-
-    CommandResult operator()(const shared_model::interface::AddPeer &command);
-
-    CommandResult operator()(
-        const shared_model::interface::AddSignatory &command);
-
-    CommandResult operator()(
-        const shared_model::interface::AppendRole &command);
-
-    CommandResult operator()(
-        const shared_model::interface::CreateAccount &command);
-
-    CommandResult operator()(
-        const shared_model::interface::CreateAsset &command);
-
-    CommandResult operator()(
-        const shared_model::interface::CreateDomain &command);
-
-    CommandResult operator()(
-        const shared_model::interface::CreateRole &command);
-
-    CommandResult operator()(
-        const shared_model::interface::DetachRole &command);
-
-    CommandResult operator()(
-        const shared_model::interface::GrantPermission &command);
-
-    CommandResult operator()(
-        const shared_model::interface::RemoveSignatory &command);
-
-    CommandResult operator()(
-        const shared_model::interface::RevokePermission &command);
-
-    CommandResult operator()(
-        const shared_model::interface::SetAccountDetail &command);
-
-    CommandResult operator()(const shared_model::interface::SetQuorum &command);
-
-    CommandResult operator()(
-        const shared_model::interface::SubtractAssetQuantity &command);
-
-    CommandResult operator()(
-        const shared_model::interface::TransferAsset &command);
-
-    void setCreatorAccountId(const shared_model::interface::types::AccountIdType
-                                 &creator_account_id);
-
-   private:
-    std::shared_ptr<iroha::ametsuchi::WsvQuery> queries;
-    std::shared_ptr<iroha::ametsuchi::WsvCommand> commands;
-    shared_model::interface::types::AccountIdType creator_account_id;
-
-    shared_model::builder::DefaultAccountAssetBuilder account_asset_builder_;
-    shared_model::builder::DefaultAccountBuilder account_builder_;
-    shared_model::builder::DefaultAssetBuilder asset_builder_;
-    shared_model::builder::DefaultDomainBuilder domain_builder_;
-  };
 
   class CommandValidator : public boost::static_visitor<CommandResult> {
    public:

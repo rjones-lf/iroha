@@ -34,13 +34,6 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
     find_package(swig REQUIRED)
     include(${SWIG_USE_FILE})
 
-    if (SWIG_JAVA AND SWIG_JAVA_PKG)
-        set(CMAKE_SWIG_FLAGS -package ${SWIG_JAVA_PKG})
-        string(REPLACE "." "/" CMAKE_SWIG_OUTDIR  ${SWIG_JAVA_PKG})   
-    else()
-        set(CMAKE_SWIG_FLAGS "")
-    endif()
-    
     set_source_files_properties(bindings.i PROPERTIES CPLUSPLUS ON)
     set_property(GLOBAL PROPERTY SWIG_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -89,7 +82,14 @@ endif()
 if (SWIG_JAVA)
     find_package(JNI REQUIRED)
 
+    if (SWIG_JAVA_PKG)
+        set(CMAKE_SWIG_FLAGS -package ${SWIG_JAVA_PKG})
+        string(REPLACE "." "/" CMAKE_SWIG_OUTDIR  ${SWIG_JAVA_PKG})
+    else()
+        set(CMAKE_SWIG_FLAGS "")
+    endif()
     myswig_add_library(irohajava LANGUAGE java SOURCES bindings.i)
+    unset(CMAKE_SWIG_FLAGS)
     swig_link_libraries(irohajava ${Java_LIBRARIES} bindings)
     # the include path to jni.h and jni_md.h
     target_include_directories(${SWIG_MODULE_irohajava_REAL_NAME} PUBLIC
