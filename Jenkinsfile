@@ -17,7 +17,7 @@ properties([parameters([
   choice(choices: '26\n25\n24\n23\n22\n21\n20\n19\n18\n17\n16\n15\n14', description: 'Android Bindings ABI Version', name: 'ABABIVersion'),
   choice(choices: 'Release\nDebug', description: 'Android bindings build type', name: 'ABBuildType'),
   choice(choices: 'arm64-v8a\narmeabi-v7a\narmeabi\nx86_64\nx86', description: 'Android bindings platform', name: 'ABPlatform'),
-  booleanParam(defaultValue: false, description: 'Build docs', name: 'Doxygen'),
+  booleanParam(defaultValue: true, description: 'Build docs', name: 'Doxygen'),
   string(defaultValue: '4', description: 'How much parallelism should we exploit. "4" is optimal for machines with modest amount of memory and at least 4 cores', name: 'PARALLELISM')])])
 
 
@@ -373,7 +373,6 @@ pipeline {
         beforeAgent true
         allOf {
           expression { return params.Doxygen }
-          expression { GIT_LOCAL_BRANCH ==~ /(master|develop)/ }
         }
       }
       // build docs on any vacant node. Prefer `x86_64` over
