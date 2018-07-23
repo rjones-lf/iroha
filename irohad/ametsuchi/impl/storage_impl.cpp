@@ -5,6 +5,8 @@
 
 #include "ametsuchi/impl/storage_impl.hpp"
 
+#include <memory>
+
 #include <soci/postgresql/soci-postgresql.h>
 #include <boost/format.hpp>
 
@@ -46,14 +48,8 @@ namespace iroha {
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
     StorageImpl::createTemporaryWsv() {
-      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
-      if (connection_ == nullptr) {
-        return expected::makeError("Connection was closed");
-      }
-      auto sql = std::make_unique<soci::session>(*connection_);
-
-      return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
-          std::make_unique<TemporaryWsvImpl>(std::move(sql), factory_));
+      return expected::makeValue(std::unique_ptr<TemporaryWsv>(
+          setupQuery<TemporaryWsvImpl>(factory_)));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
@@ -130,13 +126,6 @@ namespace iroha {
     }
 
     void StorageImpl::reset() {
-      log_->info("Drop ledger");
-      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
-      if (connection_ == nullptr) {
-        log_->warn("Tried to reset storage without active connection");
-        return;
-      }
-
       // erase db
       log_->info("drop db");
 
@@ -272,7 +261,6 @@ WHERE pg_stat_activity.datname = :dbname
     }
 
     void StorageImpl::commit(std::unique_ptr<MutableStorage> mutableStorage) {
-      std::unique_lock<std::shared_timed_mutex> write(rw_lock_);
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
@@ -288,20 +276,36 @@ WHERE pg_stat_activity.datname = :dbname
       storage->committed = true;
     }
 
+    template <typename Query>
+    class StorageImpl::Deleter : public std::default_delete<Query> {
+     public:
+      Deleter(const StorageImpl *ptr, soci::session &conn, size_t pool_pos)
+          : ptr_(ptr), conn_(conn), pool_pos_(pool_pos) {}
+
+      void operator()(Query *q) {
+        if (ptr_->connection_ != nullptr) {
+          ptr_->connection_->give_back(pool_pos_);
+        }
+        delete q;
+      }
+
+     private:
+      const StorageImpl *ptr_;
+      soci::session &conn_;
+      const size_t pool_pos_;
+    };
+
     template <typename Query, typename Backend>
-    std::shared_ptr<Query> StorageImpl::setupQuery(Backend &b) const {
+    std::unique_ptr<Query> StorageImpl::setupQuery(Backend &b) const {
       std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+      if (connection_ == nullptr) {
+        log_->warn("Storage was deleted, cannot perform setup");
+        return nullptr;
+      }
       auto pool_pos = connection_->lease();
       soci::session &session = connection_->at(pool_pos);
-      return std::shared_ptr<Query>(
-          new Query(session, b), [this, pool_pos](auto ptr) {
-            if (this->connection_ != nullptr) {
-              this->connection_->give_back(pool_pos);
-            } else {
-              this->log_->warn("Query overlived the connection pool");
-            }
-            delete ptr;
-          });
+      lock.unlock();
+      return {new Query(session, b), Deleter<Query>(this, session, pool_pos)};
     }
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
