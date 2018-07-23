@@ -39,7 +39,6 @@ namespace iroha {
        * all changes after removing wsv will be ignored
        * @return proposal with valid transactions and errors, which appeared in
        * a process of validating.
-       * If, for some reason, proposal was not created, nullptr is returned
        */
       virtual VerifiedProposalAndErrors validate(
           const shared_model::interface::Proposal &proposal,
