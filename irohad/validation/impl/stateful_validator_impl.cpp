@@ -20,9 +20,9 @@
 #include <boost/format.hpp>
 #include <string>
 
+#include "backend/protobuf/transaction.hpp"
 #include "common/result.hpp"
 #include "validation/utils.hpp"
-#include "backend/protobuf/transaction.hpp"
 
 namespace iroha {
   namespace validation {
@@ -235,7 +235,7 @@ namespace iroha {
     }
 
     StatefulValidatorImpl::StatefulValidatorImpl(
-        std::shared_ptr<shared_model::interface::ProposalFactory> factory)
+        std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory)
         : factory_(std::move(factory)), log_(logger::log("SFV")) {}
 
     validation::VerifiedProposalAndErrors StatefulValidatorImpl::validate(
@@ -248,24 +248,13 @@ namespace iroha {
       auto valid_proto_txs = validateTransactions(
           proposal.transactions(), temporaryWsv, transactions_errors_log, log_);
 
-      auto validated_proposal = factory_->createProposal(
+      // Since proposal came from ordering gate it was already validated.
+      // All transactions has been validated aswell
+      // This allows for unsafe construction of proposal
+      auto validated_proposal = factory_->unsafeCreateProposal(
           proposal.height(), proposal.createdTime(), valid_proto_txs);
 
-      auto validated_proposal_ptr = validated_proposal.match(
-          [this](expected::Value<
-                 std::unique_ptr<shared_model::interface::Proposal>> &v) {
-            log_->info("transactions in verified proposal: {}",
-                       v.value->transactions().size());
-            return std::shared_ptr<shared_model::interface::Proposal>(
-                std::move(v.value));
-          },
-          [this](const expected::Error<std::string> &e)
-              -> std::shared_ptr<shared_model::interface::Proposal> {
-            log_->warn("Failed to create verified proposal: {}", e.error);
-            return nullptr;
-          });
-
-      return std::make_pair(std::move(validated_proposal_ptr),
+      return std::make_pair(std::move(validated_proposal),
                             transactions_errors_log);
     }
   }  // namespace validation

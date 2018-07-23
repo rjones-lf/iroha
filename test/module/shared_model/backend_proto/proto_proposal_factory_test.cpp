@@ -22,15 +22,26 @@ class ProposalFactoryTest : public ::testing::Test {
   shared_model::proto::ProtoProposalFactory<
       validation::DefaultProposalValidator>
       factory;
+
+  interface::types::HeightType height{1};
+  iroha::time::time_t time{iroha::time::now()};
+
+  std::vector<proto::Transaction> txs;
+
+  void SetUp() override {
+    iroha::protocol::Transaction proto_tx;
+    txs.emplace_back(std::move(proto_tx));
+  }
+
+  void TearDown() override {
+    txs.clear();
+  }
 };
 
 TEST_F(ProposalFactoryTest, ValidProposalTest) {
+  std::vector<proto::Transaction> txs;
   iroha::protocol::Transaction proto_tx;
-  std::vector<shared_model::proto::Transaction> txs;
   txs.emplace_back(proto_tx);
-
-  auto height = 1;
-  auto time = iroha::time::now();
   auto proposal = valid_factory.createProposal(height, time, txs);
 
   proposal.match(
@@ -43,12 +54,6 @@ TEST_F(ProposalFactoryTest, ValidProposalTest) {
 }
 
 TEST_F(ProposalFactoryTest, InvalidProposalTest) {
-  iroha::protocol::Transaction proto_tx;
-  std::vector<shared_model::proto::Transaction> txs;
-  txs.emplace_back(proto_tx);
-
-  auto height = 1;
-  auto time = iroha::time::now();
   auto proposal = factory.createProposal(height, time, txs);
 
   proposal.match(

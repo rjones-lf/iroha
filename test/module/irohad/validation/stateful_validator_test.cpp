@@ -133,7 +133,7 @@ class Validator : public testing::Test {
   }
 
   std::shared_ptr<StatefulValidator> sfv;
-  std::shared_ptr<shared_model::interface::ProposalFactory> factory;
+  std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory;
   std::shared_ptr<iroha::ametsuchi::MockTemporaryWsv> temp_wsv_mock;
 };
 
