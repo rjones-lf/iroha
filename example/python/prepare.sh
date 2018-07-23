@@ -9,5 +9,5 @@ cmake -H$IROHA_HOME -Bbuild -DSWIG_PYTHON=ON -DSUPPORT_PYTHON2=ON;
 cmake --build build/ --target irohapy -- -j"$(getconf _NPROCESSORS_ONLN)"
 
 # generate proto files in current dir
-protoc --proto_path=../../shared_model/schema --python_out=. block.proto transaction.proto primitive.proto commands.proto queries.proto qry_responses.proto endpoint.proto
-python -m grpc_tools.protoc --proto_path=../../schema --proto_path=../../shared_model/schema --python_out=. --grpc_python_out=. endpoint.proto yac.proto ordering.proto loader.proto
+protoc --proto_path=../../shared_model/schema --python_out=. ../../shared_model/schema/*.proto
+python -m grpc_tools.protoc --proto_path=../../shared_model/schema --python_out=. --grpc_python_out=. ../../shared_model/schema/endpoint.proto

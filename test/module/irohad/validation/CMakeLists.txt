@@ -1,29 +1,14 @@
-#
-# Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
-# http://soramitsu.co.jp
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 addtest(chain_validation_test chain_validation_test.cpp)
 target_link_libraries(chain_validation_test
     chain_validator
-    shared_model_stateless_validation
-    shared_model_proto_backend
+    shared_model_default_builders
     )
 
 addtest(stateful_validator_test stateful_validator_test.cpp)
 target_link_libraries(stateful_validator_test
-  stateful_validator
-  shared_model_default_builders
-  )
+    stateful_validator
+    shared_model_default_builders
+    )
