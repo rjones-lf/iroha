@@ -21,6 +21,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 
 #include "common/result.hpp"
+#include "interfaces/common_objects/amount.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -29,7 +30,7 @@ namespace shared_model {
 
   namespace detail {
     boost::multiprecision::uint256_t increaseValuePrecision(
-        boost::multiprecision::uint256_t value, int degree);
+        const boost::multiprecision::uint256_t &value, int degree);
 
     /**
      * Sums up two amounts.

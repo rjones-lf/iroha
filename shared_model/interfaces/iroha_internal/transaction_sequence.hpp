@@ -8,6 +8,7 @@
 
 #include "common/result.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "validators/transactions_collection/transactions_collection_validator.hpp"
 
 namespace shared_model {
@@ -21,7 +22,6 @@ namespace shared_model {
      */
     class TransactionSequence {
      public:
-      TransactionSequence() = delete;
 
       /**
        * Creator of transaction sequence
@@ -39,10 +39,10 @@ namespace shared_model {
               OrderValidator> &validator);
 
       /**
-       * Get transactions collection
-       * @return transactions collection
+       * Retrieves transactions from all batches as single collection
+       * @return all batches transactions
        */
-      types::SharedTxsCollectionType transactions() const;
+      const types::SharedTxsCollectionType &transactions() const;
 
       /**
        * Get batches in transaction sequence
@@ -50,23 +50,13 @@ namespace shared_model {
        * single transaction
        * @return collection of batches from transaction sequence
        */
-      types::BatchesType batches() const;
+      const types::BatchesCollectionType &batches() const;
 
      private:
-      explicit TransactionSequence(
-          const types::SharedTxsCollectionType &transactions);
+      explicit TransactionSequence(const types::BatchesCollectionType &batches);
 
-      /**
-       * Get the concatenation of reduced hashes
-       * @param reduced_hashes collection of reduced hashes
-       * @return concatenated redueced hashes
-       */
-      std::string calculateBatchHash(
-          std::vector<types::HashType> reduced_hashes) const;
-
-      types::SharedTxsCollectionType transactions_;
-
-      mutable boost::optional<types::BatchesType> batches_;
+      types::BatchesCollectionType batches_;
+      mutable boost::optional<types::SharedTxsCollectionType> transactions_;
     };
 
   }  // namespace interface

@@ -69,27 +69,25 @@ def doPythonBindings(os, buildType=Release) {
   sh "cd build; ctest -R python --output-on-failure"
   if (os == 'linux') {
     sh """
-      protoc --proto_path=schema \
-        --python_out=build/bindings \
-        block.proto primitive.proto commands.proto queries.proto responses.proto endpoint.proto
+      protoc --proto_path=shared_model/schema \
+        --python_out=build/bindings shared_model/schema/*.proto
     """
     sh """
-      ${env.PBVersion} -m grpc_tools.protoc --proto_path=schema --python_out=build/bindings \
-        --grpc_python_out=build/bindings endpoint.proto yac.proto ordering.proto loader.proto
+      ${env.PBVersion} -m grpc_tools.protoc --proto_path=shared_model/schema --python_out=build/bindings \
+        --grpc_python_out=build/bindings shared_model/schema/endpoint.proto
     """
   }
   else if (os == 'windows') {
     sh """
-      protoc --proto_path=schema \
+      protoc --proto_path=shared_model/schema \
         --proto_path=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/buildtrees/protobuf/src/protobuf-3.5.1-win32/include \
-        --python_out=build/bindings \
-        block.proto primitive.proto commands.proto queries.proto responses.proto endpoint.proto
+        --python_out=build/bindings shared_model/schema/*.proto
     """
     sh """
       ${env.PBVersion} -m grpc_tools.protoc \
         --proto_path=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/buildtrees/protobuf/src/protobuf-3.5.1-win32/include \
-        --proto_path=schema --python_out=build/bindings --grpc_python_out=build/bindings \
-        endpoint.proto yac.proto ordering.proto loader.proto
+        --proto_path=shared_model/schema --python_out=build/bindings --grpc_python_out=build/bindings \
+        shared_model/schema/endpoint.proto
     """
   }
   sh """

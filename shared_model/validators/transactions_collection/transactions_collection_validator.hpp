@@ -49,6 +49,10 @@ namespace shared_model {
         return validatePointers(res);
       }
 
+      const TransactionValidator &getTransactionValidator() const {
+        return transaction_validator_;
+      }
+
       virtual Answer validatePointers(
           const interface::types::SharedTxsCollectionType &transactions)
           const = 0;

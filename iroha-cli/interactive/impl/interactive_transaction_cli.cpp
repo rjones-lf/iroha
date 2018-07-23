@@ -68,8 +68,7 @@ namespace iroha_cli {
       const auto acc_id = "Account Id";
       const auto ast_id = "Asset Id";
       const auto dom_id = "Domain Id";
-      const auto amount_a = "Amount to add (integer part)";
-      const auto amount_b = "Amount to add (precision)";
+      const auto amount_str = "Amount to to add, e.g 123.456";
       const auto peer_id = "Full address of a peer";
       const auto pub_key = "Public Key";
       const auto acc_name = "Account Name";
@@ -87,8 +86,7 @@ namespace iroha_cli {
       const auto can_roles = "Can create/append roles";
 
       command_params_map_ = {
-          {ADD_ASSET_QTY,
-           makeParamsDescription({acc_id, ast_id, amount_a, amount_b})},
+          {ADD_ASSET_QTY, makeParamsDescription({acc_id, ast_id, amount_str})},
           {ADD_PEER, makeParamsDescription({peer_id, pub_key})},
           {ADD_SIGN, makeParamsDescription({acc_id, pub_key})},
           {CREATE_ACC, makeParamsDescription({acc_name, dom_id, pub_key})},
@@ -103,8 +101,7 @@ namespace iroha_cli {
            makeParamsDescription({std::string("Src") + acc_id,
                                   std::string("Dest") + acc_id,
                                   ast_id,
-                                  amount_a,
-                                  amount_b})},
+                                  amount_str})},
           {CREATE_ROLE,
            makeParamsDescription({role,
                                   can_read_self,
@@ -330,19 +327,7 @@ namespace iroha_cli {
     InteractiveTransactionCli::parseAddAssetQuantity(
         std::vector<std::string> params) {
       auto asset_id = params[0];
-      auto val_int =
-          parser::parseValue<boost::multiprecision::uint256_t>(params[2]);
-      auto precision = parser::parseValue<uint32_t>(params[3]);
-      if (not val_int or not precision) {
-        std::cout << "Wrong format for amount" << std::endl;
-        return nullptr;
-      }
-      if (precision.value() > 255) {
-        std::cout << "Too big precision (should be less than 256)" << std::endl;
-        return nullptr;
-      }
-      std::cout << val_int.value() << " " << precision.value() << std::endl;
-      iroha::Amount amount(val_int.value(), precision.value());
+      auto amount = params[1];
       return generator_.generateAddAssetQuantity(asset_id, amount);
     }
 
@@ -432,14 +417,7 @@ namespace iroha_cli {
       auto src_account_id = params[0];
       auto dest_account_id = params[1];
       auto asset_id = params[2];
-      auto val_int =
-          parser::parseValue<boost::multiprecision::uint256_t>(params[3]);
-      auto precision = parser::parseValue<uint32_t>(params[4]);
-      if (not val_int or not precision) {
-        std::cout << "Wrong format for amount" << std::endl;
-        return nullptr;
-      }
-      iroha::Amount amount(val_int.value(), precision.value());
+      auto amount = params[3];
       return generator_.generateTransferAsset(
           src_account_id, dest_account_id, asset_id, amount);
     }

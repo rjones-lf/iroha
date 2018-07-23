@@ -104,9 +104,8 @@ TEST_F(JsonCommandTest, create_domain) {
 
 TEST_F(JsonCommandTest, add_asset_quantity) {
   auto orig_command = std::make_shared<AddAssetQuantity>();
-  iroha::Amount amount(150, 2);
 
-  orig_command->amount = amount;
+  orig_command->amount = "1.50";
   orig_command->asset_id = "23";
 
   auto json_command = factory.serializeAddAssetQuantity(orig_command);
@@ -124,9 +123,8 @@ TEST_F(JsonCommandTest, add_asset_quantity) {
  */
 TEST_F(JsonCommandTest, subtract_asset_quantity) {
   auto orig_command = std::make_shared<SubtractAssetQuantity>();
-  iroha::Amount amount(150, 2);
 
-  orig_command->amount = amount;
+  orig_command->amount = "1.50";
   orig_command->asset_id = "23";
 
   auto json_command = factory.serializeSubtractAssetQuantity(orig_command);

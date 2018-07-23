@@ -19,13 +19,14 @@
 
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
-#include "amount/amount.hpp"
 
 namespace iroha {
   namespace ametsuchi {
-    TemporaryWsvImpl::TemporaryWsvImpl(std::unique_ptr<soci::session> sql)
+    TemporaryWsvImpl::TemporaryWsvImpl(std::unique_ptr<soci::session> sql,
+                                       std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                                       factory)
         : sql_(std::move(sql)),
-          wsv_(std::make_shared<PostgresWsvQuery>(*sql_)),
+          wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
           executor_(std::make_shared<PostgresWsvCommand>(*sql_)),
           command_executor_(std::make_shared<CommandExecutor>(wsv_, executor_)),
           command_validator_(std::make_shared<CommandValidator>(wsv_)),

@@ -1,30 +1,21 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "main/application.hpp"
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
+#include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
+#include "execution/query_execution_impl.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/mst_processor_stub.hpp"
 #include "multi_sig_transactions/mst_time_provider_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
+#include "validators/field_validator.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -103,7 +94,10 @@ void Irohad::dropStorage() {
  * Initializing iroha daemon storage
  */
 void Irohad::initStorage() {
-  auto storageResult = StorageImpl::create(block_store_dir_, pg_conn_);
+  auto factory =
+      std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
+          shared_model::validation::FieldValidator>>();
+  auto storageResult = StorageImpl::create(block_store_dir_, pg_conn_, factory);
   storageResult.match(
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
         storage = _storage.value;
@@ -277,7 +271,8 @@ void Irohad::initTransactionCommandService() {
  * Initializing query command service
  */
 void Irohad::initQueryService() {
-  auto query_processor = std::make_shared<QueryProcessorImpl>(storage);
+  auto query_processor = std::make_shared<QueryProcessorImpl>(
+      storage, std::make_unique<QueryExecutionImpl>(storage));
 
   query_service = std::make_shared<::torii::QueryService>(query_processor);
 

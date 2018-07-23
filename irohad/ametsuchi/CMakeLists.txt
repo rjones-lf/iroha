@@ -25,3 +25,7 @@ target_link_libraries(ametsuchi
     SOCI::core
     SOCI::postgresql
     )
+
+target_compile_definitions(ametsuchi
+    PRIVATE SOCI_USE_BOOST HAVE_BOOST
+    )

@@ -43,11 +43,13 @@ namespace iroha {
     StorageImpl::StorageImpl(std::string block_store_dir,
                              PostgresOptions postgres_options,
                              std::unique_ptr<KeyValueStorage> block_store,
-                             std::shared_ptr<soci::connection_pool> connection)
+                             std::shared_ptr<soci::connection_pool> connection,
+                             std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
           connection_(connection),
+          factory_(factory),
           log_(logger::log("StorageImpl")) {}
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
@@ -55,7 +57,7 @@ namespace iroha {
       auto sql = std::make_unique<soci::session>(*connection_);
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
-          std::make_unique<TemporaryWsvImpl>(std::move(sql)));
+          std::make_unique<TemporaryWsvImpl>(std::move(sql), factory_));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
@@ -74,7 +76,8 @@ namespace iroha {
                   [](expected::Error<std::string> &) {
                     return shared_model::interface::types::HashType("");
                   }),
-              std::move(sql)));
+              std::move(sql),
+              factory_));
     }
 
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
@@ -212,8 +215,11 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
     };
 
     expected::Result<std::shared_ptr<StorageImpl>, std::string>
-    StorageImpl::create(std::string block_store_dir,
-                        std::string postgres_options) {
+    StorageImpl::create(
+        std::string block_store_dir,
+        std::string postgres_options,
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+            factory) {
       boost::optional<std::string> string_res = boost::none;
 
       PostgresOptions options(postgres_options);
@@ -243,7 +249,8 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
                       new StorageImpl(block_store_dir,
                                       options,
                                       std::move(ctx.value.block_store),
-                                      connection.value)));
+                                      connection.value,
+                                      factory)));
                 },
                 [&](expected::Error<std::string> &error) { storage = error; });
           },
@@ -270,7 +277,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
       auto sql = std::make_unique<soci::session>(*connection_);
-      return std::make_shared<PostgresWsvQuery>(std::move(sql));
+      return std::make_shared<PostgresWsvQuery>(std::move(sql), factory_);
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {

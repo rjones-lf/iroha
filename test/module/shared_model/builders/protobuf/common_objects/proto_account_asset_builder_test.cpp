@@ -18,7 +18,6 @@
 #include <gtest/gtest.h>
 
 #include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 
 /**
  * @given fields for AccountAsset object
@@ -31,8 +30,7 @@ TEST(ProtoAccountAssetBuilder, AllFieldsBuild) {
 
   auto expected_account_id = "account@name";
   auto expected_asset_id = "asset#coin";
-  auto expected_balance =
-      shared_model::proto::AmountBuilder().intValue(100).precision(2).build();
+  auto expected_balance = shared_model::interface::Amount("1.00");
 
   auto account_asset = builder.accountId(expected_account_id)
                            .assetId(expected_asset_id)
@@ -54,8 +52,7 @@ TEST(ProtoAccountAssetBuilderTest, SeveralObjectsFromOneBuilder) {
 
   auto expected_account_id = "account@name";
   auto expected_asset_id = "asset#coin";
-  auto expected_balance =
-      shared_model::proto::AmountBuilder().intValue(100).precision(2).build();
+  auto expected_balance = shared_model::interface::Amount("1.00");
 
   auto state = builder.accountId(expected_account_id)
                    .assetId(expected_asset_id)

@@ -65,19 +65,19 @@ target_link_libraries(shared_proto_util_test
     shared_model_proto_backend
     )
 
-addtest(shared_proto_amount_test
-    common_objects/shared_proto_amount_test.cpp
-    )
-
-target_link_libraries(shared_proto_amount_test
-    shared_model_proto_backend
-    )
-
 addtest(permissions_test
     permissions_test.cpp
     )
 target_link_libraries(permissions_test
     shared_model_proto_backend
+    )
+
+addtest(proto_batch_test
+    proto_batch_test.cpp
+    )
+target_link_libraries(proto_batch_test
+    shared_model_proto_backend
+    shared_model_stateless_validation
     )
 
 addtest(proto_transaction_sequence_test
@@ -86,4 +86,13 @@ addtest(proto_transaction_sequence_test
 target_link_libraries(proto_transaction_sequence_test
     shared_model_proto_backend
     shared_model_stateless_validation
+    )
+
+addtest(proto_common_objects_factory_test
+    common_objects/proto_common_objects_factory_test.cpp
+    )
+target_link_libraries(proto_common_objects_factory_test
+    shared_model_cryptography
+    shared_model_stateless_validation
+    schema
     )

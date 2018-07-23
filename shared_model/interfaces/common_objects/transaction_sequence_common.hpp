@@ -13,6 +13,8 @@
 namespace shared_model {
   namespace interface {
 
+    class TransactionBatch;
+
     namespace types {
 
       using TransactionsForwardCollectionType =
@@ -24,9 +26,7 @@ namespace shared_model {
 
       // TODO: IR-1514 kamilsa 09.07.2018 Introduce batch type with batch
       // invariant and return range of them
-      using BatchesType = boost::any_range<SharedTxsCollectionType,
-                                           boost::forward_traversal_tag,
-                                           const SharedTxsCollectionType &>;
+      using BatchesCollectionType = std::vector<TransactionBatch>;
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model

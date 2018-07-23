@@ -20,14 +20,24 @@
 
 #include "ametsuchi/wsv_query.hpp"
 
-#include "postgres_wsv_common.hpp"
+#include <soci/soci.h>
+
+#include "interfaces/common_objects/common_objects_factory.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace ametsuchi {
     class PostgresWsvQuery : public WsvQuery {
      public:
-      explicit PostgresWsvQuery(soci::session &sql);
-      explicit PostgresWsvQuery(std::unique_ptr<soci::session> sql_ptr);
+      PostgresWsvQuery(
+          soci::session &sql,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory);
+
+      PostgresWsvQuery(
+          std::unique_ptr<soci::session> sql_ptr,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory);
 
       boost::optional<std::vector<shared_model::interface::types::RoleIdType>>
       getAccountRoles(const shared_model::interface::types::AccountIdType
@@ -84,6 +94,7 @@ namespace iroha {
      private:
       std::unique_ptr<soci::session> sql_ptr_;
       soci::session &sql_;
+      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
       logger::Logger log_;
     };
   }  // namespace ametsuchi

@@ -47,6 +47,13 @@ namespace torii {
     grpc::Status Torii(const iroha::protocol::Transaction &tx) const;
 
     /**
+     * requests list of txs to a torii server and returns response
+     * @param tx_list
+     * @return grpc::Status - returns connection is success or not.
+     */
+    grpc::Status ListTorii(const iroha::protocol::TxList &tx_list) const;
+
+    /**
      * @param tx
      * @param response returns ToriiResponse if succeeded
      * @return grpc::Status - returns connection is success or not.

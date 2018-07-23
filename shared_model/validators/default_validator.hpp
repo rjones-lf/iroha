@@ -27,6 +27,7 @@
 #include "validators/query_validator.hpp"
 #include "validators/signable_validator.hpp"
 #include "validators/transaction_validator.hpp"
+#include "validators/transactions_collection/batch_order_validator.hpp"
 #include "validators/transactions_collection/signed_transactions_collection_validator.hpp"
 #include "validators/transactions_collection/unsigned_transactions_collection_validator.hpp"
 
@@ -70,6 +71,11 @@ namespace shared_model {
         SignableModelValidator<DefaultBlockValidator,
                                const interface::Block &,
                                FieldValidator>;
+
+    using DefaultUnsignedTxCollectionValidator =
+        UnsignedTransactionsCollectionValidator<DefaultTransactionValidator,
+                                                BatchOrderValidator>;
+
   }  // namespace validation
 }  // namespace shared_model
 

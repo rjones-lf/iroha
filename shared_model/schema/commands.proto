@@ -9,7 +9,7 @@ import "primitive.proto";
 
 message AddAssetQuantity {
     string asset_id = 1;
-    Amount amount = 2;
+    string amount = 2;
 }
 
 message AddPeer {
@@ -59,7 +59,7 @@ message TransferAsset {
     string dest_account_id = 2;
     string asset_id = 3;
     string description = 4;
-    Amount amount = 5;
+    string amount = 5;
 }
 
 message AppendRole {
@@ -89,7 +89,7 @@ message RevokePermission {
 
 message SubtractAssetQuantity {
     string asset_id = 1;
-    Amount amount = 2;
+    string amount = 2;
 }
 
 message Command {

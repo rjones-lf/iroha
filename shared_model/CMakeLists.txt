@@ -6,6 +6,7 @@ cmake_minimum_required(VERSION 3.5.1)
 project(shared_model C CXX)
 
 set(IROHA_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/schema")
+set(SM_SCHEMA_DIR "${IROHA_SCHEMA_DIR}")
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../libs
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -35,7 +36,6 @@ if (NOT IROHA_ROOT_PROJECT)
   set(SCHEMA_OUT_DIR ${CMAKE_BINARY_DIR}/schema)
 
   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs/generator generator)
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../libs/amount amount)
 endif ()
 
 add_subdirectory(backend)

@@ -36,6 +36,7 @@ add_library(shared_model_interfaces
     queries/impl/get_pending_transactions.cpp
     queries/impl/blocks_query.cpp
     queries/impl/query_payload_meta.cpp
+    common_objects/impl/amount.cpp
     )
 
 if (IROHA_ROOT_PROJECT)
@@ -55,6 +56,7 @@ if (IROHA_ROOT_PROJECT)
       query_responses/impl/block_response.cpp
       iroha_internal/block_variant.cpp
       iroha_internal/transaction_sequence.cpp
+      iroha_internal/transaction_batch.cpp
       )
 endif ()
 

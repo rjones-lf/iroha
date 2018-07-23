@@ -23,16 +23,18 @@
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/wsv_command.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "model/sha3_hash.hpp"
 
 namespace iroha {
   namespace ametsuchi {
     MutableStorageImpl::MutableStorageImpl(
         shared_model::interface::types::HashType top_hash,
-        std::unique_ptr<soci::session> sql)
+        std::unique_ptr<soci::session> sql,
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
         : top_hash_(top_hash),
           sql_(std::move(sql)),
-          wsv_(std::make_shared<PostgresWsvQuery>(*sql_)),
+          wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
           executor_(std::make_shared<PostgresWsvCommand>(*sql_)),
           block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
           command_executor_(std::make_shared<CommandExecutor>(wsv_, executor_)),

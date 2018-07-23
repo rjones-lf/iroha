@@ -98,7 +98,6 @@ endfunction()
 
 function(compile_proto_to_python PROTO)
   string(REGEX REPLACE "\\.proto$" "_pb2.py" PY_PB ${PROTO})
-  set(SM_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/shared_model/schema")
   if (MSVC)
     set(GEN_COMMAND "${Protobuf_PROTOC_EXECUTABLE}")
     set(GEN_ARGS ${Protobuf_INCLUDE_DIR})

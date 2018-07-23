@@ -19,7 +19,6 @@
 #define IROHA_ACCOUNT_ASSET_HPP
 
 #include <string>
-#include "amount/amount.hpp"
 
 namespace iroha {
   namespace model {
@@ -31,7 +30,7 @@ namespace iroha {
 
       AccountAsset(const std::string &asset_id,
                    const std::string &account_id,
-                   const Amount &balance)
+                   const std::string &balance)
           : asset_id(asset_id), account_id(account_id), balance(balance) {}
 
       /**
@@ -47,7 +46,7 @@ namespace iroha {
       /**
        * Current balance
        */
-      Amount balance;
+      std::string balance;
     };
   }  // namespace model
 }  // namespace iroha
