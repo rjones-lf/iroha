@@ -8,6 +8,7 @@
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "framework/batch_helper.hpp"
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "logger/logger.hpp"
@@ -97,28 +98,6 @@ class OrderingServiceTest : public ::testing::Test {
     proposal_timeout.get_subscriber().on_next(0);
   }
 
-  // create and wrap some single random transaction into a batch
-  auto createSingleTxBatch() {
-    return framework::expected::val(
-        shared_model::interface::TransactionBatch::createTransactionBatch<
-            shared_model::validation::DefaultTransactionValidator>(getTx()));
-  }
-
-  // create a transaction batch from some transactions
-  auto createTxBatch(size_t desired_tx_number) {
-    shared_model::interface::types::SharedTxsCollectionType txs{
-        desired_tx_number};
-    for (size_t i = 0; i < desired_tx_number; ++i) {
-      txs[i] = getTx();
-    }
-    return framework::expected::val(
-        shared_model::interface::TransactionBatch::createTransactionBatch(
-            txs,
-            shared_model::validation::SignedTransactionsCollectionValidator<
-                shared_model::validation::DefaultTransactionValidator,
-                shared_model::validation::BatchOrderValidator>()));
-  }
-
   std::shared_ptr<MockOrderingServiceTransport> fake_transport;
   std::shared_ptr<MockOrderingServicePersistentState> fake_persistent_state;
   std::condition_variable cv;
@@ -181,11 +160,8 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
   fake_transport->subscribe(ordering_service);
 
   for (size_t i = 0; i < tx_num; ++i) {
-    auto batch_opt = createSingleTxBatch();
-    if (not batch_opt) {
-      FAIL() << "could not create batch from single transaction";
-    }
-    ordering_service->onBatch(std::move(batch_opt->value));
+    auto batch = framework::batch::createValidBatch(1);
+    ordering_service->onBatch(std::move(batch));
   }
 }
 
@@ -215,29 +191,17 @@ TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
   auto ordering_service = initOs(max_proposal);
   fake_transport->subscribe(ordering_service);
 
-  boost::optional<
-      iroha::expected::Value<shared_model::interface::TransactionBatch>>
-      batch_opt;
   for (size_t i = 0; i < 8; ++i) {
-    batch_opt = createSingleTxBatch();
-    if (not batch_opt) {
-      FAIL() << "could not create batch from single transaction";
-    }
-    ordering_service->onBatch(std::move(batch_opt->value));
+    auto batch = framework::batch::createValidBatch(1);
+    ordering_service->onBatch(std::move(batch));
   }
   makeProposalTimeout();
 
-  batch_opt = createSingleTxBatch();
-  if (not batch_opt) {
-    FAIL() << "could not create batch from single transaction";
-  }
-  ordering_service->onBatch(std::move(batch_opt->value));
+  auto batch = framework::batch::createValidBatch(1);
+  ordering_service->onBatch(std::move(batch));
 
-  batch_opt = createSingleTxBatch();
-  if (not batch_opt) {
-    FAIL() << "could not create batch from single transaction";
-  }
-  ordering_service->onBatch(std::move(batch_opt->value));
+  batch = framework::batch::createValidBatch(1);
+  ordering_service->onBatch(std::move(batch));
 
   makeProposalTimeout();
 }
@@ -259,11 +223,9 @@ TEST_F(OrderingServiceTest, BrokenPersistentState) {
       .WillRepeatedly(Return(false));
 
   auto ordering_service = initOs(max_proposal);
-  auto batch_opt = createSingleTxBatch();
-  if (not batch_opt) {
-    FAIL() << "could not create batch from single transaction";
-  }
-  ordering_service->onBatch(std::move(batch_opt->value));
+  auto batch = framework::batch::createValidBatch(1);
+
+  ordering_service->onBatch(std::move(batch));
   makeProposalTimeout();
 }
 
@@ -284,11 +246,8 @@ TEST_F(OrderingServiceTest, ConcurrentGenerateProposal) {
 
   auto on_tx = [&]() {
     for (int i = 0; i < 1000; ++i) {
-      auto batch_opt = createSingleTxBatch();
-      if (not batch_opt) {
-        FAIL() << "could not create batch from single transaction";
-      }
-      ordering_service->onBatch(std::move(batch_opt->value));
+      auto batch = framework::batch::createValidBatch(1);
+      ordering_service->onBatch(std::move(batch));
     }
   };
 
@@ -340,11 +299,8 @@ TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
 
     auto on_tx = [&]() {
       for (int i = 0; i < 1000; ++i) {
-        auto batch_opt = createSingleTxBatch();
-        if (not batch_opt) {
-          FAIL() << "could not create batch from single transaction";
-        }
-        ordering_service.onBatch(std::move(batch_opt->value));
+        auto batch = framework::batch::createValidBatch(1);
+        ordering_service.onBatch(std::move(batch));
       }
     };
 
@@ -366,11 +322,8 @@ TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
 TEST_F(OrderingServiceTest, BatchesProceed) {
   const auto max_proposal = 12;
 
-  auto batch_one = createTxBatch(10);
-  auto batch_two = createTxBatch(5);
-  if (not(batch_one and batch_two)) {
-    FAIL() << "could not create transaction batch";
-  }
+  auto batch_one = framework::batch::createValidBatch(10);
+  auto batch_two = framework::batch::createValidBatch(5);
 
   EXPECT_CALL(*fake_persistent_state, saveProposalHeight(_))
       .Times(1)
@@ -385,6 +338,6 @@ TEST_F(OrderingServiceTest, BatchesProceed) {
   auto ordering_service = initOs(max_proposal);
   fake_transport->subscribe(ordering_service);
 
-  ordering_service->onBatch(std::move(batch_one->value));
-  ordering_service->onBatch(std::move(batch_two->value));
+  ordering_service->onBatch(std::move(batch_one));
+  ordering_service->onBatch(std::move(batch_two));
 }
