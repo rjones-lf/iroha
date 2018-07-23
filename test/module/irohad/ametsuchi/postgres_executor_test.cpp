@@ -42,7 +42,10 @@ namespace iroha {
         AmetsuchiTest::SetUp();
         sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
 
-        query = std::make_unique<PostgresWsvQuery>(*sql);
+        auto factory =
+            std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
+                shared_model::validation::FieldValidator>>();
+        query = std::make_unique<PostgresWsvQuery>(*sql, factory);
         executor = std::make_unique<PostgresCommandExecutor>(*sql);
 
         *sql << init_;
@@ -173,8 +176,9 @@ namespace iroha {
      */
     TEST_F(AddAccountAssetTest, AddAccountAssetTestUint256Overflow) {
       std::string uint256_halfmax =
-          "578960446186580977117854925043439539266349923328202820197287920039565648"
-              "19966.0";  // 2**255 - 2tra
+          "57896044618658097711785492504343953926634992332820282019728792003956"
+          "5648"
+          "19966.0";  // 2**255 - 2tra
       addAsset();
       ASSERT_TRUE(val(
           execute(buildCommand(TestTransactionBuilder()
