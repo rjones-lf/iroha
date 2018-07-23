@@ -38,7 +38,7 @@ namespace iroha {
        * this wsv not affected on ledger,
        * all changes after removing wsv will be ignored
        * @return proposal with valid transactions and errors, which appeared in
-       * a process of validating.
+       * a process of validating
        */
       virtual VerifiedProposalAndErrors validate(
           const shared_model::interface::Proposal &proposal,

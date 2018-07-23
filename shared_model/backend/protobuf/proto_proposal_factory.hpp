@@ -23,35 +23,8 @@ namespace shared_model {
           interface::types::TimestampType created_time,
           const interface::types::TransactionsCollectionType &transactions)
           override {
-        iroha::protocol::Proposal proposal;
-
-        proposal.set_height(height);
-        proposal.set_created_time(created_time);
-
-        for (const auto &tx : transactions) {
-          *proposal.add_transactions() =
-              static_cast<const shared_model::proto::Transaction &>(tx)
-                  .getTransport();
-        }
-
-        return createProposal(std::move(proposal));
-      }
-
-      /**
-       * Create and validate proposal using protobuf object
-       */
-      FactoryResult<std::unique_ptr<interface::Proposal>> createProposal(
-          const iroha::protocol::Proposal &proposal) {
-        auto proto_proposal = std::make_unique<Proposal>(proposal);
-
-        auto errors = validator_.validate(*proto_proposal);
-
-        if (errors) {
-          return iroha::expected::makeError(errors.reason());
-        }
-
-        return iroha::expected::makeValue<std::unique_ptr<interface::Proposal>>(
-            std::move(proto_proposal));
+        return createProposal(
+            createProtoProposal(height, created_time, transactions));
       }
 
       std::unique_ptr<interface::Proposal> unsafeCreateProposal(
@@ -59,6 +32,23 @@ namespace shared_model {
           interface::types::TimestampType created_time,
           const interface::types::TransactionsCollectionType &transactions)
           override {
+        return std::make_unique<Proposal>(
+            createProtoProposal(height, created_time, transactions));
+      }
+
+      /**
+       * Create and validate proposal using protobuf object
+       */
+      FactoryResult<std::unique_ptr<interface::Proposal>> createProposal(
+          const iroha::protocol::Proposal &proposal) {
+        return validate(std::make_unique<Proposal>(proposal));
+      }
+
+     private:
+      iroha::protocol::Proposal createProtoProposal(
+          interface::types::HeightType height,
+          interface::types::TimestampType created_time,
+          const interface::types::TransactionsCollectionType &transactions) {
         iroha::protocol::Proposal proposal;
 
         proposal.set_height(height);
@@ -70,10 +60,21 @@ namespace shared_model {
                   .getTransport();
         }
 
-        return std::make_unique<Proposal>(std::move(proposal));
+        return proposal;
       }
 
-     private:
+      FactoryResult<std::unique_ptr<interface::Proposal>> validate(
+          std::unique_ptr<Proposal> proposal) {
+        auto errors = validator_.validate(*proposal);
+
+        if (errors) {
+          return iroha::expected::makeError(errors.reason());
+        }
+
+        return iroha::expected::makeValue<std::unique_ptr<interface::Proposal>>(
+            std::move(proposal));
+      }
+
       Validator validator_;
     };
   }  // namespace proto
