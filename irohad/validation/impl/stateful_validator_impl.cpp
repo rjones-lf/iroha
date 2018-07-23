@@ -26,7 +26,6 @@
 
 namespace iroha {
   namespace validation {
-
     /**
      * Forms a readable error string from transaction signatures and account
      * signatories
@@ -235,7 +234,8 @@ namespace iroha {
     }
 
     StatefulValidatorImpl::StatefulValidatorImpl(
-        std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory)
+        std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+            factory)
         : factory_(std::move(factory)), log_(logger::log("SFV")) {}
 
     validation::VerifiedProposalAndErrors StatefulValidatorImpl::validate(
@@ -249,7 +249,7 @@ namespace iroha {
           proposal.transactions(), temporaryWsv, transactions_errors_log, log_);
 
       // Since proposal came from ordering gate it was already validated.
-      // All transactions has been validated aswell
+      // All transactions has been validated as well
       // This allows for unsafe construction of proposal
       auto validated_proposal = factory_->unsafeCreateProposal(
           proposal.height(), proposal.createdTime(), valid_proto_txs);

@@ -24,14 +24,14 @@ namespace iroha {
         std::shared_ptr<network::OrderingServiceTransport> transport,
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
             persistent_state,
-        std::shared_ptr<shared_model::interface::ProposalFactory> factory,
+        std::unique_ptr<shared_model::interface::ProposalFactory> factory,
         bool is_async)
         : wsv_(wsv),
           max_size_(max_size),
           current_size_(0),
           transport_(transport),
           persistent_state_(persistent_state),
-          factory_(factory),
+          factory_(std::move(factory)),
           log_(logger::log("OrderingServiceImpl")) {
       // restore state of ordering service from persistent storage
       proposal_height_ = persistent_state_->loadProposalHeight().value();

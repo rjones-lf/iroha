@@ -40,7 +40,7 @@ namespace iroha {
         std::shared_ptr<network::OrderingServiceTransport> transport,
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
             persistent_state) {
-      auto factory = std::make_shared<shared_model::proto::ProtoProposalFactory<
+      auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
           shared_model::validation::DefaultProposalValidator>>();
       return std::make_shared<ordering::OrderingServiceImpl>(
           wsv,
@@ -49,7 +49,7 @@ namespace iroha {
                                         rxcpp::observe_on_new_thread()),
           transport,
           persistent_state,
-          factory);
+          std::move(factory));
     }
 
     std::shared_ptr<OrderingGate> OrderingInit::initOrderingGate(

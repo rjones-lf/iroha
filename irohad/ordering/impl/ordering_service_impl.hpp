@@ -42,6 +42,7 @@ namespace iroha {
        * @param proposal_timeout observable timeout for proposal creation
        * @param transport receive transactions and publish proposals
        * @param persistent_state storage for auxiliary information
+       * @param factory is used to generate proposals
        * @param is_async whether proposals are generated in a separate thread
        */
       OrderingServiceImpl(
@@ -51,7 +52,7 @@ namespace iroha {
           std::shared_ptr<network::OrderingServiceTransport> transport,
           std::shared_ptr<ametsuchi::OrderingServicePersistentState>
               persistent_state,
-          std::shared_ptr<shared_model::interface::ProposalFactory> factory,
+          std::unique_ptr<shared_model::interface::ProposalFactory> factory,
           bool is_async = true);
 
       /**
@@ -129,7 +130,7 @@ namespace iroha {
       /// mutex for events activating
       std::mutex event_mutex_;
 
-      std::shared_ptr<shared_model::interface::ProposalFactory> factory_;
+      std::unique_ptr<shared_model::interface::ProposalFactory> factory_;
 
       logger::Logger log_;
     };

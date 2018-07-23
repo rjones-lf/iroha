@@ -59,7 +59,7 @@ namespace iroha {
      private:
       std::weak_ptr<iroha::network::OrderingGateNotification> subscriber_;
       std::unique_ptr<proto::OrderingServiceTransportGrpc::Stub> client_;
-      std::shared_ptr<shared_model::proto::ProtoProposalFactory<
+      std::unique_ptr<shared_model::proto::ProtoProposalFactory<
           shared_model::validation::DefaultProposalValidator>>
           factory_;
     };

@@ -66,6 +66,8 @@ class OrderingServiceTest : public ::testing::Test {
     fake_transport = std::make_shared<MockOrderingServiceTransport>();
     fake_persistent_state =
         std::make_shared<MockOrderingServicePersistentState>();
+    factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
+        shared_model::validation::AlwaysValidValidator>>();
   }
 
   auto initOs(size_t max_proposal) {
@@ -75,7 +77,7 @@ class OrderingServiceTest : public ::testing::Test {
         proposal_timeout.get_observable(),
         fake_transport,
         fake_persistent_state,
-        factory,
+        std::move(factory),
         false);
   }
 
@@ -90,9 +92,7 @@ class OrderingServiceTest : public ::testing::Test {
   std::string address{"0.0.0.0:50051"};
   std::shared_ptr<shared_model::interface::Peer> peer;
   std::shared_ptr<MockPeerQuery> wsv;
-  std::shared_ptr<shared_model::interface::ProposalFactory> factory =
-      std::make_shared<shared_model::proto::ProtoProposalFactory<
-          shared_model::validation::AlwaysValidValidator>>();
+  std::unique_ptr<shared_model::interface::ProposalFactory> factory;
   rxcpp::subjects::subject<OrderingServiceImpl::TimeoutType> proposal_timeout;
 };
 
@@ -276,7 +276,7 @@ TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
                                       rxcpp::observe_on_new_thread()),
         fake_transport,
         fake_persistent_state,
-        factory,
+        std::move(factory),
         true);
 
     auto on_tx = [&]() {

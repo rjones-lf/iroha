@@ -98,9 +98,9 @@ TEST_F(SignaturesSubset, PublickeyUniqueness) {
 class Validator : public testing::Test {
  public:
   void SetUp() override {
-    factory = std::make_shared<shared_model::proto::ProtoProposalFactory<
+    factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
         shared_model::validation::DefaultProposalValidator>>();
-    sfv = std::make_shared<StatefulValidatorImpl>(factory);
+    sfv = std::make_shared<StatefulValidatorImpl>(std::move(factory));
     temp_wsv_mock = std::make_shared<iroha::ametsuchi::MockTemporaryWsv>();
   }
 
@@ -133,7 +133,7 @@ class Validator : public testing::Test {
   }
 
   std::shared_ptr<StatefulValidator> sfv;
-  std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory;
+  std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory;
   std::shared_ptr<iroha::ametsuchi::MockTemporaryWsv> temp_wsv_mock;
 };
 

@@ -32,9 +32,8 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
 
   auto proposal_res = factory_->createProposal(*request);
   proposal_res.match(
-      [this](
-          iroha::expected::Value<std::unique_ptr<shared_model::interface::Proposal>>
-              &v) {
+      [this](iroha::expected::Value<
+             std::unique_ptr<shared_model::interface::Proposal>> &v) {
         log_->info("transactions in proposal: {}",
                    v.value->transactions().size());
 
@@ -44,7 +43,7 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
           log_->error("(onProposal) No subscriber");
         }
       },
-      [this](iroha::expected::Error<std::string> &e) {
+      [this](const iroha::expected::Error<std::string> &e) {
         log_->error("Received invalid proposal: {}", e.error);
       });
 
@@ -57,7 +56,7 @@ OrderingGateTransportGrpc::OrderingGateTransportGrpc(
           logger::log("OrderingGate")),
       client_(network::createClient<proto::OrderingServiceTransportGrpc>(
           server_address)),
-      factory_(std::make_shared<shared_model::proto::ProtoProposalFactory<
+      factory_(std::make_unique<shared_model::proto::ProtoProposalFactory<
                    shared_model::validation::DefaultProposalValidator>>()) {}
 
 void OrderingGateTransportGrpc::propagateTransaction(

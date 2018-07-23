@@ -29,8 +29,7 @@ class ProposalFactoryTest : public ::testing::Test {
   std::vector<proto::Transaction> txs;
 
   void SetUp() override {
-    iroha::protocol::Transaction proto_tx;
-    txs.emplace_back(std::move(proto_tx));
+    txs.emplace_back(iroha::protocol::Transaction{});
   }
 
   void TearDown() override {

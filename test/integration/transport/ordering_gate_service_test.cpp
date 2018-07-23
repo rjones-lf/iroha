@@ -45,7 +45,7 @@ using wPeer = std::shared_ptr<shared_model::interface::Peer>;
 class OrderingGateServiceTest : public ::testing::Test {
  public:
   OrderingGateServiceTest() {
-    factory_ = std::make_shared<shared_model::proto::ProtoProposalFactory<
+    factory_ = std::make_unique<shared_model::proto::ProtoProposalFactory<
         shared_model::validation::DefaultProposalValidator>>();
     pcs_ = std::make_shared<MockPeerCommunicationService>();
     EXPECT_CALL(*pcs_, on_commit())
@@ -68,7 +68,7 @@ class OrderingGateServiceTest : public ::testing::Test {
                                               proposal_timeout.get_observable(),
                                               service_transport,
                                               fake_persistent_state,
-                                              factory_);
+                                              std::move(factory_));
     service_transport->subscribe(service);
   }
 
@@ -194,7 +194,7 @@ class OrderingGateServiceTest : public ::testing::Test {
   std::shared_ptr<OrderingGateTransportGrpc> gate_transport;
   std::shared_ptr<OrderingServiceTransportGrpc> service_transport;
 
-  std::shared_ptr<shared_model::interface::ProposalFactory> factory_;
+  std::unique_ptr<shared_model::interface::ProposalFactory> factory_;
 
   const std::string kAddress = "127.0.0.1";
 };

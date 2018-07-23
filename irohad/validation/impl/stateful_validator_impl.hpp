@@ -31,14 +31,14 @@ namespace iroha {
     class StatefulValidatorImpl : public StatefulValidator {
      public:
       explicit StatefulValidatorImpl(
-          std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
+          std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
               factory);
 
       VerifiedProposalAndErrors validate(
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) override;
 
-      std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory_;
+      std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory_;
       logger::Logger log_;
     };
 
