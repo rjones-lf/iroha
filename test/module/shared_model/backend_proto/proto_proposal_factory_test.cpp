@@ -38,6 +38,12 @@ class ProposalFactoryTest : public ::testing::Test {
   }
 };
 
+
+/**
+ * @given proposal factory and valid data
+ * @when proposal is created using factory
+ * @then proposal is successfully created
+ */
 TEST_F(ProposalFactoryTest, ValidProposalTest) {
   std::vector<proto::Transaction> txs;
   iroha::protocol::Transaction proto_tx;
@@ -53,6 +59,11 @@ TEST_F(ProposalFactoryTest, ValidProposalTest) {
       [](const ErrorOf<decltype(proposal)> &e) { FAIL() << e.error; });
 }
 
+/**
+ * @given proposal factory and invalid data (empty transaction)
+ * @when proposal is created using factory
+ * @then proposal is not created successfully
+ */
 TEST_F(ProposalFactoryTest, InvalidProposalTest) {
   auto proposal = factory.createProposal(height, time, txs);
 
