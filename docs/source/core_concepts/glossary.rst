@@ -187,6 +187,12 @@ Role
 
 A named abstraction that holds a set of `permissions <#permission>`__.
 
+Signatory
+=========
+
+Represents an entity that can confirm multisignature transactions for some `account <#account>`__.
+It can be attached to account via `AddSignatory <../api/commands.html#add-signatory>`__ and detached via `RemoveSignatory <../api/commands.html#remove-signatory>`__.
+
 Simulator
 =========
 
@@ -299,7 +305,7 @@ Multisignature Transactions
 ===========================
 
 A transaction which has the `quorum`_ greater than one is considered as multisignature (also called mst).
-For its `stateful validity <#stateful-validation>`__ it is required to be confirmed by the signatories of the creator account.
+To achieve `stateful validity <#stateful-validation>`__ the confirmation is required by the `signatories <#signatory>`__ of the creator account.
 These participants need to send the same transaction with their signature.
 
 Validator

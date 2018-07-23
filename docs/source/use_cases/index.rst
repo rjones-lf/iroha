@@ -89,13 +89,13 @@ With the support of multisignature transactions it is possible to maintain a fun
 Example
 ^^^^^^^
 
-The fund assets should be help at one account.
+The fund assets should be held at one account.
 Its signatories should be fund managers, who are dealing with investments and portfolio distributions.
 That can be added via ``AddSignatory`` command.
 All of the assets should be held within one account, which signatories represent the fund managers.
 Thus the concrete exchanges can be performed with the multisignature transaction so that everyone will decide on a particular financial decision.
-The one may confirm a deal with sending the original transaction and his or her signature.
-Iroha will maintain the transaction sending so that the deal will not be completed until it receives the required number of confirmation, that parametrized with the transaction quorum parameter.
+The one may confirm a deal by sending the original transaction and one of managers' signature.
+Iroha will maintain the transaction sending so that the deal will not be completed until it receives the required number of confirmation, which is parametrized with the transaction quorum parameter.
 
 
 Related Research
