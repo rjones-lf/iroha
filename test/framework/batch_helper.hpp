@@ -256,7 +256,8 @@ namespace framework {
        */
       template <typename... TxBuilders>
       auto makeTxBatchCollection(TxBuilders &&... builders) {
-        return makeTxBatchCollection(fetchReducedHashes(builders...),
+        auto hashes = fetchReducedHashes(builders...);
+        return makeTxBatchCollection(std::move(hashes),
                                      {std::forward<TxBuilders>(builders)...});
       }
     }  // namespace internal

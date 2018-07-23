@@ -82,6 +82,7 @@ namespace shared_model {
                        [](auto &command) { return command.toString(); })
             .append("batch_meta",
                     batchMeta() ? batchMeta()->get()->toString() : "")
+            .append("reducedHash", reducedHash().toString())
             .append("signatures")
             .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
             .finalize();

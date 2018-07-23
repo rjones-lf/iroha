@@ -208,7 +208,7 @@ inline auto makeTxBuilder(
   return TestTransactionBuilder()
       .createdTime(created_time)
       .creatorAccountId("user@test")
-      .setAccountQuorum("user@test", quorum)
+      .setAccountQuorum("user@test", acc_quorum)
       .quorum(quorum);
 }
 
@@ -265,7 +265,7 @@ TEST(TransactionBatchTest, MakeTxBatchCollectionMany) {
  */
 TEST(TransactionBatchTest, CreateTestBatchTest) {
   ASSERT_EQ(2,
-            framework::batch::makeTestBatch(makeTxBuilder(), makeTxBuilder())
+            framework::batch::makeTestBatch(makeTxBuilder(2), makeTxBuilder())
                 ->transactions()
                 .size());
 }
