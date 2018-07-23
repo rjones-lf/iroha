@@ -152,12 +152,14 @@ namespace iroha {
      * @param txs to be validated
      * @param temporary_wsv to apply transactions on
      * @param transactions_errors_log to write errors to
+     * @param log to write errors to console
      * @return vector of proto transactions, which passed stateful validation
      */
     static std::vector<shared_model::proto::Transaction> validateTransactions(
         const shared_model::interface::types::TransactionsCollectionType &txs,
         ametsuchi::TemporaryWsv &temporary_wsv,
-        validation::TransactionsErrors &transactions_errors_log) {
+        validation::TransactionsErrors &transactions_errors_log,
+        const logger::Logger &log) {
       std::vector<shared_model::proto::Transaction> valid_proto_txs{};
       // TODO: kamilsa IR-1010 20.02.2018 rework validation logic, so that
       // casts to proto are not needed and stateful validator does not know
@@ -186,17 +188,32 @@ namespace iroha {
                 return tx.reducedHash() == batch_end_hash;
               });
           if (batch_end_it == txs_end) {
-            // for peer review: adequate exception variants?
-            throw std::runtime_error("Batch is formed incorrectly");
+            // exceptional case, such batch should not have passed stateless
+            // validation, so fail the whole proposal
+            auto batch_error_msg =
+                (boost::format("batch is formed incorrectly: could not "
+                               "find end of batch; "
+                               "first transaction is %s, supposed last "
+                               "transaction is %s")
+                 % current_tx_it->hash().hex() % batch_end_hash.hex())
+                    .str();
+            transactions_errors_log.emplace_back(std::make_pair(
+                validation::CommandError{
+                    "batch stateful validation", batch_error_msg, true},
+                current_tx_it->hash()));
+            log->error(std::move(batch_error_msg));
+            return std::vector<shared_model::proto::Transaction>{};
           }
 
           // check all batch's transactions for validness
           auto savepoint = temporary_wsv.createSavepoint(
               "batch_" + current_tx_it->hash().hex());
-          if (std::all_of(current_tx_it, batch_end_it + 1, [&temporary_wsv, &transactions_errors_log](auto &tx) {
-                return checkTransactions(
-                    temporary_wsv, transactions_errors_log, tx);
-              })) {
+          if (std::all_of(current_tx_it,
+                          batch_end_it + 1,
+                          [&temporary_wsv, &transactions_errors_log](auto &tx) {
+                            return checkTransactions(
+                                temporary_wsv, transactions_errors_log, tx);
+                          })) {
             // batch is successful; add it to the list of valid_txs and
             // release savepoint
             std::transform(
@@ -229,7 +246,7 @@ namespace iroha {
 
       auto transactions_errors_log = validation::TransactionsErrors{};
       auto valid_proto_txs = validateTransactions(
-          proposal.transactions(), temporaryWsv, transactions_errors_log);
+          proposal.transactions(), temporaryWsv, transactions_errors_log, log_);
       auto validated_proposal = shared_model::proto::ProposalBuilder()
                                     .createdTime(proposal.createdTime())
                                     .height(proposal.height())

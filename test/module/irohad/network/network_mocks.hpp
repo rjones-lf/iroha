@@ -19,6 +19,7 @@
 #define IROHA_NETWORK_MOCKS_HPP
 
 #include <gmock/gmock.h>
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/ordering_gate.hpp"
@@ -34,9 +35,12 @@ namespace iroha {
   namespace network {
     class MockPeerCommunicationService : public PeerCommunicationService {
      public:
-      MOCK_METHOD1(
+      MOCK_CONST_METHOD1(
           propagate_transaction,
           void(std::shared_ptr<const shared_model::interface::Transaction>));
+
+      MOCK_CONST_METHOD1(propagate_batch,
+                   void(const shared_model::interface::TransactionBatch &));
 
       MOCK_CONST_METHOD0(
           on_proposal,

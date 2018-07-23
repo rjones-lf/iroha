@@ -33,10 +33,6 @@ class ToriiQueryServiceTest : public ::testing::Test {
 
     // ----------- Command Service --------------
     query_processor = std::make_shared<iroha::torii::MockQueryProcessor>();
-    EXPECT_CALL(*query_processor, queryNotifier())
-        .WillOnce(
-            Return(rxcpp::observable<>::empty<
-                   std::shared_ptr<shared_model::interface::QueryResponse>>()));
 
     //----------- Server run ----------------
     runner->append(std::make_unique<torii::QueryService>(query_processor))
@@ -91,12 +87,10 @@ TEST_F(ToriiQueryServiceTest, FetchBlocksWhenValidQuery) {
           .blockResponse(*proto_block)
           .build();
 
-  EXPECT_CALL(
-      *query_processor,
-      blocksQueryHandle(
-          Truly([&blocks_query](
-                    const std::shared_ptr<shared_model::interface::BlocksQuery>
-                        query) { return *query == *blocks_query; })))
+  EXPECT_CALL(*query_processor,
+              blocksQueryHandle(Truly([&blocks_query](auto &query) {
+                return query == *blocks_query;
+              })))
       .WillOnce(Return(rxcpp::observable<>::just(block_response)));
 
   auto client = torii_utils::QuerySyncClient(ip, port);

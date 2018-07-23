@@ -3,9 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <boost/range/any_range.hpp>
+#ifndef IROHA_VALIDATION_UTILS
+#define IROHA_VALIDATION_UTILS
+
 #include <string>
 #include <vector>
+
+#include <boost/range/any_range.hpp>
+
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/types.hpp"
 
@@ -37,3 +42,5 @@ namespace iroha {
 
   }  // namespace validation
 }  // namespace iroha
+
+#endif  // IROHA_VALIDATION_UTILS

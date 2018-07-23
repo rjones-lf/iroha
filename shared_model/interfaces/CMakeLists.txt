@@ -56,6 +56,7 @@ if (IROHA_ROOT_PROJECT)
       query_responses/impl/block_response.cpp
       iroha_internal/block_variant.cpp
       iroha_internal/transaction_sequence.cpp
+      iroha_internal/transaction_batch.cpp
       )
 endif ()
 

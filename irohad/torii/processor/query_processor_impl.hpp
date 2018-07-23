@@ -26,7 +26,7 @@ namespace iroha {
   namespace torii {
 
     /**
-     * QueryProcessor provides start point for queries in the whole system
+     * QueryProcessorImpl provides implementation of QueryProcessor
      */
     class QueryProcessorImpl : public QueryProcessor {
      public:
@@ -40,39 +40,19 @@ namespace iroha {
       template <class Q>
       bool checkSignatories(const Q &qry);
 
-      /**
-       * Register client query
-       * @param query - client intent
-       */
-      void queryHandle(
-          std::shared_ptr<shared_model::interface::Query> qry) override;
+      std::unique_ptr<shared_model::interface::QueryResponse> queryHandle(
+          const shared_model::interface::Query &qry) override;
 
-      /**
-       * Register client block query
-       * @param query - client intent
-       * @return observable with block query responses
-       */
       rxcpp::observable<
           std::shared_ptr<shared_model::interface::BlockQueryResponse>>
       blocksQueryHandle(
-          std::shared_ptr<shared_model::interface::BlocksQuery> qry) override;
-
-      /**
-       * Subscribe for query responses
-       * @return observable with query responses
-       */
-      rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>
-      queryNotifier() override;
+          const shared_model::interface::BlocksQuery &qry) override;
 
      private:
-      rxcpp::subjects::subject<
-          std::shared_ptr<shared_model::interface::QueryResponse>>
-          subject_;
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::BlockQueryResponse>>
           blocksQuerySubject_;
       std::shared_ptr<ametsuchi::Storage> storage_;
-      std::mutex notifier_mutex_;
     };
   }  // namespace torii
 }  // namespace iroha

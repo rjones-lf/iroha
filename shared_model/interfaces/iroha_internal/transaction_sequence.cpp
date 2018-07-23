@@ -4,9 +4,10 @@
  */
 
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
+
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/transaction_validator.hpp"
-#include "validators/transactions_collection/any_order_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
 
 namespace shared_model {
@@ -19,11 +20,49 @@ namespace shared_model {
         const validation::TransactionsCollectionValidator<TransactionValidator,
                                                           OrderValidator>
             &validator) {
-      auto answer = validator.validatePointers(transactions);
-      if (answer.hasErrors()) {
-        return iroha::expected::makeError(answer.reason());
+      std::unordered_map<interface::types::HashType,
+                         std::vector<std::shared_ptr<Transaction>>,
+                         interface::types::HashType::Hasher>
+          extracted_batches;
+      std::vector<TransactionBatch> batches;
+
+      auto transaction_validator = validator.getTransactionValidator();
+
+      auto insert_batch =
+          [&batches](const iroha::expected::Value<TransactionBatch> &value) {
+            batches.push_back(value.value);
+          };
+
+      validation::Answer result;
+      for (const auto &tx : transactions) {
+        if (auto meta = tx->batchMeta()) {
+          auto hashes = meta.get()->transactionHashes();
+          auto batch_hash = TransactionBatch::calculateReducedBatchHash(hashes);
+          extracted_batches[batch_hash].push_back(tx);
+        } else {
+          TransactionBatch::createTransactionBatch(tx, transaction_validator)
+              .match(insert_batch, [&tx, &result](const auto &err) {
+                result.addReason(std::make_pair(
+                    std::string("Error in transaction with reduced hash: ")
+                        + tx->reducedHash().hex(),
+                    std::vector<std::string>{err.error}));
+              });
+        }
       }
-      return iroha::expected::makeValue(TransactionSequence(transactions));
+
+      for (const auto &it : extracted_batches) {
+        TransactionBatch::createTransactionBatch(it.second, validator)
+            .match(insert_batch, [&it, &result](const auto &err) {
+              result.addReason(std::make_pair(
+                  it.first.toString(), std::vector<std::string>{err.error}));
+            });
+      }
+
+      if (result.hasErrors()) {
+        return iroha::expected::makeError(result.reason());
+      }
+
+      return iroha::expected::makeValue(TransactionSequence(batches));
     }
 
     template iroha::expected::Result<TransactionSequence, std::string>
@@ -46,47 +85,33 @@ namespace shared_model {
                     validation::FieldValidator>>,
             validation::BatchOrderValidator> &validator);
 
-    types::SharedTxsCollectionType TransactionSequence::transactions() const {
-      return transactions_;
+    const types::SharedTxsCollectionType &TransactionSequence::transactions()
+        const {
+      if (not transactions_) {
+        types::SharedTxsCollectionType result;
+        auto transactions_amount = 0u;
+        for (const auto &batch : batches_) {
+          transactions_amount += batch.transactions().size();
+        }
+        result.reserve(transactions_amount);
+        for (const auto &batch : batches_) {
+          auto &transactions = batch.transactions();
+          std::copy(transactions.begin(),
+                    transactions.end(),
+                    std::back_inserter(result));
+        }
+        transactions_.emplace(std::move(result));
+      }
+      return transactions_.value();
+    }
+
+    const types::BatchesCollectionType &TransactionSequence::batches() const {
+      return batches_;
     }
 
     TransactionSequence::TransactionSequence(
-        const types::SharedTxsCollectionType &transactions)
-        : transactions_(transactions) {}
-
-    types::BatchesType TransactionSequence::batches() const {
-      if (batches_) {
-        return batches_.value();
-      }
-
-      std::unordered_map<std::string, std::vector<std::shared_ptr<Transaction>>>
-          extracted_batches;
-      std::vector<types::SharedTxsCollectionType> batches;
-      for (const auto &tx : transactions_) {
-        if (auto meta = tx->batchMeta()) {
-          auto hashes = meta.get()->transactionHashes();
-          auto batch_hash = this->calculateBatchHash(hashes);
-          extracted_batches[batch_hash].push_back(tx);
-        } else {
-          batches.emplace_back(std::vector<std::shared_ptr<Transaction>>{tx});
-        }
-      }
-      for (auto it : extracted_batches) {
-        batches.emplace_back(it.second);
-      }
-
-      batches_.emplace(batches);
-      return batches;
-    }
-
-    std::string TransactionSequence::calculateBatchHash(
-        std::vector<types::HashType> reduced_hashes) const {
-      std::stringstream concatenated_hashes_stream;
-      for (const auto &hash : reduced_hashes) {
-        concatenated_hashes_stream << hash.hex();
-      }
-      return concatenated_hashes_stream.str();
-    }
+        const types::BatchesCollectionType &batches)
+        : batches_(batches) {}
 
   }  // namespace interface
 }  // namespace shared_model

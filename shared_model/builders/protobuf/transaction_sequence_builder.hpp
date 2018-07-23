@@ -6,6 +6,7 @@
 #ifndef IROHA_TRANSACTION_SEQUENCE_BUILDER_HPP
 #define IROHA_TRANSACTION_SEQUENCE_BUILDER_HPP
 
+#include "builders/protobuf/transport_builder.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 
@@ -31,13 +32,15 @@ namespace shared_model {
        */
       template <class T>
       iroha::expected::Result<interface::TransactionSequence, std::string>
-      build(T &transport) {
+      build(const T &transport) {
+        const auto &txs = transport.transactions();
         std::vector<std::shared_ptr<interface::Transaction>> shm_txs;
-        std::transform(
-            transport.begin(),
-            transport.end(),
-            std::back_inserter(shm_txs),
-            [](const auto &tx) { return std::make_shared<Transaction>(tx); });
+        std::transform(txs.begin(),
+                       txs.end(),
+                       std::back_inserter(shm_txs),
+                       [](const iroha::protocol::Transaction &tx) {
+                         return std::make_shared<Transaction>(tx);
+                       });
         return interface::TransactionSequence::createTransactionSequence(
             shm_txs, stateless_validator_);
       }

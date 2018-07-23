@@ -102,7 +102,7 @@ namespace shared_model {
       typename std::enable_if<
           std::is_base_of<shared_model::interface::Transaction, U>::value,
           interface::types::HashType>::type
-      reduced_hash() {
+      reducedHash() {
         return object_.reducedHash();
       }
 

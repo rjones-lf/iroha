@@ -38,7 +38,7 @@ class KVTest : public AmetsuchiTest {
  protected:
   void SetUp() override {
     AmetsuchiTest::SetUp();
-    auto storageResult = StorageImpl::create(block_store_path, pgopt_);
+    auto storageResult = StorageImpl::create(block_store_path, pgopt_, factory);
     storageResult.match(
         [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
           storage = _storage.value;

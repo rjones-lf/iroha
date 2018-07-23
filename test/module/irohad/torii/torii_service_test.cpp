@@ -62,7 +62,10 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
 
   void propagate_transaction(
       std::shared_ptr<const shared_model::interface::Transaction> transaction)
-      override {}
+      const override {}
+
+  void propagate_batch(
+      const shared_model::interface::TransactionBatch &batch) const override {}
 
   rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
   on_proposal() const override {
@@ -475,4 +478,112 @@ TEST_F(ToriiServiceTest, StreamingNoTx) {
   ASSERT_EQ(torii_response.size(), 1);
   ASSERT_EQ(torii_response.at(0).tx_status(),
             iroha::protocol::TxStatus::NOT_RECEIVED);
+}
+
+/**
+ * Checks that torii is able to handle lists (sequences) of transactions
+ *
+ * @given torii service and collection of transactions
+ * @when that collection is asked to be processed by Torii
+ * @then statuses of all transactions from that request are STATELESS_VALID
+ */
+TEST_F(ToriiServiceTest, ListOfTxs) {
+  const auto test_txs_number = 5;
+
+  // initial preparations: creation of variables and txs
+  auto client = torii::CommandSyncClient(ip, port);
+  std::vector<shared_model::interface::types::HashType> tx_hashes(
+      test_txs_number);
+  iroha::protocol::TxList tx_list;
+
+  for (auto i = 0; i < test_txs_number; ++i) {
+    auto shm_tx = shared_model::proto::TransactionBuilder()
+                      .creatorAccountId("doge@master" + std::to_string(i))
+                      .createdTime(iroha::time::now())
+                      .setAccountQuorum("doge@master", 2)
+                      .quorum(1)
+                      .build()
+                      .signAndAddSignature(
+                          shared_model::crypto::DefaultCryptoAlgorithmType::
+                              generateKeypair())
+                      .finish();
+    tx_hashes[i] = shm_tx.hash();
+    new (tx_list.add_transactions())
+        iroha::protocol::Transaction(shm_tx.getTransport());
+  }
+
+  // send the txs
+  client.ListTorii(tx_list);
+
+  // check their statuses
+  std::for_each(
+      std::begin(tx_hashes), std::end(tx_hashes), [&client](auto &hash) {
+        iroha::protocol::TxStatusRequest tx_request;
+        tx_request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
+        iroha::protocol::ToriiResponse toriiResponse;
+        client.Status(tx_request, toriiResponse);
+
+        ASSERT_EQ(toriiResponse.tx_status(),
+                  iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+      });
+}
+
+/**
+ * Checks that in case of failed transactions list every transaction has a
+ * related status and error message
+ *
+ * @given torii service and a list of bad-formed transactions
+ * @when checking those transactions after sending them to Torii
+ * @then every transaction from this list will have STATELESS_FAILED status @and
+ * the same corresponding error message
+ */
+TEST_F(ToriiServiceTest, FailedListOfTxs) {
+  const auto test_txs_number = 5;
+
+  // initial preparations: creation of variables and txs
+  auto client = torii::CommandSyncClient(ip, port);
+  std::vector<shared_model::interface::types::HashType> tx_hashes(
+      test_txs_number);
+  iroha::protocol::TxList tx_list;
+
+  for (auto i = 0; i < test_txs_number; ++i) {
+    auto shm_tx = TestTransactionBuilder()
+                      .creatorAccountId("doge@master" + std::to_string(i))
+                      .createdTime(iroha::time::now(std::chrono::hours(24)
+                                                    + std::chrono::minutes(1)))
+                      .setAccountQuorum("doge@master", 2)
+                      .quorum(1)
+                      .build();
+    tx_hashes[i] = shm_tx.hash();
+    new (tx_list.add_transactions())
+        iroha::protocol::Transaction(shm_tx.getTransport());
+  }
+
+  // send the txs
+  client.ListTorii(tx_list);
+
+  // actual error message is too big and hardly predictable, so we want at least
+  // to make sure that edges of tx list are right
+  auto error_msg_beginning =
+      "Stateless invalid tx in transaction sequence, beginning "
+      "with tx : "
+      + tx_hashes.front().hex() + " and ending with tx "
+      + tx_hashes.back().hex();
+
+  // check their statuses
+  std::for_each(
+      std::begin(tx_hashes),
+      std::end(tx_hashes),
+      [&client, &error_msg_beginning](auto &hash) {
+        iroha::protocol::TxStatusRequest tx_request;
+        tx_request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
+        iroha::protocol::ToriiResponse toriiResponse;
+        client.Status(tx_request, toriiResponse);
+        auto error_beginning = toriiResponse.error_message().substr(
+            0, toriiResponse.error_message().find_first_of('.'));
+
+        ASSERT_EQ(toriiResponse.tx_status(),
+                  iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
+        ASSERT_EQ(error_beginning, error_msg_beginning);
+      });
 }

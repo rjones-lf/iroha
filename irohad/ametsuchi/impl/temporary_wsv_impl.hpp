@@ -22,6 +22,7 @@
 
 #include "ametsuchi/temporary_wsv.hpp"
 #include "execution/command_executor.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -43,7 +44,9 @@ namespace iroha {
         bool is_released_;
       };
 
-      explicit TemporaryWsvImpl(std::unique_ptr<soci::session> sql);
+      explicit TemporaryWsvImpl(std::unique_ptr<soci::session> sql,
+                                std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                                factory);
 
       expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &,

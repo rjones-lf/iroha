@@ -23,7 +23,7 @@
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "logger/logger.hpp"
-#include "postgres_wsv_common.hpp"
+#include "ametsuchi/impl/soci_utils.hpp"
 
 namespace iroha {
   namespace ametsuchi {
