@@ -91,9 +91,9 @@ namespace iroha {
             batch->transactions().begin(),
             batch->transactions().end(),
             [this, &proto_proposal](auto &tx) {
-              *proto_proposal.add_transactions() = std::move(
+              *proto_proposal.add_transactions() =
                   static_cast<shared_model::proto::Transaction *>(tx.get())
-                      ->getTransport());
+                      ->getTransport();
               current_size_--;
             });
       }

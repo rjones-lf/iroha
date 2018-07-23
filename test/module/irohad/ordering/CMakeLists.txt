@@ -17,8 +17,6 @@ target_link_libraries(ordering_service_test
     ordering_service
     shared_model_stateless_validation
     shared_model_interfaces
-    integration_framework
-    shared_model_proto_backend
     )
 
 addtest(ordering_gate_test ordering_gate_test.cpp)

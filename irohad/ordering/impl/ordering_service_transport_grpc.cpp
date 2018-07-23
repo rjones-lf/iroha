@@ -38,7 +38,8 @@ grpc::Status OrderingServiceTransportGrpc::onTransaction(
     log_->error("No subscriber");
   } else {
     auto batch_result =
-        shared_model::interface::TransactionBatch::createTransactionBatch<shared_model::validation::DefaultTransactionValidator>(
+        shared_model::interface::TransactionBatch::createTransactionBatch<
+            shared_model::validation::DefaultTransactionValidator>(
             std::make_shared<shared_model::proto::Transaction>(
                 iroha::protocol::Transaction(*request)));
     batch_result.match(
@@ -64,7 +65,6 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
   if (subscriber_.expired()) {
     log_->error("No subscriber");
   } else {
-    //
     auto txs =
         std::vector<std::shared_ptr<shared_model::interface::Transaction>>(
             request->transactions_size());
@@ -92,7 +92,7 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
               "Could not create batch from received transaction list: {}",
               error.error);
         });
-    }
+  }
   return ::grpc::Status::OK;
 }
 
