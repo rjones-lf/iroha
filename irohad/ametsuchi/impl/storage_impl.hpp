@@ -102,15 +102,6 @@ namespace iroha {
       const PostgresOptions postgres_options_;
 
      private:
-      template <typename T>
-      class Deleter;
-
-      template <typename T>
-      friend class Deleter;
-
-      template <typename Query, typename Backend>
-      std::shared_ptr<Query> setupQuery(Backend &b) const;
-
       std::unique_ptr<KeyValueStorage> block_store_;
 
       std::shared_ptr<soci::connection_pool> connection_;

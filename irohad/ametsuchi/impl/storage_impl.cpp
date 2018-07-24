@@ -145,18 +145,21 @@ namespace iroha {
       }
 
       if (auto dbname = postgres_options_.dbname()) {
+        auto &db = dbname.value();
         std::unique_lock<std::shared_timed_mutex> lock(drop_mutex);
-        log_->info("Drop database");
+        log_->info("Drop database {}", db);
         connection_.reset();
         soci::session sql(soci::postgresql,
                           postgres_options_.optionsStringWithoutDbName());
+        // kill active connections
         sql << R"(
 SELECT pg_terminate_backend(pg_stat_activity.pid)
 FROM pg_stat_activity
 WHERE pg_stat_activity.datname = :dbname
   AND pid <> pg_backend_pid();)",
             soci::use(dbname.value());
-        sql << "DROP DATABASE " + dbname.value();
+        // perform dropping
+        sql << "DROP DATABASE " + db;
       } else {
         soci::session(*connection_) << drop_;
       }
@@ -280,44 +283,52 @@ WHERE pg_stat_activity.datname = :dbname
       storage->committed = true;
     }
 
-    template <typename Query>
-    class StorageImpl::Deleter {
-     public:
-      Deleter(const StorageImpl *ptr, soci::session &conn, size_t pool_pos)
-          : ptr_(ptr), conn_(conn), pool_pos_(pool_pos) {}
+    namespace {
+      template <typename Query>
+      class Deleter {
+       public:
+        Deleter(std::shared_ptr<soci::connection_pool> conn, size_t pool_pos)
+            : conn_(std::move(conn)), pool_pos_(pool_pos) {}
 
-      void operator()(Query *q) const {
-        if (ptr_->connection_ != nullptr) {
-          ptr_->connection_->give_back(pool_pos_);
+        void operator()(Query *q) const {
+          if (conn_ != nullptr) {
+            conn_->give_back(pool_pos_);
+          }
+          delete q;
         }
-        delete q;
-      }
 
-     private:
-      const StorageImpl *ptr_;
-      soci::session &conn_;
-      const size_t pool_pos_;
-    };
+       private:
+        std::shared_ptr<soci::connection_pool> conn_;
+        const size_t pool_pos_;
+      };
 
-    template <typename Query, typename Backend>
-    std::shared_ptr<Query> StorageImpl::setupQuery(Backend &b) const {
-      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
-      if (connection_ == nullptr) {
-        log_->warn("Storage was deleted, cannot perform setup");
-        return nullptr;
+      template <typename Query, typename Backend>
+      std::shared_ptr<Query> setupQuery(
+          Backend &b,
+          std::shared_ptr<soci::connection_pool> conn,
+          const logger::Logger &log_,
+          std::shared_timed_mutex &drop_mutex) {
+        std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+        if (conn == nullptr) {
+          log_->warn("Storage was deleted, cannot perform setup");
+          return nullptr;
+        }
+        auto pool_pos = conn->lease();
+        soci::session &session = conn->at(pool_pos);
+        lock.unlock();
+        return {new Query(session, b),
+                Deleter<Query>(std::move(conn), pool_pos)};
       }
-      auto pool_pos = connection_->lease();
-      soci::session &session = connection_->at(pool_pos);
-      lock.unlock();
-      return {new Query(session, b), Deleter<Query>(this, session, pool_pos)};
-    }
+    }  // namespace
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
-      return setupQuery<PostgresWsvQuery>(factory_);
+      return setupQuery<PostgresWsvQuery>(
+          factory_, connection_, log_, drop_mutex);
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
-      return setupQuery<PostgresBlockQuery>(*block_store_);
+      return setupQuery<PostgresBlockQuery>(
+          *block_store_, connection_, log_, drop_mutex);
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
