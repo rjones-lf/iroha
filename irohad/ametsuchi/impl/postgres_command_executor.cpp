@@ -103,24 +103,6 @@ namespace iroha {
     PostgresCommandExecutor::PostgresCommandExecutor(soci::session &sql)
         : sql_(sql), is_genesis_(false) {}
 
-    std::string checkAccountRolePermission(
-        shared_model::interface::permissions::Role permission) {
-      const auto perm_str =
-          shared_model::interface::RolePermissionSet({permission})
-              .toBitstring();
-      const auto bits = shared_model::interface::RolePermissionSet::size();
-      std::string query = R"(
-          SELECT COALESCE(bit_or(rp.permission), '0'::bit()"
-          + std::to_string(bits) + R"()) & ')" + std::string(perm_str)
-          + R"(' = ')" + std::string(perm_str)
-          + R"(' FROM role_has_permissions AS rp
-              JOIN account_has_roles AS ar on ar.role_id = rp.role_id
-              WHERE ar.account_id = :role_account_id
-          )";
-
-      return query;
-    }
-
     void PostgresCommandExecutor::setCreatorAccountId(
         const shared_model::interface::types::AccountIdType
             &creator_account_id) {
