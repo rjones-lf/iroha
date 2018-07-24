@@ -256,6 +256,10 @@ TEST_F(OrderingServiceTest, ConcurrentGenerateProposal) {
  * called after destructor call
  */
 TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
+  std::vector<shared_model::interface::TransactionBatch> batches;
+  for (auto i = 0; i < 200; ++i) {
+    batches.push_back(framework::batch::createValidBatch(1));
+  }
   const auto max_proposal = 100000;
   const auto commit_delay = 100ms;
   EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
@@ -282,8 +286,7 @@ TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
 
     auto on_tx = [&]() {
       for (int i = 0; i < 1000; ++i) {
-        auto batch = framework::batch::createValidBatch(1);
-        ordering_service.onBatch(std::move(batch));
+        ordering_service.onBatch(std::move(batches[i]));
       }
     };
 

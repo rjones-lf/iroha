@@ -8,8 +8,8 @@
 
 #include <tbb/concurrent_queue.h>
 #include <memory>
-#include <mutex>
 #include <rxcpp/rx.hpp>
+#include <shared_mutex>
 
 #include "logger/logger.hpp"
 #include "network/ordering_service.hpp"
@@ -119,9 +119,27 @@ namespace iroha {
       rxcpp::composite_subscription handle_;
 
       /**
-       * Mutex for incoming transactions
+       * Variables for concurrency
        */
-      std::mutex mutex_;
+      /// mutex for both batch and proposal generation
+      std::shared_timed_mutex batch_prop_mutex_;
+      /// mutex for events activating
+      std::mutex event_mutex_;
+      /// condition variable for waiting
+      std::condition_variable_any prop_gen_cv_;
+      /// RAII structure for tracking, if some proposal is generated now
+      bool prop_is_generated_now_;
+      struct ProposalGenerationStatusOn {
+        explicit ProposalGenerationStatusOn(
+            std::shared_ptr<bool> prop_generation_status)
+            : prop_generation_status_(std::move(prop_generation_status)) {
+          *prop_generation_status_ = true;
+        }
+        ~ProposalGenerationStatusOn() {
+          *prop_generation_status_ = false;
+        }
+        std::shared_ptr<bool> prop_generation_status_;
+      };
 
       logger::Logger log_;
     };
