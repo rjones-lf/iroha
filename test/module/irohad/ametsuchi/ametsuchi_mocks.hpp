@@ -156,19 +156,19 @@ namespace iroha {
      public:
       MOCK_METHOD1(
           getAccountTransactions,
-          rxcpp::observable<wTransaction>(
+          std::vector<wTransaction>(
               const shared_model::interface::types::AccountIdType &account_id));
       MOCK_METHOD1(getTxByHashSync,
                    boost::optional<wTransaction>(
                        const shared_model::crypto::Hash &hash));
       MOCK_METHOD2(
           getAccountAssetTransactions,
-          rxcpp::observable<wTransaction>(
+          std::vector<wTransaction>(
               const shared_model::interface::types::AccountIdType &account_id,
               const shared_model::interface::types::AssetIdType &asset_id));
       MOCK_METHOD1(
           getTransactions,
-          rxcpp::observable<boost::optional<wTransaction>>(
+          std::vector<boost::optional<wTransaction>>(
               const std::vector<shared_model::crypto::Hash> &tx_hashes));
       MOCK_METHOD2(getBlocks,
           std::vector<BlockQuery::wBlock>(

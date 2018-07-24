@@ -112,11 +112,11 @@ class BlockQueryTest : public AmetsuchiTest {
  */
 TEST_F(BlockQueryTest, GetAccountTransactionsFromSeveralBlocks) {
   // Check that creator1 has created 3 transactions
-  auto getCreator1TxWrapper = make_test_subscriber<CallExact>(
-      blocks->getAccountTransactions(creator1), 3);
-  getCreator1TxWrapper.subscribe(
-      [this](auto val) { EXPECT_EQ(val->creatorAccountId(), creator1); });
-  ASSERT_TRUE(getCreator1TxWrapper.validate());
+  auto txs = blocks->getAccountTransactions(creator1);
+  ASSERT_EQ(txs.size(), 3);
+  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
+    EXPECT_EQ(tx->creatorAccountId(), creator1);
+  });
 }
 
 /**
@@ -128,11 +128,11 @@ TEST_F(BlockQueryTest, GetAccountTransactionsFromSeveralBlocks) {
  */
 TEST_F(BlockQueryTest, GetAccountTransactionsFromSingleBlock) {
   // Check that creator1 has created 1 transaction
-  auto getCreator2TxWrapper = make_test_subscriber<CallExact>(
-      blocks->getAccountTransactions(creator2), 1);
-  getCreator2TxWrapper.subscribe(
-      [this](auto val) { EXPECT_EQ(val->creatorAccountId(), creator2); });
-  ASSERT_TRUE(getCreator2TxWrapper.validate());
+  auto txs = blocks->getAccountTransactions(creator2);
+  ASSERT_EQ(txs.size(), 1);
+  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
+    EXPECT_EQ(tx->creatorAccountId(), creator2);
+  });
 }
 
 /**
@@ -143,10 +143,8 @@ TEST_F(BlockQueryTest, GetAccountTransactionsFromSingleBlock) {
  */
 TEST_F(BlockQueryTest, GetAccountTransactionsNonExistingUser) {
   // Check that "nonexisting" user has no transaction
-  auto getNonexistingTxWrapper = make_test_subscriber<CallExact>(
-      blocks->getAccountTransactions("nonexisting user"), 0);
-  getNonexistingTxWrapper.subscribe();
-  ASSERT_TRUE(getNonexistingTxWrapper.validate());
+  auto txs = blocks->getAccountTransactions("nonexisting user");
+  ASSERT_EQ(txs.size(), 0);
 }
 
 /**
@@ -157,20 +155,12 @@ TEST_F(BlockQueryTest, GetAccountTransactionsNonExistingUser) {
  * @then queried transactions
  */
 TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
-  auto wrapper = make_test_subscriber<CallExact>(
-      blocks->getTransactions({tx_hashes[1], tx_hashes[3]}), 2);
-  wrapper.subscribe([this](auto tx) {
-    static auto subs_cnt = 0;
-    subs_cnt++;
-    if (subs_cnt == 1) {
-      ASSERT_TRUE(tx);
-      EXPECT_EQ(tx_hashes[1], (*tx)->hash());
-    } else {
-      ASSERT_TRUE(tx);
-      EXPECT_EQ(tx_hashes[3], (*tx)->hash());
-    }
-  });
-  ASSERT_TRUE(wrapper.validate());
+  auto txs = blocks->getTransactions({tx_hashes[1], tx_hashes[3]});
+  ASSERT_EQ(txs.size(), 2);
+  ASSERT_TRUE(txs[0]);
+  ASSERT_TRUE(txs[1]);
+  ASSERT_EQ(txs[0].get()->hash(), tx_hashes[1]);
+  ASSERT_EQ(txs[1].get()->hash(), tx_hashes[3]);
 }
 
 /**
@@ -184,11 +174,11 @@ TEST_F(BlockQueryTest, GetTransactionsIncludesNonExistingTxHashes) {
   shared_model::crypto::Hash invalid_tx_hash_1(zero_string),
       invalid_tx_hash_2(std::string(
           shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength, '9'));
-  auto wrapper = make_test_subscriber<CallExact>(
-      blocks->getTransactions({invalid_tx_hash_1, invalid_tx_hash_2}), 2);
-  wrapper.subscribe(
-      [](auto transaction) { EXPECT_EQ(boost::none, transaction); });
-  ASSERT_TRUE(wrapper.validate());
+
+  auto txs = blocks->getTransactions({invalid_tx_hash_1, invalid_tx_hash_2});
+  ASSERT_EQ(txs.size(), 2);
+  ASSERT_FALSE(txs[0]);
+  ASSERT_FALSE(txs[1]);
 }
 
 /**
@@ -200,10 +190,8 @@ TEST_F(BlockQueryTest, GetTransactionsIncludesNonExistingTxHashes) {
  */
 TEST_F(BlockQueryTest, GetTransactionsWithEmpty) {
   // transactions' hashes are empty.
-  auto wrapper =
-      make_test_subscriber<CallExact>(blocks->getTransactions({}), 0);
-  wrapper.subscribe();
-  ASSERT_TRUE(wrapper.validate());
+  auto txs = blocks->getTransactions({});
+  ASSERT_EQ(txs.size(), 0);
 }
 
 /**
@@ -216,19 +204,11 @@ TEST_F(BlockQueryTest, GetTransactionsWithEmpty) {
 TEST_F(BlockQueryTest, GetTransactionsWithInvalidTxAndValidTx) {
   // TODO 15/11/17 motxx - Use EqualList VerificationStrategy
   shared_model::crypto::Hash invalid_tx_hash_1(zero_string);
-  auto wrapper = make_test_subscriber<CallExact>(
-      blocks->getTransactions({invalid_tx_hash_1, tx_hashes[0]}), 2);
-  wrapper.subscribe([this](auto tx) {
-    static auto subs_cnt = 0;
-    subs_cnt++;
-    if (subs_cnt == 1) {
-      EXPECT_EQ(boost::none, tx);
-    } else {
-      EXPECT_TRUE(tx);
-      EXPECT_EQ(tx_hashes[0], (*tx)->hash());
-    }
-  });
-  ASSERT_TRUE(wrapper.validate());
+  auto txs = blocks->getTransactions({invalid_tx_hash_1, tx_hashes[0]});
+  ASSERT_EQ(txs.size(), 2);
+  ASSERT_FALSE(txs[0]);
+  ASSERT_TRUE(txs[1]);
+  ASSERT_EQ(txs[1].get()->hash(), tx_hashes[0]);
 }
 
 /**

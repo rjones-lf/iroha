@@ -59,11 +59,11 @@ void validateAccountTransactions(B &&blocks,
                                  const std::string &account,
                                  int call_count,
                                  int command_count) {
-  validateCalls(
-      blocks->getAccountTransactions(account),
-      [&](const auto &tx) { EXPECT_EQ(tx->commands().size(), command_count); },
-      call_count,
-      " for " + account);
+  auto txs = blocks->getAccountTransactions(account);
+  ASSERT_EQ(txs.size(), call_count);
+  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
+    EXPECT_EQ(tx->commands().size(), command_count);
+  });
 }
 
 /**
@@ -81,11 +81,11 @@ void validateAccountAssetTransactions(B &&blocks,
                                       const std::string &asset,
                                       int call_count,
                                       int command_count) {
-  validateCalls(
-      blocks->getAccountAssetTransactions(account, asset),
-      [&](const auto &tx) { EXPECT_EQ(tx->commands().size(), command_count); },
-      call_count,
-      " for " + account + " " + asset);
+  auto txs = blocks->getAccountAssetTransactions(account, asset);
+  ASSERT_EQ(txs.size(), call_count);
+  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
+    EXPECT_EQ(tx->commands().size(), command_count);
+  });
 }
 
 /**

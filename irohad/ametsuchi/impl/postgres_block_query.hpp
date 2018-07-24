@@ -26,15 +26,15 @@ namespace iroha {
       explicit PostgresBlockQuery(soci::session &sql,
                                   KeyValueStorage &file_store);
 
-      rxcpp::observable<wTransaction> getAccountTransactions(
+      std::vector<wTransaction> getAccountTransactions(
           const shared_model::interface::types::AccountIdType &account_id)
           override;
 
-      rxcpp::observable<wTransaction> getAccountAssetTransactions(
+      std::vector<wTransaction> getAccountAssetTransactions(
           const shared_model::interface::types::AccountIdType &account_id,
           const shared_model::interface::types::AssetIdType &asset_id) override;
 
-      rxcpp::observable<boost::optional<wTransaction>> getTransactions(
+      std::vector<boost::optional<wTransaction>> getTransactions(
           const std::vector<shared_model::crypto::Hash> &tx_hashes) override;
 
       boost::optional<wTransaction> getTxByHashSync(
@@ -80,7 +80,7 @@ namespace iroha {
        * @return
        */
       std::function<void(std::vector<std::string> &result)> callback(
-          const rxcpp::subscriber<wTransaction> &s, uint64_t block_id);
+          std::vector<wTransaction> &s, uint64_t block_id);
 
       soci::session &sql_;
 
