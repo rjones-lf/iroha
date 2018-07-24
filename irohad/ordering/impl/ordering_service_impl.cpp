@@ -29,8 +29,7 @@ namespace iroha {
           max_size_(max_size),
           current_size_(0),
           transport_(transport),
-          persistent_state_(persistent_state),
-          prop_is_generated_now_(false) {
+          persistent_state_(persistent_state){
       log_ = logger::log("OrderingServiceImpl");
 
       // restore state of ordering service from persistent storage
@@ -72,8 +71,6 @@ namespace iroha {
         shared_model::interface::TransactionBatch &&batch) {
       std::shared_lock<std::shared_timed_mutex> batch_prop_lock(
           batch_prop_mutex_);
-      prop_gen_cv_.wait(batch_prop_lock,
-                        [this] { return not prop_is_generated_now_; });
 
       current_size_.fetch_add(batch.transactions().size());
       queue_.push(std::make_unique<shared_model::interface::TransactionBatch>(
@@ -87,46 +84,41 @@ namespace iroha {
     }
 
     void OrderingServiceImpl::generateProposal() {
-      {
-        ProposalGenerationStatusOn prop_generation_on{
-            std::make_shared<bool>(prop_is_generated_now_)};
-        std::unique_lock<std::shared_timed_mutex> lock(batch_prop_mutex_);
+      std::lock_guard<std::shared_timed_mutex> lock(batch_prop_mutex_);
 
-        // TODO 05/03/2018 andrei IR-1046 Server-side shared model object
-        // factories with move semantics
-        iroha::protocol::Proposal proto_proposal;
-        proto_proposal.set_height(proposal_height_++);
-        proto_proposal.set_created_time(iroha::time::now());
-        log_->info("Start proposal generation");
-        for (std::unique_ptr<shared_model::interface::TransactionBatch> batch;
-             static_cast<size_t>(proto_proposal.transactions_size()) < max_size_
-             and queue_.try_pop(batch);) {
-          std::for_each(
-              batch->transactions().begin(),
-              batch->transactions().end(),
-              [this, &proto_proposal](auto &tx) {
-                *proto_proposal.add_transactions() =
-                    static_cast<shared_model::proto::Transaction *>(tx.get())
-                        ->getTransport();
-                current_size_--;
-              });
-        }
-
-        auto proposal = std::make_unique<shared_model::proto::Proposal>(
-            std::move(proto_proposal));
-
-        // Save proposal height to the persistent storage.
-        // In case of restart it reloads state.
-        if (persistent_state_->saveProposalHeight(proposal_height_)) {
-          publishProposal(std::move(proposal));
-        } else {
-          // TODO(@l4l) 23/03/18: publish proposal independent of psql status
-          // IR-1162
-          log_->warn(
-              "Proposal height cannot be saved. Skipping proposal publish");
-        }
+      // TODO 05/03/2018 andrei IR-1046 Server-side shared model object
+      // factories with move semantics
+      iroha::protocol::Proposal proto_proposal;
+      proto_proposal.set_height(proposal_height_++);
+      proto_proposal.set_created_time(iroha::time::now());
+      log_->info("Start proposal generation");
+      for (std::unique_ptr<shared_model::interface::TransactionBatch> batch;
+           static_cast<size_t>(proto_proposal.transactions_size()) < max_size_
+           and queue_.try_pop(batch);) {
+        std::for_each(
+            batch->transactions().begin(),
+            batch->transactions().end(),
+            [this, &proto_proposal](auto &tx) {
+              *proto_proposal.add_transactions() =
+                  static_cast<shared_model::proto::Transaction *>(tx.get())
+                      ->getTransport();
+              current_size_--;
+            });
       }
-      prop_gen_cv_.notify_all();
+
+      auto proposal = std::make_unique<shared_model::proto::Proposal>(
+          std::move(proto_proposal));
+
+      // Save proposal height to the persistent storage.
+      // In case of restart it reloads state.
+      if (persistent_state_->saveProposalHeight(proposal_height_)) {
+        publishProposal(std::move(proposal));
+      } else {
+        // TODO(@l4l) 23/03/18: publish proposal independent of psql status
+        // IR-1162
+        log_->warn(
+            "Proposal height cannot be saved. Skipping proposal publish");
+      }
     }
 
     void OrderingServiceImpl::publishProposal(

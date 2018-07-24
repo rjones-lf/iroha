@@ -125,21 +125,6 @@ namespace iroha {
       std::shared_timed_mutex batch_prop_mutex_;
       /// mutex for events activating
       std::mutex event_mutex_;
-      /// condition variable for waiting
-      std::condition_variable_any prop_gen_cv_;
-      /// RAII structure for tracking, if some proposal is generated now
-      bool prop_is_generated_now_;
-      struct ProposalGenerationStatusOn {
-        explicit ProposalGenerationStatusOn(
-            std::shared_ptr<bool> prop_generation_status)
-            : prop_generation_status_(std::move(prop_generation_status)) {
-          *prop_generation_status_ = true;
-        }
-        ~ProposalGenerationStatusOn() {
-          *prop_generation_status_ = false;
-        }
-        std::shared_ptr<bool> prop_generation_status_;
-      };
 
       logger::Logger log_;
     };
