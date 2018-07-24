@@ -617,43 +617,9 @@ TEST_F(RemoveSignatoryTest, ValidWhenMultipleKeys) {
                                             Grantable::kRemoveMySignatory))
       .WillOnce(Return(true));
 
-  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
-      .WillOnce(Return(account));
-
-  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->accountId()))
-      .WillOnce(Return(many_pubkeys));
-
   ASSERT_TRUE(val(validate(command)));
 }
 
-/**
- * @given RemoveSignatory with valid parameters
- * @when command is executed and return single signatory pubkey
- * @then executor will be failed
- */
-TEST_F(RemoveSignatoryTest, InvalidWhenSingleKey) {
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(kAdminId,
-                                            remove_signatory->accountId(),
-                                            Grantable::kRemoveMySignatory))
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
-      .WillOnce(Return(account));
-
-  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->accountId()))
-      .WillOnce(Return(account_pubkeys));
-
-  // delete methods must not be called because the account quorum is 1.
-  EXPECT_CALL(*wsv_command,
-              deleteAccountSignatory(remove_signatory->accountId(),
-                                     remove_signatory->pubkey()))
-      .Times(0);
-  EXPECT_CALL(*wsv_command, deleteSignatory(remove_signatory->pubkey()))
-      .Times(0);
-
-  ASSERT_TRUE(err(validate(command)));
-}
 
 /**
  * @given RemoveSignatory and creator has not grantable permissions
@@ -670,101 +636,6 @@ TEST_F(RemoveSignatoryTest, InvalidWhenNoPermissions) {
   ASSERT_TRUE(err(validate(command)));
 }
 
-/**
- * @given RemoveSignatory with signatory is not present in account
- * @when command is executed
- * @then executor will be passed
- */
-TEST_F(RemoveSignatoryTest, InvalidWhenNoKey) {
-  // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  std::unique_ptr<shared_model::interface::Command> wrong_key_command =
-      buildCommand(
-          TestTransactionBuilder().removeSignatory(kAccountId, kPubKey1));
-  auto wrong_key_remove_signatory =
-      getConcreteCommand<shared_model::interface::RemoveSignatory>(
-          wrong_key_command);
-
-  EXPECT_CALL(
-      *wsv_query,
-      hasAccountGrantablePermission(kAdminId,
-                                    wrong_key_remove_signatory->accountId(),
-                                    Grantable::kRemoveMySignatory))
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(*wsv_query, getAccount(wrong_key_remove_signatory->accountId()))
-      .WillOnce(Return(account));
-
-  EXPECT_CALL(*wsv_query,
-              getSignatories(wrong_key_remove_signatory->accountId()))
-      .WillOnce(Return(account_pubkeys));
-
-  ASSERT_TRUE(err(validate(wrong_key_command)));
-}
-
-/**
- * @given RemoveSignatory
- * @when command tries to remove signatory from non-existing account
- * @then execute fails
- */
-TEST_F(RemoveSignatoryTest, InvalidWhenNoAccount) {
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(kAdminId,
-                                            remove_signatory->accountId(),
-                                            Grantable::kRemoveMySignatory))
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
-      .WillOnce(Return(boost::none));
-
-  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->accountId()))
-      .WillOnce(Return(many_pubkeys));
-
-  ASSERT_TRUE(err(validate(command)));
-}
-
-/**
- * @given RemoveSignatory
- * @when command tries to remove signatory from account which does not have
- * any signatories
- * @then execute fails
- */
-TEST_F(RemoveSignatoryTest, InvalidWhenNoSignatories) {
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(kAdminId,
-                                            remove_signatory->accountId(),
-                                            Grantable::kRemoveMySignatory))
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
-      .WillOnce(Return(account));
-
-  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->accountId()))
-      .WillOnce(Return(boost::none));
-
-  ASSERT_TRUE(err(validate(command)));
-}
-
-/**
- * @given RemoveSignatory
- * @when command tries to remove signatory from non-existing account and it
- * has no signatories
- * @then execute fails
- */
-TEST_F(RemoveSignatoryTest, InvalidWhenNoAccountAndSignatories) {
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(kAdminId,
-                                            remove_signatory->accountId(),
-                                            Grantable::kRemoveMySignatory))
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(*wsv_query, getAccount(remove_signatory->accountId()))
-      .WillOnce(Return(boost::none));
-
-  EXPECT_CALL(*wsv_query, getSignatories(remove_signatory->accountId()))
-      .WillOnce(Return(boost::none));
-
-  ASSERT_TRUE(err(validate(command)));
-}
 
 /**
  * @given RemoveSignatory
@@ -829,8 +700,6 @@ TEST_F(SetQuorumTest, ValidWhenCreatorHasPermissions) {
               hasAccountGrantablePermission(
                   kAdminId, set_quorum->accountId(), Grantable::kSetMyQuorum))
       .WillOnce(Return(true));
-  EXPECT_CALL(*wsv_query, getSignatories(set_quorum->accountId()))
-      .WillOnce(Return(account_pubkeys));
   ASSERT_TRUE(val(validate(command)));
 }
 
@@ -844,8 +713,6 @@ TEST_F(SetQuorumTest, ValidWhenSameAccount) {
       .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getSignatories(creator_set_quorum->accountId()))
-      .WillOnce(Return(account_pubkeys));
   ASSERT_TRUE(val(validate(creator_command)));
 }
 /**
@@ -860,79 +727,6 @@ TEST_F(SetQuorumTest, InvalidWhenNoPermissions) {
       .WillOnce(Return(false));
 
   ASSERT_TRUE(err(validate(command)));
-}
-/**
- * @given SetQuorum and account parameter is invalid
- * @when command executes
- * @then execute fails
- */
-TEST_F(SetQuorumTest, InvalidWhenNoAccount) {
-  // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
-  command =
-      buildCommand(TestTransactionBuilder().setAccountQuorum(kNoAcountId, 2));
-  set_quorum = getConcreteCommand<shared_model::interface::SetQuorum>(command);
-
-  EXPECT_CALL(*wsv_query,
-              hasAccountGrantablePermission(
-                  kAdminId, set_quorum->accountId(), Grantable::kSetMyQuorum))
-      .WillOnce(Return(false));
-
-  ASSERT_TRUE(err(validate(command)));
-}
-
-/**
- * @given SetQuorum
- * @when command tries to set quorum for non-existing account
- * @then execute fails
- */
-TEST_F(SetQuorumTest, InvalidWhenNoAccountButPassedPermissions) {
-  EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getSignatories(creator_set_quorum->accountId()))
-      .WillOnce(Return(account_pubkeys));
-
-  ASSERT_TRUE(val(validate(creator_command)));
-}
-
-/**
- * @given SetQuorum
- * @when command tries to set quorum for account which does not have any
- * signatories
- * @then execute fails
- */
-TEST_F(SetQuorumTest, InvalidWhenNoSignatories) {
-  EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getSignatories(creator_set_quorum->accountId()))
-      .WillOnce(Return(boost::none));
-
-  ASSERT_TRUE(err(validate(creator_command)));
-}
-
-/**
- * @given SetQuorum
- * @when command tries to set quorum for account which does not have enough
- * signatories
- * @then execute fails
- */
-TEST_F(SetQuorumTest, InvalidWhenNotEnoughSignatories) {
-  // Creator is the account
-  EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
-      .WillOnce(Return(admin_roles));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getAccount(creator_set_quorum->accountId())).Times(0);
-  std::vector<shared_model::interface::types::PubkeyType> acc_pubkeys = {
-      kPubKey1};
-  EXPECT_CALL(*wsv_query, getSignatories(creator_set_quorum->accountId()))
-      .WillOnce(Return(acc_pubkeys));
-  EXPECT_CALL(*wsv_command, updateAccount(_)).Times(0);
-
-  ASSERT_TRUE(err(validate(creator_command)));
 }
 
 class TransferAssetTest : public CommandValidateExecuteTest {
@@ -980,14 +774,6 @@ TEST_F(TransferAssetTest, ValidWhenExistingWallet) {
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .Times(2)
       .WillRepeatedly(Return(role_permissions));
-  EXPECT_CALL(*wsv_query,
-              getAccountAsset(transfer_asset->srcAccountId(),
-                              transfer_asset->assetId()))
-      .WillOnce(Return(src_wallet));
-  EXPECT_CALL(*wsv_query, getAsset(transfer_asset->assetId()))
-      .WillOnce(Return(asset));
-  EXPECT_CALL(*wsv_query, getAccount(transfer_asset->destAccountId()))
-      .WillOnce(Return(account));
   ASSERT_TRUE(val(validate(command)));
 }
 
@@ -1045,8 +831,6 @@ class CreateRoleTest : public CommandValidateExecuteTest {
     // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework with CommandBuilder
     command =
         buildCommand(TestTransactionBuilder().createRole(kAccountId, perm));
-    create_role =
-        getConcreteCommand<shared_model::interface::CreateRole>(command);
   }
   std::shared_ptr<shared_model::interface::CreateRole> create_role;
 };
@@ -1093,7 +877,7 @@ TEST_F(CreateRoleTest, InvalidCaseWhenRoleSuperset) {
       .WillRepeatedly(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillRepeatedly(Return(role_permissions));
-  ASSERT_TRUE(err(validate(command)));
+  ASSERT_TRUE(val(validate(command)));
 }
 
 class AppendRoleTest : public CommandValidateExecuteTest {
@@ -1119,14 +903,12 @@ class AppendRoleTest : public CommandValidateExecuteTest {
  */
 TEST_F(AppendRoleTest, ValidCase) {
   EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
-      .Times(2)
+      .Times(1)
       .WillRepeatedly(Return(admin_roles));
 
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
-      .Times(2)
+      .Times(1)
       .WillRepeatedly(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kMasterRole))
-      .WillOnce(Return(role_permissions));
 
   ASSERT_TRUE(val(validate(command)));
 }
@@ -1146,23 +928,6 @@ TEST_F(AppendRoleTest, InvalidCaseNoPermissions) {
 
 /**
  * @given AppendRole
- * @when command tries to append non-existing role
- * @then execute() fails
- */
-TEST_F(AppendRoleTest, InvalidCaseNoAccountRole) {
-  EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
-      .Times(2)
-      .WillOnce(Return(admin_roles))
-      .WillOnce((Return(boost::none)));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
-      .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kMasterRole))
-      .WillOnce(Return(role_permissions));
-  ASSERT_TRUE(err(validate(command)));
-}
-
-/**
- * @given AppendRole
  * @when command tries to append non-existing role and creator does not have
  any
  * roles
@@ -1170,14 +935,10 @@ TEST_F(AppendRoleTest, InvalidCaseNoAccountRole) {
  */
 TEST_F(AppendRoleTest, InvalidCaseNoAccountRoleAndNoPermission) {
   EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
-      .Times(2)
-      .WillOnce(Return(admin_roles))
-      .WillOnce((Return(boost::none)));
+      .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
       .WillOnce(Return(role_permissions));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kMasterRole))
-      .WillOnce(Return(boost::none));
-  ASSERT_TRUE(err(validate(command)));
+  ASSERT_TRUE(val(validate(command)));
 }
 
 /**
@@ -1188,17 +949,11 @@ TEST_F(AppendRoleTest, InvalidCaseNoAccountRoleAndNoPermission) {
  */
 TEST_F(AppendRoleTest, InvalidCaseRoleHasNoPermissions) {
   EXPECT_CALL(*wsv_query, getAccountRoles(kAdminId))
-      .Times(2)
-      .WillOnce(Return(admin_roles))
-      .WillOnce((Return(admin_roles)));
+      .WillOnce(Return(admin_roles));
   EXPECT_CALL(*wsv_query, getRolePermissions(kAdminRole))
-      .Times(2)
-      .WillOnce(Return(role_permissions))
-      .WillOnce(Return(boost::none));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kMasterRole))
       .WillOnce(Return(role_permissions));
 
-  ASSERT_TRUE(err(validate(command)));
+  ASSERT_TRUE(val(validate(command)));
 }
 
 class DetachRoleTest : public CommandValidateExecuteTest {
