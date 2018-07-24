@@ -55,13 +55,6 @@ namespace shared_model {
                                        std::string>
     operator-(const shared_model::interface::Amount &a,
               const shared_model::interface::Amount &b) {
-      // check if a greater than b
-      if (a.intValue() < b.intValue()) {
-        return iroha::expected::makeError(std::make_shared<std::string>(
-            (boost::format("minuend is smaller than subtrahend (%s - %s)")
-             % a.intValue().str() % b.intValue().str())
-                .str()));
-      }
       auto max_precision = std::max(a.precision(), b.precision());
       auto val_a =
           increaseValuePrecision(a.intValue(), max_precision - a.precision());

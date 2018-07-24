@@ -20,6 +20,7 @@
 #include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_account_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_asset_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_domain_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_peer_builder.hpp"
 
