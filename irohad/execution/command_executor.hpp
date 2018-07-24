@@ -68,8 +68,7 @@ namespace iroha {
 
     template <typename CommandType>
     CommandResult operator()(const CommandType &command) {
-      return hasPermissions(command, *queries, creator_account_id) |
-          [&] { return isValid(command, *queries, creator_account_id); };
+      return hasPermissions(command, *queries, creator_account_id);
     }
 
     void setCreatorAccountId(const shared_model::interface::types::AccountIdType
@@ -172,91 +171,6 @@ namespace iroha {
         const shared_model::interface::types::AccountIdType
             &creator_account_id);
 
-    CommandResult isValid(
-        const shared_model::interface::AddAssetQuantity &command,
-        iroha::ametsuchi::WsvQuery &queries,
-        const shared_model::interface::types::AccountIdType
-            &creator_account_id);
-
-    CommandResult isValid(const shared_model::interface::AddPeer &command,
-                          iroha::ametsuchi::WsvQuery &queries,
-                          const shared_model::interface::types::AccountIdType
-                              &creator_account_id);
-
-    CommandResult isValid(const shared_model::interface::AddSignatory &command,
-                          iroha::ametsuchi::WsvQuery &queries,
-                          const shared_model::interface::types::AccountIdType
-                              &creator_account_id);
-
-    CommandResult isValid(const shared_model::interface::AppendRole &command,
-                          iroha::ametsuchi::WsvQuery &queries,
-                          const shared_model::interface::types::AccountIdType
-                              &creator_account_id);
-
-    CommandResult isValid(const shared_model::interface::CreateAccount &command,
-                          iroha::ametsuchi::WsvQuery &queries,
-                          const shared_model::interface::types::AccountIdType
-                              &creator_account_id);
-
-    CommandResult isValid(const shared_model::interface::CreateAsset &command,
-                          iroha::ametsuchi::WsvQuery &queries,
-                          const shared_model::interface::types::AccountIdType
-                              &creator_account_id);
-
-    CommandResult isValid(const shared_model::interface::CreateDomain &command,
-                          iroha::ametsuchi::WsvQuery &queries,
-                          const shared_model::interface::types::AccountIdType
-                              &creator_account_id);
-
-    CommandResult isValid(const shared_model::interface::CreateRole &command,
-                          iroha::ametsuchi::WsvQuery &queries,
-                          const shared_model::interface::types::AccountIdType
-                              &creator_account_id);
-
-    CommandResult isValid(const shared_model::interface::DetachRole &command,
-                          iroha::ametsuchi::WsvQuery &queries,
-                          const shared_model::interface::types::AccountIdType
-                              &creator_account_id);
-
-    CommandResult isValid(
-        const shared_model::interface::GrantPermission &command,
-        iroha::ametsuchi::WsvQuery &queries,
-        const shared_model::interface::types::AccountIdType
-            &creator_account_id);
-
-    CommandResult isValid(
-        const shared_model::interface::RemoveSignatory &command,
-        iroha::ametsuchi::WsvQuery &queries,
-        const shared_model::interface::types::AccountIdType
-            &creator_account_id);
-
-    CommandResult isValid(
-        const shared_model::interface::RevokePermission &command,
-        iroha::ametsuchi::WsvQuery &queries,
-        const shared_model::interface::types::AccountIdType
-            &creator_account_id);
-
-    CommandResult isValid(
-        const shared_model::interface::SetAccountDetail &command,
-        iroha::ametsuchi::WsvQuery &queries,
-        const shared_model::interface::types::AccountIdType
-            &creator_account_id);
-
-    CommandResult isValid(const shared_model::interface::SetQuorum &command,
-                          iroha::ametsuchi::WsvQuery &queries,
-                          const shared_model::interface::types::AccountIdType
-                              &creator_account_id);
-
-    CommandResult isValid(
-        const shared_model::interface::SubtractAssetQuantity &command,
-        iroha::ametsuchi::WsvQuery &queries,
-        const shared_model::interface::types::AccountIdType
-            &creator_account_id);
-
-    CommandResult isValid(const shared_model::interface::TransferAsset &command,
-                          iroha::ametsuchi::WsvQuery &queries,
-                          const shared_model::interface::types::AccountIdType
-                              &creator_account_id);
 
     std::shared_ptr<iroha::ametsuchi::WsvQuery> queries;
     shared_model::interface::types::AccountIdType creator_account_id;
