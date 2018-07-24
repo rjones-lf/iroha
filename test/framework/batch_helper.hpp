@@ -229,15 +229,15 @@ namespace framework {
 
       /**
        * Function create transactions from builder and passed hashes
-       * @tparam TxBuildersCollection - type of one builder
+       * @tparam TxBuilder - type of one builder
        * @param hashes - vector of hashes of transactions
        * @param builders - initializer list of tx builders
        * @return transactions with correct batch meta
        */
-      template <typename TxBuildersCollection>
+      template <typename TxBuilder>
       auto makeTxBatchCollection(
           const std::vector<shared_model::interface::types::HashType> &hashes,
-          std::initializer_list<TxBuildersCollection> builders) {
+          std::initializer_list<TxBuilder> builders) {
         shared_model::interface::types::SharedTxsCollectionType transactions;
 
         std::transform(
