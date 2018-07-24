@@ -7,6 +7,7 @@
 
 #include <boost/format.hpp>
 
+#include "ametsuchi/impl/soci_utils.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"
@@ -49,7 +50,7 @@ namespace {
   template <typename Function>
   iroha::ametsuchi::CommandResult makeCommandResult(
       soci::statement &st,
-      std::string command_name,
+      const std::string &command_name,
       Function &&error_generator) noexcept {
     st.define_and_bind();
     try {
@@ -75,7 +76,7 @@ namespace {
    */
   iroha::ametsuchi::CommandResult makeCommandResultByReturnedValue(
       soci::statement &st,
-      std::string command_name,
+      const std::string &command_name,
       std::vector<std::function<std::string()>> &error_generator) noexcept {
     uint32_t result;
     st.exchange(soci::into(result));
@@ -95,6 +96,13 @@ namespace {
 namespace iroha {
   namespace ametsuchi {
 
+    std::string CommandError::toString() const {
+      return (boost::format("%s: %s") % command_name % error_message).str();
+    }
+
+    PostgresCommandExecutor::PostgresCommandExecutor(soci::session &sql)
+        : sql_(sql), is_genesis_(false) {}
+
     std::string checkAccountRolePermission(
         shared_model::interface::permissions::Role permission) {
       const auto perm_str =
@@ -112,9 +120,6 @@ namespace iroha {
 
       return query;
     }
-
-    PostgresCommandExecutor::PostgresCommandExecutor(soci::session &sql)
-        : sql_(sql), is_genesis_(false) {}
 
     void PostgresCommandExecutor::setCreatorAccountId(
         const shared_model::interface::types::AccountIdType

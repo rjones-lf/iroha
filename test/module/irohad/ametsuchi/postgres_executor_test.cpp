@@ -41,6 +41,7 @@ namespace iroha {
       void SetUp() override {
         AmetsuchiTest::SetUp();
         sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
+
         auto factory =
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
                 shared_model::validation::FieldValidator>>();
@@ -745,7 +746,7 @@ namespace iroha {
       shared_model::interface::types::PubkeyType pk(std::string('5', 32));
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().addSignatory(
-              account->accountId(), pk)),
+                          account->accountId(), pk)),
                       true)));
       ASSERT_TRUE(
           err(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(

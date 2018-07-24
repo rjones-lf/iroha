@@ -43,12 +43,24 @@ namespace iroha {
           run_async_(run_async) {}
 
     void OrderingGateImpl::propagateTransaction(
-        std::shared_ptr<const shared_model::interface::Transaction>
-            transaction) {
+        std::shared_ptr<const shared_model::interface::Transaction> transaction)
+        const {
       log_->info("propagate tx, account_id: {}",
                  " account_id: " + transaction->creatorAccountId());
 
       transport_->propagateTransaction(transaction);
+    }
+
+    void OrderingGateImpl::propagateBatch(
+        const shared_model::interface::TransactionBatch &batch) const {
+      if (batch.transactions().empty()) {
+        log_->warn("trying to propagate empty batch");
+        return;
+      }
+      log_->info("propagate batch, account_id: {}",
+                 batch.transactions().front()->creatorAccountId());
+
+      transport_->propagateBatch(batch);
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>

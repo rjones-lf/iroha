@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this/her file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
@@ -25,7 +13,7 @@
 #include "builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/query_responses/block_query_response_builder.hpp"
-#include "execution/query_execution.hpp"
+#include "execution/query_execution_impl.hpp"
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -51,7 +39,10 @@ class QueryValidateExecuteTest : public ::testing::Test {
   void SetUp() override {
     wsv_query = std::make_shared<StrictMock<MockWsvQuery>>();
     block_query = std::make_shared<StrictMock<MockBlockQuery>>();
-    factory = std::make_shared<QueryProcessingFactory>(wsv_query, block_query);
+    storage = std::make_shared<MockStorage>();
+    EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
+    EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
+    qry_exec = std::make_shared<QueryExecutionImpl>(storage);
 
     creator = clone(shared_model::proto::AccountBuilder()
                         .accountId(admin_id)
@@ -69,7 +60,7 @@ class QueryValidateExecuteTest : public ::testing::Test {
   }
   std::shared_ptr<shared_model::interface::QueryResponse> validateAndExecute(
       const shared_model::interface::Query &query) {
-    return factory->validateAndExecute(query);
+    return qry_exec->validateAndExecute(query);
   }
 
   /**
@@ -108,8 +99,9 @@ class QueryValidateExecuteTest : public ::testing::Test {
   std::shared_ptr<shared_model::interface::Account> creator, account;
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
+  std::shared_ptr<MockStorage> storage;
 
-  std::shared_ptr<QueryProcessingFactory> factory;
+  std::shared_ptr<QueryExecution> qry_exec;
 };
 
 class GetAccountTest : public QueryValidateExecuteTest {

@@ -3,6 +3,7 @@ package iroha.ordering.proto;
 
 import "transaction.proto";
 import "proposal.proto";
+import "endpoint.proto";
 import "google/protobuf/empty.proto";
 
 service OrderingGateTransportGrpc {
@@ -11,4 +12,5 @@ service OrderingGateTransportGrpc {
 
 service OrderingServiceTransportGrpc {
   rpc onTransaction (iroha.protocol.Transaction) returns (google.protobuf.Empty);
+  rpc onBatch (iroha.protocol.TxList) returns (google.protobuf.Empty);
 }

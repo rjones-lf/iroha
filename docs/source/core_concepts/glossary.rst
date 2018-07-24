@@ -189,6 +189,12 @@ Role
 
 A named abstraction that holds a set of `permissions <#permission>`__.
 
+Signatory
+=========
+
+Represents an entity that can confirm multisignature transactions for some `account <#account>`__.
+It can be attached to account via `AddSignatory <../api/commands.html#add-signatory>`__ and detached via `RemoveSignatory <../api/commands.html#remove-signatory>`__.
+
 Simulator
 =========
 
@@ -263,11 +269,8 @@ Transaction Status Set
 Pending Transactions
 ^^^^^^^^^^^^^^^^^^^^
 
-.. TODO igor-egorov, 2018-07-04, IR-1356, add here a link to MST docs
-
 Any transaction that has lesser signatures at the moment than `quorum`_ of transaction creator account is considered as pending.
-Pending transaction will be submitted for stateful validation as soon as multi signature mechanism (*to be documented*)
-will collect required amount of signatures for quorum.
+Pending transaction will be submitted for `stateful validation`_ as soon as `multisignature <#multisignature-transactions>`__ mechanism will collect required amount of signatures for quorum.
 
 Transaction that already has quorum of signatures can also be considered as pending in cases
 when the transaction is a part of `batch of transactions`_ and there is a not fully signed transaction.
@@ -284,10 +287,8 @@ Batch meta contains batch type identifier (atomic or ordered) and a list of `red
 of all transactions within a batch.
 The order of hashes prescribes transactions sequence.
 
-.. TODO igor-egorov, 2018-07-04, IR-1356, add here a link to MST docs
-
 Batch can contain transactions created by different accounts.
-Any transaction within a batch can require single or multiple signatures (depends on quorum set for an account of transaction creator).
+Any transaction within a batch can require single or `multiple <#multisignature-transactions>`__ signatures (depends on quorum set for an account of transaction creator).
 At least one transaction inside a batch should have at least one signature to let the batch pass `stateful validation`_.
 
 Atomic Batch
@@ -301,6 +302,13 @@ Ordered Batch
 Ordered batch preserves only the sequence of transactions applying to a ledger.
 All the transactions that able to pass stateful validation within a batch will be applied to a ledger.
 Validation failure of one transaction would NOT directly imply the failure of the whole batch.
+
+Multisignature Transactions
+===========================
+
+A transaction which has the `quorum`_ greater than one is considered as multisignature (also called mst).
+To achieve `stateful validity <#stateful-validation>`__ the confirmation is required by the `signatories <#signatory>`__ of the creator account.
+These participants need to send the same transaction with their signature.
 
 Validator
 =========
