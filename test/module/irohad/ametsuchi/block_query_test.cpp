@@ -20,8 +20,8 @@
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
-#include "framework/test_subscriber.hpp"
 #include "framework/result_fixture.hpp"
+#include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -45,8 +45,7 @@ class BlockQueryTest : public AmetsuchiTest {
 
     index = std::make_shared<PostgresBlockIndex>(*sql);
     blocks = std::make_shared<PostgresBlockQuery>(*sql, *file);
-    empty_blocks =
-        std::make_shared<PostgresBlockQuery>(*sql, *mock_file);
+    empty_blocks = std::make_shared<PostgresBlockQuery>(*sql, *mock_file);
 
     *sql << init_;
 
@@ -239,9 +238,8 @@ TEST_F(BlockQueryTest, GetTransactionsWithInvalidTxAndValidTx) {
  * @then nothing is returned
  */
 TEST_F(BlockQueryTest, GetNonExistentBlock) {
-  auto wrapper = make_test_subscriber<CallExact>(blocks->getBlocks(1000, 1), 0);
-  wrapper.subscribe();
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocks(1000, 1);
+  ASSERT_TRUE(stored_blocks.empty());
 }
 
 /**
@@ -251,9 +249,8 @@ TEST_F(BlockQueryTest, GetNonExistentBlock) {
  * @then returned exactly 1 block
  */
 TEST_F(BlockQueryTest, GetExactlyOneBlock) {
-  auto wrapper = make_test_subscriber<CallExact>(blocks->getBlocks(1, 1), 1);
-  wrapper.subscribe();
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocks(1, 1);
+  ASSERT_EQ(stored_blocks.size(), 1);
 }
 
 /**
@@ -263,9 +260,8 @@ TEST_F(BlockQueryTest, GetExactlyOneBlock) {
  * @then no blocks returned
  */
 TEST_F(BlockQueryTest, GetBlocks_Count0) {
-  auto wrapper = make_test_subscriber<CallExact>(blocks->getBlocks(1, 0), 0);
-  wrapper.subscribe();
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocks(1, 0);
+  ASSERT_TRUE(stored_blocks.empty());
 }
 
 /**
@@ -275,9 +271,8 @@ TEST_F(BlockQueryTest, GetBlocks_Count0) {
  * @then no blocks returned
  */
 TEST_F(BlockQueryTest, GetZeroBlock) {
-  auto wrapper = make_test_subscriber<CallExact>(blocks->getBlocks(0, 1), 0);
-  wrapper.subscribe();
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocks(0, 1);
+  ASSERT_TRUE(stored_blocks.empty());
 }
 
 /**
@@ -287,15 +282,13 @@ TEST_F(BlockQueryTest, GetZeroBlock) {
  * @then returned all blocks (2)
  */
 TEST_F(BlockQueryTest, GetBlocksFrom1) {
-  auto wrapper =
-      make_test_subscriber<CallExact>(blocks->getBlocksFrom(1), blocks_total);
-  size_t counter = 1;
-  wrapper.subscribe([&counter](const auto &b) {
-    // wrapper returns blocks 1 and 2
-    ASSERT_EQ(b->height(), counter++)
-        << "block height: " << b->height() << "counter: " << counter;
-  });
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocksFrom(1);
+  ASSERT_EQ(stored_blocks.size(), blocks_total);
+  for (size_t i = 0; i < stored_blocks.size(); i++) {
+    auto b = stored_blocks[i];
+    ASSERT_EQ(b->height(), i + 1)
+        << "block height: " << b->height() << "counter: " << i;
+  }
 }
 
 /**
@@ -316,11 +309,8 @@ TEST_F(BlockQueryTest, GetBlockButItIsNotJSON) {
   block_file << content;
   block_file.close();
 
-  auto wrapper =
-      make_test_subscriber<CallExact>(blocks->getBlocks(block_n, 1), 0);
-  wrapper.subscribe();
-
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocks(block_n, 1);
+  ASSERT_TRUE(stored_blocks.empty());
 }
 
 /**
@@ -344,11 +334,8 @@ TEST_F(BlockQueryTest, GetBlockButItIsInvalidBlock) {
   block_file << content;
   block_file.close();
 
-  auto wrapper =
-      make_test_subscriber<CallExact>(blocks->getBlocks(block_n, 1), 0);
-  wrapper.subscribe();
-
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocks(block_n, 1);
+  ASSERT_TRUE(stored_blocks.empty());
 }
 
 /**
@@ -359,14 +346,14 @@ TEST_F(BlockQueryTest, GetBlockButItIsInvalidBlock) {
  */
 TEST_F(BlockQueryTest, GetTop2Blocks) {
   size_t blocks_n = 2;  // top 2 blocks
-  auto wrapper =
-      make_test_subscriber<CallExact>(blocks->getTopBlocks(blocks_n), blocks_n);
 
-  size_t counter = blocks_total - blocks_n + 1;
-  wrapper.subscribe(
-      [&counter](const auto &b) { ASSERT_EQ(b->height(), counter++); });
+  auto stored_blocks = blocks->getTopBlocks(blocks_n);
+  ASSERT_EQ(stored_blocks.size(), blocks_n);
 
-  ASSERT_TRUE(wrapper.validate());
+  for (size_t i = 0; i < blocks_n; i++) {
+    auto b = stored_blocks[i];
+    ASSERT_EQ(b->height(), i + 1);
+  }
 }
 
 /**
@@ -414,5 +401,6 @@ TEST_F(BlockQueryTest, GetTopBlockFail) {
 
   auto top_block_error = framework::expected::err(empty_blocks->getTopBlock());
   ASSERT_TRUE(top_block_error);
-  ASSERT_EQ(top_block_error.value().error, "error while fetching the last block");
+  ASSERT_EQ(top_block_error.value().error,
+            "error while fetching the last block");
 }

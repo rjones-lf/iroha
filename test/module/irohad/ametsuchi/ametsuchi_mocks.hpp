@@ -171,12 +171,12 @@ namespace iroha {
           rxcpp::observable<boost::optional<wTransaction>>(
               const std::vector<shared_model::crypto::Hash> &tx_hashes));
       MOCK_METHOD2(getBlocks,
-                   rxcpp::observable<wBlock>(
+          std::vector<BlockQuery::wBlock>(
                        shared_model::interface::types::HeightType, uint32_t));
       MOCK_METHOD1(getBlocksFrom,
-                   rxcpp::observable<wBlock>(
+          std::vector<BlockQuery::wBlock>(
                        shared_model::interface::types::HeightType));
-      MOCK_METHOD1(getTopBlocks, rxcpp::observable<wBlock>(uint32_t));
+      MOCK_METHOD1(getTopBlocks, std::vector<BlockQuery::wBlock>(uint32_t));
       MOCK_METHOD0(getTopBlock, expected::Result<wBlock, std::string>(void));
       MOCK_METHOD1(hasTxWithHash, bool(const shared_model::crypto::Hash &hash));
       MOCK_METHOD0(getTopBlockHeight, uint32_t(void));

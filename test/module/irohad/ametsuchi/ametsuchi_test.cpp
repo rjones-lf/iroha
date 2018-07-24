@@ -155,10 +155,7 @@ TEST_F(AmetsuchiTest, GetBlocksCompletedWhenCalled) {
 
   apply(storage, block);
 
-  auto completed_wrapper =
-      make_test_subscriber<IsCompleted>(blocks->getBlocks(1, 1));
-  completed_wrapper.subscribe();
-  ASSERT_TRUE(completed_wrapper.validate());
+  ASSERT_EQ(*blocks->getBlocks(1, 1)[0], block);
 }
 
 TEST_F(AmetsuchiTest, SampleTest) {
@@ -214,12 +211,11 @@ TEST_F(AmetsuchiTest, SampleTest) {
 
   // Block store tests
   auto hashes = {block1.hash(), block2.hash()};
-  validateCalls(blocks->getBlocks(1, 2),
-                [i = 0, &hashes](auto eachBlock) mutable {
-                  EXPECT_EQ(*(hashes.begin() + i), eachBlock->hash());
-                  ++i;
-                },
-                2);
+
+  auto stored_blocks = blocks->getBlocks(1, 2);
+  for (size_t i = 0; i < stored_blocks.size(); i++) {
+    EXPECT_EQ(*(hashes.begin() + i), stored_blocks[i]->hash());
+  }
 
   validateAccountTransactions(blocks, "admin1", 1, 3);
   validateAccountTransactions(blocks, user1id, 1, 4);
@@ -357,12 +353,11 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   // Block store test
   auto hashes = {block1.hash(), block2.hash(), block3.hash()};
-  validateCalls(blocks->getBlocks(1, 3),
-                [i = 0, &hashes](auto eachBlock) mutable {
-                  EXPECT_EQ(*(hashes.begin() + i), eachBlock->hash());
-                  ++i;
-                },
-                3);
+
+  auto stored_blocks = blocks->getBlocks(1, 3);
+  for (size_t i = 0; i < stored_blocks.size(); i++) {
+    EXPECT_EQ(*(hashes.begin() + i), stored_blocks[i]->hash());
+  }
 
   validateAccountTransactions(blocks, admin, 1, 7);
   validateAccountTransactions(blocks, user3id, 0, 0);

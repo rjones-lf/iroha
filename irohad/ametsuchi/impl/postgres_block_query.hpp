@@ -40,14 +40,14 @@ namespace iroha {
       boost::optional<wTransaction> getTxByHashSync(
           const shared_model::crypto::Hash &hash) override;
 
-      rxcpp::observable<wBlock> getBlocks(
+      std::vector<wBlock> getBlocks(
           shared_model::interface::types::HeightType height,
           uint32_t count) override;
 
-      rxcpp::observable<wBlock> getBlocksFrom(
+      std::vector<wBlock> getBlocksFrom(
           shared_model::interface::types::HeightType height) override;
 
-      rxcpp::observable<wBlock> getTopBlocks(uint32_t count) override;
+      std::vector<wBlock> getTopBlocks(uint32_t count) override;
 
       uint32_t getTopBlockHeight() override;
 

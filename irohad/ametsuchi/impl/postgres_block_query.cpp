@@ -19,37 +19,33 @@ namespace iroha {
           block_store_(file_store),
           log_(logger::log("PostgresBlockIndex")) {}
 
-    rxcpp::observable<BlockQuery::wBlock> PostgresBlockQuery::getBlocks(
+    std::vector<BlockQuery::wBlock> PostgresBlockQuery::getBlocks(
         shared_model::interface::types::HeightType height, uint32_t count) {
       shared_model::interface::types::HeightType last_id =
           block_store_.last_id();
       auto to = std::min(last_id, height + count - 1);
+      std::vector<BlockQuery::wBlock> result;
       if (height > to or count == 0) {
-        return rxcpp::observable<>::empty<wBlock>();
+        return result;
       }
-      return rxcpp::observable<>::range(height, to)
-          .flat_map([this](const auto &i) {
-            return rxcpp::observable<>::create<PostgresBlockQuery::wBlock>(
-                [i, this](const auto &block_subscriber) {
-                  block_store_.get(i) | [](const auto &bytes) {
-                    return shared_model::converters::protobuf::jsonToModel<
-                        shared_model::proto::Block>(bytesToString(bytes));
-                  } | [&block_subscriber](auto &&block) {
-                    block_subscriber.on_next(
-                        std::make_shared<shared_model::proto::Block>(
-                            std::move(block)));
-                  };
-                  block_subscriber.on_completed();
-                });
-          });
+      for (auto i = height; i <= to; i++) {
+        block_store_.get(i) | [](const auto &bytes) {
+          return shared_model::converters::protobuf::jsonToModel<
+              shared_model::proto::Block>(bytesToString(bytes));
+        } | [&result](auto &&block) {
+          result.push_back(std::make_shared<shared_model::proto::Block>(
+              std::move(block)));
+        };
+      }
+      return result;
     }
 
-    rxcpp::observable<BlockQuery::wBlock> PostgresBlockQuery::getBlocksFrom(
+    std::vector<BlockQuery::wBlock> PostgresBlockQuery::getBlocksFrom(
         shared_model::interface::types::HeightType height) {
       return getBlocks(height, block_store_.last_id());
     }
 
-    rxcpp::observable<BlockQuery::wBlock> PostgresBlockQuery::getTopBlocks(
+    std::vector<BlockQuery::wBlock> PostgresBlockQuery::getTopBlocks(
         uint32_t count) {
       auto last_id = block_store_.last_id();
       count = std::min(count, last_id);
