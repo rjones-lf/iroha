@@ -6,17 +6,15 @@
 #ifndef IROHA_ON_DEMAND_ORDERING_SERVICE_HPP
 #define IROHA_ON_DEMAND_ORDERING_SERVICE_HPP
 
-#include "logger/logger.hpp"
-#include "network/ordering_service.hpp"
 #include "ordering/on_demand_os_transport.hpp"
 
 namespace iroha {
   namespace ordering {
 
     /**
-     * Enum type with outcome of consensus on proposals
+     * Enum type with outcomes of proposal and block consensus
      */
-    enum class RoundOutput { SUCCESSFUL, REJECT };
+    enum class RoundOutput { kCommitProposal, kCommitBlock, kReject };
 
     /**
      * Ordering Service aka OS which can share proposals by request
@@ -28,11 +26,11 @@ namespace iroha {
        * @param outcome - status of collaboration on proposal
        * @param round - number of round
        */
-      virtual void onCollaborationOutcome(RoundOutput outcome,
-                                          transport::RoundType round) = 0;
+      virtual void onCollaborationOutcome(RoundOutput outcome) = 0;
 
       virtual ~OnDemandOrderingService() = default;
     };
+
   }  // namespace ordering
 }  // namespace iroha
 

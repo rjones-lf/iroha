@@ -4,9 +4,13 @@
  */
 
 #include "ordering/impl/on_demand_ordering_service_impl.hpp"
-#include <boost/range/algorithm/for_each.hpp>
 
-#include "builders/protobuf/proposal.hpp"
+#include <unordered_set>
+
+#include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/algorithm/for_each.hpp>
+#include "backend/protobuf/proposal.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/transaction.hpp"
@@ -30,15 +34,16 @@ OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
 
 // -------------------------| OnDemandOrderingService |-------------------------
 
-void OnDemandOrderingServiceImpl::onCollaborationOutcome(
-    RoundOutput outcome, transport::RoundType round) {
-  log_->info(
-      "onCollaborationOutcome => round[{}, {}]", round.first, round.second);
+void OnDemandOrderingServiceImpl::onCollaborationOutcome(RoundOutput outcome) {
+  auto current_round = current_proposal_.first;
+  log_->info("onCollaborationOutcome => round[{}, {}]",
+             current_round.first,
+             current_round.second);
   // exclusive write lock
   std::lock_guard<std::shared_timed_mutex> guard(lock_);
   log_->info("onCollaborationOutcome => write lock is acquired");
 
-  packNextProposal(outcome, round);
+  packNextProposal(outcome);
   tryErase();
 }
 
@@ -70,8 +75,7 @@ OnDemandOrderingServiceImpl::onRequestProposal(transport::RoundType round) {
 
 // ---------------------------------| Private |---------------------------------
 
-void OnDemandOrderingServiceImpl::packNextProposal(
-    RoundOutput outcome, const transport::RoundType &last_round) {
+void OnDemandOrderingServiceImpl::packNextProposal(RoundOutput outcome) {
   log_->info("pack next proposal...size of queue = {}",
              current_proposal_.second.unsafe_size());
   if (not current_proposal_.second.empty()) {
@@ -86,10 +90,13 @@ void OnDemandOrderingServiceImpl::packNextProposal(
   auto current_round = current_proposal_.first;
   decltype(current_round) next_round;
   switch (outcome) {
-    case RoundOutput::SUCCESSFUL:
+    case RoundOutput::kCommitProposal:
+      next_round = current_round;
+      break;
+    case RoundOutput::kCommitBlock:
       next_round = std::make_pair(current_round.first + 1, kFirstRound);
       break;
-    case RoundOutput::REJECT:
+    case RoundOutput::kReject:
       next_round =
           std::make_pair(current_round.first, current_round.second + 1);
       break;
@@ -111,12 +118,14 @@ OnDemandOrderingServiceImpl::emitProposal() {
   TransactionType current_tx;
   using ProtoTxType = shared_model::proto::Transaction;
   std::vector<TransactionType> collection;
+  std::unordered_set<std::string> inserted;
 
   // outer method should guarantee availability of at least one transaction in
   // queue, also, code shouldn't fetch all transactions from queue. The rest
   // will be lost.
   while (current_proposal_.second.try_pop(current_tx)
-         and collection.size() < transaction_limit_) {
+         and collection.size() < transaction_limit_
+         and inserted.insert(current_tx->hash().hex()).second) {
     collection.emplace_back(std::move(current_tx));
   }
   log_->info("Number of transaction in proposal  = {}", collection.size());

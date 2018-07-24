@@ -14,7 +14,7 @@
 #include "module/irohad/ordering/mock_ordering_service_persistent_state.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "ordering/impl/signle_peer_ordering_service.hpp"
+#include "ordering/impl/single_peer_ordering_service.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
 
 using namespace iroha;

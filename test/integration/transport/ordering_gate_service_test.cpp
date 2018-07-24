@@ -28,7 +28,7 @@
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
-#include "ordering/impl/signle_peer_ordering_service.hpp"
+#include "ordering/impl/single_peer_ordering_service.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;

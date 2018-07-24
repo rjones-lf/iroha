@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "ordering/impl/signle_peer_ordering_service.hpp"
+#include "ordering/impl/single_peer_ordering_service.hpp"
 
 #include <algorithm>
 #include <iterator>

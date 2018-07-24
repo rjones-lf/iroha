@@ -35,8 +35,7 @@ namespace iroha {
 
       // --------------------- | OnDemandOrderingService |_---------------------
 
-      void onCollaborationOutcome(RoundOutput outcome,
-                                  transport::RoundType round) override;
+      void onCollaborationOutcome(RoundOutput outcome) override;
 
       // ----------------------- | OdOsNotification | --------------------------
 
@@ -50,8 +49,7 @@ namespace iroha {
        * Packs new proposal and creates new round
        * Note: method is not thread-safe
        */
-      void packNextProposal(RoundOutput outcome,
-                            const transport::RoundType &last_round);
+      void packNextProposal(RoundOutput outcome);
 
       /**
        * Removes last elements if it is required

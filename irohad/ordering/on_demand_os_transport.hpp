@@ -88,7 +88,9 @@ namespace iroha {
 
         virtual ~OdOsNotification() = default;
       };
+
     }  // namespace transport
   }    // namespace ordering
 }  // namespace iroha
+
 #endif  // IROHA_ON_DEMAND_OS_TRANSPORT_HPP
