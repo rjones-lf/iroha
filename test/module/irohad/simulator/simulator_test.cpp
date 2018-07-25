@@ -138,7 +138,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   EXPECT_CALL(*query, getTopBlock())
       .WillOnce(Return(expected::makeValue(wBlock(clone(block)))));
 
-  EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(1));
+  EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(block.height()));
 
   EXPECT_CALL(*validator, validate(_, _))
       .WillOnce(Return(
@@ -149,7 +149,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::Block &>()))
+              sign(A<shared_model::interface::BlockVariant &>()))
       .Times(1);
 
   init();
@@ -197,7 +197,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::Block &>()))
+              sign(A<shared_model::interface::BlockVariant &>()))
       .Times(0);
 
   init();
@@ -234,7 +234,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::Block &>()))
+              sign(A<shared_model::interface::BlockVariant &>()))
       .Times(0);
 
   init();
@@ -309,7 +309,7 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::Block &>()))
+              sign(A<shared_model::interface::BlockVariant &>()))
       .Times(1);
 
   init();

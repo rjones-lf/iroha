@@ -19,11 +19,13 @@ namespace iroha {
         std::shared_ptr<ametsuchi::TemporaryFactory> factory,
         std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
         std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
-            crypto_signer)
+            crypto_signer,
+        std::unique_ptr<shared_model::interface::UnsafeBlockFactory> block_factory)
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
           block_queries_(std::move(blockQuery)),
-          crypto_signer_(std::move(crypto_signer)) {
+          crypto_signer_(std::move(crypto_signer)),
+          block_factory_(std::move(block_factory)) {
       log_ = logger::log("Simulator");
       ordering_gate->on_proposal().subscribe(
           proposal_subscription_,

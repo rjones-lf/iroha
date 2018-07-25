@@ -24,7 +24,7 @@ namespace shared_model {
           types::HeightType height,
           const types::HashType &prev_hash,
           types::TimestampType created_time,
-          types::TransactionsCollectionType txs) = 0;
+          const types::TransactionsCollectionType &txs) = 0;
     };
   }  // namespace interface
 }  // namespace shared_model
