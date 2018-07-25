@@ -304,15 +304,15 @@ namespace iroha {
       st.exchange(soci::use(creator_account_id_, "creator_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return "is valid command validation failed: no permissions in role "
+            return "command validation failed: no permissions in role "
                 + command.roleName();
           },
           [&] {
-            return "is valid command validation failed: no roles in account "
+            return "command validation failed: no roles in account "
                 + creator_account_id_;
           },
           [&] {
-            return "is valid command validation failed: account "
+            return "command validation failed: account "
                 + creator_account_id_
                 + " does not have some of the permissions in a role "
                 + command.roleName();
@@ -523,7 +523,7 @@ namespace iroha {
                 .str();
           },
           [&] {
-            return "is valid command validation failed: account "
+            return "command validation failed: account "
                 + creator_account_id_
                 + " does not have some of the permissions from a role "
                 + command.roleName();
@@ -666,16 +666,16 @@ namespace iroha {
                 .str();
           },
           [&] {
-            return "is valid command validation failed: no account "
+            return "command validation failed: no account "
                 + command.accountId() + " found";
           },
           [&] {
-            return "is valid command validation failed: no signatories in "
+            return "command validation failed: no signatories in "
                    "account "
                 + command.accountId() + " found";
           },
           [&] {
-            return "is valid command validation failed: size of rest "
+            return "command validation failed: size of rest "
                    "signatories "
                    "becomes less than the quorum";
           },
@@ -801,12 +801,12 @@ namespace iroha {
       st.exchange(soci::use(account_id, "account_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return "is valid command validation failed: no signatories of an "
+            return "command validation failed: no signatories of an "
                    "account "
                 + account_id + " found";
           },
           [&] {
-            return "is valid command validation failed: account's "
+            return "command validation failed: account's "
                 + account_id
                 + " new quorum size is "
                     "out of bounds; "
