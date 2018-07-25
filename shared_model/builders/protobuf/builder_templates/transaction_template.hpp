@@ -111,9 +111,8 @@ namespace shared_model {
         });
       }
 
-      auto batchMeta(
-          const interface::types::BatchType &type,
-          const std::vector<interface::types::HashType> &hashes) const {
+      auto batchMeta(interface::types::BatchType type,
+                     std::vector<interface::types::HashType> hashes) const {
         return transform<0>([&](auto &tx) {
           tx.mutable_payload()->mutable_batch()->set_type(
               static_cast<
@@ -126,15 +125,14 @@ namespace shared_model {
         });
       }
 
-      auto createdTime(
-          const interface::types::TimestampType &created_time) const {
+      auto createdTime(interface::types::TimestampType created_time) const {
         return transform<CreatedTime>([&](auto &tx) {
           tx.mutable_payload()->mutable_reduced_payload()->set_created_time(
               created_time);
         });
       }
 
-      auto quorum(const interface::types::QuorumType &quorum) const {
+      auto quorum(interface::types::QuorumType quorum) const {
         return transform<Quorum>([&](auto &tx) {
           tx.mutable_payload()->mutable_reduced_payload()->set_quorum(quorum);
         });
@@ -254,7 +252,7 @@ namespace shared_model {
 
       auto revokePermission(
           const interface::types::AccountIdType &account_id,
-          const interface::permissions::Grantable &permission) const {
+          interface::permissions::Grantable permission) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_revoke_permission();
           command->set_account_id(account_id);
@@ -275,7 +273,7 @@ namespace shared_model {
       }
 
       auto setAccountQuorum(const interface::types::AddressType &account_id,
-                            const interface::types::QuorumType &quorum) const {
+                            interface::types::QuorumType quorum) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_set_quorum();
           command->set_account_id(account_id);
