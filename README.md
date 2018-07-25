@@ -25,7 +25,7 @@ Among the non-functional requirements can be noted a high degree of network faul
 
 ## Documentation
 
-Our documentation is hosted at ReadTheDocs service here: [http://iroha.readthedocs.io](http://iroha.readthedocs.io/en/).
+Our documentation is hosted at ReadTheDocs service here: [http://iroha.readthedocs.io](http://iroha.readthedocs.io).
 We have documentation in several languages available and you are welcome to contribute on [POEditor website](https://poeditor.com/join/project/SFpZw7o33o)!
 
 ### How to explore Iroha really fast?
