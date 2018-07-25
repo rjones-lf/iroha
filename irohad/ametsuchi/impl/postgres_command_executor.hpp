@@ -7,6 +7,7 @@
 #define IROHA_POSTGRES_COMMAND_EXECUTOR_HPP
 
 #include "ametsuchi/command_executor.hpp"
+
 #include "ametsuchi/impl/soci_utils.hpp"
 
 namespace iroha {
@@ -19,6 +20,8 @@ namespace iroha {
       void setCreatorAccountId(
           const shared_model::interface::types::AccountIdType
               &creator_account_id) override;
+
+      void setIsGenesis(bool is_genesis) override;
 
       CommandResult operator()(
           const shared_model::interface::AddAssetQuantity &command) override;
@@ -71,6 +74,7 @@ namespace iroha {
 
      private:
       soci::session &sql_;
+      bool is_genesis_;
 
       shared_model::interface::types::AccountIdType creator_account_id_;
     };

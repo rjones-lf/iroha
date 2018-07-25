@@ -27,7 +27,7 @@ namespace shared_model {
     class SetQuorum;
     class SubtractAssetQuantity;
     class TransferAsset;
-  } // namespace interface
+  }  // namespace interface
 }  // namespace shared_model
 
 namespace iroha {
@@ -59,6 +59,8 @@ namespace iroha {
       virtual void setCreatorAccountId(
           const shared_model::interface::types::AccountIdType
               &creator_account_id) = 0;
+
+      virtual void setIsGenesis(bool is_genesis) = 0;
 
       virtual CommandResult operator()(
           const shared_model::interface::AddAssetQuantity &command) = 0;
