@@ -457,13 +457,12 @@ namespace iroha_cli {
       provider_->sign(tx);
 
       GrpcResponseHandler response_handler;
-      auto shared_tx = shared_model::proto::Transaction(
-          iroha::model::converters::PbTransactionFactory().serialize(tx));
-      response_handler.handle(
-          CliClient(address.value().first, address.value().second)
-              .sendTx(shared_tx));
 
-      printTxHash(tx);
+      if(response_handler.handle(
+          CliClient(address.value().first, address.value().second).sendTx(tx))){
+          printTxHash(tx);
+      }
+
       printEnd();
       // Stop parsing
       return false;

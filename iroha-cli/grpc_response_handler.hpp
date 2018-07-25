@@ -33,7 +33,7 @@ namespace iroha_cli {
      * Handle iroha GRPC TxResponse
      * @param response
      */
-    void handle(CliClient::Response<CliClient::TxStatus> response);
+    bool handle(CliClient::Response<CliClient::TxStatus> response);
     /**
      * Handle Iroha GRPC QueryResponse
      * @param response
