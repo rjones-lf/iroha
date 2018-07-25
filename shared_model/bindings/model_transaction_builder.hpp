@@ -63,8 +63,8 @@ namespace shared_model {
 
       /**
        * Sets batch meta
-       * @param type one of ATOMIC or ORDERED
-       * @param hashes vector of hashes of transactions in this batch
+       * @param type - one of ATOMIC or ORDERED
+       * @param hashes - vector of hashes of transactions in this batch
        * @return builder with batchMeta set
        */
       ModelTransactionBuilder batchMeta(
