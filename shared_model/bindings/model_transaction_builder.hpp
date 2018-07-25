@@ -62,6 +62,16 @@ namespace shared_model {
       ModelTransactionBuilder quorum(interface::types::QuorumType quorum);
 
       /**
+       * Sets batch meta
+       * @param type - one of ATOMIC or ORDERED
+       * @param hashes - vector of hashes of transactions in this batch
+       * @return builder with batchMeta set
+       */
+      ModelTransactionBuilder batchMeta(
+          interface::types::BatchType type,
+          const std::vector<interface::types::HashType> &hashes);
+
+      /**
        * Adds given quantity of given asset to account
        * @param asset_id - asset id
        * @param amount - amount of asset to add
