@@ -22,6 +22,7 @@
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
+#include "interfaces/iroha_internal/unsafe_block_factory.hpp"
 #include "logger/logger.hpp"
 #include "network/ordering_gate.hpp"
 #include "simulator/block_creator.hpp"
@@ -74,6 +75,8 @@ namespace iroha {
       std::shared_ptr<ametsuchi::TemporaryFactory> ametsuchi_factory_;
       std::shared_ptr<ametsuchi::BlockQuery> block_queries_;
       std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer_;
+      std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
+          block_factory_;
 
       logger::Logger log_;
 

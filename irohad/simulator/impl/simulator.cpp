@@ -113,38 +113,14 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process verified proposal");
 
-      // TODO: Alexey Chernyshov IR-1011 2018-03-08 rework BlockBuilder logic,
-      // so that this cast will not be needed
-      auto proto_txs =
-          proposal.transactions() | boost::adaptors::transformed([](auto &tx) {
-            return static_cast<const shared_model::proto::Transaction &>(tx);
-          });
+      auto height = block_queries_->getTopBlockHeight() + 1;
+      auto block = block_factory_->unsafeCreateBlock(height,
+                                                     last_block->hash(),
+                                                     proposal.createdTime(),
+                                                     proposal.transactions());
 
-      auto sign_and_send = [this](const auto &any_block) {
-        crypto_signer_->sign(*any_block);
-        block_notifier_.get_subscriber().on_next(any_block);
-      };
-
-      if (proto_txs.empty()) {
-        auto empty_block = std::make_shared<shared_model::proto::EmptyBlock>(
-            shared_model::proto::UnsignedEmptyBlockBuilder()
-                .height(proposal.height())
-                .prevHash(last_block->hash())
-                .createdTime(proposal.createdTime())
-                .build());
-
-        sign_and_send(empty_block);
-        return;
-      }
-      auto block = std::make_shared<shared_model::proto::Block>(
-          shared_model::proto::UnsignedBlockBuilder()
-              .height(block_queries_->getTopBlockHeight() + 1)
-              .prevHash(last_block->hash())
-              .transactions(proto_txs)
-              .createdTime(proposal.createdTime())
-              .build());
-
-      sign_and_send(block);
+      crypto_signer_->sign(block);
+      block_notifier_.get_subscriber().on_next(block);
     }
 
     rxcpp::observable<shared_model::interface::BlockVariant>
