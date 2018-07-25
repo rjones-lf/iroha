@@ -143,8 +143,7 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
   fake_transport->subscribe(ordering_service);
 
   for (size_t i = 0; i < tx_num; ++i) {
-    auto batch = framework::batch::createValidBatch(1);
-    ordering_service->onBatch(std::move(batch));
+    ordering_service->onBatch(framework::batch::createValidBatch(1));
   }
 }
 
@@ -175,16 +174,12 @@ TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
   fake_transport->subscribe(ordering_service);
 
   for (size_t i = 0; i < 8; ++i) {
-    auto batch = framework::batch::createValidBatch(1);
-    ordering_service->onBatch(std::move(batch));
+    ordering_service->onBatch(framework::batch::createValidBatch(1));
   }
   makeProposalTimeout();
 
-  auto batch = framework::batch::createValidBatch(1);
-  ordering_service->onBatch(std::move(batch));
-
-  batch = framework::batch::createValidBatch(1);
-  ordering_service->onBatch(std::move(batch));
+  ordering_service->onBatch(framework::batch::createValidBatch(1));
+  ordering_service->onBatch(framework::batch::createValidBatch(1));
 
   makeProposalTimeout();
 }
@@ -206,9 +201,8 @@ TEST_F(OrderingServiceTest, BrokenPersistentState) {
       .WillRepeatedly(Return(false));
 
   auto ordering_service = initOs(max_proposal);
-  auto batch = framework::batch::createValidBatch(1);
+  ordering_service->onBatch(framework::batch::createValidBatch(1));
 
-  ordering_service->onBatch(std::move(batch));
   makeProposalTimeout();
 }
 
@@ -229,8 +223,7 @@ TEST_F(OrderingServiceTest, ConcurrentGenerateProposal) {
 
   auto on_tx = [&]() {
     for (int i = 0; i < 1000; ++i) {
-      auto batch = framework::batch::createValidBatch(1);
-      ordering_service->onBatch(std::move(batch));
+      ordering_service->onBatch(framework::batch::createValidBatch(1));
     }
   };
 
@@ -284,8 +277,7 @@ TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
       // create max_proposal+1 txs, so that publish proposal is invoked at least
       // once (concurrency!)
       for (int i = 0; i < max_proposal + 1; ++i) {
-        auto batch = framework::batch::createValidBatch(1);
-        ordering_service.onBatch(std::move(batch));
+        ordering_service.onBatch(framework::batch::createValidBatch(1));
       }
     };
 
@@ -306,16 +298,19 @@ TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
  */
 TEST_F(OrderingServiceTest, BatchesProceed) {
   const auto max_proposal = 12;
+  const auto first_batch_size = 10;
+  const auto second_batch_size = 5;
 
-  auto batch_one = framework::batch::createValidBatch(10);
-  auto batch_two = framework::batch::createValidBatch(5);
+  auto batch_one = framework::batch::createValidBatch(first_batch_size);
+  auto batch_two = framework::batch::createValidBatch(second_batch_size);
 
   EXPECT_CALL(*fake_persistent_state, saveProposalHeight(_))
       .Times(1)
       .WillRepeatedly(Return(true));
   EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
       .Times(1)
-      .WillOnce(Return(boost::optional<size_t>(15)));
+      .WillOnce(Return(
+          boost::optional<size_t>(first_batch_size + second_batch_size)));
   EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(1);
   EXPECT_CALL(*wsv, getLedgerPeers())
       .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));

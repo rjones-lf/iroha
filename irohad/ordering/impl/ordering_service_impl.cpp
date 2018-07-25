@@ -4,9 +4,9 @@
  */
 
 #include "ordering/impl/ordering_service_impl.hpp"
+
 #include <algorithm>
 #include <iterator>
-#include <shared_mutex>
 
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "ametsuchi/peer_query.hpp"

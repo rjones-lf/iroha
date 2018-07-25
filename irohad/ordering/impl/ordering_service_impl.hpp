@@ -6,10 +6,11 @@
 #ifndef IROHA_ORDERING_SERVICE_IMPL_HPP
 #define IROHA_ORDERING_SERVICE_IMPL_HPP
 
-#include <tbb/concurrent_queue.h>
 #include <memory>
-#include <rxcpp/rx.hpp>
 #include <shared_mutex>
+
+#include <tbb/concurrent_queue.h>
+#include <rxcpp/rx.hpp>
 
 #include "logger/logger.hpp"
 #include "network/ordering_service.hpp"
