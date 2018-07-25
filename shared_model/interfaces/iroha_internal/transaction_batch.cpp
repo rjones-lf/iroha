@@ -134,5 +134,10 @@ namespace shared_model {
           .finalize();
     }
 
+    bool TransactionBatch::operator==(const TransactionBatch &rhs) const {
+      return reducedHash() == rhs.reducedHash()
+             and transactions() == rhs.transactions();
+    }
+
   }  // namespace interface
 }  // namespace shared_model

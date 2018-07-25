@@ -41,7 +41,7 @@ namespace iroha {
      * participants
      * @param transaction - transaction for propagation
      */
-    void propagateTransaction(const DataType transaction);
+    void propagateTransaction(const DataType &transaction);
 
     /**
      * Prove updating of state for handling status of signing
@@ -71,7 +71,7 @@ namespace iroha {
     /**
      * @see propagateTransaction method
      */
-    virtual auto propagateTransactionImpl(DataType transaction)
+    virtual auto propagateTransactionImpl(const DataType &transaction)
         -> decltype(propagateTransaction(transaction)) = 0;
 
     /**

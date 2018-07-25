@@ -35,28 +35,32 @@ namespace iroha {
   class Completer {
    public:
     /**
-     * Verify that transaction is completed
-     * @param tx - transaction for verification
+     * Verify that batch is completed
+     * @param batch - target object for verification
      * @return true, if complete
      */
-    virtual bool operator()(const DataType tx) const = 0;
+    virtual bool operator()(const DataType &batch) const = 0;
 
     /**
-     * Check that invariant for time expiration for transaction
-     * @param tx - transaction for validation
+     * Check that invariant for time expiration for batch
+     * @param batch - object for validation
      * @param time - current time
      * @return true, if transaction was expired
      */
-    virtual bool operator()(const DataType &tx, const TimeType &time) const = 0;
+    virtual bool operator()(const DataType &batch,
+                            const TimeType &time) const = 0;
 
     virtual ~Completer() = default;
   };
 
-  class TxHashEquality {
+  /**
+   * Equality semantic for batches:
+   * check only payloads of transactions, without signatures
+   */
+  class BatchHashEquality {
    public:
     bool operator()(const DataType &left_tx, const DataType &right_tx) const {
-      return shared_model::crypto::toBinaryString((*left_tx).hash())
-          == shared_model::crypto::toBinaryString((*right_tx).hash());
+      return left_tx->reducedHash() == right_tx->reducedHash();
     }
   };
 
@@ -64,8 +68,14 @@ namespace iroha {
    * Class provide default behaviour for transaction completer
    */
   class DefaultCompleter : public Completer {
-    bool operator()(const DataType transaction) const override {
-      return boost::size(transaction->signatures()) >= transaction->quorum();
+    bool operator()(const DataType &batch) const override {
+      return std::accumulate(
+          batch->transactions().begin(),
+          batch->transactions().end(),
+          true,
+          [](bool value, const auto &tx) {
+            return value and boost::size(tx->signatures()) >= tx->quorum();
+          });
     }
 
     bool operator()(const DataType &tx, const TimeType &time) const override {
@@ -125,9 +135,9 @@ namespace iroha {
     bool operator==(const MstState &rhs) const;
 
     /**
-     * Provide transactions, that contains in state
+     * Provide batches, which contains in state
      */
-    std::vector<DataType> getTransactions() const;
+    std::vector<DataType> getBatches() const;
 
     /**
      * Erase expired transactions
@@ -145,14 +155,15 @@ namespace iroha {
     class Less {
      public:
       bool operator()(const DataType &left, const DataType &right) const {
-        return left->createdTime() < right->createdTime();
+        return left->transactions().at(0)->createdTime()
+            < right->transactions().at(0)->createdTime();
       }
     };
 
     using InternalStateType =
         std::unordered_set<DataType,
-                           iroha::model::PointerTxHasher<DataType>,
-                           TxHashEquality>;
+                           iroha::model::PointerBatchHasher<DataType>,
+                           BatchHashEquality>;
 
     using IndexType =
         std::priority_queue<DataType, std::vector<DataType>, Less>;

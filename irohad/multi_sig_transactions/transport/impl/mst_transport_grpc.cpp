@@ -19,7 +19,9 @@
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "builders/protobuf/transport_builder.hpp"
+#include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "validators/default_validator.hpp"
+#include "validators/transactions_collection/batch_order_validator.hpp"
 
 using namespace iroha::network;
 
@@ -37,18 +39,45 @@ grpc::Status MstTransportGrpc::SendState(
       shared_model::proto::Transaction,
       shared_model::validation::DefaultTransactionValidator>
       builder;
-  for (const auto &tx : request->transactions()) {
+
+  shared_model::interface::types::SharedTxsCollectionType collection;
+
+  for (const auto &proto_tx : request->transactions()) {
     // TODO: use monad after deserialize() will return optional
-    builder.build(tx).match(
+    builder.build(proto_tx).match(
         [&](iroha::expected::Value<shared_model::proto::Transaction> &v) {
-          newState += std::make_shared<shared_model::proto::Transaction>(
-              std::move(v.value));
+          collection.push_back(
+              std::make_shared<shared_model::proto::Transaction>(
+                  std::move(v.value)));
+
         },
         [&](iroha::expected::Error<std::string> &e) {
           log_->warn("Can't deserialize tx: {}", e.error);
         });
   }
-  log_->info("transactions in MstState: {}", newState.getTransactions().size());
+
+  using namespace shared_model::validation;
+  shared_model::interface::TransactionSequence::createTransactionSequence(
+      collection,
+      UnsignedTransactionsCollectionValidator<DefaultTransactionValidator,
+                                              BatchOrderValidator>())
+      .match(
+          [&newState](
+              expected::Value<shared_model::interface::TransactionSequence>
+                  &seq) {
+            std::for_each(
+                seq.value.batches().begin(),
+                seq.value.batches().end(),
+                [&newState](const auto &batch) {
+                  newState += std::make_shared<
+                      shared_model::interface::TransactionBatch>(batch);
+                });
+          },
+          [this](const auto &err) {
+            log_->warn("Can't create sequence: {}", err.error);
+          });
+
+  log_->info("batches in MstState: {}", newState.getBatches().size());
 
   auto &peer = request->peer();
   auto from = std::make_shared<shared_model::proto::Peer>(
@@ -78,12 +107,14 @@ void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
   auto peer = protoState.mutable_peer();
   peer->set_peer_key(shared_model::crypto::toBinaryString(to.pubkey()));
   peer->set_address(to.address());
-  for (auto &tx : providing_state.getTransactions()) {
-    auto addtxs = protoState.add_transactions();
-    // TODO (@l4l) 04/03/18 simplify with IR-1040
-    new (addtxs) protocol::Transaction(
-        std::static_pointer_cast<shared_model::proto::Transaction>(tx)
-            ->getTransport());
+  for (auto &batch : providing_state.getBatches()) {
+    for (auto &tx : batch->transactions()) {
+      auto addtxs = protoState.add_transactions();
+      // TODO (@l4l) 04/03/18 simplify with IR-1040
+      new (addtxs) protocol::Transaction(
+          std::static_pointer_cast<shared_model::proto::Transaction>(tx)
+              ->getTransport());
+    }
   }
 
   call->response_reader =

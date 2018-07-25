@@ -7,10 +7,10 @@
 
 using namespace iroha;
 
-auto MstProcessorStub::propagateTransactionImpl(const DataType transaction)
-    -> decltype(propagateTransaction(transaction)) {
-  log_->error("Multisig transactions are disabled. Skipping transaction: {}",
-              transaction->toString());
+auto MstProcessorStub::propagateTransactionImpl(const DataType &batch)
+    -> decltype(propagateTransaction(batch)) {
+  log_->error("Multisig transactions are disabled. Skipping batch: {}",
+              batch->reducedHash().toString());
 }
 
 auto MstProcessorStub::onStateUpdateImpl() const -> decltype(onStateUpdate()) {

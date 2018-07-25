@@ -19,9 +19,11 @@
 
 namespace iroha {
 
-  MstProcessor::MstProcessor() { log_ = logger::log("MstProcessor"); }
+  MstProcessor::MstProcessor() {
+    log_ = logger::log("MstProcessor");
+  }
 
-  void MstProcessor::propagateTransaction(const DataType transaction) {
+  void MstProcessor::propagateTransaction(const DataType &transaction) {
     this->propagateTransactionImpl(transaction);
   }
 

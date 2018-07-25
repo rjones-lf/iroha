@@ -15,6 +15,8 @@ namespace shared_model {
 
     class TransactionBatch {
      public:
+      TransactionBatch() = delete;
+
       /**
        * Create transaction batch out of collection of transactions
        * @tparam TransactionValidator validates every single transaction
@@ -66,6 +68,8 @@ namespace shared_model {
        * otherwise
        */
       bool hasAllSignatures() const;
+
+      bool operator==(const TransactionBatch &rhs) const;
 
       /**
        * @return string representation of the object

@@ -55,25 +55,15 @@ namespace iroha {
         internal_state_.begin(),
         internal_state_.end(),
         rhs.internal_state_.begin(),
-        [](auto tx1, auto tx2) {
-          if (*tx1 == *tx2) {
-            return std::is_permutation(
-                tx1->signatures().begin(),
-                tx1->signatures().end(),
-                tx2->signatures().begin(),
-                [](const auto &sig1, const auto &sig2) { return sig1 == sig2; });
-          }
-          return false;
-        });
+        [](auto &lhs, auto &rhs) { return *lhs == *rhs; });
   }
 
   bool MstState::isEmpty() const {
     return internal_state_.empty();
   }
 
-  std::vector<DataType> MstState::getTransactions() const {
-    return std::vector<DataType>(internal_state_.begin(),
-                                 internal_state_.end());
+  std::vector<DataType> MstState::getBatches() const {
+    throw std::logic_error("Function is not yet implemented");
   }
 
   MstState MstState::eraseByTime(const TimeType &time) {
@@ -90,6 +80,34 @@ namespace iroha {
 
   // ------------------------------| private api |------------------------------
 
+  /**
+   * Merge signatures in batches
+   * @param target - batch for inserting
+   * @param donor - batch with interested transactions
+   * @return false if hashes of transactions don't satisfy each other
+   */
+  bool mergeSignaturesInBatch(DataType &target, const DataType &donor) {
+    if (target->reducedHash() != donor->reducedHash()) {
+      return false;
+    }
+
+    for (auto &target_tx : target->transactions()) {
+      for (auto &donor_tx : donor->transactions()) {
+        if (target_tx->hash() == donor_tx->hash()) {
+          std::for_each(donor_tx->signatures().begin(),
+                        donor_tx->signatures().end(),
+                        [&target_tx](const auto &signature) {
+                          target_tx->addSignature(signature.signedData(),
+                                                  signature.publicKey());
+                        });
+        } else {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   MstState::MstState(const CompleterType &completer)
       : MstState(completer, InternalStateType{}) {}
 
@@ -101,21 +119,17 @@ namespace iroha {
     log_ = logger::log("MstState");
   }
 
-  void MstState::insertOne(MstState &out_state, const DataType &rhs_tx) {
-    auto corresponding = internal_state_.find(rhs_tx);
+  void MstState::insertOne(MstState &out_state, const DataType &rhs_batch) {
+    auto corresponding = internal_state_.find(rhs_batch);
     if (corresponding == internal_state_.end()) {
       // when state not contains transaction
-      rawInsert(rhs_tx);
+      rawInsert(rhs_batch);
       return;
     }
 
-    auto &found = *corresponding;
+    DataType found = *corresponding;
     // Append new signatures to the existing state
-    for (auto &sig : rhs_tx->signatures()) {
-      if (boost::find(found->signatures(), sig) == boost::end(found->signatures())) {
-        found->addSignature(sig.signedData(), sig.publicKey());
-      }
-    }
+    mergeSignaturesInBatch(found, rhs_batch);
 
     if ((*completer_)(found)) {
       // state already has completed transaction,
@@ -125,9 +139,9 @@ namespace iroha {
     }
   }
 
-  void MstState::rawInsert(const DataType &rhs_tx) {
-    internal_state_.insert(rhs_tx);
-    index_.push(rhs_tx);
+  void MstState::rawInsert(const DataType &rhs_batch) {
+    internal_state_.insert(rhs_batch);
+    index_.push(rhs_batch);
   }
 
 }  // namespace iroha

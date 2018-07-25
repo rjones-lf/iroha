@@ -24,11 +24,12 @@ namespace iroha {
   template <typename Subject>
   void shareState(ConstRefState state, Subject &subject) {
     if (not state.isEmpty()) {
-      auto completed_transactions = state.getTransactions();
-      std::for_each(
-          completed_transactions.begin(),
-          completed_transactions.end(),
-          [&subject](const auto tx) { subject.get_subscriber().on_next(tx); });
+      auto completed_transactions = state.getBatches();
+      std::for_each(completed_transactions.begin(),
+                    completed_transactions.end(),
+                    [&subject](const auto batch) {
+                      subject.get_subscriber().on_next(batch);
+                    });
     }
   }
 
@@ -53,7 +54,7 @@ namespace iroha {
 
   // -------------------------| MstProcessor override |-------------------------
 
-  auto FairMstProcessor::propagateTransactionImpl(const DataType transaction)
+  auto FairMstProcessor::propagateTransactionImpl(const DataType &transaction)
       -> decltype(propagateTransaction(transaction)) {
     shareState(storage_->updateOwnState(transaction), transactions_subject_);
     shareState(
@@ -90,7 +91,7 @@ namespace iroha {
         std::make_shared<MstState>(storage_->whatsNew(new_state));
     state_subject_.get_subscriber().on_next(new_transactions);
 
-    log_->info("New txes size: {}", new_transactions->getTransactions().size());
+    log_->info("New batches size: {}", new_transactions->getBatches().size());
     // completed transactions
     shareState(storage_->apply(from, new_state), transactions_subject_);
 

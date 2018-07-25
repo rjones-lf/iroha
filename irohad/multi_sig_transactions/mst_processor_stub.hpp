@@ -10,7 +10,7 @@
 
 namespace iroha {
   class MstProcessorStub : public MstProcessor {
-    auto propagateTransactionImpl(const DataType transaction)
+    auto propagateTransactionImpl(const DataType &transaction)
         -> decltype(propagateTransaction(transaction)) override;
 
     auto onStateUpdateImpl() const -> decltype(onStateUpdate()) override;

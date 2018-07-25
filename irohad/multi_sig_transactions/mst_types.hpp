@@ -21,11 +21,11 @@
 #include <memory>
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/transaction.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction_responses/tx_response.hpp"
 
 namespace iroha {
-  using SharedTx = std::shared_ptr<shared_model::interface::Transaction>;
+  using BatchPtr = std::shared_ptr<shared_model::interface::TransactionBatch>;
   using ConstPeer = const shared_model::interface::Peer;
   using TimeType = shared_model::interface::types::TimestampType;
   using TxResponse =
@@ -34,7 +34,7 @@ namespace iroha {
   template <typename T>
   using ConstRefT = const T &;
 
-  using ConstRefTransaction = ConstRefT<SharedTx>;
+  using ConstRefBatch = ConstRefT<BatchPtr>;
   using ConstRefPeer = ConstRefT<shared_model::interface::Peer>;
   using ConstRefTime = ConstRefT<TimeType>;
 
@@ -42,6 +42,6 @@ namespace iroha {
 
   using ConstRefState = ConstRefT<MstState>;
 
-  using DataType = SharedTx;
+  using DataType = BatchPtr;
 }  // namespace iroha
 #endif  // IROHA_MST_TYPES_HPP
