@@ -15,6 +15,7 @@
 namespace shared_model {
   namespace proto {
     class ProtoBlockFactory : public interface::UnsafeBlockFactory {
+     public:
       interface::BlockVariant unsafeCreateBlock(
           interface::types::HeightType height,
           const interface::types::HashType &prev_hash,
@@ -23,14 +24,14 @@ namespace shared_model {
         iroha::protocol::Block block;
         auto *block_payload = block.mutable_payload();
         block_payload->set_height(height);
-        block_payload->set_prev_block_hash(prev_hash.hex());
+        block_payload->set_prev_block_hash(crypto::toBinaryString(prev_hash));
         block_payload->set_created_time(created_time);
 
         if (not txs.empty()) {
           std::for_each(
               std::begin(txs), std::end(txs), [&block_payload](const auto &tx) {
                 auto *transaction = block_payload->add_transactions();
-                *transaction =
+                (*transaction) =
                     static_cast<const Transaction &>(tx).getTransport();
               });
           return std::make_shared<shared_model::proto::Block>(std::move(block));
