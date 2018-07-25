@@ -4,6 +4,8 @@
  */
 
 #include <gmock/gmock.h>
+
+#include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
@@ -190,4 +192,80 @@ TEST(TransactionBatchTest, BatchWithMissingSignatures) {
   ASSERT_TRUE(transaction_batch_val)
       << framework::expected::err(transaction_batch).value().error;
   ASSERT_FALSE(transaction_batch_val->value.hasAllSignatures());
+}
+
+/**
+ * Create test transaction builder
+ * @param acc_quorum - quorum number for setAccountDetail
+ * @param created_time - time of creation
+ * @param quorum - tx quorum number
+ * @return test tx builder
+ */
+inline auto makeTxBuilder(
+    const shared_model::interface::types::QuorumType &acc_quorum = 1,
+    uint64_t created_time = iroha::time::now(),
+    uint8_t quorum = 3) {
+  return TestTransactionBuilder()
+      .createdTime(created_time)
+      .creatorAccountId("user@test")
+      .setAccountQuorum("user@test", acc_quorum)
+      .quorum(quorum);
+}
+
+/**
+ * @given one tx-builder
+ * @when  try to fetch hash
+ * @then  got only one hash
+ */
+TEST(TransactionBatchTest, TemplateHasherOne) {
+  ASSERT_EQ(
+      1,
+      framework::batch::internal::fetchReducedHashes(makeTxBuilder()).size());
+}
+
+/**
+ * @given 3 tx-builders
+ * @when  try to fetch hashes
+ * @then  got exactly 3 hashes
+ */
+TEST(TransactionBatchTest, TemplateHasherVariadic) {
+  ASSERT_EQ(3,
+            framework::batch::internal::fetchReducedHashes(
+                makeTxBuilder(), makeTxBuilder(), makeTxBuilder())
+                .size());
+}
+
+/**
+ * @given one tx-builder
+ * @when  try to create transaction
+ * @then  got exactly one tx
+ */
+TEST(TransactionBatchTest, MakeTxBatchCollectionOne) {
+  ASSERT_EQ(1,
+            framework::batch::internal::makeTxBatchCollection(makeTxBuilder())
+                .size());
+}
+
+/**
+ * @given three tx-builders
+ * @when  try to create transaction collection
+ * @then  got exactly 3 txes
+ */
+TEST(TransactionBatchTest, MakeTxBatchCollectionMany) {
+  ASSERT_EQ(3,
+            framework::batch::internal::makeTxBatchCollection(
+                makeTxBuilder(), makeTxBuilder(), makeTxBuilder())
+                .size());
+}
+
+/**
+ * @given two tx-builders
+ * @when  try to create batch
+ * @then  batch contains two transactions
+ */
+TEST(TransactionBatchTest, CreateTestBatchTest) {
+  ASSERT_EQ(2,
+            framework::batch::makeTestBatch(makeTxBuilder(2), makeTxBuilder())
+                ->transactions()
+                .size());
 }
