@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_STORAGE_IMPL_HPP
@@ -73,19 +61,20 @@ namespace iroha {
        * @param blocks - block for insertion
        * @return true if all blocks are inserted
        */
-      virtual bool insertBlock(
-          const shared_model::interface::Block &block) override;
+      bool insertBlock(const shared_model::interface::Block &block) override;
 
       /**
        * Insert blocks without validation
        * @param blocks - collection of blocks for insertion
        * @return true if inserted
        */
-      virtual bool insertBlocks(
+      bool insertBlocks(
           const std::vector<std::shared_ptr<shared_model::interface::Block>>
               &blocks) override;
 
-      virtual void dropStorage() override;
+      void reset() override;
+
+      void dropStorage() override;
 
       void commit(std::unique_ptr<MutableStorage> mutableStorage) override;
 
@@ -117,9 +106,6 @@ namespace iroha {
 
       std::shared_ptr<soci::connection_pool> connection_;
 
-      // Allows multiple readers and a single writer
-      std::shared_timed_mutex rw_lock_;
-
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
 
       rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
@@ -127,7 +113,11 @@ namespace iroha {
 
       logger::Logger log_;
 
+      mutable std::shared_timed_mutex drop_mutex;
+
      protected:
+      static const std::string &drop_;
+      static const std::string &reset_;
       static const std::string &init_;
     };
   }  // namespace ametsuchi

@@ -34,11 +34,6 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory);
 
-      PostgresWsvQuery(
-          std::unique_ptr<soci::session> sql_ptr,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory);
-
       boost::optional<std::vector<shared_model::interface::types::RoleIdType>>
       getAccountRoles(const shared_model::interface::types::AccountIdType
                           &account_id) override;
@@ -92,7 +87,6 @@ namespace iroha {
           shared_model::interface::permissions::Grantable permission) override;
 
      private:
-      std::unique_ptr<soci::session> sql_ptr_;
       soci::session &sql_;
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
       logger::Logger log_;

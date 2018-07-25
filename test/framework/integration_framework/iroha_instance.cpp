@@ -43,7 +43,7 @@ namespace integration_framework {
         is_mst_supported_(mst_support) {}
 
   void IrohaInstance::makeGenesis(const shared_model::interface::Block &block) {
-    instance_->storage->dropStorage();
+    instance_->storage->reset();
     rawInsertBlock(block);
     instance_->init();
   }

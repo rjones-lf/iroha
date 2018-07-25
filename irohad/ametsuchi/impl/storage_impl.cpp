@@ -1,24 +1,12 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "ametsuchi/impl/storage_impl.hpp"
 
-#include <boost/format.hpp>
 #include <soci/postgresql/soci-postgresql.h>
+#include <boost/format.hpp>
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
@@ -40,20 +28,28 @@ namespace iroha {
         std::unique_ptr<KeyValueStorage> block_store)
         : block_store(std::move(block_store)) {}
 
-    StorageImpl::StorageImpl(std::string block_store_dir,
-                             PostgresOptions postgres_options,
-                             std::unique_ptr<KeyValueStorage> block_store,
-                             std::shared_ptr<soci::connection_pool> connection,
-                             std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+    StorageImpl::StorageImpl(
+        std::string block_store_dir,
+        PostgresOptions postgres_options,
+        std::unique_ptr<KeyValueStorage> block_store,
+        std::shared_ptr<soci::connection_pool> connection,
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
           connection_(connection),
           factory_(factory),
-          log_(logger::log("StorageImpl")) {}
+          log_(logger::log("StorageImpl")) {
+      soci::session sql(*connection_);
+      sql << init_;
+    }
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
     StorageImpl::createTemporaryWsv() {
+      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+      if (connection_ == nullptr) {
+        return expected::makeError("Connection was closed");
+      }
       auto sql = std::make_unique<soci::session>(*connection_);
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
@@ -63,6 +59,11 @@ namespace iroha {
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
     StorageImpl::createMutableStorage() {
       boost::optional<shared_model::interface::types::HashType> top_hash;
+
+      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+      if (connection_ == nullptr) {
+        return expected::makeError("Connection was closed");
+      }
 
       auto sql = std::make_unique<soci::session>(*connection_);
       auto block_result = getBlockQuery()->getTopBlock();
@@ -128,32 +129,40 @@ namespace iroha {
       return inserted;
     }
 
-    void StorageImpl::dropStorage() {
-      log_->info("Drop ledger");
-      auto drop = R"(
-DROP TABLE IF EXISTS account_has_signatory;
-DROP TABLE IF EXISTS account_has_asset;
-DROP TABLE IF EXISTS role_has_permissions CASCADE;
-DROP TABLE IF EXISTS account_has_roles;
-DROP TABLE IF EXISTS account_has_grantable_permissions CASCADE;
-DROP TABLE IF EXISTS account;
-DROP TABLE IF EXISTS asset;
-DROP TABLE IF EXISTS domain;
-DROP TABLE IF EXISTS signatory;
-DROP TABLE IF EXISTS peer;
-DROP TABLE IF EXISTS role;
-DROP TABLE IF EXISTS height_by_hash;
-DROP TABLE IF EXISTS height_by_account_set;
-DROP TABLE IF EXISTS index_by_creator_height;
-DROP TABLE IF EXISTS index_by_id_height_asset;
-)";
-
+    void StorageImpl::reset() {
       // erase db
       log_->info("drop db");
 
       soci::session sql(*connection_);
-      sql << drop;
-      sql << init_;
+      sql << reset_;
+    }
+
+    void StorageImpl::dropStorage() {
+      log_->info("drop storage");
+      if (connection_ == nullptr) {
+        log_->warn("Tried to drop storage without active connection");
+        return;
+      }
+
+      if (auto dbname = postgres_options_.dbname()) {
+        auto &db = dbname.value();
+        std::unique_lock<std::shared_timed_mutex> lock(drop_mutex);
+        log_->info("Drop database {}", db);
+        connection_.reset();
+        soci::session sql(soci::postgresql,
+                          postgres_options_.optionsStringWithoutDbName());
+        // kill active connections
+        sql << R"(
+SELECT pg_terminate_backend(pg_stat_activity.pid)
+FROM pg_stat_activity
+WHERE pg_stat_activity.datname = :dbname
+  AND pid <> pg_backend_pid();)",
+            soci::use(dbname.value());
+        // perform dropping
+        sql << "DROP DATABASE " + db;
+      } else {
+        soci::session(*connection_) << drop_;
+      }
 
       // erase blocks
       log_->info("drop block store");
@@ -259,7 +268,6 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
     }
 
     void StorageImpl::commit(std::unique_ptr<MutableStorage> mutableStorage) {
-      std::unique_lock<std::shared_timed_mutex> write(rw_lock_);
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
@@ -275,23 +283,111 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
       storage->committed = true;
     }
 
+    namespace {
+      /**
+       * Deleter for an object which uses connection_pool
+       * @tparam Query object type to delete
+       */
+      template <typename Query>
+      class Deleter {
+       public:
+        Deleter(std::shared_ptr<soci::connection_pool> conn, size_t pool_pos)
+            : conn_(std::move(conn)), pool_pos_(pool_pos) {}
+
+        void operator()(Query *q) const {
+          if (conn_ != nullptr) {
+            conn_->give_back(pool_pos_);
+          }
+          delete q;
+        }
+
+       private:
+        std::shared_ptr<soci::connection_pool> conn_;
+        const size_t pool_pos_;
+      };
+
+      /**
+       * Factory method for query object creation which uses connection_pool
+       * @tparam Query object type to create
+       * @tparam Backend object type to use as a backend for Query
+       * @param b is a backend obj
+       * @param conn is pointer to connection pool for getting and releaseing
+       * the session
+       * @param log is a logger
+       * @param drop_mutex is mutex for preventing connection destruction
+       *        during the function
+       * @return pointer to created query object
+       * note: blocks untils connection can be leased from the pool
+       */
+      template <typename Query, typename Backend>
+      std::shared_ptr<Query> setupQuery(
+          Backend &b,
+          std::shared_ptr<soci::connection_pool> conn,
+          const logger::Logger &log,
+          std::shared_timed_mutex &drop_mutex) {
+        std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+        if (conn == nullptr) {
+          log->warn("Storage was deleted, cannot perform setup");
+          return nullptr;
+        }
+        auto pool_pos = conn->lease();
+        soci::session &session = conn->at(pool_pos);
+        lock.unlock();
+        return {new Query(session, b),
+                Deleter<Query>(std::move(conn), pool_pos)};
+      }
+    }  // namespace
+
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
-      auto sql = std::make_unique<soci::session>(*connection_);
-      return std::make_shared<PostgresWsvQuery>(std::move(sql), factory_);
+      return setupQuery<PostgresWsvQuery>(
+          factory_, connection_, log_, drop_mutex);
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
-      auto sql = std::make_unique<soci::session>(
-          soci::postgresql, postgres_options_.optionsString());
-
-      return std::make_shared<PostgresBlockQuery>(std::move(sql),
-                                                  *block_store_);
+      return setupQuery<PostgresBlockQuery>(
+          *block_store_, connection_, log_, drop_mutex);
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
     StorageImpl::on_commit() {
       return notifier_.get_observable();
     }
+
+    const std::string &StorageImpl::drop_ = R"(
+DROP TABLE IF EXISTS account_has_signatory;
+DROP TABLE IF EXISTS account_has_asset;
+DROP TABLE IF EXISTS role_has_permissions CASCADE;
+DROP TABLE IF EXISTS account_has_roles;
+DROP TABLE IF EXISTS account_has_grantable_permissions CASCADE;
+DROP TABLE IF EXISTS account;
+DROP TABLE IF EXISTS asset;
+DROP TABLE IF EXISTS domain;
+DROP TABLE IF EXISTS signatory;
+DROP TABLE IF EXISTS peer;
+DROP TABLE IF EXISTS role;
+DROP TABLE IF EXISTS height_by_hash;
+DROP TABLE IF EXISTS height_by_account_set;
+DROP TABLE IF EXISTS index_by_creator_height;
+DROP TABLE IF EXISTS index_by_id_height_asset;
+)";
+
+    const std::string &StorageImpl::reset_ = R"(
+DELETE FROM account_has_signatory;
+DELETE FROM account_has_asset;
+DELETE FROM role_has_permissions CASCADE;
+DELETE FROM account_has_roles;
+DELETE FROM account_has_grantable_permissions CASCADE;
+DELETE FROM account;
+DELETE FROM asset;
+DELETE FROM domain;
+DELETE FROM signatory;
+DELETE FROM peer;
+DELETE FROM role;
+DELETE FROM height_by_hash;
+DELETE FROM height_by_account_set;
+DELETE FROM index_by_creator_height;
+DELETE FROM index_by_id_height_asset;
+)";
 
     const std::string &StorageImpl::init_ =
         R"(

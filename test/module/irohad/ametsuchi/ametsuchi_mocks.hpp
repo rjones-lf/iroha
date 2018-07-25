@@ -266,6 +266,7 @@ namespace iroha {
       MOCK_METHOD1(insertBlocks,
                    bool(const std::vector<
                         std::shared_ptr<shared_model::interface::Block>> &));
+      MOCK_METHOD0(reset, void(void));
       MOCK_METHOD0(dropStorage, void(void));
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
