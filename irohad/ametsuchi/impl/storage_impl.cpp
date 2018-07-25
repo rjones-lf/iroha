@@ -284,6 +284,10 @@ WHERE pg_stat_activity.datname = :dbname
     }
 
     namespace {
+      /**
+       * Deleter for an object which uses connection_pool
+       * @tparam Query object type to delete
+       */
       template <typename Query>
       class Deleter {
        public:
@@ -302,15 +306,28 @@ WHERE pg_stat_activity.datname = :dbname
         const size_t pool_pos_;
       };
 
+      /**
+       * Factory method for query object creation which uses connection_pool
+       * @tparam Query object type to create
+       * @tparam Backend object type to use as a backend for Query
+       * @param b is a backend obj
+       * @param conn is pointer to connection pool for getting and releaseing
+       * the session
+       * @param log is a logger
+       * @param drop_mutex is mutex for preventing connection destruction
+       *        during the function
+       * @return pointer to created query object
+       * note: blocks untils connection can be leased from the pool
+       */
       template <typename Query, typename Backend>
       std::shared_ptr<Query> setupQuery(
           Backend &b,
           std::shared_ptr<soci::connection_pool> conn,
-          const logger::Logger &log_,
+          const logger::Logger &log,
           std::shared_timed_mutex &drop_mutex) {
         std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
         if (conn == nullptr) {
-          log_->warn("Storage was deleted, cannot perform setup");
+          log->warn("Storage was deleted, cannot perform setup");
           return nullptr;
         }
         auto pool_pos = conn->lease();
