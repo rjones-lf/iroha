@@ -27,6 +27,7 @@
 #include "interfaces/permissions.hpp"
 #include "primitive.pb.h"
 #include "queries.pb.h"
+#include "transaction.pb.h"
 
 class ValidatorsTest : public ::testing::Test {
  public:
@@ -66,14 +67,13 @@ class ValidatorsTest : public ::testing::Test {
     field_setters["permission"] = setEnum(role_permission);
     field_setters["grantable_permission"] = setEnum(grantable_permission);
     field_setters["key"] = setString(detail_key);
+    field_setters["writer"] = setString(writer);
     field_setters["detail"] = setString(detail_key);
     field_setters["value"] = setString("");
     field_setters["tx_hashes"] = addString(hash);
     field_setters["quorum"] = setUInt32(quorum);
     field_setters["description"] = setString("");
-    field_setters["amount"] = [&](auto refl, auto msg, auto field) {
-      refl->MutableMessage(msg, field)->CopyFrom(amount);
-    };
+    field_setters["amount"] = setString(amount);
     field_setters["peer"] = [&](auto refl, auto msg, auto field) {
       refl->MutableMessage(msg, field)->CopyFrom(peer);
     };
@@ -118,14 +118,59 @@ class ValidatorsTest : public ::testing::Test {
       validator();
     });
   }
+  // TODO: IR-1490 02.07.2018 Rewrite interator for all containters
+  /**
+   * Iterate the container recursively (transaction or query),
+   * generating concrete subtypes
+   * and doing operation on concrete subtype fields. Call validator after each
+   * subtype
+   * @tparam FieldMap map of validators which are not nessery to traverse but
+   * validate as a whole
+   * @tparam FieldOp field operation type
+   * @tparam Validator validator type
+   * @param m protobuf message to iterate
+   * @param field_validators map of validators which are not nessery to traverse
+   * but validate as a whole
+   * @param field_op field operation callable object
+   * @param validator validator callable object
+   */
+  template <typename FieldOp, typename FieldMap, typename Validator>
+  void iterateContainerRecursive(std::shared_ptr<google::protobuf::Message> m,
+                                 FieldMap &field_validators,
+                                 FieldOp &&field_op,
+                                 Validator &&validator) {
+    const google::protobuf::Descriptor *desc = m->GetDescriptor();
+    const google::protobuf::Reflection *refl = m->GetReflection();
+    // Get field descriptor for concrete type
+    const auto &range = boost::irange(0, desc->field_count())
+        | boost::adaptors::transformed([&](auto i) { return desc->field(i); });
+    // Iterate through all concrete types
+    boost::for_each(range, [&](auto field) {
+      if (field->type() != google::protobuf::FieldDescriptor::TYPE_MESSAGE
+          or field_validators.count(field->name())) {
+        field_op(field, m);
+        validator();
+      } else {
+        const google::protobuf::Message *mfield = field->is_repeated()
+            ? refl->MutableRepeatedMessage(m.get(), field, 0)
+            : refl->MutableMessage(m.get(), field);
+        google::protobuf::Message *mcopy = mfield->New();
+        mcopy->CopyFrom(*mfield);
+        void *ptr = new std::shared_ptr<google::protobuf::Message>(mcopy);
+        std::shared_ptr<google::protobuf::Message> *m =
+            static_cast<std::shared_ptr<google::protobuf::Message> *>(ptr);
+        this->iterateContainerRecursive(
+            *m, field_validators, field_op, validator);
+      }
+    });
+  }
 
  protected:
   void SetUp() override {
     // Fill fields with valid values
     created_time = iroha::time::now();
     precision = 2;
-    amount.set_precision(precision);
-    amount.mutable_value()->set_fourth(1000);
+    amount = "10.00";
     public_key_size = 32;
     hash_size = 32;
     counter = 1048576;
@@ -140,6 +185,7 @@ class ValidatorsTest : public ::testing::Test {
     account_name = "admin";
     domain_id = "ru";
     detail_key = "key";
+    writer = "account@domain";
     public_key = std::string(public_key_size, '0');
     hash = std::string(public_key_size, '0');
     role_permission = iroha::protocol::RolePermission::can_append_role;
@@ -168,13 +214,15 @@ class ValidatorsTest : public ::testing::Test {
   std::string description;
   std::string public_key;
   std::string hash;
+  std::string writer;
+  iroha::protocol::Transaction::Payload::BatchMeta batch_meta;
   shared_model::interface::permissions::Role model_role_permission;
   shared_model::interface::permissions::Grantable model_grantable_permission;
   iroha::protocol::RolePermission role_permission;
   iroha::protocol::GrantablePermission grantable_permission;
   uint8_t quorum;
   uint8_t precision;
-  iroha::protocol::Amount amount;
+  std::string amount;
   iroha::protocol::Peer peer;
   decltype(iroha::time::now()) created_time;
   iroha::protocol::QueryPayloadMeta meta;

@@ -25,7 +25,7 @@ function(addtest test_name SOURCES)
     set(test_xml_output --gtest_output=xml:${REPORT_DIR}/xunit-${test_name}.xml)
   endif ()
   add_executable(${test_name} ${SOURCES})
-  target_link_libraries(${test_name} gtest gmock)
+  target_link_libraries(${test_name} gtest::main gmock::main)
   target_include_directories(${test_name} PUBLIC ${PROJECT_SOURCE_DIR}/test)
 
   # fetch directory after test in source dir call
@@ -71,28 +71,30 @@ function(compile_proto_to_cpp PROTO)
     set(GEN_ARGS ${protobuf_INCLUDE_DIR})
   endif()
   add_custom_command(
-      OUTPUT ${IROHA_SCHEMA_DIR}/${GEN_PB_HEADER} ${IROHA_SCHEMA_DIR}/${GEN_PB}
+      OUTPUT ${SCHEMA_OUT_DIR}/${GEN_PB_HEADER} ${SCHEMA_OUT_DIR}/${GEN_PB}
       COMMAND ${GEN_COMMAND}
-      ARGS -I${GEN_ARGS} -I. --cpp_out=${IROHA_SCHEMA_DIR} ${PROTO}
-      DEPENDS protoc ${IROHA_SCHEMA_DIR}/${PROTO}
-      WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
+      ARGS -I${GEN_ARGS} -I${CMAKE_CURRENT_SOURCE_DIR} ${ARGN} --cpp_out=${SCHEMA_OUT_DIR} ${PROTO}
+      DEPENDS protoc ${SCHEMA_PATH}/${PROTO}
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
       )
 endfunction()
 
-
-function(compile_proto_to_grpc_cpp PROTO)
-  compile_proto_to_cpp(${PROTO})
+function(compile_proto_only_grpc_to_cpp PROTO)
   string(REGEX REPLACE "\\.proto$" ".grpc.pb.h" GEN_GRPC_PB_HEADER ${PROTO})
   string(REGEX REPLACE "\\.proto$" ".grpc.pb.cc" GEN_GRPC_PB ${PROTO})
   add_custom_command(
-      OUTPUT ${IROHA_SCHEMA_DIR}/${GEN_GRPC_PB_HEADER} ${IROHA_SCHEMA_DIR}/${GEN_GRPC_PB}
+      OUTPUT ${SCHEMA_OUT_DIR}/${GEN_GRPC_PB_HEADER} ${SCHEMA_OUT_DIR}/${GEN_GRPC_PB}
       COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}"
-      ARGS -I${protobuf_INCLUDE_DIR} -I. --grpc_out=${IROHA_SCHEMA_DIR} --plugin=protoc-gen-grpc="${grpc_CPP_PLUGIN}" ${PROTO}
-      DEPENDS grpc_cpp_plugin ${IROHA_SCHEMA_DIR}/${PROTO}
-      WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
+      ARGS -I${protobuf_INCLUDE_DIR} -I${CMAKE_CURRENT_SOURCE_DIR} ${ARGN} --grpc_out=${SCHEMA_OUT_DIR} --plugin=protoc-gen-grpc="${grpc_CPP_PLUGIN}" ${PROTO}
+      DEPENDS grpc_cpp_plugin ${SCHEMA_PATH}/${PROTO}
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
       )
 endfunction()
 
+function(compile_proto_to_grpc_cpp PROTO)
+  compile_proto_to_cpp(${PROTO} "${ARGN}")
+  compile_proto_only_grpc_to_cpp(${PROTO} "${ARGN}")
+endfunction()
 
 function(compile_proto_to_python PROTO)
   string(REGEX REPLACE "\\.proto$" "_pb2.py" PY_PB ${PROTO})
@@ -106,8 +108,8 @@ function(compile_proto_to_python PROTO)
   add_custom_command(
       OUTPUT ${SWIG_BUILD_DIR}/${PY_PB}
       COMMAND ${GEN_COMMAND}
-      ARGS -I${GEN_ARGS} -I. --python_out=${SWIG_BUILD_DIR} ${PROTO}
-      DEPENDS protoc ${IROHA_SCHEMA_DIR}/${PROTO}
+      ARGS -I${GEN_ARGS} -I${SM_SCHEMA_DIR} --python_out=${SWIG_BUILD_DIR} ${PROTO}
+      DEPENDS protoc ${SM_SCHEMA_DIR}/${PROTO}
       WORKING_DIRECTORY ${IROHA_SCHEMA_DIR}
       )
 endfunction()

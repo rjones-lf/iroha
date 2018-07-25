@@ -36,8 +36,14 @@ namespace shared_model {
      * and query
      */
     class FieldValidator {
+     private:
+      using TimeFunction = std::function<iroha::ts64_t()>;
+
      public:
-      FieldValidator(time_t future_gap = default_future_gap);
+      FieldValidator(time_t future_gap = kDefaultFutureGap,
+                     TimeFunction time_provider = [] {
+                       return iroha::time::now();
+                     });
 
       void validateAccountId(
           ReasonsGroupType &reason,
@@ -143,6 +149,10 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::DescriptionType &description) const;
 
+      void validateBatchMeta(
+          ReasonsGroupType &reason,
+          const interface::BatchMeta &description) const;
+
       void validateHeight(ReasonsGroupType &reason,
                           const interface::types::HeightType &height) const;
 
@@ -172,11 +182,15 @@ namespace shared_model {
 
       // gap for future transactions
       time_t future_gap_;
+      // time provider callback
+      TimeFunction time_provider_;
+
+     public:
       // max-delay between tx creation and validation
-      static constexpr auto max_delay =
+      static constexpr auto kMaxDelay =
           std::chrono::hours(24) / std::chrono::milliseconds(1);
       // default value for future_gap field of FieldValidator
-      static constexpr auto default_future_gap =
+      static constexpr auto kDefaultFutureGap =
           std::chrono::minutes(5) / std::chrono::milliseconds(1);
 
       // size of key

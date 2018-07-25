@@ -1,32 +1,23 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_AMETSUCHI_FIXTURE_HPP
 #define IROHA_AMETSUCHI_FIXTURE_HPP
 
 #include <gtest/gtest.h>
+#include <soci/postgresql/soci-postgresql.h>
+#include <soci/soci.h>
 #include <boost/filesystem.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <pqxx/pqxx>
 #include "ametsuchi/impl/storage_impl.hpp"
+#include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "common/files.hpp"
 #include "framework/config_helper.hpp"
 #include "logger/logger.hpp"
+#include "validators/field_validator.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -36,53 +27,44 @@ namespace iroha {
     class AmetsuchiTest : public ::testing::Test {
      public:
       AmetsuchiTest()
-          : pgopt_(integration_framework::getPostgresCredsOrDefault()
-                   + " dbname=" + dbname_) {
+          : pgopt_("dbname=" + dbname_ + " "
+                   + integration_framework::getPostgresCredsOrDefault()) {
         auto log = logger::testLog("AmetsuchiTest");
 
         boost::filesystem::create_directory(block_store_path);
       }
 
      protected:
-      virtual void clear() {
-        pqxx::work txn(*connection);
-        txn.exec(drop_);
-        txn.commit();
-
-        iroha::remove_dir_contents(block_store_path);
-      }
-
       virtual void disconnect() {
-        connection->disconnect();
+        sql->close();
       }
 
       virtual void connect() {
-        StorageImpl::create(block_store_path, pgopt_)
+        StorageImpl::create(block_store_path, pgopt_, factory)
             .match([&](iroha::expected::Value<std::shared_ptr<StorageImpl>>
                            &_storage) { storage = _storage.value; },
                    [](iroha::expected::Error<std::string> &error) {
                      FAIL() << "StorageImpl: " << error.error;
                    });
 
-        connection = std::make_shared<pqxx::lazyconnection>(pgopt_);
-        try {
-          connection->activate();
-        } catch (const pqxx::broken_connection &e) {
-          FAIL() << "Connection to PostgreSQL broken: " << e.what();
-        }
+        sql = std::make_shared<soci::session>(soci::postgresql, pgopt_);
       }
 
       void SetUp() override {
         connect();
-        storage->dropStorage();
       }
 
       void TearDown() override {
-        clear();
-        disconnect();
+        storage->dropStorage();
       }
 
-      std::shared_ptr<pqxx::lazyconnection> connection;
+      std::shared_ptr<soci::session> sql;
+
+      std::shared_ptr<shared_model::proto::ProtoCommonObjectsFactory<
+          shared_model::validation::FieldValidator>>
+          factory =
+              std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
+                  shared_model::validation::FieldValidator>>();
 
       std::shared_ptr<StorageImpl> storage;
 
@@ -98,23 +80,6 @@ namespace iroha {
                                          .string();
 
       // TODO(warchant): IR-1019 hide SQLs under some interface
-      const std::string drop_ = R"(
-DROP TABLE IF EXISTS account_has_signatory;
-DROP TABLE IF EXISTS account_has_asset;
-DROP TABLE IF EXISTS role_has_permissions;
-DROP TABLE IF EXISTS account_has_roles;
-DROP TABLE IF EXISTS account_has_grantable_permissions;
-DROP TABLE IF EXISTS account;
-DROP TABLE IF EXISTS asset;
-DROP TABLE IF EXISTS domain;
-DROP TABLE IF EXISTS signatory;
-DROP TABLE IF EXISTS peer;
-DROP TABLE IF EXISTS role;
-DROP TABLE IF EXISTS height_by_hash;
-DROP TABLE IF EXISTS height_by_account_set;
-DROP TABLE IF EXISTS index_by_creator_height;
-DROP TABLE IF EXISTS index_by_id_height_asset;
-)";
 
       const std::string init_ = R"(
 CREATE TABLE IF NOT EXISTS role (
@@ -127,7 +92,7 @@ CREATE TABLE IF NOT EXISTS domain (
     PRIMARY KEY (domain_id)
 );
 CREATE TABLE IF NOT EXISTS signatory (
-    public_key bytea NOT NULL,
+    public_key varchar NOT NULL,
     PRIMARY KEY (public_key)
 );
 CREATE TABLE IF NOT EXISTS account (
@@ -139,11 +104,11 @@ CREATE TABLE IF NOT EXISTS account (
 );
 CREATE TABLE IF NOT EXISTS account_has_signatory (
     account_id character varying(288) NOT NULL REFERENCES account,
-    public_key bytea NOT NULL REFERENCES signatory,
+    public_key varchar NOT NULL REFERENCES signatory,
     PRIMARY KEY (account_id, public_key)
 );
 CREATE TABLE IF NOT EXISTS peer (
-    public_key bytea NOT NULL,
+    public_key varchar NOT NULL,
     address character varying(261) NOT NULL UNIQUE,
     PRIMARY KEY (public_key)
 );
@@ -177,7 +142,7 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
     PRIMARY KEY (permittee_account_id, account_id, permission_id)
 );
 CREATE TABLE IF NOT EXISTS height_by_hash (
-    hash bytea,
+    hash varchar,
     height text
 );
 CREATE TABLE IF NOT EXISTS height_by_account_set (

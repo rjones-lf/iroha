@@ -33,21 +33,31 @@ namespace shared_model {
     /**
      * Class that validates block
      */
-    template <typename FieldValidator, typename TransactionValidator>
-    class BlockValidator : public ContainerValidator<interface::Block,
-                                                     FieldValidator,
-                                                     TransactionValidator> {
+    template <typename FieldValidator,
+              typename TransactionValidator,
+              typename TransactionsCollectionValidator>
+    class BlockValidator
+        : public ContainerValidator<interface::Block,
+                                    FieldValidator,
+                                    TransactionValidator,
+                                    TransactionsCollectionValidator> {
      public:
+      using ContainerValidator<
+          interface::Block,
+          FieldValidator,
+          TransactionValidator,
+          TransactionsCollectionValidator>::ContainerValidator;
       /**
        * Applies validation on block
        * @param block
        * @return Answer containing found error if any
        */
       Answer validate(const interface::Block &block) const {
-        return ContainerValidator<interface::Block,
-                                  FieldValidator,
-                                  TransactionValidator>::validate(block,
-                                                                  "Block");
+        return ContainerValidator<
+            interface::Block,
+            FieldValidator,
+            TransactionValidator,
+            TransactionsCollectionValidator>::validate(block, "Block");
       }
     };
 

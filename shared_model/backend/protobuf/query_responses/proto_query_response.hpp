@@ -30,7 +30,7 @@
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/query_responses/query_response.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 #include "utils/lazy_initializer.hpp"
 
 namespace shared_model {

@@ -49,7 +49,7 @@ class TransferAsset : public AcceptanceFixture {
   }
 
   proto::Transaction addAssets(const std::string &amount) {
-    return complete(baseTx().addAssetQuantity(kUserId, kAsset, amount));
+    return complete(baseTx().addAssetQuantity(kAsset, amount));
   }
 
   proto::Transaction makeTransfer(const std::string &amount) {
@@ -249,8 +249,8 @@ TEST_F(TransferAsset, MoreThanHas) {
  */
 TEST_F(TransferAsset, Uint256DestOverflow) {
   std::string uint256_halfmax =
-      "723700557733226221397318656304299424082937404160253525246609900049457060"
-      "2495.0";  // 2**252 - 1
+      "578960446186580977117854925043439539266349923328202820197287920039565648"
+          "19966.0";  // 2**255 - 2
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTxAwait(makeFirstUser(), check(1))
@@ -304,8 +304,7 @@ TEST_F(TransferAsset, InterDomain) {
           .build()
           .signAndAddSignature(kAdminKeypair)
           .finish();
-  auto add_assets =
-      complete(baseTx().addAssetQuantity(kUserId, kNewAssetId, kAmount));
+  auto add_assets = complete(baseTx().addAssetQuantity(kNewAssetId, kAmount));
   auto make_transfer = complete(
       baseTx().transferAsset(kUserId, kUser2Id, kNewAssetId, kDesc, kAmount));
 
@@ -342,14 +341,13 @@ TEST_F(TransferAsset, BigPrecision) {
           .build()
           .signAndAddSignature(kAdminKeypair)
           .finish();
-  auto add_assets =
-      complete(baseTx().addAssetQuantity(kUserId, kNewAssetId, kInitial));
+  auto add_assets = complete(baseTx().addAssetQuantity(kNewAssetId, kInitial));
   auto make_transfer = complete(baseTx().transferAsset(
       kUserId, kUser2Id, kNewAssetId, kDesc, kForTransfer));
 
   auto check_balance = [](std::string account_id, std::string val) {
     return [a = std::move(account_id),
-            v = val + "." + std::string(kPrecision, '0')](auto &resp) {
+            v = val](auto &resp) {
       auto &acc_ast = boost::apply_visitor(
           framework::SpecifiedVisitor<interface::AccountAssetResponse>(),
           resp.get());

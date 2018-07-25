@@ -26,6 +26,7 @@
 #include <boost/range/any_range.hpp>
 #include "cryptography/hash.hpp"
 #include "cryptography/public_key.hpp"
+#include "utils/swig_keyword_hider.hpp"
 
 namespace shared_model {
 
@@ -98,6 +99,8 @@ namespace shared_model {
                            const AccountAsset &>;
       /// Type of the transfer message
       using DescriptionType = std::string;
+
+      enum class BatchType { ATOMIC = 0, ORDERED = 1};
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model

@@ -4,7 +4,7 @@
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/960/badge)](https://bestpractices.coreinfrastructure.org/projects/960)
 [![codecov](https://codecov.io/gh/hyperledger/iroha/branch/master/graph/badge.svg)](https://codecov.io/gh/hyperledger/iroha)
 [![Snap Status](https://build.snapcraft.io/badge/hyperledger/iroha.svg)](https://build.snapcraft.io/user/hyperledger/iroha)
-[![Build Status](https://jenkins.soramitsu.co.jp/buildStatus/icon?job=iroha/iroha-hyperledger/master)](https://jenkins.soramitsu.co.jp/job/iroha/iroha-hyperledger/master)
+[![Build Status](https://jenkins.soramitsu.co.jp/buildStatus/icon?job=iroha/iroha-hyperledger/master)](https://jenkins.soramitsu.co.jp/job/iroha/job/iroha-hyperledger/job/master/)
 [![Throughput Graph](https://graphs.waffle.io/hyperledger/iroha/throughput.svg)](https://waffle.io/hyperledger/iroha/metrics/throughput)
 
 Blockchain platform Hyperledger Iroha is designed for simple creation and management of assets. This is a distributed ledger of transactions.

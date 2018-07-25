@@ -22,13 +22,11 @@
 
 #include <boost/range/algorithm/for_each.hpp>
 
-#include "block.pb.h"
 #include "commands.pb.h"
 #include "primitive.pb.h"
+#include "transaction.pb.h"
 
-#include "amount/amount.hpp"
 #include "backend/protobuf/permissions.hpp"
-#include "builders/protobuf/helpers.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/permissions.hpp"
@@ -47,7 +45,7 @@ namespace shared_model {
     template <int S = 0,
               typename SV = validation::DefaultTransactionValidator,
               typename BT = UnsignedWrapper<Transaction>>
-    class TemplateTransactionBuilder {
+    class DEPRECATED TemplateTransactionBuilder {
      private:
       template <int, typename, typename>
       friend class TemplateTransactionBuilder;
@@ -94,7 +92,9 @@ namespace shared_model {
       template <typename Transformation>
       auto addCommand(Transformation t) const {
         NextBuilder<Command> copy = *this;
-        t(copy.transaction_.mutable_payload()->add_commands());
+        t(copy.transaction_.mutable_payload()
+              ->mutable_reduced_payload()
+              ->add_commands());
         return copy;
       }
 
@@ -105,29 +105,45 @@ namespace shared_model {
       auto creatorAccountId(
           const interface::types::AccountIdType &account_id) const {
         return transform<CreatorAccountId>([&](auto &tx) {
-          tx.mutable_payload()->set_creator_account_id(account_id);
+          tx.mutable_payload()
+              ->mutable_reduced_payload()
+              ->set_creator_account_id(account_id);
+        });
+      }
+
+      auto batchMeta(interface::types::BatchType type,
+                     std::vector<interface::types::HashType> hashes) const {
+        return transform<0>([&](auto &tx) {
+          tx.mutable_payload()->mutable_batch()->set_type(
+              static_cast<
+                  iroha::protocol::Transaction::Payload::BatchMeta::BatchType>(
+                  type));
+          for (const auto &hash : hashes) {
+            tx.mutable_payload()->mutable_batch()->add_tx_hashes(
+                crypto::toBinaryString(hash));
+          }
         });
       }
 
       auto createdTime(interface::types::TimestampType created_time) const {
         return transform<CreatedTime>([&](auto &tx) {
-          tx.mutable_payload()->set_created_time(created_time);
+          tx.mutable_payload()->mutable_reduced_payload()->set_created_time(
+              created_time);
         });
       }
 
       auto quorum(interface::types::QuorumType quorum) const {
-        return transform<Quorum>(
-            [&](auto &tx) { tx.mutable_payload()->set_quorum(quorum); });
+        return transform<Quorum>([&](auto &tx) {
+          tx.mutable_payload()->mutable_reduced_payload()->set_quorum(quorum);
+        });
       }
 
-      auto addAssetQuantity(const interface::types::AccountIdType &account_id,
-                            const interface::types::AssetIdType &asset_id,
+      auto addAssetQuantity(const interface::types::AssetIdType &asset_id,
                             const std::string &amount) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_add_asset_quantity();
-          command->set_account_id(account_id);
           command->set_asset_id(asset_id);
-          initializeProtobufAmount(command->mutable_amount(), amount);
+          command->set_amount(amount);
         });
       }
 
@@ -265,15 +281,12 @@ namespace shared_model {
         });
       }
 
-      auto subtractAssetQuantity(
-          const interface::types::AccountIdType &account_id,
-          const interface::types::AssetIdType &asset_id,
-          const std::string &amount) const {
+      auto subtractAssetQuantity(const interface::types::AssetIdType &asset_id,
+                                 const std::string &amount) const {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_subtract_asset_quantity();
-          command->set_account_id(account_id);
           command->set_asset_id(asset_id);
-          initializeProtobufAmount(command->mutable_amount(), amount);
+          command->set_amount(amount);
         });
       }
 
@@ -288,7 +301,7 @@ namespace shared_model {
           command->set_dest_account_id(dest_account_id);
           command->set_asset_id(asset_id);
           command->set_description(description);
-          initializeProtobufAmount(command->mutable_amount(), amount);
+          command->set_amount(amount);
         });
       }
 

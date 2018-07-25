@@ -19,10 +19,9 @@
 #define IROHA_POSTGRES_BLOCK_INDEX_HPP
 
 #include <boost/format.hpp>
-#include <pqxx/nontransaction>
 
 #include "ametsuchi/impl/block_index.hpp"
-#include "ametsuchi/impl/postgres_wsv_common.hpp"
+#include "ametsuchi/impl/soci_utils.hpp"
 #include "interfaces/transaction.hpp"
 #include "logger/logger.hpp"
 
@@ -30,7 +29,7 @@ namespace iroha {
   namespace ametsuchi {
     class PostgresBlockIndex : public BlockIndex {
      public:
-      explicit PostgresBlockIndex(pqxx::nontransaction &transaction);
+      explicit PostgresBlockIndex(soci::session &sql);
 
       void index(const shared_model::interface::Block &block) override;
 
@@ -58,15 +57,8 @@ namespace iroha {
           const std::string &index,
           const shared_model::interface::Transaction::CommandsType &commands);
 
-      pqxx::nontransaction &transaction_;
+      soci::session &sql_;
       logger::Logger log_;
-      using ExecuteType = decltype(makeExecuteOptional(transaction_, log_));
-      ExecuteType execute_;
-
-      // TODO: refactor to return Result when it is introduced IR-775
-      bool execute(const std::string &statement) noexcept {
-        return static_cast<bool>(execute_(statement));
-      }
     };
   }  // namespace ametsuchi
 }  // namespace iroha

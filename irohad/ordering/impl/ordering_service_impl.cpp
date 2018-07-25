@@ -4,8 +4,10 @@
  */
 
 #include "ordering/impl/ordering_service_impl.hpp"
+
 #include <algorithm>
 #include <iterator>
+
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "ametsuchi/peer_query.hpp"
 #include "backend/protobuf/proposal.hpp"
@@ -25,8 +27,9 @@ namespace iroha {
         bool is_async)
         : wsv_(wsv),
           max_size_(max_size),
+          current_size_(0),
           transport_(transport),
-          persistent_state_(persistent_state) {
+          persistent_state_(persistent_state){
       log_ = logger::log("OrderingServiceImpl");
 
       // restore state of ordering service from persistent storage
@@ -43,8 +46,8 @@ namespace iroha {
                           switch (v) {
                             case ProposalEvent::kTimerEvent:
                               return not queue_.empty();
-                            case ProposalEvent::kTransactionEvent:
-                              return queue_.unsafe_size() >= max_size_;
+                            case ProposalEvent::kBatchEvent:
+                              return current_size_.load() >= max_size_;
                             default:
                               BOOST_ASSERT_MSG(false, "Unknown value");
                           }
@@ -64,29 +67,43 @@ namespace iroha {
       }
     }
 
-    void OrderingServiceImpl::onTransaction(
-        std::shared_ptr<shared_model::interface::Transaction> transaction) {
-      queue_.push(transaction);
-      log_->info("Queue size is {}", queue_.unsafe_size());
+    void OrderingServiceImpl::onBatch(
+        shared_model::interface::TransactionBatch &&batch) {
+      std::shared_lock<std::shared_timed_mutex> batch_prop_lock(
+          batch_prop_mutex_);
 
-      // on_next calls should not be concurrent
-      std::lock_guard<std::mutex> lk(mutex_);
-      transactions_.get_subscriber().on_next(ProposalEvent::kTransactionEvent);
+      current_size_.fetch_add(batch.transactions().size());
+      queue_.push(std::make_unique<shared_model::interface::TransactionBatch>(
+          std::move(batch)));
+      log_->info("Queue size is {}", current_size_.load());
+
+      batch_prop_lock.unlock();
+
+      std::lock_guard<std::mutex> event_lock(event_mutex_);
+      transactions_.get_subscriber().on_next(ProposalEvent::kBatchEvent);
     }
 
     void OrderingServiceImpl::generateProposal() {
+      std::lock_guard<std::shared_timed_mutex> lock(batch_prop_mutex_);
+
       // TODO 05/03/2018 andrei IR-1046 Server-side shared model object
       // factories with move semantics
       iroha::protocol::Proposal proto_proposal;
       proto_proposal.set_height(proposal_height_++);
       proto_proposal.set_created_time(iroha::time::now());
       log_->info("Start proposal generation");
-      for (std::shared_ptr<shared_model::interface::Transaction> tx;
+      for (std::unique_ptr<shared_model::interface::TransactionBatch> batch;
            static_cast<size_t>(proto_proposal.transactions_size()) < max_size_
-           and queue_.try_pop(tx);) {
-        *proto_proposal.add_transactions() =
-            std::move(static_cast<shared_model::proto::Transaction *>(tx.get())
-                          ->getTransport());
+           and queue_.try_pop(batch);) {
+        std::for_each(
+            batch->transactions().begin(),
+            batch->transactions().end(),
+            [this, &proto_proposal](auto &tx) {
+              *proto_proposal.add_transactions() =
+                  std::static_pointer_cast<shared_model::proto::Transaction>(tx)
+                      ->getTransport();
+              current_size_--;
+            });
       }
 
       auto proposal = std::make_unique<shared_model::proto::Proposal>(

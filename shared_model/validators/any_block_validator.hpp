@@ -36,7 +36,7 @@ namespace shared_model {
             block_variant, [this](auto block) { return validate(*block); });
       }
 
-     private:
+     protected:
       BlockValidator non_empty_block_validator_;
       EmptyBlockValidator empty_block_validator_;
     };

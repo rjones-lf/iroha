@@ -20,17 +20,20 @@
 
 #include "ametsuchi/wsv_query.hpp"
 
-#include <pqxx/connection>
+#include <soci/soci.h>
 
-#include "postgres_wsv_common.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace ametsuchi {
     class PostgresWsvQuery : public WsvQuery {
      public:
-      explicit PostgresWsvQuery(pqxx::nontransaction &transaction);
-      PostgresWsvQuery(std::unique_ptr<pqxx::lazyconnection> connection,
-                       std::unique_ptr<pqxx::nontransaction> transaction);
+      PostgresWsvQuery(
+          soci::session &sql,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory);
+
       boost::optional<std::vector<shared_model::interface::types::RoleIdType>>
       getAccountRoles(const shared_model::interface::types::AccountIdType
                           &account_id) override;
@@ -42,30 +45,41 @@ namespace iroha {
       boost::optional<std::shared_ptr<shared_model::interface::Account>>
       getAccount(const shared_model::interface::types::AccountIdType
                      &account_id) override;
+
       boost::optional<std::string> getAccountDetail(
-          const shared_model::interface::types::AccountIdType &account_id)
-          override;
+          const shared_model::interface::types::AccountIdType &account_id,
+          const shared_model::interface::types::AccountDetailKeyType &key = "",
+          const shared_model::interface::types::AccountIdType &writer =
+              "") override;
+
       boost::optional<std::vector<shared_model::interface::types::PubkeyType>>
       getSignatories(const shared_model::interface::types::AccountIdType
                          &account_id) override;
+
       boost::optional<std::shared_ptr<shared_model::interface::Asset>> getAsset(
           const shared_model::interface::types::AssetIdType &asset_id) override;
+
       boost::optional<
           std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>>
       getAccountAssets(const shared_model::interface::types::AccountIdType
                            &account_id) override;
+
       boost::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
       getAccountAsset(
           const shared_model::interface::types::AccountIdType &account_id,
           const shared_model::interface::types::AssetIdType &asset_id) override;
+
       boost::optional<
           std::vector<std::shared_ptr<shared_model::interface::Peer>>>
       getPeers() override;
+
       boost::optional<std::vector<shared_model::interface::types::RoleIdType>>
       getRoles() override;
+
       boost::optional<std::shared_ptr<shared_model::interface::Domain>>
       getDomain(const shared_model::interface::types::DomainIdType &domain_id)
           override;
+
       bool hasAccountGrantablePermission(
           const shared_model::interface::types::AccountIdType
               &permitee_account_id,
@@ -73,14 +87,9 @@ namespace iroha {
           shared_model::interface::permissions::Grantable permission) override;
 
      private:
-      std::unique_ptr<pqxx::lazyconnection> connection_ptr_;
-      std::unique_ptr<pqxx::nontransaction> transaction_ptr_;
-
-      pqxx::nontransaction &transaction_;
+      soci::session &sql_;
+      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
       logger::Logger log_;
-
-      using ExecuteType = decltype(makeExecuteOptional(transaction_, log_));
-      ExecuteType execute_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

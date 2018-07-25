@@ -35,7 +35,7 @@ namespace shared_model {
      * to perform stateless validation on model fields
      */
     template <typename BuilderImpl, typename Validator>
-    class PeerBuilder
+    class DEPRECATED PeerBuilder
         : public CommonObjectBuilder<interface::Peer, BuilderImpl, Validator> {
      public:
       PeerBuilder address(const interface::types::AddressType &address) {

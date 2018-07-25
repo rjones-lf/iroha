@@ -547,8 +547,8 @@ public class QueryTest {
     }
 
     @Test
-    void getAccountDetailWithEmptyName() {
-        ModelQueryBuilder builder = base().getAccountDetail("");
-        assertThrows(IllegalArgumentException.class, builder::build);
+    void getAccountDetailWithNoArgs() {
+        UnsignedQuery query = base().getAccountDetail().build();
+        assertTrue(checkProtoQuery(proto(query)));
     }
 }

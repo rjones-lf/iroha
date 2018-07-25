@@ -64,8 +64,7 @@ TEST(QueryResponseTest, AccountAsset) {
   model::AccountAsset account_asset;
   account_asset.account_id = "123";
   account_asset.asset_id = "123";
-  iroha::Amount amount(1);
-  account_asset.balance = amount;
+  account_asset.balance = "1";
 
   auto pb_account_asset = pb_factory.serializeAccountAsset(account_asset);
   auto des_account_asset = pb_factory.deserializeAccountAsset(pb_account_asset);

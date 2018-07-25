@@ -56,7 +56,11 @@ namespace shared_model {
       // ------------------------| Primitive override |-------------------------
 
       std::string toString() const override {
-        return boost::apply_visitor(detail::ToStringVisitor(), get());
+        return detail::PrettyStringBuilder()
+            .init("TransactionResponse")
+            .append("transactionHash", transactionHash().hex())
+            .append(boost::apply_visitor(detail::ToStringVisitor(), get()))
+            .finalize();
       }
 
       bool operator==(const ModelType &rhs) const override {

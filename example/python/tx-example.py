@@ -2,7 +2,7 @@ import sys
 sys.path.insert(0, 'build/shared_model/bindings')
 import iroha
 
-import block_pb2
+import transaction_pb2
 import endpoint_pb2
 import endpoint_pb2_grpc
 import queries_pb2
@@ -82,7 +82,7 @@ def print_status_streaming(tx):
 
 def send_tx(tx, key_pair):
     tx_blob = iroha.ModelProtoTransaction(tx).signAndAddSignature(key_pair).finish().blob()
-    proto_tx = block_pb2.Transaction()
+    proto_tx = transaction_pb2.Transaction()
 
     if sys.version_info[0] == 2:
         tmp = ''.join(map(chr, tx_blob))
@@ -135,7 +135,7 @@ def add_coin_to_admin():
     """
     tx = tx_builder.creatorAccountId(creator) \
         .createdTime(current_time) \
-        .addAssetQuantity("admin@test", "coin#domain", "1000.00").build()
+        .addAssetQuantity("coin#domain", "1000.00").build()
 
     send_tx(tx, key_pair)
     print_status_streaming(tx)
@@ -169,7 +169,7 @@ def grant_admin_to_add_detail_to_userone():
     """
     tx = tx_builder.creatorAccountId("userone@domain") \
         .createdTime(current_time) \
-        .grantPermission(creator, "can_set_my_account_detail") \
+        .grantPermission(creator, iroha.Grantable_kSetMyAccountDetail) \
         .build()
 
     send_tx(tx, user1_kp)

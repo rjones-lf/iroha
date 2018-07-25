@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_SHARED_MODEL_QUERY_VALIDATOR_HPP
@@ -20,7 +8,7 @@
 
 #include <boost/variant/static_visitor.hpp>
 
-#include "interfaces/queries/query.hpp"
+#include "backend/protobuf/queries/proto_query.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -137,6 +125,14 @@ namespace shared_model {
         return reason;
       }
 
+      ReasonsGroupType operator()(
+          const interface::GetPendingTransactions &qry) const {
+        ReasonsGroupType reason;
+        reason.first = "GetPendingTransactions";
+
+        return reason;
+      }
+
      private:
       FieldValidator validator_;
     };
@@ -174,15 +170,26 @@ namespace shared_model {
           answer.addReason(std::move(qry_reason));
         }
 
-        auto reason = boost::apply_visitor(query_field_validator_, qry.get());
-        if (not reason.second.empty()) {
+        auto qry_case = static_cast<const shared_model::proto::Query &>(qry)
+                            .getTransport()
+                            .payload()
+                            .query_case();
+        if (iroha::protocol::Query_Payload::QUERY_NOT_SET == qry_case) {
+          ReasonsGroupType reason;
+          reason.first = "Undefined";
+          reason.second.push_back("query is undefined");
           answer.addReason(std::move(reason));
+        } else {
+          auto reason = boost::apply_visitor(query_field_validator_, qry.get());
+          if (not reason.second.empty()) {
+            answer.addReason(std::move(reason));
+          }
         }
 
         return answer;
       }
 
-     private:
+     protected:
       Answer answer_;
       FieldValidator field_validator_;
       QueryFieldValidator query_field_validator_;

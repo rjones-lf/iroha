@@ -54,6 +54,8 @@ class MockOrderingGateTransport : public OrderingGateTransport {
   MOCK_METHOD1(
       propagateTransaction,
       void(std::shared_ptr<const shared_model::interface::Transaction>));
+  MOCK_METHOD1(propagateBatch,
+               void(const shared_model::interface::TransactionBatch &));
 };
 
 class OrderingGateTest : public ::testing::Test {
@@ -138,7 +140,7 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
-                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .addAssetQuantity("coin#coin", "1.0")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(
@@ -212,7 +214,7 @@ TEST_F(QueueBehaviorTest, SendManyProposals) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
-                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .addAssetQuantity("coin#coin", "1.0")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(

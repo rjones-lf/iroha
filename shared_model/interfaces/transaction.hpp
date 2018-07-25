@@ -21,6 +21,7 @@
 #include "interfaces/base/signable.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "iroha_internal/batch_meta.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {
@@ -30,7 +31,8 @@ namespace shared_model {
      * Transaction class represent well-formed intent from client to change
      * state of ledger.
      */
-    class Transaction : public Signable<Transaction> {
+    using HashProvider = shared_model::crypto::Sha3_256;
+    class Transaction : public Signable<Transaction, HashProvider> {
      public:
       /**
        * @return creator of transaction
@@ -52,6 +54,22 @@ namespace shared_model {
        */
       virtual CommandsType commands() const = 0;
 
+      /**
+       * @return object payload (everything except signatures)
+       */
+      virtual const types::BlobType &reducedPayload() const = 0;
+
+      const types::HashType &reducedHash() const {
+        if (reduced_hash_ == boost::none) {
+          reduced_hash_.emplace(HashProvider::makeHash(reducedPayload()));
+        }
+        return *reduced_hash_;
+      }
+      /*
+       * @return Batch Meta if exists
+       */
+      virtual boost::optional<std::shared_ptr<BatchMeta>> batchMeta() const = 0;
+
       std::string toString() const override {
         return detail::PrettyStringBuilder()
             .init("Transaction")
@@ -62,10 +80,16 @@ namespace shared_model {
             .append("commands")
             .appendAll(commands(),
                        [](auto &command) { return command.toString(); })
+            .append("batch_meta",
+                    batchMeta() ? batchMeta()->get()->toString() : "")
+            .append("reducedHash", reducedHash().toString())
             .append("signatures")
             .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
             .finalize();
       }
+
+     private:
+      mutable boost::optional<types::HashType> reduced_hash_;
     };
 
   }  // namespace interface

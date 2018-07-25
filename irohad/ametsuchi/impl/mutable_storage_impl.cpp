@@ -19,31 +19,29 @@
 
 #include <boost/variant/apply_visitor.hpp>
 
+#include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/wsv_command.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "model/sha3_hash.hpp"
 
 namespace iroha {
   namespace ametsuchi {
     MutableStorageImpl::MutableStorageImpl(
         shared_model::interface::types::HashType top_hash,
-        std::unique_ptr<pqxx::lazyconnection> connection,
-        std::unique_ptr<pqxx::nontransaction> transaction)
+        std::unique_ptr<soci::session> sql,
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
         : top_hash_(top_hash),
-          connection_(std::move(connection)),
-          transaction_(std::move(transaction)),
-          wsv_(std::make_unique<PostgresWsvQuery>(*transaction_)),
-          executor_(std::make_unique<PostgresWsvCommand>(*transaction_)),
-          block_index_(std::make_unique<PostgresBlockIndex>(*transaction_)),
+          sql_(std::move(sql)),
+          wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
+          executor_(std::make_shared<PostgresWsvCommand>(*sql_)),
+          block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
+          command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
           committed(false),
           log_(logger::log("MutableStorage")) {
-      auto query = std::make_shared<PostgresWsvQuery>(*transaction_);
-      auto command = std::make_shared<PostgresWsvCommand>(*transaction_);
-      command_executor_ =
-          std::make_shared<CommandExecutor>(CommandExecutor(query, command));
-      transaction_->exec("BEGIN;");
+      *sql_ << "BEGIN";
     }
 
     bool MutableStorageImpl::apply(
@@ -67,7 +65,7 @@ namespace iroha {
                            execute_command);
       };
 
-      transaction_->exec("SAVEPOINT savepoint_;");
+      *sql_ << "SAVEPOINT savepoint_";
       auto result = function(block, *wsv_, top_hash_)
           and std::all_of(block.transactions().begin(),
                           block.transactions().end(),
@@ -78,16 +76,16 @@ namespace iroha {
         block_index_->index(block);
 
         top_hash_ = block.hash();
-        transaction_->exec("RELEASE SAVEPOINT savepoint_;");
+        *sql_ << "RELEASE SAVEPOINT savepoint_";
       } else {
-        transaction_->exec("ROLLBACK TO SAVEPOINT savepoint_;");
+        *sql_ << "ROLLBACK TO SAVEPOINT savepoint_";
       }
       return result;
     }
 
     MutableStorageImpl::~MutableStorageImpl() {
       if (not committed) {
-        transaction_->exec("ROLLBACK;");
+        *sql_ << "ROLLBACK";
       }
     }
   }  // namespace ametsuchi

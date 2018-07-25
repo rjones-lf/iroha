@@ -8,8 +8,8 @@
 
 #include "backend/protobuf/queries/proto_blocks_query.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
-#include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/transaction.hpp"
 #include "queries.pb.h"
 #include "validators/default_validator.hpp"
@@ -26,9 +26,9 @@ namespace shared_model {
      * @tparam BT -- build type of built object returned by build method
      */
     template <int S = 0,
-        typename SV = validation::DefaultBlocksQueryValidator,
-        typename BT = UnsignedWrapper<BlocksQuery>>
-    class TemplateBlocksQueryBuilder {
+              typename SV = validation::DefaultBlocksQueryValidator,
+              typename BT = UnsignedWrapper<BlocksQuery>>
+    class DEPRECATED TemplateBlocksQueryBuilder {
      private:
       template <int, typename, typename>
       friend class TemplateBlocksQueryBuilder;
@@ -46,7 +46,8 @@ namespace shared_model {
       using ProtoBlocksQuery = iroha::protocol::BlocksQuery;
 
       template <int Sp>
-      TemplateBlocksQueryBuilder(const TemplateBlocksQueryBuilder<Sp, SV, BT> &o)
+      TemplateBlocksQueryBuilder(
+          const TemplateBlocksQueryBuilder<Sp, SV, BT> &o)
           : query_(o.query_), stateless_validator_(o.stateless_validator_) {}
 
       /**

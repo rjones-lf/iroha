@@ -97,8 +97,7 @@ namespace iroha {
       if (! instanceof <AddAssetQuantity>(command))
         return false;
       auto add_asset_quantity = static_cast<const AddAssetQuantity &>(command);
-      return add_asset_quantity.account_id == account_id
-          && add_asset_quantity.asset_id == asset_id
+      return add_asset_quantity.asset_id == asset_id
           && add_asset_quantity.amount == amount;
     }
 
@@ -108,8 +107,7 @@ namespace iroha {
         return false;
       auto subtract_asset_quantity =
           static_cast<const SubtractAssetQuantity &>(command);
-      return subtract_asset_quantity.account_id == account_id
-          && subtract_asset_quantity.asset_id == asset_id
+      return subtract_asset_quantity.asset_id == asset_id
           && subtract_asset_quantity.amount == amount;
     }
 

@@ -24,6 +24,6 @@
  * Builder alias, to build shared model proto block object avoiding validation
  * and "required fields" check
  */
-using TestAccountAssetBuilder = shared_model::proto::AccountAsset;
+using TestAccountAssetBuilder = shared_model::proto::AccountAssetBuilder;
 
 #endif //IROHA_TEST_ACCOUNT_BUILDER_HPP

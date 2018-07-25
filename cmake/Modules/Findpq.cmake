@@ -20,11 +20,9 @@ find_package_handle_standard_args(pq DEFAULT_MSG
     pg_config_EXECUTABLE
     )
 
-
 set(URL https://git.postgresql.org/git/postgresql.git)
 set(VERSION 029386ccbddd0a33d481b94e511f5219b03e6636)
 set_target_description(pq "C postgres client library" ${URL} ${VERSION})
-
 
 if (NOT pq_FOUND)
   externalproject_add(postgres_postgres
@@ -51,6 +49,9 @@ endif ()
 
 get_filename_component(pq_LIBRARY_DIR ${pq_LIBRARY} DIRECTORY)
 mark_as_advanced(pq_LIBRARY_DIR)
+
+get_filename_component(pg_config_EXECUTABLE_DIR ${pg_config_EXECUTABLE} DIRECTORY)
+mark_as_advanced(pg_config_EXECUTABLE_DIR)
 
 set_target_properties(pq PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${pq_INCLUDE_DIR};${postgres_INCLUDE_DIR}"

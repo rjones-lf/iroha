@@ -7,6 +7,7 @@ add_library(ametsuchi
     impl/postgres_wsv_command.cpp
     impl/peer_query_wsv.cpp
     impl/postgres_block_query.cpp
+    impl/postgres_command_executor.cpp
     impl/postgres_block_index.cpp
     impl/postgres_ordering_service_persistent_state.cpp
     impl/wsv_restorer_impl.cpp
@@ -16,11 +17,16 @@ add_library(ametsuchi
 target_link_libraries(ametsuchi
     logger
     rxcpp
-    pqxx
     libs_common
     command_execution
     query_execution
     shared_model_interfaces
     shared_model_proto_backend
     shared_model_stateless_validation
+    SOCI::core
+    SOCI::postgresql
+    )
+
+target_compile_definitions(ametsuchi
+    PRIVATE SOCI_USE_BOOST HAVE_BOOST
     )

@@ -38,15 +38,16 @@ namespace torii {
    public:
     /**
      * Creates a new instance of CommandService
-     * @param pb_factory - model->protobuf and vice versa converter
      * @param tx_processor - processor of received transactions
-     * @param block_query - to query transactions outside the cache
-     * @param proposal_delay - time of a one proposal propagation.
+     * @param storage - to query transactions outside the cache
+     * @param initial_timeout - streaming timeout when tx is not received
+     * @param nonfinal_timeout - streaming timeout when tx is being processed
      */
     CommandService(
         std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
         std::shared_ptr<iroha::ametsuchi::Storage> storage,
-        std::chrono::milliseconds proposal_delay);
+        std::chrono::milliseconds initial_timeout,
+        std::chrono::milliseconds nonfinal_timeout);
 
     /**
      * Disable copying in any way to prevent potential issues with common
@@ -62,6 +63,12 @@ namespace torii {
     void Torii(const iroha::protocol::Transaction &tx);
 
     /**
+     * Actual implementation of sync Torii in CommandService
+     * @param tx_lis - transactions we've received
+     */
+    void ListTorii(const iroha::protocol::TxList &tx_list);
+
+    /**
      * Torii call via grpc
      * @param context - call context (see grpc docs for details)
      * @param request - transaction received
@@ -71,6 +78,17 @@ namespace torii {
     virtual grpc::Status Torii(grpc::ServerContext *context,
                                const iroha::protocol::Transaction *request,
                                google::protobuf::Empty *response) override;
+
+    /**
+     * Torii call for transactions list via grpc
+     * @param context - call context (see grpc docs for details)
+     * @param request - list of transactions received
+     * @param response - no actual response (grpc stub for empty answer)
+     * @return - grpc::Status
+     */
+    virtual grpc::Status ListTorii(grpc::ServerContext *context,
+                                   const iroha::protocol::TxList *request,
+                                   google::protobuf::Empty *response) override;
 
     /**
      * Request to retrieve a status of any particular transaction
@@ -102,12 +120,11 @@ namespace torii {
      * the some final transaction status (which cannot change anymore)
      * @param request- TxStatusRequest object which identifies transaction
      * uniquely
-     * @param response_writer - grpc::ServerWriter which can repeatedly send
-     * transaction statuses back to the client
+     * @return observable with transaction statuses
      */
-    void StatusStream(
-        iroha::protocol::TxStatusRequest const &request,
-        grpc::ServerWriter<iroha::protocol::ToriiResponse> &response_writer);
+    rxcpp::observable<
+        std::shared_ptr<shared_model::interface::TransactionResponse>>
+    StatusStream(const shared_model::crypto::Hash &hash);
 
     /**
      * StatusStream call via grpc
@@ -118,19 +135,24 @@ namespace torii {
      * transaction statuses back to the client
      * @return - grpc::Status
      */
-    virtual grpc::Status StatusStream(
-        grpc::ServerContext *context,
-        const iroha::protocol::TxStatusRequest *request,
-        grpc::ServerWriter<iroha::protocol::ToriiResponse> *response_writer)
-        override;
+    grpc::Status StatusStream(grpc::ServerContext *context,
+                              const iroha::protocol::TxStatusRequest *request,
+                              grpc::ServerWriter<iroha::protocol::ToriiResponse>
+                                  *response_writer) override;
 
    private:
-    bool checkCacheAndSend(
-        const boost::optional<iroha::protocol::ToriiResponse> &resp,
-        grpc::ServerWriter<iroha::protocol::ToriiResponse> &response_writer)
-        const;
+    /**
+     * Execute events scheduled in run loop until it is not empty and the
+     * subscriber is active
+     * @param subscription - tx status subscription
+     * @param run_loop - gRPC thread run loop
+     */
+    inline void handleEvents(rxcpp::composite_subscription &subscription,
+                             rxcpp::schedulers::run_loop &run_loop);
 
-    bool isFinalStatus(const iroha::protocol::TxStatus &status) const;
+    void addTxToCacheAndLog(const std::string &who,
+                            const shared_model::crypto::Hash &hash,
+                            const iroha::protocol::ToriiResponse &response);
 
    private:
     using CacheType = iroha::cache::Cache<shared_model::crypto::Hash,
@@ -139,9 +161,29 @@ namespace torii {
 
     std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor_;
     std::shared_ptr<iroha::ametsuchi::Storage> storage_;
-    std::chrono::milliseconds proposal_delay_;
-    std::chrono::milliseconds start_tx_processing_duration_;
+    std::chrono::milliseconds initial_timeout_;
+    std::chrono::milliseconds nonfinal_timeout_;
     std::shared_ptr<CacheType> cache_;
+
+    /**
+     * Mutex for propagating stateless validation status
+     */
+    std::mutex stateless_tx_status_notifier_mutex_;
+
+    /**
+     * Subject with stateless validation statuses
+     */
+    rxcpp::subjects::subject<
+        std::shared_ptr<shared_model::interface::TransactionResponse>>
+        stateless_notifier_;
+
+    /**
+     * Observable with all transaction statuses
+     */
+    rxcpp::observable<
+        std::shared_ptr<shared_model::interface::TransactionResponse>>
+        responses_;
+
     logger::Logger log_;
   };
 

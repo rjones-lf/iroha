@@ -6,5 +6,4 @@ target_link_libraries(ordering_gate_service_test
         ordering_service
         shared_model_stateless_validation
         shared_model_cryptography_model
-        iroha_amount
     )

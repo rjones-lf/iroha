@@ -25,6 +25,7 @@
 #include <boost/format.hpp>
 #include <boost/range/algorithm.hpp>
 #include <boost/range/join.hpp>
+#include "block.pb.h"
 
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "backend/protobuf/permissions.hpp"
@@ -267,12 +268,9 @@ class FieldValidatorTest : public ValidatorsTest {
       idTestCases("asset_id", &FieldValidatorTest::asset_id, '#');
 
   std::vector<FieldTestCase> amount_test_cases{
-      {"valid_amount",
-       [&] { amount.mutable_value()->set_fourth(100); },
-       true,
-       ""},
+      {"valid_amount", [&] { amount = "100"; }, true, ""},
       {"zero_amount",
-       [&] { amount.mutable_value()->set_fourth(0); },
+       [&] { amount = "0"; },
        false,
        "Amount must be greater than 0, passed value: 0"}};
 
@@ -562,6 +560,17 @@ class FieldValidatorTest : public ValidatorsTest {
     return all_cases;
   }();
 
+  std::vector<FieldTestCase> batch_meta_test_cases = [&]() {
+    iroha::protocol::Transaction::Payload::BatchMeta meta;
+    meta.set_type(iroha::protocol::Transaction::Payload::BatchMeta::BatchType::
+                      Transaction_Payload_BatchMeta_BatchType_ATOMIC);
+    meta.add_tx_hashes("tst");
+    std::vector<FieldTestCase> all_cases;
+    all_cases.push_back(makeTestCase(
+        "batch meta test", &FieldValidatorTest::batch_meta, meta, true, ""));
+    return all_cases;
+  }();
+
   std::vector<FieldTestCase> precision_test_cases{
       makeValidCase(&FieldValidatorTest::precision, 0),
       makeValidCase(&FieldValidatorTest::precision, 1),
@@ -632,11 +641,12 @@ class FieldValidatorTest : public ValidatorsTest {
                     &FieldValidator::validateAssetId,
                     &FieldValidatorTest::asset_id,
                     asset_id_test_cases),
-      makeTransformValidator("amount",
-                             &FieldValidator::validateAmount,
-                             &FieldValidatorTest::amount,
-                             [](auto &&x) { return proto::Amount(x); },
-                             amount_test_cases),
+      makeTransformValidator(
+          "amount",
+          &FieldValidator::validateAmount,
+          &FieldValidatorTest::amount,
+          [](auto &&x) { return shared_model::interface::Amount(x); },
+          amount_test_cases),
       makeTransformValidator("peer",
                              &FieldValidator::validatePeer,
                              &FieldValidatorTest::peer,
@@ -646,6 +656,10 @@ class FieldValidatorTest : public ValidatorsTest {
                     &FieldValidator::validateAccountName,
                     &FieldValidatorTest::account_name,
                     account_name_test_cases),
+      makeValidator("writer",
+                    &FieldValidator::validateAccountId,
+                    &FieldValidatorTest::account_id,
+                    account_id_test_cases),
       makeValidator("domain_id",
                     &FieldValidator::validateDomainId,
                     &FieldValidatorTest::domain_id,
@@ -667,7 +681,13 @@ class FieldValidatorTest : public ValidatorsTest {
       makeValidator("description",
                     &FieldValidator::validateDescription,
                     &FieldValidatorTest::description,
-                    description_test_cases)};
+                    description_test_cases),
+      makeTransformValidator(
+          "batch",
+          &FieldValidator::validateBatchMeta,
+          &FieldValidatorTest::batch_meta,
+          [](auto &&x) { return shared_model::proto::BatchMeta(x); },
+          batch_meta_test_cases)};
 };
 
 /**
@@ -685,7 +705,7 @@ TEST_F(FieldValidatorTest, CommandFieldsValidation) {
       [] { return iroha::protocol::Command::descriptor(); },
       [&](auto field) {
         // Add new command to transaction
-        auto command = payload->add_commands();
+        auto command = payload->mutable_reduced_payload()->add_commands();
         //  // Set concrete type for new command
         return command->GetReflection()->MutableMessage(command, field);
       },
@@ -700,18 +720,13 @@ TEST_F(FieldValidatorTest, CommandFieldsValidation) {
  * meaningful message
  */
 TEST_F(FieldValidatorTest, TransactionFieldsValidation) {
-  iroha::protocol::Transaction proto_tx;
-  proto_tx.add_signatures();  // at least one signature in message
-
+  auto proto_tx = std::make_shared<iroha::protocol::Transaction>();
+  proto_tx->add_signatures();  // at least one signature in message
+  proto_tx->mutable_payload()->mutable_reduced_payload()->add_commands();
   // iterate over all fields in transaction
-  iterateContainer(
-      [] { return iroha::protocol::Transaction::descriptor(); },
-      [&](auto field) {
-        return field->is_repeated()
-            ? proto_tx.GetReflection()->MutableRepeatedMessage(
-                  &proto_tx, field, 0)
-            : proto_tx.GetReflection()->MutableMessage(&proto_tx, field);
-      },
+  iterateContainerRecursive(
+      proto_tx,
+      field_validators,
       [this](auto field, auto transaction_field) { this->runTestCases(field); },
       [] {});
 }

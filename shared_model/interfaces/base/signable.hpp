@@ -80,8 +80,10 @@ namespace shared_model {
        */
       bool operator==(const Model &rhs) const override {
         return this->hash() == rhs.hash()
-            and boost::equal(this->signatures(), rhs.signatures())
-            and this->createdTime() == rhs.createdTime();
+            // is_permutation consumes ~O(N^2)
+            and std::is_permutation(signatures().begin(),
+                                    signatures().end(),
+                                    rhs.signatures().begin());
       }
 
       const types::HashType &hash() const {

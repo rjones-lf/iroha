@@ -34,7 +34,8 @@ namespace shared_model {
      */
     template <typename Iface,
               typename FieldValidator,
-              typename TransactionValidator>
+              typename TransactionValidator,
+              typename TransactionsCollectionValidator>
     class ContainerValidator {
      protected:
       void validateTransaction(
@@ -50,18 +51,25 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::TransactionsCollectionType &transactions)
           const {
-        for (const auto &tx : transactions) {
-          validateTransaction(reason, tx);
+        auto answer = transactions_collection_validator_.validate(transactions);
+        if (answer.hasErrors()) {
+          reason.second.push_back(answer.reason());
         }
       }
 
      public:
-      ContainerValidator(
+      explicit ContainerValidator(
+          const FieldValidator &field_validator = FieldValidator(),
+          const TransactionsCollectionValidator
+              &transactions_collection_validator =
+                  TransactionsCollectionValidator(),
           const TransactionValidator &transaction_validator =
-              TransactionValidator(),
-          const FieldValidator &field_validator = FieldValidator())
-          : transaction_validator_(transaction_validator),
+              TransactionValidator())
+          : transactions_collection_validator_(
+                transactions_collection_validator),
+            transaction_validator_(transaction_validator),
             field_validator_(field_validator) {}
+
       Answer validate(const Iface &cont, std::string reason_name) const {
         Answer answer;
         ReasonsGroupType reason;
@@ -76,6 +84,7 @@ namespace shared_model {
       }
 
      private:
+      TransactionsCollectionValidator transactions_collection_validator_;
       TransactionValidator transaction_validator_;
 
      protected:

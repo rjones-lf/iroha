@@ -1,3 +1,6 @@
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 cmake_minimum_required(VERSION 3.5.1)
 
 find_program(CCACHE_PROGRAM ccache)
@@ -9,7 +12,7 @@ endif()
 PROJECT(iroha C CXX)
 
 SET(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-SET(CMAKE_CXX_FLAGS "-std=c++1y -Wall")
+SET(CMAKE_CXX_FLAGS "-std=c++1y -Wall -fdiagnostics-color=always")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
 SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
 SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
@@ -100,15 +103,21 @@ message(STATUS "-DSUPPORT_PYTHON2=${SUPPORT_PYTHON2}")
 message(STATUS "-DSWIG_CSHARP=${SWIG_CSHARP}")
 message(STATUS "-DSWIG_NODE=${SWIG_NODE}")
 
-SET(IROHA_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/schema")
+set(IROHA_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/schema")
+set(SM_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/shared_model/schema")
+set(SCHEMA_OUT_DIR ${CMAKE_BINARY_DIR}/schema)
 include_directories(
   ${PROJECT_SOURCE_DIR}/irohad
   ${PROJECT_SOURCE_DIR}/shared_model
   ${PROJECT_SOURCE_DIR}/libs
-  ${IROHA_SCHEMA_DIR}
 )
 
 SET(IROHA_ROOT_PROJECT ON)
+
+# Boost uses RTTI to perform some actions (such as type erasure).
+# This is slow. This flag forces boost to use other methods,
+# which are generally faster
+add_definitions(-DBOOST_NO_RTTI)
 
 include(FeatureSummary)
 include(cmake/functions.cmake)
@@ -131,9 +140,7 @@ if(TESTING)
 endif()
 
 if (FUZZING)
-  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    add_subdirectory(fuzz)
-  else()
-    message(Fuzzing with compilers other than clang does not supported yet)
+  if (NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    message(Fuzzing with compilers other than clang is not supported yet)
   endif()
 endif()

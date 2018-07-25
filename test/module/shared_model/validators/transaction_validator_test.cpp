@@ -33,12 +33,13 @@ class TransactionValidatorTest : public ValidatorsTest {
 
     TestTransactionBuilder builder;
     auto tx = builder.creatorAccountId(creator_account_id)
-                  .createdTime(created_time)
-                  .quorum(1)
-                  .build()
-                  .getTransport();
+        .createdTime(created_time)
+        .quorum(1)
+        .build()
+        .getTransport();
     return tx;
   }
+  shared_model::validation::DefaultTransactionValidator transaction_validator;
 };
 
 /**
@@ -48,8 +49,8 @@ class TransactionValidatorTest : public ValidatorsTest {
  */
 TEST_F(TransactionValidatorTest, EmptyTransactionTest) {
   auto tx = generateEmptyTransaction();
-  tx.mutable_payload()->set_created_time(created_time);
-  shared_model::validation::DefaultTransactionValidator transaction_validator;
+  tx.mutable_payload()->mutable_reduced_payload()->set_created_time(
+      created_time);
   auto result = proto::Transaction(iroha::protocol::Transaction(tx));
   auto answer = transaction_validator.validate(result);
   ASSERT_EQ(answer.getReasonsMap().size(), 1);
@@ -62,12 +63,14 @@ TEST_F(TransactionValidatorTest, EmptyTransactionTest) {
  */
 TEST_F(TransactionValidatorTest, InvalidCreateRolePermission) {
   auto tx = generateEmptyTransaction();
-  tx.mutable_payload()->set_created_time(created_time);
+  tx.mutable_payload()->mutable_reduced_payload()->set_created_time(
+      created_time);
   iroha::protocol::Command cmd;
   cmd.mutable_create_role()->set_role_name("role");
   cmd.mutable_create_role()->add_permissions(
       static_cast<iroha::protocol::RolePermission>(-1));
-  *tx.mutable_payload()->add_commands() = std::move(cmd);
+  *tx.mutable_payload()->mutable_reduced_payload()->add_commands() =
+      std::move(cmd);
   shared_model::validation::DefaultTransactionValidator transaction_validator;
   auto result = proto::Transaction(iroha::protocol::Transaction(tx));
   auto answer = transaction_validator.validate(result);
@@ -81,31 +84,48 @@ TEST_F(TransactionValidatorTest, InvalidCreateRolePermission) {
  */
 TEST_F(TransactionValidatorTest, StatelessValidTest) {
   iroha::protocol::Transaction tx = generateEmptyTransaction();
-  tx.mutable_payload()->set_creator_account_id(account_id);
-  tx.mutable_payload()->set_created_time(created_time);
+  tx.mutable_payload()->mutable_reduced_payload()->set_creator_account_id(
+      account_id);
+  tx.mutable_payload()->mutable_reduced_payload()->set_created_time(
+      created_time);
   auto payload = tx.mutable_payload();
 
   // Iterate through all command types, filling command fields with valid values
-  iterateContainer([] { return iroha::protocol::Command::descriptor(); },
-                   [&](auto field) {
-                     // Add new command to transaction
-                     auto command = payload->add_commands();
-                     // Set concrete type for new command
-                     return command->GetReflection()->MutableMessage(command,
-                                                                     field);
-                   },
-                   [this](auto field, auto command) {
-                     // Will throw key exception in case new field is added
-                     field_setters.at(field->name())(
-                         command->GetReflection(), command, field);
-                   },
-                   [] {});
+  iterateContainer(
+      [] { return iroha::protocol::Command::descriptor(); },
+      [&](auto field) {
+        // Add new command to transaction
+        auto command = payload->mutable_reduced_payload()->add_commands();
+        // Set concrete type for new command
+        return command->GetReflection()->MutableMessage(command, field);
+      },
+      [this](auto field, auto command) {
+        // Will throw key exception in case new field is added
+        field_setters.at(field->name())(
+            command->GetReflection(), command, field);
+      },
+      [] {});
 
-  shared_model::validation::DefaultTransactionValidator transaction_validator;
   auto result = proto::Transaction(iroha::protocol::Transaction(tx));
   auto answer = transaction_validator.validate(result);
 
   ASSERT_FALSE(answer.hasErrors()) << answer.reason();
+}
+
+/**
+ * @given Protobuf transaction object with unset command
+ * @when validate is called
+ * @then there is a error returned
+ */
+TEST_F(TransactionValidatorTest, UnsetCommand) {
+  iroha::protocol::Transaction tx = generateEmptyTransaction();
+  tx.mutable_payload()->mutable_reduced_payload()->set_creator_account_id(
+      account_id);
+  tx.mutable_payload()->mutable_reduced_payload()->set_created_time(
+      created_time);
+  auto answer = transaction_validator.validate(proto::Transaction(tx));
+  tx.mutable_payload()->mutable_reduced_payload()->add_commands();
+  ASSERT_TRUE(answer.hasErrors());
 }
 
 /**
@@ -119,24 +139,23 @@ TEST_F(TransactionValidatorTest, StatelessInvalidTest) {
   auto payload = tx.mutable_payload();
 
   iroha::ts64_t invalid_time = 10000000000ull;
-  payload->set_created_time(invalid_time);
+  payload->mutable_reduced_payload()->set_created_time(invalid_time);
 
   // create commands from default constructors, which will have empty, therefore
   // invalid values
-  iterateContainer([] { return iroha::protocol::Command::descriptor(); },
-                   [&](auto field) {
-                     // Add new command to transaction
-                     auto command = payload->add_commands();
-                     // Set concrete type for new command
-                     return command->GetReflection()->MutableMessage(command,
-                                                                     field);
-                   },
-                   [](auto, auto) {
-                     // Note that no fields are set
-                   },
-                   [] {});
+  iterateContainer(
+      [] { return iroha::protocol::Command::descriptor(); },
+      [&](auto field) {
+        // Add new command to transaction
+        auto command = payload->mutable_reduced_payload()->add_commands();
+        // Set concrete type for new command
+        return command->GetReflection()->MutableMessage(command, field);
+      },
+      [](auto, auto) {
+        // Note that no fields are set
+      },
+      [] {});
 
-  shared_model::validation::DefaultTransactionValidator transaction_validator;
   auto result = proto::Transaction(iroha::protocol::Transaction(tx));
   auto answer = transaction_validator.validate(result);
 
@@ -145,3 +164,29 @@ TEST_F(TransactionValidatorTest, StatelessInvalidTest) {
   ASSERT_EQ(answer.getReasonsMap().size(),
             iroha::protocol::Command::descriptor()->field_count() + 1);
 }
+/**
+ * @given transaction made of commands with valid fields
+ * @when commands validation is invoked
+ * @then answer has no errors
+ */
+TEST_F(TransactionValidatorTest, BatchValidTest) {
+  std::string creator_account_id = "admin@test";
+
+  TestTransactionBuilder builder;
+  auto tx = builder.creatorAccountId(creator_account_id)
+      .createdTime(created_time)
+      .quorum(1)
+      .batchMeta(interface::types::BatchType::ATOMIC,
+                 std::vector<interface::types::HashType>())
+      .createDomain("test", "test")
+      .build()
+      .getTransport();
+  shared_model::validation::DefaultTransactionValidator transaction_validator;
+  auto result = proto::Transaction(iroha::protocol::Transaction(tx));
+  auto answer = transaction_validator.validate(result);
+
+  ASSERT_FALSE(answer.hasErrors()) << answer.reason();
+  ASSERT_EQ(tx.payload().batch().type(),
+            static_cast<int>(interface::types::BatchType::ATOMIC));
+}
+

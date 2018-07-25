@@ -22,6 +22,7 @@
 namespace shared_model {
   namespace interface {
     class Transaction;
+    class TransactionBatch;
     class Proposal;
   }  // namespace interface
 }  // namespace shared_model
@@ -67,6 +68,13 @@ namespace iroha {
       virtual void propagateTransaction(
           std::shared_ptr<const shared_model::interface::Transaction>
               transaction) = 0;
+
+      /**
+       * Propagates transaction batch over network
+       * @param batch to be propagated
+       */
+      virtual void propagateBatch(
+          const shared_model::interface::TransactionBatch &batch) = 0;
 
       virtual ~OrderingGateTransport() = default;
     };

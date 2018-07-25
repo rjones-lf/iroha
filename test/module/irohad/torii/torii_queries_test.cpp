@@ -1,32 +1,22 @@
-/*
-Copyright Soramitsu Co., Ltd. 2016 All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 
+#include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
+#include "execution/query_execution_impl.hpp"
 #include "framework/specified_visitor.hpp"
 #include "main/server_runner.hpp"
 #include "torii/processor/query_processor_impl.hpp"
@@ -59,10 +49,11 @@ class ToriiQueriesTest : public testing::Test {
 
     //----------- Query Service ----------
 
-    auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(storage);
-
     EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
+
+    auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
+        storage, std::make_shared<iroha::QueryExecutionImpl>(storage));
 
     //----------- Server run ----------------
     runner->append(std::make_unique<torii::QueryService>(qpi))
@@ -323,14 +314,11 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
   auto account =
       shared_model::proto::AccountBuilder().accountId("accountA").build();
 
-  auto amount =
-      shared_model::proto::AmountBuilder().intValue(100).precision(2).build();
-
   std::shared_ptr<shared_model::interface::AccountAsset> account_asset =
       clone(shared_model::proto::AccountAssetBuilder()
                 .accountId("accountA")
                 .assetId("usd")
-                .balance(amount)
+                .balance(shared_model::interface::Amount("1.00"))
                 .build());
 
   auto asset = shared_model::proto::AssetBuilder()

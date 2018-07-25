@@ -40,7 +40,11 @@ namespace iroha {
 
       void transactionHandle(
           std::shared_ptr<shared_model::interface::Transaction> transaction)
-          override;
+          const override;
+
+      void transactionSequenceHandle(
+          const shared_model::interface::TransactionSequence
+              &transaction_sequence) const override;
 
       rxcpp::observable<
           std::shared_ptr<shared_model::interface::TransactionResponse>>
@@ -52,12 +56,7 @@ namespace iroha {
 
       // processing
       std::shared_ptr<MstProcessor> mst_processor_;
-      std::unordered_set<shared_model::crypto::Hash,
-                         shared_model::crypto::Hash::Hasher>
-          proposal_set_;
-      std::unordered_set<shared_model::crypto::Hash,
-                         shared_model::crypto::Hash::Hasher>
-          candidate_set_;
+      std::vector<shared_model::interface::types::HashType> current_txs_hashes_;
 
       // internal
       rxcpp::subjects::subject<

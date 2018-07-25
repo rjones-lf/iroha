@@ -22,7 +22,6 @@
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/builder_templates/query_response_template.hpp"
 #include "builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "builders/protobuf/common_objects/proto_amount_builder.hpp"
 #include "builders/protobuf/query_responses/proto_block_query_response_builder.hpp"
 #include "builders/query_responses/block_query_response_builder.hpp"
 #include "cryptography/keypair.hpp"
@@ -40,26 +39,22 @@ const auto hash = std::string(32, '0');
 uint64_t height = 1;
 uint8_t quorum = 2;
 
-boost::multiprecision::uint256_t valid_value = 1000;
 auto valid_precision = 1;
-const iroha::Amount amount(valid_value, valid_precision);
-const auto proto_amount = shared_model::proto::AmountBuilder()
-                              .intValue(valid_value)
-                              .precision(valid_precision)
-                              .build();
+
 const shared_model::interface::types::DetailType account_detail =
     "account-detail";
 const auto query_hash = shared_model::interface::types::HashType("hashhash");
 decltype(iroha::time::now()) created_time = iroha::time::now();
 
 TEST(QueryResponseBuilderTest, AccountAssetResponse) {
+  const auto amount = shared_model::interface::Amount("10.00");
   shared_model::proto::TemplateQueryResponseBuilder<> builder;
   shared_model::proto::QueryResponse query_response =
       builder.queryHash(query_hash)
           .accountAssetResponse({shared_model::proto::AccountAssetBuilder()
                                      .accountId(account_id)
                                      .assetId(asset_id)
-                                     .balance(proto_amount)
+                                     .balance(amount)
                                      .build()})
           .build();
   ASSERT_NO_THROW({
@@ -71,7 +66,7 @@ TEST(QueryResponseBuilderTest, AccountAssetResponse) {
 
     ASSERT_EQ(asset_response.assetId(), asset_id);
     ASSERT_EQ(asset_response.accountId(), account_id);
-    ASSERT_EQ(asset_response.balance(), proto_amount);
+    ASSERT_EQ(asset_response.balance(), amount);
     ASSERT_EQ(query_response.queryHash(), query_hash);
   });
 }

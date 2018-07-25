@@ -36,7 +36,7 @@ TEST(RegressionTest, SequentialInitialization) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId(kUser)
-                .addAssetQuantity(kUser, kAsset, "1.0")
+                .addAssetQuantity(kAsset, "1.0")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(
@@ -87,7 +87,7 @@ TEST(RegressionTest, StateRecovery) {
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@test")
                 .createAccount("user", "test", userKeypair.publicKey())
-                .addAssetQuantity("admin@test", "coin#test", "133.0")
+                .addAssetQuantity("coin#test", "133.0")
                 .transferAsset(
                     "admin@test", "user@test", "coin#test", "descrs", "97.8")
                 .quorum(1)

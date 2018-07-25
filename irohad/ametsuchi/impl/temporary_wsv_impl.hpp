@@ -18,11 +18,11 @@
 #ifndef IROHA_TEMPORARY_WSV_IMPL_HPP
 #define IROHA_TEMPORARY_WSV_IMPL_HPP
 
-#include <pqxx/connection>
-#include <pqxx/nontransaction>
+#include <soci/soci.h>
 
 #include "ametsuchi/temporary_wsv.hpp"
 #include "execution/command_executor.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -30,21 +30,39 @@ namespace iroha {
   namespace ametsuchi {
     class TemporaryWsvImpl : public TemporaryWsv {
      public:
-      TemporaryWsvImpl(std::unique_ptr<pqxx::lazyconnection> connection,
-                       std::unique_ptr<pqxx::nontransaction> transaction);
+      struct SavepointWrapperImpl : public TemporaryWsv::SavepointWrapper {
+        SavepointWrapperImpl(const TemporaryWsvImpl &wsv,
+                             std::string savepoint_name);
 
-      bool apply(
+        void release() override;
+
+        ~SavepointWrapperImpl() override;
+
+       private:
+        std::shared_ptr<soci::session> sql_;
+        std::string savepoint_name_;
+        bool is_released_;
+      };
+
+      explicit TemporaryWsvImpl(std::unique_ptr<soci::session> sql,
+                                std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                                factory);
+
+      expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &,
-          std::function<bool(const shared_model::interface::Transaction &,
-                             WsvQuery &)> function) override;
+          std::function<expected::Result<void, validation::CommandError>(
+              const shared_model::interface::Transaction &, WsvQuery &)>
+              function) override;
+
+      std::unique_ptr<TemporaryWsv::SavepointWrapper> createSavepoint(
+          const std::string &name) override;
 
       ~TemporaryWsvImpl() override;
 
      private:
-      std::unique_ptr<pqxx::lazyconnection> connection_;
-      std::unique_ptr<pqxx::nontransaction> transaction_;
-      std::unique_ptr<WsvQuery> wsv_;
-      std::unique_ptr<WsvCommand> executor_;
+      std::shared_ptr<soci::session> sql_;
+      std::shared_ptr<WsvQuery> wsv_;
+      std::shared_ptr<WsvCommand> executor_;
       std::shared_ptr<CommandExecutor> command_executor_;
       std::shared_ptr<CommandValidator> command_validator_;
 

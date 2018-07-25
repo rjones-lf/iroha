@@ -19,6 +19,7 @@
 #define IROHA_NETWORK_MOCKS_HPP
 
 #include <gmock/gmock.h>
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/ordering_gate.hpp"
@@ -34,9 +35,13 @@ namespace iroha {
   namespace network {
     class MockPeerCommunicationService : public PeerCommunicationService {
      public:
-      MOCK_METHOD1(
+      MOCK_CONST_METHOD1(
           propagate_transaction,
           void(std::shared_ptr<const shared_model::interface::Transaction>));
+
+      MOCK_CONST_METHOD1(
+          propagate_batch,
+          void(const shared_model::interface::TransactionBatch &));
 
       MOCK_CONST_METHOD0(
           on_proposal,
@@ -44,6 +49,11 @@ namespace iroha {
               std::shared_ptr<shared_model::interface::Proposal>>());
 
       MOCK_CONST_METHOD0(on_commit, rxcpp::observable<Commit>());
+
+      MOCK_CONST_METHOD0(
+          on_verified_proposal,
+          rxcpp::observable<
+              std::shared_ptr<validation::VerifiedProposalAndErrors>>());
     };
 
     class MockBlockLoader : public BlockLoader {
@@ -61,10 +71,14 @@ namespace iroha {
 
     class MockOrderingGate : public OrderingGate {
      public:
-      MOCK_METHOD1(
+      MOCK_CONST_METHOD1(
           propagateTransaction,
           void(std::shared_ptr<const shared_model::interface::Transaction>
                    transaction));
+
+      MOCK_CONST_METHOD1(
+          propagateBatch,
+          void(const shared_model::interface::TransactionBatch &));
 
       MOCK_METHOD0(on_proposal,
                    rxcpp::observable<

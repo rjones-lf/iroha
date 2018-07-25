@@ -15,10 +15,10 @@ limitations under the License.
 
 #include <grpc++/grpc++.h>
 
-#include "block.pb.h"
-#include "network/impl/grpc_channel_builder.hpp"
 #include "common/byteutils.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 #include "torii/command_client.hpp"
+#include "transaction.pb.h"
 
 namespace torii {
 
@@ -54,6 +54,12 @@ namespace torii {
     google::protobuf::Empty a;
     grpc::ClientContext context;
     return stub_->Torii(&context, tx, &a);
+  }
+
+  grpc::Status CommandSyncClient::ListTorii(const iroha::protocol::TxList &tx_list) const {
+    google::protobuf::Empty a;
+    grpc::ClientContext context;
+    return stub_->ListTorii(&context, tx_list, &a);
   }
 
   grpc::Status CommandSyncClient::Status(

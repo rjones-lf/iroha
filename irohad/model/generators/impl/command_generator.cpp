@@ -101,18 +101,13 @@ namespace iroha {
       }
 
       std::shared_ptr<Command> CommandGenerator::generateAddAssetQuantity(
-          const std::string &account_id,
-          const std::string &asset_id,
-          const Amount &amount) {
-        return generateCommand<AddAssetQuantity>(account_id, asset_id, amount);
+          const std::string &asset_id, const std::string &amount) {
+        return generateCommand<AddAssetQuantity>(asset_id, amount);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateSubtractAssetQuantity(
-          const std::string &account_id,
-          const std::string &asset_id,
-          const Amount &amount) {
-        return generateCommand<SubtractAssetQuantity>(
-            account_id, asset_id, amount);
+          const std::string &asset_id, const std::string &amount) {
+        return generateCommand<SubtractAssetQuantity>(asset_id, amount);
       }
 
       std::shared_ptr<Command> CommandGenerator::generateSetQuorum(
@@ -124,7 +119,7 @@ namespace iroha {
           const std::string &src_account,
           const std::string &dest_account,
           const std::string &asset_id,
-          const Amount &amount) {
+          const std::string &amount) {
         return generateCommand<TransferAsset>(
             src_account, dest_account, asset_id, amount);
       }

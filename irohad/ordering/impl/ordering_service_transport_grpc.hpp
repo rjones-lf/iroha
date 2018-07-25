@@ -19,11 +19,11 @@
 
 #include <google/protobuf/empty.pb.h>
 
-#include "block.pb.h"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_service_transport.hpp"
 #include "ordering.grpc.pb.h"
+#include "transaction.pb.h"
 
 namespace iroha {
   namespace ordering {
@@ -45,6 +45,10 @@ namespace iroha {
       grpc::Status onTransaction(::grpc::ServerContext *context,
                                  const protocol::Transaction *request,
                                  ::google::protobuf::Empty *response) override;
+
+      grpc::Status onBatch(::grpc::ServerContext *context,
+                           const protocol::TxList *request,
+                           ::google::protobuf::Empty *response) override;
 
       ~OrderingServiceTransportGrpc() = default;
 

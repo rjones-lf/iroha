@@ -18,12 +18,12 @@
 #ifndef IROHA_MUTABLE_STORAGE_IMPL_HPP
 #define IROHA_MUTABLE_STORAGE_IMPL_HPP
 
+#include <soci/soci.h>
 #include <map>
-#include <pqxx/connection>
-#include <pqxx/nontransaction>
 
 #include "ametsuchi/mutable_storage.hpp"
 #include "execution/command_executor.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -37,10 +37,10 @@ namespace iroha {
       friend class StorageImpl;
 
      public:
-      MutableStorageImpl(
-          shared_model::interface::types::HashType top_hash,
-          std::unique_ptr<pqxx::lazyconnection> connection,
-          std::unique_ptr<pqxx::nontransaction> transaction);
+      MutableStorageImpl(shared_model::interface::types::HashType top_hash,
+                         std::unique_ptr<soci::session> sql,
+                         std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                         factory);
 
       bool apply(
           const shared_model::interface::Block &block,
@@ -58,10 +58,9 @@ namespace iroha {
       std::map<uint32_t, std::shared_ptr<shared_model::interface::Block>>
           block_store_;
 
-      std::unique_ptr<pqxx::lazyconnection> connection_;
-      std::unique_ptr<pqxx::nontransaction> transaction_;
-      std::unique_ptr<WsvQuery> wsv_;
-      std::unique_ptr<WsvCommand> executor_;
+      std::unique_ptr<soci::session> sql_;
+      std::shared_ptr<WsvQuery> wsv_;
+      std::shared_ptr<WsvCommand> executor_;
       std::unique_ptr<BlockIndex> block_index_;
       std::shared_ptr<CommandExecutor> command_executor_;
 

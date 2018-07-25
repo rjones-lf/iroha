@@ -16,26 +16,45 @@ limitations under the License.
 
 #include "network/impl/peer_communication_service_impl.hpp"
 
+#include "interfaces/iroha_internal/transaction_batch.hpp"
+
 namespace iroha {
   namespace network {
     PeerCommunicationServiceImpl::PeerCommunicationServiceImpl(
         std::shared_ptr<OrderingGate> ordering_gate,
-        std::shared_ptr<synchronizer::Synchronizer> synchronizer)
+        std::shared_ptr<synchronizer::Synchronizer> synchronizer,
+        std::shared_ptr<iroha::simulator::VerifiedProposalCreator>
+            proposal_creator)
         : ordering_gate_(std::move(ordering_gate)),
-          synchronizer_(std::move(synchronizer)) {
+          synchronizer_(std::move(synchronizer)),
+          proposal_creator_(std::move(proposal_creator)) {
       log_ = logger::log("PCS");
     }
 
     void PeerCommunicationServiceImpl::propagate_transaction(
-        std::shared_ptr<const shared_model::interface::Transaction>
-            transaction) {
+        std::shared_ptr<const shared_model::interface::Transaction> transaction)
+        const {
       log_->info("propagate tx");
       ordering_gate_->propagateTransaction(transaction);
+    }
+
+    void PeerCommunicationServiceImpl::propagate_batch(
+        const shared_model::interface::TransactionBatch &batch) const {
+      log_->info("propagate batch");
+      for (const auto tx : batch.transactions()) {
+        ordering_gate_->propagateTransaction(tx);
+      }
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
     PeerCommunicationServiceImpl::on_proposal() const {
       return ordering_gate_->on_proposal();
+    }
+
+    rxcpp::observable<
+        std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+    PeerCommunicationServiceImpl::on_verified_proposal() const {
+      return proposal_creator_->on_verified_proposal();
     }
 
     rxcpp::observable<Commit> PeerCommunicationServiceImpl::on_commit() const {

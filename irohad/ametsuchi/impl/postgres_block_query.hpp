@@ -1,31 +1,17 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_POSTGRES_FLAT_BLOCK_QUERY_HPP
 #define IROHA_POSTGRES_FLAT_BLOCK_QUERY_HPP
 
 #include <boost/optional.hpp>
-#include <pqxx/connection>
-#include <pqxx/nontransaction>
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
+#include "ametsuchi/impl/soci_utils.hpp"
 #include "logger/logger.hpp"
-#include "postgres_wsv_common.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -37,11 +23,8 @@ namespace iroha {
      */
     class PostgresBlockQuery : public BlockQuery {
      public:
-      PostgresBlockQuery(pqxx::nontransaction &transaction_,
-                         KeyValueStorage &file_store);
-      PostgresBlockQuery(std::unique_ptr<pqxx::lazyconnection> connection,
-                         std::unique_ptr<pqxx::nontransaction> transaction,
-                         KeyValueStorage &file_store);
+      explicit PostgresBlockQuery(soci::session &sql,
+                                  KeyValueStorage &file_store);
 
       rxcpp::observable<wTransaction> getAccountTransactions(
           const shared_model::interface::types::AccountIdType &account_id)
@@ -96,17 +79,13 @@ namespace iroha {
        * @param block_id
        * @return
        */
-      std::function<void(pqxx::result &result)> callback(
+      std::function<void(std::vector<std::string> &result)> callback(
           const rxcpp::subscriber<wTransaction> &s, uint64_t block_id);
 
-      std::unique_ptr<pqxx::lazyconnection> connection_ptr_;
-      std::unique_ptr<pqxx::nontransaction> transaction_ptr_;
+      soci::session &sql_;
 
       KeyValueStorage &block_store_;
-      pqxx::nontransaction &transaction_;
       logger::Logger log_;
-      using ExecuteType = decltype(makeExecuteOptional(transaction_, log_));
-      ExecuteType execute_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

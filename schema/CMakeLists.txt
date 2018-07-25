@@ -1,97 +1,55 @@
-#
-# Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
-# http://soramitsu.co.jp
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
-compile_proto_to_cpp(block.proto)
-compile_proto_to_cpp(proposal.proto)
-compile_proto_to_cpp(primitive.proto)
-compile_proto_to_cpp(commands.proto)
-compile_proto_to_cpp(queries.proto)
-compile_proto_to_cpp(responses.proto)
-compile_proto_to_cpp(endpoint.proto)
+set(SM_SCHEMA_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../shared_model/schema/)
+set(SCHEMA_PATH ${SM_SCHEMA_PATH})
+compile_proto_only_grpc_to_cpp(endpoint.proto "-I${SM_SCHEMA_PATH}")
+set(SCHEMA_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+compile_proto_to_grpc_cpp(yac.proto)
+compile_proto_to_grpc_cpp(ordering.proto "-I${SM_SCHEMA_PATH}")
+compile_proto_to_grpc_cpp(loader.proto "-I${SM_SCHEMA_PATH}")
+compile_proto_to_grpc_cpp(mst.proto "-I${SM_SCHEMA_PATH}")
 
-if (IROHA_ROOT_PROJECT)
-  compile_proto_to_grpc_cpp(endpoint.proto)
-  compile_proto_to_grpc_cpp(yac.proto)
-  compile_proto_to_grpc_cpp(ordering.proto)
-  compile_proto_to_grpc_cpp(loader.proto)
-  compile_proto_to_grpc_cpp(mst.proto)
-endif ()
-
-add_library(schema
-    block.pb.cc
-    commands.pb.cc
-    primitive.pb.cc
-    queries.pb.cc
-    responses.pb.cc
-    endpoint.pb.cc
-    proposal.pb.cc
+add_library(endpoint
+    endpoint.grpc.pb.cc
+    )
+target_link_libraries(endpoint
+    grpc++
+    schema
     )
 
-target_link_libraries(schema
+add_library(yac_grpc
+    yac.pb.cc
+    yac.grpc.pb.cc
+    )
+target_link_libraries(yac_grpc
     protobuf
-    )
-target_include_directories(schema PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    grpc++
     )
 
-if (IROHA_ROOT_PROJECT)
-  add_library(endpoint
-      endpoint.pb.cc
-      endpoint.grpc.pb.cc
-      )
-  target_link_libraries(endpoint
-      protobuf
-      grpc++
-      schema
-      )
+add_library(ordering_grpc
+    ordering.pb.cc
+    ordering.grpc.pb.cc
+    )
+target_link_libraries(ordering_grpc
+    schema
+    grpc++
+    )
 
-  add_library(yac_grpc
-      yac.pb.cc
-      yac.grpc.pb.cc
-      )
-  target_link_libraries(yac_grpc
-      protobuf
-      grpc++
-      )
+add_library(loader_grpc
+    loader.pb.cc
+    loader.grpc.pb.cc
+    )
+target_link_libraries(loader_grpc
+    schema
+    grpc++
+    )
 
-  add_library(ordering_grpc
-      ordering.pb.cc
-      ordering.grpc.pb.cc
-      )
-  target_link_libraries(ordering_grpc
-      schema
-      grpc++
-      )
-
-  add_library(loader_grpc
-      loader.pb.cc
-      loader.grpc.pb.cc
-      )
-  target_link_libraries(loader_grpc
-      schema
-      grpc++
-      )
-
-  add_library(mst_grpc
-      mst.pb.cc
-      mst.grpc.pb.cc
-      )
-  target_link_libraries(mst_grpc
-      schema
-      grpc++
-      )
-endif ()
+add_library(mst_grpc
+    mst.pb.cc
+    mst.grpc.pb.cc
+    )
+target_link_libraries(mst_grpc
+    schema
+    grpc++
+    )

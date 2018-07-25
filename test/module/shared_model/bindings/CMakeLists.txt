@@ -65,15 +65,20 @@ if (SWIG_PYTHON)
       env "PYTHONPATH=${SWIG_LIB_DIR}${SEPARATOR}$ENV{PYTHONPATH}"
       ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/blocks-query-test.py
       WORKING_DIRECTORY ${SWIG_BUILD_DIR})
+  add_test(NAME python_client_test
+      COMMAND ${CMAKE_COMMAND} -E
+      env "PYTHONPATH=${SWIG_LIB_DIR}${SEPARATOR}$ENV{PYTHONPATH}"
+      ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/client-test.py
+      WORKING_DIRECTORY ${SWIG_BUILD_DIR})
 
-  foreach(item "block" "commands" "primitive" "queries")
+  foreach(item "block" "transaction" "commands" "primitive" "queries")
     compile_proto_to_python("${item}.proto")
     list(APPEND PROTO_SWIG_DEPS "${SWIG_BUILD_DIR}/${item}_pb2.py")
   endforeach(item)
 
-  add_custom_target(python_tests
+  add_custom_target(python_tests ALL
     DEPENDS "${PROTO_SWIG_DEPS}")
-  foreach(test "python_transaction_test" "python_query_test" "python_blocks_query_test")
+  foreach(test "python_transaction_test" "python_query_test" "python_blocks_query_test" "python_client_test")
     set_tests_properties(${test}
       PROPERTIES REQUIRED_FILES "${PROTO_SWIG_DEPS}"
                  DEPENDS python_tests)
@@ -99,7 +104,7 @@ if (SWIG_JAVA)
 
   add_test(NAME java_builders_test
     COMMAND gradle test "-PSWIG_BUILD_DIR=${SWIG_BUILD_DIR}"
-    "-PSCHEMA_DIR=${IROHA_SCHEMA_DIR}"
+    "-PSCHEMA_DIR=${PROJECT_SOURCE_DIR}/shared_model/schema"
     "-PPROTOBUF_PROTOC_EXECUTABLE=${PROTOC_EXEC}"
     "-PPATH_DIRS=$ENV{PATH}${SEPARATOR}${SWIG_LIB_DIR}"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
