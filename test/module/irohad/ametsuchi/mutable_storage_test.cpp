@@ -25,8 +25,12 @@ class MutableStorageTest : public AmetsuchiTest,
           mutable_storage_ = std::move(mut_storage.value);
         },
         [](const auto &) { FAIL() << "Mutable storage cannot be created"; });
-    ;
   }
+
+  void TearDown() override {
+    mutable_storage_.reset();
+    AmetsuchiTest::TearDown();
+  };
 
   shared_model::interface::BlockVariant getBlock() {
     return std::make_shared<shared_model::proto::Block>(
