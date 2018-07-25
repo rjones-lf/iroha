@@ -195,6 +195,100 @@ namespace framework {
       return framework::expected::val(result_batch).value().value;
     }
 
+    /**
+     * Namespace provides useful functions which are related to implementation
+     * but they are internal API
+     */
+    namespace internal {
+
+      /**
+       * Create list of hashes
+       * @tparam TxBuilderCollection - type of builder
+       * @param builders - initializer list which contains all builders
+       * @return vector with transactions hashes
+       */
+      template <typename TxBuilder>
+      auto fetchReducedHashes(
+          const std::initializer_list<TxBuilder> &builders) {
+        std::vector<shared_model::interface::types::HashType> hashes;
+        std::transform(
+            builders.begin(),
+            builders.end(),
+            std::back_inserter(hashes),
+            [](const auto &builder) { return builder.build().reducedHash(); });
+        return hashes;
+      }
+
+      /**
+       * Variadic to initializer list adapter
+       */
+      template <typename... TxBuilders>
+      auto fetchReducedHashes(const TxBuilders &... builders) {
+        return fetchReducedHashes({builders...});
+      }
+
+      /**
+       * Function create transactions from builder and passed hashes
+       * @tparam TxBuilder - type of one builder
+       * @param hashes - vector of hashes of transactions
+       * @param builders - initializer list of tx builders
+       * @return transactions with correct batch meta
+       */
+      template <typename TxBuilder>
+      auto makeTxBatchCollection(
+          const std::vector<shared_model::interface::types::HashType> &hashes,
+          std::initializer_list<TxBuilder> builders) {
+        shared_model::interface::types::SharedTxsCollectionType transactions;
+
+        std::transform(
+            builders.begin(),
+            builders.end(),
+            std::back_inserter(transactions),
+            [&hashes](const auto &builder) {
+              return makePolyTxFromBuilder(builder.batchMeta(
+                  shared_model::interface::types::BatchType::ATOMIC, hashes));
+            });
+        return transactions;
+      }
+
+      /**
+       * Variadic to initializer list adapter
+       */
+      template <typename... TxBuilders>
+      auto makeTxBatchCollection(TxBuilders &&... builders) {
+        auto hashes = fetchReducedHashes(builders...);
+        return makeTxBatchCollection(std::move(hashes),
+                                     {std::forward<TxBuilders>(builders)...});
+      }
+    }  // namespace internal
+
+    /**
+     * Create test batch from passed transaction builders
+     * @tparam TxBuilders - variadic types of tx builders
+     * @return shared_ptr for batch
+     */
+    template <typename... TxBuilders>
+    auto makeTestBatch(TxBuilders &&... builders) {
+      auto transactions = internal::makeTxBatchCollection(
+          std::forward<TxBuilders>(builders)...);
+
+      using namespace shared_model::validation;
+      using TxValidator =
+          TransactionValidator<FieldValidator,
+                               CommandValidatorVisitor<FieldValidator>>;
+
+      using TxsValidator =
+          UnsignedTransactionsCollectionValidator<TxValidator,
+                                                  BatchOrderValidator>;
+
+      auto batch =
+          shared_model::interface::TransactionBatch::createTransactionBatch(
+              transactions, TxsValidator());
+
+      return std::make_shared<shared_model::interface::TransactionBatch>(
+          framework::expected::val(batch).value().value);
+    }
+
   }  // namespace batch
 }  // namespace framework
 

@@ -19,6 +19,7 @@
 
 #include <boost/variant/apply_visitor.hpp>
 
+#include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
@@ -37,7 +38,7 @@ namespace iroha {
           wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
           executor_(std::make_shared<PostgresWsvCommand>(*sql_)),
           block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
-          command_executor_(std::make_shared<CommandExecutor>(wsv_, executor_)),
+          command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
           committed(false),
           log_(logger::log("MutableStorage")) {
       *sql_ << "BEGIN";
