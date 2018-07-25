@@ -7,13 +7,13 @@
 
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
-#include "builders/protobuf/transaction.hpp"
+#include "framework/batch_helper.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "logger/logger.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/ordering/mock_ordering_service_persistent_state.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "ordering/impl/ordering_service_impl.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
 
@@ -65,20 +65,6 @@ class OrderingServiceTest : public ::testing::Test {
     fake_transport = std::make_shared<MockOrderingServiceTransport>();
     fake_persistent_state =
         std::make_shared<MockOrderingServicePersistentState>();
-  }
-
-  auto getTx() {
-    return std::make_unique<shared_model::proto::Transaction>(
-        shared_model::proto::TransactionBuilder()
-            .createdTime(iroha::time::now())
-            .creatorAccountId("admin@ru")
-            .addAssetQuantity("coin#coin", "1.0")
-            .quorum(1)
-            .build()
-            .signAndAddSignature(
-                shared_model::crypto::DefaultCryptoAlgorithmType::
-                    generateKeypair())
-            .finish());
   }
 
   auto initOs(size_t max_proposal) {
@@ -157,7 +143,7 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
   fake_transport->subscribe(ordering_service);
 
   for (size_t i = 0; i < tx_num; ++i) {
-    ordering_service->onTransaction(getTx());
+    ordering_service->onBatch(framework::batch::createValidBatch(1));
   }
 }
 
@@ -188,12 +174,13 @@ TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
   fake_transport->subscribe(ordering_service);
 
   for (size_t i = 0; i < 8; ++i) {
-    ordering_service->onTransaction(getTx());
+    ordering_service->onBatch(framework::batch::createValidBatch(1));
   }
   makeProposalTimeout();
 
-  ordering_service->onTransaction(getTx());
-  ordering_service->onTransaction(getTx());
+  ordering_service->onBatch(framework::batch::createValidBatch(1));
+  ordering_service->onBatch(framework::batch::createValidBatch(1));
+
   makeProposalTimeout();
 }
 
@@ -214,7 +201,8 @@ TEST_F(OrderingServiceTest, BrokenPersistentState) {
       .WillRepeatedly(Return(false));
 
   auto ordering_service = initOs(max_proposal);
-  ordering_service->onTransaction(getTx());
+  ordering_service->onBatch(framework::batch::createValidBatch(1));
+
   makeProposalTimeout();
 }
 
@@ -235,7 +223,7 @@ TEST_F(OrderingServiceTest, ConcurrentGenerateProposal) {
 
   auto on_tx = [&]() {
     for (int i = 0; i < 1000; ++i) {
-      ordering_service->onTransaction(getTx());
+      ordering_service->onBatch(framework::batch::createValidBatch(1));
     }
   };
 
@@ -261,8 +249,8 @@ TEST_F(OrderingServiceTest, ConcurrentGenerateProposal) {
  * called after destructor call
  */
 TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
-  const auto max_proposal = 100000;
-  const auto commit_delay = 100ms;
+  const auto max_proposal = 600;
+  const auto commit_delay = 5s;
   EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
       .Times(1)
       .WillOnce(Return(boost::optional<size_t>(1)));
@@ -286,8 +274,10 @@ TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
         true);
 
     auto on_tx = [&]() {
-      for (int i = 0; i < 1000; ++i) {
-        ordering_service.onTransaction(getTx());
+      // create max_proposal+1 txs, so that publish proposal is invoked at least
+      // once (concurrency!)
+      for (int i = 0; i < max_proposal + 1; ++i) {
+        ordering_service.onBatch(framework::batch::createValidBatch(1));
       }
     };
 
@@ -295,4 +285,39 @@ TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
     thread.join();
   }
   EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(0);
+}
+
+/**
+ * Check that batches are processed by ordering service
+ * @given ordering service up and running
+ * @when feeding the ordering service two batches, such that number of
+ * transactions in both summed is greater than maximum number of transactions
+ * inside proposal
+ * @then proposal will still contain number of transactions, equal to sum of the
+ * batches
+ */
+TEST_F(OrderingServiceTest, BatchesProceed) {
+  const auto max_proposal = 12;
+  const auto first_batch_size = 10;
+  const auto second_batch_size = 5;
+
+  auto batch_one = framework::batch::createValidBatch(first_batch_size);
+  auto batch_two = framework::batch::createValidBatch(second_batch_size);
+
+  EXPECT_CALL(*fake_persistent_state, saveProposalHeight(_))
+      .Times(1)
+      .WillRepeatedly(Return(true));
+  EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
+      .Times(1)
+      .WillOnce(Return(
+          boost::optional<size_t>(first_batch_size + second_batch_size)));
+  EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(1);
+  EXPECT_CALL(*wsv, getLedgerPeers())
+      .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));
+
+  auto ordering_service = initOs(max_proposal);
+  fake_transport->subscribe(ordering_service);
+
+  ordering_service->onBatch(std::move(batch_one));
+  ordering_service->onBatch(std::move(batch_two));
 }

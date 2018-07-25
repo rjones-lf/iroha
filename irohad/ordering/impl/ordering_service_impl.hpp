@@ -6,9 +6,10 @@
 #ifndef IROHA_ORDERING_SERVICE_IMPL_HPP
 #define IROHA_ORDERING_SERVICE_IMPL_HPP
 
-#include <tbb/concurrent_queue.h>
 #include <memory>
-#include <mutex>
+#include <shared_mutex>
+
+#include <tbb/concurrent_queue.h>
 #include <rxcpp/rx.hpp>
 
 #include "logger/logger.hpp"
@@ -52,12 +53,11 @@ namespace iroha {
           bool is_async = true);
 
       /**
-       * Process transaction received from network
-       * Enqueues transaction and publishes corresponding event
-       * @param transaction
+       * Process transaction(s) received from network
+       * Enqueues transactions and publishes corresponding event
+       * @param batch, in which transactions are packed
        */
-      void onTransaction(std::shared_ptr<shared_model::interface::Transaction>
-                             transaction) override;
+      void onBatch(shared_model::interface::TransactionBatch &&batch) override;
 
       ~OrderingServiceImpl() override;
 
@@ -73,7 +73,7 @@ namespace iroha {
       /**
        * Events for queue check strategy
        */
-      enum class ProposalEvent { kTransactionEvent, kTimerEvent };
+      enum class ProposalEvent { kBatchEvent, kTimerEvent };
 
       /**
        * Collect transactions from queue
@@ -84,13 +84,18 @@ namespace iroha {
       std::shared_ptr<ametsuchi::PeerQuery> wsv_;
 
       tbb::concurrent_queue<
-          std::shared_ptr<shared_model::interface::Transaction>>
+          std::unique_ptr<shared_model::interface::TransactionBatch>>
           queue_;
 
       /**
        * max number of txs in proposal
        */
       const size_t max_size_;
+
+      /**
+       * current number of transactions in a queue
+       */
+      std::atomic_ulong current_size_;
 
       std::shared_ptr<network::OrderingServiceTransport> transport_;
 
@@ -115,9 +120,12 @@ namespace iroha {
       rxcpp::composite_subscription handle_;
 
       /**
-       * Mutex for incoming transactions
+       * Variables for concurrency
        */
-      std::mutex mutex_;
+      /// mutex for both batch and proposal generation
+      std::shared_timed_mutex batch_prop_mutex_;
+      /// mutex for events activating
+      std::mutex event_mutex_;
 
       logger::Logger log_;
     };

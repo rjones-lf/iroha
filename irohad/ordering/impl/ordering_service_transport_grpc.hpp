@@ -46,6 +46,10 @@ namespace iroha {
                                  const protocol::Transaction *request,
                                  ::google::protobuf::Empty *response) override;
 
+      grpc::Status onBatch(::grpc::ServerContext *context,
+                           const protocol::TxList *request,
+                           ::google::protobuf::Empty *response) override;
+
       ~OrderingServiceTransportGrpc() = default;
 
      private:

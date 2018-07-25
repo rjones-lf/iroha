@@ -18,7 +18,9 @@
 
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
+#include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
+#include "validators/default_validator.hpp"
 
 using namespace iroha::ordering;
 
@@ -35,11 +37,62 @@ grpc::Status OrderingServiceTransportGrpc::onTransaction(
   if (subscriber_.expired()) {
     log_->error("No subscriber");
   } else {
-    subscriber_.lock()->onTransaction(
-        std::make_shared<shared_model::proto::Transaction>(
-            iroha::protocol::Transaction(*request)));
+    auto batch_result =
+        shared_model::interface::TransactionBatch::createTransactionBatch<
+            shared_model::validation::DefaultTransactionValidator>(
+            std::make_shared<shared_model::proto::Transaction>(
+                iroha::protocol::Transaction(*request)));
+    batch_result.match(
+        [this](iroha::expected::Value<shared_model::interface::TransactionBatch>
+                   &batch) {
+          subscriber_.lock()->onBatch(std::move(batch.value));
+        },
+        [this](const iroha::expected::Error<std::string> &error) {
+          log_->error(
+              "Could not create batch from received single transaction: {}",
+              error.error);
+        });
   }
 
+  return ::grpc::Status::OK;
+}
+
+grpc::Status OrderingServiceTransportGrpc::onBatch(
+    ::grpc::ServerContext *context,
+    const protocol::TxList *request,
+    ::google::protobuf::Empty *response) {
+  log_->info("OrderingServiceTransportGrpc::onBatch");
+  if (subscriber_.expired()) {
+    log_->error("No subscriber");
+  } else {
+    auto txs =
+        std::vector<std::shared_ptr<shared_model::interface::Transaction>>(
+            request->transactions_size());
+    std::transform(
+        std::begin(request->transactions()),
+        std::end(request->transactions()),
+        std::begin(txs),
+        [](const auto &tx) {
+          return std::make_shared<shared_model::proto::Transaction>(tx);
+        });
+
+    auto batch_result =
+        shared_model::interface::TransactionBatch::createTransactionBatch(
+            txs,
+            shared_model::validation::SignedTransactionsCollectionValidator<
+                shared_model::validation::DefaultTransactionValidator,
+                shared_model::validation::BatchOrderValidator>());
+    batch_result.match(
+        [this](iroha::expected::Value<shared_model::interface::TransactionBatch>
+                   &batch) {
+          subscriber_.lock()->onBatch(std::move(batch.value));
+        },
+        [this](const iroha::expected::Error<std::string> &error) {
+          log_->error(
+              "Could not create batch from received transaction list: {}",
+              error.error);
+        });
+  }
   return ::grpc::Status::OK;
 }
 
