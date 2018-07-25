@@ -874,7 +874,7 @@ Allows getting all `transactions <../core_concepts/glossary.html#transaction>`__
 
 .. Note:: Incoming asset transfer inside a transaction would NOT lead to an appearance of the transaction in the command output.
 
-| Related API method: `Get Account Asset Transactions <../api/queries.html#get-account-asset-transactions>`__
+| Related API method: `Get Account Transactions <../api/queries.html#get-account-transactions>`__
 | Usage in Java bindings: ``Role.kGetAllAccTxs``
 | Usage in Python bindings: ``Role_kGetAllAccTxs``
 |
@@ -896,7 +896,7 @@ Allows getting all `transactions <../core_concepts/glossary.html#transaction>`__
 
 .. Note:: Incoming asset transfer inside a transaction would NOT lead to an appearance of the transaction in the command output.
 
-| Related API method: `Get Account Asset Transactions <../api/queries.html#get-account-asset-transactions>`__
+| Related API method: `Get Account Transactions <../api/queries.html#get-account-transactions>`__
 | Usage in Java bindings: ``Role.kGetDomainAccTxs``
 | Usage in Python bindings: ``Role_kGetDomainAccTxs``
 |
@@ -918,7 +918,7 @@ Allows getting all `transactions <../core_concepts/glossary.html#transaction>`__
 
 .. Note:: Incoming asset transfer inside a transaction would NOT lead to an appearance of the transaction in the command output.
 
-| Related API method: `Get Account Asset Transactions <../api/queries.html#get-account-asset-transactions>`__
+| Related API method: `Get Account Transactions <../api/queries.html#get-account-transactions>`__
 | Usage in Java bindings: ``Role.kGetMyAccTxs``
 | Usage in Python bindings: ``Role_kGetMyAccTxs``
 |
