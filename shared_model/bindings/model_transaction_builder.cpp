@@ -39,7 +39,7 @@ namespace shared_model {
     }
 
     ModelTransactionBuilder ModelTransactionBuilder::batchMeta(
-        const interface::types::BatchType &type,
+        interface::types::BatchType type,
         const std::vector<interface::types::HashType> &hashes) {
       return ModelTransactionBuilder(builder_.batchMeta(type, hashes));
     }
