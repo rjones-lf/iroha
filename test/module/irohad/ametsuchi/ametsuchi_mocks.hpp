@@ -211,9 +211,9 @@ namespace iroha {
      public:
       MOCK_METHOD2(
           check,
-          bool(const shared_model::interface::AbstractBlock &,
+          bool(const shared_model::interface::BlockVariant &,
                std::function<
-                   bool(const shared_model::interface::AbstractBlock &,
+                   bool(const shared_model::interface::BlockVariant &,
                         WsvQuery &,
                         const shared_model::interface::types::HashType &)>));
       MOCK_METHOD2(

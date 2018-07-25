@@ -41,7 +41,7 @@ namespace iroha {
                          std::unique_ptr<soci::session> sql,
                          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
                          factory);
-      bool check(const shared_model::interface::AbstractBlock &block,
+      bool check(const shared_model::interface::BlockVariant &block,
                  MutableStoragePredicateType<decltype(block)> function) override;
 
       bool apply(

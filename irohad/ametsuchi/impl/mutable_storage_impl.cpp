@@ -19,8 +19,8 @@
 
 #include <boost/variant/apply_visitor.hpp>
 
-#include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_block_index.hpp"
+#include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/wsv_command.hpp"
@@ -45,7 +45,7 @@ namespace iroha {
     }
 
     bool MutableStorageImpl::check(
-        const shared_model::interface::AbstractBlock &block,
+        const shared_model::interface::BlockVariant &block,
         MutableStorage::MutableStoragePredicateType<decltype(block)>
             predicate) {
       return predicate(block, *wsv_, top_hash_);

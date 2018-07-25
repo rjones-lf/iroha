@@ -28,14 +28,13 @@ class MutableStorageTest : public AmetsuchiTest,
     ;
   }
 
-  shared_model::proto::Block getBlock() {
-    auto block =
+  shared_model::interface::BlockVariant getBlock() {
+    return std::make_shared<shared_model::proto::Block>(
         TestBlockBuilder()
             .transactions(std::vector<shared_model::proto::Transaction>({}))
             .height(1)
             .prevHash(fake_hash)
-            .build();
-    return block;
+            .build());
   }
 
   std::string zero_string{32, '0'};
@@ -66,4 +65,6 @@ TEST_P(MutableStorageTest, TestCheckBlock) {
 
 INSTANTIATE_TEST_CASE_P(MutableStorageParameterizedTest,
                         MutableStorageTest,
+                        // note additional comma is needed to make it compile
+                        // https://github.com/google/googletest/issues/1419
                         Bool(), );

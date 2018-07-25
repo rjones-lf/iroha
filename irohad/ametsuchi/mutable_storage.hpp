@@ -24,7 +24,7 @@
 namespace shared_model {
   namespace interface {
     class Block;
-    class AbstractBlock;
+    class BlockVariant;
   }  // namespace interface
 }  // namespace shared_model
 
@@ -39,6 +39,9 @@ namespace iroha {
      */
     class MutableStorage {
      public:
+      /**
+       * Predicate type checking type T
+       */
       template <typename T>
       using MutableStoragePredicateType =
           std::function<bool(const T &,
@@ -52,7 +55,7 @@ namespace iroha {
        * false otherwise
        * @return result of predicate
        */
-      virtual bool check(const shared_model::interface::AbstractBlock &block,
+      virtual bool check(const shared_model::interface::BlockVariant &block,
                          MutableStoragePredicateType<decltype(block)>) = 0;
 
       /**
