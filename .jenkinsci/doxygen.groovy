@@ -2,20 +2,20 @@
 
 def doDoxygen() {
 
-    sh "doxygen Doxyfile"
-    
-    sshagent(['jenkins-artifact']) {
-        sh "ssh-agent"
-        sh "rsync -auzc docs/doxygen/html/* ubuntu@nexus.soramitsu.co.jp:/var/nexus-efs/doxygen/develop"
-    }
+  sh "/usr/bin/doxygen Doxyfile"
 
-    // if (env.GIT_LOCAL_BRANCH == 'master' || env.GIT_LOCAL_BRANCH == 'develop') {
-    //     sshagent(['jenkins-artifact']) {
-    //     sh "ssh-agent"
-    //         sh "rsync -auzc docs/doxygen/html/* ubuntu@nexus.soramitsu.co.jp:/var/nexus-efs/doxygen/${env.GIT_LOCAL_BRANCH}"
-    //         sh "rsync -auzc docs/doxygen/html/* ubuntu@nexus.soramitsu.co.jp:/var/nexus-efs/doxygen/${env.GIT_LOCAL_BRANCH}"
-    //     }
-    // }
+  if (env.GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+    sshagent(['jenkins-artifact']) {
+      sh "ssh-agent"
+      sh """
+        rsync \
+        -e 'ssh -vv -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no' \
+        -ruzc \
+        docs/doxygen/html/* \
+        ubuntu@nexus.soramitsu.co.jp:/var/nexus-efs/doxygen/${env.GIT_LOCAL_BRANCH}
+      """
+    }
+  }
 }
 
 return this
