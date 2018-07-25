@@ -100,7 +100,7 @@ namespace iroha {
             batch->transactions().end(),
             [this, &proto_proposal](auto &tx) {
               *proto_proposal.add_transactions() =
-                  static_cast<shared_model::proto::Transaction *>(tx.get())
+                  std::static_pointer_cast<shared_model::proto::Transaction>(tx)
                       ->getTransport();
               current_size_--;
             });

@@ -256,8 +256,8 @@ TEST_F(OrderingServiceTest, ConcurrentGenerateProposal) {
  * called after destructor call
  */
 TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
-  const auto max_proposal = 100000;
-  const auto commit_delay = 500ms;
+  const auto max_proposal = 600;
+  const auto commit_delay = 5s;
   EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
       .Times(1)
       .WillOnce(Return(boost::optional<size_t>(1)));
@@ -281,7 +281,9 @@ TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
         true);
 
     auto on_tx = [&]() {
-      for (int i = 0; i < 1000; ++i) {
+      // create max_proposal+1 txs, so that publish proposal is invoked at least
+      // once (concurrency!)
+      for (int i = 0; i < max_proposal + 1; ++i) {
         auto batch = framework::batch::createValidBatch(1);
         ordering_service.onBatch(std::move(batch));
       }
