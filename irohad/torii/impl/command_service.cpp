@@ -161,6 +161,10 @@ namespace torii {
             },
             [this, &tx_list](auto &error) {
               auto &txs = tx_list.transactions();
+              if (txs.empty()) {
+                log_->warn("Received empty transaction sequence");
+                return;
+              }
               // form an error message, shared between all txs in a sequence
               auto first_tx_blob =
                   shared_model::proto::makeBlob(txs[0].payload());
