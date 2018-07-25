@@ -20,6 +20,7 @@ namespace shared_model {
 
     const std::string FieldValidator::account_name_pattern_ =
         R"#([a-z_0-9]{1,32})#";
+    const std::string FieldValidator::amount_pattern_ = "([0-9]+)(\\.[0-9]+)?";
     const std::string FieldValidator::asset_name_pattern_ =
         R"#([a-z_0-9]{1,32})#";
     const std::string FieldValidator::domain_pattern_ =
@@ -49,6 +50,7 @@ namespace shared_model {
     const size_t FieldValidator::description_size = 64;
 
     const std::regex FieldValidator::account_name_regex_(account_name_pattern_);
+    const std::regex FieldValidator::amount_regex_(amount_pattern_);
     const std::regex FieldValidator::asset_name_regex_(asset_name_pattern_);
     const std::regex FieldValidator::domain_regex_(domain_pattern_);
     const std::regex FieldValidator::ip_v4_regex_(ip_v4_pattern_);
@@ -95,33 +97,18 @@ namespace shared_model {
 
     void FieldValidator::validateAmount(ReasonsGroupType &reason,
                                         const interface::Amount &amount) const {
-      // parsed uint256_t
-      std::string value = amount.intValue().str();
-      // might contain dot
-      std::string real_value = amount.toStringRepr();
-      // find dot
-      auto pos = real_value.find('.');
-      // set right boundary before dot, or just string ending
-      auto end_f = pos != std::string::npos ? value.size() - pos : value.size();
-      // set left boundary after dot
-      auto start_s = pos != std::string::npos ? end_f + 1 : end_f;
-      // overflow present when one of is true:
-      // - difference between string sizes is more than 1
-      // - strings parts before dot are different
-      // - strings parts after dot are different
-      if (real_value.size() - value.size() > 1
-          || not std::equal(
-                 value.begin(), value.begin() + end_f, real_value.begin())
-          || not std::equal(value.begin() + start_s,
-                            value.end(),
-                            real_value.begin() + start_s)) {
-        reason.second.push_back("Amount value overflow");
-      }
-
-      if (amount.intValue() <= 0) {
+      auto amount_str = amount.toStringRepr();
+      std::smatch match;
+      if (not std::regex_match(amount_str, match, amount_regex_)) {
+        auto message = (boost::format("Wrongly formed asset_id, passed value: "
+                                      "'%s'. Field should match regex '%s'")
+                        % amount_str % amount_pattern_)
+                           .str();
+        reason.second.push_back(message);
+      } else if (match[1].str() == "0") {
         auto message =
-            (boost::format("Amount must be greater than 0, passed value: %d")
-             % amount.intValue())
+            (boost::format("Amount must be greater than 0, passed value: %s")
+             % amount_str)
                 .str();
         reason.second.push_back(message);
       }

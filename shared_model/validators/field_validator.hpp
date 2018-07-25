@@ -157,6 +157,7 @@ namespace shared_model {
 
      private:
       const static std::string account_name_pattern_;
+      const static std::string amount_pattern_;
       const static std::string asset_name_pattern_;
       const static std::string domain_pattern_;
       const static std::string ip_v4_pattern_;
@@ -167,6 +168,7 @@ namespace shared_model {
       const static std::string role_id_pattern_;
 
       const static std::regex account_name_regex_;
+      const static std::regex amount_regex_;
       const static std::regex asset_name_regex_;
       const static std::regex domain_regex_;
       const static std::regex ip_v4_regex_;

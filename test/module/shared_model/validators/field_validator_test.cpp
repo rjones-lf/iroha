@@ -256,14 +256,7 @@ class FieldValidatorTest : public ValidatorsTest {
 
   std::vector<FieldTestCase> amount_test_cases{
       {"valid_amount", [&] { amount = "100"; }, true, ""},
-      {"overflow_amount",
-       [&] { amount = std::string(79, '1'); },
-       false,
-       "Amount value overflow"},
-      {"overflow_amount",
-       [&] { amount = std::string(39, '1') + '.' + std::string(40, '1'); },
-       false,
-       "Amount value overflow"},
+      {"valid_amount_precision", [&] { amount = "100.0"; }, true, ""},
       {"zero_amount",
        [&] { amount = "0"; },
        false,
