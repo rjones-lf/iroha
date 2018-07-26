@@ -20,7 +20,8 @@ namespace iroha {
         std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
         std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
             crypto_signer,
-        std::unique_ptr<shared_model::interface::UnsafeBlockFactory> block_factory)
+        std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
+            block_factory)
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
           block_queries_(std::move(blockQuery)),

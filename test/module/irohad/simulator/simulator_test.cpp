@@ -56,6 +56,7 @@ class SimulatorTest : public ::testing::Test {
     ordering_gate = std::make_shared<MockOrderingGate>();
     crypto_signer = std::make_shared<shared_model::crypto::CryptoModelSigner<>>(
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair());
+    block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory>();
   }
 
   void TearDown() override {
@@ -63,8 +64,12 @@ class SimulatorTest : public ::testing::Test {
   }
 
   void init() {
-    simulator = std::make_shared<Simulator>(
-        ordering_gate, validator, factory, query, crypto_signer);
+    simulator = std::make_shared<Simulator>(ordering_gate,
+                                            validator,
+                                            factory,
+                                            query,
+                                            crypto_signer,
+                                            std::move(block_factory));
   }
 
   std::shared_ptr<MockStatefulValidator> validator;
@@ -72,6 +77,7 @@ class SimulatorTest : public ::testing::Test {
   std::shared_ptr<MockBlockQuery> query;
   std::shared_ptr<MockOrderingGate> ordering_gate;
   std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer;
+  std::unique_ptr<shared_model::interface::UnsafeBlockFactory> block_factory;
 
   std::shared_ptr<Simulator> simulator;
 };

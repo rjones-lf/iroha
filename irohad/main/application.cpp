@@ -176,11 +176,14 @@ void Irohad::initOrderingGate() {
  * Initializing iroha verified proposal creator and block creator
  */
 void Irohad::initSimulator() {
+  std::unique_ptr<shared_model::interface::UnsafeBlockFactory> block_factory =
+      std::make_unique<shared_model::proto::ProtoBlockFactory>();
   simulator = std::make_shared<Simulator>(ordering_gate,
                                           stateful_validator,
                                           storage,
                                           storage->getBlockQuery(),
-                                          crypto_signer_);
+                                          crypto_signer_,
+                                          std::move(block_factory));
 
   log_->info("[Init] => init simulator");
 }
