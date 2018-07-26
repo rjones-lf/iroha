@@ -15,6 +15,16 @@
 #include "datetime/time.hpp"
 #include "network/ordering_service_transport.hpp"
 
+// namespace {
+//  using Tx = std::shared_ptr<shared_model::interface::Transaction>;
+//
+//  std::vector<Tx> extractTransactions(tbb::concurrent_queue<
+//      std::unique_ptr<shared_model::interface::TransactionBatch>>
+//                                      queue_, ) {
+//
+//  }
+//}
+
 namespace iroha {
   namespace ordering {
     OrderingServiceImpl::OrderingServiceImpl(
@@ -86,36 +96,18 @@ namespace iroha {
 
     void OrderingServiceImpl::generateProposal() {
       std::lock_guard<std::shared_timed_mutex> lock(batch_prop_mutex_);
-
-      // TODO 05/03/2018 andrei IR-1046 Server-side shared model object
-      // factories with move semantics
-      iroha::protocol::Proposal proto_proposal;
-      proto_proposal.set_height(proposal_height_++);
-      proto_proposal.set_created_time(iroha::time::now());
       log_->info("Start proposal generation");
-      for (std::unique_ptr<shared_model::interface::TransactionBatch> batch;
-           static_cast<size_t>(proto_proposal.transactions_size()) < max_size_
-           and queue_.try_pop(batch);) {
-        std::for_each(
-            batch->transactions().begin(),
-            batch->transactions().end(),
-            [this, &proto_proposal](auto &tx) {
-              *proto_proposal.add_transactions() =
-                  std::static_pointer_cast<shared_model::proto::Transaction>(tx)
-                      ->getTransport();
-              current_size_--;
-            });
       std::vector<std::shared_ptr<shared_model::interface::Transaction>> txs;
-      // nikita
-      // extract transactions until the queue is empty
-      // or maximum limit of transactions in proposal is achieved
-      while (txs.size() < max_size_) {
-        std::shared_ptr<shared_model::interface::Transaction> tx;
-        if (not queue_.try_pop(tx)) {
-          break;
-        }
-        txs.push_back(std::move(tx));
+      for (std::unique_ptr<shared_model::interface::TransactionBatch> batch;
+           txs.size() < max_size_ and queue_.try_pop(batch);) {
+        auto batch_size = batch->transactions().size();
+        txs.reserve(batch_size);
+        txs.insert(std::end(txs),
+            std::make_move_iterator(std::begin(batch->transactions())),
+            std::make_move_iterator(std::end(batch->transactions())));
+        current_size_ -= batch_size;
       }
+
       auto tx_range = txs | boost::adaptors::indirected;
       auto proposal = factory_->createProposal(
           proposal_height_++, iroha::time::now(), tx_range);
@@ -137,7 +129,6 @@ namespace iroha {
           [this](expected::Error<std::string> &e) {
             log_->warn("Failed to initialize proposal: {}", e.error);
           });
-        // nikita
     }
 
     void OrderingServiceImpl::publishProposal(
