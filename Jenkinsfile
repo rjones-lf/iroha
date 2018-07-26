@@ -387,7 +387,9 @@ pipeline {
             "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
             "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
             ['PARALLELISM': params.PARALLELISM])
-          doxygen.doDoxygen()
+          iC.inside() {
+            doxygen.doDoxygen()
+          }
         }
       }
       post {
