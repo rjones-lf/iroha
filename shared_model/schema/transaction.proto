@@ -16,7 +16,8 @@ message Transaction {
         ORDERED = 1;
       }
       BatchType type = 1;
-      repeated bytes tx_hashes = 2;
+      // array of reduced hashes of all txs from the batch
+      repeated bytes reduced_hashes = 2;
     }
     message ReducedPayload{
       repeated Command commands = 1;
@@ -24,7 +25,9 @@ message Transaction {
       uint64 created_time = 3;
       uint32 quorum = 4;
     }
+    // transcation fields
     ReducedPayload reduced_payload = 1;
+    // batch meta fields if tx belong to any batch
     oneof optional_batch_meta{
       BatchMeta batch = 5;
     }

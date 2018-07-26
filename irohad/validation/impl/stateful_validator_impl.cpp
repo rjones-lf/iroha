@@ -182,7 +182,7 @@ namespace iroha {
         } else {
           // find the batch end in proposal's transactions
           auto batch_end_hash =
-              current_tx_it->batchMeta()->get()->transactionHashes().back();
+              current_tx_it->batchMeta()->get()->reducedHashes().back();
           auto batch_end_it =
               std::find_if(current_tx_it, txs_end, [&batch_end_hash](auto &tx) {
                 return tx.reducedHash() == batch_end_hash;

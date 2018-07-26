@@ -36,7 +36,7 @@ namespace shared_model {
       validation::Answer result;
       for (const auto &tx : transactions) {
         if (auto meta = tx->batchMeta()) {
-          auto hashes = meta.get()->transactionHashes();
+          auto hashes = meta.get()->reducedHashes();
           auto batch_hash = TransactionBatch::calculateReducedBatchHash(hashes);
           extracted_batches[batch_hash].push_back(tx);
         } else {

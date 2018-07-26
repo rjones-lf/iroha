@@ -119,7 +119,7 @@ namespace shared_model {
                   iroha::protocol::Transaction::Payload::BatchMeta::BatchType>(
                   type));
           for (const auto &hash : hashes) {
-            tx.mutable_payload()->mutable_batch()->add_tx_hashes(
+            tx.mutable_payload()->mutable_batch()->add_reduced_hashes(
                 crypto::toBinaryString(hash));
           }
         });
