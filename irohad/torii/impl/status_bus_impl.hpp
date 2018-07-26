@@ -22,6 +22,7 @@ namespace iroha {
       /// Subscribers will be invoked in separate thread
       rxcpp::observable<StatusBus::Objects> statuses() override;
 
+      // Need to create once, otherwise will create thread for each subscriber
       rxcpp::observe_on_one_worker worker_;
       rxcpp::subjects::synchronize<StatusBus::Objects, decltype(worker_)>
           subject_;
