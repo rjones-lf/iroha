@@ -37,22 +37,23 @@ namespace logger {
     return red("<--- " + string);
   }
 
-  static void setGlobalPattern() {
-    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%F] %n %v");
+  static void setGlobalPattern(spdlog::logger &logger) {
+    logger.set_pattern("[%Y-%m-%d %H:%M:%S.%F] %n %v");
   }
 
-  static void setDebugPattern() {
-    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%F][th:%t][%l] %n %v");
+  static void setDebugPattern(spdlog::logger &logger) {
+    logger.set_pattern("[%Y-%m-%d %H:%M:%S.%F][th:%t][%l] %n %v");
   }
 
   static std::shared_ptr<spdlog::logger> createLogger(const std::string &tag,
                                                       bool debug_mode = true) {
+    auto logger = spdlog::stdout_color_mt(tag);
     if (debug_mode) {
-      setDebugPattern();
+      setDebugPattern(*logger);
     } else {
-      setGlobalPattern();
+      setGlobalPattern(*logger);
     }
-    return spdlog::stdout_color_mt(tag);
+    return logger;
   }
 
   Logger log(const std::string &tag) {
