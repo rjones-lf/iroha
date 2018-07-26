@@ -15,16 +15,6 @@
 #include "datetime/time.hpp"
 #include "network/ordering_service_transport.hpp"
 
-// namespace {
-//  using Tx = std::shared_ptr<shared_model::interface::Transaction>;
-//
-//  std::vector<Tx> extractTransactions(tbb::concurrent_queue<
-//      std::unique_ptr<shared_model::interface::TransactionBatch>>
-//                                      queue_, ) {
-//
-//  }
-//}
-
 namespace iroha {
   namespace ordering {
     OrderingServiceImpl::OrderingServiceImpl(
