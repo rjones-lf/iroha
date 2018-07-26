@@ -91,6 +91,42 @@ namespace {
       return makeCommandError(e.what(), command_name);
     }
   }
+
+  std::string checkAccountRolePermission(
+      shared_model::interface::permissions::Role permission,
+      const std::string &account_alias = "role_account_id") {
+    const auto perm_str =
+        shared_model::interface::RolePermissionSet({permission}).toBitstring();
+    const auto bits = shared_model::interface::RolePermissionSet::size();
+    std::string query = R"(
+          SELECT COALESCE(bit_or(rp.permission), '0'::bit()"
+        + std::to_string(bits) + R"()) & ')" + std::string(perm_str)
+        + R"(' = ')" + std::string(perm_str)
+        + R"(' FROM role_has_permissions AS rp
+              JOIN account_has_roles AS ar on ar.role_id = rp.role_id
+              WHERE ar.account_id = :)"
+        + account_alias;
+
+    return query;
+  }
+
+  std::string checkAccountGrantablePermission(
+      shared_model::interface::permissions::Grantable permission) {
+    const auto perm_str =
+        shared_model::interface::GrantablePermissionSet({permission})
+            .toBitstring();
+    const auto bits = shared_model::interface::GrantablePermissionSet::size();
+    std::string query = R"(
+          SELECT COALESCE(bit_or(permission), '0'::bit()"
+        + std::to_string(bits) + R"()) & ')" + std::string(perm_str)
+        + R"(' = ')" + std::string(perm_str)
+        + R"(' FROM account_has_grantable_permissions
+              WHERE account_id = :grantable_account_id AND
+              permittee_account_id = :grantable_permittee_account_id
+          )";
+
+    return query;
+  }
 }  // namespace
 
 namespace iroha {
@@ -126,7 +162,12 @@ namespace iroha {
                                WHERE account_id = :account_id LIMIT 1),
                has_asset AS (SELECT asset_id FROM asset
                              WHERE asset_id = :asset_id AND
-                             precision >= :precision LIMIT 1),
+                             precision >= :precision LIMIT 1),)" +
+               (is_genesis_ ? "" : R"(has_perm AS ()"
+                 + checkAccountRolePermission(
+                     shared_model::interface::permissions::Role::kAddAssetQty)
+                + R"(),)")
+                + R"(
                amount AS (SELECT amount FROM account_has_asset
                           WHERE asset_id = :asset_id AND
                           account_id = :account_id LIMIT 1),
@@ -148,6 +189,8 @@ namespace iroha {
                         EXISTS (SELECT value FROM new_value
                                 WHERE value < 2::decimal ^ (256 - :precision)
                                 LIMIT 1)
+                        )" + (is_genesis_ ? "" : "AND (SELECT * from has_perm)")
+                        + R"(
                   )
                   ON CONFLICT (account_id, asset_id) DO UPDATE
                   SET amount = EXCLUDED.amount
@@ -155,21 +198,32 @@ namespace iroha {
                )
           SELECT CASE
               WHEN EXISTS (SELECT * FROM inserted LIMIT 1) THEN 0
-              WHEN NOT EXISTS (SELECT * FROM has_account LIMIT 1) THEN 1
-              WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 2
+              )" + (is_genesis_ ? "" :
+                    "WHEN NOT (SELECT * from has_perm) THEN 1") + R"(
+              WHEN NOT EXISTS (SELECT * FROM has_account LIMIT 1) THEN 2
+              WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 3
               WHEN NOT EXISTS (SELECT value FROM new_value
                                WHERE value < 2::decimal ^ (256 - :precision)
-                               LIMIT 1) THEN 3
-              ELSE 4
+                               LIMIT 1) THEN 4
+              ELSE 5
           END AS result;)");
       // clang-format on
 
       st.exchange(soci::use(account_id, "account_id"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
       st.exchange(soci::use(asset_id, "asset_id"));
       st.exchange(soci::use(amount, "new_value"));
       st.exchange(soci::use(precision, "precision"));
 
       std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return std::string("command validation failed: account "
+                               + creator_account_id_
+                               + " does not have permission "
+                               + shared_model::proto::permissions::toString(
+                                     shared_model::interface::permissions::
+                                         Role::kAddAssetQty));
+          },
           [] { return std::string("Account does not exist"); },
           [] {
             return std::string("Asset with given precision does not exist");
@@ -183,17 +237,49 @@ namespace iroha {
     CommandResult PostgresCommandExecutor::operator()(
         const shared_model::interface::AddPeer &command) {
       auto &peer = command.peer();
-      soci::statement st = sql_.prepare
-          << "INSERT INTO peer(public_key, address) VALUES (:pk, :address)";
-      st.exchange(soci::use(peer.pubkey().hex()));
-      st.exchange(soci::use(peer.address()));
-      auto message_gen = [&] {
-        return (boost::format(
-                    "failed to insert peer, public key: '%s', address: '%s'")
-                % peer.pubkey().hex() % peer.address())
-            .str();
+      soci::statement st = sql_.prepare << R"(
+          WITH
+          )"
+              + (is_genesis_ ? ""
+                             : R"(has_perm AS ()"
+                         + checkAccountRolePermission(
+                                   shared_model::interface::permissions::Role::
+                                       kAddPeer)
+                         + R"(),)")
+              + R"(
+          inserted AS (
+              INSERT INTO peer(public_key, address)
+              (
+                  SELECT :pk, :address
+       )" + (is_genesis_ ? "" : "WHERE (SELECT * FROM has_perm)")
+              + R"(
+              ) RETURNING (1)
+          )
+          SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
+              )"
+              + (is_genesis_ ? "" : "WHEN NOT (SELECT * from has_perm) THEN 1")
+              + R"(
+              ELSE 2 END AS result
+)";
+      st.exchange(soci::use(peer.pubkey().hex(), "pk"));
+      st.exchange(soci::use(peer.address(), "address"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return std::string(
+                "command validation failed: account " + creator_account_id_
+                + " does not have permission "
+                + shared_model::proto::permissions::toString(
+                      shared_model::interface::permissions::Role::kAddPeer));
+          },
+          [&] {
+            return (boost::format("failed to insert peer, public key: '%s', "
+                                  "address: '%s'")
+                    % peer.pubkey().hex() % peer.address())
+                .str();
+          },
       };
-      return makeCommandResult(st, "AddPeer", message_gen);
+      return makeCommandResultByReturnedValue(st, "AddPeer", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -202,31 +288,78 @@ namespace iroha {
       auto pubkey = command.pubkey().hex();
       soci::statement st = sql_.prepare <<
           R"(
-          WITH insert_signatory AS
+          WITH )"
+              + (is_genesis_ ? ""
+                             : R"(
+          has_role_perm AS ()"
+                         + checkAccountRolePermission(
+                                   shared_model::interface::permissions::Role::
+                                       kAddSignatory)
+                         + R"(),
+          has_grantable_perm AS ()"
+                         + checkAccountGrantablePermission(
+                                   shared_model::interface::permissions::
+                                       Grantable::kAddMySignatory)
+                         + R"(),
+          has_perm AS (SELECT CASE
+                           WHEN (SELECT * FROM has_grantable_perm) THEN true
+                           WHEN (:creator_id = :account_id) THEN
+                               CASE
+                                   WHEN (SELECT * FROM has_role_perm) THEN true
+                                   ELSE false
+                                END
+                           ELSE false END
+          ),)")
+              + R"(
+          insert_signatory AS
           (
-              INSERT INTO signatory(public_key) VALUES (:pk)
-              ON CONFLICT DO NOTHING RETURNING (1)
+              INSERT INTO signatory(public_key)
+              )"
+              + (is_genesis_ ? "(SELECT :pk)" :
+                             R"((SELECT :pk WHERE (SELECT * FROM has_perm)))")
+              +
+              R"(ON CONFLICT DO NOTHING RETURNING (1)
           ),
           has_signatory AS (SELECT * FROM signatory WHERE public_key = :pk),
           insert_account_signatory AS
           (
               INSERT INTO account_has_signatory(account_id, public_key)
               (
-                  SELECT :account_id, :pk WHERE EXISTS
+                  SELECT :account_id, :pk WHERE (EXISTS
                   (SELECT * FROM insert_signatory) OR
-                  EXISTS (SELECT * FROM has_signatory)
+                  EXISTS (SELECT * FROM has_signatory))
+                  )"
+              + (is_genesis_ ? "" :
+                             R"(AND (SELECT * FROM has_perm))")
+              + R"(
               )
               RETURNING (1)
           )
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_account_signatory) THEN 0
-              WHEN EXISTS (SELECT * FROM insert_signatory) THEN 1
-              ELSE 2
+              )"
+              + (is_genesis_ ? "" : "WHEN NOT (SELECT * from has_perm) THEN 1")
+              + R"(
+              WHEN EXISTS (SELECT * FROM insert_signatory) THEN 2
+              ELSE 3
           END AS RESULT;)";
       st.exchange(soci::use(pubkey, "pk"));
       st.exchange(soci::use(account_id, "account_id"));
+      st.exchange(soci::use(creator_account_id_, "creator_id"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
+      st.exchange(soci::use(account_id, "grantable_account_id"));
+      st.exchange(
+          soci::use(creator_account_id_, "grantable_permittee_account_id"));
 
       std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " does not have permission "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Grantable::
+                           kAddMySignatory)
+                + " for account " + command.accountId();
+          },
           [&] {
             return (boost::format(
                         "failed to insert account signatory, account id: "
@@ -253,7 +386,13 @@ namespace iroha {
           R"(
             WITH )"
               + (is_genesis_ ? "" :
-                             R"(role_permissions AS (
+                             R"(
+            has_perm AS ()"
+                         + checkAccountRolePermission(
+                                 shared_model::interface::permissions::Role::
+                                     kAppendRole)
+                         + R"(),
+            role_permissions AS (
                 SELECT permission FROM role_has_permissions
                 WHERE role_id = :role_id
             ),
@@ -283,7 +422,8 @@ namespace iroha {
                      :
                      R"( WHERE (SELECT * FROM role_has_any_permission) AND
                     EXISTS (SELECT * FROM account_roles) AND
-                    (SELECT * FROM account_has_role_permissions))")
+                    (SELECT * FROM account_has_role_permissions)
+                    AND (SELECT * FROM has_perm))")
               +
               R"() RETURNING (1)
             )
@@ -294,14 +434,16 @@ namespace iroha {
                      :
                      R"( WHEN NOT (SELECT * FROM role_has_any_permission) THEN 1
                 WHEN NOT EXISTS (SELECT * FROM account_roles) THEN 2
-                WHEN NOT (SELECT * FROM account_has_role_permissions) THEN 3 )")
+                WHEN NOT (SELECT * FROM account_has_role_permissions) THEN 3
+                WHEN NOT (SELECT * FROM has_perm) THEN 4)")
               +
-              R"( ELSE 4
+              R"( ELSE 5
             END AS result
 )";
       st.exchange(soci::use(account_id, "account_id"));
       st.exchange(soci::use(role_name, "role_id"));
       st.exchange(soci::use(creator_account_id_, "creator_id"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
             return "is valid command validation failed: no permissions in role "
@@ -316,6 +458,12 @@ namespace iroha {
                 + creator_account_id_
                 + " does not have some of the permissions in a role "
                 + command.roleName();
+          },
+          [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " does not have permission "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Role::kAppendRole);
           },
           [&] {
             return (boost::format(
@@ -337,7 +485,15 @@ namespace iroha {
       soci::statement st = sql_.prepare <<
           R"(
           WITH get_domain_default_role AS (SELECT default_role FROM domain
-                                           WHERE domain_id = :domain_id),
+                                           WHERE domain_id = :domain_id),)"
+              + (is_genesis_ ? "" :
+                             R"(
+            has_perm AS ()"
+                         + checkAccountRolePermission(
+                                 shared_model::interface::permissions::Role::
+                                     kCreateAccount)
+                         + R"(),)")
+              + R"(
           insert_signatory AS
           (
               INSERT INTO signatory(public_key)
@@ -355,6 +511,11 @@ namespace iroha {
                       (SELECT * FROM insert_signatory) OR EXISTS
                       (SELECT * FROM has_signatory)
                   ) AND EXISTS (SELECT * FROM get_domain_default_role)
+                  )"
+              + (is_genesis_ ? "" :
+                             R"(AND (SELECT * FROM has_perm))")
+              +
+              R"(
               ) RETURNING (1)
           ),
           insert_account_signatory AS
@@ -377,22 +538,34 @@ namespace iroha {
           )
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_account_role) THEN 0
-              WHEN NOT EXISTS (SELECT * FROM account
-                               WHERE account_id = :account_id) THEN 1
+              )"
+              + (is_genesis_ ? "" :
+                             R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)")
+              +
+              R"(WHEN NOT EXISTS (SELECT * FROM account
+                               WHERE account_id = :account_id) THEN 2
               WHEN NOT EXISTS (SELECT * FROM account_has_signatory
                                WHERE account_id = :account_id
-                               AND public_key = :pk) THEN 2
+                               AND public_key = :pk) THEN 3
               WHEN NOT EXISTS (SELECT * FROM account_has_roles
                                WHERE account_id = account_id AND role_id = (
                                SELECT default_role FROM get_domain_default_role)
-                               ) THEN 3
-              ELSE 4
+                               ) THEN 4
+              ELSE 5
               END AS result
 )";
       st.exchange(soci::use(account_id, "account_id"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
       st.exchange(soci::use(domain_id, "domain_id"));
       st.exchange(soci::use(pubkey, "pk"));
       std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " does not have permission "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Role::
+                           kCreateAccount);
+          },
           [&] {
             return (boost::format("failed to insert account, "
                                   "account id: '%s', "
@@ -426,37 +599,109 @@ namespace iroha {
       auto &domain_id = command.domainId();
       auto asset_id = command.assetName() + "#" + domain_id;
       auto precision = command.precision();
-      soci::statement st = sql_.prepare
-          << "INSERT INTO asset(asset_id, domain_id, \"precision\", data) "
-             "VALUES (:id, :domain_id, :precision, NULL)";
-      st.exchange(soci::use(asset_id));
-      st.exchange(soci::use(domain_id));
-      st.exchange(soci::use(precision));
-      auto message_gen = [&] {
-        return (boost::format("failed to insert asset, asset id: '%s', "
-                              "domain id: '%s', precision: %d")
-                % asset_id % domain_id % precision)
-            .str();
-      };
-      return makeCommandResult(st, "CreateAsset", message_gen);
+      soci::statement st = sql_.prepare << R"(
+              WITH)"
+              + (is_genesis_ ? "" :
+                             R"(
+              has_perm AS ()"
+                         + checkAccountRolePermission(
+                                 shared_model::interface::permissions::Role::
+                                     kCreateAsset)
+                         + R"(),)")
+              + R"(
+              inserted AS
+              (
+                  INSERT INTO asset(asset_id, domain_id, precision, data)
+                  (
+                      SELECT :id, :domain_id, :precision, NULL
+                      )"
+              + (is_genesis_ ? "" :
+                             R"(WHERE (SELECT * FROM has_perm))")
+              +
+              R"(
+                  ) RETURNING (1)
+              )
+              SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
+              )"
+              + (is_genesis_ ? "" :
+                             R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)")
+              +
+              R"(
+              ELSE 2 END AS result
+)";
+      st.exchange(soci::use(asset_id, "id"));
+      st.exchange(soci::use(domain_id, "domain_id"));
+      st.exchange(soci::use(precision, "precision"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " does not have permission "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Role::
+                           kCreateDomain);
+          },
+          [&] {
+            return (boost::format("failed to insert asset, asset id: '%s', "
+                                  "domain id: '%s', precision: %d")
+                    % asset_id % domain_id % precision)
+                .str();
+          }};
+      return makeCommandResultByReturnedValue(st, "CreateAsset", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
         const shared_model::interface::CreateDomain &command) {
       auto &domain_id = command.domainId();
       auto &default_role = command.userDefaultRole();
-      soci::statement st = sql_.prepare
-          << "INSERT INTO domain(domain_id, default_role) VALUES (:id, "
-             ":role)";
-      st.exchange(soci::use(domain_id));
-      st.exchange(soci::use(default_role));
-      auto message_gen = [&] {
-        return (boost::format("failed to insert domain, domain id: '%s', "
-                              "default role: '%s'")
-                % domain_id % default_role)
-            .str();
-      };
-      return makeCommandResult(st, "CreateDomain", message_gen);
+      soci::statement st = sql_.prepare << R"(
+              WITH)"
+              + (is_genesis_ ? "" :
+                             R"(
+              has_perm AS ()"
+                         + checkAccountRolePermission(
+                                 shared_model::interface::permissions::Role::
+                                     kCreateDomain)
+                         + R"(),)")
+              + R"(
+              inserted AS
+              (
+                  INSERT INTO domain(domain_id, default_role)
+                  (
+                      SELECT :id, :role
+                      )"
+              + (is_genesis_ ? "" :
+                             R"(WHERE (SELECT * FROM has_perm))")
+              +
+              R"(
+                  ) RETURNING (1)
+              )
+              SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
+              )"
+              + (is_genesis_ ? "" :
+                             R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)")
+              +
+              R"(
+              ELSE 2 END AS result
+)";
+      st.exchange(soci::use(domain_id, "id"));
+      st.exchange(soci::use(default_role, "role"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " does not have permission "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Role::
+                           kCreateDomain);
+          },
+          [&] {
+            return (boost::format("failed to insert domain, domain id: '%s', "
+                                  "default role: '%s'")
+                    % domain_id % default_role)
+                .str();
+          }};
+      return makeCommandResultByReturnedValue(st, "CreateDomain", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -477,16 +722,20 @@ namespace iroha {
                 FROM role_has_permissions AS rp
                 JOIN account_has_roles AS ar on ar.role_id = rp.role_id
                 WHERE ar.account_id = :creator_id),
-)") + R"(
+          has_perm AS ()"
+                         + checkAccountRolePermission(
+                                   shared_model::interface::permissions::Role::
+                                       kCreateRole)
+                         + R"(),)")
+              + R"(
           insert_role AS (INSERT INTO role(role_id)
                               (SELECT :role_id
                               )"
               + (is_genesis_
                      ? ""
-                     : "WHERE (SELECT * FROM account_has_role_permissions)")
-              + R"(
-                              )
-                          RETURNING (1)),
+                     : R"(WHERE (SELECT * FROM account_has_role_permissions)
+                          AND (SELECT * FROM has_perm))")
+              + R"() RETURNING (1)),
           insert_role_permissions AS
           (
               INSERT INTO role_has_permissions(role_id, permission)
@@ -497,17 +746,17 @@ namespace iroha {
           )
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_role_permissions) THEN 0
-              WHEN EXISTS (SELECT * FROM role WHERE role_id = :role_id) THEN 1
-              )"
-              + (is_genesis_ ? ""
-                             : "WHEN NOT (SELECT * FROM "
-                               "account_has_role_permissions) THEN 2")
+)" + (is_genesis_ ? "" : R"(WHEN NOT (SELECT * FROM
+                               account_has_role_permissions) THEN 2
+                        WHEN NOT (SELECT * FROM has_perm) THEN 3)")
               + R"(
-              ELSE 3
+              WHEN EXISTS (SELECT * FROM role WHERE role_id = :role_id) THEN 1
+              ELSE 4
               END AS result
 )";
       st.exchange(soci::use(role_id, "role_id"));
       st.exchange(soci::use(creator_account_id_, "creator_id"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
       st.exchange(soci::use(perm_str, "perms"));
 
       std::vector<std::function<std::string()>> message_gen = {
@@ -529,6 +778,12 @@ namespace iroha {
                 + command.roleName();
           },
           [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " does not have permission "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Role::kCreateRole);
+          },
+          [&] {
             return (boost::format("failed to insert role: '%s'") % role_id)
                 .str();
           },
@@ -540,19 +795,53 @@ namespace iroha {
         const shared_model::interface::DetachRole &command) {
       auto &account_id = command.accountId();
       auto &role_name = command.roleName();
-      soci::statement st = sql_.prepare
-          << "DELETE FROM account_has_roles WHERE account_id=:account_id "
-             "AND role_id=:role_id";
-      st.exchange(soci::use(account_id));
-      st.exchange(soci::use(role_name));
-      auto message_gen = [&] {
-        return (boost::format(
-                    "failed to delete account role, account id: '%s', "
-                    "role name: '%s'")
-                % account_id % role_name)
-            .str();
-      };
-      return makeCommandResult(st, "DetachRole", message_gen);
+      soci::statement st = sql_.prepare << R"(
+            WITH)"
+              + (is_genesis_ ? "" :
+                             R"(
+            has_perm AS ()"
+                         + checkAccountRolePermission(
+                                 shared_model::interface::permissions::Role::
+                                     kDetachRole)
+                         + R"(),)")
+              + R"(
+            deleted AS
+            (
+              DELETE FROM account_has_roles
+              WHERE account_id=:account_id
+              AND role_id=:role_id
+              )"
+              + (is_genesis_ ? "" :
+                             R"(AND (SELECT * FROM has_perm))")
+              +
+              R"(
+              RETURNING (1)
+            )
+            SELECT CASE WHEN EXISTS (SELECT * FROM deleted) THEN 0
+            )"
+              + (is_genesis_ ? "" :
+                             R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)")
+              + R"(
+            ELSE 2 END AS result
+)";
+      st.exchange(soci::use(account_id, "account_id"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
+      st.exchange(soci::use(role_name, "role_id"));
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " does not have permission "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Role::kDetachRole);
+          },
+          [&] {
+            return (boost::format(
+                        "failed to delete account role, account id: '%s', "
+                        "role name: '%s'")
+                    % account_id % role_name)
+                .str();
+          }};
+      return makeCommandResultByReturnedValue(st, "DetachRole", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -563,30 +852,62 @@ namespace iroha {
       const auto perm_str =
           shared_model::interface::GrantablePermissionSet({permission})
               .toBitstring();
-      soci::statement st = sql_.prepare
-          << "INSERT INTO account_has_grantable_permissions as "
-             "has_perm(permittee_account_id, account_id, permission) VALUES "
-             "(:permittee_account_id, :account_id, :perms) ON CONFLICT "
-             "(permittee_account_id, account_id) "
-             // SELECT will end up with a error, if the permission exists
-             "DO UPDATE SET permission=(SELECT has_perm.permission | :perms "
-             "WHERE (has_perm.permission & :perms) <> :perms);";
+      soci::statement st = sql_.prepare << R"(
+            WITH)"
+              + (is_genesis_ ? "" :
+                             R"(
+            has_perm AS ()"
+                         + checkAccountRolePermission(
+                                 shared_model::interface::permissions::
+                                     permissionFor(command.permissionName()))
+                         + R"(),)")
+              + R"(
+            inserted AS (
+              INSERT INTO account_has_grantable_permissions as
+              has_perm(permittee_account_id, account_id, permission)
+              (SELECT :permittee_account_id, :account_id, :perms )"
+              + (is_genesis_ ? "" :
+                             R"( WHERE (SELECT * FROM has_perm))")
+              + R"() ON CONFLICT
+              (permittee_account_id, account_id)
+              DO UPDATE SET permission=(SELECT has_perm.permission | :perms
+              WHERE (has_perm.permission & :perms) <> :perms)
+              RETURNING (1)
+            )
+            SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
+            )"
+              + (is_genesis_ ? "" :
+                             R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)")
+              + R"(
+              ELSE 2 END AS result
+)";
       st.exchange(soci::use(permittee_account_id, "permittee_account_id"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
       st.exchange(soci::use(account_id, "account_id"));
       st.exchange(soci::use(perm_str, "perms"));
-      auto message_gen = [&] {
-        return (boost::format("failed to insert account grantable permission, "
-                              "permittee account id: '%s', "
-                              "account id: '%s', "
-                              "permission: '%s'")
-                % permittee_account_id
-                % account_id
-                // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
-                % shared_model::proto::permissions::toString(permission))
-            .str();
-      };
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " does not have grantable permission "
+                + shared_model::proto::permissions::toString(
+                       command.permissionName())
+                + " to grant";
+          },
+          [&] {
+            return (boost::format(
+                        "failed to insert account grantable permission, "
+                        "permittee account id: '%s', "
+                        "account id: '%s', "
+                        "permission: '%s'")
+                    % permittee_account_id
+                    % account_id
+                    // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
+                    % shared_model::proto::permissions::toString(permission))
+                .str();
+          }};
 
-      return makeCommandResult(st, "GrantPermission", message_gen);
+      return makeCommandResultByReturnedValue(
+          st, "GrantPermission", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -598,6 +919,25 @@ namespace iroha {
           )")
               + (is_genesis_ ? "" :
                              R"(
+          has_role_perm AS ()"
+                         + checkAccountRolePermission(
+                                 shared_model::interface::permissions::Role::
+                                     kRemoveSignatory)
+                         + R"(),
+          has_grantable_perm AS ()"
+                         + checkAccountGrantablePermission(
+                                 shared_model::interface::permissions::
+                                     Grantable::kRemoveMySignatory)
+                         + R"(),
+          has_perm AS (SELECT CASE
+                           WHEN (SELECT * FROM has_grantable_perm) THEN true
+                           WHEN (:creator_id = :account_id) THEN
+                               CASE
+                                   WHEN (SELECT * FROM has_role_perm) THEN true
+                                   ELSE false
+                                END
+                           ELSE false END
+          ),
           get_account AS (
               SELECT quorum FROM account WHERE account_id = :account_id LIMIT 1
            ),
@@ -616,6 +956,7 @@ namespace iroha {
               )"
               + (is_genesis_ ? "" :
                              R"(
+              AND (SELECT * FROM has_perm)
               AND EXISTS (SELECT * FROM get_account)
               AND EXISTS (SELECT * FROM get_signatories)
               AND EXISTS (SELECT * FROM check_account_signatories)
@@ -642,6 +983,7 @@ namespace iroha {
               )"
               + (is_genesis_ ? "" :
                              R"(
+              WHEN NOT EXISTS (SELECT * FROM has_perm) THEN 6
               WHEN NOT EXISTS (SELECT * FROM get_account) THEN 3
               WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 4
               WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 5
@@ -651,6 +993,12 @@ namespace iroha {
 )";
       st.exchange(soci::use(account_id, "account_id"));
       st.exchange(soci::use(pubkey, "pk"));
+      st.exchange(soci::use(creator_account_id_, "creator_id"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
+      st.exchange(soci::use(account_id, "grantable_account_id"));
+      st.exchange(
+          soci::use(creator_account_id_, "grantable_permittee_account_id"));
+
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
             return (boost::format(
@@ -679,6 +1027,14 @@ namespace iroha {
                    "signatories "
                    "becomes less than the quorum";
           },
+          [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " does not have permission "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Grantable::
+                           kRemoveMySignatory)
+                + " for account " + command.accountId();
+          },
       };
       return makeCommandResultByReturnedValue(
           st, "RemoveSignatory", message_gen);
@@ -697,32 +1053,64 @@ namespace iroha {
       const auto perms = shared_model::interface::GrantablePermissionSet()
                              .set(permission)
                              .toBitstring();
-      soci::statement st = sql_.prepare
-          << "UPDATE account_has_grantable_permissions as has_perm "
-             // SELECT will end up with a error, if the permission
-             // doesn't exists
-             "SET permission=(SELECT has_perm.permission & :without_perm "
-             "WHERE has_perm.permission & :perm = :perm AND "
-             "has_perm.permittee_account_id=:permittee_account_id AND "
-             "has_perm.account_id=:account_id) WHERE "
-             "permittee_account_id=:permittee_account_id AND "
-             "account_id=:account_id";
+      soci::statement st = sql_.prepare << R"(
+              WITH)"
+              + (is_genesis_ ? "" :
+                             R"(
+            has_perm AS ()"
+                         + checkAccountGrantablePermission(permission)
+                         + R"(),)")
+              + R"(
+              inserted AS (
+                  UPDATE account_has_grantable_permissions as has_perm
+                  SET permission=(SELECT has_perm.permission & :without_perm
+                  WHERE has_perm.permission & :perm = :perm AND
+                  has_perm.permittee_account_id=:permittee_account_id AND
+                  has_perm.account_id=:account_id) WHERE
+                  permittee_account_id=:permittee_account_id AND
+                  account_id=:account_id)"
+              + (is_genesis_ ? "" :
+                             R"( AND (SELECT * FROM has_perm))")
+              + R"(
+                RETURNING (1)
+              )
+              SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
+              )"
+              + (is_genesis_ ? "" :
+                             R"(
+              WHEN NOT (SELECT * FROM has_perm) THEN 1
+          )") + R"(
+                  ELSE 2 END AS result
+)";
+      st.exchange(
+          soci::use(permittee_account_id, "grantable_permittee_account_id"));
+      st.exchange(soci::use(account_id, "grantable_account_id"));
       st.exchange(soci::use(permittee_account_id, "permittee_account_id"));
       st.exchange(soci::use(account_id, "account_id"));
       st.exchange(soci::use(without_perm_str, "without_perm"));
       st.exchange(soci::use(perms, "perm"));
-      auto message_gen = [&] {
-        return (boost::format("failed to delete account grantable permission, "
-                              "permittee account id: '%s', "
-                              "account id: '%s', "
-                              "permission id: '%s'")
-                % permittee_account_id
-                % account_id
-                // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
-                % shared_model::proto::permissions::toString(permission))
-            .str();
-      };
-      return makeCommandResult(st, "RevokePermission", message_gen);
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " does not have grantable permission "
+                + shared_model::proto::permissions::toString(
+                       command.permissionName())
+                + " to revoke";
+          },
+          [&] {
+            return (boost::format(
+                        "failed to delete account grantable permission, "
+                        "permittee account id: '%s', "
+                        "account id: '%s', "
+                        "permission id: '%s'")
+                    % permittee_account_id
+                    % account_id
+                    // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
+                    % shared_model::proto::permissions::toString(permission))
+                .str();
+          }};
+      return makeCommandResultByReturnedValue(
+          st, "RevokePermission", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -738,25 +1126,79 @@ namespace iroha {
       std::string empty_json = "{}";
       std::string filled_json = "{" + creator_account_id_ + ", " + key + "}";
       std::string val = "\"" + value + "\"";
-      soci::statement st = sql_.prepare
-          << "UPDATE account SET data = jsonb_set("
-             "CASE WHEN data ?:creator_account_id THEN data ELSE "
-             "jsonb_set(data, :json, :empty_json) END, "
-             " :filled_json, :val) WHERE account_id=:account_id";
-      st.exchange(soci::use(creator_account_id_));
-      st.exchange(soci::use(json));
-      st.exchange(soci::use(empty_json));
-      st.exchange(soci::use(filled_json));
-      st.exchange(soci::use(val));
-      st.exchange(soci::use(account_id));
-      auto message_gen = [&] {
-        return (boost::format(
-                    "failed to set account key-value, account id: '%s', "
-                    "creator account id: '%s',\n key: '%s', value: '%s'")
-                % account_id % creator_account_id_ % key % value)
-            .str();
-      };
-      return makeCommandResult(st, "SetAccountDetail", message_gen);
+      soci::statement st = sql_.prepare << R"(
+              WITH )"
+              + (is_genesis_ ? "" :
+                             R"(
+              has_role_perm AS ()"
+                         + checkAccountRolePermission(
+                                 shared_model::interface::permissions::Role::
+                                     kSetDetail)
+                         + R"(),
+              has_grantable_perm AS ()"
+                         + checkAccountGrantablePermission(
+                                 shared_model::interface::permissions::
+                                     Grantable::kSetMyAccountDetail)
+                         + R"(),
+              has_perm AS (SELECT CASE
+                               WHEN (SELECT * FROM has_grantable_perm) THEN true
+                               WHEN (:creator_id = :account_id) THEN true
+                               WHEN (SELECT * FROM has_role_perm) THEN true
+                               ELSE false END
+              ),
+              )")
+              + R"(
+              inserted AS
+              (
+                  UPDATE account SET data = jsonb_set(
+                  CASE WHEN data ?:creator_account_id THEN data ELSE
+                  jsonb_set(data, :json, :empty_json) END,
+                  :filled_json, :val) WHERE account_id=:account_id)"
+              + (is_genesis_ ? "" :
+                             R"( AND (SELECT * FROM has_perm))")
+              + R"(
+                  RETURNING (1)
+              )
+              SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
+)"
+              + (is_genesis_ ? "" :
+                             R"(
+              WHEN NOT (SELECT * FROM has_perm) THEN 1
+          )") + R"(
+                  ELSE 2 END AS result
+)";
+      st.exchange(soci::use(creator_account_id_, "creator_account_id"));
+      st.exchange(soci::use(json, "json"));
+      st.exchange(soci::use(empty_json, "empty_json"));
+      st.exchange(soci::use(filled_json, "filled_json"));
+      st.exchange(soci::use(val, "val"));
+      st.exchange(soci::use(account_id, "account_id"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
+      st.exchange(soci::use(creator_account_id_, "creator_id"));
+      st.exchange(soci::use(account_id, "grantable_account_id"));
+      st.exchange(
+          soci::use(creator_account_id_, "grantable_permittee_account_id"));
+      std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " tries to set details for account " + command.accountId()
+                + ", but has neither "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Role::kSetDetail)
+                + " nor grantable "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Grantable::
+                           kSetMyAccountDetail);
+          },
+          [&] {
+            return (boost::format(
+                        "failed to set account key-value, account id: '%s', "
+                        "creator account id: '%s',\n key: '%s', value: '%s'")
+                    % account_id % creator_account_id_ % key % value)
+                .str();
+          }};
+      return makeCommandResultByReturnedValue(
+          st, "SetAccountDetail", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -776,6 +1218,25 @@ namespace iroha {
               WHERE :quorum >= (SELECT COUNT(*) FROM get_signatories)
               AND account_id = :account_id
           ),
+          has_role_perm AS ()"
+                         + checkAccountRolePermission(
+                                 shared_model::interface::permissions::Role::
+                                     kSetQuorum)
+                         + R"(),
+          has_grantable_perm AS ()"
+                         + checkAccountGrantablePermission(
+                                 shared_model::interface::permissions::
+                                     Grantable::kSetMyQuorum)
+                         + R"(),
+          has_perm AS (SELECT CASE
+                               WHEN (SELECT * FROM has_grantable_perm) THEN true
+                               WHEN (:creator_id = :account_id) THEN
+                               CASE
+                                   WHEN (SELECT * FROM has_role_perm) THEN true
+                                   ELSE false
+                               END
+                               ELSE false END
+              ),
           )") + R"(
           updated AS (
               UPDATE account SET quorum=:quorum
@@ -783,22 +1244,29 @@ namespace iroha {
               )"
               + (is_genesis_ ? "" : R"(AND EXISTS
               (SELECT * FROM get_signatories)
-              AND EXISTS (SELECT * FROM check_account_signatories))")
+              AND EXISTS (SELECT * FROM check_account_signatories)
+              AND (SELECT * FROM has_perm))")
               + R"(
               RETURNING (1)
           )
           SELECT CASE WHEN EXISTS (SELECT * FROM updated) THEN 0
               )"
               + (is_genesis_ ? "" : R"(
+              WHEN NOT (SELECT * FROM has_perm) THEN 3
               WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 1
               WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 2
               )")
               + R"(
-              ELSE 3
+              ELSE 4
           END AS result
 )";
       st.exchange(soci::use(quorum, "quorum"));
       st.exchange(soci::use(account_id, "account_id"));
+      st.exchange(soci::use(creator_account_id_, "creator_id"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
+      st.exchange(soci::use(account_id, "grantable_account_id"));
+      st.exchange(
+          soci::use(creator_account_id_, "grantable_permittee_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
             return "is valid command validation failed: no signatories of an "
@@ -811,6 +1279,14 @@ namespace iroha {
                 + " new quorum size is "
                     "out of bounds; "
                     "value is " + std::to_string(quorum);
+          },
+          [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " does not have permission "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Grantable::
+                           kSetMyQuorum)
+                + " for account " + command.accountId();
           },
           [&] {
             return (boost::format("failed to update account, account id: '%s', "
@@ -829,9 +1305,17 @@ namespace iroha {
       auto amount = command.amount().toStringRepr();
       uint32_t precision = command.amount().precision();
       soci::statement st = sql_.prepare <<
-          // clang-format off
           R"(
-          WITH has_account AS (SELECT account_id FROM account
+          WITH )"
+              + (is_genesis_ ? "" :
+                             R"(
+               has_perm AS ()"
+                         + checkAccountRolePermission(
+                                 shared_model::interface::permissions::Role::
+                                     kSubtractAssetQty)
+                         + R"(),)")
+              + R"(
+               has_account AS (SELECT account_id FROM account
                                WHERE account_id = :account_id LIMIT 1),
                has_asset AS (SELECT asset_id FROM asset
                              WHERE asset_id = :asset_id
@@ -854,27 +1338,42 @@ namespace iroha {
                       SELECT :account_id, :asset_id, value FROM new_value
                       WHERE EXISTS (SELECT * FROM has_account LIMIT 1) AND
                         EXISTS (SELECT * FROM has_asset LIMIT 1) AND
-                        EXISTS (SELECT value FROM new_value WHERE value >= 0 LIMIT 1)
+                        EXISTS (SELECT value FROM new_value WHERE value >= 0 LIMIT 1))"
+              + (is_genesis_ ? "" :
+                             R"( AND (SELECT * FROM has_perm))")
+              + R"(
                   )
                   ON CONFLICT (account_id, asset_id)
                   DO UPDATE SET amount = EXCLUDED.amount
                   RETURNING (1)
                )
           SELECT CASE
-              WHEN EXISTS (SELECT * FROM inserted LIMIT 1) THEN 0
-              WHEN NOT EXISTS (SELECT * FROM has_account LIMIT 1) THEN 1
-              WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 2
+              WHEN EXISTS (SELECT * FROM inserted LIMIT 1) THEN 0)"
+              + (is_genesis_ ? "" :
+                             R"(
+              WHEN NOT (SELECT * FROM has_perm) THEN 1
+          )") + R"(
+              WHEN NOT EXISTS (SELECT * FROM has_account LIMIT 1) THEN 2
+              WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 3
               WHEN NOT EXISTS
-                  (SELECT value FROM new_value WHERE value >= 0 LIMIT 1) THEN 3
-              ELSE 4
+                  (SELECT value FROM new_value WHERE value >= 0 LIMIT 1) THEN 4
+              ELSE 5
           END AS result;)";
-      // clang-format on
       st.exchange(soci::use(account_id, "account_id"));
       st.exchange(soci::use(asset_id, "asset_id"));
       st.exchange(soci::use(amount, "value"));
       st.exchange(soci::use(precision, "precision"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
 
       std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return "command validation failed: account " + creator_account_id_
+                + " does not have permission "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Role::
+                           kSubtractAssetQty)
+                + " for his own account";
+          },
           [&] { return "Account does not exist with given precision"; },
           [&] { return "Asset with given precision does not exist"; },
           [&] { return "Subtracts overdrafts account asset"; },
@@ -891,23 +1390,56 @@ namespace iroha {
       auto amount = command.amount().toStringRepr();
       uint32_t precision = command.amount().precision();
       soci::statement st = sql_.prepare <<
-          // clang-format off
           R"(
-          WITH has_src_account AS (SELECT account_id FROM account
+          WITH)"
+              + (is_genesis_ ? "" :
+                             R"(
+              has_role_perm AS ()"
+                         + checkAccountRolePermission(
+                                 shared_model::interface::permissions::Role::
+                                     kTransfer)
+                         + R"(),
+              has_grantable_perm AS ()"
+                         + checkAccountGrantablePermission(
+                                 shared_model::interface::permissions::
+                                     Grantable::kTransferMyAssets)
+                         + R"(),
+              dest_can_receive AS ()"
+                         + checkAccountRolePermission(
+                                 shared_model::interface::permissions::Role::
+                                     kReceive,
+                                 "dest_account_id")
+                         + R"(),
+              has_perm AS (SELECT
+                               CASE WHEN (SELECT * FROM dest_can_receive) THEN
+                                   CASE WHEN NOT (:creator_id = :src_account_id) THEN
+                                       CASE WHEN (SELECT * FROM has_grantable_perm)
+                                           THEN true
+                                       ELSE false END
+                                   ELSE
+                                        CASE WHEN (SELECT * FROM has_role_perm)
+                                            THEN true
+                                        ELSE false END
+                                   END
+                               ELSE false END
+              ),
+              )")
+              + R"(
+              has_src_account AS (SELECT account_id FROM account
                                    WHERE account_id = :src_account_id LIMIT 1),
-               has_dest_account AS (SELECT account_id FROM account
+              has_dest_account AS (SELECT account_id FROM account
                                     WHERE account_id = :dest_account_id
                                     LIMIT 1),
-               has_asset AS (SELECT asset_id FROM asset
+              has_asset AS (SELECT asset_id FROM asset
                              WHERE asset_id = :asset_id AND
                              precision >= :precision LIMIT 1),
-               src_amount AS (SELECT amount FROM account_has_asset
+              src_amount AS (SELECT amount FROM account_has_asset
                               WHERE asset_id = :asset_id AND
                               account_id = :src_account_id LIMIT 1),
-               dest_amount AS (SELECT amount FROM account_has_asset
+              dest_amount AS (SELECT amount FROM account_has_asset
                                WHERE asset_id = :asset_id AND
                                account_id = :dest_account_id LIMIT 1),
-               new_src_value AS (SELECT
+              new_src_value AS (SELECT
                               (SELECT
                                   CASE WHEN EXISTS
                                       (SELECT amount FROM src_amount LIMIT 1)
@@ -916,7 +1448,7 @@ namespace iroha {
                                   ELSE 0::decimal
                               END) - :value::decimal AS value
                           ),
-               new_dest_value AS (SELECT
+              new_dest_value AS (SELECT
                               (SELECT :value::decimal +
                                   CASE WHEN EXISTS
                                       (SELECT amount FROM dest_amount LIMIT 1)
@@ -925,8 +1457,8 @@ namespace iroha {
                                   ELSE 0::decimal
                               END) AS value
                           ),
-               insert_src AS
-               (
+              insert_src AS
+              (
                   INSERT INTO account_has_asset(account_id, asset_id, amount)
                   (
                       SELECT :src_account_id, :asset_id, value
@@ -935,14 +1467,17 @@ namespace iroha {
                         EXISTS (SELECT * FROM has_dest_account LIMIT 1) AND
                         EXISTS (SELECT * FROM has_asset LIMIT 1) AND
                         EXISTS (SELECT value FROM new_src_value
-                                WHERE value >= 0 LIMIT 1)
+                                WHERE value >= 0 LIMIT 1))"
+              + (is_genesis_ ? "" :
+                             R"( AND (SELECT * FROM has_perm))")
+              + R"(
                   )
                   ON CONFLICT (account_id, asset_id)
                   DO UPDATE SET amount = EXCLUDED.amount
                   RETURNING (1)
-               ),
-               insert_dest AS
-               (
+              ),
+              insert_dest AS
+              (
                   INSERT INTO account_has_asset(account_id, asset_id, amount)
                   (
                       SELECT :dest_account_id, :asset_id, value
@@ -953,31 +1488,56 @@ namespace iroha {
                         EXISTS (SELECT * FROM has_asset LIMIT 1) AND
                         EXISTS (SELECT value FROM new_dest_value
                                 WHERE value < 2::decimal ^ (256 - :precision)
-                                LIMIT 1)
+                                LIMIT 1))"
+              + (is_genesis_ ? "" :
+                             R"( AND (SELECT * FROM has_perm))")
+              + R"(
                   )
                   ON CONFLICT (account_id, asset_id)
                   DO UPDATE SET amount = EXCLUDED.amount
                   RETURNING (1)
                )
           SELECT CASE
-              WHEN EXISTS (SELECT * FROM insert_dest LIMIT 1) THEN 0
-              WHEN NOT EXISTS (SELECT * FROM has_dest_account LIMIT 1) THEN 1
-              WHEN NOT EXISTS (SELECT * FROM has_src_account LIMIT 1) THEN 2
-              WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 3
+              WHEN EXISTS (SELECT * FROM insert_dest LIMIT 1) THEN 0)"
+              + (is_genesis_ ? "" :
+                             R"(
+              WHEN NOT (SELECT * FROM has_perm) THEN 1
+          )") + R"(
+              WHEN NOT EXISTS (SELECT * FROM has_dest_account LIMIT 1) THEN 2
+              WHEN NOT EXISTS (SELECT * FROM has_src_account LIMIT 1) THEN 3
+              WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 4
               WHEN NOT EXISTS (SELECT value FROM new_src_value
-                               WHERE value >= 0 LIMIT 1) THEN 4
+                               WHERE value >= 0 LIMIT 1) THEN 5
               WHEN NOT EXISTS (SELECT value FROM new_dest_value
                                WHERE value < 2::decimal ^ (256 - :precision)
-                               LIMIT 1) THEN 5
-              ELSE 6
+                               LIMIT 1) THEN 6
+              ELSE 7
           END AS result;)";
-      // clang-format on
       st.exchange(soci::use(src_account_id, "src_account_id"));
       st.exchange(soci::use(dest_account_id, "dest_account_id"));
       st.exchange(soci::use(asset_id, "asset_id"));
       st.exchange(soci::use(amount, "value"));
       st.exchange(soci::use(precision, "precision"));
+      st.exchange(soci::use(creator_account_id_, "role_account_id"));
+      st.exchange(soci::use(creator_account_id_, "creator_id"));
+      st.exchange(soci::use(src_account_id, "grantable_account_id"));
+      st.exchange(
+          soci::use(creator_account_id_, "grantable_permittee_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
+          [&] {
+            return "has permission command validation failed: account "
+                + creator_account_id_ + " does not have "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Grantable::
+                           kTransferMyAssets)
+                + " for account or does not have "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Role::kTransfer)
+                + " for his own account or destination account "
+                + command.destAccountId() + " does not have "
+                + shared_model::proto::permissions::toString(
+                       shared_model::interface::permissions::Role::kReceive);
+          },
           [&] { return "Destination account does not exist"; },
           [&] { return "Source account does not exist"; },
           [&] { return "Asset with given precision does not exist"; },
