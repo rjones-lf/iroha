@@ -63,7 +63,11 @@ namespace iroha {
   }
 
   std::vector<DataType> MstState::getBatches() const {
-    throw std::logic_error("Function is not yet implemented");
+    std::vector<DataType> result;
+    std::for_each(internal_state_.begin(),
+                  internal_state_.end(),
+                  [&result](const auto &val) { result.push_back(val); });
+    return result;
   }
 
   MstState MstState::eraseByTime(const TimeType &time) {

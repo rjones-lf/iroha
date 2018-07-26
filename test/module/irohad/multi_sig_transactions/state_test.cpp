@@ -29,9 +29,9 @@ TEST(StateTest, CreateState) {
   log_->info("Create state from => insert one transaction");
 
   auto state = MstState::empty();
-  ASSERT_EQ(0, state.getTransactions().size());
-  state += makeTx(1);
-  ASSERT_EQ(1, state.getTransactions().size());
+  ASSERT_EQ(0, state.getBatches().size());
+  state += makeTestBatch(txBuilder(1));
+  ASSERT_EQ(1, state.getBatches().size());
 }
 
 TEST(StateTest, UpdateExistingState) {
@@ -117,7 +117,8 @@ TEST(StateTest, UnionStateWhenSameTransactionHaveDifferentSignatures) {
 
   state1 += state2;
   ASSERT_EQ(1, state1.getTransactions().size());
-  ASSERT_EQ(2, boost::size(state1.getTransactions().begin()->get()->signatures()));
+  ASSERT_EQ(2,
+            boost::size(state1.getTransactions().begin()->get()->signatures()));
 }
 
 TEST(StateTest, DifferenceTest) {
