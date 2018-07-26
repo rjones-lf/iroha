@@ -20,7 +20,8 @@ namespace shared_model {
 
     const std::string FieldValidator::account_name_pattern_ =
         R"#([a-z_0-9]{1,32})#";
-    const std::string FieldValidator::amount_pattern_ = "([0-9]+)(\\.[0-9]+)?";
+    const std::string FieldValidator::amount_pattern_ =
+        "([1-9][0-9]*)(\\.[0-9]+)?";
     const std::string FieldValidator::asset_name_pattern_ =
         R"#([a-z_0-9]{1,32})#";
     const std::string FieldValidator::domain_pattern_ =
@@ -100,7 +101,7 @@ namespace shared_model {
       auto amount_str = amount.toStringRepr();
       std::smatch match;
       if (not std::regex_match(amount_str, match, amount_regex_)) {
-        auto message = (boost::format("Wrongly formed asset_id, passed value: "
+        auto message = (boost::format("Wrongly formed amount, passed value: "
                                       "'%s'. Field should match regex '%s'")
                         % amount_str % amount_pattern_)
                            .str();

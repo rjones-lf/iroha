@@ -16,7 +16,7 @@ namespace shared_model {
         : amount_(std::move(amount)),
           precision_(0),
           multiprecision_repr_([this] {
-            static const std::regex r("([0-9]+)(\\.([0-9]+))?");
+            static const std::regex r("([1-9][0-9]*)(\\.([0-9]+))?");
             // 123.456 will have the following groups:
             //   [0] -> 123.456, [1] -> 123
             //   [2] -> .456,    [3] -> 456
