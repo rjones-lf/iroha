@@ -24,7 +24,6 @@ namespace iroha {
       /**
        * Method which should be invoked on outcome of collaboration for round
        * @param outcome - status of collaboration on proposal
-       * @param round - number of round
        */
       virtual void onCollaborationOutcome(RoundOutput outcome) = 0;
 
