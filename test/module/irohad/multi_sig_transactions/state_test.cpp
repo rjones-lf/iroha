@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
@@ -41,10 +29,13 @@ TEST(StateTest, UpdateExistingState) {
 
   auto state = MstState::empty();
   auto time = iroha::time::now();
-  state += makeTx(1, time);
-  state += makeTx(1, time);
-  ASSERT_EQ(1, state.getTransactions().size());
-  ASSERT_EQ(2, boost::size(state.getTransactions().begin()->get()->signatures()));
+  state += makeTestBatch(txBuilder(1, time));
+  state += makeTestBatch(txBuilder(1, time));
+  ASSERT_EQ(1, state.getBatches().size());
+  ASSERT_EQ(
+      2,
+      boost::size(
+          state.getBatches().front()->transactions().front()->signatures()));
 }
 
 TEST(StateTest, UpdateStateWhenTransacionsSame) {
@@ -54,11 +45,12 @@ TEST(StateTest, UpdateStateWhenTransacionsSame) {
 
   auto keypair = makeKey();
   auto time = iroha::time::now();
-  state += makeTx(1, time, keypair);
-  state += makeTx(1, time, keypair);
+  state += makeTestBatch(txBuilder(1, time, keypair));
+  state += makeTestBatch(txBuilder(1, time, keypair));
 
-  ASSERT_EQ(1, state.getTransactions().size());
-  ASSERT_EQ(1, boost::size(state.getTransactions().begin()->get()->signatures()));
+  ASSERT_EQ(1, state.getBatches().size());
+  //  ASSERT_EQ(1,
+  //  boost::size(state.getBatches().begin()->get()->signatures())); todo rework
 }
 
 TEST(StateTest, DifferentSignaturesUnionTest) {
@@ -66,19 +58,19 @@ TEST(StateTest, DifferentSignaturesUnionTest) {
 
   auto state1 = MstState::empty();
 
-  state1 += makeTx(1);
-  state1 += makeTx(2);
-  state1 += makeTx(3);
+  state1 += makeTestBatch(txBuilder(1));
+  state1 += makeTestBatch(txBuilder(2));
+  state1 += makeTestBatch(txBuilder(3));
 
-  ASSERT_EQ(3, state1.getTransactions().size());
+  ASSERT_EQ(3, state1.getBatches().size());
 
   auto state2 = MstState::empty();
-  state2 += makeTx(4);
-  state2 += makeTx(5);
-  ASSERT_EQ(2, state2.getTransactions().size());
+  state2 += makeTestBatch(txBuilder(4));
+  state2 += makeTestBatch(txBuilder(5));
+  ASSERT_EQ(2, state2.getBatches().size());
 
   state1 += state2;
-  ASSERT_EQ(5, state1.getTransactions().size());
+  ASSERT_EQ(5, state1.getBatches().size());
 }
 
 TEST(StateTest, UnionStateWhenTransactionsSame) {
@@ -88,18 +80,18 @@ TEST(StateTest, UnionStateWhenTransactionsSame) {
   auto keypair = makeKey();
 
   auto state1 = MstState::empty();
-  state1 += makeTx(1, time, keypair);
-  state1 += makeTx(2);
+  state1 += makeTestBatch(txBuilder(1, time, keypair));
+  state1 += makeTestBatch(txBuilder(2));
 
-  ASSERT_EQ(2, state1.getTransactions().size());
+  ASSERT_EQ(2, state1.getBatches().size());
 
   auto state2 = MstState::empty();
-  state2 += makeTx(1, time, keypair);
-  state2 += makeTx(5);
-  ASSERT_EQ(2, state2.getTransactions().size());
+  state2 += makeTestBatch(txBuilder(1, time, keypair));
+  state2 += makeTestBatch(txBuilder(5));
+  ASSERT_EQ(2, state2.getBatches().size());
 
   state1 += state2;
-  ASSERT_EQ(3, state1.getTransactions().size());
+  ASSERT_EQ(3, state1.getBatches().size());
 }
 
 TEST(StateTest, UnionStateWhenSameTransactionHaveDifferentSignatures) {
@@ -112,13 +104,15 @@ TEST(StateTest, UnionStateWhenSameTransactionHaveDifferentSignatures) {
   auto state1 = MstState::empty();
   auto state2 = MstState::empty();
 
-  state1 += makeTx(1, time, makeKey());
-  state2 += makeTx(1, time, makeKey());
+  state1 += makeTestBatch(txBuilder(1, time, makeKey()));
+  state2 += makeTestBatch(txBuilder(1, time, makeKey()));
 
   state1 += state2;
-  ASSERT_EQ(1, state1.getTransactions().size());
-  ASSERT_EQ(2,
-            boost::size(state1.getTransactions().begin()->get()->signatures()));
+  ASSERT_EQ(1, state1.getBatches().size());
+  ASSERT_EQ(
+      2,
+      boost::size(
+          state.getBatches().front()->transactions().front()->signatures()));
 }
 
 TEST(StateTest, DifferenceTest) {
@@ -129,14 +123,14 @@ TEST(StateTest, DifferenceTest) {
 
   auto state1 = MstState::empty();
   auto state2 = MstState::empty();
-  state1 += makeTx(1);
-  state1 += makeTx(2, time, keypair);
+  state1 += makeTestBatch(txBuilder(1));
+  state1 += makeTestBatch(txBuilder(2, time, keypair));
 
-  state2 += makeTx(2, time, keypair);
-  state2 += makeTx(3);
+  state2 += makeTestBatch(txBuilder(2, time, keypair));
+  state2 += makeTestBatch(txBuilder(3));
 
   MstState diff = state1 - state2;
-  ASSERT_EQ(1, diff.getTransactions().size());
+  ASSERT_EQ(1, diff.getBatches().size());
 }
 
 TEST(StateTest, UpdateTxUntillQuorum) {
@@ -147,15 +141,18 @@ TEST(StateTest, UpdateTxUntillQuorum) {
 
   auto state = MstState::empty();
 
-  auto state_after_one_tx = state += makeTx(1, time, makeKey(), quorum);
-  ASSERT_EQ(0, state_after_one_tx.getTransactions().size());
+  auto state_after_one_tx = state +=
+      makeTestBatch(txBuilder(1, time, makeKey(), quorum));
+  ASSERT_EQ(0, state_after_one_tx.getBatches().size());
 
-  auto state_after_two_txes = state += makeTx(1, time, makeKey(), quorum);
-  ASSERT_EQ(0, state_after_one_tx.getTransactions().size());
+  auto state_after_two_txes = state +=
+      makeTestBatch(txBuilder(1, time, makeKey(), quorum));
+  ASSERT_EQ(0, state_after_one_tx.getBatches().size());
 
-  auto state_after_three_txes = state += makeTx(1, time, makeKey(), quorum);
-  ASSERT_EQ(1, state_after_three_txes.getTransactions().size());
-  ASSERT_EQ(0, state.getTransactions().size());
+  auto state_after_three_txes = state +=
+      makeTestBatch(txBuilder(1, time, makeKey(), quorum));
+  ASSERT_EQ(1, state_after_three_txes.getBatches().size());
+  ASSERT_EQ(0, state.getBatches().size());
 }
 
 TEST(StateTest, UpdateStateWithNewStateUntilQuorum) {
@@ -166,24 +163,29 @@ TEST(StateTest, UpdateStateWithNewStateUntilQuorum) {
   auto time = iroha::time::now();
 
   auto state1 = MstState::empty();
-  state1 += makeTx(1, time, makeKey(), quorum);
-  state1 += makeTx(1, time, keypair, quorum);
-  state1 += makeTx(2, time, makeKey(), quorum);
-  ASSERT_EQ(2, state1.getTransactions().size());
+  state1 += makeTestBatch(txBuilder(1, time, makeKey(), quorum));
+  state1 += makeTestBatch(txBuilder(1, time, keypair, quorum));
+  state1 += makeTestBatch(txBuilder(2, time, makeKey(), quorum));
+  ASSERT_EQ(2, state1.getBatches().size());
 
   auto state2 = MstState::empty();
-  state2 += makeTx(1, time, keypair, quorum);
-  state2 += makeTx(1, time, makeKey(), quorum);
-  ASSERT_EQ(1, state2.getTransactions().size());
+  state2 += makeTestBatch(txBuilder(1, time, keypair, quorum));
+  state2 += makeTestBatch(txBuilder(1, time, makeKey(), quorum));
+  ASSERT_EQ(1, state2.getBatches().size());
 
   auto completed_state = state1 += state2;
-  ASSERT_EQ(1, completed_state.getTransactions().size());
-  ASSERT_EQ(1, state1.getTransactions().size());
+  ASSERT_EQ(1, completed_state.getBatches().size());
+  ASSERT_EQ(1, state1.getBatches().size());
 }
 
 class TimeTestCompleter : public iroha::DefaultCompleter {
-  bool operator()(const DataType &tx, const TimeType &time) const override {
-    return tx->createdTime() < time;
+  bool operator()(const DataType &batch, const TimeType &time) const override {
+    for (const auto &tx : batch->transactions()) {
+      if (tx->createdTime() < time) {
+        return true;
+      }
+    }
+    return false;
   }
 };
 
@@ -195,14 +197,14 @@ TEST(StateTest, TimeIndexInsertionByTx) {
 
   auto state = MstState::empty(std::make_shared<TimeTestCompleter>());
 
-  state += makeTx(1, time, makeKey(), quorum);
-  state += makeTx(1, time, makeKey(), quorum);
+  state += makeTestBatch(txBuilder(1, time, makeKey(), quorum));
+  state += makeTestBatch(txBuilder(1, time, makeKey(), quorum));
 
-  ASSERT_EQ(1, state.getTransactions().size());
+  ASSERT_EQ(1, state.getBatches().size());
 
   auto expired_state = state.eraseByTime(time + 1);
-  ASSERT_EQ(1, expired_state.getTransactions().size());
-  ASSERT_EQ(0, state.getTransactions().size());
+  ASSERT_EQ(1, expired_state.getBatches().size());
+  ASSERT_EQ(0, state.getBatches().size());
 }
 
 TEST(StateTest, TimeIndexInsertionByAddState) {
@@ -212,20 +214,20 @@ TEST(StateTest, TimeIndexInsertionByAddState) {
   auto time = iroha::time::now();
 
   auto state1 = MstState::empty(std::make_shared<TimeTestCompleter>());
-  state1 += makeTx(1, time, makeKey(), quorum);
-  state1 += makeTx(1, time, makeKey(), quorum);
+  state1 += makeTestBatch(txBuilder(1, time, makeKey(), quorum));
+  state1 += makeTestBatch(txBuilder(1, time, makeKey(), quorum));
 
   auto state2 = MstState::empty(std::make_shared<TimeTestCompleter>());
-  state2 += makeTx(5, time, makeKey(), quorum);
-  state2 += makeTx(6, time, makeKey(), quorum);
+  state2 += makeTestBatch(txBuilder(5, time, makeKey(), quorum));
+  state2 += makeTestBatch(txBuilder(6, time, makeKey(), quorum));
 
   auto completed_state = state1 += state2;
-  ASSERT_EQ(0, completed_state.getTransactions().size());
+  ASSERT_EQ(0, completed_state.getBatches().size());
 
   auto expired_state = state1.eraseByTime(time + 1);
-  ASSERT_EQ(3, expired_state.getTransactions().size());
-  ASSERT_EQ(0, state1.getTransactions().size());
-  ASSERT_EQ(2, state2.getTransactions().size());
+  ASSERT_EQ(3, expired_state.getBatches().size());
+  ASSERT_EQ(0, state1.getBatches().size());
+  ASSERT_EQ(2, state2.getBatches().size());
 }
 
 TEST(StateTest, RemovingTestWhenByTimeExpired) {
@@ -238,16 +240,16 @@ TEST(StateTest, RemovingTestWhenByTimeExpired) {
   auto time = iroha::time::now();
 
   auto state1 = MstState::empty(std::make_shared<TimeTestCompleter>());
-  state1 += makeTx(1, time, makeKey(), quorum);
-  state1 += makeTx(2, time, makeKey(), quorum);
+  state1 += makeTestBatch(txBuilder(1, time, makeKey(), quorum));
+  state1 += makeTestBatch(txBuilder(2, time, makeKey(), quorum));
 
   auto state2 = MstState::empty(std::make_shared<TimeTestCompleter>());
 
   auto diff_state = state1 - state2;
 
-  ASSERT_EQ(2, diff_state.getTransactions().size());
+  ASSERT_EQ(2, diff_state.getBatches().size());
 
   auto expired_state = diff_state.eraseByTime(time + 1);
-  ASSERT_EQ(0, diff_state.getTransactions().size());
-  ASSERT_EQ(2, expired_state.getTransactions().size());
+  ASSERT_EQ(0, diff_state.getBatches().size());
+  ASSERT_EQ(2, expired_state.getBatches().size());
 }

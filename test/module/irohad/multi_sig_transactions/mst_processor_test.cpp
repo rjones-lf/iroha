@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
@@ -34,12 +22,22 @@ using testing::_;
 using testing::Return;
 
 class TestCompleter : public Completer {
-  bool operator()(const DataType transaction) const override {
-    return boost::size(transaction->signatures()) >= transaction->quorum();
+  bool operator()(const DataType &batch) const override {
+    for (const auto &tx : batch->transactions()) {
+      if (boost::size(tx->signatures()) < tx->quorum()) {
+        return false;
+      }
+    }
+    return true;
   }
 
-  bool operator()(const DataType &tx, const TimeType &time) const override {
-    return tx->createdTime() < time;
+  bool operator()(const DataType &batch, const TimeType &time) const override {
+    for (const auto &tx : batch->transactions()) {
+      if (tx->createdTime() < time) {
+        return true;
+      }
+    }
+    return false;
   }
 };
 
@@ -129,7 +127,7 @@ TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
   auto observers = initObservers(mst_processor, 0, 0, 0);
 
   // ---------------------------------| when |----------------------------------
-  mst_processor->propagateTransaction(makeTx(1));
+  mst_processor->propagateTransaction(makeTestBatch(txBuilder(1)));
 
   // ---------------------------------| then |----------------------------------
   check(observers);
@@ -152,9 +150,9 @@ TEST_F(MstProcessorTest, completedTransactionUsecase) {
 
   // ---------------------------------| when |----------------------------------
   auto time = iroha::time::now();
-  mst_processor->propagateTransaction(makeTx(1, time));
-  mst_processor->propagateTransaction(makeTx(1, time));
-  mst_processor->propagateTransaction(makeTx(1, time));
+  mst_processor->propagateTransaction(makeTestBatch(txBuilder(1, time)));
+  mst_processor->propagateTransaction(makeTestBatch(txBuilder(1, time)));
+  mst_processor->propagateTransaction(makeTestBatch(txBuilder(1, time)));
 
   // ---------------------------------| then |----------------------------------
   check(observers);
@@ -179,7 +177,7 @@ TEST_F(MstProcessorTest, expiredTransactionUsecase) {
   // ---------------------------------| when |----------------------------------
   auto quorum = 1;
   mst_processor->propagateTransaction(
-      makeTx(1, time_before, makeKey(), quorum));
+      makeTestBatch(txBuilder(1, time_before, makeKey(), quorum)));
 
   // ---------------------------------| then |----------------------------------
   check(observers);
@@ -203,12 +201,14 @@ TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
   auto observers = initObservers(mst_processor, 1, 1, 0);
 
   auto quorum = 2;
-  mst_processor->propagateTransaction(makeTx(1, time_after, makeKey(), quorum));
+  mst_processor->propagateTransaction(
+      makeTestBatch(txBuilder(1, time_after, makeKey(), quorum)));
 
   // ---------------------------------| when |----------------------------------
   auto another_peer = makePeer("another", "another_pubkey");
   auto transported_state = MstState::empty(std::make_shared<TestCompleter>());
-  transported_state += makeTx(1, time_after, makeKey(), quorum);
+  transported_state +=
+      makeTestBatch(txBuilder(1, time_after, makeKey(), quorum));
   mst_processor->onNewState(another_peer, transported_state);
 
   // ---------------------------------| then |----------------------------------
@@ -228,7 +228,8 @@ TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
 TEST_F(MstProcessorTest, onNewPropagationUsecase) {
   // ---------------------------------| given |---------------------------------
   auto quorum = 2;
-  mst_processor->propagateTransaction(makeTx(1, time_after, makeKey(), quorum));
+  mst_processor->propagateTransaction(
+      makeTestBatch(txBuilder(1, time_after, makeKey(), quorum)));
   EXPECT_CALL(*transport, sendState(_, _)).Times(2);
 
   // ---------------------------------| when |----------------------------------
@@ -254,7 +255,7 @@ TEST_F(MstProcessorTest, emptyStatePropagation) {
   auto another_peer = makePeer("another", "another_pubkey");
 
   auto another_peer_state = MstState::empty();
-  another_peer_state += makeTx(1);
+  another_peer_state += makeTestBatch(txBuilder(1));
 
   storage->apply(another_peer, another_peer_state);
   ASSERT_TRUE(storage->getDiffState(another_peer, time_now).isEmpty());
