@@ -57,6 +57,8 @@ namespace logger {
   }
 
   Logger log(const std::string &tag) {
+    static std::mutex mutex;
+    std::lock_guard<std::mutex> lock(mutex);
     auto logger = spdlog::get(tag);
     if (logger == nullptr) {
       logger = createLogger(tag);
