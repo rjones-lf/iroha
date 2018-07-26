@@ -234,8 +234,7 @@ namespace iroha {
     }
 
     StatefulValidatorImpl::StatefulValidatorImpl(
-        std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
-            factory)
+        std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory)
         : factory_(std::move(factory)), log_(logger::log("SFV")) {}
 
     validation::VerifiedProposalAndErrors StatefulValidatorImpl::validate(
@@ -254,6 +253,8 @@ namespace iroha {
       auto validated_proposal = factory_->unsafeCreateProposal(
           proposal.height(), proposal.createdTime(), valid_proto_txs);
 
+      log_->info("transactions in verified proposal: {}",
+                 validated_proposal->transactions().size());
       return std::make_pair(std::move(validated_proposal),
                             transactions_errors_log);
     }
