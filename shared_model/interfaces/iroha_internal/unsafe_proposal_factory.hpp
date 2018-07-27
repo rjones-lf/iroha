@@ -12,7 +12,6 @@
 
 namespace shared_model {
   namespace interface {
-
     class Proposal;
 
     /**
