@@ -56,7 +56,7 @@ namespace iroha {
           bool is_genesis = false,
           const shared_model::interface::types::AccountIdType &creator =
               "id@domain") {
-        executor->setIsGenesis(is_genesis);
+        executor->doValidation(not is_genesis);
         executor->setCreatorAccountId(creator);
         return boost::apply_visitor(*executor, command->get());
       }
@@ -414,7 +414,6 @@ namespace iroha {
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().appendRole(
                                   account->accountId(), "role2")),
                               true)));
-      executor->setIsGenesis(false);
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
       ASSERT_TRUE(std::find(roles->begin(), roles->end(), "role2")

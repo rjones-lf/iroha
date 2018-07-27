@@ -60,7 +60,7 @@ namespace iroha {
           const shared_model::interface::types::AccountIdType
               &creator_account_id) = 0;
 
-      virtual void setIsGenesis(bool is_genesis) = 0;
+      virtual void doValidation(bool do_validation) = 0;
 
       virtual CommandResult operator()(
           const shared_model::interface::AddAssetQuantity &command) = 0;

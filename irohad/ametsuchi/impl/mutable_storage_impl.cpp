@@ -47,7 +47,7 @@ namespace iroha {
     bool MutableStorageImpl::check(
         const shared_model::interface::BlockVariant &block,
         MutableStorage::MutableStoragePredicateType<decltype(block)>
-            predicate) {
+        predicate) {
       return predicate(block, *wsv_, top_hash_);
     }
 
@@ -57,7 +57,7 @@ namespace iroha {
             function) {
       auto execute_transaction = [this](auto &transaction) {
         command_executor_->setCreatorAccountId(transaction.creatorAccountId());
-        command_executor_->setIsGenesis(true);
+        command_executor_->doValidation(false);
         auto execute_command = [this](auto &command) {
           auto result = boost::apply_visitor(*command_executor_, command.get());
           return result.match([](expected::Value<void> &v) { return true; },
