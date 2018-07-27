@@ -107,8 +107,9 @@ target_link_libraries(proto_proposal_factory_test
     )
 
 addtest(proto_block_factory_test
-        proto_block_factory_test.cpp
+    proto_block_factory_test.cpp
     )
 target_link_libraries(proto_block_factory_test
     shared_model_proto_backend
+    shared_model_stateless_validation
     )

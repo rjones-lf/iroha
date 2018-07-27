@@ -24,6 +24,7 @@
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/peer_query.hpp"
+#include "backend/protobuf/proto_block_factory.hpp"
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
 #include "validators/default_validator.hpp"
@@ -45,6 +46,33 @@ namespace iroha {
           const shared_model::interface::types::HashType &block_hash) override;
 
      private:
+      //      /**
+      //       * Wrapper for validator which validates based on specified time
+      //       * instead of current time
+      //       */
+      //      struct TimerWrapper : public
+      //      shared_model::validation::FieldValidator {
+      //        explicit TimerWrapper(iroha::ts64_t t)
+      //            : FieldValidator(
+      //                  shared_model::validation::FieldValidator::kDefaultFutureGap,
+      //                  [=] { return t; }) {}
+      //      };
+
+      using Validator = shared_model::validation::BlockValidator<
+          shared_model::validation::FieldValidator,
+          shared_model::validation::DefaultTransactionValidator,
+          shared_model::validation::UnsignedTransactionsCollectionValidator<
+              shared_model::validation::DefaultTransactionValidator>>;
+
+      // validate signed block
+      using BlockValidator = shared_model::validation::SignableModelValidator<
+          shared_model::validation::AnyBlockValidator<
+              Validator,
+              shared_model::validation::EmptyBlockValidator<
+                  shared_model::validation::FieldValidator>>,
+          const shared_model::interface::BlockVariant &,
+          shared_model::validation::FieldValidator>;
+
       /**
        * Retrieve peers from database, and find the requested peer by pubkey
        * @param pubkey - public key of requested peer
@@ -66,6 +94,7 @@ namespace iroha {
           peer_connections_;
       std::shared_ptr<ametsuchi::PeerQuery> peer_query_;
       std::shared_ptr<ametsuchi::BlockQuery> block_query_;
+      shared_model::proto::ProtoBlockFactory<BlockValidator> block_factory_;
 
       logger::Logger log_;
     };

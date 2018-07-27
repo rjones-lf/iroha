@@ -6,14 +6,21 @@
 #ifndef IROHA_PROTO_PROPOSAL_FACTORY_HPP
 #define IROHA_PROTO_PROPOSAL_FACTORY_HPP
 
-#include "interfaces/iroha_internal/unsafe_block_factory.hpp"
-#include "block.pb.h"
-#include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/empty_block.hpp"
+#include "backend/protobuf/transaction.hpp"
+#include "block.pb.h"
+#include "common/result.hpp"
+#include "interfaces/iroha_internal/unsafe_block_factory.hpp"
 
 namespace shared_model {
   namespace proto {
+
+    /**
+     * ProtoBlockFactory is used to create proto::Block objects
+     * @tparam Validator - stateless validator
+     */
+    template <typename Validator>
     class ProtoBlockFactory : public interface::UnsafeBlockFactory {
      public:
       interface::BlockVariant unsafeCreateBlock(
@@ -40,6 +47,24 @@ namespace shared_model {
         return std::make_shared<shared_model::proto::EmptyBlock>(
             std::move(block));
       }
+
+      iroha::expected::Result<interface::BlockVariant, std::string> createBlock(
+          iroha::protocol::Block &&block) {
+        interface::BlockVariant proto_block;
+        if (block.payload().transactions().empty()) {
+          proto_block = std::make_shared<EmptyBlock>(std::move(block));
+        } else {
+          proto_block = std::make_shared<Block>(std::move(block));
+        }
+        auto errors = validator_.validate(proto_block);
+        if (errors) {
+          return iroha::expected::makeError(errors.reason());
+        }
+        return iroha::expected::makeValue(std::move(proto_block));
+      }
+
+     private:
+      Validator validator_;
     };
   }  // namespace proto
 }  // namespace shared_model

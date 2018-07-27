@@ -8,12 +8,13 @@
 #include "backend/protobuf/proto_block_factory.hpp"
 #include "datetime/time.hpp"
 #include "framework/specified_visitor.hpp"
+#include "validators/default_validator.hpp"
 
 using namespace shared_model;
 
 class ProtoBlockFactoryTest : public ::testing::Test {
  public:
-  proto::ProtoBlockFactory factory;
+  proto::ProtoBlockFactory<validation::DefaultAnyBlockValidator> factory;
 };
 
 /**

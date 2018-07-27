@@ -26,6 +26,7 @@ namespace shared_model {
         Answer answer;
         ReasonsGroupType reason;
         reason.first = "EmptyBlock";
+        field_validator_.setTime(block.createdTime());
         field_validator_.validateCreatedTime(reason, block.createdTime());
         field_validator_.validateHeight(reason, block.height());
         if (not reason.second.empty()) {

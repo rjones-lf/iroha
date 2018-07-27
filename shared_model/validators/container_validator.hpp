@@ -74,8 +74,10 @@ namespace shared_model {
         Answer answer;
         ReasonsGroupType reason;
         reason.first = reason_name;
+        field_validator_.setTime(cont.createdTime());
         field_validator_.validateCreatedTime(reason, cont.createdTime());
         field_validator_.validateHeight(reason, cont.height());
+
         validateTransactions(reason, cont.transactions());
         if (not reason.second.empty()) {
           answer.addReason(std::move(reason));

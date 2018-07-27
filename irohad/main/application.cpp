@@ -177,7 +177,8 @@ void Irohad::initOrderingGate() {
  */
 void Irohad::initSimulator() {
   std::unique_ptr<shared_model::interface::UnsafeBlockFactory> block_factory =
-      std::make_unique<shared_model::proto::ProtoBlockFactory>();
+      std::make_unique<shared_model::proto::ProtoBlockFactory<
+          shared_model::validation::DefaultAnyBlockValidator>>();
   simulator = std::make_shared<Simulator>(ordering_gate,
                                           stateful_validator,
                                           storage,

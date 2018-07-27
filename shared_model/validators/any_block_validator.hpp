@@ -7,6 +7,7 @@
 #define IROHA_ANY_BLOCK_VALIDATOR_HPP
 
 #include "common/visitor.hpp"
+#include "field_validator.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block_variant.hpp"
 #include "validators/answer.hpp"
@@ -18,6 +19,8 @@ namespace shared_model {
     class AnyBlockValidator {
      public:
       AnyBlockValidator(
+          shared_model::validation::FieldValidator field_validator =
+              shared_model::validation::FieldValidator(),
           BlockValidator block_validator = BlockValidator(),
           EmptyBlockValidator empty_block_validator = EmptyBlockValidator())
           : non_empty_block_validator_(block_validator),

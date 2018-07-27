@@ -29,6 +29,7 @@
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/cryptography/crypto_model_signer_mock.hpp"
 #include "simulator/impl/simulator.hpp"
+#include "validators/default_validator.hpp"
 
 using namespace iroha;
 using namespace iroha::validation;
@@ -56,7 +57,8 @@ class SimulatorTest : public ::testing::Test {
     ordering_gate = std::make_shared<MockOrderingGate>();
     crypto_signer = std::make_shared<shared_model::crypto::CryptoModelSigner<>>(
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair());
-    block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory>();
+    block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory<
+        shared_model::validation::DefaultAnyBlockValidator>>();
   }
 
   void TearDown() override {
