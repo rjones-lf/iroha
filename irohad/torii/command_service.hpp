@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef TORII_COMMAND_SERVICE_HPP
@@ -29,6 +17,7 @@
 #include "endpoint.pb.h"
 #include "logger/logger.hpp"
 #include "torii/processor/transaction_processor.hpp"
+#include "torii/status_bus.hpp"
 
 namespace torii {
   /**
@@ -40,12 +29,14 @@ namespace torii {
      * Creates a new instance of CommandService
      * @param tx_processor - processor of received transactions
      * @param storage - to query transactions outside the cache
+     * @param status_bus is a common notifier for tx statuses
      * @param initial_timeout - streaming timeout when tx is not received
      * @param nonfinal_timeout - streaming timeout when tx is being processed
      */
     CommandService(
         std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
         std::shared_ptr<iroha::ametsuchi::Storage> storage,
+        std::shared_ptr<iroha::torii::StatusBus> status_bus,
         std::chrono::milliseconds initial_timeout,
         std::chrono::milliseconds nonfinal_timeout);
 
@@ -150,9 +141,15 @@ namespace torii {
     inline void handleEvents(rxcpp::composite_subscription &subscription,
                              rxcpp::schedulers::run_loop &run_loop);
 
-    void addTxToCacheAndLog(const std::string &who,
-                            const shared_model::crypto::Hash &hash,
-                            const iroha::protocol::ToriiResponse &response);
+    /**
+     * Share tx status and log it
+     * @param who identifier for the logging
+     * @param hash of the tx
+     * @param response to be pushed
+     */
+    void pushStatus(const std::string &who,
+                    const shared_model::crypto::Hash &hash,
+                    const iroha::protocol::ToriiResponse &response);
 
    private:
     using CacheType = iroha::cache::Cache<shared_model::crypto::Hash,
@@ -161,28 +158,10 @@ namespace torii {
 
     std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor_;
     std::shared_ptr<iroha::ametsuchi::Storage> storage_;
+    std::shared_ptr<iroha::torii::StatusBus> status_bus_;
     std::chrono::milliseconds initial_timeout_;
     std::chrono::milliseconds nonfinal_timeout_;
     std::shared_ptr<CacheType> cache_;
-
-    /**
-     * Mutex for propagating stateless validation status
-     */
-    std::mutex stateless_tx_status_notifier_mutex_;
-
-    /**
-     * Subject with stateless validation statuses
-     */
-    rxcpp::subjects::subject<
-        std::shared_ptr<shared_model::interface::TransactionResponse>>
-        stateless_notifier_;
-
-    /**
-     * Observable with all transaction statuses
-     */
-    rxcpp::observable<
-        std::shared_ptr<shared_model::interface::TransactionResponse>>
-        responses_;
 
     logger::Logger log_;
   };

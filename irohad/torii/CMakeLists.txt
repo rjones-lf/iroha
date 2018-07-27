@@ -38,3 +38,11 @@ target_link_libraries(torii_service
     shared_model_stateless_validation
     processors
     )
+
+add_library(status_bus
+    impl/status_bus_impl.cpp
+    )
+target_link_libraries(status_bus
+    rxcpp
+    shared_model_interfaces
+    )

@@ -24,18 +24,18 @@ namespace shared_model {
       }
       // beginning of a batch
       if (not batch1) {
-        if (batch2.get()->transactionHashes().size() == 0) {
+        if (batch2.get()->reducedHashes().size() == 0) {
           return (boost::format("Tx %s has a batch of 0 transactions")
                   % tr2.value()->hash().hex())
               .str();
         }
-        if (batch2.get()->transactionHashes().front()
+        if (batch2.get()->reducedHashes().front()
             != tr2.value()->reducedHash()) {
           return (boost::format("Tx %s is a first transaction of a batch, but "
                                 "it's reduced hash %s doesn't match the first "
                                 "reduced hash in batch %s")
                   % tr2.value()->hash().hex()
-                  % batch2.get()->transactionHashes().front().hex()
+                  % batch2.get()->reducedHashes().front().hex()
                   % tr2.value()->reducedHash().hex())
               .str();
         }
@@ -43,26 +43,26 @@ namespace shared_model {
       }
       // end of a batch
       if (not batch2) {
-        if (batch1.get()->transactionHashes().back()
+        if (batch1.get()->reducedHashes().back()
             != tr1.value()->reducedHash()) {
           return (boost::format("Tx %s is a last transaction of a batch, but "
                                 "it's reduced hash %s doesn't match the last "
                                 "reduced hash in batch %s")
                   % tr1.value()->hash().hex()
-                  % batch1.get()->transactionHashes().back().hex()
+                  % batch1.get()->reducedHashes().back().hex()
                   % tr1.value()->reducedHash().hex())
               .str();
         }
         return "";
       }
       // inside of a batch
-      auto it1 = boost::find(batch1.get()->transactionHashes(),
+      auto it1 = boost::find(batch1.get()->reducedHashes(),
                              tr1.value()->reducedHash());
-      auto it2 = boost::find(batch2.get()->transactionHashes(),
+      auto it2 = boost::find(batch2.get()->reducedHashes(),
                              tr2.value()->reducedHash());
-      if (it1 == end(batch1.get()->transactionHashes())
-          or it2 == end(batch2.get()->transactionHashes())
-          or next(it1) == end(batch1.get()->transactionHashes())
+      if (it1 == end(batch1.get()->reducedHashes())
+          or it2 == end(batch2.get()->reducedHashes())
+          or next(it1) == end(batch1.get()->reducedHashes())
           or *next(it1) != *it2) {
         // end of the bach and beginning of the next
         if (canFollow(tr1, boost::none) == ""

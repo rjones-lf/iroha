@@ -564,7 +564,7 @@ class FieldValidatorTest : public ValidatorsTest {
     iroha::protocol::Transaction::Payload::BatchMeta meta;
     meta.set_type(iroha::protocol::Transaction::Payload::BatchMeta::BatchType::
                       Transaction_Payload_BatchMeta_BatchType_ATOMIC);
-    meta.add_tx_hashes("tst");
+    meta.add_reduced_hashes("tst");
     std::vector<FieldTestCase> all_cases;
     all_cases.push_back(makeTestCase(
         "batch meta test", &FieldValidatorTest::batch_meta, meta, true, ""));
