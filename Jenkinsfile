@@ -35,6 +35,7 @@ pipeline {
     IROHA_POSTGRES_USER = "pguser${GIT_COMMIT}"
     IROHA_POSTGRES_PASSWORD = "${GIT_COMMIT}"
     IROHA_POSTGRES_PORT = 5432
+    CHANGE_BRANCH_LOCAL = ''
   }
 
   options {
@@ -48,7 +49,13 @@ pipeline {
       agent { label 'master' }
       steps {
         script {
-          if (GIT_LOCAL_BRANCH != "develop") {
+          // need this for develop->master PR cases
+          // CHANGE_BRANCH is not defined if this is a branch build
+          try {
+            CHANGE_BRANCH_LOCAL = env.CHANGE_BRANCH
+          }
+          catch(MissingPropertyException e) { }
+          if (GIT_LOCAL_BRANCH != "develop" && CHANGE_BRANCH_LOCAL != "develop") {
             def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
             builds.cancelSameJobBuilds()
           }
