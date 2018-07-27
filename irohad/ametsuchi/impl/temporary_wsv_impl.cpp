@@ -34,7 +34,7 @@ namespace iroha {
       auto execute_command =
           [this](auto &command) -> expected::Result<void, CommandError> {
         // Validate and execute command
-            return boost::apply_visitor(*command_executor_, command.get());
+        return boost::apply_visitor(*command_executor_, command.get());
       };
 
       auto savepoint_wrapper = createSavepoint("savepoint_temp_wsv");

@@ -23,7 +23,6 @@
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
-#include "ametsuchi/wsv_command.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "model/sha3_hash.hpp"
 

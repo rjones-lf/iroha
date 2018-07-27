@@ -137,7 +137,7 @@ namespace iroha {
     }
 
     PostgresCommandExecutor::PostgresCommandExecutor(soci::session &sql)
-        : sql_(sql), do_validation_(false) {}
+        : sql_(sql), do_validation_(true) {}
 
     void PostgresCommandExecutor::setCreatorAccountId(
         const shared_model::interface::types::AccountIdType

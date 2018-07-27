@@ -17,7 +17,6 @@
 
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 
-#include <soci/boost-optional.h>
 #include <soci/boost-tuple.h>
 
 #include "ametsuchi/impl/soci_utils.hpp"
