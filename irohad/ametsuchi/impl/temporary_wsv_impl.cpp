@@ -18,7 +18,6 @@ namespace iroha {
           wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
           executor_(std::make_shared<PostgresWsvCommand>(*sql_)),
           command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
-          command_validator_(std::make_shared<CommandValidator>(wsv_)),
           log_(logger::log("TemporaryWSV")) {
       *sql_ << "BEGIN";
     }

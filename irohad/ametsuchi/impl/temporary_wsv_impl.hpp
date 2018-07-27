@@ -20,8 +20,8 @@
 
 #include <soci/soci.h>
 
+#include "ametsuchi/command_executor.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
-#include "execution/command_executor.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 
@@ -64,7 +64,6 @@ namespace iroha {
       std::shared_ptr<WsvQuery> wsv_;
       std::shared_ptr<WsvCommand> executor_;
       std::shared_ptr<CommandExecutor> command_executor_;
-      std::shared_ptr<CommandValidator> command_validator_;
 
       logger::Logger log_;
     };
