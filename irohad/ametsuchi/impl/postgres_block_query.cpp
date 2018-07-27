@@ -180,8 +180,8 @@ namespace iroha {
       std::vector<boost::optional<BlockQuery::wTransaction>> result;
       std::for_each(tx_hashes.begin(),
                     tx_hashes.end(),
-                    [that = this, &result](const auto &tx_hash) {
-                      result.push_back(that->getTxByHashSync(tx_hash));
+                    [this, &result](const auto &tx_hash) {
+                      result.push_back(getTxByHashSync(tx_hash));
                     });
       return result;
     }

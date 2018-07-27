@@ -26,25 +26,6 @@ auto zero_string = std::string(32, '0');
 auto fake_hash = shared_model::crypto::Hash(zero_string);
 auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
 
-/**
- * Shortcut to create CallExact observable wrapper, subscribe with given lambda,
- * and validate the number of calls with optional custom output
- * @tparam O observable type
- * @tparam F on_next function type
- * @param o observable object
- * @param f function object
- * @param call_count number of expected calls
- * @param msg custom validation failure message
- */
-template <typename O, typename F>
-void validateCalls(O &&o,
-                   F &&f,
-                   uint64_t call_count,
-                   const std::string &msg = {}) {
-  auto wrap = make_test_subscriber<CallExact>(std::forward<O>(o), call_count);
-  wrap.subscribe(std::forward<F>(f));
-  ASSERT_TRUE(wrap.validate()) << "Expected " << call_count << " calls" << msg;
-}
 
 /**
  * Validate getAccountTransaction with given parameters
@@ -213,6 +194,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
   auto hashes = {block1.hash(), block2.hash()};
 
   auto stored_blocks = blocks->getBlocks(1, 2);
+  ASSERT_EQ(2, stored_blocks.size());
   for (size_t i = 0; i < stored_blocks.size(); i++) {
     EXPECT_EQ(*(hashes.begin() + i), stored_blocks[i]->hash());
   }
@@ -355,6 +337,7 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
   auto hashes = {block1.hash(), block2.hash(), block3.hash()};
 
   auto stored_blocks = blocks->getBlocks(1, 3);
+  ASSERT_EQ(3, stored_blocks.size());
   for (size_t i = 0; i < stored_blocks.size(); i++) {
     EXPECT_EQ(*(hashes.begin() + i), stored_blocks[i]->hash());
   }

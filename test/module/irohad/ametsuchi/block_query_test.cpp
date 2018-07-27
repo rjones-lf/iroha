@@ -21,14 +21,12 @@
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "framework/result_fixture.hpp"
-#include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace iroha::ametsuchi;
-using namespace framework::test_subscriber;
 
 using testing::Return;
 
