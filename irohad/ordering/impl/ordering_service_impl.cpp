@@ -91,7 +91,6 @@ namespace iroha {
       for (std::unique_ptr<shared_model::interface::TransactionBatch> batch;
            txs.size() < max_size_ and queue_.try_pop(batch);) {
         auto batch_size = batch->transactions().size();
-        txs.reserve(batch_size);
         txs.insert(std::end(txs),
             std::make_move_iterator(std::begin(batch->transactions())),
             std::make_move_iterator(std::end(batch->transactions())));

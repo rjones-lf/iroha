@@ -13,7 +13,6 @@
 
 namespace shared_model {
   namespace interface {
-
     class Proposal;
 
     /**
@@ -33,4 +32,5 @@ namespace shared_model {
     };
   }  // namespace interface
 }  // namespace shared_model
+
 #endif  // IROHA_PROPOSAL_FACTORY_HPP

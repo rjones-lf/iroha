@@ -13,7 +13,6 @@
 
 namespace shared_model {
   namespace proto {
-
     template <typename Validator>
     class ProtoProposalFactory : public interface::ProposalFactory,
                                  public interface::UnsafeProposalFactory {
