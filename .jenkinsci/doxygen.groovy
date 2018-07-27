@@ -17,6 +17,7 @@ def doDoxygen() {
       }
     }
   }
+  catch (MissingPropertyException e) {}
 }
 
 return this
