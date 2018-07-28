@@ -34,7 +34,7 @@ using iroha::operator|;
 
 using TransactionSequenceBuilder = TransportBuilder<
     interface::TransactionSequence,
-    validation::UnsignedTransactionsCollectionValidator<
+    validation::TransactionsCollectionValidator<
         validation::TransactionValidator<
             validation::FieldValidator,
             validation::CommandValidatorVisitor<validation::FieldValidator>>,

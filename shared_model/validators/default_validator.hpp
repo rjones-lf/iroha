@@ -28,8 +28,7 @@
 #include "validators/signable_validator.hpp"
 #include "validators/transaction_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
-#include "validators/transactions_collection/signed_transactions_collection_validator.hpp"
-#include "validators/transactions_collection/unsigned_transactions_collection_validator.hpp"
+#include "validators/transactions_collection/transactions_collection_validator.hpp"
 
 namespace shared_model {
   namespace validation {
@@ -37,44 +36,52 @@ namespace shared_model {
         TransactionValidator<FieldValidator,
                              CommandValidatorVisitor<FieldValidator>>;
 
-    using DefaultQueryValidator =
-        QueryValidator<FieldValidator, QueryValidatorVisitor<FieldValidator>>;
-
-    using DefaultBlocksQueryValidator = BlocksQueryValidator<FieldValidator>;
-
-    using DefaultProposalValidator = ProposalValidator<
-        FieldValidator,
-        DefaultTransactionValidator,
-        UnsignedTransactionsCollectionValidator<DefaultTransactionValidator>>;
-
-    using DefaultBlockValidator = BlockValidator<
-        FieldValidator,
-        DefaultTransactionValidator,
-        SignedTransactionsCollectionValidator<DefaultTransactionValidator>>;
-
-    using DefaultEmptyBlockValidator = EmptyBlockValidator<FieldValidator>;
-
-    using DefaultAnyBlockValidator =
-        AnyBlockValidator<DefaultBlockValidator, DefaultEmptyBlockValidator>;
-
     using DefaultSignableTransactionValidator =
         SignableModelValidator<DefaultTransactionValidator,
                                const interface::Transaction &,
                                FieldValidator>;
+
+    using DefaultQueryValidator =
+        QueryValidator<FieldValidator, QueryValidatorVisitor<FieldValidator>>;
 
     using DefaultSignableQueryValidator =
         SignableModelValidator<DefaultQueryValidator,
                                const interface::Query &,
                                FieldValidator>;
 
+    using DefaultBlocksQueryValidator = BlocksQueryValidator<FieldValidator>;
+
+    using DefaultUnsignedTransactionsValidator =
+        TransactionsCollectionValidator<DefaultTransactionValidator,
+                                        BatchOrderValidator>;
+
+    using DefaultSignedOrderedTransctionsValidator =
+        TransactionsCollectionValidator<DefaultSignableTransactionValidator,
+                                        BatchOrderValidator>;
+
+    using DefaultSignedUnorderedTransactionsValidator =
+        TransactionsCollectionValidator<DefaultSignableTransactionValidator,
+                                        AnyOrderValidator>;
+
+    using DefaultProposalValidator =
+        ProposalValidator<FieldValidator,
+                          DefaultTransactionValidator,
+                          DefaultUnsignedTransactionsValidator>;
+
+    using DefaultBlockValidator =
+        BlockValidator<FieldValidator,
+                       DefaultTransactionValidator,
+                       DefaultSignedOrderedTransctionsValidator>;
+
     using DefaultSignableBlockValidator =
         SignableModelValidator<DefaultBlockValidator,
                                const interface::Block &,
                                FieldValidator>;
 
-    using DefaultUnsignedTxCollectionValidator =
-        UnsignedTransactionsCollectionValidator<DefaultTransactionValidator,
-                                                BatchOrderValidator>;
+    using DefaultEmptyBlockValidator = EmptyBlockValidator<FieldValidator>;
+
+    using DefaultAnyBlockValidator =
+        AnyBlockValidator<DefaultBlockValidator, DefaultEmptyBlockValidator>;
 
   }  // namespace validation
 }  // namespace shared_model
