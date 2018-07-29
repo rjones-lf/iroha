@@ -219,7 +219,7 @@ namespace framework {
                   rest_vector.end(),
                   boost::back_move_inserter(first_vector));
         return first_vector;
-      };
+      }
 
       auto makeTxBatchCollection(const HashesType &) {
         return shared_model::interface::types::SharedTxsCollectionType();
