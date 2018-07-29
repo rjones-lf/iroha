@@ -26,28 +26,24 @@ def doDebugBuild(coverageEnabled=false) {
                                            ['PARALLELISM': parallelism])
   // push Docker image in case the current branch is develop,
   // or it is a commit into PR which base branch is develop (usually develop -> master)
-  // CHANGE_BRANCH is not defined if this is a branch
-  try {
-    if ((GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH == 'develop') && manifest.manifestSupportEnabled()) {
-      manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop-build",
-        ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
-         "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
-         "${DOCKER_REGISTRY_BASENAME}:aarch64-develop-build"])
-      manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:develop-build",
-        [
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
-           arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
-           arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-develop-build",
-           arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
-        ])
-      withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
-        manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:develop-build", login, password)
-      }
+  if ((GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop') && manifest.manifestSupportEnabled()) {
+    manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop-build",
+      ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
+       "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
+       "${DOCKER_REGISTRY_BASENAME}:aarch64-develop-build"])
+    manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:develop-build",
+      [
+        [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
+         arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
+        [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
+         arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
+        [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-develop-build",
+         arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
+      ])
+    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
+      manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:develop-build", login, password)
     }
   }
-  catch(MissingPropertyException e) {}
 
   docker.image('postgres:9.5').withRun(""
     + " -e POSTGRES_USER=${env.IROHA_POSTGRES_USER}"

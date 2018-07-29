@@ -59,52 +59,48 @@ def doReleaseBuild() {
 
   // push Docker image in case the current branch is develop,
   // or it is a commit into PR which base branch is develop (usually develop -> master)
-  // CHANGE_BRANCH is not defined if this is a branch
-  try {
-    if (GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH == 'develop') {
-      iCRelease.push("${platform}-develop")
-      if (manifest.manifestSupportEnabled()) {
-        manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop",
-          ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop",
-           "${DOCKER_REGISTRY_BASENAME}:armv7l-develop",
-           "${DOCKER_REGISTRY_BASENAME}:aarch64-develop"])
-        manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:develop",
-          [
-            [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-develop",
-             arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
-            [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-develop",
-             arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
-            [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-develop",
-             arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
-          ])
-        withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
-          manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:develop", login, password)
-        }
-      }
-    }
-    else if (GIT_LOCAL_BRANCH == 'master') {
-      iCRelease.push("${platform}-latest")
-      if (manifest.manifestSupportEnabled()) {
-        manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:latest",
-          ["${DOCKER_REGISTRY_BASENAME}:x86_64-latest",
-           "${DOCKER_REGISTRY_BASENAME}:armv7l-latest",
-           "${DOCKER_REGISTRY_BASENAME}:aarch64-latest"])
-        manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:latest",
-          [
-            [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-latest",
-             arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
-            [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-latest",
-             arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
-            [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-latest",
-             arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
-          ])
-        withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
-          manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:latest", login, password)
-        }
+  if (GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop') {
+    iCRelease.push("${platform}-develop")
+    if (manifest.manifestSupportEnabled()) {
+      manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop",
+        ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop",
+         "${DOCKER_REGISTRY_BASENAME}:armv7l-develop",
+         "${DOCKER_REGISTRY_BASENAME}:aarch64-develop"])
+      manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:develop",
+        [
+          [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-develop",
+           arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
+          [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-develop",
+           arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
+          [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-develop",
+           arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
+        ])
+      withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
+        manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:develop", login, password)
       }
     }
   }
-  catch(MissingPropertyException e) {}
+  else if (GIT_LOCAL_BRANCH == 'master') {
+    iCRelease.push("${platform}-latest")
+    if (manifest.manifestSupportEnabled()) {
+      manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:latest",
+        ["${DOCKER_REGISTRY_BASENAME}:x86_64-latest",
+         "${DOCKER_REGISTRY_BASENAME}:armv7l-latest",
+         "${DOCKER_REGISTRY_BASENAME}:aarch64-latest"])
+      manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:latest",
+        [
+          [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-latest",
+           arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
+          [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-latest",
+           arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
+          [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-latest",
+           arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
+        ])
+      withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
+        manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:latest", login, password)
+      }
+    }
+  }
 
   sh "docker rmi ${iCRelease.id}"
 }
