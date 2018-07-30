@@ -98,12 +98,8 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
         auto reader =
             this->getPeerStub(**peer).retrieveBlocks(&context, request);
         while (reader->Read(&block)) {
-          auto proto_block = block_factory_.createBlock(std::move(block))
-              | getNonEmptyBlock;
-          //      shared_model::proto::TransportBuilder<shared_model::proto::Block,
-          //                                            Validator>(
-          //          Validator(TimerWrapper(block.payload().created_time())))
-          //          .build(block)
+          auto proto_block =
+              block_factory_.createBlock(std::move(block)) | getNonEmptyBlock;
           proto_block.match(
               // success case
               [&subscriber](iroha::expected::Value<std::shared_ptr<
@@ -143,14 +139,16 @@ boost::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
   }
 
   // stateless validation of block
-  auto result = std::make_shared<shared_model::proto::Block>(std::move(block));
-//  auto answer = BlockValidator().validate(*result);
-//  if (answer.hasErrors()) {
-//    log_->error(answer.reason());
-//    return boost::none;
-//  }
+  auto result = block_factory_.createBlock(std::move(block)) | getNonEmptyBlock;
 
-  return boost::optional<std::shared_ptr<Block>>(std::move(result));
+  return result.match(
+      [](iroha::expected::Value<std::shared_ptr<shared_model::interface::Block>>
+             &v) { return boost::make_optional(std::move(v.value)); },
+      [this](iroha::expected::Error<std::string> &e)
+          -> boost::optional<std::shared_ptr<Block>> {
+        log_->error(e.error);
+        return boost::none;
+      });
 }
 
 boost::optional<std::shared_ptr<shared_model::interface::Peer>>

@@ -19,6 +19,7 @@
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
 #include <gtest/gtest.h>
+#include <builders/protobuf/builder_templates/transaction_template.hpp>
 
 #include "builders/common_objects/peer_builder.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
@@ -76,6 +77,9 @@ class BlockLoaderTest : public testing::Test {
   }
 
   auto getBaseBlockBuilder() const {
+    iroha::protocol::Transaction proto_tx;
+    shared_model::proto::Transaction tx(proto_tx);
+
     return shared_model::proto::TemplateBlockBuilder<
                (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
                shared_model::validation::AlwaysValidValidator,
@@ -83,7 +87,8 @@ class BlockLoaderTest : public testing::Test {
                    shared_model::proto::Block>>()
         .height(1)
         .prevHash(kPrevHash)
-        .createdTime(iroha::time::now());
+        .createdTime(iroha::time::now())
+        .transactions(std::vector<decltype(tx)>{tx});
   }
 
   const Hash kPrevHash =
