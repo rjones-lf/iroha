@@ -161,7 +161,7 @@ namespace iroha {
     }
 
     void TransactionProcessorImpl::batchHandle(
-        const shared_model::interface::TransactionBatch &batch)
+        const shared_model::interface::TransactionBatch &transaction_batch)
         const {
       if (batch.hasAllSignatures()) {
         pcs_->propagate_batch(batch);

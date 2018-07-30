@@ -46,12 +46,11 @@ namespace iroha {
           const = 0;
 
       /**
-       * Process transaction sequence and propagate batches from it either to
-       * the MST or PCS
+       * Process batch and propagate it to the MST or PCS
        * @param transaction_sequence - transaction sequence for processing
        */
       virtual void batchHandle(const shared_model::interface::TransactionBatch
-                                   &transaction_sequence) const = 0;
+                                   &transaction_batch) const = 0;
 
       /**
        * Subscribers will be notified with transaction status

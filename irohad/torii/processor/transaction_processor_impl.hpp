@@ -43,7 +43,7 @@ namespace iroha {
           const override;
 
       void batchHandle(const shared_model::interface::TransactionBatch
-                           &transaction_sequence) const override;
+                           &transaction_batch) const override;
 
       rxcpp::observable<
           std::shared_ptr<shared_model::interface::TransactionResponse>>
