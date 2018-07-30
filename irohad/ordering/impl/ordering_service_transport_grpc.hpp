@@ -30,10 +30,9 @@ namespace iroha {
 
     class OrderingServiceTransportGrpc
         : public iroha::network::OrderingServiceTransport,
-          public proto::OrderingServiceTransportGrpc::Service,
-          network::AsyncGrpcClient<google::protobuf::Empty> {
+          public proto::OrderingServiceTransportGrpc::Service {
      public:
-      OrderingServiceTransportGrpc();
+      OrderingServiceTransportGrpc(std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call);
       void subscribe(
           std::shared_ptr<iroha::network::OrderingServiceNotification>
               subscriber) override;
@@ -54,6 +53,8 @@ namespace iroha {
 
      private:
       std::weak_ptr<iroha::network::OrderingServiceNotification> subscriber_;
+      std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call_;
+
     };
 
   }  // namespace ordering

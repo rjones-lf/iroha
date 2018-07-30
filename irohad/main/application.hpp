@@ -46,6 +46,7 @@
 #include "validation/impl/chain_validator_impl.hpp"
 #include "validation/impl/stateful_validator_impl.hpp"
 #include "validation/stateful_validator.hpp"
+#include "mst.grpc.pb.h"
 
 namespace iroha {
   namespace ametsuchi {
@@ -120,6 +121,8 @@ class Irohad {
   virtual void initCryptoProvider();
 
   virtual void initValidators();
+  
+  virtual void initNetworkClient();
 
   virtual void initOrderingGate();
 
@@ -140,6 +143,7 @@ class Irohad {
   virtual void initTransactionCommandService();
 
   virtual void initQueryService();
+  
 
   /**
    * Initialize WSV restorer
@@ -168,6 +172,9 @@ class Irohad {
 
   // WSV restorer
   std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;
+
+  // async call
+  std::shared_ptr<iroha::network::AsyncGrpcClient<google::protobuf::Empty>> async_call_;
 
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;

@@ -28,7 +28,7 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
     ::grpc::ServerContext *context,
     const iroha::protocol::Proposal *request,
     ::google::protobuf::Empty *response) {
-  log_->info("receive proposal");
+  async_call_->log_->info("receive proposal");
 
   auto proposal_res = factory_->createProposal(*request);
   proposal_res.match(
@@ -51,27 +51,29 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
 }
 
 OrderingGateTransportGrpc::OrderingGateTransportGrpc(
-    const std::string &server_address)
-    : network::AsyncGrpcClient<google::protobuf::Empty>(
-          logger::log("OrderingGate")),
-      client_(network::createClient<proto::OrderingServiceTransportGrpc>(
+    const std::string &server_address,
+    std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call)
+    : client_(network::createClient<proto::OrderingServiceTransportGrpc>(
           server_address)),
+      async_call_(async_call),
       factory_(std::make_unique<shared_model::proto::ProtoProposalFactory<
                    shared_model::validation::DefaultProposalValidator>>()) {}
 
 void OrderingGateTransportGrpc::propagateTransaction(
     std::shared_ptr<const shared_model::interface::Transaction> transaction) {
-  log_->info("Propagate tx (on transport)");
-  auto call = new AsyncClientCall;
+  async_call_->log_->info("Propagate tx (on transport)");
 
   auto transaction_transport =
       static_cast<const shared_model::proto::Transaction &>(*transaction)
           .getTransport();
-  log_->debug("Propagating: '{}'", transaction_transport.DebugString());
-  call->response_reader =
-      client_->AsynconTransaction(&call->context, transaction_transport, &cq_);
+  async_call_->log_->debug("Propagating: '{}'", transaction_transport.DebugString());
 
-  call->response_reader->Finish(&call->reply, &call->status, call);
+  async_call_->Call(
+    [&] (auto context, auto cq)
+    {
+        return client_->AsynconTransaction(context,transaction_transport,cq);
+    } );
+
 }
 
 void OrderingGateTransportGrpc::propagateBatch(
@@ -93,6 +95,6 @@ void OrderingGateTransportGrpc::propagateBatch(
 
 void OrderingGateTransportGrpc::subscribe(
     std::shared_ptr<iroha::network::OrderingGateNotification> subscriber) {
-  log_->info("Subscribe");
+  async_call_->log_->info("Subscribe");
   subscriber_ = subscriber;
 }

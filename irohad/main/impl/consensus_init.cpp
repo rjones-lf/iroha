@@ -33,8 +33,9 @@ namespace iroha {
         return std::make_shared<PeerOrdererImpl>(wsv);
       }
 
-      auto YacInit::createNetwork() {
-        consensus_network = std::make_shared<NetworkImpl>();
+      auto YacInit::createNetwork(async_call) {
+          auto async_call = std::make_shared< iroha::network::AsyncGrpcClient<google::protobuf::Empty> >(logger::log("YacInit"));
+        consensus_network = std::make_shared< NetworkImpl>( async_call );
         return consensus_network;
       }
 
@@ -87,7 +88,8 @@ namespace iroha {
                            createNetwork(),
                            createCryptoProvider(keypair),
                            createTimer(delay_milliseconds),
-                           initial_order);
+                           initial_order,
+        );
       }
 
       std::shared_ptr<YacGate> YacInit::initConsensusGate(
@@ -96,7 +98,8 @@ namespace iroha {
           std::shared_ptr<network::BlockLoader> block_loader,
           const shared_model::crypto::Keypair &keypair,
           std::chrono::milliseconds vote_delay_milliseconds,
-          std::chrono::milliseconds load_delay_milliseconds) {
+          std::chrono::milliseconds load_delay_milliseconds,
+      {
         auto peer_orderer = createPeerOrderer(wsv);
 
         auto yac = createYac(peer_orderer->getInitialOrdering().value(),

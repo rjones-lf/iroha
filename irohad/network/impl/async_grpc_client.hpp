@@ -32,9 +32,9 @@ namespace iroha {
     template <typename Response>
     class AsyncGrpcClient {
      public:
-      explicit AsyncGrpcClient(logger::Logger &&log)
+      explicit AsyncGrpcClient()
           : thread_(&AsyncGrpcClient::asyncCompleteRpc, this),
-            log_(std::move(log)) {}
+            log_(logger::log("AsyncGrpcClient")) {}
 
       /**
        * Listen to gRPC server responses
@@ -51,6 +51,7 @@ namespace iroha {
         }
       }
 
+
       ~AsyncGrpcClient() {
         cq_.Shutdown();
         if (thread_.joinable()) {
@@ -61,6 +62,7 @@ namespace iroha {
       grpc::CompletionQueue cq_;
       std::thread thread_;
       logger::Logger log_;
+
 
       /**
        * State and data information of gRPC call
@@ -75,6 +77,15 @@ namespace iroha {
         std::unique_ptr<grpc::ClientAsyncResponseReader<Response>>
             response_reader;
       };
+      /**
+       * Universal method to perform all needed sends
+       */
+      template<typename F>
+      void Call( F&& lambda ) {
+          auto call = new AsyncClientCall;
+          call->response_reader = lambda( &call->context, &cq_ );
+          call->response_reader->Finish( &call->reply, &call->status, call );
+      }
     };
   }  // namespace network
 }  // namespace iroha

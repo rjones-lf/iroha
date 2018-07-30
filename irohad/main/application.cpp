@@ -55,7 +55,7 @@ Irohad::Irohad(const std::string &block_store_dir,
   log_ = logger::log("IROHAD");
   log_->info("created");
   // Initializing storage at this point in order to insert genesis block before
-  // initialization of iroha deamon
+   // initialization of iroha deamon
   initStorage();
 }
 
@@ -69,6 +69,7 @@ void Irohad::init() {
 
   initCryptoProvider();
   initValidators();
+  initNetworkClient();
   initOrderingGate();
   initSimulator();
   initBlockLoader();
@@ -90,6 +91,7 @@ void Irohad::dropStorage() {
   storage->reset();
   ordering_service_storage_->resetState();
 }
+
 
 /**
  * Initializing iroha daemon storage
@@ -159,6 +161,11 @@ void Irohad::initValidators() {
   log_->info("[Init] => validators");
 }
 
+void Irohad::initNetworkClient() {
+  async_call_ = std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
+}
+
+
 /**
  * Initializing ordering gate
  */
@@ -167,7 +174,8 @@ void Irohad::initOrderingGate() {
                                                  max_proposal_size_,
                                                  proposal_delay_,
                                                  ordering_service_storage_,
-                                                 storage->getBlockQuery());
+                                                 storage->getBlockQuery(),
+                                                 async_call_);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -245,7 +253,7 @@ void Irohad::initStatusBus() {
 
 void Irohad::initMstProcessor() {
   if (is_mst_supported_) {
-    auto mst_transport = std::make_shared<MstTransportGrpc>();
+    auto mst_transport = std::make_shared<MstTransportGrpc>(async_call_);
     auto mst_completer = std::make_shared<DefaultCompleter>();
     auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
