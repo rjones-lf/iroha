@@ -52,7 +52,8 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
 
 OrderingGateTransportGrpc::OrderingGateTransportGrpc(
     const std::string &server_address,
-    std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call)
+    std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+        async_call)
     : client_(network::createClient<proto::OrderingServiceTransportGrpc>(
           server_address)),
       async_call_(async_call),
@@ -66,20 +67,17 @@ void OrderingGateTransportGrpc::propagateTransaction(
   auto transaction_transport =
       static_cast<const shared_model::proto::Transaction &>(*transaction)
           .getTransport();
-  async_call_->log_->debug("Propagating: '{}'", transaction_transport.DebugString());
+  async_call_->log_->debug("Propagating: '{}'",
+                           transaction_transport.DebugString());
 
-  async_call_->Call(
-    [&] (auto context, auto cq)
-    {
-        return client_->AsynconTransaction(context,transaction_transport,cq);
-    } );
-
+  async_call_->Call([&](auto context, auto cq) {
+    return client_->AsynconTransaction(context, transaction_transport, cq);
+  });
 }
 
 void OrderingGateTransportGrpc::propagateBatch(
     const shared_model::interface::TransactionBatch &batch) {
-  log_->info("Propagate transaction batch (on transport)");
-  auto call = new AsyncClientCall;
+  async_call_->log_->info("Propagate transaction batch (on transport)");
 
   iroha::protocol::TxList batch_transport;
   for (const auto tx : batch.transactions()) {
@@ -87,10 +85,9 @@ void OrderingGateTransportGrpc::propagateBatch(
         std::static_pointer_cast<shared_model::proto::Transaction>(tx)
             ->getTransport());
   }
-  call->response_reader =
-      client_->AsynconBatch(&call->context, batch_transport, &cq_);
-
-  call->response_reader->Finish(&call->reply, &call->status, call);
+  async_call_->Call([&](auto context, auto cq) {
+    return client_->AsynconBatch(context, batch_transport, cq);
+  });
 }
 
 void OrderingGateTransportGrpc::subscribe(
