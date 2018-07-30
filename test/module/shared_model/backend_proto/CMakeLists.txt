@@ -94,5 +94,13 @@ addtest(proto_common_objects_factory_test
 target_link_libraries(proto_common_objects_factory_test
     shared_model_cryptography
     shared_model_stateless_validation
-    schema
+    )
+
+addtest(proto_proposal_factory_test
+    proto_proposal_factory_test.cpp
+    )
+
+target_link_libraries(proto_proposal_factory_test
+    shared_model_stateless_validation
+    shared_model_proto_backend
     )

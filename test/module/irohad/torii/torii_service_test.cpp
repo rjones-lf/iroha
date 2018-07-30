@@ -1,18 +1,7 @@
-/*
-Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include "builders/protobuf/block.hpp"
 #include "builders/protobuf/proposal.hpp"
@@ -28,6 +17,7 @@ limitations under the License.
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "torii/command_client.hpp"
 #include "torii/command_service.hpp"
+#include "torii/impl/status_bus_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 
 constexpr size_t TimesToriiBlocking = 5;
@@ -44,6 +34,7 @@ using namespace iroha::torii;
 using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds initial_timeout = 1s;
 constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
+constexpr unsigned resubscribe_attempts = 3;
 
 using iroha::Commit;
 
@@ -108,8 +99,10 @@ class ToriiServiceTest : public testing::Test {
     EXPECT_CALL(*mst, onExpiredTransactionsImpl())
         .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
+    auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
     auto tx_processor =
-        std::make_shared<iroha::torii::TransactionProcessorImpl>(pcsMock, mst);
+        std::make_shared<iroha::torii::TransactionProcessorImpl>(
+            pcsMock, mst, status_bus);
 
     EXPECT_CALL(*block_query, getTxByHashSync(_))
         .WillRepeatedly(Return(boost::none));
@@ -117,8 +110,11 @@ class ToriiServiceTest : public testing::Test {
 
     //----------- Server run ----------------
     runner
-        ->append(std::make_unique<torii::CommandService>(
-            tx_processor, storage, initial_timeout, nonfinal_timeout))
+        ->append(std::make_unique<torii::CommandService>(tx_processor,
+                                                         storage,
+                                                         status_bus,
+                                                         initial_timeout,
+                                                         nonfinal_timeout))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -413,9 +409,14 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   // (Committed in this case) will be received. We start request before
   // transaction sending so we need in a separate thread for it.
   std::thread t([&] {
+    unsigned resub_counter(resubscribe_attempts);
     iroha::protocol::TxStatusRequest tx_request;
     tx_request.set_tx_hash(txhash);
-    client.StatusStream(tx_request, torii_response);
+    do {
+      client.StatusStream(tx_request, torii_response);
+    } while (torii_response.back().tx_status()
+                 != iroha::protocol::TxStatus::COMMITTED
+             and --resub_counter);
   });
 
   client.Torii(iroha_tx.getTransport());

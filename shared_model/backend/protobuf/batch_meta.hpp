@@ -34,10 +34,10 @@ namespace shared_model {
                                    ->index();
               return static_cast<interface::types::BatchType>(which);
             }},
-            transaction_hashes_{[this] {
+            reduced_hashes_{[this] {
               return boost::accumulate(
-                  proto_->tx_hashes(),
-                  TransactionHashesType{},
+                  proto_->reduced_hashes(),
+                  ReducedHashesType{},
                   [](auto &&acc, const auto &hash) {
                     acc.emplace_back(hash);
                     return std::forward<decltype(acc)>(acc);
@@ -51,8 +51,8 @@ namespace shared_model {
       interface::types::BatchType type() const override {
         return *type_;
       };
-      const TransactionHashesType &transactionHashes() const override {
-        return *transaction_hashes_;
+      const ReducedHashesType &reducedHashes() const override {
+        return *reduced_hashes_;
       };
 
      private:
@@ -61,7 +61,7 @@ namespace shared_model {
 
       Lazy<interface::types::BatchType> type_;
 
-      const Lazy<TransactionHashesType> transaction_hashes_;
+      const Lazy<ReducedHashesType> reduced_hashes_;
     };  // namespace proto
   }     // namespace proto
 }  // namespace shared_model

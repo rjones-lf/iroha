@@ -24,24 +24,24 @@ namespace shared_model {
             .init("BatchMeta")
             .append("Type",
                     type() == types::BatchType::ATOMIC ? "ATOMIC" : "ORDERED")
-            .appendAll(transactionHashes(),
+            .appendAll(reducedHashes(),
                        [](auto &hash) { return hash.toString(); })
             .finalize();
       }
       /// type of hashes collection
-      using TransactionHashesType = std::vector<interface::types::HashType>;
+      using ReducedHashesType = std::vector<interface::types::HashType>;
 
       /**
        * @return Hashes of transactions to fetch
        */
-      virtual const TransactionHashesType &transactionHashes() const = 0;
+      virtual const ReducedHashesType &reducedHashes() const = 0;
       /**
        * Checks equality of objects inside
        * @param rhs - other wrapped value
        * @return true, if wrapped objects are same
        */
       bool operator==(const ModelType &rhs) const override {
-        return boost::equal(transactionHashes(), rhs.transactionHashes())
+        return boost::equal(reducedHashes(), rhs.reducedHashes())
             and type() == rhs.type();
       }
     };

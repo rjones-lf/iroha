@@ -56,7 +56,10 @@ def doReleaseBuild() {
   sh "mv /tmp/${GIT_COMMIT}-${BUILD_NUMBER}/iroha.deb /tmp/${env.GIT_COMMIT}"
   sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
   iCRelease = docker.build("${DOCKER_REGISTRY_BASENAME}:${GIT_COMMIT}-${BUILD_NUMBER}-release", "--no-cache -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
-  if (env.GIT_LOCAL_BRANCH == 'develop') {
+
+  // push Docker image in case the current branch is develop,
+  // or it is a commit into PR which base branch is develop (usually develop -> master)
+  if (GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop') {
     iCRelease.push("${platform}-develop")
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop",
@@ -77,7 +80,7 @@ def doReleaseBuild() {
       }
     }
   }
-  else if (env.GIT_LOCAL_BRANCH == 'master') {
+  else if (GIT_LOCAL_BRANCH == 'master') {
     iCRelease.push("${platform}-latest")
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:latest",
@@ -98,6 +101,7 @@ def doReleaseBuild() {
       }
     }
   }
+
   sh "docker rmi ${iCRelease.id}"
 }
 return this

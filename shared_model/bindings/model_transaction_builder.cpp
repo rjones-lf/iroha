@@ -38,6 +38,12 @@ namespace shared_model {
       return ModelTransactionBuilder(builder_.quorum(quorum));
     }
 
+    ModelTransactionBuilder ModelTransactionBuilder::batchMeta(
+        interface::types::BatchType type,
+        const std::vector<interface::types::HashType> &hashes) {
+      return ModelTransactionBuilder(builder_.batchMeta(type, hashes));
+    }
+
     ModelTransactionBuilder ModelTransactionBuilder::addAssetQuantity(
         const interface::types::AssetIdType &asset_id,
         const std::string &amount) {

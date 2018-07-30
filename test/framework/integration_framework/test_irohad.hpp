@@ -64,6 +64,10 @@ namespace integration_framework {
       return crypto_signer_;
     }
 
+    auto getStatusBus() {
+      return status_bus_;
+    }
+
     void run() override {
       internal_server = std::make_unique<ServerRunner>(
           "127.0.0.1:" + std::to_string(internal_port_));

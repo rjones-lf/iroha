@@ -19,6 +19,8 @@
 
 #include <memory>
 
+#include <boost/thread/barrier.hpp>
+
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
@@ -179,10 +181,30 @@ namespace integration_framework {
       std::function<void(const shared_model::proto::TransactionResponse &)>
           validation) {
     log_->info("send transaction");
+
+    // Required for StatusBus synchronization
+    boost::barrier bar1(2);
+    auto bar2 = std::make_shared<boost::barrier>(2);
+    iroha_instance_->instance_->getStatusBus()
+        ->statuses()
+        .filter([&](auto s) { return s->transactionHash() == tx.hash(); })
+        .take(1)
+        .subscribe([&bar1, b2 = std::weak_ptr<boost::barrier>(bar2)](auto s) {
+          bar1.wait();
+          if (auto lock = b2.lock()) {
+            lock->wait();
+          }
+        });
+
     iroha_instance_->getIrohaInstance()->getCommandService()->Torii(
         tx.getTransport());
+    // make sure that the first (stateless) status is come
+    bar1.wait();
     // fetch status of transaction
     shared_model::proto::TransactionResponse status = getTxStatus(tx.hash());
+    // make sure that the following statuses (stateful/commited)
+    // isn't reached the bus yet
+    bar2->wait();
 
     // check validation function
     validation(status);

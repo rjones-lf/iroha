@@ -16,7 +16,7 @@ if (NOT IROHA_ROOT_PROJECT)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
   if (NOT MSVC)
     set(CMAKE_CXX_FLAGS "-std=c++14 -Wall -fdiagnostics-color=always")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wno-error=deprecated-declarations")
     set(CMAKE_CXX_FLAGS_DEBUG "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
   endif ()
 

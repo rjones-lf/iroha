@@ -88,7 +88,7 @@ parts:
      - -DgRPC_PROTOBUF_PROVIDER=package
      - -DgRPC_GFLAGS_PROVIDER=package
      - -DBUILD_SHARED_LIBS=ON
-    after: [cmake, protobuf, c-ares]
+    after: [cmake, protobuf, c-ares, gflags]
   spdlog:
     source: https://github.com/gabime/spdlog.git
     source-commit: f85a08622e20b74bff34381cafcb8ef8167b29d0
@@ -150,7 +150,7 @@ parts:
       mv $SNAPCRAFT_PART_INSTALL/include $SNAPCRAFT_PART_INSTALL/usr/local/include
   ed25519:
     source: https://github.com/hyperledger/iroha-ed25519.git
-    source-commit: e7188b8393dbe5ac54378610d53630bd4a180038
+    source-commit: f42953c631fae93011612f6b1ee33f1f88c3f8af
     plugin: cmake
     configflags: [-DTESTING=OFF]
     after: [cmake]

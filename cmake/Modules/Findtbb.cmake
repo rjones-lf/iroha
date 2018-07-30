@@ -48,3 +48,10 @@ set_target_properties(tbb PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${tbb_INCLUDE_DIR}
     IMPORTED_LOCATION ${tbb_LIBRARY}
     )
+
+if (NOT TBB_USE_GLIBCXX_VERSION AND UNIX AND NOT APPLE AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  # https://www.threadingbuildingblocks.org/docs/help/reference/appendices/known_issues/linux_os.html
+  string(REPLACE "." "0" TBB_USE_GLIBCXX_VERSION ${CMAKE_CXX_COMPILER_VERSION})
+  set_target_properties(tbb PROPERTIES
+    INTERFACE_COMPILE_DEFINITIONS "TBB_USE_GLIBCXX_VERSION=${TBB_USE_GLIBCXX_VERSION}")
+endif()

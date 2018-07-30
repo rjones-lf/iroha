@@ -6,7 +6,6 @@
 #include <gtest/gtest.h>
 
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
-#include "builders/default_builders.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/result_fixture.hpp"
 #include "validators/field_validator.hpp"

@@ -49,7 +49,7 @@ RUN set -e; \
     git clone https://github.com/boostorg/boost /tmp/boost; \
     (cd /tmp/boost ; git checkout 436ad1dfcfc7e0246141beddd11c8a4e9c10b146); \
     (cd /tmp/boost ; git submodule update --init --recursive); \
-    (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=system,filesystem); \
+    (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=system,filesystem,thread); \
     (cd /tmp/boost ; /tmp/boost/b2 headers); \
     (cd /tmp/boost ; /tmp/boost/b2 cxxflags="-std=c++14" -j ${PARALLELISM} install --prefix=/opt/dependencies/boost); \
     ldconfig; \
@@ -234,7 +234,7 @@ RUN set -e; \
 # install ed25519
 RUN set -e; \
     git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
-    (cd /tmp/ed25519 ; git checkout e7188b8393dbe5ac54378610d53630bd4a180038); \
+    (cd /tmp/ed25519 ; git checkout f42953c631fae93011612f6b1ee33f1f88c3f8af); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DTESTING=OFF \
