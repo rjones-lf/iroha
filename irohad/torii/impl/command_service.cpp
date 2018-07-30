@@ -146,16 +146,16 @@ namespace torii {
                     log_->warn("Found transaction {} in cache, ignoring",
                                tx_hash.hex());
                     return;
-
                   }
 
-                this->pushStatus(
-                    "ToriiList",
-                    std::move(tx_hash),
-                    makeResponse(tx_hash,
-                                 iroha::protocol::TxStatus::
-                                     STATELESS_VALIDATION_SUCCESS));
-              });
+                  this->pushStatus(
+                      "ToriiList",
+                      std::move(tx_hash),
+                      makeResponse(tx_hash,
+                                   iroha::protocol::TxStatus::
+                                       STATELESS_VALIDATION_SUCCESS));
+                });
+              }
             },
             [this, &tx_list](auto &error) {
               auto &txs = tx_list.transactions();
@@ -349,8 +349,8 @@ namespace torii {
                    },
                    [&] { log_->debug("stream done, {}", client_id); });
 
-    // run loop while subscription is active or there are pending events in the
-    // queue
+    // run loop while subscription is active or there are pending events in
+    // the queue
     handleEvents(subscription, rl);
 
     log_->debug("status stream done, {}", client_id);

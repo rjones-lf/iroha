@@ -152,12 +152,12 @@ namespace iroha {
     void TransactionProcessorImpl::batchHandle(
         const shared_model::interface::TransactionBatch &transaction_batch)
         const {
-      if (batch.hasAllSignatures()) {
-        pcs_->propagate_batch(batch);
+      if (transaction_batch.hasAllSignatures()) {
+        pcs_->propagate_batch(transaction_batch);
       } else {
         // TODO kamilsa 16.07.18 propagate full batch to mst when its
         // interface is updated
-        for (const auto tx : batch.transactions()) {
+        for (const auto tx : transaction_batch.transactions()) {
           mst_processor_->propagateTransaction(tx);
         }
       }
