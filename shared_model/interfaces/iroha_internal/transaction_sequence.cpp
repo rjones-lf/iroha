@@ -4,6 +4,7 @@
  */
 
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
+#include <validators/default_validator.hpp>
 
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "validators/field_validator.hpp"
@@ -69,21 +70,22 @@ namespace shared_model {
     TransactionSequence::createTransactionSequence(
         const types::SharedTxsCollectionType &transactions,
         const validation::TransactionsCollectionValidator<
-            validation::TransactionValidator<
-                validation::FieldValidator,
-                validation::CommandValidatorVisitor<
-                    validation::FieldValidator>>,
+            validation::DefaultTransactionValidator,
             validation::AnyOrderValidator> &validator);
 
     template iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequence::createTransactionSequence(
         const types::SharedTxsCollectionType &transactions,
         const validation::TransactionsCollectionValidator<
-            validation::TransactionValidator<
-                validation::FieldValidator,
-                validation::CommandValidatorVisitor<
-                    validation::FieldValidator>>,
+            validation::DefaultTransactionValidator,
             validation::BatchOrderValidator> &validator);
+
+    template iroha::expected::Result<TransactionSequence, std::string>
+    TransactionSequence::createTransactionSequence(
+        const types::SharedTxsCollectionType &transactions,
+        const validation::TransactionsCollectionValidator<
+            validation::DefaultSignableTransactionValidator,
+            validation::BatchOrderValidator> &);
 
     const types::SharedTxsCollectionType &TransactionSequence::transactions()
         const {

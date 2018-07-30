@@ -114,10 +114,12 @@ namespace shared_model {
     template iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
         std::shared_ptr<Transaction> transaction,
-        const validation::TransactionValidator<
-            validation::FieldValidator,
-            validation::CommandValidatorVisitor<validation::FieldValidator>>
-            &validator);
+        const validation::DefaultTransactionValidator &validator);
+
+    template iroha::expected::Result<TransactionBatch, std::string>
+    TransactionBatch::createTransactionBatch(
+        std::shared_ptr<Transaction> transaction,
+        const validation::DefaultSignableTransactionValidator &validator);
 
     const types::SharedTxsCollectionType &TransactionBatch::transactions()
         const {
