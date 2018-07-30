@@ -194,8 +194,8 @@ namespace iroha {
           [this, tx_hashes](const auto &subscriber) {
             std::for_each(tx_hashes.begin(),
                           tx_hashes.end(),
-                          [that = this, &subscriber](const auto &tx_hash) {
-                            subscriber.on_next(that->getTxByHashSync(tx_hash));
+                          [&subscriber, this](const auto &tx_hash) {
+                            subscriber.on_next(this->getTxByHashSync(tx_hash));
                           });
             subscriber.on_completed();
           });

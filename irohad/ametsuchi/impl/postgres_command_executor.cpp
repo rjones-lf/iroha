@@ -361,17 +361,16 @@ namespace iroha {
 
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return std::string(
-                (boost::format("command validation failed: account %s"
-                               " does not have permission %s or %s")
-                 % creator_account_id_
-                 % shared_model::proto::permissions::toString(
-                       shared_model::interface::permissions::Role::
-                           kAddSignatory)
-                 % shared_model::proto::permissions::toString(
-                       shared_model::interface::permissions::Grantable::
-                           kAddMySignatory))
-                    .str());
+            return (boost::format("command validation failed: account %s"
+                                  " does not have permission %s or %s")
+                    % creator_account_id_
+                    % shared_model::proto::permissions::toString(
+                          shared_model::interface::permissions::Role::
+                              kAddSignatory)
+                    % shared_model::proto::permissions::toString(
+                          shared_model::interface::permissions::Grantable::
+                              kAddMySignatory))
+                .str();
           },
           [&] {
             return (boost::format(
