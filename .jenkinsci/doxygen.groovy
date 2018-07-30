@@ -1,8 +1,8 @@
 #!/usr/bin/env groovy
 
 def doDoxygen() {
-  if (env.GIT_LOCAL_BRANCH in ["master","develop"] || env.CHANGE_BRANCH == 'develop') {
-    def branch = env.CHANGE_BRANCH == 'develop' ? env.CHANGE_BRANCH : env.GIT_LOCAL_BRANCH
+  if (env.GIT_LOCAL_BRANCH in ["master","develop"] || env.CHANGE_BRANCH_LOCAL == 'develop') {
+    def branch = env.CHANGE_BRANCH_LOCAL == 'develop' ? env.CHANGE_BRANCH_LOCAL : env.GIT_LOCAL_BRANCH
     sh "doxygen Doxyfile"
     sshagent(['jenkins-artifact']) {
       sh "ssh-agent"
