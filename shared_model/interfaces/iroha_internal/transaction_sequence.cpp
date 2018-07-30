@@ -4,12 +4,9 @@
  */
 
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
-#include <validators/default_validator.hpp>
 
 #include "interfaces/iroha_internal/transaction_batch.hpp"
-#include "validators/field_validator.hpp"
-#include "validators/transaction_validator.hpp"
-#include "validators/transactions_collection/batch_order_validator.hpp"
+#include "validators/default_validator.hpp"
 
 namespace shared_model {
   namespace interface {
