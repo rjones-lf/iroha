@@ -30,7 +30,7 @@ namespace iroha {
     class MstTransportGrpc : public MstTransport,
                              public transport::MstTransportGrpc::Service {
      public:
-      MstTransportGrpc(std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call);
+      explicit MstTransportGrpc(std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call);
 
       /**
        * Server part of grpc SendState method call

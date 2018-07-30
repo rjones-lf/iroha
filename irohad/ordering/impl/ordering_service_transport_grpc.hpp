@@ -32,7 +32,7 @@ namespace iroha {
         : public iroha::network::OrderingServiceTransport,
           public proto::OrderingServiceTransportGrpc::Service {
      public:
-      OrderingServiceTransportGrpc(std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call);
+      explicit OrderingServiceTransportGrpc(std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call);
       void subscribe(
           std::shared_ptr<iroha::network::OrderingServiceNotification>
               subscriber) override;

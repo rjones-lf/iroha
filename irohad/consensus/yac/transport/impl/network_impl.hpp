@@ -41,7 +41,7 @@ namespace iroha {
       class NetworkImpl : public YacNetwork,
                           public proto::Yac::Service {
        public:
-        NetworkImpl(std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call);
+        explicit NetworkImpl(std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call);
         void subscribe(
             std::shared_ptr<YacNetworkNotifications> handler) override;
         void send_commit(const shared_model::interface::Peer &to,
