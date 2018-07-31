@@ -55,7 +55,7 @@ Irohad::Irohad(const std::string &block_store_dir,
   log_ = logger::log("IROHAD");
   log_->info("created");
   // Initializing storage at this point in order to insert genesis block before
-   // initialization of iroha deamon
+  // initialization of iroha deamon
   initStorage();
 }
 
@@ -91,7 +91,6 @@ void Irohad::dropStorage() {
   storage->reset();
   ordering_service_storage_->resetState();
 }
-
 
 /**
  * Initializing iroha daemon storage
@@ -161,10 +160,13 @@ void Irohad::initValidators() {
   log_->info("[Init] => validators");
 }
 
+/**
+ * Initializing network client
+ */
 void Irohad::initNetworkClient() {
-  async_call_ = std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
+  async_call_ =
+      std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
 }
-
 
 /**
  * Initializing ordering gate
@@ -212,7 +214,8 @@ void Irohad::initConsensusGate() {
                                               block_loader,
                                               keypair,
                                               vote_delay_,
-                                              load_delay_);
+                                              load_delay_,
+                                              async_call_);
 
   log_->info("[Init] => consensus gate");
 }

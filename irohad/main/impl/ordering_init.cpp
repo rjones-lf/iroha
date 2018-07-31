@@ -59,7 +59,8 @@ namespace iroha {
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
             persistent_state,
         std::shared_ptr<ametsuchi::BlockQuery> block_query,
-        std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call) {
+        std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+            async_call) {
       auto ledger_peers = wsv->getLedgerPeers();
       if (not ledger_peers or ledger_peers.value().empty()) {
         log_->error(
@@ -72,7 +73,8 @@ namespace iroha {
               network_address, async_call);
 
       ordering_service_transport =
-          std::make_shared<ordering::OrderingServiceTransportGrpc>(async_call);
+          std::make_shared<ordering::OrderingServiceTransportGrpc>(
+              std::move(async_call));
       ordering_service = createService(wsv,
                                        max_size,
                                        delay_milliseconds,

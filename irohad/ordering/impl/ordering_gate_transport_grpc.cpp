@@ -34,17 +34,17 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
   proposal_res.match(
       [this](iroha::expected::Value<
              std::unique_ptr<shared_model::interface::Proposal>> &v) {
-        log_->info("transactions in proposal: {}",
-                   v.value->transactions().size());
+        async_call_->log_->info("transactions in proposal: {}",
+                                v.value->transactions().size());
 
         if (not subscriber_.expired()) {
           subscriber_.lock()->onProposal(std::move(v.value));
         } else {
-          log_->error("(onProposal) No subscriber");
+          async_call_->log_->error("(onProposal) No subscriber");
         }
       },
       [this](const iroha::expected::Error<std::string> &e) {
-        log_->error("Received invalid proposal: {}", e.error);
+        async_call_->log_->error("Received invalid proposal: {}", e.error);
       });
 
   return grpc::Status::OK;

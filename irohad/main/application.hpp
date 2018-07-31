@@ -143,7 +143,6 @@ class Irohad {
   virtual void initTransactionCommandService();
 
   virtual void initQueryService();
-  
 
   /**
    * Initialize WSV restorer

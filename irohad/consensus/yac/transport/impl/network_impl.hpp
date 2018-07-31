@@ -36,12 +36,14 @@ namespace iroha {
       struct VoteMessage;
 
       /**
-       * Class provide implementation of transport for consensus based on grpc
+       * Class which provides implementation of transport for consensus based on
+       * grpc
        */
-      class NetworkImpl : public YacNetwork,
-                          public proto::Yac::Service {
+      class NetworkImpl : public YacNetwork, public proto::Yac::Service {
        public:
-        explicit NetworkImpl(std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call);
+        explicit NetworkImpl(
+            std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+                async_call);
         void subscribe(
             std::shared_ptr<YacNetworkNotifications> handler) override;
         void send_commit(const shared_model::interface::Peer &to,
@@ -100,7 +102,8 @@ namespace iroha {
          * Subscriber of network messages
          */
         std::weak_ptr<YacNetworkNotifications> handler_;
-        std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call_;
+        std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+            async_call_;
       };
 
     }  // namespace yac

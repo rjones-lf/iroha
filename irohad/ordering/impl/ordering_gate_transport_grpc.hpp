@@ -39,8 +39,10 @@ namespace iroha {
         : public iroha::network::OrderingGateTransport,
           public proto::OrderingGateTransportGrpc::Service {
      public:
-      explicit OrderingGateTransportGrpc(const std::string &server_address,
-                                         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call);
+      OrderingGateTransportGrpc(
+          const std::string &server_address,
+          std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+              async_call);
 
       grpc::Status onProposal(::grpc::ServerContext *context,
                               const protocol::Proposal *request,
@@ -59,7 +61,8 @@ namespace iroha {
      private:
       std::weak_ptr<iroha::network::OrderingGateNotification> subscriber_;
       std::unique_ptr<proto::OrderingServiceTransportGrpc::Stub> client_;
-      std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call_;
+      std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+          async_call_;
       std::unique_ptr<shared_model::proto::ProtoProposalFactory<
           shared_model::validation::DefaultProposalValidator>>
           factory_;

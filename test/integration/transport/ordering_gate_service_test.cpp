@@ -51,8 +51,10 @@ class OrderingGateServiceTest : public ::testing::Test {
     EXPECT_CALL(*pcs_, on_commit())
         .WillRepeatedly(Return(commit_subject_.get_observable()));
 
-    async_call_ = std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
-    service_transport = std::make_shared<OrderingServiceTransportGrpc>(async_call_);
+    async_call_ =
+        std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
+    service_transport =
+        std::make_shared<OrderingServiceTransportGrpc>(async_call_);
 
     wsv = std::make_shared<MockPeerQuery>();
   }
@@ -74,7 +76,8 @@ class OrderingGateServiceTest : public ::testing::Test {
   }
 
   void initGate(std::string address) {
-    gate_transport = std::make_shared<OrderingGateTransportGrpc>(address, async_call_);
+    gate_transport =
+        std::make_shared<OrderingGateTransportGrpc>(address, async_call_);
     gate = std::make_shared<OrderingGateImpl>(gate_transport, 1, false);
     gate->setPcs(*pcs_);
     gate_transport->subscribe(gate);
@@ -180,10 +183,10 @@ class OrderingGateServiceTest : public ::testing::Test {
  private:
   std::shared_ptr<OrderingGateImpl> gate;
   std::shared_ptr<OrderingServiceImpl> service;
-  std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call_;
+  std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+      async_call_;
 
-
-    /// Peer Communication Service and commit subject are required to emulate
+  /// Peer Communication Service and commit subject are required to emulate
   /// commits for Ordering Service
   std::shared_ptr<MockPeerCommunicationService> pcs_;
   rxcpp::subjects::subject<Commit> commit_subject_;

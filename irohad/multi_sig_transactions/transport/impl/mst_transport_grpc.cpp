@@ -23,7 +23,9 @@
 
 using namespace iroha::network;
 
-MstTransportGrpc::MstTransportGrpc(std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call)
+MstTransportGrpc::MstTransportGrpc(
+    std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+        async_call)
     : async_call_(async_call) {}
 
 grpc::Status MstTransportGrpc::SendState(
@@ -45,10 +47,11 @@ grpc::Status MstTransportGrpc::SendState(
               std::move(v.value));
         },
         [&](iroha::expected::Error<std::string> &e) {
-            async_call_->log_->warn("Can't deserialize tx: {}", e.error);
+          async_call_->log_->warn("Can't deserialize tx: {}", e.error);
         });
   }
-  async_call_->log_->info("transactions in MstState: {}", newState.getTransactions().size());
+  async_call_->log_->info("transactions in MstState: {}",
+                          newState.getTransactions().size());
 
   auto &peer = request->peer();
   auto from = std::make_shared<shared_model::proto::Peer>(
@@ -84,9 +87,7 @@ void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
             ->getTransport());
   }
 
-  async_call_->Call(
-    [&] (auto context, auto cq)
-    {
-        return client->AsyncSendState(context,protoState,cq);
-    } );
+  async_call_->Call([&](auto context, auto cq) {
+    return client->AsyncSendState(context, protoState, cq);
+  });
 }

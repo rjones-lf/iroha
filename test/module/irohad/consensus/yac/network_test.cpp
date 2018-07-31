@@ -33,7 +33,8 @@ namespace iroha {
         static constexpr auto default_address = "0.0.0.0:0";
         void SetUp() override {
           notifications = std::make_shared<MockYacNetworkNotifications>();
-          async_call = std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
+          async_call = std::make_shared<
+              network::AsyncGrpcClient<google::protobuf::Empty>>();
           network = std::make_shared<NetworkImpl>(async_call);
 
           message.hash.proposal_hash = "proposal";
@@ -65,7 +66,8 @@ namespace iroha {
         }
 
         std::shared_ptr<MockYacNetworkNotifications> notifications;
-        std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call;
+        std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+            async_call;
         std::shared_ptr<NetworkImpl> network;
         std::shared_ptr<shared_model::interface::Peer> peer;
         VoteMessage message;
