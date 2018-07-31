@@ -10,7 +10,6 @@
 #include "validators/transaction_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
 
-#include "cryptography/model_impl/hash.cpp"
 
 namespace shared_model {
   namespace interface {
