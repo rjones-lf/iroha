@@ -48,7 +48,7 @@ grpc::Status OrderingServiceTransportGrpc::onTransaction(
           subscriber_.lock()->onBatch(std::move(batch.value));
         },
         [this](const iroha::expected::Error<std::string> &error) {
-          log_->error(
+          async_call_->log_->error(
               "Could not create batch from received single transaction: {}",
               error.error);
         });
@@ -61,9 +61,9 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
     ::grpc::ServerContext *context,
     const protocol::TxList *request,
     ::google::protobuf::Empty *response) {
-  log_->info("OrderingServiceTransportGrpc::onBatch");
+  async_call_->log_->info("OrderingServiceTransportGrpc::onBatch");
   if (subscriber_.expired()) {
-    log_->error("No subscriber");
+    async_call_->log_->error("No subscriber");
   } else {
     auto txs =
         std::vector<std::shared_ptr<shared_model::interface::Transaction>>(
