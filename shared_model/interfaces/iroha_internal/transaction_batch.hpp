@@ -15,7 +15,6 @@ namespace shared_model {
 
     class TransactionBatch {
      public:
-
       /**
        * Create transaction batch out of collection of transactions
        * @tparam TransactionValidator validates every single transaction
@@ -69,14 +68,26 @@ namespace shared_model {
       bool hasAllSignatures() const;
 
       /**
+       * @return string representation of the object
+       */
+      std::string toString() const;
+
+      /**
        * Get the concatenation of reduced hashes as a single hash
        * That kind of hash does not respect batch type
+       * @tparam Collection type of const ref iterator
        * @param reduced_hashes
        * @return concatenated reduced hashes
        */
+      template <typename Collection>
       static types::HashType calculateReducedBatchHash(
-          const boost::any_range<types::HashType, boost::forward_traversal_tag>
-              &reduced_hashes);
+          const Collection &reduced_hashes) {
+        std::stringstream concatenated_hash;
+        for (const auto &hash : reduced_hashes) {
+          concatenated_hash << hash.hex();
+        }
+        return types::HashType::fromHexString(concatenated_hash.str());
+      }
 
      private:
       explicit TransactionBatch(
