@@ -34,6 +34,7 @@ using namespace iroha::torii;
 using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds initial_timeout = 1s;
 constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
+constexpr unsigned resubscribe_attempts = 3;
 
 using iroha::Commit;
 
@@ -408,9 +409,14 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   // (Committed in this case) will be received. We start request before
   // transaction sending so we need in a separate thread for it.
   std::thread t([&] {
+    unsigned resub_counter(resubscribe_attempts);
     iroha::protocol::TxStatusRequest tx_request;
     tx_request.set_tx_hash(txhash);
-    client.StatusStream(tx_request, torii_response);
+    do {
+      client.StatusStream(tx_request, torii_response);
+    } while (torii_response.back().tx_status()
+                 != iroha::protocol::TxStatus::COMMITTED
+             and --resub_counter);
   });
 
   client.Torii(iroha_tx.getTransport());

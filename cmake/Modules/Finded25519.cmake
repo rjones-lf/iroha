@@ -12,24 +12,10 @@ find_package_handle_standard_args(ed25519 DEFAULT_MSG
     )
 
 set(URL https://github.com/hyperledger/iroha-ed25519)
-if (MSVC)
-  # trunk/1.2 with windows-specific changes
-  set(VERSION 31bb9b50e01b21ea2c21d33929e20934be4665b4)
-else()
-  set(VERSION e7188b8393dbe5ac54378610d53630bd4a180038)
-endif()
+set(VERSION f42953c631fae93011612f6b1ee33f1f88c3f8af)
 set_target_description(ed25519 "Digital signature algorithm" ${URL} ${VERSION})
 
 if (NOT ed25519_FOUND)
-  if (NOT WIN32)
-    find_package(Git REQUIRED)
-    set(PATCH_RANDOM ${GIT_EXECUTABLE} apply ${PROJECT_SOURCE_DIR})
-    if (NOT IROHA_ROOT_PROJECT)
-      set(PATCH_RANDOM ${PATCH_RANDOM}/..)
-    endif ()
-    set(PATCH_RANDOM ${PATCH_RANDOM}/patch/close.patch || true)
-  endif ()
-
   externalproject_add(hyperledger_ed25519
       GIT_REPOSITORY ${URL}
       GIT_TAG        ${VERSION}

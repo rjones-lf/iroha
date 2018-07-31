@@ -8,10 +8,10 @@
 #include <algorithm>
 #include <iterator>
 
+#include <boost/range/adaptor/indirected.hpp>
+
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "ametsuchi/peer_query.hpp"
-#include "backend/protobuf/proposal.hpp"
-#include "backend/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
 #include "network/ordering_service_transport.hpp"
 
@@ -24,14 +24,15 @@ namespace iroha {
         std::shared_ptr<network::OrderingServiceTransport> transport,
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
             persistent_state,
+        std::unique_ptr<shared_model::interface::ProposalFactory> factory,
         bool is_async)
         : wsv_(wsv),
           max_size_(max_size),
           current_size_(0),
           transport_(transport),
-          persistent_state_(persistent_state){
-      log_ = logger::log("OrderingServiceImpl");
-
+          persistent_state_(persistent_state),
+          factory_(std::move(factory)),
+          log_(logger::log("OrderingServiceImpl")) {
       // restore state of ordering service from persistent storage
       proposal_height_ = persistent_state_->loadProposalHeight().value();
 
@@ -85,40 +86,38 @@ namespace iroha {
 
     void OrderingServiceImpl::generateProposal() {
       std::lock_guard<std::shared_timed_mutex> lock(batch_prop_mutex_);
-
-      // TODO 05/03/2018 andrei IR-1046 Server-side shared model object
-      // factories with move semantics
-      iroha::protocol::Proposal proto_proposal;
-      proto_proposal.set_height(proposal_height_++);
-      proto_proposal.set_created_time(iroha::time::now());
       log_->info("Start proposal generation");
+      std::vector<std::shared_ptr<shared_model::interface::Transaction>> txs;
       for (std::unique_ptr<shared_model::interface::TransactionBatch> batch;
-           static_cast<size_t>(proto_proposal.transactions_size()) < max_size_
-           and queue_.try_pop(batch);) {
-        std::for_each(
-            batch->transactions().begin(),
-            batch->transactions().end(),
-            [this, &proto_proposal](auto &tx) {
-              *proto_proposal.add_transactions() =
-                  std::static_pointer_cast<shared_model::proto::Transaction>(tx)
-                      ->getTransport();
-              current_size_--;
-            });
+           txs.size() < max_size_ and queue_.try_pop(batch);) {
+        auto batch_size = batch->transactions().size();
+        txs.insert(std::end(txs),
+            std::make_move_iterator(std::begin(batch->transactions())),
+            std::make_move_iterator(std::end(batch->transactions())));
+        current_size_ -= batch_size;
       }
 
-      auto proposal = std::make_unique<shared_model::proto::Proposal>(
-          std::move(proto_proposal));
+      auto tx_range = txs | boost::adaptors::indirected;
+      auto proposal = factory_->createProposal(
+          proposal_height_++, iroha::time::now(), tx_range);
 
-      // Save proposal height to the persistent storage.
-      // In case of restart it reloads state.
-      if (persistent_state_->saveProposalHeight(proposal_height_)) {
-        publishProposal(std::move(proposal));
-      } else {
-        // TODO(@l4l) 23/03/18: publish proposal independent of psql status
-        // IR-1162
-        log_->warn(
-            "Proposal height cannot be saved. Skipping proposal publish");
-      }
+      proposal.match(
+          [this](expected::Value<
+                 std::unique_ptr<shared_model::interface::Proposal>> &v) {
+            // Save proposal height to the persistent storage.
+            // In case of restart it reloads state.
+            if (persistent_state_->saveProposalHeight(proposal_height_)) {
+              publishProposal(std::move(v.value));
+            } else {
+              // TODO(@l4l) 23/03/18: publish proposal independent of psql
+              // status IR-1162
+              log_->warn(
+                  "Proposal height cannot be saved. Skipping proposal publish");
+            }
+          },
+          [this](expected::Error<std::string> &e) {
+            log_->warn("Failed to initialize proposal: {}", e.error);
+          });
     }
 
     void OrderingServiceImpl::publishProposal(

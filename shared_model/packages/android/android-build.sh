@@ -93,7 +93,7 @@ VERBOSE=1 cmake --build ./protobuf/.build --target install -- -j"$CORES"
 
 # ed25519
 git clone https://github.com/hyperledger/iroha-ed25519.git
-(cd ./iroha-ed25519 ; git checkout e7188b8393dbe5ac54378610d53630bd4a180038)
+(cd ./iroha-ed25519 ; git checkout f42953c631fae93011612f6b1ee33f1f88c3f8af)
 cmake "${ANDROID_TOOLCHAIN_ARGS[@]}" "${INSTALL_ARGS[@]}" -DTESTING=OFF -DCMAKE_BUILD_TYPE="$BUILD_TYPE" -DBUILD=STATIC -H./iroha-ed25519 -B./iroha-ed25519/build
 VERBOSE=1 cmake --build ./iroha-ed25519/build --target install -- -j"$CORES"
 mv "$DEPS_DIR"/lib/static/libed25519.a "$DEPS_DIR"/lib; rmdir "$DEPS_DIR"/lib/static/

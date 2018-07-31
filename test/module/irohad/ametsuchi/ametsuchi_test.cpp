@@ -26,25 +26,6 @@ auto zero_string = std::string(32, '0');
 auto fake_hash = shared_model::crypto::Hash(zero_string);
 auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
 
-/**
- * Shortcut to create CallExact observable wrapper, subscribe with given lambda,
- * and validate the number of calls with optional custom output
- * @tparam O observable type
- * @tparam F on_next function type
- * @param o observable object
- * @param f function object
- * @param call_count number of expected calls
- * @param msg custom validation failure message
- */
-template <typename O, typename F>
-void validateCalls(O &&o,
-                   F &&f,
-                   uint64_t call_count,
-                   const std::string &msg = {}) {
-  auto wrap = make_test_subscriber<CallExact>(std::forward<O>(o), call_count);
-  wrap.subscribe(std::forward<F>(f));
-  ASSERT_TRUE(wrap.validate()) << "Expected " << call_count << " calls" << msg;
-}
 
 /**
  * Validate getAccountTransaction with given parameters
@@ -59,11 +40,11 @@ void validateAccountTransactions(B &&blocks,
                                  const std::string &account,
                                  int call_count,
                                  int command_count) {
-  validateCalls(
-      blocks->getAccountTransactions(account),
-      [&](const auto &tx) { EXPECT_EQ(tx->commands().size(), command_count); },
-      call_count,
-      " for " + account);
+  auto txs = blocks->getAccountTransactions(account);
+  ASSERT_EQ(txs.size(), call_count);
+  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
+    EXPECT_EQ(tx->commands().size(), command_count);
+  });
 }
 
 /**
@@ -81,11 +62,11 @@ void validateAccountAssetTransactions(B &&blocks,
                                       const std::string &asset,
                                       int call_count,
                                       int command_count) {
-  validateCalls(
-      blocks->getAccountAssetTransactions(account, asset),
-      [&](const auto &tx) { EXPECT_EQ(tx->commands().size(), command_count); },
-      call_count,
-      " for " + account + " " + asset);
+  auto txs = blocks->getAccountAssetTransactions(account, asset);
+  ASSERT_EQ(txs.size(), call_count);
+  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
+    EXPECT_EQ(tx->commands().size(), command_count);
+  });
 }
 
 /**
@@ -155,10 +136,7 @@ TEST_F(AmetsuchiTest, GetBlocksCompletedWhenCalled) {
 
   apply(storage, block);
 
-  auto completed_wrapper =
-      make_test_subscriber<IsCompleted>(blocks->getBlocks(1, 1));
-  completed_wrapper.subscribe();
-  ASSERT_TRUE(completed_wrapper.validate());
+  ASSERT_EQ(*blocks->getBlocks(1, 1)[0], block);
 }
 
 TEST_F(AmetsuchiTest, SampleTest) {
@@ -214,12 +192,12 @@ TEST_F(AmetsuchiTest, SampleTest) {
 
   // Block store tests
   auto hashes = {block1.hash(), block2.hash()};
-  validateCalls(blocks->getBlocks(1, 2),
-                [i = 0, &hashes](auto eachBlock) mutable {
-                  EXPECT_EQ(*(hashes.begin() + i), eachBlock->hash());
-                  ++i;
-                },
-                2);
+
+  auto stored_blocks = blocks->getBlocks(1, 2);
+  ASSERT_EQ(2, stored_blocks.size());
+  for (size_t i = 0; i < stored_blocks.size(); i++) {
+    EXPECT_EQ(*(hashes.begin() + i), stored_blocks[i]->hash());
+  }
 
   validateAccountTransactions(blocks, "admin1", 1, 3);
   validateAccountTransactions(blocks, user1id, 1, 4);
@@ -357,12 +335,12 @@ TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
 
   // Block store test
   auto hashes = {block1.hash(), block2.hash(), block3.hash()};
-  validateCalls(blocks->getBlocks(1, 3),
-                [i = 0, &hashes](auto eachBlock) mutable {
-                  EXPECT_EQ(*(hashes.begin() + i), eachBlock->hash());
-                  ++i;
-                },
-                3);
+
+  auto stored_blocks = blocks->getBlocks(1, 3);
+  ASSERT_EQ(3, stored_blocks.size());
+  for (size_t i = 0; i < stored_blocks.size(); i++) {
+    EXPECT_EQ(*(hashes.begin() + i), stored_blocks[i]->hash());
+  }
 
   validateAccountTransactions(blocks, admin, 1, 7);
   validateAccountTransactions(blocks, user3id, 0, 0);

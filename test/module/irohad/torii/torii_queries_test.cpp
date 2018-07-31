@@ -476,17 +476,14 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   auto account =
       shared_model::proto::AccountBuilder().accountId("accountA").build();
   auto creator = "a@domain";
-  auto txs_observable = rxcpp::observable<>::iterate([&account] {
-    std::vector<wTransaction> result;
-    for (size_t i = 0; i < 3; ++i) {
-      std::shared_ptr<shared_model::interface::Transaction> current =
-          clone(TestTransactionBuilder()
-                    .creatorAccountId(account.accountId())
-                    .build());
-      result.push_back(current);
-    }
-    return result;
-  }());
+  std::vector<wTransaction> txs;
+  for (size_t i = 0; i < 3; ++i) {
+    std::shared_ptr<shared_model::interface::Transaction> current =
+        clone(TestTransactionBuilder()
+                  .creatorAccountId(account.accountId())
+                  .build());
+    txs.push_back(current);
+  }
 
   EXPECT_CALL(*wsv_query, getSignatories(creator))
       .WillRepeatedly(Return(signatories));
@@ -496,7 +493,7 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   perm.set(Role::kGetMyAccTxs);
   EXPECT_CALL(*wsv_query, getRolePermissions("test")).WillOnce(Return(perm));
   EXPECT_CALL(*block_query, getAccountTransactions(creator))
-      .WillOnce(Return(txs_observable));
+      .WillOnce(Return(txs));
 
   iroha::protocol::QueryResponse response;
 

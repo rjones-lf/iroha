@@ -77,16 +77,14 @@ class QueryValidateExecuteTest : public ::testing::Test {
    * @param N
    * @return observable with transactions
    */
-  rxcpp::observable<wTransaction> getDefaultTransactions(
-      const std::string &creator, size_t N) {
-    return rxcpp::observable<>::iterate([&creator, &N, this] {
-      std::vector<wTransaction> result;
-      for (size_t i = 0; i < N; ++i) {
-        auto current = makeTransaction(creator);
-        result.push_back(current);
-      }
-      return result;
-    }());
+  std::vector<wTransaction> getDefaultTransactions(
+    const std::string &creator, size_t N) {
+    std::vector<wTransaction> result;
+    for (size_t i = 0; i < N; ++i) {
+      auto current = makeTransaction(creator);
+      result.push_back(current);
+    }
+    return result;
   }
 
   std::string admin_id = "admin@test", account_id = "test@test",
@@ -645,10 +643,10 @@ class GetAccountTransactionsTest : public QueryValidateExecuteTest {
   void SetUp() override {
     QueryValidateExecuteTest::SetUp();
     role_permissions = {Role::kGetMyAccTxs};
-    txs_observable = getDefaultTransactions(account_id, N);
+    txs = getDefaultTransactions(account_id, N);
   }
 
-  rxcpp::observable<wTransaction> txs_observable;
+  std::vector<wTransaction> txs;
   size_t N = 3;
 };
 
@@ -668,10 +666,10 @@ TEST_F(GetAccountTransactionsTest, MyAccountValidCase) {
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
 
-  txs_observable = getDefaultTransactions(admin_id, N);
+  txs = getDefaultTransactions(admin_id, N);
 
   EXPECT_CALL(*block_query, getAccountTransactions(admin_id))
-      .WillOnce(Return(txs_observable));
+      .WillOnce(Return(txs));
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
@@ -706,7 +704,7 @@ TEST_F(GetAccountTransactionsTest, AllAccountValidCase) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*block_query, getAccountTransactions(account_id))
-      .WillOnce(Return(txs_observable));
+      .WillOnce(Return(txs));
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
@@ -741,7 +739,7 @@ TEST_F(GetAccountTransactionsTest, DomainAccountValidCase) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*block_query, getAccountTransactions(account_id))
-      .WillOnce(Return(txs_observable));
+      .WillOnce(Return(txs));
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
@@ -802,7 +800,7 @@ TEST_F(GetAccountTransactionsTest, NoAccountExist) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*block_query, getAccountTransactions("none"))
-      .WillOnce(Return(rxcpp::observable<>::empty<wTransaction>()));
+      .WillOnce(Return(std::vector<wTransaction>()));
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW(
@@ -817,10 +815,10 @@ class GetAccountAssetsTransactionsTest : public QueryValidateExecuteTest {
   void SetUp() override {
     QueryValidateExecuteTest::SetUp();
     role_permissions = {Role::kGetMyAccAstTxs};
-    txs_observable = getDefaultTransactions(account_id, N);
+    txs = getDefaultTransactions(account_id, N);
   }
 
-  rxcpp::observable<wTransaction> txs_observable;
+  std::vector<wTransaction> txs;
   size_t N = 3;
 };
 
@@ -840,10 +838,10 @@ TEST_F(GetAccountAssetsTransactionsTest, MyAccountValidCase) {
   EXPECT_CALL(*wsv_query, getRolePermissions(admin_role))
       .WillOnce(Return(role_permissions));
 
-  txs_observable = getDefaultTransactions(admin_id, N);
+  txs = getDefaultTransactions(admin_id, N);
 
   EXPECT_CALL(*block_query, getAccountAssetTransactions(admin_id, asset_id))
-      .WillOnce(Return(txs_observable));
+      .WillOnce(Return(txs));
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
@@ -878,7 +876,7 @@ TEST_F(GetAccountAssetsTransactionsTest, AllAccountValidCase) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*block_query, getAccountAssetTransactions(account_id, asset_id))
-      .WillOnce(Return(txs_observable));
+      .WillOnce(Return(txs));
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
@@ -913,7 +911,7 @@ TEST_F(GetAccountAssetsTransactionsTest, DomainAccountValidCase) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*block_query, getAccountAssetTransactions(account_id, asset_id))
-      .WillOnce(Return(txs_observable));
+      .WillOnce(Return(txs));
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW({
@@ -974,7 +972,7 @@ TEST_F(GetAccountAssetsTransactionsTest, NoAccountExist) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*block_query, getAccountAssetTransactions("none", asset_id))
-      .WillOnce(Return(rxcpp::observable<>::empty<wTransaction>()));
+      .WillOnce(Return(std::vector<wTransaction>()));
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW(
@@ -1002,7 +1000,7 @@ TEST_F(GetAccountAssetsTransactionsTest, NoAssetExist) {
       .WillOnce(Return(role_permissions));
 
   EXPECT_CALL(*block_query, getAccountAssetTransactions(account_id, "none"))
-      .WillOnce(Return(rxcpp::observable<>::empty<wTransaction>()));
+      .WillOnce(Return(std::vector<wTransaction>()));
 
   auto response = validateAndExecute(query);
   ASSERT_NO_THROW(

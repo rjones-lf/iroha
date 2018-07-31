@@ -17,14 +17,16 @@ def doDebugBuild(coverageEnabled=false) {
   if (env.NODE_NAME.contains('arm7')) {
     parallelism = 1
   }
+
   sh "docker network create ${env.IROHA_NETWORK}"
   def iC = dPullOrBuild.dockerPullOrUpdate("${platform}-develop-build",
                                            "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
                                            "${env.GIT_RAW_BASE_URL}/${previousCommit}/docker/develop/Dockerfile",
                                            "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
                                            ['PARALLELISM': parallelism])
-
-  if (GIT_LOCAL_BRANCH == 'develop' && manifest.manifestSupportEnabled()) {
+  // push Docker image in case the current branch is develop,
+  // or it is a commit into PR which base branch is develop (usually develop -> master)
+  if ((GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop') && manifest.manifestSupportEnabled()) {
     manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop-build",
       ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
        "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
@@ -42,6 +44,7 @@ def doDebugBuild(coverageEnabled=false) {
       manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:develop-build", login, password)
     }
   }
+
   docker.image('postgres:9.5').withRun(""
     + " -e POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
     + " -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"

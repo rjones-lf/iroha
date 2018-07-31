@@ -18,6 +18,7 @@
 #include "validation/impl/stateful_validator_impl.hpp"
 #include "validation/stateful_validator.hpp"
 #include "validation/utils.hpp"
+#include "backend/protobuf/proto_proposal_factory.hpp"
 
 using namespace iroha::validation;
 using namespace shared_model::crypto;
@@ -97,7 +98,9 @@ TEST_F(SignaturesSubset, PublickeyUniqueness) {
 class Validator : public testing::Test {
  public:
   void SetUp() override {
-    sfv = std::make_shared<StatefulValidatorImpl>();
+    factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
+        shared_model::validation::DefaultProposalValidator>>();
+    sfv = std::make_shared<StatefulValidatorImpl>(std::move(factory));
     temp_wsv_mock = std::make_shared<iroha::ametsuchi::MockTemporaryWsv>();
   }
 
@@ -130,6 +133,7 @@ class Validator : public testing::Test {
   }
 
   std::shared_ptr<StatefulValidator> sfv;
+  std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory;
   std::shared_ptr<iroha::ametsuchi::MockTemporaryWsv> temp_wsv_mock;
 };
 

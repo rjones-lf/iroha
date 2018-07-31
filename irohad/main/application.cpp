@@ -149,7 +149,10 @@ void Irohad::initCryptoProvider() {
  * Initializing validators
  */
 void Irohad::initValidators() {
-  stateful_validator = std::make_shared<StatefulValidatorImpl>();
+  auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
+      shared_model::validation::DefaultProposalValidator>>();
+  stateful_validator =
+      std::make_shared<StatefulValidatorImpl>(std::move(factory));
   chain_validator = std::make_shared<ChainValidatorImpl>(
       std::make_shared<consensus::yac::SupermajorityCheckerImpl>());
 

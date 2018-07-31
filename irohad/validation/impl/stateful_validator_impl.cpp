@@ -20,13 +20,12 @@
 #include <boost/format.hpp>
 #include <string>
 
-#include "builders/protobuf/proposal.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "common/result.hpp"
 #include "validation/utils.hpp"
 
 namespace iroha {
   namespace validation {
-
     /**
      * Forms a readable error string from transaction signatures and account
      * signatories
@@ -234,9 +233,9 @@ namespace iroha {
       return valid_proto_txs;
     }
 
-    StatefulValidatorImpl::StatefulValidatorImpl() {
-      log_ = logger::log("SFV");
-    }
+    StatefulValidatorImpl::StatefulValidatorImpl(
+        std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory)
+        : factory_(std::move(factory)), log_(logger::log("SFV")) {}
 
     validation::VerifiedProposalAndErrors StatefulValidatorImpl::validate(
         const shared_model::interface::Proposal &proposal,
@@ -247,19 +246,17 @@ namespace iroha {
       auto transactions_errors_log = validation::TransactionsErrors{};
       auto valid_proto_txs = validateTransactions(
           proposal.transactions(), temporaryWsv, transactions_errors_log, log_);
-      auto validated_proposal = shared_model::proto::ProposalBuilder()
-                                    .createdTime(proposal.createdTime())
-                                    .height(proposal.height())
-                                    .transactions(valid_proto_txs)
-                                    .createdTime(proposal.createdTime())
-                                    .build();
+
+      // Since proposal came from ordering gate it was already validated.
+      // All transactions has been validated as well
+      // This allows for unsafe construction of proposal
+      auto validated_proposal = factory_->unsafeCreateProposal(
+          proposal.height(), proposal.createdTime(), valid_proto_txs);
 
       log_->info("transactions in verified proposal: {}",
-                 validated_proposal.transactions().size());
-      return std::make_pair(std::make_shared<decltype(validated_proposal)>(
-                                validated_proposal.getTransport()),
+                 validated_proposal->transactions().size());
+      return std::make_pair(std::move(validated_proposal),
                             transactions_errors_log);
     }
-
   }  // namespace validation
 }  // namespace iroha
