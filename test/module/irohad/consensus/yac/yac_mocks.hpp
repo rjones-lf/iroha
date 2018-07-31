@@ -32,6 +32,7 @@
 #include "consensus/yac/yac_gate.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "consensus/yac/yac_peer_orderer.hpp"
+#include "consensus/yac/yac_proposal_hash_provider.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
@@ -203,6 +204,12 @@ namespace iroha {
         MockYacHashProvider &operator=(const MockYacHashProvider &rhs) {
           return *this;
         };
+      };
+
+      struct MockYacProposalHashProvider : public YacProposalHashProvider {
+        MOCK_CONST_METHOD1(makeHash, YacHash(const network::ProposalVote &));
+
+        MOCK_CONST_METHOD1(makeProposalInfo, ProposalInfo(const YacHash &));
       };
 
       class MockYacNetworkNotifications : public YacNetworkNotifications {

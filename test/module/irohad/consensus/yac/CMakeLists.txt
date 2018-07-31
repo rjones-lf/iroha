@@ -80,11 +80,24 @@ target_link_libraries(yac_gate_test
     shared_model_default_builders
     )
 
+addtest(yac_proposal_gate_test yac_proposal_gate_test.cpp)
+target_link_libraries(yac_proposal_gate_test
+    yac
+    shared_model_cryptography_model
+    shared_model_default_builders
+    )
+
 addtest(yac_hash_provider_test yac_hash_provider_test.cpp)
 target_link_libraries(yac_hash_provider_test
     yac
     shared_model_cryptography
     shared_model_stateless_validation
+    )
+
+addtest(yac_proposal_hash_provider_test yac_proposal_hash_provider_test.cpp)
+target_link_libraries(yac_proposal_hash_provider_test
+    yac
+    shared_model_cryptography
     )
 
 addtest(yac_common_test yac_common_test.cpp)

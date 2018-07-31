@@ -29,7 +29,9 @@ add_library(yac
     transport/impl/network_impl.cpp
     impl/peer_orderer_impl.cpp
     impl/yac_gate_impl.cpp
+    impl/yac_proposal_gate_impl.cpp
     impl/yac_hash_provider_impl.cpp
+    impl/yac_proposal_hash_provider_impl.cpp
     impl/yac_crypto_provider_impl.cpp
 
     storage/impl/yac_common.cpp

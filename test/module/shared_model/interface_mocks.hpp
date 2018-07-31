@@ -3,10 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#pragma once
+#ifndef IROHA_INTERFACE_MOCKS_HPP
+#define IROHA_INTERFACE_MOCKS_HPP
 
 #include <gmock/gmock.h>
 #include "interfaces/iroha_internal/block.hpp"
+#include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/transaction.hpp"
 
 namespace iface = shared_model::interface;
@@ -48,3 +50,13 @@ struct SignatureMock : public iface::Signature {
   MOCK_CONST_METHOD0(signedData, const SignedType &());
   MOCK_CONST_METHOD0(clone, SignatureMock *());
 };
+
+struct MockProposal : public iface::Proposal {
+  MOCK_CONST_METHOD0(transactions, iface::types::TransactionsCollectionType());
+  MOCK_CONST_METHOD0(height, iface::types::HeightType());
+  MOCK_CONST_METHOD0(createdTime, iface::types::TimestampType());
+  MOCK_CONST_METHOD0(blob, const iface::types::BlobType &());
+  MOCK_CONST_METHOD0(clone, MockProposal *());
+};
+
+#endif  // IROHA_INTERFACE_MOCKS_HPP

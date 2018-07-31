@@ -44,8 +44,8 @@ namespace iroha {
       template <>
       struct Convert<Peer> {
         template <typename T>
-        boost::optional<Peer> operator()(T &&x) {
-          auto des = makeFieldDeserializer(x);
+        boost::optional<Peer> operator()(T &&x) const {
+          auto des = makeFieldDeserializer(std::forward<T>(x));
           auto address = des.String("address");
           auto pubkey = des.String("peer_key");
 
