@@ -80,7 +80,7 @@ namespace torii {
     log_->debug("Fetching commits");
     shared_model::proto::TransportBuilder<
         shared_model::proto::BlocksQuery,
-        shared_model::validation::DefaultSignableBlocksQyeryValidator>()
+        shared_model::validation::DefaultSignableBlocksQueryValidator>()
         .build(*request)
         .match(
             [this, context, request, writer](

@@ -78,7 +78,7 @@ namespace shared_model {
      * Block query validator which checks stateless validation including
      * signatures
      */
-    using DefaultSignableBlocksQyeryValidator =
+    using DefaultSignableBlocksQueryValidator =
         SignableModelValidator<DefaultUnsignedBlocksQueryValidator,
                                const interface::BlocksQuery &,
                                FieldValidator>;
