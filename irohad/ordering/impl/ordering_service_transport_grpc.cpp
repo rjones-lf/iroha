@@ -88,7 +88,7 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
           subscriber_.lock()->onBatch(std::move(batch.value));
         },
         [this](const iroha::expected::Error<std::string> &error) {
-          log_->error(
+          async_call_->log_->error(
               "Could not create batch from received transaction list: {}",
               error.error);
         });
