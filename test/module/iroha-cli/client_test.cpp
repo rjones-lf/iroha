@@ -45,7 +45,7 @@ using namespace shared_model::proto;
 using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds initial_timeout = 1s;
 constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
-constexpr unsigned status_read_attempts = 3;
+constexpr uint32_t status_read_attempts = 3;
 
 class ClientServerTest : public testing::Test {
  public:
@@ -190,7 +190,7 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
         .answer;
   };
   decltype(getAnswer()) answer;
-  unsigned read_attempt_counter(status_read_attempts);
+  auto read_attempt_counter(status_read_attempts);
   do {
     answer = getAnswer();
   } while (answer.tx_status()
@@ -254,7 +254,7 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
         .answer;
   };
   decltype(getAnswer()) answer;
-  unsigned read_attempt_counter(status_read_attempts);
+  auto read_attempt_counter(status_read_attempts);
   do {
     // check it really failed with specific message
     answer = getAnswer();
