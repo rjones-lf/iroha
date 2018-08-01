@@ -283,7 +283,7 @@ TEST_F(TransportBuilderTest, InvalidQueryCreationTest) {
  */
 TEST_F(TransportBuilderTest, BlockCreationTest) {
   auto orig_model = createBlock();
-  testTransport<validation::DefaultBlockValidator>(
+  testTransport<validation::DefaultUnsignedBlockValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -299,7 +299,7 @@ TEST_F(TransportBuilderTest, BlockCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidBlockCreationTest) {
   auto orig_model = createInvalidBlock();
-  testTransport<validation::DefaultBlockValidator>(
+  testTransport<validation::DefaultUnsignedBlockValidator>(
       orig_model,
       [](const Value<std::decay_t<decltype(orig_model)>> &) { FAIL(); },
       [](const Error<const std::string> &) { SUCCEED(); });
