@@ -45,6 +45,16 @@ using namespace shared_model::proto;
 using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds initial_timeout = 1s;
 constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
+
+/**
+Here we imitate the behavior of StatusStram client but on a bit lower level. So
+the do-while cycle imitates client resubscription to the stream. Stream
+"expiration" is a valid designed case (see pr #1615 for the details).
+
+The number of attempts (3) is a magic constant here. The idea behind this number
+is the following: only one resubscription is usually enough to pass the test; if
+three resubscribes were not enough, then most likely there is another bug.
+ */
 constexpr uint32_t status_read_attempts = 3;
 
 class ClientServerTest : public testing::Test {

@@ -34,6 +34,15 @@ using namespace iroha::torii;
 using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds initial_timeout = 1s;
 constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
+
+/**
+The do-while cycle imitates client resubscription to the stream. Stream
+"expiration" is a valid designed case (see pr #1615 for the details).
+
+The number of attempts (3) is a magic constant here. The idea behind this number
+is the following: only one resubscription is usually enough to pass the test; if
+three resubscribes were not enough, then most likely there is another bug.
+ */
 constexpr uint32_t resubscribe_attempts = 3;
 
 using iroha::Commit;
