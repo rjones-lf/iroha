@@ -102,6 +102,10 @@ namespace iroha {
          * Subscriber of network messages
          */
         std::weak_ptr<YacNetworkNotifications> handler_;
+
+        /**
+         * Rpc call to provide an ability to perform call grpc endpoints
+         */
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call_;
       };

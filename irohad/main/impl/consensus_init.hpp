@@ -44,7 +44,8 @@ namespace iroha {
 
         auto createPeerOrderer(std::shared_ptr<ametsuchi::PeerQuery> wsv);
 
-        auto createNetwork(std::shared_ptr<iroha::network::AsyncGrpcClient<google::protobuf::Empty>> async_call);
+        auto createNetwork(std::shared_ptr<iroha::network::AsyncGrpcClient<
+                               google::protobuf::Empty>> async_call);
 
         auto createCryptoProvider(const shared_model::crypto::Keypair &keypair);
 
@@ -56,7 +57,9 @@ namespace iroha {
             ClusterOrdering initial_order,
             const shared_model::crypto::Keypair &keypair,
             std::chrono::milliseconds delay_milliseconds,
-            std::shared_ptr<iroha::network::AsyncGrpcClient<google::protobuf::Empty>> async_call);
+            std::shared_ptr<
+                iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
+                async_call);
 
        public:
         std::shared_ptr<YacGate> initConsensusGate(
@@ -66,7 +69,9 @@ namespace iroha {
             const shared_model::crypto::Keypair &keypair,
             std::chrono::milliseconds vote_delay_milliseconds,
             std::chrono::milliseconds load_delay_milliseconds,
-            std::shared_ptr<iroha::network::AsyncGrpcClient<google::protobuf::Empty>> async_call);
+            std::shared_ptr<
+                iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
+                async_call);
 
         std::shared_ptr<NetworkImpl> consensus_network;
       };
