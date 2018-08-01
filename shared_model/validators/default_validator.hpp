@@ -47,7 +47,7 @@ namespace shared_model {
     /**
      * Transaction validator which checks stateless validation
      */
-    using DefaultSignableTransactionValidator =
+    using DefaultSignedTransactionValidator =
         SignableModelValidator<DefaultTransactionValidator,
                                const interface::Transaction &,
                                FieldValidator>;

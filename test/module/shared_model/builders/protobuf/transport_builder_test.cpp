@@ -218,7 +218,7 @@ class TransportBuilderTest : public ::testing::Test {
  */
 TEST_F(TransportBuilderTest, TransactionCreationTest) {
   auto orig_model = createTransaction();
-  testTransport<validation::DefaultSignableTransactionValidator>(
+  testTransport<validation::DefaultSignedTransactionValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -237,7 +237,7 @@ TEST_F(TransportBuilderTest, TransactionCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidTransactionCreationTest) {
   auto orig_model = createInvalidTransaction();
-  testTransport<validation::DefaultSignableTransactionValidator>(
+  testTransport<validation::DefaultSignedTransactionValidator>(
       orig_model,
       [](const Value<decltype(orig_model)>) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
