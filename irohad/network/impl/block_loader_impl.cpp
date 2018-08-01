@@ -57,10 +57,14 @@ namespace {
   }
 }  // namespace
 
-BlockLoaderImpl::BlockLoaderImpl(std::shared_ptr<PeerQuery> peer_query,
-                                 std::shared_ptr<BlockQuery> block_query)
+BlockLoaderImpl::BlockLoaderImpl(
+    std::shared_ptr<PeerQuery> peer_query,
+    std::shared_ptr<BlockQuery> block_query,
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        shared_model::interface::BlockVariant>> validator)
     : peer_query_(std::move(peer_query)),
       block_query_(std::move(block_query)),
+      block_factory_(std::move(validator)),
       log_(logger::log("BlockLoaderImpl")) {}
 
 rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(

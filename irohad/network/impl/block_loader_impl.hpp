@@ -27,14 +27,16 @@
 #include "backend/protobuf/proto_block_factory.hpp"
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
-#include "validators/default_validator.hpp"
+#include "validators/abstract_validator.hpp"
 
 namespace iroha {
   namespace network {
     class BlockLoaderImpl : public BlockLoader {
      public:
       BlockLoaderImpl(std::shared_ptr<ametsuchi::PeerQuery> peer_query,
-                      std::shared_ptr<ametsuchi::BlockQuery> block_query);
+                      std::shared_ptr<ametsuchi::BlockQuery> block_query,
+                      std::unique_ptr<shared_model::validation::AbstractValidator<
+                          shared_model::interface::BlockVariant>> validator);
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlocks(
@@ -46,32 +48,20 @@ namespace iroha {
           const shared_model::interface::types::HashType &block_hash) override;
 
      private:
-      //      /**
-      //       * Wrapper for validator which validates based on specified time
-      //       * instead of current time
-      //       */
-      //      struct TimerWrapper : public
-      //      shared_model::validation::FieldValidator {
-      //        explicit TimerWrapper(iroha::ts64_t t)
-      //            : FieldValidator(
-      //                  shared_model::validation::FieldValidator::kDefaultFutureGap,
-      //                  [=] { return t; }) {}
-      //      };
-
-      using Validator = shared_model::validation::BlockValidator<
-          shared_model::validation::FieldValidator,
-          shared_model::validation::DefaultTransactionValidator,
-          shared_model::validation::UnsignedTransactionsCollectionValidator<
-              shared_model::validation::DefaultTransactionValidator>>;
-
-      // validate signed block
-      using BlockValidator = shared_model::validation::SignableModelValidator<
-          shared_model::validation::AnyBlockValidator<
-              Validator,
-              shared_model::validation::EmptyBlockValidator<
-                  shared_model::validation::FieldValidator>>,
-          const shared_model::interface::BlockVariant &,
-          shared_model::validation::FieldValidator>;
+//      using Validator = shared_model::validation::BlockValidator<
+//          shared_model::validation::FieldValidator,
+//          shared_model::validation::DefaultTransactionValidator,
+//          shared_model::validation::UnsignedTransactionsCollectionValidator<
+//              shared_model::validation::DefaultTransactionValidator>>;
+//
+//      // validate signed block
+//      using BlockValidator = shared_model::validation::SignableModelValidator<
+//          shared_model::validation::AnyBlockValidator<
+//              Validator,
+//              shared_model::validation::EmptyBlockValidator<
+//                  shared_model::validation::FieldValidator>>,
+//          const shared_model::interface::BlockVariant &,
+//          shared_model::validation::FieldValidator>;
 
       /**
        * Retrieve peers from database, and find the requested peer by pubkey
@@ -94,7 +84,7 @@ namespace iroha {
           peer_connections_;
       std::shared_ptr<ametsuchi::PeerQuery> peer_query_;
       std::shared_ptr<ametsuchi::BlockQuery> block_query_;
-      shared_model::proto::ProtoBlockFactory<BlockValidator> block_factory_;
+      shared_model::proto::ProtoBlockFactory block_factory_;
 
       logger::Logger log_;
     };

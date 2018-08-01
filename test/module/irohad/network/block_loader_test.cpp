@@ -37,6 +37,7 @@ using namespace iroha::network;
 using namespace iroha::ametsuchi;
 using namespace framework::test_subscriber;
 using namespace shared_model::crypto;
+using namespace shared_model::validation;
 
 using testing::A;
 using testing::Return;
@@ -44,12 +45,17 @@ using testing::Return;
 using wPeer = std::shared_ptr<shared_model::interface::Peer>;
 using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
+using namespace shared_model::validation;
+
 class BlockLoaderTest : public testing::Test {
  public:
   void SetUp() override {
     peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
-    loader = std::make_shared<BlockLoaderImpl>(peer_query, storage);
+    auto validator_ptr = std::make_unique<MockBlockValidator>();
+    validator = validator_ptr.get();
+    loader = std::make_shared<BlockLoaderImpl>(
+        peer_query, storage, std::move(validator_ptr));
     service = std::make_shared<BlockLoaderService>(storage);
 
     grpc::ServerBuilder builder;
@@ -103,6 +109,7 @@ class BlockLoaderTest : public testing::Test {
   std::shared_ptr<BlockLoaderImpl> loader;
   std::shared_ptr<BlockLoaderService> service;
   std::unique_ptr<grpc::Server> server;
+  MockBlockValidator *validator;
 };
 
 /**
@@ -113,6 +120,7 @@ class BlockLoaderTest : public testing::Test {
 TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
   // Current block height 1 => Other block height 1 => no blocks received
   auto block = getBaseBlockBuilder().build().signAndAddSignature(key).finish();
+  auto variant = shared_model::interface::BlockVariant(wBlock(clone(block)));
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
@@ -216,10 +224,16 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   auto requested =
       getBaseBlockBuilder().build().signAndAddSignature(key).finish();
 
+  auto variant = shared_model::interface::BlockVariant(wBlock(clone(requested)));
+
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*storage, getBlocksFrom(1))
       .WillOnce(Return(std::vector<wBlock>{clone(requested)}));
+  EXPECT_CALL(
+      *validator,
+      validate(variant))
+      .WillOnce(Return(Answer{}));
   auto block = loader->retrieveBlock(peer_key, requested.hash());
 
   ASSERT_TRUE(block);
@@ -235,6 +249,8 @@ TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
   // Request nonexisting block => failure
   auto present =
       getBaseBlockBuilder().build().signAndAddSignature(key).finish();
+
+  auto variant = shared_model::interface::BlockVariant(wBlock(clone(present)));
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));

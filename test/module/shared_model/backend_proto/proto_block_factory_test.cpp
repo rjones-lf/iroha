@@ -8,13 +8,22 @@
 #include "backend/protobuf/proto_block_factory.hpp"
 #include "datetime/time.hpp"
 #include "framework/specified_visitor.hpp"
+#include "module/shared_model/validators/validators.hpp"
 #include "validators/default_validator.hpp"
 
 using namespace shared_model;
 
 class ProtoBlockFactoryTest : public ::testing::Test {
  public:
-  proto::ProtoBlockFactory<validation::DefaultAnyBlockValidator> factory;
+  std::unique_ptr<proto::ProtoBlockFactory> factory;
+  validation::MockBlockValidator *validator;
+
+  ProtoBlockFactoryTest() {
+    auto validator_ptr = std::make_unique<validation::MockBlockValidator>();
+    validator = validator_ptr.get();
+    factory =
+        std::make_unique<proto::ProtoBlockFactory>(std::move(validator_ptr));
+  }
 };
 
 /**
@@ -31,7 +40,7 @@ TEST_F(ProtoBlockFactoryTest, UnsafeBlockCreation) {
   txs.emplace_back(iroha::protocol::Transaction{});
 
   auto block_variant =
-      factory.unsafeCreateBlock(height, prev_hash, created_time, txs);
+      factory->unsafeCreateBlock(height, prev_hash, created_time, txs);
 
   auto block = boost::get<std::shared_ptr<shared_model::interface::Block>>(
       block_variant);

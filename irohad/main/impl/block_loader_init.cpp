@@ -16,6 +16,7 @@
  */
 
 #include "main/impl/block_loader_init.hpp"
+#include "validators/block_variant_validator.hpp"
 #include "validators/default_validator.hpp"
 
 using namespace iroha;
@@ -28,7 +29,10 @@ auto BlockLoaderInit::createService(std::shared_ptr<BlockQuery> storage) {
 
 auto BlockLoaderInit::createLoader(std::shared_ptr<PeerQuery> peer_query,
                                    std::shared_ptr<BlockQuery> storage) {
-  return std::make_shared<BlockLoaderImpl>(peer_query, storage);
+  return std::make_shared<BlockLoaderImpl>(
+      peer_query,
+      storage,
+      std::make_unique<shared_model::validation::BlockVariantValidator>());
 }
 
 std::shared_ptr<BlockLoader> BlockLoaderInit::initBlockLoader(

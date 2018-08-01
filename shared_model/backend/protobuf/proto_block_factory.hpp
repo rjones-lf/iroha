@@ -12,6 +12,7 @@
 #include "block.pb.h"
 #include "common/result.hpp"
 #include "interfaces/iroha_internal/unsafe_block_factory.hpp"
+#include "validators/abstract_validator.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -20,9 +21,12 @@ namespace shared_model {
      * ProtoBlockFactory is used to create proto::Block objects
      * @tparam Validator - stateless validator
      */
-    template <typename Validator>
     class ProtoBlockFactory : public interface::UnsafeBlockFactory {
      public:
+      ProtoBlockFactory(std::unique_ptr<shared_model::validation::AbstractValidator<
+                            shared_model::interface::BlockVariant>> validator)
+          : validator_(std::move(validator)) {}
+
       interface::BlockVariant unsafeCreateBlock(
           interface::types::HeightType height,
           const interface::types::HashType &prev_hash,
@@ -56,7 +60,7 @@ namespace shared_model {
         } else {
           proto_block = std::make_shared<Block>(std::move(block));
         }
-        auto errors = validator_.validate(proto_block);
+        auto errors = validator_->validate(proto_block);
         if (errors) {
           return iroha::expected::makeError(errors.reason());
         }
@@ -64,7 +68,9 @@ namespace shared_model {
       }
 
      private:
-      Validator validator_;
+      std::unique_ptr<shared_model::validation::AbstractValidator<
+          shared_model::interface::BlockVariant>>
+          validator_;
     };
   }  // namespace proto
 }  // namespace shared_model
