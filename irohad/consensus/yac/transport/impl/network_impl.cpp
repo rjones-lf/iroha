@@ -54,7 +54,6 @@ namespace iroha {
 
         async_call_->log_->info(
             "Send vote {} to {}", vote.hash.block_hash, to.address());
-        int i;
       }
 
       void NetworkImpl::send_commit(const shared_model::interface::Peer &to,
