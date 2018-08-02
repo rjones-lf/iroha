@@ -210,7 +210,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   auto sig = expected_block->signatures().begin();
   auto &pubkey = sig->publicKey();
   EXPECT_CALL(*block_loader, retrieveBlock(pubkey, expected_block->hash()))
-      .WillOnce(Return(expected_block));
+      .WillOnce(Return(shared_model::interface::BlockVariant{expected_block}));
 
   init();
 
@@ -272,7 +272,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
   auto &pubkey = sig->publicKey();
   EXPECT_CALL(*block_loader, retrieveBlock(pubkey, expected_block->hash()))
       .WillOnce(Return(boost::none))
-      .WillOnce(Return(expected_block));
+      .WillOnce(Return(shared_model::interface::BlockVariant{expected_block}));
 
   init();
 

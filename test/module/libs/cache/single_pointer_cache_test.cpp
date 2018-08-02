@@ -99,7 +99,8 @@ TEST_F(SinglePointerCacheTest, MultithreadedCache) {
     }
   };
 
-  std::thread writer_one{write_one}, reader{read}, releaser{release}, writer_two{write_two};
+  std::thread writer_one{write_one}, reader{read}, releaser{release},
+      writer_two{write_two};
   writer_one.join();
   reader.join();
   releaser.join();
