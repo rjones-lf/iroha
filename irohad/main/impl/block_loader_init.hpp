@@ -38,7 +38,7 @@ namespace iroha {
        */
       auto createService(
           std::shared_ptr<ametsuchi::BlockQuery> storage,
-          std::shared_ptr<consensus::ConsensusBlockCache> block_cache);
+          std::shared_ptr<consensus::ConsensusResultCache> block_cache);
 
       /**
        * Create block loader for loading blocks from given peer by top block
@@ -60,7 +60,7 @@ namespace iroha {
       std::shared_ptr<BlockLoader> initBlockLoader(
           std::shared_ptr<ametsuchi::PeerQuery> peer_query,
           std::shared_ptr<ametsuchi::BlockQuery> storage,
-          std::shared_ptr<iroha::consensus::ConsensusBlockCache> block_cache);
+          std::shared_ptr<consensus::ConsensusResultCache> block_cache);
 
       std::shared_ptr<BlockLoaderImpl> loader;
       std::shared_ptr<BlockLoaderService> service;

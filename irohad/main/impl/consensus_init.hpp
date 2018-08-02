@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "ametsuchi/peer_query.hpp"
+#include "consensus/consensus_block_cache.hpp"
 #include "consensus/yac/messages.hpp"
 #include "consensus/yac/timer.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
@@ -64,7 +65,8 @@ namespace iroha {
             std::shared_ptr<network::BlockLoader> block_loader,
             const shared_model::crypto::Keypair &keypair,
             std::chrono::milliseconds vote_delay_milliseconds,
-            std::chrono::milliseconds load_delay_milliseconds);
+            std::chrono::milliseconds load_delay_milliseconds,
+            std::shared_ptr<consensus::ConsensusResultCache> block_cache);
 
         std::shared_ptr<NetworkImpl> consensus_network;
       };

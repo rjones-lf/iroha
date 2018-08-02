@@ -51,7 +51,7 @@ class BlockLoaderTest : public testing::Test {
   void SetUp() override {
     peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
-    block_cache = std::make_shared<iroha::consensus::ConsensusBlockCache>();
+    block_cache = std::make_shared<iroha::consensus::ConsensusResultCache>();
     loader = std::make_shared<BlockLoaderImpl>(peer_query, storage);
     service = std::make_shared<BlockLoaderService>(storage, block_cache);
 
@@ -91,7 +91,7 @@ class BlockLoaderTest : public testing::Test {
   }
 
   // wrap block, so it could be inserted into consensus cache
-  iroha::consensus::ConsensusBlockCache::DataPointer wrapBlock(
+  iroha::consensus::ConsensusResultCache::DataPointer wrapBlock(
       std::shared_ptr<shared_model::interface::Block> block) const {
     return std::make_shared<shared_model::interface::BlockVariant>(
         std::move(block));
@@ -109,7 +109,7 @@ class BlockLoaderTest : public testing::Test {
   std::shared_ptr<BlockLoaderImpl> loader;
   std::shared_ptr<BlockLoaderService> service;
   std::unique_ptr<grpc::Server> server;
-  std::shared_ptr<iroha::consensus::ConsensusBlockCache> block_cache;
+  std::shared_ptr<iroha::consensus::ConsensusResultCache> block_cache;
 };
 
 /**

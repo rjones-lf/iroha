@@ -190,7 +190,7 @@ void Irohad::initSimulator() {
  * Initializing consensus block cache
  */
 void Irohad::initConsensusCache() {
-  block_cache = std::make_shared<consensus::ConsensusBlockCache>();
+  block_cache = std::make_shared<consensus::ConsensusResultCache>();
 
   log_->info("[Init] => init consensus block cache");
 }

@@ -29,7 +29,7 @@ namespace iroha {
      public:
       BlockLoaderService(
           std::shared_ptr<ametsuchi::BlockQuery> storage,
-          std::shared_ptr<consensus::ConsensusBlockCache> block_cache);
+          std::shared_ptr<iroha::consensus::ConsensusResultCache> block_cache);
 
       grpc::Status retrieveBlocks(
           ::grpc::ServerContext *context,
@@ -42,7 +42,7 @@ namespace iroha {
 
      private:
       std::shared_ptr<ametsuchi::BlockQuery> storage_;
-      std::shared_ptr<consensus::ConsensusBlockCache> block_cache_;
+      std::shared_ptr<iroha::consensus::ConsensusResultCache> block_cache_;
       logger::Logger log_;
     };
   }  // namespace network

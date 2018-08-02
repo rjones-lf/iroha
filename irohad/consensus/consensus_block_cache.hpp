@@ -13,10 +13,15 @@ namespace iroha {
   namespace consensus {
 
     /**
-     * Type to represent consensus cache for a single block
+     * Type to represent result of the consensus in form of block/empty_block
      */
-    using ConsensusBlockCache =
-        cache::SinglePointerCache<shared_model::interface::BlockVariant>;
+    using ConsensusResult = shared_model::interface::BlockVariant;
+
+    /**
+     * Type to represent a consensus result cache with a single block
+     */
+    using ConsensusResultCache =
+        cache::SinglePointerCache<ConsensusResult>;
 
   }  // namespace consensus
 }  // namespace iroha
