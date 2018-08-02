@@ -21,12 +21,6 @@ auto makeQuery() {
       .build();
 }
 
-template <typename Builder>
-auto createValidQuery(Builder builder,
-                      const shared_model::crypto::Keypair &keypair) {
-  return builder.signAndAddSignature(keypair).finish();
-}
-
 template <typename Query>
 auto createInvalidQuery(Query query,
                         const shared_model::crypto::Keypair &keypair) {
@@ -37,44 +31,38 @@ auto createInvalidQuery(Query query,
 
 /**
  * @given itf instance
- * @when  pass query with valid signature
- * AND    pass query with invalid signature
- * @then  assure that query with invalid signature is failed
- * AND valid query is ok
+ * @when  pass query with invalid signature
+ * @then  assure that query with invalid signature is failed with stateless
+ * error
  */
 TEST(QueryTest, FailedQueryTest) {
   const auto key_pair =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
-  auto query_with_valid_signature = createValidQuery(
-      makeQuery<shared_model::proto::QueryBuilder>(), key_pair);
-  auto valid_query_response = [](auto &status) {
-    boost::apply_visitor(
-        framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
-        status.get());
-  };
-
   auto query_with_broken_signature =
       createInvalidQuery(makeQuery<TestQueryBuilder>(), key_pair);
   auto stateless_invalid_query_response = [](auto &status) {
-    boost::apply_visitor(framework::SpecifiedVisitor<
-                             shared_model::interface::ErrorQueryResponse>(),
-                         status.get());
+    auto &resp =
+        boost::apply_visitor(framework::SpecifiedVisitor<
+                                 shared_model::interface::ErrorQueryResponse>(),
+                             status.get());
+    boost::apply_visitor(
+        framework::SpecifiedVisitor<
+            shared_model::interface::StatelessFailedErrorResponse>(),
+        resp.get());
   };
 
   integration_framework::IntegrationTestFramework itf(1);
-  itf.setInitialState(key_pair).sendQuery(query_with_valid_signature,
-                                          valid_query_response);
 
-  itf.sendQuery(query_with_broken_signature, stateless_invalid_query_response);
+  itf.setInitialState(key_pair).sendQuery(query_with_broken_signature,
+                                          stateless_invalid_query_response);
 }
 
 /**
  * @given itf instance
- * @when  pass block query with valid signature
- * AND    pass block query with invalid signature
- * @then  assure that query with invalid signature is failed
- * AND valid query is ok
+ * @when  pass block query with invalid signature
+ * @then  assure that query with invalid signature is failed with stateless
+ * error
  */
 TEST(QueryTest, FailedBlockQueryTest) {
   // TODO: 01/08/2018 @muratovv Implement test since IR-1569 will be completed
