@@ -25,9 +25,9 @@ using namespace iroha::network;
 
 BlockLoaderService::BlockLoaderService(
     std::shared_ptr<BlockQuery> storage,
-    std::shared_ptr<consensus::ConsensusResultCache> block_cache)
+    std::shared_ptr<consensus::ConsensusResultCache> consensus_result_cache)
     : storage_(std::move(storage)),
-      block_cache_(std::move(block_cache)),
+      consensus_result_cache_(std::move(consensus_result_cache)),
       log_(logger::log("BlockLoaderService")) {}
 
 grpc::Status BlockLoaderService::retrieveBlocks(
@@ -54,7 +54,7 @@ grpc::Status BlockLoaderService::retrieveBlock(
   }
 
   // required block must be in the cache
-  auto block_variant = block_cache_->get();
+  auto block_variant = consensus_result_cache_->get();
   if (not block_variant) {
     log_->info("Requested to retrieve a block from an empty cache");
     return grpc::Status(grpc::StatusCode::NOT_FOUND, "Cache is empty");

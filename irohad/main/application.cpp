@@ -190,7 +190,7 @@ void Irohad::initSimulator() {
  * Initializing consensus block cache
  */
 void Irohad::initConsensusCache() {
-  block_cache = std::make_shared<consensus::ConsensusResultCache>();
+  consensus_result_cache_ = std::make_shared<consensus::ConsensusResultCache>();
 
   log_->info("[Init] => init consensus block cache");
 }
@@ -200,7 +200,7 @@ void Irohad::initConsensusCache() {
  */
 void Irohad::initBlockLoader() {
   block_loader = loader_init.initBlockLoader(
-      initPeerQuery(), storage->getBlockQuery(), block_cache);
+      initPeerQuery(), storage->getBlockQuery(), consensus_result_cache_);
 
   log_->info("[Init] => block loader");
 }
@@ -214,7 +214,8 @@ void Irohad::initConsensusGate() {
                                               block_loader,
                                               keypair,
                                               vote_delay_,
-                                              load_delay_);
+                                              load_delay_,
+                                              consensus_result_cache_);
 
   log_->info("[Init] => consensus gate");
 }

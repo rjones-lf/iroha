@@ -44,14 +44,14 @@ namespace iroha {
 
       class YacGateImpl : public YacGate {
        public:
-        YacGateImpl(
-            std::shared_ptr<HashGate> hash_gate,
-            std::shared_ptr<YacPeerOrderer> orderer,
-            std::shared_ptr<YacHashProvider> hash_provider,
-            std::shared_ptr<simulator::BlockCreator> block_creator,
-            std::shared_ptr<network::BlockLoader> block_loader,
-            std::shared_ptr<consensus::ConsensusResultCache> block_cache,
-            uint64_t delay);
+        YacGateImpl(std::shared_ptr<HashGate> hash_gate,
+                    std::shared_ptr<YacPeerOrderer> orderer,
+                    std::shared_ptr<YacHashProvider> hash_provider,
+                    std::shared_ptr<simulator::BlockCreator> block_creator,
+                    std::shared_ptr<network::BlockLoader> block_loader,
+                    std::shared_ptr<consensus::ConsensusResultCache>
+                        consensus_result_cache,
+                    uint64_t delay);
         void vote(const shared_model::interface::BlockVariant &) override;
         /**
          * Method called when commit received

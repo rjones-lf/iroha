@@ -97,7 +97,7 @@ namespace iroha {
           const shared_model::crypto::Keypair &keypair,
           std::chrono::milliseconds vote_delay_milliseconds,
           std::chrono::milliseconds load_delay_milliseconds,
-          std::shared_ptr<consensus::ConsensusResultCache> block_cache) {
+          std::shared_ptr<consensus::ConsensusResultCache> consensus_result_cache) {
         auto peer_orderer = createPeerOrderer(wsv);
 
         auto yac = createYac(peer_orderer->getInitialOrdering().value(),
@@ -111,7 +111,7 @@ namespace iroha {
                                              hash_provider,
                                              block_creator,
                                              block_loader,
-                                             std::move(block_cache),
+                                             std::move(consensus_result_cache),
                                              load_delay_milliseconds.count());
       }
 

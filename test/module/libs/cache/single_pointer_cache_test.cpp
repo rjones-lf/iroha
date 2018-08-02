@@ -4,7 +4,6 @@
  */
 
 #include <thread>
-#include <condition_variable>
 
 #include <gtest/gtest.h>
 
@@ -105,4 +104,5 @@ TEST_F(SinglePointerCacheTest, MultithreadedCache) {
   writer_one.join();
   reader.join();
   releaser.join();
+  writer_two.join();
 }
