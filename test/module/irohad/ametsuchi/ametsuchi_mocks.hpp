@@ -156,27 +156,27 @@ namespace iroha {
      public:
       MOCK_METHOD1(
           getAccountTransactions,
-          rxcpp::observable<wTransaction>(
+          std::vector<wTransaction>(
               const shared_model::interface::types::AccountIdType &account_id));
       MOCK_METHOD1(getTxByHashSync,
                    boost::optional<wTransaction>(
                        const shared_model::crypto::Hash &hash));
       MOCK_METHOD2(
           getAccountAssetTransactions,
-          rxcpp::observable<wTransaction>(
+          std::vector<wTransaction>(
               const shared_model::interface::types::AccountIdType &account_id,
               const shared_model::interface::types::AssetIdType &asset_id));
       MOCK_METHOD1(
           getTransactions,
-          rxcpp::observable<boost::optional<wTransaction>>(
+          std::vector<boost::optional<wTransaction>>(
               const std::vector<shared_model::crypto::Hash> &tx_hashes));
       MOCK_METHOD2(getBlocks,
-                   rxcpp::observable<wBlock>(
+          std::vector<BlockQuery::wBlock>(
                        shared_model::interface::types::HeightType, uint32_t));
       MOCK_METHOD1(getBlocksFrom,
-                   rxcpp::observable<wBlock>(
+          std::vector<BlockQuery::wBlock>(
                        shared_model::interface::types::HeightType));
-      MOCK_METHOD1(getTopBlocks, rxcpp::observable<wBlock>(uint32_t));
+      MOCK_METHOD1(getTopBlocks, std::vector<BlockQuery::wBlock>(uint32_t));
       MOCK_METHOD0(getTopBlock, expected::Result<wBlock, std::string>(void));
       MOCK_METHOD1(hasTxWithHash, bool(const shared_model::crypto::Hash &hash));
       MOCK_METHOD0(getTopBlockHeight, uint32_t(void));

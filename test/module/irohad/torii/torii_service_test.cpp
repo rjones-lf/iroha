@@ -35,6 +35,16 @@ using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds initial_timeout = 1s;
 constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
 
+/**
+The do-while cycle imitates client resubscription to the stream. Stream
+"expiration" is a valid designed case (see pr #1615 for the details).
+
+The number of attempts (3) is a magic constant here. The idea behind this number
+is the following: only one resubscription is usually enough to pass the test; if
+three resubscribes were not enough, then most likely there is another bug.
+ */
+constexpr uint32_t resubscribe_attempts = 3;
+
 using iroha::Commit;
 
 class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
@@ -408,9 +418,14 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   // (Committed in this case) will be received. We start request before
   // transaction sending so we need in a separate thread for it.
   std::thread t([&] {
+    auto resub_counter(resubscribe_attempts);
     iroha::protocol::TxStatusRequest tx_request;
     tx_request.set_tx_hash(txhash);
-    client.StatusStream(tx_request, torii_response);
+    do {
+      client.StatusStream(tx_request, torii_response);
+    } while (torii_response.back().tx_status()
+                 != iroha::protocol::TxStatus::COMMITTED
+             and --resub_counter);
   });
 
   client.Torii(iroha_tx.getTransport());
