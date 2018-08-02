@@ -71,15 +71,13 @@ namespace {
     const auto perm_str =
         shared_model::interface::RolePermissionSet({permission}).toBitstring();
     const auto bits = shared_model::interface::RolePermissionSet::size();
-    std::string query = R"(
-          SELECT COALESCE(bit_or(rp.permission), '0'::bit()"
-        + std::to_string(bits) + R"()) & ')" + std::string(perm_str)
-        + R"(' = ')" + std::string(perm_str)
-        + R"(' FROM role_has_permissions AS rp
+    std::string query = (boost::format(R"(
+          SELECT COALESCE(bit_or(rp.permission), '0'::bit(%i))
+          & '%s' = '%s' FROM role_has_permissions AS rp
               JOIN account_has_roles AS ar on ar.role_id = rp.role_id
-              WHERE ar.account_id = :)"
-        + account_alias;
-
+              WHERE ar.account_id = :%s)")
+                         % bits % perm_str % perm_str % account_alias)
+                            .str();
     return query;
   }
 
@@ -89,15 +87,14 @@ namespace {
         shared_model::interface::GrantablePermissionSet({permission})
             .toBitstring();
     const auto bits = shared_model::interface::GrantablePermissionSet::size();
-    std::string query = R"(
-          SELECT COALESCE(bit_or(permission), '0'::bit()"
-        + std::to_string(bits) + R"()) & ')" + std::string(perm_str)
-        + R"(' = ')" + std::string(perm_str)
-        + R"(' FROM account_has_grantable_permissions
+    std::string query = (boost::format(R"(
+          SELECT COALESCE(bit_or(permission), '0'::bit(%i))
+          & '%s' = '%s' FROM account_has_grantable_permissions
               WHERE account_id = :grantable_account_id AND
               permittee_account_id = :grantable_permittee_account_id
-          )";
-
+          )") % bits % perm_str
+                         % perm_str)
+                            .str();
     return query;
   }
 
@@ -209,14 +206,13 @@ namespace iroha {
 
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return std::string(
-                (boost::format("command validation failed: account %s"
-                               " does not have permission %s")
-                 % creator_account_id_
-                 % shared_model::proto::permissions::toString(
-                       shared_model::interface::permissions::Role::
-                           kAddAssetQty))
-                    .str());
+            return (boost::format("command validation failed: account %s"
+                                  " does not have permission %s")
+                    % creator_account_id_
+                    % shared_model::proto::permissions::toString(
+                          shared_model::interface::permissions::Role::
+                              kAddAssetQty))
+                .str();
           },
           [] { return std::string("Account does not exist"); },
           [] {
@@ -289,11 +285,12 @@ namespace iroha {
               + (do_validation_ ? R"(
           has_perm AS ()"
                          + checkAccountHasRoleOrGrantablePerm(
-                             shared_model::interface::permissions::
-                             Role::kAddSignatory,
-                             shared_model::interface::permissions::
-                             Grantable::kAddMySignatory)
-                         + R"(),)" : "")
+                                      shared_model::interface::permissions::
+                                          Role::kAddSignatory,
+                                      shared_model::interface::permissions::
+                                          Grantable::kAddMySignatory)
+                         + R"(),)"
+                                : "")
               + R"(
           insert_signatory AS
           (
@@ -947,14 +944,15 @@ namespace iroha {
       auto &pubkey = command.pubkey().hex();
       soci::statement st = sql_.prepare << std::string(R"(
           WITH
-          )") + (do_validation_ ? R"(
+          )")
+              + (do_validation_ ? R"(
           has_perm AS ()"
-                  + checkAccountHasRoleOrGrantablePerm(
-                      shared_model::interface::permissions::
-                      Role::kRemoveSignatory,
-                      shared_model::interface::permissions::
-                      Grantable::kRemoveMySignatory)
-                  + R"(),
+                         + checkAccountHasRoleOrGrantablePerm(
+                                      shared_model::interface::permissions::
+                                          Role::kRemoveSignatory,
+                                      shared_model::interface::permissions::
+                                          Grantable::kRemoveMySignatory)
+                         + R"(),
           get_account AS (
               SELECT quorum FROM account WHERE account_id = :account_id LIMIT 1
            ),
@@ -1262,14 +1260,17 @@ namespace iroha {
               SELECT 1 FROM account
               WHERE :quorum >= (SELECT COUNT(*) FROM get_signatories)
               AND account_id = :account_id
-          ),)" : "")     + (do_validation_ ? R"(
+          ),)"
+                                : "")
+              + (do_validation_ ? R"(
           has_perm AS ()"
-          + checkAccountHasRoleOrGrantablePerm(
-              shared_model::interface::permissions::
-              Role::kSetQuorum,
-              shared_model::interface::permissions::
-              Grantable::kSetMyQuorum)
-          + R"(),)" : "")
+                         + checkAccountHasRoleOrGrantablePerm(
+                                      shared_model::interface::permissions::
+                                          Role::kSetQuorum,
+                                      shared_model::interface::permissions::
+                                          Grantable::kSetMyQuorum)
+                         + R"(),)"
+                                : "")
               + R"(
           updated AS (
               UPDATE account SET quorum=:quorum

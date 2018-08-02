@@ -490,7 +490,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command ]
+     * @given  command
      * @when trying to create account
      * @then account is created
      */
@@ -505,7 +505,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command ]
+     * @given  command
      * @when trying to create account
      * @then account is created
      */
@@ -538,7 +538,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command ]
+     * @given  command
      * @when trying to create asset
      * @then asset is created
      */
@@ -569,7 +569,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command ]
+     * @given  command
      * @when trying to create asset without permission
      * @then asset is not created
      */

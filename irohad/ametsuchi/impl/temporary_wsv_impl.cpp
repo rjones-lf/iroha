@@ -16,8 +16,7 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
         : sql_(std::move(sql)),
           wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
-          executor_(std::make_shared<PostgresWsvCommand>(*sql_)),
-          command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
+          command_executor_(std::make_unique<PostgresCommandExecutor>(*sql_)),
           log_(logger::log("TemporaryWSV")) {
       *sql_ << "BEGIN";
     }

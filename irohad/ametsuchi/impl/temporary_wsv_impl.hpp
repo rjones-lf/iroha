@@ -62,8 +62,7 @@ namespace iroha {
      private:
       std::shared_ptr<soci::session> sql_;
       std::shared_ptr<WsvQuery> wsv_;
-      std::shared_ptr<WsvCommand> executor_;
-      std::shared_ptr<CommandExecutor> command_executor_;
+      std::unique_ptr<CommandExecutor> command_executor_;
 
       logger::Logger log_;
     };
