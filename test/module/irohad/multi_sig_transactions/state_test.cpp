@@ -13,42 +13,37 @@ using namespace std;
 using namespace iroha;
 using namespace iroha::model;
 
+/**
+ * @given empty state
+ * @when  insert one batch
+ * @then  checks that batch is holded by state
+ */
 TEST(StateTest, CreateState) {
-  log_->info("Create state from => insert one transaction");
 
   auto state = MstState::empty();
   ASSERT_EQ(0, state.getBatches().size());
   log_->info("first check");
-//  state += makeTestBatch(txBuilder(1));
   state += addSignatures(
         makeTestBatch(txBuilder(1)), 0, makeSignature("1", "pub_key_1"));
   log_->info("add");
   ASSERT_EQ(1, state.getBatches().size());
 }
 
+/**
+ * @given empty state
+ * @when  insert batches with different signatures
+ * @then  checks that signatures are merged into the state
+ */
 TEST(StateTest, UpdateExistingState) {
-  log_->info(
-      "Create empty state => insert tx with one signature => "
-      "insert tx with another signature");
-  log_->info("pub_keys {}", makeSignature("1", "pub_key_1").second == makeSignature("2", "pub_key_2").second);
 
   auto state = MstState::empty();
   auto time = iroha::time::now();
   state += addSignatures(
-      makeTestBatch(txBuilder(1, time)), 0, makeSignature("1", "pub_key_1"), makeSignature("2", "pub_key_2"));
-//  state +=
-//makeTestBatch(txBuilder(1, time));
-  ASSERT_EQ(1, state.getBatches().size());
-  log_->info("Tx: {}",
-             state.getBatches()
-                 .begin()
-                 ->get()
-                 ->transactions()
-                 .begin()
-                 ->get()
-                 ->toString());
+      makeTestBatch(txBuilder(1, time)), 0, makeSignature("1", "pub_key_1"));
+
   state += addSignatures(
-      makeTestBatch(txBuilder(1, time)), 0, makeSignature("3", "3"));
+      makeTestBatch(txBuilder(1, time)), 0, makeSignature("2", "pub_key_2"));
+  ASSERT_EQ(1, state.getBatches().size());
   ASSERT_EQ(1, state.getBatches().begin()->get()->transactions().size());
   ASSERT_EQ(2,
             boost::size(state.getBatches()
