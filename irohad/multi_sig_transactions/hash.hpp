@@ -31,9 +31,12 @@ namespace iroha {
     template <typename BatchType>
     class PointerBatchHasher {
      public:
-      size_t operator()(const BatchType &tx) const {
+      size_t operator()(const BatchType &batch) const {
+        auto log_ = logger::log("PointerBatchHasher");
+        log_->info("1 call {}", batch->toString());
+        log_->info("call <<{}>>", batch->reducedHash().toString());
         return string_hasher(
-            shared_model::crypto::toBinaryString(tx->reducedHash()));
+            shared_model::crypto::toBinaryString(batch->reducedHash()));
       }
 
      private:

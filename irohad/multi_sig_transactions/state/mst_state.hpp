@@ -48,6 +48,8 @@ namespace iroha {
   class BatchHashEquality {
    public:
     bool operator()(const DataType &left_tx, const DataType &right_tx) const {
+      auto log_ = logger::log("BatchHashEquality");
+      log_->info("call");
       return left_tx->reducedHash() == right_tx->reducedHash();
     }
   };
@@ -57,6 +59,8 @@ namespace iroha {
    */
   class DefaultCompleter : public Completer {
     bool operator()(const DataType &batch) const override {
+      auto log_ = logger::log("DefaultCompleter");
+      log_->info("DefaultCompleter");
       return std::accumulate(
           batch->transactions().begin(),
           batch->transactions().end(),

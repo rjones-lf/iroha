@@ -269,6 +269,7 @@ namespace framework {
      */
     template <typename... TxBuilders>
     auto makeTestBatch(TxBuilders &&... builders) {
+      auto log_ = logger::log("BATCH_HELPER");
       auto transactions = internal::makeTxBatchCollection(
           std::forward<TxBuilders>(builders)...);
 
@@ -285,6 +286,7 @@ namespace framework {
           shared_model::interface::TransactionBatch::createTransactionBatch(
               transactions, TxsValidator());
 
+      log_->info("batch created");
       return std::make_shared<shared_model::interface::TransactionBatch>(
           framework::expected::val(batch).value().value);
     }

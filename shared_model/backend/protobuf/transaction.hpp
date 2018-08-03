@@ -27,6 +27,8 @@
 #include "batch_meta.hpp"
 #include "utils/lazy_initializer.hpp"
 
+#include <iostream>
+
 namespace shared_model {
   namespace proto {
     class Transaction FINAL : public CopyableProto<interface::Transaction,
@@ -68,10 +70,17 @@ namespace shared_model {
 
       bool addSignature(const crypto::Signed &signed_blob,
                         const crypto::PublicKey &public_key) override {
+        std::cout << "*** try instert " << public_key.toString() << std::endl;
         // if already has such signature
         if (std::find_if(signatures_->begin(),
                          signatures_->end(),
                          [&public_key](const auto &signature) {
+
+                           std::cout << "*** check pub keys "
+                                     << signature.publicKey().toString()
+                                     << " and " << public_key.toString()
+                                     << "with result " << (signature.publicKey()
+                               == public_key) << std::endl;
                            return signature.publicKey() == public_key;
                          })
             != signatures_->end()) {
