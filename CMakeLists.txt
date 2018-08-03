@@ -52,7 +52,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
 option(BENCHMARKING "Build benchmarks"               OFF)
 option(TESTING      "Build tests"                    ON )
-option(COVERAGE     "Enable coverage"                OFF)
+option(COVERAGE     "Enable coverage"                ON)
 option(FUZZING      "Build fuzzing binaries"         OFF)
 option(PACKAGE_ZIP  "Create ZIP package"             OFF)
 option(PACKAGE_TGZ  "Create TGZ package"             OFF)
