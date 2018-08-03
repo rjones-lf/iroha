@@ -9,6 +9,8 @@
 #include "validators/transaction_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
 
+#include "iostream"
+
 namespace shared_model {
   namespace interface {
 
@@ -134,9 +136,20 @@ namespace shared_model {
           .finalize();
     }
 
+    bool TransactionBatch::addSignature(
+        size_t number_of_tx,
+        const shared_model::crypto::Signed &signed_blob,
+        const shared_model::crypto::PublicKey &public_key) {
+      if (number_of_tx >= transactions_.size()) {
+        return false;
+      } else {
+        return transactions_.at(number_of_tx)->addSignature(signed_blob, public_key);
+      }
+    }
+
     bool TransactionBatch::operator==(const TransactionBatch &rhs) const {
       return reducedHash() == rhs.reducedHash()
-             and transactions() == rhs.transactions();
+          and transactions() == rhs.transactions();
     }
 
   }  // namespace interface

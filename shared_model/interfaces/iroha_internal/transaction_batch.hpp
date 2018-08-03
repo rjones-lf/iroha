@@ -77,6 +77,17 @@ namespace shared_model {
       std::string toString() const;
 
       /**
+       * Add signature to concrete transaction in the batch
+       * @param number_of_tx - number of transaction for inserting signature
+       * @param singed - signed blob of transaction
+       * @param public_key - public key of inserter
+       * @return true if signature has been inserted
+       */
+      bool addSignature(size_t number_of_tx,
+                        const shared_model::crypto::Signed &signed_blob,
+                        const shared_model::crypto::PublicKey &public_key);
+
+      /**
        * Get the concatenation of reduced hashes as a single hash
        * That kind of hash does not respect batch type
        * @tparam Collection type of const ref iterator
