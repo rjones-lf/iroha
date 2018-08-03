@@ -20,11 +20,8 @@ namespace iroha {
   }
 
   MstState MstState::operator+=(const DataType &rhs) {
-    log_->info("add tx {}", rhs != nullptr);
     auto result = MstState::empty(completer_);
-    log_->info("create result");
     insertOne(result, rhs);
-    log_->info("result");
     return result;
   }
 
@@ -55,12 +52,10 @@ namespace iroha {
 
   std::vector<DataType> MstState::getBatches() const {
     std::vector<DataType> result;
-    log_->info("insert, size state {}, index size", internal_state_.size(), index_.size());
     std::for_each(internal_state_.begin(),
                   internal_state_.end(),
                   [&result, this](const auto &val) {
                     val->transactions();
-                    log_->info("push_back");
                     result.push_back(val);
                   });
     return result;
@@ -121,18 +116,13 @@ namespace iroha {
 
   void MstState::insertOne(MstState &out_state, const DataType &rhs_batch) {
     log_->info("batch: {}", rhs_batch->toString());
-    log_->info("Insertone {} {}", internal_state_.size(), index_.size());
     auto corresponding = internal_state_.find(rhs_batch);
-    log_->info("found");
     if (corresponding == internal_state_.end()) {
       // when state not contains transaction
-      log_->info("rawinsert");
       rawInsert(rhs_batch);
-      log_->info("inserted");
       return;
     }
 
-    log_->info("merge signatures");
     DataType found = *corresponding;
     // Append new signatures to the existing state
     mergeSignaturesInBatch(found, rhs_batch);
@@ -140,7 +130,6 @@ namespace iroha {
     if ((*completer_)(found)) {
       // state already has completed transaction,
       // remove from state and return it
-      log_->info("remove");
       out_state += found;
       internal_state_.erase(internal_state_.find(found));
     }
