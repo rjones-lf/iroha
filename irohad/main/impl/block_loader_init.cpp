@@ -26,15 +26,16 @@ auto BlockLoaderInit::createService(std::shared_ptr<BlockQuery> storage) {
   return std::make_shared<BlockLoaderService>(storage);
 }
 
-auto BlockLoaderInit::createLoader(std::shared_ptr<PeerQuery> peer_query,
-                                   std::shared_ptr<BlockQuery> storage) {
-  return std::make_shared<BlockLoaderImpl>(peer_query, storage);
+auto BlockLoaderInit::createLoader(
+    std::shared_ptr<PeerQueryFactory> peer_query_factory,
+    std::shared_ptr<BlockQuery> storage) {
+  return std::make_shared<BlockLoaderImpl>(peer_query_factory, storage);
 }
 
 std::shared_ptr<BlockLoader> BlockLoaderInit::initBlockLoader(
-    std::shared_ptr<PeerQuery> peer_query,
+    std::shared_ptr<PeerQueryFactory> peer_query_factory,
     std::shared_ptr<BlockQuery> storage) {
   service = createService(storage);
-  loader = createLoader(peer_query, storage);
+  loader = createLoader(peer_query_factory, storage);
   return loader;
 }

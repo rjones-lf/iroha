@@ -24,16 +24,20 @@
 #include <boost/range/irange.hpp>
 #include "common/types.hpp"
 
+#include "ametsuchi/peer_query.hpp"
+
 namespace iroha {
 
   using PropagationData = PropagationStrategy::PropagationData;
   using OptPeer = GossipPropagationStrategy::OptPeer;
-  using PeerProvider = GossipPropagationStrategy::PeerProvider;
+  using PeerProviderFactory = GossipPropagationStrategy::PeerProviderFactory;
   using std::chrono::steady_clock;
 
   GossipPropagationStrategy::GossipPropagationStrategy(
-      PeerProvider query, std::chrono::milliseconds period, uint32_t amount)
-      : query(query),
+      PeerProviderFactory query_factory,
+      std::chrono::milliseconds period,
+      uint32_t amount)
+      : query_factory(query_factory),
         non_visited({}),
         emitent(rxcpp::observable<>::interval(steady_clock::now(), period)
                     .map([this, amount](int) {
@@ -54,15 +58,12 @@ namespace iroha {
     return emitent.subscribe_on(rxcpp::observe_on_new_thread());
   }
 
-  GossipPropagationStrategy::~GossipPropagationStrategy() {
-    // Make sure that emitent callback have finish and haven't started yet
-    std::lock_guard<std::mutex> lock(m);
-    query.reset();
-  }
+  GossipPropagationStrategy::~GossipPropagationStrategy() {}
 
   bool GossipPropagationStrategy::initQueue() {
-    return query->getLedgerPeers() |
-               [](auto &&data) -> boost::optional<PropagationData> {
+    return query_factory->createPeerQuery() | [](const auto &query) {
+      return query->getLedgerPeers();
+    } | [](auto &&data) -> boost::optional<PropagationData> {
       if (data.size() == 0) {
         return {};
       }
@@ -81,7 +82,7 @@ namespace iroha {
   OptPeer GossipPropagationStrategy::visit() {
     // Make sure that dtor isn't running
     std::lock_guard<std::mutex> lock(m);
-    if (not query or (non_visited.empty() and not initQueue())) {
+    if (non_visited.empty() and not initQueue()) {
       // either PeerProvider doesn't gives peers / dtor have been called
       return {};
     }

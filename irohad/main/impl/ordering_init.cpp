@@ -34,7 +34,7 @@ namespace iroha {
     }
 
     auto OrderingInit::createService(
-        std::shared_ptr<ametsuchi::PeerQuery> wsv,
+        std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
         size_t max_size,
         std::chrono::milliseconds delay_milliseconds,
         std::shared_ptr<network::OrderingServiceTransport> transport,
@@ -43,7 +43,7 @@ namespace iroha {
       auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
           shared_model::validation::DefaultProposalValidator>>();
       return std::make_shared<ordering::OrderingServiceImpl>(
-          wsv,
+          peer_query_factory,
           max_size,
           rxcpp::observable<>::interval(delay_milliseconds,
                                         rxcpp::observe_on_new_thread()),
@@ -53,13 +53,17 @@ namespace iroha {
     }
 
     std::shared_ptr<OrderingGate> OrderingInit::initOrderingGate(
-        std::shared_ptr<ametsuchi::PeerQuery> wsv,
+        std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
         size_t max_size,
         std::chrono::milliseconds delay_milliseconds,
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
             persistent_state,
         std::shared_ptr<ametsuchi::BlockQuery> block_query) {
-      auto ledger_peers = wsv->getLedgerPeers();
+      auto query = peer_query_factory->createPeerQuery();
+      if (not query) {
+        log_->error("Cannot get the peer query");
+      }
+      auto ledger_peers = query.get()->getLedgerPeers();
       if (not ledger_peers or ledger_peers.value().empty()) {
         log_->error(
             "Ledger don't have peers. Do you set correct genesis block?");
@@ -72,7 +76,7 @@ namespace iroha {
 
       ordering_service_transport =
           std::make_shared<ordering::OrderingServiceTransportGrpc>();
-      ordering_service = createService(wsv,
+      ordering_service = createService(peer_query_factory,
                                        max_size,
                                        delay_milliseconds,
                                        ordering_service_transport,

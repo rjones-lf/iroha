@@ -41,7 +41,7 @@ namespace iroha {
        * @return initialized loader
        */
       auto createLoader(
-          std::shared_ptr<ametsuchi::PeerQuery> peer_query,
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           std::shared_ptr<ametsuchi::BlockQuery> storage);
 
      public:
@@ -50,7 +50,7 @@ namespace iroha {
        * @return initialized service
        */
       std::shared_ptr<BlockLoader> initBlockLoader(
-          std::shared_ptr<ametsuchi::PeerQuery> peer_query,
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           std::shared_ptr<ametsuchi::BlockQuery> storage);
 
       std::shared_ptr<BlockLoaderImpl> loader;

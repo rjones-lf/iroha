@@ -163,7 +163,7 @@ void Irohad::initValidators() {
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
-  ordering_gate = ordering_init.initOrderingGate(initPeerQuery(),
+  ordering_gate = ordering_init.initOrderingGate(storage,
                                                  max_proposal_size_,
                                                  proposal_delay_,
                                                  ordering_service_storage_,
@@ -190,7 +190,7 @@ void Irohad::initSimulator() {
  */
 void Irohad::initBlockLoader() {
   block_loader =
-      loader_init.initBlockLoader(initPeerQuery(), storage->getBlockQuery());
+      loader_init.initBlockLoader(storage, storage->getBlockQuery());
 
   log_->info("[Init] => block loader");
 }
@@ -199,7 +199,7 @@ void Irohad::initBlockLoader() {
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
-  consensus_gate = yac_init.initConsensusGate(initPeerQuery(),
+  consensus_gate = yac_init.initConsensusGate(storage,
                                               simulator,
                                               block_loader,
                                               keypair,
@@ -251,7 +251,7 @@ void Irohad::initMstProcessor() {
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
     // cli parameters
     auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
-        std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery()),
+        storage,
         std::chrono::seconds(5) /*emitting period*/,
         2 /*amount per once*/);
     auto mst_time = std::make_shared<MstTimeProviderImpl>();

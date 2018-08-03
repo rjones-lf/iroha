@@ -20,6 +20,7 @@
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/peer_query.hpp"
+#include "ametsuchi/peer_query_factory.hpp"
 #include "logger/logger.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
@@ -57,7 +58,7 @@ namespace iroha {
        * @param loop - handler of async events
        */
       auto createService(
-          std::shared_ptr<ametsuchi::PeerQuery> wsv,
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           size_t max_size,
           std::chrono::milliseconds delay_milliseconds,
           std::shared_ptr<network::OrderingServiceTransport> transport,
@@ -75,7 +76,7 @@ namespace iroha {
        * @return efficient implementation of OrderingGate
        */
       std::shared_ptr<iroha::network::OrderingGate> initOrderingGate(
-          std::shared_ptr<ametsuchi::PeerQuery> wsv,
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           size_t max_size,
           std::chrono::milliseconds delay_milliseconds,
           std::shared_ptr<ametsuchi::OrderingServicePersistentState>

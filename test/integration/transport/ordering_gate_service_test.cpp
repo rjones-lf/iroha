@@ -54,16 +54,20 @@ class OrderingGateServiceTest : public ::testing::Test {
     service_transport = std::make_shared<OrderingServiceTransportGrpc>();
 
     wsv = std::make_shared<MockPeerQuery>();
+    pqfactory = std::make_shared<MockPeerQueryFactory>();
   }
 
   void SetUp() override {
     fake_persistent_state =
         std::make_shared<MockOrderingServicePersistentState>();
+    EXPECT_CALL(*pqfactory, createPeerQuery())
+        .WillRepeatedly(
+            Return(boost::make_optional(std::shared_ptr<PeerQuery>(wsv))));
   }
 
   void initOs(size_t max_proposal) {
     service =
-        std::make_shared<OrderingServiceImpl>(wsv,
+        std::make_shared<OrderingServiceImpl>(pqfactory,
                                               max_proposal,
                                               proposal_timeout.get_observable(),
                                               service_transport,
@@ -175,6 +179,7 @@ class OrderingGateServiceTest : public ::testing::Test {
   std::shared_ptr<shared_model::interface::Peer> peer;
   std::shared_ptr<MockOrderingServicePersistentState> fake_persistent_state;
   std::shared_ptr<MockPeerQuery> wsv;
+  std::shared_ptr<MockPeerQueryFactory> pqfactory;
 
  private:
   std::shared_ptr<OrderingGateImpl> gate;

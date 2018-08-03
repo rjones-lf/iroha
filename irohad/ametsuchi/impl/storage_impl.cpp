@@ -10,6 +10,7 @@
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
+#include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
@@ -79,6 +80,16 @@ namespace iroha {
                   }),
               std::move(sql),
               factory_));
+    }
+
+    boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery() {
+      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+      auto wsv = getWsvQuery();
+      if (not wsv) {
+        return boost::none;
+      }
+      return boost::make_optional<std::shared_ptr<PeerQuery>>(
+          std::make_shared<PeerQueryWsv>(wsv));
     }
 
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {

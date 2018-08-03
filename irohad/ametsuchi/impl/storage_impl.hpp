@@ -56,6 +56,8 @@ namespace iroha {
       expected::Result<std::unique_ptr<MutableStorage>, std::string>
       createMutableStorage() override;
 
+      boost::optional<std::shared_ptr<PeerQuery>> createPeerQuery() override;
+
       /**
        * Insert block without validation
        * @param blocks - block for insertion

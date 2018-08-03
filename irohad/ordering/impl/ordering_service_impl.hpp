@@ -12,6 +12,7 @@
 #include <tbb/concurrent_queue.h>
 #include <rxcpp/rx.hpp>
 
+#include "ametsuchi/peer_query_factory.hpp"
 #include "logger/logger.hpp"
 #include "network/ordering_service.hpp"
 #include "ordering.grpc.pb.h"
@@ -46,7 +47,7 @@ namespace iroha {
        * @param is_async whether proposals are generated in a separate thread
        */
       OrderingServiceImpl(
-          std::shared_ptr<ametsuchi::PeerQuery> wsv,
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           size_t max_size,
           rxcpp::observable<TimeoutType> proposal_timeout,
           std::shared_ptr<network::OrderingServiceTransport> transport,
@@ -84,7 +85,7 @@ namespace iroha {
        */
       void generateProposal() override;
 
-      std::shared_ptr<ametsuchi::PeerQuery> wsv_;
+      std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory_;
 
       tbb::concurrent_queue<
           std::unique_ptr<shared_model::interface::TransactionBatch>>

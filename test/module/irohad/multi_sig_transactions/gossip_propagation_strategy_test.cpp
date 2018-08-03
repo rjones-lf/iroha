@@ -28,6 +28,7 @@
 #include <thread>
 #include <vector>
 #include "ametsuchi/peer_query.hpp"
+#include "ametsuchi/peer_query_factory.hpp"
 #include "model/peer.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 
@@ -39,6 +40,13 @@ using PropagationData = GossipPropagationStrategy::PropagationData;
 class MockPeerQuery : public ametsuchi::PeerQuery {
  public:
   MOCK_METHOD0(getLedgerPeers, boost::optional<PropagationData>());
+};
+
+class MockPeerQueryFactory : public iroha::ametsuchi::PeerQueryFactory {
+ public:
+  MOCK_METHOD0(
+      createPeerQuery,
+      boost::optional<std::shared_ptr<iroha::ametsuchi::PeerQuery>>(void));
 };
 
 /**
@@ -89,7 +97,11 @@ PropagationData subscribeAndEmit(boost::optional<PropagationData> data,
                                  uint32_t take) {
   auto query = std::make_shared<MockPeerQuery>();
   EXPECT_CALL(*query, getLedgerPeers()).WillRepeatedly(testing::Return(data));
-  GossipPropagationStrategy strategy(query, period, amount);
+  auto pbfactory = std::make_shared<MockPeerQueryFactory>();
+  EXPECT_CALL(*pbfactory, createPeerQuery())
+      .WillRepeatedly(testing::Return(boost::make_optional(
+          std::shared_ptr<iroha::ametsuchi::PeerQuery>(query))));
+  GossipPropagationStrategy strategy(pbfactory, period, amount);
   return subscribeAndEmit(strategy, take);
 }
 
@@ -104,7 +116,7 @@ bool validateEmitted(const PropagationData &emitted,
   return std::find_if(
              emitted.begin(),
              emitted.end(),
-             [&peersId, flag = true ](const auto &v) mutable {
+             [&peersId, flag = true](const auto &v) mutable {
                if (flag
                    and std::find(peersId.begin(), peersId.end(), v->address())
                        == peersId.end())
@@ -191,13 +203,17 @@ TEST(GossipPropagationStrategyTest, MultipleSubsEmission) {
   auto range = boost::irange(0, threads);
 
   auto query = std::make_shared<MockPeerQuery>();
+  auto pbfactory = std::make_shared<MockPeerQueryFactory>();
+  EXPECT_CALL(*pbfactory, createPeerQuery())
+      .WillRepeatedly(testing::Return(boost::make_optional(
+          std::shared_ptr<iroha::ametsuchi::PeerQuery>(query))));
   EXPECT_CALL(*query, getLedgerPeers()).WillRepeatedly(testing::Return(peers));
-  GossipPropagationStrategy strategy(query, 1ms, amount);
+  GossipPropagationStrategy strategy(pbfactory, 1ms, amount);
 
   // Create separate subscriber for every thread
   // Use result[i] as storage for emitent for i-th one
   std::transform(range.begin(), range.end(), std::begin(ths), [&](auto i) {
-    return std::thread([ take, &res = result[i], &strategy ] {
+    return std::thread([take, &res = result[i], &strategy] {
       res = subscribeAndEmit(strategy, take);
     });
   });
