@@ -120,7 +120,6 @@ int main(int argc, char *argv[]) {
                 config[mbr::MaxProposalSize].GetUint(),
                 std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()),
                 std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()),
-                std::chrono::milliseconds(config[mbr::LoadDelay].GetUint()),
                 *keypair,
                 config[mbr::MstSupport].GetBool());
 

@@ -71,7 +71,6 @@ namespace integration_framework {
     const size_t internal_port_;
     const std::chrono::milliseconds proposal_delay_;
     const std::chrono::milliseconds vote_delay_;
-    const std::chrono::milliseconds load_delay_;
     const bool is_mst_supported_;
   };
 }  // namespace integration_framework

@@ -67,8 +67,6 @@ class Irohad {
    * one proposal
    * @param proposal_delay - maximum waiting time util emitting new proposal
    * @param vote_delay - waiting time before sending vote to next peer
-   * @param load_delay - waiting time before loading committed block from next
-   * peer
    * @param keypair - public and private keys for crypto signer
    * @param is_mst_supported - enable or disable mst processing support
    */
@@ -79,7 +77,6 @@ class Irohad {
          size_t max_proposal_size,
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
-         std::chrono::milliseconds load_delay,
          const shared_model::crypto::Keypair &keypair,
          bool is_mst_supported);
 
@@ -157,7 +154,6 @@ class Irohad {
   size_t max_proposal_size_;
   std::chrono::milliseconds proposal_delay_;
   std::chrono::milliseconds vote_delay_;
-  std::chrono::milliseconds load_delay_;
   bool is_mst_supported_;
 
   // ------------------------| internal dependencies |-------------------------

@@ -41,15 +41,13 @@ namespace iroha {
           std::shared_ptr<simulator::BlockCreator> block_creator,
           std::shared_ptr<network::BlockLoader> block_loader,
           std::shared_ptr<consensus::ConsensusResultCache>
-              consensus_result_cache,
-          uint64_t delay)
+              consensus_result_cache)
           : hash_gate_(std::move(hash_gate)),
             orderer_(std::move(orderer)),
             hash_provider_(std::move(hash_provider)),
             block_creator_(std::move(block_creator)),
             block_loader_(std::move(block_loader)),
             consensus_result_cache_(std::move(consensus_result_cache)),
-            delay_(delay),
             log_(logger::log("YacGate")) {
         block_creator_->on_block().subscribe(
             [this](const auto &block) { this->vote(block); });
@@ -103,7 +101,6 @@ namespace iroha {
             // iterate over peers who voted for the committed block
             rxcpp::observable<>::iterate(commit_message.votes)
                 // allow other peers to apply commit
-                .delay(std::chrono::milliseconds(delay_))
                 .flat_map([this, model_hash](auto vote) {
                   // map vote to block if it can be loaded
                   return rxcpp::observable<>::create<
