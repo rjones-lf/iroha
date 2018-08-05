@@ -15,7 +15,6 @@ namespace shared_model {
 
     class TransactionBatch {
      public:
-
       /**
        * Create transaction batch out of collection of transactions
        * @tparam TransactionValidator validates every single transaction
@@ -26,12 +25,11 @@ namespace shared_model {
        * transaction validator and order validator
        * @return valid batch of transactions
        */
-      template <typename TransactionValidator, typename OrderValidator>
+      template <typename TransactionValidator>
       static iroha::expected::Result<TransactionBatch, std::string>
       createTransactionBatch(const types::SharedTxsCollectionType &transactions,
                              const validation::TransactionsCollectionValidator<
-                                 TransactionValidator,
-                                 OrderValidator> &validator);
+                                 TransactionValidator> &validator);
 
       /**
        * Creates transaction batch from single transaction

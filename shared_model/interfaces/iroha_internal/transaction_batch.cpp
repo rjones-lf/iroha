@@ -40,16 +40,15 @@ namespace shared_model {
                           });
     };
 
-    template <typename TransactionValidator, typename OrderValidator>
+    template <typename TransactionValidator>
     iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
         const types::SharedTxsCollectionType &transactions,
-        const validation::TransactionsCollectionValidator<TransactionValidator,
-                                                          OrderValidator>
+        const validation::TransactionsCollectionValidator<TransactionValidator>
             &validator) {
       auto answer = validator.validate(transactions);
       std::string reason_name = "Transaction batch: ";
-      validation::ReasonsGroupType batch_reason;  // разберись с ризонами
+      validation::ReasonsGroupType batch_reason;
       batch_reason.first = reason_name;
       if (not allTxsInSameBatch(transactions)) {
         batch_reason.second.emplace_back(
@@ -83,20 +82,7 @@ namespace shared_model {
     template iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
         const types::SharedTxsCollectionType &transactions,
-        const validation::DefaultSignedOrderedTransctionsValidator &validator);
-
-    template iroha::expected::Result<TransactionBatch, std::string>
-    TransactionBatch::createTransactionBatch(
-        const types::SharedTxsCollectionType &transactions,
-        const validation::DefaultSignedUnorderedTransactionsValidator
-            &validator);
-
-    template iroha::expected::Result<TransactionBatch, std::string>
-    TransactionBatch::createTransactionBatch(
-        const types::SharedTxsCollectionType &,
-        const validation::TransactionsCollectionValidator<
-            validation::DefaultTransactionValidator,
-            shared_model::validation::AnyOrderValidator> &);
+        const validation::DefaultSignedTransactionsValidator &validator);
 
     template <typename TransactionValidator>
     iroha::expected::Result<TransactionBatch, std::string>

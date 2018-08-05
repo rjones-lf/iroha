@@ -11,12 +11,11 @@
 namespace shared_model {
   namespace interface {
 
-    template <typename TransactionValidator, typename OrderValidator>
+    template <typename TransactionValidator>
     iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequence::createTransactionSequence(
         const types::SharedTxsCollectionType &transactions,
-        const validation::TransactionsCollectionValidator<TransactionValidator,
-                                                          OrderValidator>
+        const validation::TransactionsCollectionValidator<TransactionValidator>
             &validator) {
       std::unordered_map<interface::types::HashType,
                          std::vector<std::shared_ptr<Transaction>>,
@@ -38,7 +37,8 @@ namespace shared_model {
           auto batch_hash = TransactionBatch::calculateReducedBatchHash(hashes);
           extracted_batches[batch_hash].push_back(tx);
         } else {
-          TransactionBatch::createTransactionBatch(tx, transaction_validator)
+          TransactionBatch::createTransactionBatch<TransactionValidator>(
+              tx, transaction_validator)
               .match(insert_batch, [&tx, &result](const auto &err) {
                 result.addReason(std::make_pair(
                     std::string("Error in transaction with reduced hash: ")
@@ -66,23 +66,12 @@ namespace shared_model {
     template iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequence::createTransactionSequence(
         const types::SharedTxsCollectionType &transactions,
-        const validation::TransactionsCollectionValidator<
-            validation::DefaultTransactionValidator,
-            validation::AnyOrderValidator> &validator);
+        const validation::DefaultUnsignedTransactionsValidator &validator);
 
     template iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequence::createTransactionSequence(
         const types::SharedTxsCollectionType &transactions,
-        const validation::TransactionsCollectionValidator<
-            validation::DefaultTransactionValidator,
-            validation::BatchOrderValidator> &validator);
-
-    template iroha::expected::Result<TransactionSequence, std::string>
-    TransactionSequence::createTransactionSequence(
-        const types::SharedTxsCollectionType &transactions,
-        const validation::TransactionsCollectionValidator<
-            validation::DefaultSignableTransactionValidator,
-            validation::BatchOrderValidator> &);
+        const validation::DefaultSignedTransactionsValidator &validator);
 
     const types::SharedTxsCollectionType &TransactionSequence::transactions()
         const {

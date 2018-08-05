@@ -9,6 +9,7 @@
 #include <boost/format.hpp>
 
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
+#include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/signable_validator.hpp"
 #include "validators/transaction_validator.hpp"
@@ -17,19 +18,16 @@
 namespace shared_model {
   namespace validation {
 
-    template <typename TransactionValidator, typename OrderValidator>
-    TransactionsCollectionValidator<TransactionValidator, OrderValidator>::
+    template <typename TransactionValidator>
+    TransactionsCollectionValidator<TransactionValidator>::
         TransactionsCollectionValidator(
-            const TransactionValidator &transactions_validator,
-            const OrderValidator &order_validator)
-        : transaction_validator_(transactions_validator),
-          order_validator_(order_validator) {}
+            const TransactionValidator &transactions_validator)
+        : transaction_validator_(transactions_validator) {}
 
-    template <typename TransactionValidator, typename OrderValidator>
-    Answer
-    TransactionsCollectionValidator<TransactionValidator, OrderValidator>::
-        validate(const shared_model::interface::types::
-                     TransactionsForwardCollectionType &transactions) const {
+    template <typename TransactionValidator>
+    Answer TransactionsCollectionValidator<TransactionValidator>::validate(
+        const shared_model::interface::types::TransactionsForwardCollectionType
+            &transactions) const {
       interface::types::SharedTxsCollectionType res;
       std::transform(std::begin(transactions),
                      std::end(transactions),
@@ -38,12 +36,11 @@ namespace shared_model {
       return validate(res);
     }
 
-    template <typename TransactionValidator, typename OrderValidator>
-    Answer
-    TransactionsCollectionValidator<TransactionValidator, OrderValidator>::
-        validate(const shared_model::interface::types::SharedTxsCollectionType
-                     &transactions) const {
-      Answer res = order_validator_.validate(transactions);
+    template <typename TransactionValidator>
+    Answer TransactionsCollectionValidator<TransactionValidator>::validate(
+        const shared_model::interface::types::SharedTxsCollectionType
+            &transactions) const {
+      Answer res;
       ReasonsGroupType reason;
       reason.first = "Transaction list";
 
@@ -63,38 +60,16 @@ namespace shared_model {
       return res;
     }
 
-    template <typename TransactionValidator, typename OrderValidator>
+    template <typename TransactionValidator>
     const TransactionValidator &TransactionsCollectionValidator<
-        TransactionValidator,
-        OrderValidator>::getTransactionValidator() const {
+        TransactionValidator>::getTransactionValidator() const {
       return transaction_validator_;
     }
 
-    template class TransactionsCollectionValidator<
-        TransactionValidator<FieldValidator,
-                             CommandValidatorVisitor<FieldValidator>>,
-        AnyOrderValidator>;
+    template class TransactionsCollectionValidator<DefaultTransactionValidator>;
 
     template class TransactionsCollectionValidator<
-        SignableModelValidator<
-            TransactionValidator<FieldValidator,
-                                 CommandValidatorVisitor<FieldValidator>>,
-            const interface::Transaction &,
-            FieldValidator>,
-        AnyOrderValidator>;
-
-    template class TransactionsCollectionValidator<
-        TransactionValidator<FieldValidator,
-                             CommandValidatorVisitor<FieldValidator>>,
-        BatchOrderValidator>;
-
-    template class TransactionsCollectionValidator<
-        SignableModelValidator<
-            TransactionValidator<FieldValidator,
-                                 CommandValidatorVisitor<FieldValidator>>,
-            const interface::Transaction &,
-            FieldValidator>,
-        BatchOrderValidator>;
+        DefaultSignableTransactionValidator>;
 
   }  // namespace validation
 }  // namespace shared_model

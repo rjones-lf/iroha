@@ -80,7 +80,7 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
         shared_model::interface::TransactionBatch::createTransactionBatch(
             txs,
             shared_model::validation::
-                DefaultSignedOrderedTransctionsValidator());
+                DefaultSignedTransactionsValidator());
     batch_result.match(
         [this](iroha::expected::Value<shared_model::interface::TransactionBatch>
                    &batch) {

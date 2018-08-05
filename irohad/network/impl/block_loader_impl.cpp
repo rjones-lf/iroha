@@ -50,7 +50,7 @@ struct TimerWrapper : public val::FieldValidator {
 using BlockValidatorInternal =
     val::BlockValidator<TimerWrapper,
                         val::DefaultTransactionValidator,
-                        val::DefaultSignedUnorderedTransactionsValidator>;
+                        val::DefaultSignedTransactionsValidator>;
 using Validator =
     val::SignableModelValidator<BlockValidatorInternal,
                                 const shared_model::interface::Block &,

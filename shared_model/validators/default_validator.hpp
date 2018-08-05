@@ -52,26 +52,20 @@ namespace shared_model {
     using DefaultBlocksQueryValidator = BlocksQueryValidator<FieldValidator>;
 
     using DefaultUnsignedTransactionsValidator =
-        TransactionsCollectionValidator<DefaultTransactionValidator,
-                                        BatchOrderValidator>;
+        TransactionsCollectionValidator<DefaultTransactionValidator>;
 
-    using DefaultSignedOrderedTransctionsValidator =
-        TransactionsCollectionValidator<DefaultSignableTransactionValidator,
-                                        BatchOrderValidator>;
-
-    using DefaultSignedUnorderedTransactionsValidator =
-        TransactionsCollectionValidator<DefaultSignableTransactionValidator,
-                                        AnyOrderValidator>;
+    using DefaultSignedTransactionsValidator =
+        TransactionsCollectionValidator<DefaultSignableTransactionValidator>;
 
     using DefaultProposalValidator =
         ProposalValidator<FieldValidator,
                           DefaultTransactionValidator,
-                          DefaultUnsignedTransactionsValidator>;
+                          DefaultSignedTransactionsValidator>;
 
     using DefaultBlockValidator =
         BlockValidator<FieldValidator,
                        DefaultTransactionValidator,
-                       DefaultSignedOrderedTransctionsValidator>;
+                       DefaultSignedTransactionsValidator>;
 
     using DefaultSignableBlockValidator =
         SignableModelValidator<DefaultBlockValidator,

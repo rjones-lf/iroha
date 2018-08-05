@@ -16,18 +16,15 @@ namespace shared_model {
      * Validator of transaction's collection, this is not fair implementation
      * now, it always returns empty answer
      */
-    template <typename TransactionValidator,
-              typename OrderValidator = AnyOrderValidator>
+    template <typename TransactionValidator>
     class TransactionsCollectionValidator {
      protected:
       TransactionValidator transaction_validator_;
-      OrderValidator order_validator_;
 
      public:
       explicit TransactionsCollectionValidator(
           const TransactionValidator &transactions_validator =
-              TransactionValidator(),
-          const OrderValidator &order_validator = OrderValidator());
+              TransactionValidator());
 
       // TODO: IR-1505, igor-egorov, 2018-07-05 Remove method below when
       // proposal and block will return collection of shared transactions

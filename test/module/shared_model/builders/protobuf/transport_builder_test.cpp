@@ -37,8 +37,7 @@ using TransactionSequenceBuilder = TransportBuilder<
     validation::TransactionsCollectionValidator<
         validation::TransactionValidator<
             validation::FieldValidator,
-            validation::CommandValidatorVisitor<validation::FieldValidator>>,
-        validation::BatchOrderValidator>>;
+            validation::CommandValidatorVisitor<validation::FieldValidator>>>>;
 
 class TransportBuilderTest : public ::testing::Test {
  protected:
