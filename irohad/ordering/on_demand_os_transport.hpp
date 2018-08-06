@@ -18,6 +18,7 @@ namespace shared_model {
   namespace interface {
     class Transaction;
     class Proposal;
+    class Peer;
   }  // namespace interface
 }  // namespace shared_model
 
@@ -87,6 +88,22 @@ namespace iroha {
             RoundType round) = 0;
 
         virtual ~OdOsNotification() = default;
+      };
+
+      /**
+       * Factory for creating communication interface to a specific peer
+       */
+      class OdOsNotificationFactory {
+       public:
+        /**
+         * Create corresponding OdOsNotification interface for peer
+         * @param peer - peer to connect
+         * @return connection represented with OdOsNotification interface
+         */
+        virtual std::unique_ptr<OdOsNotification> create(
+            const shared_model::interface::Peer &to) = 0;
+
+        virtual ~OdOsNotificationFactory() = default;
       };
 
     }  // namespace transport

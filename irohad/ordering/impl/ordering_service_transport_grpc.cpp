@@ -79,8 +79,7 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
     auto batch_result =
         shared_model::interface::TransactionBatch::createTransactionBatch(
             txs,
-            shared_model::validation::
-                DefaultSignedTransactionsValidator());
+            shared_model::validation::DefaultSignedTransactionsValidator());
     batch_result.match(
         [this](iroha::expected::Value<shared_model::interface::TransactionBatch>
                    &batch) {
@@ -99,8 +98,9 @@ void OrderingServiceTransportGrpc::publishProposal(
     std::unique_ptr<shared_model::interface::Proposal> proposal,
     const std::vector<std::string> &peers) {
   async_call_->log_->info("OrderingServiceTransportGrpc::publishProposal");
-  std::unordered_map<std::string,
-                     std::unique_ptr<proto::OrderingGateTransportGrpc::Stub>>
+  std::unordered_map<
+      std::string,
+      std::unique_ptr<proto::OrderingGateTransportGrpc::StubInterface>>
       peers_map;
   for (const auto &peer : peers) {
     peers_map[peer] =

@@ -73,7 +73,7 @@ namespace iroha {
          * Mapping of peer objects to connections
          */
         std::unordered_map<shared_model::interface::types::AddressType,
-                           std::unique_ptr<proto::Yac::Stub>>
+                           std::unique_ptr<proto::Yac::StubInterface>>
             peers_;
 
         /**

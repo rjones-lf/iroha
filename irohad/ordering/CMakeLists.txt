@@ -38,5 +38,16 @@ target_link_libraries(on_demand_ordering_service
     shared_model_interfaces
     shared_model_proto_backend
     logger
-    # transport is missing
+    )
+
+add_library(on_demand_ordering_service_transport_grpc
+    impl/on_demand_os_server_grpc.cpp
+    impl/on_demand_os_client_grpc.cpp
+    )
+
+target_link_libraries(on_demand_ordering_service_transport_grpc
+    shared_model_interfaces
+    shared_model_proto_backend
+    logger
+    ordering_grpc
     )

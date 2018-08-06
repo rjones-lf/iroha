@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gtest/gtest.h>
+#include "ordering/impl/on_demand_ordering_service_impl.hpp"
+
 #include <memory>
 #include <thread>
 
+#include <gtest/gtest.h>
 #include "builders/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
-#include "ordering/impl/on_demand_ordering_service_impl.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;

@@ -72,8 +72,9 @@ void MstTransportGrpc::subscribe(
 void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
                                  ConstRefState providing_state) {
   async_call_->log_->info("Propagate MstState to peer {}", to.address());
-  auto client = transport::MstTransportGrpc::NewStub(
-      grpc::CreateChannel(to.address(), grpc::InsecureChannelCredentials()));
+  std::unique_ptr<transport::MstTransportGrpc::StubInterface> client =
+      transport::MstTransportGrpc::NewStub(grpc::CreateChannel(
+          to.address(), grpc::InsecureChannelCredentials()));
 
   transport::MstState protoState;
   auto peer = protoState.mutable_peer();

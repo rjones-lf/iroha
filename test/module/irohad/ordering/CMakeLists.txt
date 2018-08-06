@@ -31,3 +31,13 @@ target_link_libraries(on_demand_os_test
     on_demand_ordering_service
     shared_model_default_builders
     )
+
+addtest(on_demand_os_client_grpc_test on_demand_os_client_grpc_test.cpp)
+target_link_libraries(on_demand_os_client_grpc_test
+    on_demand_ordering_service_transport_grpc
+    )
+
+addtest(on_demand_os_server_grpc_test on_demand_os_server_grpc_test.cpp)
+target_link_libraries(on_demand_os_server_grpc_test
+    on_demand_ordering_service_transport_grpc
+    )
