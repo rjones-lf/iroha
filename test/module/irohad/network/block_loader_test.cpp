@@ -52,8 +52,13 @@ class BlockLoaderTest : public testing::Test {
         .WillRepeatedly(testing::Return(boost::make_optional(
             std::shared_ptr<iroha::ametsuchi::PeerQuery>(peer_query))));
     storage = std::make_shared<MockBlockQuery>();
-    loader = std::make_shared<BlockLoaderImpl>(peer_query_factory, storage);
-    service = std::make_shared<BlockLoaderService>(storage);
+    block_query_factory = std::make_shared<MockBlockQueryFactory>();
+    EXPECT_CALL(*block_query_factory, createBlockQuery())
+        .WillRepeatedly(testing::Return(boost::make_optional(
+            std::shared_ptr<iroha::ametsuchi::BlockQuery>(storage))));
+    loader = std::make_shared<BlockLoaderImpl>(peer_query_factory,
+                                               block_query_factory);
+    service = std::make_shared<BlockLoaderService>(block_query_factory);
 
     grpc::ServerBuilder builder;
     int port = 0;
@@ -100,6 +105,7 @@ class BlockLoaderTest : public testing::Test {
   std::shared_ptr<MockPeerQuery> peer_query;
   std::shared_ptr<MockPeerQueryFactory> peer_query_factory;
   std::shared_ptr<MockBlockQuery> storage;
+  std::shared_ptr<MockBlockQueryFactory> block_query_factory;
   std::shared_ptr<BlockLoaderImpl> loader;
   std::shared_ptr<BlockLoaderService> service;
   std::unique_ptr<grpc::Server> server;
@@ -195,8 +201,7 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
       .WillOnce(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*storage, getTopBlock())
       .WillOnce(Return(iroha::expected::makeValue(wBlock(clone(block)))));
-  EXPECT_CALL(*storage, getBlocksFrom(next_height))
-      .WillOnce(Return(blocks));
+  EXPECT_CALL(*storage, getBlocksFrom(next_height)).WillOnce(Return(blocks));
   auto wrapper = make_test_subscriber<CallExact>(
       loader->retrieveBlocks(peer_key), num_blocks);
   auto height = next_height;

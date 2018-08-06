@@ -8,11 +8,10 @@
 
 #include <boost/optional.hpp>
 
+#include "ametsuchi/peer_query.hpp"
+
 namespace iroha {
   namespace ametsuchi {
-
-    class PeerQuery;
-
     class PeerQueryFactory {
      public:
       /**

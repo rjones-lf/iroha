@@ -32,12 +32,12 @@ namespace iroha {
         std::shared_ptr<network::OrderingGate> ordering_gate,
         std::shared_ptr<validation::StatefulValidator> statefulValidator,
         std::shared_ptr<ametsuchi::TemporaryFactory> factory,
-        std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
+        std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
         std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
             crypto_signer)
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
-          block_queries_(std::move(blockQuery)),
+          block_query_factory_(block_query_factory),
           crypto_signer_(std::move(crypto_signer)) {
       log_ = logger::log("Simulator");
       ordering_gate->on_proposal().subscribe(
@@ -70,7 +70,8 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process proposal");
       // Get last block from local ledger
-      auto top_block_result = block_queries_->getTopBlock();
+      auto top_block_result = block_query_factory_->createBlockQuery() |
+          [](const auto &block_query) { return block_query->getTopBlock(); };
       auto block_fetched = top_block_result.match(
           [&](expected::Value<std::shared_ptr<shared_model::interface::Block>>
                   &block) {
@@ -136,14 +137,16 @@ namespace iroha {
         sign_and_send(empty_block);
         return;
       }
-      auto block = std::make_shared<shared_model::proto::Block>(
-          shared_model::proto::UnsignedBlockBuilder()
-              .height(block_queries_->getTopBlockHeight() + 1)
-              .prevHash(last_block->hash())
-              .transactions(proto_txs)
-              .createdTime(proposal.createdTime())
-              .build());
-
+      auto block = block_query_factory_->createBlockQuery() |
+          [&](const auto &block_query) {
+            return std::make_shared<shared_model::proto::Block>(
+                shared_model::proto::UnsignedBlockBuilder()
+                    .height(block_query->getTopBlockHeight() + 1)
+                    .prevHash(last_block->hash())
+                    .transactions(proto_txs)
+                    .createdTime(proposal.createdTime())
+                    .build());
+          };
       sign_and_send(block);
     }
 

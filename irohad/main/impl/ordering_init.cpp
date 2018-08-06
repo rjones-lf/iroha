@@ -13,24 +13,29 @@ namespace iroha {
   namespace network {
     auto OrderingInit::createGate(
         std::shared_ptr<OrderingGateTransport> transport,
-        std::shared_ptr<ametsuchi::BlockQuery> block_query) {
-      return block_query->getTopBlock().match(
-          [this, &transport](
-              expected::Value<std::shared_ptr<shared_model::interface::Block>>
-                  &block) -> std::shared_ptr<OrderingGate> {
-            const auto &height = block.value->height();
-            auto gate =
-                std::make_shared<ordering::OrderingGateImpl>(transport, height);
-            log_->info("Creating Ordering Gate with initial height {}", height);
-            transport->subscribe(gate);
-            return gate;
-          },
-          [](expected::Error<std::string> &error)
-              -> std::shared_ptr<OrderingGate> {
-            // TODO 12.06.18 Akvinikym: handle the exception IR-1415
-            throw std::runtime_error("Ordering Gate creation failed! "
-                                     + error.error);
-          });
+        std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factroy) {
+      return block_query_factroy->createBlockQuery() |
+          [this, &transport](const auto &block_query) {
+            return block_query->getTopBlock().match(
+                [this, &transport](
+                    expected::Value<
+                        std::shared_ptr<shared_model::interface::Block>> &block)
+                    -> std::shared_ptr<OrderingGate> {
+                  const auto &height = block.value->height();
+                  auto gate = std::make_shared<ordering::OrderingGateImpl>(
+                      transport, height);
+                  log_->info("Creating Ordering Gate with initial height {}",
+                             height);
+                  transport->subscribe(gate);
+                  return gate;
+                },
+                [](expected::Error<std::string> &error)
+                    -> std::shared_ptr<OrderingGate> {
+                  // TODO 12.06.18 Akvinikym: handle the exception IR-1415
+                  throw std::runtime_error("Ordering Gate creation failed! "
+                                           + error.error);
+                });
+          };
     }
 
     auto OrderingInit::createService(
@@ -58,7 +63,7 @@ namespace iroha {
         std::chrono::milliseconds delay_milliseconds,
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
             persistent_state,
-        std::shared_ptr<ametsuchi::BlockQuery> block_query) {
+        std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory) {
       auto query = peer_query_factory->createPeerQuery();
       if (not query) {
         log_->error("Cannot get the peer query");
@@ -82,7 +87,7 @@ namespace iroha {
                                        ordering_service_transport,
                                        persistent_state);
       ordering_service_transport->subscribe(ordering_service);
-      ordering_gate = createGate(ordering_gate_transport, block_query);
+      ordering_gate = createGate(ordering_gate_transport, block_query_factory);
       return ordering_gate;
     }
   }  // namespace network

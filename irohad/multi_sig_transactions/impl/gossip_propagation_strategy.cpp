@@ -24,8 +24,6 @@
 #include <boost/range/irange.hpp>
 #include "common/types.hpp"
 
-#include "ametsuchi/peer_query.hpp"
-
 namespace iroha {
 
   using PropagationData = PropagationStrategy::PropagationData;

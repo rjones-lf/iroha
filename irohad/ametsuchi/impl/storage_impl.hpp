@@ -58,6 +58,8 @@ namespace iroha {
 
       boost::optional<std::shared_ptr<PeerQuery>> createPeerQuery() override;
 
+      boost::optional<std::shared_ptr<BlockQuery>> createBlockQuery() override;
+
       /**
        * Insert block without validation
        * @param blocks - block for insertion

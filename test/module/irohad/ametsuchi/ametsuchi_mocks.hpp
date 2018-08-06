@@ -21,6 +21,7 @@
 #include <gmock/gmock.h>
 #include <boost/optional.hpp>
 #include "ametsuchi/block_query.hpp"
+#include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/key_value_storage.hpp"
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/mutable_storage.hpp"
@@ -270,6 +271,8 @@ namespace iroha {
           expected::Result<std::unique_ptr<MutableStorage>, std::string>(void));
       MOCK_METHOD0(createPeerQuery,
                    boost::optional<std::shared_ptr<PeerQuery>>(void));
+      MOCK_METHOD0(createBlockQuery,
+                   boost::optional<std::shared_ptr<BlockQuery>>(void));
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
       MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block &));
       MOCK_METHOD1(insertBlocks,
@@ -304,6 +307,11 @@ namespace iroha {
                    boost::optional<std::shared_ptr<PeerQuery>>(void));
     };
 
+    class MockBlockQueryFactory : public BlockQueryFactory {
+     public:
+      MOCK_METHOD0(createBlockQuery,
+                   boost::optional<std::shared_ptr<BlockQuery>>(void));
+    };
   }  // namespace ametsuchi
 }  // namespace iroha
 

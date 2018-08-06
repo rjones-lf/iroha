@@ -27,7 +27,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include "ametsuchi/peer_query.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
 #include "model/peer.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"

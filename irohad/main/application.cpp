@@ -167,7 +167,7 @@ void Irohad::initOrderingGate() {
                                                  max_proposal_size_,
                                                  proposal_delay_,
                                                  ordering_service_storage_,
-                                                 storage->getBlockQuery());
+                                                 storage);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -179,7 +179,7 @@ void Irohad::initSimulator() {
   simulator = std::make_shared<Simulator>(ordering_gate,
                                           stateful_validator,
                                           storage,
-                                          storage->getBlockQuery(),
+                                          storage,
                                           crypto_signer_);
 
   log_->info("[Init] => init simulator");
@@ -190,7 +190,7 @@ void Irohad::initSimulator() {
  */
 void Irohad::initBlockLoader() {
   block_loader =
-      loader_init.initBlockLoader(storage, storage->getBlockQuery());
+      loader_init.initBlockLoader(storage, storage);
 
   log_->info("[Init] => block loader");
 }

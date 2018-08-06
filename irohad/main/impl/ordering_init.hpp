@@ -18,8 +18,7 @@
 #ifndef IROHA_ORDERING_INIT_HPP
 #define IROHA_ORDERING_INIT_HPP
 
-#include "ametsuchi/block_query.hpp"
-#include "ametsuchi/peer_query.hpp"
+#include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
 #include "logger/logger.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
@@ -45,10 +44,12 @@ namespace iroha {
        * service)
        * @param transport - object which will be notified
        * about incoming proposals and send transactions
-       * @param block_query - block store to get last block height
+       * @param block_query_factory - block store factory to get last block
+       * height
        */
-      auto createGate(std::shared_ptr<OrderingGateTransport> transport,
-                      std::shared_ptr<ametsuchi::BlockQuery> block_query);
+      auto createGate(
+          std::shared_ptr<OrderingGateTransport> transport,
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory);
 
       /**
        * Init ordering service
@@ -72,7 +73,8 @@ namespace iroha {
        * @param loop - handler of async events
        * @param max_size - limitation of proposal size
        * @param delay_milliseconds - delay before emitting proposal
-       * @param block_query - block store to get last block height
+       * @param block_query_factory - block store factory to get last block
+       * height
        * @return efficient implementation of OrderingGate
        */
       std::shared_ptr<iroha::network::OrderingGate> initOrderingGate(
@@ -81,7 +83,7 @@ namespace iroha {
           std::chrono::milliseconds delay_milliseconds,
           std::shared_ptr<ametsuchi::OrderingServicePersistentState>
               persistent_state,
-          std::shared_ptr<ametsuchi::BlockQuery> block_query);
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory);
 
       std::shared_ptr<iroha::network::OrderingService> ordering_service;
       std::shared_ptr<iroha::network::OrderingGate> ordering_gate;

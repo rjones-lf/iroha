@@ -18,7 +18,7 @@
 #ifndef IROHA_BLOCK_LOADER_INIT_HPP
 #define IROHA_BLOCK_LOADER_INIT_HPP
 
-#include "ametsuchi/block_query.hpp"
+#include "ametsuchi/block_query_factory.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
 
@@ -34,7 +34,8 @@ namespace iroha {
        * @param storage - used to retrieve blocks
        * @return initialized service
        */
-      auto createService(std::shared_ptr<ametsuchi::BlockQuery> storage);
+      auto createService(
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory);
 
       /**
        * Create block loader for loading blocks from given peer by top block
@@ -42,7 +43,7 @@ namespace iroha {
        */
       auto createLoader(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
-          std::shared_ptr<ametsuchi::BlockQuery> storage);
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory);
 
      public:
       /**
@@ -51,7 +52,7 @@ namespace iroha {
        */
       std::shared_ptr<BlockLoader> initBlockLoader(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
-          std::shared_ptr<ametsuchi::BlockQuery> storage);
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory);
 
       std::shared_ptr<BlockLoaderImpl> loader;
       std::shared_ptr<BlockLoaderService> service;

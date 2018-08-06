@@ -92,6 +92,15 @@ namespace iroha {
           std::make_shared<PeerQueryWsv>(wsv));
     }
 
+    boost::optional<std::shared_ptr<BlockQuery>> StorageImpl::createBlockQuery() {
+      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+      auto block_query = getBlockQuery();
+      if (not block_query) {
+        return boost::none;
+      }
+      return boost::make_optional(block_query);
+    }
+
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
       log_->info("create mutable storage");
       auto storageResult = createMutableStorage();

@@ -8,6 +8,7 @@
 
 #include <rxcpp/rx-observable.hpp>
 #include <vector>
+#include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
 #include "ametsuchi/temporary_factory.hpp"
@@ -32,7 +33,8 @@ namespace iroha {
      */
     class Storage : public TemporaryFactory,
                     public MutableFactory,
-                    public PeerQueryFactory {
+                    public PeerQueryFactory,
+                    public BlockQueryFactory {
      public:
       virtual std::shared_ptr<WsvQuery> getWsvQuery() const = 0;
 

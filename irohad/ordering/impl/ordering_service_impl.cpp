@@ -11,7 +11,6 @@
 #include <boost/range/adaptor/indirected.hpp>
 
 #include "ametsuchi/ordering_service_persistent_state.hpp"
-#include "ametsuchi/peer_query.hpp"
 #include "datetime/time.hpp"
 #include "network/ordering_service_transport.hpp"
 

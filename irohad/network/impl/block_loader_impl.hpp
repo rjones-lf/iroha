@@ -22,7 +22,7 @@
 
 #include <unordered_map>
 
-#include "ametsuchi/block_query.hpp"
+#include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
@@ -34,7 +34,7 @@ namespace iroha {
      public:
       BlockLoaderImpl(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
-          std::shared_ptr<ametsuchi::BlockQuery> block_query);
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory);
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlocks(
@@ -66,7 +66,7 @@ namespace iroha {
                          std::unique_ptr<proto::Loader::Stub>>
           peer_connections_;
       std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory_;
-      std::shared_ptr<ametsuchi::BlockQuery> block_query_;
+      std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory_;
 
       logger::Logger log_;
     };

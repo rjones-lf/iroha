@@ -22,20 +22,22 @@ using namespace iroha;
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
 
-auto BlockLoaderInit::createService(std::shared_ptr<BlockQuery> storage) {
-  return std::make_shared<BlockLoaderService>(storage);
+auto BlockLoaderInit::createService(
+    std::shared_ptr<BlockQueryFactory> block_query_factory) {
+  return std::make_shared<BlockLoaderService>(block_query_factory);
 }
 
 auto BlockLoaderInit::createLoader(
     std::shared_ptr<PeerQueryFactory> peer_query_factory,
-    std::shared_ptr<BlockQuery> storage) {
-  return std::make_shared<BlockLoaderImpl>(peer_query_factory, storage);
+    std::shared_ptr<BlockQueryFactory> block_query_factory) {
+  return std::make_shared<BlockLoaderImpl>(peer_query_factory,
+                                           block_query_factory);
 }
 
 std::shared_ptr<BlockLoader> BlockLoaderInit::initBlockLoader(
     std::shared_ptr<PeerQueryFactory> peer_query_factory,
-    std::shared_ptr<BlockQuery> storage) {
-  service = createService(storage);
-  loader = createLoader(peer_query_factory, storage);
+    std::shared_ptr<BlockQueryFactory> block_query_factory) {
+  service = createService(block_query_factory);
+  loader = createLoader(peer_query_factory, block_query_factory);
   return loader;
 }

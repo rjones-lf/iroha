@@ -19,7 +19,7 @@
 #define IROHA_SIMULATOR_HPP
 
 #include <boost/optional.hpp>
-#include "ametsuchi/block_query.hpp"
+#include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "logger/logger.hpp"
@@ -37,7 +37,7 @@ namespace iroha {
           std::shared_ptr<network::OrderingGate> ordering_gate,
           std::shared_ptr<validation::StatefulValidator> statefulValidator,
           std::shared_ptr<ametsuchi::TemporaryFactory> factory,
-          std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
               crypto_signer);
 
@@ -72,7 +72,7 @@ namespace iroha {
 
       std::shared_ptr<validation::StatefulValidator> validator_;
       std::shared_ptr<ametsuchi::TemporaryFactory> ametsuchi_factory_;
-      std::shared_ptr<ametsuchi::BlockQuery> block_queries_;
+      std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory_;
       std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer_;
 
       logger::Logger log_;

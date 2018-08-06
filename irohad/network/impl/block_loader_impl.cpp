@@ -19,7 +19,6 @@
 
 #include <grpc++/create_channel.h>
 
-#include "ametsuchi/peer_query.hpp"
 #include "backend/protobuf/block.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "interfaces/common_objects/peer.hpp"
@@ -34,9 +33,9 @@ namespace val = shared_model::validation;
 
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQueryFactory> peer_query_factory,
-    std::shared_ptr<BlockQuery> block_query)
+    std::shared_ptr<BlockQueryFactory> block_query_factory)
     : peer_query_factory_(peer_query_factory),
-      block_query_(std::move(block_query)) {
+      block_query_factory_(std::move(block_query_factory)) {
   log_ = logger::log("BlockLoaderImpl");
 }
 
@@ -65,13 +64,19 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
   return rxcpp::observable<>::create<
       std::shared_ptr<Block>>([this, peer_pubkey](auto subscriber) {
     std::shared_ptr<Block> top_block;
-    block_query_->getTopBlock().match(
-        [&top_block](
-            expected::Value<std::shared_ptr<shared_model::interface::Block>>
-                block) { top_block = block.value; },
-        [this](expected::Error<std::string> error) {
-          log_->error(kTopBlockRetrieveFail + std::string{": "} + error.error);
-        });
+    block_query_factory_->createBlockQuery() |
+        [this, &top_block](const auto &block_query) {
+          block_query->getTopBlock().match(
+              [&top_block](
+                  expected::Value<
+                      std::shared_ptr<shared_model::interface::Block>> block) {
+                top_block = block.value;
+              },
+              [this](expected::Error<std::string> error) {
+                log_->error(kTopBlockRetrieveFail + std::string{": "}
+                            + error.error);
+              });
+        };
     if (not top_block) {
       subscriber.on_completed();
       return;
