@@ -129,13 +129,6 @@ bool Irohad::restoreWsv() {
 }
 
 /**
- * Initializing peer query interface
- */
-std::unique_ptr<iroha::ametsuchi::PeerQuery> Irohad::initPeerQuery() {
-  return std::make_unique<ametsuchi::PeerQueryWsv>(storage->getWsvQuery());
-}
-
-/**
  * Initializing crypto provider
  */
 void Irohad::initCryptoProvider() {

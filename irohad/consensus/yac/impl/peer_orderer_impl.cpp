@@ -32,7 +32,6 @@ namespace iroha {
           : peer_query_factory_(peer_query_factory) {}
 
       boost::optional<ClusterOrdering> PeerOrdererImpl::getInitialOrdering() {
-        auto query = peer_query_factory_->createPeerQuery();
         return peer_query_factory_->createPeerQuery() |
             [](const auto &query) { return query->getLedgerPeers(); } |
             [](const auto &peers) { return ClusterOrdering::create(peers); };

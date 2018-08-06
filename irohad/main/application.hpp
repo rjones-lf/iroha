@@ -115,8 +115,6 @@ class Irohad {
 
   virtual void initStorage();
 
-  virtual std::unique_ptr<iroha::ametsuchi::PeerQuery> initPeerQuery();
-
   virtual void initCryptoProvider();
 
   virtual void initValidators();
