@@ -19,12 +19,11 @@ using namespace iroha::model;
  * @then  checks that batch is holded by state
  */
 TEST(StateTest, CreateState) {
-
   auto state = MstState::empty();
   ASSERT_EQ(0, state.getBatches().size());
   log_->info("first check");
   state += addSignatures(
-        makeTestBatch(txBuilder(1)), 0, makeSignature("1", "pub_key_1"));
+      makeTestBatch(txBuilder(1)), 0, makeSignature("1", "pub_key_1"));
   log_->info("add");
   ASSERT_EQ(1, state.getBatches().size());
 }
@@ -35,7 +34,6 @@ TEST(StateTest, CreateState) {
  * @then  checks that signatures are merged into the state
  */
 TEST(StateTest, UpdateExistingState) {
-
   auto state = MstState::empty();
   auto time = iroha::time::now();
   state += addSignatures(
@@ -54,210 +52,290 @@ TEST(StateTest, UpdateExistingState) {
                             ->get()
                             ->signatures()));
 }
-//
-// TEST(StateTest, UpdateStateWhenTransacionsSame) {
-//  log_->info("Create empty state => insert two equal transaction");
-//
-//  auto state = MstState::empty();
-//
-//  auto keypair = makeKey();
-//  auto time = iroha::time::now();
-//  state += makeTx(1, time, keypair);
-//  state += makeTx(1, time, keypair);
-//
-//  ASSERT_EQ(1, state.getTransactions().size());
-//  ASSERT_EQ(1,
-//            boost::size(state.getTransactions().begin()->get()->signatures()));
-//}
-//
-// TEST(StateTest, DifferentSignaturesUnionTest) {
-//  log_->info("Create two states => merge them");
-//
-//  auto state1 = MstState::empty();
-//
-//  state1 += makeTx(1);
-//  state1 += makeTx(2);
-//  state1 += makeTx(3);
-//
-//  ASSERT_EQ(3, state1.getTransactions().size());
-//
-//  auto state2 = MstState::empty();
-//  state2 += makeTx(4);
-//  state2 += makeTx(5);
-//  ASSERT_EQ(2, state2.getTransactions().size());
-//
-//  state1 += state2;
-//  ASSERT_EQ(5, state1.getTransactions().size());
-//}
-//
-// TEST(StateTest, UnionStateWhenTransactionsSame) {
-//  log_->info("Create two states with common elements => merge them");
-//
-//  auto time = iroha::time::now();
-//  auto keypair = makeKey();
-//
-//  auto state1 = MstState::empty();
-//  state1 += makeTx(1, time, keypair);
-//  state1 += makeTx(2);
-//
-//  ASSERT_EQ(2, state1.getTransactions().size());
-//
-//  auto state2 = MstState::empty();
-//  state2 += makeTx(1, time, keypair);
-//  state2 += makeTx(5);
-//  ASSERT_EQ(2, state2.getTransactions().size());
-//
-//  state1 += state2;
-//  ASSERT_EQ(3, state1.getTransactions().size());
-//}
-//
-// TEST(StateTest, UnionStateWhenSameTransactionHaveDifferentSignatures) {
-//  log_->info(
-//      "Create two transactions with different signatures => move them"
-//      " into owns states => merge states");
-//
-//  auto time = iroha::time::now();
-//
-//  auto state1 = MstState::empty();
-//  auto state2 = MstState::empty();
-//
-//  state1 += makeTx(1, time, makeKey());
-//  state2 += makeTx(1, time, makeKey());
-//
-//  state1 += state2;
-//  ASSERT_EQ(1, state1.getTransactions().size());
-//  ASSERT_EQ(2,
-//            boost::size(state1.getTransactions().begin()->get()->signatures()));
-//}
-//
-// TEST(StateTest, DifferenceTest) {
-//  log_->info("Create two sets with common element => perform diff operation");
-//
-//  auto keypair = makeKey();
-//  auto time = iroha::time::now();
-//
-//  auto state1 = MstState::empty();
-//  auto state2 = MstState::empty();
-//  state1 += makeTx(1);
-//  state1 += makeTx(2, time, keypair);
-//
-//  state2 += makeTx(2, time, keypair);
-//  state2 += makeTx(3);
-//
-//  MstState diff = state1 - state2;
-//  ASSERT_EQ(1, diff.getTransactions().size());
-//}
-//
-// TEST(StateTest, UpdateTxUntillQuorum) {
-//  log_->info("Update transaction signature until quorum happens");
-//
-//  auto quorum = 3u;
-//  auto time = iroha::time::now();
-//
-//  auto state = MstState::empty();
-//
-//  auto state_after_one_tx = state += makeTx(1, time, makeKey(), quorum);
-//  ASSERT_EQ(0, state_after_one_tx.getTransactions().size());
-//
-//  auto state_after_two_txes = state += makeTx(1, time, makeKey(), quorum);
-//  ASSERT_EQ(0, state_after_one_tx.getTransactions().size());
-//
-//  auto state_after_three_txes = state += makeTx(1, time, makeKey(), quorum);
-//  ASSERT_EQ(1, state_after_three_txes.getTransactions().size());
-//  ASSERT_EQ(0, state.getTransactions().size());
-//}
-//
-// TEST(StateTest, UpdateStateWithNewStateUntilQuorum) {
-//  log_->info("Merge two states that contains common transaction");
-//
-//  auto quorum = 3u;
-//  auto keypair = makeKey();
-//  auto time = iroha::time::now();
-//
-//  auto state1 = MstState::empty();
-//  state1 += makeTx(1, time, makeKey(), quorum);
-//  state1 += makeTx(1, time, keypair, quorum);
-//  state1 += makeTx(2, time, makeKey(), quorum);
-//  ASSERT_EQ(2, state1.getTransactions().size());
-//
-//  auto state2 = MstState::empty();
-//  state2 += makeTx(1, time, keypair, quorum);
-//  state2 += makeTx(1, time, makeKey(), quorum);
-//  ASSERT_EQ(1, state2.getTransactions().size());
-//
-//  auto completed_state = state1 += state2;
-//  ASSERT_EQ(1, completed_state.getTransactions().size());
-//  ASSERT_EQ(1, state1.getTransactions().size());
-//}
-//
-// class TimeTestCompleter : public iroha::DefaultCompleter {
-//  bool operator()(const DataType &tx, const TimeType &time) const override {
-//    return tx->createdTime() < time;
-//  }
-//};
-//
-// TEST(StateTest, TimeIndexInsertionByTx) {
-//  log_->info("Insert one transaction with many signatures => erase tx by
-//  time");
-//
-//  auto quorum = 3u;
-//  auto time = iroha::time::now();
-//
-//  auto state = MstState::empty(std::make_shared<TimeTestCompleter>());
-//
-//  state += makeTx(1, time, makeKey(), quorum);
-//  state += makeTx(1, time, makeKey(), quorum);
-//
-//  ASSERT_EQ(1, state.getTransactions().size());
-//
-//  auto expired_state = state.eraseByTime(time + 1);
-//  ASSERT_EQ(1, expired_state.getTransactions().size());
-//  ASSERT_EQ(0, state.getTransactions().size());
-//}
-//
-// TEST(StateTest, TimeIndexInsertionByAddState) {
-//  log_->info("Fill two states => add one to another => erase tx by time");
-//
-//  auto quorum = 3u;
-//  auto time = iroha::time::now();
-//
-//  auto state1 = MstState::empty(std::make_shared<TimeTestCompleter>());
-//  state1 += makeTx(1, time, makeKey(), quorum);
-//  state1 += makeTx(1, time, makeKey(), quorum);
-//
-//  auto state2 = MstState::empty(std::make_shared<TimeTestCompleter>());
-//  state2 += makeTx(5, time, makeKey(), quorum);
-//  state2 += makeTx(6, time, makeKey(), quorum);
-//
-//  auto completed_state = state1 += state2;
-//  ASSERT_EQ(0, completed_state.getTransactions().size());
-//
-//  auto expired_state = state1.eraseByTime(time + 1);
-//  ASSERT_EQ(3, expired_state.getTransactions().size());
-//  ASSERT_EQ(0, state1.getTransactions().size());
-//  ASSERT_EQ(2, state2.getTransactions().size());
-//}
-//
-// TEST(StateTest, RemovingTestWhenByTimeExpired) {
-//  log_->info(
-//      "Create one filled state and one empty => "
-//      "remove second from first "
-//      "=> perform time expiration method");
-//
-//  auto quorum = 3u;
-//  auto time = iroha::time::now();
-//
-//  auto state1 = MstState::empty(std::make_shared<TimeTestCompleter>());
-//  state1 += makeTx(1, time, makeKey(), quorum);
-//  state1 += makeTx(2, time, makeKey(), quorum);
-//
-//  auto state2 = MstState::empty(std::make_shared<TimeTestCompleter>());
-//
-//  auto diff_state = state1 - state2;
-//
-//  ASSERT_EQ(2, diff_state.getTransactions().size());
-//
-//  auto expired_state = diff_state.eraseByTime(time + 1);
-//  ASSERT_EQ(0, diff_state.getTransactions().size());
-//  ASSERT_EQ(2, expired_state.getTransactions().size());
-//}
+
+/**
+ * @given empty state
+ * @when  insert batch with same signatures two times
+ * @then  checks that appears only one signature
+ */
+TEST(StateTest, UpdateStateWhenTransacionsSame) {
+  log_->info("Create empty state => insert two equal transaction");
+
+  auto state = MstState::empty();
+
+  auto time = iroha::time::now();
+  state += addSignatures(
+      makeTestBatch(txBuilder(1, time)), 0, makeSignature("1", "1"));
+  state += addSignatures(
+      makeTestBatch(txBuilder(1, time)), 0, makeSignature("1", "1"));
+
+  ASSERT_EQ(1, state.getBatches().size());
+  ASSERT_EQ(1,
+            boost::size(state.getBatches()
+                            .begin()
+                            ->get()
+                            ->transactions()
+                            .begin()
+                            ->get()
+                            ->signatures()));
+}
+
+/**
+ * @given prepared state with 3 batches
+ * @when  insert independent state
+ * @then  checks that all batches are here
+ */
+TEST(StateTest, DifferentSignaturesUnionTest) {
+  log_->info("Create two states => merge them");
+
+  auto state1 = MstState::empty();
+
+  state1 +=
+      addSignatures(makeTestBatch(txBuilder(1)), 0, makeSignature("1", "1"));
+
+  state1 +=
+      addSignatures(makeTestBatch(txBuilder(2)), 0, makeSignature("2", "2"));
+  state1 +=
+      addSignatures(makeTestBatch(txBuilder(3)), 0, makeSignature("3", "3"));
+
+  ASSERT_EQ(3, state1.getBatches().size());
+
+  auto state2 = MstState::empty();
+  state2 +=
+      addSignatures(makeTestBatch(txBuilder(4)), 0, makeSignature("4", "4"));
+  state2 +=
+      addSignatures(makeTestBatch(txBuilder(5)), 0, makeSignature("5", "5"));
+  ASSERT_EQ(2, state2.getBatches().size());
+
+  state1 += state2;
+  ASSERT_EQ(5, state1.getBatches().size());
+}
+
+/**
+ * @given two empty states
+ * @when insert
+ * @then
+ */
+TEST(StateTest, UnionStateWhenSameTransactionHaveDifferentSignatures) {
+  log_->info(
+      "Create two transactions with different signatures => move them"
+      " into owns states => merge states");
+
+  auto time = iroha::time::now();
+
+  auto state1 = MstState::empty();
+  auto state2 = MstState::empty();
+
+  state1 += addSignatures(
+      makeTestBatch(txBuilder(1, time)), 0, makeSignature("1", "1"));
+  state2 += addSignatures(
+      makeTestBatch(txBuilder(1, time)), 0, makeSignature("2", "2"));
+
+  state1 += state2;
+  ASSERT_EQ(1, state1.getBatches().size());
+  ASSERT_EQ(2,
+            boost::size(state1.getBatches()
+                            .begin()
+                            ->get()
+                            ->transactions()
+                            .begin()
+                            ->get()
+                            ->signatures()));
+}
+
+/**
+ * @given prepared state with two batches
+ * AND    another state with tx and signature
+ * @when  merge states
+ * @then  checks that final state collapse same tx
+ */
+TEST(StateTest, UnionStateWhenTransactionsSame) {
+  auto time = iroha::time::now();
+
+  auto state1 = MstState::empty();
+  state1 += addSignatures(
+      makeTestBatch(txBuilder(1, time)), 0, makeSignature("1", "1"));
+  state1 += addSignatures(
+      makeTestBatch(txBuilder(2)), 0, makeSignature("other", "other"));
+
+  ASSERT_EQ(2, state1.getBatches().size());
+
+  auto state2 = MstState::empty();
+  state2 += addSignatures(
+      makeTestBatch(txBuilder(1, time)), 0, makeSignature("1", "1"));
+  state2 += addSignatures(
+      makeTestBatch(txBuilder(3)), 0, makeSignature("other_", "other_"));
+  ASSERT_EQ(2, state2.getBatches().size());
+
+  state1 += state2;
+  ASSERT_EQ(3, state1.getBatches().size());
+}
+
+/**
+ * @given two states with common element
+ * @when  performs diff operaton for states
+ * @then  check that common element is presented
+ */
+TEST(StateTest, DifferenceTest) {
+  auto time = iroha::time::now();
+
+  auto state1 = MstState::empty();
+  state1 += addSignatures(
+      makeTestBatch(txBuilder(1, time)), 0, makeSignature("1", "1"));
+  state1 +=
+      addSignatures(makeTestBatch(txBuilder(2)), 0, makeSignature("2", "2"));
+
+  auto state2 = MstState::empty();
+  state2 += addSignatures(
+      makeTestBatch(txBuilder(1, time)), 0, makeSignature("2_2", "2_2"));
+  state2 +=
+      addSignatures(makeTestBatch(txBuilder(3)), 0, makeSignature("3", "3"));
+
+  MstState diff = state1 - state2;
+  ASSERT_EQ(1, diff.getBatches().size());
+}
+
+TEST(StateTest, UpdateTxUntillQuorum) {
+  log_->info("Update transaction signature until quorum happens");
+
+  auto quorum = 3u;
+  auto time = iroha::time::now();
+
+  auto state = MstState::empty();
+
+  auto state_after_one_tx = state += addSignatures(
+      makeTestBatch(txBuilder(1, time, quorum)), 0, makeSignature("1", "1"));
+  ASSERT_EQ(0, state_after_one_tx.getBatches().size());
+
+  auto state_after_two_txes = state += addSignatures(
+      makeTestBatch(txBuilder(1, time, quorum)), 0, makeSignature("2", "2"));
+  ASSERT_EQ(0, state_after_one_tx.getBatches().size());
+
+  auto state_after_three_txes = state += addSignatures(
+      makeTestBatch(txBuilder(1, time, quorum)), 0, makeSignature("3", "3"));
+  ASSERT_EQ(1, state_after_three_txes.getBatches().size());
+  ASSERT_EQ(0, state.getBatches().size());
+}
+
+/**
+ * @given two states with same transaction, where transaction will complete
+ * after merge
+ * @when  merge states
+ * @then  checks that transaction go out to completed state
+ */
+TEST(StateTest, UpdateStateWithNewStateUntilQuorum) {
+  auto quorum = 3u;
+  auto keypair = makeKey();
+  auto time = iroha::time::now();
+
+  auto state1 = MstState::empty();
+  state1 += addSignatures(makeTestBatch(txBuilder(1, time, quorum)),
+                          0,
+                          makeSignature("1_1", "1_1"));
+  state1 += addSignatures(
+      makeTestBatch(txBuilder(2, time)), 0, makeSignature("2", "2"));
+  state1 += addSignatures(
+      makeTestBatch(txBuilder(2, time)), 0, makeSignature("3", "3"));
+  ASSERT_EQ(2, state1.getBatches().size());
+
+  auto state2 = MstState::empty();
+  state2 += addSignatures(makeTestBatch(txBuilder(1, time, quorum)),
+                          0,
+                          makeSignature("1_2", "1_2"));
+  state2 += addSignatures(makeTestBatch(txBuilder(1, time, quorum)),
+                          0,
+                          makeSignature("1_3", "1_3"));
+  ASSERT_EQ(1, state2.getBatches().size());
+
+  auto completed_state = state1 += state2;
+  ASSERT_EQ(1, completed_state.getBatches().size());
+  ASSERT_EQ(1, state1.getBatches().size());
+}
+
+class TimeTestCompleter : public iroha::DefaultCompleter {
+  bool operator()(const DataType &batch, const TimeType &time) const override {
+    return std::all_of(
+        batch->transactions().begin(),
+        batch->transactions().end(),
+        [&time](const auto &tx) { return tx->createdTime() < time; });
+  }
+};
+
+/**
+ * @given state with one transaction
+ * @when  call erase by time, where batch will be already expired
+ * @then  checks that expired state contains batch and initial doesn't conitain
+ */
+TEST(StateTest, TimeIndexInsertionByTx) {
+  auto quorum = 2u;
+  auto time = iroha::time::now();
+
+  auto state = MstState::empty(std::make_shared<TimeTestCompleter>());
+
+  state += addSignatures(makeTestBatch(txBuilder(1, time, quorum)),
+                         0,
+                         makeSignature("1_1", "1_1"));
+
+  auto expired_state = state.eraseByTime(time + 1);
+  ASSERT_EQ(1, expired_state.getBatches().size());
+  ASSERT_EQ(0, state.getBatches().size());
+}
+
+/**
+ * @given init two states
+ * @when  merge them
+ * AND make states expired
+ * @then checks that all expired transactions are preserved in expired state
+ */
+TEST(StateTest, TimeIndexInsertionByAddState) {
+  auto quorum = 3u;
+  auto time = iroha::time::now();
+
+  auto state1 = MstState::empty(std::make_shared<TimeTestCompleter>());
+  state1 += addSignatures(makeTestBatch(txBuilder(1, time, quorum)),
+                          0,
+                          makeSignature("1_1", "1_1"));
+  state1 += addSignatures(makeTestBatch(txBuilder(1, time, quorum)),
+                          0,
+                          makeSignature("1_2", "1_2"));
+
+  auto state2 = MstState::empty(std::make_shared<TimeTestCompleter>());
+  state2 += addSignatures(
+      makeTestBatch(txBuilder(2, time)), 0, makeSignature("2", "2"));
+  state2 += addSignatures(
+      makeTestBatch(txBuilder(3, time)), 0, makeSignature("3", "3"));
+
+  auto completed_state = state1 += state2;
+  ASSERT_EQ(0, completed_state.getBatches().size());
+
+  auto expired_state = state1.eraseByTime(time + 1);
+  ASSERT_EQ(3, expired_state.getBatches().size());
+  ASSERT_EQ(0, state1.getBatches().size());
+  ASSERT_EQ(2, state2.getBatches().size());
+}
+
+/**
+ * @given first state with two batches, seconds is empty
+ * @when  remove second from first
+ * AND call erase by time in diff state
+ * @then checks that expired state contains batches and diff is not
+ */
+TEST(StateTest, RemovingTestWhenByTimeExpired) {
+  auto time = iroha::time::now();
+
+  auto state1 = MstState::empty(std::make_shared<TimeTestCompleter>());
+  state1 += addSignatures(
+      makeTestBatch(txBuilder(1, time)), 0, makeSignature("2", "2"));
+  state1 += addSignatures(
+      makeTestBatch(txBuilder(2, time)), 0, makeSignature("2", "2"));
+
+  auto state2 = MstState::empty(std::make_shared<TimeTestCompleter>());
+
+  auto diff_state = state1 - state2;
+
+  ASSERT_EQ(2, diff_state.getBatches().size());
+
+  auto expired_state = diff_state.eraseByTime(time + 1);
+  ASSERT_EQ(2, expired_state.getBatches().size());
+  ASSERT_EQ(0, diff_state.getBatches().size());
+}
