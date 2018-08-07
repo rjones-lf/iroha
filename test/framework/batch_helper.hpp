@@ -7,7 +7,6 @@
 #define IROHA_BATCH_HELPER_HPP
 
 #include <boost/range/irange.hpp>
-#include <experimental/type_traits>
 
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
@@ -225,6 +224,17 @@ namespace framework {
         return shared_model::interface::types::SharedTxsCollectionType();
       }
 
+      /**
+       * Creates a vector containing single signed transaction
+       * @tparam TxBuilder is any builder which creates
+       * UnsignedWrapper<Transaction>
+       * @param reduced_hashes are the reduced hashes of the batch containing
+       * that transaction
+       * @param builder is builder with set information about the transaction
+       * @return vector containing single signed transaction
+       *
+       * NOTE: SFINAE checks that builder does not return Transaction object
+       */
       template <typename TxBuilder>
       auto makeTxBatchCollection(const HashesType &reduced_hashes,
                                  TxBuilder &&builder) ->
@@ -237,6 +247,16 @@ namespace framework {
                 reduced_hashes))};
       }
 
+      /**
+       * Creates a vector containing single unsigned transaction
+       * @tparam TxBuilder is any builder which creates Transaction
+       * @param reduced_hashes are the reduced hashes of the batch containing
+       * that transaction
+       * @param builder is builder with set information about the transaction
+       * @return vector containing single unsigned transaction
+       *
+       * NOTE: SFINAE checks that builder returns Transaction object
+       */
       template <typename TxBuilder>
       auto makeTxBatchCollection(const HashesType &reduced_hashes,
                                  TxBuilder &&builder) ->
@@ -263,15 +283,28 @@ namespace framework {
     }  // namespace internal
 
     /**
+     * Create test batch transactions from passed transaction builders
+     * @tparam TxBuilders - variadic types of tx builders
+     * @return vector of transactions
+     */
+    template <typename... TxBuilders>
+    auto makeTestBatchTransactions(TxBuilders &&... builders) {
+      auto reduced_hashes = internal::fetchReducedHashes(builders...);
+      auto transactions = internal::makeTxBatchCollection(
+          reduced_hashes, std::forward<TxBuilders>(builders)...);
+
+      return transactions;
+    }
+
+    /**
      * Create test batch from passed transaction builders
      * @tparam TxBuilders - variadic types of tx builders
      * @return shared_ptr for batch
      */
     template <typename... TxBuilders>
     auto makeTestBatch(TxBuilders &&... builders) {
-      auto reduced_hashes = internal::fetchReducedHashes(builders...);
-      auto transactions = internal::makeTxBatchCollection(
-          reduced_hashes, std::forward<TxBuilders>(builders)...);
+      auto transactions =
+          makeTestBatchTransactions(std::forward<TxBuilders>(builders)...);
 
       using namespace shared_model::validation;
 

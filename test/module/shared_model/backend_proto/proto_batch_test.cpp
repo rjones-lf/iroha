@@ -206,6 +206,22 @@ TEST(TransactionBatchTest, BatchWithMissingSignatures) {
 }
 
 /**
+ * @given list of transactions from the same batch with no signatures
+ * @when create transaction batch is invoked
+ * @then returned result contains error
+ */
+TEST(TransactionBatchTest, BatchWithNoSignatures) {
+  const size_t batch_size = 5;
+  auto unsigned_transactions =
+      framework::batch::createUnsignedBatchTransactions(
+          interface::types::BatchType::ATOMIC, batch_size);
+  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
+      unsigned_transactions,
+      validation::DefaultUnsignedTransactionsValidator());
+  ASSERT_TRUE(framework::expected::err(transaction_batch));
+}
+
+/**
  * Create test transaction builder
  * @param acc_quorum - quorum number for setAccountDetail
  * @param created_time - time of creation
@@ -226,6 +242,21 @@ inline auto makeSignedTxBuilder(
     uint8_t quorum = 3) {
   return framework::batch::prepareUnsignedTransactionBuilder(
       "user@test", created_time, quorum);
+}
+
+/**
+ * @given list of transactions from the same batch. Only one of them is signed
+ * @when create transaction batch is invoked
+ * @then transaction batch is successfully created
+ */
+TEST(TransactionBatchTest, BatchWithOneSignature) {
+  auto unsigned_transactions = framework::batch::makeTestBatchTransactions(
+      makeTxBuilder(1), makeTxBuilder(2), makeSignedTxBuilder(1));
+  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
+      unsigned_transactions,
+      validation::DefaultUnsignedTransactionsValidator());
+  ASSERT_TRUE(framework::expected::val(transaction_batch))
+      << framework::expected::err(transaction_batch).value().error;
 }
 
 /**
@@ -290,5 +321,3 @@ TEST(TransactionBatchTest, CreateTestBatchTest) {
                 ->transactions()
                 .size());
 }
-
-
