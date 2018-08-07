@@ -91,10 +91,8 @@ auto initObservers(std::shared_ptr<FairMstProcessor> mst_processor,
                    int c) {
   auto obs = std::make_tuple(
       make_test_subscriber<CallExact>(mst_processor->onStateUpdate(), a),
-      make_test_subscriber<CallExact>(mst_processor->onPreparedTransactions(),
-                                      b),
-      make_test_subscriber<CallExact>(mst_processor->onExpiredTransactions(),
-                                      c));
+      make_test_subscriber<CallExact>(mst_processor->onPreparedBatches(), b),
+      make_test_subscriber<CallExact>(mst_processor->onExpiredBatches(), c));
   std::get<0>(obs).subscribe();
   std::get<1>(obs).subscribe();
   std::get<2>(obs).subscribe();
@@ -115,10 +113,10 @@ void check(T &t) {
  * @given initialised mst processor
  * AND wrappers on mst observables
  *
- * @when insert not-completed transaction
+ * @when insert not-completed batch
  *
  * @then check that:
- * state not updated
+ * state is not updated
  * AND absent prepared transactions
  * AND absent expired transactions
  */
@@ -127,7 +125,8 @@ TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
   auto observers = initObservers(mst_processor, 0, 0, 0);
 
   // ---------------------------------| when |----------------------------------
-  mst_processor->propagateTransaction(makeTestBatch(txBuilder(1)));
+  mst_processor->propagateBatch(
+      addSignaturesFromKeyPairs(makeTestBatch(txBuilder(1)), 0, makeKey()));
 
   // ---------------------------------| then |----------------------------------
   check(observers);
@@ -137,7 +136,7 @@ TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
  * @given initialised mst processor
  * AND wrappers on mst observables
  *
- * @when insert transactions that provide completed transaction
+ * @when insert transactions that provide completed transactions
  *
  * @then check that:
  * state not updated
@@ -149,10 +148,12 @@ TEST_F(MstProcessorTest, completedTransactionUsecase) {
   auto observers = initObservers(mst_processor, 0, 1, 0);
 
   // ---------------------------------| when |----------------------------------
-  auto time = iroha::time::now();
-  mst_processor->propagateTransaction(makeTestBatch(txBuilder(1, time)));
-  mst_processor->propagateTransaction(makeTestBatch(txBuilder(1, time)));
-  mst_processor->propagateTransaction(makeTestBatch(txBuilder(1, time)));
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, 3)), 0, makeKey()));
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, 3)), 0, makeKey()));
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, 3)), 0, makeKey()));
 
   // ---------------------------------| then |----------------------------------
   check(observers);
@@ -175,9 +176,9 @@ TEST_F(MstProcessorTest, expiredTransactionUsecase) {
   auto observers = initObservers(mst_processor, 0, 0, 1);
 
   // ---------------------------------| when |----------------------------------
-  auto quorum = 1;
-  mst_processor->propagateTransaction(
-      makeTestBatch(txBuilder(1, time_before, makeKey(), quorum)));
+  auto quorum = 1u;
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_before, quorum)), 0, makeKey()));
 
   // ---------------------------------| then |----------------------------------
   check(observers);
@@ -201,14 +202,14 @@ TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
   auto observers = initObservers(mst_processor, 1, 1, 0);
 
   auto quorum = 2;
-  mst_processor->propagateTransaction(
-      makeTestBatch(txBuilder(1, time_after, makeKey(), quorum)));
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, quorum)), 0, makeKey()));
 
   // ---------------------------------| when |----------------------------------
   auto another_peer = makePeer("another", "another_pubkey");
   auto transported_state = MstState::empty(std::make_shared<TestCompleter>());
-  transported_state +=
-      makeTestBatch(txBuilder(1, time_after, makeKey(), quorum));
+  transported_state += addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, quorum)), 0, makeKey());
   mst_processor->onNewState(another_peer, transported_state);
 
   // ---------------------------------| then |----------------------------------
@@ -227,9 +228,9 @@ TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
 
 TEST_F(MstProcessorTest, onNewPropagationUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto quorum = 2;
-  mst_processor->propagateTransaction(
-      makeTestBatch(txBuilder(1, time_after, makeKey(), quorum)));
+  auto quorum = 2u;
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_after, quorum)), 0, makeKey()));
   EXPECT_CALL(*transport, sendState(_, _)).Times(2);
 
   // ---------------------------------| when |----------------------------------
