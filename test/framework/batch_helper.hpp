@@ -8,6 +8,7 @@
 
 #include <boost/range/irange.hpp>
 
+#include "logger/logger.hpp"
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
