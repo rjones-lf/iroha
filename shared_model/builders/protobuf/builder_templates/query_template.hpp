@@ -27,7 +27,7 @@ namespace shared_model {
      * @tparam BT -- build type of built object returned by build method
      */
     template <int S = 0,
-              typename SV = validation::DefaultQueryValidator,
+              typename SV = validation::DefaultUnsignedQueryValidator,
               typename BT = UnsignedWrapper<Query>>
     class DEPRECATED TemplateQueryBuilder {
      private:
