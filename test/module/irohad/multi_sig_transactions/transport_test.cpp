@@ -33,15 +33,19 @@ TEST(TransportTest, SendAndReceive) {
 
   std::mutex mtx;
   std::condition_variable cv;
-  ON_CALL(*notifications, onNewState(_, _))
-      .WillByDefault(
-          InvokeWithoutArgs(&cv, &std::condition_variable::notify_one));
 
+  auto time = iroha::time::now();
   auto state = iroha::MstState::empty();
-  state += makeTestBatch(txBuilder(1, iroha::time::now(), makeKey(), 3));
-  state += makeTestBatch(txBuilder(1, iroha::time::now(), makeKey(), 4));
-  state += makeTestBatch(txBuilder(1, iroha::time::now(), makeKey(), 5));
-  state += makeTestBatch(txBuilder(1, iroha::time::now(), makeKey(), 5));
+  state += addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time)), 0, makeKey());
+  state += addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(2, time)), 0, makeKey());
+  state += addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(3, time)), 0, makeKey());
+  state += addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(3, time)), 0, makeKey());
+
+  ASSERT_EQ(3, state.getBatches().size());
 
   std::unique_ptr<grpc::Server> server;
 
@@ -59,12 +63,18 @@ TEST(TransportTest, SendAndReceive) {
       makePeer(addr + std::to_string(port), "abcdabcdabcdabcdabcdabcdabcdabcd");
   // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side
-  EXPECT_CALL(*notifications, onNewState(_, state))
-      .WillOnce(Invoke([&peer](auto &p, auto) { EXPECT_EQ(*p, *peer); }));
+  EXPECT_CALL(*notifications, onNewState(_, _))
+      .WillOnce(
+          Invoke([&peer, &cv, &state](const auto &p, auto const &target_state) {
+            EXPECT_EQ(*peer, *p);
+
+            EXPECT_EQ(state, target_state);
+            cv.notify_one();
+          }));
 
   transport->sendState(*peer, state);
   std::unique_lock<std::mutex> lock(mtx);
-  cv.wait_for(lock, std::chrono::milliseconds(100));
+  cv.wait_for(lock, std::chrono::milliseconds(5000));
 
   server->Shutdown();
 }

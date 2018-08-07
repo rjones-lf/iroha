@@ -39,11 +39,16 @@ namespace iroha {
   }
 
   bool MstState::operator==(const MstState &rhs) const {
-    return std::is_permutation(
-        internal_state_.begin(),
-        internal_state_.end(),
-        rhs.internal_state_.begin(),
-        [](auto &lhs, auto &rhs) { return *lhs == *rhs; });
+    auto &&lhs_batches = getBatches();
+    auto &&rhs_batches = rhs.getBatches();
+
+    return std::equal(lhs_batches.begin(),
+                      lhs_batches.end(),
+                      rhs_batches.begin(),
+                      rhs_batches.end(),
+                      [](const auto &l, const auto &r) {
+                        return *l == *r;;
+                      });
   }
 
   bool MstState::isEmpty() const {
@@ -58,6 +63,10 @@ namespace iroha {
                     val->transactions();
                     result.push_back(val);
                   });
+    std::sort(
+        result.begin(), result.end(), [](const auto &left, const auto &right) {
+          return left->reducedHash().hex() < right->reducedHash().hex();
+        });
     return result;
   }
 

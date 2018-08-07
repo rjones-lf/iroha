@@ -9,7 +9,7 @@
 #include "validators/transaction_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
 
-#include "iostream"
+#include <algorithm>
 
 namespace shared_model {
   namespace interface {
@@ -143,13 +143,20 @@ namespace shared_model {
       if (number_of_tx >= transactions_.size()) {
         return false;
       } else {
-        return transactions_.at(number_of_tx)->addSignature(signed_blob, public_key);
+        return transactions_.at(number_of_tx)
+            ->addSignature(signed_blob, public_key);
       }
     }
 
     bool TransactionBatch::operator==(const TransactionBatch &rhs) const {
       return reducedHash() == rhs.reducedHash()
-          and transactions() == rhs.transactions();
+          and std::equal(transactions().begin(),
+                         transactions().end(),
+                         rhs.transactions().begin(),
+                         rhs.transactions().end(),
+                         [](auto const &left, auto const &right) {
+                           return *left == *right;
+                         });
     }
 
   }  // namespace interface

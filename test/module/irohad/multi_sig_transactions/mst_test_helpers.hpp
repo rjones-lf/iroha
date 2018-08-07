@@ -56,6 +56,23 @@ auto addSignatures(Batch &&batch, int tx_number, Signatures... signatures) {
   return batch;
 }
 
+template <typename Batch, typename... KeyPairs>
+auto addSignaturesFromKeyPairs(Batch &&batch,
+                               int tx_number,
+                               KeyPairs... keypairs) {
+  auto create_signature = [&](auto &&key_pair) {
+    auto &payload = batch->transactions().at(tx_number)->payload();
+    auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
+        shared_model::crypto::Blob(payload), key_pair);
+    batch->addSignature(tx_number, signedBlob, key_pair.publicKey());
+  };
+
+  int temp[] = {(create_signature(std::forward<KeyPairs>(keypairs)), 0)...};
+  (void)temp;
+
+  return batch;
+}
+
 inline auto makeSignature(const std::string &sign,
                           const std::string &public_key) {
   return std::make_pair(shared_model::crypto::Signed(sign),
