@@ -209,10 +209,6 @@ class Irohad {
  public:
   std::shared_ptr<iroha::ametsuchi::Storage> storage;
 
-  // ordering service persistent state storage
-  std::shared_ptr<iroha::ametsuchi::OrderingServicePersistentState>
-      ordering_service_storage_;
-
   shared_model::crypto::Keypair keypair;
   grpc::ServerBuilder builder;
 };

@@ -182,8 +182,6 @@ namespace iroha {
         std::vector<std::shared_ptr<soci::session>> connections;
         for (size_t i = 0; i < pool_size_; i++) {
           connections.push_back(std::make_shared<soci::session>(*connection_));
-        }
-        for (size_t i = 0; i < pool_size_; i++) {
           connections[i]->close();
         }
         connections.clear();
