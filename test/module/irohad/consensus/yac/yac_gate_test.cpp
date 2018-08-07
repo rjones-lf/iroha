@@ -55,12 +55,13 @@ class YacGateTest : public ::testing::Test {
                   .createdTime(iroha::time::now())
                   .quorum(1)
                   .build()
-                  .signAndAddSignature(keypair);
+                  .signAndAddSignature(keypair)
+                  .finish();
     shared_model::proto::Block tmp =
         shared_model::proto::BlockBuilder()
             .height(1)
             .createdTime(iroha::time::now())
-            .transactions(std::vector<shared_model::proto::Transaction>{})
+            .transactions(std::vector<shared_model::proto::Transaction>{tx})
             .prevHash(Sha3_256::makeHash(Blob("block")))
             .build()
             .signAndAddSignature(keypair)

@@ -19,7 +19,7 @@ namespace shared_model {
      */
     static bool allTxsInSameBatch(const types::SharedTxsCollectionType &txs) {
       // Empty batch is still batch, so txs can be empty
-      if (txs.empty() or txs.size() == 1) {
+      if (txs.size() == 1) {
         return true;
       }
 
@@ -40,24 +40,38 @@ namespace shared_model {
                           });
     };
 
-    template <typename TransactionValidator>
+    template <typename TransactionValidator, typename FieldValidator>
     iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
         const types::SharedTxsCollectionType &transactions,
         const validation::TransactionsCollectionValidator<TransactionValidator>
-            &validator) {
+            &validator,
+        const FieldValidator &field_validator) {
       auto answer = validator.validate(transactions);
+
       std::string reason_name = "Transaction batch: ";
       validation::ReasonsGroupType batch_reason;
       batch_reason.first = reason_name;
+      if (boost::empty(transactions)) {
+        batch_reason.second.emplace_back(
+            "Provided transactions are not from the same batch");
+      }
       if (not allTxsInSameBatch(transactions)) {
         batch_reason.second.emplace_back(
             "Provided transactions are not from the same batch");
       }
-      bool has_at_least_one_signature = std::any_of(
-          transactions.begin(), transactions.end(), [](const auto tx) {
-            return not boost::empty(tx->signatures());
-          });
+      bool has_at_least_one_signature =
+          std::any_of(transactions.begin(),
+                      transactions.end(),
+                      [&field_validator, &batch_reason](const auto tx) {
+                        const auto &signatures = tx->signatures();
+                        if (not boost::empty(signatures)) {
+                          field_validator.validateSignatures(
+                              batch_reason, signatures, tx->payload());
+                          return true;
+                        }
+                        return false;
+                      });
 
       if (not has_at_least_one_signature) {
         batch_reason.second.emplace_back(
@@ -77,20 +91,29 @@ namespace shared_model {
     template iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
         const types::SharedTxsCollectionType &transactions,
-        const validation::DefaultUnsignedTransactionsValidator &validator);
+        const validation::DefaultUnsignedTransactionsValidator &validator,
+        const validation::FieldValidator &field_validator);
 
     template iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
         const types::SharedTxsCollectionType &transactions,
-        const validation::DefaultSignedTransactionsValidator &validator);
+        const validation::DefaultSignedTransactionsValidator &validator,
+        const validation::FieldValidator &field_validator);
 
-    template <typename TransactionValidator>
+    template <typename TransactionValidator, typename FieldValidator>
     iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
         std::shared_ptr<Transaction> transaction,
-        const TransactionValidator &transaction_validator) {
+        const TransactionValidator &transaction_validator,
+        const FieldValidator &field_validator) {
+      validation::ReasonsGroupType reason;
+      reason.first = "Transaction batch: ";
+      field_validator.validateSignatures(
+          reason, transaction->signatures(), transaction->payload());
+
       auto answer = transaction_validator.validate(*transaction);
       if (answer.hasErrors()) {
+        answer.addReason(std::move(reason));
         return iroha::expected::makeError(answer.reason());
       }
       return iroha::expected::makeValue(
@@ -100,12 +123,15 @@ namespace shared_model {
     template iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
         std::shared_ptr<Transaction> transaction,
-        const validation::DefaultTransactionValidator &validator);
+        const validation::DefaultTransactionValidator &transaction_validator,
+        const validation::FieldValidator &field_validator);
 
     template iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
         std::shared_ptr<Transaction> transaction,
-        const validation::DefaultSignableTransactionValidator &validator);
+        const validation::DefaultSignableTransactionValidator
+            &transaction_validator,
+        const validation::FieldValidator &field_validator);
 
     const types::SharedTxsCollectionType &TransactionBatch::transactions()
         const {

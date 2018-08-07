@@ -18,16 +18,19 @@
 namespace shared_model {
   namespace validation {
 
-    template <typename TransactionValidator>
-    TransactionsCollectionValidator<TransactionValidator>::
+    template <typename TransactionValidator, typename FieldValidator>
+    TransactionsCollectionValidator<TransactionValidator, FieldValidator>::
         TransactionsCollectionValidator(
-            const TransactionValidator &transactions_validator)
-        : transaction_validator_(transactions_validator) {}
+            const TransactionValidator &transactions_validator,
+            const FieldValidator &field_validator)
+        : transaction_validator_(transactions_validator),
+          field_validator_(field_validator) {}
 
-    template <typename TransactionValidator>
-    Answer TransactionsCollectionValidator<TransactionValidator>::validate(
-        const shared_model::interface::types::TransactionsForwardCollectionType
-            &transactions) const {
+    template <typename TransactionValidator, typename FieldValidator>
+    Answer
+    TransactionsCollectionValidator<TransactionValidator, FieldValidator>::
+        validate(const shared_model::interface::types::
+                     TransactionsForwardCollectionType &transactions) const {
       interface::types::SharedTxsCollectionType res;
       std::transform(std::begin(transactions),
                      std::end(transactions),
@@ -36,13 +39,20 @@ namespace shared_model {
       return validate(res);
     }
 
-    template <typename TransactionValidator>
-    Answer TransactionsCollectionValidator<TransactionValidator>::validate(
-        const shared_model::interface::types::SharedTxsCollectionType
-            &transactions) const {
+    template <typename TransactionValidator, typename FieldValidator>
+    Answer
+    TransactionsCollectionValidator<TransactionValidator, FieldValidator>::
+        validate(const shared_model::interface::types::SharedTxsCollectionType
+                     &transactions) const {
       Answer res;
       ReasonsGroupType reason;
       reason.first = "Transaction list";
+
+      if (boost::empty(transactions)) {
+        reason.second.emplace_back("Transaction sequence can not be empty");
+        res.addReason(std::move(reason));
+        return res;
+      }
 
       for (const auto &tx : transactions) {
         auto answer = transaction_validator_.validate(*tx);
@@ -60,16 +70,19 @@ namespace shared_model {
       return res;
     }
 
-    template <typename TransactionValidator>
+    template <typename TransactionValidator, typename FieldValidator>
     const TransactionValidator &TransactionsCollectionValidator<
-        TransactionValidator>::getTransactionValidator() const {
+        TransactionValidator,
+        FieldValidator>::getTransactionValidator() const {
       return transaction_validator_;
     }
 
-    template class TransactionsCollectionValidator<DefaultTransactionValidator>;
+    template class TransactionsCollectionValidator<DefaultTransactionValidator,
+                                                   FieldValidator>;
 
     template class TransactionsCollectionValidator<
-        DefaultSignableTransactionValidator>;
+        DefaultSignableTransactionValidator,
+        FieldValidator>;
 
   }  // namespace validation
 }  // namespace shared_model

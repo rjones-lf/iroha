@@ -7,6 +7,7 @@
 #define IROHA_TRANSACTION_SEQUENCE_VALIDATOR_HPP
 
 #include "validators/answer.hpp"
+#include "validators/field_validator.hpp"
 #include "validators/transactions_collection/any_order_validator.hpp"
 
 namespace shared_model {
@@ -16,15 +17,18 @@ namespace shared_model {
      * Validator of transaction's collection, this is not fair implementation
      * now, it always returns empty answer
      */
-    template <typename TransactionValidator>
+    template <typename TransactionValidator,
+              typename FieldValidator = validation::FieldValidator>
     class TransactionsCollectionValidator {
      protected:
       TransactionValidator transaction_validator_;
+      FieldValidator field_validator_;
 
      public:
       explicit TransactionsCollectionValidator(
           const TransactionValidator &transactions_validator =
-              TransactionValidator());
+              TransactionValidator(),
+          const FieldValidator &field_validator = FieldValidator());
 
       // TODO: IR-1505, igor-egorov, 2018-07-05 Remove method below when
       // proposal and block will return collection of shared transactions
