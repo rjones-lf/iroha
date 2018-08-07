@@ -20,4 +20,5 @@ target_link_libraries(query_execution
         rxcpp
         shared_model_default_builders
         common_execution
+        pending_txs_storage
         )
