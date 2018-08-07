@@ -280,8 +280,8 @@ void Irohad::initMstProcessor() {
   log_->info("[Init] => MST processor");
 }
 
-void Irohad::initPendingTxsStrorage() {
-  pending_txs_storage_ = std::make_shared<PendingTransactionStorage>(
+void Irohad::initPendingTxsStorage() {
+  pending_txs_storage_ = std::make_shared<PendingTransactionStorageImpl>(
       mst_processor->onStateUpdate(),
       mst_processor->onPreparedTransactions(),
       mst_processor->onExpiredTransactions());

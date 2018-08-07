@@ -4,7 +4,7 @@
 #
 
 add_library(pending_txs_storage
-    pending_txs_storage.cpp
+        impl/pending_txs_storage_impl.cpp
     )
 
 target_link_libraries(pending_txs_storage

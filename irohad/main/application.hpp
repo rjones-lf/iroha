@@ -34,7 +34,7 @@
 #include "network/impl/peer_communication_service_impl.hpp"
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
-#include "pending_txs_storage/pending_txs_storage.hpp"
+#include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
 #include "simulator/block_creator.hpp"
 #include "simulator/impl/simulator.hpp"
 #include "synchronizer/impl/synchronizer_impl.hpp"
@@ -137,7 +137,7 @@ class Irohad {
 
   virtual void initMstProcessor();
 
-  virtual void initPendingTxsStrorage();
+  virtual void initPendingTxsStorage();
 
   virtual void initTransactionCommandService();
 

@@ -3,15 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "pending_txs_storage/pending_txs_storage.hpp"
+#include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
 
 #include "multi_sig_transactions/state/mst_state.hpp"
-#include "pending_txs_storage.hpp"
-#include "pending_txs_storage/pending_txs_storage.hpp"
 
 namespace iroha {
 
-  PendingTransactionStorage::PendingTransactionStorage(
+  PendingTransactionStorageImpl::PendingTransactionStorageImpl(
       StateObservable updatedBatches,
       BatchObservable preparedBatch,
       BatchObservable expiredBatch) {
@@ -29,14 +27,14 @@ namespace iroha {
         });
   }
 
-  PendingTransactionStorage::~PendingTransactionStorage() {
+  PendingTransactionStorageImpl::~PendingTransactionStorageImpl() {
     updated_batches_subscription_.unsubscribe();
     prepared_batch_subscription_.unsubscribe();
     expired_batch_subscription_.unsubscribe();
   }
 
-  PendingTransactionStorage::SharedTxsCollectionType
-  PendingTransactionStorage::getPendingTransactions(
+  PendingTransactionStorageImpl::SharedTxsCollectionType
+  PendingTransactionStorageImpl::getPendingTransactions(
       const AccountIdType &accountId) const {
     std::shared_lock<std::shared_timed_mutex> lock(mutex_);
     auto creator_it = storage_.index.find(accountId);
@@ -56,8 +54,8 @@ namespace iroha {
     return {};
   }
 
-  std::set<PendingTransactionStorage::AccountIdType>
-  PendingTransactionStorage::batchCreators(
+  std::set<PendingTransactionStorageImpl::AccountIdType>
+  PendingTransactionStorageImpl::batchCreators(
       const TransactionBatch &batch) const {
     std::set<AccountIdType> creators;
     for (const auto &transaction : batch.transactions()) {
@@ -66,7 +64,7 @@ namespace iroha {
     return creators;
   }
 
-  void PendingTransactionStorage::updatedBatchesHandler(
+  void PendingTransactionStorageImpl::updatedBatchesHandler(
       const SharedState &updatedBatches) {
     std::unique_lock<std::shared_timed_mutex> lock(mutex_);
     for (auto &batch : updatedBatches->getBatches()) {
@@ -81,17 +79,17 @@ namespace iroha {
     }
   }
 
-  void PendingTransactionStorage::preparedBatchHandler(
+  void PendingTransactionStorageImpl::preparedBatchHandler(
       const SharedBatch &preparedBatch) {
     removeBatch(preparedBatch);
   }
 
-  void PendingTransactionStorage::expiredBatchHandler(
+  void PendingTransactionStorageImpl::expiredBatchHandler(
       const SharedBatch &expiredBatch) {
     removeBatch(expiredBatch);
   }
 
-  void PendingTransactionStorage::removeBatch(const SharedBatch &batch) {
+  void PendingTransactionStorageImpl::removeBatch(const SharedBatch &batch) {
     auto creators = batchCreators(*batch);
     auto hash = batch->reducedHash();
     {

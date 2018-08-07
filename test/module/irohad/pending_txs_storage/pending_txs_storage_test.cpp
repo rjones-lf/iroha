@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "pending_txs_storage/pending_txs_storage.hpp"
+#include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
 #include <rxcpp/rx.hpp>
 #include "module/irohad/pending_txs_storage/pending_txs_storage_fixture.hpp"
 
@@ -36,7 +36,7 @@ TEST_F(PendingTxsStorageFixture, InsertionTest) {
   auto dummy = rxcpp::observable<>::create<std::shared_ptr<Batch>>(
       [](auto s) { s.on_completed(); });
 
-  iroha::PendingTransactionStorage storage(updates, dummy, dummy);
+  iroha::PendingTransactionStorageImpl storage(updates, dummy, dummy);
   for (const auto &creator : {"alice@iroha", "bob@iroha"}) {
     auto pending = storage.getPendingTransactions(creator);
     ASSERT_EQ(pending.size(), 2)
@@ -77,7 +77,7 @@ TEST_F(PendingTxsStorageFixture, SignaturesUpdate) {
   auto dummy = rxcpp::observable<>::create<std::shared_ptr<Batch>>(
       [](auto s) { s.on_completed(); });
 
-  iroha::PendingTransactionStorage storage(updates, dummy, dummy);
+  iroha::PendingTransactionStorageImpl storage(updates, dummy, dummy);
   auto pending = storage.getPendingTransactions("alice@iroha");
   ASSERT_EQ(pending.size(), 1);
   ASSERT_EQ(boost::size(pending.front()->signatures()), 2);
@@ -106,7 +106,7 @@ TEST_F(PendingTxsStorageFixture, SeveralBatches) {
   auto dummy = rxcpp::observable<>::create<std::shared_ptr<Batch>>(
       [](auto s) { s.on_completed(); });
 
-  iroha::PendingTransactionStorage storage(updates, dummy, dummy);
+  iroha::PendingTransactionStorageImpl storage(updates, dummy, dummy);
   auto alice_pending = storage.getPendingTransactions("alice@iroha");
   ASSERT_EQ(alice_pending.size(), 4);
 
@@ -138,7 +138,7 @@ TEST_F(PendingTxsStorageFixture, SeparateBatchesDoNotOverwriteStorage) {
   auto dummy = rxcpp::observable<>::create<std::shared_ptr<Batch>>(
       [](auto s) { s.on_completed(); });
 
-  iroha::PendingTransactionStorage storage(updates, dummy, dummy);
+  iroha::PendingTransactionStorageImpl storage(updates, dummy, dummy);
   auto alice_pending = storage.getPendingTransactions("alice@iroha");
   ASSERT_EQ(alice_pending.size(), 4);
 
@@ -165,7 +165,7 @@ TEST_F(PendingTxsStorageFixture, PreparedBatch) {
   });
   auto dummy = rxcpp::observable<>::create<std::shared_ptr<Batch>>(
       [](auto s) { s.on_completed(); });
-  iroha::PendingTransactionStorage storage(
+  iroha::PendingTransactionStorageImpl storage(
       updates, prepared_batches_subject.get_observable(), dummy);
 
   source.front().addKeys(2);
@@ -194,7 +194,7 @@ TEST_F(PendingTxsStorageFixture, ExpiredBatch) {
   });
   auto dummy = rxcpp::observable<>::create<std::shared_ptr<Batch>>(
       [](auto s) { s.on_completed(); });
-  iroha::PendingTransactionStorage storage(
+  iroha::PendingTransactionStorageImpl storage(
       updates, dummy, expired_batches_subject.get_observable());
 
   expired_batches_subject.get_subscriber().on_next(batch);
