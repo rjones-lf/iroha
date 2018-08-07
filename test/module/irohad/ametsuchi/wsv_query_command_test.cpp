@@ -57,6 +57,11 @@ namespace iroha {
         *sql << init_;
       }
 
+      void TearDown() override {
+        sql->close();
+        AmetsuchiTest::TearDown();
+      }
+
       std::string role = "role";
       shared_model::interface::RolePermissionSet role_permissions;
       shared_model::interface::permissions::Grantable grantable_permission;
@@ -273,7 +278,7 @@ namespace iroha {
       ASSERT_TRUE(acc_details);
       ASSERT_EQ(
           "{ \"admin\" : {\"some_key\" : \"even_third_val\"}, "
-            "\"id@domain\" : {\"some_key\" : \"some_val\"} }",
+          "\"id@domain\" : {\"some_key\" : \"some_val\"} }",
           *acc_details);
     }
 
@@ -293,8 +298,7 @@ namespace iroha {
       auto acc_details =
           query->getAccountDetail(account->accountId(), "", "admin");
       ASSERT_TRUE(acc_details);
-      ASSERT_EQ(R"({"admin" : {"another_key": "another_val"}})",
-                *acc_details);
+      ASSERT_EQ(R"({"admin" : {"another_key": "another_val"}})", *acc_details);
     }
 
     /**
@@ -319,8 +323,7 @@ namespace iroha {
       auto acc_details = query->getAccountDetail(
           account->accountId(), "some_key", account->accountId());
       ASSERT_TRUE(acc_details);
-      ASSERT_EQ(R"({"id@domain" : {"some_key" : "some_val"}})",
-                *acc_details);
+      ASSERT_EQ(R"({"id@domain" : {"some_key" : "some_val"}})", *acc_details);
     }
 
     class AccountRoleTest : public WsvQueryCommandTest {

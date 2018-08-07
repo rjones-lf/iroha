@@ -41,14 +41,15 @@ namespace iroha {
 
       static expected::Result<std::shared_ptr<soci::connection_pool>,
                               std::string>
-      initPostgresConnection(std::string &options_str, size_t pool_size = 10);
+      initPostgresConnection(std::string &options_str, size_t pool_size);
 
      public:
       static expected::Result<std::shared_ptr<StorageImpl>, std::string> create(
           std::string block_store_dir,
           std::string postgres_connection,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory_);
+              factory_,
+          size_t pool_size = 10);
 
       expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
       createTemporaryWsv() override;
@@ -59,6 +60,9 @@ namespace iroha {
       boost::optional<std::shared_ptr<PeerQuery>> createPeerQuery() override;
 
       boost::optional<std::shared_ptr<BlockQuery>> createBlockQuery() override;
+
+      boost::optional<std::shared_ptr<OrderingServicePersistentState>>
+      createOSPersistentState() override;
 
       /**
        * Insert block without validation
@@ -95,7 +99,8 @@ namespace iroha {
                   std::unique_ptr<KeyValueStorage> block_store,
                   std::shared_ptr<soci::connection_pool> connection,
                   std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-                      factory);
+                      factory,
+                  size_t pool_size);
 
       /**
        * Folder with raw blocks
@@ -118,6 +123,8 @@ namespace iroha {
       logger::Logger log_;
 
       mutable std::shared_timed_mutex drop_mutex;
+
+      size_t pool_size_;
 
      protected:
       static const std::string &drop_;

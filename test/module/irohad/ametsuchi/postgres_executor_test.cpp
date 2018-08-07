@@ -51,6 +51,11 @@ namespace iroha {
         *sql << init_;
       }
 
+      void TearDown() override {
+        sql->close();
+        AmetsuchiTest::TearDown();
+      }
+
       CommandResult execute(
           const std::unique_ptr<shared_model::interface::Command> &command,
           const shared_model::interface::types::AccountIdType &creator =

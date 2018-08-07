@@ -67,12 +67,17 @@ class OrderingServiceTest : public ::testing::Test {
     fake_transport = std::make_shared<MockOrderingServiceTransport>();
     fake_persistent_state =
         std::make_shared<MockOrderingServicePersistentState>();
+    persistent_state_factory = std::make_shared<MockOSPersistentStateFactory>();
     factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
         shared_model::validation::AlwaysValidValidator>>();
 
     EXPECT_CALL(*pqfactory, createPeerQuery())
         .WillRepeatedly(
             Return(boost::make_optional(std::shared_ptr<PeerQuery>(wsv))));
+    EXPECT_CALL(*persistent_state_factory, createOSPersistentState())
+        .WillRepeatedly(Return(boost::make_optional(
+            std::shared_ptr<OrderingServicePersistentState>(
+                fake_persistent_state))));
   }
 
   auto initOs(size_t max_proposal) {
@@ -81,7 +86,7 @@ class OrderingServiceTest : public ::testing::Test {
         max_proposal,
         proposal_timeout.get_observable(),
         fake_transport,
-        fake_persistent_state,
+        persistent_state_factory,
         std::move(factory),
         false);
   }
@@ -92,6 +97,7 @@ class OrderingServiceTest : public ::testing::Test {
 
   std::shared_ptr<MockOrderingServiceTransport> fake_transport;
   std::shared_ptr<MockOrderingServicePersistentState> fake_persistent_state;
+  std::shared_ptr<MockOSPersistentStateFactory> persistent_state_factory;
   std::condition_variable cv;
   std::mutex m;
   std::string address{"0.0.0.0:50051"};
@@ -281,7 +287,7 @@ TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
         rxcpp::observable<>::interval(commit_delay,
                                       rxcpp::observe_on_new_thread()),
         fake_transport,
-        fake_persistent_state,
+        persistent_state_factory,
         std::move(factory),
         true);
 

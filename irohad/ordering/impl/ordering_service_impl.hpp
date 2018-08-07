@@ -13,6 +13,7 @@
 #include <rxcpp/rx.hpp>
 
 #include "ametsuchi/peer_query_factory.hpp"
+#include "ametsuchi/os_persistent_state_factory.hpp"
 #include "logger/logger.hpp"
 #include "network/ordering_service.hpp"
 #include "ordering.grpc.pb.h"
@@ -51,7 +52,7 @@ namespace iroha {
           size_t max_size,
           rxcpp::observable<TimeoutType> proposal_timeout,
           std::shared_ptr<network::OrderingServiceTransport> transport,
-          std::shared_ptr<ametsuchi::OrderingServicePersistentState>
+          std::shared_ptr<ametsuchi::OSPersistentStateFactory>
               persistent_state,
           std::unique_ptr<shared_model::interface::ProposalFactory> factory,
           bool is_async = true);
@@ -108,7 +109,7 @@ namespace iroha {
        * In case of relaunch, ordering server will enumerate proposals
        * consecutively.
        */
-      std::shared_ptr<ametsuchi::OrderingServicePersistentState>
+      std::shared_ptr<ametsuchi::OSPersistentStateFactory>
           persistent_state_;
 
       /**

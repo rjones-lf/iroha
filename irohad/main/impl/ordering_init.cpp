@@ -4,7 +4,7 @@
  */
 
 #include "main/impl/ordering_init.hpp"
-#include "ametsuchi/ordering_service_persistent_state.hpp"
+#include "ametsuchi/os_persistent_state_factory.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
@@ -43,7 +43,7 @@ namespace iroha {
         size_t max_size,
         std::chrono::milliseconds delay_milliseconds,
         std::shared_ptr<network::OrderingServiceTransport> transport,
-        std::shared_ptr<ametsuchi::OrderingServicePersistentState>
+        std::shared_ptr<ametsuchi::OSPersistentStateFactory>
             persistent_state) {
       auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
           shared_model::validation::DefaultProposalValidator>>();
@@ -61,7 +61,7 @@ namespace iroha {
         std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
         size_t max_size,
         std::chrono::milliseconds delay_milliseconds,
-        std::shared_ptr<ametsuchi::OrderingServicePersistentState>
+        std::shared_ptr<ametsuchi::OSPersistentStateFactory>
             persistent_state,
         std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory) {
       auto query = peer_query_factory->createPeerQuery();

@@ -88,7 +88,8 @@ void Irohad::init() {
  */
 void Irohad::dropStorage() {
   storage->reset();
-  ordering_service_storage_->resetState();
+  storage->createOSPersistentState() |
+      [](const auto &state) { state->resetState(); };
 }
 
 /**
@@ -105,17 +106,12 @@ void Irohad::initStorage() {
       },
       [&](expected::Error<std::string> &error) { log_->error(error.error); });
 
-  PostgresOrderingServicePersistentState::create(pg_conn_).match(
-      [&](expected::Value<
-          std::shared_ptr<ametsuchi::PostgresOrderingServicePersistentState>>
-              &_storage) { ordering_service_storage_ = _storage.value; },
-      [&](expected::Error<std::string> &error) { log_->error(error.error); });
-
   log_->info("[Init] => storage", logger::logBool(storage));
 }
 
 void Irohad::resetOrderingService() {
-  if (not ordering_service_storage_->resetState())
+  if (not (storage->createOSPersistentState() |
+      [](const auto &state) { return state->resetState(); }))
     log_->error("cannot reset ordering service storage");
 }
 
@@ -156,11 +152,8 @@ void Irohad::initValidators() {
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
-  ordering_gate = ordering_init.initOrderingGate(storage,
-                                                 max_proposal_size_,
-                                                 proposal_delay_,
-                                                 ordering_service_storage_,
-                                                 storage);
+  ordering_gate = ordering_init.initOrderingGate(
+      storage, max_proposal_size_, proposal_delay_, storage, storage);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -169,11 +162,8 @@ void Irohad::initOrderingGate() {
  * Initializing iroha verified proposal creator and block creator
  */
 void Irohad::initSimulator() {
-  simulator = std::make_shared<Simulator>(ordering_gate,
-                                          stateful_validator,
-                                          storage,
-                                          storage,
-                                          crypto_signer_);
+  simulator = std::make_shared<Simulator>(
+      ordering_gate, stateful_validator, storage, storage, crypto_signer_);
 
   log_->info("[Init] => init simulator");
 }
@@ -182,8 +172,7 @@ void Irohad::initSimulator() {
  * Initializing block loader
  */
 void Irohad::initBlockLoader() {
-  block_loader =
-      loader_init.initBlockLoader(storage, storage);
+  block_loader = loader_init.initBlockLoader(storage, storage);
 
   log_->info("[Init] => block loader");
 }
@@ -192,12 +181,8 @@ void Irohad::initBlockLoader() {
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
-  consensus_gate = yac_init.initConsensusGate(storage,
-                                              simulator,
-                                              block_loader,
-                                              keypair,
-                                              vote_delay_,
-                                              load_delay_);
+  consensus_gate = yac_init.initConsensusGate(
+      storage, simulator, block_loader, keypair, vote_delay_, load_delay_);
 
   log_->info("[Init] => consensus gate");
 }

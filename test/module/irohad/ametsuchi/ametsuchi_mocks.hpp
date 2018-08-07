@@ -25,6 +25,7 @@
 #include "ametsuchi/key_value_storage.hpp"
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/mutable_storage.hpp"
+#include "ametsuchi/os_persistent_state_factory.hpp"
 #include "ametsuchi/peer_query.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
 #include "ametsuchi/storage.hpp"
@@ -273,6 +274,10 @@ namespace iroha {
                    boost::optional<std::shared_ptr<PeerQuery>>(void));
       MOCK_METHOD0(createBlockQuery,
                    boost::optional<std::shared_ptr<BlockQuery>>(void));
+      MOCK_METHOD0(
+          createOSPersistentState,
+          boost::optional<std::shared_ptr<OrderingServicePersistentState>>(
+              void));
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
       MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block &));
       MOCK_METHOD1(insertBlocks,
@@ -311,6 +316,14 @@ namespace iroha {
      public:
       MOCK_METHOD0(createBlockQuery,
                    boost::optional<std::shared_ptr<BlockQuery>>(void));
+    };
+
+    class MockOSPersistentStateFactory : public OSPersistentStateFactory {
+     public:
+      MOCK_METHOD0(
+          createOSPersistentState,
+          boost::optional<std::shared_ptr<OrderingServicePersistentState>>(
+              void));
     };
   }  // namespace ametsuchi
 }  // namespace iroha

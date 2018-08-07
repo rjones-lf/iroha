@@ -20,6 +20,7 @@
 
 #include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
+#include "ametsuchi/os_persistent_state_factory.hpp"
 #include "logger/logger.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
@@ -63,7 +64,7 @@ namespace iroha {
           size_t max_size,
           std::chrono::milliseconds delay_milliseconds,
           std::shared_ptr<network::OrderingServiceTransport> transport,
-          std::shared_ptr<ametsuchi::OrderingServicePersistentState>
+          std::shared_ptr<ametsuchi::OSPersistentStateFactory>
               persistent_state);
 
      public:
@@ -81,7 +82,7 @@ namespace iroha {
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           size_t max_size,
           std::chrono::milliseconds delay_milliseconds,
-          std::shared_ptr<ametsuchi::OrderingServicePersistentState>
+          std::shared_ptr<ametsuchi::OSPersistentStateFactory>
               persistent_state,
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory);
 

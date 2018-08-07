@@ -34,13 +34,15 @@ namespace iroha {
         PostgresOptions postgres_options,
         std::unique_ptr<KeyValueStorage> block_store,
         std::shared_ptr<soci::connection_pool> connection,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        size_t pool_size)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
           connection_(connection),
           factory_(factory),
-          log_(logger::log("StorageImpl")) {
+          log_(logger::log("StorageImpl")),
+          pool_size_(pool_size) {
       soci::session sql(*connection_);
       sql << init_;
     }
@@ -92,13 +94,22 @@ namespace iroha {
           std::make_shared<PeerQueryWsv>(wsv));
     }
 
-    boost::optional<std::shared_ptr<BlockQuery>> StorageImpl::createBlockQuery() {
+    boost::optional<std::shared_ptr<BlockQuery>>
+    StorageImpl::createBlockQuery() {
       std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
       auto block_query = getBlockQuery();
       if (not block_query) {
         return boost::none;
       }
       return boost::make_optional(block_query);
+    }
+
+    boost::optional<std::shared_ptr<OrderingServicePersistentState>>
+    StorageImpl::createOSPersistentState() {
+      return boost::make_optional<
+          std::shared_ptr<OrderingServicePersistentState>>(
+          std::make_shared<PostgresOrderingServicePersistentState>(
+              std::make_unique<soci::session>(*connection_)));
     }
 
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
@@ -168,16 +179,17 @@ namespace iroha {
         auto &db = dbname.value();
         std::unique_lock<std::shared_timed_mutex> lock(drop_mutex);
         log_->info("Drop database {}", db);
+        std::vector<std::shared_ptr<soci::session>> connections;
+        for (size_t i = 0; i < pool_size_; i++) {
+          connections.push_back(std::make_shared<soci::session>(*connection_));
+        }
+        for (size_t i = 0; i < pool_size_; i++) {
+          connections[i]->close();
+        }
+        connections.clear();
         connection_.reset();
         soci::session sql(soci::postgresql,
                           postgres_options_.optionsStringWithoutDbName());
-        // kill active connections
-        sql << R"(
-SELECT pg_terminate_backend(pg_stat_activity.pid)
-FROM pg_stat_activity
-WHERE pg_stat_activity.datname = :dbname
-  AND pid <> pg_backend_pid();)",
-            soci::use(dbname.value());
         // perform dropping
         sql << "DROP DATABASE " + db;
       } else {
@@ -247,8 +259,8 @@ WHERE pg_stat_activity.datname = :dbname
     StorageImpl::create(
         std::string block_store_dir,
         std::string postgres_options,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-            factory) {
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        size_t pool_size) {
       boost::optional<std::string> string_res = boost::none;
 
       PostgresOptions options(postgres_options);
@@ -267,7 +279,7 @@ WHERE pg_stat_activity.datname = :dbname
       }
 
       auto ctx_result = initConnections(block_store_dir);
-      auto db_result = initPostgresConnection(postgres_options);
+      auto db_result = initPostgresConnection(postgres_options, pool_size);
       expected::Result<std::shared_ptr<StorageImpl>, std::string> storage;
       ctx_result.match(
           [&](expected::Value<ConnectionContext> &ctx) {
@@ -279,7 +291,8 @@ WHERE pg_stat_activity.datname = :dbname
                                       options,
                                       std::move(ctx.value.block_store),
                                       connection.value,
-                                      factory)));
+                                      factory,
+                                      pool_size)));
                 },
                 [&](expected::Error<std::string> &error) { storage = error; });
           },

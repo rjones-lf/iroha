@@ -196,10 +196,6 @@ class Irohad {
   // query service
   std::shared_ptr<torii::QueryService> query_service;
 
-  // ordering service persistent state storage
-  std::shared_ptr<iroha::ametsuchi::OrderingServicePersistentState>
-      ordering_service_storage_;
-
   std::unique_ptr<ServerRunner> torii_server;
   std::unique_ptr<ServerRunner> internal_server;
 
@@ -212,6 +208,10 @@ class Irohad {
 
  public:
   std::shared_ptr<iroha::ametsuchi::Storage> storage;
+
+  // ordering service persistent state storage
+  std::shared_ptr<iroha::ametsuchi::OrderingServicePersistentState>
+      ordering_service_storage_;
 
   shared_model::crypto::Keypair keypair;
   grpc::ServerBuilder builder;
