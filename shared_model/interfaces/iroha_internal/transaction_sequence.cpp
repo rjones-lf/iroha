@@ -8,6 +8,7 @@
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "validators/default_validator.hpp"
 
+
 namespace shared_model {
   namespace interface {
 

@@ -40,7 +40,7 @@ namespace shared_model {
      * @tparam BT -- build type of built object returned by build method
      */
     template <int S = 0,
-              typename SV = validation::DefaultBlockValidator,
+              typename SV = validation::DefaultUnsignedBlockValidator,
               typename BT = UnsignedWrapper<Block>>
     class DEPRECATED TemplateBlockBuilder {
      private:

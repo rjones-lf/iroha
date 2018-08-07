@@ -21,7 +21,7 @@
 
 class QueryValidatorTest : public ValidatorsTest {
  public:
-  shared_model::validation::DefaultQueryValidator query_validator;
+  shared_model::validation::DefaultUnsignedQueryValidator query_validator;
 };
 
 using namespace shared_model;
