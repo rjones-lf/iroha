@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "backend/protobuf/transaction.hpp"
+#include "backend/protobuf/proto_block_factory.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/specified_visitor.hpp"

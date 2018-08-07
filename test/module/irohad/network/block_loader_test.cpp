@@ -19,9 +19,9 @@
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
 #include <gtest/gtest.h>
-#include <builders/protobuf/builder_templates/transaction_template.hpp>
 
 #include "builders/common_objects/peer_builder.hpp"
+#include "builders/protobuf/builder_templates/transaction_template.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/hash.hpp"
@@ -55,7 +55,9 @@ class BlockLoaderTest : public testing::Test {
     auto validator_ptr = std::make_unique<MockBlockValidator>();
     validator = validator_ptr.get();
     loader = std::make_shared<BlockLoaderImpl>(
-        peer_query, storage, std::move(validator_ptr));
+        peer_query,
+        storage,
+        shared_model::proto::ProtoBlockFactory(std::move(validator_ptr)));
     service = std::make_shared<BlockLoaderService>(storage);
 
     grpc::ServerBuilder builder;
@@ -203,8 +205,7 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
       .WillOnce(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*storage, getTopBlock())
       .WillOnce(Return(iroha::expected::makeValue(wBlock(clone(block)))));
-  EXPECT_CALL(*storage, getBlocksFrom(next_height))
-      .WillOnce(Return(blocks));
+  EXPECT_CALL(*storage, getBlocksFrom(next_height)).WillOnce(Return(blocks));
   auto wrapper = make_test_subscriber<CallExact>(
       loader->retrieveBlocks(peer_key), num_blocks);
   auto height = next_height;
@@ -224,16 +225,14 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   auto requested =
       getBaseBlockBuilder().build().signAndAddSignature(key).finish();
 
-  auto variant = shared_model::interface::BlockVariant(wBlock(clone(requested)));
+  auto variant =
+      shared_model::interface::BlockVariant(wBlock(clone(requested)));
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*storage, getBlocksFrom(1))
       .WillOnce(Return(std::vector<wBlock>{clone(requested)}));
-  EXPECT_CALL(
-      *validator,
-      validate(variant))
-      .WillOnce(Return(Answer{}));
+  EXPECT_CALL(*validator, validate(variant)).WillOnce(Return(Answer{}));
   auto block = loader->retrieveBlock(peer_key, requested.hash());
 
   ASSERT_TRUE(block);

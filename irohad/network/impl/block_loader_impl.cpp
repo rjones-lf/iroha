@@ -23,7 +23,6 @@
 #include "builders/protobuf/transport_builder.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
-#include "validators/default_validator.hpp"
 
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
@@ -57,14 +56,12 @@ namespace {
   }
 }  // namespace
 
-BlockLoaderImpl::BlockLoaderImpl(
-    std::shared_ptr<PeerQuery> peer_query,
-    std::shared_ptr<BlockQuery> block_query,
-    std::unique_ptr<shared_model::validation::AbstractValidator<
-        shared_model::interface::BlockVariant>> validator)
+BlockLoaderImpl::BlockLoaderImpl(std::shared_ptr<PeerQuery> peer_query,
+                                 std::shared_ptr<BlockQuery> block_query,
+                                 shared_model::proto::ProtoBlockFactory factory)
     : peer_query_(std::move(peer_query)),
       block_query_(std::move(block_query)),
-      block_factory_(std::move(validator)),
+      block_factory_(std::move(factory)),
       log_(logger::log("BlockLoaderImpl")) {}
 
 rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
@@ -105,12 +102,10 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
           auto proto_block =
               block_factory_.createBlock(std::move(block)) | getNonEmptyBlock;
           proto_block.match(
-              // success case
               [&subscriber](iroha::expected::Value<std::shared_ptr<
                                 shared_model::interface::Block>> &result) {
                 subscriber.on_next(std::move(result.value));
               },
-              // fail case
               [this, &context](iroha::expected::Error<std::string> &error) {
                 log_->error(error.error);
                 context.TryCancel();

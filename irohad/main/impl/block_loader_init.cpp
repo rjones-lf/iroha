@@ -29,10 +29,10 @@ auto BlockLoaderInit::createService(std::shared_ptr<BlockQuery> storage) {
 
 auto BlockLoaderInit::createLoader(std::shared_ptr<PeerQuery> peer_query,
                                    std::shared_ptr<BlockQuery> storage) {
-  return std::make_shared<BlockLoaderImpl>(
-      peer_query,
-      storage,
+  shared_model::proto::ProtoBlockFactory factory(
       std::make_unique<shared_model::validation::BlockVariantValidator>());
+  return std::make_shared<BlockLoaderImpl>(
+      peer_query, storage, std::move(factory));
 }
 
 std::shared_ptr<BlockLoader> BlockLoaderInit::initBlockLoader(

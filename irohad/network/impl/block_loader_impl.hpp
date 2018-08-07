@@ -27,7 +27,6 @@
 #include "backend/protobuf/proto_block_factory.hpp"
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
-#include "validators/abstract_validator.hpp"
 
 namespace iroha {
   namespace network {
@@ -35,8 +34,7 @@ namespace iroha {
      public:
       BlockLoaderImpl(std::shared_ptr<ametsuchi::PeerQuery> peer_query,
                       std::shared_ptr<ametsuchi::BlockQuery> block_query,
-                      std::unique_ptr<shared_model::validation::AbstractValidator<
-                          shared_model::interface::BlockVariant>> validator);
+                      shared_model::proto::ProtoBlockFactory factory);
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlocks(
@@ -48,21 +46,6 @@ namespace iroha {
           const shared_model::interface::types::HashType &block_hash) override;
 
      private:
-//      using Validator = shared_model::validation::BlockValidator<
-//          shared_model::validation::FieldValidator,
-//          shared_model::validation::DefaultTransactionValidator,
-//          shared_model::validation::UnsignedTransactionsCollectionValidator<
-//              shared_model::validation::DefaultTransactionValidator>>;
-//
-//      // validate signed block
-//      using BlockValidator = shared_model::validation::SignableModelValidator<
-//          shared_model::validation::AnyBlockValidator<
-//              Validator,
-//              shared_model::validation::EmptyBlockValidator<
-//                  shared_model::validation::FieldValidator>>,
-//          const shared_model::interface::BlockVariant &,
-//          shared_model::validation::FieldValidator>;
-
       /**
        * Retrieve peers from database, and find the requested peer by pubkey
        * @param pubkey - public key of requested peer

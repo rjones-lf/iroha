@@ -10,7 +10,6 @@
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/temporary_factory.hpp"
-#include "backend/protobuf/proto_block_factory.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "interfaces/iroha_internal/unsafe_block_factory.hpp"
 #include "logger/logger.hpp"
@@ -33,9 +32,6 @@ namespace iroha {
               crypto_signer,
           std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
               block_factory);
-
-      Simulator(const Simulator &) = delete;
-      Simulator &operator=(const Simulator &) = delete;
 
       ~Simulator() override;
 

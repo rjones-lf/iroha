@@ -7,6 +7,7 @@
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
+#include "backend/protobuf/proto_proposal_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "execution/query_execution_impl.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
@@ -177,7 +178,7 @@ void Irohad::initOrderingGate() {
  * Initializing iroha verified proposal creator and block creator
  */
 void Irohad::initSimulator() {
-  std::unique_ptr<shared_model::interface::UnsafeBlockFactory> block_factory =
+  auto block_factory =
       std::make_unique<shared_model::proto::ProtoBlockFactory>(
           std::make_unique<shared_model::validation::BlockVariantValidator>());
   simulator = std::make_shared<Simulator>(ordering_gate,
