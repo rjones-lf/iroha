@@ -80,6 +80,7 @@ void Irohad::init() {
   initPeerCommunicationService();
   initStatusBus();
   initMstProcessor();
+  initPendingTxsStrorage();
 
   // Torii
   initTransactionCommandService();
@@ -277,6 +278,14 @@ void Irohad::initMstProcessor() {
     mst_processor = std::make_shared<MstProcessorStub>();
   }
   log_->info("[Init] => MST processor");
+}
+
+void Irohad::initPendingTxsStrorage() {
+  pending_txs_storage_ = std::make_shared<PendingTransactionStorage>(
+      mst_processor->onStateUpdate(),
+      mst_processor->onPreparedTransactions(),
+      mst_processor->onExpiredTransactions());
+  log_->info("[Init] => pending transactions storage");
 }
 
 /**
