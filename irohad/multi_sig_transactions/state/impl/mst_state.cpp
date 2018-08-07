@@ -59,7 +59,7 @@ namespace iroha {
     std::vector<DataType> result;
     std::for_each(internal_state_.begin(),
                   internal_state_.end(),
-                  [&result, this](const auto &val) {
+                  [&result](const auto &val) {
                     val->transactions();
                     result.push_back(val);
                   });
