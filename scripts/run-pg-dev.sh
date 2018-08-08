@@ -5,7 +5,7 @@ PG_IMAGE_NAME="postgres:9.5"
 PG_HOST_DATA="/tmp/pgdata"
 PG_CONTAINER_DATA="/var/lib/postgresql/data"
 PG_USER="iroha"
-PG_PASS="helloworld"
+PG_PASS="mysecretpassword"
 export PG_PORT="5432"
 
 export G_ID=$(id -g)
