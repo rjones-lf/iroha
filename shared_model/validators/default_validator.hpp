@@ -83,8 +83,7 @@ namespace shared_model {
                                const interface::BlocksQuery &,
                                FieldValidator>;
 
-    // --------------------------| Transactions collection validation
-    // |---------------------------
+    // ------------| Transactions collection validation |--------------
 
     /**
      * Transactions collection validator that checks stateless validness of
