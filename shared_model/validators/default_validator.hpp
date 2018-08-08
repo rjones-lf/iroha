@@ -39,15 +39,16 @@ namespace shared_model {
      * Transaction validator which checks stateless validation WITHOUT
      * signatures
      */
-    using DefaultTransactionValidator =
+    using DefaultUnsignedTransactionValidator =
         TransactionValidator<FieldValidator,
                              CommandValidatorVisitor<FieldValidator>>;
 
     /**
-     * Transaction validator which checks stateless validation and signature of transaction
+     * Transaction validator which checks stateless validation and signature of
+     * transaction
      */
     using DefaultSignedTransactionValidator =
-        SignableModelValidator<DefaultTransactionValidator,
+        SignableModelValidator<DefaultUnsignedTransactionValidator,
                                const interface::Transaction &,
                                FieldValidator>;
 
@@ -62,7 +63,7 @@ namespace shared_model {
     /**
      * Query validator which checks stateless validation including signatures
      */
-    using DefaultSignableQueryValidator =
+    using DefaultSignedQueryValidator =
         SignableModelValidator<DefaultUnsignedQueryValidator,
                                const interface::Query &,
                                FieldValidator>;
@@ -77,46 +78,49 @@ namespace shared_model {
      * Block query validator which checks stateless validation including
      * signatures
      */
-    using DefaultSignableBlocksQueryValidator =
+    using DefaultSignedBlocksQueryValidator =
         SignableModelValidator<DefaultUnsignedBlocksQueryValidator,
                                const interface::BlocksQuery &,
                                FieldValidator>;
 
-    // --------------------------| Transactions collection validation |---------------------------
+    // --------------------------| Transactions collection validation
+    // |---------------------------
 
     /**
-     * Transactions collection validator that checks stateless validness of transactions WITHOUT signatures
+     * Transactions collection validator that checks stateless validness of
+     * transactions WITHOUT signatures
      */
     using DefaultUnsignedTransactionsValidator =
-        TransactionsCollectionValidator<DefaultTransactionValidator>;
+        TransactionsCollectionValidator<DefaultUnsignedTransactionValidator>;
 
     /**
-     * Transactions collection validator that checks signatures and stateless validness of transactions
+     * Transactions collection validator that checks signatures and stateless
+     * validness of transactions
      */
     using DefaultSignedTransactionsValidator =
-        TransactionsCollectionValidator<DefaultSignableTransactionValidator>;
+        TransactionsCollectionValidator<DefaultSignedTransactionValidator>;
 
     /**
      * Proposal validator which checks stateless validation of proposal
      */
     using DefaultProposalValidator =
         ProposalValidator<FieldValidator,
-                          DefaultTransactionValidator,
+                          DefaultUnsignedTransactionValidator,
                           DefaultSignedTransactionsValidator>;
 
     /**
      * Block validator which checks blocks WITHOUT signatures
      */
-    using DefaultUnsignedBlockValidator = BlockValidator<
-        FieldValidator,
-        DefaultTransactionValidator,
-        SignedTransactionsCollectionValidator<DefaultTransactionValidator>>;
+    using DefaultUnsignedBlockValidator =
+        BlockValidator<FieldValidator,
+                       DefaultUnsignedTransactionValidator,
+                       DefaultSignedTransactionsValidator>;
 
     /**
      * Block validator which checks blocks including signatures
      */
     using DefaultSignableBlockValidator =
-        SignableModelValidator<DefaultBlockValidator,
+        SignableModelValidator<DefaultUnsignedBlockValidator,
                                const interface::Block &,
                                FieldValidator>;
 
@@ -131,7 +135,8 @@ namespace shared_model {
      * In https://soramitsu.atlassian.net/browse/IR-1418 should be removed
      */
     using DefaultAnyBlockValidator =
-        AnyBlockValidator<DefaultBlockValidator, DefaultEmptyBlockValidator>;
+        AnyBlockValidator<DefaultSignableBlockValidator,
+                          DefaultEmptyBlockValidator>;
 
   }  // namespace validation
 }  // namespace shared_model

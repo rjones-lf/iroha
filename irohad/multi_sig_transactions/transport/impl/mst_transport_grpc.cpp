@@ -35,7 +35,7 @@ grpc::Status MstTransportGrpc::SendState(
   MstState newState = MstState::empty();
   shared_model::proto::TransportBuilder<
       shared_model::proto::Transaction,
-      shared_model::validation::DefaultTransactionValidator>
+      shared_model::validation::DefaultUnsignedTransactionValidator>
       builder;
   for (const auto &tx : request->transactions()) {
     // TODO: use monad after deserialize() will return optional

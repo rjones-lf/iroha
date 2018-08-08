@@ -39,7 +39,7 @@ grpc::Status OrderingServiceTransportGrpc::onTransaction(
   } else {
     auto batch_result =
         shared_model::interface::TransactionBatch::createTransactionBatch<
-            shared_model::validation::DefaultTransactionValidator>(
+            shared_model::validation::DefaultSignedTransactionValidator>(
             std::make_shared<shared_model::proto::Transaction>(
                 iroha::protocol::Transaction(*request)));
     batch_result.match(

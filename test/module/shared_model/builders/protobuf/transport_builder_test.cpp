@@ -251,7 +251,7 @@ TEST_F(TransportBuilderTest, InvalidTransactionCreationTest) {
  */
 TEST_F(TransportBuilderTest, QueryCreationTest) {
   auto orig_model = createQuery();
-  testTransport<validation::DefaultSignableQueryValidator>(
+  testTransport<validation::DefaultSignedQueryValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -267,7 +267,7 @@ TEST_F(TransportBuilderTest, QueryCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidQueryCreationTest) {
   auto orig_model = createInvalidQuery();
-  testTransport<validation::DefaultSignableQueryValidator>(
+  testTransport<validation::DefaultSignedQueryValidator>(
       orig_model,
       [](const Value<decltype(orig_model)>) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });

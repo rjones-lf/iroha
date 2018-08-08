@@ -123,13 +123,14 @@ namespace shared_model {
     template iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
         std::shared_ptr<Transaction> transaction,
-        const validation::DefaultTransactionValidator &transaction_validator,
+        const validation::DefaultUnsignedTransactionValidator
+            &transaction_validator,
         const validation::FieldValidator &field_validator);
 
     template iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
         std::shared_ptr<Transaction> transaction,
-        const validation::DefaultSignableTransactionValidator
+        const validation::DefaultSignedTransactionValidator
             &transaction_validator,
         const validation::FieldValidator &field_validator);
 

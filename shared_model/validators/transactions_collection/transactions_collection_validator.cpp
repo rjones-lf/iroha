@@ -77,11 +77,11 @@ namespace shared_model {
       return transaction_validator_;
     }
 
-    template class TransactionsCollectionValidator<DefaultTransactionValidator,
+    template class TransactionsCollectionValidator<DefaultUnsignedTransactionValidator,
                                                    FieldValidator>;
 
     template class TransactionsCollectionValidator<
-        DefaultSignableTransactionValidator,
+        DefaultSignedTransactionValidator,
         FieldValidator>;
 
   }  // namespace validation

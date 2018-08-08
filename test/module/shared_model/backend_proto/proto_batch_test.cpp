@@ -122,7 +122,7 @@ TEST(TransactionBatchTest, CreateBatchWithValidAndInvalidTx) {
  * @then transaction batch is created
  */
 TEST(TransactionBatchTest, CreateSingleTxBatchWhenValid) {
-  validation::DefaultTransactionValidator transaction_validator;
+  validation::DefaultUnsignedTransactionValidator transaction_validator;
 
   auto tx1 = createValidUnsignedTransaction();
 
@@ -139,7 +139,7 @@ TEST(TransactionBatchTest, CreateSingleTxBatchWhenValid) {
  * @then transaction batch is not created
  */
 TEST(TransactionBatchTest, CreateSingleTxBatchWhenInvalid) {
-  validation::DefaultTransactionValidator transaction_validator;
+  validation::DefaultUnsignedTransactionValidator transaction_validator;
 
   auto tx1 = createInvalidUnsignedTransaction();
 
