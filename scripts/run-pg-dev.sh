@@ -14,7 +14,7 @@ export U_ID=$(id -u)
 mkdir -p ${PG_HOST_DATA}
 docker run -dt --user "${U_ID}:${G_ID}" \
         --name ${PG_CONTAINER_NAME} \
-        -p ${PG_PORT} \
+        -p 127.0.0.1:${PG_PORT}:${PG_PORT} \
         -v ${PG_HOST_DATA}:${PG_CONTAINER_DATA} \
         -e POSTGRES_USER=${PG_USER} -e POSTGRES_PASSWORD=${PG_PASS} \
         ${PG_IMAGE_NAME}
