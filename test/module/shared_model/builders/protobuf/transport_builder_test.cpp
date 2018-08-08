@@ -116,9 +116,11 @@ class TransportBuilderTest : public ::testing::Test {
   }
 
   auto createBlock() {
-    return getBaseBlockBuilder<shared_model::proto::UnsignedBlockBuilder>()
+    return getBaseBlockBuilder<shared_model::proto::BlockBuilder>()
         .createdTime(created_time)
-        .build();
+        .build()
+        .signAndAddSignature(keypair)
+        .finish();
   }
 
   auto createInvalidBlock() {
@@ -408,12 +410,12 @@ TEST_F(TransportBuilderTest, BlockVariantWithValidBlock) {
   auto block = createBlock();
   interface::BlockVariant orig_model =
       std::make_shared<decltype(block)>(block.getTransport());
-  auto val = framework::expected::val(
-      TransportBuilder<decltype(orig_model),
-                       validation::DefaultAnyBlockValidator>()
-          .build(block.getTransport()));
+  auto built_block = TransportBuilder<decltype(orig_model),
+                                      validation::DefaultAnyBlockValidator>()
+                         .build(block.getTransport());
+  auto val = framework::expected::val(built_block);
 
-  ASSERT_TRUE(val);
+  ASSERT_TRUE(val) << framework::expected::err(built_block).value().error;
   val | [&block](auto &block_variant) {
     iroha::visit_in_place(
         block_variant.value,

@@ -104,22 +104,18 @@ namespace shared_model {
      * Proposal validator which checks stateless validation of proposal
      */
     using DefaultProposalValidator =
-        ProposalValidator<FieldValidator,
-                          DefaultUnsignedTransactionValidator,
-                          DefaultSignedTransactionsValidator>;
+        ProposalValidator<FieldValidator, DefaultSignedTransactionsValidator>;
 
     /**
      * Block validator which checks blocks WITHOUT signatures
      */
     using DefaultUnsignedBlockValidator =
-        BlockValidator<FieldValidator,
-                       DefaultUnsignedTransactionValidator,
-                       DefaultSignedTransactionsValidator>;
+        BlockValidator<FieldValidator, DefaultUnsignedTransactionsValidator>;
 
     /**
      * Block validator which checks blocks including signatures
      */
-    using DefaultSignableBlockValidator =
+    using DefaultSignedBlockValidator =
         SignableModelValidator<DefaultUnsignedBlockValidator,
                                const interface::Block &,
                                FieldValidator>;
@@ -135,7 +131,7 @@ namespace shared_model {
      * In https://soramitsu.atlassian.net/browse/IR-1418 should be removed
      */
     using DefaultAnyBlockValidator =
-        AnyBlockValidator<DefaultSignableBlockValidator,
+        AnyBlockValidator<DefaultSignedBlockValidator,
                           DefaultEmptyBlockValidator>;
 
   }  // namespace validation
