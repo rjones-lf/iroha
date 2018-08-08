@@ -90,7 +90,7 @@ namespace iroha {
               iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call) {
         return Yac::create(YacVoteStorage(),
-                           createNetwork(async_call),
+                           createNetwork(std::move(async_call)),
                            createCryptoProvider(keypair),
                            createTimer(delay_milliseconds),
                            initial_order);
@@ -111,7 +111,7 @@ namespace iroha {
         auto yac = createYac(peer_orderer->getInitialOrdering().value(),
                              keypair,
                              vote_delay_milliseconds,
-                             async_call);
+                             std::move(async_call));
         consensus_network->subscribe(yac);
 
         auto hash_provider = createHashProvider();

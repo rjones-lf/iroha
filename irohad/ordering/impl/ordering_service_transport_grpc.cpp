@@ -111,18 +111,16 @@ void OrderingServiceTransportGrpc::publishProposal(
   for (const auto &peer : peers_map) {
     auto proto = static_cast<shared_model::proto::Proposal *>(proposal.get());
     async_call_->log_->debug("Publishing proposal: '{}'",
-                proto->getTransport().DebugString());
+                             proto->getTransport().DebugString());
 
     auto transport = proto->getTransport();
-    async_call_->Call(
-      [&] (auto context, auto cq)
-      {
-          return peer.second->AsynconProposal(context,transport,cq);
-      } );
-
+    async_call_->Call([&](auto context, auto cq) {
+      return peer.second->AsynconProposal(context, transport, cq);
+    });
   }
 }
 
 OrderingServiceTransportGrpc::OrderingServiceTransportGrpc(
-        std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>> async_call)
-    : async_call_(async_call) {}
+    std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+        async_call)
+    : async_call_(std::move(async_call)) {}

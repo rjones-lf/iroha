@@ -78,7 +78,8 @@ namespace iroha {
 
       /**
        * Universal method to perform all needed sends
-       * @tparam lambda which must return unique pointer to ClientAsyncResponseReader<Response> object
+       * @tparam lambda which must return unique pointer to
+       * ClientAsyncResponseReader<Response> object
        */
       template <typename F>
       void Call(F &&lambda) {

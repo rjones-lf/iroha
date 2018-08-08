@@ -56,7 +56,7 @@ OrderingGateTransportGrpc::OrderingGateTransportGrpc(
         async_call)
     : client_(network::createClient<proto::OrderingServiceTransportGrpc>(
           server_address)),
-      async_call_(async_call),
+      async_call_(std::move(async_call)),
       factory_(std::make_unique<shared_model::proto::ProtoProposalFactory<
                    shared_model::validation::DefaultProposalValidator>>()) {}
 
