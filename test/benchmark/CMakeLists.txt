@@ -25,3 +25,15 @@ target_link_libraries(bm_proto_creation
     shared_model_proto_backend
     )
 
+add_executable(query_benchmark
+    query_benchmark.cpp
+    )
+
+target_link_libraries(query_benchmark
+    benchmark
+    application
+    raw_block_loader
+    integration_framework
+    shared_model_stateless_validation
+    acceptance_fixture
+    )
