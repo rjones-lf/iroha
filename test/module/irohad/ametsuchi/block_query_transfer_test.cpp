@@ -127,11 +127,9 @@ namespace iroha {
       tx_hashes.push_back(block.transactions().back().hash());
       insert(block);
 
-      auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator1, asset), 1);
-      wrapper.subscribe(
-          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), val->hash()); });
-      ASSERT_TRUE(wrapper.validate());
+      auto txs = blocks->getAccountAssetTransactions(creator1, asset);
+      ASSERT_EQ(txs.size(), 1);
+      ASSERT_EQ(txs[0]->hash(), tx_hashes[0]);
     }
 
     /**
@@ -145,11 +143,9 @@ namespace iroha {
       tx_hashes.push_back(block.transactions().back().hash());
       insert(block);
 
-      auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator2, asset), 1);
-      wrapper.subscribe(
-          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), val->hash()); });
-      ASSERT_TRUE(wrapper.validate());
+      auto txs = blocks->getAccountAssetTransactions(creator2, asset);
+      ASSERT_EQ(txs.size(), 1);
+      ASSERT_EQ(txs[0]->hash(), tx_hashes[0]);
     }
 
     /**
@@ -163,11 +159,9 @@ namespace iroha {
       tx_hashes.push_back(block.transactions().back().hash());
       insert(block);
 
-      auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator3, asset), 1);
-      wrapper.subscribe(
-          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), val->hash()); });
-      ASSERT_TRUE(wrapper.validate());
+      auto txs = blocks->getAccountAssetTransactions(creator3, asset);
+      ASSERT_EQ(txs.size(), 1);
+      ASSERT_EQ(txs[0]->hash(), tx_hashes[0]);
     }
 
     /**
@@ -187,13 +181,11 @@ namespace iroha {
       tx_hashes.push_back(block.transactions().back().hash());
       insert(block2);
 
-      auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator1, asset), 2);
-      wrapper.subscribe([ i = 0, this ](auto val) mutable {
-        ASSERT_EQ(tx_hashes.at(i), val->hash());
-        ++i;
-      });
-      ASSERT_TRUE(wrapper.validate());
+      auto txs = blocks->getAccountAssetTransactions(creator1, asset);
+      ASSERT_EQ(txs.size(), 2);
+      for (size_t i = 0; i < txs.size(); i++) {
+        ASSERT_EQ(txs[i]->hash(), tx_hashes[i]);
+      }
     }
   }  // namespace ametsuchi
 }  // namespace iroha

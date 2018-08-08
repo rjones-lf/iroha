@@ -290,10 +290,13 @@ QueryExecutionImpl::executeGetAccountAssetTransactions(
       bq.getAccountAssetTransactions(query.accountId(), query.assetId());
 
   std::vector<shared_model::proto::Transaction> txs;
-  acc_asset_tx.subscribe([&](const auto &tx) {
-    txs.push_back(
-        *std::static_pointer_cast<shared_model::proto::Transaction>(tx));
-  });
+  std::transform(
+      acc_asset_tx.begin(),
+      acc_asset_tx.end(),
+      std::back_inserter(txs),
+      [](const auto &tx) {
+        return *std::static_pointer_cast<shared_model::proto::Transaction>(tx);
+      });
 
   auto response = QueryResponseBuilder().transactionsResponse(txs);
   return response;
@@ -307,10 +310,13 @@ QueryExecutionImpl::executeGetAccountTransactions(
   auto acc_tx = bq.getAccountTransactions(query.accountId());
 
   std::vector<shared_model::proto::Transaction> txs;
-  acc_tx.subscribe([&](const auto &tx) {
-    txs.push_back(
-        *std::static_pointer_cast<shared_model::proto::Transaction>(tx));
-  });
+  std::transform(
+      acc_tx.begin(),
+      acc_tx.end(),
+      std::back_inserter(txs),
+      [](const auto &tx) {
+        return *std::static_pointer_cast<shared_model::proto::Transaction>(tx);
+      });
 
   auto response = QueryResponseBuilder().transactionsResponse(txs);
   return response;
@@ -329,7 +335,7 @@ QueryExecutionImpl::executeGetTransactions(
   std::vector<shared_model::proto::Transaction> txs;
   bool can_get_all =
       checkAccountRolePermission(accountId, wq, Role::kGetAllTxs);
-  transactions.subscribe([&](const auto &tx) {
+  std::for_each(transactions.begin(), transactions.end(), [&](const auto &tx) {
     if (tx) {
       auto proto_tx =
           *std::static_pointer_cast<shared_model::proto::Transaction>(*tx);

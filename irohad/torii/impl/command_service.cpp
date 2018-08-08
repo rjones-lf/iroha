@@ -78,7 +78,7 @@ namespace torii {
   void CommandService::Torii(const iroha::protocol::Transaction &request) {
     shared_model::proto::TransportBuilder<
         shared_model::proto::Transaction,
-        shared_model::validation::DefaultSignableTransactionValidator>()
+        shared_model::validation::DefaultSignedTransactionValidator>()
         .build(request)
         .match(
             [this](

@@ -4,6 +4,7 @@
  */
 
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "utils/string_builder.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/transaction_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
@@ -30,13 +31,13 @@ namespace shared_model {
       }
 
       return std::none_of(++txs.begin(),
-                   txs.end(),
-                   [front_batch_meta = batch_meta.value()](
-                       const std::shared_ptr<Transaction> tx) {
-                     return tx->batchMeta()
-                         ? **tx->batchMeta() != *front_batch_meta
-                         : false;
-                   });
+                          txs.end(),
+                          [front_batch_meta = batch_meta.value()](
+                              const std::shared_ptr<Transaction> tx) {
+                            return tx->batchMeta()
+                                ? **tx->batchMeta() != *front_batch_meta
+                                : false;
+                          });
     };
 
     template <typename TransactionValidator, typename OrderValidator>
@@ -123,14 +124,14 @@ namespace shared_model {
           });
     }
 
-    types::HashType TransactionBatch::calculateReducedBatchHash(
-        const boost::any_range<types::HashType, boost::forward_traversal_tag>
-            &reduced_hashes) {
-      std::stringstream concatenated_hash;
-      for (const auto &hash : reduced_hashes) {
-        concatenated_hash << hash.hex();
-      }
-      return types::HashType::fromHexString(concatenated_hash.str());
+    std::string TransactionBatch::toString() const {
+      return detail::PrettyStringBuilder()
+          .init("Batch")
+          .append("reducedHash", reducedHash().toString())
+          .append("hasAllSignatures", hasAllSignatures() ? "true" : "false")
+          .append("transactions")
+          .appendAll(transactions(), [](auto &tx) { return tx->toString(); })
+          .finalize();
     }
 
   }  // namespace interface
