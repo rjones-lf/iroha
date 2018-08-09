@@ -53,10 +53,10 @@ namespace iroha {
 
       CommandResult execute(
           const std::unique_ptr<shared_model::interface::Command> &command,
-          bool is_genesis = false,
+          bool do_validation = false,
           const shared_model::interface::types::AccountIdType &creator =
               "id@domain") {
-        executor->doValidation(not is_genesis);
+        executor->doValidation(not do_validation);
         executor->setCreatorAccountId(creator);
         return boost::apply_visitor(*executor, command->get());
       }
