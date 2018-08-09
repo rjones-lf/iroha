@@ -178,7 +178,9 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
   EXPECT_CALL(*pcs, propagate_batch(_))
       .Times(transaction_sequence.batches().size());
 
-  tp->transactionSequenceHandle(transaction_sequence);
+  for (const auto &batch : transaction_sequence.batches()) {
+    tp->batchHandle(batch);
+  }
 
   // create proposal from sequence transactions and notify about it
   std::vector<shared_model::proto::Transaction> proto_transactions;

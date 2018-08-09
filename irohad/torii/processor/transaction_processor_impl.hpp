@@ -45,9 +45,8 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::Transaction> transaction)
           const override;
 
-      void transactionSequenceHandle(
-          const shared_model::interface::TransactionSequence
-              &transaction_sequence) const override;
+      void batchHandle(const shared_model::interface::TransactionBatch
+                           &transaction_batch) const override;
 
      private:
       // connections
