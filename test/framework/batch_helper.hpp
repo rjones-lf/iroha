@@ -233,13 +233,16 @@ namespace framework {
        * @param builder is builder with set information about the transaction
        * @return vector containing single signed transaction
        *
-       * NOTE: SFINAE checks that builder does not return Transaction object
+       * NOTE: SFINAE was added to check that provided builder returns
+       * UnsignedWrapper<Transaction>
        */
       template <typename TxBuilder>
       auto makeTxBatchCollection(const HashesType &reduced_hashes,
                                  TxBuilder &&builder) ->
           typename std::enable_if_t<
-              not std::is_same<decltype(builder.build()), ProtoTxType>::value,
+              std::is_same<
+                  decltype(builder.build()),
+                  shared_model::proto::UnsignedWrapper<ProtoTxType>>::value,
               shared_model::interface::types::SharedTxsCollectionType> {
         return shared_model::interface::types::SharedTxsCollectionType{
             completeUnsignedTxBuilder(builder.batchMeta(
@@ -255,7 +258,7 @@ namespace framework {
        * @param builder is builder with set information about the transaction
        * @return vector containing single unsigned transaction
        *
-       * NOTE: SFINAE checks that builder returns Transaction object
+       * NOTE: SFINAE was added to check that builder returns Transaction object
        */
       template <typename TxBuilder>
       auto makeTxBatchCollection(const HashesType &reduced_hashes,
