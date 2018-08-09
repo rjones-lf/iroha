@@ -7,6 +7,7 @@
 #define IROHA_INTERFACE_MOCKS_HPP
 
 #include <gmock/gmock.h>
+#include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/transaction.hpp"
@@ -57,6 +58,12 @@ struct MockProposal : public iface::Proposal {
   MOCK_CONST_METHOD0(createdTime, iface::types::TimestampType());
   MOCK_CONST_METHOD0(blob, const iface::types::BlobType &());
   MOCK_CONST_METHOD0(clone, MockProposal *());
+};
+
+struct MockPeer : public iface::Peer {
+  MOCK_CONST_METHOD0(address, const iface::types::AddressType &());
+  MOCK_CONST_METHOD0(pubkey, const iface::types::PubkeyType &());
+  MOCK_CONST_METHOD0(clone, MockPeer *());
 };
 
 #endif  // IROHA_INTERFACE_MOCKS_HPP

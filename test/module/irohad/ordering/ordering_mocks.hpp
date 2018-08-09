@@ -15,17 +15,13 @@ namespace iroha {
     namespace transport {
 
       struct MockOdOsNotification : public OdOsNotification {
-        MOCK_METHOD1(doOnTransactions, void(CollectionType &transactions));
-
-        void onTransactions(CollectionType &&transactions) {
-          doOnTransactions(transactions);
-        }
+        MOCK_METHOD1(onTransactions, void(CollectionType transactions));
 
         MOCK_METHOD1(onRequestProposal,
                      boost::optional<ProposalType>(RoundType round));
       };
 
-      class MockOdOsNotificationFactory : public OdOsNotificationFactory {
+      struct MockOdOsNotificationFactory : public OdOsNotificationFactory {
         MOCK_METHOD1(create,
                      std::unique_ptr<OdOsNotification>(
                          const shared_model::interface::Peer &to));

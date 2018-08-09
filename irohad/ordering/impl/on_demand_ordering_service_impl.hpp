@@ -39,7 +39,7 @@ namespace iroha {
 
       // ----------------------- | OdOsNotification | --------------------------
 
-      void onTransactions(CollectionType &&transactions) override;
+      void onTransactions(CollectionType transactions) override;
 
       boost::optional<ProposalType> onRequestProposal(
           transport::RoundType round) override;

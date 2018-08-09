@@ -22,7 +22,7 @@ OnDemandOsClientGrpc::OnDemandOsClientGrpc(
       time_provider_(std::move(time_provider)),
       proposal_request_timeout_(proposal_request_timeout) {}
 
-void OnDemandOsClientGrpc::onTransactions(CollectionType &&transactions) {
+void OnDemandOsClientGrpc::onTransactions(CollectionType transactions) {
   proto::TransactionsCollection message;
   for (auto &transaction : transactions) {
     *message.add_transactions() = std::move(

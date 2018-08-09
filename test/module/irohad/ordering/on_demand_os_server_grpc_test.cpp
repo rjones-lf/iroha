@@ -43,7 +43,7 @@ TEST_F(OnDemandOsServerGrpcTest, SendTransactions) {
   OdOsNotification::CollectionType collection;
   auto creator = "test";
 
-  EXPECT_CALL(*notification, doOnTransactions(_))
+  EXPECT_CALL(*notification, onTransactions(_))
       .WillOnce(SaveArg0Move(&collection));
   proto::TransactionsCollection request;
   request.add_transactions()

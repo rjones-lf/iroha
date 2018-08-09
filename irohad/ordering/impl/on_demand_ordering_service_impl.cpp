@@ -49,8 +49,7 @@ void OnDemandOrderingServiceImpl::onCollaborationOutcome(RoundOutput outcome) {
 
 // ----------------------------| OdOsNotification |-----------------------------
 
-void OnDemandOrderingServiceImpl::onTransactions(
-    CollectionType &&transactions) {
+void OnDemandOrderingServiceImpl::onTransactions(CollectionType transactions) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
   log_->info("onTransactions => collections size = {}", transactions.size());
