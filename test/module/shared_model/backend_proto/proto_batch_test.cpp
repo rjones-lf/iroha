@@ -12,7 +12,6 @@
 #include "validators/field_validator.hpp"
 #include "validators/transaction_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
-#include "validators/transactions_collection/unsigned_transactions_collection_validator.hpp"
 
 using namespace shared_model;
 using ::testing::_;
@@ -20,13 +19,21 @@ using ::testing::Return;
 using ::testing::Test;
 using ::testing::Truly;
 
-using TxValidator = validation::TransactionValidator<
-    validation::FieldValidator,
-    validation::CommandValidatorVisitor<validation::FieldValidator>>;
-
-using TxsValidator = validation::UnsignedTransactionsCollectionValidator<
-    TxValidator,
-    validation::BatchOrderValidator>;
+/**
+ * Creates valid signed transaction
+ * @param created_time assigned to transactions
+ * @return std::shared_ptr<interface::Transaction> containing valid signed
+ * transaction
+ */
+auto createValidSignedTransaction(size_t created_time = iroha::time::now()) {
+  return std::shared_ptr<interface::Transaction>(
+      clone(framework::batch::prepareUnsignedTransactionBuilder("valid@account",
+                                                                created_time)
+                .build()
+                .signAndAddSignature(
+                    crypto::DefaultCryptoAlgorithmType::generateKeypair())
+                .finish()));
+}
 
 /**
  * Creates valid unsigned transaction
@@ -63,8 +70,12 @@ TEST(TransactionBatchTest, CreateTransactionBatchWhenValid) {
   auto txs = framework::batch::createUnsignedBatchTransactions(
       interface::types::BatchType::ATOMIC,
       std::vector<std::string>{"a@domain", "b@domain"});
-  auto transaction_batch =
-      interface::TransactionBatch::createTransactionBatch(txs, TxsValidator());
+
+  // put one transaction with signature to pass validation
+  txs.push_back(createValidSignedTransaction());
+
+  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
+      txs, validation::DefaultUnsignedTransactionsValidator());
   ASSERT_TRUE(framework::expected::val(transaction_batch))
       << framework::expected::err(transaction_batch).value().error;
 }
@@ -84,8 +95,8 @@ TEST(TransactionBatchTest, CreateTransactionBatchWhenDifferentBatchType) {
   auto txs = framework::batch::createUnsignedBatchTransactions(
       std::vector<decltype(tx1_fields)>{tx1_fields, tx2_fields});
 
-  auto transaction_batch =
-      interface::TransactionBatch::createTransactionBatch(txs, TxsValidator());
+  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
+      txs, validation::DefaultUnsignedTransactionsValidator());
   ASSERT_TRUE(framework::expected::err(transaction_batch));
 }
 
@@ -100,8 +111,8 @@ TEST(TransactionBatchTest, CreateBatchWithValidAndInvalidTx) {
       interface::types::BatchType::ATOMIC,
       std::vector<std::string>{"valid@name", "invalid#@name"});
 
-  auto transaction_batch =
-      interface::TransactionBatch::createTransactionBatch(txs, TxsValidator());
+  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
+      txs, validation::DefaultUnsignedTransactionsValidator());
   ASSERT_TRUE(framework::expected::err(transaction_batch));
 }
 
@@ -111,7 +122,7 @@ TEST(TransactionBatchTest, CreateBatchWithValidAndInvalidTx) {
  * @then transaction batch is created
  */
 TEST(TransactionBatchTest, CreateSingleTxBatchWhenValid) {
-  TxValidator transaction_validator;
+  validation::DefaultUnsignedTransactionValidator transaction_validator;
 
   auto tx1 = createValidUnsignedTransaction();
 
@@ -128,7 +139,7 @@ TEST(TransactionBatchTest, CreateSingleTxBatchWhenValid) {
  * @then transaction batch is not created
  */
 TEST(TransactionBatchTest, CreateSingleTxBatchWhenInvalid) {
-  TxValidator transaction_validator;
+  validation::DefaultUnsignedTransactionValidator transaction_validator;
 
   auto tx1 = createInvalidUnsignedTransaction();
 
@@ -160,8 +171,8 @@ auto createBatchWithTransactionsWithQuorum(
       now,
       quorum);
 
-  return interface::TransactionBatch::createTransactionBatch(transactions,
-                                                             TxsValidator());
+  return interface::TransactionBatch::createTransactionBatch(
+      transactions, validation::DefaultUnsignedTransactionsValidator());
 }
 
 /**
@@ -195,6 +206,22 @@ TEST(TransactionBatchTest, BatchWithMissingSignatures) {
 }
 
 /**
+ * @given list of transactions from the same batch with no signatures
+ * @when create transaction batch is invoked
+ * @then returned result contains error
+ */
+TEST(TransactionBatchTest, BatchWithNoSignatures) {
+  const size_t batch_size = 5;
+  auto unsigned_transactions =
+      framework::batch::createUnsignedBatchTransactions(
+          interface::types::BatchType::ATOMIC, batch_size);
+  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
+      unsigned_transactions,
+      validation::DefaultUnsignedTransactionsValidator());
+  ASSERT_TRUE(framework::expected::err(transaction_batch));
+}
+
+/**
  * Create test transaction builder
  * @param acc_quorum - quorum number for setAccountDetail
  * @param created_time - time of creation
@@ -205,11 +232,31 @@ inline auto makeTxBuilder(
     const shared_model::interface::types::QuorumType &acc_quorum = 1,
     uint64_t created_time = iroha::time::now(),
     uint8_t quorum = 3) {
-  return TestTransactionBuilder()
-      .createdTime(created_time)
-      .creatorAccountId("user@test")
-      .setAccountQuorum("user@test", acc_quorum)
-      .quorum(quorum);
+  return framework::batch::prepareTransactionBuilder(
+      "user@test", created_time, quorum);
+}
+
+inline auto makeSignedTxBuilder(
+    const shared_model::interface::types::QuorumType &acc_quorum = 1,
+    uint64_t created_time = iroha::time::now(),
+    uint8_t quorum = 3) {
+  return framework::batch::prepareUnsignedTransactionBuilder(
+      "user@test", created_time, quorum);
+}
+
+/**
+ * @given list of transactions from the same batch. Only one of them is signed
+ * @when create transaction batch is invoked
+ * @then transaction batch is successfully created
+ */
+TEST(TransactionBatchTest, BatchWithOneSignature) {
+  auto unsigned_transactions = framework::batch::makeTestBatchTransactions(
+      makeTxBuilder(1), makeTxBuilder(2), makeSignedTxBuilder(1));
+  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
+      unsigned_transactions,
+      validation::DefaultUnsignedTransactionsValidator());
+  ASSERT_TRUE(framework::expected::val(transaction_batch))
+      << framework::expected::err(transaction_batch).value().error;
 }
 
 /**
@@ -242,7 +289,8 @@ TEST(TransactionBatchTest, TemplateHasherVariadic) {
  */
 TEST(TransactionBatchTest, MakeTxBatchCollectionOne) {
   ASSERT_EQ(1,
-            framework::batch::internal::makeTxBatchCollection(makeTxBuilder())
+            framework::batch::internal::makeTxBatchCollection(
+                framework::batch::internal::HashesType{}, makeTxBuilder())
                 .size());
 }
 
@@ -254,7 +302,10 @@ TEST(TransactionBatchTest, MakeTxBatchCollectionOne) {
 TEST(TransactionBatchTest, MakeTxBatchCollectionMany) {
   ASSERT_EQ(3,
             framework::batch::internal::makeTxBatchCollection(
-                makeTxBuilder(), makeTxBuilder(), makeTxBuilder())
+                framework::batch::internal::HashesType{},
+                makeTxBuilder(),
+                makeTxBuilder(),
+                makeTxBuilder())
                 .size());
 }
 
@@ -264,8 +315,9 @@ TEST(TransactionBatchTest, MakeTxBatchCollectionMany) {
  * @then  batch contains two transactions
  */
 TEST(TransactionBatchTest, CreateTestBatchTest) {
-  ASSERT_EQ(2,
-            framework::batch::makeTestBatch(makeTxBuilder(2), makeTxBuilder())
+  ASSERT_EQ(3,
+            framework::batch::makeTestBatch(
+                makeTxBuilder(2), makeTxBuilder(), makeSignedTxBuilder(1))
                 ->transactions()
                 .size());
 }

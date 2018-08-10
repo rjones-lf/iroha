@@ -69,6 +69,7 @@ void Irohad::init() {
 
   initCryptoProvider();
   initValidators();
+  initNetworkClient();
   initOrderingGate();
   initSimulator();
   initConsensusCache();
@@ -161,6 +162,14 @@ void Irohad::initValidators() {
 }
 
 /**
+ * Initializing network client
+ */
+void Irohad::initNetworkClient() {
+  async_call_ =
+      std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
+}
+
+/**
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
@@ -168,7 +177,8 @@ void Irohad::initOrderingGate() {
                                                  max_proposal_size_,
                                                  proposal_delay_,
                                                  ordering_service_storage_,
-                                                 storage->getBlockQuery());
+                                                 storage->getBlockQuery(),
+                                                 async_call_);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -215,7 +225,8 @@ void Irohad::initConsensusGate() {
                                               keypair,
                                               vote_delay_,
                                               load_delay_,
-                                              consensus_result_cache_);
+                                              consensus_result_cache_,
+                                              async_call_);
 
   log_->info("[Init] => consensus gate");
 }
@@ -256,7 +267,7 @@ void Irohad::initStatusBus() {
 
 void Irohad::initMstProcessor() {
   if (is_mst_supported_) {
-    auto mst_transport = std::make_shared<MstTransportGrpc>();
+    auto mst_transport = std::make_shared<MstTransportGrpc>(async_call_);
     auto mst_completer = std::make_shared<DefaultCompleter>();
     auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via

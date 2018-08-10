@@ -43,7 +43,7 @@ namespace shared_model {
      * @tparam BT -- build type of built object returned by build method
      */
     template <int S = 0,
-              typename SV = validation::DefaultTransactionValidator,
+              typename SV = validation::DefaultUnsignedTransactionValidator,
               typename BT = UnsignedWrapper<Transaction>>
     class DEPRECATED TemplateTransactionBuilder {
      private:

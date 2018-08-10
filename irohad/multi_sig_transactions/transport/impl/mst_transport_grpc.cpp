@@ -23,19 +23,21 @@
 
 using namespace iroha::network;
 
-MstTransportGrpc::MstTransportGrpc()
-    : AsyncGrpcClient<google::protobuf::Empty>(logger::log("MstTransport")) {}
+MstTransportGrpc::MstTransportGrpc(
+    std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+        async_call)
+    : async_call_(async_call) {}
 
 grpc::Status MstTransportGrpc::SendState(
     ::grpc::ServerContext *context,
     const ::iroha::network::transport::MstState *request,
     ::google::protobuf::Empty *response) {
-  log_->info("MstState Received");
+  async_call_->log_->info("MstState Received");
 
   MstState newState = MstState::empty();
   shared_model::proto::TransportBuilder<
       shared_model::proto::Transaction,
-      shared_model::validation::DefaultTransactionValidator>
+      shared_model::validation::DefaultUnsignedTransactionValidator>
       builder;
   for (const auto &tx : request->transactions()) {
     // TODO: use monad after deserialize() will return optional
@@ -45,10 +47,11 @@ grpc::Status MstTransportGrpc::SendState(
               std::move(v.value));
         },
         [&](iroha::expected::Error<std::string> &e) {
-          log_->warn("Can't deserialize tx: {}", e.error);
+          async_call_->log_->warn("Can't deserialize tx: {}", e.error);
         });
   }
-  log_->info("transactions in MstState: {}", newState.getTransactions().size());
+  async_call_->log_->info("transactions in MstState: {}",
+                          newState.getTransactions().size());
 
   auto &peer = request->peer();
   auto from = std::make_shared<shared_model::proto::Peer>(
@@ -68,11 +71,9 @@ void MstTransportGrpc::subscribe(
 
 void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
                                  ConstRefState providing_state) {
-  log_->info("Propagate MstState to peer {}", to.address());
+  async_call_->log_->info("Propagate MstState to peer {}", to.address());
   auto client = transport::MstTransportGrpc::NewStub(
       grpc::CreateChannel(to.address(), grpc::InsecureChannelCredentials()));
-
-  auto call = new AsyncClientCall;
 
   transport::MstState protoState;
   auto peer = protoState.mutable_peer();
@@ -86,7 +87,7 @@ void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
             ->getTransport());
   }
 
-  call->response_reader =
-      client->AsyncSendState(&call->context, protoState, &cq_);
-  call->response_reader->Finish(&call->reply, &call->status, call);
+  async_call_->Call([&](auto context, auto cq) {
+    return client->AsyncSendState(context, protoState, cq);
+  });
 }

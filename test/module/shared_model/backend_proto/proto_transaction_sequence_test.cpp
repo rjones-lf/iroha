@@ -12,19 +12,9 @@
 
 using namespace shared_model;
 using ::testing::_;
+using ::testing::A;
 using ::testing::Return;
 using ::testing::Test;
-
-class MockTransactionCollectionValidator
-    : public validation::UnsignedTransactionsCollectionValidator<
-          validation::TransactionValidator<validation::FieldValidator,
-                                           validation::CommandValidatorVisitor<
-                                               validation::FieldValidator>>> {
- public:
-  MOCK_CONST_METHOD1(
-      validatePointers,
-      validation::Answer(const interface::types::SharedTxsCollectionType &));
-};
 
 shared_model::validation::Answer createAnswerWithErrors() {
   shared_model::validation::Answer answer;
@@ -34,16 +24,17 @@ shared_model::validation::Answer createAnswerWithErrors() {
 }
 
 /**
- * @given Transaction collection of several transactions
+ * @given Valid transaction collection of several transactions
  * @when create transaction sequence
  * @and transactions validator returns empty answer
  * @then TransactionSequence is created
  */
 TEST(TransactionSequenceTest, CreateTransactionSequenceWhenValid) {
-  MockTransactionCollectionValidator transactions_validator;
+  validation::DefaultUnsignedTransactionsValidator tx_collection_validator;
 
-  EXPECT_CALL(transactions_validator, validatePointers(_))
-      .WillOnce(Return(validation::Answer()));
+  size_t transactions_size = 3;
+  auto transactions =
+      framework::batch::createValidBatch(transactions_size).transactions();
 
   std::shared_ptr<interface::Transaction> tx(clone(
       framework::batch::prepareTransactionBuilder("account@domain")
@@ -52,60 +43,49 @@ TEST(TransactionSequenceTest, CreateTransactionSequenceWhenValid) {
           .build()));
 
   auto tx_sequence = interface::TransactionSequence::createTransactionSequence(
-      std::vector<decltype(tx)>{tx, tx, tx}, transactions_validator);
+      transactions, tx_collection_validator);
 
   ASSERT_TRUE(framework::expected::val(tx_sequence));
 }
 
 /**
- * @given Transaction collection of several transactions
+ * @given Invalid transaction collection of several transactions
  * @when create transaction sequence
  * @and transactions validator returns non empty answer
  * @then TransactionSequence is not created
  */
 TEST(TransactionSequenceTest, CreateTransactionSequenceWhenInvalid) {
-  MockTransactionCollectionValidator res;
+  validation::DefaultUnsignedTransactionsValidator tx_collection_validator;
 
-  EXPECT_CALL(res, validatePointers(_))
-      .WillOnce(Return(createAnswerWithErrors()));
-
-  std::shared_ptr<interface::Transaction> tx(clone(
-      framework::batch::prepareTransactionBuilder("account@domain")
-          .batchMeta(shared_model::interface::types::BatchType::ATOMIC,
-                     std::vector<shared_model::interface::types::HashType>{})
-          .build()));
+  std::shared_ptr<interface::Transaction> tx(
+      clone(framework::batch::prepareTransactionBuilder("invalid@#account#name")
+                .build()));
 
   auto tx_sequence = interface::TransactionSequence::createTransactionSequence(
-      std::vector<decltype(tx)>{tx, tx, tx}, res);
+      std::vector<decltype(tx)>{tx, tx, tx}, tx_collection_validator);
 
   ASSERT_TRUE(framework::expected::err(tx_sequence));
 }
 
 /**
- * @given Transaction collection of several transactions, including some of the
+ * @given Transaction collection of several transactions, including some of them
  * united into the batches
  * @when transactions validator returns empty answer
  * @and create transaction sequence
- * @then expected number of batches is created
+ * @then expected number of batches is created and transactions
  */
 TEST(TransactionSequenceTest, CreateBatches) {
   size_t batches_number = 3;
   size_t txs_in_batch = 2;
   size_t single_transactions = 1;
 
-  MockTransactionCollectionValidator txs_validator;
-
-  EXPECT_CALL(txs_validator, validatePointers(_))
-      .Times(batches_number)
-      .WillRepeatedly(Return(validation::Answer()));
+  validation::DefaultUnsignedTransactionsValidator txs_validator;
 
   interface::types::SharedTxsCollectionType tx_collection;
   auto now = iroha::time::now();
   for (size_t i = 0; i < batches_number; i++) {
-    auto batch = framework::batch::createUnsignedBatchTransactions(
-        shared_model::interface::types::BatchType::ATOMIC,
-        txs_in_batch,
-        now + i);
+    auto batch = framework::batch::createValidBatch(txs_in_batch, now + i)
+                     .transactions();
     tx_collection.insert(tx_collection.begin(), batch.begin(), batch.end());
   }
 
