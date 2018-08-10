@@ -157,6 +157,9 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
     }
 
+    // TODO igor-egorov, 2018-08-10, IR-1569, create system test for
+    // --overwrite-ledger option
+
     // clear previous storage if any
     irohad.dropStorage();
 
