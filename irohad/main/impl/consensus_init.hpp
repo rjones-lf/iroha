@@ -68,9 +68,9 @@ namespace iroha {
             std::shared_ptr<simulator::BlockCreator> block_creator,
             std::shared_ptr<network::BlockLoader> block_loader,
             const shared_model::crypto::Keypair &keypair,
+            std::shared_ptr<consensus::ConsensusResultCache> block_cache,
             std::chrono::milliseconds vote_delay_milliseconds,
             std::chrono::milliseconds load_delay_milliseconds,
-            std::shared_ptr<consensus::ConsensusResultCache> block_cache,
             std::shared_ptr<
                 iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call);

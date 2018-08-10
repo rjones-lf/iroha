@@ -223,9 +223,9 @@ void Irohad::initConsensusGate() {
                                               simulator,
                                               block_loader,
                                               keypair,
+                                              consensus_result_cache_,
                                               vote_delay_,
                                               load_delay_,
-                                              consensus_result_cache_,
                                               async_call_);
 
   log_->info("[Init] => consensus gate");
