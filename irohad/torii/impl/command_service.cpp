@@ -129,7 +129,7 @@ namespace torii {
   void CommandService::ListTorii(const iroha::protocol::TxList &tx_list) {
     shared_model::proto::TransportBuilder<
         shared_model::interface::TransactionSequence,
-        shared_model::validation::DefaultUnsignedTxCollectionValidator>()
+        shared_model::validation::DefaultUnsignedTransactionsValidator>()
         .build(tx_list)
         .match(
             [this](

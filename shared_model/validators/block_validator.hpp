@@ -33,19 +33,15 @@ namespace shared_model {
     /**
      * Class that validates block
      */
-    template <typename FieldValidator,
-              typename TransactionValidator,
-              typename TransactionsCollectionValidator>
+    template <typename FieldValidator, typename TransactionsCollectionValidator>
     class BlockValidator
         : public ContainerValidator<interface::Block,
                                     FieldValidator,
-                                    TransactionValidator,
                                     TransactionsCollectionValidator> {
      public:
       using ContainerValidator<
           interface::Block,
           FieldValidator,
-          TransactionValidator,
           TransactionsCollectionValidator>::ContainerValidator;
       /**
        * Applies validation on block
@@ -56,7 +52,6 @@ namespace shared_model {
         return ContainerValidator<
             interface::Block,
             FieldValidator,
-            TransactionValidator,
             TransactionsCollectionValidator>::validate(block, "Block");
       }
     };

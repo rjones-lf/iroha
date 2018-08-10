@@ -22,7 +22,6 @@ namespace shared_model {
      */
     class TransactionSequence {
      public:
-
       /**
        * Creator of transaction sequence
        * @param transactions collection of transactions
@@ -30,13 +29,14 @@ namespace shared_model {
        * @return Result containing transaction sequence if validation
        * successful and string message containing error otherwise
        */
-      template <typename TransactionValidator, typename OrderValidator>
+      template <typename TransactionValidator,
+                typename FieldValidator = validation::FieldValidator>
       static iroha::expected::Result<TransactionSequence, std::string>
       createTransactionSequence(
           const types::SharedTxsCollectionType &transactions,
           const validation::TransactionsCollectionValidator<
-              TransactionValidator,
-              OrderValidator> &validator);
+              TransactionValidator> &validator,
+          const FieldValidator &field_validator = FieldValidator());
 
       /**
        * Retrieves transactions from all batches as single collection

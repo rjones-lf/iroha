@@ -48,10 +48,7 @@ struct TimerWrapper : public val::FieldValidator {
                        [=] { return t; }) {}
 };
 using BlockValidatorInternal =
-    val::BlockValidator<TimerWrapper,
-                        val::DefaultTransactionValidator,
-                        val::UnsignedTransactionsCollectionValidator<
-                            val::DefaultTransactionValidator>>;
+    val::BlockValidator<TimerWrapper, val::DefaultSignedTransactionsValidator>;
 using Validator =
     val::SignableModelValidator<BlockValidatorInternal,
                                 const shared_model::interface::Block &,
@@ -59,61 +56,58 @@ using Validator =
 
 rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
     const PublicKey &peer_pubkey) {
-  return rxcpp::observable<>::create<std::shared_ptr<Block>>(
-      [this, peer_pubkey](auto subscriber) {
-        std::shared_ptr<Block> top_block;
-        block_query_->getTopBlock().match(
-            [&top_block](
-                expected::Value<std::shared_ptr<shared_model::interface::Block>>
-                    block) { top_block = block.value; },
-            [this](expected::Error<std::string> error) {
-              log_->error(kTopBlockRetrieveFail + std::string{": "}
-                          + error.error);
-            });
-        if (not top_block) {
-          subscriber.on_completed();
-          return;
-        }
+  return rxcpp::observable<>::create<
+      std::shared_ptr<Block>>([this, peer_pubkey](auto subscriber) {
+    std::shared_ptr<Block> top_block;
+    block_query_->getTopBlock().match(
+        [&top_block](
+            expected::Value<std::shared_ptr<shared_model::interface::Block>>
+                block) { top_block = block.value; },
+        [this](expected::Error<std::string> error) {
+          log_->error(kTopBlockRetrieveFail + std::string{": "} + error.error);
+        });
+    if (not top_block) {
+      subscriber.on_completed();
+      return;
+    }
 
-        auto peer = this->findPeer(peer_pubkey);
-        if (not peer) {
-          log_->error(kPeerNotFound);
-          subscriber.on_completed();
-          return;
-        }
+    auto peer = this->findPeer(peer_pubkey);
+    if (not peer) {
+      log_->error(kPeerNotFound);
+      subscriber.on_completed();
+      return;
+    }
 
-        proto::BlocksRequest request;
-        grpc::ClientContext context;
-        protocol::Block block;
+    proto::BlocksRequest request;
+    grpc::ClientContext context;
+    protocol::Block block;
 
-        // request next block to our top
-        request.set_height(top_block->height() + 1);
+    // request next block to our top
+    request.set_height(top_block->height() + 1);
 
-        auto reader =
-            this->getPeerStub(**peer).retrieveBlocks(&context, request);
-        while (reader->Read(&block)) {
-          shared_model::proto::TransportBuilder<shared_model::proto::Block,
-                                                Validator>(
-              Validator(TimerWrapper(block.payload().created_time())))
-              .build(block)
-              .match(
-                  // success case
-                  [&subscriber](iroha::expected::Value<shared_model::proto::Block>
-                          &result) {
-                    subscriber.on_next(
-                        std::move(std::make_shared<shared_model::proto::Block>(
-                            std::move(result.value))));
-                  },
-                  // fail case
-                  [this,
-                   &context](iroha::expected::Error<std::string> &error) {
-                    log_->error(error.error);
-                    context.TryCancel();
-                  });
-        }
-        reader->Finish();
-        subscriber.on_completed();
-      });
+    auto reader = this->getPeerStub(**peer).retrieveBlocks(&context, request);
+    while (reader->Read(&block)) {
+      shared_model::proto::TransportBuilder<shared_model::proto::Block,
+                                            Validator>(
+          Validator(TimerWrapper(block.payload().created_time())))
+          .build(block)
+          .match(
+              // success case
+              [&subscriber](
+                  iroha::expected::Value<shared_model::proto::Block> &result) {
+                subscriber.on_next(
+                    std::move(std::make_shared<shared_model::proto::Block>(
+                        std::move(result.value))));
+              },
+              // fail case
+              [this, &context](iroha::expected::Error<std::string> &error) {
+                log_->error(error.error);
+                context.TryCancel();
+              });
+    }
+    reader->Finish();
+    subscriber.on_completed();
+  });
 }
 
 boost::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(

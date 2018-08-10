@@ -33,19 +33,15 @@ namespace shared_model {
     /**
      * Class that validates proposal
      */
-    template <typename FieldValidator,
-              typename TransactionValidator,
-              typename TransactionsCollectionValidator>
+    template <typename FieldValidator, typename TransactionsCollectionValidator>
     class ProposalValidator
         : public ContainerValidator<interface::Proposal,
                                     FieldValidator,
-                                    TransactionValidator,
                                     TransactionsCollectionValidator> {
      public:
       using ContainerValidator<
           interface::Proposal,
           FieldValidator,
-          TransactionValidator,
           TransactionsCollectionValidator>::ContainerValidator;
       /**
        * Applies validation on proposal
@@ -56,7 +52,6 @@ namespace shared_model {
         return ContainerValidator<
             interface::Proposal,
             FieldValidator,
-            TransactionValidator,
             TransactionsCollectionValidator>::validate(prop, "Proposal");
       }
     };

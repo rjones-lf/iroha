@@ -152,12 +152,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
   using namespace shared_model::validation;
-  using TxValidator =
-      TransactionValidator<FieldValidator,
-                           CommandValidatorVisitor<FieldValidator>>;
-
-  using TxsValidator =
-      UnsignedTransactionsCollectionValidator<TxValidator, BatchOrderValidator>;
+  using TxsValidator = DefaultSignedTransactionsValidator;
 
   auto transactions =
       framework::batch::createValidBatch(proposal_size).transactions();
