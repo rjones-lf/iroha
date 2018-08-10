@@ -17,12 +17,16 @@ using namespace shared_model::proto;
  */
 TEST(BlockBuilderTest, BlockWithTransactions) {
   shared_model::proto::Transaction tx =
-      TestTransactionBuilder()
+      TestUnsignedTransactionBuilder()
           .createdTime(iroha::time::now())
           .creatorAccountId("admin@test")
           .quorum(1)
           .addAssetQuantity("coin#test", "1.0")
-          .build();
+          .build()
+          .signAndAddSignature(
+              shared_model::crypto::DefaultCryptoAlgorithmType::
+                  generateKeypair())
+          .finish();
 
   ASSERT_NO_THROW(
       BlockBuilder()

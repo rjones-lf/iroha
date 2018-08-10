@@ -67,7 +67,9 @@ class ConsensusSunnyDayTest : public ::testing::Test {
   static const size_t port = 50541;
 
   void SetUp() override {
-    network = std::make_shared<NetworkImpl>();
+    auto async_call = std::make_shared<
+        iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
+    network = std::make_shared<NetworkImpl>(async_call);
     crypto = std::make_shared<FixedCryptoProvider>(std::to_string(my_num));
     timer = std::make_shared<TimerImpl>([this] {
       // static factory with a single thread
