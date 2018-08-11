@@ -92,8 +92,7 @@ class YacGateTest : public ::testing::Test {
                                          hash_provider,
                                          block_creator,
                                          block_loader,
-                                         block_cache,
-                                         delay);
+                                         block_cache);
   }
 
   YacHash expected_hash;
@@ -108,7 +107,6 @@ class YacGateTest : public ::testing::Test {
   shared_ptr<MockBlockCreator> block_creator;
   shared_ptr<MockBlockLoader> block_loader;
   shared_ptr<ConsensusResultCache> block_cache;
-  uint64_t delay = 0;
 
   shared_ptr<YacGateImpl> gate;
 
@@ -225,11 +223,19 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   // message with it
   auto keypair =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+  auto tx = shared_model::proto::TransactionBuilder()
+                .creatorAccountId("doge@meme")
+                .setAccountQuorum("doge@meme", 1)
+                .createdTime(iroha::time::now())
+                .quorum(1)
+                .build()
+                .signAndAddSignature(keypair)
+                .finish();
   std::shared_ptr<shared_model::interface::Block> actual_block =
       clone(shared_model::proto::BlockBuilder()
                 .height(1)
                 .createdTime(iroha::time::now())
-                .transactions(std::vector<shared_model::proto::Transaction>{})
+                .transactions(std::vector<shared_model::proto::Transaction>{tx})
                 .prevHash(Sha3_256::makeHash(Blob("actual_block")))
                 .build()
                 .signAndAddSignature(keypair)

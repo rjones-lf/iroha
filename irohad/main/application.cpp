@@ -39,7 +39,6 @@ Irohad::Irohad(const std::string &block_store_dir,
                size_t max_proposal_size,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
-               std::chrono::milliseconds load_delay,
                const shared_model::crypto::Keypair &keypair,
                bool is_mst_supported)
     : block_store_dir_(block_store_dir),
@@ -49,7 +48,6 @@ Irohad::Irohad(const std::string &block_store_dir,
       max_proposal_size_(max_proposal_size),
       proposal_delay_(proposal_delay),
       vote_delay_(vote_delay),
-      load_delay_(load_delay),
       is_mst_supported_(is_mst_supported),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
@@ -225,7 +223,6 @@ void Irohad::initConsensusGate() {
                                               keypair,
                                               consensus_result_cache_,
                                               vote_delay_,
-                                              load_delay_,
                                               async_call_);
 
   log_->info("[Init] => consensus gate");

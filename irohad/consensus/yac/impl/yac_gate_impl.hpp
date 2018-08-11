@@ -50,8 +50,7 @@ namespace iroha {
                     std::shared_ptr<simulator::BlockCreator> block_creator,
                     std::shared_ptr<network::BlockLoader> block_loader,
                     std::shared_ptr<consensus::ConsensusResultCache>
-                        consensus_result_cache,
-                    uint64_t delay);
+                        consensus_result_cache);
         void vote(const shared_model::interface::BlockVariant &) override;
         /**
          * Method called when commit received
@@ -76,8 +75,6 @@ namespace iroha {
 
         std::shared_ptr<consensus::ConsensusResultCache>
             consensus_result_cache_;
-
-        const uint64_t delay_;
 
         logger::Logger log_;
 
