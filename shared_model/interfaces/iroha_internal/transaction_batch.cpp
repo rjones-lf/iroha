@@ -5,6 +5,7 @@
 
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "utils/string_builder.hpp"
+#include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/transaction_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
@@ -83,6 +84,7 @@ namespace shared_model {
                     validation::FieldValidator>>,
             validation::AnyOrderValidator> &validator);
 
+    // TODO: 11/08/2018 @muratovv move to own hpp file IR-1595
     template <typename TransactionValidator>
     iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
@@ -95,6 +97,14 @@ namespace shared_model {
       return iroha::expected::makeValue(
           TransactionBatch(types::SharedTxsCollectionType{transaction}));
     };
+
+    // TODO: 11/08/2018 @muratovv move instantiation to batch_helper.hpp IR-1595
+    template iroha::expected::Result<shared_model::interface::TransactionBatch,
+                                     std::string>
+    TransactionBatch::createTransactionBatch(
+        std::shared_ptr<shared_model::interface::Transaction> transaction,
+        const shared_model::validation::DefaultSignedTransactionValidator
+            &validator);
 
     template iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(

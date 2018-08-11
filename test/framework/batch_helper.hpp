@@ -8,7 +8,6 @@
 
 #include <boost/range/irange.hpp>
 
-#include "logger/logger.hpp"
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
@@ -194,6 +193,23 @@ namespace framework {
               txs, TxsValidator());
 
       return framework::expected::val(result_batch).value().value;
+    }
+
+    inline auto createBatchFromSingleTransaction(
+        std::shared_ptr<shared_model::interface::Transaction> tx) {
+      return shared_model::interface::TransactionBatch::createTransactionBatch(
+                 tx,
+                 shared_model::validation::DefaultSignedTransactionValidator())
+          .match(
+              [](const iroha::expected::Value<
+                  shared_model::interface::TransactionBatch> &value) {
+                return value.value;
+              },
+              [](const auto &err) -> shared_model::interface::TransactionBatch {
+                throw std::runtime_error(
+                    err.error
+                    + "Error transformation from transaction to batch");
+              });
     }
 
     /**
