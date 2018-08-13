@@ -28,10 +28,11 @@
 namespace iroha {
   namespace network {
     class MstTransportGrpc : public MstTransport,
-                             public transport::MstTransportGrpc::Service,
-                             private AsyncGrpcClient<google::protobuf::Empty> {
+                             public transport::MstTransportGrpc::Service {
      public:
-      MstTransportGrpc();
+      explicit MstTransportGrpc(
+          std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+              async_call);
 
       /**
        * Server part of grpc SendState method call
@@ -54,6 +55,8 @@ namespace iroha {
      private:
       std::weak_ptr<MstTransportNotification> subscriber_;
       model::converters::PbTransactionFactory factory_;
+      std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+          async_call_;
     };
   }  // namespace network
 }  // namespace iroha

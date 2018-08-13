@@ -80,7 +80,9 @@ namespace iroha {
           std::chrono::milliseconds delay_milliseconds,
           std::shared_ptr<ametsuchi::OrderingServicePersistentState>
               persistent_state,
-          std::shared_ptr<ametsuchi::BlockQuery> block_query);
+          std::shared_ptr<ametsuchi::BlockQuery> block_query,
+          std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+              async_call);
 
       std::shared_ptr<iroha::network::OrderingService> ordering_service;
       std::shared_ptr<iroha::network::OrderingGate> ordering_gate;

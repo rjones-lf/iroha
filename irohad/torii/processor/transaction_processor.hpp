@@ -24,7 +24,7 @@ namespace shared_model {
   namespace interface {
     class Transaction;
     class TransactionResponse;
-    class TransactionSequence;
+    class TransactionBatch;
   }  // namespace interface
 }  // namespace shared_model
 
@@ -42,17 +42,15 @@ namespace iroha {
        * @param transaction - transaction for processing
        */
       virtual void transactionHandle(
-          std::shared_ptr<shared_model::interface::Transaction>
-              transaction) const = 0;
+          std::shared_ptr<shared_model::interface::Transaction> transaction)
+          const = 0;
 
       /**
-       * Process transaction sequence and propagate batches from it either to
-       * the MST or PCS
+       * Process batch and propagate it to the MST or PCS
        * @param transaction_sequence - transaction sequence for processing
        */
-      virtual void transactionSequenceHandle(
-          const shared_model::interface::TransactionSequence
-              &transaction_sequence) const = 0;
+      virtual void batchHandle(const shared_model::interface::TransactionBatch
+                                   &transaction_batch) const = 0;
 
       virtual ~TransactionProcessor() = default;
     };
