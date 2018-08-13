@@ -85,13 +85,6 @@ namespace iroha {
           const shared_model::interface::types::AccountIdType &account_id,
           shared_model::interface::permissions::Grantable permission) override;
 
-      WsvCommandResult addAssetQuantity(
-          const std::string &account_id,
-          const std::string &asset_id,
-          const std::string amount_value,
-          const int amount_precision
-          ) override;
-
      private:
       soci::session &sql_;
     };
