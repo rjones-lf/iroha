@@ -149,7 +149,7 @@ TEST_F(CreateAssetFixture, ExistingNameDifferentPrecision) {
 
 /**
  * C239 CreateAsset without such permissions
- * @given a user without can_create_asset permisison
+ * @given a user without can_create_asset permission
  * @when the user tries to create asset
  * @then stateful validation is failed
  */
@@ -232,7 +232,7 @@ TEST_F(CreateAssetFixture, DISABLED_NegativePrecision) {
  * C238 Create asset with overflow of precision data type
  * DISABLED because the current implementation of TransactionBuilder does not
  * allow to pass oversized value on a type level.
- * @given a user with can_create_asset permisison
+ * @given a user with can_create_asset permission
  * @when the user tries to create an asset with overflowed value of precision
  * @then stateless validation failed
  */
