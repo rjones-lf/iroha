@@ -22,10 +22,10 @@
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
+#include "interfaces/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "validators/permissions.hpp"
 
 using namespace iroha::ametsuchi;
 
@@ -38,7 +38,7 @@ class KVTest : public AmetsuchiTest {
  protected:
   void SetUp() override {
     AmetsuchiTest::SetUp();
-    auto storageResult = StorageImpl::create(block_store_path, pgopt_);
+    auto storageResult = StorageImpl::create(block_store_path, pgopt_, factory);
     storageResult.match(
         [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
           storage = _storage.value;
@@ -57,19 +57,16 @@ class KVTest : public AmetsuchiTest {
             .creatorAccountId("userone@ru")
             .createRole(
                 "user",
-                std::vector<shared_model::interface::types::PermissionNameType>{
-                    shared_model::permissions::can_add_peer,
-                    shared_model::permissions::can_create_asset,
-                    shared_model::permissions::can_get_my_account})
+                {shared_model::interface::permissions::Role::kAddPeer,
+                 shared_model::interface::permissions::Role::kCreateAsset,
+                 shared_model::interface::permissions::Role::kGetMyAccount})
             .createDomain("ru", "user")
-            .createAccount(
-                account_name1,
-                domain_id,
-                shared_model::crypto::PublicKey(empty_key))
-            .createAccount(
-                account_name2,
-                domain_id,
-                shared_model::crypto::PublicKey(empty_key))
+            .createAccount(account_name1,
+                           domain_id,
+                           shared_model::crypto::PublicKey(empty_key))
+            .createAccount(account_name2,
+                           domain_id,
+                           shared_model::crypto::PublicKey(empty_key))
             .setAccountDetail(account_name2 + "@" + domain_id, "age", "24")
             .build();
     auto block1 =

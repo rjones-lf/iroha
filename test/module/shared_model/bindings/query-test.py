@@ -114,7 +114,7 @@ class BuilderTest(unittest.TestCase):
       .creatorAccountId("admin@test")
 
   def proto(self, query):
-    return iroha.ModelProtoQuery().signAndAddSignature(query, self.keys)
+    return iroha.ModelProtoQuery(query).signAndAddSignature(self.keys).finish()
 
   def check_proto_query(self, blob):
     try:
@@ -262,36 +262,22 @@ class BuilderTest(unittest.TestCase):
   def test_get_account_assets(self):
     for domain in VALID_DOMAINS:
       for name in VALID_NAMES_1:
-        query = self.builder.getAccountAssets("{}@{}".format(name, domain), "{}#{}".format(name, domain)).build()
+        query = self.builder.getAccountAssets("{}@{}".format(name, domain)).build()
         self.assertTrue(self.check_proto_query(self.proto(query)))
 
   def test_get_account_assets_invalid_account(self):
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().getAccountAssets("{}@test".format(name), "coin#test").build()
+        self.base().getAccountAssets("{}@test".format(name)).build()
 
   def test_get_account_assets_invalid_account_domain(self):
     for domain in INVALID_DOMAINS:
       with self.assertRaises(ValueError):
-        self.base().getAccountAssets("admin@{}".format(domain), "coin#test").build()
+        self.base().getAccountAssets("admin@{}".format(domain)).build()
 
   def test_get_account_assets_empty_account(self):
     with self.assertRaises(ValueError):
-      self.base().getAccountAssets("", "coin#test").build()
-
-  def test_get_account_assets_invalid_asset_name(self):
-    for name in INVALID_NAMES_1:
-      with self.assertRaises(ValueError):
-        self.base().getAccountAssets("admin@test", "{}#test".format(name)).build()
-
-  def test_get_account_assets_invalid_asset_domain(self):
-    for domain in INVALID_DOMAINS:
-      with self.assertRaises(ValueError):
-        self.base().getAccountAssets("admin@test", "admin#{}".format(domain)).build()
-
-  def test_get_account_assets_empty_asset(self):
-    with self.assertRaises(ValueError):
-      self.base().getAccountAssets("admin@test", "").build()
+      self.base().getAccountAssets("").build()
 
   # ====================== GetRoles Tests ======================
 
@@ -344,14 +330,10 @@ class BuilderTest(unittest.TestCase):
     query = self.builder.getTransactions(hv).build()
     self.assertTrue(self.check_proto_query(self.proto(query)))
 
-  # TODO igor-egorov, 11.05.2018, IR-1322
-  @unittest.skip("IR-1322")
   def test_get_transactions_with_empty_vector(self):
     with self.assertRaises(ValueError):
       self.base().getTransactions(iroha.HashVector()).build()
 
-  # TODO igor-egorov, 11.05.2018, IR-1325
-  @unittest.skip("IR-1325")
   def test_get_transactions_with_invalid_hash_sizes(self):
     hashes = [
       "",
@@ -365,8 +347,6 @@ class BuilderTest(unittest.TestCase):
       with self.assertRaises(ValueError):
         self.base().getTransactions(hv).build()
 
-  # TODO igor-egorov, 11.05.2018, IR-1325
-  @unittest.skip("IR-1325")
   def test_get_transactions_with_one_valid_and_one_invalid_hash_1(self):
     hv = iroha.HashVector()
     hv.append(iroha.Hash("1" * 32))
@@ -375,8 +355,6 @@ class BuilderTest(unittest.TestCase):
     with self.assertRaises(ValueError):
       self.base().getTransactions(hv).build()
 
-  # TODO igor-egorov, 11.05.2018, IR-1325
-  @unittest.skip("IR-1325")
   def test_get_transactions_with_one_valid_and_one_invalid_hash_2(self):
     hv = iroha.HashVector()
     hv.append(iroha.Hash("1"))
@@ -404,9 +382,9 @@ class BuilderTest(unittest.TestCase):
       with self.assertRaises(ValueError):
         self.base().getAccountDetail("admin@{}".format(domain)).build()
 
-  def test_get_account_detail_with_empty_name(self):
-    with self.assertRaises(ValueError):
-      self.base().getAccountDetail("").build()
+  def test_get_account_detail_with_no_args(self):
+    query = self.builder.getAccountDetail().build()
+    self.assertTrue(self.check_proto_query(self.proto(query)))
 
 if __name__ == '__main__':
   unittest.main()

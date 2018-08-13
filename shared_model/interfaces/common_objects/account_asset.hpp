@@ -18,15 +18,10 @@
 #ifndef IROHA_SHARED_MODEL_ACCOUNT_ASSET_HPP
 #define IROHA_SHARED_MODEL_ACCOUNT_ASSET_HPP
 
-#include <new>
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/amount.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/account_asset.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -34,7 +29,7 @@ namespace shared_model {
     /**
      * Representation of wallet in system
      */
-    class AccountAsset : public PRIMITIVE(AccountAsset) {
+    class AccountAsset : public ModelPrimitive<AccountAsset> {
      public:
       /**
        * @return Identity of user, for fetching data
@@ -73,25 +68,6 @@ namespace shared_model {
         return accountId() == rhs.accountId() and assetId() == rhs.assetId()
             and balance() == rhs.balance();
       }
-
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of account asset.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->account_id = accountId();
-        oldModel->asset_id = assetId();
-        using OldBalanceType = decltype(oldModel->balance);
-        // Use shared_ptr and placement-new to copy new model field
-        // to the field of old model for returning raw pointer
-        auto p = std::shared_ptr<OldBalanceType>(balance().makeOldModel());
-        new (&oldModel->balance) OldBalanceType(*p);
-        return oldModel;
-      }
-
-#endif
     };
   }  // namespace interface
 }  // namespace shared_model

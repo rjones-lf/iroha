@@ -22,7 +22,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "interfaces/utils/specified_visitor.hpp"
+#include "framework/specified_visitor.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 constexpr auto kUser = "user@test";
@@ -46,7 +46,8 @@ TEST(PipelineIntegrationTest, SendQuery) {
                    .signAndAddSignature(
                        // TODO: 30/03/17 @l4l use keygen adapter IR-1189
                        shared_model::crypto::DefaultCryptoAlgorithmType::
-                           generateKeypair());
+                           generateKeypair())
+                   .finish();
 
   auto check = [](auto &status) {
     ASSERT_TRUE(boost::apply_visitor(
@@ -54,7 +55,7 @@ TEST(PipelineIntegrationTest, SendQuery) {
             shared_model::interface::StatefulFailedErrorResponse>(),
         status.get()));
   };
-  integration_framework::IntegrationTestFramework()
+  integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendQuery(query, check)
       .done();
@@ -70,15 +71,17 @@ TEST(PipelineIntegrationTest, SendTx) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId(kUser)
-                .addAssetQuantity(kUser, kAsset, "1.0")
+                .addAssetQuantity(kAsset, "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair());
+                        generateKeypair())
+                .finish();
 
   auto checkStatelessValid = [](auto &status) {
     ASSERT_NO_THROW(boost::apply_visitor(
-        shared_model::interface::SpecifiedVisitor<
+        framework::SpecifiedVisitor<
             shared_model::interface::StatelessValidTxResponse>(),
         status.get()));
   };
@@ -88,7 +91,7 @@ TEST(PipelineIntegrationTest, SendTx) {
   auto checkBlock = [](auto &block) {
     ASSERT_EQ(block->transactions().size(), 0);
   };
-  integration_framework::IntegrationTestFramework()
+  integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessValid)
       .checkProposal(checkProposal)

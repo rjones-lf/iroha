@@ -40,13 +40,8 @@ auto mk_local_peer(uint64_t num) {
 class FixedCryptoProvider : public MockYacCryptoProvider {
  public:
   explicit FixedCryptoProvider(const std::string &public_key) {
-    // TODO 15.04.2018 x3medima17 IR-1189: move to separate class
-    auto size =
-        shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
-            .publicKey()
-            .size();
-    // TODO 16.04.2018 x3medima17 IR-977: add sizes
-    std::string key(size, 0);
+    std::string key(
+        shared_model::crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, 0);
     std::copy(public_key.begin(), public_key.end(), key.begin());
     pubkey = clone(shared_model::crypto::PublicKey(key));
   }
@@ -72,7 +67,9 @@ class ConsensusSunnyDayTest : public ::testing::Test {
   static const size_t port = 50541;
 
   void SetUp() override {
-    network = std::make_shared<NetworkImpl>();
+    auto async_call = std::make_shared<
+        iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
+    network = std::make_shared<NetworkImpl>(async_call);
     crypto = std::make_shared<FixedCryptoProvider>(std::to_string(my_num));
     timer = std::make_shared<TimerImpl>([this] {
       // static factory with a single thread

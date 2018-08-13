@@ -44,10 +44,10 @@ find_package(rapidjson)
 ##########################
 find_package(pq)
 
-##########################a
-#          pqxx          #
 ##########################
-find_package(pqxx)
+#          SOCI          #
+##########################
+find_package(soci)
 
 ################################
 #            gflags            #
@@ -71,6 +71,7 @@ find_package(Boost 1.65.0 REQUIRED
     COMPONENTS
     filesystem
     system
+    thread
     )
 add_library(boost INTERFACE IMPORTED)
 set_target_properties(boost PROPERTIES

@@ -21,3 +21,8 @@ target_link_libraries(pipeline_test
     shared_model_stateless_validation
     shared_model_proto_builders
     )
+
+addtest(multisig_tx_pipeline_test multisig_tx_pipeline_test.cpp)
+target_link_libraries(multisig_tx_pipeline_test
+    acceptance_fixture
+    )

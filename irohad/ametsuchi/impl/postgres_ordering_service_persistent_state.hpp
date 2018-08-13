@@ -18,8 +18,7 @@
 #ifndef IROHA_POSTGRES_ORDERING_SERVICE_PERSISTENT_STATE_HPP
 #define IROHA_POSTGRES_ORDERING_SERVICE_PERSISTENT_STATE_HPP
 
-#include <pqxx/pqxx>
-#include "ametsuchi/impl/postgres_wsv_common.hpp"
+#include "ametsuchi/impl/soci_utils.hpp"
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "common/result.hpp"
 #include "logger/logger.hpp"
@@ -50,8 +49,7 @@ namespace iroha {
        * @param postgres_transaction postgres transaction object
        */
       explicit PostgresOrderingServicePersistentState(
-          std::unique_ptr<pqxx::lazyconnection> postgres_connection,
-          std::unique_ptr<pqxx::nontransaction> postgres_transaction);
+          std::unique_ptr<soci::session> sql);
 
       /**
        * Initialize storage.
@@ -81,20 +79,11 @@ namespace iroha {
       virtual bool resetState();
 
      private:
-      /**
-       * Pg connection with direct transaction management
-       */
-      std::unique_ptr<pqxx::lazyconnection> postgres_connection_;
-
-      /**
-       * Pg transaction
-       */
-      std::unique_ptr<pqxx::nontransaction> postgres_transaction_;
+      std::unique_ptr<soci::session> sql_;
 
       logger::Logger log_;
 
-      using ExecuteType = decltype(makeExecuteResult(*postgres_transaction_));
-      ExecuteType execute_;
+      bool execute_(std::string query);
     };
   }  // namespace ametsuchi
 }  // namespace iroha

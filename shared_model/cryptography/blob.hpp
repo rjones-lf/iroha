@@ -23,7 +23,6 @@
 
 #include "interfaces/base/model_primitive.hpp"
 #include "utils/lazy_initializer.hpp"
-#include "utils/swig_keyword_hider.hpp"
 
 namespace shared_model {
   namespace crypto {
@@ -81,21 +80,6 @@ namespace shared_model {
       std::string toString() const override;
 
       bool operator==(const Blob &rhs) const override;
-
-#ifndef DISABLE_BACKWARD
-      /**
-       * Method perform transforming object to old-fashion blob_t format
-       * @tparam BlobType - type of blob
-       * @return blob_t array with own data
-       * Design note: this method is deprecated and should be removed after
-       * migration to shared model in whole project
-       */
-
-      template <typename BlobType>
-      DEPRECATED BlobType makeOldModel() const {
-        return BlobType::from_string(toBinaryString(*this));
-      }
-#endif
 
      protected:
       Blob *clone() const override;

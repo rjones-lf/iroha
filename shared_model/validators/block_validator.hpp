@@ -19,12 +19,11 @@
 #define IROHA_BLOCK_VALIDATOR_HPP
 
 #include <boost/format.hpp>
-#include "validators/container_validator.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
-#include "utils/polymorphic_wrapper.hpp"
 #include "validators/answer.hpp"
+#include "validators/container_validator.hpp"
 
 // TODO 22/01/2018 x3medima17: write stateless validator IR-837
 
@@ -34,21 +33,26 @@ namespace shared_model {
     /**
      * Class that validates block
      */
-    template <typename FieldValidator, typename TransactionValidator>
-    class BlockValidator : public ContainerValidator<interface::Block,
-                                                     FieldValidator,
-                                                     TransactionValidator> {
+    template <typename FieldValidator, typename TransactionsCollectionValidator>
+    class BlockValidator
+        : public ContainerValidator<interface::Block,
+                                    FieldValidator,
+                                    TransactionsCollectionValidator> {
      public:
+      using ContainerValidator<
+          interface::Block,
+          FieldValidator,
+          TransactionsCollectionValidator>::ContainerValidator;
       /**
        * Applies validation on block
        * @param block
        * @return Answer containing found error if any
        */
       Answer validate(const interface::Block &block) const {
-        return ContainerValidator<interface::Block,
-                                  FieldValidator,
-                                  TransactionValidator>::validate(block,
-                                                                  "Block");
+        return ContainerValidator<
+            interface::Block,
+            FieldValidator,
+            TransactionsCollectionValidator>::validate(block, "Block");
       }
     };
 

@@ -38,7 +38,7 @@ def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, r
       def testExitCode = sh(script: "docker pull ${DOCKER_REGISTRY_BASENAME}:${imageName}", returnStatus: true)
       if (testExitCode != 0) {
         // image does not (yet) exist on Dockerhub. Build it
-        iC = docker.build("${DOCKER_REGISTRY_BASENAME}:${commit}-${BUILD_NUMBER}", "$buildOptions --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")   
+        iC = docker.build("${DOCKER_REGISTRY_BASENAME}:${commit}-${BUILD_NUMBER}", "$buildOptions --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
       }
       else {
         // no difference found compared to both previous and reference Dockerfile
@@ -46,7 +46,7 @@ def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, r
       }
     }
   }
-  if (GIT_LOCAL_BRANCH ==~ /develop|master/) {
+  if (GIT_LOCAL_BRANCH ==~ /develop|master/ || CHANGE_BRANCH_LOCAL == 'develop') {
     docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
       iC.push(imageName)
     }

@@ -18,19 +18,16 @@
 #ifndef IROHA_SHARED_MODEL_TRANSFER_ASSET_HPP
 #define IROHA_SHARED_MODEL_TRANSFER_ASSET_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/amount.hpp"
 #include "interfaces/common_objects/types.hpp"
-#ifndef DISABLE_BACKWARD
-#include "model/commands/transfer_asset.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Grant permission to account
      */
-    class TransferAsset : public PRIMITIVE(TransferAsset) {
+    class TransferAsset : public ModelPrimitive<TransferAsset> {
      public:
       /**
        * @return Id of the account from which transfer assets
@@ -53,40 +50,9 @@ namespace shared_model {
        */
       virtual const types::DescriptionType &description() const = 0;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("TransferAsset")
-            .append("src_account_id", srcAccountId())
-            .append("dest_account_id", destAccountId())
-            .append("asset_id", assetId())
-            .append("description", description())
-            .append("amount", amount().toString())
-            .finalize();
-      }
+      std::string toString() const override;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::TransferAsset;
-        oldModel->src_account_id = srcAccountId();
-        oldModel->dest_account_id = destAccountId();
-        using OldAmountType = iroha::Amount;
-        /// Use shared_ptr and placement-new to copy new model field to
-        /// oldModel's field and to return raw pointer
-        auto p = std::shared_ptr<OldAmountType>(amount().makeOldModel());
-        new (&oldModel->amount) OldAmountType(*p);
-        oldModel->asset_id = assetId();
-        oldModel->description = description();
-        return oldModel;
-      }
-
-#endif
-
-      bool operator==(const ModelType &rhs) const override {
-        return srcAccountId() == rhs.srcAccountId()
-            and destAccountId() == rhs.destAccountId()
-            and assetId() == rhs.assetId() and amount() == rhs.amount()
-            and description() == rhs.description();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -50,7 +50,8 @@ namespace iroha_cli {
       descriptionMap_ = {{GET_TX_INFO, "Get status of transaction"}};
       const auto tx_id = "Requested tx hash";
 
-      requestParamsDescriptions_ = {{GET_TX_INFO, {tx_id}}};
+      requestParamsDescriptions_ = {
+          {GET_TX_INFO, makeParamsDescription({tx_id})}};
       actionHandlers_ = {{GET_TX_INFO, &InteractiveStatusCli::parseGetHash}};
 
       menuPoints_ = formMenu(
@@ -76,7 +77,7 @@ namespace iroha_cli {
       printMenu("Choose action: ", menuPoints_);
       while (isParsing) {
         auto line = promptString("> ");
-        if (not line){
+        if (not line) {
           // line has terminating symbol
           isParsing = false;
           break;
@@ -139,15 +140,20 @@ namespace iroha_cli {
       }
 
       auto status = iroha::protocol::TxStatus::NOT_RECEIVED;
+      iroha::protocol::ToriiResponse answer;
       if (iroha::hexstringToBytestring(txHash_)) {
-        status = CliClient(address.value().first, address.value().second)
+        answer = CliClient(address.value().first, address.value().second)
                      .getTxStatus(*iroha::hexstringToBytestring(txHash_))
-                     .answer.tx_status();
+                     .answer;
+        status = answer.tx_status();
       }
 
       std::string message;
       try {
         message = userMessageMap.at(status);
+        if (not answer.error_message().empty()) {
+          message += " " + answer.error_message();
+        }
       } catch (const std::out_of_range &e) {
         message =
             "A problem detected while retrieving transaction status. Please "

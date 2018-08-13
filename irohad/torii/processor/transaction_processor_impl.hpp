@@ -18,11 +18,14 @@
 #ifndef IROHA_TRANSACTION_PROCESSOR_STUB_HPP
 #define IROHA_TRANSACTION_PROCESSOR_STUB_HPP
 
+#include <mutex>
 #include "builders/default_builders.hpp"
 #include "interfaces/transaction_responses/tx_response.hpp"
 #include "logger/logger.hpp"
+#include "multi_sig_transactions/mst_processor.hpp"
 #include "network/peer_communication_service.hpp"
 #include "torii/processor/transaction_processor.hpp"
+#include "torii/status_bus.hpp"
 
 namespace iroha {
   namespace torii {
@@ -30,39 +33,41 @@ namespace iroha {
      public:
       /**
        * @param pcs - provide information proposals and commits
-       * @param validator - perform stateless validation
+       * @param mst_processor is a handler for multisignature transactions
+       * @param status_bus is a common notifier for tx statuses
        */
       TransactionProcessorImpl(
-          std::shared_ptr<network::PeerCommunicationService> pcs);
+          std::shared_ptr<network::PeerCommunicationService> pcs,
+          std::shared_ptr<MstProcessor> mst_processor,
+          std::shared_ptr<iroha::torii::StatusBus> status_bus);
 
       void transactionHandle(
           std::shared_ptr<shared_model::interface::Transaction> transaction)
-          override;
+          const override;
 
-      rxcpp::observable<
-          std::shared_ptr<shared_model::interface::TransactionResponse>>
-      transactionNotifier() override;
+      void batchHandle(const shared_model::interface::TransactionBatch
+                           &transaction_batch) const override;
 
      private:
       // connections
       std::shared_ptr<network::PeerCommunicationService> pcs_;
 
       // processing
-      std::unordered_set<shared_model::crypto::Hash,
-                         shared_model::crypto::Hash::Hasher>
-          proposal_set_;
-      std::unordered_set<shared_model::crypto::Hash,
-                         shared_model::crypto::Hash::Hasher>
-          candidate_set_;
+      std::shared_ptr<MstProcessor> mst_processor_;
+      std::vector<shared_model::interface::types::HashType> current_txs_hashes_;
+
+      std::shared_ptr<iroha::torii::StatusBus> status_bus_;
 
       // internal
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::TransactionResponse>>
           notifier_;
 
-      shared_model::builder::DefaultTransactionStatusBuilder status_builder_;
-
       logger::Logger log_;
+
+      /// prevents from emitting new tx statuses from different threads
+      /// in parallel
+      std::mutex notifier_mutex_;
     };
   }  // namespace torii
 }  // namespace iroha

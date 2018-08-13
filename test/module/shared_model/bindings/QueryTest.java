@@ -124,7 +124,7 @@ public class QueryTest {
     }
 
     Blob proto(UnsignedQuery query) {
-        return new ModelProtoQuery().signAndAddSignature(query, keys);
+        return new ModelProtoQuery(query).signAndAddSignature(keys).finish();
     }
 
     /**
@@ -361,7 +361,7 @@ public class QueryTest {
     void getAccountAssets() {
         for (String name: validNameSymbols1) {
             for (String domain: validDomains) {
-                UnsignedQuery query = builder.getAccountAssets(name + "@" + domain, name + "#" + domain).build();
+                UnsignedQuery query = builder.getAccountAssets(name + "@" + domain).build();
                 assertTrue(checkProtoQuery(proto(query)));
             }
         }
@@ -370,7 +370,7 @@ public class QueryTest {
     @Test
     void getAccountAssetsWithInvalidAccountName() {
         for (String account: invalidNameSymbols1) {
-            ModelQueryBuilder builder = base().getAccountAssets(account + "@test", "coin#test");
+            ModelQueryBuilder builder = base().getAccountAssets(account + "@test");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -378,36 +378,14 @@ public class QueryTest {
     @Test
     void getAccountAssetsWithInvalidAccountDomain() {
         for (String domain: invalidDomains) {
-            ModelQueryBuilder builder = base().getAccountAssets("user@" + domain, "coin#test");
+            ModelQueryBuilder builder = base().getAccountAssets("user@" + domain);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
 
     @Test
     void getAccountAssetsWithEmptyAccount() {
-        ModelQueryBuilder builder = base().getAccountAssets("", "coin#test");
-        assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    @Test
-    void getAccountAssetsWithInvalidAssetName() {
-        for (String asset: invalidNameSymbols1) {
-            ModelQueryBuilder builder = base().getAccountAssets("user@test", asset + "#test");
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
-    }
-
-    @Test
-    void getAccountAssetsWithInvalidAssetDomain() {
-        for (String domain: invalidDomains) {
-            ModelQueryBuilder builder = base().getAccountAssets("user@test", "coin#" + domain);
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
-    }
-
-    @Test
-    void getAccountAssetsWithEmptyAsset() {
-        ModelQueryBuilder builder = base().getAccountAssets("user@test", "");
+        ModelQueryBuilder builder = base().getAccountAssets("");
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
@@ -493,16 +471,12 @@ public class QueryTest {
 
     // The following four tests are disabled because there is a need to
     // clarify desired behavior.
-    // TODO igor-egorov, 08.05.2018, IR-1322
-    @Disabled
     @Test
     void getTransactionsWithEmptyVector() {
         ModelQueryBuilder builder = base().getTransactions(new HashVector());
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
-    // TODO igor-egorov, 08.05.2018, IR-1325
-    @Disabled
     @Test
     void getTransactionsWithInvalidHashSizes() {
         String hashes[] = {
@@ -520,8 +494,6 @@ public class QueryTest {
         }
     }
 
-    // TODO igor-egorov, 08.05.2018, IR-1325
-    @Disabled
     @Test
     void getTransactionsWithOneValidAndOneInvalidHash1() {
         Hash valid = new Hash("12345678901234567890123456789012");
@@ -534,8 +506,6 @@ public class QueryTest {
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
-    // TODO igor-egorov, 08.05.2018, IR-1325
-    @Disabled
     @Test
     void getTransactionsWithOneValidAndOneInvalidHash2() {
         Hash valid = new Hash("12345678901234567890123456789012");
@@ -577,8 +547,8 @@ public class QueryTest {
     }
 
     @Test
-    void getAccountDetailWithEmptyName() {
-        ModelQueryBuilder builder = base().getAccountDetail("");
-        assertThrows(IllegalArgumentException.class, builder::build);
+    void getAccountDetailWithNoArgs() {
+        UnsignedQuery query = base().getAccountDetail().build();
+        assertTrue(checkProtoQuery(proto(query)));
     }
 }

@@ -24,6 +24,7 @@ namespace shared_model {
   namespace interface {
     class Transaction;
     class TransactionResponse;
+    class TransactionBatch;
   }  // namespace interface
 }  // namespace shared_model
 
@@ -41,16 +42,15 @@ namespace iroha {
        * @param transaction - transaction for processing
        */
       virtual void transactionHandle(
-          std::shared_ptr<shared_model::interface::Transaction>
-              transaction) = 0;
+          std::shared_ptr<shared_model::interface::Transaction> transaction)
+          const = 0;
 
       /**
-       * Subscribers will be notified with transaction status
-       * @return observable for subscribing
+       * Process batch and propagate it to the MST or PCS
+       * @param transaction_sequence - transaction sequence for processing
        */
-      virtual rxcpp::observable<
-          std::shared_ptr<shared_model::interface::TransactionResponse>>
-      transactionNotifier() = 0;
+      virtual void batchHandle(const shared_model::interface::TransactionBatch
+                                   &transaction_batch) const = 0;
 
       virtual ~TransactionProcessor() = default;
     };

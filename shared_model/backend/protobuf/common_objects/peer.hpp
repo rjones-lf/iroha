@@ -21,7 +21,7 @@
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "backend/protobuf/util.hpp"
 #include "interfaces/common_objects/peer.hpp"
-#include "responses.pb.h"
+#include "primitive.pb.h"
 #include "utils/lazy_initializer.hpp"
 
 namespace shared_model {

@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/bin/bash -e
 cd "$(dirname "$0")"
 
 # folder with bindings and native library
-mkdir dist
+mkdir -p dist
 
 # build native library
 ./prepare.sh
@@ -22,7 +22,7 @@ gradle javaDocJar
 cp build/shared_model/bindings/libs/* dist/
 
 cd build/shared_model/bindings
-jar -cvf iroha_lib.jar *.java
+jar -cvf iroha_lib.jar jp/co/soramitsu/iroha/*.java
 
 cd ../../../
 cp build/shared_model/bindings/iroha_lib.jar dist

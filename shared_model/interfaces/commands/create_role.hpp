@@ -20,55 +20,31 @@
 
 #include <numeric>
 #include <set>
-#include "interfaces/base/primitive.hpp"
-#include "interfaces/common_objects/types.hpp"
 
-#ifndef DISABLE_BACKWARD
-#include "model/commands/create_role.hpp"
-#endif
+#include "interfaces/base/model_primitive.hpp"
+#include "interfaces/common_objects/types.hpp"
+#include "interfaces/permissions.hpp"
 
 namespace shared_model {
   namespace interface {
     /**
      * Create new role in Iroha
      */
-    class CreateRole : public PRIMITIVE(CreateRole) {
+    class CreateRole : public ModelPrimitive<CreateRole> {
      public:
       /**
        * @return Id of the domain to create
        */
       virtual const types::RoleIdType &roleName() const = 0;
-      /// Set of Permissions to insure the order for consistent hash
-      using PermissionsType = std::set<types::PermissionNameType>;
+
       /**
        * @return permissions associated with the role
        */
-      virtual const PermissionsType &rolePermissions() const = 0;
+      virtual const RolePermissionSet &rolePermissions() const = 0;
 
-      std::string toString() const override {
-        auto roles_set = rolePermissions();
-        return detail::PrettyStringBuilder()
-            .init("CreateRole")
-            .append("role_name", roleName())
-            .appendAll(roles_set, [](auto &role) { return role; })
-            .finalize();
-      }
+      std::string toString() const override = 0;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::CreateRole;
-        oldModel->role_name = roleName();
-        oldModel->permissions.insert(rolePermissions().begin(),
-                                     rolePermissions().end());
-        return oldModel;
-      }
-
-#endif
-
-      bool operator==(const ModelType &rhs) const override {
-        return roleName() == rhs.roleName()
-            and rolePermissions() == rhs.rolePermissions();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

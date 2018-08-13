@@ -20,6 +20,7 @@
 #include <grpc++/grpc++.h>
 #include <memory>
 
+#include "yac.pb.h"
 #include "consensus/yac/messages.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
 #include "interfaces/common_objects/peer.hpp"
@@ -31,9 +32,10 @@ namespace iroha {
     namespace yac {
       // ----------| Public API |----------
 
-      NetworkImpl::NetworkImpl()
-          : network::AsyncGrpcClient<google::protobuf::Empty>(
-                logger::log("YacNetwork")) {}
+      NetworkImpl::NetworkImpl(
+          std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+              async_call)
+          : async_call_(async_call) {}
 
       void NetworkImpl::subscribe(
           std::shared_ptr<YacNetworkNotifications> handler) {
@@ -46,15 +48,12 @@ namespace iroha {
 
         auto request = PbConverters::serializeVote(vote);
 
-        auto call = new AsyncClientCall;
+        async_call_->Call([&](auto context, auto cq) {
+          return peers_.at(to.address())->AsyncSendVote(context, request, cq);
+        });
 
-        call->response_reader =
-            peers_.at(to.address())
-                ->AsyncSendVote(&call->context, request, &cq_);
-
-        call->response_reader->Finish(&call->reply, &call->status, call);
-
-        log_->info("Send vote {} to {}", vote.hash.block_hash, to.address());
+        async_call_->log_->info(
+            "Send vote {} to {}", vote.hash.block_hash, to.address());
       }
 
       void NetworkImpl::send_commit(const shared_model::interface::Peer &to,
@@ -67,17 +66,13 @@ namespace iroha {
           *pb_vote = PbConverters::serializeVote(vote);
         }
 
-        auto call = new AsyncClientCall;
+        async_call_->Call([&](auto context, auto cq) {
+          return peers_.at(to.address())->AsyncSendCommit(context, request, cq);
+        });
 
-        call->response_reader =
-            peers_.at(to.address())
-                ->AsyncSendCommit(&call->context, request, &cq_);
-
-        call->response_reader->Finish(&call->reply, &call->status, call);
-
-        log_->info("Send votes bundle[size={}] commit to {}",
-                   commit.votes.size(),
-                   to.address());
+        async_call_->log_->info("Send votes bundle[size={}] commit to {}",
+                                commit.votes.size(),
+                                to.address());
       }
 
       void NetworkImpl::send_reject(const shared_model::interface::Peer &to,
@@ -90,17 +85,13 @@ namespace iroha {
           *pb_vote = PbConverters::serializeVote(vote);
         }
 
-        auto call = new AsyncClientCall;
+        async_call_->Call([&](auto context, auto cq) {
+          return peers_.at(to.address())->AsyncSendReject(context, request, cq);
+        });
 
-        call->response_reader =
-            peers_.at(to.address())
-                ->AsyncSendReject(&call->context, request, &cq_);
-
-        call->response_reader->Finish(&call->reply, &call->status, call);
-
-        log_->info("Send votes bundle[size={}] reject to {}",
-                   reject.votes.size(),
-                   to.address());
+        async_call_->log_->info("Send votes bundle[size={}] reject to {}",
+                                reject.votes.size(),
+                                to.address());
       }
 
       grpc::Status NetworkImpl::SendVote(
@@ -109,7 +100,7 @@ namespace iroha {
           ::google::protobuf::Empty *response) {
         auto vote = *PbConverters::deserializeVote(*request);
 
-        log_->info(
+        async_call_->log_->info(
             "Receive vote {} from {}", vote.hash.block_hash, context->peer());
 
         handler_.lock()->on_vote(vote);
@@ -126,9 +117,9 @@ namespace iroha {
           commit.votes.push_back(vote);
         }
 
-        log_->info("Receive commit[size={}] from {}",
-                   commit.votes.size(),
-                   context->peer());
+        async_call_->log_->info("Receive commit[size={}] from {}",
+                                commit.votes.size(),
+                                context->peer());
 
         handler_.lock()->on_commit(commit);
         return grpc::Status::OK;
@@ -144,9 +135,9 @@ namespace iroha {
           reject.votes.push_back(vote);
         }
 
-        log_->info("Receive reject[size={}] from {}",
-                   reject.votes.size(),
-                   context->peer());
+        async_call_->log_->info("Receive reject[size={}] from {}",
+                                reject.votes.size(),
+                                context->peer());
 
         handler_.lock()->on_reject(reject);
         return grpc::Status::OK;

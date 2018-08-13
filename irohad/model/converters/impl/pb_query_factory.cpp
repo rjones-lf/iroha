@@ -74,7 +74,6 @@ namespace iroha {
               const auto &pb_cast = pl.get_account_assets();
               auto query = GetAccountAssets();
               query.account_id = pb_cast.account_id();
-              query.asset_id = pb_cast.asset_id();
               val = std::make_shared<model::GetAccountAssets>(query);
               break;
             }
@@ -151,19 +150,19 @@ namespace iroha {
         sign.pubkey = pubkey_t::from_string(pb_sign.pubkey());
         sign.signature = sig_t::from_string(pb_sign.signature());
 
-        val->query_counter = pl.query_counter();
+        val->query_counter = pl.meta().query_counter();
         val->signature = sign;
-        val->created_ts = pl.created_time();
-        val->creator_account_id = pl.creator_account_id();
+        val->created_ts = pl.meta().created_time();
+        val->creator_account_id = pl.meta().creator_account_id();
         return val;
       }
 
       void PbQueryFactory::serializeQueryMetaData(
           protocol::Query &pb_query, std::shared_ptr<const Query> query) const {
-        auto pl = pb_query.mutable_payload();
-        pl->set_creator_account_id(query->creator_account_id);
-        pl->set_created_time(query->created_ts);
-        pl->set_query_counter(query->query_counter);
+        auto *meta = pb_query.mutable_payload()->mutable_meta();
+        meta->set_created_time(query->created_ts);
+        meta->set_creator_account_id(query->creator_account_id);
+        meta->set_query_counter(query->query_counter);
         // Set signatures
         auto sig = pb_query.mutable_signature();
         sig->set_signature(query->signature.signature.to_string());
@@ -200,7 +199,6 @@ namespace iroha {
         auto pb_query_mut =
             pb_query.mutable_payload()->mutable_get_account_assets();
         pb_query_mut->set_account_id(tmp->account_id);
-        pb_query_mut->set_asset_id(tmp->asset_id);
         return pb_query;
       }
 

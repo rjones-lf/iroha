@@ -9,7 +9,7 @@ import time
 import sys
 
 from google.protobuf.message import DecodeError
-import block_pb2 as blk
+import transaction_pb2 as trx
 
 # TODO luckychess 8.08.2018 add test for number of methods
 # in interface and proto implementation IR-1080
@@ -113,7 +113,7 @@ class BuilderTest(unittest.TestCase):
       .creatorAccountId("admin@test")
 
   def proto(self, tx):
-    return iroha.ModelProtoTransaction().signAndAddSignature(tx, self.keys)
+    return iroha.ModelProtoTransaction(tx).signAndAddSignature(self.keys).finish()
 
   def check_proto_tx(self, blob):
     try:
@@ -121,7 +121,7 @@ class BuilderTest(unittest.TestCase):
         tmp = ''.join(map(chr, blob.blob()))
       else:
         tmp = bytes(blob.blob())
-      blk.Transaction.FromString(tmp)
+      trx.Transaction.FromString(tmp)
     except DecodeError as e:
       print(e)
       return False
@@ -208,47 +208,33 @@ class BuilderTest(unittest.TestCase):
   # ====================== AddAssetQuantity Tests ======================
 
   def test_add_asset_quantity(self):
-    tx = self.builder.addAssetQuantity("admin@test", "asset#domain", "12.345").build()
+    tx = self.builder.addAssetQuantity("asset#domain", "12.345").build()
     self.assertTrue(self.check_proto_tx(self.proto(tx)))
 
-  def test_add_asset_quantity_valid_account_and_asset(self):
+  def test_add_asset_quantity_valid_asset(self):
     for name in VALID_NAMES_1:
       for domain in VALID_DOMAINS:
-        tx = self.builder.addAssetQuantity("{}@{}".format(name, domain), "{}#{}".format(name, domain), "100").build()
+        tx = self.builder.addAssetQuantity("{}#{}".format(name, domain), "100").build()
         self.assertTrue(self.check_proto_tx(self.proto(tx)))
-
-  def test_add_asset_quantity_invalid_account(self):
-    for name in INVALID_NAMES_1:
-      with self.assertRaises(ValueError):
-        self.base().addAssetQuantity("{}@test".format(name), "coin#test", "10").build()
-
-  def test_add_asset_quantity_invalid_account_domain(self):
-    for domain in INVALID_DOMAINS:
-      with self.assertRaises(ValueError):
-        self.base().addAssetQuantity("admin@{}".format(domain), "coin#test", "10").build()
-
-  def test_add_asset_quantity_empty_account(self):
-    with self.assertRaises(ValueError):
-      self.base().addAssetQuantity("", "coin#test", "10").build()
 
   def test_add_asset_quantity_invalid_asset(self):
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().addAssetQuantity("admin@test", "{}#test".format(name), "10").build()
+        self.base().addAssetQuantity("{}#test".format(name), "10").build()
 
   def test_add_asset_quantity_invalid_asset_domain(self):
     for domain in INVALID_DOMAINS:
       with self.assertRaises(ValueError):
-        self.base().addAssetQuantity("admin@test", "coin#{}".format(domain), "10").build()
+        self.base().addAssetQuantity("coin#{}".format(domain), "10").build()
 
   def test_add_asset_quantity_empty_asset(self):
     with self.assertRaises(ValueError):
-      self.base().addAssetQuantity("admin@test", "", "10").build()
+      self.base().addAssetQuantity("", "10").build()
 
   def test_add_asset_quantity_invalid_amount(self):
     for amount in ["", "-12", "-13.45", "chars", "chars10"]:
       with self.assertRaises(ValueError):
-        self.base().addAssetQuantity("admin@test", "coin#test", amount).build()
+        self.base().addAssetQuantity("coin#test", amount).build()
 
   # ====================== RemoveSignatory Tests ======================
 
@@ -522,50 +508,18 @@ class BuilderTest(unittest.TestCase):
   # ====================== CreateRole Tests ======================
 
   def test_create_role(self):
-    permissions = iroha.StringVector()
-    permissions.append("can_receive")
-    permissions.append("can_get_roles")
-    self.assertTrue(permissions.size() == 2)
-
     for name in VALID_NAMES_1:
-      tx = self.builder.createRole(name, permissions).build()
+      tx = self.builder.createRole(name, iroha.RolePermissionSet([iroha.Role_kReceive, iroha.Role_kGetRoles])).build()
       self.assertTrue(self.check_proto_tx(self.proto(tx)))
 
   def test_create_role_with_invalid_name(self):
-    permissions = iroha.StringVector()
-    permissions.append("can_receive")
-    permissions.append("can_get_roles")
-
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().createRole(name, permissions).build()
+        self.base().createRole(name, iroha.RolePermissionSet([iroha.Role_kReceive, iroha.Role_kGetRoles])).build()
 
   def test_create_role_with_empty_permissions(self):
-    permissions = iroha.StringVector()
-    self.assertTrue(permissions.size() == 0)
-
-    with self.assertRaises(ValueError):
-      self.base().createRole("user", permissions).build()
-
-  # TODO igor-egorov, 11.05.2018, IR-1267
-  @unittest.skip("Disabled till IR-1267 will be fixed")
-  def test_create_role_wrong_permissions(self):
-    permissions = iroha.StringVector()
-    permissions.append("wrong_permission")
-    permissions.append("can_receive")
-
-    with self.assertRaises(ValueError):
-      self.base().createRole("user", permissions).build()
-
-  # TODO igor-egorov, 11.05.2018, IR-1267
-  @unittest.skip("Disabled till IR-1267 will be fixed")
-  def test_create_role_wrong_permissions_2(self):
-    permissions = iroha.StringVector()
-    permissions.append("can_receive")
-    permissions.append("wrong_permission")
-
-    with self.assertRaises(ValueError):
-      self.base().createRole("user", permissions).build()
+    tx = self.builder.createRole("user", iroha.RolePermissionSet([])).build()
+    self.assertTrue(self.check_proto_tx(self.proto(tx)))
 
   # ====================== DetachRole Tests ======================
 
@@ -599,108 +553,72 @@ class BuilderTest(unittest.TestCase):
   def test_grant_permission(self):
     for domain in VALID_DOMAINS:
       for name in VALID_NAMES_1:
-        tx = self.builder.grantPermission("{}@{}".format(name, domain), "can_set_my_quorum").build()
+        tx = self.builder.grantPermission("{}@{}".format(name, domain), iroha.Grantable_kSetMyQuorum).build()
         self.assertTrue(self.check_proto_tx(self.proto(tx)))
 
   def test_grant_permission_empty_account(self):
     with self.assertRaises(ValueError):
-      self.base().grantPermission("", "can_set_my_quorum").build()
+      self.base().grantPermission("", iroha.Grantable_kSetMyQuorum).build()
 
   def test_grant_permission_invalid_account(self):
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().grantPermission("{}@test".format(name), "can_set_my_quorum").build()
+        self.base().grantPermission("{}@test".format(name), iroha.Grantable_kSetMyQuorum).build()
 
   def test_grant_permission_invalid_account_domain(self):
     for domain in INVALID_DOMAINS:
       with self.assertRaises(ValueError):
-        self.base().grantPermission("admin@{}".format(domain), "can_set_my_quorum").build()
-
-  def test_grant_permission_with_invalid_name(self):
-    permissions = [
-      "",
-      "random",
-      "can_read_assets"  # non-grantable permission
-    ]
-
-    for perm in permissions:
-      with self.assertRaises(ValueError):
-        self.base().grantPermission("admin@test", perm).build()
+        self.base().grantPermission("admin@{}".format(domain), iroha.Grantable_kSetMyQuorum).build()
 
   # ====================== RevokePermission Tests ======================
 
   def test_revoke_permission(self):
     for domain in VALID_DOMAINS:
       for name in VALID_NAMES_1:
-        tx = self.builder.revokePermission("{}@{}".format(name, domain), "can_set_my_quorum").build()
+        tx = self.builder.revokePermission("{}@{}".format(name, domain), iroha.Grantable_kSetMyQuorum).build()
         self.assertTrue(self.check_proto_tx(self.proto(tx)))
 
   def test_revoke_permission_invalid_account(self):
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().revokePermission("{}@test".format(name), "can_set_my_quorum").build()
+        self.base().revokePermission("{}@test".format(name), iroha.Grantable_kSetMyQuorum).build()
 
   def test_revoke_permission_invalid_account_domain(self):
     for domain in INVALID_DOMAINS:
       with self.assertRaises(ValueError):
-        self.base().revokePermission("admin@{}".format(domain), "can_set_my_quorum").build()
+        self.base().revokePermission("admin@{}".format(domain), iroha.Grantable_kSetMyQuorum).build()
 
   def test_revoke_permission_empty_account(self):
     with self.assertRaises(ValueError):
-      self.base().revokePermission("", "can_set_my_quorum").build()
-
-  def test_revoke_permission_with_invalid_name(self):
-    permissions = [
-      "",
-      "random",
-      "can_read_assets"  # non-grantable permission
-    ]
-
-    for perm in permissions:
-      with self.assertRaises(ValueError):
-        self.base().revokePermission("admin@test", perm).build()
+      self.base().revokePermission("", iroha.Grantable_kSetMyQuorum).build()
 
   # ====================== SubtractAssetQuantity Tests ======================
 
   def test_subtract_asset_quantity(self):
     for domain in VALID_DOMAINS:
       for name in VALID_NAMES_1:
-        tx = self.builder.subtractAssetQuantity("{}@{}".format(name, domain), "{}#{}".format(name, domain), "10").build()
+        tx = self.builder.subtractAssetQuantity("{}#{}".format(name, domain), "10").build()
         self.assertTrue(self.check_proto_tx(self.proto(tx)))
-
-  def test_subtract_asset_quantity_invalid_account(self):
-    for name in INVALID_NAMES_1:
-      with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("{}@test".format(name), "coin#test", "10").build()
-
-  def test_subtract_asset_quantity_invalid_account_domain(self):
-    for domain in INVALID_DOMAINS:
-      with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("admin@{}".format(domain), "coin#test", "10").build()
-
-  def test_subtract_asset_quantity_with_empty_account(self):
-    with self.assertRaises(ValueError):
-      self.base().subtractAssetQuantity("", "coin#test", "10").build()
 
   def test_subtract_asset_quantity_invalid_asset_name(self):
     for name in INVALID_NAMES_1:
       with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("admin@test", "{}#test".format(name), "10").build()
+        self.base().subtractAssetQuantity("{}#test".format(name), "10").build()
 
   def test_subtract_asset_quantity_invalid_asset_domain(self):
     for domain in INVALID_DOMAINS:
       with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("admin@test", "coin#{}".format(domain), "10").build()
+        self.base().subtractAssetQuantity("coin#{}".format(domain), "10").build()
 
   def test_subtract_asset_quantity_empty_account(self):
     with self.assertRaises(ValueError):
-      self.base().subtractAssetQuantity("admin@test", "", "10").build()
+      self.base().subtractAssetQuantity("", "10").build()
 
   def test_subtract_asset_quantity_invalid_amount(self):
     amounts = ["", "0", "chars", "-10", "10chars", "10.10.10"]
     for amount in amounts:
       with self.assertRaises(ValueError):
-        self.base().subtractAssetQuantity("admin@test", "coin#test", amount).build()
+        self.base().subtractAssetQuantity("coin#test", amount).build()
 
 if __name__ == '__main__':
   unittest.main()

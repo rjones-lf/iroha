@@ -37,19 +37,12 @@ namespace iroha {
         ASSERT_TRUE(tmp);
         file = std::move(*tmp);
 
-        postgres_connection = std::make_unique<pqxx::lazyconnection>(pgopt_);
-        try {
-          postgres_connection->activate();
-        } catch (const pqxx::broken_connection &e) {
-          FAIL() << "Connection to PostgreSQL broken: " << e.what();
-        }
-        transaction = std::make_unique<pqxx::nontransaction>(
-            *postgres_connection, "Postgres block indexes");
+        sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
 
-        index = std::make_shared<PostgresBlockIndex>(*transaction);
-        blocks = std::make_shared<PostgresBlockQuery>(*transaction, *file);
+        index = std::make_shared<PostgresBlockIndex>(*sql);
+        blocks = std::make_shared<PostgresBlockQuery>(*sql, *file);
 
-        transaction->exec(init_);
+        *sql << init_;
       }
 
       void insert(const shared_model::proto::Block &block) {
@@ -59,8 +52,7 @@ namespace iroha {
         index->index(block);
       }
 
-      std::unique_ptr<pqxx::lazyconnection> postgres_connection;
-      std::unique_ptr<pqxx::nontransaction> transaction;
+      std::unique_ptr<soci::session> sql;
       std::vector<shared_model::crypto::Hash> tx_hashes;
       std::shared_ptr<BlockQuery> blocks;
       std::shared_ptr<BlockIndex> index;
@@ -132,14 +124,12 @@ namespace iroha {
      */
     TEST_F(BlockQueryTransferTest, SenderAssetName) {
       auto block = makeBlockWithCreator(creator1, creator2, asset, creator1);
-      tx_hashes.push_back(block.transactions().back()->hash());
+      tx_hashes.push_back(block.transactions().back().hash());
       insert(block);
 
-      auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator1, asset), 1);
-      wrapper.subscribe(
-          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), val->hash()); });
-      ASSERT_TRUE(wrapper.validate());
+      auto txs = blocks->getAccountAssetTransactions(creator1, asset);
+      ASSERT_EQ(txs.size(), 1);
+      ASSERT_EQ(txs[0]->hash(), tx_hashes[0]);
     }
 
     /**
@@ -150,14 +140,12 @@ namespace iroha {
      */
     TEST_F(BlockQueryTransferTest, ReceiverAssetName) {
       auto block = makeBlockWithCreator(creator1, creator2, asset, creator1);
-      tx_hashes.push_back(block.transactions().back()->hash());
+      tx_hashes.push_back(block.transactions().back().hash());
       insert(block);
 
-      auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator2, asset), 1);
-      wrapper.subscribe(
-          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), val->hash()); });
-      ASSERT_TRUE(wrapper.validate());
+      auto txs = blocks->getAccountAssetTransactions(creator2, asset);
+      ASSERT_EQ(txs.size(), 1);
+      ASSERT_EQ(txs[0]->hash(), tx_hashes[0]);
     }
 
     /**
@@ -168,14 +156,12 @@ namespace iroha {
      */
     TEST_F(BlockQueryTransferTest, GrantedTransfer) {
       auto block = makeBlockWithCreator(creator1, creator2, asset, creator3);
-      tx_hashes.push_back(block.transactions().back()->hash());
+      tx_hashes.push_back(block.transactions().back().hash());
       insert(block);
 
-      auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator3, asset), 1);
-      wrapper.subscribe(
-          [this](auto val) { ASSERT_EQ(tx_hashes.at(0), val->hash()); });
-      ASSERT_TRUE(wrapper.validate());
+      auto txs = blocks->getAccountAssetTransactions(creator3, asset);
+      ASSERT_EQ(txs.size(), 1);
+      ASSERT_EQ(txs[0]->hash(), tx_hashes[0]);
     }
 
     /**
@@ -187,21 +173,19 @@ namespace iroha {
     TEST_F(BlockQueryTransferTest, TwoBlocks) {
       auto block = makeBlock(creator1, creator2, asset);
 
-      tx_hashes.push_back(block.transactions().back()->hash());
+      tx_hashes.push_back(block.transactions().back().hash());
       insert(block);
 
       auto block2 = makeBlock(creator1, creator2, asset, 2, block.hash());
 
-      tx_hashes.push_back(block.transactions().back()->hash());
+      tx_hashes.push_back(block.transactions().back().hash());
       insert(block2);
 
-      auto wrapper = make_test_subscriber<CallExact>(
-          blocks->getAccountAssetTransactions(creator1, asset), 2);
-      wrapper.subscribe([ i = 0, this ](auto val) mutable {
-        ASSERT_EQ(tx_hashes.at(i), val->hash());
-        ++i;
-      });
-      ASSERT_TRUE(wrapper.validate());
+      auto txs = blocks->getAccountAssetTransactions(creator1, asset);
+      ASSERT_EQ(txs.size(), 2);
+      for (size_t i = 0; i < txs.size(); i++) {
+        ASSERT_EQ(txs[i]->hash(), tx_hashes[i]);
+      }
     }
   }  // namespace ametsuchi
 }  // namespace iroha

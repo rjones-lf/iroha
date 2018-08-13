@@ -20,6 +20,7 @@
 #include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_account_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_asset_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_domain_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_peer_builder.hpp"
 
@@ -40,31 +41,29 @@ namespace iroha {
                             .quorum(1)
                             .jsonData(R"({"id@domain": {"key": "value"}})")
                             .build());
+        role_permissions.set(
+            shared_model::interface::permissions::Role::kAddMySignatory);
+        grantable_permission =
+            shared_model::interface::permissions::Grantable::kAddMySignatory;
       }
 
       void SetUp() override {
         AmetsuchiTest::SetUp();
-        postgres_connection = std::make_unique<pqxx::lazyconnection>(pgopt_);
-        try {
-          postgres_connection->activate();
-        } catch (const pqxx::broken_connection &e) {
-          FAIL() << "Connection to PostgreSQL broken: " << e.what();
-        }
-        wsv_transaction =
-            std::make_unique<pqxx::nontransaction>(*postgres_connection);
+        sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
 
-        command = std::make_unique<PostgresWsvCommand>(*wsv_transaction);
-        query = std::make_unique<PostgresWsvQuery>(*wsv_transaction);
+        command = std::make_unique<PostgresWsvCommand>(*sql);
+        query = std::make_unique<PostgresWsvQuery>(*sql, factory);
 
-        wsv_transaction->exec(init_);
+        *sql << init_;
       }
 
-      std::string role = "role", permission = "permission";
+      std::string role = "role";
+      shared_model::interface::RolePermissionSet role_permissions;
+      shared_model::interface::permissions::Grantable grantable_permission;
       std::unique_ptr<shared_model::interface::Account> account;
       std::unique_ptr<shared_model::interface::Domain> domain;
 
-      std::unique_ptr<pqxx::lazyconnection> postgres_connection;
-      std::unique_ptr<pqxx::nontransaction> wsv_transaction;
+      std::unique_ptr<soci::session> sql;
 
       std::unique_ptr<WsvCommand> command;
       std::unique_ptr<WsvQuery> query;
@@ -98,6 +97,11 @@ namespace iroha {
       ASSERT_EQ(0, roles->size());
     }
 
+    TEST_F(RoleTest, InsertTwoRole) {
+      ASSERT_TRUE(val(command->insertRole("role")));
+      ASSERT_TRUE(err(command->insertRole("role")));
+    }
+
     class RolePermissionsTest : public WsvQueryCommandTest {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
@@ -111,12 +115,11 @@ namespace iroha {
      * @then RolePermissions are inserted
      */
     TEST_F(RolePermissionsTest, InsertRolePermissionsWhenRoleExists) {
-      ASSERT_TRUE(val(command->insertRolePermissions(role, {permission})));
+      ASSERT_TRUE(val(command->insertRolePermissions(role, role_permissions)));
 
       auto permissions = query->getRolePermissions(role);
       ASSERT_TRUE(permissions);
-      ASSERT_EQ(1, permissions->size());
-      ASSERT_EQ(permission, permissions->front());
+      ASSERT_EQ(role_permissions, permissions.get());
     }
 
     /**
@@ -126,11 +129,12 @@ namespace iroha {
      */
     TEST_F(RolePermissionsTest, InsertRolePermissionsWhenNoRole) {
       auto new_role = role + " ";
-      ASSERT_TRUE(err(command->insertRolePermissions(new_role, {permission})));
+      ASSERT_TRUE(
+          err(command->insertRolePermissions(new_role, role_permissions)));
 
       auto permissions = query->getRolePermissions(new_role);
       ASSERT_TRUE(permissions);
-      ASSERT_EQ(0, permissions->size());
+      ASSERT_FALSE(role_permissions.isSubsetOf(*permissions));
     }
 
     class AccountTest : public WsvQueryCommandTest {
@@ -200,7 +204,7 @@ namespace iroha {
 
     /**
      * @given inserted role, domain, account
-     * @when update  json data in account
+     * @when update json data in account
      * @then get account and check json data is the same
      */
     TEST_F(AccountTest, UpdateAccountJSONData) {
@@ -227,7 +231,96 @@ namespace iroha {
      * @then getAccountDetail will return nullopt
      */
     TEST_F(AccountTest, GetAccountDetailInvalidWhenNotFound) {
-      EXPECT_FALSE(query->getAccountDetail("invalid account id"));
+      EXPECT_FALSE(query->getAccountDetail("invalid account id", "", ""));
+    }
+
+    /**
+     * @given details, inserted for one account
+     * @when performing query to retrieve all account's details
+     * @then getAccountDetail will return all details of this account
+     */
+    TEST_F(AccountTest, GetAccountDetailWithAccount) {
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), account->accountId(), "some_key", "some_val")));
+
+      auto acc_details = query->getAccountDetail(account->accountId(), "", "");
+      ASSERT_TRUE(acc_details);
+      ASSERT_EQ(R"({"id@domain": {"key": "value", "some_key": "some_val"}})",
+                *acc_details);
+    }
+
+    /**
+     * @given details, inserted into one account by two writers, with one of the
+     * keys repeated
+     * @when performing query to retrieve details under this key
+     * @then getAccountDetail will return details from both writers under the
+     * specified key
+     */
+    TEST_F(AccountTest, GetAccountDetailWithKey) {
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), account->accountId(), "some_key", "some_val")));
+      ASSERT_TRUE(val(command->setAccountKV(account->accountId(),
+                                            account->accountId(),
+                                            "another_key",
+                                            "another_val")));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), "admin", "some_key", "even_third_val")));
+
+      auto acc_details =
+          query->getAccountDetail(account->accountId(), "some_key", "");
+      ASSERT_TRUE(acc_details);
+      ASSERT_EQ(
+          "{ \"admin\" : {\"some_key\" : \"even_third_val\"}, "
+            "\"id@domain\" : {\"some_key\" : \"some_val\"} }",
+          *acc_details);
+    }
+
+    /**
+     * @given details, inserted into one account by two writers
+     * @when performing query to retrieve details, added by one of the writers
+     * @then getAccountDetail will return only details, added by the specified
+     * writer
+     */
+    TEST_F(AccountTest, GetAccountDetailWithWriter) {
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), account->accountId(), "some_key", "some_val")));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), "admin", "another_key", "another_val")));
+
+      auto acc_details =
+          query->getAccountDetail(account->accountId(), "", "admin");
+      ASSERT_TRUE(acc_details);
+      ASSERT_EQ(R"({"admin" : {"another_key": "another_val"}})",
+                *acc_details);
+    }
+
+    /**
+     * @given details, inserted into one account by two writers, with one of the
+     * keys repeated
+     * @when performing query to retrieve details under this key and added by
+     * one of the writers
+     * @then getAccountDetail will return only details, which are under the
+     * specified key and added by the specified writer
+     */
+    TEST_F(AccountTest, GetAccountDetailWithKeyAndWriter) {
+      ASSERT_TRUE(val(command->insertAccount(*account)));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), account->accountId(), "some_key", "some_val")));
+      ASSERT_TRUE(val(command->setAccountKV(account->accountId(),
+                                            account->accountId(),
+                                            "another_key",
+                                            "another_val")));
+      ASSERT_TRUE(val(command->setAccountKV(
+          account->accountId(), "admin", "some_key", "even_third_val")));
+
+      auto acc_details = query->getAccountDetail(
+          account->accountId(), "some_key", account->accountId());
+      ASSERT_TRUE(acc_details);
+      ASSERT_EQ(R"({"id@domain" : {"some_key" : "some_val"}})",
+                *acc_details);
     }
 
     class AccountRoleTest : public WsvQueryCommandTest {
@@ -351,10 +444,14 @@ namespace iroha {
     TEST_F(AccountGrantablePermissionTest,
            InsertAccountGrantablePermissionWhenAccountsExist) {
       ASSERT_TRUE(val(command->insertAccountGrantablePermission(
-          permittee_account->accountId(), account->accountId(), permission)));
+          permittee_account->accountId(),
+          account->accountId(),
+          grantable_permission)));
 
-      ASSERT_TRUE(query->hasAccountGrantablePermission(
-          permittee_account->accountId(), account->accountId(), permission));
+      ASSERT_TRUE(
+          query->hasAccountGrantablePermission(permittee_account->accountId(),
+                                               account->accountId(),
+                                               grantable_permission));
     }
 
     /**
@@ -366,20 +463,20 @@ namespace iroha {
            InsertAccountGrantablePermissionWhenNoPermitteeAccount) {
       auto permittee_account_id = permittee_account->accountId() + " ";
       ASSERT_TRUE(err(command->insertAccountGrantablePermission(
-          permittee_account_id, account->accountId(), permission)));
+          permittee_account_id, account->accountId(), grantable_permission)));
 
       ASSERT_FALSE(query->hasAccountGrantablePermission(
-          permittee_account_id, account->accountId(), permission));
+          permittee_account_id, account->accountId(), grantable_permission));
     }
 
     TEST_F(AccountGrantablePermissionTest,
            InsertAccountGrantablePermissionWhenNoAccount) {
       auto account_id = account->accountId() + " ";
       ASSERT_TRUE(err(command->insertAccountGrantablePermission(
-          permittee_account->accountId(), account_id, permission)));
+          permittee_account->accountId(), account_id, grantable_permission)));
 
       ASSERT_FALSE(query->hasAccountGrantablePermission(
-          permittee_account->accountId(), account_id, permission));
+          permittee_account->accountId(), account_id, grantable_permission));
     }
 
     /**
@@ -390,10 +487,14 @@ namespace iroha {
     TEST_F(AccountGrantablePermissionTest,
            DeleteAccountGrantablePermissionWhenAccountsPermissionExist) {
       ASSERT_TRUE(val(command->deleteAccountGrantablePermission(
-          permittee_account->accountId(), account->accountId(), permission)));
+          permittee_account->accountId(),
+          account->accountId(),
+          grantable_permission)));
 
-      ASSERT_FALSE(query->hasAccountGrantablePermission(
-          permittee_account->accountId(), account->accountId(), permission));
+      ASSERT_FALSE(
+          query->hasAccountGrantablePermission(permittee_account->accountId(),
+                                               account->accountId(),
+                                               grantable_permission));
     }
 
     class DeletePeerTest : public WsvQueryCommandTest {
@@ -445,19 +546,14 @@ namespace iroha {
       // skip database setup
       void SetUp() override {
         AmetsuchiTest::SetUp();
-        postgres_connection = std::make_unique<pqxx::lazyconnection>(pgopt_);
-        try {
-          postgres_connection->activate();
-        } catch (const pqxx::broken_connection &e) {
-          FAIL() << "Connection to PostgreSQL broken: " << e.what();
-        }
-        wsv_transaction =
-            std::make_unique<pqxx::nontransaction>(*postgres_connection);
+        sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
 
-        command = std::make_unique<PostgresWsvCommand>(*wsv_transaction);
-        query = std::make_unique<PostgresWsvQuery>(*wsv_transaction);
+        command = std::make_unique<PostgresWsvCommand>(*sql);
+        query = std::make_unique<PostgresWsvQuery>(*sql, factory);
       }
     };
+
+    std::unique_ptr<soci::session> sql;
 
     /**
      * @given not set up database

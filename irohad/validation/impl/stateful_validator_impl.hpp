@@ -17,6 +17,7 @@
 #ifndef IROHA_STATEFUL_VALIDATIOR_IMPL_HPP
 #define IROHA_STATEFUL_VALIDATIOR_IMPL_HPP
 
+#include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "validation/stateful_validator.hpp"
 
 #include "logger/logger.hpp"
@@ -29,35 +30,18 @@ namespace iroha {
      */
     class StatefulValidatorImpl : public StatefulValidator {
      public:
-      StatefulValidatorImpl();
+      explicit StatefulValidatorImpl(
+          std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+              factory);
 
-      /**
-       * Function perform stateful validation on proposal
-       * and return proposal with valid transactions
-       * @param proposal - proposal for validation
-       * @param wsv  - temporary wsv for validation,
-       * this wsv not affected on ledger,
-       * all changes after removing wsv will be ignored
-       * @return proposal with valid transactions
-       */
-      std::shared_ptr<shared_model::interface::Proposal> validate(
+      VerifiedProposalAndErrors validate(
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) override;
 
-     private:
-      /**
-       * Checks if public keys of signatures are present in vector of pubkeys
-       * @param signatures - collection of signatures
-       * @param public_keys - collection of public keys
-       * @return true, if all public keys of signatures are present in vector of
-       * pubkeys
-       */
-      bool signaturesSubset(
-          const shared_model::interface::types::SignatureRangeType &signatures,
-          const std::vector<shared_model::crypto::PublicKey> &public_keys);
-
+      std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory_;
       logger::Logger log_;
     };
+
   }  // namespace validation
 }  // namespace iroha
 

@@ -24,14 +24,14 @@ RUN set -e; \
         # dev dependencies
         libssl-dev zlib1g-dev libcurl4-openssl-dev libc6-dbg golang \
         # CI dependencies
-        git ssh tar gzip ca-certificates \
+        git ssh tar gzip ca-certificates gnupg \
         # Pythons
         python-pip python3-pip python3-setuptools python-dev \
         # SWIG dependencies
         libpcre3-dev autoconf bison  \
         # other
-        wget curl file gdb ccache \
-        gcovr cppcheck doxygen graphviz graphviz-dev unzip zip; \
+        wget curl file gdb gdbserver ccache \
+        gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip zip; \
     apt-get -y clean
 
 # install cmake 3.10.2
@@ -49,7 +49,7 @@ RUN set -e; \
     git clone https://github.com/boostorg/boost /tmp/boost; \
     (cd /tmp/boost ; git checkout 436ad1dfcfc7e0246141beddd11c8a4e9c10b146); \
     (cd /tmp/boost ; git submodule update --init --recursive); \
-    (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=system,filesystem); \
+    (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=system,filesystem,thread); \
     (cd /tmp/boost ; /tmp/boost/b2 headers); \
     (cd /tmp/boost ; /tmp/boost/b2 cxxflags="-std=c++14" -j ${PARALLELISM} install); \
     ldconfig; \
@@ -177,17 +177,25 @@ RUN set -e; \
     # remove
     rm -rf /tmp/postgresql
 
-# install pqxx
+# install soci 3.2.3
 RUN set -e; \
-    git clone https://github.com/jtv/libpqxx /tmp/libpqxx; \
-    (cd /tmp/libpqxx ; git checkout 5b17abce5ac2b1a2f8278718405b7ade8bb30ae9); \
-    curl -L -o /tmp/libpqxx/config/config.guess 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=6b2374c79506ee82a8b440f6d1ca293e2e2e2463'; \
-    curl -L -o /tmp/libpqxx/config/config.sub 'http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=6b2374c79506ee82a8b440f6d1ca293e2e2e2463'; \
-    (cd /tmp/libpqxx ; /tmp/libpqxx/configure --disable-documentation --with-pic); \
-    make -j${PARALLELISM} -C /tmp/libpqxx; \
-    make -C /tmp/libpqxx install; \
+    git clone https://github.com/SOCI/soci /tmp/soci; \
+    (cd /tmp/soci ; git checkout 111b50af8c3876ea392367640b4bd83b4f903ab8); \
+    cmake \
+        -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
+        -DWITH_BOOST=ON \
+        -DWITH_DB2=OFF \
+        -DWITH_FIREBIRD=OFF \
+        -DWITH_MYSQL=OFF \
+        -DWITH_ODBC=OFF \
+        -DWITH_ORACLE=OFF \
+        -DWITH_POSTGRESQL=ON \
+        -DWITH_SQLITE3=OFF \
+        -H/tmp/soci/src \
+        -B/tmp/soci/build; \
+    cmake --build /tmp/soci/build --target install; \
     ldconfig; \
-    rm -rf /tmp/libpqxx
+    rm -rf /tmp/soci
 
 # install tbb
 RUN set -e; \
@@ -213,7 +221,7 @@ RUN set -e; \
 # install ed25519
 RUN set -e; \
     git clone git://github.com/hyperledger/iroha-ed25519.git /tmp/ed25519; \
-    (cd /tmp/ed25519 ; git checkout e7188b8393dbe5ac54378610d53630bd4a180038); \
+    (cd /tmp/ed25519 ; git checkout f42953c631fae93011612f6b1ee33f1f88c3f8af); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DTESTING=OFF \

@@ -18,50 +18,24 @@
 #ifndef IROHA_SHARED_MODEL_GET_ACCOUNT_ASSETS_HPP
 #define IROHA_SHARED_MODEL_GET_ACCOUNT_ASSETS_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/get_account_assets.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Query for get all account's assets and balance
      */
-    class GetAccountAssets : public PRIMITIVE(GetAccountAssets) {
+    class GetAccountAssets : public ModelPrimitive<GetAccountAssets> {
      public:
       /**
        * @return account identifier
        */
       virtual const types::AccountIdType &accountId() const = 0;
-      /**
-       * @return asset identifier
-       */
-      virtual const types::AssetIdType &assetId() const = 0;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::GetAccountAssets;
-        oldModel->account_id = accountId();
-        oldModel->asset_id = assetId();
-        return oldModel;
-      }
+      std::string toString() const override;
 
-#endif
-
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("GetAccountAssets")
-            .append("account_id", accountId())
-            .append("asset_id", assetId())
-            .finalize();
-      }
-
-      bool operator==(const ModelType &rhs) const override {
-        return accountId() == rhs.accountId() and assetId() == rhs.accountId();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

@@ -28,7 +28,7 @@ namespace shared_model {
      * PeerBuilder is used to construct Peer proto objects with initialized
      * protobuf implementation
      */
-    class PeerBuilder {
+    class DEPRECATED PeerBuilder {
      public:
       shared_model::proto::Peer build() {
         return shared_model::proto::Peer(iroha::protocol::Peer(peer_));

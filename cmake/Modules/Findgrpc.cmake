@@ -15,6 +15,9 @@ mark_as_advanced(grpc_grpc++_LIBRARY)
 find_library(gpr_LIBRARY gpr)
 mark_as_advanced(gpr_LIBRARY)
 
+find_library(address_sorting_LIBRARY address_sorting)
+mark_as_advanced(address_sorting_LIBRARY)
+
 find_program(grpc_CPP_PLUGIN grpc_cpp_plugin)
 mark_as_advanced(grpc_CPP_PLUGIN)
 
@@ -29,6 +32,12 @@ set(URL https://github.com/grpc/grpc)
 set(VERSION bd44e485f69d70ca4095cea92decd98de3892aa6) # Release 1.11.0
 set_target_description(grpc "Remote Procedure Call library" ${URL} ${VERSION})
 
+if (NOT protobuf_FOUND)
+  set(PROTO_DEP -DgRPC_PROTOBUF_PACKAGE_TYPE=CONFIG -DProtobuf_DIR=${EP_PREFIX}/src/google_protobuf-build/lib/cmake/protobuf)
+else ()
+  set(PROTO_DEP -DgRPC_PROTOBUF_PACKAGE_TYPE=MODULE)
+endif ()
+
 if (NOT grpc_FOUND)
   find_package(Git REQUIRED)
   externalproject_add(grpc_grpc
@@ -36,8 +45,7 @@ if (NOT grpc_FOUND)
       GIT_TAG        ${VERSION}
       CMAKE_ARGS
         -DgRPC_PROTOBUF_PROVIDER=package
-        -DgRPC_PROTOBUF_PACKAGE_TYPE=CONFIG
-        -DProtobuf_DIR=${EP_PREFIX}/src/google_protobuf-build/lib/cmake/protobuf
+        ${PROTO_DEP}
         -DgRPC_ZLIB_PROVIDER=package
         -DBUILD_SHARED_LIBS=ON
       BUILD_BYPRODUCTS
@@ -54,6 +62,7 @@ if (NOT grpc_FOUND)
   set(gpr_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}gpr${CMAKE_SHARED_LIBRARY_SUFFIX})
   set(grpc_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}grpc${CMAKE_SHARED_LIBRARY_SUFFIX})
   set(grpc_grpc++_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}grpc++${CMAKE_SHARED_LIBRARY_SUFFIX})
+  set(address_sorting_LIBRARY ${binary_dir}/${CMAKE_SHARED_LIBRARY_PREFIX}address_sorting${CMAKE_SHARED_LIBRARY_SUFFIX})
   set(grpc_CPP_PLUGIN ${binary_dir}/grpc_cpp_plugin)
   file(MAKE_DIRECTORY ${grpc_INCLUDE_DIR})
   link_directories(${binary_dir})
@@ -88,4 +97,5 @@ if(ENABLE_LIBS_PACKAGING)
   add_install_step_for_lib(${grpc_LIBRARY})
   add_install_step_for_lib(${grpc_grpc++_LIBRARY})
   add_install_step_for_lib(${gpr_LIBRARY})
+  add_install_step_for_lib(${address_sorting_LIBRARY})
 endif()

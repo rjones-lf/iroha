@@ -63,6 +63,7 @@ TEST_F(JsonTransactionTest, InvalidWhenNegativeAddAssetQuantity) {
     ],
     "created_ts": 1503845603221,
     "creator_account_id": "admin@test",
+    "quorum": 5,
     "commands": [
         {
             "command_type": "CreateAsset",

@@ -75,10 +75,22 @@ namespace shared_model {
       return copy;
     }
 
+    TransactionStatusBuilder TransactionStatusBuilder::mstExpired() {
+      TransactionStatusBuilder copy(*this);
+      copy.tx_response_.set_tx_status(iroha::protocol::TxStatus::MST_EXPIRED);
+      return copy;
+    }
+
     TransactionStatusBuilder TransactionStatusBuilder::txHash(
         const crypto::Hash &hash) {
       TransactionStatusBuilder copy(*this);
       copy.tx_response_.set_tx_hash(crypto::toBinaryString(hash));
+      return copy;
+    }
+
+    TransactionStatusBuilder TransactionStatusBuilder::errorMsg(const std::string &msg) {
+      TransactionStatusBuilder copy(*this);
+      copy.tx_response_.set_error_message(msg);
       return copy;
     }
 

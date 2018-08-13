@@ -2,7 +2,7 @@ import sys
 sys.path.insert(0, 'build/shared_model/bindings')
 import iroha
 
-import block_pb2
+import transaction_pb2
 import endpoint_pb2
 import endpoint_pb2_grpc
 import queries_pb2
@@ -13,8 +13,6 @@ import time
 tx_builder = iroha.ModelTransactionBuilder()
 query_builder = iroha.ModelQueryBuilder()
 crypto = iroha.ModelCrypto()
-proto_tx_helper = iroha.ModelProtoTransaction()
-proto_query_helper = iroha.ModelProtoQuery()
 
 admin_priv = open("../admin@test.priv", "r").read()
 admin_pub = open("../admin@test.pub", "r").read()
@@ -83,8 +81,8 @@ def print_status_streaming(tx):
 
 
 def send_tx(tx, key_pair):
-    tx_blob = proto_tx_helper.signAndAddSignature(tx, key_pair).blob()
-    proto_tx = block_pb2.Transaction()
+    tx_blob = iroha.ModelProtoTransaction(tx).signAndAddSignature(key_pair).finish().blob()
+    proto_tx = transaction_pb2.Transaction()
 
     if sys.version_info[0] == 2:
         tmp = ''.join(map(chr, tx_blob))
@@ -100,7 +98,7 @@ def send_tx(tx, key_pair):
 
 
 def send_query(query, key_pair):
-    query_blob = proto_query_helper.signAndAddSignature(query, key_pair).blob()
+    query_blob = iroha.ModelProtoQuery(query).signAndAddSignature(key_pair).finish().blob()
 
     proto_query = queries_pb2.Query()
 
@@ -137,7 +135,7 @@ def add_coin_to_admin():
     """
     tx = tx_builder.creatorAccountId(creator) \
         .createdTime(current_time) \
-        .addAssetQuantity("admin@test", "coin#domain", "1000.00").build()
+        .addAssetQuantity("coin#domain", "1000.00").build()
 
     send_tx(tx, key_pair)
     print_status_streaming(tx)
@@ -171,7 +169,7 @@ def grant_admin_to_add_detail_to_userone():
     """
     tx = tx_builder.creatorAccountId("userone@domain") \
         .createdTime(current_time) \
-        .grantPermission(creator, "can_set_my_account_detail") \
+        .grantPermission(creator, iroha.Grantable_kSetMyAccountDetail) \
         .build()
 
     send_tx(tx, user1_kp)
@@ -223,7 +221,7 @@ def get_account_asset():
     query = query_builder.creatorAccountId(creator) \
         .createdTime(current_time) \
         .queryCounter(query_counter) \
-        .getAccountAssets("userone@domain", "coin#domain") \
+        .getAccountAssets("userone@domain") \
         .build()
 
     query_response = send_query(query, key_pair)

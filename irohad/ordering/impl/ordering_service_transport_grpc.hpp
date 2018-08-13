@@ -19,21 +19,22 @@
 
 #include <google/protobuf/empty.pb.h>
 
-#include "block.pb.h"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_service_transport.hpp"
 #include "ordering.grpc.pb.h"
+#include "transaction.pb.h"
 
 namespace iroha {
   namespace ordering {
 
     class OrderingServiceTransportGrpc
         : public iroha::network::OrderingServiceTransport,
-          public proto::OrderingServiceTransportGrpc::Service,
-          network::AsyncGrpcClient<google::protobuf::Empty> {
+          public proto::OrderingServiceTransportGrpc::Service {
      public:
-      OrderingServiceTransportGrpc();
+      explicit OrderingServiceTransportGrpc(
+          std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+              async_call);
       void subscribe(
           std::shared_ptr<iroha::network::OrderingServiceNotification>
               subscriber) override;
@@ -46,10 +47,16 @@ namespace iroha {
                                  const protocol::Transaction *request,
                                  ::google::protobuf::Empty *response) override;
 
+      grpc::Status onBatch(::grpc::ServerContext *context,
+                           const protocol::TxList *request,
+                           ::google::protobuf::Empty *response) override;
+
       ~OrderingServiceTransportGrpc() = default;
 
      private:
       std::weak_ptr<iroha::network::OrderingServiceNotification> subscriber_;
+      std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+          async_call_;
     };
 
   }  // namespace ordering

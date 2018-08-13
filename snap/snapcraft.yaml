@@ -42,7 +42,7 @@ parts:
       - rxcpp
       - rapidjson
       - libpq
-      - pqxx
+      - soci
       - tbb
       - ed25519
   cmake:
@@ -88,7 +88,7 @@ parts:
      - -DgRPC_PROTOBUF_PROVIDER=package
      - -DgRPC_GFLAGS_PROVIDER=package
      - -DBUILD_SHARED_LIBS=ON
-    after: [cmake, protobuf, c-ares]
+    after: [cmake, protobuf, c-ares, gflags]
   spdlog:
     source: https://github.com/gabime/spdlog.git
     source-commit: f85a08622e20b74bff34381cafcb8ef8167b29d0
@@ -120,12 +120,21 @@ parts:
       make -C src/bin/pg_config install DESTDIR=$SNAPCRAFT_PART_INSTALL
       make -C src/interfaces/libpq install DESTDIR=$SNAPCRAFT_PART_INSTALL
       make -C src/include install DESTDIR=$SNAPCRAFT_PART_INSTALL
-  pqxx:
-    source: https://github.com/jtv/libpqxx.git
-    source-commit: 5b17abce5ac2b1a2f8278718405b7ade8bb30ae9
-    plugin: autotools
-    configflags: [--disable-documentation, --with-pic]
-    after: [libpq]
+  soci:
+    source: https://github.com/SOCI/soci.git
+    source-commit: 111b50af8c3876ea392367640b4bd83b4f903ab8
+    plugin: cmake
+    configflags:
+     - -DWITH_BOOST=ON
+     - -DWITH_DB2=OFF
+     - -DWITH_FIREBIRD=OFF
+     - -DWITH_MYSQL=OFF
+     - -DWITH_ODBC=OFF
+     - -DWITH_ORACLE=OFF
+     - -DWITH_POSTGRESQL=ON
+     - -DWITH_SQLITE3=OFF
+     - -DCMAKE_INSTALL_PREFIX=/
+    after: [cmake, boost, libpq]
   tbb:
     source: https://github.com/01org/tbb.git
     source-commit: eb6336ad29450f2a64af5123ca1b9429ff6bc11d
@@ -141,7 +150,7 @@ parts:
       mv $SNAPCRAFT_PART_INSTALL/include $SNAPCRAFT_PART_INSTALL/usr/local/include
   ed25519:
     source: https://github.com/hyperledger/iroha-ed25519.git
-    source-commit: e7188b8393dbe5ac54378610d53630bd4a180038
+    source-commit: f42953c631fae93011612f6b1ee33f1f88c3f8af
     plugin: cmake
     configflags: [-DTESTING=OFF]
     after: [cmake]

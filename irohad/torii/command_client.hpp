@@ -22,6 +22,8 @@ limitations under the License.
 #include <memory>
 #include <thread>
 
+#include "logger/logger.hpp"
+
 namespace torii {
 
   /**
@@ -43,6 +45,13 @@ namespace torii {
      * @return grpc::Status - returns connection is success or not.
      */
     grpc::Status Torii(const iroha::protocol::Transaction &tx) const;
+
+    /**
+     * requests list of txs to a torii server and returns response
+     * @param tx_list
+     * @return grpc::Status - returns connection is success or not.
+     */
+    grpc::Status ListTorii(const iroha::protocol::TxList &tx_list) const;
 
     /**
      * @param tx
@@ -67,6 +76,7 @@ namespace torii {
     std::string ip_;
     size_t port_;
     std::unique_ptr<iroha::protocol::CommandService::Stub> stub_;
+    logger::Logger log_;
   };
 
 }  // namespace torii

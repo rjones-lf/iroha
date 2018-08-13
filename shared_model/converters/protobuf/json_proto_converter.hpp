@@ -34,7 +34,7 @@ namespace shared_model {
        * @return json string
        */
       template <typename T>
-      std::string modelToJson(T message) {
+      std::string modelToJson(const T &message) {
         std::string result;
         google::protobuf::util::MessageToJsonString(message.getTransport(),
                                                     &result);

@@ -1,30 +1,17 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_POSTGRES_FLAT_BLOCK_QUERY_HPP
 #define IROHA_POSTGRES_FLAT_BLOCK_QUERY_HPP
 
 #include <boost/optional.hpp>
-#include <pqxx/nontransaction>
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
+#include "ametsuchi/impl/soci_utils.hpp"
 #include "logger/logger.hpp"
-#include "postgres_wsv_common.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -36,33 +23,37 @@ namespace iroha {
      */
     class PostgresBlockQuery : public BlockQuery {
      public:
-      PostgresBlockQuery(pqxx::nontransaction &transaction_,
-                         FlatFile &file_store);
+      explicit PostgresBlockQuery(soci::session &sql,
+                                  KeyValueStorage &file_store);
 
-      rxcpp::observable<wTransaction> getAccountTransactions(
+      std::vector<wTransaction> getAccountTransactions(
           const shared_model::interface::types::AccountIdType &account_id)
           override;
 
-      rxcpp::observable<wTransaction> getAccountAssetTransactions(
+      std::vector<wTransaction> getAccountAssetTransactions(
           const shared_model::interface::types::AccountIdType &account_id,
           const shared_model::interface::types::AssetIdType &asset_id) override;
 
-      rxcpp::observable<boost::optional<wTransaction>> getTransactions(
+      std::vector<boost::optional<wTransaction>> getTransactions(
           const std::vector<shared_model::crypto::Hash> &tx_hashes) override;
 
       boost::optional<wTransaction> getTxByHashSync(
           const shared_model::crypto::Hash &hash) override;
 
-      rxcpp::observable<wBlock> getBlocks(
+      std::vector<wBlock> getBlocks(
           shared_model::interface::types::HeightType height,
           uint32_t count) override;
 
-      rxcpp::observable<wBlock> getBlocksFrom(
+      std::vector<wBlock> getBlocksFrom(
           shared_model::interface::types::HeightType height) override;
 
-      rxcpp::observable<wBlock> getTopBlocks(uint32_t count) override;
+      std::vector<wBlock> getTopBlocks(uint32_t count) override;
+
+      uint32_t getTopBlockHeight() override;
 
       bool hasTxWithHash(const shared_model::crypto::Hash &hash) override;
+
+      expected::Result<wBlock, std::string> getTopBlock() override;
 
      private:
       /**
@@ -88,14 +79,13 @@ namespace iroha {
        * @param block_id
        * @return
        */
-      std::function<void(pqxx::result &result)> callback(
-          const rxcpp::subscriber<wTransaction> &s, uint64_t block_id);
+      std::function<void(std::vector<std::string> &result)> callback(
+          std::vector<wTransaction> &s, uint64_t block_id);
 
-      FlatFile &block_store_;
-      pqxx::nontransaction &transaction_;
+      soci::session &sql_;
+
+      KeyValueStorage &block_store_;
       logger::Logger log_;
-      using ExecuteType = decltype(makeExecuteOptional(transaction_, log_));
-      ExecuteType execute_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

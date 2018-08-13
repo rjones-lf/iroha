@@ -27,6 +27,9 @@ target_link_libraries(server_runner
 add_library(raw_block_loader impl/raw_block_loader.cpp)
 target_link_libraries(raw_block_loader
     shared_model_interfaces
+    shared_model_proto_backend
+    shared_model_stateless_validation
+    logger
     )
 
 add_library(application
@@ -50,6 +53,7 @@ target_link_libraries(application
     simulator
     block_loader
     block_loader_service
+    mst_processor
     torii_service
     )
 

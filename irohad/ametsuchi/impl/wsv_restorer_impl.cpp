@@ -28,13 +28,10 @@ namespace iroha {
     expected::Result<void, std::string> WsvRestorerImpl::restoreWsv(
         Storage &storage) {
       // get all blocks starting from the genesis
-      std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
-      storage.getBlockQuery()->getBlocksFrom(1).as_blocking().subscribe(
-          [&blocks](auto block) {
-            blocks.push_back(std::move(block));
-          });
+      std::vector<std::shared_ptr<shared_model::interface::Block>> blocks=
+      storage.getBlockQuery()->getBlocksFrom(1);
 
-      storage.dropStorage();
+      storage.reset();
 
       if (not storage.insertBlocks(blocks))
         return expected::makeError("cannot insert blocks");

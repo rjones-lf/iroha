@@ -18,62 +18,24 @@
 #ifndef IROHA_SHARED_MODEL_ACCOUNT_DETAIL_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_ACCOUNT_DETAIL_RESPONSE_HPP
 
-#include "interfaces/base/primitive.hpp"
-#include "interfaces/common_objects/account_asset.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/string_builder.hpp"
-#include "utils/visitor_apply_for_all.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/queries/responses/account_detail_response.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
     /**
      * Provide response with account asset
      */
-    class AccountDetailResponse : public PRIMITIVE(AccountDetailResponse) {
+    class AccountDetailResponse : public ModelPrimitive<AccountDetailResponse> {
      public:
-      /// Detail
-      using DetailType = std::string;
       /**
        * @return Account has Asset model
        */
-      virtual const DetailType &detail() const = 0;
+      virtual const types::DetailType &detail() const = 0;
 
-      /**
-       * Stringify the data.
-       * @return string representation of data.
-       */
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("AccountDetailResponse")
-            .append(detail())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      /**
-       * Implementation of operator ==
-       * @param rhs - the right-hand side of AccountAssetResponse object
-       * @return true if they are same.
-       */
-      bool operator==(const ModelType &rhs) const override {
-        return detail() == rhs.detail();
-      }
-
-#ifndef DISABLE_BACKWARD
-      /**
-       * Makes old model.
-       * @return An allocated old model of account asset response.
-       */
-      OldModelType *makeOldModel() const override {
-        OldModelType *oldModel = new OldModelType();
-        oldModel->detail = detail();
-        return oldModel;
-      }
-
-#endif
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

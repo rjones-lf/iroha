@@ -38,11 +38,10 @@ Install Iroha Python Libraries
 
   .. code:: sh
 
-      cmake -H. -Bbuild -DSWIG_PYTHON=ON -DSHARED_MODEL_DISABLE_COMPATIBILITY=ON -DSUPPORT_PYTHON2=ON;
+      cmake -H. -Bbuild -DSWIG_PYTHON=ON -DSUPPORT_PYTHON2=ON;
       cmake --build build --target irohapy
 
       - SWIG_PYTHON=ON forces to build bindings for Python.
-      - SHARED_MODEL_DISABLE_COMPATIBILITY=ON disables backward compatibility with old model of Iroha. Since you want to build only client library you don't need to have the compatibility.
       - SUPPORT_PYTHON2=ON shows that bindings will be built for Python 2. For Python 3 skip this parameter.
 
   After this you can find Iroha python library in **iroha/build/shared_model/bindings** folder, where you have previously cloned repository.
@@ -75,8 +74,8 @@ Building Protobuf Files
     echo "schema" >> iroha-schema/.git/info/sparse-checkout
     git -C iroha-schema pull schema develop
     cd iroha-schema
-    protoc --proto_path=schema --python_out=. block.proto primitive.proto commands.proto queries.proto responses.proto endpoint.proto
-    python -m grpc_tools.protoc --proto_path=schema --python_out=. --grpc_python_out=. endpoint.proto yac.proto ordering.proto loader.proto
+    protoc --proto_path=shared_model/schema --python_out=. shared_model/schema/*.proto
+    python -m grpc_tools.protoc --proto_path=shared_model/schema --python_out=. --grpc_python_out=. shared_model/schema/endpoint.proto
 
 Protobuf files can be found in **iroha-schema** folder ('\*_pb2\*.py' files)
 
@@ -243,7 +242,7 @@ Create asset quantity:
 
   tx = tx_builder.creatorAccountId(creator) \
         .createdTime(current_time) \
-        .addAssetQuantity("admin@test", "coin#domain", "1000.2").build()
+        .addAssetQuantity("coin#domain", "1000.2").build()
 
   send_tx(tx, key_pair)
   print_status(tx)

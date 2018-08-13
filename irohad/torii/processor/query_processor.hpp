@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_QUERY_PROCESSOR_HPP
@@ -20,8 +8,16 @@
 
 #include <rxcpp/rx.hpp>
 
-#include "interfaces/queries/query.hpp"
-#include "interfaces/query_responses/query_response.hpp"
+#include <memory>
+
+namespace shared_model {
+  namespace interface {
+    class Query;
+    class BlocksQuery;
+    class QueryResponse;
+    class BlockQueryResponse;
+  }  // namespace interface
+}  // namespace shared_model
 
 namespace iroha {
   namespace torii {
@@ -32,20 +28,20 @@ namespace iroha {
     class QueryProcessor {
      public:
       /**
-       * Register client query
-       * @param client - query emitter
-       * @param query - client intent
+       * Perform client query
+       * @param qry - client intent
+       * @return resulted response
        */
-      virtual void queryHandle(
-          std::shared_ptr<shared_model::interface::Query> qry) = 0;
-
+      virtual std::unique_ptr<shared_model::interface::QueryResponse>
+      queryHandle(const shared_model::interface::Query &qry) = 0;
       /**
-       * Subscribe for query responses
-       * @return observable with query responses
+       * Register client blocks query
+       * @param query - client intent
+       * @return observable with block query responses
        */
       virtual rxcpp::observable<
-          std::shared_ptr<shared_model::interface::QueryResponse>>
-      queryNotifier() = 0;
+          std::shared_ptr<shared_model::interface::BlockQueryResponse>>
+      blocksQueryHandle(const shared_model::interface::BlocksQuery &qry) = 0;
 
       virtual ~QueryProcessor(){};
     };

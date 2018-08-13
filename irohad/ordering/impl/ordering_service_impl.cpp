@@ -4,12 +4,14 @@
  */
 
 #include "ordering/impl/ordering_service_impl.hpp"
+
 #include <algorithm>
 #include <iterator>
+
+#include <boost/range/adaptor/indirected.hpp>
+
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "ametsuchi/peer_query.hpp"
-#include "backend/protobuf/proposal.hpp"
-#include "backend/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
 #include "network/ordering_service_transport.hpp"
 
@@ -22,13 +24,15 @@ namespace iroha {
         std::shared_ptr<network::OrderingServiceTransport> transport,
         std::shared_ptr<ametsuchi::OrderingServicePersistentState>
             persistent_state,
+        std::unique_ptr<shared_model::interface::ProposalFactory> factory,
         bool is_async)
         : wsv_(wsv),
           max_size_(max_size),
+          current_size_(0),
           transport_(transport),
-          persistent_state_(persistent_state) {
-      log_ = logger::log("OrderingServiceImpl");
-
+          persistent_state_(persistent_state),
+          factory_(std::move(factory)),
+          log_(logger::log("OrderingServiceImpl")) {
       // restore state of ordering service from persistent storage
       proposal_height_ = persistent_state_->loadProposalHeight().value();
 
@@ -43,8 +47,8 @@ namespace iroha {
                           switch (v) {
                             case ProposalEvent::kTimerEvent:
                               return not queue_.empty();
-                            case ProposalEvent::kTransactionEvent:
-                              return queue_.unsafe_size() >= max_size_;
+                            case ProposalEvent::kBatchEvent:
+                              return current_size_.load() >= max_size_;
                             default:
                               BOOST_ASSERT_MSG(false, "Unknown value");
                           }
@@ -64,44 +68,56 @@ namespace iroha {
       }
     }
 
-    void OrderingServiceImpl::onTransaction(
-        std::shared_ptr<shared_model::interface::Transaction> transaction) {
-      queue_.push(transaction);
-      log_->info("Queue size is {}", queue_.unsafe_size());
+    void OrderingServiceImpl::onBatch(
+        shared_model::interface::TransactionBatch &&batch) {
+      std::shared_lock<std::shared_timed_mutex> batch_prop_lock(
+          batch_prop_mutex_);
 
-      // on_next calls should not be concurrent
-      std::lock_guard<std::mutex> lk(mutex_);
-      transactions_.get_subscriber().on_next(ProposalEvent::kTransactionEvent);
+      current_size_.fetch_add(batch.transactions().size());
+      queue_.push(std::make_unique<shared_model::interface::TransactionBatch>(
+          std::move(batch)));
+      log_->info("Queue size is {}", current_size_.load());
+
+      batch_prop_lock.unlock();
+
+      std::lock_guard<std::mutex> event_lock(event_mutex_);
+      transactions_.get_subscriber().on_next(ProposalEvent::kBatchEvent);
     }
 
     void OrderingServiceImpl::generateProposal() {
-      // TODO 05/03/2018 andrei IR-1046 Server-side shared model object
-      // factories with move semantics
-      iroha::protocol::Proposal proto_proposal;
-      proto_proposal.set_height(proposal_height_++);
-      proto_proposal.set_created_time(iroha::time::now());
+      std::lock_guard<std::shared_timed_mutex> lock(batch_prop_mutex_);
       log_->info("Start proposal generation");
-      for (std::shared_ptr<shared_model::interface::Transaction> tx;
-           static_cast<size_t>(proto_proposal.transactions_size()) < max_size_
-           and queue_.try_pop(tx);) {
-        *proto_proposal.add_transactions() =
-            std::move(static_cast<shared_model::proto::Transaction *>(tx.get())
-                          ->getTransport());
+      std::vector<std::shared_ptr<shared_model::interface::Transaction>> txs;
+      for (std::unique_ptr<shared_model::interface::TransactionBatch> batch;
+           txs.size() < max_size_ and queue_.try_pop(batch);) {
+        auto batch_size = batch->transactions().size();
+        txs.insert(std::end(txs),
+            std::make_move_iterator(std::begin(batch->transactions())),
+            std::make_move_iterator(std::end(batch->transactions())));
+        current_size_ -= batch_size;
       }
 
-      auto proposal = std::make_unique<shared_model::proto::Proposal>(
-          std::move(proto_proposal));
+      auto tx_range = txs | boost::adaptors::indirected;
+      auto proposal = factory_->createProposal(
+          proposal_height_++, iroha::time::now(), tx_range);
 
-      // Save proposal height to the persistent storage.
-      // In case of restart it reloads state.
-      if (persistent_state_->saveProposalHeight(proposal_height_)) {
-        publishProposal(std::move(proposal));
-      } else {
-        // TODO(@l4l) 23/03/18: publish proposal independent of psql status
-        // IR-1162
-        log_->warn(
-            "Proposal height cannot be saved. Skipping proposal publish");
-      }
+      proposal.match(
+          [this](expected::Value<
+                 std::unique_ptr<shared_model::interface::Proposal>> &v) {
+            // Save proposal height to the persistent storage.
+            // In case of restart it reloads state.
+            if (persistent_state_->saveProposalHeight(proposal_height_)) {
+              publishProposal(std::move(v.value));
+            } else {
+              // TODO(@l4l) 23/03/18: publish proposal independent of psql
+              // status IR-1162
+              log_->warn(
+                  "Proposal height cannot be saved. Skipping proposal publish");
+            }
+          },
+          [this](expected::Error<std::string> &e) {
+            log_->warn("Failed to initialize proposal: {}", e.error);
+          });
     }
 
     void OrderingServiceImpl::publishProposal(

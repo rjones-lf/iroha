@@ -79,6 +79,7 @@ namespace iroha_cli {
       // ------ Query handlers -----------
       const std::string GET_ACC = "get_acc";
       const std::string GET_ACC_AST = "get_acc_ast";
+      const std::string GET_ACC_AST_TX = "get_acc_ast_tx";
       const std::string GET_ACC_TX = "get_acc_tx";
       const std::string GET_TX = "get_tx";
       const std::string GET_ACC_SIGN = "get_acc_sign";
@@ -94,7 +95,7 @@ namespace iroha_cli {
       DescriptionMap description_map_;
 
       // Parameters descriptions of queries
-      ParamsMap query_params_descriptions_;
+      ParamsMap query_params_map_;
 
       /**
        * Parse line for query
@@ -106,6 +107,8 @@ namespace iroha_cli {
       //  --- Specific Query parsers ---
       std::shared_ptr<iroha::model::Query> parseGetAccount(QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetAccountAssets(
+          QueryParams params);
+      std::shared_ptr<iroha::model::Query> parseGetAccountAssetTransactions(
           QueryParams params);
       std::shared_ptr<iroha::model::Query> parseGetAccountTransactions(
           QueryParams params);
@@ -124,7 +127,7 @@ namespace iroha_cli {
       std::unordered_map<QueryName, ResultHandler> result_handlers_;
 
       // Parameters descriptions of result commands
-      ParamsMap result_params_descriptions_;
+      ParamsMap result_params_map_;
 
       /**
        * Parse line for result

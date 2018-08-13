@@ -36,9 +36,10 @@ namespace shared_model {
      * to perform stateless validation on model fields
      */
     template <typename BuilderImpl, typename Validator>
-    class SignatureBuilder : public CommonObjectBuilder<interface::Signature,
-                                                        BuilderImpl,
-                                                        Validator> {
+    class DEPRECATED SignatureBuilder
+        : public CommonObjectBuilder<interface::Signature,
+                                     BuilderImpl,
+                                     Validator> {
      public:
       SignatureBuilder publicKey(
           const shared_model::interface::types::PubkeyType &key) {

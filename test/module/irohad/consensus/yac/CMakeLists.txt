@@ -84,6 +84,7 @@ addtest(yac_hash_provider_test yac_hash_provider_test.cpp)
 target_link_libraries(yac_hash_provider_test
     yac
     shared_model_cryptography
+    shared_model_stateless_validation
     )
 
 addtest(yac_common_test yac_common_test.cpp)

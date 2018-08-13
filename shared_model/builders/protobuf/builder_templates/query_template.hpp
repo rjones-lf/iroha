@@ -1,22 +1,12 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_PROTO_QUERY_BUILDER_TEMPLATE_HPP
 #define IROHA_PROTO_QUERY_BUILDER_TEMPLATE_HPP
+
+#include <boost/range/algorithm/for_each.hpp>
 
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
@@ -37,9 +27,9 @@ namespace shared_model {
      * @tparam BT -- build type of built object returned by build method
      */
     template <int S = 0,
-              typename SV = validation::DefaultQueryValidator,
+              typename SV = validation::DefaultUnsignedQueryValidator,
               typename BT = UnsignedWrapper<Query>>
-    class TemplateQueryBuilder {
+    class DEPRECATED TemplateQueryBuilder {
      private:
       template <int, typename, typename>
       friend class TemplateQueryBuilder;
@@ -93,20 +83,22 @@ namespace shared_model {
 
       auto createdTime(interface::types::TimestampType created_time) const {
         return transform<CreatedTime>([&](auto &qry) {
-          qry.mutable_payload()->set_created_time(created_time);
+          qry.mutable_payload()->mutable_meta()->set_created_time(created_time);
         });
       }
 
       auto creatorAccountId(
           const interface::types::AccountIdType &creator_account_id) const {
         return transform<CreatorAccountId>([&](auto &qry) {
-          qry.mutable_payload()->set_creator_account_id(creator_account_id);
+          qry.mutable_payload()->mutable_meta()->set_creator_account_id(
+              creator_account_id);
         });
       }
 
       auto queryCounter(interface::types::CounterType query_counter) const {
         return transform<QueryCounter>([&](auto &qry) {
-          qry.mutable_payload()->set_query_counter(query_counter);
+          qry.mutable_payload()->mutable_meta()->set_query_counter(
+              query_counter);
         });
       }
 
@@ -144,19 +136,28 @@ namespace shared_model {
       }
 
       auto getAccountAssets(
-          const interface::types::AccountIdType &account_id,
-          const interface::types::AssetIdType &asset_id) const {
+          const interface::types::AccountIdType &account_id) const {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_account_assets();
           query->set_account_id(account_id);
-          query->set_asset_id(asset_id);
         });
       }
 
-      auto getAccountDetail(const interface::types::AccountIdType &account_id) {
+      auto getAccountDetail(
+          const interface::types::AccountIdType &account_id = "",
+          const interface::types::AccountDetailKeyType &key = "",
+          const interface::types::AccountIdType &writer = "") {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_account_detail();
-          query->set_account_id(account_id);
+          if (not account_id.empty()) {
+            query->set_account_id(account_id);
+          }
+          if (not key.empty()) {
+            query->set_key(key);
+          }
+          if (not writer.empty()) {
+            query->set_writer(writer);
+          }
         });
       }
 
@@ -200,8 +201,21 @@ namespace shared_model {
         return getTransactions({hashes...});
       }
 
+      auto getPendingTransactions() const {
+        return queryField([&](auto proto_query) {
+          proto_query->mutable_get_pending_transactions();
+        });
+      }
+
       auto build() const {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
+        if (not query_.has_payload()) {
+          throw std::invalid_argument("Query missing payload");
+        }
+        if (query_.payload().query_case()
+            == iroha::protocol::Query_Payload::QueryCase::QUERY_NOT_SET) {
+          throw std::invalid_argument("Missing concrete query");
+        }
         auto result = Query(iroha::protocol::Query(query_));
         auto answer = stateless_validator_.validate(result);
         if (answer.hasErrors()) {

@@ -16,10 +16,14 @@
  */
 
 #include "validators/field_validator.hpp"
+
 #include <boost/algorithm/string_regex.hpp>
 #include <boost/format.hpp>
+#include <limits>
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
-#include "permissions.hpp"
+#include "interfaces/queries/query_payload_meta.hpp"
+#include "validators/field_validator.hpp"
 
 // TODO: 15.02.18 nickaleks Change structure to compositional IR-978
 
@@ -46,22 +50,29 @@ namespace shared_model {
         R"([A-Za-z0-9_]{1,64})";
     const std::string FieldValidator::role_id_pattern_ = R"#([a-z_0-9]{1,32})#";
 
-    const size_t FieldValidator::public_key_size = 32;
+    const size_t FieldValidator::public_key_size =
+        crypto::DefaultCryptoAlgorithmType::kPublicKeyLength;
+    const size_t FieldValidator::signature_size =
+        crypto::DefaultCryptoAlgorithmType::kSignatureLength;
+    const size_t FieldValidator::hash_size =
+        crypto::DefaultCryptoAlgorithmType::kHashLength;
     /// limit for the set account detail size in bytes
     const size_t FieldValidator::value_size = 4 * 1024 * 1024;
     const size_t FieldValidator::description_size = 64;
 
-    FieldValidator::FieldValidator(time_t future_gap)
-        : account_name_regex_(account_name_pattern_),
-          asset_name_regex_(asset_name_pattern_),
-          domain_regex_(domain_pattern_),
-          ip_v4_regex_(ip_v4_pattern_),
-          peer_address_regex_(peer_address_pattern_),
-          account_id_regex_(account_id_pattern_),
-          asset_id_regex_(asset_id_pattern_),
-          detail_key_regex_(detail_key_pattern_),
-          role_id_regex_(role_id_pattern_),
-          future_gap_(future_gap) {}
+    const std::regex FieldValidator::account_name_regex_(account_name_pattern_);
+    const std::regex FieldValidator::asset_name_regex_(asset_name_pattern_);
+    const std::regex FieldValidator::domain_regex_(domain_pattern_);
+    const std::regex FieldValidator::ip_v4_regex_(ip_v4_pattern_);
+    const std::regex FieldValidator::peer_address_regex_(peer_address_pattern_);
+    const std::regex FieldValidator::account_id_regex_(account_id_pattern_);
+    const std::regex FieldValidator::asset_id_regex_(asset_id_pattern_);
+    const std::regex FieldValidator::detail_key_regex_(detail_key_pattern_);
+    const std::regex FieldValidator::role_id_regex_(role_id_pattern_);
+
+    FieldValidator::FieldValidator(time_t future_gap,
+                                   TimeFunction time_provider)
+        : future_gap_(future_gap), time_provider_(time_provider) {}
 
     void FieldValidator::validateAccountId(
         ReasonsGroupType &reason,
@@ -123,8 +134,9 @@ namespace shared_model {
       if (not std::regex_match(address, peer_address_regex_)) {
         auto message =
             (boost::format("Wrongly formed peer address, passed value: '%s'. "
-                           "Field should have valid IPv4 format or be a valid "
-                           "hostname following RFC1123 specification")
+                           "Field should have a valid 'host:port' format where "
+                           "host is IPv4 or a "
+                           "hostname following RFC1035, RFC1123 specifications")
              % address)
                 .str();
         reason.second.push_back(std::move(message));
@@ -208,31 +220,35 @@ namespace shared_model {
     void FieldValidator::validatePrecision(
         ReasonsGroupType &reason,
         const interface::types::PrecisionType &precision) const {
-      // define precision constraints
-    }
-
-    void FieldValidator::validatePermission(
-        ReasonsGroupType &reason,
-        const interface::types::PermissionNameType &permission_name) const {
-      if (shared_model::permissions::all_perm_group.find(permission_name)
-          == shared_model::permissions::all_perm_group.end()) {
-        reason.second.push_back("Provided permission does not exist");
+      /* The following validation is pointless since PrecisionType is already
+       * uint8_t, but it is going to be changed and the validation will become
+       * meaningful.
+       */
+      interface::types::PrecisionType min = std::numeric_limits<uint8_t>::min();
+      interface::types::PrecisionType max = std::numeric_limits<uint8_t>::max();
+      if (precision < min or precision > max) {
+        auto message =
+            (boost::format(
+                 "Precision value (%d) is out of allowed range [%d; %d]")
+             % precision % min % max)
+                .str();
+        reason.second.push_back(std::move(message));
       }
     }
 
-    void FieldValidator::validatePermissions(
+    void FieldValidator::validateRolePermission(
         ReasonsGroupType &reason,
-        const interface::CreateRole::PermissionsType &permissions) const {
-      if (permissions.empty()) {
-        reason.second.push_back(
-            "Permission set should contain at least one permission");
+        const interface::permissions::Role &permission) const {
+      if (not isValid(permission)) {
+        reason.second.push_back("Provided role permission does not exist");
       }
-      if (not std::includes(shared_model::permissions::role_perm_group.begin(),
-                            shared_model::permissions::role_perm_group.end(),
-                            permissions.begin(),
-                            permissions.end())) {
-        reason.second.push_back(
-            "Provided permissions are not subset of the allowed permissions");
+    }
+
+    void FieldValidator::validateGrantablePermission(
+        ReasonsGroupType &reason,
+        const interface::permissions::Grantable &permission) const {
+      if (not isValid(permission)) {
+        reason.second.push_back("Provided grantable permission does not exist");
       }
     }
 
@@ -260,7 +276,7 @@ namespace shared_model {
     void FieldValidator::validateCreatedTime(
         ReasonsGroupType &reason,
         const interface::types::TimestampType &timestamp) const {
-      iroha::ts64_t now = iroha::time::now();
+      iroha::ts64_t now = time_provider_();
 
       if (now + future_gap_ < timestamp) {
         auto message = (boost::format("bad timestamp: sent from future, "
@@ -270,7 +286,7 @@ namespace shared_model {
         reason.second.push_back(std::move(message));
       }
 
-      if (now > max_delay + timestamp) {
+      if (now > kMaxDelay + timestamp) {
         auto message =
             (boost::format("bad timestamp: too old, timestamp: %llu, now: %llu")
              % timestamp % now)
@@ -294,20 +310,21 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::types::SignatureRangeType &signatures,
         const crypto::Blob &source) const {
+      if (boost::empty(signatures)) {
+        reason.second.push_back("Signatures cannot be empty");
+      }
       for (const auto &signature : signatures) {
         const auto &sign = signature.signedData();
         const auto &pkey = signature.publicKey();
         bool is_valid = true;
 
-        if (sign.blob().size() != 64) {
-          // TODO (@l4l) 03/02/18: IR-977 replace signature size with a const
+        if (sign.blob().size() != signature_size) {
           reason.second.push_back(
               (boost::format("Invalid signature: %s") % sign.hex()).str());
           is_valid = false;
         }
 
-        if (pkey.blob().size() != 32) {
-          // TODO (@l4l) 03/02/18: IR-977 replace public key size with a const
+        if (pkey.blob().size() != public_key_size) {
           reason.second.push_back(
               (boost::format("Invalid pubkey: %s") % pkey.hex()).str());
           is_valid = false;
@@ -323,6 +340,10 @@ namespace shared_model {
       }
     }
 
+    void FieldValidator::validateQueryPayloadMeta(
+        ReasonsGroupType &reason,
+        const interface::QueryPayloadMeta &meta) const {}
+
     void FieldValidator::validateDescription(
         shared_model::validation::ReasonsGroupType &reason,
         const shared_model::interface::types::DescriptionType &description)
@@ -334,6 +355,27 @@ namespace shared_model {
                 .str());
       }
     }
+    void FieldValidator::validateBatchMeta(
+        shared_model::validation::ReasonsGroupType &reason,
+        const interface::BatchMeta &batch_meta) const {}
 
+    void FieldValidator::validateHeight(
+        shared_model::validation::ReasonsGroupType &reason,
+        const shared_model::interface::types::HeightType &height) const {
+      if (height <= 0) {
+        auto message =
+            (boost::format("Height should be > 0, passed value: %d") % height)
+                .str();
+        reason.second.push_back(message);
+      }
+    }
+
+    void FieldValidator::validateHash(ReasonsGroupType &reason,
+                                      const crypto::Hash &hash) const {
+      if (hash.size() != hash_size) {
+        reason.second.push_back(
+            (boost::format("Hash has invalid size: %d") % hash.size()).str());
+      }
+    }
   }  // namespace validation
 }  // namespace shared_model

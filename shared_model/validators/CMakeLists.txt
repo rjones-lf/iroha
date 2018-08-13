@@ -15,6 +15,8 @@
 add_library(shared_model_stateless_validation
         default_validator.cpp
         field_validator.cpp
+        transactions_collection/transactions_collection_validator.cpp
+        transactions_collection/batch_order_validator.cpp
         )
 
 target_link_libraries(shared_model_stateless_validation

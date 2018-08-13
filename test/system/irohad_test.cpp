@@ -22,7 +22,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <boost/process.hpp>
-#include <pqxx/pqxx>
+#include <soci/soci.h>
+#include <soci/postgresql/soci-postgresql.h>
 
 #include "common/files.hpp"
 #include "common/types.hpp"
@@ -44,13 +45,17 @@ class IrohadTest : public testing::Test {
     timeout = 1s;
     setPaths();
     auto config = parse_iroha_config(path_config_.string());
-    blockstore_path_ = config[config_members::BlockStorePath].GetString();
+    blockstore_path_ = (boost::filesystem::temp_directory_path()
+                        / boost::filesystem::unique_path())
+                           .string();
     pgopts_ = integration_framework::getPostgresCredsOrDefault(
         config[config_members::PgOpt].GetString());
     // we need a separate file here in case if target environment
     // has custom database connection options set
     // via environment variables
     auto config_copy_json = parse_iroha_config(path_config_.string());
+    config_copy_json[config_members::BlockStorePath].SetString(
+        blockstore_path_.data(), blockstore_path_.size());
     config_copy_json[config_members::PgOpt].SetString(pgopts_.data(),
                                                       pgopts_.size());
     rapidjson::StringBuffer sb;
@@ -85,7 +90,7 @@ class IrohadTest : public testing::Test {
   void setPaths() {
     path_irohad_ = boost::filesystem::path(PATHIROHAD);
     irohad_executable = path_irohad_ / "irohad";
-    path_example_ = path_irohad_.parent_path().parent_path() / "example";
+    path_example_ = boost::filesystem::path(PATHEXAMPLE);
     path_config_ = path_example_ / "config.sample";
     path_genesis_ = path_example_ / "genesis.block";
     path_keypair_ = path_example_ / "node0";
@@ -93,13 +98,6 @@ class IrohadTest : public testing::Test {
   }
 
   void dropPostgres() {
-    auto connection = std::make_shared<pqxx::lazyconnection>(pgopts_);
-    try {
-      connection->activate();
-    } catch (const pqxx::broken_connection &e) {
-      FAIL() << "Connection to PostgreSQL broken: " << e.what();
-    }
-
     const auto drop = R"(
 DROP TABLE IF EXISTS account_has_signatory;
 DROP TABLE IF EXISTS account_has_asset;
@@ -118,10 +116,8 @@ DROP TABLE IF EXISTS index_by_creator_height;
 DROP TABLE IF EXISTS index_by_id_height_asset;
 )";
 
-    pqxx::work txn(*connection);
-    txn.exec(drop);
-    txn.commit();
-    connection->disconnect();
+    soci::session sql(soci::postgresql, pgopts_);
+    sql << drop;
   }
 
  public:

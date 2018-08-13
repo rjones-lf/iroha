@@ -19,7 +19,7 @@
 
 #include <memory>
 #include "interfaces/iroha_internal/proposal.hpp"
-#include "interfaces/transaction.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 
 namespace iroha {
   namespace network {
@@ -31,12 +31,11 @@ namespace iroha {
     class OrderingServiceNotification {
      public:
       /**
-       * Callback on receiving transaction
-       * @param transaction - transaction object itself
+       * Callback on receiving transaction(s)
+       * @param batch object, in which transaction(s) are packed
        */
-      virtual void onTransaction(
-          std::shared_ptr<shared_model::interface::Transaction>
-              transaction) = 0;
+      virtual void onBatch(
+          shared_model::interface::TransactionBatch &&batch) = 0;
 
       virtual ~OrderingServiceNotification() = default;
     };

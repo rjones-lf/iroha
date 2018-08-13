@@ -194,8 +194,8 @@ namespace iroha {
 
       class MockYacHashProvider : public YacHashProvider {
        public:
-        MOCK_CONST_METHOD1(makeHash,
-                           YacHash(const shared_model::interface::Block &));
+        MOCK_CONST_METHOD1(
+            makeHash, YacHash(const shared_model::interface::BlockVariant &));
 
         MOCK_CONST_METHOD1(
             toModelHash,

@@ -22,7 +22,7 @@
 
 namespace shared_model {
   namespace proto {
-    class TransactionStatusBuilder {
+    class DEPRECATED TransactionStatusBuilder {
      public:
       shared_model::proto::TransactionResponse build() &&;
 
@@ -40,7 +40,11 @@ namespace shared_model {
 
       TransactionStatusBuilder notReceived();
 
-      TransactionStatusBuilder txHash(const crypto::Hash& hash);
+      TransactionStatusBuilder mstExpired();
+
+      TransactionStatusBuilder txHash(const crypto::Hash &hash);
+
+      TransactionStatusBuilder errorMsg(const std::string &msg);
 
      private:
       iroha::protocol::ToriiResponse tx_response_;

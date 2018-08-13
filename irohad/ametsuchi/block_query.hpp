@@ -22,6 +22,7 @@
 #include <cmath>
 #include <rxcpp/rx-observable.hpp>
 
+#include "common/result.hpp"
 #include "common/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/transaction.hpp"
@@ -33,7 +34,7 @@ namespace iroha {
      * Public interface for queries on blocks and transactions
      */
     class BlockQuery {
-    protected:
+     protected:
       using wTransaction =
           std::shared_ptr<shared_model::interface::Transaction>;
       using wBlock = std::shared_ptr<shared_model::interface::Block>;
@@ -45,7 +46,7 @@ namespace iroha {
        * @param account_id - account_id (accountName@domainName)
        * @return observable of Model Transaction
        */
-      virtual rxcpp::observable<wTransaction> getAccountTransactions(
+      virtual std::vector<wTransaction> getAccountTransactions(
           const shared_model::interface::types::AccountIdType &account_id) = 0;
 
       /**
@@ -54,7 +55,7 @@ namespace iroha {
        * @param asset_id - asset_id (assetName#domainName)
        * @return observable of Model Transaction
        */
-      virtual rxcpp::observable<wTransaction> getAccountAssetTransactions(
+      virtual std::vector<wTransaction> getAccountAssetTransactions(
           const shared_model::interface::types::AccountIdType &account_id,
           const shared_model::interface::types::AssetIdType &asset_id) = 0;
 
@@ -63,7 +64,7 @@ namespace iroha {
        * @param tx_hashes - transactions' hashes to retrieve
        * @return observable of Model Transaction
        */
-      virtual rxcpp::observable<boost::optional<wTransaction>> getTransactions(
+      virtual std::vector<boost::optional<wTransaction>> getTransactions(
           const std::vector<shared_model::crypto::Hash> &tx_hashes) = 0;
 
       /**
@@ -72,22 +73,30 @@ namespace iroha {
        * @param count - number of blocks to retrieve
        * @return observable of Model Block
        */
-      virtual rxcpp::observable<wBlock> getBlocks(shared_model::interface::types::HeightType height,
-                                                  uint32_t count) = 0;
+      virtual std::vector<wBlock> getBlocks(
+          shared_model::interface::types::HeightType height,
+          uint32_t count) = 0;
 
       /**
        * Get all blocks starting from given height.
        * @param from - starting height
        * @return observable of Model Block
        */
-      virtual rxcpp::observable<wBlock> getBlocksFrom(shared_model::interface::types::HeightType height) = 0;
+      virtual std::vector<wBlock> getBlocksFrom(
+          shared_model::interface::types::HeightType height) = 0;
 
       /**
        * Get given number of blocks from top.
        * @param count - number of blocks to retrieve
        * @return observable of Model Block
        */
-      virtual rxcpp::observable<wBlock> getTopBlocks(uint32_t count) = 0;
+      virtual std::vector<wBlock> getTopBlocks(uint32_t count) = 0;
+
+      /**
+       * Get height of the top block.
+       * @return height
+       */
+      virtual uint32_t getTopBlockHeight() = 0;
 
       /**
        * Synchronously gets transaction by its hash
@@ -104,6 +113,12 @@ namespace iroha {
        * @return true if transaction exists, false otherwise
        */
       virtual bool hasTxWithHash(const shared_model::crypto::Hash &hash) = 0;
+
+      /**
+       * Get the top-most block
+       * @return result of Model Block or error message
+       */
+      virtual expected::Result<wBlock, std::string> getTopBlock() = 0;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

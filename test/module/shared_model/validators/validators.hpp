@@ -18,7 +18,7 @@
 #ifndef IROHA_VALIDATOR_MOCKS_HPP
 #define IROHA_VALIDATOR_MOCKS_HPP
 
-#include "interfaces/transaction.hpp"
+#include "validators/answer.hpp"
 
 namespace shared_model {
   namespace validation {

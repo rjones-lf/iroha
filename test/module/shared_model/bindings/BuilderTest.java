@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Disabled;
 import java.math.BigInteger;
 
 import iroha.protocol.Commands;
-import iroha.protocol.BlockOuterClass;
+import iroha.protocol.TransactionOuterClass;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -133,7 +133,7 @@ public class BuilderTest {
     }
 
     Blob proto(UnsignedTx tx) {
-        return new ModelProtoTransaction().signAndAddSignature(tx, keys);
+        return new ModelProtoTransaction(tx).signAndAddSignature(keys).finish();
     }
 
     /**
@@ -150,7 +150,7 @@ public class BuilderTest {
         }
 
         try {
-            BlockOuterClass.Transaction.parseFrom(bs);
+            TransactionOuterClass.Transaction.parseFrom(bs);
         } catch (InvalidProtocolBufferException e) {
             System.out.print("Exception: ");
             System.out.println(e.getMessage());
@@ -284,54 +284,31 @@ public class BuilderTest {
 
     @Test
     void addAssetQuantity() {
-        UnsignedTx tx = builder.addAssetQuantity("admin@test", "asset#domain", "12.345").build();
+        UnsignedTx tx = builder.addAssetQuantity("asset#domain", "12.345").build();
         assertTrue(checkProtoTx(proto(tx)));
     }
 
     @Test
-    void addAssetQuantityValidAccountsAndAssets() {
+    void addAssetQuantityValidAssets() {
         for (String domain: validDomains) {
             for (String name: validNameSymbols1) {
-                UnsignedTx tx = builder.addAssetQuantity(name + "@" + domain, name + "#" + domain, "100").build();
+                UnsignedTx tx = builder.addAssetQuantity(name + "#" + domain, "100").build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
     }
 
     @Test
-    void addAssetQuantityInvalidAccountDomain() {
-        for (String domain: invalidDomains) {
-            ModelTransactionBuilder builder = base().addAssetQuantity("admin@" + domain, "asset#test", "10");
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
-    }
-
-    @Test
     void addAssetQuantityInvalidAssetDomain() {
         for (String domain: invalidDomains) {
-            ModelTransactionBuilder builder = base().addAssetQuantity("admin@test", "asset#" + domain, "10");
+            ModelTransactionBuilder builder = base().addAssetQuantity("asset#" + domain, "10");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
 
     @Test
     void addAssetZeroQuantity() {
-        ModelTransactionBuilder builder = base().addAssetQuantity("admin@test", "asset#domain", "0");
-        assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    @Test
-    void addAssetQuantityInvalidAccountName() {
-        for (String accountName: invalidNameSymbols1) {
-            String accountId = accountName + "@test";
-            ModelTransactionBuilder builder = base().addAssetQuantity(accountId, "asset#domain", "10");
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
-    }
-
-    @Test
-    void addAssetQuantityEmptyAccount() {
-        ModelTransactionBuilder builder = base().addAssetQuantity("", "asset#test", "10");
+        ModelTransactionBuilder builder = base().addAssetQuantity("asset#domain", "0");
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
@@ -339,21 +316,21 @@ public class BuilderTest {
     void addAssetQuantityInvalidAssetName() {
         for (String assetName: invalidNameSymbols1) {
             String assetId = assetName + "#test";
-            ModelTransactionBuilder builder = base().addAssetQuantity("account@test", assetId, "10");
+            ModelTransactionBuilder builder = base().addAssetQuantity(assetId, "10");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
 
     @Test
     void addAssetQuantityEmptyAsset() {
-        ModelTransactionBuilder builder = base().addAssetQuantity("account@test", "", "10");
+        ModelTransactionBuilder builder = base().addAssetQuantity("", "10");
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
     @Test
     void addAssetQuantityInvalidAmount() {
         for (String amount: new String[]{"", "-12", "-13.45", "chars", "chars10"}) {
-            ModelTransactionBuilder builder = base().addAssetQuantity("account@test", "asset#test", amount);
+            ModelTransactionBuilder builder = base().addAssetQuantity("asset#test", amount);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -797,11 +774,9 @@ public class BuilderTest {
 
     @Test
     void createRole() {
-        StringVector permissions = new StringVector();
-        permissions.add("can_receive");
-        permissions.add("can_get_roles");
-        assertTrue(permissions.size() == 2);
-
+        RolePermissionSet permissions = new RolePermissionSet();
+        permissions.set(Role.kReceive);
+        permissions.set(Role.kGetRoles);
         for (String role: validNameSymbols1) {
             UnsignedTx tx = builder.createRole(role, permissions).build();
             assertTrue(checkProtoTx(proto(tx)));
@@ -810,11 +785,9 @@ public class BuilderTest {
 
     @Test
     void createRoleWithInvalidName() {
-        StringVector permissions = new StringVector();
-        permissions.add("can_receive");
-        permissions.add("can_get_roles");
-        assertTrue(permissions.size() == 2);
-
+        RolePermissionSet permissions = new RolePermissionSet();
+        permissions.set(Role.kReceive);
+        permissions.set(Role.kGetRoles);
         for (String role: invalidNameSymbols1) {
             ModelTransactionBuilder mtb = base().createRole(role, permissions);
             assertThrows(IllegalArgumentException.class, mtb::build);
@@ -823,42 +796,8 @@ public class BuilderTest {
 
     @Test
     void createRoleEmptyPermissions() {
-        StringVector permissions = new StringVector();
-
-        ModelTransactionBuilder builder = new ModelTransactionBuilder();
-        builder.createRole("new_role", permissions);
-        assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    /* Disabled till IR-1267 will be fixed. */
-    /* Please run this test on mac host after enabling,
-       because the test was passing on Linux host and failing on macOs.
-    */
-    @Disabled
-    @Test
-    void createRoleWrongPermissions() {
-        StringVector permissions = new StringVector();
-        permissions.add("wrong_permission");
-        permissions.add("can_receive");
-
-        ModelTransactionBuilder builder = base().createRole("new_role", permissions);
-        assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-
-    /* Test differs from the previous by the order of permissions' mames in vector.
-     * Test is disabled because there is no exception thrown when it should be.
-     */
-    /* Disabled till IR-1267 will be fixed. */
-    @Disabled
-    @Test
-    void createRoleWrongPermissions2() {
-        StringVector permissions = new StringVector();
-        permissions.add("can_receive");
-        permissions.add("wrong_permission");
-
-        ModelTransactionBuilder builder = base().createRole("new_role", permissions);
-        assertThrows(IllegalArgumentException.class, builder::build);
+        UnsignedTx tx = builder.createRole("new_role", new RolePermissionSet()).build();
+        assertTrue(checkProtoTx(proto(tx)));
     }
 
     /* ====================== DetachRole Tests ====================== */
@@ -913,7 +852,7 @@ public class BuilderTest {
         for (String accountName: validNameSymbols1) {
             for (String domain: validDomains) {
                 String accountId = accountName + "@" + domain;
-                UnsignedTx tx = builder.grantPermission(accountId, "can_set_my_quorum").build();
+                UnsignedTx tx = builder.grantPermission(accountId, Grantable.kSetMyQuorum).build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
@@ -924,7 +863,7 @@ public class BuilderTest {
         for (String accountName: invalidNameSymbols1) {
             for (String domain: validDomains) {
                 String accountId = accountName + "@" + domain;
-                ModelTransactionBuilder builder = base().grantPermission(accountId, "can_set_my_quorum");
+                ModelTransactionBuilder builder = base().grantPermission(accountId, Grantable.kSetMyQuorum);
                 assertThrows(IllegalArgumentException.class, builder::build);
             }
         }
@@ -932,26 +871,8 @@ public class BuilderTest {
 
     @Test
     void grantPermissionEmptyAccount() {
-        ModelTransactionBuilder builder = base().grantPermission("", "can_set_my_quorum");
+        ModelTransactionBuilder builder = base().grantPermission("", Grantable.kSetMyQuorum);
         assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    // TODO igor-egorov, 14.05.2018 IR-1267
-    // Please test using clang on macOS before enabling
-    // This test does not fail on Linux with GCC 5.4.0
-    @Disabled
-    @Test
-    void grantPermissionWithInvalidName() {
-        String permissions[] = {
-            "",
-            "random",
-            "can_read_assets" // non-grantable permission
-        };
-
-        for (String permission: permissions) {
-            ModelTransactionBuilder builder = base().grantPermission("admin@test", permission);
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
     }
 
     /* ====================== RevokePermission Tests ====================== */
@@ -960,7 +881,7 @@ public class BuilderTest {
     void revokePermission() {
         for (String accountName: validNameSymbols1) {
             for (String domain: validDomains) {
-                UnsignedTx tx = builder.revokePermission(accountName + "@" + domain, "can_set_my_quorum").build();
+                UnsignedTx tx = builder.revokePermission(accountName + "@" + domain, Grantable.kSetMyQuorum).build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
@@ -969,7 +890,7 @@ public class BuilderTest {
     @Test
     void revokePermissionInvalidAccount() {
         for (String accountName: invalidNameSymbols1) {
-            ModelTransactionBuilder builder = base().revokePermission(accountName + "@test", "can_set_my_quorum");
+            ModelTransactionBuilder builder = base().revokePermission(accountName + "@test", Grantable.kSetMyQuorum);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -977,33 +898,15 @@ public class BuilderTest {
     @Test
     void revokePermissionInvalidDomain() {
         for (String domain: invalidDomains) {
-            ModelTransactionBuilder builder = base().revokePermission("admin@" + domain, "can_set_my_quorum");
+            ModelTransactionBuilder builder = base().revokePermission("admin@" + domain, Grantable.kSetMyQuorum);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
 
     @Test
     void revokePermissionEmptyAccount() {
-        ModelTransactionBuilder builder = base().revokePermission("", "can_set_my_quorum");
+        ModelTransactionBuilder builder = base().revokePermission("", Grantable.kSetMyQuorum);
         assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    // TODO igor-egorov, 14.05.2018 IR-1267
-    // Please test using clang on macOS before enabling
-    // This test does not fail on Linux with GCC 5.4.0
-    @Disabled
-    @Test
-    void revokePermissionWithInvalidName() {
-        String permissions[] = {
-            "",
-            "random",
-            "can_read_assets" // non-grantable permission
-        };
-
-        for (String permission: permissions) {
-            ModelTransactionBuilder builder = base().revokePermission("admin@test", permission);
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
     }
 
     /* ====================== SubtractAssetQuantity Tests ====================== */
@@ -1012,32 +915,16 @@ public class BuilderTest {
     void subtractAssetQuantity() {
         for (String name: validNameSymbols1) {
             for (String domain: validDomains) {
-                UnsignedTx tx = builder.subtractAssetQuantity(name + "@" + domain, name + "#" + domain, "10.22").build();
+                UnsignedTx tx = builder.subtractAssetQuantity(name + "#" + domain, "10.22").build();
                 assertTrue(checkProtoTx(proto(tx)));
             }
         }
     }
 
     @Test
-    void subtractAssetQuantityInvalidAccount() {
-        for (String account: invalidNameSymbols1) {
-            ModelTransactionBuilder builder = base().subtractAssetQuantity(account + "@test", "coin#test", "10");
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
-    }
-
-    @Test
-    void subtractAssetQuantityInvalidAccountDomain() {
-        for (String domain: invalidDomains) {
-            ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@" + domain, "coin#test", "10");
-            assertThrows(IllegalArgumentException.class, builder::build);
-        }
-    }
-
-    @Test
     void subtractAssetQuantityInvalidAsset() {
         for (String asset: invalidNameSymbols1) {
-            ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@test", asset + "#test", "10");
+            ModelTransactionBuilder builder = base().subtractAssetQuantity(asset + "#test", "10");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
@@ -1045,20 +932,14 @@ public class BuilderTest {
     @Test
     void subtractAssetQuantityInvalidAssetDomain() {
         for (String domain: invalidDomains) {
-            ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@test", "coin#" + domain, "10");
+            ModelTransactionBuilder builder = base().subtractAssetQuantity("coin#" + domain, "10");
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }
 
     @Test
-    void subtractAssetQuantityEmptyAccount() {
-        ModelTransactionBuilder builder = base().subtractAssetQuantity("", "coin#test", "10");
-        assertThrows(IllegalArgumentException.class, builder::build);
-    }
-
-    @Test
     void subtractAssetQuantityEmptyAsset() {
-        ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@test", "", "10");
+        ModelTransactionBuilder builder = base().subtractAssetQuantity("", "10");
         assertThrows(IllegalArgumentException.class, builder::build);
     }
 
@@ -1074,7 +955,7 @@ public class BuilderTest {
         };
 
         for (String amount: invalidAmounts) {
-            ModelTransactionBuilder builder = base().subtractAssetQuantity("admin@test", "coin#test", amount);
+            ModelTransactionBuilder builder = base().subtractAssetQuantity("coin#test", amount);
             assertThrows(IllegalArgumentException.class, builder::build);
         }
     }

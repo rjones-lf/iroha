@@ -11,7 +11,6 @@ IROHA_BRANCH = "develop"
 
 IROHA_CMAKE_ARGS = dict(
     SWIG_PYTHON="ON",
-    SHARED_MODEL_DISABLE_COMPATIBILITY="ON"
 )
 
 if sys.version_info[0] == 2:

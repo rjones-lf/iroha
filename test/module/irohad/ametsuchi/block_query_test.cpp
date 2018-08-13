@@ -20,13 +20,15 @@
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
-#include "framework/test_subscriber.hpp"
+#include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 using namespace iroha::ametsuchi;
-using namespace framework::test_subscriber;
+
+using testing::Return;
 
 class BlockQueryTest : public AmetsuchiTest {
  protected:
@@ -36,19 +38,14 @@ class BlockQueryTest : public AmetsuchiTest {
     auto tmp = FlatFile::create(block_store_path);
     ASSERT_TRUE(tmp);
     file = std::move(*tmp);
-    postgres_connection = std::make_unique<pqxx::lazyconnection>(pgopt_);
-    try {
-      postgres_connection->activate();
-    } catch (const pqxx::broken_connection &e) {
-      FAIL() << "Connection to PostgreSQL broken: " << e.what();
-    }
-    transaction = std::make_unique<pqxx::nontransaction>(
-        *postgres_connection, "Postgres block indexes");
+    mock_file = std::make_shared<MockKeyValueStorage>();
+    sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
 
-    index = std::make_shared<PostgresBlockIndex>(*transaction);
-    blocks = std::make_shared<PostgresBlockQuery>(*transaction, *file);
+    index = std::make_shared<PostgresBlockIndex>(*sql);
+    blocks = std::make_shared<PostgresBlockQuery>(*sql, *file);
+    empty_blocks = std::make_shared<PostgresBlockQuery>(*sql, *mock_file);
 
-    transaction->exec(init_);
+    *sql << init_;
 
     // First transaction in block1
     auto txn1_1 = TestTransactionBuilder().creatorAccountId(creator1).build();
@@ -82,7 +79,7 @@ class BlockQueryTest : public AmetsuchiTest {
             .prevHash(block1.hash())
             .build();
 
-    for (const auto &b : {block1, block2}) {
+    for (const auto &b : {std::move(block1), std::move(block2)}) {
       file->add(b.height(),
                 iroha::stringToBytes(
                     shared_model::converters::protobuf::modelToJson(b)));
@@ -91,12 +88,13 @@ class BlockQueryTest : public AmetsuchiTest {
     }
   }
 
-  std::unique_ptr<pqxx::lazyconnection> postgres_connection;
-  std::unique_ptr<pqxx::nontransaction> transaction;
+  std::unique_ptr<soci::session> sql;
   std::vector<shared_model::crypto::Hash> tx_hashes;
   std::shared_ptr<BlockQuery> blocks;
+  std::shared_ptr<BlockQuery> empty_blocks;
   std::shared_ptr<BlockIndex> index;
   std::unique_ptr<FlatFile> file;
+  std::shared_ptr<MockKeyValueStorage> mock_file;
   std::string creator1 = "user1@test";
   std::string creator2 = "user2@test";
   std::size_t blocks_total{0};
@@ -112,11 +110,11 @@ class BlockQueryTest : public AmetsuchiTest {
  */
 TEST_F(BlockQueryTest, GetAccountTransactionsFromSeveralBlocks) {
   // Check that creator1 has created 3 transactions
-  auto getCreator1TxWrapper = make_test_subscriber<CallExact>(
-      blocks->getAccountTransactions(creator1), 3);
-  getCreator1TxWrapper.subscribe(
-      [this](auto val) { EXPECT_EQ(val->creatorAccountId(), creator1); });
-  ASSERT_TRUE(getCreator1TxWrapper.validate());
+  auto txs = blocks->getAccountTransactions(creator1);
+  ASSERT_EQ(txs.size(), 3);
+  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
+    EXPECT_EQ(tx->creatorAccountId(), creator1);
+  });
 }
 
 /**
@@ -128,11 +126,11 @@ TEST_F(BlockQueryTest, GetAccountTransactionsFromSeveralBlocks) {
  */
 TEST_F(BlockQueryTest, GetAccountTransactionsFromSingleBlock) {
   // Check that creator1 has created 1 transaction
-  auto getCreator2TxWrapper = make_test_subscriber<CallExact>(
-      blocks->getAccountTransactions(creator2), 1);
-  getCreator2TxWrapper.subscribe(
-      [this](auto val) { EXPECT_EQ(val->creatorAccountId(), creator2); });
-  ASSERT_TRUE(getCreator2TxWrapper.validate());
+  auto txs = blocks->getAccountTransactions(creator2);
+  ASSERT_EQ(txs.size(), 1);
+  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
+    EXPECT_EQ(tx->creatorAccountId(), creator2);
+  });
 }
 
 /**
@@ -143,10 +141,8 @@ TEST_F(BlockQueryTest, GetAccountTransactionsFromSingleBlock) {
  */
 TEST_F(BlockQueryTest, GetAccountTransactionsNonExistingUser) {
   // Check that "nonexisting" user has no transaction
-  auto getNonexistingTxWrapper = make_test_subscriber<CallExact>(
-      blocks->getAccountTransactions("nonexisting user"), 0);
-  getNonexistingTxWrapper.subscribe();
-  ASSERT_TRUE(getNonexistingTxWrapper.validate());
+  auto txs = blocks->getAccountTransactions("nonexisting user");
+  ASSERT_EQ(txs.size(), 0);
 }
 
 /**
@@ -157,20 +153,12 @@ TEST_F(BlockQueryTest, GetAccountTransactionsNonExistingUser) {
  * @then queried transactions
  */
 TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
-  auto wrapper = make_test_subscriber<CallExact>(
-      blocks->getTransactions({tx_hashes[1], tx_hashes[3]}), 2);
-  wrapper.subscribe([this](auto tx) {
-    static auto subs_cnt = 0;
-    subs_cnt++;
-    if (subs_cnt == 1) {
-      ASSERT_TRUE(tx);
-      EXPECT_EQ(tx_hashes[1], (*tx)->hash());
-    } else {
-      ASSERT_TRUE(tx);
-      EXPECT_EQ(tx_hashes[3], (*tx)->hash());
-    }
-  });
-  ASSERT_TRUE(wrapper.validate());
+  auto txs = blocks->getTransactions({tx_hashes[1], tx_hashes[3]});
+  ASSERT_EQ(txs.size(), 2);
+  ASSERT_TRUE(txs[0]);
+  ASSERT_TRUE(txs[1]);
+  ASSERT_EQ(txs[0].get()->hash(), tx_hashes[1]);
+  ASSERT_EQ(txs[1].get()->hash(), tx_hashes[3]);
 }
 
 /**
@@ -182,12 +170,13 @@ TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
  */
 TEST_F(BlockQueryTest, GetTransactionsIncludesNonExistingTxHashes) {
   shared_model::crypto::Hash invalid_tx_hash_1(zero_string),
-      invalid_tx_hash_2(std::string(32, '9'));
-  auto wrapper = make_test_subscriber<CallExact>(
-      blocks->getTransactions({invalid_tx_hash_1, invalid_tx_hash_2}), 2);
-  wrapper.subscribe(
-      [](auto transaction) { EXPECT_EQ(boost::none, transaction); });
-  ASSERT_TRUE(wrapper.validate());
+      invalid_tx_hash_2(std::string(
+          shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength, '9'));
+
+  auto txs = blocks->getTransactions({invalid_tx_hash_1, invalid_tx_hash_2});
+  ASSERT_EQ(txs.size(), 2);
+  ASSERT_FALSE(txs[0]);
+  ASSERT_FALSE(txs[1]);
 }
 
 /**
@@ -199,10 +188,8 @@ TEST_F(BlockQueryTest, GetTransactionsIncludesNonExistingTxHashes) {
  */
 TEST_F(BlockQueryTest, GetTransactionsWithEmpty) {
   // transactions' hashes are empty.
-  auto wrapper =
-      make_test_subscriber<CallExact>(blocks->getTransactions({}), 0);
-  wrapper.subscribe();
-  ASSERT_TRUE(wrapper.validate());
+  auto txs = blocks->getTransactions({});
+  ASSERT_EQ(txs.size(), 0);
 }
 
 /**
@@ -215,19 +202,11 @@ TEST_F(BlockQueryTest, GetTransactionsWithEmpty) {
 TEST_F(BlockQueryTest, GetTransactionsWithInvalidTxAndValidTx) {
   // TODO 15/11/17 motxx - Use EqualList VerificationStrategy
   shared_model::crypto::Hash invalid_tx_hash_1(zero_string);
-  auto wrapper = make_test_subscriber<CallExact>(
-      blocks->getTransactions({invalid_tx_hash_1, tx_hashes[0]}), 2);
-  wrapper.subscribe([this](auto tx) {
-    static auto subs_cnt = 0;
-    subs_cnt++;
-    if (subs_cnt == 1) {
-      EXPECT_EQ(boost::none, tx);
-    } else {
-      EXPECT_TRUE(tx);
-      EXPECT_EQ(tx_hashes[0], (*tx)->hash());
-    }
-  });
-  ASSERT_TRUE(wrapper.validate());
+  auto txs = blocks->getTransactions({invalid_tx_hash_1, tx_hashes[0]});
+  ASSERT_EQ(txs.size(), 2);
+  ASSERT_FALSE(txs[0]);
+  ASSERT_TRUE(txs[1]);
+  ASSERT_EQ(txs[1].get()->hash(), tx_hashes[0]);
 }
 
 /**
@@ -237,9 +216,8 @@ TEST_F(BlockQueryTest, GetTransactionsWithInvalidTxAndValidTx) {
  * @then nothing is returned
  */
 TEST_F(BlockQueryTest, GetNonExistentBlock) {
-  auto wrapper = make_test_subscriber<CallExact>(blocks->getBlocks(1000, 1), 0);
-  wrapper.subscribe();
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocks(1000, 1);
+  ASSERT_TRUE(stored_blocks.empty());
 }
 
 /**
@@ -249,9 +227,8 @@ TEST_F(BlockQueryTest, GetNonExistentBlock) {
  * @then returned exactly 1 block
  */
 TEST_F(BlockQueryTest, GetExactlyOneBlock) {
-  auto wrapper = make_test_subscriber<CallExact>(blocks->getBlocks(1, 1), 1);
-  wrapper.subscribe();
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocks(1, 1);
+  ASSERT_EQ(stored_blocks.size(), 1);
 }
 
 /**
@@ -261,9 +238,8 @@ TEST_F(BlockQueryTest, GetExactlyOneBlock) {
  * @then no blocks returned
  */
 TEST_F(BlockQueryTest, GetBlocks_Count0) {
-  auto wrapper = make_test_subscriber<CallExact>(blocks->getBlocks(1, 0), 0);
-  wrapper.subscribe();
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocks(1, 0);
+  ASSERT_TRUE(stored_blocks.empty());
 }
 
 /**
@@ -273,9 +249,8 @@ TEST_F(BlockQueryTest, GetBlocks_Count0) {
  * @then no blocks returned
  */
 TEST_F(BlockQueryTest, GetZeroBlock) {
-  auto wrapper = make_test_subscriber<CallExact>(blocks->getBlocks(0, 1), 0);
-  wrapper.subscribe();
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocks(0, 1);
+  ASSERT_TRUE(stored_blocks.empty());
 }
 
 /**
@@ -285,15 +260,13 @@ TEST_F(BlockQueryTest, GetZeroBlock) {
  * @then returned all blocks (2)
  */
 TEST_F(BlockQueryTest, GetBlocksFrom1) {
-  auto wrapper =
-      make_test_subscriber<CallExact>(blocks->getBlocksFrom(1), blocks_total);
-  size_t counter = 1;
-  wrapper.subscribe([&counter](const auto &b) {
-    // wrapper returns blocks 1 and 2
-    ASSERT_EQ(b->height(), counter++)
-        << "block height: " << b->height() << "counter: " << counter;
-  });
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocksFrom(1);
+  ASSERT_EQ(stored_blocks.size(), blocks_total);
+  for (size_t i = 0; i < stored_blocks.size(); i++) {
+    auto b = stored_blocks[i];
+    ASSERT_EQ(b->height(), i + 1)
+        << "block height: " << b->height() << "counter: " << i;
+  }
 }
 
 /**
@@ -314,11 +287,8 @@ TEST_F(BlockQueryTest, GetBlockButItIsNotJSON) {
   block_file << content;
   block_file.close();
 
-  auto wrapper =
-      make_test_subscriber<CallExact>(blocks->getBlocks(block_n, 1), 0);
-  wrapper.subscribe();
-
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocks(block_n, 1);
+  ASSERT_TRUE(stored_blocks.empty());
 }
 
 /**
@@ -342,11 +312,8 @@ TEST_F(BlockQueryTest, GetBlockButItIsInvalidBlock) {
   block_file << content;
   block_file.close();
 
-  auto wrapper =
-      make_test_subscriber<CallExact>(blocks->getBlocks(block_n, 1), 0);
-  wrapper.subscribe();
-
-  ASSERT_TRUE(wrapper.validate());
+  auto stored_blocks = blocks->getBlocks(block_n, 1);
+  ASSERT_TRUE(stored_blocks.empty());
 }
 
 /**
@@ -357,14 +324,14 @@ TEST_F(BlockQueryTest, GetBlockButItIsInvalidBlock) {
  */
 TEST_F(BlockQueryTest, GetTop2Blocks) {
   size_t blocks_n = 2;  // top 2 blocks
-  auto wrapper =
-      make_test_subscriber<CallExact>(blocks->getTopBlocks(blocks_n), blocks_n);
 
-  size_t counter = blocks_total - blocks_n + 1;
-  wrapper.subscribe(
-      [&counter](const auto &b) { ASSERT_EQ(b->height(), counter++); });
+  auto stored_blocks = blocks->getTopBlocks(blocks_n);
+  ASSERT_EQ(stored_blocks.size(), blocks_n);
 
-  ASSERT_TRUE(wrapper.validate());
+  for (size_t i = 0; i < blocks_n; i++) {
+    auto b = stored_blocks[i];
+    ASSERT_EQ(b->height(), i + 1);
+  }
 }
 
 /**
@@ -387,4 +354,31 @@ TEST_F(BlockQueryTest, HasTxWithExistingHash) {
 TEST_F(BlockQueryTest, HasTxWithInvalidHash) {
   shared_model::crypto::Hash invalid_tx_hash(zero_string);
   EXPECT_FALSE(blocks->hasTxWithHash(invalid_tx_hash));
+}
+
+/**
+ * @given block store with preinserted blocks
+ * @when getTopBlock is invoked on this block store
+ * @then returned top block's height is equal to the inserted one's
+ */
+TEST_F(BlockQueryTest, GetTopBlockSuccess) {
+  auto top_block_opt = framework::expected::val(blocks->getTopBlock());
+  ASSERT_TRUE(top_block_opt);
+  ASSERT_EQ(top_block_opt.value().value->height(), 2);
+}
+
+/**
+ * @given empty block store
+ * @when getTopBlock is invoked on this block store
+ * @then result must be a string error, because no block was fetched
+ */
+TEST_F(BlockQueryTest, GetTopBlockFail) {
+  EXPECT_CALL(*mock_file, last_id()).WillRepeatedly(Return(0));
+  EXPECT_CALL(*mock_file, get(mock_file->last_id()))
+      .WillOnce(Return(boost::none));
+
+  auto top_block_error = framework::expected::err(empty_blocks->getTopBlock());
+  ASSERT_TRUE(top_block_error);
+  ASSERT_EQ(top_block_error.value().error,
+            "error while fetching the last block");
 }

@@ -19,7 +19,9 @@
 
 #include <boost/range/adaptor/transformed.hpp>
 
+#include "backend/protobuf/empty_block.hpp"
 #include "builders/protobuf/block.hpp"
+#include "builders/protobuf/empty_block.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 
@@ -46,9 +48,10 @@ namespace iroha {
 
       notifier_.get_observable().subscribe(
           verified_proposal_subscription_,
-          [this](const std::shared_ptr<shared_model::interface::Proposal>
-                     &verified_proposal) {
-            this->process_verified_proposal(*verified_proposal);
+          [this](std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>
+                     verified_proposal_and_errors) {
+            this->process_verified_proposal(
+                *verified_proposal_and_errors->first);
           });
     }
 
@@ -57,7 +60,8 @@ namespace iroha {
       verified_proposal_subscription_.unsubscribe();
     }
 
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
+    rxcpp::observable<
+        std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
     Simulator::on_verified_proposal() {
       return notifier_.get_observable();
     }
@@ -66,33 +70,36 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process proposal");
       // Get last block from local ledger
-      log_->info("Getting top block");
-      block_queries_->getTopBlocks(1)
-          .subscribe_on(rxcpp::observe_on_new_thread())
-          .as_blocking()
-          .subscribe([this](auto block) { last_block = block; });
-      log_->info("Received top block");
-      if (not last_block) {
-        log_->warn("Could not fetch last block");
+      auto top_block_result = block_queries_->getTopBlock();
+      auto block_fetched = top_block_result.match(
+          [&](expected::Value<std::shared_ptr<shared_model::interface::Block>>
+                  &block) {
+            last_block = block.value;
+            return true;
+          },
+          [this](expected::Error<std::string> &error) {
+            log_->warn("Could not fetch last block: " + error.error);
+            return false;
+          });
+      if (not block_fetched) {
         return;
       }
-      if (last_block.value()->height() + 1 != proposal.height()) {
+
+      if (last_block->height() + 1 != proposal.height()) {
         log_->warn("Last block height: {}, proposal height: {}",
-                   last_block.value()->height(),
+                   last_block->height(),
                    proposal.height());
         return;
       }
-      log_->info("Creating temporary wsv");
       auto temporaryStorageResult = ametsuchi_factory_->createTemporaryWsv();
-      log_->info("created temporary wsv");
       temporaryStorageResult.match(
           [&](expected::Value<std::unique_ptr<ametsuchi::TemporaryWsv>>
                   &temporaryStorage) {
-            log_->info("match done");
-            auto validated_proposal =
-                validator_->validate(proposal, *temporaryStorage.value);
-            log_->info("validated");
-            notifier_.get_subscriber().on_next(validated_proposal);
+            auto validated_proposal_and_errors =
+                std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
+                    validator_->validate(proposal, *temporaryStorage.value));
+            notifier_.get_subscriber().on_next(
+                std::move(validated_proposal_and_errors));
           },
           [&](expected::Error<std::string> &error) {
             log_->error(error.error);
@@ -109,27 +116,38 @@ namespace iroha {
       // TODO: Alexey Chernyshov IR-1011 2018-03-08 rework BlockBuilder logic,
       // so that this cast will not be needed
       auto proto_txs =
-          proposal.transactions()
-          | boost::adaptors::transformed([](const auto &polymorphic_tx) {
-              return static_cast<const shared_model::proto::Transaction &>(
-                  *polymorphic_tx);
-            });
-      log_->info("building block");
+          proposal.transactions() | boost::adaptors::transformed([](auto &tx) {
+            return static_cast<const shared_model::proto::Transaction &>(tx);
+          });
+
+      auto sign_and_send = [this](const auto &any_block) {
+        crypto_signer_->sign(*any_block);
+        block_notifier_.get_subscriber().on_next(any_block);
+      };
+
+      if (proto_txs.empty()) {
+        auto empty_block = std::make_shared<shared_model::proto::EmptyBlock>(
+            shared_model::proto::UnsignedEmptyBlockBuilder()
+                .height(proposal.height())
+                .prevHash(last_block->hash())
+                .createdTime(proposal.createdTime())
+                .build());
+
+        sign_and_send(empty_block);
+        return;
+      }
       auto block = std::make_shared<shared_model::proto::Block>(
           shared_model::proto::UnsignedBlockBuilder()
-              .height(proposal.height())
-              .prevHash(last_block.value()->hash())
+              .height(block_queries_->getTopBlockHeight() + 1)
+              .prevHash(last_block->hash())
               .transactions(proto_txs)
               .createdTime(proposal.createdTime())
               .build());
-      log_->info("finished building block");
 
-      crypto_signer_->sign(*block);
-
-      block_notifier_.get_subscriber().on_next(block);
+      sign_and_send(block);
     }
 
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+    rxcpp::observable<shared_model::interface::BlockVariant>
     Simulator::on_block() {
       return block_notifier_.get_observable();
     }

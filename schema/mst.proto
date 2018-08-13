@@ -1,0 +1,15 @@
+syntax = "proto3";
+package iroha.network.transport;
+
+import "transaction.proto";
+import "primitive.proto";
+import "google/protobuf/empty.proto";
+
+message MstState {
+    repeated iroha.protocol.Transaction transactions = 1;
+    iroha.protocol.Peer peer = 2;
+}
+
+service MstTransportGrpc {
+    rpc SendState(MstState) returns (google.protobuf.Empty);
+}

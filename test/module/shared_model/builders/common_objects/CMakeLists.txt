@@ -30,15 +30,6 @@ target_link_libraries(account_builder_test
         shared_model_stateless_validation
         )
 
-addtest(amount_builder_test
-        amount_builder_test.cpp
-        )
-
-target_link_libraries(amount_builder_test
-        shared_model_proto_builders
-        shared_model_stateless_validation
-        )
-
 addtest(signature_builder_test
         signature_builder_test.cpp
         )
@@ -66,10 +57,11 @@ target_link_libraries(account_asset_builder_test
         shared_model_stateless_validation
         )
 
-addtest(query_response_builder_test
-        query_response_builder_test.cpp
-        )
-
-target_link_libraries(query_response_builder_test
-        shared_model_proto_builders
-        )
+if (IROHA_ROOT_PROJECT)
+  addtest(query_response_builder_test
+          query_response_builder_test.cpp
+          )
+  target_link_libraries(query_response_builder_test
+          shared_model_proto_builders
+          )
+endif ()

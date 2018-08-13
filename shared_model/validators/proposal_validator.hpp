@@ -33,21 +33,26 @@ namespace shared_model {
     /**
      * Class that validates proposal
      */
-    template <typename FieldValidator, typename TransactionValidator>
-    class ProposalValidator : public ContainerValidator<interface::Proposal,
-                                                        FieldValidator,
-                                                        TransactionValidator> {
+    template <typename FieldValidator, typename TransactionsCollectionValidator>
+    class ProposalValidator
+        : public ContainerValidator<interface::Proposal,
+                                    FieldValidator,
+                                    TransactionsCollectionValidator> {
      public:
+      using ContainerValidator<
+          interface::Proposal,
+          FieldValidator,
+          TransactionsCollectionValidator>::ContainerValidator;
       /**
        * Applies validation on proposal
        * @param proposal
        * @return Answer containing found error if any
        */
       Answer validate(const interface::Proposal &prop) const {
-        return ContainerValidator<interface::Proposal,
-                                  FieldValidator,
-                                  TransactionValidator>::validate(prop,
-                                                                  "Proposal");
+        return ContainerValidator<
+            interface::Proposal,
+            FieldValidator,
+            TransactionsCollectionValidator>::validate(prop, "Proposal");
       }
     };
 

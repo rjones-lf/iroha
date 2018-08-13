@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_SHARED_MODEL_QUERY_HPP
@@ -20,7 +8,6 @@
 
 #include <boost/variant.hpp>
 
-#include "interfaces/base/primitive.hpp"
 #include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/queries/get_account.hpp"
@@ -33,13 +20,8 @@
 #include "interfaces/queries/get_roles.hpp"
 #include "interfaces/queries/get_signatories.hpp"
 #include "interfaces/queries/get_transactions.hpp"
-#include "utils/polymorphic_wrapper.hpp"
-#include "utils/string_builder.hpp"
-#include "utils/visitor_apply_for_all.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/query.hpp"
-#endif
+#include "interfaces/queries/get_pending_transactions.hpp"
+#include "interfaces/queries/query_payload_meta.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -49,11 +31,11 @@ namespace shared_model {
      * system.
      * General note: this class is container for queries but not a base class.
      */
-    class Query : public SIGNABLE(Query) {
+    class Query : public Signable<Query> {
      private:
-      /// Shortcut type for polymorphic wrapper
+      /// Shortcut type for const reference
       template <typename... Value>
-      using wrap = boost::variant<detail::PolymorphicWrapper<Value>...>;
+      using wrap = boost::variant<const Value &...>;
 
      public:
       /// Type of variant, that handle concrete query
@@ -66,7 +48,8 @@ namespace shared_model {
                                     GetAccountDetail,
                                     GetRoles,
                                     GetRolePermissions,
-                                    GetAssetInfo>;
+                                    GetAssetInfo,
+                                    GetPendingTransactions>;
 
       /// Types of concrete commands, in attached variant
       using QueryListType = QueryVariantType::types;
@@ -90,41 +73,9 @@ namespace shared_model {
 
       // ------------------------| Primitive override |-------------------------
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("Query")
-            .append("creatorId", creatorAccountId())
-            .append("queryCounter", std::to_string(queryCounter()))
-            .append(Signable::toString())
-            .append(boost::apply_visitor(detail::ToStringVisitor(), get()))
-            .finalize();
-      }
+      std::string toString() const override;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto old_model = boost::apply_visitor(
-            detail::OldModelCreatorVisitor<OldModelType *>(), get());
-        old_model->creator_account_id = creatorAccountId();
-        old_model->query_counter = queryCounter();
-        // signature related
-        old_model->created_ts = createdTime();
-        std::for_each(signatures().begin(),
-                      signatures().end(),
-                      [&old_model](auto &signature_wrapper) {
-                        // for_each cycle will assign last signature for old
-                        // model. Also, if in new model absence at least one
-                        // signature, this part will be worked correctly.
-                        auto old_sig = signature_wrapper.makeOldModel();
-                        old_model->signature = *old_sig;
-                        delete old_sig;
-                      });
-        return old_model;
-      }
-#endif
-
-      bool operator==(const ModelType &rhs) const override {
-        return this->get() == rhs.get();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

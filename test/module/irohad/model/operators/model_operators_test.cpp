@@ -58,9 +58,7 @@ TEST(ModelOperatorTest, AddPeerTest) {
 
 AddAssetQuantity createAddAssetQuantity() {
   AddAssetQuantity aaq;
-  aaq.account_id = "123";
-  iroha::Amount amount(1010, 2);
-  aaq.amount = amount;
+  aaq.amount = "10.10";
   aaq.asset_id = "123";
   return aaq;
 }
@@ -78,9 +76,7 @@ TEST(ModelOperatorTest, AddAssetQuantityTest) {
 
 SubtractAssetQuantity createSubtractAssetQuantity() {
   SubtractAssetQuantity saq;
-  saq.account_id = "acc";
-  iroha::Amount amount(1010, 2);
-  saq.amount = amount;
+  saq.amount = "10.10";
   saq.asset_id = "ast";
   return saq;
 }
@@ -214,8 +210,7 @@ TEST(ModelOperatorTest, SetQuorumTest) {
 TransferAsset createTransferAsset() {
   TransferAsset transferAsset;
   transferAsset.asset_id = "123";
-  iroha::Amount amount(1010, 2);
-  transferAsset.amount = amount;
+  transferAsset.amount = "10.10";
   transferAsset.src_account_id = "1";
   transferAsset.dest_account_id = "2";
   transferAsset.description = "test";
@@ -286,18 +281,6 @@ TEST(ModelOperatorTest, RevokePermissionTest) {
   ASSERT_NE(first, second);
 }
 
-// -----|Amount|-----
-
-TEST(ModelOperatorTest, AmountTest) {
-  iroha::Amount amount1(1010, 2);
-
-  iroha::Amount amount2(1010, 2);
-
-  ASSERT_EQ(amount1, amount2);
-  iroha::Amount amount3(1011, 2);
-  ASSERT_NE(amount1, amount3);
-}
-
 // -----|Signature|-----
 
 Signature createSignature() {
@@ -329,6 +312,7 @@ TEST(ModelOperatorTest, SignatureTest) {
 Transaction createTransaction() {
   Transaction transaction;
   transaction.created_ts = 1;
+  transaction.quorum = 1;
   transaction.creator_account_id = "132";
   transaction.signatures.push_back(createSignature());
 
@@ -359,7 +343,7 @@ TEST(ModelOperatorTest, TransactionTest) {
 
   ASSERT_EQ(tx1, tx2);
   tx1.signatures.push_back(createSignature());
-  ASSERT_NE(tx1, tx2);
+  ASSERT_EQ(tx1, tx2);  // signatures not affect on equality
 }
 
 // -----|Block|-----

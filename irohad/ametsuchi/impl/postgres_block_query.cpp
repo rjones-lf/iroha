@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "ametsuchi/impl/postgres_block_query.hpp"
@@ -25,48 +13,39 @@
 namespace iroha {
   namespace ametsuchi {
 
-    PostgresBlockQuery::PostgresBlockQuery(pqxx::nontransaction &transaction,
-                                           FlatFile &file_store)
-        : block_store_(file_store),
-          transaction_(transaction),
-          log_(logger::log("PostgresBlockIndex")),
-          execute_{makeExecuteOptional(transaction_, log_)} {}
+    PostgresBlockQuery::PostgresBlockQuery(soci::session &sql,
+                                           KeyValueStorage &file_store)
+        : sql_(sql),
+          block_store_(file_store),
+          log_(logger::log("PostgresBlockIndex")) {}
 
-    rxcpp::observable<BlockQuery::wBlock> PostgresBlockQuery::getBlocks(
+    std::vector<BlockQuery::wBlock> PostgresBlockQuery::getBlocks(
         shared_model::interface::types::HeightType height, uint32_t count) {
       shared_model::interface::types::HeightType last_id =
           block_store_.last_id();
       auto to = std::min(last_id, height + count - 1);
+      std::vector<BlockQuery::wBlock> result;
       if (height > to or count == 0) {
-        return rxcpp::observable<>::empty<wBlock>();
+        return result;
       }
-      return rxcpp::observable<>::range(height, to)
-          .flat_map([this](const auto &i) {
-            auto block = block_store_.get(i) | [](const auto &bytes) {
-              return shared_model::converters::protobuf::jsonToModel<
-                  shared_model::proto::Block>(bytesToString(bytes));
-            };
-            if (not block) {
-              log_->error("error while converting from JSON");
-            }
-
-            return rxcpp::observable<>::create<PostgresBlockQuery::wBlock>(
-                [block{std::move(block)}](const auto &s) {
-                  if (block) {
-                    s.on_next(std::make_shared<shared_model::proto::Block>(
-                        block.value()));
-                  }
-                  s.on_completed();
-                });
-          });
+      for (auto i = height; i <= to; i++) {
+        block_store_.get(i) | [](const auto &bytes) {
+          return shared_model::converters::protobuf::jsonToModel<
+              shared_model::proto::Block>(bytesToString(bytes));
+        } | [&result](auto &&block) {
+          result.push_back(
+              std::make_shared<shared_model::proto::Block>(std::move(block)));
+        };
+      }
+      return result;
     }
 
-    rxcpp::observable<BlockQuery::wBlock> PostgresBlockQuery::getBlocksFrom(
+    std::vector<BlockQuery::wBlock> PostgresBlockQuery::getBlocksFrom(
         shared_model::interface::types::HeightType height) {
       return getBlocks(height, block_store_.last_id());
     }
 
-    rxcpp::observable<BlockQuery::wBlock> PostgresBlockQuery::getTopBlocks(
+    std::vector<BlockQuery::wBlock> PostgresBlockQuery::getTopBlocks(
         uint32_t count) {
       auto last_id = block_store_.last_id();
       count = std::min(count, last_id);
@@ -76,42 +55,42 @@ namespace iroha {
     std::vector<shared_model::interface::types::HeightType>
     PostgresBlockQuery::getBlockIds(
         const shared_model::interface::types::AccountIdType &account_id) {
-      return execute_(
-                 "SELECT DISTINCT height FROM height_by_account_set WHERE "
-                 "account_id = "
-                 + transaction_.quote(account_id) + ";")
-                 | [&](const auto &result)
-                 -> std::vector<shared_model::interface::types::HeightType> {
-        return transform<shared_model::interface::types::HeightType>(
-            result, [&](const auto &row) {
-              return row.at("height")
-                  .template as<shared_model::interface::types::HeightType>();
-            });
-      };
+      std::vector<shared_model::interface::types::HeightType> result;
+      soci::indicator ind;
+      std::string row;
+      soci::statement st =
+          (sql_.prepare << "SELECT DISTINCT height FROM height_by_account_set "
+                           "WHERE account_id = :id",
+           soci::into(row, ind),
+           soci::use(account_id));
+      st.execute();
+
+      processSoci(st, ind, row, [&result](std::string &r) {
+        result.push_back(std::stoull(r));
+      });
+      return result;
     }
 
     boost::optional<shared_model::interface::types::HeightType>
     PostgresBlockQuery::getBlockId(const shared_model::crypto::Hash &hash) {
-      boost::optional<uint64_t> blockId;
-      return execute_("SELECT height FROM height_by_hash WHERE hash = "
-                      + transaction_.quote(pqxx::binarystring(
-                            hash.blob().data(), hash.blob().size()))
-                      + ";")
-                 | [&](const auto &result)
-                 -> boost::optional<
-                     shared_model::interface::types::HeightType> {
-        if (result.size() == 0) {
-          return boost::none;
-        }
-        return result[0]
-            .at("height")
-            .template as<shared_model::interface::types::HeightType>();
-      };
+      boost::optional<uint64_t> blockId = boost::none;
+      boost::optional<std::string> block_str;
+      auto hash_str = hash.hex();
+
+      sql_ << "SELECT height FROM height_by_hash WHERE hash = :hash",
+          soci::into(block_str), soci::use(hash_str);
+      if (block_str) {
+        blockId = std::stoull(block_str.get());
+      } else {
+        log_->info("No block with transaction {}", hash.toString());
+      }
+      return blockId;
     }
 
-    std::function<void(pqxx::result &result)> PostgresBlockQuery::callback(
-        const rxcpp::subscriber<wTransaction> &subscriber, uint64_t block_id) {
-      return [this, &subscriber, block_id](pqxx::result &result) {
+    std::function<void(std::vector<std::string> &result)>
+    PostgresBlockQuery::callback(std::vector<wTransaction> &blocks,
+                                 uint64_t block_id) {
+      return [this, &blocks, block_id](std::vector<std::string> &result) {
         auto block = block_store_.get(block_id) | [](const auto &bytes) {
           return shared_model::converters::protobuf::jsonToModel<
               shared_model::proto::Block>(bytesToString(bytes));
@@ -123,76 +102,88 @@ namespace iroha {
 
         boost::for_each(
             result | boost::adaptors::transformed([](const auto &x) {
-              return x.at("index").template as<size_t>();
+              std::istringstream iss(x);
+              size_t size;
+              iss >> size;
+              return size;
             }),
             [&](const auto &x) {
-              subscriber.on_next(PostgresBlockQuery::wTransaction(
-                  clone(*block->transactions().at(x))));
+              blocks.push_back(PostgresBlockQuery::wTransaction(
+                  clone(block->transactions()[x])));
             });
       };
     }
 
-    rxcpp::observable<BlockQuery::wTransaction>
+    std::vector<BlockQuery::wTransaction>
     PostgresBlockQuery::getAccountTransactions(
         const shared_model::interface::types::AccountIdType &account_id) {
-      return rxcpp::observable<>::create<wTransaction>(
-          [this, account_id](const auto &subscriber) {
-            auto block_ids = this->getBlockIds(account_id);
-            if (block_ids.empty()) {
-              subscriber.on_completed();
-              return;
-            }
+      std::vector<BlockQuery::wTransaction> result;
+      auto block_ids = this->getBlockIds(account_id);
+      if (block_ids.empty()) {
+        return result;
+      }
+      for (const auto &block_id : block_ids) {
+        std::vector<std::string> index;
+        soci::indicator ind;
+        std::string row;
+        soci::statement st =
+            (sql_.prepare
+                 << "SELECT DISTINCT index FROM index_by_creator_height "
+                    "WHERE creator_id = :id AND height = :height",
+             soci::into(row, ind),
+             soci::use(account_id),
+             soci::use(block_id));
+        st.execute();
 
-            for (const auto &block_id : block_ids) {
-              execute_(
-                  "SELECT DISTINCT index FROM index_by_creator_height WHERE "
-                  "creator_id = "
-                  + transaction_.quote(account_id)
-                  + " AND height = " + transaction_.quote(block_id) + ";")
-                  | this->callback(subscriber, block_id);
-            }
-            subscriber.on_completed();
-          });
+        processSoci(
+            st, ind, row, [&index](std::string &r) { index.push_back(r); });
+        this->callback(result, block_id)(index);
+      }
+      return result;
     }
 
-    rxcpp::observable<BlockQuery::wTransaction>
+    std::vector<BlockQuery::wTransaction>
     PostgresBlockQuery::getAccountAssetTransactions(
         const shared_model::interface::types::AccountIdType &account_id,
         const shared_model::interface::types::AssetIdType &asset_id) {
-      return rxcpp::observable<>::create<wTransaction>([this,
-                                                        account_id,
-                                                        asset_id](
-                                                           auto subscriber) {
-        auto block_ids = this->getBlockIds(account_id);
-        if (block_ids.empty()) {
-          subscriber.on_completed();
-          return;
-        }
+      std::vector<BlockQuery::wTransaction> result;
+      auto block_ids = this->getBlockIds(account_id);
+      if (block_ids.empty()) {
+        return result;
+      }
 
-        for (const auto &block_id : block_ids) {
-          execute_(
-              "SELECT DISTINCT index FROM index_by_id_height_asset WHERE id = "
-              + transaction_.quote(account_id)
-              + " AND height = " + transaction_.quote(block_id)
-              + " AND asset_id = " + transaction_.quote(asset_id) + ";")
-              | this->callback(subscriber, block_id);
-        }
-        subscriber.on_completed();
-      });
+      for (const auto &block_id : block_ids) {
+        std::vector<std::string> index;
+        soci::indicator ind;
+        std::string row;
+        soci::statement st =
+            (sql_.prepare
+                 << "SELECT DISTINCT index FROM index_by_id_height_asset "
+                    "WHERE id = :id AND height = :height AND asset_id = "
+                    ":asset_id",
+             soci::into(row, ind),
+             soci::use(account_id),
+             soci::use(block_id),
+             soci::use(asset_id));
+        st.execute();
+
+        processSoci(
+            st, ind, row, [&index](std::string &r) { index.push_back(r); });
+        this->callback(result, block_id)(index);
+      }
+      return result;
     }
 
-    rxcpp::observable<boost::optional<BlockQuery::wTransaction>>
+    std::vector<boost::optional<BlockQuery::wTransaction>>
     PostgresBlockQuery::getTransactions(
         const std::vector<shared_model::crypto::Hash> &tx_hashes) {
-      return rxcpp::observable<>::create<boost::optional<wTransaction>>(
-          [this, tx_hashes](const auto &subscriber) {
-            std::for_each(tx_hashes.begin(),
-                          tx_hashes.end(),
-                          [that = this, &subscriber](const auto &tx_hash) {
-                            subscriber.on_next(that->getTxByHashSync(tx_hash));
-                          });
-            subscriber.on_completed();
-          });
+      std::vector<boost::optional<BlockQuery::wTransaction>> result;
+      std::for_each(tx_hashes.begin(),
+                    tx_hashes.end(),
+                    [this, &result](const auto &tx_hash) {
+                      result.push_back(this->getTxByHashSync(tx_hash));
+                    });
+      return result;
     }
 
     boost::optional<BlockQuery::wTransaction>
@@ -213,10 +204,10 @@ namespace iroha {
       auto it =
           std::find_if(block->transactions().begin(),
                        block->transactions().end(),
-                       [&hash](const auto &tx) { return tx->hash() == hash; });
+                       [&hash](const auto &tx) { return tx.hash() == hash; });
       if (it != block->transactions().end()) {
         result = boost::optional<PostgresBlockQuery::wTransaction>(
-            PostgresBlockQuery::wTransaction(clone(**it)));
+            PostgresBlockQuery::wTransaction(clone(*it)));
       }
       return result;
     }
@@ -224,6 +215,25 @@ namespace iroha {
     bool PostgresBlockQuery::hasTxWithHash(
         const shared_model::crypto::Hash &hash) {
       return getBlockId(hash) != boost::none;
+    }
+
+    uint32_t PostgresBlockQuery::getTopBlockHeight() {
+      return block_store_.last_id();
+    }
+
+    expected::Result<BlockQuery::wBlock, std::string>
+    PostgresBlockQuery::getTopBlock() {
+      // TODO 18/06/18 Akvinikym: add dependency injection IR-937 IR-1040
+      auto block =
+          block_store_.get(block_store_.last_id()) | [](const auto &bytes) {
+            return shared_model::converters::protobuf::jsonToModel<
+                shared_model::proto::Block>(bytesToString(bytes));
+          };
+      if (not block) {
+        return expected::makeError("error while fetching the last block");
+      }
+      return expected::makeValue(std::make_shared<shared_model::proto::Block>(
+          std::move(block.value())));
     }
 
   }  // namespace ametsuchi

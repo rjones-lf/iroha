@@ -3,7 +3,7 @@ apply plugin: 'com.google.protobuf'
 apply plugin: 'application'
 
 def BUILD_DIR = "./build/shared_model/bindings"
-def SCHEMA_DIR = "../../schema"
+def SCHEMA_DIR = ["../../schema", "../../shared_model/schema"]
 
 buildscript {
     repositories {
@@ -38,7 +38,7 @@ sourceSets {
             srcDirs = ['.']
         }
         proto {
-            srcDirs = [SCHEMA_DIR]
+            srcDirs = SCHEMA_DIR
         }
     }
 }

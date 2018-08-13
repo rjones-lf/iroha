@@ -16,7 +16,9 @@
 add_library(bindings
         model_transaction_builder.cpp
         model_query_builder.cpp
+        model_blocks_query_builder.cpp
         model_crypto.cpp
+        client_api.cpp
         )
 
 target_link_libraries(bindings
@@ -24,7 +26,6 @@ target_link_libraries(bindings
         shared_model_cryptography
         generator
         shared_model_stateless_validation
-        iroha_amount
         )
 
 
@@ -33,10 +34,6 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
     find_package(swig REQUIRED)
     include(${SWIG_USE_FILE})
 
-    set(CMAKE_SWIG_FLAGS "")
-    if (SHARED_MODEL_DISABLE_COMPATIBILITY)
-        set(CMAKE_SWIG_FLAGS "-DDISABLE_BACKWARD")
-    endif()
     set_source_files_properties(bindings.i PROPERTIES CPLUSPLUS ON)
     set_property(GLOBAL PROPERTY SWIG_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -59,17 +56,22 @@ endif()
 
 if (SWIG_PYTHON)
     if(SUPPORT_PYTHON2)
-        find_package(PythonLibs 2.7 REQUIRED)
+        set(PYTHON_VER 2.7)
     else()
-        find_package(PythonLibs 3.5 REQUIRED)
+        set(PYTHON_VER 3.5)
     endif()
+
+    if(CMAKE_GENERATOR MATCHES "Visual Studio")
+        find_package(PythonInterp ${PYTHON_VER} REQUIRED)
+    endif()
+    find_package(PythonLibs ${PYTHON_VER} REQUIRED)
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
         set(MAC_OPTS "-flat_namespace -undefined suppress")
     endif()
 
     myswig_add_library(iroha LANGUAGE python SOURCES bindings.i)
-    swig_link_libraries(iroha ${Python_LIBRARIES} bindings ${MAC_OPTS})
+    swig_link_libraries(iroha ${PYTHON_LIBRARIES} bindings ${MAC_OPTS})
     add_custom_target(irohapy DEPENDS ${SWIG_MODULE_iroha_REAL_NAME})
     # path to where Python.h is found
     target_include_directories(${SWIG_MODULE_iroha_REAL_NAME} PUBLIC
@@ -80,7 +82,14 @@ endif()
 if (SWIG_JAVA)
     find_package(JNI REQUIRED)
 
+    if (SWIG_JAVA_PKG)
+        set(CMAKE_SWIG_FLAGS -package ${SWIG_JAVA_PKG})
+        string(REPLACE "." "/" CMAKE_SWIG_OUTDIR  ${SWIG_JAVA_PKG})
+    else()
+        set(CMAKE_SWIG_FLAGS "")
+    endif()
     myswig_add_library(irohajava LANGUAGE java SOURCES bindings.i)
+    unset(CMAKE_SWIG_FLAGS)
     swig_link_libraries(irohajava ${Java_LIBRARIES} bindings)
     # the include path to jni.h and jni_md.h
     target_include_directories(${SWIG_MODULE_irohajava_REAL_NAME} PUBLIC

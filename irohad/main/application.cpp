@@ -1,24 +1,22 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "main/application.hpp"
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
+#include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
+#include "execution/query_execution_impl.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy.hpp"
+#include "multi_sig_transactions/mst_processor_impl.hpp"
+#include "multi_sig_transactions/mst_processor_stub.hpp"
+#include "multi_sig_transactions/mst_time_provider_impl.hpp"
+#include "multi_sig_transactions/storage/mst_storage_impl.hpp"
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
+#include "torii/impl/status_bus_impl.hpp"
+#include "validators/field_validator.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -42,7 +40,8 @@ Irohad::Irohad(const std::string &block_store_dir,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
                std::chrono::milliseconds load_delay,
-               const shared_model::crypto::Keypair &keypair)
+               const shared_model::crypto::Keypair &keypair,
+               bool is_mst_supported)
     : block_store_dir_(block_store_dir),
       pg_conn_(pg_conn),
       torii_port_(torii_port),
@@ -51,6 +50,7 @@ Irohad::Irohad(const std::string &block_store_dir,
       proposal_delay_(proposal_delay),
       vote_delay_(vote_delay),
       load_delay_(load_delay),
+      is_mst_supported_(is_mst_supported),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
   log_->info("created");
@@ -67,15 +67,17 @@ void Irohad::init() {
   initWsvRestorer();
   restoreWsv();
 
-  initPeerQuery();
   initCryptoProvider();
   initValidators();
+  initNetworkClient();
   initOrderingGate();
   initSimulator();
   initBlockLoader();
   initConsensusGate();
   initSynchronizer();
   initPeerCommunicationService();
+  initStatusBus();
+  initMstProcessor();
 
   // Torii
   initTransactionCommandService();
@@ -86,14 +88,18 @@ void Irohad::init() {
  * Dropping iroha daemon storage
  */
 void Irohad::dropStorage() {
-  storage->dropStorage();
+  storage->reset();
+  ordering_service_storage_->resetState();
 }
 
 /**
  * Initializing iroha daemon storage
  */
 void Irohad::initStorage() {
-  auto storageResult = StorageImpl::create(block_store_dir_, pg_conn_);
+  auto factory =
+      std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
+          shared_model::validation::FieldValidator>>();
+  auto storageResult = StorageImpl::create(block_store_dir_, pg_conn_, factory);
   storageResult.match(
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
         storage = _storage.value;
@@ -144,11 +150,22 @@ void Irohad::initCryptoProvider() {
  * Initializing validators
  */
 void Irohad::initValidators() {
-  stateful_validator = std::make_shared<StatefulValidatorImpl>();
+  auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
+      shared_model::validation::DefaultProposalValidator>>();
+  stateful_validator =
+      std::make_shared<StatefulValidatorImpl>(std::move(factory));
   chain_validator = std::make_shared<ChainValidatorImpl>(
       std::make_shared<consensus::yac::SupermajorityCheckerImpl>());
 
   log_->info("[Init] => validators");
+}
+
+/**
+ * Initializing network client
+ */
+void Irohad::initNetworkClient() {
+  async_call_ =
+      std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
 }
 
 /**
@@ -159,7 +176,8 @@ void Irohad::initOrderingGate() {
                                                  max_proposal_size_,
                                                  proposal_delay_,
                                                  ordering_service_storage_,
-                                                 storage->getBlockQuery());
+                                                 storage->getBlockQuery(),
+                                                 async_call_);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -196,7 +214,8 @@ void Irohad::initConsensusGate() {
                                               block_loader,
                                               keypair,
                                               vote_delay_,
-                                              load_delay_);
+                                              load_delay_,
+                                              async_call_);
 
   log_->info("[Init] => consensus gate");
 }
@@ -215,8 +234,8 @@ void Irohad::initSynchronizer() {
  * Initializing peer communication service
  */
 void Irohad::initPeerCommunicationService() {
-  pcs = std::make_shared<PeerCommunicationServiceImpl>(ordering_gate,
-                                                       synchronizer);
+  pcs = std::make_shared<PeerCommunicationServiceImpl>(
+      ordering_gate, synchronizer, simulator);
 
   pcs->on_proposal().subscribe(
       [this](auto) { log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ "); });
@@ -230,14 +249,44 @@ void Irohad::initPeerCommunicationService() {
   log_->info("[Init] => pcs");
 }
 
+void Irohad::initStatusBus() {
+  status_bus_ = std::make_shared<StatusBusImpl>();
+  log_->info("[Init] => Tx status bus");
+}
+
+void Irohad::initMstProcessor() {
+  if (is_mst_supported_) {
+    auto mst_transport = std::make_shared<MstTransportGrpc>(async_call_);
+    auto mst_completer = std::make_shared<DefaultCompleter>();
+    auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
+    // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
+    // cli parameters
+    auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
+        std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery()),
+        std::chrono::seconds(5) /*emitting period*/,
+        2 /*amount per once*/);
+    auto mst_time = std::make_shared<MstTimeProviderImpl>();
+    mst_processor = std::make_shared<FairMstProcessor>(
+        mst_transport, mst_storage, mst_propagation, mst_time);
+  } else {
+    mst_processor = std::make_shared<MstProcessorStub>();
+  }
+  log_->info("[Init] => MST processor");
+}
+
 /**
  * Initializing transaction command service
  */
 void Irohad::initTransactionCommandService() {
-  auto tx_processor = std::make_shared<TransactionProcessorImpl>(pcs);
+  auto tx_processor = std::make_shared<TransactionProcessorImpl>(
+      pcs, mst_processor, status_bus_);
 
-  command_service = std::make_shared<::torii::CommandService>(
-      tx_processor, storage->getBlockQuery(), proposal_delay_);
+  command_service =
+      std::make_shared<::torii::CommandService>(tx_processor,
+                                                storage,
+                                                status_bus_,
+                                                std::chrono::seconds(1),
+                                                2 * proposal_delay_);
 
   log_->info("[Init] => command service");
 }
@@ -246,7 +295,8 @@ void Irohad::initTransactionCommandService() {
  * Initializing query command service
  */
 void Irohad::initQueryService() {
-  auto query_processor = std::make_shared<QueryProcessorImpl>(storage);
+  auto query_processor = std::make_shared<QueryProcessorImpl>(
+      storage, std::make_unique<QueryExecutionImpl>(storage));
 
   query_service = std::make_shared<::torii::QueryService>(query_processor);
 

@@ -23,7 +23,7 @@ This is the list of maintainers, including their email address for direct commun
 | Igor Egorov            | @igor-egorov             | igor@soramitsu.co.jp           | Development, Android library    |
 | Konstantin Munichev    | @luckychess              | konstantin@soramitsu.co.jp     | Security                        |
 | Evgenii Mininbaev      | @l4l                     | evgenii@soramitsu.co.jp        | Security, Python library        |
-| Vyacheslav Bikbaev     | @laSinteZ                | bikbaev@soramitsu.co.jp        | Documentation, NodeJS library   |
+| Vyacheslav Bikbaev     | @laSinteZ                | viacheslav@soramitsu.co.jp     | Documentation, NodeJS library   |
 | Arseniy Fokin          | @stinger112              | stinger112@gmail.com           | NodeJS library                  |
 | Alexey Chernyshov      | @Alexey-N-Chernyshov     | chernyshov@soramitsu.co.jp     | Development                     |
 | Artyom Bakhtin         | @bakhtin                 | a@bakhtin.net                  | Ansible, Jenkins, artifacts     |

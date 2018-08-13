@@ -19,14 +19,19 @@
 
 #include <boost/functional/hash.hpp>
 
-#include "utils/string_builder.hpp"
-
+#include "common/byteutils.hpp"
 namespace shared_model {
   namespace crypto {
 
     Hash::Hash() : Blob() {}
 
     Hash::Hash(const std::string &hash) : Blob(hash) {}
+
+    Hash::Hash(const Blob &blob) : Blob(blob) {}
+
+    Hash Hash::fromHexString(const std::string &hex) {
+      return Hash(Blob::fromHexString(hex));
+    }
 
     std::string Hash::toString() const {
       return detail::PrettyStringBuilder()

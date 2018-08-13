@@ -18,12 +18,8 @@
 #ifndef IROHA_SHARED_MODEL_CREATE_ACCOUNT_HPP
 #define IROHA_SHARED_MODEL_CREATE_ACCOUNT_HPP
 
-#include "interfaces/base/primitive.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
-
-#ifndef DISABLE_BACKWARD
-#include "model/commands/create_account.hpp"
-#endif
 
 namespace shared_model {
   namespace interface {
@@ -31,7 +27,7 @@ namespace shared_model {
     /**
      * Create acccount in Iroha domain
      */
-    class CreateAccount : public PRIMITIVE(CreateAccount) {
+    class CreateAccount : public ModelPrimitive<CreateAccount> {
      public:
       /**
        * @return Name of the account to create in Iroha
@@ -46,30 +42,9 @@ namespace shared_model {
        */
       virtual const types::PubkeyType &pubkey() const = 0;
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("CreateAccount")
-            .append("account_name", accountName())
-            .append("domain_id", domainId())
-            .append(pubkey().toString())
-            .finalize();
-      }
+      std::string toString() const override;
 
-#ifndef DISABLE_BACKWARD
-      OldModelType *makeOldModel() const override {
-        auto oldModel = new iroha::model::CreateAccount;
-        oldModel->account_name = accountName();
-        oldModel->domain_id = domainId();
-        oldModel->pubkey = pubkey().makeOldModel<decltype(oldModel->pubkey)>();
-        return oldModel;
-      }
-
-#endif
-
-      bool operator==(const ModelType &rhs) const override {
-        return accountName() == rhs.accountName()
-            and domainId() == rhs.domainId() and pubkey() == rhs.pubkey();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

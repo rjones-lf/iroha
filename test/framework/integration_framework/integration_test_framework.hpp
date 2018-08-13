@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_INTEGRATION_FRAMEWORK_HPP
@@ -28,6 +16,8 @@
 #include <vector>
 
 #include <tbb/concurrent_queue.h>
+#include <boost/filesystem.hpp>
+#include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "logger/logger.hpp"
@@ -39,11 +29,11 @@ namespace shared_model {
   namespace interface {
     class Block;
     class Proposal;
-  }
+  }  // namespace interface
   namespace proto {
     class Block;
   }
-}
+}  // namespace shared_model
 
 namespace integration_framework {
 
@@ -58,28 +48,36 @@ namespace integration_framework {
    public:
     /**
      * Construct test framework instance
-     * @param maximum_proposal_size - (default = 10) Maximum amount of
-     * transactions per proposal
+     * @param maximum_proposal_size - Maximum number of transactions per
+     * proposal
      * @param destructor_lambda - (default nullptr) Pointer to function which
      * receives pointer to constructed instance of Integration Test Framework.
      * If specified, then will be called instead of default destructor's code
+     * @param mst_support enables multisignature tx support
+     * @param block_store_path specifies path where blocks will be stored
      */
     explicit IntegrationTestFramework(
-        size_t maximum_proposal_size = 10,
+        size_t maximum_proposal_size,
+        const boost::optional<std::string> &dbname = boost::none,
         std::function<void(IntegrationTestFramework &)> deleter =
-            [](IntegrationTestFramework &itf) { itf.done(); });
+            [](IntegrationTestFramework &itf) { itf.done(); },
+        bool mst_support = false,
+        const std::string &block_store_path =
+            (boost::filesystem::temp_directory_path()
+             / boost::filesystem::unique_path())
+                .string());
 
     ~IntegrationTestFramework();
 
     /**
-    * Construct default genesis block.
-    *
-    * Genesis block contains single transaction that
-    * creates a single role (kDefaultRole), domain (kDefaultDomain),
-    * account (kAdminName) and asset (kAssetName).
-    * @param key - signing key
-    * @return signed genesis block
-    */
+     * Construct default genesis block.
+     *
+     * Genesis block contains single transaction that
+     * creates a single role (kDefaultRole), domain (kDefaultDomain),
+     * account (kAdminName) and asset (kAssetName).
+     * @param key - signing key
+     * @return signed genesis block
+     */
     static shared_model::proto::Block defaultBlock(
         const shared_model::crypto::Keypair &key);
 
@@ -103,6 +101,14 @@ namespace integration_framework {
         const shared_model::interface::Block &block);
 
     /**
+     * Initialize Iroha instance using the data left in block store from
+     * previous launch of Iroha
+     * @param keypair - signing key used for initialization of previous instance
+     */
+    IntegrationTestFramework &recoverState(
+        const shared_model::crypto::Keypair &keypair);
+
+    /**
      * Send transaction to Iroha and validate its status
      * @param tx - transaction for sending
      * @param validation - callback for transaction status validation that
@@ -122,6 +128,17 @@ namespace integration_framework {
      */
     IntegrationTestFramework &sendTx(
         const shared_model::proto::Transaction &tx);
+
+    /**
+     * Send transaction to Iroha with awaiting proposal
+     * and without status validation
+     * @param tx - transaction for sending
+     * @param check - callback for checking committed block
+     * @return this
+     */
+    IntegrationTestFramework &sendTxAwait(
+        const shared_model::proto::Transaction &tx,
+        std::function<void(const BlockType &)> check);
 
     /**
      * Check current status of transaction
@@ -211,8 +228,10 @@ namespace integration_framework {
 
     tbb::concurrent_queue<ProposalType> proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
-    std::shared_ptr<IrohaInstance> iroha_instance_ =
-        std::make_shared<IrohaInstance>();
+    std::shared_ptr<IrohaInstance> iroha_instance_;
+
+    void initPipeline(const shared_model::crypto::Keypair &keypair);
+    void subscribeQueuesAndRun();
 
     // config area
 

@@ -21,9 +21,8 @@
 #include "backend/protobuf/common_objects/account_asset.hpp"
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/query_responses/account_detail_response.hpp"
-#include "responses.pb.h"
+#include "qry_responses.pb.h"
 #include "utils/lazy_initializer.hpp"
-#include "utils/reference_holder.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -33,22 +32,16 @@ namespace shared_model {
                                AccountDetailResponse> {
      public:
       template <typename QueryResponseType>
-      explicit AccountDetailResponse(QueryResponseType &&queryResponse)
-          : CopyableProto(std::forward<QueryResponseType>(queryResponse)) {}
+      explicit AccountDetailResponse(QueryResponseType &&queryResponse);
 
-      AccountDetailResponse(const AccountDetailResponse &o)
-          : AccountDetailResponse(o.proto_) {}
+      AccountDetailResponse(const AccountDetailResponse &o);
 
-      AccountDetailResponse(AccountDetailResponse &&o)
-          : AccountDetailResponse(std::move(o.proto_)) {}
+      AccountDetailResponse(AccountDetailResponse &&o);
 
-      const DetailType &detail() const override {
-        return account_detail_response_.detail();
-      }
+      const interface::types::DetailType &detail() const override;
 
      private:
-      const iroha::protocol::AccountDetailResponse &account_detail_response_{
-          proto_->account_detail_response()};
+      const iroha::protocol::AccountDetailResponse &account_detail_response_;
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -22,6 +22,7 @@
 
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
+#include "validation/stateful_validator_common.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -39,26 +40,44 @@ namespace iroha {
     class TemporaryWsv {
      public:
       /**
+       * Wrapper for savepoints in wsv state; rollbacks to savepoint, if
+       * destroyed without explicit release, releases it otherwise
+       */
+      struct SavepointWrapper {
+        /**
+         * Release the savepoint
+         */
+        virtual void release() = 0;
+
+        virtual ~SavepointWrapper() = default;
+      };
+
+      /**
        * Applies a transaction to current state
        * using logic specified in function
        * @param transaction Transaction to be applied
        * @param function Function that specifies the logic used to apply the
        * transaction
-       * Function parameters:
-       *  - Transaction @see transaction
-       *  - WsvQuery - world state view query interface for temporary storage
-       * Function returns true if the transaction is successfully applied, false
-       * otherwise.
        * @return True if transaction was successfully applied, false otherwise
        */
-      virtual bool apply(
+      virtual expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &,
-          std::function<bool(const shared_model::interface::Transaction &,
-                             WsvQuery &)> function) = 0;
+          std::function<expected::Result<void, validation::CommandError>(
+              const shared_model::interface::Transaction &, WsvQuery &)>
+              function) = 0;
+
+      /**
+       * Create a savepoint for wsv state
+       * @param name of savepoint to be created
+       * @return RAII wrapper for savepoints
+       */
+      virtual std::unique_ptr<TemporaryWsv::SavepointWrapper> createSavepoint(
+          const std::string &name) = 0;
 
       virtual ~TemporaryWsv() = default;
+
     };
-  }  // namespace ametsuchi
+  }     // namespace ametsuchi
 }  // namespace iroha
 
 #endif  // IROHA_TEMPORARYWSV_HPP

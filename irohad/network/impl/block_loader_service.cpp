@@ -31,13 +31,11 @@ grpc::Status BlockLoaderService::retrieveBlocks(
     ::grpc::ServerContext *context,
     const proto::BlocksRequest *request,
     ::grpc::ServerWriter<::iroha::protocol::Block> *writer) {
-  storage_->getBlocksFrom(request->height())
-      .map([](auto block) {
-        return std::dynamic_pointer_cast<shared_model::proto::Block>(block)
-            ->getTransport();
-      })
-      .as_blocking()
-      .subscribe([writer](auto block) { writer->Write(block); });
+  auto blocks = storage_->getBlocksFrom(request->height());
+  std::for_each(blocks.begin(), blocks.end(), [&writer](const auto &block) {
+    writer->Write(std::dynamic_pointer_cast<shared_model::proto::Block>(block)
+                      ->getTransport());
+  });
   return grpc::Status::OK;
 }
 
@@ -53,14 +51,14 @@ grpc::Status BlockLoaderService::retrieveBlock(
   }
 
   boost::optional<protocol::Block> result;
-  storage_->getBlocksFrom(1)
-      .filter([&hash](auto block) { return block->hash() == hash; })
-      .map([](auto block) {
-        return std::dynamic_pointer_cast<shared_model::proto::Block>(block)
-            ->getTransport();
-      })
-      .as_blocking()
-      .subscribe([&result](auto block) { result = block; });
+  auto blocks = storage_->getBlocksFrom(1);
+  std::for_each(
+      blocks.begin(), blocks.end(), [&result, &hash](const auto &block) {
+        if (block->hash() == hash) {
+          result = std::dynamic_pointer_cast<shared_model::proto::Block>(block)
+                       ->getTransport();
+        }
+      });
   if (not result) {
     log_->info("Cannot find block with requested hash");
     return grpc::Status(grpc::StatusCode::NOT_FOUND, "Block not found");

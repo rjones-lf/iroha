@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_QUERY_PROCESSOR_IMPL_HPP
@@ -26,38 +14,35 @@ namespace iroha {
   namespace torii {
 
     /**
-     * QueryProcessor provides start point for queries in the whole system
+     * QueryProcessorImpl provides implementation of QueryProcessor
      */
     class QueryProcessorImpl : public QueryProcessor {
      public:
-      explicit QueryProcessorImpl(std::shared_ptr<ametsuchi::Storage> storage);
+      QueryProcessorImpl(std::shared_ptr<ametsuchi::Storage> storage,
+                         std::shared_ptr<QueryExecution> qry_exec);
 
       /**
        * Checks if query has needed signatures
        * @param qry arrived query
        * @return true if passes stateful validation
        */
-      bool checkSignatories(const shared_model::interface::Query &qry);
+      template <class Q>
+      bool checkSignatories(const Q &qry);
 
-      /**
-       * Register client query
-       * @param query - client intent
-       */
-      void queryHandle(
-          std::shared_ptr<shared_model::interface::Query> qry) override;
+      std::unique_ptr<shared_model::interface::QueryResponse> queryHandle(
+          const shared_model::interface::Query &qry) override;
 
-      /**
-       * Subscribe for query responses
-       * @return observable with query responses
-       */
-      rxcpp::observable<std::shared_ptr<shared_model::interface::QueryResponse>>
-      queryNotifier() override;
+      rxcpp::observable<
+          std::shared_ptr<shared_model::interface::BlockQueryResponse>>
+      blocksQueryHandle(
+          const shared_model::interface::BlocksQuery &qry) override;
 
      private:
       rxcpp::subjects::subject<
-          std::shared_ptr<shared_model::interface::QueryResponse>>
-          subject_;
+          std::shared_ptr<shared_model::interface::BlockQueryResponse>>
+          blocks_query_subject_;
       std::shared_ptr<ametsuchi::Storage> storage_;
+      std::shared_ptr<QueryExecution> qry_exec_;
     };
   }  // namespace torii
 }  // namespace iroha

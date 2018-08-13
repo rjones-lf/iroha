@@ -9,7 +9,7 @@ def doDebugBuild(coverageEnabled=false) {
   def previousCommit = pCommit.previousCommitOrCurrent()
   // params are always null unless job is started
   // this is the case for the FIRST build only.
-  // So just set this to same value as default. 
+  // So just set this to same value as default.
   // This is a known bug. See https://issues.jenkins-ci.org/browse/JENKINS-41929
   if (!parallelism) {
     parallelism = 4
@@ -17,17 +17,19 @@ def doDebugBuild(coverageEnabled=false) {
   if (env.NODE_NAME.contains('arm7')) {
     parallelism = 1
   }
+
   sh "docker network create ${env.IROHA_NETWORK}"
   def iC = dPullOrBuild.dockerPullOrUpdate("${platform}-develop-build",
                                            "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
                                            "${env.GIT_RAW_BASE_URL}/${previousCommit}/docker/develop/Dockerfile",
                                            "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
                                            ['PARALLELISM': parallelism])
-
-  if (GIT_LOCAL_BRANCH == 'develop' && manifest.manifestSupportEnabled()) {
-    manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop-build", 
-      ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build", 
-       "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build", 
+  // push Docker image in case the current branch is develop,
+  // or it is a commit into PR which base branch is develop (usually develop -> master)
+  if ((GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop') && manifest.manifestSupportEnabled()) {
+    manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop-build",
+      ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
+       "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
        "${DOCKER_REGISTRY_BASENAME}:aarch64-develop-build"])
     manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:develop-build",
       [
@@ -42,6 +44,7 @@ def doDebugBuild(coverageEnabled=false) {
       manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:develop-build", login, password)
     }
   }
+
   docker.image('postgres:9.5').withRun(""
     + " -e POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
     + " -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
@@ -70,7 +73,7 @@ def doDebugBuild(coverageEnabled=false) {
         ccache --show-stats
         ccache --zero-stats
         ccache --max-size=5G
-      """  
+      """
       sh """
         cmake \
           -DTESTING=ON \
@@ -85,7 +88,7 @@ def doDebugBuild(coverageEnabled=false) {
       if ( coverageEnabled ) {
         sh "cmake --build build --target coverage.init.info"
       }
-      def testExitCode = sh(script: 'CTEST_OUTPUT_ON_FAILURE=1 cmake --build build --target test', returnStatus: true)
+      def testExitCode = sh(script: """cd build && ctest --output-on-failure""", returnStatus: true)
       if (testExitCode != 0) {
         currentBuild.result = "UNSTABLE"
       }

@@ -23,6 +23,7 @@
 #include <unordered_set>
 
 #include "cryptography/default_hash_provider.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"
@@ -36,27 +37,13 @@ namespace shared_model {
 
   namespace interface {
 
-#ifdef DISABLE_BACKWARD
-#define SIGNABLE(Model) Signable<Model>
-#else
-#define SIGNABLE(Model) Signable<Model, iroha::model::Model>
-#endif
-
-/**
- * Interface provides signatures and adds them to model object
- * @tparam Model - your new style model
- */
-#ifndef DISABLE_BACKWARD
-    template <typename Model,
-              typename OldModel,
-              typename HashProvider = crypto::DefaultHashProvider>
-    class Signable : public Primitive<Model, OldModel> {
-#else
+    /**
+     * Interface provides signatures and adds them to model object
+     * @tparam Model - your model
+     */
     template <typename Model,
               typename HashProvider = shared_model::crypto::Sha3_256>
     class Signable : public ModelPrimitive<Model> {
-#endif
-
      public:
       /**
        * @return attached signatures
@@ -93,8 +80,10 @@ namespace shared_model {
        */
       bool operator==(const Model &rhs) const override {
         return this->hash() == rhs.hash()
-            and boost::equal(this->signatures(), rhs.signatures())
-            and this->createdTime() == rhs.createdTime();
+            // is_permutation consumes ~O(N^2)
+            and std::is_permutation(signatures().begin(),
+                                    signatures().end(),
+                                    rhs.signatures().begin());
       }
 
       const types::HashType &hash() const {

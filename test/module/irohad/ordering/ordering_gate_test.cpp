@@ -54,6 +54,8 @@ class MockOrderingGateTransport : public OrderingGateTransport {
   MOCK_METHOD1(
       propagateTransaction,
       void(std::shared_ptr<const shared_model::interface::Transaction>));
+  MOCK_METHOD1(propagateBatch,
+               void(const shared_model::interface::TransactionBatch &));
 };
 
 class OrderingGateTest : public ::testing::Test {
@@ -73,7 +75,10 @@ class OrderingGateTest : public ::testing::Test {
     server = builder.BuildAndStart();
     auto address = "0.0.0.0:" + std::to_string(port);
     // Initialize components after port has been bind
-    transport = std::make_shared<OrderingGateTransportGrpc>(address);
+    async_call_ =
+        std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
+    transport =
+        std::make_shared<OrderingGateTransportGrpc>(address, async_call_);
     gate_impl = std::make_shared<OrderingGateImpl>(transport, 1, false);
     transport->subscribe(gate_impl);
 
@@ -92,6 +97,8 @@ class OrderingGateTest : public ::testing::Test {
   std::shared_ptr<MockOrderingGateTransportGrpcService> fake_service;
   std::condition_variable cv;
   std::mutex m;
+  std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+      async_call_;
 };
 
 /**
@@ -138,11 +145,13 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
-                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .addAssetQuantity("coin#coin", "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair());
+                        generateKeypair())
+                .finish();
   std::vector<shared_model::proto::Transaction> txs = {tx, tx};
   iroha::protocol::Proposal proposal = shared_model::proto::ProposalBuilder()
                                            .height(2)
@@ -210,11 +219,13 @@ TEST_F(QueueBehaviorTest, SendManyProposals) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
-                .addAssetQuantity("admin@tu", "coin#coin", "1.0")
+                .addAssetQuantity("coin#coin", "1.0")
+                .quorum(1)
                 .build()
                 .signAndAddSignature(
                     shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair());
+                        generateKeypair())
+                .finish();
   std::vector<shared_model::proto::Transaction> txs = {tx, tx};
   auto proposal1 = std::make_shared<shared_model::proto::Proposal>(
       shared_model::proto::ProposalBuilder()
