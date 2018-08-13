@@ -33,8 +33,11 @@ namespace iroha {
         return std::make_shared<PeerOrdererImpl>(wsv);
       }
 
-      auto YacInit::createNetwork() {
-        consensus_network = std::make_shared<NetworkImpl>();
+      auto YacInit::createNetwork(
+          std::shared_ptr<
+              iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
+              async_call) {
+        consensus_network = std::make_shared<NetworkImpl>(async_call);
         return consensus_network;
       }
 
@@ -82,9 +85,12 @@ namespace iroha {
       std::shared_ptr<consensus::yac::Yac> YacInit::createYac(
           ClusterOrdering initial_order,
           const shared_model::crypto::Keypair &keypair,
-          std::chrono::milliseconds delay_milliseconds) {
+          std::chrono::milliseconds delay_milliseconds,
+          std::shared_ptr<
+              iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
+              async_call) {
         return Yac::create(YacVoteStorage(),
-                           createNetwork(),
+                           createNetwork(std::move(async_call)),
                            createCryptoProvider(keypair),
                            createTimer(delay_milliseconds),
                            initial_order);
@@ -96,12 +102,16 @@ namespace iroha {
           std::shared_ptr<network::BlockLoader> block_loader,
           const shared_model::crypto::Keypair &keypair,
           std::chrono::milliseconds vote_delay_milliseconds,
-          std::chrono::milliseconds load_delay_milliseconds) {
+          std::chrono::milliseconds load_delay_milliseconds,
+          std::shared_ptr<
+              iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
+              async_call) {
         auto peer_orderer = createPeerOrderer(wsv);
 
         auto yac = createYac(peer_orderer->getInitialOrdering().value(),
                              keypair,
-                             vote_delay_milliseconds);
+                             vote_delay_milliseconds,
+                             std::move(async_call));
         consensus_network->subscribe(yac);
 
         auto hash_provider = createHashProvider();
@@ -112,7 +122,6 @@ namespace iroha {
                                              block_loader,
                                              load_delay_milliseconds.count());
       }
-
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha

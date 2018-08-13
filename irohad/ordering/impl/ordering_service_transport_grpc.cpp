@@ -33,13 +33,13 @@ grpc::Status OrderingServiceTransportGrpc::onTransaction(
     ::grpc::ServerContext *context,
     const iroha::protocol::Transaction *request,
     ::google::protobuf::Empty *response) {
-  log_->info("OrderingServiceTransportGrpc::onTransaction");
+  async_call_->log_->info("OrderingServiceTransportGrpc::onTransaction");
   if (subscriber_.expired()) {
-    log_->error("No subscriber");
+    async_call_->log_->error("No subscriber");
   } else {
     auto batch_result =
         shared_model::interface::TransactionBatch::createTransactionBatch<
-            shared_model::validation::DefaultTransactionValidator>(
+            shared_model::validation::DefaultSignedTransactionValidator>(
             std::make_shared<shared_model::proto::Transaction>(
                 iroha::protocol::Transaction(*request)));
     batch_result.match(
@@ -48,7 +48,7 @@ grpc::Status OrderingServiceTransportGrpc::onTransaction(
           subscriber_.lock()->onBatch(std::move(batch.value));
         },
         [this](const iroha::expected::Error<std::string> &error) {
-          log_->error(
+          async_call_->log_->error(
               "Could not create batch from received single transaction: {}",
               error.error);
         });
@@ -61,9 +61,9 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
     ::grpc::ServerContext *context,
     const protocol::TxList *request,
     ::google::protobuf::Empty *response) {
-  log_->info("OrderingServiceTransportGrpc::onBatch");
+  async_call_->log_->info("OrderingServiceTransportGrpc::onBatch");
   if (subscriber_.expired()) {
-    log_->error("No subscriber");
+    async_call_->log_->error("No subscriber");
   } else {
     auto txs =
         std::vector<std::shared_ptr<shared_model::interface::Transaction>>(
@@ -79,16 +79,15 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
     auto batch_result =
         shared_model::interface::TransactionBatch::createTransactionBatch(
             txs,
-            shared_model::validation::SignedTransactionsCollectionValidator<
-                shared_model::validation::DefaultTransactionValidator,
-                shared_model::validation::BatchOrderValidator>());
+            shared_model::validation::
+                DefaultSignedTransactionsValidator());
     batch_result.match(
         [this](iroha::expected::Value<shared_model::interface::TransactionBatch>
                    &batch) {
           subscriber_.lock()->onBatch(std::move(batch.value));
         },
         [this](const iroha::expected::Error<std::string> &error) {
-          log_->error(
+          async_call_->log_->error(
               "Could not create batch from received transaction list: {}",
               error.error);
         });
@@ -99,7 +98,7 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
 void OrderingServiceTransportGrpc::publishProposal(
     std::unique_ptr<shared_model::interface::Proposal> proposal,
     const std::vector<std::string> &peers) {
-  log_->info("OrderingServiceTransportGrpc::publishProposal");
+  async_call_->log_->info("OrderingServiceTransportGrpc::publishProposal");
   std::unordered_map<std::string,
                      std::unique_ptr<proto::OrderingGateTransportGrpc::Stub>>
       peers_map;
@@ -109,17 +108,18 @@ void OrderingServiceTransportGrpc::publishProposal(
   }
 
   for (const auto &peer : peers_map) {
-    auto call = new AsyncClientCall;
     auto proto = static_cast<shared_model::proto::Proposal *>(proposal.get());
-    log_->debug("Publishing proposal: '{}'",
-                proto->getTransport().DebugString());
-    call->response_reader = peer.second->AsynconProposal(
-        &call->context, proto->getTransport(), &cq_);
+    async_call_->log_->debug("Publishing proposal: '{}'",
+                             proto->getTransport().DebugString());
 
-    call->response_reader->Finish(&call->reply, &call->status, call);
+    auto transport = proto->getTransport();
+    async_call_->Call([&](auto context, auto cq) {
+      return peer.second->AsynconProposal(context, transport, cq);
+    });
   }
 }
 
-OrderingServiceTransportGrpc::OrderingServiceTransportGrpc()
-    : network::AsyncGrpcClient<google::protobuf::Empty>(
-          logger::log("OrderingServiceTransportGrpc")) {}
+OrderingServiceTransportGrpc::OrderingServiceTransportGrpc(
+    std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+        async_call)
+    : async_call_(std::move(async_call)) {}

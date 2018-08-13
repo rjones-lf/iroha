@@ -4,6 +4,7 @@
 #
 
 import consts
+import csv
 import os.path
 
 levels = ['*', '=', '-', '^', '"']
@@ -184,3 +185,27 @@ def example(text):
         result.append('| {}'.format(line))
     result.extend(['|', ''])
     return result
+
+
+def permissions_list(matrix_path):
+    """Generate lines - all the permissions as a list"""
+    grantable_label = '``grantable``'
+    lines = [
+        '.. list-table::',
+        '    :header-rows: 1',
+        '',
+        '    * - Permission Name',
+        '      - Category',
+        '      - Type'
+    ]
+    with open(matrix_path, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            lines.append('    * - `{}`_ {}'.format(
+                row['Permission'],
+                grantable_label if row['Grantable'].strip() == 'TRUE' else ''
+            ))
+            lines.append('      - {}'.format(row['Category']))
+            lines.append('      - {}'.format(row['Type']))
+    lines.append('')
+    return lines

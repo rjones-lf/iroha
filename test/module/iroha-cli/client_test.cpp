@@ -46,6 +46,17 @@ using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds initial_timeout = 1s;
 constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
 
+/**
+Here we imitate the behavior of StatusStram client but on a bit lower level. So
+the do-while cycle imitates client resubscription to the stream. Stream
+"expiration" is a valid designed case (see pr #1615 for the details).
+
+The number of attempts (3) is a magic constant here. The idea behind this number
+is the following: only one resubscription is usually enough to pass the test; if
+three resubscribes were not enough, then most likely there is another bug.
+ */
+constexpr uint32_t status_read_attempts = 3;
+
 class ClientServerTest : public testing::Test {
  public:
   virtual void SetUp() {
@@ -183,12 +194,21 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
 
   ASSERT_EQ(iroha_cli::CliClient(ip, port).sendTx(shm_tx).answer,
             iroha_cli::CliClient::OK);
-  auto tx_hash = shm_tx.hash();
-  auto res = iroha_cli::CliClient(ip, port).getTxStatus(
-      shared_model::crypto::toBinaryString(tx_hash));
-  ASSERT_EQ(res.answer.tx_status(),
+  auto getAnswer = [&]() {
+    return iroha_cli::CliClient(ip, port)
+        .getTxStatus(shared_model::crypto::toBinaryString(shm_tx.hash()))
+        .answer;
+  };
+  decltype(getAnswer()) answer;
+  auto read_attempt_counter(status_read_attempts);
+  do {
+    answer = getAnswer();
+  } while (answer.tx_status()
+               != iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED
+           and --read_attempt_counter);
+  ASSERT_EQ(answer.tx_status(),
             iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
-  ASSERT_NE(res.answer.error_message().size(), 0);
+  ASSERT_NE(answer.error_message().size(), 0);
 }
 
 /**
@@ -239,10 +259,18 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
                            "index '2' did not pass verification with "
                            "error 'CommandError'";
 
-  // check it really failed with specific message
-  auto answer =
-      client.getTxStatus(shared_model::crypto::toBinaryString(tx.hash()))
-          .answer;
+  auto getAnswer = [&]() {
+    return client.getTxStatus(shared_model::crypto::toBinaryString(tx.hash()))
+        .answer;
+  };
+  decltype(getAnswer()) answer;
+  auto read_attempt_counter(status_read_attempts);
+  do {
+    // check it really failed with specific message
+    answer = getAnswer();
+  } while (answer.tx_status()
+               != iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED
+           and --read_attempt_counter);
   ASSERT_EQ(answer.tx_status(),
             iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED);
   ASSERT_EQ(answer.error_message(), stringified_error);

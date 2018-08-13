@@ -34,11 +34,10 @@ using iroha::operator|;
 
 using TransactionSequenceBuilder = TransportBuilder<
     interface::TransactionSequence,
-    validation::UnsignedTransactionsCollectionValidator<
+    validation::TransactionsCollectionValidator<
         validation::TransactionValidator<
             validation::FieldValidator,
-            validation::CommandValidatorVisitor<validation::FieldValidator>>,
-        validation::BatchOrderValidator>>;
+            validation::CommandValidatorVisitor<validation::FieldValidator>>>>;
 
 class TransportBuilderTest : public ::testing::Test {
  protected:
@@ -117,9 +116,11 @@ class TransportBuilderTest : public ::testing::Test {
   }
 
   auto createBlock() {
-    return getBaseBlockBuilder<shared_model::proto::UnsignedBlockBuilder>()
+    return getBaseBlockBuilder<shared_model::proto::BlockBuilder>()
         .createdTime(created_time)
-        .build();
+        .build()
+        .signAndAddSignature(keypair)
+        .finish();
   }
 
   auto createInvalidBlock() {
@@ -218,7 +219,7 @@ class TransportBuilderTest : public ::testing::Test {
  */
 TEST_F(TransportBuilderTest, TransactionCreationTest) {
   auto orig_model = createTransaction();
-  testTransport<validation::DefaultSignableTransactionValidator>(
+  testTransport<validation::DefaultSignedTransactionValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -237,7 +238,7 @@ TEST_F(TransportBuilderTest, TransactionCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidTransactionCreationTest) {
   auto orig_model = createInvalidTransaction();
-  testTransport<validation::DefaultSignableTransactionValidator>(
+  testTransport<validation::DefaultSignedTransactionValidator>(
       orig_model,
       [](const Value<decltype(orig_model)>) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
@@ -252,7 +253,7 @@ TEST_F(TransportBuilderTest, InvalidTransactionCreationTest) {
  */
 TEST_F(TransportBuilderTest, QueryCreationTest) {
   auto orig_model = createQuery();
-  testTransport<validation::DefaultSignableQueryValidator>(
+  testTransport<validation::DefaultSignedQueryValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -268,7 +269,7 @@ TEST_F(TransportBuilderTest, QueryCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidQueryCreationTest) {
   auto orig_model = createInvalidQuery();
-  testTransport<validation::DefaultSignableQueryValidator>(
+  testTransport<validation::DefaultSignedQueryValidator>(
       orig_model,
       [](const Value<decltype(orig_model)>) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
@@ -283,7 +284,7 @@ TEST_F(TransportBuilderTest, InvalidQueryCreationTest) {
  */
 TEST_F(TransportBuilderTest, BlockCreationTest) {
   auto orig_model = createBlock();
-  testTransport<validation::DefaultBlockValidator>(
+  testTransport<validation::DefaultUnsignedBlockValidator>(
       orig_model,
       [&orig_model](const Value<decltype(orig_model)> &model) {
         ASSERT_EQ(model.value.getTransport().SerializeAsString(),
@@ -299,7 +300,7 @@ TEST_F(TransportBuilderTest, BlockCreationTest) {
  */
 TEST_F(TransportBuilderTest, InvalidBlockCreationTest) {
   auto orig_model = createInvalidBlock();
-  testTransport<validation::DefaultBlockValidator>(
+  testTransport<validation::DefaultUnsignedBlockValidator>(
       orig_model,
       [](const Value<std::decay_t<decltype(orig_model)>> &) { FAIL(); },
       [](const Error<const std::string> &) { SUCCEED(); });
@@ -409,12 +410,12 @@ TEST_F(TransportBuilderTest, BlockVariantWithValidBlock) {
   auto block = createBlock();
   interface::BlockVariant orig_model =
       std::make_shared<decltype(block)>(block.getTransport());
-  auto val = framework::expected::val(
-      TransportBuilder<decltype(orig_model),
-                       validation::DefaultAnyBlockValidator>()
-          .build(block.getTransport()));
+  auto built_block = TransportBuilder<decltype(orig_model),
+                                      validation::DefaultAnyBlockValidator>()
+                         .build(block.getTransport());
+  auto val = framework::expected::val(built_block);
 
-  ASSERT_TRUE(val);
+  ASSERT_TRUE(val) << framework::expected::err(built_block).value().error;
   val | [&block](auto &block_variant) {
     iroha::visit_in_place(
         block_variant.value,

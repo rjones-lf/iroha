@@ -78,7 +78,7 @@ namespace torii {
   void CommandService::Torii(const iroha::protocol::Transaction &request) {
     shared_model::proto::TransportBuilder<
         shared_model::proto::Transaction,
-        shared_model::validation::DefaultSignableTransactionValidator>()
+        shared_model::validation::DefaultSignedTransactionValidator>()
         .build(request)
         .match(
             [this](
@@ -129,7 +129,7 @@ namespace torii {
   void CommandService::ListTorii(const iroha::protocol::TxList &tx_list) {
     shared_model::proto::TransportBuilder<
         shared_model::interface::TransactionSequence,
-        shared_model::validation::DefaultUnsignedTxCollectionValidator>()
+        shared_model::validation::DefaultUnsignedTransactionsValidator>()
         .build(tx_list)
         .match(
             [this](
@@ -137,25 +137,25 @@ namespace torii {
                 iroha::expected::Value<
                     shared_model::interface::TransactionSequence>
                     &tx_sequence) {
-              auto txs = tx_sequence.value.transactions();
-              std::for_each(txs.begin(), txs.end(), [this](auto &tx) {
-                auto tx_hash = tx->hash();
-                if (cache_->findItem(tx_hash) and tx->quorum() < 2) {
-                  log_->warn("Found transaction {} in cache, ignoring",
-                             tx_hash.hex());
-                  return;
-                }
+              for (const auto &batch : tx_sequence.value.batches()) {
+                tx_processor_->batchHandle(batch);
+                const auto &txs = batch.transactions();
+                std::for_each(txs.begin(), txs.end(), [this](const auto &tx) {
+                  auto tx_hash = tx->hash();
+                  if (cache_->findItem(tx_hash) and tx->quorum() < 2) {
+                    log_->warn("Found transaction {} in cache, ignoring",
+                               tx_hash.hex());
+                    return;
+                  }
 
-                // Send transaction to iroha
-                tx_processor_->transactionHandle(tx);
-
-                this->pushStatus(
-                    "ToriiList",
-                    std::move(tx_hash),
-                    makeResponse(tx_hash,
-                                 iroha::protocol::TxStatus::
-                                     STATELESS_VALIDATION_SUCCESS));
-              });
+                  this->pushStatus(
+                      "ToriiList",
+                      std::move(tx_hash),
+                      makeResponse(tx_hash,
+                                   iroha::protocol::TxStatus::
+                                       STATELESS_VALIDATION_SUCCESS));
+                });
+              }
             },
             [this, &tx_list](auto &error) {
               auto &txs = tx_list.transactions();
@@ -349,8 +349,8 @@ namespace torii {
                    },
                    [&] { log_->debug("stream done, {}", client_id); });
 
-    // run loop while subscription is active or there are pending events in the
-    // queue
+    // run loop while subscription is active or there are pending events in
+    // the queue
     handleEvents(subscription, rl);
 
     log_->debug("status stream done, {}", client_id);
