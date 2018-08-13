@@ -3,7 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "integration/acceptance/grant_fixture.hpp"
+#include "integration/acceptance/grantable_permissions_fixture.hpp"
+
+using namespace integration_framework;
+
+using namespace shared_model;
+using namespace shared_model::interface;
+using namespace shared_model::interface::permissions;
 
 /**
  * C256 Grant permission to a non-existing account
@@ -12,7 +18,7 @@
  * @then this transaction is stateful invalid
  * AND it is not written in the block
  */
-TEST_F(GrantPermissionFixture, GrantToInexistingAccount) {
+TEST_F(GrantablePermissionsFixture, GrantToInexistingAccount) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeAccountWithPerms(
@@ -37,7 +43,7 @@ TEST_F(GrantPermissionFixture, GrantToInexistingAccount) {
  * @then a block with transaction to add signatory to the account is written
  * AND there is a signatory added by the permitee
  */
-TEST_F(GrantPermissionFixture, GrantAddSignatoryPermission) {
+TEST_F(GrantablePermissionsFixture, GrantAddSignatoryPermission) {
   auto expected_number_of_signatories = 2;
   auto is_contained = true;
   auto check_if_signatory_is_contained = checkSignatorySet(
@@ -76,7 +82,7 @@ TEST_F(GrantPermissionFixture, GrantAddSignatoryPermission) {
  * @then a block with transaction to remove signatory from the account is
  * written AND there is no signatory added by the permitee
  */
-TEST_F(GrantPermissionFixture, GrantRemoveSignatoryPermission) {
+TEST_F(GrantablePermissionsFixture, GrantRemoveSignatoryPermission) {
   auto expected_number_of_signatories = 1;
   auto is_contained = false;
   auto check_if_signatory_is_not_contained = checkSignatorySet(
@@ -132,7 +138,7 @@ TEST_F(GrantPermissionFixture, GrantRemoveSignatoryPermission) {
  * @then a block with transaction to change quorum in the account is written
  * AND the quorum number of account equals to the number, set by permitee
  */
-TEST_F(GrantPermissionFixture, GrantSetQuorumPermission) {
+TEST_F(GrantablePermissionsFixture, GrantSetQuorumPermission) {
   auto quorum_quantity = 2;
   auto check_quorum_quantity = checkQuorum(quorum_quantity);
 
@@ -178,7 +184,7 @@ TEST_F(GrantPermissionFixture, GrantSetQuorumPermission) {
  * AND the permitee is able to read the data
  * AND the account is able to read the data
  */
-TEST_F(GrantPermissionFixture, GrantSetAccountDetailPermission) {
+TEST_F(GrantablePermissionsFixture, GrantSetAccountDetailPermission) {
   auto check_account_detail =
       checkAccountDetail(kAccountDetailKey, kAccountDetailValue);
 
@@ -217,7 +223,7 @@ TEST_F(GrantPermissionFixture, GrantSetAccountDetailPermission) {
  * @then a block with transaction to grant right is written
  * AND the transfer is made
  */
-TEST_F(GrantPermissionFixture, GrantTransferPermission) {
+TEST_F(GrantablePermissionsFixture, GrantTransferPermission) {
   auto amount_of_asset = "1000.0";
 
   IntegrationTestFramework itf(1);
@@ -253,7 +259,7 @@ TEST_F(GrantPermissionFixture, GrantTransferPermission) {
  * @then this transaction is statefully invalid
  * AND it is not written in the block
  */
-TEST_F(GrantPermissionFixture, GrantWithoutGrantPermissions) {
+TEST_F(GrantablePermissionsFixture, GrantWithoutGrantPermissions) {
   IntegrationTestFramework itf(1);
   createTwoAccounts(itf, {Role::kReceive}, {Role::kReceive});
   for (auto &perm : kAllGrantable) {
@@ -275,7 +281,7 @@ TEST_F(GrantPermissionFixture, GrantWithoutGrantPermissions) {
  * AND it is not written in the block
  */
 
-TEST_F(GrantPermissionFixture, GrantMoreThanOnce) {
+TEST_F(GrantablePermissionsFixture, GrantMoreThanOnce) {
   IntegrationTestFramework itf(1);
   createTwoAccounts(itf, {kCanGrantAll}, {Role::kReceive})
       .sendTx(accountGrantToAccount(kAccount1,

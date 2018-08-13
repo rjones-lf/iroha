@@ -3,9 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "integration/acceptance/grant_fixture.hpp"
+#include "integration/acceptance/grantable_permissions_fixture.hpp"
 
 #include "builders/protobuf/builder_templates/query_template.hpp"
+
+using namespace integration_framework;
+
+using namespace shared_model;
+using namespace shared_model::interface;
+using namespace shared_model::interface::permissions;
 
 /**
  * C269 Revoke permission from a non-existing account
@@ -14,7 +20,7 @@
  * account
  * @then transaction would not be committed
  */
-TEST_F(GrantPermissionFixture, RevokeFromNonExistingAccount) {
+TEST_F(GrantablePermissionsFixture, RevokeFromNonExistingAccount) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeAccountWithPerms(
@@ -41,7 +47,7 @@ TEST_F(GrantPermissionFixture, RevokeFromNonExistingAccount) {
  * @when the first account revokes the permission twice
  * @then the second revoke does not pass stateful validation
  */
-TEST_F(GrantPermissionFixture, RevokeTwice) {
+TEST_F(GrantablePermissionsFixture, RevokeTwice) {
   IntegrationTestFramework itf(1);
   createTwoAccounts(itf, {Role::kSetMyQuorum}, {Role::kReceive})
       .sendTx(accountGrantToAccount(kAccount1,
@@ -80,9 +86,9 @@ TEST_F(GrantPermissionFixture, RevokeTwice) {
  * TODO igor-egorov, 2018-08-03, enable test case
  * https://soramitsu.atlassian.net/browse/IR-1572
  */
-TEST_F(GrantPermissionFixture, DISABLED_RevokeWithoutPermission) {
+TEST_F(GrantablePermissionsFixture, DISABLED_RevokeWithoutPermission) {
   auto detach_role_tx =
-      GrantPermissionFixture::TxBuilder()
+      GrantablePermissionsFixture::TxBuilder()
           .createdTime(getUniqueTime())
           .creatorAccountId(IntegrationTestFramework::kAdminId)
           .quorum(1)
@@ -117,10 +123,10 @@ TEST_F(GrantPermissionFixture, DISABLED_RevokeWithoutPermission) {
 
 namespace grantables {
 
-  using gpf = GrantPermissionFixture;
+  using gpf = GrantablePermissionsFixture;
 
   template <typename GrantableType>
-  class GrantRevokeFixture : public GrantPermissionFixture {
+  class GrantRevokeFixture : public GrantablePermissionsFixture {
    public:
     GrantableType grantable_type_;
   };
@@ -130,15 +136,15 @@ namespace grantables {
     const Grantable grantable_permission_;
     interface::types::HashType tx_hash_;
 
-    virtual IntegrationTestFramework &prepare(GrantPermissionFixture &fixture,
-                                              IntegrationTestFramework &itf) {
+    virtual IntegrationTestFramework &prepare(
+        GrantablePermissionsFixture &fixture, IntegrationTestFramework &itf) {
       (void)fixture;  // prevent warning about unused param, fixture is needed
                       // in some derivatives
       return itf;
     }
 
     virtual proto::Transaction testTransaction(
-        GrantPermissionFixture &fixture) = 0;
+        GrantablePermissionsFixture &fixture) = 0;
 
    protected:
     GrantableType(const Role &can_grant_permission,
@@ -151,7 +157,8 @@ namespace grantables {
     AddMySignatory()
         : GrantableType(Role::kAddMySignatory, Grantable::kAddMySignatory) {}
 
-    proto::Transaction testTransaction(GrantPermissionFixture &f) override {
+    proto::Transaction testTransaction(
+        GrantablePermissionsFixture &f) override {
       return f.permiteeModifySignatory(
           &TestUnsignedTransactionBuilder::addSignatory,
           f.kAccount2,
@@ -165,11 +172,11 @@ namespace grantables {
         : GrantableType(Role::kRemoveMySignatory,
                         Grantable::kRemoveMySignatory) {}
 
-    IntegrationTestFramework &prepare(GrantPermissionFixture &f,
+    IntegrationTestFramework &prepare(GrantablePermissionsFixture &f,
                                       IntegrationTestFramework &itf) override {
       auto account_id = f.kAccount1 + "@" + f.kDomain;
       auto add_signatory_tx =
-          GrantPermissionFixture::TxBuilder()
+          GrantablePermissionsFixture::TxBuilder()
               .createdTime(f.getUniqueTime())
               .creatorAccountId(account_id)
               .quorum(1)
@@ -185,7 +192,8 @@ namespace grantables {
       return itf;
     }
 
-    proto::Transaction testTransaction(GrantPermissionFixture &f) override {
+    proto::Transaction testTransaction(
+        GrantablePermissionsFixture &f) override {
       return f.permiteeModifySignatory(
           &TestUnsignedTransactionBuilder::removeSignatory,
           f.kAccount2,
@@ -199,7 +207,8 @@ namespace grantables {
         : GrantableType(Role::kSetMyAccountDetail,
                         Grantable::kSetMyAccountDetail) {}
 
-    proto::Transaction testTransaction(GrantPermissionFixture &f) override {
+    proto::Transaction testTransaction(
+        GrantablePermissionsFixture &f) override {
       return f.permiteeSetAccountDetail(f.kAccount2,
                                         f.kAccount2Keypair,
                                         f.kAccount1,
@@ -212,7 +221,8 @@ namespace grantables {
     SetMyQuorum()
         : GrantableType(Role::kSetMyQuorum, Grantable::kSetMyQuorum) {}
 
-    proto::Transaction testTransaction(GrantPermissionFixture &f) override {
+    proto::Transaction testTransaction(
+        GrantablePermissionsFixture &f) override {
       return f.permiteeSetQuorum(
           f.kAccount2, f.kAccount2Keypair, f.kAccount1, 1);
     }
@@ -223,10 +233,10 @@ namespace grantables {
         : GrantableType(Role::kTransferMyAssets, Grantable::kTransferMyAssets) {
     }
 
-    IntegrationTestFramework &prepare(GrantPermissionFixture &f,
+    IntegrationTestFramework &prepare(GrantablePermissionsFixture &f,
                                       IntegrationTestFramework &itf) {
       auto create_and_transfer_coins =
-          GrantPermissionFixture::TxBuilder()
+          GrantablePermissionsFixture::TxBuilder()
               .createdTime(f.getUniqueTime())
               .creatorAccountId(itf.kAdminId)
               .quorum(1)
@@ -247,7 +257,8 @@ namespace grantables {
       return itf;
     }
 
-    proto::Transaction testTransaction(GrantPermissionFixture &f) override {
+    proto::Transaction testTransaction(
+        GrantablePermissionsFixture &f) override {
       return f.transferAssetFromSource(
           f.kAccount2, f.kAccount2Keypair, f.kAccount1, "1000.0", f.kAccount2);
     }
@@ -261,6 +272,22 @@ namespace grantables {
 
   TYPED_TEST_CASE(GrantRevokeFixture, GrantablePermissionsTypes);
 
+  /**
+   * The test iterates over helper types (GrantablePermissionsTypes).
+   * That helper types contain information about required Grantable and Role
+   * permissions for the test.
+   *
+   * The test does the following:
+   * - creates two accounts
+   * - first account grants permission to the second account
+   * - does preparation of the first account (for example gives assets for
+   * future transfer during the main part of the test)
+   * - does the test transaction (each GrantablePermissionType has own test
+   * transaction)
+   * - first account revokes the permission from the second account
+   * - does the test transaction again
+   * - checks that the last transaction was failed due to a missing permission
+   */
   TYPED_TEST(GrantRevokeFixture, GrantAndRevokePermission) {
     IntegrationTestFramework itf(1);
 

@@ -10,6 +10,13 @@ target_link_libraries(acceptance_fixture
     shared_model_proto_builders
     )
 
+add_library(grantable_permissions_fixture
+    grantable_permissions_fixture.cpp
+    )
+target_link_libraries(grantable_permissions_fixture
+    acceptance_fixture
+    )
+
 addtest(add_asset_qty_test add_asset_qty_test.cpp)
 target_link_libraries(add_asset_qty_test
     acceptance_fixture
@@ -37,12 +44,12 @@ target_link_libraries(get_transactions_test
 
 addtest(grant_permission_test grant_permission_test.cpp)
 target_link_libraries(grant_permission_test
-    acceptance_fixture
+    grantable_permissions_fixture
     )
 
 addtest(revoke_permission_test revoke_permission_test.cpp)
 target_link_libraries(revoke_permission_test
-    acceptance_fixture
+    grantable_permissions_fixture
     )
 
 addtest(invalid_fields_test invalid_fields_test.cpp)

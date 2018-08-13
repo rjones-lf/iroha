@@ -57,7 +57,7 @@ namespace shared_model {
       using ErrorMessageType = std::string;
 
       /**
-       * @return error message if present
+       * @return error message if present, otherwise - an empty string
        */
       virtual const ErrorMessageType &errorMessage() const = 0;
 
