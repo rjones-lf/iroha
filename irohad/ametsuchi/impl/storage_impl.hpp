@@ -48,7 +48,7 @@ namespace iroha {
           std::string block_store_dir,
           std::string postgres_connection,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory_,
+              factory,
           size_t pool_size = 10);
 
       expected::Result<std::unique_ptr<TemporaryWsv>, std::string>

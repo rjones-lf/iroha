@@ -19,6 +19,7 @@
 #define IROHA_SIMULATOR_HPP
 
 #include <boost/optional.hpp>
+
 #include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"

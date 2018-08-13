@@ -30,7 +30,7 @@ RUN set -e; \
         # SWIG dependencies
         libpcre3-dev autoconf bison  \
         # other
-        wget curl file gdb ccache \
+        wget curl file gdb gdbserver ccache \
         gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip zip; \
     apt-get -y clean
 

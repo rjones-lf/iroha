@@ -18,9 +18,7 @@
 #ifndef IROHA_APPLICATION_HPP
 #define IROHA_APPLICATION_HPP
 
-#include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
-#include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
 #include "logger/logger.hpp"
@@ -28,6 +26,7 @@
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
+#include "mst.grpc.pb.h"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
@@ -119,6 +118,8 @@ class Irohad {
 
   virtual void initValidators();
 
+  virtual void initNetworkClient();
+
   virtual void initOrderingGate();
 
   virtual void initSimulator();
@@ -166,6 +167,10 @@ class Irohad {
 
   // WSV restorer
   std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;
+
+  // async call
+  std::shared_ptr<iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
+      async_call_;
 
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;

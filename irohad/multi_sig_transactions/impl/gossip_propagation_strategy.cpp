@@ -32,10 +32,10 @@ namespace iroha {
   using std::chrono::steady_clock;
 
   GossipPropagationStrategy::GossipPropagationStrategy(
-      PeerProviderFactory query_factory,
+      PeerProviderFactory peer_factory,
       std::chrono::milliseconds period,
       uint32_t amount)
-      : query_factory(query_factory),
+      : peer_factory(peer_factory),
         non_visited({}),
         emitent(rxcpp::observable<>::interval(steady_clock::now(), period)
                     .map([this, amount](int) {
@@ -56,10 +56,8 @@ namespace iroha {
     return emitent.subscribe_on(rxcpp::observe_on_new_thread());
   }
 
-  GossipPropagationStrategy::~GossipPropagationStrategy() {}
-
   bool GossipPropagationStrategy::initQueue() {
-    return query_factory->createPeerQuery() | [](const auto &query) {
+    return peer_factory->createPeerQuery() | [](const auto &query) {
       return query->getLedgerPeers();
     } | [](auto &&data) -> boost::optional<PropagationData> {
       if (data.size() == 0) {

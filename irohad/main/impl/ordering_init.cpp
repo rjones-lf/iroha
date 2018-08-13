@@ -63,9 +63,11 @@ namespace iroha {
         std::chrono::milliseconds delay_milliseconds,
         std::shared_ptr<ametsuchi::OSPersistentStateFactory>
             persistent_state,
-        std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory) {
+        std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
+        std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+            async_call) {
       auto query = peer_query_factory->createPeerQuery();
-      if (not query) {
+      if (not query or not query.get()) {
         log_->error("Cannot get the peer query");
       }
       auto ledger_peers = query.get()->getLedgerPeers();
@@ -77,10 +79,11 @@ namespace iroha {
       log_->info("Ordering gate is at {}", network_address);
       ordering_gate_transport =
           std::make_shared<iroha::ordering::OrderingGateTransportGrpc>(
-              network_address);
+              network_address, async_call);
 
       ordering_service_transport =
-          std::make_shared<ordering::OrderingServiceTransportGrpc>();
+          std::make_shared<ordering::OrderingServiceTransportGrpc>(
+              std::move(async_call));
       ordering_service = createService(peer_query_factory,
                                        max_size,
                                        delay_milliseconds,

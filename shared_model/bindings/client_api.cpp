@@ -31,7 +31,7 @@ namespace shared_model {
     void validateTransaction(const Blob &b) {
       auto blob = convert(b);
       auto s = get<iroha::protocol::Transaction>(blob) | [](auto tx) {
-        static validation::DefaultSignableTransactionValidator val;
+        static validation::DefaultSignedTransactionValidator val;
         return boost::make_optional(
             val.validate(proto::Transaction(tx)).reason());
       };
@@ -48,7 +48,7 @@ namespace shared_model {
     void validateQuery(const Blob &b) {
       auto blob = convert(b);
       auto s = get<iroha::protocol::Query>(blob) | [](auto qry) {
-        static validation::DefaultSignableQueryValidator val;
+        static validation::DefaultSignedQueryValidator val;
         return boost::make_optional(val.validate(proto::Query(qry)).reason());
       };
       if (s) {

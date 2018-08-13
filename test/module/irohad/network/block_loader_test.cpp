@@ -28,6 +28,7 @@
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
 #include "validators/default_validator.hpp"
@@ -85,6 +86,14 @@ class BlockLoaderTest : public testing::Test {
   }
 
   auto getBaseBlockBuilder() const {
+    auto tx = TestUnsignedTransactionBuilder()
+                  .creatorAccountId("account@domain")
+                  .setAccountQuorum("account@domain", 1)
+                  .createdTime(iroha::time::now())
+                  .quorum(1)
+                  .build()
+                  .signAndAddSignature(key)
+                  .finish();
     return shared_model::proto::TemplateBlockBuilder<
                (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
                shared_model::validation::AlwaysValidValidator,
@@ -92,6 +101,7 @@ class BlockLoaderTest : public testing::Test {
                    shared_model::proto::Block>>()
         .height(1)
         .prevHash(kPrevHash)
+        .transactions(std::vector<shared_model::proto::Transaction>{tx})
         .createdTime(iroha::time::now());
   }
 

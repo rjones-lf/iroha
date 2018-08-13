@@ -43,7 +43,7 @@ namespace iroha {
        * @param max_size maximum size of proposal
        * @param proposal_timeout observable timeout for proposal creation
        * @param transport receive transactions and publish proposals
-       * @param persistent_state storage for auxiliary information
+       * @param persistent_state factory to storage for auxiliary information
        * @param factory is used to generate proposals
        * @param is_async whether proposals are generated in a separate thread
        */
@@ -105,7 +105,7 @@ namespace iroha {
       std::shared_ptr<network::OrderingServiceTransport> transport_;
 
       /**
-       * Persistent storage for proposal counter.
+       * Factory to persistent storage for proposal counter.
        * In case of relaunch, ordering server will enumerate proposals
        * consecutively.
        */

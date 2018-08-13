@@ -34,10 +34,9 @@ namespace val = shared_model::validation;
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQueryFactory> peer_query_factory,
     std::shared_ptr<BlockQueryFactory> block_query_factory)
-    : peer_query_factory_(peer_query_factory),
-      block_query_factory_(std::move(block_query_factory)) {
-  log_ = logger::log("BlockLoaderImpl");
-}
+    : peer_query_factory_(std::move(peer_query_factory)),
+      block_query_factory_(std::move(block_query_factory)),
+      log_(logger::log("BlockLoaderImpl")) {}
 
 const char *kPeerNotFound = "Cannot find peer";
 const char *kTopBlockRetrieveFail = "Failed to retrieve top block";
@@ -50,10 +49,7 @@ struct TimerWrapper : public val::FieldValidator {
                        [=] { return t; }) {}
 };
 using BlockValidatorInternal =
-    val::BlockValidator<TimerWrapper,
-                        val::DefaultTransactionValidator,
-                        val::UnsignedTransactionsCollectionValidator<
-                            val::DefaultTransactionValidator>>;
+    val::BlockValidator<TimerWrapper, val::DefaultSignedTransactionsValidator>;
 using Validator =
     val::SignableModelValidator<BlockValidatorInternal,
                                 const shared_model::interface::Block &,
@@ -61,26 +57,23 @@ using Validator =
 
 rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
     const PublicKey &peer_pubkey) {
-  return rxcpp::observable<>::create<
-      std::shared_ptr<Block>>([this, peer_pubkey](auto subscriber) {
-    std::shared_ptr<Block> top_block;
-    block_query_factory_->createBlockQuery() |
+  return rxcpp::observable<>::create<std::shared_ptr<Block>>(
+      [this, peer_pubkey](auto subscriber) {
+        std::shared_ptr<Block> top_block;
+        block_query_factory_->createBlockQuery() |
         [this, &top_block](const auto &block_query) {
           block_query->getTopBlock().match(
-              [&top_block](
-                  expected::Value<
-                      std::shared_ptr<shared_model::interface::Block>> block) {
-                top_block = block.value;
-              },
-              [this](expected::Error<std::string> error) {
-                log_->error(kTopBlockRetrieveFail + std::string{": "}
-                            + error.error);
-              });
-        };
-    if (not top_block) {
-      subscriber.on_completed();
-      return;
-    }
+            [&top_block](
+                expected::Value<std::shared_ptr<shared_model::interface::Block>>
+                    block) { top_block = block.value;
+            },[this](expected::Error<std::string> error) {
+              log_->error(kTopBlockRetrieveFail + std::string{": "}
+                          + error.error);});
+            };
+        if (not top_block) {
+          subscriber.on_completed();
+          return;
+        }
 
     auto peer = this->findPeer(peer_pubkey);
     if (not peer) {

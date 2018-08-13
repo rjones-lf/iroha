@@ -24,17 +24,16 @@ using namespace iroha::network;
 
 BlockLoaderService::BlockLoaderService(
     std::shared_ptr<BlockQueryFactory> block_query_factory)
-    : block_query_factory_(block_query_factory) {
-  log_ = logger::log("BlockLoaderService");
-}
+    : block_query_factory_(std::move(block_query_factory)),
+      log_(logger::log("BlockLoaderService")) {}
 
 grpc::Status BlockLoaderService::retrieveBlocks(
     ::grpc::ServerContext *context,
     const proto::BlocksRequest *request,
     ::grpc::ServerWriter<::iroha::protocol::Block> *writer) {
   auto blocks = block_query_factory_->createBlockQuery() |
-      [request](const auto &block_query) {
-        return block_query->getBlocksFrom(request->height());
+      [height = request->height()](const auto &block_query) {
+        return block_query->getBlocksFrom(height);
       };
   std::for_each(blocks.begin(), blocks.end(), [&writer](const auto &block) {
     writer->Write(std::dynamic_pointer_cast<shared_model::proto::Block>(block)

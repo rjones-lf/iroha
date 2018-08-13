@@ -22,4 +22,5 @@ target_link_libraries(
     shared_model_proto_builders
     shared_model_interfaces
     shared_model_proto_backend
+    shared_model_stateless_validation
 )

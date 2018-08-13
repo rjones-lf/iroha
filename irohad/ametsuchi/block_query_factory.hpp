@@ -23,7 +23,6 @@ namespace iroha {
 
       virtual ~BlockQueryFactory() = default;
     };
-
   }  // namespace ametsuchi
 }  // namespace iroha
 #endif  // IROHA_BLOCK_QUERY_FACTORY_HPP

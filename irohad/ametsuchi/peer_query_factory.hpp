@@ -22,7 +22,6 @@ namespace iroha {
 
       virtual ~PeerQueryFactory() = default;
     };
-
   }  // namespace ametsuchi
 }  // namespace iroha
 #endif  // IROHA_PEER_QUERY_FACTORY_HPP

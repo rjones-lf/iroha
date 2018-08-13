@@ -22,7 +22,6 @@ namespace iroha {
 
       virtual ~OSPersistentStateFactory() = default;
     };
-
   }  // namespace ametsuchi
 }  // namespace iroha
 #endif  // IROHA_OS_PERSISTENT_STATE_FACTORY_HPP

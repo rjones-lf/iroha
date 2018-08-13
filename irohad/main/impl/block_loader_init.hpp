@@ -31,14 +31,17 @@ namespace iroha {
      private:
       /**
        * Create block loader service with given storage
-       * @param storage - used to retrieve blocks
+       * @param block_query_factory - factory to block query component
        * @return initialized service
        */
       auto createService(
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory);
 
       /**
-       * Create block loader for loading blocks from given peer by top block
+       * Create block loader for loading blocks from given peer factory by top
+       * block
+       * @param peer_query_factory - factory to peer query component
+       * @param block_query_factory - factory to block query component
        * @return initialized loader
        */
       auto createLoader(
@@ -48,6 +51,8 @@ namespace iroha {
      public:
       /**
        * Initialize block loader with service and loader
+       * @param peer_query_factory - factory to peer query component
+       * @param block_query_factory - factory to block query component
        * @return initialized service
        */
       std::shared_ptr<BlockLoader> initBlockLoader(

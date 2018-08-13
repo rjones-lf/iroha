@@ -106,6 +106,9 @@ namespace iroha {
 
     boost::optional<std::shared_ptr<OrderingServicePersistentState>>
     StorageImpl::createOSPersistentState() {
+      if (not connection_) {
+        return boost::none;
+      }
       return boost::make_optional<
           std::shared_ptr<OrderingServicePersistentState>>(
           std::make_shared<PostgresOrderingServicePersistentState>(

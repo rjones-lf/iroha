@@ -65,6 +65,7 @@ namespace iroha {
       /**
        * Save proposal height that it can be restored
        * after launch
+       * @param height is height of last proposal
        */
       virtual bool saveProposalHeight(size_t height) override ;
 

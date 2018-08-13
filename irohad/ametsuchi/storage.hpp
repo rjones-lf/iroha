@@ -8,6 +8,7 @@
 
 #include <rxcpp/rx-observable.hpp>
 #include <vector>
+
 #include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/os_persistent_state_factory.hpp"
 #include "ametsuchi/mutable_factory.hpp"

@@ -6,20 +6,19 @@
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 
 #include "interfaces/iroha_internal/transaction_batch.hpp"
-#include "validators/field_validator.hpp"
-#include "validators/transaction_validator.hpp"
-#include "validators/transactions_collection/batch_order_validator.hpp"
+#include "validators/default_validator.hpp"
+
 
 namespace shared_model {
   namespace interface {
 
-    template <typename TransactionValidator, typename OrderValidator>
+    template <typename TransactionValidator, typename FieldValidator>
     iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequence::createTransactionSequence(
         const types::SharedTxsCollectionType &transactions,
-        const validation::TransactionsCollectionValidator<TransactionValidator,
-                                                          OrderValidator>
-            &validator) {
+        const validation::TransactionsCollectionValidator<TransactionValidator>
+            &validator,
+        const FieldValidator &field_validator) {
       std::unordered_map<interface::types::HashType,
                          std::vector<std::shared_ptr<Transaction>>,
                          interface::types::HashType::Hasher>
@@ -40,7 +39,9 @@ namespace shared_model {
           auto batch_hash = TransactionBatch::calculateReducedBatchHash(hashes);
           extracted_batches[batch_hash].push_back(tx);
         } else {
-          TransactionBatch::createTransactionBatch(tx, transaction_validator)
+          TransactionBatch::createTransactionBatch<TransactionValidator,
+                                                   FieldValidator>(
+              tx, transaction_validator, field_validator)
               .match(insert_batch, [&tx, &result](const auto &err) {
                 result.addReason(std::make_pair(
                     std::string("Error in transaction with reduced hash: ")
@@ -68,22 +69,14 @@ namespace shared_model {
     template iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequence::createTransactionSequence(
         const types::SharedTxsCollectionType &transactions,
-        const validation::TransactionsCollectionValidator<
-            validation::TransactionValidator<
-                validation::FieldValidator,
-                validation::CommandValidatorVisitor<
-                    validation::FieldValidator>>,
-            validation::AnyOrderValidator> &validator);
+        const validation::DefaultUnsignedTransactionsValidator &validator,
+        const validation::FieldValidator &field_validator);
 
     template iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequence::createTransactionSequence(
         const types::SharedTxsCollectionType &transactions,
-        const validation::TransactionsCollectionValidator<
-            validation::TransactionValidator<
-                validation::FieldValidator,
-                validation::CommandValidatorVisitor<
-                    validation::FieldValidator>>,
-            validation::BatchOrderValidator> &validator);
+        const validation::DefaultSignedTransactionsValidator &validator,
+        const validation::FieldValidator &field_validator);
 
     const types::SharedTxsCollectionType &TransactionSequence::transactions()
         const {
