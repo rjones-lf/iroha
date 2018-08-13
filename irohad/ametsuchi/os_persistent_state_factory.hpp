@@ -18,7 +18,7 @@ namespace iroha {
        * @return ordering service persistent state
        */
       virtual boost::optional<std::shared_ptr<OrderingServicePersistentState>>
-      createOSPersistentState() = 0;
+      createOSPersistentState() const = 0;
 
       virtual ~OSPersistentStateFactory() = default;
     };

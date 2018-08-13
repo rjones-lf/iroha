@@ -57,12 +57,14 @@ namespace iroha {
       expected::Result<std::unique_ptr<MutableStorage>, std::string>
       createMutableStorage() override;
 
-      boost::optional<std::shared_ptr<PeerQuery>> createPeerQuery() override;
+      boost::optional<std::shared_ptr<PeerQuery>> createPeerQuery()
+          const override;
 
-      boost::optional<std::shared_ptr<BlockQuery>> createBlockQuery() override;
+      boost::optional<std::shared_ptr<BlockQuery>> createBlockQuery()
+          const override;
 
       boost::optional<std::shared_ptr<OrderingServicePersistentState>>
-      createOSPersistentState() override;
+      createOSPersistentState() const override;
 
       /**
        * Insert block without validation

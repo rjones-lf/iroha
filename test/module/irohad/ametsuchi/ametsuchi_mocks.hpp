@@ -270,11 +270,11 @@ namespace iroha {
       MOCK_METHOD0(
           createMutableStorage,
           expected::Result<std::unique_ptr<MutableStorage>, std::string>(void));
-      MOCK_METHOD0(createPeerQuery,
+      MOCK_CONST_METHOD0(createPeerQuery,
                    boost::optional<std::shared_ptr<PeerQuery>>(void));
-      MOCK_METHOD0(createBlockQuery,
+      MOCK_CONST_METHOD0(createBlockQuery,
                    boost::optional<std::shared_ptr<BlockQuery>>(void));
-      MOCK_METHOD0(
+      MOCK_CONST_METHOD0(
           createOSPersistentState,
           boost::optional<std::shared_ptr<OrderingServicePersistentState>>(
               void));
@@ -308,19 +308,19 @@ namespace iroha {
 
     class MockPeerQueryFactory : public PeerQueryFactory {
      public:
-      MOCK_METHOD0(createPeerQuery,
+      MOCK_CONST_METHOD0(createPeerQuery,
                    boost::optional<std::shared_ptr<PeerQuery>>(void));
     };
 
     class MockBlockQueryFactory : public BlockQueryFactory {
      public:
-      MOCK_METHOD0(createBlockQuery,
+      MOCK_CONST_METHOD0(createBlockQuery,
                    boost::optional<std::shared_ptr<BlockQuery>>(void));
     };
 
     class MockOSPersistentStateFactory : public OSPersistentStateFactory {
      public:
-      MOCK_METHOD0(
+      MOCK_CONST_METHOD0(
           createOSPersistentState,
           boost::optional<std::shared_ptr<OrderingServicePersistentState>>(
               void));

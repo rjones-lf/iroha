@@ -18,7 +18,8 @@ namespace iroha {
        * Creates a peer query from the current state.
        * @return Created peer query
        */
-      virtual boost::optional<std::shared_ptr<PeerQuery>> createPeerQuery() = 0;
+      virtual boost::optional<std::shared_ptr<PeerQuery>> createPeerQuery()
+          const = 0;
 
       virtual ~PeerQueryFactory() = default;
     };

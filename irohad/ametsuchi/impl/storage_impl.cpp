@@ -84,7 +84,8 @@ namespace iroha {
               factory_));
     }
 
-    boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery() {
+    boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery()
+        const {
       std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
       auto wsv = getWsvQuery();
       if (not wsv) {
@@ -94,8 +95,8 @@ namespace iroha {
           std::make_shared<PeerQueryWsv>(wsv));
     }
 
-    boost::optional<std::shared_ptr<BlockQuery>>
-    StorageImpl::createBlockQuery() {
+    boost::optional<std::shared_ptr<BlockQuery>> StorageImpl::createBlockQuery()
+        const {
       std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
       auto block_query = getBlockQuery();
       if (not block_query) {
@@ -105,7 +106,7 @@ namespace iroha {
     }
 
     boost::optional<std::shared_ptr<OrderingServicePersistentState>>
-    StorageImpl::createOSPersistentState() {
+    StorageImpl::createOSPersistentState() const {
       if (not connection_) {
         return boost::none;
       }

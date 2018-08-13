@@ -43,7 +43,7 @@ class MockPeerQuery : public ametsuchi::PeerQuery {
 
 class MockPeerQueryFactory : public iroha::ametsuchi::PeerQueryFactory {
  public:
-  MOCK_METHOD0(
+  MOCK_CONST_METHOD0(
       createPeerQuery,
       boost::optional<std::shared_ptr<iroha::ametsuchi::PeerQuery>>(void));
 };
