@@ -31,5 +31,6 @@ add_executable(query_benchmark
 
 target_link_libraries(query_benchmark
     benchmark
+    gtest::gtest
     integration_framework
     )

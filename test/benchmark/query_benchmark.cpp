@@ -4,14 +4,17 @@
  */
 
 #include <benchmark/benchmark.h>
+#include <gtest/gtest.h>
 #include <string>
 
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
+#include "framework/specified_visitor.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "utils/query_error_response_visitor.hpp"
 
 const std::string kUser = "user";
 const std::string kUserId = kUser + "@test";
@@ -57,19 +60,30 @@ static void BM_QueryAccount(benchmark::State &state) {
   itf.skipBlock().skipProposal();
 
   auto make_query = []() {
-    return TestQueryBuilder()
+    return TestUnsignedQueryBuilder()
         .createdTime(iroha::time::now())
         .creatorAccountId(kUserId)
         .queryCounter(1)
         .getAccount(kUserId)
-        .build();
+        .build()
+        .signAndAddSignature(kUserKeypair)
+        .finish();
   };
-  auto check = [](auto &status) {};
+
+  auto check = [](auto &status) {
+    ASSERT_NO_THROW({
+      boost::apply_visitor(
+          framework::SpecifiedVisitor<const shared_model::interface::AccountResponse &>(),
+          status.get());
+    });
+  };
+
+  itf.sendQuery(make_query(), check);
 
   // define main benchmark loop
   while (state.KeepRunning()) {
     // define the code to be tested
-    itf.sendQuery(make_query(), check);
+    itf.sendQuery(make_query());
   }
   itf.done();
 }
