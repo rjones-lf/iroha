@@ -124,9 +124,6 @@ namespace iroha {
       processSoci(st, ind, row, [&set](std::string &row) {
         set = shared_model::interface::RolePermissionSet(row);
       });
-      if (set.none()) {
-        return boost::none;
-      }
       return set;
     }
 

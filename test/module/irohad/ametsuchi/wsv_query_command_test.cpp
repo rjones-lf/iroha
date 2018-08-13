@@ -133,7 +133,8 @@ namespace iroha {
           err(command->insertRolePermissions(new_role, role_permissions)));
 
       auto permissions = query->getRolePermissions(new_role);
-      ASSERT_FALSE(permissions);
+      ASSERT_TRUE(permissions);
+      ASSERT_TRUE(permissions->none());
     }
 
     class AccountTest : public WsvQueryCommandTest {

@@ -702,7 +702,8 @@ namespace iroha {
       ASSERT_TRUE(err(execute(buildCommand(
           TestTransactionBuilder().createRole("role2", role_permissions2)))));
       auto rl = query->getRolePermissions("role2");
-      ASSERT_FALSE(rl);
+      ASSERT_TRUE(rl);
+      ASSERT_TRUE(rl->none());
     }
 
     class DetachRole : public CommandExecutorTest {
