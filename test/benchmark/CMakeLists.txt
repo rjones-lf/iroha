@@ -35,5 +35,4 @@ target_link_libraries(query_benchmark
     raw_block_loader
     integration_framework
     shared_model_stateless_validation
-    acceptance_fixture
     )

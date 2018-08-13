@@ -1,7 +1,29 @@
 /**
- * Copyright Soramitsu Co., Ltd. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
+ * http://soramitsu.co.jp
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+///
+/// Documentation is at https://github.com/google/benchmark
+///
+/// General recommendations:
+///  - build with -DCMAKE_BUILD_TYPE=Release
+///  - disable CPU scaling (frequency changes depending on workload)
+///  - put initialization code in fixtures
+///  - write meaningful names for benchmarks
+///
 
 #include <benchmark/benchmark.h>
 #include <string>
@@ -11,83 +33,81 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "integration/acceptance/acceptance_fixture.hpp"
+#include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/permissions.hpp"
-
-using namespace integration_framework;
-using namespace shared_model;
 
 const std::string kUser = "user";
 const std::string kUserId = kUser + "@test";
 const std::string kAmount = "1.0";
-const crypto::Keypair kAdminKeypair =
-    crypto::DefaultCryptoAlgorithmType::generateKeypair();
-const crypto::Keypair kUserKeypair =
-    crypto::DefaultCryptoAlgorithmType::generateKeypair();
+const shared_model::crypto::Keypair kAdminKeypair =
+    shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+const shared_model::crypto::Keypair kUserKeypair =
+    shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
-class QueryBenchmark : public benchmark::Fixture {
- public:
-  TestUnsignedTransactionBuilder createUser(
-      const std::string &user, const shared_model::crypto::PublicKey &key) {
-    return TestUnsignedTransactionBuilder()
-        .createAccount(
-            user,
-            integration_framework::IntegrationTestFramework::kDefaultDomain,
-            key)
-        .creatorAccountId(
-            integration_framework::IntegrationTestFramework::kAdminId)
-        .createdTime(iroha::time::now())
-        .quorum(1);
-  }
+TestUnsignedTransactionBuilder createUser(
+    const std::string &user, const shared_model::crypto::PublicKey &key) {
+  return TestUnsignedTransactionBuilder()
+      .createAccount(
+          user,
+          integration_framework::IntegrationTestFramework::kDefaultDomain,
+          key)
+      .creatorAccountId(
+          integration_framework::IntegrationTestFramework::kAdminId)
+      .createdTime(iroha::time::now())
+      .quorum(1);
+}
 
-  TestUnsignedTransactionBuilder createUserWithPerms(
-      const std::string &user,
-      const shared_model::crypto::PublicKey &key,
-      const std::string &role_id,
-      const shared_model::interface::RolePermissionSet &perms) {
-    const auto user_id = user + "@"
-        + integration_framework::IntegrationTestFramework::kDefaultDomain;
-    return createUser(user, key)
-        .detachRole(user_id,
-                    integration_framework::IntegrationTestFramework::kDefaultRole)
-        .createRole(role_id, perms)
-        .appendRole(user_id, role_id);
-  }
-};
+TestUnsignedTransactionBuilder createUserWithPerms(
+    const std::string &user,
+    const shared_model::crypto::PublicKey &key,
+    const std::string &role_id,
+    const shared_model::interface::RolePermissionSet &perms) {
+  const auto user_id = user + "@"
+      + integration_framework::IntegrationTestFramework::kDefaultDomain;
+  return createUser(user, key)
+      .detachRole(user_id,
+                  integration_framework::IntegrationTestFramework::kDefaultRole)
+      .createRole(role_id, perms)
+      .appendRole(user_id, role_id);
+}
 
-BENCHMARK_DEFINE_F(QueryBenchmark, GetAccount)(benchmark::State &state) {
-  const std::string kAsset = "coin#test";
-
-  auto make_perms = [this] {
-    auto perms = shared_model::interface::RolePermissionSet(
-        {shared_model::interface::permissions::Role::kAddAssetQty});
-    return createUserWithPerms(kUser, kUserKeypair.publicKey(), "role", perms)
-        .build()
-        .signAndAddSignature(kAdminKeypair)
-        .finish();
-  };
-
-  IntegrationTestFramework itf(1);
+/// Test how long is empty std::string creation
+// define a static function, which accepts 'state'
+// function's name = benchmark's name
+static void BM_QueryAccount(benchmark::State &state) {
+  integration_framework::IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair);
+  itf.sendTx(createUserWithPerms(
+                 kUser,
+                 kUserKeypair.publicKey(),
+                 "role",
+                 {shared_model::interface::permissions::Role::kGetAllAccounts})
+                 .build()
+                 .signAndAddSignature(kAdminKeypair)
+                 .finish());
 
-  for (int i = 0; i < 1; i++) {
-    itf.sendTx(make_perms());
-  }
-  itf.skipProposal().skipBlock();
+  itf.skipBlock().skipProposal();
 
-  //  auto transaction = ;
+  auto make_query = []() {
+    return TestQueryBuilder()
+        .createdTime(iroha::time::now())
+        .creatorAccountId(kUserId)
+        .queryCounter(1)
+        .getAccount(kUserId)
+        .build();
+  };
+  auto check = [](auto &status) {};
+
   // define main benchmark loop
   while (state.KeepRunning()) {
     // define the code to be tested
-
-    std::string empty_string;
+    itf.sendQuery(make_query(), check);
   }
   itf.done();
 }
 // define benchmark
-// BENCHMARK(BM_QueryAccount)->Unit(benchmark::kMillisecond);
-BENCHMARK_REGISTER_F(QueryBenchmark, GetAccount)->UseManualTime();
+BENCHMARK(BM_QueryAccount);
 
 /// That's all. More in documentation.
 

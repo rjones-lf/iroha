@@ -6,7 +6,6 @@
 #ifndef IROHA_ACCEPTANCE_FIXTURE_HPP
 #define IROHA_ACCEPTANCE_FIXTURE_HPP
 
-#include <gtest/gtest.h>
 #include <functional>
 #include <string>
 #include <vector>
