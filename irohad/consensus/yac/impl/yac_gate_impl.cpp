@@ -111,10 +111,10 @@ namespace iroha {
                             shared_model::crypto::Hash(model_hash));
                         // if load is successful
                         if (block) {
-                          subscriber.on_next(*block);
                           // update the cache with block consensus voted for
                           consensus_result_cache_->insert(
                               std::make_shared<ConsensusResult>(*block));
+                          subscriber.on_next(*block);
                         }
                         subscriber.on_completed();
                       });

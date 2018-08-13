@@ -55,7 +55,7 @@ namespace iroha {
         /**
          * Method called when commit received
          * assumes to retrieve a block eventually
-         * @return observable with the Block committed
+         * @return observable with the committed block
          */
         rxcpp::observable<shared_model::interface::BlockVariant> on_commit()
             override;
