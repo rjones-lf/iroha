@@ -5,6 +5,9 @@
 
 #include "backend/protobuf/proto_block_factory.hpp"
 
+#include "backend/protobuf/block.hpp"
+#include "backend/protobuf/empty_block.hpp"
+
 using namespace shared_model::proto;
 
 ProtoBlockFactory::ProtoBlockFactory(
@@ -25,7 +28,7 @@ shared_model::interface::BlockVariant ProtoBlockFactory::unsafeCreateBlock(
 
   if (not txs.empty()) {
     std::for_each(
-        std::begin(txs), std::end(txs), [&block_payload](const auto &tx) {
+        std::begin(txs), std::end(txs), [block_payload](const auto &tx) {
           auto *transaction = block_payload->add_transactions();
           (*transaction) = static_cast<const Transaction &>(tx).getTransport();
         });

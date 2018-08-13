@@ -14,11 +14,10 @@
 
 namespace shared_model {
   namespace validation {
-
     template <typename BlockValidator, typename EmptyBlockValidator>
     class AnyBlockValidator {
      public:
-      AnyBlockValidator(
+      explicit AnyBlockValidator(
           shared_model::validation::FieldValidator field_validator =
               shared_model::validation::FieldValidator(),
           BlockValidator block_validator = BlockValidator(),

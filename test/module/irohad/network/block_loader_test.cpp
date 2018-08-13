@@ -45,8 +45,6 @@ using testing::Return;
 using wPeer = std::shared_ptr<shared_model::interface::Peer>;
 using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
-using namespace shared_model::validation;
-
 class BlockLoaderTest : public testing::Test {
  public:
   void SetUp() override {
@@ -85,8 +83,8 @@ class BlockLoaderTest : public testing::Test {
   }
 
   auto getBaseBlockBuilder() const {
-    iroha::protocol::Transaction proto_tx;
-    shared_model::proto::Transaction tx(proto_tx);
+//    iroha::protocol::Transaction proto_tx;
+    shared_model::proto::Transaction tx(iroha::protocol::Transaction{});
 
     return shared_model::proto::TemplateBlockBuilder<
                (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,

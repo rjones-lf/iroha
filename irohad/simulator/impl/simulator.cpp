@@ -26,8 +26,8 @@ namespace iroha {
           ametsuchi_factory_(std::move(factory)),
           block_queries_(std::move(blockQuery)),
           crypto_signer_(std::move(crypto_signer)),
-          block_factory_(std::move(block_factory)) {
-      log_ = logger::log("Simulator");
+          block_factory_(std::move(block_factory)),
+          log_(logger::log("Simulator")){
       ordering_gate->on_proposal().subscribe(
           proposal_subscription_,
           [this](std::shared_ptr<shared_model::interface::Proposal> proposal) {

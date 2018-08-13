@@ -29,7 +29,7 @@ namespace shared_model {
      public:
       explicit SignableModelValidator(
           FieldValidator &&validator = FieldValidator())
-          : ModelValidator(validator), field_validator_(validator) {}
+          : ModelValidator(validator), field_validator_(std::move(validator)) {}
 
       Answer validate(const Model &model) const {
         auto answer = ModelValidator::validate(model);

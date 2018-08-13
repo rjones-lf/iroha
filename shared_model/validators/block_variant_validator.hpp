@@ -41,7 +41,6 @@ namespace shared_model {
 
       BlockVarValidator validator_;
     };
-
   }  // namespace validation
 }  // namespace shared_model
 

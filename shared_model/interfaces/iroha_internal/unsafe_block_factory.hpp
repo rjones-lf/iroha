@@ -18,13 +18,15 @@ namespace shared_model {
       /**
        * Create block
        * @param txs - if it is empty, create EmptyBlock,
-       * else create regular block
+       *              else create regular block
        */
       virtual BlockVariant unsafeCreateBlock(
           types::HeightType height,
           const types::HashType &prev_hash,
           types::TimestampType created_time,
           const types::TransactionsCollectionType &txs) = 0;
+
+      virtual ~UnsafeBlockFactory() = default;
     };
   }  // namespace interface
 }  // namespace shared_model

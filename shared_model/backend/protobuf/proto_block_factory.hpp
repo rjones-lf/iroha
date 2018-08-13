@@ -6,8 +6,6 @@
 #ifndef IROHA_PROTO_BLOCK_FACTORY_HPP
 #define IROHA_PROTO_BLOCK_FACTORY_HPP
 
-#include "backend/protobuf/block.hpp"
-#include "backend/protobuf/empty_block.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "block.pb.h"
 #include "common/result.hpp"
