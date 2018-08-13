@@ -31,8 +31,5 @@ add_executable(query_benchmark
 
 target_link_libraries(query_benchmark
     benchmark
-    application
-    raw_block_loader
     integration_framework
-    shared_model_stateless_validation
     )
