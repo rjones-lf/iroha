@@ -22,6 +22,8 @@ class CreateAssetFixture : public AcceptanceFixture {
 
   const interface::types::AssetNameType kAssetName = "newcoin";
   const interface::types::PrecisionType kPrecision = 1;
+  const interface::types::PrecisionType kNonDefaultPrecision = kPrecision + 17;
+  const interface::types::DomainIdType kNonExistingDomain = "nonexisting";
   const std::vector<interface::types::AssetNameType> kIllegalAssetNames = {
       "",
       " ",
@@ -57,7 +59,7 @@ class CreateAssetFixture : public AcceptanceFixture {
 };
 
 /*
- * With the current implementation of crateAsset method of TransactionBuilder
+ * With the current implementation of CreateAsset method of TransactionBuilder
  * that is not possible to create tests for the following cases:
  *
  */
@@ -139,7 +141,7 @@ TEST_F(CreateAssetFixture, ExistingNameDifferentPrecision) {
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(complete(baseTx().createAsset(
-          IntegrationTestFramework::kAssetName, kDomain, kPrecision + 17)))
+          IntegrationTestFramework::kAssetName, kDomain, kNonDefaultPrecision)))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkBlock(
@@ -181,7 +183,7 @@ TEST_F(CreateAssetFixture, ValidNonExistingDomain) {
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(
-          complete(baseTx().createAsset(kAssetName, "nonexisting", kPrecision)))
+          complete(baseTx().createAsset(kAssetName, kNonExistingDomain, kPrecision)))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkBlock(
