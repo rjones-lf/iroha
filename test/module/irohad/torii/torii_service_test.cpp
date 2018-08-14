@@ -208,12 +208,8 @@ TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
     tx_request.set_tx_hash(
         shared_model::crypto::toBinaryString(tx_hashes.at(i)));
     iroha::protocol::ToriiResponse toriiResponse;
-    auto resub_counter(resubscribe_attempts);
-    do {
-      client.Status(tx_request, toriiResponse);
-    } while (toriiResponse.tx_status()
-                 != iroha::protocol::TxStatus::NOT_RECEIVED
-             and --resub_counter);
+    // this test does not require the fix for thread scheduling issues
+    client.Status(tx_request, toriiResponse);
     ASSERT_EQ(toriiResponse.tx_status(),
               iroha::protocol::TxStatus::NOT_RECEIVED);
   }
@@ -388,14 +384,12 @@ TEST_F(ToriiServiceTest, CheckHash) {
     iroha::protocol::TxStatusRequest tx_request;
     tx_request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
     iroha::protocol::ToriiResponse toriiResponse;
+    const auto binary_hash = shared_model::crypto::toBinaryString(hash);
     auto resub_counter(resubscribe_attempts);
     do {
       client.Status(tx_request, toriiResponse);
-    } while (toriiResponse.tx_hash()
-                 != shared_model::crypto::toBinaryString(hash)
-             and --resub_counter);
-    ASSERT_EQ(toriiResponse.tx_hash(),
-              shared_model::crypto::toBinaryString(hash));
+    } while (toriiResponse.tx_hash() != binary_hash and --resub_counter);
+    ASSERT_EQ(toriiResponse.tx_hash(), binary_hash);
   }
 }
 
