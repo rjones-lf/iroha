@@ -12,15 +12,15 @@
 
 namespace iroha {
   namespace ametsuchi {
-    class OSPersistentStateFactory {
+    class OsPersistentStateFactory {
      public:
       /**
        * @return ordering service persistent state
        */
       virtual boost::optional<std::shared_ptr<OrderingServicePersistentState>>
-      createOSPersistentState() const = 0;
+      createOsPersistentState() const = 0;
 
-      virtual ~OSPersistentStateFactory() = default;
+      virtual ~OsPersistentStateFactory() = default;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

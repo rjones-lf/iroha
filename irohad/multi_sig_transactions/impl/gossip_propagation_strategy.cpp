@@ -76,8 +76,6 @@ namespace iroha {
   }
 
   OptPeer GossipPropagationStrategy::visit() {
-    // Make sure that dtor isn't running
-    std::lock_guard<std::mutex> lock(m);
     if (non_visited.empty() and not initQueue()) {
       // either PeerProvider doesn't gives peers / dtor have been called
       return {};

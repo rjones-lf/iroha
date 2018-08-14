@@ -67,26 +67,27 @@ namespace iroha {
           size_t max_size,
           std::chrono::milliseconds delay_milliseconds,
           std::shared_ptr<network::OrderingServiceTransport> transport,
-          std::shared_ptr<ametsuchi::OSPersistentStateFactory>
+          std::shared_ptr<ametsuchi::OsPersistentStateFactory>
               persistent_state);
 
      public:
       /**
        * Initialization of ordering gate(client) and ordering service (service)
        * @param peer_query_factory - factory to get peer list
-       * @param loop - handler of async events
        * @param max_size - limitation of proposal size
        * @param delay_milliseconds - delay before emitting proposal
+       * @param persistent_state - factory to access persistent state
        * @param block_query_factory - block store factory to get last block
        * height
-       * @param persistent_state - factory to access persistent state
+       * @param async_call - async grpc cliet that is passed to transport
+       * components
        * @return efficient implementation of OrderingGate
        */
       std::shared_ptr<iroha::network::OrderingGate> initOrderingGate(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           size_t max_size,
           std::chrono::milliseconds delay_milliseconds,
-          std::shared_ptr<ametsuchi::OSPersistentStateFactory>
+          std::shared_ptr<ametsuchi::OsPersistentStateFactory>
               persistent_state,
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>

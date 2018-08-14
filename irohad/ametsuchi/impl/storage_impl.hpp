@@ -64,7 +64,7 @@ namespace iroha {
           const override;
 
       boost::optional<std::shared_ptr<OrderingServicePersistentState>>
-      createOSPersistentState() const override;
+      createOsPersistentState() const override;
 
       /**
        * Insert block without validation

@@ -27,26 +27,17 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 #include "ametsuchi/peer_query_factory.hpp"
 #include "model/peer.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 
 using namespace iroha;
 
 using namespace std::chrono_literals;
+using namespace iroha::ametsuchi;
 using PropagationData = GossipPropagationStrategy::PropagationData;
-
-class MockPeerQuery : public ametsuchi::PeerQuery {
- public:
-  MOCK_METHOD0(getLedgerPeers, boost::optional<PropagationData>());
-};
-
-class MockPeerQueryFactory : public iroha::ametsuchi::PeerQueryFactory {
- public:
-  MOCK_CONST_METHOD0(
-      createPeerQuery,
-      boost::optional<std::shared_ptr<iroha::ametsuchi::PeerQuery>>(void));
-};
 
 /**
  * Generates peers with empty pub keys

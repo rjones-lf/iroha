@@ -37,7 +37,7 @@ namespace iroha {
                     public MutableFactory,
                     public PeerQueryFactory,
                     public BlockQueryFactory,
-                    public OSPersistentStateFactory {
+                    public OsPersistentStateFactory {
      public:
       virtual std::shared_ptr<WsvQuery> getWsvQuery() const = 0;
 

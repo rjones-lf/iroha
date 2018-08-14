@@ -271,13 +271,12 @@ namespace iroha {
           createMutableStorage,
           expected::Result<std::unique_ptr<MutableStorage>, std::string>(void));
       MOCK_CONST_METHOD0(createPeerQuery,
-                   boost::optional<std::shared_ptr<PeerQuery>>(void));
+                   boost::optional<std::shared_ptr<PeerQuery>>());
       MOCK_CONST_METHOD0(createBlockQuery,
-                   boost::optional<std::shared_ptr<BlockQuery>>(void));
+                   boost::optional<std::shared_ptr<BlockQuery>>());
       MOCK_CONST_METHOD0(
-          createOSPersistentState,
-          boost::optional<std::shared_ptr<OrderingServicePersistentState>>(
-              void));
+          createOsPersistentState,
+          boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
       MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block &));
       MOCK_METHOD1(insertBlocks,
@@ -309,21 +308,20 @@ namespace iroha {
     class MockPeerQueryFactory : public PeerQueryFactory {
      public:
       MOCK_CONST_METHOD0(createPeerQuery,
-                   boost::optional<std::shared_ptr<PeerQuery>>(void));
+                   boost::optional<std::shared_ptr<PeerQuery>>());
     };
 
     class MockBlockQueryFactory : public BlockQueryFactory {
      public:
       MOCK_CONST_METHOD0(createBlockQuery,
-                   boost::optional<std::shared_ptr<BlockQuery>>(void));
+                   boost::optional<std::shared_ptr<BlockQuery>>());
     };
 
-    class MockOSPersistentStateFactory : public OSPersistentStateFactory {
+    class MockOsPersistentStateFactory : public OsPersistentStateFactory {
      public:
       MOCK_CONST_METHOD0(
-          createOSPersistentState,
-          boost::optional<std::shared_ptr<OrderingServicePersistentState>>(
-              void));
+          createOsPersistentState,
+          boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
     };
   }  // namespace ametsuchi
 }  // namespace iroha

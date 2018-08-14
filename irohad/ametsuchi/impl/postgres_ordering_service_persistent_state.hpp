@@ -67,17 +67,17 @@ namespace iroha {
        * after launch
        * @param height is height of last proposal
        */
-      virtual bool saveProposalHeight(size_t height) override ;
+      bool saveProposalHeight(size_t height) override;
 
       /**
        * Load proposal height
        */
-      virtual boost::optional<size_t> loadProposalHeight() const override ;
+      boost::optional<size_t> loadProposalHeight() const override;
 
       /**
        * Reset storage state to default
        */
-      virtual bool resetState() override ;
+      bool resetState() override;
 
      private:
       std::unique_ptr<soci::session> sql_;

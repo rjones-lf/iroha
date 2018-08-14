@@ -40,7 +40,7 @@ namespace iroha {
     using OptPeer = boost::optional<PropagationData::value_type>;
     /**
      * Initialize strategy with
-     * @param query is a provider of peer list
+     * @param peer_factory is a provider of peer list
      * @param period of emitting data in ms
      * @param amount of peers emitted per once
      */

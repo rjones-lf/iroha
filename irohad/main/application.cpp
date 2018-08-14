@@ -89,7 +89,7 @@ void Irohad::init() {
  */
 void Irohad::dropStorage() {
   storage->reset();
-  storage->createOSPersistentState() |
+  storage->createOsPersistentState() |
       [](const auto &state) { state->resetState(); };
 }
 
@@ -111,7 +111,7 @@ void Irohad::initStorage() {
 }
 
 void Irohad::resetOrderingService() {
-  if (not (storage->createOSPersistentState() |
+  if (not (storage->createOsPersistentState() |
       [](const auto &state) { return state->resetState(); }))
     log_->error("cannot reset ordering service storage");
 }

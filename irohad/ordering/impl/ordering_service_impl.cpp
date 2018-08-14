@@ -21,7 +21,7 @@ namespace iroha {
         size_t max_size,
         rxcpp::observable<TimeoutType> proposal_timeout,
         std::shared_ptr<network::OrderingServiceTransport> transport,
-        std::shared_ptr<ametsuchi::OSPersistentStateFactory> persistent_state,
+        std::shared_ptr<ametsuchi::OsPersistentStateFactory> persistent_state,
         std::unique_ptr<shared_model::interface::ProposalFactory> factory,
         bool is_async)
         : peer_query_factory_(peer_query_factory),
@@ -32,7 +32,7 @@ namespace iroha {
           factory_(std::move(factory)),
           log_(logger::log("OrderingServiceImpl")) {
       // restore state of ordering service from persistent storage
-      proposal_height_ = persistent_state_->createOSPersistentState() |
+      proposal_height_ = persistent_state_->createOsPersistentState() |
           [](const auto &state) { return state->loadProposalHeight().value(); };
 
       rxcpp::observable<ProposalEvent> timer =
@@ -105,7 +105,7 @@ namespace iroha {
                  std::unique_ptr<shared_model::interface::Proposal>> &v) {
             // Save proposal height to the persistent storage.
             // In case of restart it reloads state.
-            if (persistent_state_->createOSPersistentState()
+            if (persistent_state_->createOsPersistentState()
                     | [this](const auto &state) {
                         return state->saveProposalHeight(proposal_height_);
                       }) {
