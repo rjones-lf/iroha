@@ -13,14 +13,12 @@
 using namespace integration_framework;
 using namespace shared_model;
 
-class GetRoles : public AcceptanceFixture {};
-
 /**
  * @given a user with CanGetRoles permission
  * @when execute query with getRoles command
- * @then there is should be no exception
+ * @then the query returns list of roles
  */
-TEST_F(GetRoles, CanGetRoles) {
+TEST_F(AcceptanceFixture, CanGetRoles) {
   auto checkQuery = [](auto &queryResponse) {
     ASSERT_NO_THROW(boost::apply_visitor(
         framework::SpecifiedVisitor<shared_model::interface::RolesResponse>(),
@@ -49,15 +47,14 @@ TEST_F(GetRoles, CanGetRoles) {
 /**
  * @given a user without CanGetRoles permission
  * @when execute query with getRoles command
- * @then there is should be an exception
+ * @then there is no way to to get roles due to user hasn't permissions enough
  */
-TEST_F(GetRoles, CanNotGetRoles) {
+TEST_F(AcceptanceFixture, CanNotGetRoles) {
   auto checkQuery = [](auto &queryResponse) {
     ASSERT_NO_THROW({
       boost::apply_visitor(
           framework::SpecifiedVisitor<
               shared_model::interface::StatefulFailedErrorResponse>(),
-
           boost::apply_visitor(
               framework::SpecifiedVisitor<
                   shared_model::interface::ErrorQueryResponse>(),
