@@ -31,7 +31,10 @@ namespace shared_model {
 
       /**
        * Create block variant with nonempty block
-       * @return Error if block is empty, or if it is invalid
+       *
+       * @param block - proto block from which block variant is created
+       * @return BlockVariant with block.
+       *         Error if block is empty, or if it is invalid
        */
       iroha::expected::Result<interface::BlockVariant, std::string> createBlock(
           iroha::protocol::Block block);

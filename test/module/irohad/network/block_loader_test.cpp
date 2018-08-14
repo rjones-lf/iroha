@@ -83,7 +83,6 @@ class BlockLoaderTest : public testing::Test {
   }
 
   auto getBaseBlockBuilder() const {
-//    iroha::protocol::Transaction proto_tx;
     shared_model::proto::Transaction tx(iroha::protocol::Transaction{});
 
     return shared_model::proto::TemplateBlockBuilder<
@@ -246,8 +245,6 @@ TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
   // Request nonexisting block => failure
   auto present =
       getBaseBlockBuilder().build().signAndAddSignature(key).finish();
-
-  auto variant = shared_model::interface::BlockVariant(wBlock(clone(present)));
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));

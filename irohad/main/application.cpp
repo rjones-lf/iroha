@@ -17,8 +17,8 @@
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "torii/impl/status_bus_impl.hpp"
-#include "validators/field_validator.hpp"
 #include "validators/block_variant_validator.hpp"
+#include "validators/field_validator.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -178,9 +178,8 @@ void Irohad::initOrderingGate() {
  * Initializing iroha verified proposal creator and block creator
  */
 void Irohad::initSimulator() {
-  auto block_factory =
-      std::make_unique<shared_model::proto::ProtoBlockFactory>(
-          std::make_unique<shared_model::validation::BlockVariantValidator>());
+  auto block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory>(
+      std::make_unique<shared_model::validation::BlockVariantValidator>());
   simulator = std::make_shared<Simulator>(ordering_gate,
                                           stateful_validator,
                                           storage,

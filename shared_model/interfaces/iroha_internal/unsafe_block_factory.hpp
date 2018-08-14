@@ -15,11 +15,14 @@ namespace shared_model {
      */
     class UnsafeBlockFactory {
      public:
-      /**
-       * Create block
-       * @param txs - if it is empty, create EmptyBlock,
-       *              else create regular block
-       */
+       /**
+        * Create block without any validation
+        * @param height - block height
+        * @param prev_hash - hash of the previous block
+        * @param created_time - time the block is created
+        * @param txs - list of transactions. If it empty, EmptyBlock is creted
+        * @return BlockVariant with block or empty block
+        */
       virtual BlockVariant unsafeCreateBlock(
           types::HeightType height,
           const types::HashType &prev_hash,
