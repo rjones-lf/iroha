@@ -55,14 +55,19 @@ const auto transactions = 100;
 const auto commands = 100;
 
 static void BM_AddAssetQuantity(benchmark::State &state) {
-  integration_framework::IntegrationTestFramework itf(transactions);
+  integration_framework::IntegrationTestFramework itf(transactions,
+                                                      boost::none,
+                                                      [](auto &) {},
+                                                      false,
+                                                      std::chrono::hours(1),
+                                                      std::chrono::hours(1));
   itf.setInitialState(kAdminKeypair);
   for (int i = 0; i < transactions; i++) {
     itf.sendTx(createUserWithPerms(
-        kUser,
-        kUserKeypair.publicKey(),
-        "role",
-        {shared_model::interface::permissions::Role::kAddAssetQty})
+                   kUser,
+                   kUserKeypair.publicKey(),
+                   "role",
+                   {shared_model::interface::permissions::Role::kAddAssetQty})
                    .build()
                    .signAndAddSignature(kAdminKeypair)
                    .finish());
@@ -79,8 +84,7 @@ static void BM_AddAssetQuantity(benchmark::State &state) {
       for (int i = 0; i < commands; i++) {
         base = base.addAssetQuantity(kAsset, kAmount);
       }
-      return base.quorum(1).build()
-          .signAndAddSignature(kUserKeypair).finish();
+      return base.quorum(1).build().signAndAddSignature(kUserKeypair).finish();
     };
 
     for (int i = 0; i < transactions; i++) {

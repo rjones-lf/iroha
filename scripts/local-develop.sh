@@ -34,7 +34,7 @@ pgport=5432
 # run postgres
 pghost=127.0.0.1
 
-pgid=$(docker run -p $pghost:$pgport:$pgport --rm --name $pgname -e POSTGRES_USER=$user -e POSTGRES_PASSSWORD=$password -d alitrack/postgres-plpython)
+pgid=$(docker run -p $pghost:$pgport:$pgport --rm --name $pgname -e POSTGRES_USER=$user -e POSTGRES_PASSSWORD=$password -d postgres:9.5)
 
 # stderr
 >&2 echo "postgres: 127.0.0.1:$pgport {login: $user, pwd: $password}"

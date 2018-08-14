@@ -54,9 +54,13 @@ namespace integration_framework {
       std::function<void(integration_framework::IntegrationTestFramework &)>
           deleter,
       bool mst_support,
+      milliseconds proposal_waiting,
+      milliseconds block_waiting,
       const std::string &block_store_path)
       : iroha_instance_(std::make_shared<IrohaInstance>(
             mst_support, block_store_path, dbname)),
+        proposal_waiting(proposal_waiting),
+        block_waiting(block_waiting),
         maximum_proposal_size_(maximum_proposal_size),
         deleter_(deleter) {}
 

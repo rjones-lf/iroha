@@ -18,8 +18,6 @@ SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -Wno-deprecated-de
 SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
 SET(CMAKE_INSTALL_RPATH "../lib")
 
-SET(BENCHMARKING ON)
-
 if(COVERAGE)
   find_program(LCOV_PROGRAM lcov)
   if(NOT LCOV_PROGRAM)
@@ -66,8 +64,6 @@ option(SWIG_JAVA    "Generate Swig Java bindings"    OFF)
 option(SUPPORT_PYTHON2 "ON if Python2, OFF if python3" OFF)
 option(SWIG_CSHARP  "Generate Swig C# bindings"      OFF)
 option(SWIG_NODE    "Generate Swig NodeJS"           OFF)
-
-SET(BENCHMARKING ON)
 
 if (NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug)

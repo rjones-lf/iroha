@@ -38,7 +38,6 @@ namespace shared_model {
 namespace integration_framework {
 
   using std::chrono::milliseconds;
-  using std::chrono::hours;
 
   class IntegrationTestFramework {
    private:
@@ -50,6 +49,8 @@ namespace integration_framework {
      * Construct test framework instance
      * @param maximum_proposal_size - Maximum number of transactions per
      * proposal
+     * @param proposal_waiting - maximum time of waiting before appearing next proposal
+     * @param block_waiting - maximum time of waiting before appearing next committed block
      * @param destructor_lambda - (default nullptr) Pointer to function which
      * receives pointer to constructed instance of Integration Test Framework.
      * If specified, then will be called instead of default destructor's code
@@ -62,6 +63,8 @@ namespace integration_framework {
         std::function<void(IntegrationTestFramework &)> deleter =
             [](IntegrationTestFramework &itf) { itf.done(); },
         bool mst_support = false,
+        milliseconds proposal_waiting = milliseconds(20000),
+        milliseconds block_waiting = milliseconds(20000),
         const std::string &block_store_path =
             (boost::filesystem::temp_directory_path()
              / boost::filesystem::unique_path())
@@ -237,10 +240,10 @@ namespace integration_framework {
 
     /// maximum time of waiting before appearing next proposal
     // TODO 21/12/2017 muratovv make relation of time with instance's config
-    const milliseconds proposal_waiting = hours(1);
+    milliseconds proposal_waiting;
 
     /// maximum time of waiting before appearing next committed block
-    const milliseconds block_waiting = hours(1);
+    milliseconds block_waiting;
 
     size_t maximum_proposal_size_;
 

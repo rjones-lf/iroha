@@ -130,7 +130,13 @@ TEST(RegressionTest, StateRecovery) {
 
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &) {}, false, path)
+        1,
+        dbname,
+        [](auto &) {},
+        false,
+        std::chrono::milliseconds(20000),
+        std::chrono::milliseconds(20000),
+        path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx)
         .checkProposal(checkOne)
@@ -139,7 +145,13 @@ TEST(RegressionTest, StateRecovery) {
   }
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &itf) { itf.done(); }, false, path)
+        1,
+        dbname,
+        [](auto &itf) { itf.done(); },
+        false,
+        std::chrono::milliseconds(20000),
+        std::chrono::milliseconds(20000),
+        path)
         .recoverState(kAdminKeypair)
         .sendQuery(makeQuery(2, kAdminKeypair), checkQuery)
         .done();
