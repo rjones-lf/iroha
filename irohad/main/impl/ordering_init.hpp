@@ -47,6 +47,7 @@ namespace iroha {
        * about incoming proposals and send transactions
        * @param block_query_factory - block store factory to get last block
        * height
+       * @return ordering gate
        */
       auto createGate(
           std::shared_ptr<OrderingGateTransport> transport,
@@ -57,7 +58,9 @@ namespace iroha {
        * @param peer_query_factory - factory to get peer list
        * @param max_size - limitation of proposal size
        * @param delay_milliseconds - delay before emitting proposal
+       * @param transport - ordering service transport
        * @param persistent_state - factory to access persistent state
+       * @return ordering service
        */
       auto createService(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,

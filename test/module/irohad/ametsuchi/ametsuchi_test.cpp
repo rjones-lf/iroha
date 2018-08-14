@@ -677,7 +677,9 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
  * @then load proposal height and ensure it is correct
  */
 TEST_F(AmetsuchiTest, OrderingServicePersistentStorageTest) {
-  auto ordering_state = storage->createOSPersistentState().get();
+  auto os_opt = storage->createOSPersistentState();
+  ASSERT_TRUE(os_opt);
+  auto ordering_state = os_opt.get();
   ASSERT_TRUE(ordering_state);
 
   ordering_state->resetState();
@@ -696,7 +698,9 @@ TEST_F(AmetsuchiTest, OrderingServicePersistentStorageTest) {
  * @then load proposal height and ensure it is correct
  */
 TEST_F(AmetsuchiTest, OrderingServicePersistentStorageRestartTest) {
-  auto ordering_state = storage->createOSPersistentState().get();
+  auto os_opt = storage->createOSPersistentState();
+  ASSERT_TRUE(os_opt);
+  auto ordering_state = os_opt.get();
   ASSERT_TRUE(ordering_state);
 
   ordering_state->resetState();
@@ -706,7 +710,10 @@ TEST_F(AmetsuchiTest, OrderingServicePersistentStorageRestartTest) {
 
   // restart Ordering Service Storage
   ordering_state.reset();
-  ordering_state = storage->createOSPersistentState().get();
+  os_opt = storage->createOSPersistentState();
+  ASSERT_TRUE(os_opt);
+  ordering_state = os_opt.get();
+  ASSERT_TRUE(ordering_state);
   ASSERT_TRUE(ordering_state);
   ASSERT_EQ(11, ordering_state->loadProposalHeight().value());
 }
@@ -718,10 +725,14 @@ TEST_F(AmetsuchiTest, OrderingServicePersistentStorageRestartTest) {
  */
 TEST_F(AmetsuchiTest,
        OrderingServicePersistentStorageDifferentConnectionsTest) {
-  auto ordering_state_1 = storage->createOSPersistentState().get();
+  auto os_opt1 = storage->createOSPersistentState();
+  ASSERT_TRUE(os_opt1);
+  auto ordering_state_1 = os_opt1.get();
   ASSERT_TRUE(ordering_state_1);
 
-  auto ordering_state_2 = storage->createOSPersistentState().get();
+  auto os_opt2 = storage->createOSPersistentState();
+  ASSERT_TRUE(os_opt2);
+  auto ordering_state_2 = os_opt2.get();
   ASSERT_TRUE(ordering_state_2);
 
   ordering_state_2->resetState();
