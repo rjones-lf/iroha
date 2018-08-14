@@ -75,15 +75,17 @@ namespace iroha {
       // find height of last committed block
       auto top_block_height =
           pcs.on_commit()
-              .transform([this](const Commit &commit) {
-                commit.subscribe(
-                    // take height of next block
-                    [this](std::shared_ptr<shared_model::interface::Block>
-                               block_ptr) {
-                      last_block_height_ = block_ptr->height();
-                    });
-                return last_block_height_;
-              })
+              .transform(
+                  [this](const synchronizer::SynchronizerCommitReceiveEvent
+                             &commit_event) {
+                    commit_event.first.subscribe(
+                        // take height of next block
+                        [this](std::shared_ptr<shared_model::interface::Block>
+                                   block_ptr) {
+                          last_block_height_ = block_ptr->height();
+                        });
+                    return last_block_height_;
+                  })
               .start_with(last_block_height_);
 
       auto subscribe = [&](auto merge_strategy) {

@@ -22,6 +22,7 @@
 
 #include "interfaces/iroha_internal/block_variant.hpp"
 #include "network/peer_communication_service.hpp"
+#include "synchronizer/synchronizer_common.hpp"
 
 namespace iroha {
   namespace synchronizer {
@@ -38,11 +39,17 @@ namespace iroha {
           const shared_model::interface::BlockVariant &commit_message) = 0;
 
       /**
-       * Emit committed blocks
-       * Note 1: from one block received on consensus
-       * Note 2: commit may be empty; in that case, it can contain empty pointer
+       * Emit block(s) after commit event:
+       *   - block, which was committed by this peer
+       *     @or
+       *   - chain of blocks, which is missed on this peer
+       *     @or
+       *   - empty commit
+       * Difference between just empty commit and reject case can be
+       * distinguished via second element in the pair
        */
-      virtual rxcpp::observable<Commit> on_commit_chain() = 0;
+      virtual rxcpp::observable<SynchronizerCommitReceiveEvent>
+      on_commit_chain() = 0;
 
       virtual ~Synchronizer() = default;
     };

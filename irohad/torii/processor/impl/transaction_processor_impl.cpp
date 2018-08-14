@@ -90,34 +90,36 @@ namespace iroha {
           });
 
       // commit transactions
-      pcs_->on_commit().subscribe([this](Commit blocks) {
-        blocks.subscribe(
-            // on next
-            [this](auto model_block) {
-              current_txs_hashes_.reserve(model_block->transactions().size());
-              std::transform(model_block->transactions().begin(),
-                             model_block->transactions().end(),
-                             std::back_inserter(current_txs_hashes_),
-                             [](const auto &tx) { return tx.hash(); });
-            },
-            // on complete
-            [this]() {
-              if (current_txs_hashes_.empty()) {
-                log_->info("there are no transactions to be committed");
-              } else {
-                std::lock_guard<std::mutex> lock(notifier_mutex_);
-                for (const auto &tx_hash : current_txs_hashes_) {
-                  log_->info("on commit committed: {}", tx_hash.hex());
-                  status_bus_->publish(
-                      shared_model::builder::DefaultTransactionStatusBuilder()
-                          .committed()
-                          .txHash(tx_hash)
-                          .build());
-                }
-              }
-              current_txs_hashes_.clear();
-            });
-      });
+      pcs_->on_commit().subscribe(
+          [this](synchronizer::SynchronizerCommitReceiveEvent commit_event) {
+            commit_event.first.subscribe(
+                // on next
+                [this](auto model_block) {
+                  current_txs_hashes_.reserve(
+                      model_block->transactions().size());
+                  std::transform(model_block->transactions().begin(),
+                                 model_block->transactions().end(),
+                                 std::back_inserter(current_txs_hashes_),
+                                 [](const auto &tx) { return tx.hash(); });
+                },
+                // on complete
+                [this]() {
+                  if (current_txs_hashes_.empty()) {
+                    log_->info("there are no transactions to be committed");
+                  } else {
+                    std::lock_guard<std::mutex> lock(notifier_mutex_);
+                    for (const auto &tx_hash : current_txs_hashes_) {
+                      log_->info("on commit committed: {}", tx_hash.hex());
+                      status_bus_->publish(shared_model::builder::
+                                               DefaultTransactionStatusBuilder()
+                                                   .committed()
+                                                   .txHash(tx_hash)
+                                                   .build());
+                    }
+                  }
+                  current_txs_hashes_.clear();
+                });
+          });
 
       mst_processor_->onPreparedTransactions().subscribe([this](auto &&tx) {
         log_->info("MST tx prepared");

@@ -19,6 +19,7 @@
 #define IROHA_TRANSACTION_PROCESSOR_STUB_HPP
 
 #include <mutex>
+
 #include "builders/default_builders.hpp"
 #include "interfaces/transaction_responses/tx_response.hpp"
 #include "logger/logger.hpp"
