@@ -153,6 +153,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
       // Check commit block
       ASSERT_EQ(block->height(), test_block.height());
     });
+    ASSERT_EQ(commit_event.second, CommitEventType::nonempty);
     ASSERT_TRUE(block_wrapper.validate());
   });
 
@@ -234,6 +235,7 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
       // Check commit block
       ASSERT_EQ(block->height(), commit_message.height());
     });
+    ASSERT_EQ(commit_event.second, CommitEventType::nonempty);
     ASSERT_TRUE(block_wrapper.validate());
   });
 
@@ -320,6 +322,7 @@ TEST_F(SynchronizerTest, EmptyBlockNotCommitted) {
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
   wrapper.subscribe([commit_message](auto commit_event) {
     auto block_wrapper = make_test_subscriber<CallExact>(commit_event.first, 0);
+    ASSERT_EQ(commit_event.second, CommitEventType::empty);
     ASSERT_TRUE(block_wrapper.validate());
   });
 
@@ -371,6 +374,7 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
       // Check commit block
       ASSERT_EQ(block->height(), commit_message.height());
     });
+    ASSERT_EQ(commit_event.second, CommitEventType::nonempty);
     ASSERT_TRUE(block_wrapper.validate());
   });
 
