@@ -36,6 +36,7 @@
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "interfaces/permissions.hpp"
+#include "synchronizer/synchronizer_common.hpp"
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
@@ -159,8 +160,8 @@ namespace integration_framework {
     iroha_instance_->getIrohaInstance()
         ->getPeerCommunicationService()
         ->on_commit()
-        .subscribe([this](auto commit_observable) {
-          commit_observable.subscribe([this](auto committed_block) {
+        .subscribe([this](auto commit_event) {
+          commit_event.first.subscribe([this](auto committed_block) {
             block_queue_.push(committed_block);
             log_->info("block");
             queue_cond.notify_all();
