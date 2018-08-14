@@ -53,9 +53,17 @@ TEST_F(GetRoles, CanGetRoles) {
  */
 TEST_F(GetRoles, CanNotGetRoles) {
   auto checkQuery = [](auto &queryResponse) {
-    ASSERT_ANY_THROW(boost::apply_visitor(
-        framework::SpecifiedVisitor<shared_model::interface::RolesResponse>(),
-        queryResponse.get()));
+    ASSERT_NO_THROW({
+      boost::apply_visitor(
+          framework::SpecifiedVisitor<
+              shared_model::interface::StatefulFailedErrorResponse>(),
+
+          boost::apply_visitor(
+              framework::SpecifiedVisitor<
+                  shared_model::interface::ErrorQueryResponse>(),
+              queryResponse.get())
+              .get());
+    });
   };
 
   auto query = TestUnsignedQueryBuilder()
@@ -72,6 +80,6 @@ TEST_F(GetRoles, CanNotGetRoles) {
       .sendTx(makeUserWithPerms({}))
       .skipProposal()
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(boost::size(block->transactions()), 1); })
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(query, checkQuery);
 }
