@@ -49,8 +49,10 @@ namespace integration_framework {
      * Construct test framework instance
      * @param maximum_proposal_size - Maximum number of transactions per
      * proposal
-     * @param proposal_waiting - maximum time of waiting before appearing next proposal
-     * @param block_waiting - maximum time of waiting before appearing next committed block
+     * @param proposal_waiting - maximum time of waiting before appearing next
+     * proposal
+     * @param block_waiting - maximum time of waiting before appearing next
+     * committed block
      * @param destructor_lambda - (default nullptr) Pointer to function which
      * receives pointer to constructed instance of Integration Test Framework.
      * If specified, then will be called instead of default destructor's code
