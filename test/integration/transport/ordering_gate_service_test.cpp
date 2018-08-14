@@ -34,6 +34,7 @@
 using namespace iroha;
 using namespace iroha::ordering;
 using namespace iroha::network;
+using namespace iroha::synchronizer;
 using namespace framework::test_subscriber;
 using namespace iroha::ametsuchi;
 using namespace std::chrono_literals;
@@ -135,8 +136,8 @@ class OrderingGateServiceTest : public ::testing::Test {
       std::shared_ptr<shared_model::interface::Block> block =
           std::make_shared<shared_model::proto::Block>(
               TestBlockBuilder().height(proposal->height()).build());
-      commit_subject_.get_subscriber().on_next(
-          rxcpp::observable<>::just(block));
+      commit_subject_.get_subscriber().on_next(SynchronizerCommitReceiveEvent{
+          rxcpp::observable<>::just(block), CommitEventType::nonempty});
       counter--;
       cv.notify_one();
     });
@@ -189,7 +190,7 @@ class OrderingGateServiceTest : public ::testing::Test {
   /// Peer Communication Service and commit subject are required to emulate
   /// commits for Ordering Service
   std::shared_ptr<MockPeerCommunicationService> pcs_;
-  rxcpp::subjects::subject<Commit> commit_subject_;
+  rxcpp::subjects::subject<SynchronizerCommitReceiveEvent> commit_subject_;
   rxcpp::subjects::subject<OrderingServiceImpl::TimeoutType> proposal_timeout;
 
   std::condition_variable cv;
