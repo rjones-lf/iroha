@@ -55,4 +55,14 @@ inline auto makePolyTxFromBuilder(Builder &&builder) {
   return std::make_shared<ProtoTxType>(builder.build());
 }
 
+template <typename Builder>
+inline auto completeUnsignedTxBuilder(Builder &&builder){
+  return std::make_shared<ProtoTxType>(
+      builder.build()
+          .signAndAddSignature(
+              shared_model::crypto::DefaultCryptoAlgorithmType::
+                  generateKeypair())
+          .finish());
+}
+
 #endif  // IROHA_TEST_TRANSACTION_BUILDER_HPP

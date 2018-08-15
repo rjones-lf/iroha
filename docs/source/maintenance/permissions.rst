@@ -21,6 +21,161 @@ This section will help you to understand permissions and give you an idea of how
 Each permission is provided with an example written in Python that demonstrates the way of transaction or query creation,
 which require specific permission. Every example uses *commons.py* module, which listing is available at `Supplementary Sources`_ section.
 
+*******************
+List of Permissions
+*******************
+
+.. list-table::
+    :header-rows: 1
+
+    * - Permission Name
+      - Category
+      - Type
+    * - `can_create_account`_ 
+      - Account
+      - Command
+    * - `can_set_detail`_ 
+      - Account
+      - Command
+    * - `can_set_my_account_detail`_ ``grantable``
+      - Account
+      - Command
+    * - `can_create_asset`_ 
+      - Asset
+      - Command
+    * - `can_receive`_ 
+      - Asset
+      - Command
+    * - `can_transfer`_ 
+      - Asset
+      - Command
+    * - `can_transfer_my_assets`_ ``grantable``
+      - Asset
+      - Command
+    * - `can_add_asset_qty`_ 
+      - Asset Quantity
+      - Command
+    * - `can_subtract_asset_qty`_ 
+      - Asset Quantity
+      - Command
+    * - `can_create_domain`_ 
+      - Domain
+      - Command
+    * - `can_grant_can_add_my_signatory`_ 
+      - Grant
+      - Command
+    * - `can_grant_can_remove_my_signatory`_ 
+      - Grant
+      - Command
+    * - `can_grant_can_set_my_account_detail`_ 
+      - Grant
+      - Command
+    * - `can_grant_can_set_my_quorum`_ 
+      - Grant
+      - Command
+    * - `can_grant_can_transfer_my_assets`_ 
+      - Grant
+      - Command
+    * - `can_add_peer`_ 
+      - Peer
+      - Command
+    * - `can_append_role`_ 
+      - Role
+      - Command
+    * - `can_create_role`_ 
+      - Role
+      - Command
+    * - `can_detach_role`_ 
+      - Role
+      - Command
+    * - `can_add_my_signatory`_ ``grantable``
+      - Signatory
+      - Command
+    * - `can_add_signatory`_ 
+      - Signatory
+      - Command
+    * - `can_remove_my_signatory`_ ``grantable``
+      - Signatory
+      - Command
+    * - `can_remove_signatory`_ 
+      - Signatory
+      - Command
+    * - `can_set_my_quorum`_ ``grantable``
+      - Signatory
+      - Command
+    * - `can_set_quorum`_ 
+      - Signatory
+      - Command
+    * - `can_get_all_acc_detail`_ 
+      - Account
+      - Query
+    * - `can_get_all_accounts`_ 
+      - Account
+      - Query
+    * - `can_get_domain_acc_detail`_ 
+      - Account
+      - Query
+    * - `can_get_domain_accounts`_ 
+      - Account
+      - Query
+    * - `can_get_my_acc_detail`_ 
+      - Account
+      - Query
+    * - `can_get_my_account`_ 
+      - Account
+      - Query
+    * - `can_get_all_acc_ast`_ 
+      - Account Asset
+      - Query
+    * - `can_get_domain_acc_ast`_ 
+      - Account Asset
+      - Query
+    * - `can_get_my_acc_ast`_ 
+      - Account Asset
+      - Query
+    * - `can_get_all_acc_ast_txs`_ 
+      - Account Asset Transaction
+      - Query
+    * - `can_get_domain_acc_ast_txs`_ 
+      - Account Asset Transaction
+      - Query
+    * - `can_get_my_acc_ast_txs`_ 
+      - Account Asset Transaction
+      - Query
+    * - `can_get_all_acc_txs`_ 
+      - Account Transaction
+      - Query
+    * - `can_get_domain_acc_txs`_ 
+      - Account Transaction
+      - Query
+    * - `can_get_my_acc_txs`_ 
+      - Account Transaction
+      - Query
+    * - `can_read_assets`_ 
+      - Asset
+      - Query
+    * - `can_get_blocks`_ 
+      - Block Stream
+      - Query
+    * - `can_get_roles`_ 
+      - Role
+      - Query
+    * - `can_get_all_signatories`_ 
+      - Signatory
+      - Query
+    * - `can_get_domain_signatories`_ 
+      - Signatory
+      - Query
+    * - `can_get_my_signatories`_ 
+      - Signatory
+      - Query
+    * - `can_get_all_txs`_ 
+      - Transaction
+      - Query
+    * - `can_get_my_txs`_ 
+      - Transaction
+      - Query
+
 Command-related permissions
 ===========================
 
@@ -599,7 +754,7 @@ can_get_all_acc_detail
 
 Allows getting all the details set to any `account <../core_concepts/glossary.html#account>`__ within the system.
 
-| Related API method: To be done
+| Related API method: `Get Account Detail <../api/queries.html#get-account-detail>`__
 | Usage in Java bindings: ``Role.kGetAllAccDetail``
 | Usage in Python bindings: ``Role_kGetAllAccDetail``
 |
@@ -643,7 +798,7 @@ can_get_domain_acc_detail
 
 Allows getting all the details set to any `account <../core_concepts/glossary.html#account>`__ within the same `domain <../core_concepts/glossary.html#domain>`__ as a domain of `query <../core_concepts/glossary.html#query>`__ creator account.
 
-| Related API method: To be done
+| Related API method: `Get Account Detail <../api/queries.html#get-account-detail>`__
 | Usage in Java bindings: ``Role.kGetDomainAccDetail``
 | Usage in Python bindings: ``Role_kGetDomainAccDetail``
 |
@@ -687,7 +842,7 @@ can_get_my_acc_detail
 
 Allows getting all the details set to the `account <../core_concepts/glossary.html#account>`__ of `query <../core_concepts/glossary.html#query>`__ creator.
 
-| Related API method: To be done
+| Related API method: `Get Account Detail <../api/queries.html#get-account-detail>`__
 | Usage in Java bindings: ``Role.kGetMyAccDetail``
 | Usage in Python bindings: ``Role_kGetMyAccDetail``
 |

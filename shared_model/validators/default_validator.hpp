@@ -28,8 +28,7 @@
 #include "validators/signable_validator.hpp"
 #include "validators/transaction_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
-#include "validators/transactions_collection/signed_transactions_collection_validator.hpp"
-#include "validators/transactions_collection/unsigned_transactions_collection_validator.hpp"
+#include "validators/transactions_collection/transactions_collection_validator.hpp"
 
 namespace shared_model {
   namespace validation {
@@ -40,15 +39,16 @@ namespace shared_model {
      * Transaction validator which checks stateless validation WITHOUT
      * signatures
      */
-    using DefaultTransactionValidator =
+    using DefaultUnsignedTransactionValidator =
         TransactionValidator<FieldValidator,
                              CommandValidatorVisitor<FieldValidator>>;
 
     /**
-     * Transaction validator which checks stateless validation
+     * Transaction validator which checks stateless validation and signature of
+     * transaction
      */
     using DefaultSignedTransactionValidator =
-        SignableModelValidator<DefaultTransactionValidator,
+        SignableModelValidator<DefaultUnsignedTransactionValidator,
                                const interface::Transaction &,
                                FieldValidator>;
 
@@ -61,42 +61,60 @@ namespace shared_model {
         QueryValidator<FieldValidator, QueryValidatorVisitor<FieldValidator>>;
 
     /**
+     * Query validator which checks stateless validation including signatures
+     */
+    using DefaultSignedQueryValidator =
+        SignableModelValidator<DefaultUnsignedQueryValidator,
+                               const interface::Query &,
+                               FieldValidator>;
+
+    /**
      * Block query validator checks stateless validation WITHOUT signatures
      */
     using DefaultUnsignedBlocksQueryValidator =
         BlocksQueryValidator<FieldValidator>;
 
     /**
-     * Query validator which checks stateless validation including signatures
-     */
-    using DefaultSignableQueryValidator =
-        SignableModelValidator<DefaultUnsignedQueryValidator,
-                               const interface::Query &,
-                               FieldValidator>;
-
-    /**
      * Block query validator which checks stateless validation including
      * signatures
      */
-    using DefaultSignableBlocksQueryValidator =
+    using DefaultSignedBlocksQueryValidator =
         SignableModelValidator<DefaultUnsignedBlocksQueryValidator,
                                const interface::BlocksQuery &,
                                FieldValidator>;
 
-    // --------------------------| Block validation |---------------------------
+    // ------------| Transactions collection validation |--------------
+
+    /**
+     * Transactions collection validator that checks stateless validness of
+     * transactions WITHOUT signatures
+     */
+    using DefaultUnsignedTransactionsValidator =
+        TransactionsCollectionValidator<DefaultUnsignedTransactionValidator>;
+
+    /**
+     * Transactions collection validator that checks signatures and stateless
+     * validness of transactions
+     */
+    using DefaultSignedTransactionsValidator =
+        TransactionsCollectionValidator<DefaultSignedTransactionValidator>;
+
+    /**
+     * Proposal validator which checks stateless validation of proposal
+     */
+    using DefaultProposalValidator =
+        ProposalValidator<FieldValidator, DefaultSignedTransactionsValidator>;
 
     /**
      * Block validator which checks blocks WITHOUT signatures
      */
-    using DefaultUnsignedBlockValidator = BlockValidator<
-        FieldValidator,
-        DefaultTransactionValidator,
-        SignedTransactionsCollectionValidator<DefaultTransactionValidator>>;
+    using DefaultUnsignedBlockValidator =
+        BlockValidator<FieldValidator, DefaultUnsignedTransactionsValidator>;
 
     /**
      * Block validator which checks blocks including signatures
      */
-    using DefaultSignableBlockValidator =
+    using DefaultSignedBlockValidator =
         SignableModelValidator<DefaultUnsignedBlockValidator,
                                const interface::Block &,
                                FieldValidator>;
@@ -112,27 +130,8 @@ namespace shared_model {
      * In https://soramitsu.atlassian.net/browse/IR-1418 should be removed
      */
     using DefaultAnyBlockValidator =
-        AnyBlockValidator<DefaultUnsignedBlockValidator,
+        AnyBlockValidator<DefaultSignedBlockValidator,
                           DefaultEmptyBlockValidator>;
-
-    // ------------------------| Proposal validation |--------------------------
-
-    /**
-     * Proposal validator which checks stateless validation of proposal
-     */
-    using DefaultProposalValidator = ProposalValidator<
-        FieldValidator,
-        DefaultTransactionValidator,
-        UnsignedTransactionsCollectionValidator<DefaultTransactionValidator>>;
-
-    // -----------------| Transaction collection validation |-------------------
-
-    /**
-     * Check sequence of transactions without signatures
-     */
-    using DefaultUnsignedTxCollectionValidator =
-        UnsignedTransactionsCollectionValidator<DefaultTransactionValidator,
-                                                BatchOrderValidator>;
 
   }  // namespace validation
 }  // namespace shared_model

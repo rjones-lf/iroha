@@ -17,7 +17,7 @@ namespace iroha {
                                            KeyValueStorage &file_store)
         : sql_(sql),
           block_store_(file_store),
-          log_(logger::log("PostgresBlockIndex")) {}
+          log_(logger::log("PostgresBlockQuery")) {}
 
     std::vector<BlockQuery::wBlock> PostgresBlockQuery::getBlocks(
         shared_model::interface::types::HeightType height, uint32_t count) {

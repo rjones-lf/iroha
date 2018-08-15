@@ -39,7 +39,9 @@ using ::testing::InvokeWithoutArgs;
  * @then Assume that received state same as sent
  */
 TEST(TransportTest, SendAndReceive) {
-  auto transport = std::make_shared<MstTransportGrpc>();
+  auto async_call_ = std::make_shared<
+      iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
+  auto transport = std::make_shared<MstTransportGrpc>(async_call_);
   auto notifications = std::make_shared<iroha::MockMstTransportNotification>();
   transport->subscribe(notifications);
 

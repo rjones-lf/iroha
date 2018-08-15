@@ -75,7 +75,10 @@ class OrderingGateTest : public ::testing::Test {
     server = builder.BuildAndStart();
     auto address = "0.0.0.0:" + std::to_string(port);
     // Initialize components after port has been bind
-    transport = std::make_shared<OrderingGateTransportGrpc>(address);
+    async_call_ =
+        std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
+    transport =
+        std::make_shared<OrderingGateTransportGrpc>(address, async_call_);
     gate_impl = std::make_shared<OrderingGateImpl>(transport, 1, false);
     transport->subscribe(gate_impl);
 
@@ -94,6 +97,8 @@ class OrderingGateTest : public ::testing::Test {
   std::shared_ptr<MockOrderingGateTransportGrpcService> fake_service;
   std::condition_variable cv;
   std::mutex m;
+  std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+      async_call_;
 };
 
 /**

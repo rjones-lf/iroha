@@ -19,6 +19,7 @@
 #define IROHA_BLOCK_LOADER_INIT_HPP
 
 #include "ametsuchi/block_query.hpp"
+#include "consensus/consensus_block_cache.hpp"
 #include "network/impl/block_loader_impl.hpp"
 #include "network/impl/block_loader_service.hpp"
 
@@ -31,27 +32,35 @@ namespace iroha {
      private:
       /**
        * Create block loader service with given storage
-       * @param storage - used to retrieve blocks
+       * @param storage used to retrieve blocks
+       * @param block_cache used to retrieve last block put by consensus
        * @return initialized service
        */
-      auto createService(std::shared_ptr<ametsuchi::BlockQuery> storage);
+      auto createService(
+          std::shared_ptr<ametsuchi::BlockQuery> storage,
+          std::shared_ptr<consensus::ConsensusResultCache> block_cache);
 
       /**
        * Create block loader for loading blocks from given peer by top block
+       * @param peer_query used to retrieve peers
+       * @param storage used to retrieve block
        * @return initialized loader
        */
-      auto createLoader(
-          std::shared_ptr<ametsuchi::PeerQuery> peer_query,
-          std::shared_ptr<ametsuchi::BlockQuery> storage);
+      auto createLoader(std::shared_ptr<ametsuchi::PeerQuery> peer_query,
+                        std::shared_ptr<ametsuchi::BlockQuery> storage);
 
      public:
       /**
        * Initialize block loader with service and loader
+       * @param peer_query used to retrieve peers
+       * @param storage used to retrieve block
+       * @param block_cache used to retrieve last block put by consensus
        * @return initialized service
        */
       std::shared_ptr<BlockLoader> initBlockLoader(
           std::shared_ptr<ametsuchi::PeerQuery> peer_query,
-          std::shared_ptr<ametsuchi::BlockQuery> storage);
+          std::shared_ptr<ametsuchi::BlockQuery> storage,
+          std::shared_ptr<consensus::ConsensusResultCache> block_cache);
 
       std::shared_ptr<BlockLoaderImpl> loader;
       std::shared_ptr<BlockLoaderService> service;

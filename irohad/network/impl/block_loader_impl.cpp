@@ -73,7 +73,7 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
             expected::Value<std::shared_ptr<shared_model::interface::Block>>
                 block) { top_block = block.value; },
         [this](expected::Error<std::string> error) {
-          log_->error(kTopBlockRetrieveFail + std::string{": "} + error.error);
+          log_->error("{}: {}", kTopBlockRetrieveFail, error.error);
         });
     if (not top_block) {
       subscriber.on_completed();
@@ -114,7 +114,7 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
   });
 }
 
-boost::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
+boost::optional<BlockVariant> BlockLoaderImpl::retrieveBlock(
     const PublicKey &peer_pubkey, const types::HashType &block_hash) {
   auto peer = findPeer(peer_pubkey);
   if (not peer) {
