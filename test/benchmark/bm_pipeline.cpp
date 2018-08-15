@@ -54,6 +54,11 @@ TestUnsignedTransactionBuilder createUserWithPerms(
 const auto proposal_size = 100;
 const auto transaction_size = 100;
 
+/**
+ * This benchmark runs execution of the add asset quantity command in order to
+ * measure execution performance
+ * @param state
+ */
 static void BM_AddAssetQuantity(benchmark::State &state) {
   integration_framework::IntegrationTestFramework itf(
       proposal_size,
