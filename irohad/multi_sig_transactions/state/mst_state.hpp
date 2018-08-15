@@ -53,17 +53,16 @@ namespace iroha {
   };
 
   /**
-   * Class provide default behaviour for transaction completer
+   * Class provide default behaviour for batch completer:
+   * complete, if all transactions have at least quorum number of signatures
    */
   class DefaultCompleter : public Completer {
     bool operator()(const DataType &batch) const override {
-      return std::accumulate(
-          batch->transactions().begin(),
-          batch->transactions().end(),
-          true,
-          [](bool value, const auto &tx) {
-            return value and boost::size(tx->signatures()) >= tx->quorum();
-          });
+      return std::all_of(batch->transactions().begin(),
+                         batch->transactions().end(),
+                         [](const auto &tx) {
+                           return boost::size(tx->signatures()) >= tx->quorum();
+                         });
     }
 
     bool operator()(const DataType &tx, const TimeType &time) const override {

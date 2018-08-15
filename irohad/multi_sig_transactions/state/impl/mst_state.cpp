@@ -6,6 +6,7 @@
 #include "multi_sig_transactions/state/mst_state.hpp"
 
 #include <boost/range/algorithm/find.hpp>
+#include <boost/range/combine.hpp>
 #include <utility>
 
 #include "backend/protobuf/transaction.hpp"
@@ -46,9 +47,7 @@ namespace iroha {
                       lhs_batches.end(),
                       rhs_batches.begin(),
                       rhs_batches.end(),
-                      [](const auto &l, const auto &r) {
-                        return *l == *r;;
-                      });
+                      [](const auto &l, const auto &r) { return *l == *r; });
   }
 
   bool MstState::isEmpty() const {
@@ -63,6 +62,8 @@ namespace iroha {
                     val->transactions();
                     result.push_back(val);
                   });
+    // sorting is provided for clear comparison of states
+    // TODO: 15/08/2018 @muratovv Rework return type with set IR-1621
     std::sort(
         result.begin(), result.end(), [](const auto &left, const auto &right) {
           return left->reducedHash().hex() < right->reducedHash().hex();
@@ -88,26 +89,24 @@ namespace iroha {
    * Merge signatures in batches
    * @param target - batch for inserting
    * @param donor - batch with interested transactions
-   * @return false if hashes of transactions don't satisfy each other
+   * @return return false when sequences of transactions inside input batches
+   * are different
    */
   bool mergeSignaturesInBatch(DataType &target, const DataType &donor) {
-    if (target->reducedHash() != donor->reducedHash()) {
+    if (not(*target == *donor)) {
       return false;
     }
 
-    for (auto &target_tx : target->transactions()) {
-      for (auto &donor_tx : donor->transactions()) {
-        if (target_tx->hash() == donor_tx->hash()) {
-          std::for_each(donor_tx->signatures().begin(),
-                        donor_tx->signatures().end(),
-                        [&target_tx](const auto &signature) {
-                          target_tx->addSignature(signature.signedData(),
-                                                  signature.publicKey());
-                        });
-        } else {
-          return false;
-        }
-      }
+    for (auto zip :
+         boost::combine(target->transactions(), donor->transactions())) {
+      const auto &target_tx = zip.get<0>();
+      const auto &donor_tx = zip.get<1>();
+      std::for_each(donor_tx->signatures().begin(),
+                    donor_tx->signatures().end(),
+                    [&target_tx](const auto &signature) {
+                      target_tx->addSignature(signature.signedData(),
+                                              signature.publicKey());
+                    });
     }
     return true;
   }

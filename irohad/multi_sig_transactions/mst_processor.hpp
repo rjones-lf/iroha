@@ -49,7 +49,8 @@ namespace iroha {
     rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() const;
 
     /**
-     * Observable emit batches which are prepared to processing in system
+     * Observable emit batches which are prepared for further processing in
+     * system
      */
     rxcpp::observable<DataType> onPreparedBatches() const;
 

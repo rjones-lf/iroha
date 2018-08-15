@@ -165,7 +165,7 @@ namespace shared_model {
                          rhs.transactions().begin(),
                          rhs.transactions().end(),
                          [](auto const &left, auto const &right) {
-                           return *left == *right;
+                           return left->equalsByValue(*right);
                          });
     }
 

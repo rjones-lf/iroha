@@ -86,7 +86,6 @@ namespace iroha {
     auto current_time = time_provider_->getCurrentTime();
 
     // update state
-    // todo wrap in method
     auto new_batches =
         std::make_shared<MstState>(storage_->whatsNew(new_state));
     state_subject_.get_subscriber().on_next(new_batches);
