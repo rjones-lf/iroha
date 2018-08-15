@@ -58,25 +58,28 @@ class CreateAssetFixture : public AcceptanceFixture {
       "ab..cd"};
 };
 
-/*
- * With the current implementation of CreateAsset method of TransactionBuilder
- * that is not possible to create tests for the following cases:
- *
- */
-
 /**
  * @given some user with can_create_asset permission
  * @when the user tries to create an asset
  * @then asset is successfully created
  */
 TEST_F(CreateAssetFixture, Basic) {
+  const auto asset_id = kAssetName + "#" + kDomain;
+  const auto asset_amount = "100.0";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
+      .sendTx(makeUserWithPerms({interface::permissions::Role::kCreateAsset,
+                                 interface::permissions::Role::kAddAssetQty}))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      // testing the target command
       .sendTx(complete(baseTx().createAsset(kAssetName, kDomain, kPrecision)))
+      .skipProposal()
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      // testing that target command actually changed the state of the ledger
+      .sendTx(complete(baseTx().addAssetQuantity(asset_id, asset_amount)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -182,8 +185,8 @@ TEST_F(CreateAssetFixture, ValidNonExistingDomain) {
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(
-          complete(baseTx().createAsset(kAssetName, kNonExistingDomain, kPrecision)))
+      .sendTx(complete(
+          baseTx().createAsset(kAssetName, kNonExistingDomain, kPrecision)))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkBlock(
