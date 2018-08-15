@@ -130,11 +130,12 @@ namespace iroha {
     }
 
     void StorageImpl::reset() {
-      // erase db
-      log_->info("drop db");
-
+      log_->info("drop wsv records from db tables");
       soci::session sql(*connection_);
       sql << reset_;
+
+      log_->info("drop blocks from disk");
+      block_store_->dropAll();
     }
 
     void StorageImpl::dropStorage() {

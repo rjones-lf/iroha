@@ -754,7 +754,7 @@ can_get_all_acc_detail
 
 Allows getting all the details set to any `account <../core_concepts/glossary.html#account>`__ within the system.
 
-| Related API method: To be done
+| Related API method: `Get Account Detail <../api/queries.html#get-account-detail>`__
 | Usage in Java bindings: ``Role.kGetAllAccDetail``
 | Usage in Python bindings: ``Role_kGetAllAccDetail``
 |
@@ -798,7 +798,7 @@ can_get_domain_acc_detail
 
 Allows getting all the details set to any `account <../core_concepts/glossary.html#account>`__ within the same `domain <../core_concepts/glossary.html#domain>`__ as a domain of `query <../core_concepts/glossary.html#query>`__ creator account.
 
-| Related API method: To be done
+| Related API method: `Get Account Detail <../api/queries.html#get-account-detail>`__
 | Usage in Java bindings: ``Role.kGetDomainAccDetail``
 | Usage in Python bindings: ``Role_kGetDomainAccDetail``
 |
@@ -842,7 +842,7 @@ can_get_my_acc_detail
 
 Allows getting all the details set to the `account <../core_concepts/glossary.html#account>`__ of `query <../core_concepts/glossary.html#query>`__ creator.
 
-| Related API method: To be done
+| Related API method: `Get Account Detail <../api/queries.html#get-account-detail>`__
 | Usage in Java bindings: ``Role.kGetMyAccDetail``
 | Usage in Python bindings: ``Role_kGetMyAccDetail``
 |

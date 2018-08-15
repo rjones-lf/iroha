@@ -59,12 +59,13 @@ namespace iroha {
       on_commit() = 0;
 
       /**
-       * Remove all information without dropping the storage
+       * Remove all records from the tables and remove all the blocks
        */
       virtual void reset() = 0;
 
       /**
        * Remove all information from ledger
+       * Tables and the database will be removed too
        */
       virtual void dropStorage() = 0;
 

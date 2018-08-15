@@ -22,19 +22,24 @@ using namespace iroha;
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
 
-auto BlockLoaderInit::createService(std::shared_ptr<BlockQuery> storage) {
-  return std::make_shared<BlockLoaderService>(storage);
+auto BlockLoaderInit::createService(
+    std::shared_ptr<BlockQuery> storage,
+    std::shared_ptr<consensus::ConsensusResultCache> consensus_result_cache) {
+  return std::make_shared<BlockLoaderService>(
+      std::move(storage), std::move(consensus_result_cache));
 }
 
 auto BlockLoaderInit::createLoader(std::shared_ptr<PeerQuery> peer_query,
                                    std::shared_ptr<BlockQuery> storage) {
-  return std::make_shared<BlockLoaderImpl>(peer_query, storage);
+  return std::make_shared<BlockLoaderImpl>(std::move(peer_query),
+                                           std::move(storage));
 }
 
 std::shared_ptr<BlockLoader> BlockLoaderInit::initBlockLoader(
     std::shared_ptr<PeerQuery> peer_query,
-    std::shared_ptr<BlockQuery> storage) {
-  service = createService(storage);
-  loader = createLoader(peer_query, storage);
+    std::shared_ptr<BlockQuery> storage,
+    std::shared_ptr<consensus::ConsensusResultCache> consensus_result_cache) {
+  service = createService(storage, std::move(consensus_result_cache));
+  loader = createLoader(std::move(peer_query), std::move(storage));
   return loader;
 }
