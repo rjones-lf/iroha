@@ -445,6 +445,19 @@ namespace iroha {
                   != roles->end());
     }
 
+    TEST_F(AppendRole, ValidAppendRoleTestWhenEmptyPerms) {
+      addAllPerms();
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
+          "role2", {})),
+                              true)));
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().appendRole(
+          account->accountId(), "role2")))));
+      auto roles = query->getAccountRoles(account->accountId());
+      ASSERT_TRUE(roles);
+      ASSERT_TRUE(std::find(roles->begin(), roles->end(), "role2")
+                      != roles->end());
+    }
+
     class CreateAccount : public CommandExecutorTest {
      public:
       void SetUp() override {
