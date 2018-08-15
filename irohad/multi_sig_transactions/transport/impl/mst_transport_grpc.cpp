@@ -43,7 +43,6 @@ grpc::Status MstTransportGrpc::SendState(
   shared_model::interface::types::SharedTxsCollectionType collection;
 
   for (const auto &proto_tx : request->transactions()) {
-    // TODO: use monad after deserialize() will return optional, IR-1624
     builder.build(proto_tx).match(
         [&](iroha::expected::Value<shared_model::proto::Transaction> &v) {
           collection.push_back(
