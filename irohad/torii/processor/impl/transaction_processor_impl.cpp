@@ -92,23 +92,25 @@ namespace iroha {
       // commit transactions
       pcs_->on_commit().subscribe(
           [this](synchronizer::SynchronizerCommitReceiveEvent commit_event) {
+            std::vector<shared_model::interface::types::HashType>
+                current_txs_hashes;
             commit_event.first.subscribe(
                 // on next
                 [this](auto model_block) {
-                  current_txs_hashes_.reserve(
+                  current_txs_hashes.reserve(
                       model_block->transactions().size());
                   std::transform(model_block->transactions().begin(),
                                  model_block->transactions().end(),
-                                 std::back_inserter(current_txs_hashes_),
+                                 std::back_inserter(current_txs_hashes),
                                  [](const auto &tx) { return tx.hash(); });
                 },
                 // on complete
                 [this]() {
-                  if (current_txs_hashes_.empty()) {
+                  if (current_txs_hashes.empty()) {
                     log_->info("there are no transactions to be committed");
                   } else {
                     std::lock_guard<std::mutex> lock(notifier_mutex_);
-                    for (const auto &tx_hash : current_txs_hashes_) {
+                    for (const auto &tx_hash : current_txs_hashes) {
                       log_->info("on commit committed: {}", tx_hash.hex());
                       status_bus_->publish(shared_model::builder::
                                                DefaultTransactionStatusBuilder()
@@ -117,7 +119,7 @@ namespace iroha {
                                                    .build());
                     }
                   }
-                  current_txs_hashes_.clear();
+                  current_txs_hashes.clear();
                 });
           });
 
@@ -127,7 +129,6 @@ namespace iroha {
       });
       mst_processor_->onExpiredTransactions().subscribe([this](auto &&tx) {
         log_->info("MST tx expired");
-        std::lock_guard<std::mutex> lock(notifier_mutex_);
         this->status_bus_->publish(
             shared_model::builder::DefaultTransactionStatusBuilder()
                 .mstExpired()

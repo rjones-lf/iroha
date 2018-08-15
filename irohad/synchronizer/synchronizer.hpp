@@ -39,14 +39,8 @@ namespace iroha {
           const shared_model::interface::BlockVariant &commit_message) = 0;
 
       /**
-       * Emit block(s) after commit event:
-       *   - block, which was committed by this peer
-       *     @or
-       *   - chain of blocks, which is missed on this peer
-       *     @or
-       *   - empty commit
-       * Difference between just empty commit and reject case can be
-       * distinguished via second element in the pair
+       * After synchronization this observable emits zero or more blocks plus
+       * outcome type
        */
       virtual rxcpp::observable<SynchronizerCommitReceiveEvent>
       on_commit_chain() = 0;

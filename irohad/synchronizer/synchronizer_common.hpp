@@ -25,9 +25,9 @@ namespace iroha {
         rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>;
 
     /**
-     * Type of commit, received by synchronizer
+     * Type of consensus outcome, received by synchronizer
      */
-    enum class CommitEventType {
+    enum class ConsensusOutcomeType {
       nonempty,
       empty,
       reject
@@ -36,7 +36,7 @@ namespace iroha {
     /**
      * Event, which is emitted by synchronizer, when it receives commit
      */
-    using SynchronizerCommitReceiveEvent = std::pair<Chain, CommitEventType>;
+    using SynchronizerCommitReceiveEvent = std::pair<Chain, ConsensusOutcomeType>;
 
   }  // namespace synchronizer
 }  // namespace iroha

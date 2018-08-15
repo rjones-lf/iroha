@@ -55,7 +55,6 @@ namespace iroha {
 
       // processing
       std::shared_ptr<MstProcessor> mst_processor_;
-      std::vector<shared_model::interface::types::HashType> current_txs_hashes_;
 
       std::shared_ptr<iroha::torii::StatusBus> status_bus_;
 
