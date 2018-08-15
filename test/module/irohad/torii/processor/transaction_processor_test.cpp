@@ -60,12 +60,12 @@ class TransactionProcessorTest : public ::testing::Test {
         .quorum(1);
   }
 
-  auto baseTestTx() {
+  auto baseTestTx(shared_model::interface::types::QuorumType quorum = 1) {
     return TestTransactionBuilder()
         .createdTime(iroha::time::now())
         .creatorAccountId("user@domain")
         .setAccountQuorum("user@domain", 2)
-        .quorum(1)
+        .quorum(quorum)
         .build();
   }
 
@@ -137,7 +137,7 @@ class TransactionProcessorTest : public ::testing::Test {
  * @given transaction processor
  * @when transactions passed to processor compose proposal which is sent to peer
  * communication service
- * @then for every transaction STATELESS_VALID status is returned
+ * @then for every transaction in batches STATELESS_VALID status is returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
   std::vector<shared_model::proto::Transaction> txs;
@@ -155,7 +155,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
       }));
 
   EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(0);
-  EXPECT_CALL(*pcs, propagate_transaction(_)).Times(txs.size());
+  EXPECT_CALL(*pcs, propagate_batch(_)).Times(txs.size());
 
   for (const auto &tx : txs) {
     tp->batchHandle(framework::batch::createBatchFromSingleTransaction(
@@ -175,9 +175,9 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
 
 /**
  * @given transactions from the same batch
- * @when transactions sequence is created and propagated @and all transactions
- * were returned by pcs in proposal notifier
- * @then all transactions have stateless valid status
+ * @when transactions sequence is created and propagated
+ * AND all transactions were returned by pcs in proposal notifier
+ * @then all transactions in batches have stateless valid status
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
   using namespace shared_model::validation;
@@ -232,12 +232,12 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
  * @given transaction processor
  * @when transactions compose proposal which is sent to peer
  * communication service @and all transactions composed the block
- * @then for every transaction STATEFUL_VALID status is returned
+ * @then for every transaction in bathces STATEFUL_VALID status is returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
-    auto &&tx = TestTransactionBuilder().createdTime(i).build();
+    auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
     txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
@@ -250,7 +250,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
       }));
 
   EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(0);
-  EXPECT_CALL(*pcs, propagate_transaction(_)).Times(txs.size());
+  EXPECT_CALL(*pcs, propagate_batch(_)).Times(txs.size());
 
   for (const auto &tx : txs) {
     tp->batchHandle(framework::batch::createBatchFromSingleTransaction(
@@ -297,7 +297,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
 TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
-    auto &&tx = TestTransactionBuilder().createdTime(i).build();
+    auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
     txs.push_back(tx);
     status_map[tx.hash()] =
         status_builder.notReceived().txHash(tx.hash()).build();
@@ -310,7 +310,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
       }));
 
   EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(0);
-  EXPECT_CALL(*pcs, propagate_transaction(_)).Times(txs.size());
+  EXPECT_CALL(*pcs, propagate_batch(_)).Times(txs.size());
 
   for (const auto &tx : txs) {
     tp->batchHandle(framework::batch::createBatchFromSingleTransaction(
@@ -426,43 +426,37 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
 }
 
 /**
- * @given valid multisig tx
- * @when transaction_processor handle it
- * @then it goes to mst and after signing goes to PeerCommunicationService
+ * @given batch one transaction with quorum 2
+ * AND one signature
+ * @when transaction_processor handle the batch
+ * @then checks that batch is relayed to MST
  */
-TEST_F(TransactionProcessorTest, MultisigTransaction) {
-  std::shared_ptr<shared_model::interface::TransactionBatch> after_mst;
-  auto mst_propagate =
-      [&after_mst](
-          std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
-        auto keypair1 =
-            shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
-        auto signedBlob1 = shared_model::crypto::CryptoSigner<>::sign(
-            shared_model::crypto::Blob(batch->transactions().at(0)->payload()),
-            keypair1);
-        after_mst->addSignature(0, signedBlob1, keypair1.publicKey());
-        auto keypair2 =
-            shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
-        auto signedBlob2 = shared_model::crypto::CryptoSigner<>::sign(
-            shared_model::crypto::Blob(batch->transactions().at(0)->payload()),
-            keypair2);
-        after_mst->addSignature(0, signedBlob2, keypair2.publicKey());
-      };
-  EXPECT_CALL(*mp, propagateBatchImpl(_))
-      .WillOnce(testing::Invoke(mst_propagate));
-  EXPECT_CALL(*pcs, propagate_transaction(_)).Times(1);
+TEST_F(TransactionProcessorTest, MultisigTransactionToMST) {
+  auto &&tx = addSignaturesFromKeyPairs(baseTestTx(2), makeKey());
 
-  std::shared_ptr<shared_model::interface::Transaction> tx =
-      clone(base_tx()
-                .quorum(2)
-                .build()
-                .signAndAddSignature(
-                    shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair())
-                .finish());
+  auto &&after_mst = framework::batch::createBatchFromSingleTransaction(
+      std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
+  EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(1);
 
-  tp->batchHandle(framework::batch::createBatchFromSingleTransaction(tx));
-  mst_prepared_notifier.get_subscriber().on_next(after_mst);
+  tp->batchHandle(std::move(after_mst));
+}
+
+/**
+ * @given batch one transaction with quorum 2
+ * AND one signature
+ * @when MST emits the batch
+ * @then checks that PCS is invoked.
+ * This happens because tx processor is subscribed for MST
+ */
+TEST_F(TransactionProcessorTest, MultisigTransactionFromMst) {
+  auto &&tx = addSignaturesFromKeyPairs(baseTestTx(2), makeKey(), makeKey());
+
+  auto &&after_mst = framework::batch::createBatchFromSingleTransaction(
+      std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
+
+  EXPECT_CALL(*pcs, propagate_batch(_)).Times(1);
+  mst_prepared_notifier.get_subscriber().on_next(
+      std::make_shared<shared_model::interface::TransactionBatch>(after_mst));
 }
 
 /**
@@ -472,7 +466,7 @@ TEST_F(TransactionProcessorTest, MultisigTransaction) {
  */
 TEST_F(TransactionProcessorTest, MultisigExpired) {
   EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(1);
-  EXPECT_CALL(*pcs, propagate_transaction(_)).Times(0);
+  EXPECT_CALL(*pcs, propagate_batch(_)).Times(0);
 
   std::shared_ptr<shared_model::interface::Transaction> tx =
       clone(base_tx()
