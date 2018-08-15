@@ -20,6 +20,7 @@
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
+#include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "logger/logger.hpp"
 
 namespace shared_model {
@@ -138,6 +139,18 @@ namespace integration_framework {
     IntegrationTestFramework &sendTxAwait(
         const shared_model::proto::Transaction &tx,
         std::function<void(const BlockType &)> check);
+
+    /**
+     * Send transactions to Iroha and validate obtained statuses
+     * @param tx_sequence - transactions sequence
+     * @param validation - callback for transactions statuses validation.
+     * Applied to the vector of returned statuses
+     * @return this
+     */
+    IntegrationTestFramework &sendTxSequence(
+        const shared_model::interface::TransactionSequence &tx_sequence,
+        std::function<void(std::vector<shared_model::proto::TransactionResponse>
+                               &)> validation);
 
     /**
      * Check current status of transaction

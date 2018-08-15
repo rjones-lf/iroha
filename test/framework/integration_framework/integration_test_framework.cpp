@@ -224,6 +224,57 @@ namespace integration_framework {
     return *this;
   }
 
+  IntegrationTestFramework &IntegrationTestFramework::sendTxSequence(
+      const shared_model::interface::TransactionSequence &tx_sequence,
+      std::function<void(std::vector<shared_model::proto::TransactionResponse>
+                             &)> validation) {
+    auto transactions = tx_sequence.transactions();
+
+    boost::barrier bar1(tx_sequence.transactions().size() + 1);
+    auto bar2 =
+        std::make_shared<boost::barrier>(tx_sequence.transactions().size() + 1);
+
+    iroha_instance_->instance_->getStatusBus()
+        ->statuses()
+        .filter([&](auto s) {
+          return std::find_if(transactions.begin(),
+                              transactions.end(),
+                              [&s](const auto tx) {
+                                return s->transactionHash() == tx->hash();
+                              })
+              == transactions.end();
+        })
+        .subscribe([&bar1, b2 = std::weak_ptr<boost::barrier>(bar2)](auto s) {
+          bar1.wait();
+          if (auto lock = b2.lock()) {
+            lock->wait();
+          }
+        });
+
+    iroha::protocol::TxList tx_list;
+    for (const auto &tx : transactions) {
+      new (tx_list.add_transactions()) iroha::protocol::Transaction(
+          std::static_pointer_cast<shared_model::proto::Transaction>(tx)
+              ->getTransport());
+    }
+    iroha_instance_->getIrohaInstance()->getCommandService()->ListTorii(
+        tx_list);
+
+    // make sure that the first (stateless) status is come
+    bar1.wait();
+    // fetch status of transaction
+    std::vector<shared_model::proto::TransactionResponse> statuses;
+    for (const auto tx : transactions) {
+      statuses.push_back(getTxStatus(tx->hash()));
+    }
+    // make sure that the following statuses (stateful/commited)
+    // isn't reached the bus yet
+    bar2->wait();
+
+    validation(statuses);
+    return *this;
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::sendQuery(
       const shared_model::proto::Query &qry,
       std::function<void(const shared_model::proto::QueryResponse &)>
