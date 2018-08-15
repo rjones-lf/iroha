@@ -23,8 +23,10 @@ using namespace iroha::ametsuchi;
 using namespace iroha::network;
 
 auto BlockLoaderInit::createService(
-    std::shared_ptr<BlockQueryFactory> block_query_factory) {
-  return std::make_shared<BlockLoaderService>(block_query_factory);
+    std::shared_ptr<BlockQueryFactory> block_query_factory,
+    std::shared_ptr<consensus::ConsensusResultCache> consensus_result_cache) {
+  return std::make_shared<BlockLoaderService>(block_query_factory,
+                                              std::move(consensus_result_cache));
 }
 
 auto BlockLoaderInit::createLoader(
@@ -36,8 +38,10 @@ auto BlockLoaderInit::createLoader(
 
 std::shared_ptr<BlockLoader> BlockLoaderInit::initBlockLoader(
     std::shared_ptr<PeerQueryFactory> peer_query_factory,
-    std::shared_ptr<BlockQueryFactory> block_query_factory) {
-  service = createService(block_query_factory);
+    std::shared_ptr<BlockQueryFactory> block_query_factory,
+    std::shared_ptr<consensus::ConsensusResultCache> consensus_result_cache) {
+  service = createService(block_query_factory,
+                          std::move(consensus_result_cache));
   loader = createLoader(peer_query_factory, block_query_factory);
   return loader;
 }

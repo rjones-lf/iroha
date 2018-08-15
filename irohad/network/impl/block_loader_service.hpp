@@ -19,6 +19,7 @@
 #define IROHA_BLOCK_LOADER_SERVICE_HPP
 
 #include "ametsuchi/block_query_factory.hpp"
+#include "consensus/consensus_block_cache.hpp"
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
 
@@ -27,7 +28,9 @@ namespace iroha {
     class BlockLoaderService : public proto::Loader::Service {
      public:
       explicit BlockLoaderService(
-          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory);
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
+          std::shared_ptr<iroha::consensus::ConsensusResultCache>
+          consensus_result_cache);
 
       grpc::Status retrieveBlocks(
           ::grpc::ServerContext *context,
@@ -40,6 +43,8 @@ namespace iroha {
 
      private:
       std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory_;
+      std::shared_ptr<iroha::consensus::ConsensusResultCache>
+          consensus_result_cache_;
       logger::Logger log_;
     };
   }  // namespace network

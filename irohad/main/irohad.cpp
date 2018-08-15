@@ -120,7 +120,6 @@ int main(int argc, char *argv[]) {
                 config[mbr::MaxProposalSize].GetUint(),
                 std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()),
                 std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()),
-                std::chrono::milliseconds(config[mbr::LoadDelay].GetUint()),
                 *keypair,
                 config[mbr::MstSupport].GetBool());
 
@@ -156,6 +155,9 @@ int main(int argc, char *argv[]) {
           "overwrite it. Shutting down...");
       return EXIT_FAILURE;
     }
+
+    // TODO igor-egorov, 2018-08-10, IR-1569, create system test for
+    // --overwrite-ledger option
 
     // clear previous storage if any
     irohad.dropStorage();

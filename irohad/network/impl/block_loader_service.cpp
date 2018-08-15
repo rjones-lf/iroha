@@ -17,14 +17,18 @@
 
 #include "network/impl/block_loader_service.hpp"
 #include "backend/protobuf/block.hpp"
+#include "backend/protobuf/empty_block.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
 using namespace iroha::network;
 
 BlockLoaderService::BlockLoaderService(
-    std::shared_ptr<BlockQueryFactory> block_query_factory)
+    std::shared_ptr<BlockQueryFactory> block_query_factory,
+    std::shared_ptr<iroha::consensus::ConsensusResultCache>
+        consensus_result_cache)
     : block_query_factory_(std::move(block_query_factory)),
+      consensus_result_cache_(std::move(consensus_result_cache)),
       log_(logger::log("BlockLoaderService")) {}
 
 grpc::Status BlockLoaderService::retrieveBlocks(
@@ -53,20 +57,29 @@ grpc::Status BlockLoaderService::retrieveBlock(
                         "Bad hash provided");
   }
 
-  boost::optional<protocol::Block> result;
-  auto blocks = block_query_factory_->createBlockQuery() |
-      [](const auto &block_query) { return block_query->getBlocksFrom(1); };
-  std::for_each(
-      blocks.begin(), blocks.end(), [&result, &hash](const auto &block) {
-        if (block->hash() == hash) {
-          result = std::dynamic_pointer_cast<shared_model::proto::Block>(block)
-                       ->getTransport();
-        }
-      });
-  if (not result) {
-    log_->info("Cannot find block with requested hash");
+  // required block must be in the cache
+  auto block_variant = consensus_result_cache_->get();
+  if (not block_variant) {
+    log_->info("Requested to retrieve a block from an empty cache");
+    return grpc::Status(grpc::StatusCode::NOT_FOUND, "Cache is empty");
+  }
+  if (block_variant->hash() != hash) {
+    log_->info(
+        "Requested to retrieve a block with hash other than the one in cache");
     return grpc::Status(grpc::StatusCode::NOT_FOUND, "Block not found");
   }
-  response->CopyFrom(result.value());
+
+  auto transport_block = iroha::visit_in_place(
+      *block_variant,
+      [](std::shared_ptr<shared_model::interface::Block> block) {
+        return std::static_pointer_cast<shared_model::proto::Block>(block)
+            ->getTransport();
+      },
+      [](std::shared_ptr<shared_model::interface::EmptyBlock> empty_block) {
+        return std::static_pointer_cast<shared_model::proto::EmptyBlock>(
+                   empty_block)
+            ->getTransport();
+      });
+  response->CopyFrom(transport_block);
   return grpc::Status::OK;
 }

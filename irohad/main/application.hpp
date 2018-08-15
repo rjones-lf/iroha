@@ -19,6 +19,7 @@
 #define IROHA_APPLICATION_HPP
 
 #include "ametsuchi/impl/storage_impl.hpp"
+#include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
 #include "logger/logger.hpp"
@@ -65,8 +66,6 @@ class Irohad {
    * one proposal
    * @param proposal_delay - maximum waiting time util emitting new proposal
    * @param vote_delay - waiting time before sending vote to next peer
-   * @param load_delay - waiting time before loading committed block from next
-   * peer
    * @param keypair - public and private keys for crypto signer
    * @param is_mst_supported - enable or disable mst processing support
    */
@@ -77,7 +76,6 @@ class Irohad {
          size_t max_proposal_size,
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
-         std::chrono::milliseconds load_delay,
          const shared_model::crypto::Keypair &keypair,
          bool is_mst_supported);
 
@@ -124,6 +122,8 @@ class Irohad {
 
   virtual void initSimulator();
 
+  virtual void initConsensusCache();
+
   virtual void initBlockLoader();
 
   virtual void initConsensusGate();
@@ -153,7 +153,6 @@ class Irohad {
   size_t max_proposal_size_;
   std::chrono::milliseconds proposal_delay_;
   std::chrono::milliseconds vote_delay_;
-  std::chrono::milliseconds load_delay_;
   bool is_mst_supported_;
 
   // ------------------------| internal dependencies |-------------------------
@@ -177,6 +176,9 @@ class Irohad {
 
   // simulator
   std::shared_ptr<iroha::simulator::Simulator> simulator;
+
+  // block cache for consensus and block loader
+  std::shared_ptr<iroha::consensus::ConsensusResultCache> consensus_result_cache_;
 
   // block loader
   std::shared_ptr<iroha::network::BlockLoader> block_loader;

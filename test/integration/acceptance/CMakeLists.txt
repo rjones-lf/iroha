@@ -90,3 +90,7 @@ addtest(set_account_detail_test set_account_detail_test.cpp)
 target_link_libraries(set_account_detail_test
     acceptance_fixture
     )
+addtest(get_roles_test get_roles_test.cpp)
+target_link_libraries(get_roles_test
+    acceptance_fixture
+    )

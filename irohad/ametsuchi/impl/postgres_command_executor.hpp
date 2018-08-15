@@ -20,6 +20,8 @@ namespace iroha {
           const shared_model::interface::types::AccountIdType
               &creator_account_id) override;
 
+      void doValidation(bool do_validation) override;
+
       CommandResult operator()(
           const shared_model::interface::AddAssetQuantity &command) override;
 
@@ -71,6 +73,7 @@ namespace iroha {
 
      private:
       soci::session &sql_;
+      bool do_validation_;
 
       shared_model::interface::types::AccountIdType creator_account_id_;
     };

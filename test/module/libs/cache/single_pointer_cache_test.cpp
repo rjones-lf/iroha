@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <condition_variable>
 #include <thread>
 
 #include <gtest/gtest.h>
@@ -59,9 +58,10 @@ TEST_F(SinglePointerCacheTest, Release) {
 
 /**
  * @given empty int cache
- * @when several readers reading values from cache @and several writers writing
- * values to the cache @and releaser emptyfying the cache are spawned
- * @then the system must not crash
+ * @when first thread inserts value @and another tries to read it @and the first
+ * removes it @and second read operation completes
+ * @then the system could possibly crash, if it was not thread-safe - it would
+ * try to give removed value to the second thread
  */
 TEST_F(SinglePointerCacheTest, MultithreadedCache) {
   constexpr std::chrono::milliseconds sleep_interval{100};
@@ -99,7 +99,8 @@ TEST_F(SinglePointerCacheTest, MultithreadedCache) {
     }
   };
 
-  std::thread writer_one{write_one}, reader{read}, releaser{release}, writer_two{write_two};
+  std::thread writer_one{write_one}, reader{read}, releaser{release},
+      writer_two{write_two};
   writer_one.join();
   reader.join();
   releaser.join();

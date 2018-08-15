@@ -101,8 +101,9 @@ namespace iroha {
           std::shared_ptr<simulator::BlockCreator> block_creator,
           std::shared_ptr<network::BlockLoader> block_loader,
           const shared_model::crypto::Keypair &keypair,
+          std::shared_ptr<consensus::ConsensusResultCache>
+              consensus_result_cache,
           std::chrono::milliseconds vote_delay_milliseconds,
-          std::chrono::milliseconds load_delay_milliseconds,
           std::shared_ptr<
               iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call) {
@@ -120,7 +121,7 @@ namespace iroha {
                                              hash_provider,
                                              block_creator,
                                              block_loader,
-                                             load_delay_milliseconds.count());
+                                             std::move(consensus_result_cache));
       }
     }  // namespace yac
   }    // namespace consensus
