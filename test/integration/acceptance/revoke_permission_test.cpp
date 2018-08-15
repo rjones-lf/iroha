@@ -27,10 +27,10 @@ TEST_F(GrantablePermissionsFixture, RevokeFromNonExistingAccount) {
           kAccount1, kAccount1Keypair, {Role::kSetMyQuorum}, kRole1))
       .skipProposal()
       .skipBlock()
-      .sendTx(accountRevokeFromAccount(kAccount1,
-                                       kAccount1Keypair,
-                                       kAccount2,
-                                       permissions::Grantable::kSetMyQuorum))
+      .sendTx(revokePermission(kAccount1,
+                               kAccount1Keypair,
+                               kAccount2,
+                               permissions::Grantable::kSetMyQuorum))
       .checkProposal(
           // transaction is stateless valid
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
@@ -49,25 +49,26 @@ TEST_F(GrantablePermissionsFixture, RevokeFromNonExistingAccount) {
  */
 TEST_F(GrantablePermissionsFixture, RevokeTwice) {
   IntegrationTestFramework itf(1);
+  itf.setInitialState(kAdminKeypair);
   createTwoAccounts(itf, {Role::kSetMyQuorum}, {Role::kReceive})
-      .sendTx(accountGrantToAccount(kAccount1,
-                                    kAccount1Keypair,
-                                    kAccount2,
-                                    permissions::Grantable::kSetMyQuorum))
+      .sendTx(grantPermission(kAccount1,
+                              kAccount1Keypair,
+                              kAccount2,
+                              permissions::Grantable::kSetMyQuorum))
       .checkBlock(
           // permission was successfully granted
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(accountRevokeFromAccount(kAccount1,
-                                       kAccount1Keypair,
-                                       kAccount2,
-                                       permissions::Grantable::kSetMyQuorum))
+      .sendTx(revokePermission(kAccount1,
+                               kAccount1Keypair,
+                               kAccount2,
+                               permissions::Grantable::kSetMyQuorum))
       .checkBlock(
           // permission was successfully revoked
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(accountRevokeFromAccount(kAccount1,
-                                       kAccount1Keypair,
-                                       kAccount2,
-                                       permissions::Grantable::kSetMyQuorum))
+      .sendTx(revokePermission(kAccount1,
+                               kAccount1Keypair,
+                               kAccount2,
+                               permissions::Grantable::kSetMyQuorum))
       .checkBlock(
           // permission cannot be revoked twice
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
@@ -98,11 +99,12 @@ TEST_F(GrantablePermissionsFixture, DISABLED_RevokeWithoutPermission) {
           .finish();
 
   IntegrationTestFramework itf(1);
+  itf.setInitialState(kAdminKeypair);
   createTwoAccounts(itf, {Role::kSetMyQuorum}, {Role::kReceive})
-      .sendTx(accountGrantToAccount(kAccount1,
-                                    kAccount1Keypair,
-                                    kAccount2,
-                                    permissions::Grantable::kSetMyQuorum))
+      .sendTx(grantPermission(kAccount1,
+                              kAccount1Keypair,
+                              kAccount2,
+                              permissions::Grantable::kSetMyQuorum))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -110,10 +112,10 @@ TEST_F(GrantablePermissionsFixture, DISABLED_RevokeWithoutPermission) {
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(accountRevokeFromAccount(kAccount1,
-                                       kAccount1Keypair,
-                                       kAccount2,
-                                       permissions::Grantable::kSetMyQuorum))
+      .sendTx(revokePermission(kAccount1,
+                               kAccount1Keypair,
+                               kAccount2,
+                               permissions::Grantable::kSetMyQuorum))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkBlock(
@@ -159,7 +161,7 @@ namespace grantables {
 
     proto::Transaction testTransaction(
         GrantablePermissionsFixture &f) override {
-      return f.permiteeModifySignatory(
+      return f.permitteeModifySignatory(
           &TestUnsignedTransactionBuilder::addSignatory,
           f.kAccount2,
           f.kAccount2Keypair,
@@ -194,7 +196,7 @@ namespace grantables {
 
     proto::Transaction testTransaction(
         GrantablePermissionsFixture &f) override {
-      return f.permiteeModifySignatory(
+      return f.permitteeModifySignatory(
           &TestUnsignedTransactionBuilder::removeSignatory,
           f.kAccount2,
           f.kAccount2Keypair,
@@ -209,11 +211,11 @@ namespace grantables {
 
     proto::Transaction testTransaction(
         GrantablePermissionsFixture &f) override {
-      return f.permiteeSetAccountDetail(f.kAccount2,
-                                        f.kAccount2Keypair,
-                                        f.kAccount1,
-                                        f.kAccountDetailKey,
-                                        f.kAccountDetailValue);
+      return f.setAccountDetail(f.kAccount2,
+                                f.kAccount2Keypair,
+                                f.kAccount1,
+                                f.kAccountDetailKey,
+                                f.kAccountDetailValue);
     }
   };
 
@@ -223,8 +225,7 @@ namespace grantables {
 
     proto::Transaction testTransaction(
         GrantablePermissionsFixture &f) override {
-      return f.permiteeSetQuorum(
-          f.kAccount2, f.kAccount2Keypair, f.kAccount1, 1);
+      return f.setQuorum(f.kAccount2, f.kAccount2Keypair, f.kAccount1, 1);
     }
   };
 
@@ -290,17 +291,18 @@ namespace grantables {
    */
   TYPED_TEST(GrantRevokeFixture, GrantAndRevokePermission) {
     IntegrationTestFramework itf(1);
+    itf.setInitialState(gpf::kAdminKeypair);
 
     gpf::createTwoAccounts(itf,
                            {this->grantable_type_.can_grant_permission_,
                             Role::kAddSignatory,
                             Role::kReceive},
                            {Role::kReceive})
-        .sendTx(gpf::accountGrantToAccount(
-            gpf::kAccount1,
-            gpf::kAccount1Keypair,
-            gpf::kAccount2,
-            this->grantable_type_.grantable_permission_))
+        .sendTx(
+            gpf::grantPermission(gpf::kAccount1,
+                                 gpf::kAccount1Keypair,
+                                 gpf::kAccount2,
+                                 this->grantable_type_.grantable_permission_))
         .skipProposal()
         .checkBlock(
             // permission was successfully granted
@@ -312,11 +314,11 @@ namespace grantables {
         })
         .checkBlock(
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-        .sendTx(gpf::accountRevokeFromAccount(
-            gpf::kAccount1,
-            gpf::kAccount1Keypair,
-            gpf::kAccount2,
-            this->grantable_type_.grantable_permission_))
+        .sendTx(
+            gpf::revokePermission(gpf::kAccount1,
+                                  gpf::kAccount1Keypair,
+                                  gpf::kAccount2,
+                                  this->grantable_type_.grantable_permission_))
         .skipProposal()
         .checkBlock(
             // permission was successfully revoked

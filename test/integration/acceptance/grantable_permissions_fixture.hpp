@@ -35,7 +35,10 @@ class GrantablePermissionsFixture : public AcceptanceFixture {
       const shared_model::interface::types::RoleIdType &role);
 
   /**
-   * Creates two accounts with corresponding permission sets
+   * Creates two accounts with corresponding permission sets.
+   * Accounts are created in GrantablePermissionsFixture::kDomain,
+   * their names will be kAccount1 and kAccount2 and
+   * the names of their roles will be kRole1 and kRole2.
    * @param itf - initialized instance of test framework
    * @param perm1 set of permissions for account #1
    * @param perm2 set of permissions for account #2
@@ -50,17 +53,17 @@ class GrantablePermissionsFixture : public AcceptanceFixture {
    * Create a transaction such that the creator grants permittee a permission
    * @param creator_account_name - first's account name without domain
    * @param creator_key - the keypair to sign the transaction
-   * @param permitee_account_name - a name of permittee account (receives the
+   * @param permittee_account_name - a name of permittee account (receives the
    * grantable permission)
    * @param grant_permission - grantable permisssion to be granted
    * @return proto::Transaction
    */
-  shared_model::proto::Transaction accountGrantToAccount(
+  shared_model::proto::Transaction grantPermission(
       const shared_model::interface::types::AccountNameType
           &creator_account_name,
       const shared_model::crypto::Keypair &creator_key,
       const shared_model::interface::types::AccountNameType
-          &permitee_account_name,
+          &permittee_account_name,
       const shared_model::interface::permissions::Grantable &grant_permission);
 
   /**
@@ -73,7 +76,7 @@ class GrantablePermissionsFixture : public AcceptanceFixture {
    * @param revoke_permission - grantable permission to be revoked
    * @return proto::Transaction
    */
-  shared_model::proto::Transaction accountRevokeFromAccount(
+  shared_model::proto::Transaction revokePermission(
       const shared_model::interface::types::AccountNameType
           &creator_account_name,
       const shared_model::crypto::Keypair &creator_key,
@@ -84,49 +87,49 @@ class GrantablePermissionsFixture : public AcceptanceFixture {
   /**
    * Forms a transaction that either adds or removes signatory of an account
    * @param f Add or Remove signatory function
-   * @param permitee_account_name name of account which is granted permission
-   * @param permitee_key key of account which is granted permission
-   * @param account_name account name which has granted permission to permitee
+   * @param permittee_account_name name of account which is granted permission
+   * @param permittee_key key of account which is granted permission
+   * @param account_name account name which has granted permission to permittee
    * @return a transaction
    */
-  shared_model::proto::Transaction permiteeModifySignatory(
+  shared_model::proto::Transaction permitteeModifySignatory(
       TxBuilder (TxBuilder::*f)(
           const shared_model::interface::types::AccountIdType &,
           const shared_model::interface::types::PubkeyType &) const,
       const shared_model::interface::types::AccountNameType
-          &permitee_account_name,
-      const shared_model::crypto::Keypair &permitee_key,
+          &permittee_account_name,
+      const shared_model::crypto::Keypair &permittee_key,
       const shared_model::interface::types::AccountNameType &account_name);
 
   /**
    * Forms a transaction that allows permitted user to modify quorum field
-   * @param permitee_account_name name of account which is granted permission
-   * @param permitee_key key of account which is granted permission
-   * @param account_name account name which has granted permission to permitee
+   * @param permittee_account_name name of account which is granted permission
+   * @param permittee_key key of account which is granted permission
+   * @param account_name account name which has granted permission to permittee
    * @param quorum quorum field
    * @return a transaction
    */
-  shared_model::proto::Transaction permiteeSetQuorum(
+  shared_model::proto::Transaction setQuorum(
       const shared_model::interface::types::AccountNameType
-          &permitee_account_name,
-      const shared_model::crypto::Keypair &permitee_key,
+          &permittee_account_name,
+      const shared_model::crypto::Keypair &permittee_key,
       const shared_model::interface::types::AccountNameType &account_name,
       shared_model::interface::types::QuorumType quorum);
 
   /**
    * Forms a transaction that allows permitted user to set details of the
    * account
-   * @param permitee_account_name name of account which is granted permission
-   * @param permitee_key key of account which is granted permission
-   * @param account_name account name which has granted permission to permitee
+   * @param permittee_account_name name of account which is granted permission
+   * @param permittee_key key of account which is granted permission
+   * @param account_name account name which has granted permission to permittee
    * @param key of the data to set
    * @param detail is the data value
    * @return a transaction
    */
-  shared_model::proto::Transaction permiteeSetAccountDetail(
+  shared_model::proto::Transaction setAccountDetail(
       const shared_model::interface::types::AccountNameType
-          &permitee_account_name,
-      const shared_model::crypto::Keypair &permitee_key,
+          &permittee_account_name,
+      const shared_model::crypto::Keypair &permittee_key,
       const shared_model::interface::types::AccountNameType &account_name,
       const shared_model::interface::types::AccountDetailKeyType &key,
       const shared_model::interface::types::AccountDetailValueType &detail);
@@ -260,6 +263,43 @@ class GrantablePermissionsFixture : public AcceptanceFixture {
         ASSERT_TRUE(resp.detail().find(detail) != std::string::npos);
       });
     };
+  }
+
+  /**
+   * Prepare base transaction
+   * @param account_id - account of transaction creator
+   * @return transaction builder
+   */
+  auto baseTx(const shared_model::interface::types::AccountIdType &account_id) {
+    return TxBuilder()
+        .creatorAccountId(account_id)
+        .createdTime(getUniqueTime())
+        .quorum(1);
+  }
+
+  /**
+   * Prepare base query
+   * @param account_id - account of query creator
+   * @return query builder
+   */
+  auto baseQuery(
+      const shared_model::interface::types::AccountIdType &account_id,
+      const shared_model::interface::types::CounterType &query_counter = 1) {
+    return shared_model::proto::QueryBuilder()
+        .creatorAccountId(account_id)
+        .createdTime(getUniqueTime())
+        .queryCounter(query_counter);
+  }
+
+  /**
+   * Build and sign the transaction
+   * @param builder - semi-built transaction builder
+   * @param keypair - key to sign the transaction
+   * @return - built and signed transaction
+   */
+  template <typename Builder>
+  auto complete(Builder builder, const shared_model::crypto::Keypair &keypair) {
+    return builder.build().signAndAddSignature(keypair).finish();
   }
 
   const std::string kAccount1 = "accountone";
