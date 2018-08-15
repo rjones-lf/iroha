@@ -26,6 +26,17 @@ class CreateAssetFixture : public AcceptanceFixture {
   const interface::types::DomainIdType kNonExistingDomain = "nonexisting";
 };
 
+/*
+ * With the current implementation of crateAsset method of TransactionBuilder
+ * that is not possible to create tests for the following cases:
+ * C237 Create asset with a negative precision
+ *   because the current implementation of TransactionBuilder does not
+ *   allow to pass negative value on a type level.
+ * C238 Create asset with overflow of precision data type
+ *   because the current implementation of TransactionBuilder does not
+ *   allow to pass oversized value on a type level.
+ */
+
 /**
  * @given some user with can_create_asset permission
  * @when the user tries to create an asset
@@ -187,48 +198,4 @@ TEST_F(CreateAssetFixture, InvalidDomain) {
                checkStatelessInvalid);
   }
   itf.done();
-}
-
-/**
- * C237 Create asset with a negative precision
- * DISABLED because the current implementation of TransactionBuilder does not
- * allow to pass negative value on a type level
- * @given a user with can_create_asset permission
- * @when the user tries to create an asset with negative precision
- * @then stateless validation failed
- */
-TEST_F(CreateAssetFixture, DISABLED_NegativePrecision) {
-  IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(complete(baseTx().createAsset(kAssetName, kDomain, -10)),
-              checkStatelessInvalid)
-      .done();
-}
-
-/**
- * C238 Create asset with overflow of precision data type
- * DISABLED because the current implementation of TransactionBuilder does not
- * allow to pass oversized value on a type level.
- * @given a user with can_create_asset permission
- * @when the user tries to create an asset with overflowed value of precision
- * @then stateless validation failed
- */
-TEST_F(CreateAssetFixture, DISABLED_PrecisionOverflow) {
-  uint64_t more_than_allowed = UCHAR_MAX + 1;
-  IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(complete(baseTx().createAsset(
-                  kAssetName,
-                  kDomain,
-                  (interface::types::PrecisionType)more_than_allowed)),
-              checkStatelessInvalid)
-      .done();
 }
