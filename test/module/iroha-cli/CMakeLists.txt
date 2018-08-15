@@ -15,14 +15,13 @@
 # limitations under the License.
 #
 
-#TODO: muratovv, IR-1589, fix compilation errors and pass tests
-#addtest(client_test client_test.cpp)
-#target_link_libraries(client_test
-#    client
-#    processors
-#    server_runner
-#    query_execution
-#    )
-#target_include_directories(client_test PUBLIC
-#    ${PROJECT_SOURCE_DIR}/iroha-cli
-#    )
+addtest(client_test client_test.cpp)
+target_link_libraries(client_test
+    client
+    processors
+    server_runner
+    query_execution
+    )
+target_include_directories(client_test PUBLIC
+    ${PROJECT_SOURCE_DIR}/iroha-cli
+    )

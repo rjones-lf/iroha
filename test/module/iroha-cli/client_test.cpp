@@ -84,9 +84,9 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*pcsMock, on_verified_proposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
-    EXPECT_CALL(*mst, onPreparedTransactionsImpl())
+    EXPECT_CALL(*mst, onPreparedBatchesImpl())
         .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
-    EXPECT_CALL(*mst, onExpiredTransactionsImpl())
+    EXPECT_CALL(*mst, onExpiredBatchesImpl())
         .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
     auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
@@ -149,7 +149,7 @@ class ClientServerTest : public testing::Test {
 
 TEST_F(ClientServerTest, SendTxWhenValid) {
   iroha_cli::CliClient client(ip, port);
-  EXPECT_CALL(*pcsMock, propagate_transaction(_)).Times(1);
+  EXPECT_CALL(*pcsMock, propagate_batch(_)).Times(1);
 
   auto shm_tx = shared_model::proto::TransactionBuilder()
                     .creatorAccountId("some@account")
@@ -228,7 +228,7 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
  */
 TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
   iroha_cli::CliClient client(ip, port);
-  EXPECT_CALL(*pcsMock, propagate_transaction(_)).Times(1);
+  EXPECT_CALL(*pcsMock, propagate_batch(_)).Times(1);
 
   // creating stateful invalid tx
   auto tx = TransactionBuilder()
