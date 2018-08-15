@@ -26,9 +26,7 @@ namespace shared_model {
 
       using Validator = shared_model::validation::BlockValidator<
           shared_model::validation::FieldValidator,
-          shared_model::validation::DefaultTransactionValidator,
-          shared_model::validation::UnsignedTransactionsCollectionValidator<
-              shared_model::validation::DefaultTransactionValidator>>;
+          shared_model::validation::DefaultSignedTransactionsValidator>;
 
       using BlockVarValidator =
           shared_model::validation::SignableModelValidator<

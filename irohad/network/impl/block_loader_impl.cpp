@@ -135,14 +135,13 @@ boost::optional<BlockVariant> BlockLoaderImpl::retrieveBlock(
     return boost::none;
   }
 
-  // stateless validation of block
-  auto result = block_factory_.createBlock(std::move(block)) | getNonEmptyBlock;
+  auto result = block_factory_.createBlock(std::move(block));
 
   return result.match(
-      [](iroha::expected::Value<std::shared_ptr<shared_model::interface::Block>>
+      [](iroha::expected::Value<BlockVariant>
              &v) { return boost::make_optional(std::move(v.value)); },
       [this](const iroha::expected::Error<std::string> &e)
-          -> boost::optional<std::shared_ptr<Block>> {
+          -> boost::optional<BlockVariant> {
         log_->error(e.error);
         return boost::none;
       });

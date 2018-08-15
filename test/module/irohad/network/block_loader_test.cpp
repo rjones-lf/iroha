@@ -57,7 +57,8 @@ class BlockLoaderTest : public testing::Test {
     block_cache = std::make_shared<iroha::consensus::ConsensusResultCache>();
     auto validator_ptr = std::make_unique<MockBlockValidator>();
     validator = validator_ptr.get();
-    loader = std::make_shared<BlockLoaderImpl>(peer_query,
+    loader = std::make_shared<BlockLoaderImpl>(
+        peer_query,
         storage,
         shared_model::proto::ProtoBlockFactory(std::move(validator_ptr)));
     service = std::make_shared<BlockLoaderService>(storage, block_cache);
@@ -238,16 +239,13 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
  */
 TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   // Request existing block => success
-  auto requested = std::make_shared<shared_model::proto::Block>(
-      getBaseBlockBuilder().build().signAndAddSignature(key).finish());
-  block_cache->insert(wrapBlock(requested));
-
-  auto variant =
-      shared_model::interface::BlockVariant(wBlock(clone(requested)));
+  auto requested = wrapBlock(std::make_shared<shared_model::proto::Block>(
+      getBaseBlockBuilder().build().signAndAddSignature(key).finish()));
+  block_cache->insert(requested);
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*validator, validate(variant)).WillOnce(Return(Answer{}));
+  EXPECT_CALL(*validator, validate(*requested)).WillOnce(Return(Answer{}));
   EXPECT_CALL(*storage, getBlocksFrom(_)).Times(0);
   auto block_variant = loader->retrieveBlock(peer_key, requested->hash());
 
@@ -257,7 +255,7 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
         framework::SpecifiedVisitor<
             std::shared_ptr<shared_model::interface::Block>>(),
         *block_variant);
-    ASSERT_EQ(*requested, *unwrapped_block);
+    ASSERT_EQ(*requested, unwrapped_block);
   });
 }
 
