@@ -25,11 +25,11 @@ target_link_libraries(bm_proto_creation
     shared_model_proto_backend
     )
 
-add_executable(query_benchmark
-    query_benchmark.cpp
+add_executable(bm_query
+    bm_query.cpp
     )
 
-target_link_libraries(query_benchmark
+target_link_libraries(bm_query
     benchmark
     gtest::gtest
     integration_framework

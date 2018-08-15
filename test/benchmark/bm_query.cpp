@@ -45,6 +45,10 @@ TestUnsignedTransactionBuilder createUserWithPerms(
       .appendRole(user_id, role_id);
 }
 
+/**
+ * This benchmark executes get account query in order to measure query execution
+ * performance
+ */
 static void BM_QueryAccount(benchmark::State &state) {
   integration_framework::IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair);
@@ -73,7 +77,8 @@ static void BM_QueryAccount(benchmark::State &state) {
   auto check = [](auto &status) {
     ASSERT_NO_THROW({
       boost::apply_visitor(
-          framework::SpecifiedVisitor<const shared_model::interface::AccountResponse &>(),
+          framework::SpecifiedVisitor<
+              const shared_model::interface::AccountResponse &>(),
           status.get());
     });
   };
