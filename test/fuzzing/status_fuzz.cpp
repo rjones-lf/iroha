@@ -30,7 +30,7 @@ struct CommandFixture {
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       vprop_notifier_;
-  rxcpp::subjects::subject<iroha::synchronizer::SynchronizerCommitReceiveEvent>
+  rxcpp::subjects::subject<iroha::synchronizer::SynchronizationEvent>
       commit_notifier_;
   rxcpp::subjects::subject<iroha::DataType> mst_notifier_;
 

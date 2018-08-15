@@ -50,8 +50,7 @@ namespace iroha {
               std::shared_ptr<shared_model::interface::Proposal>>());
 
       MOCK_CONST_METHOD0(
-          on_commit,
-          rxcpp::observable<synchronizer::SynchronizerCommitReceiveEvent>());
+          on_commit, rxcpp::observable<synchronizer::SynchronizationEvent>());
 
       MOCK_CONST_METHOD0(
           on_verified_proposal,

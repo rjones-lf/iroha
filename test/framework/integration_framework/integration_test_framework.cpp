@@ -161,7 +161,7 @@ namespace integration_framework {
         ->getPeerCommunicationService()
         ->on_commit()
         .subscribe([this](auto commit_event) {
-          commit_event.first.subscribe([this](auto committed_block) {
+          commit_event.synced_blocks.subscribe([this](auto committed_block) {
             block_queue_.push(committed_block);
             log_->info("block");
             queue_cond.notify_all();

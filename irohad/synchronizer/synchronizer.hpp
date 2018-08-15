@@ -40,13 +40,13 @@ namespace iroha {
 
       /**
        * After synchronization this observable emits zero or more blocks plus
-       * outcome type
+       * outcome of synchronization
        */
-      virtual rxcpp::observable<SynchronizerCommitReceiveEvent>
-      on_commit_chain() = 0;
+      virtual rxcpp::observable<SynchronizationEvent> on_commit_chain() = 0;
 
       virtual ~Synchronizer() = default;
     };
+
   }  // namespace synchronizer
 }  // namespace iroha
 #endif  // IROHA_SYNCHRONIZER_HPP

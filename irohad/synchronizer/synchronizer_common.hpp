@@ -8,11 +8,9 @@
 
 #include <utility>
 
-#include <boost/variant.hpp>
 #include <rxcpp/rx-observable.hpp>
 
 #include "interfaces/iroha_internal/block.hpp"
-#include "interfaces/iroha_internal/empty_block.hpp"
 
 namespace iroha {
   namespace synchronizer {
@@ -25,18 +23,19 @@ namespace iroha {
         rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>;
 
     /**
-     * Type of consensus outcome, received by synchronizer
+     * Outcome, which was decided by synchronizer based on consensus result and
+     * current local ledger state
      */
-    enum class ConsensusOutcomeType {
-      nonempty,
-      empty,
-      reject
-    };
+    enum class SynchronizationOutcomeType { kCommit, kCommitEmpty, kReject };
 
     /**
-     * Event, which is emitted by synchronizer, when it receives commit
+     * Event, which is emitted by synchronizer, when it receives and processes
+     * commit
      */
-    using SynchronizerCommitReceiveEvent = std::pair<Chain, ConsensusOutcomeType>;
+    struct SynchronizationEvent {
+      Chain synced_blocks;
+      SynchronizationOutcomeType sync_outcome;
+    };
 
   }  // namespace synchronizer
 }  // namespace iroha

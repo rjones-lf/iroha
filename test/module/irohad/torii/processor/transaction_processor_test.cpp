@@ -97,7 +97,7 @@ class TransactionProcessorTest : public ::testing::Test {
 
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier;
-  rxcpp::subjects::subject<SynchronizerCommitReceiveEvent> commit_notifier;
+  rxcpp::subjects::subject<SynchronizationEvent> commit_notifier;
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       verified_prop_notifier;
@@ -247,8 +247,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
       blocks_notifier;
 
-  commit_notifier.get_subscriber().on_next(SynchronizerCommitReceiveEvent{
-      blocks_notifier.get_observable(), CommitEventType::nonempty});
+  commit_notifier.get_subscriber().on_next(SynchronizationEvent{
+      blocks_notifier.get_observable(), SynchronizationOutcomeType::kCommit});
 
   blocks_notifier.get_subscriber().on_next(
       std::shared_ptr<shared_model::interface::Block>(clone(block)));
@@ -304,10 +304,10 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   auto block = TestBlockBuilder().transactions(txs).build();
 
   // 2. Create block and notify transaction processor about it
-  SynchronizerCommitReceiveEvent commit_event{
+  SynchronizationEvent commit_event{
       rxcpp::observable<>::just(
           std::shared_ptr<shared_model::interface::Block>(clone(block))),
-      CommitEventType::nonempty};
+      SynchronizationOutcomeType::kCommit};
   commit_notifier.get_subscriber().on_next(commit_event);
 
   SCOPED_TRACE("Committed status verification");
@@ -378,10 +378,10 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
 
   auto block = TestBlockBuilder().transactions(block_txs).build();
 
-  SynchronizerCommitReceiveEvent commit_event{
+  SynchronizationEvent commit_event{
       rxcpp::observable<>::just(
           std::shared_ptr<shared_model::interface::Block>(clone(block))),
-      CommitEventType::nonempty};
+      SynchronizationOutcomeType::kCommit};
   commit_notifier.get_subscriber().on_next(commit_event);
 
   {

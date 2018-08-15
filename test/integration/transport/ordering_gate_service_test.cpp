@@ -136,8 +136,9 @@ class OrderingGateServiceTest : public ::testing::Test {
       std::shared_ptr<shared_model::interface::Block> block =
           std::make_shared<shared_model::proto::Block>(
               TestBlockBuilder().height(proposal->height()).build());
-      commit_subject_.get_subscriber().on_next(SynchronizerCommitReceiveEvent{
-          rxcpp::observable<>::just(block), CommitEventType::nonempty});
+      commit_subject_.get_subscriber().on_next(
+          SynchronizationEvent{rxcpp::observable<>::just(block),
+                               SynchronizationOutcomeType::kCommit});
       counter--;
       cv.notify_one();
     });
@@ -190,7 +191,7 @@ class OrderingGateServiceTest : public ::testing::Test {
   /// Peer Communication Service and commit subject are required to emulate
   /// commits for Ordering Service
   std::shared_ptr<MockPeerCommunicationService> pcs_;
-  rxcpp::subjects::subject<SynchronizerCommitReceiveEvent> commit_subject_;
+  rxcpp::subjects::subject<SynchronizationOutcomeType> commit_subject_;
   rxcpp::subjects::subject<OrderingServiceImpl::TimeoutType> proposal_timeout;
 
   std::condition_variable cv;

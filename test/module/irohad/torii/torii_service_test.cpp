@@ -51,7 +51,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
   CustomPeerCommunicationServiceMock(
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::Proposal>> prop_notifier,
-      rxcpp::subjects::subject<SynchronizerCommitReceiveEvent> commit_notifier,
+      rxcpp::subjects::subject<SynchronizationEvent> commit_notifier,
       rxcpp::subjects::subject<
           std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
           verified_prop_notifier)
@@ -70,7 +70,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
   on_proposal() const override {
     return prop_notifier_.get_observable();
   }
-  rxcpp::observable<SynchronizerCommitReceiveEvent> on_commit() const override {
+  rxcpp::observable<SynchronizationEvent> on_commit() const override {
     return commit_notifier_.get_observable();
   }
 
@@ -83,7 +83,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
  private:
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier_;
-  rxcpp::subjects::subject<SynchronizerCommitReceiveEvent> commit_notifier_;
+  rxcpp::subjects::subject<SynchronizationEvent> commit_notifier_;
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       verified_prop_notifier_;
@@ -143,7 +143,7 @@ class ToriiServiceTest : public testing::Test {
 
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier_;
-  rxcpp::subjects::subject<SynchronizerCommitReceiveEvent> commit_notifier_;
+  rxcpp::subjects::subject<SynchronizationEvent> commit_notifier_;
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       verified_prop_notifier_;
@@ -455,8 +455,8 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   // create commit from block notifier's observable
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
       block_notifier_;
-  SynchronizerCommitReceiveEvent commit{block_notifier_.get_observable(),
-                                        CommitEventType::nonempty};
+  SynchronizationEvent commit{block_notifier_.get_observable(),
+                                        SynchronizationOutcomeType::kCommit};
 
   // invoke on next of commit_notifier by sending new block to commit
   commit_notifier_.get_subscriber().on_next(commit);
