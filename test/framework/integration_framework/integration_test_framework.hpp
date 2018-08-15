@@ -49,8 +49,7 @@ namespace integration_framework {
      * Construct test framework instance
      * @param maximum_proposal_size - Maximum number of transactions per
      * proposal
-     * @param proposal_waiting - maximum time of waiting before appearing next
-     * proposal
+     * @param proposal_waiting - maximum time of waiting before next proposal
      * @param block_waiting - maximum time of waiting before appearing next
      * committed block
      * @param destructor_lambda - (default nullptr) Pointer to function which
@@ -65,12 +64,12 @@ namespace integration_framework {
         std::function<void(IntegrationTestFramework &)> deleter =
             [](IntegrationTestFramework &itf) { itf.done(); },
         bool mst_support = false,
-        milliseconds proposal_waiting = milliseconds(20000),
-        milliseconds block_waiting = milliseconds(20000),
         const std::string &block_store_path =
             (boost::filesystem::temp_directory_path()
              / boost::filesystem::unique_path())
-                .string());
+                .string(),
+        milliseconds proposal_waiting = milliseconds(20000),
+        milliseconds block_waiting = milliseconds(20000));
 
     ~IntegrationTestFramework();
 

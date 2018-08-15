@@ -134,8 +134,6 @@ TEST(RegressionTest, StateRecovery) {
         dbname,
         [](auto &) {},
         false,
-        std::chrono::milliseconds(20000),
-        std::chrono::milliseconds(20000),
         path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx)
@@ -149,8 +147,6 @@ TEST(RegressionTest, StateRecovery) {
         dbname,
         [](auto &itf) { itf.done(); },
         false,
-        std::chrono::milliseconds(20000),
-        std::chrono::milliseconds(20000),
         path)
         .recoverState(kAdminKeypair)
         .sendQuery(makeQuery(2, kAdminKeypair), checkQuery)

@@ -51,18 +51,22 @@ TestUnsignedTransactionBuilder createUserWithPerms(
       .appendRole(user_id, role_id);
 }
 
-const auto transactions = 100;
-const auto commands = 100;
+const auto proposal_size = 100;
+const auto transaction_size = 100;
 
 static void BM_AddAssetQuantity(benchmark::State &state) {
-  integration_framework::IntegrationTestFramework itf(transactions,
-                                                      boost::none,
-                                                      [](auto &) {},
-                                                      false,
-                                                      std::chrono::hours(1),
-                                                      std::chrono::hours(1));
+  integration_framework::IntegrationTestFramework itf(
+      proposal_size,
+      boost::none,
+      [](auto &) {},
+      false,
+      (boost::filesystem::temp_directory_path()
+       / boost::filesystem::unique_path())
+          .string(),
+      std::chrono::hours(1),
+      std::chrono::hours(1));
   itf.setInitialState(kAdminKeypair);
-  for (int i = 0; i < transactions; i++) {
+  for (int i = 0; i < proposal_size; i++) {
     itf.sendTx(createUserWithPerms(
                    kUser,
                    kUserKeypair.publicKey(),
@@ -74,30 +78,23 @@ static void BM_AddAssetQuantity(benchmark::State &state) {
   }
   itf.skipBlock().skipProposal();
 
-  //  auto transaction = ;
-  // define main benchmark loop
   while (state.KeepRunning()) {
-    // define the code to be tested
-
     auto make_base = [&]() {
       auto base = baseTx();
-      for (int i = 0; i < commands; i++) {
+      for (int i = 0; i < transaction_size; i++) {
         base = base.addAssetQuantity(kAsset, kAmount);
       }
       return base.quorum(1).build().signAndAddSignature(kUserKeypair).finish();
     };
 
-    for (int i = 0; i < transactions; i++) {
+    for (int i = 0; i < proposal_size; i++) {
       itf.sendTx(make_base());
     }
     itf.skipProposal().skipBlock();
   }
   itf.done();
 }
-// define benchmark
+
 BENCHMARK(BM_AddAssetQuantity)->Unit(benchmark::kMillisecond);
 
-/// That's all. More in documentation.
-
-// don't forget to include this:
 BENCHMARK_MAIN();

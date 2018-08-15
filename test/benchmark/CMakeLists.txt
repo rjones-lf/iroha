@@ -26,10 +26,10 @@ target_link_libraries(bm_proto_creation
     )
 
 
-add_executable(pipeline_benchmark
-        pipeline_benchmark.cpp)
+add_executable(bm_pipeline
+    bm_pipeline.cpp)
 
-target_link_libraries(pipeline_benchmark
+target_link_libraries(bm_pipeline
         benchmark
         application
         raw_block_loader

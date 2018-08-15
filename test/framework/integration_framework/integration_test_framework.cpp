@@ -54,9 +54,9 @@ namespace integration_framework {
       std::function<void(integration_framework::IntegrationTestFramework &)>
           deleter,
       bool mst_support,
+      const std::string &block_store_path,
       milliseconds proposal_waiting,
-      milliseconds block_waiting,
-      const std::string &block_store_path)
+      milliseconds block_waiting)
       : iroha_instance_(std::make_shared<IrohaInstance>(
             mst_support, block_store_path, dbname)),
         proposal_waiting(proposal_waiting),
@@ -255,10 +255,8 @@ namespace integration_framework {
     log_->info("check proposal");
     // fetch first proposal from proposal queue
     ProposalType proposal;
-    log_->info("fetching from queue");
     fetchFromQueue(
         proposal_queue_, proposal, proposal_waiting, "missed proposal");
-    log_->info("validating proposal");
     validation(proposal);
     return *this;
   }
