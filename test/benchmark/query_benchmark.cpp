@@ -88,7 +88,7 @@ static void BM_QueryAccount(benchmark::State &state) {
   itf.done();
 }
 // define benchmark
-BENCHMARK(BM_QueryAccount);
+BENCHMARK(BM_QueryAccount)->Unit(benchmark::kMicrosecond);
 
 /// That's all. More in documentation.
 

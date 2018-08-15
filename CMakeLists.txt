@@ -65,7 +65,6 @@ option(SUPPORT_PYTHON2 "ON if Python2, OFF if python3" OFF)
 option(SWIG_CSHARP  "Generate Swig C# bindings"      OFF)
 option(SWIG_NODE    "Generate Swig NodeJS"           OFF)
 
-SET(BENCHMARKING ON)
 
 if (NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Debug)
