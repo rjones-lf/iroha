@@ -61,8 +61,7 @@ TEST_F(CreateAssetFixture, Basic) {
       .sendTx(complete(baseTx().addAssetQuantity(asset_id, asset_amount)))
       .skipProposal()
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
@@ -83,7 +82,6 @@ TEST_F(CreateAssetFixture, IllegalCharactersInName) {
     itf.sendTx(complete(baseTx().createAsset(name, kDomain, kPrecision)),
                checkStatelessInvalid);
   }
-  itf.done();
 }
 
 /**
@@ -106,8 +104,7 @@ TEST_F(CreateAssetFixture, ExistingName) {
       .checkBlock(
           // todo igor-egorov, 2018-08-15, IR-1625, add precise check of failure
           // reason
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -131,8 +128,7 @@ TEST_F(CreateAssetFixture, ExistingNameDifferentPrecision) {
       .checkBlock(
           // todo igor-egorov, 2018-08-15, IR-1625, add precise check of failure
           // reason
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -154,8 +150,7 @@ TEST_F(CreateAssetFixture, WithoutPermission) {
       .checkBlock(
           // todo igor-egorov, 2018-08-15, IR-1625, add precise check of failure
           // reason
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -177,8 +172,7 @@ TEST_F(CreateAssetFixture, ValidNonExistingDomain) {
       .checkBlock(
           // todo igor-egorov, 2018-08-15, IR-1625, add precise check of failure
           // reason
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -197,5 +191,4 @@ TEST_F(CreateAssetFixture, InvalidDomain) {
     itf.sendTx(complete(baseTx().createAsset(kAssetName, domain, kPrecision)),
                checkStatelessInvalid);
   }
-  itf.done();
 }
