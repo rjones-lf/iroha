@@ -30,11 +30,12 @@ namespace iroha {
           transport_(transport),
           persistent_state_(persistent_state),
           factory_(std::move(factory)),
+          proposal_height_(persistent_state_->createOsPersistentState() |
+                           [](const auto &state) {
+                             return state->loadProposalHeight().value();
+                           }),
           log_(logger::log("OrderingServiceImpl")) {
       // restore state of ordering service from persistent storage
-      proposal_height_ = persistent_state_->createOsPersistentState() |
-          [](const auto &state) { return state->loadProposalHeight().value(); };
-
       rxcpp::observable<ProposalEvent> timer =
           proposal_timeout.map([](auto) { return ProposalEvent::kTimerEvent; });
 
@@ -105,10 +106,10 @@ namespace iroha {
                  std::unique_ptr<shared_model::interface::Proposal>> &v) {
             // Save proposal height to the persistent storage.
             // In case of restart it reloads state.
-            if (persistent_state_->createOsPersistentState()
-                    | [this](const auto &state) {
-                        return state->saveProposalHeight(proposal_height_);
-                      }) {
+            if (persistent_state_->createOsPersistentState() |
+                [this](const auto &state) {
+                  return state->saveProposalHeight(proposal_height_);
+                }) {
               publishProposal(std::move(v.value));
             } else {
               // TODO(@l4l) 23/03/18: publish proposal independent of psql

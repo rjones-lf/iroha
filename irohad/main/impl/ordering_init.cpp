@@ -13,8 +13,8 @@ namespace iroha {
   namespace network {
     auto OrderingInit::createGate(
         std::shared_ptr<OrderingGateTransport> transport,
-        std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factroy) {
-      return block_query_factroy->createBlockQuery() |
+        std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory) {
+      return block_query_factory->createBlockQuery() |
           [this, &transport](const auto &block_query) {
             return block_query->getTopBlock().match(
                 [this, &transport](

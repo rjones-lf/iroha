@@ -48,7 +48,7 @@ namespace iroha {
                               std::chrono::milliseconds period,
                               uint32_t amount);
 
-    ~GossipPropagationStrategy() = default;
+    ~GossipPropagationStrategy() override = default;
 
     // ------------------| PropagationStrategy override |------------------
 

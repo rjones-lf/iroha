@@ -66,16 +66,19 @@ namespace iroha {
        * Save proposal height that it can be restored
        * after launch
        * @param height is height of last proposal
+       * @return if height has been saved
        */
       bool saveProposalHeight(size_t height) override;
 
       /**
        * Load proposal height
+       * @return proposal height if it was saved, otherwise boost::none
        */
       boost::optional<size_t> loadProposalHeight() const override;
 
       /**
        * Reset storage state to default
+       * @return whether state was reset successfully
        */
       bool resetState() override;
 
