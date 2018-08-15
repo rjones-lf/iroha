@@ -24,38 +24,6 @@ class CreateAssetFixture : public AcceptanceFixture {
   const interface::types::PrecisionType kPrecision = 1;
   const interface::types::PrecisionType kNonDefaultPrecision = kPrecision + 17;
   const interface::types::DomainIdType kNonExistingDomain = "nonexisting";
-  const std::vector<interface::types::AssetNameType> kIllegalAssetNames = {
-      "",
-      " ",
-      "   ",
-      "A",
-      "assetV",
-      "asSet",
-      "asset%",
-      "^123",
-      "verylongassetname_thenameislonger",
-      "verylongassetname_thenameislongerthanitshouldbe",
-      "assset-01"};
-
-  const std::vector<interface::types::DomainIdType> kIllegalDomainNames = {
-      "",
-      " ",
-      "   ",
-      "9start.with.digit",
-      "-startWithDash",
-      "@.is.not.allowed",
-      "no space is allowed",
-      "endWith-",
-      "label.endedWith-.is.not.allowed",
-      "aLabelMustNotExceeds63charactersALabelMustNotExceeds63characters",
-      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
-      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
-      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
-      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP",
-      "257.257.257.257",
-      "domain#domain",
-      "asd@asd",
-      "ab..cd"};
 };
 
 /**
@@ -125,6 +93,8 @@ TEST_F(CreateAssetFixture, ExistingName) {
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkBlock(
+          // todo igor-egorov, 2018-08-15, IR-1625, add precise check of failure
+          // reason
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }
@@ -148,6 +118,8 @@ TEST_F(CreateAssetFixture, ExistingNameDifferentPrecision) {
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkBlock(
+          // todo igor-egorov, 2018-08-15, IR-1625, add precise check of failure
+          // reason
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }
@@ -169,6 +141,8 @@ TEST_F(CreateAssetFixture, WithoutPermission) {
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkBlock(
+          // todo igor-egorov, 2018-08-15, IR-1625, add precise check of failure
+          // reason
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }
@@ -190,6 +164,8 @@ TEST_F(CreateAssetFixture, ValidNonExistingDomain) {
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkBlock(
+          // todo igor-egorov, 2018-08-15, IR-1625, add precise check of failure
+          // reason
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }
