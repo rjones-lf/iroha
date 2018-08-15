@@ -14,16 +14,15 @@
 
 add_subdirectory(processor)
 
-# TODO: muratovv, IR-1586, fix failed tests
 # command service test
-#addtest(torii_service_test torii_service_test.cpp)
-#target_link_libraries(torii_service_test
-#    torii_service
-#    command_client
-#    query_client
-#    server_runner
-#    processors
-#    )
+addtest(torii_service_test torii_service_test.cpp)
+target_link_libraries(torii_service_test
+    torii_service
+    command_client
+    query_client
+    server_runner
+    processors
+    )
 
 addtest(torii_queries_test torii_queries_test.cpp)
 target_link_libraries(torii_queries_test

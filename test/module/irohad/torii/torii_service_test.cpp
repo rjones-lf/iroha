@@ -102,9 +102,9 @@ class ToriiServiceTest : public testing::Test {
     block_query = std::make_shared<MockBlockQuery>();
     storage = std::make_shared<MockStorage>();
 
-    EXPECT_CALL(*mst, onPreparedTransactionsImpl())
+    EXPECT_CALL(*mst, onPreparedBatchesImpl())
         .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
-    EXPECT_CALL(*mst, onExpiredTransactionsImpl())
+    EXPECT_CALL(*mst, onExpiredBatchesImpl())
         .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
     auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
