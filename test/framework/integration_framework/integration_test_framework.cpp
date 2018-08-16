@@ -341,6 +341,13 @@ namespace integration_framework {
     return *this;
   }
 
+  IntegrationTestFramework &IntegrationTestFramework::sendTxSequenceAwait(
+      const shared_model::interface::TransactionSequence &tx_sequence,
+      std::function<void(const BlockType &)> check) {
+    sendTxSequence(tx_sequence).skipProposal().checkBlock(check);
+    return *this;
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::sendQuery(
       const shared_model::proto::Query &qry,
       std::function<void(const shared_model::proto::QueryResponse &)>

@@ -163,6 +163,10 @@ namespace integration_framework {
         const shared_model::interface::TransactionSequence &tx_sequence,
         std::function<void(const BlockType &)> check);
 
+    IntegrationTestFramework &sendTxSequenceAwait(
+        const shared_model::interface::TransactionSequence &tx_sequence,
+        std::function<void(const BlockType &)> check);
+
     /**
      * Check current status of transaction
      * @param hash - hash of transaction to check
