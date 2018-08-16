@@ -110,8 +110,8 @@ void Irohad::initStorage() {
 }
 
 void Irohad::resetOrderingService() {
-  if (not (storage->createOsPersistentState() |
-      [](const auto &state) { return state->resetState(); }))
+  if (not(storage->createOsPersistentState() |
+          [](const auto &state) { return state->resetState(); }))
     log_->error("cannot reset ordering service storage");
 }
 
@@ -193,9 +193,8 @@ void Irohad::initConsensusCache() {
  * Initializing block loader
  */
 void Irohad::initBlockLoader() {
-  block_loader = loader_init.initBlockLoader(storage,
-                                             storage,
-                                             consensus_result_cache_);
+  block_loader =
+      loader_init.initBlockLoader(storage, storage, consensus_result_cache_);
 
   log_->info("[Init] => block loader");
 }
@@ -204,8 +203,8 @@ void Irohad::initBlockLoader() {
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
-  consensus_gate = yac_init.initConsensusGate(
-                                             storage, simulator,
+  consensus_gate = yac_init.initConsensusGate(storage,
+                                              simulator,
                                               block_loader,
                                               keypair,
                                               consensus_result_cache_,

@@ -79,7 +79,7 @@ namespace iroha {
        * @param persistent_state - factory to access persistent state
        * @param block_query_factory - block store factory to get last block
        * height
-       * @param async_call - async grpc cliet that is passed to transport
+       * @param async_call - async grpc client that is passed to transport
        * components
        * @return efficient implementation of OrderingGate
        */

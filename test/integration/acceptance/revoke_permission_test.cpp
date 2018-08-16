@@ -345,7 +345,7 @@ namespace grantables {
               auto message = status.errorMessage();
 
               ASSERT_NE(
-                  message.find("has permission command validation failed"),
+                  message.find("command validation failed"),
                   std::string::npos)
                   << "Fail reason: " << message;
             })

@@ -74,7 +74,7 @@ TEST_F(AcceptanceFixture, CanNotGetRoles) {
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({interface::permissions::Role::kGetBlocks}))
+      .sendTx(makeUserWithPerms({}))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
