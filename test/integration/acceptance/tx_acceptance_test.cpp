@@ -36,7 +36,7 @@ class AcceptanceTest : public AcceptanceFixture {
     return Builder()
         .createdTime(getUniqueTime())
         .creatorAccountId(kAdmin)
-        .addAssetQuantity(kAsset, "1.0")
+        .addAssetQuantity(kAssetId, "1.0")
         .quorum(1);
   }
 

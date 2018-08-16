@@ -49,12 +49,12 @@ class TransferAsset : public AcceptanceFixture {
   }
 
   proto::Transaction addAssets(const std::string &amount) {
-    return complete(baseTx().addAssetQuantity(kAsset, amount));
+    return complete(baseTx().addAssetQuantity(kAssetId, amount));
   }
 
   proto::Transaction makeTransfer(const std::string &amount) {
     return complete(
-        baseTx().transferAsset(kUserId, kUser2Id, kAsset, kDesc, amount));
+        baseTx().transferAsset(kUserId, kUser2Id, kAssetId, kDesc, amount));
   }
 
   proto::Transaction makeTransfer() {
@@ -133,7 +133,7 @@ TEST_F(TransferAsset, NonexistentDest) {
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
       .sendTxAwait(complete(baseTx().transferAsset(
-                       kUserId, nonexistent, kAsset, kDesc, kAmount)),
+                       kUserId, nonexistent, kAssetId, kDesc, kAmount)),
                    check(0))
       .done();
 }
@@ -200,7 +200,7 @@ TEST_F(TransferAsset, EmptyDesc) {
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
       .sendTxAwait(complete(baseTx().transferAsset(
-                       kUserId, kUser2Id, kAsset, "", kAmount)),
+                       kUserId, kUser2Id, kAssetId, "", kAmount)),
                    check(1))
       .done();
 }
@@ -219,7 +219,7 @@ TEST_F(TransferAsset, LongDesc) {
       .sendTxAwait(addAssets(), check(1))
       .sendTx(
           complete(baseTx().transferAsset(
-              kUserId, kUser2Id, kAsset, std::string(100000, 'a'), kAmount)),
+              kUserId, kUser2Id, kAssetId, std::string(100000, 'a'), kAmount)),
           checkStatelessInvalid)
       .done();
 }
@@ -278,7 +278,7 @@ TEST_F(TransferAsset, SourceIsDest) {
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
       .sendTx(complete(baseTx().transferAsset(
-                  kUserId, kUserId, kAsset, kDesc, kAmount)),
+                  kUserId, kUserId, kAssetId, kDesc, kAmount)),
               checkStatelessInvalid);
 }
 

@@ -13,7 +13,7 @@ AcceptanceFixture::AcceptanceFixture()
     : kUser("user"),
       kRole("role"),
       kDomain(integration_framework::IntegrationTestFramework::kDefaultDomain),
-      kAsset(integration_framework::IntegrationTestFramework::kAssetName + "#"
+      kAssetId(integration_framework::IntegrationTestFramework::kAssetName + "#"
              + integration_framework::IntegrationTestFramework::kDefaultDomain),
       kUserId(
           kUser + "@"
