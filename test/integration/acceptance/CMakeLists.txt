@@ -1,24 +1,20 @@
 #
-# Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
-# http://soramitsu.co.jp
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+
 add_library(acceptance_fixture acceptance_fixture.cpp)
 target_link_libraries(acceptance_fixture
     gtest::gtest
     integration_framework
     shared_model_proto_builders
+    )
+
+add_library(grantable_permissions_fixture
+    grantable_permissions_fixture.cpp
+    )
+target_link_libraries(grantable_permissions_fixture
+    acceptance_fixture
     )
 
 addtest(add_asset_qty_test add_asset_qty_test.cpp)
@@ -48,7 +44,12 @@ target_link_libraries(get_transactions_test
 
 addtest(grant_permission_test grant_permission_test.cpp)
 target_link_libraries(grant_permission_test
-    acceptance_fixture
+    grantable_permissions_fixture
+    )
+
+addtest(revoke_permission_test revoke_permission_test.cpp)
+target_link_libraries(revoke_permission_test
+    grantable_permissions_fixture
     )
 
 addtest(invalid_fields_test invalid_fields_test.cpp)
@@ -88,5 +89,9 @@ target_link_libraries(get_account_assets_test
 
 addtest(set_account_detail_test set_account_detail_test.cpp)
 target_link_libraries(set_account_detail_test
+    acceptance_fixture
+    )
+addtest(get_roles_test get_roles_test.cpp)
+target_link_libraries(get_roles_test
     acceptance_fixture
     )
