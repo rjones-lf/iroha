@@ -1419,8 +1419,6 @@ namespace iroha {
       std::unique_ptr<shared_model::interface::Account> account2;
     };
 
-    void checkTransfer() {}
-
     /**
      * @given  command
      * @when trying to add transfer asset
