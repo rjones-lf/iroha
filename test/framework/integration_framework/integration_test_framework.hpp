@@ -150,7 +150,9 @@ namespace integration_framework {
     IntegrationTestFramework &sendTxSequence(
         const shared_model::interface::TransactionSequence &tx_sequence,
         std::function<void(std::vector<shared_model::proto::TransactionResponse>
-                               &)> validation);
+                               &)> validation = [](const auto &) {
+          return true;
+        });
 
     /**
      * Check current status of transaction
