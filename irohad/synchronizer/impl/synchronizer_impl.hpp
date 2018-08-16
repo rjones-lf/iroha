@@ -40,8 +40,7 @@ namespace iroha {
       void process_commit(const shared_model::interface::BlockVariant
                               &committed_block_variant) override;
 
-      rxcpp::observable<SynchronizerCommitReceiveEvent> on_commit_chain()
-          override;
+      rxcpp::observable<SynchronizationEvent> on_commit_chain() override;
 
      private:
       std::shared_ptr<validation::ChainValidator> validator_;
@@ -49,7 +48,7 @@ namespace iroha {
       std::shared_ptr<network::BlockLoader> block_loader_;
 
       // internal
-      rxcpp::subjects::subject<SynchronizerCommitReceiveEvent> notifier_;
+      rxcpp::subjects::subject<SynchronizationEvent> notifier_;
       rxcpp::composite_subscription subscription_;
 
       logger::Logger log_;

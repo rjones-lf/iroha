@@ -77,8 +77,8 @@ namespace iroha {
           pcs.on_commit()
               .transform(
                   [this](const synchronizer::SynchronizationEvent
-                             &commit_event) {
-                    commit_event.synced_blocks.subscribe(
+                             &sync_event) {
+                    sync_event.synced_blocks.subscribe(
                         // take height of next block
                         [this](std::shared_ptr<shared_model::interface::Block>
                                    block_ptr) {

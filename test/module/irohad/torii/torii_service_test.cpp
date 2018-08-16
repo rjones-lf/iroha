@@ -314,8 +314,8 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   // create commit from block notifier's observable
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
       block_notifier_;
-  SynchronizerCommitReceiveEvent commit{block_notifier_.get_observable(),
-                                        CommitEventType::nonempty};
+  SynchronizationEvent commit{block_notifier_.get_observable(),
+                              SynchronizationOutcomeType::kCommit};
 
   // invoke on next of commit_notifier by sending new block to commit
   commit_notifier_.get_subscriber().on_next(commit);
@@ -458,7 +458,7 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
       block_notifier_;
   SynchronizationEvent commit{block_notifier_.get_observable(),
-                                        SynchronizationOutcomeType::kCommit};
+                              SynchronizationOutcomeType::kCommit};
 
   // invoke on next of commit_notifier by sending new block to commit
   commit_notifier_.get_subscriber().on_next(commit);
