@@ -13,8 +13,9 @@ AcceptanceFixture::AcceptanceFixture()
     : kUser("user"),
       kRole("role"),
       kDomain(integration_framework::IntegrationTestFramework::kDefaultDomain),
-      kAssetId(integration_framework::IntegrationTestFramework::kAssetName + "#"
-             + integration_framework::IntegrationTestFramework::kDefaultDomain),
+      kAssetId(
+          integration_framework::IntegrationTestFramework::kAssetName + "#"
+          + integration_framework::IntegrationTestFramework::kDefaultDomain),
       kUserId(
           kUser + "@"
           + integration_framework::IntegrationTestFramework::kDefaultDomain),
@@ -73,28 +74,46 @@ shared_model::proto::Transaction AcceptanceFixture::makeUserWithPerms(
 }
 
 template <typename Builder>
-auto AcceptanceFixture::base(Builder builder) -> decltype(
-    builder.creatorAccountId(std::string()).createdTime(uint64_t())) {
-  return builder.creatorAccountId(kUserId).createdTime(getUniqueTime());
+auto AcceptanceFixture::base(
+    Builder builder,
+    const shared_model::interface::types::AccountIdType &account_id)
+    -> decltype(
+        builder.creatorAccountId(std::string()).createdTime(uint64_t())) {
+  return builder.creatorAccountId(account_id).createdTime(getUniqueTime());
 }
 
 template auto AcceptanceFixture::base<TestUnsignedTransactionBuilder>(
-    TestUnsignedTransactionBuilder builder)
+    TestUnsignedTransactionBuilder builder,
+    const shared_model::interface::types::AccountIdType &account_id)
     -> decltype(
         builder.creatorAccountId(std::string()).createdTime(uint64_t()));
 template auto AcceptanceFixture::base<TestUnsignedQueryBuilder>(
-    TestUnsignedQueryBuilder builder)
+    TestUnsignedQueryBuilder builder,
+    const shared_model::interface::types::AccountIdType &account_id)
     -> decltype(
         builder.creatorAccountId(std::string()).createdTime(uint64_t()));
 
 auto AcceptanceFixture::baseTx()
-    -> decltype(base(TestUnsignedTransactionBuilder())) {
-  return base(TestUnsignedTransactionBuilder()).quorum(1);
+    -> decltype(base(TestUnsignedTransactionBuilder(), std::string())) {
+  return base(TestUnsignedTransactionBuilder(), kUserId).quorum(1);
+}
+
+auto AcceptanceFixture::baseTx(
+    const shared_model::interface::types::AccountIdType &account_id)
+    -> decltype(baseTx()) {
+  return base(TestUnsignedTransactionBuilder(), account_id).quorum(1);
 }
 
 auto AcceptanceFixture::baseQry()
-    -> decltype(base(TestUnsignedQueryBuilder())) {
-  return base(TestUnsignedQueryBuilder()).queryCounter(nonce_counter);
+    -> decltype(base(TestUnsignedQueryBuilder(), std::string())) {
+  return base(TestUnsignedQueryBuilder(), kUserId).queryCounter(nonce_counter);
+}
+
+auto AcceptanceFixture::baseQry(
+    const shared_model::interface::types::AccountIdType &account_id)
+    -> decltype(baseQry()) {
+  return base(TestUnsignedQueryBuilder(), account_id)
+      .queryCounter(nonce_counter);
 }
 
 template <typename Builder>
@@ -113,6 +132,31 @@ template auto AcceptanceFixture::complete<TestUnsignedTransactionBuilder>(
             .finish());
 template auto AcceptanceFixture::complete<TestUnsignedQueryBuilder>(
     TestUnsignedQueryBuilder builder)
+    -> decltype(
+        builder.build()
+            .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
+            .finish());
+
+template <typename Builder>
+auto AcceptanceFixture::complete(Builder builder,
+                                 const shared_model::crypto::Keypair &keypair)
+    -> decltype(
+        builder.build()
+            .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
+            .finish()) {
+  return builder.build().signAndAddSignature(keypair).finish();
+}
+
+template auto AcceptanceFixture::complete<TestUnsignedTransactionBuilder>(
+    TestUnsignedTransactionBuilder builder,
+    const shared_model::crypto::Keypair &keypair)
+    -> decltype(
+        builder.build()
+            .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
+            .finish());
+template auto AcceptanceFixture::complete<TestUnsignedQueryBuilder>(
+    TestUnsignedQueryBuilder builder,
+    const shared_model::crypto::Keypair &keypair)
     -> decltype(
         builder.build()
             .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())

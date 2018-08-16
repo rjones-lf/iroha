@@ -77,23 +77,42 @@ class AcceptanceFixture : public ::testing::Test {
    * @return builder containing creator account id and created time
    */
   template <typename Builder>
-  auto base(Builder builder) -> decltype(
-      builder.creatorAccountId(std::string()).createdTime(uint64_t()));
+  auto base(Builder builder,
+            const shared_model::interface::types::AccountIdType &account_id)
+      -> decltype(
+          builder.creatorAccountId(std::string()).createdTime(uint64_t()));
 
   /**
-   * Create valid base pre-built transaction
+   * Create valid base pre-built transaction with kUserId as transaction creator
    * @return pre-built tx
    */
-  auto baseTx() -> decltype(base(TestUnsignedTransactionBuilder()));
+  auto baseTx()
+      -> decltype(base(TestUnsignedTransactionBuilder(), std::string()));
 
   /**
-   * Create valid base pre-built query
+   * Create valid base pre-built transaction with specified creator
+   * @param account_id - account of transaction creator
+   * @return pre-built tx
+   */
+  auto baseTx(const shared_model::interface::types::AccountIdType &account_id)
+      -> decltype(baseTx());
+
+  /**
+   * Create valid base pre-built query with kUserId as query creator
    * @return pre-built query
    */
-  auto baseQry() -> decltype(base(TestUnsignedQueryBuilder()));
+  auto baseQry() -> decltype(base(TestUnsignedQueryBuilder(), std::string()));
 
   /**
-   * Completes pre-built object
+   * Create valid base pre-built query with specified query creator
+   * @param account_id - account of query creator
+   * @return pre-built query
+   */
+  auto baseQry(const shared_model::interface::types::AccountIdType &account_id)
+      -> decltype(baseQry());
+
+  /**
+   * Completes pre-built object with kUserKeypair used for signing
    * @param builder is a pre-built object
    * @return built object
    */
@@ -102,6 +121,13 @@ class AcceptanceFixture : public ::testing::Test {
       builder.build()
           .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
           .finish());
+
+  template <typename Builder>
+  auto complete(Builder builder, const shared_model::crypto::Keypair &keypair)
+      -> decltype(builder.build()
+                      .signAndAddSignature(
+                          std::declval<shared_model::crypto::Keypair>())
+                      .finish());
 
   /**
    * @return unique time for this fixture

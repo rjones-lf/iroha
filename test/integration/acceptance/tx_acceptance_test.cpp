@@ -39,11 +39,6 @@ class AcceptanceTest : public AcceptanceFixture {
         .addAssetQuantity(kAssetId, "1.0")
         .quorum(1);
   }
-
-  template <typename T>
-  auto complete(T t) {
-    return t.build().signAndAddSignature(kAdminKeypair).finish();
-  }
 };
 
 /**
@@ -56,7 +51,7 @@ TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
   const std::string kNonUser = "nonuser@test";
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(complete(baseTx<>().creatorAccountId(kNonUser)),
+      .sendTx(complete(baseTx<>().creatorAccountId(kNonUser), kAdminKeypair),
               checkStatelessValid)
       .checkProposal(checkProposal)
       .checkBlock(checkStatefulInvalid)
@@ -73,7 +68,8 @@ TEST_F(AcceptanceTest, Transaction1HourOld) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>().createdTime(
-                  iroha::time::now(std::chrono::hours(-1)))),
+                           iroha::time::now(std::chrono::hours(-1))),
+                       kAdminKeypair),
               checkStatelessValid)
       .skipProposal()
       .checkBlock(checkStatefulValid)
@@ -90,7 +86,8 @@ TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
-                  std::chrono::hours(24) - std::chrono::minutes(1)))),
+                           std::chrono::hours(24) - std::chrono::minutes(1))),
+                       kAdminKeypair),
               checkStatelessValid)
       .skipProposal()
       .checkBlock(checkStatefulValid)
@@ -106,7 +103,8 @@ TEST_F(AcceptanceTest, TransactionMore24HourOld) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
-                  std::chrono::hours(24) + std::chrono::minutes(1)))),
+                           std::chrono::hours(24) + std::chrono::minutes(1))),
+                       kAdminKeypair),
               checkStatelessInvalid)
       .done();
 }
@@ -121,7 +119,8 @@ TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
-                  std::chrono::minutes(5) - std::chrono::seconds(10)))),
+                           std::chrono::minutes(5) - std::chrono::seconds(10))),
+                       kAdminKeypair),
               checkStatelessValid)
       .skipProposal()
       .checkBlock(checkStatefulValid)
@@ -137,7 +136,8 @@ TEST_F(AcceptanceTest, Transaction10MinutesFromFuture) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>().createdTime(
-                  iroha::time::now(std::chrono::minutes(10)))),
+                           iroha::time::now(std::chrono::minutes(10))),
+                       kAdminKeypair),
               checkStatelessInvalid)
       .done();
 }
@@ -228,7 +228,7 @@ TEST_F(AcceptanceTest, TransactionInvalidSignedBlob) {
 TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(complete(baseTx<>()), checkStatelessValid)
+      .sendTx(complete(baseTx<>(), kAdminKeypair), checkStatelessValid)
       .skipProposal()
       .checkBlock(checkStatefulValid)
       .done();
