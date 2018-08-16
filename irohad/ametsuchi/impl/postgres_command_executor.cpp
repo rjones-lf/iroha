@@ -117,7 +117,7 @@ namespace {
         .str();
   }
 
-  inline std::string miss_role_perm(
+  inline std::string missRolePerm(
       shared_model::interface::types::AccountIdType account,
       shared_model::interface::permissions::Role perm) {
     return (boost::format("command validation failed: account %s"
@@ -126,7 +126,7 @@ namespace {
         .str();
   }
 
-  inline std::string miss_grantable_perm(
+  inline std::string missGrantablePerm(
       shared_model::interface::types::AccountIdType account,
       shared_model::interface::types::AccountIdType permittee,
       shared_model::interface::permissions::Grantable perm) {
@@ -138,7 +138,7 @@ namespace {
         .str();
   }
 
-  inline std::string miss_role_or_grantable_perm(
+  inline std::string missRoleOrGrantablePerm(
       shared_model::interface::types::AccountIdType account,
       shared_model::interface::types::AccountIdType permittee,
       shared_model::interface::permissions::Role role_perm,
@@ -247,7 +247,7 @@ namespace iroha {
 
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return miss_role_perm(
+            return missRolePerm(
                 creator_account_id_,
                 shared_model::interface::permissions::Role::kAddAssetQty);
           },
@@ -294,7 +294,7 @@ namespace iroha {
       st.exchange(soci::use(creator_account_id_, "role_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return miss_role_perm(
+            return missRolePerm(
                 creator_account_id_,
                 shared_model::interface::permissions::Role::kAddPeer);
           },
@@ -365,7 +365,7 @@ namespace iroha {
 
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return miss_role_or_grantable_perm(
+            return missRoleOrGrantablePerm(
                 creator_account_id_,
                 account_id,
                 shared_model::interface::permissions::Role::kAddSignatory,
@@ -461,7 +461,7 @@ namespace iroha {
                 .str();
           },
           [&] {
-            return miss_role_perm(
+            return missRolePerm(
                 creator_account_id_,
                 shared_model::interface::permissions::Role::kAppendRole);
           },
@@ -558,7 +558,7 @@ namespace iroha {
       st.exchange(soci::use(pubkey, "pk"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return miss_role_perm(
+            return missRolePerm(
                 creator_account_id_,
                 shared_model::interface::permissions::Role::kCreateAccount);
           },
@@ -628,7 +628,7 @@ namespace iroha {
       st.exchange(soci::use(creator_account_id_, "role_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return miss_role_perm(
+            return missRolePerm(
                 creator_account_id_,
                 shared_model::interface::permissions::Role::kCreateDomain);
           },
@@ -677,7 +677,7 @@ namespace iroha {
       st.exchange(soci::use(creator_account_id_, "role_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return miss_role_perm(
+            return missRolePerm(
                 creator_account_id_,
                 shared_model::interface::permissions::Role::kCreateDomain);
           },
@@ -764,7 +764,7 @@ namespace iroha {
                 .str();
           },
           [&] {
-            return miss_role_perm(
+            return missRolePerm(
                 creator_account_id_,
                 shared_model::interface::permissions::Role::kCreateRole);
           },
@@ -812,7 +812,7 @@ namespace iroha {
       st.exchange(soci::use(role_name, "role_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return miss_role_perm(
+            return missRolePerm(
                 creator_account_id_,
                 shared_model::interface::permissions::Role::kDetachRole);
           },
@@ -868,7 +868,7 @@ namespace iroha {
       st.exchange(soci::use(perm_str, "perms"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return miss_grantable_perm(creator_account_id_,
+            return missGrantablePerm(creator_account_id_,
                                        permittee_account_id,
                                        command.permissionName());
           },
@@ -1000,7 +1000,7 @@ namespace iroha {
                    "becomes less than the quorum";
           },
           [&] {
-            return miss_role_or_grantable_perm(
+            return missRoleOrGrantablePerm(
                 creator_account_id_,
                 command.accountId(),
                 shared_model::interface::permissions::Role::kRemoveSignatory,
@@ -1061,7 +1061,7 @@ namespace iroha {
       st.exchange(soci::use(perms, "perm"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return miss_grantable_perm(creator_account_id_,
+            return missGrantablePerm(creator_account_id_,
                                        command.accountId(),
                                        command.permissionName());
           },
@@ -1145,7 +1145,7 @@ namespace iroha {
           soci::use(creator_account_id_, "grantable_permittee_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return miss_role_or_grantable_perm(
+            return missRoleOrGrantablePerm(
                 creator_account_id_,
                 command.accountId(),
                 shared_model::interface::permissions::Role::kSetDetail,
@@ -1236,7 +1236,7 @@ namespace iroha {
                 .str();
           },
           [&] {
-            return miss_role_or_grantable_perm(
+            return missRoleOrGrantablePerm(
                 creator_account_id_,
                 account_id,
                 shared_model::interface::permissions::Role::kSetQuorum,
@@ -1322,7 +1322,7 @@ namespace iroha {
 
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return miss_role_perm(
+            return missRolePerm(
                 creator_account_id_,
                 shared_model::interface::permissions::Role::kSubtractAssetQty);
           },
