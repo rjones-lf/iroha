@@ -17,7 +17,8 @@ namespace iroha {
 
     /**
      * Chain of block(s), which was either committed directly by this peer or
-     * downloaded from another
+     * downloaded from another; contains zero or more blocks depending on
+     * synchronization outcome
      */
     using Chain =
         rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>;

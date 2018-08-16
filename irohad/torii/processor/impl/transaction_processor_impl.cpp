@@ -105,7 +105,7 @@ namespace iroha {
                                  [](const auto &tx) { return tx.hash(); });
                 },
                 // on complete
-                [this]() {
+                [this] {
                   if (current_txs_hashes.empty()) {
                     log_->info("there are no transactions to be committed");
                   } else {
@@ -119,7 +119,6 @@ namespace iroha {
                                                    .build());
                     }
                   }
-                  current_txs_hashes.clear();
                 });
           });
 
