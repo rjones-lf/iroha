@@ -23,7 +23,6 @@
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
-#include "ametsuchi/wsv_command.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "model/sha3_hash.hpp"
 
@@ -47,7 +46,7 @@ namespace iroha {
     bool MutableStorageImpl::check(
         const shared_model::interface::BlockVariant &block,
         MutableStorage::MutableStoragePredicateType<decltype(block)>
-            predicate) {
+        predicate) {
       return predicate(block, *wsv_, top_hash_);
     }
 
@@ -57,6 +56,7 @@ namespace iroha {
             function) {
       auto execute_transaction = [this](auto &transaction) {
         command_executor_->setCreatorAccountId(transaction.creatorAccountId());
+        command_executor_->doValidation(false);
         auto execute_command = [this](auto &command) {
           auto result = boost::apply_visitor(*command_executor_, command.get());
           return result.match([](expected::Value<void> &v) { return true; },
