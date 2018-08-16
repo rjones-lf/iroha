@@ -396,7 +396,7 @@ namespace iroha {
             SELECT CASE
                 WHEN EXISTS (SELECT * FROM inserted) THEN 0
                 %s
-                ELSE 5
+                ELSE 4
             END AS result)");
       if (do_validation_) {
         cmd =
@@ -407,9 +407,7 @@ namespace iroha {
                 SELECT permission FROM role_has_permissions
                 WHERE role_id = :role_id
             ),
-            role_has_any_permission AS (
-                SELECT permission <> '0'::bit(%2%) FROM role_permissions
-            ),
+
             account_roles AS (
                 SELECT role_id FROM account_has_roles WHERE account_id = :creator_id
             ),
@@ -426,14 +424,14 @@ namespace iroha {
                         Role::kAppendRole)
                     % std::to_string(bits))
                     .str()
-                % R"( WHERE (SELECT * FROM role_has_any_permission) AND
+                % R"( WHERE
                     EXISTS (SELECT * FROM account_roles) AND
                     (SELECT * FROM account_has_role_permissions)
                     AND (SELECT * FROM has_perm))"
-                % R"( WHEN NOT (SELECT * FROM role_has_any_permission) THEN 1
-                WHEN NOT EXISTS (SELECT * FROM account_roles) THEN 2
-                WHEN NOT (SELECT * FROM account_has_role_permissions) THEN 3
-                WHEN NOT (SELECT * FROM has_perm) THEN 4)");
+                % R"(
+                WHEN NOT EXISTS (SELECT * FROM account_roles) THEN 1
+                WHEN NOT (SELECT * FROM account_has_role_permissions) THEN 2
+                WHEN NOT (SELECT * FROM has_perm) THEN 3)");
       } else {
         cmd =
             (cmd
@@ -447,12 +445,6 @@ namespace iroha {
       st.exchange(soci::use(creator_account_id_, "creator_id"));
       st.exchange(soci::use(creator_account_id_, "role_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return (boost::format("is valid command validation failed: no "
-                                  "permissions in role %s")
-                    % command.roleName())
-                .str();
-          },
           [&] {
             return (boost::format("is valid command validation failed: no "
                                   "roles in account %s")

@@ -142,10 +142,13 @@ namespace integration_framework {
     /**
      * Check current status of transaction
      * @param hash - hash of transaction to check
-     * @return TransactonResponse object
+     * @param validation - callback that receives transaction response
+     * @return this
      */
-    shared_model::proto::TransactionResponse getTxStatus(
-        const shared_model::crypto::Hash &hash);
+    IntegrationTestFramework &getTxStatus(
+        const shared_model::crypto::Hash &hash,
+        std::function<void(const shared_model::proto::TransactionResponse &)>
+            validation);
 
     /**
      * Send query to Iroha and validate the response
