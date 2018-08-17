@@ -19,6 +19,7 @@ AcceptanceFixture::AcceptanceFixture()
       kUserId(
           kUser + "@"
           + integration_framework::IntegrationTestFramework::kDefaultDomain),
+      kAdminId(integration_framework::IntegrationTestFramework::kAdminId),
       kAdminKeypair(
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()),
       kUserKeypair(

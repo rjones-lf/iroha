@@ -139,6 +139,7 @@ class AcceptanceFixture : public ::testing::Test {
   const std::string kDomain;
   const std::string kAssetId;
   const std::string kUserId;
+  const std::string kAdminId;
   const shared_model::crypto::Keypair kAdminKeypair;
   const shared_model::crypto::Keypair kUserKeypair;
 
