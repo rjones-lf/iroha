@@ -16,12 +16,10 @@ using namespace iroha;
 class StorageTestCompleter : public DefaultCompleter {
  public:
   bool operator()(const DataType &batch, const TimeType &time) const override {
-    for (const auto &tx : batch->transactions()) {
-      if (tx->createdTime() < time) {
-        return true;
-      }
-    }
-    return false;
+    return std::all_of(
+        batch->transactions().begin(),
+        batch->transactions().end(),
+        [&time](const auto &tx) { return tx->createdTime() < time; });
   }
 };
 

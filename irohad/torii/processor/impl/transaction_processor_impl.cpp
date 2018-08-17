@@ -146,7 +146,9 @@ namespace iroha {
       } else {
         // TODO: 07/08/2018 @muratovv rework interface of pcs::propagate batch
         // and mst::propagate batch IR-1584
-        mst_processor_->propagateBatch(std::make_shared<shared_model::interface::TransactionBatch>(transaction_batch));
+        mst_processor_->propagateBatch(
+            std::make_shared<shared_model::interface::TransactionBatch>(
+                transaction_batch));
       }
     }
 
