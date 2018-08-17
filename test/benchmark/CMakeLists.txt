@@ -22,6 +22,8 @@ target_include_directories(bm_proto_creation PUBLIC
 
 target_link_libraries(bm_proto_creation
     benchmark
+    gtest::gtest
+    gmock::gmock
     shared_model_proto_backend
     )
 
@@ -32,5 +34,6 @@ add_executable(bm_query
 target_link_libraries(bm_query
     benchmark
     gtest::gtest
+    gmock::gmock
     integration_framework
     )
