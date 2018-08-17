@@ -96,7 +96,7 @@ namespace iroha {
             current_txs_hashes;
         sync_event.synced_blocks.subscribe(
             // on next
-            [this](auto model_block) {
+            [&current_txs_hashes](auto model_block) {
               current_txs_hashes.reserve(model_block->transactions().size());
               std::transform(model_block->transactions().begin(),
                              model_block->transactions().end(),
@@ -104,7 +104,7 @@ namespace iroha {
                              [](const auto &tx) { return tx.hash(); });
             },
             // on complete
-            [this] {
+            [this, &current_txs_hashes] {
               if (current_txs_hashes.empty()) {
                 log_->info("there are no transactions to be committed");
               } else {
