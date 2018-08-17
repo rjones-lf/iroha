@@ -56,6 +56,12 @@ namespace iroha {
     return emitent.subscribe_on(rxcpp::observe_on_new_thread());
   }
 
+  GossipPropagationStrategy::~GossipPropagationStrategy() {
+    // Make sure that emitent callback have finish and haven't started yet
+    std::lock_guard<std::mutex> lock(m);
+    peer_factory.reset();
+  }
+
   bool GossipPropagationStrategy::initQueue() {
     return peer_factory->createPeerQuery() | [](const auto &query) {
       return query->getLedgerPeers();
@@ -76,7 +82,8 @@ namespace iroha {
   }
 
   OptPeer GossipPropagationStrategy::visit() {
-    if (non_visited.empty() and not initQueue()) {
+    std::lock_guard<std::mutex> lock(m);
+    if (not peer_factory or (non_visited.empty() and not initQueue())) {
       // either PeerProvider doesn't gives peers / dtor have been called
       return {};
     }

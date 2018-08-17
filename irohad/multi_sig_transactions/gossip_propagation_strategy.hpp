@@ -48,6 +48,8 @@ namespace iroha {
                               std::chrono::milliseconds period,
                               uint32_t amount);
 
+    ~GossipPropagationStrategy();
+
     // ------------------| PropagationStrategy override |------------------
 
     rxcpp::observable<PropagationData> emitter() override;
