@@ -13,10 +13,14 @@
 namespace iroha {
   namespace ametsuchi {
 
-    PostgresBlockQuery::PostgresBlockQuery(soci::session &sql,
-                                           KeyValueStorage &file_store)
+    PostgresBlockQuery::PostgresBlockQuery(
+        soci::session &sql,
+        KeyValueStorage &file_store,
+        std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
+            converter)
         : sql_(sql),
           block_store_(file_store),
+          converter_(std::move(converter)),
           log_(logger::log("PostgresBlockQuery")) {}
 
     std::vector<BlockQuery::wBlock> PostgresBlockQuery::getBlocks(
@@ -29,13 +33,22 @@ namespace iroha {
         return result;
       }
       for (auto i = height; i <= to; i++) {
-        block_store_.get(i) | [](const auto &bytes) {
-          return shared_model::converters::protobuf::jsonToModel<
-              shared_model::proto::Block>(bytesToString(bytes));
-        } | [&result](auto &&block) {
-          result.push_back(
-              std::make_shared<shared_model::proto::Block>(std::move(block)));
-        };
+        block_store_.get(i) | [this](const auto &bytes) {
+          auto result = converter_->deserialize(bytesToString(bytes));
+          return result.match(
+              [](expected::Value<
+                  std::unique_ptr<shared_model::interface::Block>> &v)
+                  -> boost::optional<
+                      std::unique_ptr<shared_model::interface::Block>> {
+                return std::move(v.value);
+              },
+              [this](const expected::Error<std::string> &e)
+                  -> boost::optional<
+                      std::unique_ptr<shared_model::interface::Block>> {
+                log_->error("Failed to deserialize json block: {}", e.error);
+                return boost::none;
+              });
+        } | [&result](auto &&block) { result.emplace_back(std::move(block)); };
       }
       return result;
     }

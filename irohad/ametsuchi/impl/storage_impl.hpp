@@ -17,6 +17,7 @@
 #include "ametsuchi/impl/postgres_options.hpp"
 #include "ametsuchi/key_value_storage.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
+#include "interfaces/iroha_internal/block_json_deserializer.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -48,7 +49,9 @@ namespace iroha {
           std::string block_store_dir,
           std::string postgres_connection,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory_);
+              factory_,
+          std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
+              converter);
 
       expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
       createTemporaryWsv() override;
@@ -86,12 +89,15 @@ namespace iroha {
       on_commit() override;
 
      protected:
-      StorageImpl(std::string block_store_dir,
-                  PostgresOptions postgres_options,
-                  std::unique_ptr<KeyValueStorage> block_store,
-                  std::shared_ptr<soci::connection_pool> connection,
-                  std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-                      factory);
+      StorageImpl(
+          std::string block_store_dir,
+          PostgresOptions postgres_options,
+          std::unique_ptr<KeyValueStorage> block_store,
+          std::shared_ptr<soci::connection_pool> connection,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory,
+          std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
+              converter);
 
       /**
        * Folder with raw blocks
@@ -110,6 +116,9 @@ namespace iroha {
 
       rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
           notifier_;
+
+      std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
+          converter_;
 
       logger::Logger log_;
 
