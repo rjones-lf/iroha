@@ -24,17 +24,17 @@
 
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/peer_query.hpp"
+#include "backend/protobuf/proto_block_factory.hpp"
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
-#include "validators/default_validator.hpp"
 
 namespace iroha {
   namespace network {
     class BlockLoaderImpl : public BlockLoader {
      public:
-      BlockLoaderImpl(
-          std::shared_ptr<ametsuchi::PeerQuery> peer_query,
-          std::shared_ptr<ametsuchi::BlockQuery> block_query);
+      BlockLoaderImpl(std::shared_ptr<ametsuchi::PeerQuery> peer_query,
+                      std::shared_ptr<ametsuchi::BlockQuery> block_query,
+                      shared_model::proto::ProtoBlockFactory factory);
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlocks(
@@ -66,6 +66,7 @@ namespace iroha {
           peer_connections_;
       std::shared_ptr<ametsuchi::PeerQuery> peer_query_;
       std::shared_ptr<ametsuchi::BlockQuery> block_query_;
+      shared_model::proto::ProtoBlockFactory block_factory_;
 
       logger::Logger log_;
     };

@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 
 #include "builders/common_objects/peer_builder.hpp"
+#include "builders/protobuf/builder_templates/transaction_template.hpp"
 #include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
@@ -39,6 +40,7 @@ using namespace iroha::network;
 using namespace iroha::ametsuchi;
 using namespace framework::test_subscriber;
 using namespace shared_model::crypto;
+using namespace shared_model::validation;
 
 using testing::_;
 using testing::A;
@@ -53,7 +55,12 @@ class BlockLoaderTest : public testing::Test {
     peer_query = std::make_shared<MockPeerQuery>();
     storage = std::make_shared<MockBlockQuery>();
     block_cache = std::make_shared<iroha::consensus::ConsensusResultCache>();
-    loader = std::make_shared<BlockLoaderImpl>(peer_query, storage);
+    auto validator_ptr = std::make_unique<MockBlockValidator>();
+    validator = validator_ptr.get();
+    loader = std::make_shared<BlockLoaderImpl>(
+        peer_query,
+        storage,
+        shared_model::proto::ProtoBlockFactory(std::move(validator_ptr)));
     service = std::make_shared<BlockLoaderService>(storage, block_cache);
 
     grpc::ServerBuilder builder;
@@ -96,8 +103,8 @@ class BlockLoaderTest : public testing::Test {
                    shared_model::proto::Block>>()
         .height(1)
         .prevHash(kPrevHash)
-        .transactions(std::vector<shared_model::proto::Transaction>{tx})
-        .createdTime(iroha::time::now());
+        .createdTime(iroha::time::now())
+        .transactions(std::vector<decltype(tx)>{tx});
   }
 
   // wrap block, so it could be inserted into consensus cache
@@ -120,6 +127,7 @@ class BlockLoaderTest : public testing::Test {
   std::shared_ptr<BlockLoaderService> service;
   std::unique_ptr<grpc::Server> server;
   std::shared_ptr<iroha::consensus::ConsensusResultCache> block_cache;
+  MockBlockValidator *validator;
 };
 
 /**
@@ -130,6 +138,7 @@ class BlockLoaderTest : public testing::Test {
 TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
   // Current block height 1 => Other block height 1 => no blocks received
   auto block = getBaseBlockBuilder().build().signAndAddSignature(key).finish();
+  auto variant = shared_model::interface::BlockVariant(wBlock(clone(block)));
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
@@ -230,12 +239,13 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
  */
 TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   // Request existing block => success
-  auto requested = std::make_shared<shared_model::proto::Block>(
-      getBaseBlockBuilder().build().signAndAddSignature(key).finish());
-  block_cache->insert(wrapBlock(requested));
+  auto requested = wrapBlock(std::make_shared<shared_model::proto::Block>(
+      getBaseBlockBuilder().build().signAndAddSignature(key).finish()));
+  block_cache->insert(requested);
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
+  EXPECT_CALL(*validator, validate(*requested)).WillOnce(Return(Answer{}));
   EXPECT_CALL(*storage, getBlocksFrom(_)).Times(0);
   auto block_variant = loader->retrieveBlock(peer_key, requested->hash());
 
@@ -245,7 +255,7 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
         framework::SpecifiedVisitor<
             std::shared_ptr<shared_model::interface::Block>>(),
         *block_variant);
-    ASSERT_EQ(*requested, *unwrapped_block);
+    ASSERT_EQ(*requested, unwrapped_block);
   });
 }
 

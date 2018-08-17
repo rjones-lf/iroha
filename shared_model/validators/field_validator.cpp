@@ -377,5 +377,12 @@ namespace shared_model {
             (boost::format("Hash has invalid size: %d") % hash.size()).str());
       }
     }
+
+    void FieldValidator::setTime(
+        shared_model::interface::types::TimestampType time) const {
+      time_provider_ = [time]{
+        return time;
+      };
+    }
   }  // namespace validation
 }  // namespace shared_model

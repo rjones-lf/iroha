@@ -76,7 +76,7 @@ TEST_F(AcceptanceFixture, CanNotGetRoles) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms({}))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .sendQuery(query, checkQuery);
 }
