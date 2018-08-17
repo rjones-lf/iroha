@@ -12,8 +12,8 @@
 #include <unordered_set>
 
 #include <rxcpp/rx.hpp>
-#include "pending_txs_storage/pending_txs_storage.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "pending_txs_storage/pending_txs_storage.hpp"
 
 namespace iroha {
 
@@ -31,23 +31,21 @@ namespace iroha {
     using StateObservable = rxcpp::observable<SharedState>;
     using BatchObservable = rxcpp::observable<SharedBatch>;
 
-    PendingTransactionStorageImpl(StateObservable updatedBatches,
-                                  BatchObservable preparedBatch,
-                                  BatchObservable expiredBatch);
+    PendingTransactionStorageImpl(StateObservable updated_batches,
+                                  BatchObservable prepared_batch,
+                                  BatchObservable expired_batch);
 
     ~PendingTransactionStorageImpl() override;
 
     SharedTxsCollectionType getPendingTransactions(
-        const AccountIdType &accountId) const override;
+        const AccountIdType &account_id) const override;
 
    private:
-    void updatedBatchesHandler(const SharedState &updatedBatches);
-    void preparedBatchHandler(const SharedBatch &preparedBatch);
-    void expiredBatchHandler(const SharedBatch &expiredBatch);
+    void updatedBatchesHandler(const SharedState &updated_batches);
 
     void removeBatch(const SharedBatch &batch);
 
-    std::set<AccountIdType> batchCreators(const TransactionBatch &batch) const;
+    static std::set<AccountIdType> batchCreators(const TransactionBatch &batch);
 
     /**
      * Subscriptions on MST events
@@ -61,6 +59,15 @@ namespace iroha {
      */
     mutable std::shared_timed_mutex mutex_;
 
+    /**
+     * Storage is composed of two maps:
+     * Indices map contains relations of accounts and batch hashes. For each
+     * account there are listed hashes of batches, where the account has created
+     * at least one transaction.
+     *
+     * Batches map is used for storing and fast access to batches via batch
+     * hashes.
+     */
     struct {
       std::unordered_map<AccountIdType,
                          std::unordered_set<HashType, HashType::Hasher>>

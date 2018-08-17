@@ -10,20 +10,20 @@
 namespace iroha {
 
   PendingTransactionStorageImpl::PendingTransactionStorageImpl(
-      StateObservable updatedBatches,
-      BatchObservable preparedBatch,
-      BatchObservable expiredBatch) {
+      StateObservable updated_batches,
+      BatchObservable prepared_batch,
+      BatchObservable expired_batch) {
     updated_batches_subscription_ =
-        updatedBatches.subscribe([this](const SharedState &updatedBatches) {
-          this->updatedBatchesHandler(updatedBatches);
+        updated_batches.subscribe([this](const SharedState &batches) {
+          this->updatedBatchesHandler(batches);
         });
     prepared_batch_subscription_ =
-        preparedBatch.subscribe([this](const SharedBatch &preparedBatch) {
-          this->preparedBatchHandler(preparedBatch);
+        prepared_batch.subscribe([this](const SharedBatch &preparedBatch) {
+          this->removeBatch(preparedBatch);
         });
     expired_batch_subscription_ =
-        expiredBatch.subscribe([this](const SharedBatch &expiredBatch) {
-          this->expiredBatchHandler(expiredBatch);
+        expired_batch.subscribe([this](const SharedBatch &expiredBatch) {
+          this->removeBatch(expiredBatch);
         });
   }
 
@@ -35,9 +35,9 @@ namespace iroha {
 
   PendingTransactionStorageImpl::SharedTxsCollectionType
   PendingTransactionStorageImpl::getPendingTransactions(
-      const AccountIdType &accountId) const {
+      const AccountIdType &account_id) const {
     std::shared_lock<std::shared_timed_mutex> lock(mutex_);
-    auto creator_it = storage_.index.find(accountId);
+    auto creator_it = storage_.index.find(account_id);
     if (storage_.index.end() != creator_it) {
       auto &batch_hashes = creator_it->second;
       SharedTxsCollectionType result;
@@ -55,8 +55,7 @@ namespace iroha {
   }
 
   std::set<PendingTransactionStorageImpl::AccountIdType>
-  PendingTransactionStorageImpl::batchCreators(
-      const TransactionBatch &batch) const {
+  PendingTransactionStorageImpl::batchCreators(const TransactionBatch &batch) {
     std::set<AccountIdType> creators;
     for (const auto &transaction : batch.transactions()) {
       creators.insert(transaction->creatorAccountId());
@@ -65,9 +64,9 @@ namespace iroha {
   }
 
   void PendingTransactionStorageImpl::updatedBatchesHandler(
-      const SharedState &updatedBatches) {
+      const SharedState &updated_batches) {
     std::unique_lock<std::shared_timed_mutex> lock(mutex_);
-    for (auto &batch : updatedBatches->getBatches()) {
+    for (auto &batch : updated_batches->getBatches()) {
       auto hash = batch->reducedHash();
       auto it = storage_.batches.find(hash);
       if (storage_.batches.end() == it) {
@@ -79,35 +78,23 @@ namespace iroha {
     }
   }
 
-  void PendingTransactionStorageImpl::preparedBatchHandler(
-      const SharedBatch &preparedBatch) {
-    removeBatch(preparedBatch);
-  }
-
-  void PendingTransactionStorageImpl::expiredBatchHandler(
-      const SharedBatch &expiredBatch) {
-    removeBatch(expiredBatch);
-  }
-
   void PendingTransactionStorageImpl::removeBatch(const SharedBatch &batch) {
     auto creators = batchCreators(*batch);
     auto hash = batch->reducedHash();
-    {
-      std::unique_lock<std::shared_timed_mutex> lock(mutex_);
-      auto &batches = storage_.batches;
-      auto batch_it = batches.find(hash);
-      if (batches.end() != batch_it) {
-        batches.erase(batch_it);
-      }
-      for (const auto &creator : creators) {
-        auto &index = storage_.index;
-        auto index_it = index.find(creator);
-        if (index.end() != index_it) {
-          auto &creator_set = index_it->second;
-          auto creator_it = creator_set.find(hash);
-          if (creator_set.end() != creator_it) {
-            creator_set.erase(creator_it);
-          }
+    std::unique_lock<std::shared_timed_mutex> lock(mutex_);
+    auto &batches = storage_.batches;
+    auto batch_it = batches.find(hash);
+    if (batches.end() != batch_it) {
+      batches.erase(batch_it);
+    }
+    for (const auto &creator : creators) {
+      auto &index = storage_.index;
+      auto index_it = index.find(creator);
+      if (index.end() != index_it) {
+        auto &creator_set = index_it->second;
+        auto creator_it = creator_set.find(hash);
+        if (creator_set.end() != creator_it) {
+          creator_set.erase(creator_it);
         }
       }
     }

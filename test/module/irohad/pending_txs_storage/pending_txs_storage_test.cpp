@@ -3,10 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
 #include <rxcpp/rx.hpp>
 #include "module/irohad/pending_txs_storage/pending_txs_storage_fixture.hpp"
+#include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
 
+/**
+ * Test that check that fixture common preparation procedures can be done
+ * successfully.
+ * @given empty MST state
+ * @when two mst transactions generated as batch
+ * @then the transactions can be added to MST state successfully
+ */
 TEST_F(PendingTxsStorageFixture, FixutureSelfCheck) {
   auto state = std::make_shared<iroha::MstState>(iroha::MstState::empty());
   auto transactions =

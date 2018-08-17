@@ -19,12 +19,12 @@ namespace iroha {
    public:
     /**
      * Get all the pending transactions associated with request originator
-     * @param accountId - query creator
+     * @param account_id - query creator
      * @return collection of interface::Transaction objects
      */
     virtual shared_model::interface::types::SharedTxsCollectionType
     getPendingTransactions(const shared_model::interface::types::AccountIdType
-                               &accountId) const = 0;
+                               &account_id) const = 0;
 
     virtual ~PendingTransactionStorage() = default;
   };

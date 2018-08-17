@@ -4,13 +4,10 @@
 #
 
 add_library(pending_txs_storage
-        impl/pending_txs_storage_impl.cpp
+    impl/pending_txs_storage_impl.cpp
     )
 
 target_link_libraries(pending_txs_storage
     mst_state
-    ## todo remove schema target, igor-egorov, IR-1512
-    ## schema is included due to a dependency bug in shared_model_interfaces
-    schema
     shared_model_interfaces
     )
