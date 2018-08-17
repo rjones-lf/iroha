@@ -5,7 +5,7 @@
 
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "builders/protobuf/unsigned_proto.hpp
+#include "builders/protobuf/unsigned_proto.hpp"
 #include "cryptography/keypair.hpp"
 
 namespace shared_model {
