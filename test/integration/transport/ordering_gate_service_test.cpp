@@ -191,7 +191,7 @@ class OrderingGateServiceTest : public ::testing::Test {
   /// Peer Communication Service and commit subject are required to emulate
   /// commits for Ordering Service
   std::shared_ptr<MockPeerCommunicationService> pcs_;
-  rxcpp::subjects::subject<SynchronizationOutcomeType> commit_subject_;
+  rxcpp::subjects::subject<SynchronizationEvent> commit_subject_;
   rxcpp::subjects::subject<OrderingServiceImpl::TimeoutType> proposal_timeout;
 
   std::condition_variable cv;
