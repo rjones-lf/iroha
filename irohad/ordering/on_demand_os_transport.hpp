@@ -97,6 +97,7 @@ namespace iroha {
        public:
         /**
          * Create corresponding OdOsNotification interface for peer
+         * Returned pointer is guaranteed to be not equal to nullptr
          * @param peer - peer to connect
          * @return connection represented with OdOsNotification interface
          */

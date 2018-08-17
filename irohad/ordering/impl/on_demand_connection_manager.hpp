@@ -20,16 +20,30 @@ namespace iroha {
      */
     class OnDemandConnectionManager : public transport::OdOsNotification {
      public:
+      /**
+       * Current peers to send transactions and request proposals
+       * Transactions are sent to two ordering services:
+       * current and previous consumers
+       * Proposal is requested from current ordering service: issuer
+       */
       struct CurrentPeers {
         std::shared_ptr<shared_model::interface::Peer> issuer, current_consumer,
             previous_consumer;
       };
 
+      /**
+       * Corresponding connections created by OdOsNotificationFactory
+       * @see CurrentPeers for individual descriptions
+       */
+      struct CurrentConnections {
+        std::unique_ptr<transport::OdOsNotification> issuer, current_consumer,
+            previous_consumer;
+      };
+
       OnDemandConnectionManager(
           std::shared_ptr<transport::OdOsNotificationFactory> factory,
+          CurrentPeers initial_peers,
           rxcpp::observable<CurrentPeers> peers);
-
-      // OdOsNotification
 
       void onTransactions(CollectionType transactions) override;
 
@@ -40,8 +54,7 @@ namespace iroha {
       std::shared_ptr<transport::OdOsNotificationFactory> factory_;
       rxcpp::composite_subscription subscription_;
 
-      std::unique_ptr<transport::OdOsNotification> issuer_, current_consumer_,
-          previous_consumer_;
+      CurrentConnections connections_;
 
       std::shared_timed_mutex mutex_;
     };
