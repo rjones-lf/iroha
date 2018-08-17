@@ -19,6 +19,7 @@
 #define IROHA_UNSIGNED_PROTO_HPP
 
 #include "backend/protobuf/common_objects/signature.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/keypair.hpp"
 #include "interfaces/common_objects/types.hpp"
@@ -102,7 +103,7 @@ namespace shared_model {
       typename std::enable_if<
           std::is_base_of<shared_model::interface::Transaction, U>::value,
           interface::types::HashType>::type
-      reducedHash() {
+      reducedHash() const {
         return object_.reducedHash();
       }
 

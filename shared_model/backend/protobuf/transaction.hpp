@@ -29,6 +29,7 @@
 
 namespace shared_model {
   namespace proto {
+    using HashProvider = shared_model::crypto::Sha3_256;
     class Transaction FINAL : public CopyableProto<interface::Transaction,
                                                    iroha::protocol::Transaction,
                                                    Transaction> {
@@ -66,6 +67,13 @@ namespace shared_model {
         return *signatures_;
       }
 
+      const interface::types::HashType &reducedHash() const override {
+        if (reduced_hash_ == boost::none) {
+          reduced_hash_.emplace(HashProvider::makeHash(reducedPayload()));
+        }
+        return *reduced_hash_;
+      }
+
       bool addSignature(const crypto::Signed &signed_blob,
                         const crypto::PublicKey &public_key) override {
         // if already has such signature
@@ -100,6 +108,7 @@ namespace shared_model {
       }
 
      private:
+      mutable boost::optional<interface::types::HashType> reduced_hash_;
       // lazy
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;

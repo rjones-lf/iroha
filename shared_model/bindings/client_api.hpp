@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "backend/protobuf/transaction.hpp"
+#include "interfaces/common_objects/types.hpp"
+#include "builders/protobuf/unsigned_proto.hpp
 #include "cryptography/keypair.hpp"
 
 namespace shared_model {
@@ -52,5 +55,15 @@ namespace shared_model {
      * @return hash of the blob
      */
     Blob hashQuery(const Blob &);
+
+    /**
+     * Get reduced hash of unsigned transaction
+     * @param utx to get hash from
+     * @return reduced hash
+     */
+    interface::types::HashType utxReducedHash(
+        const shared_model::proto::UnsignedWrapper<
+            shared_model::proto::Transaction> &);
+
   }  // namespace bindings
 }  // namespace shared_model
