@@ -177,12 +177,16 @@ namespace grantables {
     IntegrationTestFramework &prepare(GrantablePermissionsFixture &f,
                                       IntegrationTestFramework &itf) override {
       auto account_id = f.kAccount1 + "@" + f.kDomain;
+      auto pkey =
+          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
+              .publicKey();
       auto add_signatory_tx =
           GrantablePermissionsFixture::TxBuilder()
               .createdTime(f.getUniqueTime())
               .creatorAccountId(account_id)
               .quorum(1)
               .addSignatory(account_id, f.kAccount2Keypair.publicKey())
+              .addSignatory(account_id, pkey)
               .build()
               .signAndAddSignature(f.kAccount1Keypair)
               .finish();
@@ -339,16 +343,14 @@ namespace grantables {
         })
         .checkBlock(
             [](auto &block) { EXPECT_EQ(block->transactions().size(), 0); })
-        .getTxStatus(
-            last_check_tx.hash(),
-            [](auto &status) {
-              auto message = status.errorMessage();
+        .getTxStatus(last_check_tx.hash(),
+                     [](auto &status) {
+                       auto message = status.errorMessage();
 
-              ASSERT_NE(
-                  message.find("has permission command validation failed"),
-                  std::string::npos)
-                  << "Fail reason: " << message;
-            })
+                       ASSERT_NE(message.find("does not have permission"),
+                                 std::string::npos)
+                           << "Fail reason: " << message;
+                     })
         .done();
   }
 
