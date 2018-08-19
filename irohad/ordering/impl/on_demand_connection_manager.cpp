@@ -14,16 +14,15 @@ OnDemandConnectionManager::OnDemandConnectionManager(
     CurrentPeers initial_peers,
     rxcpp::observable<CurrentPeers> peers)
     : factory_(std::move(factory)),
-      subscription_(peers.start_with(initial_peers).subscribe([&](auto peers) {
+      subscription_(peers.subscribe([this](const auto &peers) {
         // exclusive lock
         std::lock_guard<std::shared_timed_mutex> lock(mutex_);
 
-        connections_.issuer = factory_->create(*peers.issuer);
-        connections_.current_consumer =
-            factory_->create(*peers.current_consumer);
-        connections_.previous_consumer =
-            factory_->create(*peers.previous_consumer);
-      })) {}
+        this->initializeConnections(peers);
+      })) {
+  // using start_with(initial_peers) results in deadlock
+  initializeConnections(initial_peers);
+}
 
 void OnDemandConnectionManager::onTransactions(CollectionType transactions) {
   // shared lock
@@ -39,4 +38,15 @@ OnDemandConnectionManager::onRequestProposal(transport::RoundType round) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
   return connections_.issuer->onRequestProposal(round);
+}
+
+void OnDemandConnectionManager::initializeConnections(
+    const CurrentPeers &peers) {
+  auto create_assign = [this](auto &ptr, auto &peer) {
+    ptr = factory_->create(*peer);
+  };
+
+  create_assign(connections_.issuer, peers.issuer);
+  create_assign(connections_.current_consumer, peers.current_consumer);
+  create_assign(connections_.previous_consumer, peers.previous_consumer);
 }

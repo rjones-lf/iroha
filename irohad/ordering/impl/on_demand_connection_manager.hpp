@@ -51,6 +51,12 @@ namespace iroha {
           transport::RoundType round) override;
 
      private:
+      /**
+       * Initialize corresponding peers in connections_ using factory_
+       * @param peers to initialize connections with
+       */
+      void initializeConnections(const CurrentPeers &peers);
+
       std::shared_ptr<transport::OdOsNotificationFactory> factory_;
       rxcpp::composite_subscription subscription_;
 
