@@ -36,7 +36,8 @@ class AcceptanceFixture : public ::testing::Test {
    * @return pre-built transaction
    */
   TestUnsignedTransactionBuilder createUser(
-      const std::string &user, const shared_model::crypto::PublicKey &key);
+      const shared_model::interface::types::AccountNameType &user,
+      const shared_model::crypto::PublicKey &key);
 
   /**
    * Creates a set of transactions for user creation with specified permissions
@@ -47,9 +48,9 @@ class AcceptanceFixture : public ::testing::Test {
    * @return pre-build transaction
    */
   TestUnsignedTransactionBuilder createUserWithPerms(
-      const std::string &user,
+      const shared_model::interface::types::AccountNameType &user,
       const shared_model::crypto::PublicKey &key,
-      const std::string &role_id,
+      const shared_model::interface::types::RoleIdType &role_id,
       const shared_model::interface::RolePermissionSet &perms);
 
   /**
@@ -59,7 +60,7 @@ class AcceptanceFixture : public ::testing::Test {
    * @return built tx and a hash of its payload
    */
   shared_model::proto::Transaction makeUserWithPerms(
-      const std::string &role_name,
+      const shared_model::interface::types::RoleIdType &role_name,
       const shared_model::interface::RolePermissionSet &perms);
 
   /**
@@ -134,12 +135,12 @@ class AcceptanceFixture : public ::testing::Test {
    */
   iroha::time::time_t getUniqueTime();
 
-  const std::string kUser;
-  const std::string kRole;
-  const std::string kDomain;
-  const std::string kAssetId;
-  const std::string kUserId;
-  const std::string kAdminId;
+  const shared_model::interface::types::AccountNameType kUser;
+  const shared_model::interface::types::RoleIdType kRole;
+  const shared_model::interface::types::DomainIdType kDomain;
+  const shared_model::interface::types::AssetIdType kAssetId;
+  const shared_model::interface::types::AccountIdType kUserId;
+  const shared_model::interface::types::AccountIdType kAdminId;
   const shared_model::crypto::Keypair kAdminKeypair;
   const shared_model::crypto::Keypair kUserKeypair;
 

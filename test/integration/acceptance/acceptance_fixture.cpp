@@ -34,7 +34,8 @@ AcceptanceFixture::AcceptanceFixture()
       nonce_counter(0) {}
 
 TestUnsignedTransactionBuilder AcceptanceFixture::createUser(
-    const std::string &user, const shared_model::crypto::PublicKey &key) {
+    const shared_model::interface::types::AccountNameType &user,
+    const shared_model::crypto::PublicKey &key) {
   return TestUnsignedTransactionBuilder()
       .createAccount(
           user,
@@ -47,9 +48,9 @@ TestUnsignedTransactionBuilder AcceptanceFixture::createUser(
 }
 
 TestUnsignedTransactionBuilder AcceptanceFixture::createUserWithPerms(
-    const std::string &user,
+    const shared_model::interface::types::AccountNameType &user,
     const shared_model::crypto::PublicKey &key,
-    const std::string &role_id,
+    const shared_model::interface::types::RoleIdType &role_id,
     const shared_model::interface::RolePermissionSet &perms) {
   const auto user_id = user + "@"
       + integration_framework::IntegrationTestFramework::kDefaultDomain;
@@ -61,7 +62,7 @@ TestUnsignedTransactionBuilder AcceptanceFixture::createUserWithPerms(
 }
 
 shared_model::proto::Transaction AcceptanceFixture::makeUserWithPerms(
-    const std::string &role_name,
+    const shared_model::interface::types::RoleIdType &role_name,
     const shared_model::interface::RolePermissionSet &perms) {
   return createUserWithPerms(kUser, kUserKeypair.publicKey(), role_name, perms)
       .build()
