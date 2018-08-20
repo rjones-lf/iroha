@@ -29,7 +29,6 @@
 
 namespace shared_model {
   namespace proto {
-    using HashProvider = shared_model::crypto::Sha3_256;
     class Transaction FINAL : public CopyableProto<interface::Transaction,
                                                    iroha::protocol::Transaction,
                                                    Transaction> {
@@ -108,6 +107,7 @@ namespace shared_model {
       }
 
      private:
+      using HashProvider = shared_model::crypto::Sha3_256;
       mutable boost::optional<interface::types::HashType> reduced_hash_;
       // lazy
       template <typename T>
