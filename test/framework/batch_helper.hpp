@@ -169,6 +169,11 @@ namespace framework {
       return createUnsignedBatchTransactions(batch_type, creators, now);
     }
 
+    /**
+     * Create batch of expected size
+     * @param size - number of transactions in batch
+     * @return valid batch
+     */
     auto createValidBatch(const size_t &size) {
       using namespace shared_model::validation;
       using TxValidator =
@@ -195,6 +200,11 @@ namespace framework {
       return framework::expected::val(result_batch).value().value;
     }
 
+    /**
+     * Wrap a transaction with batch
+     * @param tx - interested transaction
+     * @return created batch or throw std::runtime_error
+     */
     inline auto createBatchFromSingleTransaction(
         std::shared_ptr<shared_model::interface::Transaction> tx) {
       return shared_model::interface::TransactionBatch::createTransactionBatch(

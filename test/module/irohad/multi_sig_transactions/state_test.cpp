@@ -113,8 +113,10 @@ TEST(StateTest, DifferentSignaturesUnionTest) {
 
 /**
  * @given two empty states
- * @when insert
- * @then
+ * @when insert transaction with quorum 2 to one state
+ * AND insert same transaction with another signature to second state
+ * AND merge states
+ * @then check that merged state contains both signatures
  */
 TEST(StateTest, UnionStateWhenSameTransactionHaveDifferentSignatures) {
   log_->info(
@@ -195,9 +197,12 @@ TEST(StateTest, DifferenceTest) {
   ASSERT_EQ(1, diff.getBatches().size());
 }
 
+/**
+ * @given empty state
+ * @when insert transaction with quorum 3, 3 times
+ * @then check that transaction is compelete
+ */
 TEST(StateTest, UpdateTxUntillQuorum) {
-  log_->info("Update transaction signature until quorum happens");
-
   auto quorum = 3u;
   auto time = iroha::time::now();
 
@@ -252,6 +257,10 @@ TEST(StateTest, UpdateStateWithNewStateUntilQuorum) {
   ASSERT_EQ(1, state1.getBatches().size());
 }
 
+/**
+ * Tests expired completer, which checks that all transactions in batch are not
+ * expired
+ */
 class TimeTestCompleter : public iroha::DefaultCompleter {
   bool operator()(const DataType &batch, const TimeType &time) const override {
     return std::all_of(
