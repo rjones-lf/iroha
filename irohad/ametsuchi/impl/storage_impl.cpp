@@ -34,8 +34,7 @@ namespace iroha {
         std::unique_ptr<KeyValueStorage> block_store,
         std::shared_ptr<soci::connection_pool> connection,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
-        std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
-        converter)
+        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
@@ -231,10 +230,9 @@ WHERE pg_stat_activity.datname = :dbname
     StorageImpl::create(
         std::string block_store_dir,
         std::string postgres_options,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-            factory,
-        std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
-        converter) {
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        std::shared_ptr<shared_model::interface::BlockJsonConverter>
+            converter) {
       boost::optional<std::string> string_res = boost::none;
 
       PostgresOptions options(postgres_options);
@@ -278,12 +276,15 @@ WHERE pg_stat_activity.datname = :dbname
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
-        block_store_->add(
-            block.first,
-            stringToBytes(shared_model::converters::protobuf::modelToJson(
-                *std::static_pointer_cast<shared_model::proto::Block>(
-                    block.second))));
-        notifier_.get_subscriber().on_next(block.second);
+        auto json_result = converter_->serialize(*block.second);
+        json_result.match(
+            [this, &block](const expected::Value<std::string> &v) {
+              block_store_->add(block.first, stringToBytes(v.value));
+              notifier_.get_subscriber().on_next(block.second);
+            },
+            [this](const expected::Error<std::string> &e) {
+              log_->error(e.error);
+            });
       }
 
       *(storage->sql_) << "COMMIT";
@@ -331,7 +332,7 @@ WHERE pg_stat_activity.datname = :dbname
           std::shared_ptr<soci::connection_pool> conn,
           std::shared_timed_mutex &drop_mutex,
           const logger::Logger &log,
-          QueryArgs&&... args) {
+          QueryArgs &&... args) {
         std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
         if (conn == nullptr) {
           log->warn("Storage was deleted, cannot perform setup");

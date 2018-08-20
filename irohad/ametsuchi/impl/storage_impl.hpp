@@ -17,7 +17,7 @@
 #include "ametsuchi/impl/postgres_options.hpp"
 #include "ametsuchi/key_value_storage.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
-#include "interfaces/iroha_internal/block_json_deserializer.hpp"
+#include "interfaces/iroha_internal/block_json_converter.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -50,7 +50,7 @@ namespace iroha {
           std::string postgres_connection,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory_,
-          std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
+          std::shared_ptr<shared_model::interface::BlockJsonConverter>
               converter);
 
       expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
@@ -96,7 +96,7 @@ namespace iroha {
           std::shared_ptr<soci::connection_pool> connection,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory,
-          std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
+          std::shared_ptr<shared_model::interface::BlockJsonConverter>
               converter);
 
       /**
@@ -117,7 +117,7 @@ namespace iroha {
       rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
           notifier_;
 
-      std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
+      std::shared_ptr<shared_model::interface::BlockJsonConverter>
           converter_;
 
       logger::Logger log_;

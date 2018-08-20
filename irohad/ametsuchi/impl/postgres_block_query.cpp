@@ -9,11 +9,8 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 
-#include "converters/protobuf/json_proto_converter.hpp"
-
 namespace iroha {
   namespace ametsuchi {
-
     PostgresBlockQuery::PostgresBlockQuery(
         soci::session &sql,
         KeyValueStorage &file_store,

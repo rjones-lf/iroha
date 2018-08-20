@@ -5,11 +5,10 @@
 
 #ifndef IROHA_BLOCK_JSON_DESERIALIZER_HPP
 #define IROHA_BLOCK_JSON_DESERIALIZER_HPP
-
-#include <common/result.hpp>
 #include <memory>
 
 #include "interfaces/common_objects/types.hpp"
+#include "common/result.hpp"
 
 namespace shared_model {
   namespace interface {
