@@ -137,7 +137,6 @@ TEST(PipelineIntegrationTest, SendTxSequence) {
 
   auto checkStatelessValid = [](auto &statuses) {
     for (const auto &status : statuses) {
-      std::cerr << status.toString() << std::endl;
       EXPECT_NO_THROW(boost::apply_visitor(
           framework::SpecifiedVisitor<
               shared_model::interface::StatelessValidTxResponse>(),
