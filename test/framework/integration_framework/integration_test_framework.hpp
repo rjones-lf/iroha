@@ -150,12 +150,11 @@ namespace integration_framework {
     IntegrationTestFramework &sendTxSequence(
         const shared_model::interface::TransactionSequence &tx_sequence,
         std::function<void(std::vector<shared_model::proto::TransactionResponse>
-                               &)> validation = [](const auto &) {
-          return true;
-        });
+                               &)> validation = [](const auto &) {});
 
     /**
-     * Send transactions to Iroha with awaiting proposal and without status validation
+     * Send transactions to Iroha with awaiting proposal and without status
+     * validation
      * @param tx_sequence - sequence for sending
      * @param check - callback for checking committed block
      * @return this

@@ -229,13 +229,13 @@ namespace integration_framework {
       std::function<void(std::vector<shared_model::proto::TransactionResponse>
                              &)> validation) {
     log_->info("send transactions");
-    auto transactions = tx_sequence.transactions();
+    const auto &transactions = tx_sequence.transactions();
 
     boost::barrier bar(2);
 
     iroha_instance_->instance_->getStatusBus()
         ->statuses()
-        .filter([transactions](auto s) {
+        .filter([&transactions](auto s) {
           // filter statuses for transactions from sequence
           auto it = std::find_if(
               transactions.begin(), transactions.end(), [&s](const auto tx) {

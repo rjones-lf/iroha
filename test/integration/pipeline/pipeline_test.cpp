@@ -109,18 +109,16 @@ TEST(PipelineIntegrationTest, SendTx) {
 }
 
 /**
- * @given some user
- * @when sending sample AddAssetQuantity transactions to the ledger
- * @then receive STATELESS_VALIDATION_SUCCESS status on that transactions,
- * all transactions are passed to proposal and does not appear in block
+ * prepares transaction sequence
+ * @param tx_size the size of transaction sequence
+ * @return  transaction sequence
  */
-TEST(PipelineIntegrationTest, SendTxSequence) {
-  size_t tx_size = 5;
-
+auto prepareTransactionSequence(size_t tx_size) {
   shared_model::interface::types::SharedTxsCollectionType txs;
 
+  const auto &now = iroha::time::now();
   for (size_t i = 0; i < tx_size; i++) {
-    auto &&tx = prepareAddAssetQtyTransaction(iroha::time::now() + i);
+    auto &&tx = prepareAddAssetQtyTransaction(now + i);
     txs.push_back(
         std::make_shared<shared_model::proto::Transaction>(std::move(tx)));
   }
@@ -129,13 +127,20 @@ TEST(PipelineIntegrationTest, SendTxSequence) {
       shared_model::interface::TransactionSequence::createTransactionSequence(
           txs, shared_model::validation::DefaultSignedTransactionsValidator());
 
-  auto tx_sequence_value = framework::expected::val(tx_sequence_result);
-  ASSERT_TRUE(tx_sequence_value)
-      << framework::expected::err(tx_sequence_result).value().error;
+  return framework::expected::val(tx_sequence_result).value().value;
+}
 
-  auto tx_sequence = tx_sequence_value.value().value;
+/**
+ * @given some user
+ * @when sending sample AddAssetQuantity transactions to the ledger
+ * @then receive STATELESS_VALIDATION_SUCCESS status on that transactions,
+ * all transactions are passed to proposal and does not appear in block
+ */
+TEST(PipelineIntegrationTest, SendTxSequence) {
+  size_t tx_size = 5;
+  const auto &tx_sequence = prepareTransactionSequence(tx_size);
 
-  auto checkStatelessValid = [](auto &statuses) {
+  auto check_stateless_valid = [](auto &statuses) {
     for (const auto &status : statuses) {
       EXPECT_NO_THROW(boost::apply_visitor(
           framework::SpecifiedVisitor<
@@ -143,17 +148,37 @@ TEST(PipelineIntegrationTest, SendTxSequence) {
           status.get()));
     }
   };
-  auto checkProposal = [&tx_size](auto &proposal) {
+  auto check_proposal = [&tx_size](auto &proposal) {
     ASSERT_EQ(proposal->transactions().size(), tx_size);
   };
-  auto checkBlock = [](auto &block) {
+  auto check_block = [](auto &block) {
     ASSERT_EQ(block->transactions().size(), 0);
   };
   integration_framework::IntegrationTestFramework(
       tx_size)  // make all transactions to fit into a single proposal
       .setInitialState(kAdminKeypair)
-      .sendTxSequence(tx_sequence, checkStatelessValid)
-      .checkProposal(checkProposal)
-      .checkBlock(checkBlock)
+      .sendTxSequence(tx_sequence, check_stateless_valid)
+      .checkProposal(check_proposal)
+      .checkBlock(check_block)
+      .done();
+}
+
+/**
+ * @give some user
+ * @when sending transaction sequence with stateful invalid transactions to the
+ * ledger using sendTxSequence await method
+ * @then all transactions does not appear in the block
+ */
+TEST(PipelineIntegrationTest, SendTxSequenceAwait) {
+  size_t tx_size = 5;
+  const auto &tx_sequence = prepareTransactionSequence(tx_size);
+
+  auto check_block = [](auto &block) {
+    ASSERT_EQ(block->transactions().size(), 0);
+  };
+  integration_framework::IntegrationTestFramework(
+      tx_size)  // make all transactions to fit into a single proposal
+      .setInitialState(kAdminKeypair)
+      .sendTxSequenceAwait(tx_sequence, check_block)
       .done();
 }
