@@ -21,6 +21,7 @@
 #include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
+#include "framework/batch_helper.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 #include "utils/query_error_response_visitor.hpp"
@@ -62,22 +63,30 @@ TEST(PipelineIntegrationTest, SendQuery) {
 }
 
 /**
+ * prepares signed transaction with add asset quantity command
+ * @param created_time created time of transaction, by default is now
+ * @return Transaction with add asset quantity command
+ */
+auto prepareAddAssetQtyTransaction(size_t created_time = iroha::time::now()) {
+  return shared_model::proto::TransactionBuilder()
+      .createdTime(created_time)
+      .creatorAccountId(kUser)
+      .addAssetQuantity(kAsset, "1.0")
+      .quorum(1)
+      .build()
+      .signAndAddSignature(
+          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair())
+      .finish();
+}
+
+/**
  * @given some user
  * @when sending sample AddAssetQuantity transaction to the ledger
  * @then receive STATELESS_VALIDATION_SUCCESS status on that tx,
  * the tx is passed to proposal and does not appear in block
  */
 TEST(PipelineIntegrationTest, SendTx) {
-  auto tx = shared_model::proto::TransactionBuilder()
-                .createdTime(iroha::time::now())
-                .creatorAccountId(kUser)
-                .addAssetQuantity(kAsset, "1.0")
-                .quorum(1)
-                .build()
-                .signAndAddSignature(
-                    shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair())
-                .finish();
+  auto tx = prepareAddAssetQtyTransaction();
 
   auto checkStatelessValid = [](auto &status) {
     ASSERT_NO_THROW(boost::apply_visitor(
@@ -94,6 +103,57 @@ TEST(PipelineIntegrationTest, SendTx) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessValid)
+      .checkProposal(checkProposal)
+      .checkBlock(checkBlock)
+      .done();
+}
+
+/**
+ * @given some user
+ * @when sending sample AddAssetQuantity transactions to the ledger
+ * @then receive STATELESS_VALIDATION_SUCCESS status on that transactions,
+ * all transactions are passed to proposal and does not appear in block
+ */
+TEST(PipelineIntegrationTest, SendTxSequence) {
+  size_t tx_size = 5;
+
+  shared_model::interface::types::SharedTxsCollectionType txs;
+
+  for (size_t i = 0; i < tx_size; i++) {
+    auto &&tx = prepareAddAssetQtyTransaction(iroha::time::now() + i);
+    txs.push_back(
+        std::make_shared<shared_model::proto::Transaction>(std::move(tx)));
+  }
+
+  auto tx_sequence_result =
+      shared_model::interface::TransactionSequence::createTransactionSequence(
+          txs, shared_model::validation::DefaultSignedTransactionsValidator());
+
+  auto tx_sequence_value = framework::expected::val(tx_sequence_result);
+  ASSERT_TRUE(tx_sequence_value)
+      << framework::expected::err(tx_sequence_result).value().error;
+
+  auto tx_sequence = tx_sequence_value.value().value;
+
+  auto checkStatelessValid = [](auto &statuses) {
+    for (const auto &status : statuses) {
+      std::cerr << status.toString() << std::endl;
+      EXPECT_NO_THROW(boost::apply_visitor(
+          framework::SpecifiedVisitor<
+              shared_model::interface::StatelessValidTxResponse>(),
+          status.get()));
+    }
+  };
+  auto checkProposal = [&tx_size](auto &proposal) {
+    ASSERT_EQ(proposal->transactions().size(), tx_size);
+  };
+  auto checkBlock = [](auto &block) {
+    ASSERT_EQ(block->transactions().size(), 0);
+  };
+  integration_framework::IntegrationTestFramework(
+      tx_size)  // make all transactions to fit into a single proposal
+      .setInitialState(kAdminKeypair)
+      .sendTxSequence(tx_sequence, checkStatelessValid)
       .checkProposal(checkProposal)
       .checkBlock(checkBlock)
       .done();
