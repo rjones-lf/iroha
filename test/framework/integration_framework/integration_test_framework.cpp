@@ -294,48 +294,52 @@ namespace integration_framework {
       const shared_model::interface::TransactionSequence &tx_sequence,
       std::function<void(std::vector<shared_model::proto::TransactionResponse>
                              &)> validation) {
+    log_->info("send transactions");
     auto transactions = tx_sequence.transactions();
 
-    boost::barrier bar1(tx_sequence.transactions().size() + 1);
-    auto bar2 =
-        std::make_shared<boost::barrier>(tx_sequence.transactions().size() + 1);
+    boost::barrier bar(2);
 
     iroha_instance_->instance_->getStatusBus()
         ->statuses()
-        .filter([&](auto s) {
-          return std::find_if(transactions.begin(),
-                              transactions.end(),
-                              [&s](const auto tx) {
-                                return s->transactionHash() == tx->hash();
-                              })
-              == transactions.end();
+        .filter([transactions](auto s) {
+          // filter statuses for transactions from sequence
+          auto it = std::find_if(
+              transactions.begin(), transactions.end(), [&s](const auto tx) {
+                // check if status is either stateless valid or failed
+                bool is_stateless_status = iroha::visit_in_place(
+                    s->get(),
+                    [](const shared_model::interface::StatelessFailedTxResponse
+                           &stateless_failed_response) { return true; },
+                    [](const shared_model::interface::StatelessValidTxResponse
+                           &stateless_valid_response) { return true; },
+                    [](const auto &other_responses) { return false; });
+                return is_stateless_status
+                    and s->transactionHash() == tx->hash();
+              });
+          return it != transactions.end();
         })
-        .subscribe([&bar1, b2 = std::weak_ptr<boost::barrier>(bar2)](auto s) {
-          bar1.wait();
-          if (auto lock = b2.lock()) {
-            lock->wait();
-          }
-        });
+        .take(transactions.size())
+        .subscribe([](auto &&) {}, [&bar] { bar.wait(); });
 
+    // put all transactions to the TxList and send them to iroha
     iroha::protocol::TxList tx_list;
     for (const auto &tx : transactions) {
-      new (tx_list.add_transactions()) iroha::protocol::Transaction(
+      auto proto_tx =
           std::static_pointer_cast<shared_model::proto::Transaction>(tx)
-              ->getTransport());
+              ->getTransport();
+      *tx_list.add_transactions() = proto_tx;
     }
     iroha_instance_->getIrohaInstance()->getCommandService()->ListTorii(
         tx_list);
 
     // make sure that the first (stateless) status is come
-    bar1.wait();
-    // fetch status of transaction
+    bar.wait();
+
+    // collect all statuses and process them
     std::vector<shared_model::proto::TransactionResponse> statuses;
     for (const auto tx : transactions) {
       statuses.push_back(getTxStatus(tx->hash()));
     }
-    // make sure that the following statuses (stateful/commited)
-    // isn't reached the bus yet
-    bar2->wait();
 
     validation(statuses);
     return *this;
