@@ -5,6 +5,7 @@
 
 #include "ametsuchi/impl/postgres_block_query.hpp"
 
+#include <boost/format.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 
@@ -33,22 +34,14 @@ namespace iroha {
         return result;
       }
       for (auto i = height; i <= to; i++) {
-        block_store_.get(i) | [this](const auto &bytes) {
-          auto result = converter_->deserialize(bytesToString(bytes));
-          return result.match(
-              [](expected::Value<
-                  std::unique_ptr<shared_model::interface::Block>> &v)
-                  -> boost::optional<
-                      std::unique_ptr<shared_model::interface::Block>> {
-                return std::move(v.value);
-              },
-              [this](const expected::Error<std::string> &e)
-                  -> boost::optional<
-                      std::unique_ptr<shared_model::interface::Block>> {
-                log_->error("Failed to deserialize json block: {}", e.error);
-                return boost::none;
-              });
-        } | [&result](auto &&block) { result.emplace_back(std::move(block)); };
+        auto block = getBlock(i);
+        block.match(
+            [&result](
+                expected::Value<std::unique_ptr<shared_model::interface::Block>>
+                    &v) { result.emplace_back(std::move(v.value)); },
+            [this](const expected::Error<std::string> &e) {
+              log_->error(e.error);
+            });
       }
       return result;
     }
@@ -104,25 +97,24 @@ namespace iroha {
     PostgresBlockQuery::callback(std::vector<wTransaction> &blocks,
                                  uint64_t block_id) {
       return [this, &blocks, block_id](std::vector<std::string> &result) {
-        auto block = block_store_.get(block_id) | [](const auto &bytes) {
-          return shared_model::converters::protobuf::jsonToModel<
-              shared_model::proto::Block>(bytesToString(bytes));
-        };
-        if (not block) {
-          log_->error("error while converting from JSON");
-          return;
-        }
-
-        boost::for_each(
-            result | boost::adaptors::transformed([](const auto &x) {
-              std::istringstream iss(x);
-              size_t size;
-              iss >> size;
-              return size;
-            }),
-            [&](const auto &x) {
-              blocks.push_back(PostgresBlockQuery::wTransaction(
-                  clone(block->transactions()[x])));
+        auto block = getBlock(block_id);
+        block.match(
+            [&result, &blocks](
+                expected::Value<std::unique_ptr<shared_model::interface::Block>>
+                    &v) {
+              boost::for_each(
+                  result | boost::adaptors::transformed([](const auto &x) {
+                    std::istringstream iss(x);
+                    size_t size;
+                    iss >> size;
+                    return size;
+                  }),
+                  [&](const auto &x) {
+                    blocks.emplace_back(clone(v.value->transactions()[x]));
+                  });
+            },
+            [this](const expected::Error<std::string> &e) {
+              log_->error(e.error);
             });
       };
     }
@@ -202,27 +194,39 @@ namespace iroha {
     boost::optional<BlockQuery::wTransaction>
     PostgresBlockQuery::getTxByHashSync(
         const shared_model::crypto::Hash &hash) {
-      auto block = getBlockId(hash) | [this](const auto &block_id) {
-        return block_store_.get(block_id);
-      } | [](const auto &bytes) {
-        return shared_model::converters::protobuf::jsonToModel<
-            shared_model::proto::Block>(bytesToString(bytes));
-      };
-      if (not block) {
-        log_->error("error while converting from JSON");
-        return boost::none;
-      }
-
-      boost::optional<PostgresBlockQuery::wTransaction> result;
-      auto it =
-          std::find_if(block->transactions().begin(),
-                       block->transactions().end(),
-                       [&hash](const auto &tx) { return tx.hash() == hash; });
-      if (it != block->transactions().end()) {
-        result = boost::optional<PostgresBlockQuery::wTransaction>(
-            PostgresBlockQuery::wTransaction(clone(*it)));
-      }
-      return result;
+      return getBlockId(hash) |
+          [this](const auto &block_id) {
+            auto result = getBlock(block_id);
+            return result.match(
+                [](expected::Value<
+                    std::unique_ptr<shared_model::interface::Block>> &v)
+                    -> boost::optional<
+                        std::unique_ptr<shared_model::interface::Block>> {
+                  return std::move(v.value);
+                },
+                [this](const expected::Error<std::string> &e)
+                    -> boost::optional<
+                        std::unique_ptr<shared_model::interface::Block>> {
+                  log_->error(e.error);
+                  return boost::none;
+                });
+          }
+      | [&hash, this](const auto &block) {
+          boost::optional<PostgresBlockQuery::wTransaction> transaction;
+          auto it = std::find_if(
+              block->transactions().begin(),
+              block->transactions().end(),
+              [&hash](const auto &tx) { return tx.hash() == hash; });
+          if (it != block->transactions().end()) {
+            transaction = PostgresBlockQuery::wTransaction(clone(*it));
+          } else {
+            log_->error("Failed to find transaction {} in block {}",
+                        hash.hex(),
+                        block->height());
+            transaction = boost::none;
+          }
+          return transaction;
+        };
     }
 
     bool PostgresBlockQuery::hasTxWithHash(
@@ -236,18 +240,30 @@ namespace iroha {
 
     expected::Result<BlockQuery::wBlock, std::string>
     PostgresBlockQuery::getTopBlock() {
-      // TODO 18/06/18 Akvinikym: add dependency injection IR-937 IR-1040
-      auto block =
-          block_store_.get(block_store_.last_id()) | [](const auto &bytes) {
-            return shared_model::converters::protobuf::jsonToModel<
-                shared_model::proto::Block>(bytesToString(bytes));
-          };
-      if (not block) {
-        return expected::makeError("error while fetching the last block");
-      }
-      return expected::makeValue(std::make_shared<shared_model::proto::Block>(
-          std::move(block.value())));
+      return getBlock(block_store_.last_id())
+          .match(
+              [](expected::Value<
+                  std::unique_ptr<shared_model::interface::Block>> &v)
+                  -> expected::Result<BlockQuery::wBlock, std::string> {
+                return expected::makeValue<BlockQuery::wBlock>(
+                    std::move(v.value));
+              },
+              [](expected::Error<std::string> &e)
+                  -> expected::Result<BlockQuery::wBlock, std::string> {
+                return expected::makeError(std::move(e.error));
+              });
     }
 
+    expected::Result<std::unique_ptr<shared_model::interface::Block>,
+                     std::string>
+    PostgresBlockQuery::getBlock(
+        shared_model::interface::types::HeightType id) {
+      auto serialized_block = block_store_.get(id);
+      if (not serialized_block) {
+        auto error = boost::format("Failed to retrieve block with id %d") % id;
+        return expected::makeError(error.str());
+      }
+      return converter_->deserialize(bytesToString(*serialized_block));
+    }
   }  // namespace ametsuchi
 }  // namespace iroha

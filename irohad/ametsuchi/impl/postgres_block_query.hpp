@@ -86,6 +86,15 @@ namespace iroha {
       std::function<void(std::vector<std::string> &result)> callback(
           std::vector<wTransaction> &s, uint64_t block_id);
 
+      /**
+       * Retrieve block with given id block storage
+       * @param id - height of a block to retrieve
+       * @return block with given height
+       */
+      expected::Result<std::unique_ptr<shared_model::interface::Block>,
+                       std::string>
+      getBlock(shared_model::interface::types::HeightType id);
+
       soci::session &sql_;
 
       KeyValueStorage &block_store_;
