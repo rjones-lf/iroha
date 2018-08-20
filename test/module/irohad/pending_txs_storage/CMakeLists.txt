@@ -3,20 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-add_library(pending_txs_storage_fixture
-        pending_txs_storage_fixture.cpp
-        )
-target_link_libraries(pending_txs_storage_fixture
-        gtest::main
-        pending_txs_storage
-        shared_model_stateless_validation
-        shared_model_cryptography
-        )
-
 
 addtest(pending_txs_storage_test
-        pending_txs_storage_test.cpp
-        )
+    pending_txs_storage_test.cpp
+    )
 target_link_libraries(pending_txs_storage_test
-        pending_txs_storage_fixture
-        )
+    rxcpp
+    pending_txs_storage
+    shared_model_stateless_validation
+    )

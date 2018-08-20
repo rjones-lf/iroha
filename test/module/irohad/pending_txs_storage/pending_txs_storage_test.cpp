@@ -3,9 +3,33 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <rxcpp/rx.hpp>
-#include "module/irohad/pending_txs_storage/pending_txs_storage_fixture.hpp"
+#include <gtest/gtest.h>
+#include <rxcpp/rx-observable.hpp>
+#include "datetime/time.hpp"
+#include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 #include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
+
+class PendingTxsStorageFixture : public ::testing::Test {
+ public:
+  using Batch = shared_model::interface::TransactionBatch;
+
+  /**
+   * Get the closest to now timestamp from the future but never return the same
+   * value twice.
+   * @return iroha timestamp
+   */
+  iroha::time::time_t getUniqueTime() {
+    static iroha::time::time_t latest_timestamp = 0;
+    auto now = iroha::time::now();
+    if (now > latest_timestamp) {
+      latest_timestamp = now;
+      return now;
+    } else {
+      return ++latest_timestamp;
+    }
+  }
+};
 
 /**
  * Test that check that fixture common preparation procedures can be done
@@ -16,8 +40,13 @@
  */
 TEST_F(PendingTxsStorageFixture, FixutureSelfCheck) {
   auto state = std::make_shared<iroha::MstState>(iroha::MstState::empty());
+
   auto transactions =
-      generateSharedBatch({{"alice@iroha", 2, 1}, {"bob@iroha", 2}});
+      addSignatures(makeTestBatch(txBuilder(1, getUniqueTime()),
+                                  txBuilder(1, getUniqueTime())),
+                    0,
+                    makeSignature("1", "pub_key_1"));
+
   *state += transactions;
   ASSERT_EQ(state->getBatches().size(), 1) << "Failed to prepare MST state";
   ASSERT_EQ(state->getBatches().front()->transactions().size(), 2)
@@ -32,8 +61,11 @@ TEST_F(PendingTxsStorageFixture, FixutureSelfCheck) {
  */
 TEST_F(PendingTxsStorageFixture, InsertionTest) {
   auto state = std::make_shared<iroha::MstState>(iroha::MstState::empty());
-  std::vector<TxData> source{{"alice@iroha", 2, 1}, {"bob@iroha", 2}};
-  auto transactions = generateSharedBatch(source);
+  auto transactions = addSignatures(
+      makeTestBatch(txBuilder(2, getUniqueTime(), 2, "alice@iroha"),
+                    txBuilder(2, getUniqueTime(), 2, "bob@iroha")),
+      0,
+      makeSignature("1", "pub_key_1"));
   *state += transactions;
 
   auto updates = rxcpp::observable<>::create<decltype(state)>([&state](auto s) {
@@ -68,11 +100,13 @@ TEST_F(PendingTxsStorageFixture, InsertionTest) {
 TEST_F(PendingTxsStorageFixture, SignaturesUpdate) {
   auto state1 = std::make_shared<iroha::MstState>(iroha::MstState::empty());
   auto state2 = std::make_shared<iroha::MstState>(iroha::MstState::empty());
-  std::vector<TxData> source = {{"alice@iroha", 3, 1}};
-  auto transactions = generateSharedBatch(source);
+  auto transactions = addSignatures(
+      makeTestBatch(txBuilder(3, getUniqueTime(), 3, "alice@iroha")),
+      0,
+      makeSignature("1", "pub_key_1"));
   *state1 += transactions;
-  source.front().addKeys(1);
-  transactions = generateSharedBatch(source);
+  transactions =
+      addSignatures(transactions, 0, makeSignature("2", "pub_key_2"));
   *state2 += transactions;
 
   auto updates =
@@ -98,10 +132,20 @@ TEST_F(PendingTxsStorageFixture, SignaturesUpdate) {
  */
 TEST_F(PendingTxsStorageFixture, SeveralBatches) {
   auto state = std::make_shared<iroha::MstState>(iroha::MstState::empty());
-  auto batch1 = generateSharedBatch({{"alice@iroha", 2, 1}, {"bob@iroha", 2}});
-  auto batch2 =
-      generateSharedBatch({{"alice@iroha", 2, 1}, {"alice@iroha", 3}});
-  auto batch3 = generateSharedBatch({{"bob@iroha", 2, 1}});
+  auto batch1 = addSignatures(
+      makeTestBatch(txBuilder(2, getUniqueTime(), 2, "alice@iroha"),
+                    txBuilder(2, getUniqueTime(), 2, "bob@iroha")),
+      0,
+      makeSignature("1", "pub_key_1"));
+  auto batch2 = addSignatures(
+      makeTestBatch(txBuilder(2, getUniqueTime(), 2, "alice@iroha"),
+                    txBuilder(3, getUniqueTime(), 3, "alice@iroha")),
+      0,
+      makeSignature("1", "pub_key_1"));
+  auto batch3 = addSignatures(
+      makeTestBatch(txBuilder(2, getUniqueTime(), 2, "bob@iroha")),
+      0,
+      makeSignature("2", "pub_key_2"));
   *state += batch1;
   *state += batch2;
   *state += batch3;
@@ -129,11 +173,18 @@ TEST_F(PendingTxsStorageFixture, SeveralBatches) {
  */
 TEST_F(PendingTxsStorageFixture, SeparateBatchesDoNotOverwriteStorage) {
   auto state1 = std::make_shared<iroha::MstState>(iroha::MstState::empty());
-  auto batch1 = generateSharedBatch({{"alice@iroha", 2, 1}, {"bob@iroha", 2}});
+  auto batch1 = addSignatures(
+      makeTestBatch(txBuilder(2, getUniqueTime(), 2, "alice@iroha"),
+                    txBuilder(2, getUniqueTime(), 2, "bob@iroha")),
+      0,
+      makeSignature("1", "pub_key_1"));
   *state1 += batch1;
   auto state2 = std::make_shared<iroha::MstState>(iroha::MstState::empty());
-  auto batch2 =
-      generateSharedBatch({{"alice@iroha", 2, 1}, {"alice@iroha", 3}});
+  auto batch2 = addSignatures(
+      makeTestBatch(txBuilder(2, getUniqueTime(), 2, "alice@iroha"),
+                    txBuilder(3, getUniqueTime(), 3, "alice@iroha")),
+      0,
+      makeSignature("1", "pub_key_1"));
   *state2 += batch2;
 
   auto updates =
@@ -162,8 +213,11 @@ TEST_F(PendingTxsStorageFixture, SeparateBatchesDoNotOverwriteStorage) {
  */
 TEST_F(PendingTxsStorageFixture, PreparedBatch) {
   auto state = std::make_shared<iroha::MstState>(iroha::MstState::empty());
-  std::vector<TxData> source = {{"alice@iroha", 3, 1}};
-  auto batch = generateSharedBatch(source);
+  auto batch = addSignatures(
+      makeTestBatch(txBuilder(3, getUniqueTime(), 3, "alice@iroha")),
+      0,
+      makeSignature("1", "pub_key_1"));
+  *state += batch;
 
   rxcpp::subjects::subject<decltype(batch)> prepared_batches_subject;
   auto updates = rxcpp::observable<>::create<decltype(state)>([&state](auto s) {
@@ -175,8 +229,10 @@ TEST_F(PendingTxsStorageFixture, PreparedBatch) {
   iroha::PendingTransactionStorageImpl storage(
       updates, prepared_batches_subject.get_observable(), dummy);
 
-  source.front().addKeys(2);
-  batch = generateSharedBatch(source);
+  batch = addSignatures(batch,
+                        0,
+                        makeSignature("2", "pub_key_2"),
+                        makeSignature("3", "pub_key_3"));
   prepared_batches_subject.get_subscriber().on_next(batch);
   prepared_batches_subject.get_subscriber().on_completed();
   auto pending = storage.getPendingTransactions("alice@iroha");
@@ -191,8 +247,11 @@ TEST_F(PendingTxsStorageFixture, PreparedBatch) {
  */
 TEST_F(PendingTxsStorageFixture, ExpiredBatch) {
   auto state = std::make_shared<iroha::MstState>(iroha::MstState::empty());
-  std::vector<TxData> source = {{"alice@iroha", 3, 1}};
-  auto batch = generateSharedBatch(source);
+  auto batch = addSignatures(
+      makeTestBatch(txBuilder(3, getUniqueTime(), 3, "alice@iroha")),
+      0,
+      makeSignature("1", "pub_key_1"));
+  *state += batch;
 
   rxcpp::subjects::subject<decltype(batch)> expired_batches_subject;
   auto updates = rxcpp::observable<>::create<decltype(state)>([&state](auto s) {

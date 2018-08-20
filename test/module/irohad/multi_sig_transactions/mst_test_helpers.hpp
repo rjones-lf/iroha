@@ -27,11 +27,12 @@ inline auto makeKey() {
 inline auto txBuilder(
     const shared_model::interface::types::CounterType &counter,
     iroha::TimeType created_time = iroha::time::now(),
-    uint8_t quorum = 3) {
+    shared_model::interface::types::QuorumType quorum = 3,
+    shared_model::interface::types::AccountIdType account_id = "user@test") {
   return TestTransactionBuilder()
       .createdTime(created_time)
-      .creatorAccountId("user@test")
-      .setAccountQuorum("user@test", counter)
+      .creatorAccountId(account_id)
+      .setAccountQuorum(account_id, counter)
       .quorum(quorum);
 }
 
