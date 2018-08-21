@@ -39,3 +39,14 @@ def grant_can_set_my_quorum_tx():
         .build()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(alice['key']).finish()
+
+
+@commons.hex
+def revoke_can_set_my_quorum_tx():
+    tx = iroha.ModelTransactionBuilder() \
+        .createdTime(commons.now()) \
+        .creatorAccountId(alice['id']) \
+        .revokePermission(bob['id'], iroha.Grantable_kSetMyQuorum) \
+        .build()
+    return iroha.ModelProtoTransaction(tx) \
+        .signAndAddSignature(alice['key']).finish()

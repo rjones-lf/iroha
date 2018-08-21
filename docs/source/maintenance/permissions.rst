@@ -427,7 +427,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_add_my_s
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_add_my_signatory.py
     :language: python
     :linenos:
-    :lines: 9-41
+    :lines: 9-52
 
 can_grant_can_remove_my_signatory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -447,7 +447,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_remove_m
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_remove_my_signatory.py
     :language: python
     :linenos:
-    :lines: 9-41
+    :lines: 9-52
 
 can_grant_can_set_my_account_detail
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -467,7 +467,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_a
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_set_my_account_detail.py
     :language: python
     :linenos:
-    :lines: 9-41
+    :lines: 9-52
 
 can_grant_can_set_my_quorum
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -487,7 +487,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_q
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_set_my_quorum.py
     :language: python
     :linenos:
-    :lines: 9-41
+    :lines: 9-52
 
 can_grant_can_transfer_my_assets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -507,7 +507,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_transfer
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_transfer_my_assets.py
     :language: python
     :linenos:
-    :lines: 9-48
+    :lines: 9-59
 
 Peer
 ----
