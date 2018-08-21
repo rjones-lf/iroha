@@ -28,10 +28,6 @@ namespace shared_model {
 
 namespace iroha {
   namespace network {
-
-    using ConsensusResultType =
-        std::shared_ptr<shared_model::interface::BlockVariant>;
-
     /**
      * Public api of consensus module
      */

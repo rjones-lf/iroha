@@ -1,27 +1,17 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_SIMULATOR_HPP
 #define IROHA_SIMULATOR_HPP
 
 #include <boost/optional.hpp>
-#include "ametsuchi/block_query.hpp"
+
+#include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
+#include "interfaces/iroha_internal/unsafe_block_factory.hpp"
 #include "logger/logger.hpp"
 #include "network/ordering_gate.hpp"
 #include "simulator/block_creator.hpp"
@@ -37,14 +27,13 @@ namespace iroha {
           std::shared_ptr<network::OrderingGate> ordering_gate,
           std::shared_ptr<validation::StatefulValidator> statefulValidator,
           std::shared_ptr<ametsuchi::TemporaryFactory> factory,
-          std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
-              crypto_signer);
+              crypto_signer,
+          std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
+              block_factory);
 
-      Simulator(const Simulator &) = delete;
-      Simulator &operator=(const Simulator &) = delete;
-
-      ~Simulator();
+      ~Simulator() override;
 
       void process_proposal(
           const shared_model::interface::Proposal &proposal) override;
@@ -72,8 +61,10 @@ namespace iroha {
 
       std::shared_ptr<validation::StatefulValidator> validator_;
       std::shared_ptr<ametsuchi::TemporaryFactory> ametsuchi_factory_;
-      std::shared_ptr<ametsuchi::BlockQuery> block_queries_;
+      std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory_;
       std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer_;
+      std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
+          block_factory_;
 
       logger::Logger log_;
 

@@ -82,8 +82,8 @@ auto prepareAddAssetQtyTransaction(size_t created_time = iroha::time::now()) {
 /**
  * @given some user
  * @when sending sample AddAssetQuantity transaction to the ledger
- * @then receive STATELESS_VALIDATION_SUCCESS status on that tx,
- * the tx is passed to proposal and does not appear in block
+ * @then receive STATELESS_VALIDATION_SUCCESS status on that tx @and
+ * STATEFUL_VALIDATION_FAILED, thus empty verified proposal
  */
 TEST(PipelineIntegrationTest, SendTx) {
   auto tx = prepareAddAssetQtyTransaction();
@@ -97,14 +97,12 @@ TEST(PipelineIntegrationTest, SendTx) {
   auto checkProposal = [](auto &proposal) {
     ASSERT_EQ(proposal->transactions().size(), 1);
   };
-  auto checkBlock = [](auto &block) {
-    ASSERT_EQ(block->transactions().size(), 0);
-  };
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx, checkStatelessValid)
       .checkProposal(checkProposal)
-      .checkBlock(checkBlock)
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 

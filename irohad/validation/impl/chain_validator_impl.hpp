@@ -39,10 +39,11 @@ namespace iroha {
       bool validateChain(
           rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
               blocks,
-          ametsuchi::MutableStorage &storage) override;
+          ametsuchi::MutableStorage &storage) const override;
 
-      bool validateBlock(const shared_model::interface::Block &block,
-                         ametsuchi::MutableStorage &storage) override;
+      bool validateBlock(
+          const shared_model::interface::BlockVariant &block_variant,
+          ametsuchi::MutableStorage &storage) const override;
 
      private:
       /**
