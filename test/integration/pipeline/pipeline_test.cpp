@@ -26,8 +26,7 @@
 #include "framework/specified_visitor.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
-constexpr auto kUser = "user@test";
-constexpr auto kAsset = "asset#domain";
+constexpr auto kAdmin = "admin@test";
 const shared_model::crypto::Keypair kAdminKeypair =
     shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
@@ -40,9 +39,9 @@ const shared_model::crypto::Keypair kAdminKeypair =
 TEST(PipelineIntegrationTest, SendQuery) {
   auto query = shared_model::proto::QueryBuilder()
                    .createdTime(iroha::time::now())
-                   .creatorAccountId(kUser)
+                   .creatorAccountId(kAdmin)
                    .queryCounter(1)
-                   .getAccount(kUser)
+                   .getAccount(kAdmin)
                    .build()
                    .signAndAddSignature(
                        // TODO: 30/03/17 @l4l use keygen adapter IR-1189
@@ -63,46 +62,54 @@ TEST(PipelineIntegrationTest, SendQuery) {
 }
 
 /**
- * prepares signed transaction with add asset quantity command
- * @param created_time created time of transaction, by default is now
- * @return Transaction with add asset quantity command
+ * prepares signed transaction with CreateDomain command
+ * @param domain_name name of the domain
+ * @return Transaction with CreateDomain command
  */
-auto prepareAddAssetQtyTransaction(size_t created_time = iroha::time::now()) {
+auto prepareCreateDomainTransaction(std::string domain_name = "domain") {
   return shared_model::proto::TransactionBuilder()
-      .createdTime(created_time)
-      .creatorAccountId(kUser)
-      .addAssetQuantity(kAsset, "1.0")
+      .createdTime(iroha::time::now())
       .quorum(1)
+      .creatorAccountId(kAdmin)
+      .createDomain(domain_name, "user")
       .build()
-      .signAndAddSignature(
-          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair())
+      .signAndAddSignature(kAdminKeypair)
       .finish();
 }
 
 /**
  * @given some user
- * @when sending sample AddAssetQuantity transaction to the ledger
- * @then receive STATELESS_VALIDATION_SUCCESS status on that tx @and
- * STATEFUL_VALIDATION_FAILED, thus empty verified proposal
+ * @when sending sample CreateDomain transaction to the ledger
+ * @then receive STATELESS_VALIDATION_SUCCESS status on that tx AND
+ * tx is committed, thus non-empty verified proposal
  */
 TEST(PipelineIntegrationTest, SendTx) {
-  auto tx = prepareAddAssetQtyTransaction();
+  auto tx = prepareCreateDomainTransaction();
 
-  auto checkStatelessValid = [](auto &status) {
+  auto check_stateless_valid = [](auto &status) {
     ASSERT_NO_THROW(boost::apply_visitor(
         framework::SpecifiedVisitor<
             shared_model::interface::StatelessValidTxResponse>(),
         status.get()));
   };
-  auto checkProposal = [](auto &proposal) {
+  auto check_proposal = [](auto &proposal) {
     ASSERT_EQ(proposal->transactions().size(), 1);
   };
+
+  auto check_verified_proposal = [](auto &proposal) {
+    ASSERT_EQ(proposal->transactions().size(), 1);
+  };
+
+  auto check_block = [](auto &block) {
+    ASSERT_EQ(block->transactions().size(), 1);
+  };
+
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessValid)
-      .checkProposal(checkProposal)
-      .checkVerifiedProposal(
-          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .sendTx(tx, check_stateless_valid)
+      .checkProposal(check_proposal)
+      .checkVerifiedProposal(check_verified_proposal)
+      .checkBlock(check_block)
       .done();
 }
 
@@ -114,9 +121,9 @@ TEST(PipelineIntegrationTest, SendTx) {
 auto prepareTransactionSequence(size_t tx_size) {
   shared_model::interface::types::SharedTxsCollectionType txs;
 
-  const auto &now = iroha::time::now();
   for (size_t i = 0; i < tx_size; i++) {
-    auto &&tx = prepareAddAssetQtyTransaction(now + i);
+    auto &&tx = prepareCreateDomainTransaction(std::string("domain")
+                                               + std::to_string(i));
     txs.push_back(
         std::make_shared<shared_model::proto::Transaction>(std::move(tx)));
   }
@@ -130,9 +137,10 @@ auto prepareTransactionSequence(size_t tx_size) {
 
 /**
  * @given some user
- * @when sending sample AddAssetQuantity transactions to the ledger
+ * @when sending sample create domain transactions to the ledger
  * @then receive STATELESS_VALIDATION_SUCCESS status on that transactions,
- * all transactions are passed to proposal and does not appear in block
+ * all transactions are passed to proposal and appear in verified proposal and
+ * block
  */
 TEST(PipelineIntegrationTest, SendTxSequence) {
   size_t tx_size = 5;
@@ -149,30 +157,35 @@ TEST(PipelineIntegrationTest, SendTxSequence) {
   auto check_proposal = [&tx_size](auto &proposal) {
     ASSERT_EQ(proposal->transactions().size(), tx_size);
   };
-  auto check_block = [](auto &block) {
-    ASSERT_EQ(block->transactions().size(), 0);
+  auto check_verified_proposal = [&tx_size](auto &proposal) {
+    ASSERT_EQ(proposal->transactions().size(), tx_size);
   };
+  auto check_block = [&tx_size](auto &block) {
+    ASSERT_EQ(block->transactions().size(), tx_size);
+  };
+
   integration_framework::IntegrationTestFramework(
       tx_size)  // make all transactions to fit into a single proposal
       .setInitialState(kAdminKeypair)
       .sendTxSequence(tx_sequence, check_stateless_valid)
       .checkProposal(check_proposal)
+      .checkVerifiedProposal(check_verified_proposal)
       .checkBlock(check_block)
       .done();
 }
 
 /**
  * @give some user
- * @when sending transaction sequence with stateful invalid transactions to the
+ * @when sending transaction sequence with stateful valid transactions to the
  * ledger using sendTxSequence await method
- * @then all transactions does not appear in the block
+ * @then all transactions appear in the block
  */
 TEST(PipelineIntegrationTest, SendTxSequenceAwait) {
   size_t tx_size = 5;
   const auto &tx_sequence = prepareTransactionSequence(tx_size);
 
-  auto check_block = [](auto &block) {
-    ASSERT_EQ(block->transactions().size(), 0);
+  auto check_block = [&tx_size](auto &block) {
+    ASSERT_EQ(block->transactions().size(), tx_size);
   };
   integration_framework::IntegrationTestFramework(
       tx_size)  // make all transactions to fit into a single proposal

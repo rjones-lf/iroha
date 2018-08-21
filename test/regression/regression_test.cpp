@@ -23,7 +23,7 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 
-constexpr auto kUser = "user@test";
+constexpr auto kAdmin = "user@test";
 constexpr auto kAsset = "asset#domain";
 const auto kAdminKeypair =
     shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
@@ -36,7 +36,7 @@ const auto kAdminKeypair =
 TEST(RegressionTest, SequentialInitialization) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
-                .creatorAccountId(kUser)
+                .creatorAccountId(kAdmin)
                 .addAssetQuantity(kAsset, "1.0")
                 .quorum(1)
                 .build()
