@@ -63,6 +63,9 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::TransactionResponse>>
           notifier_;
 
+      std::vector<shared_model::interface::types::HashType>
+          current_txs_hashes_;
+
       logger::Logger log_;
 
       /// prevents from emitting new tx statuses from different threads
