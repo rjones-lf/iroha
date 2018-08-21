@@ -93,18 +93,19 @@ TEST_F(CreateAssetFixture, IllegalCharactersInName) {
 TEST_F(CreateAssetFixture, ExistingName) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          makeUserWithPerms(),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(complete(baseTx().createAsset(
           IntegrationTestFramework::kAssetName, kDomain, kPrecision)))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
-      .checkBlock(
+      .checkVerifiedProposal(
           // todo igor-egorov, 2018-08-15, IR-1625, add precise check of failure
           // reason
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
+          [](auto &vproposal) {
+            ASSERT_EQ(vproposal->transactions().size(), 0);
+          });
 }
 
 /**
@@ -117,18 +118,19 @@ TEST_F(CreateAssetFixture, ExistingName) {
 TEST_F(CreateAssetFixture, ExistingNameDifferentPrecision) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          makeUserWithPerms(),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(complete(baseTx().createAsset(
           IntegrationTestFramework::kAssetName, kDomain, kNonDefaultPrecision)))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
-      .checkBlock(
+      .checkVerifiedProposal(
           // todo igor-egorov, 2018-08-15, IR-1625, add precise check of failure
           // reason
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
+          [](auto &vproposal) {
+            ASSERT_EQ(vproposal->transactions().size(), 0);
+          });
 }
 
 /**
@@ -140,17 +142,18 @@ TEST_F(CreateAssetFixture, ExistingNameDifferentPrecision) {
 TEST_F(CreateAssetFixture, WithoutPermission) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({}))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          makeUserWithPerms({}),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(complete(baseTx().createAsset(kAssetName, kDomain, kPrecision)))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
-      .checkBlock(
+      .checkVerifiedProposal(
           // todo igor-egorov, 2018-08-15, IR-1625, add precise check of failure
           // reason
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
+          [](auto &vproposal) {
+            ASSERT_EQ(vproposal->transactions().size(), 0);
+          });
 }
 
 /**
@@ -161,18 +164,19 @@ TEST_F(CreateAssetFixture, WithoutPermission) {
 TEST_F(CreateAssetFixture, ValidNonExistingDomain) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          makeUserWithPerms(),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(complete(
           baseTx().createAsset(kAssetName, kNonExistingDomain, kPrecision)))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
-      .checkBlock(
+      .checkVerifiedProposal(
           // todo igor-egorov, 2018-08-15, IR-1625, add precise check of failure
           // reason
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
+          [](auto &vproposal) {
+            ASSERT_EQ(vproposal->transactions().size(), 0);
+          });
 }
 
 /**
