@@ -6,6 +6,7 @@
 #include "ordering/impl/on_demand_connection_manager.hpp"
 
 #include <gtest/gtest.h>
+#include <boost/range/combine.hpp>
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
@@ -37,16 +38,17 @@ struct OnDemandConnectionManagerTest : public ::testing::Test {
           .WillRepeatedly(CreateAndSave(&ptr));
     };
 
-    set(cpeers.issuer, issuer);
-    set(cpeers.current_consumer, current_consumer);
-    set(cpeers.previous_consumer, previous_consumer);
+    for (auto pair : boost::combine(cpeers.peers, connections)) {
+      set(boost::get<0>(pair), boost::get<1>(pair));
+    }
 
     manager = std::make_shared<OnDemandConnectionManager>(
         factory, cpeers, peers.get_observable());
   }
 
   OnDemandConnectionManager::CurrentPeers cpeers;
-  MockOdOsNotification *issuer, *previous_consumer, *current_consumer;
+  OnDemandConnectionManager::PeerCollectionType<MockOdOsNotification *>
+      connections;
 
   rxcpp::subjects::subject<OnDemandConnectionManager::CurrentPeers> peers;
   std::shared_ptr<MockOdOsNotificationFactory> factory;
@@ -59,9 +61,9 @@ struct OnDemandConnectionManagerTest : public ::testing::Test {
  * @then new peers are requested from factory
  */
 TEST_F(OnDemandConnectionManagerTest, FactoryUsed) {
-  ASSERT_NE(issuer, nullptr);
-  ASSERT_NE(previous_consumer, nullptr);
-  ASSERT_NE(current_consumer, nullptr);
+  for (auto peer : connections) {
+    ASSERT_NE(peer, nullptr);
+  }
 }
 
 /**
@@ -71,8 +73,11 @@ TEST_F(OnDemandConnectionManagerTest, FactoryUsed) {
  */
 TEST_F(OnDemandConnectionManagerTest, onTransactions) {
   OdOsNotification::CollectionType collection;
-  EXPECT_CALL(*previous_consumer, onTransactions(collection)).Times(1);
-  EXPECT_CALL(*current_consumer, onTransactions(collection)).Times(1);
+  for (auto peer_type : {OnDemandConnectionManager::kPreviousConsumer,
+                         OnDemandConnectionManager::kCurrentFirstConsumer,
+                         OnDemandConnectionManager::kCurrentSecondConsumer}) {
+    EXPECT_CALL(*connections[peer_type], onTransactions(collection)).Times(1);
+  }
 
   manager->onTransactions(collection);
 }
@@ -89,7 +94,8 @@ TEST_F(OnDemandConnectionManagerTest, onRequestProposal) {
   boost::optional<OnDemandConnectionManager::ProposalType> oproposal =
       OnDemandConnectionManager::ProposalType{};
   auto proposal = oproposal.value().get();
-  EXPECT_CALL(*issuer, onRequestProposal(round))
+  EXPECT_CALL(*connections[OnDemandConnectionManager::kIssuer],
+              onRequestProposal(round))
       .WillOnce(Return(ByMove(std::move(oproposal))));
 
   auto result = manager->onRequestProposal(round);
@@ -108,7 +114,8 @@ TEST_F(OnDemandConnectionManagerTest, onRequestProposal) {
 TEST_F(OnDemandConnectionManagerTest, onRequestProposalNone) {
   RoundType round;
   boost::optional<OnDemandConnectionManager::ProposalType> oproposal;
-  EXPECT_CALL(*issuer, onRequestProposal(round))
+  EXPECT_CALL(*connections[OnDemandConnectionManager::kIssuer],
+              onRequestProposal(round))
       .WillOnce(Return(ByMove(std::move(oproposal))));
 
   auto result = manager->onRequestProposal(round);

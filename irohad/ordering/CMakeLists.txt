@@ -58,4 +58,5 @@ add_library(on_demand_connection_manager
 target_link_libraries(on_demand_connection_manager
     shared_model_interfaces
     rxcpp
+    boost
     )

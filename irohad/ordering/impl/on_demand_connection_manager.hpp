@@ -21,23 +21,38 @@ namespace iroha {
     class OnDemandConnectionManager : public transport::OdOsNotification {
      public:
       /**
+       * Responsibilities of individual peers from the peers array
+       * Transactions are sent to three ordering services:
+       * current consumers, first and second, and previous consumer
+       * Proposal is requested from the current ordering service: issuer
+       */
+      enum PeerType {
+        kIssuer = 0,
+        kPreviousConsumer,
+        kCurrentFirstConsumer,
+        kCurrentSecondConsumer,
+        kCount
+      };
+
+      /// Collection with value types which represent peers
+      template <typename T>
+      using PeerCollectionType = std::array<T, kCount>;
+
+      /**
        * Current peers to send transactions and request proposals
-       * Transactions are sent to two ordering services:
-       * current and previous consumers
-       * Proposal is requested from current ordering service: issuer
+       * @see PeerType for individual descriptions
        */
       struct CurrentPeers {
-        std::shared_ptr<shared_model::interface::Peer> issuer, current_consumer,
-            previous_consumer;
+        PeerCollectionType<std::shared_ptr<shared_model::interface::Peer>>
+            peers;
       };
 
       /**
        * Corresponding connections created by OdOsNotificationFactory
-       * @see CurrentPeers for individual descriptions
+       * @see PeerType for individual descriptions
        */
       struct CurrentConnections {
-        std::unique_ptr<transport::OdOsNotification> issuer, current_consumer,
-            previous_consumer;
+        PeerCollectionType<std::unique_ptr<transport::OdOsNotification>> peers;
       };
 
       OnDemandConnectionManager(

@@ -5,6 +5,7 @@
 
 #include "ordering/impl/on_demand_connection_manager.hpp"
 
+#include <boost/range/combine.hpp>
 #include "interfaces/iroha_internal/proposal.hpp"
 
 using namespace iroha::ordering;
@@ -28,8 +29,10 @@ void OnDemandConnectionManager::onTransactions(CollectionType transactions) {
   // shared lock
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
-  connections_.current_consumer->onTransactions(transactions);
-  connections_.previous_consumer->onTransactions(transactions);
+  for (auto peer_type :
+       {kPreviousConsumer, kCurrentFirstConsumer, kCurrentSecondConsumer}) {
+    connections_.peers[peer_type]->onTransactions(transactions);
+  }
 }
 
 boost::optional<OnDemandConnectionManager::ProposalType>
@@ -37,7 +40,7 @@ OnDemandConnectionManager::onRequestProposal(transport::RoundType round) {
   // shared lock
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
-  return connections_.issuer->onRequestProposal(round);
+  return connections_.peers[kIssuer]->onRequestProposal(round);
 }
 
 void OnDemandConnectionManager::initializeConnections(
@@ -46,7 +49,7 @@ void OnDemandConnectionManager::initializeConnections(
     ptr = factory_->create(*peer);
   };
 
-  create_assign(connections_.issuer, peers.issuer);
-  create_assign(connections_.current_consumer, peers.current_consumer);
-  create_assign(connections_.previous_consumer, peers.previous_consumer);
+  for (auto pair : boost::combine(connections_.peers, peers.peers)) {
+    create_assign(boost::get<0>(pair), boost::get<1>(pair));
+  }
 }
