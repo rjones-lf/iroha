@@ -338,7 +338,9 @@ namespace integration_framework {
     // collect all statuses and process them
     std::vector<shared_model::proto::TransactionResponse> statuses;
     for (const auto tx : transactions) {
-      statuses.push_back(getTxStatus(tx->hash()));
+      getTxStatus(tx->hash(), [&statuses](const auto &status) {
+        statuses.push_back(status);
+      });
     }
 
     validation(statuses);
@@ -348,7 +350,10 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::sendTxSequenceAwait(
       const shared_model::interface::TransactionSequence &tx_sequence,
       std::function<void(const BlockType &)> check) {
-    sendTxSequence(tx_sequence).skipProposal().checkBlock(check);
+    sendTxSequence(tx_sequence)
+        .skipProposal()
+        .skipVerifiedProposal()
+        .checkBlock(check);
     return *this;
   }
 
