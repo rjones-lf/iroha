@@ -414,7 +414,7 @@ can_grant_can_add_my_signatory
 
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_add_my_signatory`_ `permission <../core_concepts/glossary.html#permission>`__.
 
-| Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
+| Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
 | Usage in Java bindings: ``Role.kAddMySignatory``
 | Usage in Python bindings: ``Role_kAddMySignatory``
 |
@@ -434,7 +434,7 @@ can_grant_can_remove_my_signatory
 
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_remove_my_signatory`_ `permission <../core_concepts/glossary.html#permission>`__.
 
-| Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
+| Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
 | Usage in Java bindings: ``Role.kRemoveMySignatory``
 | Usage in Python bindings: ``Role_kRemoveMySignatory``
 |
@@ -454,7 +454,7 @@ can_grant_can_set_my_account_detail
 
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_account_detail`_ `permission <../core_concepts/glossary.html#permission>`__.
 
-| Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
+| Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
 | Usage in Java bindings: ``Role.kSetMyAccountDetail``
 | Usage in Python bindings: ``Role_kSetMyAccountDetail``
 |
@@ -474,7 +474,7 @@ can_grant_can_set_my_quorum
 
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_quorum`_ `permission <../core_concepts/glossary.html#permission>`__.
 
-| Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
+| Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
 | Usage in Java bindings: ``Role.kSetMyQuorum``
 | Usage in Python bindings: ``Role_kSetMyQuorum``
 |
@@ -494,7 +494,7 @@ can_grant_can_transfer_my_assets
 
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_transfer_my_assets`_ `permission <../core_concepts/glossary.html#permission>`__.
 
-| Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
+| Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
 | Usage in Java bindings: ``Role.kTransferMyAssets``
 | Usage in Python bindings: ``Role_kTransferMyAssets``
 |
