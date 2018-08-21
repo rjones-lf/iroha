@@ -18,6 +18,10 @@
 #ifndef IROHA_VALIDATOR_MOCKS_HPP
 #define IROHA_VALIDATOR_MOCKS_HPP
 
+#include <gmock/gmock.h>
+
+#include "interfaces/iroha_internal/block_variant.hpp"
+#include "validators/abstract_validator.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -31,6 +35,12 @@ namespace shared_model {
       Answer validate(const T &) const {
         return {};
       }
+    };
+
+    class MockBlockValidator
+        : public AbstractValidator<interface::BlockVariant> {
+     public:
+      MOCK_METHOD1(validate, Answer(const interface::BlockVariant &));
     };
 
   }  // namespace validation

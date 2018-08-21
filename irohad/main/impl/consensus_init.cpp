@@ -29,8 +29,8 @@ namespace iroha {
     namespace yac {
 
       auto YacInit::createPeerOrderer(
-          std::shared_ptr<ametsuchi::PeerQuery> wsv) {
-        return std::make_shared<PeerOrdererImpl>(wsv);
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory) {
+        return std::make_shared<PeerOrdererImpl>(peer_query_factory);
       }
 
       auto YacInit::createNetwork(
@@ -97,7 +97,7 @@ namespace iroha {
       }
 
       std::shared_ptr<YacGate> YacInit::initConsensusGate(
-          std::shared_ptr<ametsuchi::PeerQuery> wsv,
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           std::shared_ptr<simulator::BlockCreator> block_creator,
           std::shared_ptr<network::BlockLoader> block_loader,
           const shared_model::crypto::Keypair &keypair,
@@ -107,7 +107,7 @@ namespace iroha {
           std::shared_ptr<
               iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call) {
-        auto peer_orderer = createPeerOrderer(wsv);
+        auto peer_orderer = createPeerOrderer(peer_query_factory);
 
         auto yac = createYac(peer_orderer->getInitialOrdering().value(),
                              keypair,

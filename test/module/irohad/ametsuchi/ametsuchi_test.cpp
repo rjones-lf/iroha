@@ -26,7 +26,6 @@ auto zero_string = std::string(32, '0');
 auto fake_hash = shared_model::crypto::Hash(zero_string);
 auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
 
-
 /**
  * Validate getAccountTransaction with given parameters
  * @tparam B block query type
@@ -678,16 +677,9 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
  * @then load proposal height and ensure it is correct
  */
 TEST_F(AmetsuchiTest, OrderingServicePersistentStorageTest) {
-  std::shared_ptr<iroha::ametsuchi::PostgresOrderingServicePersistentState>
-      ordering_state;
-  iroha::ametsuchi::PostgresOrderingServicePersistentState::create(pgopt_)
-      .match([&](iroha::expected::Value<std::shared_ptr<
-                     iroha::ametsuchi::PostgresOrderingServicePersistentState>>
-                     &_storage) { ordering_state = _storage.value; },
-             [](iroha::expected::Error<std::string> &error) {
-               FAIL() << "PostgresOrderingServicePersistentState: "
-                      << error.error;
-             });
+  auto os_opt = storage->createOsPersistentState();
+  ASSERT_TRUE(os_opt);
+  auto ordering_state = os_opt.get();
   ASSERT_TRUE(ordering_state);
 
   ordering_state->resetState();
@@ -706,16 +698,9 @@ TEST_F(AmetsuchiTest, OrderingServicePersistentStorageTest) {
  * @then load proposal height and ensure it is correct
  */
 TEST_F(AmetsuchiTest, OrderingServicePersistentStorageRestartTest) {
-  std::shared_ptr<iroha::ametsuchi::PostgresOrderingServicePersistentState>
-      ordering_state;
-  iroha::ametsuchi::PostgresOrderingServicePersistentState::create(pgopt_)
-      .match([&](iroha::expected::Value<std::shared_ptr<
-                     iroha::ametsuchi::PostgresOrderingServicePersistentState>>
-                     &_storage) { ordering_state = _storage.value; },
-             [](iroha::expected::Error<std::string> &error) {
-               FAIL() << "PostgresOrderingServicePersistentState: "
-                      << error.error;
-             });
+  auto os_opt = storage->createOsPersistentState();
+  ASSERT_TRUE(os_opt);
+  auto ordering_state = os_opt.get();
   ASSERT_TRUE(ordering_state);
 
   ordering_state->resetState();
@@ -725,14 +710,10 @@ TEST_F(AmetsuchiTest, OrderingServicePersistentStorageRestartTest) {
 
   // restart Ordering Service Storage
   ordering_state.reset();
-  iroha::ametsuchi::PostgresOrderingServicePersistentState::create(pgopt_)
-      .match([&](iroha::expected::Value<std::shared_ptr<
-                     iroha::ametsuchi::PostgresOrderingServicePersistentState>>
-                     &_storage) { ordering_state = _storage.value; },
-             [](iroha::expected::Error<std::string> &error) {
-               FAIL() << "PostgresOrderingServicePersistentState: "
-                      << error.error;
-             });
+  os_opt = storage->createOsPersistentState();
+  ASSERT_TRUE(os_opt);
+  ordering_state = os_opt.get();
+  ASSERT_TRUE(ordering_state);
   ASSERT_TRUE(ordering_state);
   ASSERT_EQ(11, ordering_state->loadProposalHeight().value());
 }
@@ -744,28 +725,14 @@ TEST_F(AmetsuchiTest, OrderingServicePersistentStorageRestartTest) {
  */
 TEST_F(AmetsuchiTest,
        OrderingServicePersistentStorageDifferentConnectionsTest) {
-  std::shared_ptr<iroha::ametsuchi::PostgresOrderingServicePersistentState>
-      ordering_state_1;
-  iroha::ametsuchi::PostgresOrderingServicePersistentState::create(pgopt_)
-      .match([&](iroha::expected::Value<std::shared_ptr<
-                     iroha::ametsuchi::PostgresOrderingServicePersistentState>>
-                     &_storage) { ordering_state_1 = _storage.value; },
-             [](iroha::expected::Error<std::string> &error) {
-               FAIL() << "PostgresOrderingServicePersistentState: "
-                      << error.error;
-             });
+  auto os_opt1 = storage->createOsPersistentState();
+  ASSERT_TRUE(os_opt1);
+  auto ordering_state_1 = os_opt1.get();
   ASSERT_TRUE(ordering_state_1);
 
-  std::shared_ptr<iroha::ametsuchi::PostgresOrderingServicePersistentState>
-      ordering_state_2;
-  iroha::ametsuchi::PostgresOrderingServicePersistentState::create(pgopt_)
-      .match([&](iroha::expected::Value<std::shared_ptr<
-                     iroha::ametsuchi::PostgresOrderingServicePersistentState>>
-                     &_storage) { ordering_state_2 = _storage.value; },
-             [](iroha::expected::Error<std::string> &error) {
-               FAIL() << "PostgresOrderingServicePersistentState: "
-                      << error.error;
-             });
+  auto os_opt2 = storage->createOsPersistentState();
+  ASSERT_TRUE(os_opt2);
+  auto ordering_state_2 = os_opt2.get();
   ASSERT_TRUE(ordering_state_2);
 
   ordering_state_2->resetState();

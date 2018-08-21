@@ -44,26 +44,27 @@ TEST_F(CreateAccount, Basic) {
 /**
  * @given some user without can_create_account permission
  * @when execute tx with CreateAccount command
- * @then there is no tx in proposal
+ * @then verified proposal is empty
  */
 TEST_F(CreateAccount, NoPermissions) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms({interface::permissions::Role::kGetMyTxs}))
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createAccount(
           kNewUser, kDomain, kNewUserKeypair.publicKey())))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
 /**
  * @given some user with can_create_account permission
  * @when execute tx with CreateAccount command with nonexistent domain
- * @then there is no tx in proposal
+ * @then verified proposal is empty
  */
 TEST_F(CreateAccount, NoDomain) {
   const std::string nonexistent_domain = "asdf";
@@ -71,19 +72,20 @@ TEST_F(CreateAccount, NoDomain) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createAccount(
           kNewUser, nonexistent_domain, kNewUserKeypair.publicKey())))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
 /**
  * @given some user with can_create_account permission
  * @when execute tx with CreateAccount command with already existing username
- * @then there is no tx in proposal
+ * @then verified proposal is empty
  */
 TEST_F(CreateAccount, ExistingName) {
   std::string existing_name = kUser;
@@ -91,12 +93,13 @@ TEST_F(CreateAccount, ExistingName) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createAccount(
           existing_name, kDomain, kNewUserKeypair.publicKey())))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 

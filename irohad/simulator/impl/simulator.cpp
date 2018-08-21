@@ -1,27 +1,12 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "simulator/impl/simulator.hpp"
 
 #include <boost/range/adaptor/transformed.hpp>
 
-#include "backend/protobuf/empty_block.hpp"
-#include "builders/protobuf/block.hpp"
-#include "builders/protobuf/empty_block.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 
@@ -32,14 +17,17 @@ namespace iroha {
         std::shared_ptr<network::OrderingGate> ordering_gate,
         std::shared_ptr<validation::StatefulValidator> statefulValidator,
         std::shared_ptr<ametsuchi::TemporaryFactory> factory,
-        std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
+        std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
         std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
-            crypto_signer)
+            crypto_signer,
+        std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
+            block_factory)
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
-          block_queries_(std::move(blockQuery)),
-          crypto_signer_(std::move(crypto_signer)) {
-      log_ = logger::log("Simulator");
+          block_query_factory_(block_query_factory),
+          crypto_signer_(std::move(crypto_signer)),
+          block_factory_(std::move(block_factory)),
+          log_(logger::log("Simulator")) {
       ordering_gate->on_proposal().subscribe(
           proposal_subscription_,
           [this](std::shared_ptr<shared_model::interface::Proposal> proposal) {
@@ -70,7 +58,8 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process proposal");
       // Get last block from local ledger
-      auto top_block_result = block_queries_->getTopBlock();
+      auto top_block_result = block_query_factory_->createBlockQuery() |
+          [](const auto &block_query) { return block_query->getTopBlock(); };
       auto block_fetched = top_block_result.match(
           [&](expected::Value<std::shared_ptr<shared_model::interface::Block>>
                   &block) {
@@ -113,38 +102,20 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process verified proposal");
 
-      // TODO: Alexey Chernyshov IR-1011 2018-03-08 rework BlockBuilder logic,
-      // so that this cast will not be needed
-      auto proto_txs =
-          proposal.transactions() | boost::adaptors::transformed([](auto &tx) {
-            return static_cast<const shared_model::proto::Transaction &>(tx);
-          });
-
-      auto sign_and_send = [this](const auto &any_block) {
-        crypto_signer_->sign(*any_block);
-        block_notifier_.get_subscriber().on_next(any_block);
-      };
-
-      if (proto_txs.empty()) {
-        auto empty_block = std::make_shared<shared_model::proto::EmptyBlock>(
-            shared_model::proto::UnsignedEmptyBlockBuilder()
-                .height(proposal.height())
-                .prevHash(last_block->hash())
-                .createdTime(proposal.createdTime())
-                .build());
-
-        sign_and_send(empty_block);
+      auto height = block_query_factory_->createBlockQuery() |
+          [&](const auto &block_query) {
+            return block_query->getTopBlockHeight() + 1;
+          };
+      if (not height) {
+        log_->error("Unable to query top block height");
         return;
       }
-      auto block = std::make_shared<shared_model::proto::Block>(
-          shared_model::proto::UnsignedBlockBuilder()
-              .height(block_queries_->getTopBlockHeight() + 1)
-              .prevHash(last_block->hash())
-              .transactions(proto_txs)
-              .createdTime(proposal.createdTime())
-              .build());
-
-      sign_and_send(block);
+      auto block = block_factory_->unsafeCreateBlock(height,
+                                                     last_block->hash(),
+                                                     proposal.createdTime(),
+                                                     proposal.transactions());
+      crypto_signer_->sign(block);
+      block_notifier_.get_subscriber().on_next(block);
     }
 
     rxcpp::observable<shared_model::interface::BlockVariant>

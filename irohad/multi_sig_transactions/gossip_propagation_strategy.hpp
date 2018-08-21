@@ -23,7 +23,8 @@
 #include <boost/optional.hpp>
 #include <chrono>
 #include <mutex>
-#include "ametsuchi/peer_query.hpp"
+
+#include "ametsuchi/peer_query_factory.hpp"
 
 namespace iroha {
 
@@ -35,15 +36,15 @@ namespace iroha {
    */
   class GossipPropagationStrategy : public PropagationStrategy {
    public:
-    using PeerProvider = std::shared_ptr<ametsuchi::PeerQuery>;
+    using PeerProviderFactory = std::shared_ptr<ametsuchi::PeerQueryFactory>;
     using OptPeer = boost::optional<PropagationData::value_type>;
     /**
      * Initialize strategy with
-     * @param query is a provider of peer list
+     * @param peer_factory is a provider of peer list
      * @param period of emitting data in ms
      * @param amount of peers emitted per once
      */
-    GossipPropagationStrategy(PeerProvider query,
+    GossipPropagationStrategy(PeerProviderFactory peer_factory,
                               std::chrono::milliseconds period,
                               uint32_t amount);
 
@@ -58,7 +59,7 @@ namespace iroha {
     /**
      * Source of peers for propagation
      */
-    PeerProvider query;
+    PeerProviderFactory peer_factory;
 
     /**
      * Cache of peer provider's data

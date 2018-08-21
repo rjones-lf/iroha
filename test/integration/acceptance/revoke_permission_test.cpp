@@ -26,6 +26,7 @@ TEST_F(GrantablePermissionsFixture, RevokeFromNonExistingAccount) {
       .sendTx(makeAccountWithPerms(
           kAccount1, kAccount1Keypair, {Role::kSetMyQuorum}, kRole1))
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(revokePermission(kAccount1,
                                kAccount1Keypair,
@@ -34,9 +35,9 @@ TEST_F(GrantablePermissionsFixture, RevokeFromNonExistingAccount) {
       .checkProposal(
           // transaction is stateless valid
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
-      .checkBlock(
+      .checkVerifiedProposal(
           // transaction is not stateful valid (kAccount2 does not exist)
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
@@ -55,6 +56,7 @@ TEST_F(GrantablePermissionsFixture, RevokeTwice) {
                               kAccount1Keypair,
                               kAccount2,
                               permissions::Grantable::kSetMyQuorum))
+      .skipVerifiedProposal()
       .checkBlock(
           // permission was successfully granted
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -62,6 +64,7 @@ TEST_F(GrantablePermissionsFixture, RevokeTwice) {
                                kAccount1Keypair,
                                kAccount2,
                                permissions::Grantable::kSetMyQuorum))
+      .skipVerifiedProposal()
       .checkBlock(
           // permission was successfully revoked
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -69,9 +72,9 @@ TEST_F(GrantablePermissionsFixture, RevokeTwice) {
                                kAccount1Keypair,
                                kAccount2,
                                permissions::Grantable::kSetMyQuorum))
-      .checkBlock(
+      .checkVerifiedProposal(
           // permission cannot be revoked twice
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
@@ -106,10 +109,12 @@ TEST_F(GrantablePermissionsFixture, DISABLED_RevokeWithoutPermission) {
                               kAccount2,
                               permissions::Grantable::kSetMyQuorum))
       .skipProposal()
+      .skipVerifiedProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(detach_role_tx)
       .skipProposal()
+      .skipVerifiedProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(revokePermission(kAccount1,
@@ -118,8 +123,8 @@ TEST_F(GrantablePermissionsFixture, DISABLED_RevokeWithoutPermission) {
                                permissions::Grantable::kSetMyQuorum))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
@@ -177,12 +182,16 @@ namespace grantables {
     IntegrationTestFramework &prepare(GrantablePermissionsFixture &f,
                                       IntegrationTestFramework &itf) override {
       auto account_id = f.kAccount1 + "@" + f.kDomain;
+      auto pkey =
+          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
+              .publicKey();
       auto add_signatory_tx =
           GrantablePermissionsFixture::TxBuilder()
               .createdTime(f.getUniqueTime())
               .creatorAccountId(account_id)
               .quorum(1)
               .addSignatory(account_id, f.kAccount2Keypair.publicKey())
+              .addSignatory(account_id, pkey)
               .build()
               .signAndAddSignature(f.kAccount1Keypair)
               .finish();
@@ -304,6 +313,7 @@ namespace grantables {
                                  gpf::kAccount2,
                                  this->grantable_type_.grantable_permission_))
         .skipProposal()
+        .skipVerifiedProposal()
         .checkBlock(
             // permission was successfully granted
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
@@ -312,6 +322,7 @@ namespace grantables {
         .checkProposal([](auto &proposal) {
           ASSERT_EQ(proposal->transactions().size(), 1);
         })
+        .skipVerifiedProposal()
         .checkBlock(
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
         .sendTx(
@@ -320,6 +331,7 @@ namespace grantables {
                                   gpf::kAccount2,
                                   this->grantable_type_.grantable_permission_))
         .skipProposal()
+        .skipVerifiedProposal()
         .checkBlock(
             // permission was successfully revoked
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
@@ -337,18 +349,14 @@ namespace grantables {
         .checkProposal([](auto &proposal) {
           ASSERT_EQ(proposal->transactions().size(), 1);
         })
-        .checkBlock(
-            [](auto &block) { EXPECT_EQ(block->transactions().size(), 0); })
-        .getTxStatus(
-            last_check_tx.hash(),
-            [](auto &status) {
-              auto message = status.errorMessage();
+        .getTxStatus(last_check_tx.hash(),
+                     [](auto &status) {
+                       auto message = status.errorMessage();
 
-              ASSERT_NE(
-                  message.find("has permission command validation failed"),
-                  std::string::npos)
-                  << "Fail reason: " << message;
-            })
+                       ASSERT_NE(message.find("did not pass verification"),
+                                 std::string::npos)
+                           << "Fail reason: " << message;
+                     })
         .done();
   }
 

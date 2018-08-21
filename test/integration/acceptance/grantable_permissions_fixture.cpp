@@ -26,9 +26,11 @@ GrantablePermissionsFixture::createTwoAccounts(
     const shared_model::interface::RolePermissionSet &perm2) {
   itf.sendTx(makeAccountWithPerms(kAccount1, kAccount1Keypair, perm1, kRole1))
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(makeAccountWithPerms(kAccount2, kAccount2Keypair, perm2, kRole2))
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock();
   return itf;
 }

@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "backend/protobuf/transaction.hpp"
+#include "backend/protobuf/proto_block_factory.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/specified_visitor.hpp"
@@ -29,6 +30,7 @@
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/cryptography/crypto_model_signer_mock.hpp"
 #include "simulator/impl/simulator.hpp"
+#include "module/shared_model/validators/validators.hpp"
 
 using namespace iroha;
 using namespace iroha::validation;
@@ -56,6 +58,12 @@ class SimulatorTest : public ::testing::Test {
     ordering_gate = std::make_shared<MockOrderingGate>();
     crypto_signer = std::make_shared<shared_model::crypto::CryptoModelSigner<>>(
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair());
+    block_query_factory = std::make_shared<MockBlockQueryFactory>();
+    EXPECT_CALL(*block_query_factory, createBlockQuery())
+        .WillRepeatedly(testing::Return(boost::make_optional(
+            std::shared_ptr<iroha::ametsuchi::BlockQuery>(query))));
+    block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory>(
+        std::make_unique<shared_model::validation::MockBlockValidator>());
   }
 
   void TearDown() override {
@@ -64,14 +72,17 @@ class SimulatorTest : public ::testing::Test {
 
   void init() {
     simulator = std::make_shared<Simulator>(
-        ordering_gate, validator, factory, query, crypto_signer);
+        ordering_gate, validator, factory, block_query_factory, crypto_signer,
+                                            std::move(block_factory));
   }
 
   std::shared_ptr<MockStatefulValidator> validator;
   std::shared_ptr<MockTemporaryFactory> factory;
   std::shared_ptr<MockBlockQuery> query;
+  std::shared_ptr<MockBlockQueryFactory> block_query_factory;
   std::shared_ptr<MockOrderingGate> ordering_gate;
   std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer;
+  std::unique_ptr<shared_model::interface::UnsafeBlockFactory> block_factory;
 
   std::shared_ptr<Simulator> simulator;
 };
@@ -138,7 +149,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   EXPECT_CALL(*query, getTopBlock())
       .WillOnce(Return(expected::makeValue(wBlock(clone(block)))));
 
-  EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(1));
+  EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(block.height()));
 
   EXPECT_CALL(*validator, validate(_, _))
       .WillOnce(Return(
@@ -149,7 +160,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::Block &>()))
+              sign(A<shared_model::interface::BlockVariant &>()))
       .Times(1);
 
   init();
@@ -197,7 +208,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::Block &>()))
+              sign(A<shared_model::interface::BlockVariant &>()))
       .Times(0);
 
   init();
@@ -234,7 +245,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::Block &>()))
+              sign(A<shared_model::interface::BlockVariant &>()))
       .Times(0);
 
   init();
@@ -309,7 +320,7 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::Block &>()))
+              sign(A<shared_model::interface::BlockVariant &>()))
       .Times(1);
 
   init();

@@ -7,17 +7,19 @@
 #define IROHA_ANY_BLOCK_VALIDATOR_HPP
 
 #include "common/visitor.hpp"
+#include "field_validator.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block_variant.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
   namespace validation {
-
     template <typename BlockValidator, typename EmptyBlockValidator>
     class AnyBlockValidator {
      public:
-      AnyBlockValidator(
+      explicit AnyBlockValidator(
+          shared_model::validation::FieldValidator field_validator =
+              shared_model::validation::FieldValidator(),
           BlockValidator block_validator = BlockValidator(),
           EmptyBlockValidator empty_block_validator = EmptyBlockValidator())
           : non_empty_block_validator_(block_validator),
@@ -32,8 +34,9 @@ namespace shared_model {
       }
 
       Answer validate(const interface::BlockVariant &block_variant) const {
-        return iroha::visit_in_place(
-            block_variant, [this](auto block) { return validate(*block); });
+        return iroha::visit_in_place(block_variant, [this](auto block) {
+          return this->validate(*block);
+        });
       }
 
      protected:
