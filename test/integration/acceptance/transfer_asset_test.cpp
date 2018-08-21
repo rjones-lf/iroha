@@ -91,7 +91,7 @@ TEST_F(TransferAsset, Basic) {
  * @given pair of users
  *        AND the first user without can_transfer permission
  * @when execute tx with TransferAsset command
- * @then there is an empty proposal
+ * @then there is an empty verified proposal
  */
 TEST_F(TransferAsset, WithoutCanTransfer) {
   IntegrationTestFramework(1)
@@ -99,7 +99,9 @@ TEST_F(TransferAsset, WithoutCanTransfer) {
       .sendTxAwait(makeFirstUser({}), check(1))
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
-      .sendTxAwait(makeTransfer(), check(0))
+      .sendTx(makeTransfer())
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
@@ -107,7 +109,7 @@ TEST_F(TransferAsset, WithoutCanTransfer) {
  * @given pair of users
  *        AND the second user without can_receive permission
  * @when execute tx with TransferAsset command
- * @then there is an empty proposal
+ * @then there is an empty verified proposal
  */
 TEST_F(TransferAsset, WithoutCanReceive) {
   IntegrationTestFramework(1)
@@ -117,14 +119,17 @@ TEST_F(TransferAsset, WithoutCanReceive) {
       .sendTxAwait(makeSecondUser({interface::permissions::Role::kAddPeer}),
                    check(1))
       .sendTxAwait(addAssets(), check(1))
-      .sendTxAwait(makeTransfer(), check(0))
+      .sendTx(makeTransfer())
+      .skipProposal()
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
 /**
  * @given some user with all required permissions
  * @when execute tx with TransferAsset command to nonexistent destination
- * @then there is an empty proposal
+ * @then there is an empty verified proposal
  */
 TEST_F(TransferAsset, NonexistentDest) {
   std::string nonexistent = "inexist@test";
@@ -132,16 +137,18 @@ TEST_F(TransferAsset, NonexistentDest) {
       .setInitialState(kAdminKeypair)
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
-      .sendTxAwait(complete(baseTx().transferAsset(
-                       kUserId, nonexistent, kAsset, kDesc, kAmount)),
-                   check(0))
+      .sendTx(complete(
+          baseTx().transferAsset(kUserId, nonexistent, kAsset, kDesc, kAmount)))
+      .skipProposal()
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
 /**
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with nonexistent asset
- * @then there is an empty proposal
+ * @then there is an empty verified proposal
  */
 TEST_F(TransferAsset, NonexistentAsset) {
   std::string nonexistent = "inexist#test";
@@ -150,9 +157,11 @@ TEST_F(TransferAsset, NonexistentAsset) {
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
-      .sendTxAwait(complete(baseTx().transferAsset(
-                       kUserId, kUser2Id, nonexistent, kDesc, kAmount)),
-                   check(0))
+      .sendTx(complete(baseTx().transferAsset(
+          kUserId, kUser2Id, nonexistent, kDesc, kAmount)))
+      .skipProposal()
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
@@ -227,7 +236,7 @@ TEST_F(TransferAsset, LongDesc) {
 /**
  * @given pair of users with all required permissions
  * @when execute tx with TransferAsset command with amount more, than user has
- * @then there is an empty proposal
+ * @then there is an empty verified proposal
  */
 TEST_F(TransferAsset, MoreThanHas) {
   IntegrationTestFramework(1)
@@ -235,7 +244,10 @@ TEST_F(TransferAsset, MoreThanHas) {
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets("50.0"), check(1))
-      .sendTxAwait(makeTransfer("100.0"), check(0))
+      .sendTx(makeTransfer("100.0"))
+      .skipProposal()
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
@@ -244,13 +256,13 @@ TEST_F(TransferAsset, MoreThanHas) {
  * is replenished if required
  * @when execute two txes with TransferAsset command with amount more than a
  * uint256 max half
- * @then first transaction is commited and there is an empty proposal for the
- * second
+ * @then first transaction is commited @and there is an empty verified proposal
+ * for the second
  */
 TEST_F(TransferAsset, Uint256DestOverflow) {
   std::string uint256_halfmax =
       "578960446186580977117854925043439539266349923328202820197287920039565648"
-          "19966.0";  // 2**255 - 2
+      "19966.0";  // 2**255 - 2
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTxAwait(makeFirstUser(), check(1))
@@ -261,7 +273,10 @@ TEST_F(TransferAsset, Uint256DestOverflow) {
       // Restore self balance
       .sendTxAwait(addAssets(uint256_halfmax), check(1))
       // Send second half of the maximum
-      .sendTxAwait(makeTransfer(uint256_halfmax), check(0))
+      .sendTx(makeTransfer(uint256_halfmax))
+      .skipProposal()
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
@@ -346,8 +361,7 @@ TEST_F(TransferAsset, BigPrecision) {
       kUserId, kUser2Id, kNewAssetId, kDesc, kForTransfer));
 
   auto check_balance = [](std::string account_id, std::string val) {
-    return [a = std::move(account_id),
-            v = val](auto &resp) {
+    return [a = std::move(account_id), v = val](auto &resp) {
       auto &acc_ast = boost::apply_visitor(
           framework::SpecifiedVisitor<interface::AccountAssetResponse>(),
           resp.get());

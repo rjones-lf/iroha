@@ -23,7 +23,8 @@
 namespace shared_model {
   namespace interface {
     class Block;
-  }
+    class BlockVariant;
+  }  // namespace interface
 }  // namespace shared_model
 
 namespace iroha {
@@ -55,16 +56,17 @@ namespace iroha {
       virtual bool validateChain(
           rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
               commit,
-          ametsuchi::MutableStorage &storage) = 0;
+          ametsuchi::MutableStorage &storage) const = 0;
 
       /**
        * Block validation will check if all signatures and meta-data are valid.
-       * @param block - storage that may be modified during loading
-       * @param storage -  storage that may be modified during block appliance
-       * @return true if block is valid and can be applied, false otherwise
+       * @param block_variant to be checked
+       * @param storage, on which the block is going to be checked
+       * @return true if block is valid, false otherwise
        */
-      virtual bool validateBlock(const shared_model::interface::Block &block,
-                                 ametsuchi::MutableStorage &storage) = 0;
+      virtual bool validateBlock(
+          const shared_model::interface::BlockVariant &block_variant,
+          ametsuchi::MutableStorage &storage) const = 0;
     };
   }  // namespace validation
 }  // namespace iroha

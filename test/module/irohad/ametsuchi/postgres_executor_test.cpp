@@ -51,6 +51,11 @@ namespace iroha {
         *sql << init_;
       }
 
+      void TearDown() override {
+        sql->close();
+        AmetsuchiTest::TearDown();
+      }
+
       CommandResult execute(
           const std::unique_ptr<shared_model::interface::Command> &command,
           bool do_validation = false,
@@ -90,7 +95,8 @@ namespace iroha {
                         true)));
       }
 
-      std::string role = "role";
+      const std::string role = "role";
+      const std::string another_role = "role2";
       shared_model::interface::RolePermissionSet role_permissions;
       shared_model::interface::permissions::Grantable grantable_permission;
       std::unique_ptr<shared_model::interface::Account> account;
@@ -393,10 +399,10 @@ namespace iroha {
       role_permissions2.set(
           shared_model::interface::permissions::Role::kRemoveMySignatory);
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
-                                  "role2", role_permissions2)),
+                                  another_role, role_permissions2)),
                               true)));
       ASSERT_TRUE(err(execute(buildCommand(TestTransactionBuilder().appendRole(
-          account->accountId(), "role2")))));
+          account->accountId(), another_role)))));
     }
 
     /**
@@ -409,40 +415,53 @@ namespace iroha {
       role_permissions2.set(
           shared_model::interface::permissions::Role::kRemoveMySignatory);
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
-                                  "role2", role_permissions2)),
+                                  another_role, role_permissions2)),
                               true)));
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().appendRole(
-                                  account->accountId(), "role2")),
+                                  account->accountId(), another_role)),
                               true)));
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
-      ASSERT_TRUE(std::find(roles->begin(), roles->end(), "role2")
+      ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
                   != roles->end());
     }
 
     TEST_F(AppendRole, InvalidAppendRoleTestWhenNoPerms) {
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
-                                  "role2", role_permissions)),
+                                  another_role, role_permissions)),
                               true)));
       ASSERT_TRUE(err(execute(buildCommand(TestTransactionBuilder().appendRole(
-          account->accountId(), "role2")))));
+          account->accountId(), another_role)))));
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
-      ASSERT_TRUE(std::find(roles->begin(), roles->end(), "role2")
+      ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
                   == roles->end());
     }
 
     TEST_F(AppendRole, ValidAppendRoleTest) {
       addAllPerms();
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
-                                  "role2", role_permissions)),
+                                  another_role, role_permissions)),
                               true)));
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().appendRole(
-          account->accountId(), "role2")))));
+          account->accountId(), another_role)))));
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
-      ASSERT_TRUE(std::find(roles->begin(), roles->end(), "role2")
+      ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
                   != roles->end());
+    }
+
+    TEST_F(AppendRole, ValidAppendRoleTestWhenEmptyPerms) {
+      addAllPerms();
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
+          another_role, {})),
+                              true)));
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().appendRole(
+          account->accountId(), another_role)))));
+      auto roles = query->getAccountRoles(account->accountId());
+      ASSERT_TRUE(roles);
+      ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
+                      != roles->end());
     }
 
     class CreateAccount : public CommandExecutorTest {
@@ -628,7 +647,7 @@ namespace iroha {
       addAllPerms();
       ASSERT_TRUE(
           err(execute(buildCommand(TestTransactionBuilder().createDomain(
-              domain2->domainId(), "role2")))));
+              domain2->domainId(), another_role)))));
     }
 
     /**
@@ -685,7 +704,7 @@ namespace iroha {
     TEST_F(CreateRole, ValidCreateRoleTest) {
       addAllPerms();
       ASSERT_TRUE(val(execute(buildCommand(
-          TestTransactionBuilder().createRole("role2", role_permissions)))));
+          TestTransactionBuilder().createRole(another_role, role_permissions)))));
       auto rl = query->getRolePermissions(role);
       ASSERT_TRUE(rl);
       ASSERT_EQ(rl.get(), role_permissions);
@@ -700,8 +719,8 @@ namespace iroha {
       role_permissions2.set(
           shared_model::interface::permissions::Role::kRemoveMySignatory);
       ASSERT_TRUE(err(execute(buildCommand(
-          TestTransactionBuilder().createRole("role2", role_permissions2)))));
-      auto rl = query->getRolePermissions("role2");
+          TestTransactionBuilder().createRole(another_role, role_permissions2)))));
+      auto rl = query->getRolePermissions(another_role);
       ASSERT_TRUE(rl);
       ASSERT_TRUE(rl->none());
     }
@@ -716,7 +735,7 @@ namespace iroha {
                         true)));
         ASSERT_TRUE(
             val(execute(buildCommand(TestTransactionBuilder().createRole(
-                            "role2", role_permissions)),
+                            another_role, role_permissions)),
                         true)));
         ASSERT_TRUE(
             val(execute(buildCommand(TestTransactionBuilder().createDomain(
@@ -728,7 +747,7 @@ namespace iroha {
                         true)));
         ASSERT_TRUE(
             val(execute(buildCommand(TestTransactionBuilder().appendRole(
-                            account->accountId(), "role2")),
+                            account->accountId(), another_role)),
                         true)));
       }
     };
@@ -741,10 +760,10 @@ namespace iroha {
     TEST_F(DetachRole, ValidDetachRoleTest) {
       addAllPerms();
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().detachRole(
-          account->accountId(), "role2")))));
+          account->accountId(), another_role)))));
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
-      ASSERT_TRUE(std::find(roles->begin(), roles->end(), "role2")
+      ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
                   == roles->end());
     }
 
@@ -755,10 +774,10 @@ namespace iroha {
      */
     TEST_F(DetachRole, InvalidDetachRoleTestWhenNoPerms) {
       ASSERT_TRUE(err(execute(buildCommand(TestTransactionBuilder().detachRole(
-          account->accountId(), "role2")))));
+          account->accountId(), another_role)))));
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
-      ASSERT_TRUE(std::find(roles->begin(), roles->end(), "role2")
+      ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
                   != roles->end());
     }
 
@@ -772,7 +791,7 @@ namespace iroha {
                         true)));
         ASSERT_TRUE(
             val(execute(buildCommand(TestTransactionBuilder().createRole(
-                            "role2", role_permissions)),
+                            another_role, role_permissions)),
                         true)));
         ASSERT_TRUE(
             val(execute(buildCommand(TestTransactionBuilder().createDomain(
@@ -1404,8 +1423,6 @@ namespace iroha {
           "coin#" + domain->domainId();
       std::unique_ptr<shared_model::interface::Account> account2;
     };
-
-    void checkTransfer() {}
 
     /**
      * @given  command

@@ -116,6 +116,41 @@ namespace {
             % checkAccountGrantablePermission(grantable))
         .str();
   }
+
+  inline std::string missRolePerm(
+      shared_model::interface::types::AccountIdType account,
+      shared_model::interface::permissions::Role perm) {
+    return (boost::format("command validation failed: account %s"
+                          " does not have permission %s (role)")
+            % account % shared_model::proto::permissions::toString(perm))
+        .str();
+  }
+
+  inline std::string missGrantablePerm(
+      shared_model::interface::types::AccountIdType account,
+      shared_model::interface::types::AccountIdType permittee,
+      shared_model::interface::permissions::Grantable perm) {
+    return (boost::format(
+                "command validation failed: account %s"
+                " does not have permission %s (grantable) for account %s")
+            % account % shared_model::proto::permissions::toString(perm)
+            % permittee)
+        .str();
+  }
+
+  inline std::string missRoleOrGrantablePerm(
+      shared_model::interface::types::AccountIdType account,
+      shared_model::interface::types::AccountIdType permittee,
+      shared_model::interface::permissions::Role role_perm,
+      shared_model::interface::permissions::Grantable grantable_perm) {
+    return (boost::format("command validation failed: account %s"
+                          " does not have permission %s (role)"
+                          " and permission %s (grantable) for account %s")
+            % account % shared_model::proto::permissions::toString(role_perm)
+            % shared_model::proto::permissions::toString(grantable_perm)
+            % permittee)
+        .str();
+  }
 }  // namespace
 
 namespace iroha {
@@ -198,11 +233,7 @@ namespace iroha {
              % "AND (SELECT * from has_perm)"
              % "WHEN NOT (SELECT * from has_perm) THEN 1");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
 
       soci::statement st = sql_.prepare << cmd.str();
@@ -216,13 +247,9 @@ namespace iroha {
 
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return (boost::format("command validation failed: account %s"
-                                  " does not have permission %s")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::
-                              kAddAssetQty))
-                .str();
+            return missRolePerm(
+                creator_account_id_,
+                shared_model::interface::permissions::Role::kAddAssetQty);
           },
           [] { return std::string("Account does not exist"); },
           [] {
@@ -251,20 +278,15 @@ namespace iroha {
               %s
               ELSE 2 END AS result)");
       if (do_validation_) {
-        cmd =
-            (cmd
-                % (boost::format(R"(has_perm AS (%s),)")
-                    % checkAccountRolePermission(
-                        shared_model::interface::permissions::
-                        Role::kAddPeer)).str()
-                % "WHERE (SELECT * FROM has_perm)"
-                % "WHEN NOT (SELECT * from has_perm) THEN 1");
+        cmd = (cmd
+               % (boost::format(R"(has_perm AS (%s),)")
+                  % checkAccountRolePermission(
+                        shared_model::interface::permissions::Role::kAddPeer))
+                     .str()
+               % "WHERE (SELECT * FROM has_perm)"
+               % "WHEN NOT (SELECT * from has_perm) THEN 1");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(peer.pubkey().hex(), "pk"));
@@ -272,13 +294,9 @@ namespace iroha {
       st.exchange(soci::use(creator_account_id_, "role_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return std::string(
-                (boost::format("command validation failed: account %s"
-                               " does not have permission %s")
-                 % creator_account_id_
-                 % shared_model::proto::permissions::toString(
-                       shared_model::interface::permissions::Role::kAddPeer))
-                    .str());
+            return missRolePerm(
+                creator_account_id_,
+                shared_model::interface::permissions::Role::kAddPeer);
           },
           [&] {
             return (boost::format("failed to insert peer, public key: '%s', "
@@ -323,24 +341,18 @@ namespace iroha {
       if (do_validation_) {
         cmd =
             (cmd
-                % (boost::format(R"(
+             % (boost::format(R"(
           has_perm AS (%s),)")
-                    % checkAccountHasRoleOrGrantablePerm(
-                        shared_model::interface::permissions::
-                        Role::kAddSignatory,
-                        shared_model::interface::permissions::
-                        Grantable::kAddMySignatory))
-                    .str()
-                % "(SELECT :pk WHERE (SELECT * FROM has_perm))"
-                % " AND (SELECT * FROM has_perm)"
-                % "WHEN NOT (SELECT * from has_perm) THEN 1");
+                % checkAccountHasRoleOrGrantablePerm(
+                      shared_model::interface::permissions::Role::kAddSignatory,
+                      shared_model::interface::permissions::Grantable::
+                          kAddMySignatory))
+                   .str()
+             % "(SELECT :pk WHERE (SELECT * FROM has_perm))"
+             % " AND (SELECT * FROM has_perm)"
+             % "WHEN NOT (SELECT * from has_perm) THEN 1");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % "(SELECT :pk)"
-                % ""
-                % "");
+        cmd = (cmd % "" % "(SELECT :pk)" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(pubkey, "pk"));
@@ -353,16 +365,12 @@ namespace iroha {
 
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return (boost::format("command validation failed: account %s"
-                                  " does not have permission %s or %s")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::
-                              kAddSignatory)
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Grantable::
-                              kAddMySignatory))
-                .str();
+            return missRoleOrGrantablePerm(
+                creator_account_id_,
+                account_id,
+                shared_model::interface::permissions::Role::kAddSignatory,
+                shared_model::interface::permissions::Grantable::
+                    kAddMySignatory);
           },
           [&] {
             return (boost::format(
@@ -396,20 +404,17 @@ namespace iroha {
             SELECT CASE
                 WHEN EXISTS (SELECT * FROM inserted) THEN 0
                 %s
-                ELSE 5
+                ELSE 4
             END AS result)");
       if (do_validation_) {
-        cmd =
-            (cmd
-                % (boost::format(R"(
+        cmd = (cmd
+               % (boost::format(R"(
             has_perm AS (%1%),
             role_permissions AS (
                 SELECT permission FROM role_has_permissions
                 WHERE role_id = :role_id
             ),
-            role_has_any_permission AS (
-                SELECT permission <> '0'::bit(%2%) FROM role_permissions
-            ),
+
             account_roles AS (
                 SELECT role_id FROM account_has_roles WHERE account_id = :creator_id
             ),
@@ -421,25 +426,20 @@ namespace iroha {
                 JOIN account_has_roles AS ar on ar.role_id = rp.role_id
                 WHERE ar.account_id = :creator_id
             ),)")
-                    % checkAccountRolePermission(
-                        shared_model::interface::permissions::
-                        Role::kAppendRole)
-                    % std::to_string(bits))
-                    .str()
-                % R"( WHERE (SELECT * FROM role_has_any_permission) AND
+                  % checkAccountRolePermission(
+                        shared_model::interface::permissions::Role::kAppendRole)
+                  % std::to_string(bits))
+                     .str()
+               % R"( WHERE
                     EXISTS (SELECT * FROM account_roles) AND
                     (SELECT * FROM account_has_role_permissions)
                     AND (SELECT * FROM has_perm))"
-                % R"( WHEN NOT (SELECT * FROM role_has_any_permission) THEN 1
-                WHEN NOT EXISTS (SELECT * FROM account_roles) THEN 2
-                WHEN NOT (SELECT * FROM account_has_role_permissions) THEN 3
-                WHEN NOT (SELECT * FROM has_perm) THEN 4)");
+               % R"(
+                WHEN NOT EXISTS (SELECT * FROM account_roles) THEN 1
+                WHEN NOT (SELECT * FROM account_has_role_permissions) THEN 2
+                WHEN NOT (SELECT * FROM has_perm) THEN 3)");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(account_id, "account_id"));
@@ -447,12 +447,6 @@ namespace iroha {
       st.exchange(soci::use(creator_account_id_, "creator_id"));
       st.exchange(soci::use(creator_account_id_, "role_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return (boost::format("is valid command validation failed: no "
-                                  "permissions in role %s")
-                    % command.roleName())
-                .str();
-          },
           [&] {
             return (boost::format("is valid command validation failed: no "
                                   "roles in account %s")
@@ -467,13 +461,9 @@ namespace iroha {
                 .str();
           },
           [&] {
-            return (boost::format("command validation failed: account %s"
-                                  " does not have permission %s")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::
-                              kAppendRole))
-                .str();
+            return missRolePerm(
+                creator_account_id_,
+                shared_model::interface::permissions::Role::kAppendRole);
           },
           [&] {
             return (boost::format(
@@ -549,22 +539,17 @@ namespace iroha {
               ELSE 5
               END AS result)");
       if (do_validation_) {
-        cmd =
-            (cmd
-                % (boost::format(R"(
+        cmd = (cmd
+               % (boost::format(R"(
             has_perm AS (%s),)")
-                    % checkAccountRolePermission(
-                        shared_model::interface::permissions::
-                        Role::kCreateAccount))
-                    .str()
-                % R"(AND (SELECT * FROM has_perm))"
-                % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)");
+                  % checkAccountRolePermission(
+                        shared_model::interface::permissions::Role::
+                            kCreateAccount))
+                     .str()
+               % R"(AND (SELECT * FROM has_perm))"
+               % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(account_id, "account_id"));
@@ -573,13 +558,9 @@ namespace iroha {
       st.exchange(soci::use(pubkey, "pk"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return (boost::format("command validation failed: account %s"
-                                  " does not have permission %s")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::
-                              kCreateAccount))
-                .str();
+            return missRolePerm(
+                creator_account_id_,
+                shared_model::interface::permissions::Role::kCreateAccount);
           },
           [&] {
             return (boost::format("failed to insert account, "
@@ -630,20 +611,15 @@ namespace iroha {
       if (do_validation_) {
         cmd =
             (cmd
-                % (boost::format(R"(
+             % (boost::format(R"(
               has_perm AS (%s),)")
-                    % checkAccountRolePermission(
-                        shared_model::interface::permissions::
-                        Role::kCreateAsset))
-                    .str()
-                %  R"(WHERE (SELECT * FROM has_perm))"
-                % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)");
+                % checkAccountRolePermission(
+                      shared_model::interface::permissions::Role::kCreateAsset))
+                   .str()
+             % R"(WHERE (SELECT * FROM has_perm))"
+             % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(asset_id, "id"));
@@ -652,13 +628,9 @@ namespace iroha {
       st.exchange(soci::use(creator_account_id_, "role_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return (boost::format("command validation failed: account %s"
-                                  " does not have permission %s")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::
-                              kCreateDomain))
-                .str();
+            return missRolePerm(
+                creator_account_id_,
+                shared_model::interface::permissions::Role::kCreateDomain);
           },
           [&] {
             return (boost::format("failed to insert asset, asset id: '%s', "
@@ -687,22 +659,17 @@ namespace iroha {
               %s
               ELSE 2 END AS result)");
       if (do_validation_) {
-        cmd =
-            (cmd
-                % (boost::format(R"(
+        cmd = (cmd
+               % (boost::format(R"(
               has_perm AS (%s),)")
-                    % checkAccountRolePermission(
-                        shared_model::interface::permissions::
-                        Role::kCreateDomain))
-                    .str()
-                %  R"(WHERE (SELECT * FROM has_perm))"
-                % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)");
+                  % checkAccountRolePermission(
+                        shared_model::interface::permissions::Role::
+                            kCreateDomain))
+                     .str()
+               % R"(WHERE (SELECT * FROM has_perm))"
+               % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(domain_id, "id"));
@@ -710,13 +677,9 @@ namespace iroha {
       st.exchange(soci::use(creator_account_id_, "role_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return (boost::format("command validation failed: account %s"
-                                  " does not have permission %s")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::
-                              kCreateDomain))
-                .str();
+            return missRolePerm(
+                creator_account_id_,
+                shared_model::interface::permissions::Role::kCreateDomain);
           },
           [&] {
             return (boost::format("failed to insert domain, domain id: '%s', "
@@ -755,29 +718,25 @@ namespace iroha {
       if (do_validation_) {
         cmd =
             (cmd
-                % (boost::format(R"(
+             % (boost::format(R"(
           account_has_role_permissions AS (
                 SELECT COALESCE(bit_or(rp.permission), '0'::bit(%s)) &
                     :perms = :perms
                 FROM role_has_permissions AS rp
                 JOIN account_has_roles AS ar on ar.role_id = rp.role_id
                 WHERE ar.account_id = :creator_id),
-          has_perm AS (%s),)") % std::to_string(bits)
-                    % checkAccountRolePermission(
-                        shared_model::interface::permissions::
-                        Role::kCreateRole))
-                    .str()
-                % R"(WHERE (SELECT * FROM account_has_role_permissions)
+          has_perm AS (%s),)")
+                % std::to_string(bits)
+                % checkAccountRolePermission(
+                      shared_model::interface::permissions::Role::kCreateRole))
+                   .str()
+             % R"(WHERE (SELECT * FROM account_has_role_permissions)
                           AND (SELECT * FROM has_perm))"
-                % R"(WHEN NOT (SELECT * FROM
+             % R"(WHEN NOT (SELECT * FROM
                                account_has_role_permissions) THEN 2
                         WHEN NOT (SELECT * FROM has_perm) THEN 3)");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(role_id, "role_id"));
@@ -805,13 +764,9 @@ namespace iroha {
                 .str();
           },
           [&] {
-            return (boost::format("command validation failed: account %s"
-                                  " does not have permission %s")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::
-                              kCreateRole))
-                .str();
+            return missRolePerm(
+                creator_account_id_,
+                shared_model::interface::permissions::Role::kCreateRole);
           },
           [&] {
             return (boost::format("failed to insert role: '%s'") % role_id)
@@ -825,7 +780,7 @@ namespace iroha {
         const shared_model::interface::DetachRole &command) {
       auto &account_id = command.accountId();
       auto &role_name = command.roleName();
-      boost::format cmd (R"(
+      boost::format cmd(R"(
             WITH %s
             deleted AS
             (
@@ -841,20 +796,15 @@ namespace iroha {
       if (do_validation_) {
         cmd =
             (cmd
-                % (boost::format(R"(
+             % (boost::format(R"(
             has_perm AS (%s),)")
-                    % checkAccountRolePermission(
-                        shared_model::interface::permissions::
-                        Role::kDetachRole))
-                    .str()
-                % R"(AND (SELECT * FROM has_perm))"
-                % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)");
+                % checkAccountRolePermission(
+                      shared_model::interface::permissions::Role::kDetachRole))
+                   .str()
+             % R"(AND (SELECT * FROM has_perm))"
+             % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(account_id, "account_id"));
@@ -862,13 +812,9 @@ namespace iroha {
       st.exchange(soci::use(role_name, "role_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return (boost::format("command validation failed: account %s"
-                                  " does not have permission %s")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::
-                              kDetachRole))
-                .str();
+            return missRolePerm(
+                creator_account_id_,
+                shared_model::interface::permissions::Role::kDetachRole);
           },
           [&] {
             return (boost::format(
@@ -903,22 +849,17 @@ namespace iroha {
               %s
               ELSE 2 END AS result)");
       if (do_validation_) {
-        cmd =
-            (cmd
-                % (boost::format(R"(
+        cmd = (cmd
+               % (boost::format(R"(
             has_perm AS (%s),)")
-                    % checkAccountRolePermission(
-                        shared_model::interface::permissions::
-                        permissionFor(command.permissionName())))
-                    .str()
-                % R"( WHERE (SELECT * FROM has_perm))"
-                % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)");
+                  % checkAccountRolePermission(
+                        shared_model::interface::permissions::permissionFor(
+                            command.permissionName())))
+                     .str()
+               % R"( WHERE (SELECT * FROM has_perm))"
+               % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(permittee_account_id, "permittee_account_id"));
@@ -927,13 +868,9 @@ namespace iroha {
       st.exchange(soci::use(perm_str, "perms"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return (boost::format(
-                        "command validation failed: account %s"
-                        " does not have grantable permission %s to grant")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          command.permissionName()))
-                .str();
+            return missGrantablePerm(creator_account_id_,
+                                     permittee_account_id,
+                                     command.permissionName());
           },
           [&] {
             return (boost::format(
@@ -986,9 +923,8 @@ namespace iroha {
               ELSE 1
           END AS result)");
       if (do_validation_) {
-        cmd =
-            (cmd
-                % (boost::format(R"(
+        cmd = (cmd
+               % (boost::format(R"(
           has_perm AS (%s),
           get_account AS (
               SELECT quorum FROM account WHERE account_id = :account_id LIMIT 1
@@ -1002,30 +938,25 @@ namespace iroha {
               WHERE quorum < (SELECT COUNT(*) FROM get_signatories)
           ),
           )")
-                    % checkAccountHasRoleOrGrantablePerm(
-                        shared_model::interface::permissions::
-                        Role::kRemoveSignatory,
-                        shared_model::interface::permissions::
-                        Grantable::kRemoveMySignatory))
-                    .str()
-                % R"(
+                  % checkAccountHasRoleOrGrantablePerm(
+                        shared_model::interface::permissions::Role::
+                            kRemoveSignatory,
+                        shared_model::interface::permissions::Grantable::
+                            kRemoveMySignatory))
+                     .str()
+               % R"(
               AND (SELECT * FROM has_perm)
               AND EXISTS (SELECT * FROM get_account)
               AND EXISTS (SELECT * FROM get_signatories)
               AND EXISTS (SELECT * FROM check_account_signatories)
-          )"
-                % R"(
-              WHEN NOT EXISTS (SELECT * FROM has_perm) THEN 6
+          )" % R"(
+              WHEN NOT (SELECT * FROM has_perm) THEN 6
               WHEN NOT EXISTS (SELECT * FROM get_account) THEN 3
               WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 4
               WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 5
           )");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(account_id, "account_id"));
@@ -1069,18 +1000,12 @@ namespace iroha {
                    "becomes less than the quorum";
           },
           [&] {
-            return (boost::format(
-                        "command validation failed: account %s"
-                        " does not have permission %s or %s for account %s")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Grantable::
-                              kRemoveMySignatory)
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::
-                              kRemoveSignatory)
-                    % command.accountId())
-                .str();
+            return missRoleOrGrantablePerm(
+                creator_account_id_,
+                command.accountId(),
+                shared_model::interface::permissions::Role::kRemoveSignatory,
+                shared_model::interface::permissions::Grantable::
+                    kRemoveMySignatory);
           },
       };
       return makeCommandResultByReturnedValue(
@@ -1116,19 +1041,15 @@ namespace iroha {
                   %s
                   ELSE 2 END AS result)");
       if (do_validation_) {
-        cmd =
-            (cmd
-                % (boost::format(R"(
-            has_perm AS (%s),)") % checkAccountGrantablePermission(permission))
-                    .str()
-                % R"( AND (SELECT * FROM has_perm))"
-                % R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )");
+        cmd = (cmd
+               % (boost::format(R"(
+            has_perm AS (%s),)")
+                  % checkAccountGrantablePermission(permission))
+                     .str()
+               % R"( AND (SELECT * FROM has_perm))"
+               % R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(
@@ -1140,13 +1061,9 @@ namespace iroha {
       st.exchange(soci::use(perms, "perm"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return (boost::format(
-                        "command validation failed: account %s"
-                        " does not have grantable permission %s to revoke")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          command.permissionName()))
-                .str();
+            return missGrantablePerm(creator_account_id_,
+                                     command.accountId(),
+                                     command.permissionName());
           },
           [&] {
             return (boost::format(
@@ -1192,9 +1109,8 @@ namespace iroha {
                   %s
                   ELSE 2 END AS result)");
       if (do_validation_) {
-        cmd =
-            (cmd
-                % (boost::format(R"(
+        cmd = (cmd
+               % (boost::format(R"(
               has_role_perm AS (%s),
               has_grantable_perm AS (%s),
               has_perm AS (SELECT CASE
@@ -1204,21 +1120,16 @@ namespace iroha {
                                ELSE false END
               ),
               )")
-                    % checkAccountRolePermission(
-                        shared_model::interface::permissions::Role::
-                        kSetDetail)
-                    % checkAccountGrantablePermission(
-                        shared_model::interface::permissions::
-                        Grantable::kSetMyAccountDetail))
-                    .str()
-                % R"( AND (SELECT * FROM has_perm))"
-                % R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )");
+                  % checkAccountRolePermission(
+                        shared_model::interface::permissions::Role::kSetDetail)
+                  % checkAccountGrantablePermission(
+                        shared_model::interface::permissions::Grantable::
+                            kSetMyAccountDetail))
+                     .str()
+               % R"( AND (SELECT * FROM has_perm))"
+               % R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(creator_account_id_, "creator_account_id"));
@@ -1234,18 +1145,12 @@ namespace iroha {
           soci::use(creator_account_id_, "grantable_permittee_account_id"));
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return (boost::format("command validation failed: account %s"
-                                  " tries to set details for account %s"
-                                  ", but has neither %s"
-                                  " nor grantable %s")
-                    % creator_account_id_ % command.accountId()
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::
-                              kSetDetail)
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Grantable::
-                              kSetMyAccountDetail))
-                .str();
+            return missRoleOrGrantablePerm(
+                creator_account_id_,
+                command.accountId(),
+                shared_model::interface::permissions::Role::kSetDetail,
+                shared_model::interface::permissions::Grantable::
+                    kSetMyAccountDetail);
           },
           [&] {
             return (boost::format(
@@ -1276,9 +1181,7 @@ namespace iroha {
               ELSE 4
           END AS result)");
       if (do_validation_) {
-        cmd =
-            (cmd
-                % R"(
+        cmd = (cmd % R"(
           get_signatories AS (
               SELECT public_key FROM account_has_signatory
               WHERE account_id = :account_id
@@ -1288,30 +1191,24 @@ namespace iroha {
               WHERE :quorum >= (SELECT COUNT(*) FROM get_signatories)
               AND account_id = :account_id
           ),)"
-                % (boost::format(R"(
+               % (boost::format(R"(
           has_perm AS (%s),)")
-                    % checkAccountHasRoleOrGrantablePerm(
-                        shared_model::interface::permissions::
-                        Role::kSetQuorum,
-                        shared_model::interface::permissions::
-                        Grantable::kSetMyQuorum))
-                    .str()
-                % R"(AND EXISTS
+                  % checkAccountHasRoleOrGrantablePerm(
+                        shared_model::interface::permissions::Role::kSetQuorum,
+                        shared_model::interface::permissions::Grantable::
+                            kSetMyQuorum))
+                     .str()
+               % R"(AND EXISTS
               (SELECT * FROM get_signatories)
               AND EXISTS (SELECT * FROM check_account_signatories)
               AND (SELECT * FROM has_perm))"
-                % R"(
+               % R"(
               WHEN NOT (SELECT * FROM has_perm) THEN 3
               WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 1
               WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 2
               )");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(quorum, "quorum"));
@@ -1339,14 +1236,11 @@ namespace iroha {
                 .str();
           },
           [&] {
-            return (boost::format("command validation failed: account %s"
-                                  " does not have permission %s for account %s")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Grantable::
-                              kSetMyQuorum)
-                    % command.accountId())
-                .str();
+            return missRoleOrGrantablePerm(
+                creator_account_id_,
+                account_id,
+                shared_model::interface::permissions::Role::kSetQuorum,
+                shared_model::interface::permissions::Grantable::kSetMyQuorum);
           },
           [&] {
             return (boost::format("failed to update account, account id: '%s', "
@@ -1406,22 +1300,17 @@ namespace iroha {
               ELSE 5
           END AS result;)");
       if (do_validation_) {
-        cmd =
-            (cmd
-                % (boost::format(R"(
+        cmd = (cmd
+               % (boost::format(R"(
                has_perm AS (%s),)")
-                    % checkAccountRolePermission(
-                        shared_model::interface::permissions::
-                        Role::kSubtractAssetQty))
-                    .str()
-                % R"( AND (SELECT * FROM has_perm))"
-                % R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )");
+                  % checkAccountRolePermission(
+                        shared_model::interface::permissions::Role::
+                            kSubtractAssetQty))
+                     .str()
+               % R"( AND (SELECT * FROM has_perm))"
+               % R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "");
       }
 
       soci::statement st = sql_.prepare << cmd.str();
@@ -1433,15 +1322,9 @@ namespace iroha {
 
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
-            return (boost::format("command validation failed: account %s"
-                                  " does not have permission %s"
-                                  " for his own account")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::
-                              kSubtractAssetQty))
-                .str();
-            ;
+            return missRolePerm(
+                creator_account_id_,
+                shared_model::interface::permissions::Role::kSubtractAssetQty);
           },
           [&] { return "Account does not exist with given precision"; },
           [&] { return "Asset with given precision does not exist"; },
@@ -1541,9 +1424,8 @@ namespace iroha {
               ELSE 7
           END AS result;)");
       if (do_validation_) {
-        cmd =
-            (cmd
-                % (boost::format(R"(
+        cmd = (cmd
+               % (boost::format(R"(
               has_role_perm AS (%s),
               has_grantable_perm AS (%s),
               dest_can_receive AS (%s),
@@ -1561,27 +1443,20 @@ namespace iroha {
                                ELSE false END
               ),
               )")
-                    % checkAccountRolePermission(
-                        shared_model::interface::permissions::
-                        Role::kTransfer)
-                    % checkAccountGrantablePermission(
-                        shared_model::interface::permissions::
-                        Grantable::kTransferMyAssets)
-                    % checkAccountRolePermission(
-                        shared_model::interface::permissions::
-                        Role::kReceive,
+                  % checkAccountRolePermission(
+                        shared_model::interface::permissions::Role::kTransfer)
+                  % checkAccountGrantablePermission(
+                        shared_model::interface::permissions::Grantable::
+                            kTransferMyAssets)
+                  % checkAccountRolePermission(
+                        shared_model::interface::permissions::Role::kReceive,
                         "dest_account_id"))
-                    .str()
-                % R"( AND (SELECT * FROM has_perm))"
-                % R"( AND (SELECT * FROM has_perm))"
-                % R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )");
+                     .str()
+               % R"( AND (SELECT * FROM has_perm))"
+               % R"( AND (SELECT * FROM has_perm))"
+               % R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )");
       } else {
-        cmd =
-            (cmd
-                % ""
-                % ""
-                % ""
-                % "");
+        cmd = (cmd % "" % "" % "" % "");
       }
       soci::statement st = sql_.prepare << cmd.str();
       st.exchange(soci::use(src_account_id, "src_account_id"));
@@ -1598,7 +1473,7 @@ namespace iroha {
           [&] {
             return (boost::format(
                         "has permission command validation failed: account %s"
-                        " does not have %s"
+                        " does not have permission %s"
                         " for account or does not have %s"
                         " for his own account or destination account %s"
                         " does not have %s")

@@ -16,6 +16,7 @@
  */
 
 #include "main/impl/block_loader_init.hpp"
+#include "validators/block_variant_validator.hpp"
 #include "validators/default_validator.hpp"
 
 using namespace iroha;
@@ -23,23 +24,28 @@ using namespace iroha::ametsuchi;
 using namespace iroha::network;
 
 auto BlockLoaderInit::createService(
-    std::shared_ptr<BlockQuery> storage,
+    std::shared_ptr<BlockQueryFactory> block_query_factory,
     std::shared_ptr<consensus::ConsensusResultCache> consensus_result_cache) {
-  return std::make_shared<BlockLoaderService>(
-      std::move(storage), std::move(consensus_result_cache));
+  return std::make_shared<BlockLoaderService>(block_query_factory,
+                                              std::move(consensus_result_cache));
 }
 
-auto BlockLoaderInit::createLoader(std::shared_ptr<PeerQuery> peer_query,
-                                   std::shared_ptr<BlockQuery> storage) {
-  return std::make_shared<BlockLoaderImpl>(std::move(peer_query),
-                                           std::move(storage));
+auto BlockLoaderInit::createLoader(
+    std::shared_ptr<PeerQueryFactory> peer_query_factory,
+    std::shared_ptr<BlockQueryFactory> block_query_factory) {
+  shared_model::proto::ProtoBlockFactory factory(
+      std::make_unique<shared_model::validation::BlockVariantValidator>());
+  return std::make_shared<BlockLoaderImpl>(peer_query_factory,
+                                           block_query_factory,
+                                           std::move(factory));
 }
 
 std::shared_ptr<BlockLoader> BlockLoaderInit::initBlockLoader(
-    std::shared_ptr<PeerQuery> peer_query,
-    std::shared_ptr<BlockQuery> storage,
+    std::shared_ptr<PeerQueryFactory> peer_query_factory,
+    std::shared_ptr<BlockQueryFactory> block_query_factory,
     std::shared_ptr<consensus::ConsensusResultCache> consensus_result_cache) {
-  service = createService(storage, std::move(consensus_result_cache));
-  loader = createLoader(std::move(peer_query), std::move(storage));
+  service = createService(block_query_factory,
+                          std::move(consensus_result_cache));
+  loader = createLoader(peer_query_factory, block_query_factory);
   return loader;
 }

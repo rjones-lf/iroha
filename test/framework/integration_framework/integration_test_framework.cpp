@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "framework/integration_framework/integration_test_framework.hpp"
@@ -149,6 +137,15 @@ namespace integration_framework {
 
     iroha_instance_->getIrohaInstance()
         ->getPeerCommunicationService()
+        ->on_verified_proposal()
+        .subscribe([this](auto verified_proposal_and_errors) {
+          verified_proposal_queue_.push(verified_proposal_and_errors->first);
+          log_->info("verified proposal");
+          queue_cond.notify_all();
+        });
+
+    iroha_instance_->getIrohaInstance()
+        ->getPeerCommunicationService()
         ->on_commit()
         .subscribe([this](auto commit_observable) {
           commit_observable.subscribe([this](auto committed_block) {
@@ -165,15 +162,17 @@ namespace integration_framework {
     log_->info("run iroha");
   }
 
-  shared_model::proto::TransactionResponse
-  IntegrationTestFramework::getTxStatus(
-      const shared_model::crypto::Hash &hash) {
+  IntegrationTestFramework &IntegrationTestFramework::getTxStatus(
+      const shared_model::crypto::Hash &hash,
+      std::function<void(const shared_model::proto::TransactionResponse &)>
+          validation) {
     iroha::protocol::TxStatusRequest request;
     request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
     iroha::protocol::ToriiResponse response;
     iroha_instance_->getIrohaInstance()->getCommandService()->Status(request,
                                                                      response);
-    return shared_model::proto::TransactionResponse(std::move(response));
+    validation(shared_model::proto::TransactionResponse(std::move(response)));
+    return *this;
   }
 
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
@@ -201,13 +200,14 @@ namespace integration_framework {
     // make sure that the first (stateless) status is come
     bar1.wait();
     // fetch status of transaction
-    shared_model::proto::TransactionResponse status = getTxStatus(tx.hash());
-    // make sure that the following statuses (stateful/commited)
-    // isn't reached the bus yet
-    bar2->wait();
+    getTxStatus(tx.hash(), [&validation, &bar2](auto &status) {
+      // make sure that the following statuses (stateful/committed)
+      // isn't reached the bus yet
+      bar2->wait();
 
-    // check validation function
-    validation(status);
+      // check validation function
+      validation(status);
+    });
     return *this;
   }
 
@@ -220,7 +220,7 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::sendTxAwait(
       const shared_model::proto::Transaction &tx,
       std::function<void(const BlockType &)> check) {
-    sendTx(tx).skipProposal().checkBlock(check);
+    sendTx(tx).skipProposal().skipVerifiedProposal().checkBlock(check);
     return *this;
   }
 
@@ -259,6 +259,24 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::skipProposal() {
     checkProposal([](const auto &) {});
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::checkVerifiedProposal(
+      std::function<void(const ProposalType &)> validation) {
+    log_->info("check verified proposal");
+    // fetch first proposal from proposal queue
+    ProposalType verified_proposal;
+    fetchFromQueue(verified_proposal_queue_,
+                   verified_proposal,
+                   proposal_waiting,
+                   "missed verified proposal");
+    validation(verified_proposal);
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::skipVerifiedProposal() {
+    checkVerifiedProposal([](const auto &) {});
     return *this;
   }
 
