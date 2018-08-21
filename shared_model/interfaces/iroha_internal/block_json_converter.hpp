@@ -11,12 +11,14 @@
 
 namespace shared_model {
   namespace interface {
-    class Block;
 
+    /**
+     * Block json converter is a class which can convert blocks to/from json
+     */
     class BlockJsonConverter : public BlockJsonSerializer,
                                public BlockJsonDeserializer {
      public:
-      virtual ~BlockJsonConverter() override = default;
+      ~BlockJsonConverter() override = default;
     };
   };  // namespace interface
 }  // namespace shared_model
