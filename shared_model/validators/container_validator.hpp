@@ -34,19 +34,9 @@ namespace shared_model {
      */
     template <typename Iface,
               typename FieldValidator,
-              typename TransactionValidator,
               typename TransactionsCollectionValidator>
     class ContainerValidator {
      protected:
-      void validateTransaction(
-          ReasonsGroupType &reason,
-          const interface::Transaction &transaction) const {
-        auto answer = transaction_validator_.validate(transaction);
-        if (answer.hasErrors()) {
-          auto message = (boost::format("Tx: %s") % answer.reason()).str();
-          reason.second.push_back(message);
-        }
-      }
       void validateTransactions(
           ReasonsGroupType &reason,
           const interface::types::TransactionsCollectionType &transactions)
@@ -62,12 +52,9 @@ namespace shared_model {
           const FieldValidator &field_validator = FieldValidator(),
           const TransactionsCollectionValidator
               &transactions_collection_validator =
-                  TransactionsCollectionValidator(),
-          const TransactionValidator &transaction_validator =
-              TransactionValidator())
+                  TransactionsCollectionValidator())
           : transactions_collection_validator_(
                 transactions_collection_validator),
-            transaction_validator_(transaction_validator),
             field_validator_(field_validator) {}
 
       Answer validate(const Iface &cont, std::string reason_name) const {
@@ -76,6 +63,8 @@ namespace shared_model {
         reason.first = reason_name;
         field_validator_.validateCreatedTime(reason, cont.createdTime());
         field_validator_.validateHeight(reason, cont.height());
+
+        field_validator_.setTime(cont.createdTime());
         validateTransactions(reason, cont.transactions());
         if (not reason.second.empty()) {
           answer.addReason(std::move(reason));
@@ -85,7 +74,6 @@ namespace shared_model {
 
      private:
       TransactionsCollectionValidator transactions_collection_validator_;
-      TransactionValidator transaction_validator_;
 
      protected:
       FieldValidator field_validator_;

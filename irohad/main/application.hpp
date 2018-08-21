@@ -18,9 +18,8 @@
 #ifndef IROHA_APPLICATION_HPP
 #define IROHA_APPLICATION_HPP
 
-#include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
-#include "ametsuchi/ordering_service_persistent_state.hpp"
+#include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
 #include "logger/logger.hpp"
@@ -28,6 +27,7 @@
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
+#include "mst.grpc.pb.h"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
@@ -66,8 +66,6 @@ class Irohad {
    * one proposal
    * @param proposal_delay - maximum waiting time util emitting new proposal
    * @param vote_delay - waiting time before sending vote to next peer
-   * @param load_delay - waiting time before loading committed block from next
-   * peer
    * @param keypair - public and private keys for crypto signer
    * @param is_mst_supported - enable or disable mst processing support
    */
@@ -78,7 +76,6 @@ class Irohad {
          size_t max_proposal_size,
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
-         std::chrono::milliseconds load_delay,
          const shared_model::crypto::Keypair &keypair,
          bool is_mst_supported);
 
@@ -115,15 +112,17 @@ class Irohad {
 
   virtual void initStorage();
 
-  virtual std::unique_ptr<iroha::ametsuchi::PeerQuery> initPeerQuery();
-
   virtual void initCryptoProvider();
 
   virtual void initValidators();
 
+  virtual void initNetworkClient();
+
   virtual void initOrderingGate();
 
   virtual void initSimulator();
+
+  virtual void initConsensusCache();
 
   virtual void initBlockLoader();
 
@@ -154,7 +153,6 @@ class Irohad {
   size_t max_proposal_size_;
   std::chrono::milliseconds proposal_delay_;
   std::chrono::milliseconds vote_delay_;
-  std::chrono::milliseconds load_delay_;
   bool is_mst_supported_;
 
   // ------------------------| internal dependencies |-------------------------
@@ -169,11 +167,18 @@ class Irohad {
   // WSV restorer
   std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;
 
+  // async call
+  std::shared_ptr<iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
+      async_call_;
+
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;
 
   // simulator
   std::shared_ptr<iroha::simulator::Simulator> simulator;
+
+  // block cache for consensus and block loader
+  std::shared_ptr<iroha::consensus::ConsensusResultCache> consensus_result_cache_;
 
   // block loader
   std::shared_ptr<iroha::network::BlockLoader> block_loader;
@@ -197,10 +202,6 @@ class Irohad {
 
   // query service
   std::shared_ptr<torii::QueryService> query_service;
-
-  // ordering service persistent state storage
-  std::shared_ptr<iroha::ametsuchi::OrderingServicePersistentState>
-      ordering_service_storage_;
 
   std::unique_ptr<ServerRunner> torii_server;
   std::unique_ptr<ServerRunner> internal_server;

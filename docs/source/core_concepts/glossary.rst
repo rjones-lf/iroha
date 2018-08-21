@@ -289,7 +289,7 @@ The order of hashes prescribes transactions sequence.
 
 Batch can contain transactions created by different accounts.
 Any transaction within a batch can require single or `multiple <#multisignature-transactions>`__ signatures (depends on quorum set for an account of transaction creator).
-At least one transaction inside a batch should have at least one signature to let the batch pass `stateful validation`_.
+At least one transaction inside a batch should have at least one signature to let the batch pass `stateless validation`_.
 
 Atomic Batch
 ------------
