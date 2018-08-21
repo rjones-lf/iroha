@@ -21,10 +21,13 @@
 #include <gmock/gmock.h>
 #include <boost/optional.hpp>
 #include "ametsuchi/block_query.hpp"
+#include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/key_value_storage.hpp"
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/mutable_storage.hpp"
+#include "ametsuchi/os_persistent_state_factory.hpp"
 #include "ametsuchi/peer_query.hpp"
+#include "ametsuchi/peer_query_factory.hpp"
 #include "ametsuchi/storage.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
@@ -171,10 +174,10 @@ namespace iroha {
           std::vector<boost::optional<wTransaction>>(
               const std::vector<shared_model::crypto::Hash> &tx_hashes));
       MOCK_METHOD2(getBlocks,
-          std::vector<BlockQuery::wBlock>(
+                   std::vector<BlockQuery::wBlock>(
                        shared_model::interface::types::HeightType, uint32_t));
       MOCK_METHOD1(getBlocksFrom,
-          std::vector<BlockQuery::wBlock>(
+                   std::vector<BlockQuery::wBlock>(
                        shared_model::interface::types::HeightType));
       MOCK_METHOD1(getTopBlocks, std::vector<BlockQuery::wBlock>(uint32_t));
       MOCK_METHOD0(getTopBlock, expected::Result<wBlock, std::string>(void));
@@ -267,6 +270,13 @@ namespace iroha {
       MOCK_METHOD0(
           createMutableStorage,
           expected::Result<std::unique_ptr<MutableStorage>, std::string>(void));
+      MOCK_CONST_METHOD0(createPeerQuery,
+                   boost::optional<std::shared_ptr<PeerQuery>>());
+      MOCK_CONST_METHOD0(createBlockQuery,
+                   boost::optional<std::shared_ptr<BlockQuery>>());
+      MOCK_CONST_METHOD0(
+          createOsPersistentState,
+          boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
       MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block &));
       MOCK_METHOD1(insertBlocks,
@@ -295,6 +305,24 @@ namespace iroha {
       MOCK_METHOD0(dropAll, void(void));
     };
 
+    class MockPeerQueryFactory : public PeerQueryFactory {
+     public:
+      MOCK_CONST_METHOD0(createPeerQuery,
+                   boost::optional<std::shared_ptr<PeerQuery>>());
+    };
+
+    class MockBlockQueryFactory : public BlockQueryFactory {
+     public:
+      MOCK_CONST_METHOD0(createBlockQuery,
+                   boost::optional<std::shared_ptr<BlockQuery>>());
+    };
+
+    class MockOsPersistentStateFactory : public OsPersistentStateFactory {
+     public:
+      MOCK_CONST_METHOD0(
+          createOsPersistentState,
+          boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
+    };
   }  // namespace ametsuchi
 }  // namespace iroha
 

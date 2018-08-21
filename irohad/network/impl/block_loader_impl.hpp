@@ -22,8 +22,8 @@
 
 #include <unordered_map>
 
-#include "ametsuchi/block_query.hpp"
-#include "ametsuchi/peer_query.hpp"
+#include "ametsuchi/block_query_factory.hpp"
+#include "ametsuchi/peer_query_factory.hpp"
 #include "backend/protobuf/proto_block_factory.hpp"
 #include "loader.grpc.pb.h"
 #include "logger/logger.hpp"
@@ -32,9 +32,10 @@ namespace iroha {
   namespace network {
     class BlockLoaderImpl : public BlockLoader {
      public:
-      BlockLoaderImpl(std::shared_ptr<ametsuchi::PeerQuery> peer_query,
-                      std::shared_ptr<ametsuchi::BlockQuery> block_query,
-                      shared_model::proto::ProtoBlockFactory factory);
+      BlockLoaderImpl(
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
+          shared_model::proto::ProtoBlockFactory factory);
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlocks(
@@ -64,8 +65,8 @@ namespace iroha {
       std::unordered_map<shared_model::interface::types::AddressType,
                          std::unique_ptr<proto::Loader::Stub>>
           peer_connections_;
-      std::shared_ptr<ametsuchi::PeerQuery> peer_query_;
-      std::shared_ptr<ametsuchi::BlockQuery> block_query_;
+      std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory_;
+      std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory_;
       shared_model::proto::ProtoBlockFactory block_factory_;
 
       logger::Logger log_;

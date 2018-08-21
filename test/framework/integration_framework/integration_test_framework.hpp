@@ -185,6 +185,22 @@ namespace integration_framework {
     IntegrationTestFramework &skipProposal();
 
     /**
+     * Request next verified proposal from queue and check it with provided
+     * function
+     * @param validation - callback that receives object of type \relates
+     * std::shared_ptr<shared_model::interface::Proposal> by reference
+     * @return this
+     */
+    IntegrationTestFramework &checkVerifiedProposal(
+        std::function<void(const ProposalType &)> validation);
+
+    /**
+     * Request next verified proposal from queue and skip it
+     * @return this
+     */
+    IntegrationTestFramework &skipVerifiedProposal();
+
+    /**
      * Request next block from queue and serve it with custom handler
      * @param validation - callback that receives object of type \relates
      * std::shared_ptr<shared_model::interface::Block> by reference
@@ -229,6 +245,7 @@ namespace integration_framework {
                         const std::string &error_reason);
 
     tbb::concurrent_queue<ProposalType> proposal_queue_;
+    tbb::concurrent_queue<ProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
     std::shared_ptr<IrohaInstance> iroha_instance_;
 

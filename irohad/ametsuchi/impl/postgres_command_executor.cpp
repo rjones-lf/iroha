@@ -869,8 +869,8 @@ namespace iroha {
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
             return missGrantablePerm(creator_account_id_,
-                                       permittee_account_id,
-                                       command.permissionName());
+                                     permittee_account_id,
+                                     command.permissionName());
           },
           [&] {
             return (boost::format(
@@ -1062,8 +1062,8 @@ namespace iroha {
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
             return missGrantablePerm(creator_account_id_,
-                                       command.accountId(),
-                                       command.permissionName());
+                                     command.accountId(),
+                                     command.permissionName());
           },
           [&] {
             return (boost::format(

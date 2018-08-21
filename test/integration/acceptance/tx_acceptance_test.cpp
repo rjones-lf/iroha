@@ -24,10 +24,6 @@ class AcceptanceTest : public AcceptanceFixture {
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); };
   const std::function<void(
       const std::shared_ptr<shared_model::interface::Block> &)>
-      checkStatefulInvalid =
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); };
-  const std::function<void(
-      const std::shared_ptr<shared_model::interface::Block> &)>
       checkStatefulValid =
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); };
 
@@ -50,7 +46,7 @@ class AcceptanceTest : public AcceptanceFixture {
  * @given non existent user
  * @when sending  transaction to the ledger
  * @then receive STATELESS_VALIDATION_SUCCESS status
- *       AND STATEFUL_VALIDATION_FAILED on that tx
+ *       @and verified proposal is empty for that transaction
  */
 TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
   const std::string kNonUser = "nonuser@test";
@@ -59,7 +55,8 @@ TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
       .sendTx(complete(baseTx<>().creatorAccountId(kNonUser)),
               checkStatelessValid)
       .checkProposal(checkProposal)
-      .checkBlock(checkStatefulInvalid)
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 

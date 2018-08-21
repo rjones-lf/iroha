@@ -53,15 +53,24 @@ class BlockLoaderTest : public testing::Test {
  public:
   void SetUp() override {
     peer_query = std::make_shared<MockPeerQuery>();
+    peer_query_factory = std::make_shared<MockPeerQueryFactory>();
+    EXPECT_CALL(*peer_query_factory, createPeerQuery())
+        .WillRepeatedly(testing::Return(boost::make_optional(
+            std::shared_ptr<iroha::ametsuchi::PeerQuery>(peer_query))));
     storage = std::make_shared<MockBlockQuery>();
+    block_query_factory = std::make_shared<MockBlockQueryFactory>();
+    EXPECT_CALL(*block_query_factory, createBlockQuery())
+        .WillRepeatedly(testing::Return(boost::make_optional(
+            std::shared_ptr<iroha::ametsuchi::BlockQuery>(storage))));
     block_cache = std::make_shared<iroha::consensus::ConsensusResultCache>();
     auto validator_ptr = std::make_unique<MockBlockValidator>();
     validator = validator_ptr.get();
     loader = std::make_shared<BlockLoaderImpl>(
-        peer_query,
-        storage,
+        peer_query_factory,
+        block_query_factory,
         shared_model::proto::ProtoBlockFactory(std::move(validator_ptr)));
-    service = std::make_shared<BlockLoaderService>(storage, block_cache);
+    service = std::make_shared<BlockLoaderService>(block_query_factory,
+                                                   block_cache);
 
     grpc::ServerBuilder builder;
     int port = 0;
@@ -122,7 +131,9 @@ class BlockLoaderTest : public testing::Test {
       DefaultCryptoAlgorithmType::generateKeypair().publicKey();
   Keypair key = DefaultCryptoAlgorithmType::generateKeypair();
   std::shared_ptr<MockPeerQuery> peer_query;
+  std::shared_ptr<MockPeerQueryFactory> peer_query_factory;
   std::shared_ptr<MockBlockQuery> storage;
+  std::shared_ptr<MockBlockQueryFactory> block_query_factory;
   std::shared_ptr<BlockLoaderImpl> loader;
   std::shared_ptr<BlockLoaderService> service;
   std::unique_ptr<grpc::Server> server;

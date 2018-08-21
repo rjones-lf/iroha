@@ -137,6 +137,15 @@ namespace integration_framework {
 
     iroha_instance_->getIrohaInstance()
         ->getPeerCommunicationService()
+        ->on_verified_proposal()
+        .subscribe([this](auto verified_proposal_and_errors) {
+          verified_proposal_queue_.push(verified_proposal_and_errors->first);
+          log_->info("verified proposal");
+          queue_cond.notify_all();
+        });
+
+    iroha_instance_->getIrohaInstance()
+        ->getPeerCommunicationService()
         ->on_commit()
         .subscribe([this](auto commit_observable) {
           commit_observable.subscribe([this](auto committed_block) {
@@ -211,7 +220,7 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::sendTxAwait(
       const shared_model::proto::Transaction &tx,
       std::function<void(const BlockType &)> check) {
-    sendTx(tx).skipProposal().checkBlock(check);
+    sendTx(tx).skipProposal().skipVerifiedProposal().checkBlock(check);
     return *this;
   }
 
@@ -250,6 +259,24 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::skipProposal() {
     checkProposal([](const auto &) {});
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::checkVerifiedProposal(
+      std::function<void(const ProposalType &)> validation) {
+    log_->info("check verified proposal");
+    // fetch first proposal from proposal queue
+    ProposalType verified_proposal;
+    fetchFromQueue(verified_proposal_queue_,
+                   verified_proposal,
+                   proposal_waiting,
+                   "missed verified proposal");
+    validation(verified_proposal);
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::skipVerifiedProposal() {
+    checkVerifiedProposal([](const auto &) {});
     return *this;
   }
 

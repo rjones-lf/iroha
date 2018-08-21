@@ -43,11 +43,15 @@ size_t N_PEERS = 4;
 
 class YacPeerOrdererTest : public ::testing::Test {
  public:
-  YacPeerOrdererTest() : orderer(make_shared<MockPeerQuery>()) {}
+  YacPeerOrdererTest() : orderer(make_shared<MockPeerQueryFactory>()) {}
 
   void SetUp() override {
     wsv = make_shared<MockPeerQuery>();
-    orderer = PeerOrdererImpl(wsv);
+    pbfactory = make_shared<MockPeerQueryFactory>();
+    EXPECT_CALL(*pbfactory, createPeerQuery())
+        .WillRepeatedly(testing::Return(boost::make_optional(
+            std::shared_ptr<iroha::ametsuchi::PeerQuery>(wsv))));
+    orderer = PeerOrdererImpl(pbfactory);
   }
 
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers = [] {
@@ -78,6 +82,7 @@ class YacPeerOrdererTest : public ::testing::Test {
   }();
 
   shared_ptr<MockPeerQuery> wsv;
+  shared_ptr<MockPeerQueryFactory> pbfactory;
   PeerOrdererImpl orderer;
 };
 

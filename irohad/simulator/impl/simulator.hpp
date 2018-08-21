@@ -8,7 +8,7 @@
 
 #include <boost/optional.hpp>
 
-#include "ametsuchi/block_query.hpp"
+#include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "interfaces/iroha_internal/unsafe_block_factory.hpp"
@@ -27,7 +27,7 @@ namespace iroha {
           std::shared_ptr<network::OrderingGate> ordering_gate,
           std::shared_ptr<validation::StatefulValidator> statefulValidator,
           std::shared_ptr<ametsuchi::TemporaryFactory> factory,
-          std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
               crypto_signer,
           std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
@@ -61,7 +61,7 @@ namespace iroha {
 
       std::shared_ptr<validation::StatefulValidator> validator_;
       std::shared_ptr<ametsuchi::TemporaryFactory> ametsuchi_factory_;
-      std::shared_ptr<ametsuchi::BlockQuery> block_queries_;
+      std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory_;
       std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer_;
       std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
           block_factory_;
