@@ -233,6 +233,8 @@ namespace integration_framework {
 
     boost::barrier bar(2);
 
+    // subscribe on status bus and save all stateless statuses into a vector
+    std::vector<shared_model::proto::TransactionResponse> statuses;
     iroha_instance_->instance_->getStatusBus()
         ->statuses()
         .filter([&transactions](auto s) {
@@ -253,7 +255,12 @@ namespace integration_framework {
           return it != transactions.end();
         })
         .take(transactions.size())
-        .subscribe([](auto &&) {}, [&bar] { bar.wait(); });
+        .subscribe(
+            [&statuses](auto s) {
+              statuses.push_back(*std::static_pointer_cast<
+                                 shared_model::proto::TransactionResponse>(s));
+            },
+            [&bar] { bar.wait(); });
 
     // put all transactions to the TxList and send them to iroha
     iroha::protocol::TxList tx_list;
@@ -268,14 +275,6 @@ namespace integration_framework {
 
     // make sure that the first (stateless) status is come
     bar.wait();
-
-    // collect all statuses and process them
-    std::vector<shared_model::proto::TransactionResponse> statuses;
-    for (const auto tx : transactions) {
-      getTxStatus(tx->hash(), [&statuses](const auto &status) {
-        statuses.push_back(status);
-      });
-    }
 
     validation(statuses);
     return *this;
