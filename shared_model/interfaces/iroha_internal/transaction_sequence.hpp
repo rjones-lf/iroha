@@ -52,6 +52,8 @@ namespace shared_model {
        */
       const types::BatchesCollectionType &batches() const;
 
+      std::string toString() const;
+
      private:
       explicit TransactionSequence(const types::BatchesCollectionType &batches);
 

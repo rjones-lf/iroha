@@ -8,7 +8,6 @@
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "validators/default_validator.hpp"
 
-
 namespace shared_model {
   namespace interface {
 
@@ -100,6 +99,14 @@ namespace shared_model {
 
     const types::BatchesCollectionType &TransactionSequence::batches() const {
       return batches_;
+    }
+
+    std::string TransactionSequence::toString() const {
+      return detail::PrettyStringBuilder()
+          .init("TransactionSequence")
+          .appendAll(batches_,
+                     [](const auto &batch) { return batch.toString(); })
+          .finalize();
     }
 
     TransactionSequence::TransactionSequence(
