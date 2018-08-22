@@ -85,13 +85,13 @@ class AccountAssetTxsFixture : public AcceptanceFixture {
           auto end = tx_hashes_.end();
           ASSERT_NE(std::find(begin, end, tx.hash()), end);
         }
-      });
+      }) << "Actual response: "
+         << response.toString();
     };
   }
 
   auto checkQueryStatefulInvalid() {
     return [](auto &response) {
-      std::cout << response.toString() << std::endl;
       ASSERT_NO_THROW({
         const auto &error_response = boost::apply_visitor(
             framework::SpecifiedVisitor<interface::ErrorQueryResponse>(),
@@ -99,7 +99,8 @@ class AccountAssetTxsFixture : public AcceptanceFixture {
         boost::apply_visitor(framework::SpecifiedVisitor<
                                  interface::StatefulFailedErrorResponse>(),
                              error_response.get());
-      });
+      }) << "Actual response: "
+         << response.toString();
     };
   }
 
@@ -112,7 +113,8 @@ class AccountAssetTxsFixture : public AcceptanceFixture {
         boost::apply_visitor(framework::SpecifiedVisitor<
                                  interface::StatelessFailedErrorResponse>(),
                              error_response.get());
-      });
+      }) << "Actual response: "
+         << response.toString();
     };
   }
 
@@ -423,7 +425,8 @@ TEST_F(AccountAssetTxsFixture, AnothersTxsWithMyTxsPermission) {
 }
 
 /**
- * C343 Get account transactions from another domain having CanGetAllAccountAssetTransactions permission
+ * C343 Get account transactions from another domain having
+ * CanGetAllAccountAssetTransactions permission
  * @given a user with kGetAllAccAstTxs permission
  * @when the user tries to retrieve a list of asset transactions with account id
  * of a user from another domain
