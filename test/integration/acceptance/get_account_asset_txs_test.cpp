@@ -24,6 +24,20 @@ class AccountAssetTxsFixture : public AcceptanceFixture {
         kSpectatorKeypair(
             crypto::DefaultCryptoAlgorithmType::generateKeypair()) {}
 
+  /**
+   * Prepare state of ledger:
+   * - create accounts of target user, close and remote spectators (close
+   *   spectator - another user from the same domain as the domain of target
+   *   user account, remote - a user from domain different to domain of target
+   *   user account).
+   * - execute transfer asset from admin to target account
+   * - execute transfer asset from target to admin account
+   *
+   * @param target_permissions - set of query permissions for target account
+   * @param spectator_permissions - set of query permisisons for spectators'
+   * accounts
+   * @return reference to ITF
+   */
   IntegrationTestFramework &prepareState(
       const interface::RolePermissionSet &target_permissions = {},
       const interface::RolePermissionSet &spectator_permissions = {}) {
@@ -72,6 +86,10 @@ class AccountAssetTxsFixture : public AcceptanceFixture {
         .sendTxAwait(prepare_tx_2, block_with_tx);
   }
 
+  /**
+   * @return a lambda that verifies that query response contains all the hashes
+   * of transactions related to the tested pair of account id and asset id
+   */
   auto checkAllHashesReceived() {
     return [this](const proto::QueryResponse &response) {
       ASSERT_NO_THROW({
@@ -91,6 +109,10 @@ class AccountAssetTxsFixture : public AcceptanceFixture {
     };
   }
 
+  /**
+   * @return a lambda that verifies that query response says the query was
+   * stateful invalid
+   */
   auto checkQueryStatefulInvalid() {
     return [](auto &response) {
       ASSERT_TRUE(boost::apply_visitor(
@@ -101,6 +123,10 @@ class AccountAssetTxsFixture : public AcceptanceFixture {
     };
   }
 
+  /**
+   * @return a lambda that verifies that query response says the query was
+   * stateless invalid
+   */
   auto checkQueryStatelessInvalid() {
     return [](auto &response) {
       ASSERT_TRUE(boost::apply_visitor(
