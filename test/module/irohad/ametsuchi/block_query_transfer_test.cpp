@@ -52,6 +52,11 @@ namespace iroha {
         index->index(block);
       }
 
+      void TearDown() override {
+        sql->close();
+        AmetsuchiTest::TearDown();
+      }
+
       std::unique_ptr<soci::session> sql;
       std::vector<shared_model::crypto::Hash> tx_hashes;
       std::shared_ptr<BlockQuery> blocks;

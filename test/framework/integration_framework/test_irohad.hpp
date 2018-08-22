@@ -34,7 +34,6 @@ namespace integration_framework {
                size_t max_proposal_size,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
-               std::chrono::milliseconds load_delay,
                const shared_model::crypto::Keypair &keypair,
                bool is_mst_supported)
         : Irohad(block_store_dir,
@@ -44,7 +43,6 @@ namespace integration_framework {
                  max_proposal_size,
                  proposal_delay,
                  vote_delay,
-                 load_delay,
                  keypair,
                  is_mst_supported) {}
 

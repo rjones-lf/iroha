@@ -159,6 +159,8 @@ namespace shared_model {
       void validateHash(ReasonsGroupType &reason,
                         const crypto::Hash &hash) const;
 
+      void setTime(shared_model::interface::types::TimestampType time) const;
+
      private:
       const static std::string account_name_pattern_;
       const static std::string asset_name_pattern_;
@@ -183,7 +185,7 @@ namespace shared_model {
       // gap for future transactions
       time_t future_gap_;
       // time provider callback
-      TimeFunction time_provider_;
+      mutable TimeFunction time_provider_;
 
      public:
       // max-delay between tx creation and validation

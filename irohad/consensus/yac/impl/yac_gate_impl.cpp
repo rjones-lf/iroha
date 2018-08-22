@@ -40,14 +40,15 @@ namespace iroha {
           std::shared_ptr<YacHashProvider> hash_provider,
           std::shared_ptr<simulator::BlockCreator> block_creator,
           std::shared_ptr<network::BlockLoader> block_loader,
-          uint64_t delay)
+          std::shared_ptr<consensus::ConsensusResultCache>
+              consensus_result_cache)
           : hash_gate_(std::move(hash_gate)),
             orderer_(std::move(orderer)),
             hash_provider_(std::move(hash_provider)),
             block_creator_(std::move(block_creator)),
             block_loader_(std::move(block_loader)),
-            delay_(delay) {
-        log_ = logger::log("YacGate");
+            consensus_result_cache_(std::move(consensus_result_cache)),
+            log_(logger::log("YacGate")) {
         block_creator_->on_block().subscribe(
             [this](const auto &block) { this->vote(block); });
       }
@@ -65,6 +66,10 @@ namespace iroha {
         }
         current_block_ = std::make_pair(hash, block);
         hash_gate_->vote(hash, *order);
+
+        // insert the block we voted for to the consensus cache
+        consensus_result_cache_->insert(
+            std::make_shared<ConsensusResult>(block));
       }
 
       rxcpp::observable<shared_model::interface::BlockVariant>
@@ -96,18 +101,20 @@ namespace iroha {
             // iterate over peers who voted for the committed block
             rxcpp::observable<>::iterate(commit_message.votes)
                 // allow other peers to apply commit
-                .delay(std::chrono::milliseconds(delay_))
                 .flat_map([this, model_hash](auto vote) {
                   // map vote to block if it can be loaded
                   return rxcpp::observable<>::create<
-                      std::shared_ptr<shared_model::interface::Block>>(
+                      shared_model::interface::BlockVariant>(
                       [this, model_hash, vote](auto subscriber) {
                         auto block = block_loader_->retrieveBlock(
                             vote.signature->publicKey(),
                             shared_model::crypto::Hash(model_hash));
                         // if load is successful
                         if (block) {
-                          subscriber.on_next(block.value());
+                          // update the cache with block consensus voted for
+                          consensus_result_cache_->insert(
+                              std::make_shared<ConsensusResult>(*block));
+                          subscriber.on_next(*block);
                         }
                         subscriber.on_completed();
                       });

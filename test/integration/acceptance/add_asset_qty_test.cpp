@@ -41,18 +41,19 @@ TEST_F(AddAssetQuantity, Basic) {
 /**
  * @given some user without can_add_asset_qty permission
  * @when execute tx with AddAssetQuantity command
- * @then there is no tx in proposal
+ * @then verified proposal is empty
  */
 TEST_F(AddAssetQuantity, NoPermissions) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms({interface::permissions::Role::kGetMyTxs}))
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAsset, kAmount)))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
@@ -92,7 +93,7 @@ TEST_F(AddAssetQuantity, ZeroAmount) {
  * @given pair of users with all required permissions
  * @when execute two txes with AddAssetQuantity command with amount more than a
  * uint256 max half
- * @then first transaction is committed and there is an empty proposal for the
+ * @then first transaction is committed @and verified proposal is empty for the
  * second
  */
 TEST_F(AddAssetQuantity, Uint256DestOverflow) {
@@ -103,24 +104,26 @@ TEST_F(AddAssetQuantity, Uint256DestOverflow) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       // Add first half of the maximum
       .sendTx(complete(baseTx().addAssetQuantity(kAsset, uint256_halfmax)))
       .skipProposal()
+      .skipVerifiedProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       // Add second half of the maximum
       .sendTx(complete(baseTx().addAssetQuantity(kAsset, uint256_halfmax)))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
 /**
  * @given some user with all required permissions
  * @when execute tx with AddAssetQuantity command with nonexistent asset
- * @then there is an empty proposal
+ * @then verified proposal is empty
  */
 TEST_F(AddAssetQuantity, NonexistentAsset) {
   std::string nonexistent = "inexist#test";
@@ -128,10 +131,11 @@ TEST_F(AddAssetQuantity, NonexistentAsset) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(nonexistent, kAmount)))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }

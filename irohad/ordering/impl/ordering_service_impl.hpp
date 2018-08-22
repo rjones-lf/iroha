@@ -12,10 +12,12 @@
 #include <tbb/concurrent_queue.h>
 #include <rxcpp/rx.hpp>
 
+#include "ametsuchi/os_persistent_state_factory.hpp"
+#include "ametsuchi/peer_query_factory.hpp"
+#include "interfaces/iroha_internal/proposal_factory.hpp"
 #include "logger/logger.hpp"
 #include "network/ordering_service.hpp"
 #include "ordering.grpc.pb.h"
-#include "interfaces/iroha_internal/proposal_factory.hpp"
 
 namespace iroha {
 
@@ -37,21 +39,21 @@ namespace iroha {
       using TimeoutType = long;
       /**
        * Constructor
-       * @param wsv interface for fetching peers from world state view
+       * @param peer_query_factory interface for fetching peers from world state
+       * view
        * @param max_size maximum size of proposal
        * @param proposal_timeout observable timeout for proposal creation
        * @param transport receive transactions and publish proposals
-       * @param persistent_state storage for auxiliary information
+       * @param persistent_state factory to storage for auxiliary information
        * @param factory is used to generate proposals
        * @param is_async whether proposals are generated in a separate thread
        */
       OrderingServiceImpl(
-          std::shared_ptr<ametsuchi::PeerQuery> wsv,
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           size_t max_size,
           rxcpp::observable<TimeoutType> proposal_timeout,
           std::shared_ptr<network::OrderingServiceTransport> transport,
-          std::shared_ptr<ametsuchi::OrderingServicePersistentState>
-              persistent_state,
+          std::shared_ptr<ametsuchi::OsPersistentStateFactory> persistent_state,
           std::unique_ptr<shared_model::interface::ProposalFactory> factory,
           bool is_async = true);
 
@@ -84,7 +86,7 @@ namespace iroha {
        */
       void generateProposal() override;
 
-      std::shared_ptr<ametsuchi::PeerQuery> wsv_;
+      std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory_;
 
       tbb::concurrent_queue<
           std::unique_ptr<shared_model::interface::TransactionBatch>>
@@ -103,12 +105,11 @@ namespace iroha {
       std::shared_ptr<network::OrderingServiceTransport> transport_;
 
       /**
-       * Persistent storage for proposal counter.
+       * Factory to persistent storage for proposal counter.
        * In case of relaunch, ordering server will enumerate proposals
        * consecutively.
        */
-      std::shared_ptr<ametsuchi::OrderingServicePersistentState>
-          persistent_state_;
+      std::shared_ptr<ametsuchi::OsPersistentStateFactory> persistent_state_;
 
       /**
        * Proposal counter of expected proposal. Should be number of blocks in

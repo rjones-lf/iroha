@@ -20,6 +20,7 @@
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
+#include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "logger/logger.hpp"
 
 namespace shared_model {
@@ -145,12 +146,38 @@ namespace integration_framework {
         std::function<void(const BlockType &)> check);
 
     /**
+     * Send transactions to Iroha and validate obtained statuses
+     * @param tx_sequence - transactions sequence
+     * @param validation - callback for transactions statuses validation.
+     * Applied to the vector of returned statuses
+     * @return this
+     */
+    IntegrationTestFramework &sendTxSequence(
+        const shared_model::interface::TransactionSequence &tx_sequence,
+        std::function<void(std::vector<shared_model::proto::TransactionResponse>
+                               &)> validation = [](const auto &) {});
+
+    /**
+     * Send transactions to Iroha with awaiting proposal and without status
+     * validation
+     * @param tx_sequence - sequence for sending
+     * @param check - callback for checking committed block
+     * @return this
+     */
+    IntegrationTestFramework &sendTxSequenceAwait(
+        const shared_model::interface::TransactionSequence &tx_sequence,
+        std::function<void(const BlockType &)> check);
+
+    /**
      * Check current status of transaction
      * @param hash - hash of transaction to check
-     * @return TransactonResponse object
+     * @param validation - callback that receives transaction response
+     * @return this
      */
-    shared_model::proto::TransactionResponse getTxStatus(
-        const shared_model::crypto::Hash &hash);
+    IntegrationTestFramework &getTxStatus(
+        const shared_model::crypto::Hash &hash,
+        std::function<void(const shared_model::proto::TransactionResponse &)>
+            validation);
 
     /**
      * Send query to Iroha and validate the response
@@ -185,6 +212,22 @@ namespace integration_framework {
      * @return this
      */
     IntegrationTestFramework &skipProposal();
+
+    /**
+     * Request next verified proposal from queue and check it with provided
+     * function
+     * @param validation - callback that receives object of type \relates
+     * std::shared_ptr<shared_model::interface::Proposal> by reference
+     * @return this
+     */
+    IntegrationTestFramework &checkVerifiedProposal(
+        std::function<void(const ProposalType &)> validation);
+
+    /**
+     * Request next verified proposal from queue and skip it
+     * @return this
+     */
+    IntegrationTestFramework &skipVerifiedProposal();
 
     /**
      * Request next block from queue and serve it with custom handler
@@ -231,6 +274,7 @@ namespace integration_framework {
                         const std::string &error_reason);
 
     tbb::concurrent_queue<ProposalType> proposal_queue_;
+    tbb::concurrent_queue<ProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
     std::shared_ptr<IrohaInstance> iroha_instance_;
 

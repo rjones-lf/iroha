@@ -16,9 +16,7 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
         : sql_(std::move(sql)),
           wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
-          executor_(std::make_shared<PostgresWsvCommand>(*sql_)),
-          command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
-          command_validator_(std::make_shared<CommandValidator>(wsv_)),
+          command_executor_(std::make_unique<PostgresCommandExecutor>(*sql_)),
           log_(logger::log("TemporaryWSV")) {
       *sql_ << "BEGIN";
     }
@@ -30,15 +28,11 @@ namespace iroha {
             apply_function) {
       const auto &tx_creator = tx.creatorAccountId();
       command_executor_->setCreatorAccountId(tx_creator);
-      command_validator_->setCreatorAccountId(tx_creator);
+      command_executor_->doValidation(true);
       auto execute_command =
           [this](auto &command) -> expected::Result<void, CommandError> {
-        // Validate command
-        return boost::apply_visitor(*command_validator_, command.get())
-            // Execute command
-            | [this, &command] {
-                return boost::apply_visitor(*command_executor_, command.get());
-              };
+        // Validate and execute command
+        return boost::apply_visitor(*command_executor_, command.get());
       };
 
       auto savepoint_wrapper = createSavepoint("savepoint_temp_wsv");

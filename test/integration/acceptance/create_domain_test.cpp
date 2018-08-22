@@ -41,25 +41,26 @@ TEST_F(CreateDomain, Basic) {
 /**
  * @given some user without can_create_domain permission
  * @when execute tx with CreateDomain command
- * @then there is no tx in proposal
+ * @then verified proposal is empty
  */
 TEST_F(CreateDomain, NoPermissions) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms({interface::permissions::Role::kGetMyTxs}))
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(kNewDomain, kRole)))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
 /**
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with nonexistent role
- * @then there is no tx in proposal
+ * @then verified proposal is empty
  */
 TEST_F(CreateDomain, NoRole) {
   const std::string nonexistent_role = "asdf";
@@ -67,18 +68,19 @@ TEST_F(CreateDomain, NoRole) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(kNewDomain, nonexistent_role)))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
 /**
  * @given some user with can_create_domain permission
  * @when execute tx with CreateDomain command with already existing domain
- * @then there is no tx in proposal
+ * @then verified proposal is empty
  */
 TEST_F(CreateDomain, ExistingName) {
   std::string existing_domain = IntegrationTestFramework::kDefaultDomain;
@@ -86,11 +88,12 @@ TEST_F(CreateDomain, ExistingName) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(existing_domain, kRole)))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 

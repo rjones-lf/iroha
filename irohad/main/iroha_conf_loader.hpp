@@ -35,7 +35,6 @@ namespace config_members {
   const char *MaxProposalSize = "max_proposal_size";
   const char *ProposalDelay = "proposal_delay";
   const char *VoteDelay = "vote_delay";
-  const char *LoadDelay = "load_delay";
   const char *MstSupport = "mst_enable";
 }  // namespace config_members
 
@@ -92,11 +91,6 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
                    ac::no_member_error(mbr::VoteDelay));
   ac::assert_fatal(doc[mbr::VoteDelay].IsUint(),
                    ac::type_error(mbr::VoteDelay, kUintType));
-
-  ac::assert_fatal(doc.HasMember(mbr::LoadDelay),
-                   ac::no_member_error(mbr::LoadDelay));
-  ac::assert_fatal(doc[mbr::LoadDelay].IsUint(),
-                   ac::type_error(mbr::LoadDelay, kUintType));
 
   ac::assert_fatal(doc.HasMember(mbr::MstSupport),
                    ac::no_member_error(mbr::MstSupport));

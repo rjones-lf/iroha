@@ -7,6 +7,7 @@
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
+#include "backend/protobuf/proto_proposal_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "execution/query_execution_impl.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
@@ -16,6 +17,7 @@
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "torii/impl/status_bus_impl.hpp"
+#include "validators/block_variant_validator.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace iroha;
@@ -39,7 +41,6 @@ Irohad::Irohad(const std::string &block_store_dir,
                size_t max_proposal_size,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
-               std::chrono::milliseconds load_delay,
                const shared_model::crypto::Keypair &keypair,
                bool is_mst_supported)
     : block_store_dir_(block_store_dir),
@@ -49,7 +50,6 @@ Irohad::Irohad(const std::string &block_store_dir,
       max_proposal_size_(max_proposal_size),
       proposal_delay_(proposal_delay),
       vote_delay_(vote_delay),
-      load_delay_(load_delay),
       is_mst_supported_(is_mst_supported),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
@@ -72,6 +72,7 @@ void Irohad::init() {
   initNetworkClient();
   initOrderingGate();
   initSimulator();
+  initConsensusCache();
   initBlockLoader();
   initConsensusGate();
   initSynchronizer();
@@ -89,7 +90,8 @@ void Irohad::init() {
  */
 void Irohad::dropStorage() {
   storage->reset();
-  ordering_service_storage_->resetState();
+  storage->createOsPersistentState() |
+      [](const auto &state) { state->resetState(); };
 }
 
 /**
@@ -106,17 +108,12 @@ void Irohad::initStorage() {
       },
       [&](expected::Error<std::string> &error) { log_->error(error.error); });
 
-  PostgresOrderingServicePersistentState::create(pg_conn_).match(
-      [&](expected::Value<
-          std::shared_ptr<ametsuchi::PostgresOrderingServicePersistentState>>
-              &_storage) { ordering_service_storage_ = _storage.value; },
-      [&](expected::Error<std::string> &error) { log_->error(error.error); });
-
   log_->info("[Init] => storage", logger::logBool(storage));
 }
 
 void Irohad::resetOrderingService() {
-  if (not ordering_service_storage_->resetState())
+  if (not(storage->createOsPersistentState() |
+          [](const auto &state) { return state->resetState(); }))
     log_->error("cannot reset ordering service storage");
 }
 
@@ -127,13 +124,6 @@ bool Irohad::restoreWsv() {
         log_->error(error.error);
         return false;
       });
-}
-
-/**
- * Initializing peer query interface
- */
-std::unique_ptr<iroha::ametsuchi::PeerQuery> Irohad::initPeerQuery() {
-  return std::make_unique<ametsuchi::PeerQueryWsv>(storage->getWsvQuery());
 }
 
 /**
@@ -172,11 +162,11 @@ void Irohad::initNetworkClient() {
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
-  ordering_gate = ordering_init.initOrderingGate(initPeerQuery(),
+  ordering_gate = ordering_init.initOrderingGate(storage,
                                                  max_proposal_size_,
                                                  proposal_delay_,
-                                                 ordering_service_storage_,
-                                                 storage->getBlockQuery(),
+                                                 storage,
+                                                 storage,
                                                  async_call_);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
@@ -186,13 +176,22 @@ void Irohad::initOrderingGate() {
  * Initializing iroha verified proposal creator and block creator
  */
 void Irohad::initSimulator() {
-  simulator = std::make_shared<Simulator>(ordering_gate,
-                                          stateful_validator,
-                                          storage,
-                                          storage->getBlockQuery(),
-                                          crypto_signer_);
+  auto block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory>(
+      std::make_unique<shared_model::validation::BlockVariantValidator>());
+  simulator = std::make_shared<Simulator>(
+      ordering_gate, stateful_validator, storage, storage, crypto_signer_,
+                                          std::move(block_factory));
 
   log_->info("[Init] => init simulator");
+}
+
+/**
+ * Initializing consensus block cache
+ */
+void Irohad::initConsensusCache() {
+  consensus_result_cache_ = std::make_shared<consensus::ConsensusResultCache>();
+
+  log_->info("[Init] => init consensus block cache");
 }
 
 /**
@@ -200,7 +199,7 @@ void Irohad::initSimulator() {
  */
 void Irohad::initBlockLoader() {
   block_loader =
-      loader_init.initBlockLoader(initPeerQuery(), storage->getBlockQuery());
+      loader_init.initBlockLoader(storage, storage, consensus_result_cache_);
 
   log_->info("[Init] => block loader");
 }
@@ -209,12 +208,12 @@ void Irohad::initBlockLoader() {
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
-  consensus_gate = yac_init.initConsensusGate(initPeerQuery(),
+  consensus_gate = yac_init.initConsensusGate(storage,
                                               simulator,
                                               block_loader,
                                               keypair,
+                                              consensus_result_cache_,
                                               vote_delay_,
-                                              load_delay_,
                                               async_call_);
 
   log_->info("[Init] => consensus gate");
@@ -262,7 +261,7 @@ void Irohad::initMstProcessor() {
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
     // cli parameters
     auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
-        std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery()),
+        storage,
         std::chrono::seconds(5) /*emitting period*/,
         2 /*amount per once*/);
     auto mst_time = std::make_shared<MstTimeProviderImpl>();

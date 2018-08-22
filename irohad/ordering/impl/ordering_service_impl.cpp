@@ -11,31 +11,31 @@
 #include <boost/range/adaptor/indirected.hpp>
 
 #include "ametsuchi/ordering_service_persistent_state.hpp"
-#include "ametsuchi/peer_query.hpp"
 #include "datetime/time.hpp"
 #include "network/ordering_service_transport.hpp"
 
 namespace iroha {
   namespace ordering {
     OrderingServiceImpl::OrderingServiceImpl(
-        std::shared_ptr<ametsuchi::PeerQuery> wsv,
+        std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
         size_t max_size,
         rxcpp::observable<TimeoutType> proposal_timeout,
         std::shared_ptr<network::OrderingServiceTransport> transport,
-        std::shared_ptr<ametsuchi::OrderingServicePersistentState>
-            persistent_state,
+        std::shared_ptr<ametsuchi::OsPersistentStateFactory> persistent_state,
         std::unique_ptr<shared_model::interface::ProposalFactory> factory,
         bool is_async)
-        : wsv_(wsv),
+        : peer_query_factory_(peer_query_factory),
           max_size_(max_size),
           current_size_(0),
           transport_(transport),
           persistent_state_(persistent_state),
           factory_(std::move(factory)),
+          proposal_height_(persistent_state_->createOsPersistentState() |
+                           [](const auto &state) {
+                             return state->loadProposalHeight().value();
+                           }),
           log_(logger::log("OrderingServiceImpl")) {
       // restore state of ordering service from persistent storage
-      proposal_height_ = persistent_state_->loadProposalHeight().value();
-
       rxcpp::observable<ProposalEvent> timer =
           proposal_timeout.map([](auto) { return ProposalEvent::kTimerEvent; });
 
@@ -92,8 +92,8 @@ namespace iroha {
            txs.size() < max_size_ and queue_.try_pop(batch);) {
         auto batch_size = batch->transactions().size();
         txs.insert(std::end(txs),
-            std::make_move_iterator(std::begin(batch->transactions())),
-            std::make_move_iterator(std::end(batch->transactions())));
+                   std::make_move_iterator(std::begin(batch->transactions())),
+                   std::make_move_iterator(std::end(batch->transactions())));
         current_size_ -= batch_size;
       }
 
@@ -106,7 +106,10 @@ namespace iroha {
                  std::unique_ptr<shared_model::interface::Proposal>> &v) {
             // Save proposal height to the persistent storage.
             // In case of restart it reloads state.
-            if (persistent_state_->saveProposalHeight(proposal_height_)) {
+            if (persistent_state_->createOsPersistentState() |
+                [this](const auto &state) {
+                  return state->saveProposalHeight(proposal_height_);
+                }) {
               publishProposal(std::move(v.value));
             } else {
               // TODO(@l4l) 23/03/18: publish proposal independent of psql
@@ -122,7 +125,8 @@ namespace iroha {
 
     void OrderingServiceImpl::publishProposal(
         std::unique_ptr<shared_model::interface::Proposal> proposal) {
-      auto peers = wsv_->getLedgerPeers();
+      auto peers = peer_query_factory_->createPeerQuery() |
+          [](const auto &query) { return query->getLedgerPeers(); };
       if (peers) {
         std::vector<std::string> addresses;
         std::transform(peers->begin(),
