@@ -20,7 +20,7 @@ namespace shared_model {
      public:
       ~BlockJsonConverter() override = default;
     };
-  };  // namespace interface
+  }  // namespace interface
 }  // namespace shared_model
 
 #endif  // IROHA_BLOCK_JSON_CONVERTER_HPP

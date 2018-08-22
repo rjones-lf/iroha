@@ -29,7 +29,7 @@ namespace shared_model {
 
       virtual ~BlockJsonDeserializer() = default;
     };
-  };  // namespace interface
+  }  // namespace interface
 }  // namespace shared_model
 
 #endif  // IROHA_BLOCK_JSON_DESERIALIZER_HPP
