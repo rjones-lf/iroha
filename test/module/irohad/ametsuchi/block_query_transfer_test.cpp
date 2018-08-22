@@ -18,6 +18,7 @@
 #include <boost/optional.hpp>
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
+#include "backend/protobuf/proto_block_json_converter.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
@@ -40,7 +41,9 @@ namespace iroha {
         sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
 
         index = std::make_shared<PostgresBlockIndex>(*sql);
-        blocks = std::make_shared<PostgresBlockQuery>(*sql, *file);
+        auto converter =
+            std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
+        blocks = std::make_shared<PostgresBlockQuery>(*sql, *file, converter);
 
         *sql << init_;
       }
