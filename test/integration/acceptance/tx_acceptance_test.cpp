@@ -237,7 +237,6 @@ TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
  * @then the response is STATELESS_VALIDATION_FAILED
  */
 TEST_F(AcceptanceTest, EmptySignatures) {
-  std::string kAccountId = "some@account";
   auto proto_tx = baseTx<TestTransactionBuilder>().build().getTransport();
   proto_tx.clear_signatures();
   auto tx = shared_model::proto::Transaction(proto_tx);
