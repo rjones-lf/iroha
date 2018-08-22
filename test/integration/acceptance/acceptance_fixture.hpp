@@ -81,7 +81,9 @@ class AcceptanceFixture : public ::testing::Test {
   auto base(Builder builder,
             const shared_model::interface::types::AccountIdType &account_id)
       -> decltype(
-          builder.creatorAccountId(std::string()).createdTime(uint64_t()));
+          builder
+              .creatorAccountId(shared_model::interface::types::AccountIdType())
+              .createdTime(uint64_t()));
 
   /**
    * Create valid base pre-built transaction with specified creator
@@ -89,13 +91,15 @@ class AcceptanceFixture : public ::testing::Test {
    * @return pre-built tx
    */
   auto baseTx(const shared_model::interface::types::AccountIdType &account_id)
-      -> decltype(base(TestUnsignedTransactionBuilder(), std::string()));
+      -> decltype(base(TestUnsignedTransactionBuilder(),
+                       shared_model::interface::types::AccountIdType()));
 
   /**
    * Create valid base pre-built transaction with kUserId as transaction creator
    * @return pre-built tx
    */
-  auto baseTx() -> decltype(baseTx(std::string()));
+  auto baseTx()
+      -> decltype(baseTx(shared_model::interface::types::AccountIdType()));
 
   /**
    * Create valid base pre-built query with specified query creator
@@ -132,8 +136,10 @@ class AcceptanceFixture : public ::testing::Test {
    */
   template <typename Builder>
   auto complete(Builder builder)
-      -> decltype(complete(std::declval<Builder>(),
-                           std::declval<shared_model::crypto::Keypair>()));
+      -> decltype(builder.build()
+      .signAndAddSignature(
+          std::declval<shared_model::crypto::Keypair>())
+      .finish());
 
   /**
    * @return unique time for this fixture

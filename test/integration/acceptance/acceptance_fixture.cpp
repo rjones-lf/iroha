@@ -80,7 +80,9 @@ auto AcceptanceFixture::base(
     Builder builder,
     const shared_model::interface::types::AccountIdType &account_id)
     -> decltype(
-        builder.creatorAccountId(std::string()).createdTime(uint64_t())) {
+        builder
+            .creatorAccountId(shared_model::interface::types::AccountIdType())
+            .createdTime(uint64_t())) {
   return builder.creatorAccountId(account_id).createdTime(getUniqueTime());
 }
 
@@ -88,12 +90,16 @@ template auto AcceptanceFixture::base<TestUnsignedTransactionBuilder>(
     TestUnsignedTransactionBuilder builder,
     const shared_model::interface::types::AccountIdType &account_id)
     -> decltype(
-        builder.creatorAccountId(std::string()).createdTime(uint64_t()));
+        builder
+            .creatorAccountId(shared_model::interface::types::AccountIdType())
+            .createdTime(uint64_t()));
 template auto AcceptanceFixture::base<TestUnsignedQueryBuilder>(
     TestUnsignedQueryBuilder builder,
     const shared_model::interface::types::AccountIdType &account_id)
     -> decltype(
-        builder.creatorAccountId(std::string()).createdTime(uint64_t()));
+        builder
+            .creatorAccountId(shared_model::interface::types::AccountIdType())
+            .createdTime(uint64_t()));
 
 auto AcceptanceFixture::baseTx(
     const shared_model::interface::types::AccountIdType &account_id)
@@ -101,7 +107,8 @@ auto AcceptanceFixture::baseTx(
   return base(TestUnsignedTransactionBuilder(), account_id).quorum(1);
 }
 
-auto AcceptanceFixture::baseTx() -> decltype(baseTx(std::string())) {
+auto AcceptanceFixture::baseTx()
+    -> decltype(baseTx(shared_model::interface::types::AccountIdType())) {
   return baseTx(kUserId);
 }
 
@@ -112,7 +119,8 @@ auto AcceptanceFixture::baseQry(
       .queryCounter(nonce_counter);
 }
 
-auto AcceptanceFixture::baseQry() -> decltype(baseQry(std::string())) {
+auto AcceptanceFixture::baseQry()
+    -> decltype(baseQry(shared_model::interface::types::AccountIdType())) {
   return baseQry(kUserId);
 }
 
@@ -142,20 +150,25 @@ template auto AcceptanceFixture::complete<TestUnsignedQueryBuilder>(
             .finish());
 
 template <typename Builder>
-auto AcceptanceFixture::complete(Builder builder)
-    -> decltype(complete(std::declval<Builder>(),
-                         std::declval<shared_model::crypto::Keypair>())) {
+auto AcceptanceFixture::complete(Builder builder) -> decltype(
+    builder.build()
+        .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
+        .finish()) {
   return complete(builder, kUserKeypair);
 }
 
 template auto AcceptanceFixture::complete<TestUnsignedTransactionBuilder>(
     TestUnsignedTransactionBuilder builder)
-    -> decltype(complete(std::declval<TestUnsignedTransactionBuilder>(),
-                         std::declval<shared_model::crypto::Keypair>()));
+    -> decltype(
+        builder.build()
+            .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
+            .finish());
 template auto AcceptanceFixture::complete<TestUnsignedQueryBuilder>(
     TestUnsignedQueryBuilder builder)
-    -> decltype(complete(std::declval<TestUnsignedQueryBuilder>(),
-                         std::declval<shared_model::crypto::Keypair>()));
+    -> decltype(
+        builder.build()
+            .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
+            .finish());
 
 iroha::time::time_t AcceptanceFixture::getUniqueTime() {
   return initial_time + nonce_counter++;
