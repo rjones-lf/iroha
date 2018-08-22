@@ -31,7 +31,7 @@ AcceptanceFixture::AcceptanceFixture()
             status.get()));
       }),
       initial_time(iroha::time::now()),
-      nonce_counter(0) {}
+      nonce_counter(1) {}
 
 TestUnsignedTransactionBuilder AcceptanceFixture::createUser(
     const shared_model::interface::types::AccountNameType &user,
