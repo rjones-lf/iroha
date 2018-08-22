@@ -254,7 +254,7 @@ namespace iroha {
     expected::Result<std::unique_ptr<shared_model::interface::Block>,
                      std::string>
     PostgresBlockQuery::getBlock(
-        shared_model::interface::types::HeightType id) {
+        shared_model::interface::types::HeightType id) const {
       auto serialized_block = block_store_.get(id);
       if (not serialized_block) {
         auto error = boost::format("Failed to retrieve block with id %d") % id;

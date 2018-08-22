@@ -14,7 +14,8 @@ using namespace shared_model;
 using namespace shared_model::proto;
 
 iroha::expected::Result<interface::types::JsonType, std::string>
-ProtoBlockJsonConverter::serialize(const interface::Block &block) noexcept {
+ProtoBlockJsonConverter::serialize(const interface::Block &block) const
+    noexcept {
   const auto &proto_block = static_cast<const Block &>(block).getTransport();
   std::string result;
   auto status =
@@ -28,7 +29,7 @@ ProtoBlockJsonConverter::serialize(const interface::Block &block) noexcept {
 
 iroha::expected::Result<std::unique_ptr<interface::Block>, std::string>
 ProtoBlockJsonConverter::deserialize(
-    const interface::types::JsonType &json) noexcept {
+    const interface::types::JsonType &json) const noexcept {
   iroha::protocol::Block block;
   auto status = google::protobuf::util::JsonStringToMessage(json, &block);
   if (not status.ok()) {

@@ -93,7 +93,7 @@ namespace iroha {
        */
       expected::Result<std::unique_ptr<shared_model::interface::Block>,
                        std::string>
-      getBlock(shared_model::interface::types::HeightType id);
+      getBlock(shared_model::interface::types::HeightType id) const;
 
       soci::session &sql_;
 

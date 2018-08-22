@@ -317,13 +317,12 @@ WHERE pg_stat_activity.datname = :dbname
       /**
        * Factory method for query object creation which uses connection_pool
        * @tparam Query object type to create
-       * @tparam Backend object type to use as a backend for Query
-       * @param b is a backend obj
-       * @param conn is pointer to connection pool for getting and releaseing
+       * @param conn is pointer to connection pool for getting and releasing
        * the session
-       * @param log is a logger
        * @param drop_mutex is mutex for preventing connection destruction
        *        during the function
+       * @param log is a logger
+       * @param args - various other arguments needed to initalize Query object
        * @return pointer to created query object
        * note: blocks until connection can be leased from the pool
        */
