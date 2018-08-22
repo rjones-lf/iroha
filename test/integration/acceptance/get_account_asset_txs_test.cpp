@@ -6,6 +6,7 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "utils/query_error_response_visitor.hpp"
 
 using namespace shared_model;
 using namespace integration_framework;
@@ -80,9 +81,9 @@ class AccountAssetTxsFixture : public AcceptanceFixture {
 
         const auto &transactions = resp.transactions();
         ASSERT_EQ(boost::size(transactions), tx_hashes_.size());
+        auto begin = tx_hashes_.begin();
+        auto end = tx_hashes_.end();
         for (const auto &tx : transactions) {
-          auto begin = tx_hashes_.begin();
-          auto end = tx_hashes_.end();
           ASSERT_NE(std::find(begin, end, tx.hash()), end);
         }
       }) << "Actual response: "
@@ -92,29 +93,21 @@ class AccountAssetTxsFixture : public AcceptanceFixture {
 
   auto checkQueryStatefulInvalid() {
     return [](auto &response) {
-      ASSERT_NO_THROW({
-        const auto &error_response = boost::apply_visitor(
-            framework::SpecifiedVisitor<interface::ErrorQueryResponse>(),
-            response.get());
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 interface::StatefulFailedErrorResponse>(),
-                             error_response.get());
-      }) << "Actual response: "
-         << response.toString();
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::StatefulFailedErrorResponse>(),
+          response.get()))
+          << "Actual response: " << response.toString();
     };
   }
 
   auto checkQueryStatelessInvalid() {
     return [](auto &response) {
-      ASSERT_NO_THROW({
-        const auto &error_response = boost::apply_visitor(
-            framework::SpecifiedVisitor<interface::ErrorQueryResponse>(),
-            response.get());
-        boost::apply_visitor(framework::SpecifiedVisitor<
-                                 interface::StatelessFailedErrorResponse>(),
-                             error_response.get());
-      }) << "Actual response: "
-         << response.toString();
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::StatelessFailedErrorResponse>(),
+          response.get()))
+          << "Actual response: " << response.toString();
     };
   }
 
