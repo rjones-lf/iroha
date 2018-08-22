@@ -193,7 +193,7 @@ namespace iroha {
         const shared_model::crypto::Hash &hash) {
       return getBlockId(hash) |
           [this](const auto &block_id) {
-            auto result = getBlock(block_id);
+            auto result = this->getBlock(block_id);
             return result.match(
                 [](expected::Value<
                     std::unique_ptr<shared_model::interface::Block>> &v)
