@@ -75,6 +75,7 @@ class AcceptanceFixture : public ::testing::Test {
    * Add default user creator account id and current created time to builder
    * @tparam Builder type (transaction, query)
    * @param builder object to modify
+   * @param account_id - account of transaction creator
    * @return builder containing creator account id and created time
    */
   template <typename Builder>
