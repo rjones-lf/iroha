@@ -77,6 +77,6 @@ TEST_F(AcceptanceFixture, CanNotGetRoles) {
       .sendTx(makeUserWithPerms({}))
       .skipProposal()
       .checkVerifiedProposal(
-          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .sendQuery(query, checkQuery);
 }
