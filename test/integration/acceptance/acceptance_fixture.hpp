@@ -84,25 +84,18 @@ class AcceptanceFixture : public ::testing::Test {
           builder.creatorAccountId(std::string()).createdTime(uint64_t()));
 
   /**
-   * Create valid base pre-built transaction with kUserId as transaction creator
-   * @return pre-built tx
-   */
-  auto baseTx()
-      -> decltype(base(TestUnsignedTransactionBuilder(), std::string()));
-
-  /**
    * Create valid base pre-built transaction with specified creator
    * @param account_id - account of transaction creator
    * @return pre-built tx
    */
   auto baseTx(const shared_model::interface::types::AccountIdType &account_id)
-      -> decltype(baseTx());
+      -> decltype(base(TestUnsignedTransactionBuilder(), std::string()));
 
   /**
-   * Create valid base pre-built query with kUserId as query creator
-   * @return pre-built query
+   * Create valid base pre-built transaction with kUserId as transaction creator
+   * @return pre-built tx
    */
-  auto baseQry() -> decltype(base(TestUnsignedQueryBuilder(), std::string()));
+  auto baseTx() -> decltype(baseTx(std::string()));
 
   /**
    * Create valid base pre-built query with specified query creator
@@ -110,7 +103,27 @@ class AcceptanceFixture : public ::testing::Test {
    * @return pre-built query
    */
   auto baseQry(const shared_model::interface::types::AccountIdType &account_id)
-      -> decltype(baseQry());
+      -> decltype(base(TestUnsignedQueryBuilder(), std::string()));
+
+  /**
+   * Create valid base pre-built query with kUserId as query creator
+   * @return pre-built query
+   */
+  auto baseQry() -> decltype(baseQry(std::string()));
+
+  /**
+   * Completes pre-built object with specified keypair for signing
+   * @tparam Builder - is a type of a pre-built object
+   * @param builder - is a pre-built object
+   * @param keypair - keypair used for signing
+   * @return built object
+   */
+  template <typename Builder>
+  auto complete(Builder builder, const shared_model::crypto::Keypair &keypair)
+      -> decltype(builder.build()
+                      .signAndAddSignature(
+                          std::declval<shared_model::crypto::Keypair>())
+                      .finish());
 
   /**
    * Completes pre-built object with kUserKeypair used for signing
@@ -118,17 +131,9 @@ class AcceptanceFixture : public ::testing::Test {
    * @return built object
    */
   template <typename Builder>
-  auto complete(Builder builder) -> decltype(
-      builder.build()
-          .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
-          .finish());
-
-  template <typename Builder>
-  auto complete(Builder builder, const shared_model::crypto::Keypair &keypair)
-      -> decltype(builder.build()
-                      .signAndAddSignature(
-                          std::declval<shared_model::crypto::Keypair>())
-                      .finish());
+  auto complete(Builder builder)
+      -> decltype(complete(std::declval<Builder>(),
+                           std::declval<shared_model::crypto::Keypair>()));
 
   /**
    * @return unique time for this fixture
