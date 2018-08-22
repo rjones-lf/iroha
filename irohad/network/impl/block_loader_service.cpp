@@ -24,9 +24,10 @@ using namespace iroha::ametsuchi;
 using namespace iroha::network;
 
 BlockLoaderService::BlockLoaderService(
-    std::shared_ptr<BlockQuery> storage,
-    std::shared_ptr<consensus::ConsensusResultCache> consensus_result_cache)
-    : storage_(std::move(storage)),
+    std::shared_ptr<BlockQueryFactory> block_query_factory,
+    std::shared_ptr<iroha::consensus::ConsensusResultCache>
+        consensus_result_cache)
+    : block_query_factory_(std::move(block_query_factory)),
       consensus_result_cache_(std::move(consensus_result_cache)),
       log_(logger::log("BlockLoaderService")) {}
 
@@ -34,7 +35,10 @@ grpc::Status BlockLoaderService::retrieveBlocks(
     ::grpc::ServerContext *context,
     const proto::BlocksRequest *request,
     ::grpc::ServerWriter<::iroha::protocol::Block> *writer) {
-  auto blocks = storage_->getBlocksFrom(request->height());
+  auto blocks = block_query_factory_->createBlockQuery() |
+      [height = request->height()](const auto &block_query) {
+        return block_query->getBlocksFrom(height);
+      };
   std::for_each(blocks.begin(), blocks.end(), [&writer](const auto &block) {
     writer->Write(std::dynamic_pointer_cast<shared_model::proto::Block>(block)
                       ->getTransport());
