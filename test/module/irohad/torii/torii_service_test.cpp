@@ -328,7 +328,13 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
     tx_request.set_tx_hash(
         shared_model::crypto::toBinaryString(tx_hashes.at(i)));
     iroha::protocol::ToriiResponse toriiResponse;
-    client3.Status(tx_request, toriiResponse);
+
+    auto resub_counter(resubscribe_attempts);
+    do {
+      client3.Status(tx_request, toriiResponse);
+    } while (toriiResponse.tx_status()
+                 != iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS
+             and --resub_counter);
 
     ASSERT_EQ(toriiResponse.tx_status(),
               iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
