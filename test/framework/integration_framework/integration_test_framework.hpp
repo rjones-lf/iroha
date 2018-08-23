@@ -164,16 +164,6 @@ namespace integration_framework {
         std::function<void(const BlockType &)> check);
 
     /**
-     * Send transactions to Iroha with awaiting proposal and without status validation
-     * @param tx_sequence - sequence for sending
-     * @param check - callback for checking committed block
-     * @return this
-     */
-    IntegrationTestFramework &sendTxSequenceAwait(
-        const shared_model::interface::TransactionSequence &tx_sequence,
-        std::function<void(const BlockType &)> check);
-
-    /**
      * Check current status of transaction
      * @param hash - hash of transaction to check
      * @param validation - callback that receives transaction response
