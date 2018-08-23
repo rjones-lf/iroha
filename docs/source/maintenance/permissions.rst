@@ -421,7 +421,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_add_my_s
 
 **Example**
 
-| Admin creates domain that contains only can_grant_can_add_my_signatory permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob can_add_my_signatory permission.
+| Admin creates domain that contains only can_grant_can_add_my_signatory permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob and revoke can_add_my_signatory permission.
 |
 
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_add_my_signatory.py
@@ -441,7 +441,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_remove_m
 
 **Example**
 
-| Admin creates domain that contains only can_grant_can_remove_my_signatory permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob can_remove_my_signatory permission.
+| Admin creates domain that contains only can_grant_can_remove_my_signatory permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob and revoke can_remove_my_signatory permission.
 |
 
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_remove_my_signatory.py
@@ -461,7 +461,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_a
 
 **Example**
 
-| Admin creates domain that contains only can_grant_can_set_my_account_detail permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob can_set_my_account_detail permission.
+| Admin creates domain that contains only can_grant_can_set_my_account_detail permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob and revoke can_set_my_account_detail permission.
 |
 
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_set_my_account_detail.py
@@ -481,7 +481,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_q
 
 **Example**
 
-| Admin creates domain that contains only can_grant_can_set_my_quorum permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob can_set_my_quorum permission.
+| Admin creates domain that contains only can_grant_can_set_my_quorum permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob and revoke can_set_my_quorum permission.
 |
 
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_set_my_quorum.py
@@ -501,7 +501,7 @@ Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_transfer
 
 **Example**
 
-| Admin creates domain that contains only can_grant_can_transfer_my_assets permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob can_transfer_my_assets permission.
+| Admin creates domain that contains only can_grant_can_transfer_my_assets permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob and revoke can_transfer_my_assets permission.
 |
 
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_transfer_my_assets.py
