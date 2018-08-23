@@ -383,6 +383,7 @@ TEST_F(BlockQueryTest, GetTopBlockFail) {
 
   auto top_block_error = framework::expected::err(empty_blocks->getTopBlock());
   ASSERT_TRUE(top_block_error);
+  auto expected_error = boost::format("Failed to retrieve block with id %d");
   ASSERT_EQ(top_block_error.value().error,
-            "Failed to retrieve block with id 0");
+            (expected_error % mock_file->last_id()).str());
 }

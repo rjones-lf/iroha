@@ -209,20 +209,22 @@ namespace iroha {
                 });
           }
       | [&hash, this](const auto &block) {
-          boost::optional<PostgresBlockQuery::wTransaction> transaction;
           auto it = std::find_if(
               block->transactions().begin(),
               block->transactions().end(),
               [&hash](const auto &tx) { return tx.hash() == hash; });
           if (it != block->transactions().end()) {
-            transaction = PostgresBlockQuery::wTransaction(clone(*it));
+            return boost::make_optional<PostgresBlockQuery::wTransaction>(
+                clone(*it));
           } else {
             log_->error("Failed to find transaction {} in block {}",
                         hash.hex(),
                         block->height());
-            transaction = boost::none;
+            // return type specification for lambda breaks formatting.
+            // That is why optional is constructed explicitly
+            return boost::optional<PostgresBlockQuery::wTransaction>(
+                boost::none);
           }
-          return transaction;
         };
     }
 
