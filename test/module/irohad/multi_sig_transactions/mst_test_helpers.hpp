@@ -46,8 +46,12 @@ auto addSignatures(Batch &&batch, int tx_number, Signatures... signatures) {
     batch->addSignature(tx_number, sig_pair.first, sig_pair.second);
   };
 
+  // pack expansion trick:
+  // generate array with zeros. Operator , express left lambda and return right
+  // arg
   int temp[] = {
       (insert_signatures(std::forward<Signatures>(signatures)), 0)...};
+  // use unused variable
   (void)temp;
 
   mst_helpers_log_->info(
@@ -62,12 +66,16 @@ auto addSignaturesFromKeyPairs(Batch &&batch,
                                KeyPairs... keypairs) {
   auto create_signature = [&](auto &&key_pair) {
     auto &payload = batch->transactions().at(tx_number)->payload();
-    auto signedBlob = shared_model::crypto::CryptoSigner<>::sign(
+    auto signed_blob = shared_model::crypto::CryptoSigner<>::sign(
         shared_model::crypto::Blob(payload), key_pair);
-    batch->addSignature(tx_number, signedBlob, key_pair.publicKey());
+    batch->addSignature(tx_number, signed_blob, key_pair.publicKey());
   };
 
+  // pack expansion trick:
+  // generate array with zeros. Operator , express left lambda and return right
+  // arg
   int temp[] = {(create_signature(std::forward<KeyPairs>(keypairs)), 0)...};
+  // use unused variable
   (void)temp;
 
   return batch;

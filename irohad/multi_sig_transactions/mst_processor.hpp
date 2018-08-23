@@ -37,7 +37,7 @@ namespace iroha {
     // ---------------------------| user interface |----------------------------
 
     /**
-     * Propagate in network batch for signing by other
+     * Propagate batch in network for signing by other
      * participants
      * @param transaction - transaction for propagation
      */

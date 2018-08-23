@@ -27,7 +27,7 @@ namespace iroha {
       auto completed_batches = state.getBatches();
       std::for_each(completed_batches.begin(),
                     completed_batches.end(),
-                    [&subject](const auto batch) {
+                    [&subject](const auto &batch) {
                       subject.get_subscriber().on_next(batch);
                     });
     }

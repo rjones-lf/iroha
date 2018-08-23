@@ -62,5 +62,4 @@ endif ()
 target_link_libraries(shared_model_proto_backend
     schema
     shared_model_interfaces
-    logger
     )

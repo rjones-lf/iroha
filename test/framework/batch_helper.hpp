@@ -170,8 +170,8 @@ namespace framework {
     }
 
     /**
-     * Create batch of expected size
-     * @param size - number of transactions in batch
+     * Creates a batch of expected size
+     * @param size - number of transactions in the batch
      * @param created_time - time of batch creation
      * @return valid batch
      */

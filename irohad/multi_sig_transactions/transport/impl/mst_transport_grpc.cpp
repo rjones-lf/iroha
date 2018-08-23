@@ -36,7 +36,6 @@ grpc::Status MstTransportGrpc::SendState(
     ::google::protobuf::Empty *response) {
   async_call_->log_->info("MstState Received");
 
-  MstState newState = MstState::empty();
   shared_model::proto::TransportBuilder<
       shared_model::proto::Transaction,
       shared_model::validation::DefaultUnsignedTransactionValidator>
@@ -58,27 +57,29 @@ grpc::Status MstTransportGrpc::SendState(
   }
 
   using namespace shared_model::validation;
-  shared_model::interface::TransactionSequence::createTransactionSequence(
-      collection,
-      UnsignedTransactionsCollectionValidator<DefaultTransactionValidator,
-                                              BatchOrderValidator>())
-      .match(
-          [&newState](
-              expected::Value<shared_model::interface::TransactionSequence>
-                  &seq) {
-            std::for_each(
-                seq.value.batches().begin(),
-                seq.value.batches().end(),
-                [&newState](const auto &batch) {
-                  newState += std::make_shared<
-                      shared_model::interface::TransactionBatch>(batch);
-                });
-          },
-          [this](const auto &err) {
-            log_->warn("Can't create sequence: {}", err.error);
-          });
+  auto new_state =
+      shared_model::interface::TransactionSequence::createTransactionSequence(
+          collection, DefaultSignedTransactionsValidator())
+          .match(
+              [](expected::Value<shared_model::interface::TransactionSequence>
+                     &seq) {
+                MstState new_state = MstState::empty();
+                std::for_each(
+                    seq.value.batches().begin(),
+                    seq.value.batches().end(),
+                    [&new_state](const auto &batch) {
+                      new_state += std::make_shared<
+                          shared_model::interface::TransactionBatch>(batch);
+                    });
+                return new_state;
+              },
+              [this](const auto &err) {
+                async_call_->log_->warn("Can't create sequence: {}", err.error);
+                return MstState::empty();
+              });
 
-  log_->info("batches in MstState: {}", newState.getBatches().size());
+  async_call_->log_->info("batches in MstState: {}",
+                          new_state.getBatches().size());
 
   auto &peer = request->peer();
   auto from = std::make_shared<shared_model::proto::Peer>(
@@ -86,7 +87,7 @@ grpc::Status MstTransportGrpc::SendState(
           .address(peer.address())
           .pubkey(shared_model::crypto::PublicKey(peer.peer_key()))
           .build());
-  subscriber_.lock()->onNewState(std::move(from), std::move(newState));
+  subscriber_.lock()->onNewState(std::move(from), std::move(new_state));
 
   return grpc::Status::OK;
 }
@@ -108,9 +109,8 @@ void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
   peer->set_address(to.address());
   for (auto &batch : providing_state.getBatches()) {
     for (auto &tx : batch->transactions()) {
-      auto addtxs = protoState.add_transactions();
       // TODO (@l4l) 04/03/18 simplify with IR-1040
-      new (addtxs) protocol::Transaction(
+      *protoState.add_transactions() = protocol::Transaction(
           std::static_pointer_cast<shared_model::proto::Transaction>(tx)
               ->getTransport());
     }

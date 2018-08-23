@@ -23,21 +23,18 @@ using testing::Return;
 
 class TestCompleter : public Completer {
   bool operator()(const DataType &batch) const override {
-    for (const auto &tx : batch->transactions()) {
-      if (boost::size(tx->signatures()) < tx->quorum()) {
-        return false;
-      }
-    }
-    return true;
+    return std::all_of(batch->transactions().begin(),
+                       batch->transactions().end(),
+                       [](const auto &tx) {
+                         return boost::size(tx->signatures()) >= tx->quorum();
+                       });
   }
 
   bool operator()(const DataType &batch, const TimeType &time) const override {
-    for (const auto &tx : batch->transactions()) {
-      if (tx->createdTime() < time) {
-        return true;
-      }
-    }
-    return false;
+    return std::any_of(
+        batch->transactions().begin(),
+        batch->transactions().end(),
+        [&time](const auto &tx) { return tx->createdTime() < time; });
   }
 };
 
@@ -113,7 +110,7 @@ void check(T &t) {
  * @given initialised mst processor
  * AND wrappers on mst observables
  *
- * @when insert not-completed batch
+ * @when an incomplete batch is inserted
  *
  * @then check that:
  * state is not updated
@@ -136,10 +133,11 @@ TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
  * @given initialised mst processor
  * AND wrappers on mst observables
  *
- * @when insert transactions that provide completed transactions
+ * @when the same transaction arrives with different signatures
+ * AND the resulting set of signatures satisfies the account quorum number
  *
  * @then check that:
- * state not updated
+ * state is not updated
  * AND 1 prepared transaction
  * AND absent expired transactions
  */

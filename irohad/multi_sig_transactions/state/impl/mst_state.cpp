@@ -40,8 +40,8 @@ namespace iroha {
   }
 
   bool MstState::operator==(const MstState &rhs) const {
-    auto &&lhs_batches = getBatches();
-    auto &&rhs_batches = rhs.getBatches();
+    const auto &lhs_batches = getBatches();
+    const auto &rhs_batches = rhs.getBatches();
 
     return std::equal(lhs_batches.begin(),
                       lhs_batches.end(),
@@ -55,13 +55,8 @@ namespace iroha {
   }
 
   std::vector<DataType> MstState::getBatches() const {
-    std::vector<DataType> result;
-    std::for_each(internal_state_.begin(),
-                  internal_state_.end(),
-                  [&result](const auto &val) {
-                    val->transactions();
-                    result.push_back(val);
-                  });
+    std::vector<DataType> result(internal_state_.begin(),
+                                 internal_state_.end());
     // sorting is provided for clear comparison of states
     // TODO: 15/08/2018 @muratovv Rework return type with set IR-1621
     std::sort(
@@ -88,7 +83,7 @@ namespace iroha {
   /**
    * Merge signatures in batches
    * @param target - batch for inserting
-   * @param donor - batch with interested transactions
+   * @param donor - batch with transactions to copy signatures from
    * @return return false when sequences of transactions inside input batches
    * are different
    */
