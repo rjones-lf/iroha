@@ -266,8 +266,7 @@ namespace iroha {
         std::string block_store_dir,
         std::string postgres_options,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
-        std::shared_ptr<shared_model::interface::BlockJsonConverter>
-            converter,
+        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
         size_t pool_size) {
       boost::optional<std::string> string_res = boost::none;
 

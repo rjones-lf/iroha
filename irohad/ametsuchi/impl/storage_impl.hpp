@@ -99,16 +99,15 @@ namespace iroha {
       on_commit() override;
 
      protected:
-      StorageImpl(
-          std::string block_store_dir,
-          PostgresOptions postgres_options,
-          std::unique_ptr<KeyValueStorage> block_store,
-          std::shared_ptr<soci::connection_pool> connection,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory,
-          std::shared_ptr<shared_model::interface::BlockJsonConverter>
-              converter,
-          size_t pool_size);
+      StorageImpl(std::string block_store_dir,
+                  PostgresOptions postgres_options,
+                  std::unique_ptr<KeyValueStorage> block_store,
+                  std::shared_ptr<soci::connection_pool> connection,
+                  std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                      factory,
+                  std::shared_ptr<shared_model::interface::BlockJsonConverter>
+                      converter,
+                  size_t pool_size);
 
       /**
        * Folder with raw blocks
@@ -128,8 +127,7 @@ namespace iroha {
       rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
           notifier_;
 
-      std::shared_ptr<shared_model::interface::BlockJsonConverter>
-          converter_;
+      std::shared_ptr<shared_model::interface::BlockJsonConverter> converter_;
 
       logger::Logger log_;
 
