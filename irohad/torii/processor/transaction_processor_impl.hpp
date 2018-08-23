@@ -63,8 +63,8 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::TransactionResponse>>
           notifier_;
 
-      std::vector<shared_model::interface::types::HashType>
-          current_txs_hashes_;
+      // keeps hashes of transaction, which were committed during this round
+      std::vector<shared_model::interface::types::HashType> current_txs_hashes_;
 
       logger::Logger log_;
 

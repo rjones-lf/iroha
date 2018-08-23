@@ -140,6 +140,9 @@ namespace iroha {
         processApplicableBlock(committed_block_variant);
       } else {
         auto missing_chain = downloadMissingChain(committed_block_variant);
+
+        // TODO [IR-1634] 23.08.18 Akvinikym: place this call to notifier after
+        // downloaded chain application
         notifier_.get_subscriber().on_next(SynchronizationEvent{
             missing_chain, SynchronizationOutcomeType::kCommit});
 
