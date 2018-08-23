@@ -90,8 +90,9 @@ namespace iroha {
           });
 
       // commit transactions
-      pcs_->on_commit().subscribe([this](Commit blocks) {
-        blocks.subscribe(
+      pcs_->on_commit().subscribe([this](synchronizer::SynchronizationEvent
+                                             sync_event) {
+        sync_event.synced_blocks.subscribe(
             // on next
             [this](auto model_block) {
               current_txs_hashes_.reserve(model_block->transactions().size());
@@ -101,7 +102,7 @@ namespace iroha {
                              [](const auto &tx) { return tx.hash(); });
             },
             // on complete
-            [this]() {
+            [this] {
               if (current_txs_hashes_.empty()) {
                 log_->info("there are no transactions to be committed");
               } else {
@@ -114,8 +115,8 @@ namespace iroha {
                           .txHash(tx_hash)
                           .build());
                 }
+                current_txs_hashes_.clear();
               }
-              current_txs_hashes_.clear();
             });
       });
 
@@ -125,7 +126,6 @@ namespace iroha {
       });
       mst_processor_->onExpiredTransactions().subscribe([this](auto &&tx) {
         log_->info("MST tx expired");
-        std::lock_guard<std::mutex> lock(notifier_mutex_);
         this->status_bus_->publish(
             shared_model::builder::DefaultTransactionStatusBuilder()
                 .mstExpired()

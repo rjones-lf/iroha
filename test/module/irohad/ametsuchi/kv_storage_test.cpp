@@ -22,7 +22,6 @@
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
-#include "backend/protobuf/proto_block_json_converter.hpp"
 #include "interfaces/permissions.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -39,21 +38,6 @@ class KVTest : public AmetsuchiTest {
  protected:
   void SetUp() override {
     AmetsuchiTest::SetUp();
-    auto converter =
-        std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
-    auto storageResult =
-        StorageImpl::create(block_store_path, pgopt_, factory, converter);
-    storageResult.match(
-        [&](iroha::expected::Value<std::shared_ptr<StorageImpl>> &_storage) {
-          storage = _storage.value;
-        },
-        [](iroha::expected::Error<std::string> &error) {
-          FAIL() << "StorageImpl: " << error.error;
-        });
-    ASSERT_TRUE(storage);
-    blocks = storage->getBlockQuery();
-    wsv_query = storage->getWsvQuery();
-
     std::string empty_key(32, '0');
     // transaction for block 1
     auto txn =
@@ -97,9 +81,10 @@ class KVTest : public AmetsuchiTest {
     }
   }
 
-  std::shared_ptr<StorageImpl> storage;
-  std::shared_ptr<BlockQuery> blocks;
-  std::shared_ptr<WsvQuery> wsv_query;
+  void TearDown() override {
+    sql->close();
+    AmetsuchiTest::TearDown();
+  }
 
   std::string domain_id = "ru";
   std::string account_name1 = "userone";
@@ -113,8 +98,8 @@ class KVTest : public AmetsuchiTest {
  */
 TEST_F(KVTest, GetNonexistingUserDetail) {
   auto account_id1 = account_name1 + "@" + domain_id;
-  auto ss =
-      std::istringstream(wsv_query->getAccountDetail(account_id1).value());
+  auto ss = std::istringstream(
+      storage->getWsvQuery()->getAccountDetail(account_id1).value());
 
   boost::property_tree::ptree root;
   boost::property_tree::read_json(ss, root);
@@ -129,8 +114,8 @@ TEST_F(KVTest, GetNonexistingUserDetail) {
 TEST_F(KVTest, SetAccountDetail) {
   auto account_id1 = account_name1 + "@" + domain_id;
   auto account_id2 = account_name2 + "@" + domain_id;
-  auto ss =
-      std::istringstream(wsv_query->getAccountDetail(account_id2).value());
+  auto ss = std::istringstream(
+      storage->getWsvQuery()->getAccountDetail(account_id2).value());
 
   boost::property_tree::ptree root;
   boost::property_tree::read_json(ss, root);

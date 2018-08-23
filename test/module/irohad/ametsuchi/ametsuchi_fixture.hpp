@@ -58,6 +58,7 @@ namespace iroha {
       }
 
       void TearDown() override {
+        sql->close();
         storage->dropStorage();
       }
 

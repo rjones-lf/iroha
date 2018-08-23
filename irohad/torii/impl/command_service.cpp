@@ -371,7 +371,7 @@ namespace torii {
     log_->debug("{}: adding item to cache: {}, status {} ",
                 who,
                 hash.hex(),
-                response.tx_status());
+                iroha::protocol::TxStatus_Name(response.tx_status()));
     status_bus_->publish(
         std::make_shared<shared_model::proto::TransactionResponse>(
             std::move(response)));

@@ -55,11 +55,12 @@ namespace {
   }
 }  // namespace
 
-BlockLoaderImpl::BlockLoaderImpl(std::shared_ptr<PeerQuery> peer_query,
-                                 std::shared_ptr<BlockQuery> block_query,
-                                 shared_model::proto::ProtoBlockFactory factory)
-    : peer_query_(std::move(peer_query)),
-      block_query_(std::move(block_query)),
+BlockLoaderImpl::BlockLoaderImpl(
+    std::shared_ptr<PeerQueryFactory> peer_query_factory,
+    std::shared_ptr<BlockQueryFactory> block_query_factory,
+    shared_model::proto::ProtoBlockFactory factory)
+    : peer_query_factory_(std::move(peer_query_factory)),
+      block_query_factory_(std::move(block_query_factory)),
       block_factory_(std::move(factory)),
       log_(logger::log("BlockLoaderImpl")) {}
 
@@ -68,13 +69,18 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
   return rxcpp::observable<>::create<
       std::shared_ptr<Block>>([this, peer_pubkey](auto subscriber) {
     std::shared_ptr<Block> top_block;
-    block_query_->getTopBlock().match(
-        [&top_block](
-            expected::Value<std::shared_ptr<shared_model::interface::Block>>
-                block) { top_block = block.value; },
-        [this](expected::Error<std::string> error) {
-          log_->error("{}: {}", kTopBlockRetrieveFail, error.error);
-        });
+    block_query_factory_->createBlockQuery() |
+        [this, &top_block](const auto &block_query) {
+          block_query->getTopBlock().match(
+              [&top_block](
+                  expected::Value<
+                      std::shared_ptr<shared_model::interface::Block>> block) {
+                top_block = block.value;
+              },
+              [this](expected::Error<std::string> error) {
+                log_->error("{}: {}", kTopBlockRetrieveFail, error.error);
+              });
+        };
     if (not top_block) {
       subscriber.on_completed();
       return;
@@ -138,8 +144,9 @@ boost::optional<BlockVariant> BlockLoaderImpl::retrieveBlock(
   auto result = block_factory_.createBlock(std::move(block));
 
   return result.match(
-      [](iroha::expected::Value<BlockVariant>
-             &v) { return boost::make_optional(std::move(v.value)); },
+      [](iroha::expected::Value<BlockVariant> &v) {
+        return boost::make_optional(std::move(v.value));
+      },
       [this](const iroha::expected::Error<std::string> &e)
           -> boost::optional<BlockVariant> {
         log_->error(e.error);
@@ -149,7 +156,8 @@ boost::optional<BlockVariant> BlockLoaderImpl::retrieveBlock(
 
 boost::optional<std::shared_ptr<shared_model::interface::Peer>>
 BlockLoaderImpl::findPeer(const shared_model::crypto::PublicKey &pubkey) {
-  auto peers = peer_query_->getLedgerPeers();
+  auto peers = peer_query_factory_->createPeerQuery() |
+      [](const auto &query) { return query->getLedgerPeers(); };
   if (not peers) {
     log_->error(kPeerRetrieveFail);
     return boost::none;

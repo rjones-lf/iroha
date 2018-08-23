@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "ametsuchi/peer_query.hpp"
+#include "ametsuchi/peer_query_factory.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "consensus/yac/messages.hpp"
 #include "consensus/yac/timer.hpp"
@@ -43,7 +43,8 @@ namespace iroha {
        private:
         // ----------| Yac dependencies |----------
 
-        auto createPeerOrderer(std::shared_ptr<ametsuchi::PeerQuery> wsv);
+        auto createPeerOrderer(
+            std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory);
 
         auto createNetwork(std::shared_ptr<iroha::network::AsyncGrpcClient<
                                google::protobuf::Empty>> async_call);
@@ -64,7 +65,7 @@ namespace iroha {
 
        public:
         std::shared_ptr<YacGate> initConsensusGate(
-            std::shared_ptr<ametsuchi::PeerQuery> wsv,
+            std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
             std::shared_ptr<simulator::BlockCreator> block_creator,
             std::shared_ptr<network::BlockLoader> block_loader,
             const shared_model::crypto::Keypair &keypair,

@@ -414,100 +414,100 @@ can_grant_can_add_my_signatory
 
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_add_my_signatory`_ `permission <../core_concepts/glossary.html#permission>`__.
 
-| Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
+| Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
 | Usage in Java bindings: ``Role.kAddMySignatory``
 | Usage in Python bindings: ``Role_kAddMySignatory``
 |
 
 **Example**
 
-| Admin creates domain that contains only can_grant_can_add_my_signatory permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob can_add_my_signatory permission.
+| Admin creates domain that contains only can_grant_can_add_my_signatory permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob and revoke can_add_my_signatory permission.
 |
 
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_add_my_signatory.py
     :language: python
     :linenos:
-    :lines: 9-41
+    :lines: 9-52
 
 can_grant_can_remove_my_signatory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_remove_my_signatory`_ `permission <../core_concepts/glossary.html#permission>`__.
 
-| Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
+| Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
 | Usage in Java bindings: ``Role.kRemoveMySignatory``
 | Usage in Python bindings: ``Role_kRemoveMySignatory``
 |
 
 **Example**
 
-| Admin creates domain that contains only can_grant_can_remove_my_signatory permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob can_remove_my_signatory permission.
+| Admin creates domain that contains only can_grant_can_remove_my_signatory permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob and revoke can_remove_my_signatory permission.
 |
 
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_remove_my_signatory.py
     :language: python
     :linenos:
-    :lines: 9-41
+    :lines: 9-52
 
 can_grant_can_set_my_account_detail
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_account_detail`_ `permission <../core_concepts/glossary.html#permission>`__.
 
-| Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
+| Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
 | Usage in Java bindings: ``Role.kSetMyAccountDetail``
 | Usage in Python bindings: ``Role_kSetMyAccountDetail``
 |
 
 **Example**
 
-| Admin creates domain that contains only can_grant_can_set_my_account_detail permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob can_set_my_account_detail permission.
+| Admin creates domain that contains only can_grant_can_set_my_account_detail permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob and revoke can_set_my_account_detail permission.
 |
 
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_set_my_account_detail.py
     :language: python
     :linenos:
-    :lines: 9-41
+    :lines: 9-52
 
 can_grant_can_set_my_quorum
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_set_my_quorum`_ `permission <../core_concepts/glossary.html#permission>`__.
 
-| Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
+| Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
 | Usage in Java bindings: ``Role.kSetMyQuorum``
 | Usage in Python bindings: ``Role_kSetMyQuorum``
 |
 
 **Example**
 
-| Admin creates domain that contains only can_grant_can_set_my_quorum permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob can_set_my_quorum permission.
+| Admin creates domain that contains only can_grant_can_set_my_quorum permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob and revoke can_set_my_quorum permission.
 |
 
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_set_my_quorum.py
     :language: python
     :linenos:
-    :lines: 9-41
+    :lines: 9-52
 
 can_grant_can_transfer_my_assets
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Allows `role <../core_concepts/glossary.html#role>`__ owners grant `can_transfer_my_assets`_ `permission <../core_concepts/glossary.html#permission>`__.
 
-| Related API method: `Grant Permission <../api/commands.html#grant-permission>`__
+| Related API methods: `Grant Permission <../api/commands.html#grant-permission>`__, `Revoke Permission <../api/commands.html#revoke-permission>`__
 | Usage in Java bindings: ``Role.kTransferMyAssets``
 | Usage in Python bindings: ``Role_kTransferMyAssets``
 |
 
 **Example**
 
-| Admin creates domain that contains only can_grant_can_transfer_my_assets permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob can_transfer_my_assets permission.
+| Admin creates domain that contains only can_grant_can_transfer_my_assets permission and two accounts for Alice and Bob in that domain. Alice can grant to Bob and revoke can_transfer_my_assets permission.
 |
 
 .. literalinclude:: ../../../example/python/permissions/can_grant_can_transfer_my_assets.py
     :language: python
     :linenos:
-    :lines: 9-48
+    :lines: 9-59
 
 Peer
 ----

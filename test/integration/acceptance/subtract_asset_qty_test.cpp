@@ -30,7 +30,7 @@ class SubtractAssetQuantity : public AcceptanceFixture {
    * @return built tx that adds kAmount assets to the users
    */
   auto replenish() {
-    return complete(baseTx().addAssetQuantity(kAsset, kAmount));
+    return complete(baseTx().addAssetQuantity(kAssetId, kAmount));
   }
 
   const std::string kAmount = "1.0";
@@ -50,7 +50,7 @@ TEST_F(SubtractAssetQuantity, Everything) {
       .sendTx(replenish())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().subtractAssetQuantity(kAsset, kAmount)))
+      .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, kAmount)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -61,42 +61,46 @@ TEST_F(SubtractAssetQuantity, Everything) {
  * @given some user with all required permissions
  * @when execute tx with SubtractAssetQuantity command with amount more than
  * user has
- * @then there is no tx in proposal
+ * @then there is an empty verified proposal
  */
 TEST_F(SubtractAssetQuantity, Overdraft) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(replenish())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().subtractAssetQuantity(kAsset, "2.0")))
+      .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, "2.0")))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
 /**
  * @given some user without can_subtract_asset_qty permission
  * @when execute tx with SubtractAssetQuantity command
- * @then there is no tx in proposal
+there is an empty verified proposal
  */
 TEST_F(SubtractAssetQuantity, NoPermissions) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms({interface::permissions::Role::kAddAssetQty}))
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(replenish())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().subtractAssetQuantity(kAsset, kAmount)))
+      .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, kAmount)))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
@@ -115,7 +119,7 @@ TEST_F(SubtractAssetQuantity, NegativeAmount) {
       .sendTx(replenish())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().subtractAssetQuantity(kAsset, "-1.0")),
+      .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, "-1.0")),
               checkStatelessInvalid);
 }
 
@@ -134,14 +138,14 @@ TEST_F(SubtractAssetQuantity, ZeroAmount) {
       .sendTx(replenish())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().subtractAssetQuantity(kAsset, "0.0")),
+      .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, "0.0")),
               checkStatelessInvalid);
 }
 
 /**
  * @given some user with all required permissions
  * @when execute tx with SubtractAssetQuantity command with nonexistent asset
- * @then there is an empty proposal
+ * @then there is an empty verified proposal
  */
 TEST_F(SubtractAssetQuantity, NonexistentAsset) {
   std::string nonexistent = "inexist#test";
@@ -149,13 +153,15 @@ TEST_F(SubtractAssetQuantity, NonexistentAsset) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(replenish())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().subtractAssetQuantity(nonexistent, kAmount)))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }

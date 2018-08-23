@@ -36,7 +36,8 @@ class AcceptanceFixture : public ::testing::Test {
    * @return pre-built transaction
    */
   TestUnsignedTransactionBuilder createUser(
-      const std::string &user, const shared_model::crypto::PublicKey &key);
+      const shared_model::interface::types::AccountNameType &user,
+      const shared_model::crypto::PublicKey &key);
 
   /**
    * Creates a set of transactions for user creation with specified permissions
@@ -47,9 +48,9 @@ class AcceptanceFixture : public ::testing::Test {
    * @return pre-build transaction
    */
   TestUnsignedTransactionBuilder createUserWithPerms(
-      const std::string &user,
+      const shared_model::interface::types::AccountNameType &user,
       const shared_model::crypto::PublicKey &key,
-      const std::string &role_id,
+      const shared_model::interface::types::RoleIdType &role_id,
       const shared_model::interface::RolePermissionSet &perms);
 
   /**
@@ -59,7 +60,7 @@ class AcceptanceFixture : public ::testing::Test {
    * @return built tx and a hash of its payload
    */
   shared_model::proto::Transaction makeUserWithPerms(
-      const std::string &role_name,
+      const shared_model::interface::types::RoleIdType &role_name,
       const shared_model::interface::RolePermissionSet &perms);
 
   /**
@@ -74,50 +75,123 @@ class AcceptanceFixture : public ::testing::Test {
    * Add default user creator account id and current created time to builder
    * @tparam Builder type (transaction, query)
    * @param builder object to modify
+   * @param account_id - account of transaction creator
    * @return builder containing creator account id and created time
    */
   template <typename Builder>
-  auto base(Builder builder) -> decltype(
-      builder.creatorAccountId(std::string()).createdTime(uint64_t()));
+  auto base(Builder builder,
+            const shared_model::interface::types::AccountIdType &account_id)
+      -> decltype(
+          builder
+              .creatorAccountId(shared_model::interface::types::AccountIdType())
+              .createdTime(uint64_t()));
 
   /**
-   * Create valid base pre-built transaction
+   * Create valid base pre-built transaction with specified creator
+   * @param account_id - account of transaction creator
    * @return pre-built tx
    */
-  auto baseTx() -> decltype(base(TestUnsignedTransactionBuilder()));
+  auto baseTx(const shared_model::interface::types::AccountIdType &account_id)
+      -> decltype(base(TestUnsignedTransactionBuilder(),
+                       shared_model::interface::types::AccountIdType()));
 
   /**
-   * Create valid base pre-built query
+   * Create valid base pre-built transaction with kUserId as transaction creator
+   * @return pre-built tx
+   */
+  auto baseTx()
+      -> decltype(baseTx(shared_model::interface::types::AccountIdType()));
+
+  /**
+   * Create valid base pre-built query with specified query creator
+   * @param account_id - account of query creator
    * @return pre-built query
    */
-  auto baseQry() -> decltype(base(TestUnsignedQueryBuilder()));
+  auto baseQry(const shared_model::interface::types::AccountIdType &account_id)
+      -> decltype(base(TestUnsignedQueryBuilder(), std::string()));
 
   /**
-   * Completes pre-built object
+   * Create valid base pre-built query with kUserId as query creator
+   * @return pre-built query
+   */
+  auto baseQry() -> decltype(baseQry(std::string()));
+
+  /**
+   * Completes pre-built object with specified keypair for signing
+   * @tparam Builder - is a type of a pre-built object
+   * @param builder - is a pre-built object
+   * @param keypair - keypair used for signing
+   * @return built object
+   */
+  template <typename Builder>
+  auto complete(Builder builder, const shared_model::crypto::Keypair &keypair)
+      -> decltype(builder.build()
+                      .signAndAddSignature(
+                          std::declval<shared_model::crypto::Keypair>())
+                      .finish());
+
+  /**
+   * Completes pre-built object with kUserKeypair used for signing
    * @param builder is a pre-built object
    * @return built object
    */
   template <typename Builder>
-  auto complete(Builder builder) -> decltype(
-      builder.build()
-          .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
-          .finish());
+  auto complete(Builder builder)
+      -> decltype(builder.build()
+      .signAndAddSignature(
+          std::declval<shared_model::crypto::Keypair>())
+      .finish());
 
   /**
    * @return unique time for this fixture
    */
   iroha::time::time_t getUniqueTime();
 
-  const std::string kUser;
-  const std::string kRole;
-  const std::string kDomain;
-  const std::string kAsset;
-  const std::string kUserId;
+  const shared_model::interface::types::AccountNameType kUser;
+  const shared_model::interface::types::RoleIdType kRole;
+  const shared_model::interface::types::DomainIdType kDomain;
+  const shared_model::interface::types::AssetIdType kAssetId;
+  const shared_model::interface::types::AccountIdType kUserId;
+  const shared_model::interface::types::AccountIdType kAdminId;
   const shared_model::crypto::Keypair kAdminKeypair;
   const shared_model::crypto::Keypair kUserKeypair;
 
   const std::function<void(const shared_model::proto::TransactionResponse &)>
       checkStatelessInvalid;
+
+  const std::vector<shared_model::interface::types::AssetNameType>
+      kIllegalAssetNames = {"",
+                            " ",
+                            "   ",
+                            "A",
+                            "assetV",
+                            "asSet",
+                            "asset%",
+                            "^123",
+                            "verylongassetname_thenameislonger",
+                            "verylongassetname_thenameislongerthanitshouldbe",
+                            "assset-01"};
+
+  const std::vector<shared_model::interface::types::DomainIdType>
+      kIllegalDomainNames = {
+          "",
+          " ",
+          "   ",
+          "9start.with.digit",
+          "-startWithDash",
+          "@.is.not.allowed",
+          "no space is allowed",
+          "endWith-",
+          "label.endedWith-.is.not.allowed",
+          "aLabelMustNotExceeds63charactersALabelMustNotExceeds63characters",
+          "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+          "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+          "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
+          "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP",
+          "257.257.257.257",
+          "domain#domain",
+          "asd@asd",
+          "ab..cd"};
 
  private:
   iroha::time::time_t initial_time;

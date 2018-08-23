@@ -58,6 +58,10 @@ class SimulatorTest : public ::testing::Test {
     ordering_gate = std::make_shared<MockOrderingGate>();
     crypto_signer = std::make_shared<shared_model::crypto::CryptoModelSigner<>>(
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair());
+    block_query_factory = std::make_shared<MockBlockQueryFactory>();
+    EXPECT_CALL(*block_query_factory, createBlockQuery())
+        .WillRepeatedly(testing::Return(boost::make_optional(
+            std::shared_ptr<iroha::ametsuchi::BlockQuery>(query))));
     block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory>(
         std::make_unique<shared_model::validation::MockBlockValidator>());
   }
@@ -67,17 +71,15 @@ class SimulatorTest : public ::testing::Test {
   }
 
   void init() {
-    simulator = std::make_shared<Simulator>(ordering_gate,
-                                            validator,
-                                            factory,
-                                            query,
-                                            crypto_signer,
+    simulator = std::make_shared<Simulator>(
+        ordering_gate, validator, factory, block_query_factory, crypto_signer,
                                             std::move(block_factory));
   }
 
   std::shared_ptr<MockStatefulValidator> validator;
   std::shared_ptr<MockTemporaryFactory> factory;
   std::shared_ptr<MockBlockQuery> query;
+  std::shared_ptr<MockBlockQueryFactory> block_query_factory;
   std::shared_ptr<MockOrderingGate> ordering_gate;
   std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer;
   std::unique_ptr<shared_model::interface::UnsafeBlockFactory> block_factory;

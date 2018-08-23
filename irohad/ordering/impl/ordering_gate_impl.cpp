@@ -72,12 +72,19 @@ namespace iroha {
         const iroha::network::PeerCommunicationService &pcs) {
       log_->info("setPcs");
 
+      // find height of last committed block
       auto top_block_height =
           pcs.on_commit()
-              .transform([](const Commit &commit) {
-                // find height of last commited block
-                return commit.as_blocking().last()->height();
-              })
+              .transform(
+                  [this](const synchronizer::SynchronizationEvent &sync_event) {
+                    sync_event.synced_blocks.subscribe(
+                        // take height of next block
+                        [this](std::shared_ptr<shared_model::interface::Block>
+                                   block_ptr) {
+                          last_block_height_ = block_ptr->height();
+                        });
+                    return last_block_height_;
+                  })
               .start_with(last_block_height_);
 
       auto subscribe = [&](auto merge_strategy) {

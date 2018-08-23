@@ -69,7 +69,7 @@ TEST_F(SetAccountDetail, Self) {
 /**
  * @given a pair of users and first one without permissions
  * @when the first one tries to use SetAccountDetail on the second
- * @then there is the tx in proposal
+ * @then there is an empty verified proposal
  */
 TEST_F(SetAccountDetail, WithoutNoPerm) {
   auto second_user_tx = makeSecondUser();
@@ -77,17 +77,19 @@ TEST_F(SetAccountDetail, WithoutNoPerm) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(second_user_tx)
       .skipProposal()
+      .skipVerifiedProposal()
       .checkBlock([](auto &block) {
         ASSERT_EQ(block->transactions().size(), 1)
             << "Cannot create second user account";
       })
       .sendTx(complete(baseTx(kUser2Id)))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
@@ -118,9 +120,9 @@ TEST_F(SetAccountDetail, WithPerm) {
 
 /**
  * @given a pair of users
- *        AND second has been granted can_set_my_detail from the first
+ *        @and second has been granted can_set_my_detail from the first
  * @when the first one tries to use SetAccountDetail on the second
- * @then there is no tx in proposal
+ * @then there is an empty verified proposal
  */
 TEST_F(SetAccountDetail, WithGrantablePerm) {
   auto second_user_tx = makeSecondUser();

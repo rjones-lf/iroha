@@ -18,9 +18,7 @@
 #ifndef IROHA_APPLICATION_HPP
 #define IROHA_APPLICATION_HPP
 
-#include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/storage_impl.hpp"
-#include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
@@ -114,8 +112,6 @@ class Irohad {
 
   virtual void initStorage();
 
-  virtual std::unique_ptr<iroha::ametsuchi::PeerQuery> initPeerQuery();
-
   virtual void initCryptoProvider();
 
   virtual void initValidators();
@@ -206,10 +202,6 @@ class Irohad {
 
   // query service
   std::shared_ptr<torii::QueryService> query_service;
-
-  // ordering service persistent state storage
-  std::shared_ptr<iroha::ametsuchi::OrderingServicePersistentState>
-      ordering_service_storage_;
 
   std::unique_ptr<ServerRunner> torii_server;
   std::unique_ptr<ServerRunner> internal_server;

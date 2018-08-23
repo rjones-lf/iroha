@@ -19,7 +19,6 @@
 
 #include <random>
 
-#include "ametsuchi/peer_query.hpp"
 #include "common/types.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
@@ -29,22 +28,25 @@ namespace iroha {
   namespace consensus {
     namespace yac {
       PeerOrdererImpl::PeerOrdererImpl(
-          std::shared_ptr<ametsuchi::PeerQuery> peer_query)
-          : query_(std::move(peer_query)) {}
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory)
+          : peer_query_factory_(peer_query_factory) {}
 
       boost::optional<ClusterOrdering> PeerOrdererImpl::getInitialOrdering() {
-        return query_->getLedgerPeers() |
+        return peer_query_factory_->createPeerQuery() |
+            [](const auto &query) { return query->getLedgerPeers(); } |
             [](const auto &peers) { return ClusterOrdering::create(peers); };
       }
 
       boost::optional<ClusterOrdering> PeerOrdererImpl::getOrdering(
           const YacHash &hash) {
-        return query_->getLedgerPeers() | [&hash](auto peers) {
-          std::seed_seq seed(hash.block_hash.begin(), hash.block_hash.end());
-          std::default_random_engine gen(seed);
-          std::shuffle(peers.begin(), peers.end(), gen);
-          return ClusterOrdering::create(peers);
-        };
+        return peer_query_factory_->createPeerQuery() |
+            [](const auto &query) { return query->getLedgerPeers(); }
+        | [&hash](auto peers) {
+            std::seed_seq seed(hash.block_hash.begin(), hash.block_hash.end());
+            std::default_random_engine gen(seed);
+            std::shuffle(peers.begin(), peers.end(), gen);
+            return ClusterOrdering::create(peers);
+          };
       }
     }  // namespace yac
   }    // namespace consensus

@@ -57,7 +57,8 @@ namespace iroha {
       return proposal_creator_->on_verified_proposal();
     }
 
-    rxcpp::observable<Commit> PeerCommunicationServiceImpl::on_commit() const {
+    rxcpp::observable<synchronizer::SynchronizationEvent>
+    PeerCommunicationServiceImpl::on_commit() const {
       return synchronizer_->on_commit_chain();
     }
   }  // namespace network
