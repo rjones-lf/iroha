@@ -64,6 +64,14 @@ namespace shared_model {
        */
       virtual const QueryErrorResponseVariantType &get() const = 0;
 
+      /// Message type
+      using ErrorMessageType = std::string;
+
+      /**
+       * @return error message if present, otherwise - an empty string
+       */
+      virtual const ErrorMessageType &errorMessage() const = 0;
+
       // ------------------------| Primitive override |-------------------------
 
       std::string toString() const override;

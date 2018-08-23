@@ -20,6 +20,7 @@
 
 #include <rxcpp/rx.hpp>
 
+#include "synchronizer/synchronizer_common.hpp"
 #include "validation/stateful_validator_common.hpp"
 
 namespace shared_model {
@@ -32,9 +33,6 @@ namespace shared_model {
 }  // namespace shared_model
 
 namespace iroha {
-
-  using Commit =
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>;
 
   namespace network {
 
@@ -81,8 +79,10 @@ namespace iroha {
        * In common case observable<Block> will contain one element.
        * But there are scenarios when consensus provide many blocks, e.g.
        * on peer startup - peer will get all actual blocks.
+       * Also, it can provide no blocks at all, if commit was empty
        */
-      virtual rxcpp::observable<Commit> on_commit() const = 0;
+      virtual rxcpp::observable<synchronizer::SynchronizationEvent> on_commit()
+          const = 0;
 
       virtual ~PeerCommunicationService() = default;
     };

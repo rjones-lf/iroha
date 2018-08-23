@@ -81,13 +81,15 @@ namespace iroha {
             mutable_factory_->commit(std::move(storage));
 
             notifier_.get_subscriber().on_next(
-                rxcpp::observable<>::just(block_ptr));
+                SynchronizationEvent{rxcpp::observable<>::just(block_ptr),
+                                     SynchronizationOutcomeType::kCommit});
           },
           [this](std::shared_ptr<shared_model::interface::EmptyBlock>
                      empty_block_ptr) {
-            notifier_.get_subscriber().on_next(
+            notifier_.get_subscriber().on_next(SynchronizationEvent{
                 rxcpp::observable<>::empty<
-                    std::shared_ptr<shared_model::interface::Block>>());
+                    std::shared_ptr<shared_model::interface::Block>>(),
+                SynchronizationOutcomeType::kCommitEmpty});
           });
     }
 
@@ -138,7 +140,11 @@ namespace iroha {
         processApplicableBlock(committed_block_variant);
       } else {
         auto missing_chain = downloadMissingChain(committed_block_variant);
-        notifier_.get_subscriber().on_next(missing_chain);
+
+        // TODO [IR-1634] 23.08.18 Akvinikym: place this call to notifier after
+        // downloaded chain application
+        notifier_.get_subscriber().on_next(SynchronizationEvent{
+            missing_chain, SynchronizationOutcomeType::kCommit});
 
         // apply downloaded chain
         std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
@@ -153,7 +159,8 @@ namespace iroha {
       }
     }
 
-    rxcpp::observable<Commit> SynchronizerImpl::on_commit_chain() {
+    rxcpp::observable<SynchronizationEvent>
+    SynchronizerImpl::on_commit_chain() {
       return notifier_.get_observable();
     }
 

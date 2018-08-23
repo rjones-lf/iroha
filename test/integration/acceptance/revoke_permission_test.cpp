@@ -250,10 +250,10 @@ namespace grantables {
               .createdTime(f.getUniqueTime())
               .creatorAccountId(itf.kAdminId)
               .quorum(1)
-              .addAssetQuantity(f.kAsset, "9000.0")
+              .addAssetQuantity(f.kAssetId, "9000.0")
               .transferAsset(itf.kAdminId,
                              f.kAccount1 + "@" + f.kDomain,
-                             f.kAsset,
+                             f.kAssetId,
                              "init top up",
                              "8000.0")
               .build()

@@ -24,6 +24,7 @@
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "interfaces/permissions.hpp"
+#include "synchronizer/synchronizer_common.hpp"
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
@@ -42,9 +43,13 @@ namespace integration_framework {
       std::function<void(integration_framework::IntegrationTestFramework &)>
           deleter,
       bool mst_support,
-      const std::string &block_store_path)
+      const std::string &block_store_path,
+      milliseconds proposal_waiting,
+      milliseconds block_waiting)
       : iroha_instance_(std::make_shared<IrohaInstance>(
             mst_support, block_store_path, dbname)),
+        proposal_waiting(proposal_waiting),
+        block_waiting(block_waiting),
         maximum_proposal_size_(maximum_proposal_size),
         deleter_(deleter) {}
 
@@ -147,8 +152,8 @@ namespace integration_framework {
     iroha_instance_->getIrohaInstance()
         ->getPeerCommunicationService()
         ->on_commit()
-        .subscribe([this](auto commit_observable) {
-          commit_observable.subscribe([this](auto committed_block) {
+        .subscribe([this](auto commit_event) {
+          commit_event.synced_blocks.subscribe([this](auto committed_block) {
             block_queue_.push(committed_block);
             log_->info("block");
             queue_cond.notify_all();
@@ -221,6 +226,72 @@ namespace integration_framework {
       const shared_model::proto::Transaction &tx,
       std::function<void(const BlockType &)> check) {
     sendTx(tx).skipProposal().skipVerifiedProposal().checkBlock(check);
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::sendTxSequence(
+      const shared_model::interface::TransactionSequence &tx_sequence,
+      std::function<void(std::vector<shared_model::proto::TransactionResponse>
+                             &)> validation) {
+    log_->info("send transactions");
+    const auto &transactions = tx_sequence.transactions();
+
+    boost::barrier bar(2);
+
+    // subscribe on status bus and save all stateless statuses into a vector
+    std::vector<shared_model::proto::TransactionResponse> statuses;
+    iroha_instance_->instance_->getStatusBus()
+        ->statuses()
+        .filter([&transactions](auto s) {
+          // filter statuses for transactions from sequence
+          auto it = std::find_if(
+              transactions.begin(), transactions.end(), [&s](const auto tx) {
+                // check if status is either stateless valid or failed
+                bool is_stateless_status = iroha::visit_in_place(
+                    s->get(),
+                    [](const shared_model::interface::StatelessFailedTxResponse
+                           &stateless_failed_response) { return true; },
+                    [](const shared_model::interface::StatelessValidTxResponse
+                           &stateless_valid_response) { return true; },
+                    [](const auto &other_responses) { return false; });
+                return is_stateless_status
+                    and s->transactionHash() == tx->hash();
+              });
+          return it != transactions.end();
+        })
+        .take(transactions.size())
+        .subscribe(
+            [&statuses](auto s) {
+              statuses.push_back(*std::static_pointer_cast<
+                                 shared_model::proto::TransactionResponse>(s));
+            },
+            [&bar] { bar.wait(); });
+
+    // put all transactions to the TxList and send them to iroha
+    iroha::protocol::TxList tx_list;
+    for (const auto &tx : transactions) {
+      auto proto_tx =
+          std::static_pointer_cast<shared_model::proto::Transaction>(tx)
+              ->getTransport();
+      *tx_list.add_transactions() = proto_tx;
+    }
+    iroha_instance_->getIrohaInstance()->getCommandService()->ListTorii(
+        tx_list);
+
+    // make sure that the first (stateless) status is come
+    bar.wait();
+
+    validation(statuses);
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::sendTxSequenceAwait(
+      const shared_model::interface::TransactionSequence &tx_sequence,
+      std::function<void(const BlockType &)> check) {
+    sendTxSequence(tx_sequence)
+        .skipProposal()
+        .skipVerifiedProposal()
+        .checkBlock(check);
     return *this;
   }
 

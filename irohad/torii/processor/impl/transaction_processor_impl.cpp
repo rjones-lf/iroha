@@ -90,8 +90,9 @@ namespace iroha {
           });
 
       // commit transactions
-      pcs_->on_commit().subscribe([this](Commit blocks) {
-        blocks.subscribe(
+      pcs_->on_commit().subscribe([this](synchronizer::SynchronizationEvent
+                                             sync_event) {
+        sync_event.synced_blocks.subscribe(
             // on next
             [this](auto model_block) {
               current_txs_hashes_.reserve(model_block->transactions().size());
@@ -101,7 +102,7 @@ namespace iroha {
                              [](const auto &tx) { return tx.hash(); });
             },
             // on complete
-            [this]() {
+            [this] {
               if (current_txs_hashes_.empty()) {
                 log_->info("there are no transactions to be committed");
               } else {
@@ -114,8 +115,8 @@ namespace iroha {
                           .txHash(tx_hash)
                           .build());
                 }
+                current_txs_hashes_.clear();
               }
-              current_txs_hashes_.clear();
             });
       });
 
@@ -125,7 +126,7 @@ namespace iroha {
         // and mst::propagate batch IR-1584
         this->pcs_->propagate_batch(*batch);
       });
-      mst_processor_->onExpiredBatches().subscribe([this](auto &&batch) {
+      mst_processor_->onExpiredTransactions().subscribe([this](auto &&tx) {
         log_->info("MST batch {} is expired", batch->reducedHash().toString());
         std::lock_guard<std::mutex> lock(notifier_mutex_);
         for (auto &&tx : batch->transactions()) {
@@ -136,6 +137,20 @@ namespace iroha {
                   .build());
         }
       });
+    }
+
+    void TransactionProcessorImpl::transactionHandle(
+        std::shared_ptr<shared_model::interface::Transaction> transaction)
+        const {
+      log_->info("handle transaction");
+      if (boost::size(transaction->signatures()) < transaction->quorum()) {
+        log_->info("waiting for quorum signatures");
+        mst_processor_->propagateTransaction(transaction);
+        return;
+      }
+
+      log_->info("propagating tx");
+      pcs_->propagate_transaction(transaction);
     }
 
     void TransactionProcessorImpl::batchHandle(

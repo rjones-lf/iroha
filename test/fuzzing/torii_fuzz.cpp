@@ -9,6 +9,7 @@
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
+#include "synchronizer/synchronizer_common.hpp"
 #include "torii/command_service.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 
@@ -26,7 +27,8 @@ struct CommandFixture {
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       vprop_notifier_;
-  rxcpp::subjects::subject<iroha::Commit> commit_notifier_;
+  rxcpp::subjects::subject<iroha::synchronizer::SynchronizationEvent>
+      commit_notifier_;
   rxcpp::subjects::subject<iroha::DataType> mst_notifier_;
 
   CommandFixture() {

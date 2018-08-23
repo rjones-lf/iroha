@@ -49,7 +49,8 @@ namespace iroha {
           std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       on_verified_proposal() const override;
 
-      rxcpp::observable<Commit> on_commit() const override;
+      rxcpp::observable<synchronizer::SynchronizationEvent> on_commit()
+          const override;
 
      private:
       std::shared_ptr<OrderingGate> ordering_gate_;
