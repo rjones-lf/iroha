@@ -26,7 +26,7 @@ namespace shared_model {
   namespace crypto {
     class Keypair;
   }
-}
+}  // namespace shared_model
 
 namespace iroha {
   /**
@@ -37,25 +37,12 @@ namespace iroha {
     virtual ~KeysManager() = default;
 
     /**
-     * Create a new keypair and store it as is on disk
-     * @return false if create account failed
-     */
-    virtual bool createKeys() = 0;
-
-    /**
      * Create keys a new keypair and store it encrypted on disk
-     * @param pass_phrase is a password for the keys
+     * @param pass_phrase is used for private key encryption. Optional, default
+     * value is an empty string.
      * @return false if create account failed
      */
-    virtual bool createKeys(const std::string &pass_phrase) = 0;
-
-    /**
-     * Load plain-text keys associated with the manager, then validate loaded
-     * keypair by signing and verifying signature of test message
-     * @return nullopt if no keypair found locally, or verification failure;
-     *         related keypair otherwise
-     */
-    virtual boost::optional<shared_model::crypto::Keypair> loadKeys() = 0;
+    virtual bool createKeys(const std::string &pass_phrase = "") = 0;
 
     /**
      * Load encrypted keys associated with the manager, then validate loaded
@@ -65,7 +52,7 @@ namespace iroha {
      *         related keypair otherwise
      */
     virtual boost::optional<shared_model::crypto::Keypair> loadKeys(
-        const std::string &pass_phrase) = 0;
+        const std::string &pass_phrase = "") = 0;
   };
 
 }  // namespace iroha
