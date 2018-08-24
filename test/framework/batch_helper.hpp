@@ -318,6 +318,8 @@ namespace framework {
       batch_meta.batch_type = batch_type;
       batch_meta.reduced_hashes = internal::fetchReducedHashes(builders...);
 
+      // makes clang avoid sending warning with unused function
+      // (makeTxBatchCollection)
       internal::makeTxBatchCollection(batch_meta);
 
       return internal::makeTxBatchCollection(
