@@ -6,6 +6,7 @@
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "validators/default_validator.hpp"
 
 
@@ -39,7 +40,7 @@ namespace shared_model {
           auto batch_hash = TransactionBatch::calculateReducedBatchHash(hashes);
           extracted_batches[batch_hash].push_back(tx);
         } else {
-          TransactionBatch::createTransactionBatch<TransactionValidator,
+          TransactionBatchFactory::createTransactionBatch<TransactionValidator,
                                                    FieldValidator>(
               tx, transaction_validator, field_validator)
               .match(insert_batch, [&tx, &result](const auto &err) {
@@ -52,7 +53,7 @@ namespace shared_model {
       }
 
       for (const auto &it : extracted_batches) {
-        TransactionBatch::createTransactionBatch(it.second, validator)
+        TransactionBatchFactory::createTransactionBatch(it.second, validator)
             .match(insert_batch, [&it, &result](const auto &err) {
               result.addReason(std::make_pair(
                   it.first.toString(), std::vector<std::string>{err.error}));

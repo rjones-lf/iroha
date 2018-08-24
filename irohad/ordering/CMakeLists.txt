@@ -60,3 +60,12 @@ target_link_libraries(on_demand_connection_manager
     rxcpp
     boost
     )
+
+add_library(on_demand_ordering_gate
+    impl/on_demand_ordering_gate.cpp
+    )
+target_link_libraries(on_demand_ordering_gate
+    shared_model_interfaces
+    rxcpp
+    boost
+    )

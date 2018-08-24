@@ -8,6 +8,7 @@
 
 #include <gmock/gmock.h>
 
+#include "ordering/on_demand_ordering_service.hpp"
 #include "ordering/on_demand_os_transport.hpp"
 
 namespace iroha {
@@ -28,7 +29,17 @@ namespace iroha {
       };
 
     }  // namespace transport
-  }    // namespace ordering
+
+    struct MockOnDemandOrderingService : public OnDemandOrderingService {
+      MOCK_METHOD2(onTransactions, void(transport::RoundType, CollectionType));
+
+      MOCK_METHOD1(onRequestProposal,
+                   boost::optional<ProposalType>(transport::RoundType));
+
+      MOCK_METHOD1(onCollaborationOutcome, void(transport::RoundType));
+    };
+
+  }  // namespace ordering
 }  // namespace iroha
 
 #endif  // IROHA_ORDERING_MOCKS_HPP

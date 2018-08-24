@@ -46,3 +46,8 @@ addtest(on_demand_connection_manager_test on_demand_connection_manager_test.cpp)
 target_link_libraries(on_demand_connection_manager_test
     on_demand_connection_manager
     )
+
+addtest(on_demand_ordering_gate_test on_demand_ordering_gate_test.cpp)
+target_link_libraries(on_demand_ordering_gate_test
+    on_demand_ordering_gate
+    )
