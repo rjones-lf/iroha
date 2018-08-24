@@ -21,7 +21,7 @@ using namespace iroha::model;
 TEST(StateTest, CreateState) {
   auto state = MstState::empty();
   ASSERT_EQ(0, state.getBatches().size());
-  auto &&tx = addSignatures(
+  auto tx = addSignatures(
       makeTestBatch(txBuilder(1)), 0, makeSignature("1", "pub_key_1"));
   state += tx;
   ASSERT_EQ(1, state.getBatches().size());
@@ -37,19 +37,18 @@ TEST(StateTest, UpdateExistingState) {
   auto state = MstState::empty();
   auto time = iroha::time::now();
 
-  auto &&first_signature = makeSignature("1", "pub_key_1");
-  auto &&second_signature = makeSignature("2", "pub_key_2");
-  auto &&base_tx = makeTestBatch(txBuilder(1, time));
+  auto first_signature = makeSignature("1", "pub_key_1");
+  auto second_signature = makeSignature("2", "pub_key_2");
+  auto base_tx = makeTestBatch(txBuilder(1, time));
 
-  auto &&first_tx = addSignatures(base_tx, 0, first_signature);
+  auto first_tx = addSignatures(base_tx, 0, first_signature);
   state += first_tx;
 
-  auto &&second_tx = addSignatures(base_tx, 0, second_signature);
+  auto second_tx = addSignatures(base_tx, 0, second_signature);
   state += second_tx;
   ASSERT_EQ(1, state.getBatches().size());
 
-  auto &&merged_tx =
-      addSignatures(base_tx, 0, first_signature, second_signature);
+  auto merged_tx = addSignatures(base_tx, 0, first_signature, second_signature);
   ASSERT_EQ(*merged_tx, *state.getBatches().at(0));
 }
 
@@ -181,14 +180,14 @@ TEST(StateTest, UnionStateWhenTransactionsSame) {
 TEST(StateTest, DifferenceTest) {
   auto time = iroha::time::now();
 
-  auto &&first_signature = makeSignature("1", "1");
-  auto &&second_signature = makeSignature("2", "2");
-  auto &&third_signature = makeSignature("3", "3");
+  auto first_signature = makeSignature("1", "1");
+  auto second_signature = makeSignature("2", "2");
+  auto third_signature = makeSignature("3", "3");
 
-  auto &&another_signature = makeSignature("another", "another");
+  auto another_signature = makeSignature("another", "another");
 
-  auto &&common_batch = makeTestBatch(txBuilder(1, time));
-  auto &&another_batch = makeTestBatch(txBuilder(3));
+  auto common_batch = makeTestBatch(txBuilder(1, time));
+  auto another_batch = makeTestBatch(txBuilder(3));
 
   auto state1 = MstState::empty();
   state1 += addSignatures(common_batch, 0, first_signature);
@@ -201,7 +200,7 @@ TEST(StateTest, DifferenceTest) {
 
   MstState diff = state1 - state2;
   ASSERT_EQ(1, diff.getBatches().size());
-  auto &&expected_batch = addSignatures(common_batch, 0, first_signature);
+  auto expected_batch = addSignatures(common_batch, 0, first_signature);
   ASSERT_EQ(*expected_batch, *diff.getBatches().at(0));
 }
 
@@ -287,10 +286,9 @@ TEST(StateTest, TimeIndexInsertionByTx) {
   auto quorum = 2u;
   auto time = iroha::time::now();
 
-  auto &&prepared_batch =
-      addSignatures(makeTestBatch(txBuilder(1, time, quorum)),
-                    0,
-                    makeSignature("1_1", "1_1"));
+  auto prepared_batch = addSignatures(makeTestBatch(txBuilder(1, time, quorum)),
+                                      0,
+                                      makeSignature("1_1", "1_1"));
 
   auto state = MstState::empty(std::make_shared<TimeTestCompleter>());
 
