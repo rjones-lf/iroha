@@ -164,14 +164,14 @@ TEST_P(BatchPipelineTest, ValidBatch) {
       prepareTransferAssetBuilder(kFirstUserId, kSecondUserId, kAssetA, "1.0"),
       prepareTransferAssetBuilder(kSecondUserId, kFirstUserId, kAssetB, "1.0"));
 
-  SCOPED_TRACE("From valid batch test")
+  SCOPED_TRACE("From valid batch test");
   auto transaction_sequence = createTransactionSequence(
       {signedTx(batch_transactions[0], kFirstUserKeypair),
        signedTx(batch_transactions[1], kSecondUserKeypair)});
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(createFirstUser(), [&](const auto &) {})
+      .sendTxAwait(createFirstUser(), [](const auto &) {})
       .sendTxAwait(createSecondUser(), [](const auto &) {})
       .sendTxAwait(
           createAndAddAssets(kFirstUserId, kAssetA, "1.0", kFirstUserKeypair),
@@ -207,7 +207,7 @@ TEST_F(BatchPipelineTest, InvalidAtomicBatch) {
                                   "2.0")  // invalid tx due to too big transfer
   );
 
-  SCOPED_TRACE("From invalid atomic batch test")
+  SCOPED_TRACE("From invalid atomic batch test");
   auto transaction_sequence = createTransactionSequence(
       {signedTx(batch_transactions[0], kFirstUserKeypair),
        signedTx(batch_transactions[1], kSecondUserKeypair)});
@@ -267,7 +267,7 @@ TEST_F(BatchPipelineTest, InvalidOrderedBatch) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(createFirstUser(), [&](const auto &) {})
+      .sendTxAwait(createFirstUser(), [](const auto &) {})
       .sendTxAwait(createSecondUser(), [](const auto &) {})
       .sendTxAwait(
           createAndAddAssets(kFirstUserId, kAssetA, "1.0", kFirstUserKeypair),
