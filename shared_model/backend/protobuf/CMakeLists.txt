@@ -8,6 +8,7 @@ add_library(shared_model_proto_backend
     impl/proposal.cpp
     impl/permissions.cpp
     impl/proto_block_factory.cpp
+    impl/proto_block_json_converter.cpp
     commands/impl/proto_add_asset_quantity.cpp
     commands/impl/proto_add_peer.cpp
     commands/impl/proto_add_signatory.cpp

@@ -7,6 +7,7 @@
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
+#include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "execution/query_execution_impl.hpp"
@@ -101,7 +102,12 @@ void Irohad::initStorage() {
   auto factory =
       std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
           shared_model::validation::FieldValidator>>();
-  auto storageResult = StorageImpl::create(block_store_dir_, pg_conn_, factory);
+  auto block_converter =
+      std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
+  auto storageResult = StorageImpl::create(block_store_dir_,
+                                           pg_conn_,
+                                           std::move(factory),
+                                           std::move(block_converter));
   storageResult.match(
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
         storage = _storage.value;

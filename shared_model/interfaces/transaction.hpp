@@ -31,8 +31,7 @@ namespace shared_model {
      * Transaction class represent well-formed intent from client to change
      * state of ledger.
      */
-    using HashProvider = shared_model::crypto::Sha3_256;
-    class Transaction : public Signable<Transaction, HashProvider> {
+    class Transaction : public Signable<Transaction> {
      public:
       /**
        * @return creator of transaction
@@ -59,12 +58,11 @@ namespace shared_model {
        */
       virtual const types::BlobType &reducedPayload() const = 0;
 
-      const types::HashType &reducedHash() const {
-        if (reduced_hash_ == boost::none) {
-          reduced_hash_.emplace(HashProvider::makeHash(reducedPayload()));
-        }
-        return *reduced_hash_;
-      }
+      /**
+       * @return hash of reduced payload
+       */
+      virtual const types::HashType &reducedHash() const = 0;
+
       /*
        * @return Batch Meta if exists
        */
@@ -87,9 +85,6 @@ namespace shared_model {
             .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
             .finalize();
       }
-
-     private:
-      mutable boost::optional<types::HashType> reduced_hash_;
     };
 
   }  // namespace interface

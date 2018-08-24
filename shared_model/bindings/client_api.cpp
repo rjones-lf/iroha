@@ -120,5 +120,11 @@ namespace shared_model {
       }
       throw std::invalid_argument("unknown object");
     }
+
+    interface::types::HashType utxReducedHash(
+        const shared_model::proto::UnsignedWrapper<
+            shared_model::proto::Transaction> &utx) {
+      return utx.reducedHash();
+    }
   }  // namespace bindings
 }  // namespace shared_model

@@ -23,6 +23,7 @@
 using namespace iroha;
 using namespace iroha::network;
 using namespace iroha::torii;
+using namespace iroha::synchronizer;
 using namespace framework::test_subscriber;
 
 using ::testing::_;
@@ -96,7 +97,7 @@ class TransactionProcessorTest : public ::testing::Test {
 
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier;
-  rxcpp::subjects::subject<Commit> commit_notifier;
+  rxcpp::subjects::subject<SynchronizationEvent> commit_notifier;
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       verified_prop_notifier;
@@ -246,7 +247,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
       blocks_notifier;
 
-  commit_notifier.get_subscriber().on_next(blocks_notifier.get_observable());
+  commit_notifier.get_subscriber().on_next(SynchronizationEvent{
+      blocks_notifier.get_observable(), SynchronizationOutcomeType::kCommit});
 
   blocks_notifier.get_subscriber().on_next(
       std::shared_ptr<shared_model::interface::Block>(clone(block)));
@@ -302,9 +304,11 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   auto block = TestBlockBuilder().transactions(txs).build();
 
   // 2. Create block and notify transaction processor about it
-  Commit single_commit = rxcpp::observable<>::just(
-      std::shared_ptr<shared_model::interface::Block>(clone(block)));
-  commit_notifier.get_subscriber().on_next(single_commit);
+  SynchronizationEvent commit_event{
+      rxcpp::observable<>::just(
+          std::shared_ptr<shared_model::interface::Block>(clone(block))),
+      SynchronizationOutcomeType::kCommit};
+  commit_notifier.get_subscriber().on_next(commit_event);
 
   SCOPED_TRACE("Committed status verification");
   validateStatuses<shared_model::interface::CommittedTxResponse>(txs);
@@ -374,9 +378,11 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
 
   auto block = TestBlockBuilder().transactions(block_txs).build();
 
-  Commit single_commit = rxcpp::observable<>::just(
-      std::shared_ptr<shared_model::interface::Block>(clone(block)));
-  commit_notifier.get_subscriber().on_next(single_commit);
+  SynchronizationEvent commit_event{
+      rxcpp::observable<>::just(
+          std::shared_ptr<shared_model::interface::Block>(clone(block))),
+      SynchronizationOutcomeType::kCommit};
+  commit_notifier.get_subscriber().on_next(commit_event);
 
   {
     SCOPED_TRACE("Stateful invalid status verification");

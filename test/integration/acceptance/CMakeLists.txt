@@ -102,3 +102,10 @@ addtest(create_asset_test create_asset_test.cpp)
 target_link_libraries(create_asset_test
     acceptance_fixture
     )
+
+addtest(get_account_asset_txs_test
+    get_account_asset_txs_test.cpp
+    )
+target_link_libraries(get_account_asset_txs_test
+    acceptance_fixture
+    )

@@ -22,6 +22,7 @@
 
 #include "interfaces/iroha_internal/block_variant.hpp"
 #include "network/peer_communication_service.hpp"
+#include "synchronizer/synchronizer_common.hpp"
 
 namespace iroha {
   namespace synchronizer {
@@ -38,15 +39,14 @@ namespace iroha {
           const shared_model::interface::BlockVariant &commit_message) = 0;
 
       /**
-       * Emit committed blocks
-       * Note 1: from the block received on consensus
-       * Note 2: if ledger state on this peer is up-to-date, commit contains
-       * empty pointer, as there's nothing to download or commit
+       * After synchronization this observable emits zero or more blocks plus
+       * outcome of synchronization
        */
-      virtual rxcpp::observable<Commit> on_commit_chain() = 0;
+      virtual rxcpp::observable<SynchronizationEvent> on_commit_chain() = 0;
 
       virtual ~Synchronizer() = default;
     };
+
   }  // namespace synchronizer
 }  // namespace iroha
 #endif  // IROHA_SYNCHRONIZER_HPP

@@ -11,6 +11,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
+#include "backend/protobuf/proto_block_json_converter.hpp"
 #include "framework/config_helper.hpp"
 #include "validators/field_validator.hpp"
 
@@ -41,6 +42,9 @@ class StorageInitTest : public ::testing::Test {
       factory = std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
           shared_model::validation::FieldValidator>>();
 
+  std::shared_ptr<shared_model::proto::ProtoBlockJsonConverter> converter =
+      std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
+
   void TearDown() override {
     soci::session sql(soci::postgresql, pg_opt_without_dbname_);
     std::string query = "DROP DATABASE IF EXISTS " + dbname_;
@@ -54,7 +58,7 @@ class StorageInitTest : public ::testing::Test {
  * @then Database is created
  */
 TEST_F(StorageInitTest, CreateStorageWithDatabase) {
-  StorageImpl::create(block_store_path, pgopt_, factory)
+  StorageImpl::create(block_store_path, pgopt_, factory, converter)
       .match([](const Value<std::shared_ptr<StorageImpl>> &) { SUCCEED(); },
              [](const Error<std::string> &error) { FAIL() << error.error; });
   soci::session sql(soci::postgresql, pg_opt_without_dbname_);
@@ -73,7 +77,7 @@ TEST_F(StorageInitTest, CreateStorageWithDatabase) {
 TEST_F(StorageInitTest, CreateStorageWithInvalidPgOpt) {
   std::string pg_opt =
       "host=localhost port=5432 users=nonexistinguser dbname=test";
-  StorageImpl::create(block_store_path, pg_opt, factory)
+  StorageImpl::create(block_store_path, pg_opt, factory, converter)
       .match(
           [](const Value<std::shared_ptr<StorageImpl>> &) {
             FAIL() << "storage created, but should not";

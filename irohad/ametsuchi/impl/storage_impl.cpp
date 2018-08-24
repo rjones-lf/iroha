@@ -35,12 +35,14 @@ namespace iroha {
         std::unique_ptr<KeyValueStorage> block_store,
         std::shared_ptr<soci::connection_pool> connection,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
         size_t pool_size)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
           connection_(connection),
-          factory_(factory),
+          factory_(std::move(factory)),
+          converter_(std::move(converter)),
           log_(logger::log("StorageImpl")),
           pool_size_(pool_size) {
       soci::session sql(*connection_);
@@ -264,6 +266,7 @@ namespace iroha {
         std::string block_store_dir,
         std::string postgres_options,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
         size_t pool_size) {
       boost::optional<std::string> string_res = boost::none;
 
@@ -296,6 +299,7 @@ namespace iroha {
                                       std::move(ctx.value.block_store),
                                       connection.value,
                                       factory,
+                                      converter,
                                       pool_size)));
                 },
                 [&](expected::Error<std::string> &error) { storage = error; });
@@ -308,12 +312,15 @@ namespace iroha {
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
-        block_store_->add(
-            block.first,
-            stringToBytes(shared_model::converters::protobuf::modelToJson(
-                *std::static_pointer_cast<shared_model::proto::Block>(
-                    block.second))));
-        notifier_.get_subscriber().on_next(block.second);
+        auto json_result = converter_->serialize(*block.second);
+        json_result.match(
+            [this, &block](const expected::Value<std::string> &v) {
+              block_store_->add(block.first, stringToBytes(v.value));
+              notifier_.get_subscriber().on_next(block.second);
+            },
+            [this](const expected::Error<std::string> &e) {
+              log_->error(e.error);
+            });
       }
 
       *(storage->sql_) << "COMMIT";
@@ -346,22 +353,21 @@ namespace iroha {
       /**
        * Factory method for query object creation which uses connection_pool
        * @tparam Query object type to create
-       * @tparam Backend object type to use as a backend for Query
-       * @param b is a backend obj
-       * @param conn is pointer to connection pool for getting and releaseing
+       * @param conn is pointer to connection pool for getting and releasing
        * the session
-       * @param log is a logger
        * @param drop_mutex is mutex for preventing connection destruction
        *        during the function
+       * @param log is a logger
+       * @param args - various other arguments needed to initalize Query object
        * @return pointer to created query object
-       * note: blocks untils connection can be leased from the pool
+       * note: blocks until connection can be leased from the pool
        */
-      template <typename Query, typename Backend>
+      template <typename Query, typename... QueryArgs>
       std::shared_ptr<Query> setupQuery(
-          Backend &b,
           std::shared_ptr<soci::connection_pool> conn,
+          std::shared_timed_mutex &drop_mutex,
           const logger::Logger &log,
-          std::shared_timed_mutex &drop_mutex) {
+          QueryArgs &&... args) {
         std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
         if (conn == nullptr) {
           log->warn("Storage was deleted, cannot perform setup");
@@ -370,19 +376,19 @@ namespace iroha {
         auto pool_pos = conn->lease();
         soci::session &session = conn->at(pool_pos);
         lock.unlock();
-        return {new Query(session, b),
+        return {new Query(session, std::forward<QueryArgs>(args)...),
                 Deleter<Query>(std::move(conn), pool_pos)};
       }
     }  // namespace
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
       return setupQuery<PostgresWsvQuery>(
-          factory_, connection_, log_, drop_mutex);
+          connection_, drop_mutex, log_, factory_);
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
       return setupQuery<PostgresBlockQuery>(
-          *block_store_, connection_, log_, drop_mutex);
+          connection_, drop_mutex, log_, *block_store_, converter_);
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>

@@ -22,7 +22,7 @@ TYPED_TEST(BinaryTestFixture, can_set_detail) {
 }
 
 TYPED_TEST(BinaryTestFixture, can_grant_can_set_my_account_detail) {
-  this->doTest(2);
+  this->doTest(3);
 }
 
 TYPED_TEST(BinaryTestFixture, can_set_my_account_detail) {
@@ -42,7 +42,7 @@ TYPED_TEST(BinaryTestFixture, can_transfer) {
 }
 
 TYPED_TEST(BinaryTestFixture, can_grant_can_transfer_my_assets) {
-  this->doTest(2);
+  this->doTest(3);
 }
 
 TYPED_TEST(BinaryTestFixture, can_transfer_my_assets) {
@@ -82,15 +82,15 @@ TYPED_TEST(BinaryTestFixture, can_add_signatory) {
 }
 
 TYPED_TEST(BinaryTestFixture, can_grant_can_add_my_signatory) {
-  this->doTest(2);
+  this->doTest(3);
 }
 
 TYPED_TEST(BinaryTestFixture, can_grant_can_remove_my_signatory) {
-  this->doTest(2);
+  this->doTest(3);
 }
 
 TYPED_TEST(BinaryTestFixture, can_grant_can_set_my_quorum) {
-  this->doTest(2);
+  this->doTest(3);
 }
 
 TYPED_TEST(BinaryTestFixture, can_add_my_signatory) {
