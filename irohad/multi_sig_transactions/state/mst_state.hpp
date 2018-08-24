@@ -112,7 +112,7 @@ namespace iroha {
     MstState operator-(const MstState &rhs) const;
 
     /**
-     * @return true, if there is no bathes inside
+     * @return true, if there is no batches inside
      */
     bool isEmpty() const;
 

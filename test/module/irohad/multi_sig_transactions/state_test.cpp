@@ -277,7 +277,7 @@ class TimeTestCompleter : public iroha::DefaultCompleter {
 };
 
 /**
- * @given given a timepoint
+ * @given a timepoint
  * AND    a state with an expired transaction
  * @when  erase by time is called
  * @then   the resulting state contains the expired transaction

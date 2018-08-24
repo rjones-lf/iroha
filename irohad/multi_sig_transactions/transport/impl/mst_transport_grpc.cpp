@@ -110,9 +110,9 @@ void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
   for (auto &batch : providing_state.getBatches()) {
     for (auto &tx : batch->transactions()) {
       // TODO (@l4l) 04/03/18 simplify with IR-1040
-      *protoState.add_transactions() = protocol::Transaction(
+      *protoState.add_transactions() =
           std::static_pointer_cast<shared_model::proto::Transaction>(tx)
-              ->getTransport());
+              ->getTransport();
     }
   }
 

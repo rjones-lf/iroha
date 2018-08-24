@@ -47,8 +47,8 @@ auto addSignatures(Batch &&batch, int tx_number, Signatures... signatures) {
   };
 
   // pack expansion trick:
-  // generate array with zeros. Operator , express left lambda and return right
-  // arg
+  // an ellipsis operator applies insert_signatures to each signature, operator
+  // comma returns the rightmost argument, which is 0
   int temp[] = {
       (insert_signatures(std::forward<Signatures>(signatures)), 0)...};
   // use unused variable
@@ -72,8 +72,8 @@ auto addSignaturesFromKeyPairs(Batch &&batch,
   };
 
   // pack expansion trick:
-  // generate array with zeros. Operator , express left lambda and return right
-  // arg
+  // an ellipsis operator applies insert_signatures to each signature, operator
+  // comma returns the rightmost argument, which is 0
   int temp[] = {(create_signature(std::forward<KeyPairs>(keypairs)), 0)...};
   // use unused variable
   (void)temp;
