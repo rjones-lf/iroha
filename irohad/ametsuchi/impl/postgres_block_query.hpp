@@ -11,6 +11,7 @@
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/soci_utils.hpp"
+#include "interfaces/iroha_internal/block_json_deserializer.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -23,8 +24,11 @@ namespace iroha {
      */
     class PostgresBlockQuery : public BlockQuery {
      public:
-      explicit PostgresBlockQuery(soci::session &sql,
-                                  KeyValueStorage &file_store);
+      PostgresBlockQuery(
+          soci::session &sql,
+          KeyValueStorage &file_store,
+          std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
+              converter);
 
       std::vector<wTransaction> getAccountTransactions(
           const shared_model::interface::types::AccountIdType &account_id)
@@ -82,9 +86,21 @@ namespace iroha {
       std::function<void(std::vector<std::string> &result)> callback(
           std::vector<wTransaction> &s, uint64_t block_id);
 
+      /**
+       * Retrieve block with given id block storage
+       * @param id - height of a block to retrieve
+       * @return block with given height
+       */
+      expected::Result<std::unique_ptr<shared_model::interface::Block>,
+                       std::string>
+      getBlock(shared_model::interface::types::HeightType id) const;
+
       soci::session &sql_;
 
       KeyValueStorage &block_store_;
+      std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
+          converter_;
+
       logger::Logger log_;
     };
   }  // namespace ametsuchi

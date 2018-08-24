@@ -14,6 +14,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
+#include "backend/protobuf/proto_block_json_converter.hpp"
 #include "common/files.hpp"
 #include "framework/config_helper.hpp"
 #include "logger/logger.hpp"
@@ -40,7 +41,9 @@ namespace iroha {
       }
 
       virtual void connect() {
-        StorageImpl::create(block_store_path, pgopt_, factory)
+        auto converter =
+            std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
+        StorageImpl::create(block_store_path, pgopt_, factory, converter)
             .match([&](iroha::expected::Value<std::shared_ptr<StorageImpl>>
                            &_storage) { storage = _storage.value; },
                    [](iroha::expected::Error<std::string> &error) {
