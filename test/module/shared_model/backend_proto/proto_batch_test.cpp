@@ -290,7 +290,7 @@ TEST(TransactionBatchTest, TemplateHasherVariadic) {
 TEST(TransactionBatchTest, MakeTxBatchCollectionOne) {
   ASSERT_EQ(1,
             framework::batch::internal::makeTxBatchCollection(
-                framework::batch::internal::HashesType{}, makeTxBuilder())
+                framework::batch::internal::BatchMeta{}, makeTxBuilder())
                 .size());
 }
 
@@ -302,7 +302,7 @@ TEST(TransactionBatchTest, MakeTxBatchCollectionOne) {
 TEST(TransactionBatchTest, MakeTxBatchCollectionMany) {
   ASSERT_EQ(3,
             framework::batch::internal::makeTxBatchCollection(
-                framework::batch::internal::HashesType{},
+                framework::batch::internal::BatchMeta{},
                 makeTxBuilder(),
                 makeTxBuilder(),
                 makeTxBuilder())

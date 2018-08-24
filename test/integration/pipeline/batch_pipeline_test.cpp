@@ -37,7 +37,6 @@ class BatchPipelineTest
   }
 
   /**
-   * Create transaction to create second user
    * @return transaction to create second user
    */
   auto createSecondUser() {
@@ -56,9 +55,9 @@ class BatchPipelineTest
    * @param keypair is used to sign transaction
    * @return transaction with create asset and add asset quantity commands
    */
-  auto createAndAddAssets(std::string account_id,
-                          std::string asset_name,
-                          std::string amount,
+  auto createAndAddAssets(const interface::types::AccountIdType &account_id,
+                          const interface::types::AssetNameType &asset_name,
+                          const std::string &amount,
                           const crypto::Keypair &keypair) {
     return proto::TransactionBuilder()
         .creatorAccountId(account_id)
@@ -80,10 +79,11 @@ class BatchPipelineTest
    * @param amount amount of asset to be transferred
    * @return transaction builder with transfer asset command
    */
-  auto prepareTransferAssetBuilder(const std::string &src_account_id,
-                                   const std::string &dest_account_id,
-                                   const std::string &asset_name,
-                                   const std::string &amount) {
+  auto prepareTransferAssetBuilder(
+      const interface::types::AccountIdType &src_account_id,
+      const interface::types::AccountIdType &dest_account_id,
+      const interface::types::AssetNameType &asset_name,
+      const std::string &amount) {
     return TestTransactionBuilder()
         .creatorAccountId(src_account_id)
         .quorum(1)
@@ -96,7 +96,7 @@ class BatchPipelineTest
   }
 
   /**
-   * Takes transaction and sign it wit provided signature
+   * Take transaction and sign it with provided signature
    * @param tx to be signed
    * @param keypair to sign
    * @return signed transaction
@@ -180,15 +180,13 @@ TEST_P(BatchPipelineTest, ValidBatch) {
           createAndAddAssets(kSecondUserId, kAssetB, "1.0", kSecondUserKeypair),
           [](const auto &) {})
       .sendTxSequenceAwait(
-          transaction_sequence,
-          [&transaction_sequence](const auto &block) {
+          transaction_sequence, [&transaction_sequence](const auto &block) {
             // check that transactions from block are the same as transactions
             // from transaction sequence
             ASSERT_THAT(block->transactions(),
                         Pointwise(RefAndPointerEq(),
                                   transaction_sequence.transactions()));
-          })
-      .done();
+          });
 }
 
 /**
@@ -238,8 +236,7 @@ TEST_F(BatchPipelineTest, InvalidAtomicBatch) {
       })
       .checkVerifiedProposal([](const auto verified_proposal) {
         ASSERT_THAT(verified_proposal->transactions(), IsEmpty());
-      })
-      .done();
+      });
 }
 
 /**
@@ -275,16 +272,13 @@ TEST_F(BatchPipelineTest, InvalidOrderedBatch) {
       .sendTxAwait(
           createAndAddAssets(kSecondUserId, kAssetB, "1.0", kSecondUserKeypair),
           [](const auto &) {})
-      .sendTxSequenceAwait(
-          transaction_sequence,
-          [&](const auto block) {
-            ASSERT_THAT(
-                block->transactions(),
-                ElementsAre(
-                    RefAndPointerEq(transaction_sequence.transactions()[0]),
-                    RefAndPointerEq(transaction_sequence.transactions()[2])));
-          })
-      .done();
+      .sendTxSequenceAwait(transaction_sequence, [&](const auto block) {
+        ASSERT_THAT(
+            block->transactions(),
+            ElementsAre(
+                RefAndPointerEq(transaction_sequence.transactions()[0]),
+                RefAndPointerEq(transaction_sequence.transactions()[2])));
+      });
 }
 
 INSTANTIATE_TEST_CASE_P(BatchPipelineParameterizedTest,

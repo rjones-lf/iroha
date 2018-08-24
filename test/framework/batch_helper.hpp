@@ -200,12 +200,14 @@ namespace framework {
 
       using HashesType = std::vector<shared_model::interface::types::HashType>;
 
-      namespace {
-        struct BatchMeta {
-          HashesType reduced_hashes;
-          shared_model::interface::types::BatchType batch_type;
-        };
-      }  // namespace
+      /**
+       * Struct containing batch meta information: Type of the batch and reduced
+       * hash
+       */
+      struct BatchMeta {
+        HashesType reduced_hashes;
+        shared_model::interface::types::BatchType batch_type;
+      };
 
       template <typename TxBuilder>
       auto fetchReducedHashes(const TxBuilder &builder) {
@@ -291,22 +293,10 @@ namespace framework {
     }  // namespace internal
 
     /**
-     * Create test batch transactions from passed transaction builders
-     * @tparam TxBuilders - variadic types of tx builders
-     * @return vector of transactions
-     */
-    template <typename... TxBuilders>
-    auto makeTestBatchTransactions(TxBuilders &&... builders) {
-      return makeTestBatchTransactions(
-          shared_model::interface::types::BatchType::ATOMIC,
-          std::forward<TxBuilders>(builders)...);
-    }
-
-    /**
      * Create test batch transactions from passed transaction builders with
      * provided batch meta
      * @tparam TxBuilders variadic types of tx builders
-     * @param batch_type type of the batch (either ATOMIC or ORDERED)
+     * @param batch_type type of the batch
      * @param builders transaction builders
      * @return vector of transactions
      */
@@ -320,10 +310,22 @@ namespace framework {
 
       // makes clang avoid sending warning with unused function
       // (makeTxBatchCollection)
-      internal::makeTxBatchCollection(batch_meta);
+      //      internal::makeTxBatchCollection(batch_meta);
 
       return internal::makeTxBatchCollection(
           batch_meta, std::forward<TxBuilders>(builders)...);
+    }
+
+    /**
+     * Create test batch transactions from passed transaction builders
+     * @tparam TxBuilders - variadic types of tx builders
+     * @return vector of transactions
+     */
+    template <typename... TxBuilders>
+    auto makeTestBatchTransactions(TxBuilders &&... builders) {
+      return makeTestBatchTransactions(
+          shared_model::interface::types::BatchType::ATOMIC,
+          std::forward<TxBuilders>(builders)...);
     }
 
     /**
