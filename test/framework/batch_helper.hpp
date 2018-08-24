@@ -337,16 +337,8 @@ namespace framework {
       auto transactions =
           makeTestBatchTransactions(std::forward<TxBuilders>(builders)...);
 
-      using namespace shared_model::validation;
-
-      using TxsValidator = DefaultUnsignedTransactionsValidator;
-
-      auto batch =
-          shared_model::interface::TransactionBatch::createTransactionBatch(
-              transactions, TxsValidator());
-
       return std::make_shared<shared_model::interface::TransactionBatch>(
-          framework::expected::val(batch).value().value);
+          transactions);
     }
 
   }  // namespace batch

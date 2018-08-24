@@ -53,6 +53,10 @@ namespace shared_model {
               TransactionValidator(),
           const FieldValidator &field_validator = FieldValidator());
 
+      explicit TransactionBatch(
+          const types::SharedTxsCollectionType &transactions)
+          : transactions_(transactions) {}
+
       /**
        * Get transactions list
        * @return list of transactions from the batch
@@ -109,10 +113,6 @@ namespace shared_model {
       }
 
      private:
-      explicit TransactionBatch(
-          const types::SharedTxsCollectionType &transactions)
-          : transactions_(transactions) {}
-
       types::SharedTxsCollectionType transactions_;
 
       mutable boost::optional<types::HashType> reduced_hash_;

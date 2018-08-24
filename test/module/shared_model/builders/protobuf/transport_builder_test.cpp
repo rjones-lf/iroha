@@ -448,14 +448,13 @@ TEST_F(TransportBuilderTest, BlockVariantWithInvalidBlock) {
  * @given empty range of transactions
  * @when TransportBuilder tries to build TransactionSequence object
  * @then built object contains TransactionSequence shared model object
- * AND it containcs 0 transactions
+ * AND object will not created
  */
 TEST_F(TransportBuilderTest, TransactionSequenceEmpty) {
   iroha::protocol::TxList tx_list;
   auto val =
       framework::expected::val(TransactionSequenceBuilder().build(tx_list));
-  ASSERT_TRUE(val);
-  val | [](auto &seq) { EXPECT_EQ(boost::size(seq.value.transactions()), 0); };
+  ASSERT_FALSE(val);
 }
 
 struct getProtocolTx {

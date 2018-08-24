@@ -126,7 +126,7 @@ namespace iroha {
         // and mst::propagate batch IR-1584
         this->pcs_->propagate_batch(*batch);
       });
-      mst_processor_->onExpiredTransactions().subscribe([this](auto &&tx) {
+      mst_processor_->onExpiredBatches().subscribe([this](auto &&batch) {
         log_->info("MST batch {} is expired", batch->reducedHash().toString());
         std::lock_guard<std::mutex> lock(notifier_mutex_);
         for (auto &&tx : batch->transactions()) {
@@ -137,20 +137,6 @@ namespace iroha {
                   .build());
         }
       });
-    }
-
-    void TransactionProcessorImpl::transactionHandle(
-        std::shared_ptr<shared_model::interface::Transaction> transaction)
-        const {
-      log_->info("handle transaction");
-      if (boost::size(transaction->signatures()) < transaction->quorum()) {
-        log_->info("waiting for quorum signatures");
-        mst_processor_->propagateTransaction(transaction);
-        return;
-      }
-
-      log_->info("propagating tx");
-      pcs_->propagate_transaction(transaction);
     }
 
     void TransactionProcessorImpl::batchHandle(
