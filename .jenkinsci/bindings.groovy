@@ -7,7 +7,7 @@ def doJavaBindings(os, packageName, buildType=Release) {
     [currentPath, buildType, os, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
   def cmakeOptions = ""
   if (os == 'windows') {
-    sh "mkdir -p /tmp/${env.GIT_COMMIT}/bindings-artifact"
+    sh "mkdir -p /tmp/${commit}/bindings-artifact"
     cmakeOptions = '-DCMAKE_TOOLCHAIN_FILE=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/scripts/buildsystems/vcpkg.cmake -G "NMake Makefiles"'
   }
   if (os == 'linux') {
@@ -30,7 +30,7 @@ def doJavaBindings(os, packageName, buildType=Release) {
       zip -r $artifactsPath *.dll *.lib *.manifest *.exp libirohajava.so \$(echo ${packageName} | cut -d '.' -f1); \
       popd"
   if (os == 'windows') {
-    sh "cp $artifactsPath /tmp/${env.GIT_COMMIT}/bindings-artifact"
+    sh "cp $artifactsPath /tmp/${commit}/bindings-artifact"
   }
   else {
     sh "cp $artifactsPath /tmp/bindings-artifact"
@@ -45,11 +45,30 @@ def doPythonBindings(os, buildType=Release) {
   def artifactsPath = sprintf('%1$s/python-bindings-%2$s-%3$s-%4$s-%5$s-%6$s.zip',
     [currentPath, env.PBVersion, buildType, os, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)])
   def cmakeOptions = ""
+
+  sh "mkdir -p /tmp/${commit}/bindings-artifact"
   if (os == 'windows') {
-    sh "mkdir -p /tmp/${env.GIT_COMMIT}/bindings-artifact"
-    cmakeOptions = '-DCMAKE_TOOLCHAIN_FILE=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/scripts/buildsystems/vcpkg.cmake -G "NMake Makefiles"'
+    cmakeOptions = """ \\
+      -DPYTHON_INCLUDE_DIR=/c/users/administrator/anaconda64/envs/py3.5/include/ \\
+      -DPYTHON_LIBRARY=/c/users/administrator/anaconda64/envs/py3.5/libs/python35.lib \\
+      -DPYTHON_EXECUTABLE=/c/users/administrator/anaconda64/envs/py3.5/python \\
+      -DCMAKE_TOOLCHAIN_FILE=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/scripts/buildsystems/vcpkg.cmake -G "NMake Makefiles" \\
+    """
+  }
+  if (os == 'mac') {
+    cmakeOptions = """ \\
+      -DPYTHON_INCLUDE_DIR=/Users/jenkins/.pyenv/versions/3.5.5/include/python3.5m/ \\
+      -DPYTHON_LIBRARY=/Users/jenkins/.pyenv/versions/3.5.5/lib/libpython3.5m.a \\
+      -DPYTHON_EXECUTABLE=/Users/jenkins/.pyenv/versions/3.5.5/bin/python3.5 \\
+    """
   }
   if (os == 'linux') {
+    cmakeOptions = """ \\
+      -DPYTHON_INCLUDE_DIR=/home/iroha-ci/.pyenv/versions/3.5.5/include/python3.5m/ \\
+      -DPYTHON_LIBRARY=/home/iroha-ci/.pyenv/versions/3.5.5/lib/libpython3.5m.a \\
+      -DPYTHON_EXECUTABLE=/home/iroha-ci/.pyenv/versions/3.5.5/bin/python3.5 \\
+    """
+
     // do not use preinstalled libed25519
     sh "rm -rf /usr/local/include/ed25519*; unlink /usr/local/lib/libed25519.so; rm -f /usr/local/lib/libed25519.so.1.2.2"
   }
@@ -58,49 +77,41 @@ def doPythonBindings(os, buildType=Release) {
     cmake \
       -Hshared_model \
       -Bbuild \
-      -DCMAKE_BUILD_TYPE=$buildType \
+      -DCMAKE_BUILD_TYPE=${buildType} \
       -DSWIG_PYTHON=ON \
-      -DSUPPORT_PYTHON2=$supportPython2 \
+      -DSUPPORT_PYTHON2=${supportPython2} \
       ${cmakeOptions}
   """
   def parallelismParam = (os == 'windows') ? '' : "-j${params.PARALLELISM}"
   sh "cmake --build build --target irohapy -- ${parallelismParam}"
   sh "cmake --build build --target python_tests"
   sh "cd build; ctest -R python --output-on-failure"
-  if (os == 'linux') {
+  if (os ==~ /(mac|linux)/) {
     sh """
       protoc --proto_path=shared_model/schema \
-        --python_out=build/bindings shared_model/schema/*.proto
-    """
-    sh """
-      ${env.PBVersion} -m grpc_tools.protoc --proto_path=shared_model/schema --python_out=build/bindings \
-        --grpc_python_out=build/bindings shared_model/schema/endpoint.proto
+        --python_out=build/bindings shared_model/schema/*.proto; \
+      python -m grpc_tools.protoc --proto_path=shared_model/schema --python_out=build/bindings \
+        --grpc_python_out=build/bindings \
+        shared_model/schema/endpoint.proto
     """
   }
-  else if (os == 'windows') {
+  if (os == 'windows') {
     sh """
       protoc --proto_path=shared_model/schema \
         --proto_path=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/buildtrees/protobuf/src/protobuf-3.5.1-win32/include \
-        --python_out=build/bindings shared_model/schema/*.proto
-    """
-    sh """
-      ${env.PBVersion} -m grpc_tools.protoc \
+        --python_out=build/bindings shared_model/schema/*.proto; \
+      python -m grpc_tools.protoc \
         --proto_path=/c/Users/Administrator/Downloads/vcpkg-master/vcpkg-master/buildtrees/protobuf/src/protobuf-3.5.1-win32/include \
         --proto_path=shared_model/schema --python_out=build/bindings --grpc_python_out=build/bindings \
         shared_model/schema/endpoint.proto
     """
   }
-  sh """
-    zip -j $artifactsPath build/bindings/*.py build/bindings/*.dll build/bindings/*.so \
-      build/bindings/*.py build/bindings/*.pyd build/bindings/*.lib build/bindings/*.dll \
-      build/bindings/*.exp build/bindings/*.manifest
-    """
-  if (os == 'windows') {
-    sh "cp $artifactsPath /tmp/${env.GIT_COMMIT}/bindings-artifact"
-  }
-  else {
-    sh "cp $artifactsPath /tmp/bindings-artifact"
-  }
+
+  sh """ 
+    zip -jq ${artifactsPath} build/bindings/*.{py,dll,so,pyd,lib,dll,exp,manifest} || true; \
+    cp ${artifactsPath} /tmp/${commit}/bindings-artifact
+  """
+  
   return artifactsPath
 }
 

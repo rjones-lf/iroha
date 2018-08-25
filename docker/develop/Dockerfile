@@ -25,14 +25,43 @@ RUN set -e; \
         libssl-dev zlib1g-dev libcurl4-openssl-dev libc6-dbg golang \
         # CI dependencies
         git ssh tar gzip ca-certificates gnupg \
-        # Pythons
-        python-pip python3-pip python3-setuptools python-dev \
         # SWIG dependencies
         libpcre3-dev autoconf bison  \
         # other
         wget curl file gdb gdbserver ccache \
         gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip zip; \
     apt-get -y clean
+
+
+# non-interactive adduser
+#   -m = create home dir
+#   -s = set default shell
+#   iroha-ci = username
+#   -u = userid, default for Ubuntu is 1000
+#   -U = create a group same as username
+#   no password
+RUN useradd -ms /bin/bash iroha-ci -u 1000 -U
+
+# install pyenv environment for python bindings
+
+WORKDIR /home/iroha-ci
+USER iroha-ci
+
+RUN git clone git://github.com/yyuu/pyenv.git .pyenv
+
+ENV HOME /home/iroha-ci
+ENV PYENV_ROOT $HOME/.pyenv
+ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+# ENV PYTHON_CONFIGURE_OPTS "--enable-shared"
+RUN set -e; \
+    pyenv install 2.7.15; \
+    pyenv install 3.5.5; \
+    pyenv global 2.7.15; \
+    pip install --upgrade pip setuptools wheel twine grpcio grpcio_tools protobuf; \
+    pyenv global 3.5.5; \
+    pip install --upgrade pip setuptools wheel twine grpcio grpcio_tools protobuf;
+
+USER root
 
 # install cmake 3.10.2
 RUN set -e; \
@@ -251,28 +280,9 @@ RUN set -e; \
     make install; \
     rm -rf /tmp/swig-rel-3.0.12
 
-RUN set -e; \
-    add-apt-repository -y ppa:jonathonf/python-3.6; \
-    apt-get update; \
-    apt-get -y install python3.6-dev
-
-# python bindings dependencies
-RUN set -e; \
-    pip install grpcio_tools; \
-    pip3 install grpcio_tools
-
 # install lcov
 RUN set -e; \
     curl -L -o /tmp/lcov-1.13.tar.gz https://github.com/linux-test-project/lcov/releases/download/v1.13/lcov-1.13.tar.gz; cd /tmp; tar zxf lcov-1.13.tar.gz; cd lcov-1.13; make install
-
-# non-interactive adduser
-#   -m = create home dir
-#   -s = set default shell
-#   iroha-ci = username
-#   -u = userid, default for Ubuntu is 1000
-#   -U = create a group same as username
-#   no password
-RUN useradd -ms /bin/bash iroha-ci -u 1000 -U
 
 WORKDIR /opt/iroha
 RUN set -e; \
@@ -280,6 +290,6 @@ RUN set -e; \
     mkdir -p /tmp/ccache -m 777; \
     ccache --clear
 
-
 USER iroha-ci
+
 CMD ["/bin/bash"]
