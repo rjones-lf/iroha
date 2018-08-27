@@ -138,9 +138,7 @@ class AcceptanceFixture : public ::testing::Test {
   template <typename Builder>
   auto complete(Builder builder)
       -> decltype(builder.build()
-      .signAndAddSignature(
-          std::declval<shared_model::crypto::Keypair>())
-      .finish());
+          .finish());
 
   /**
    * @return unique time for this fixture

@@ -106,6 +106,14 @@ namespace shared_model {
       return batches_;
     }
 
+    std::string TransactionSequence::toString() const {
+      return detail::PrettyStringBuilder()
+          .init("TransactionSequence")
+          .appendAll(batches_,
+                     [](const auto &batch) { return batch.toString(); })
+          .finalize();
+    }
+
     TransactionSequence::TransactionSequence(
         const types::BatchesCollectionType &batches)
         : batches_(batches) {}

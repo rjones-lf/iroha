@@ -111,12 +111,6 @@ namespace iroha {
        */
       std::shared_ptr<ametsuchi::OsPersistentStateFactory> persistent_state_;
 
-      /**
-       * Proposal counter of expected proposal. Should be number of blocks in
-       * the ledger + 1.
-       */
-      size_t proposal_height_;
-
       /// Observable for transaction events from the network
       rxcpp::subjects::subject<ProposalEvent> transactions_;
 
@@ -132,6 +126,12 @@ namespace iroha {
       std::mutex event_mutex_;
 
       std::unique_ptr<shared_model::interface::ProposalFactory> factory_;
+
+      /**
+       * Proposal counter of expected proposal. Should be number of blocks in
+       * the ledger + 1.
+       */
+      size_t proposal_height_;
 
       logger::Logger log_;
     };

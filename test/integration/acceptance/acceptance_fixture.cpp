@@ -152,7 +152,6 @@ template auto AcceptanceFixture::complete<TestUnsignedQueryBuilder>(
 template <typename Builder>
 auto AcceptanceFixture::complete(Builder builder) -> decltype(
     builder.build()
-        .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
         .finish()) {
   return complete(builder, kUserKeypair);
 }
@@ -161,13 +160,11 @@ template auto AcceptanceFixture::complete<TestUnsignedTransactionBuilder>(
     TestUnsignedTransactionBuilder builder)
     -> decltype(
         builder.build()
-            .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
             .finish());
 template auto AcceptanceFixture::complete<TestUnsignedQueryBuilder>(
     TestUnsignedQueryBuilder builder)
     -> decltype(
         builder.build()
-            .signAndAddSignature(std::declval<shared_model::crypto::Keypair>())
             .finish());
 
 iroha::time::time_t AcceptanceFixture::getUniqueTime() {
