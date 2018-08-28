@@ -107,24 +107,6 @@ class GetAccount : public AcceptanceFixture {
     return checkValidAccount(kDomain, kUserId, kNewRole);
   }
 
-  auto checkStatefulInvalid() {
-    return [](auto &status) {
-      ASSERT_TRUE(boost::apply_visitor(
-          shared_model::interface::QueryErrorResponseChecker<
-              shared_model::interface::StatefulFailedErrorResponse>(),
-          status.get()));
-    };
-  }
-
-  auto checkStatelessInvalid() {
-    return [](auto &status) {
-      ASSERT_TRUE(boost::apply_visitor(
-          shared_model::interface::QueryErrorResponseChecker<
-              shared_model::interface::StatelessFailedErrorResponse>(),
-          status.get()));
-    };
-  }
-
   const std::string kNewRole = "rl";
   const std::string kRole2 = "roletwo";
   const std::string kUser2 = "usertwo";
@@ -148,7 +130,10 @@ TEST_F(GetAccount, Basic) {
  * @then query is stateless invalid response
  */
 TEST_F(GetAccount, EmptyAccount) {
-  prepareState().sendQuery(makeQuery(""), checkStatelessInvalid());
+  prepareState().sendQuery(
+      makeQuery(""),
+      checkQueryErrorResponse<
+          shared_model::interface::StatelessFailedErrorResponse>());
 }
 
 /**
@@ -159,7 +144,9 @@ TEST_F(GetAccount, EmptyAccount) {
 TEST_F(GetAccount, NonexistentAccount) {
   prepareState().sendQuery(
       complete(baseQry().queryCounter(1).getAccount("inexistent@" + kDomain)),
-      checkStatefulInvalid());
+
+      checkQueryErrorResponse<
+          shared_model::interface::StatefulFailedErrorResponse>());
 }
 
 /**
@@ -168,7 +155,10 @@ TEST_F(GetAccount, NonexistentAccount) {
  * @then query is stateful invalid response
  */
 TEST_F(GetAccount, NoPermission) {
-  prepareState({}).sendQuery(makeQuery(), checkStatefulInvalid());
+  prepareState({}).sendQuery(
+      makeQuery(),
+      checkQueryErrorResponse<
+          shared_model::interface::StatefulFailedErrorResponse>());
 }
 
 /**
