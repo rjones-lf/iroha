@@ -48,6 +48,14 @@ namespace iroha {
         account_id_(account_id),
         log_(logger::log("KeysManagerImpl")) {}
 
+  /**
+   * Here we use an empty string as a default value of path to file,
+   * since there are usages of KeysManagerImpl with path passed as a part of
+   * account_id.
+   */
+  KeysManagerImpl::KeysManagerImpl(const std::string account_id)
+      : KeysManagerImpl(account_id, "") {}
+
   bool KeysManagerImpl::validate(const Keypair &keypair) const {
     try {
       auto test = Blob("12345");
@@ -78,6 +86,10 @@ namespace iroha {
     return contents;
   }
 
+  boost::optional<Keypair> KeysManagerImpl::loadKeys() {
+    return loadKeys("");
+  }
+
   boost::optional<Keypair> KeysManagerImpl::loadKeys(
       const std::string &pass_phrase) {
     auto public_key =
@@ -95,6 +107,10 @@ namespace iroha {
                            pass_phrase)));
 
     return validate(keypair) ? boost::make_optional(keypair) : boost::none;
+  }
+
+  bool KeysManagerImpl::createKeys() {
+    return createKeys("");
   }
 
   bool KeysManagerImpl::createKeys(const std::string &pass_phrase) {

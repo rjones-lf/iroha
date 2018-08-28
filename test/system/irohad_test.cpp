@@ -34,17 +34,6 @@ using namespace boost::filesystem;
 using namespace std::chrono_literals;
 using iroha::operator|;
 
-/**
-The do-while cycle imitates client resubscription to the stream. Stream
-"expiration" is a valid designed case (see pr #1615 for the details).
-
-The number of attempts (5) is a magic constant here. The idea behind this number
-is the following: five resubscription with 3 seconds timeout is usually enough
-to pass the test; if not - most likely there is another bug.
- */
-constexpr uint32_t resubscribe_attempts = 5;
-const std::chrono::seconds resubscribe_timeout = std::chrono::seconds(3);
-
 class IrohadTest : public AcceptanceFixture {
  public:
   IrohadTest() : kAddress("127.0.0.1"), kPort(50051) {}
@@ -145,6 +134,19 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
   boost::optional<child> iroha_process_;
 
+  /**
+   * Command client resubscription settings
+   *
+   * The do-while loop imitates client resubscription to the stream. Stream
+   * "expiration" is a valid designed case (see pr #1615 for the details).
+   *
+   * The number of attempts (5) is a magic constant here. The idea behind this
+   * number is the following: five resubscription with 3 seconds timeout is
+   * usually enough to pass the test; if not - most likely there is another bug.
+   */
+  const uint32_t resubscribe_attempts = 5;
+  const std::chrono::seconds resubscribe_timeout = std::chrono::seconds(3);
+
  protected:
   boost::filesystem::path path_irohad_;
   boost::filesystem::path path_example_;
@@ -189,13 +191,13 @@ TEST_F(IrohadTest, SendTx) {
   client.Torii(tx.getTransport());
 
   auto resub_counter(resubscribe_attempts);
+  const auto committed_status = iroha::protocol::TxStatus::COMMITTED;
   do {
     std::this_thread::sleep_for(resubscribe_timeout);
     client.Status(tx_request, torii_response);
-  } while (torii_response.tx_status() != iroha::protocol::TxStatus::COMMITTED
-           and --resub_counter);
+  } while (torii_response.tx_status() != committed_status and --resub_counter);
 
-  ASSERT_EQ(torii_response.tx_status(), iroha::protocol::TxStatus::COMMITTED);
+  ASSERT_EQ(torii_response.tx_status(), committed_status);
 }
 
 /**

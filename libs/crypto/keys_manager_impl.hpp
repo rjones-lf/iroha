@@ -22,25 +22,24 @@ namespace iroha {
      * @param account_id - fully qualified account id, e.g. admin@test
      * @param path_to_keypair - path to directory that contains priv and pub key
      * of an account
-     *
-     * Here we use an empty string as a default value of path to file, since
-     * there are usages of KeysManagerImpl with path passed as a part of
-     * account_id.
      */
-    explicit KeysManagerImpl(
-        const std::string &account_id,
-        const boost::filesystem::path &path_to_keypair = "");
-
-    bool createKeys(const std::string &pass_phrase = "") override;
+    explicit KeysManagerImpl(const std::string &account_id,
+                             const boost::filesystem::path &path_to_keypair);
 
     /**
-     * Loads keypair from disk
-     * @param pass_phrase - pass phrase used for private key encryption.
-     * Optional, default is an empty string.
-     * @return boost optional of Keypair in case of success
+     * Initialize key manager for a specific account
+     * @param account_id - fully qualified account id, e.g. admin@test
      */
+    explicit KeysManagerImpl(const std::string account_id);
+
+    bool createKeys() override;
+
+    bool createKeys(const std::string &pass_phrase) override;
+
+    boost::optional<shared_model::crypto::Keypair> loadKeys() override;
+
     boost::optional<shared_model::crypto::Keypair> loadKeys(
-        const std::string &pass_phrase = "") override;
+        const std::string &pass_phrase) override;
 
     static const std::string kPublicKeyExtension;
     static const std::string kPrivateKeyExtension;
