@@ -14,8 +14,13 @@
 using namespace integration_framework;
 using namespace shared_model;
 
+#define CHECK_BLOCK(i) \
+  [](auto &block) { ASSERT_EQ(block->transactions().size(), i); }
+
 class GetAccount : public AcceptanceFixture {
  public:
+  GetAccount() : itf(1) {}
+
   /**
    * Creates the transaction with the user creation commands
    * @param perms are the permissions of the user
@@ -29,12 +34,25 @@ class GetAccount : public AcceptanceFixture {
   }
 
   /**
+   * Prepares base state that contains a default user
+   * @param perms are the permissions of the user
+   * @return itf with the base state
+   */
+  IntegrationTestFramework &prepareState(
+      const interface::RolePermissionSet &perms = {
+          interface::permissions::Role::kGetMyAccount}) {
+    itf.setInitialState(kAdminKeypair)
+        .sendTxAwait(makeUserWithPerms(perms), CHECK_BLOCK(1));
+    return itf;
+  }
+
+  /**
    * Creates valid GetAccount query of the selected user
    * @param user is account to query
    * @return built query
    */
   auto makeQuery(const std::string &user) {
-    return complete(baseQry().queryCounter(1).getAccount(user));
+    return complete(baseQry().getAccount(user));
   }
 
   /**
@@ -91,7 +109,7 @@ class GetAccount : public AcceptanceFixture {
 
   auto checkStatefulInvalid() {
     return [](auto &status) {
-      ASSERT_NO_THROW(boost::apply_visitor(
+      ASSERT_TRUE(boost::apply_visitor(
           shared_model::interface::QueryErrorResponseChecker<
               shared_model::interface::StatefulFailedErrorResponse>(),
           status.get()));
@@ -100,7 +118,7 @@ class GetAccount : public AcceptanceFixture {
 
   auto checkStatelessInvalid() {
     return [](auto &status) {
-      ASSERT_NO_THROW(boost::apply_visitor(
+      ASSERT_TRUE(boost::apply_visitor(
           shared_model::interface::QueryErrorResponseChecker<
               shared_model::interface::StatelessFailedErrorResponse>(),
           status.get()));
@@ -112,9 +130,8 @@ class GetAccount : public AcceptanceFixture {
   const std::string kUser2 = "usertwo";
   const crypto::Keypair kUser2Keypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
+  IntegrationTestFramework itf;
 };
-
-#define check(i) [](auto &block) { ASSERT_EQ(block->transactions().size(), i); }
 
 /**
  * @given a user with GetMyAccount permission
@@ -122,11 +139,7 @@ class GetAccount : public AcceptanceFixture {
  * @then there is a valid AccountResponse
  */
 TEST_F(GetAccount, Basic) {
-  IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeUserWithPerms(), check(1))
-      .sendQuery(makeQuery(), checkValidAccount())
-      .done();
+  prepareState().sendQuery(makeQuery(), checkValidAccount());
 }
 
 /**
@@ -135,11 +148,7 @@ TEST_F(GetAccount, Basic) {
  * @then query is stateless invalid response
  */
 TEST_F(GetAccount, EmptyAccount) {
-  IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeUserWithPerms(), check(1))
-      .sendQuery(makeQuery(), checkStatelessInvalid())
-      .done();
+  prepareState().sendQuery(makeQuery(""), checkStatelessInvalid());
 }
 
 /**
@@ -148,13 +157,9 @@ TEST_F(GetAccount, EmptyAccount) {
  * @then query is stateful invalid response
  */
 TEST_F(GetAccount, NonexistentAccount) {
-  IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeUserWithPerms(), check(1))
-      .sendQuery(complete(baseQry().queryCounter(1).getAccount("inexistent@"
-                                                               + kDomain)),
-                 checkStatefulInvalid())
-      .done();
+  prepareState().sendQuery(
+      complete(baseQry().queryCounter(1).getAccount("inexistent@" + kDomain)),
+      checkStatefulInvalid());
 }
 
 /**
@@ -163,11 +168,7 @@ TEST_F(GetAccount, NonexistentAccount) {
  * @then query is stateful invalid response
  */
 TEST_F(GetAccount, NoPermission) {
-  IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeUserWithPerms({}), check(1))
-      .sendQuery(makeQuery(), checkStatefulInvalid())
-      .done();
+  prepareState({}).sendQuery(makeQuery(), checkStatefulInvalid());
 }
 
 /**
@@ -176,13 +177,8 @@ TEST_F(GetAccount, NoPermission) {
  * @then there is a valid AccountResponse
  */
 TEST_F(GetAccount, WithGetDomainPermission) {
-  IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTxAwait(
-          makeUserWithPerms({interface::permissions::Role::kGetDomainAccounts}),
-          check(1))
-      .sendQuery(makeQuery(), checkValidAccount())
-      .done();
+  prepareState({interface::permissions::Role::kGetDomainAccounts})
+      .sendQuery(makeQuery(), checkValidAccount());
 }
 
 /**
@@ -191,13 +187,8 @@ TEST_F(GetAccount, WithGetDomainPermission) {
  * @then there is a valid AccountResponse
  */
 TEST_F(GetAccount, WithGetAllPermission) {
-  IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTxAwait(
-          makeUserWithPerms({interface::permissions::Role::kGetAllAccounts}),
-          check(1))
-      .sendQuery(makeQuery(), checkValidAccount())
-      .done();
+  prepareState({interface::permissions::Role::kGetAllAccounts})
+      .sendQuery(makeQuery(), checkValidAccount());
 }
 
 /**
@@ -207,24 +198,17 @@ TEST_F(GetAccount, WithGetAllPermission) {
  */
 TEST_F(GetAccount, WithGetDomainPermissionOtherAccount) {
   const std::string kUser2Id = kUser2 + "@" + kDomain;
+  auto make_second_user =
+      complete(createUserWithPerms(kUser2,
+                                   kUser2Keypair.publicKey(),
+                                   kRole2,
+                                   {interface::permissions::Role::kSetQuorum}),
+               kAdminKeypair);
 
-  IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTxAwait(
-          makeUserWithPerms({interface::permissions::Role::kGetDomainAccounts}),
-          check(1))
-      .sendTxAwait(
-          createUserWithPerms(kUser2,
-                              kUser2Keypair.publicKey(),
-                              kRole2,
-                              {interface::permissions::Role::kSetQuorum})
-              .build()
-              .signAndAddSignature(kAdminKeypair)
-              .finish(),
-          check(1))
+  prepareState({interface::permissions::Role::kGetDomainAccounts})
+      .sendTxAwait(make_second_user, CHECK_BLOCK(1))
       .sendQuery(makeQuery(kUser2Id),
-                 checkValidAccount(kDomain, kUser2Id, kRole2))
-      .done();
+                 checkValidAccount(kDomain, kUser2Id, kRole2));
 }
 
 /**
@@ -235,23 +219,16 @@ TEST_F(GetAccount, WithGetDomainPermissionOtherAccount) {
 TEST_F(GetAccount, WithGetDomainPermissionOtherAccountInterdomain) {
   const std::string kNewDomain = "newdom";
   const std::string kUser2Id = kUser2 + "@" + kNewDomain;
-  auto make_second_user =
+  auto make_second_user = complete(
       baseTx()
           .creatorAccountId(IntegrationTestFramework::kAdminId)
           .createRole(kRole2, {interface::permissions::Role::kSetQuorum})
           .createDomain(kNewDomain, kRole2)
-          .createAccount(kUser2, kNewDomain, kUser2Keypair.publicKey())
-          .build()
-          .signAndAddSignature(kAdminKeypair)
-          .finish();
+          .createAccount(kUser2, kNewDomain, kUser2Keypair.publicKey()),
+      kAdminKeypair);
 
-  IntegrationTestFramework(1)
-      .setInitialState(kAdminKeypair)
-      .sendTxAwait(
-          makeUserWithPerms({interface::permissions::Role::kGetAllAccounts}),
-          check(1))
-      .sendTxAwait(make_second_user, check(1))
+  prepareState({interface::permissions::Role::kGetAllAccounts})
+      .sendTxAwait(make_second_user, CHECK_BLOCK(1))
       .sendQuery(makeQuery(kUser2Id),
-                 checkValidAccount(kNewDomain, kUser2Id, kRole2))
-      .done();
+                 checkValidAccount(kNewDomain, kUser2Id, kRole2));
 }
