@@ -3,7 +3,7 @@ add_library(synchronizer
     )
 
 target_link_libraries(synchronizer
-    common
+    ametsuchi
     rxcpp
     logger
     )
