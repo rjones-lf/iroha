@@ -29,14 +29,18 @@ class GetAccount : public AcceptanceFixture {
   }
 
   /**
-   * Creates valid GetAccount query of current user
-   * @param hash of the tx for querying
+   * Creates valid GetAccount query of the selected user
+   * @param user is account to query
    * @return built query
    */
   auto makeQuery(const std::string &user) {
     return complete(baseQry().queryCounter(1).getAccount(user));
   }
 
+  /**
+   * Creates valid GetAccount query of the current user
+   * @return built query
+   */
   auto makeQuery() {
     return makeQuery(kUserId);
   }
@@ -56,6 +60,9 @@ class GetAccount : public AcceptanceFixture {
   }
 
   /**
+   * @param domain is domain for checking
+   * @param user is account id for checking
+   * @param role is role for checking
    * @return a lambda that verifies that query response contains created account
    */
   auto checkValidAccount(const std::string &domain,
@@ -75,6 +82,9 @@ class GetAccount : public AcceptanceFixture {
     };
   }
 
+  /**
+   * @return a lambda that verifies that query response contains created account
+   */
   auto checkValidAccount() {
     return checkValidAccount(kDomain, kUserId, kNewRole);
   }
@@ -148,7 +158,7 @@ TEST_F(GetAccount, NonexistentAccount) {
 }
 
 /**
- * @given a user without GetMyAccount permission
+ * @given a user without any permission
  * @when GetAccount is queried on the user
  * @then query is stateful invalid response
  */
