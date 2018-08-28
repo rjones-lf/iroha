@@ -75,7 +75,7 @@ namespace iroha {
 
     std::string contents;
     file >> contents;
-    return boost::make_optional<std::string>(contents);
+    return contents;
   }
 
   boost::optional<Keypair> KeysManagerImpl::loadKeys(
