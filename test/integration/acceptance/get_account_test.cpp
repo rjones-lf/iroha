@@ -107,6 +107,32 @@ class GetAccount : public AcceptanceFixture {
     return checkValidAccount(kDomain, kUserId, kNewRole);
   }
 
+  /**
+   * @return a command for creating second user in the default domain
+   */
+  auto makeSecondUser() {
+    return complete(
+        createUserWithPerms(kUser2,
+                            kUser2Keypair.publicKey(),
+                            kRole2,
+                            {interface::permissions::Role::kSetQuorum}),
+        kAdminKeypair);
+  }
+
+  /**
+   * @return a command for creating second user in the new domain
+   */
+  auto makeSecondInterdomainUser() {
+    return complete(
+        baseTx()
+            .creatorAccountId(IntegrationTestFramework::kAdminId)
+            .createRole(kRole2, {interface::permissions::Role::kSetQuorum})
+            .createDomain(kNewDomain, kRole2)
+            .createAccount(kUser2, kNewDomain, kUser2Keypair.publicKey()),
+        kAdminKeypair);
+  }
+
+  const std::string kNewDomain = "newdom";
   const std::string kNewRole = "rl";
   const std::string kRole2 = "roletwo";
   const std::string kUser2 = "usertwo";
@@ -114,15 +140,6 @@ class GetAccount : public AcceptanceFixture {
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
   IntegrationTestFramework itf;
 };
-
-/**
- * @given a user with GetMyAccount permission
- * @when GetAccount is queried on the user
- * @then there is a valid AccountResponse
- */
-TEST_F(GetAccount, Basic) {
-  prepareState().sendQuery(makeQuery(), checkValidAccount());
-}
 
 /**
  * @given a user with all required permissions
@@ -162,7 +179,16 @@ TEST_F(GetAccount, NoPermission) {
 }
 
 /**
- * @given a user with only kGetDomainAccounts permission
+ * @given a user with GetMyAccount permission
+ * @when GetAccount is queried on the user
+ * @then there is a valid AccountResponse
+ */
+TEST_F(GetAccount, WithGetMyPermission) {
+  prepareState().sendQuery(makeQuery(), checkValidAccount());
+}
+
+/**
+ * @given a user with GetDomainAccounts permission
  * @when GetAccount is queried on the user
  * @then there is a valid AccountResponse
  */
@@ -172,7 +198,7 @@ TEST_F(GetAccount, WithGetDomainPermission) {
 }
 
 /**
- * @given a user with only kGetAllAccounts permission
+ * @given a user with GetAllAccounts permission
  * @when GetAccount is queried on the user
  * @then there is a valid AccountResponse
  */
@@ -182,21 +208,55 @@ TEST_F(GetAccount, WithGetAllPermission) {
 }
 
 /**
- * @given a user with all required permissions and a user in the same domain
+ * @given a user without any permission and a user in the same domain
+ * @when GetAccount is queried on the second user
+ * @then query is stateful invalid response
+ */
+TEST_F(GetAccount, NoPermissionOtherAccount) {
+  const std::string kUser2Id = kUser2 + "@" + kDomain;
+  prepareState({})
+      .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
+      .sendQuery(makeQuery(kUser2Id),
+                 checkQueryErrorResponse<
+                     shared_model::interface::StatefulFailedErrorResponse>());
+}
+
+/**
+ * @given a user with GetMyAccount permission and a user in the same domain
+ * @when GetAccount is queried on the second user
+ * @then query is stateful invalid response
+ */
+TEST_F(GetAccount, WithGetMyPermissionOtherAccount) {
+  const std::string kUser2Id = kUser2 + "@" + kDomain;
+  prepareState({interface::permissions::Role::kGetMyAccount})
+      .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
+      .sendQuery(makeQuery(kUser2Id),
+                 checkQueryErrorResponse<
+                     shared_model::interface::StatefulFailedErrorResponse>());
+}
+
+/**
+ * @given a user with GetDomainAccounts permission and a user in the same domain
  * @when GetAccount is queried on the second user
  * @then there is a valid AccountResponse
  */
 TEST_F(GetAccount, WithGetDomainPermissionOtherAccount) {
   const std::string kUser2Id = kUser2 + "@" + kDomain;
-  auto make_second_user =
-      complete(createUserWithPerms(kUser2,
-                                   kUser2Keypair.publicKey(),
-                                   kRole2,
-                                   {interface::permissions::Role::kSetQuorum}),
-               kAdminKeypair);
-
   prepareState({interface::permissions::Role::kGetDomainAccounts})
-      .sendTxAwait(make_second_user, CHECK_BLOCK(1))
+      .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
+      .sendQuery(makeQuery(kUser2Id),
+                 checkValidAccount(kDomain, kUser2Id, kRole2));
+}
+
+/**
+ * @given a user with GetAllAccounts permission and a user in the same domain
+ * @when GetAccount is queried on the second user
+ * @then there is a valid AccountResponse
+ */
+TEST_F(GetAccount, WithGetAllPermissionOtherAccount) {
+  const std::string kUser2Id = kUser2 + "@" + kDomain;
+  prepareState({interface::permissions::Role::kGetAllAccounts})
+      .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
       .sendQuery(makeQuery(kUser2Id),
                  checkValidAccount(kDomain, kUser2Id, kRole2));
 }
@@ -204,21 +264,54 @@ TEST_F(GetAccount, WithGetDomainPermissionOtherAccount) {
 /**
  * @given a user with all required permissions and a user in other domain
  * @when GetAccount is queried on the second user
- * @then there is a valid AccountResponse
+ * @then query is stateful invalid response
+ */
+TEST_F(GetAccount, NoPermissionOtherAccountInterdomain) {
+  const std::string kUser2Id = kUser2 + "@" + kNewDomain;
+  prepareState({})
+      .sendTxAwait(makeSecondInterdomainUser(), CHECK_BLOCK(1))
+      .sendQuery(makeQuery(kUser2Id),
+                 checkQueryErrorResponse<
+                     shared_model::interface::StatefulFailedErrorResponse>());
+}
+
+/**
+ * @given a user with all required permissions and a user in other domain
+ * @when GetAccount is queried on the second user
+ * @then query is stateful invalid response
+ */
+TEST_F(GetAccount, WithGetMyPermissionOtherAccountInterdomain) {
+  const std::string kUser2Id = kUser2 + "@" + kNewDomain;
+  prepareState({interface::permissions::Role::kGetMyAccount})
+      .sendTxAwait(makeSecondInterdomainUser(), CHECK_BLOCK(1))
+      .sendQuery(makeQuery(kUser2Id),
+                 checkQueryErrorResponse<
+                     shared_model::interface::StatefulFailedErrorResponse>());
+}
+
+/**
+ * @given a user with all required permissions and a user in other domain
+ * @when GetAccount is queried on the second user
+ * @then query is stateful invalid response
  */
 TEST_F(GetAccount, WithGetDomainPermissionOtherAccountInterdomain) {
-  const std::string kNewDomain = "newdom";
   const std::string kUser2Id = kUser2 + "@" + kNewDomain;
-  auto make_second_user = complete(
-      baseTx()
-          .creatorAccountId(IntegrationTestFramework::kAdminId)
-          .createRole(kRole2, {interface::permissions::Role::kSetQuorum})
-          .createDomain(kNewDomain, kRole2)
-          .createAccount(kUser2, kNewDomain, kUser2Keypair.publicKey()),
-      kAdminKeypair);
+  prepareState({interface::permissions::Role::kGetDomainAccounts})
+      .sendTxAwait(makeSecondInterdomainUser(), CHECK_BLOCK(1))
+      .sendQuery(makeQuery(kUser2Id),
+                 checkQueryErrorResponse<
+                     shared_model::interface::StatefulFailedErrorResponse>());
+}
 
+/**
+ * @given a user with all required permissions and a user in other domain
+ * @when GetAccount is queried on the second user
+ * @then there is a valid AccountResponse
+ */
+TEST_F(GetAccount, WithGetAllPermissionOtherAccountInterdomain) {
+  const std::string kUser2Id = kUser2 + "@" + kNewDomain;
   prepareState({interface::permissions::Role::kGetAllAccounts})
-      .sendTxAwait(make_second_user, CHECK_BLOCK(1))
+      .sendTxAwait(makeSecondInterdomainUser(), CHECK_BLOCK(1))
       .sendQuery(makeQuery(kUser2Id),
                  checkValidAccount(kNewDomain, kUser2Id, kRole2));
 }
