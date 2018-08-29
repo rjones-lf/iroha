@@ -24,11 +24,12 @@ namespace iroha {
   template <typename Subject>
   void shareState(ConstRefState state, Subject &subject) {
     if (not state.isEmpty()) {
-      auto completed_transactions = state.getTransactions();
-      std::for_each(
-          completed_transactions.begin(),
-          completed_transactions.end(),
-          [&subject](const auto tx) { subject.get_subscriber().on_next(tx); });
+      auto completed_batches = state.getBatches();
+      std::for_each(completed_batches.begin(),
+                    completed_batches.end(),
+                    [&subject](const auto &batch) {
+                      subject.get_subscriber().on_next(batch);
+                    });
     }
   }
 
@@ -53,9 +54,9 @@ namespace iroha {
 
   // -------------------------| MstProcessor override |-------------------------
 
-  auto FairMstProcessor::propagateTransactionImpl(const DataType transaction)
-      -> decltype(propagateTransaction(transaction)) {
-    shareState(storage_->updateOwnState(transaction), transactions_subject_);
+  auto FairMstProcessor::propagateBatchImpl(const iroha::DataType &batch)
+      -> decltype(propagateBatch(batch)) {
+    shareState(storage_->updateOwnState(batch), batches_subject_);
     shareState(
         storage_->getExpiredTransactions(time_provider_->getCurrentTime()),
         expired_subject_);
@@ -66,13 +67,13 @@ namespace iroha {
     return state_subject_.get_observable();
   }
 
-  auto FairMstProcessor::onPreparedTransactionsImpl() const
-      -> decltype(onPreparedTransactions()) {
-    return transactions_subject_.get_observable();
+  auto FairMstProcessor::onPreparedBatchesImpl() const
+      -> decltype(onPreparedBatches()) {
+    return batches_subject_.get_observable();
   }
 
-  auto FairMstProcessor::onExpiredTransactionsImpl() const
-      -> decltype(onExpiredTransactions()) {
+  auto FairMstProcessor::onExpiredBatchesImpl() const
+      -> decltype(onExpiredBatches()) {
     return expired_subject_.get_observable();
   }
 
@@ -85,18 +86,17 @@ namespace iroha {
     auto current_time = time_provider_->getCurrentTime();
 
     // update state
-    // todo wrap in method
-    auto new_transactions =
+    auto new_batches =
         std::make_shared<MstState>(storage_->whatsNew(new_state));
-    state_subject_.get_subscriber().on_next(new_transactions);
+    state_subject_.get_subscriber().on_next(new_batches);
 
-    log_->info("New txes size: {}", new_transactions->getTransactions().size());
-    // completed transactions
-    shareState(storage_->apply(from, new_state), transactions_subject_);
+    log_->info("New batches size: {}", new_batches->getBatches().size());
+    // completed batches
+    shareState(storage_->apply(from, new_state), batches_subject_);
 
-    // expired transactions
-    auto expired_transactions = storage_->getDiffState(from, current_time);
-    shareState(expired_transactions, this->expired_subject_);
+    // expired batches
+    auto expired_batches = storage_->getDiffState(from, current_time);
+    shareState(expired_batches, this->expired_subject_);
   }
 
   // -----------------------------| private api |-----------------------------

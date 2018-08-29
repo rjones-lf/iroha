@@ -92,10 +92,23 @@ namespace torii {
                 return;
               }
 
-              // Send transaction to iroha
-              tx_processor_->transactionHandle(
-                  std::make_shared<shared_model::proto::Transaction>(
-                      std::move(iroha_tx.value)));
+              // TODO: 08/08/2018 @muratovv remove duplication between Torii and
+              // ListTorii IR-1583
+              auto single_batch_result = shared_model::interface::
+                  TransactionBatch::createTransactionBatch(
+                      std::make_shared<shared_model::proto::Transaction>(
+                          std::move(iroha_tx.value)),
+                      shared_model::validation::
+                          DefaultSignedTransactionValidator());
+              single_batch_result.match(
+                  [this](const iroha::expected::Value<
+                         shared_model::interface::TransactionBatch> &value) {
+                    tx_processor_->batchHandle(value.value);
+                  },
+                  [this](const auto &err) {
+                    log_->warn("Transaction can't transformed to batch: {}",
+                               err.error);
+                  });
 
               this->pushStatus(
                   "Torii",

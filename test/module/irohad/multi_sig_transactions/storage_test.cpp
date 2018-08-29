@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
@@ -27,8 +15,11 @@ using namespace iroha;
 
 class StorageTestCompleter : public DefaultCompleter {
  public:
-  bool operator()(const DataType &tx, const TimeType &time) const override {
-    return tx->createdTime() < time;
+  bool operator()(const DataType &batch, const TimeType &time) const override {
+    return std::all_of(
+        batch->transactions().begin(),
+        batch->transactions().end(),
+        [&time](const auto &tx) { return tx->createdTime() < time; });
   }
 };
 
@@ -43,9 +34,9 @@ class StorageTest : public testing::Test {
   }
 
   void fillOwnState() {
-    storage->updateOwnState(makeTx(1, creation_time));
-    storage->updateOwnState(makeTx(2, creation_time));
-    storage->updateOwnState(makeTx(3, creation_time));
+    storage->updateOwnState(makeTestBatch(txBuilder(1, creation_time)));
+    storage->updateOwnState(makeTestBatch(txBuilder(2, creation_time)));
+    storage->updateOwnState(makeTestBatch(txBuilder(3, creation_time)));
   }
 
   std::shared_ptr<MstStorage> storage;
@@ -62,38 +53,33 @@ TEST_F(StorageTest, StorageWhenApplyOtherState) {
       "apply state");
 
   auto new_state = MstState::empty(std::make_shared<StorageTestCompleter>());
-  new_state += makeTx(5, creation_time);
-  new_state += makeTx(6, creation_time);
-  new_state += makeTx(7, creation_time);
+  new_state += makeTestBatch(txBuilder(5, creation_time));
+  new_state += makeTestBatch(txBuilder(6, creation_time));
+  new_state += makeTestBatch(txBuilder(7, creation_time));
 
   storage->apply(makePeer("localhost:50052", "another"), new_state);
 
-  ASSERT_EQ(6,
-            storage->getDiffState(absent_peer, creation_time)
-                .getTransactions()
-                .size());
+  ASSERT_EQ(
+      6, storage->getDiffState(absent_peer, creation_time).getBatches().size());
 }
 
 TEST_F(StorageTest, StorageInsertOtherState) {
   log_->info("init fixture state => get expired state");
 
-  ASSERT_EQ(3,
-            storage->getExpiredTransactions(creation_time + 1)
-                .getTransactions()
-                .size());
+  ASSERT_EQ(
+      3,
+      storage->getExpiredTransactions(creation_time + 1).getBatches().size());
   ASSERT_EQ(0,
             storage->getDiffState(absent_peer, creation_time + 1)
-                .getTransactions()
+                .getBatches()
                 .size());
 }
 
 TEST_F(StorageTest, StorageWhenCreateValidDiff) {
   log_->info("insert transactions => check their presence");
 
-  ASSERT_EQ(3,
-            storage->getDiffState(absent_peer, creation_time)
-                .getTransactions()
-                .size());
+  ASSERT_EQ(
+      3, storage->getDiffState(absent_peer, creation_time).getBatches().size());
 }
 
 TEST_F(StorageTest, StorageWhenCreate) {
@@ -103,8 +89,7 @@ TEST_F(StorageTest, StorageWhenCreate) {
 
   auto expiration_time = creation_time + 1;
 
-  ASSERT_EQ(0,
-            storage->getDiffState(absent_peer, expiration_time)
-                .getTransactions()
-                .size());
+  ASSERT_EQ(
+      0,
+      storage->getDiffState(absent_peer, expiration_time).getBatches().size());
 }

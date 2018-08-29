@@ -120,33 +120,23 @@ namespace iroha {
             });
       });
 
-      mst_processor_->onPreparedTransactions().subscribe([this](auto &&tx) {
-        log_->info("MST tx prepared");
-        return this->pcs_->propagate_transaction(tx);
+      mst_processor_->onPreparedBatches().subscribe([this](auto &&batch) {
+        log_->info("MST batch prepared");
+        // TODO: 07/08/2018 @muratovv rework interface of pcs::propagate batch
+        // and mst::propagate batch IR-1584
+        this->pcs_->propagate_batch(*batch);
       });
-      mst_processor_->onExpiredTransactions().subscribe([this](auto &&tx) {
-        log_->info("MST tx expired");
-        this->status_bus_->publish(
-            shared_model::builder::DefaultTransactionStatusBuilder()
-                .mstExpired()
-                .txHash(tx->hash())
-                .build());
-        ;
+      mst_processor_->onExpiredBatches().subscribe([this](auto &&batch) {
+        log_->info("MST batch {} is expired", batch->reducedHash().toString());
+        std::lock_guard<std::mutex> lock(notifier_mutex_);
+        for (auto &&tx : batch->transactions()) {
+          this->status_bus_->publish(
+              shared_model::builder::DefaultTransactionStatusBuilder()
+                  .mstExpired()
+                  .txHash(tx->hash())
+                  .build());
+        }
       });
-    }
-
-    void TransactionProcessorImpl::transactionHandle(
-        std::shared_ptr<shared_model::interface::Transaction> transaction)
-        const {
-      log_->info("handle transaction");
-      if (boost::size(transaction->signatures()) < transaction->quorum()) {
-        log_->info("waiting for quorum signatures");
-        mst_processor_->propagateTransaction(transaction);
-        return;
-      }
-
-      log_->info("propagating tx");
-      pcs_->propagate_transaction(transaction);
     }
 
     void TransactionProcessorImpl::batchHandle(
@@ -155,11 +145,11 @@ namespace iroha {
       if (transaction_batch.hasAllSignatures()) {
         pcs_->propagate_batch(transaction_batch);
       } else {
-        // TODO kamilsa 16.07.18 propagate full batch to mst when its
-        // interface is updated
-        for (const auto tx : transaction_batch.transactions()) {
-          mst_processor_->propagateTransaction(tx);
-        }
+        // TODO: 07/08/2018 @muratovv rework interface of pcs::propagate batch
+        // and mst::propagate batch IR-1584
+        mst_processor_->propagateBatch(
+            std::make_shared<shared_model::interface::TransactionBatch>(
+                transaction_batch));
       }
     }
 

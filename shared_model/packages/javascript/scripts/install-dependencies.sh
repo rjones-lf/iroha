@@ -15,7 +15,7 @@ git clone https://github.com/boostorg/boost /tmp/boost; \
     (cd /tmp/boost ; git checkout 436ad1dfcfc7e0246141beddd11c8a4e9c10b146); \
     (cd /tmp/boost ; git submodule init); \
     (cd /tmp/boost ; git submodule update --recursive -j "$(getconf _NPROCESSORS_ONLN)"; \
-    (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=system,filesystem); \
+    (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=thread,system,filesystem); \
     (cd /tmp/boost ; /tmp/boost/b2 headers); \
     (cd /tmp/boost ; sudo /tmp/boost/b2 link=static cxxflags="-std=c++14" -j "$(getconf _NPROCESSORS_ONLN)" install); \
     rm -rf /tmp/boost

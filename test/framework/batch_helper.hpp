@@ -169,6 +169,12 @@ namespace framework {
       return createUnsignedBatchTransactions(batch_type, creators, now);
     }
 
+    /**
+     * Creates a batch of expected size
+     * @param size - number of transactions in the batch
+     * @param created_time - time of batch creation
+     * @return valid batch
+     */
     auto createValidBatch(const size_t &size,
                           const size_t &created_time = iroha::time::now()) {
       using namespace shared_model::validation;
@@ -190,6 +196,28 @@ namespace framework {
               txs, TxsValidator());
 
       return framework::expected::val(result_batch).value().value;
+    }
+
+    /**
+     * Wrap a transaction with batch
+     * @param tx - interested transaction
+     * @return created batch or throw std::runtime_error
+     */
+    inline auto createBatchFromSingleTransaction(
+        std::shared_ptr<shared_model::interface::Transaction> tx) {
+      return shared_model::interface::TransactionBatch::createTransactionBatch(
+                 tx,
+                 shared_model::validation::DefaultSignedTransactionValidator())
+          .match(
+              [](const iroha::expected::Value<
+                  shared_model::interface::TransactionBatch> &value) {
+                return value.value;
+              },
+              [](const auto &err) -> shared_model::interface::TransactionBatch {
+                throw std::runtime_error(
+                    err.error
+                    + "Error transformation from transaction to batch");
+              });
     }
 
     /**
@@ -338,16 +366,8 @@ namespace framework {
       auto transactions =
           makeTestBatchTransactions(std::forward<TxBuilders>(builders)...);
 
-      using namespace shared_model::validation;
-
-      using TxsValidator = DefaultUnsignedTransactionsValidator;
-
-      auto batch =
-          shared_model::interface::TransactionBatch::createTransactionBatch(
-              transactions, TxsValidator());
-
       return std::make_shared<shared_model::interface::TransactionBatch>(
-          framework::expected::val(batch).value().value);
+          transactions);
     }
 
   }  // namespace batch

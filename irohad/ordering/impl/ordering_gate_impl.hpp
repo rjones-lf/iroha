@@ -72,9 +72,8 @@ namespace iroha {
           std::shared_ptr<const shared_model::interface::Transaction>
               transaction) const override;
 
-      void propagateBatch(
-          const shared_model::interface::TransactionBatch &batch)
-          const override;
+      void propagateBatch(const shared_model::interface::TransactionBatch
+                              &batch) const override;
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
       on_proposal() override;
@@ -101,6 +100,10 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::Proposal>>
           proposals_;
 
+      /**
+       * Notification subject which is used only for notification purposes
+       * without semantic for emitted values
+       */
       rxcpp::subjects::subject<shared_model::interface::types::HeightType>
           net_proposals_;
       std::shared_ptr<iroha::network::OrderingGateTransport> transport_;

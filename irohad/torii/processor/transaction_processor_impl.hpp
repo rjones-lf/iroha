@@ -42,10 +42,6 @@ namespace iroha {
           std::shared_ptr<MstProcessor> mst_processor,
           std::shared_ptr<iroha::torii::StatusBus> status_bus);
 
-      void transactionHandle(
-          std::shared_ptr<shared_model::interface::Transaction> transaction)
-          const override;
-
       void batchHandle(const shared_model::interface::TransactionBatch
                            &transaction_batch) const override;
 

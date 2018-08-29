@@ -24,7 +24,7 @@ namespace shared_model {
           extracted_batches;
       std::vector<TransactionBatch> batches;
 
-      auto transaction_validator = validator.getTransactionValidator();
+      const auto &transaction_validator = validator.getTransactionValidator();
 
       auto insert_batch =
           [&batches](const iroha::expected::Value<TransactionBatch> &value) {
@@ -32,6 +32,11 @@ namespace shared_model {
           };
 
       validation::Answer result;
+      if (transactions.size() == 0) {
+        result.addReason(std::make_pair(
+            "Transaction collection error",
+            std::vector<std::string>{"sequence can not be empty"}));
+      }
       for (const auto &tx : transactions) {
         if (auto meta = tx->batchMeta()) {
           auto hashes = meta.get()->reducedHashes();

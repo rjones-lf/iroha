@@ -80,6 +80,7 @@ void Irohad::init() {
   initPeerCommunicationService();
   initStatusBus();
   initMstProcessor();
+  initPendingTxsStorage();
 
   // Torii
   initTransactionCommandService();
@@ -279,6 +280,14 @@ void Irohad::initMstProcessor() {
   log_->info("[Init] => MST processor");
 }
 
+void Irohad::initPendingTxsStorage() {
+  pending_txs_storage_ = std::make_shared<PendingTransactionStorageImpl>(
+      mst_processor->onStateUpdate(),
+      mst_processor->onPreparedBatches(),
+      mst_processor->onExpiredBatches());
+  log_->info("[Init] => pending transactions storage");
+}
+
 /**
  * Initializing transaction command service
  */
@@ -301,7 +310,8 @@ void Irohad::initTransactionCommandService() {
  */
 void Irohad::initQueryService() {
   auto query_processor = std::make_shared<QueryProcessorImpl>(
-      storage, std::make_unique<QueryExecutionImpl>(storage));
+      storage,
+      std::make_unique<QueryExecutionImpl>(storage, pending_txs_storage_));
 
   query_service = std::make_shared<::torii::QueryService>(query_processor);
 

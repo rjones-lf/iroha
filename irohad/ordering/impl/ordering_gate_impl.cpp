@@ -72,7 +72,7 @@ namespace iroha {
         const iroha::network::PeerCommunicationService &pcs) {
       log_->info("setPcs");
 
-      // find height of last committed block
+      /// observable which contains heights of the top committed blocks
       auto top_block_height =
           pcs.on_commit()
               .transform(
@@ -87,9 +87,14 @@ namespace iroha {
                   })
               .start_with(last_block_height_);
 
+      /// merge_strategy - observable with another source of block heights
       auto subscribe = [&](auto merge_strategy) {
         pcs_subscriber_ = merge_strategy(net_proposals_.get_observable())
                               .subscribe([this](const auto &t) {
+                                // t is zip of two observables, there is
+                                // intentionally ignored first value (with stub
+                                // values) because it is required only for
+                                // synchronization
                                 this->tryNextRound(std::get<1>(t));
                               });
       };
@@ -111,6 +116,7 @@ namespace iroha {
       log_->info("Received new proposal, height: {}", proposal->height());
       proposal_queue_.push(std::move(proposal));
       std::lock_guard<std::mutex> lock(proposal_mutex_);
+      // intentionally pass stub value
       net_proposals_.get_subscriber().on_next(0);
     }
 

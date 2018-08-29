@@ -42,6 +42,7 @@ namespace iroha {
     class PeerCommunicationService {
      public:
       /**
+       * @deprecated use propagate_batch instead
        * Propagate transaction in network
        * @param transaction - object for propagation
        */

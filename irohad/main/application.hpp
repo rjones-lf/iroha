@@ -34,6 +34,7 @@
 #include "network/impl/peer_communication_service_impl.hpp"
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
+#include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
 #include "simulator/block_creator.hpp"
 #include "simulator/impl/simulator.hpp"
 #include "synchronizer/impl/synchronizer_impl.hpp"
@@ -136,6 +137,8 @@ class Irohad {
 
   virtual void initMstProcessor();
 
+  virtual void initPendingTxsStorage();
+
   virtual void initTransactionCommandService();
 
   virtual void initQueryService();
@@ -195,6 +198,10 @@ class Irohad {
   // mst
   std::shared_ptr<iroha::MstProcessor> mst_processor;
 
+  // pending transactions storage
+  std::shared_ptr<iroha::PendingTransactionStorage> pending_txs_storage_;
+
+  // status bus
   std::shared_ptr<iroha::torii::StatusBus> status_bus_;
 
   // transaction service

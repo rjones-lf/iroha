@@ -79,11 +79,20 @@ namespace shared_model {
        * @return true, if objects totally equal
        */
       bool operator==(const Model &rhs) const override {
-        return this->hash() == rhs.hash()
+        return equalsByValue(rhs)
             // is_permutation consumes ~O(N^2)
             and std::is_permutation(signatures().begin(),
                                     signatures().end(),
                                     rhs.signatures().begin());
+      }
+
+      /**
+       * Provides comaprison based on equality objects only
+       * @param rhs - another model object
+       * @return true, if hashes of objects are equal
+       */
+      bool equalsByValue(const Model &rhs) const {
+        return this->hash() == rhs.hash();
       }
 
       const types::HashType &hash() const {

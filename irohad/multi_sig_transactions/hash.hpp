@@ -26,16 +26,13 @@
 namespace iroha {
   namespace model {
     /**
-     * Hash calculation factory for transaction
+     * Hash calculation factory for batch
      */
-    template <typename Tx>
-    class PointerTxHasher {
+    template <typename BatchType>
+    class PointerBatchHasher {
      public:
-      using TxType = Tx;
-      size_t operator()(const TxType &tx) const {
-        auto hash =
-            string_hasher(shared_model::crypto::toBinaryString(tx->hash()));
-        return hash;
+      size_t operator()(const BatchType &batch) const {
+        return string_hasher(batch->reducedHash().hex());
       }
 
      private:
