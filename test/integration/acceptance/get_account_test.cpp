@@ -142,6 +142,7 @@ class GetAccount : public AcceptanceFixture {
 };
 
 /**
+ * C321 Pass an empty account id
  * @given a user with all required permissions
  * @when GetAccount is queried on the empty account name
  * @then query is stateless invalid response
@@ -154,6 +155,7 @@ TEST_F(GetAccount, EmptyAccount) {
 }
 
 /**
+ * C320 Get an non-existing account
  * @given a user with all required permissions
  * @when GetAccount is queried on the user
  * @then query is stateful invalid response
@@ -167,7 +169,8 @@ TEST_F(GetAccount, NonexistentAccount) {
 }
 
 /**
- * @given a user without any permission
+ * C315 Get my account without a CanGetMyAccount permission
+ * @given a user without any query-related permission
  * @when GetAccount is queried on the user
  * @then query is stateful invalid response
  */
@@ -179,6 +182,7 @@ TEST_F(GetAccount, NoPermission) {
 }
 
 /**
+ * C322 Get my account with a CanGetMyAccount permission
  * @given a user with GetMyAccount permission
  * @when GetAccount is queried on the user
  * @then there is a valid AccountResponse
@@ -188,6 +192,7 @@ TEST_F(GetAccount, WithGetMyPermission) {
 }
 
 /**
+ * C316 Get my account with only CanGetDomainAccounts permission
  * @given a user with GetDomainAccounts permission
  * @when GetAccount is queried on the user
  * @then there is a valid AccountResponse
@@ -198,6 +203,7 @@ TEST_F(GetAccount, WithGetDomainPermission) {
 }
 
 /**
+ * C317 Get my account with only CanGetAllAccounts permission
  * @given a user with GetAllAccounts permission
  * @when GetAccount is queried on the user
  * @then there is a valid AccountResponse
@@ -236,6 +242,7 @@ TEST_F(GetAccount, WithGetMyPermissionOtherAccount) {
 }
 
 /**
+ * C318 Get an account from the domain having CanGetDomainAccounts
  * @given a user with GetDomainAccounts permission and a user in the same domain
  * @when GetAccount is queried on the second user
  * @then there is a valid AccountResponse
@@ -304,6 +311,8 @@ TEST_F(GetAccount, WithGetDomainPermissionOtherAccountInterdomain) {
 }
 
 /**
+ * C319 Get an account from another domain in the system having
+ * CanGetAllAccounts
  * @given a user with all required permissions and a user in other domain
  * @when GetAccount is queried on the second user
  * @then there is a valid AccountResponse
