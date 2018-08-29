@@ -10,16 +10,15 @@
 
 namespace iroha {
   class MstProcessorStub : public MstProcessor {
-    auto propagateTransactionImpl(const DataType transaction)
-        -> decltype(propagateTransaction(transaction)) override;
+    auto propagateBatchImpl(const DataType &batch)
+        -> decltype(propagateBatch(batch)) override;
 
     auto onStateUpdateImpl() const -> decltype(onStateUpdate()) override;
 
-    auto onPreparedTransactionsImpl() const
-        -> decltype(onPreparedTransactions()) override;
+    auto onPreparedBatchesImpl() const
+        -> decltype(onPreparedBatches()) override;
 
-    auto onExpiredTransactionsImpl() const
-        -> decltype(onExpiredTransactions()) override;
+    auto onExpiredBatchesImpl() const -> decltype(onExpiredBatches()) override;
   };
 
 }  // namespace iroha

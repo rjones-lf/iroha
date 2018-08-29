@@ -30,6 +30,7 @@ using ::testing::Return;
 using namespace iroha::network;
 using namespace iroha::ametsuchi;
 using namespace iroha::torii;
+using namespace iroha::synchronizer;
 
 using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds initial_timeout = 1s;
@@ -45,14 +46,12 @@ three resubscribes were not enough, then most likely there is another bug.
  */
 constexpr uint32_t resubscribe_attempts = 3;
 
-using iroha::Commit;
-
 class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
  public:
   CustomPeerCommunicationServiceMock(
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::Proposal>> prop_notifier,
-      rxcpp::subjects::subject<Commit> commit_notifier,
+      rxcpp::subjects::subject<SynchronizationEvent> commit_notifier,
       rxcpp::subjects::subject<
           std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
           verified_prop_notifier)
@@ -71,7 +70,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
   on_proposal() const override {
     return prop_notifier_.get_observable();
   }
-  rxcpp::observable<Commit> on_commit() const override {
+  rxcpp::observable<SynchronizationEvent> on_commit() const override {
     return commit_notifier_.get_observable();
   }
 
@@ -84,7 +83,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
  private:
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier_;
-  rxcpp::subjects::subject<Commit> commit_notifier_;
+  rxcpp::subjects::subject<SynchronizationEvent> commit_notifier_;
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       verified_prop_notifier_;
@@ -103,9 +102,9 @@ class ToriiServiceTest : public testing::Test {
     block_query = std::make_shared<MockBlockQuery>();
     storage = std::make_shared<MockStorage>();
 
-    EXPECT_CALL(*mst, onPreparedTransactionsImpl())
+    EXPECT_CALL(*mst, onPreparedBatchesImpl())
         .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
-    EXPECT_CALL(*mst, onExpiredTransactionsImpl())
+    EXPECT_CALL(*mst, onExpiredBatchesImpl())
         .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
     auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
@@ -144,7 +143,7 @@ class ToriiServiceTest : public testing::Test {
 
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
       prop_notifier_;
-  rxcpp::subjects::subject<Commit> commit_notifier_;
+  rxcpp::subjects::subject<SynchronizationEvent> commit_notifier_;
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       verified_prop_notifier_;
@@ -315,7 +314,8 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   // create commit from block notifier's observable
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
       block_notifier_;
-  Commit commit = block_notifier_.get_observable();
+  SynchronizationEvent commit{block_notifier_.get_observable(),
+                              SynchronizationOutcomeType::kCommit};
 
   // invoke on next of commit_notifier by sending new block to commit
   commit_notifier_.get_subscriber().on_next(commit);
@@ -328,7 +328,13 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
     tx_request.set_tx_hash(
         shared_model::crypto::toBinaryString(tx_hashes.at(i)));
     iroha::protocol::ToriiResponse toriiResponse;
-    client3.Status(tx_request, toriiResponse);
+
+    auto resub_counter(resubscribe_attempts);
+    do {
+      client3.Status(tx_request, toriiResponse);
+    } while (toriiResponse.tx_status()
+                 != iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS
+             and --resub_counter);
 
     ASSERT_EQ(toriiResponse.tx_status(),
               iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
@@ -457,7 +463,8 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   // create commit from block notifier's observable
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
       block_notifier_;
-  Commit commit = block_notifier_.get_observable();
+  SynchronizationEvent commit{block_notifier_.get_observable(),
+                              SynchronizationOutcomeType::kCommit};
 
   // invoke on next of commit_notifier by sending new block to commit
   commit_notifier_.get_subscriber().on_next(commit);

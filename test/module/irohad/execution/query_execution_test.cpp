@@ -16,6 +16,7 @@
 #include "execution/query_execution_impl.hpp"
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
+#include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
@@ -40,9 +41,11 @@ class QueryValidateExecuteTest : public ::testing::Test {
     wsv_query = std::make_shared<StrictMock<MockWsvQuery>>();
     block_query = std::make_shared<StrictMock<MockBlockQuery>>();
     storage = std::make_shared<MockStorage>();
+    pending_txs_storage = std::make_shared<MockPendingTransactionStorage>();
     EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
-    qry_exec = std::make_shared<QueryExecutionImpl>(storage);
+    qry_exec =
+        std::make_shared<QueryExecutionImpl>(storage, pending_txs_storage);
 
     creator = clone(shared_model::proto::AccountBuilder()
                         .accountId(admin_id)
@@ -77,8 +80,8 @@ class QueryValidateExecuteTest : public ::testing::Test {
    * @param N
    * @return observable with transactions
    */
-  std::vector<wTransaction> getDefaultTransactions(
-    const std::string &creator, size_t N) {
+  std::vector<wTransaction> getDefaultTransactions(const std::string &creator,
+                                                   size_t N) {
     std::vector<wTransaction> result;
     for (size_t i = 0; i < N; ++i) {
       auto current = makeTransaction(creator);
@@ -98,6 +101,7 @@ class QueryValidateExecuteTest : public ::testing::Test {
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
   std::shared_ptr<MockStorage> storage;
+  std::shared_ptr<MockPendingTransactionStorage> pending_txs_storage;
 
   std::shared_ptr<QueryExecution> qry_exec;
 };
@@ -1273,4 +1277,22 @@ TEST_F(GetRolePermissionsTest, InValidCaseNoRole) {
       boost::apply_visitor(shared_model::interface::QueryErrorResponseChecker<
                                shared_model::interface::NoRolesErrorResponse>(),
                            response->get()));
+}
+
+/// --------- Get Pending Transactions -------------
+/**
+ * @given initialized storage
+ * @when get pending transactions
+ * @then pending txs storage will be requested for query creator account
+ */
+TEST_F(QueryValidateExecuteTest, TransactionsStorageIsAccessed) {
+  auto query = TestQueryBuilder()
+                   .creatorAccountId(account_id)
+                   .getPendingTransactions()
+                   .build();
+
+  EXPECT_CALL(*pending_txs_storage, getPendingTransactions(account_id))
+      .Times(1);
+
+  validateAndExecute(query);
 }

@@ -56,6 +56,8 @@ namespace shared_model {
 
       const QueryErrorResponseVariantType &get() const override;
 
+      const ErrorMessageType &errorMessage() const override;
+
      private:
       /// lazy variant shortcut
       template <typename T>

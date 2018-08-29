@@ -37,11 +37,11 @@ namespace iroha {
     // ---------------------------| user interface |----------------------------
 
     /**
-     * Propagate in network multi-signature transaction for signing by other
+     * Propagate batch in network for signing by other
      * participants
      * @param transaction - transaction for propagation
      */
-    void propagateTransaction(const DataType transaction);
+    void propagateBatch(const DataType &batch);
 
     /**
      * Prove updating of state for handling status of signing
@@ -49,14 +49,15 @@ namespace iroha {
     rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() const;
 
     /**
-     * Observable emit transactions that prepared to processing in system
+     * Observable emit batches which are prepared for further processing in
+     * system
      */
-    rxcpp::observable<DataType> onPreparedTransactions() const;
+    rxcpp::observable<DataType> onPreparedBatches() const;
 
     /**
      * Observable emit expired by time transactions
      */
-    rxcpp::observable<DataType> onExpiredTransactions() const;
+    rxcpp::observable<DataType> onExpiredBatches() const;
 
     virtual ~MstProcessor() = default;
 
@@ -71,8 +72,8 @@ namespace iroha {
     /**
      * @see propagateTransaction method
      */
-    virtual auto propagateTransactionImpl(DataType transaction)
-        -> decltype(propagateTransaction(transaction)) = 0;
+    virtual auto propagateBatchImpl(const DataType &batch)
+        -> decltype(propagateBatch(batch)) = 0;
 
     /**
      * @see onStateUpdate method
@@ -82,14 +83,14 @@ namespace iroha {
     /**
      * @see onPreparedTransactions method
      */
-    virtual auto onPreparedTransactionsImpl() const
-        -> decltype(onPreparedTransactions()) = 0;
+    virtual auto onPreparedBatchesImpl() const
+        -> decltype(onPreparedBatches()) = 0;
 
     /**
      * @see onExpiredTransactions method
      */
-    virtual auto onExpiredTransactionsImpl() const
-        -> decltype(onExpiredTransactions()) = 0;
+    virtual auto onExpiredBatchesImpl() const
+        -> decltype(onExpiredBatches()) = 0;
   };
 }  // namespace iroha
 

@@ -147,12 +147,14 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
 
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
-  wrapper.subscribe([test_block](auto commit) {
-    auto block_wrapper = make_test_subscriber<CallExact>(commit, 1);
+  wrapper.subscribe([test_block](auto commit_event) {
+    auto block_wrapper =
+        make_test_subscriber<CallExact>(commit_event.synced_blocks, 1);
     block_wrapper.subscribe([test_block](auto block) {
       // Check commit block
       ASSERT_EQ(block->height(), test_block.height());
     });
+    ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kCommit);
     ASSERT_TRUE(block_wrapper.validate());
   });
 
@@ -228,12 +230,14 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
 
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
-  wrapper.subscribe([commit_message](auto commit) {
-    auto block_wrapper = make_test_subscriber<CallExact>(commit, 1);
+  wrapper.subscribe([commit_message](auto commit_event) {
+    auto block_wrapper =
+        make_test_subscriber<CallExact>(commit_event.synced_blocks, 1);
     block_wrapper.subscribe([commit_message](auto block) {
       // Check commit block
       ASSERT_EQ(block->height(), commit_message.height());
     });
+    ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kCommit);
     ASSERT_TRUE(block_wrapper.validate());
   });
 
@@ -318,8 +322,11 @@ TEST_F(SynchronizerTest, EmptyBlockNotCommitted) {
 
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
-  wrapper.subscribe([commit_message](auto commit) {
-    auto block_wrapper = make_test_subscriber<CallExact>(commit, 0);
+  wrapper.subscribe([commit_message](auto commit_event) {
+    auto block_wrapper =
+        make_test_subscriber<CallExact>(commit_event.synced_blocks, 0);
+    ASSERT_EQ(commit_event.sync_outcome,
+              SynchronizationOutcomeType::kCommitEmpty);
     ASSERT_TRUE(block_wrapper.validate());
   });
 
@@ -365,12 +372,14 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
 
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
-  wrapper.subscribe([commit_message](auto commit) {
-    auto block_wrapper = make_test_subscriber<CallExact>(commit, 1);
+  wrapper.subscribe([commit_message](auto commit_event) {
+    auto block_wrapper =
+        make_test_subscriber<CallExact>(commit_event.synced_blocks, 1);
     block_wrapper.subscribe([commit_message](auto block) {
       // Check commit block
       ASSERT_EQ(block->height(), commit_message.height());
     });
+    ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kCommit);
     ASSERT_TRUE(block_wrapper.validate());
   });
 

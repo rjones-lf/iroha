@@ -41,9 +41,7 @@ namespace iroha {
     void PeerCommunicationServiceImpl::propagate_batch(
         const shared_model::interface::TransactionBatch &batch) const {
       log_->info("propagate batch");
-      for (const auto tx : batch.transactions()) {
-        ordering_gate_->propagateTransaction(tx);
-      }
+      ordering_gate_->propagateBatch(batch);
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
@@ -57,7 +55,8 @@ namespace iroha {
       return proposal_creator_->on_verified_proposal();
     }
 
-    rxcpp::observable<Commit> PeerCommunicationServiceImpl::on_commit() const {
+    rxcpp::observable<synchronizer::SynchronizationEvent>
+    PeerCommunicationServiceImpl::on_commit() const {
       return synchronizer_->on_commit_chain();
     }
   }  // namespace network

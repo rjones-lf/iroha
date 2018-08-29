@@ -35,7 +35,7 @@ This tutorial was tested with the following environment:
 -	MacOS Sierra 10.12.6
 -	Xcode 9.2
 -	carthage 0.29.0
--	cmake 3.11.0
+-	cmake 3.11.4
 -	iPhone 7 iOS 11.2 Simulator
  
 Hyperledger Iroha iOS library

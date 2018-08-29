@@ -55,7 +55,7 @@ parts:
     source-commit: 436ad1dfcfc7e0246141beddd11c8a4e9c10b146
     plugin: nil
     build: |
-      ./bootstrap.sh --with-libraries=system,filesystem
+      ./bootstrap.sh --with-libraries=thread,system,filesystem
       ./b2 headers
       ./b2 cxxflags="-std=c++14" install
   protobuf:

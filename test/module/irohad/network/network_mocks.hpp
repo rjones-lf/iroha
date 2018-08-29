@@ -24,6 +24,7 @@
 #include "network/consensus_gate.hpp"
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
+#include "synchronizer/synchronizer_common.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -48,7 +49,8 @@ namespace iroha {
           rxcpp::observable<
               std::shared_ptr<shared_model::interface::Proposal>>());
 
-      MOCK_CONST_METHOD0(on_commit, rxcpp::observable<Commit>());
+      MOCK_CONST_METHOD0(
+          on_commit, rxcpp::observable<synchronizer::SynchronizationEvent>());
 
       MOCK_CONST_METHOD0(
           on_verified_proposal,

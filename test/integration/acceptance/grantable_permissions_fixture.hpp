@@ -265,43 +265,6 @@ class GrantablePermissionsFixture : public AcceptanceFixture {
     };
   }
 
-  /**
-   * Prepare base transaction
-   * @param account_id - account of transaction creator
-   * @return transaction builder
-   */
-  auto baseTx(const shared_model::interface::types::AccountIdType &account_id) {
-    return TxBuilder()
-        .creatorAccountId(account_id)
-        .createdTime(getUniqueTime())
-        .quorum(1);
-  }
-
-  /**
-   * Prepare base query
-   * @param account_id - account of query creator
-   * @return query builder
-   */
-  auto baseQuery(
-      const shared_model::interface::types::AccountIdType &account_id,
-      const shared_model::interface::types::CounterType &query_counter = 1) {
-    return shared_model::proto::QueryBuilder()
-        .creatorAccountId(account_id)
-        .createdTime(getUniqueTime())
-        .queryCounter(query_counter);
-  }
-
-  /**
-   * Build and sign the transaction
-   * @param builder - semi-built transaction builder
-   * @param keypair - key to sign the transaction
-   * @return - built and signed transaction
-   */
-  template <typename Builder>
-  auto complete(Builder builder, const shared_model::crypto::Keypair &keypair) {
-    return builder.build().signAndAddSignature(keypair).finish();
-  }
-
   const std::string kAccount1 = "accountone";
   const std::string kAccount2 = "accounttwo";
 

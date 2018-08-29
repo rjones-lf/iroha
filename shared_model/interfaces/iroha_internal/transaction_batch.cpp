@@ -4,6 +4,9 @@
  */
 
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+
+#include <algorithm>
+
 #include "utils/string_builder.hpp"
 #include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
@@ -100,6 +103,7 @@ namespace shared_model {
         const validation::DefaultSignedTransactionsValidator &validator,
         const validation::FieldValidator &field_validator);
 
+    // TODO: 11/08/2018 @muratovv move to own hpp file IR-1595
     template <typename TransactionValidator, typename FieldValidator>
     iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
@@ -120,6 +124,7 @@ namespace shared_model {
           TransactionBatch(types::SharedTxsCollectionType{transaction}));
     };
 
+    // TODO: 11/08/2018 @muratovv move instantiation to batch_helper.hpp IR-1595
     template iroha::expected::Result<TransactionBatch, std::string>
     TransactionBatch::createTransactionBatch(
         std::shared_ptr<Transaction> transaction,
@@ -164,6 +169,29 @@ namespace shared_model {
           .append("transactions")
           .appendAll(transactions(), [](auto &tx) { return tx->toString(); })
           .finalize();
+    }
+
+    bool TransactionBatch::addSignature(
+        size_t number_of_tx,
+        const shared_model::crypto::Signed &signed_blob,
+        const shared_model::crypto::PublicKey &public_key) {
+      if (number_of_tx >= transactions_.size()) {
+        return false;
+      } else {
+        return transactions_.at(number_of_tx)
+            ->addSignature(signed_blob, public_key);
+      }
+    }
+
+    bool TransactionBatch::operator==(const TransactionBatch &rhs) const {
+      return reducedHash() == rhs.reducedHash()
+          and std::equal(transactions().begin(),
+                         transactions().end(),
+                         rhs.transactions().begin(),
+                         rhs.transactions().end(),
+                         [](auto const &left, auto const &right) {
+                           return left->equalsByValue(*right);
+                         });
     }
 
   }  // namespace interface

@@ -22,6 +22,11 @@ target_link_libraries(pipeline_test
     shared_model_proto_builders
     )
 
+addtest(batch_pipeline_test batch_pipeline_test.cpp)
+target_link_libraries(batch_pipeline_test
+    acceptance_fixture
+    )
+
 addtest(multisig_tx_pipeline_test multisig_tx_pipeline_test.cpp)
 target_link_libraries(multisig_tx_pipeline_test
     acceptance_fixture
