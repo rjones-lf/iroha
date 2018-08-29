@@ -37,18 +37,21 @@ namespace shared_model {
                                        StatelessValidTxResponse,
                                        StatefulFailedTxResponse,
                                        StatefulValidTxResponse,
-                                       CommittedTxResponse,
                                        RejectTxResponse,
+                                       CommittedTxResponse,
                                        MstExpiredResponse,
                                        NotReceivedTxResponse>;
 
       /// Type with list of types in ResponseVariantType
       using ResponseListType = ResponseVariantType::types;
 
+      /// Type of transaction hash
+      using TransactionHashType = interface::types::HashType;
+
       /**
        * @return hash of corresponding transaction
        */
-      virtual const interface::types::HashType &transactionHash() const = 0;
+      virtual const TransactionHashType &transactionHash() const = 0;
 
       /**
        * @return attached concrete tx response
@@ -76,7 +79,7 @@ namespace shared_model {
 
       bool operator==(const ModelType &rhs) const override {
         return transactionHash() == rhs.transactionHash()
-            and get() == rhs.get();
+            and errorMessage() == rhs.errorMessage() and get() == rhs.get();
       }
     };
   }  // namespace interface

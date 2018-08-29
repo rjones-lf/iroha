@@ -25,6 +25,7 @@ namespace shared_model {
                                                       StatelessValidTxResponse,
                                                       StatefulFailedTxResponse,
                                                       StatefulValidTxResponse,
+                                                      RejectedTxResponse,
                                                       CommittedTxResponse,
                                                       MstExpiredResponse,
                                                       NotReceivedTxResponse>;

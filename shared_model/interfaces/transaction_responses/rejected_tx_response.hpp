@@ -13,7 +13,7 @@ namespace shared_model {
     /**
      * Status shows that transaction was rejected on consensus
      */
-    class RejectTxResponse : public AbstractTxResponse<CommittedTxResponse> {
+    class RejectTxResponse : public AbstractTxResponse<RejectTxResponse> {
      private:
       std::string className() const override {
         return "RejectedTxResponse";
