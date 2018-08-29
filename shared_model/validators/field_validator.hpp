@@ -131,7 +131,11 @@ namespace shared_model {
 
       void validateCreatedTime(
           ReasonsGroupType &reason,
-          const interface::types::TimestampType &timestamp) const;
+          interface::types::TimestampType timestamp,
+          interface::types::TimestampType current_timestamp) const;
+
+      void validateCreatedTime(ReasonsGroupType &reason,
+                               interface::types::TimestampType timestamp) const;
 
       void validateCounter(ReasonsGroupType &reason,
                            const interface::types::CounterType &counter) const;
@@ -149,17 +153,14 @@ namespace shared_model {
           ReasonsGroupType &reason,
           const interface::types::DescriptionType &description) const;
 
-      void validateBatchMeta(
-          ReasonsGroupType &reason,
-          const interface::BatchMeta &description) const;
+      void validateBatchMeta(ReasonsGroupType &reason,
+                             const interface::BatchMeta &description) const;
 
       void validateHeight(ReasonsGroupType &reason,
                           const interface::types::HeightType &height) const;
 
       void validateHash(ReasonsGroupType &reason,
                         const crypto::Hash &hash) const;
-
-      void setTime(shared_model::interface::types::TimestampType time) const;
 
      private:
       const static std::string account_name_pattern_;

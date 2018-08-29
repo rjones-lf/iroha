@@ -275,24 +275,29 @@ namespace shared_model {
 
     void FieldValidator::validateCreatedTime(
         ReasonsGroupType &reason,
-        const interface::types::TimestampType &timestamp) const {
-      iroha::ts64_t now = time_provider_();
-
-      if (now + future_gap_ < timestamp) {
+        interface::types::TimestampType timestamp,
+        interface::types::TimestampType current_timestamp) const {
+      if (current_timestamp + future_gap_ < timestamp) {
         auto message = (boost::format("bad timestamp: sent from future, "
                                       "timestamp: %llu, now: %llu")
-                        % timestamp % now)
+                        % timestamp % current_timestamp)
                            .str();
         reason.second.push_back(std::move(message));
       }
 
-      if (now > kMaxDelay + timestamp) {
+      if (current_timestamp > kMaxDelay + timestamp) {
         auto message =
             (boost::format("bad timestamp: too old, timestamp: %llu, now: %llu")
-             % timestamp % now)
+             % timestamp % current_timestamp)
                 .str();
         reason.second.push_back(std::move(message));
       }
+    }
+
+    void FieldValidator::validateCreatedTime(
+        ReasonsGroupType &reason,
+        interface::types::TimestampType timestamp) const {
+      validateCreatedTime(reason, timestamp, time_provider_());
     }
 
     void FieldValidator::validateCounter(
@@ -378,11 +383,5 @@ namespace shared_model {
       }
     }
 
-    void FieldValidator::setTime(
-        shared_model::interface::types::TimestampType time) const {
-      time_provider_ = [time]{
-        return time;
-      };
-    }
   }  // namespace validation
 }  // namespace shared_model

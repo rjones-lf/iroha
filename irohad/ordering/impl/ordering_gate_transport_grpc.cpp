@@ -18,6 +18,7 @@
 
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
+#include "datetime/time.hpp"
 #include "endpoint.pb.h"
 #include "interfaces/common_objects/types.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
@@ -29,6 +30,8 @@ grpc::Status OrderingGateTransportGrpc::onProposal(
     const iroha::protocol::Proposal *request,
     ::google::protobuf::Empty *response) {
   async_call_->log_->info("receive proposal");
+
+  std::cout << "~~~ onProposal " << iroha::time::now() << std::endl;
 
   auto proposal_res = factory_->createProposal(*request);
   proposal_res.match(

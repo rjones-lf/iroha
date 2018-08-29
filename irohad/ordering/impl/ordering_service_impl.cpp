@@ -87,10 +87,13 @@ namespace iroha {
     void OrderingServiceImpl::generateProposal() {
       std::lock_guard<std::shared_timed_mutex> lock(batch_prop_mutex_);
       log_->info("Start proposal generation");
+      auto now = iroha::time::now();
       std::vector<std::shared_ptr<shared_model::interface::Transaction>> txs;
       for (std::unique_ptr<shared_model::interface::TransactionBatch> batch;
            txs.size() < max_size_ and queue_.try_pop(batch);) {
         auto batch_size = batch->transactions().size();
+        // TODO 29.08.2018 andrei IR-1667 Timestamp validation during proposal
+        // generation
         txs.insert(std::end(txs),
                    std::make_move_iterator(std::begin(batch->transactions())),
                    std::make_move_iterator(std::end(batch->transactions())));
@@ -98,8 +101,8 @@ namespace iroha {
       }
 
       auto tx_range = txs | boost::adaptors::indirected;
-      auto proposal = factory_->createProposal(
-          proposal_height_++, iroha::time::now(), tx_range);
+      auto proposal =
+          factory_->createProposal(proposal_height_++, now, tx_range);
 
       proposal.match(
           [this](expected::Value<

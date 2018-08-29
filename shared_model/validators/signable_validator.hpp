@@ -26,13 +26,10 @@ namespace shared_model {
 
     template <typename ModelValidator, typename Model, typename FieldValidator>
     class SignableModelValidator : public ModelValidator {
-     public:
-      explicit SignableModelValidator(
-          FieldValidator &&validator = FieldValidator())
-          : ModelValidator(validator), field_validator_(std::move(validator)) {}
-
-      Answer validate(const Model &model) const {
-        auto answer = ModelValidator::validate(model);
+     private:
+      template <typename Validator>
+      Answer validateImpl(const Model &model, Validator &&validator) const {
+        auto answer = std::forward<Validator>(validator)(model);
         std::string reason_name = "Signature";
         ReasonsGroupType reason(reason_name, GroupedReasons());
         field_validator_.validateSignatures(
@@ -41,6 +38,25 @@ namespace shared_model {
           answer.addReason(std::move(reason));
         }
         return answer;
+      }
+
+     public:
+      explicit SignableModelValidator(
+          FieldValidator &&validator = FieldValidator())
+          : ModelValidator(validator), field_validator_(std::move(validator)) {}
+
+      Answer validate(const Model &model,
+                      interface::types::TimestampType current_timestamp) const {
+        return validateImpl(
+            model, [this, &current_timestamp](const auto &model) {
+              return ModelValidator::validate(model, current_timestamp);
+            });
+      }
+
+      Answer validate(const Model &model) const {
+        return validateImpl(model, [this](const auto &model) {
+          return ModelValidator::validate(model);
+        });
       }
 
      private:

@@ -24,6 +24,7 @@
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "validators/answer.hpp"
+#include "validators/container_validator.hpp"
 
 // TODO 22/01/2018 x3medima17: write stateless validator IR-836
 

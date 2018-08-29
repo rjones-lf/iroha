@@ -240,19 +240,10 @@ namespace shared_model {
      */
     template <typename FieldValidator, typename CommandValidator>
     class TransactionValidator {
-     public:
-      TransactionValidator(
-          const FieldValidator &field_validator = FieldValidator(),
-          const CommandValidator &command_validator = CommandValidator())
-          : field_validator_(field_validator),
-            command_validator_(command_validator) {}
-
-      /**
-       * Applies validation to given transaction
-       * @param tx - transaction to validate
-       * @return Answer containing found error if any
-       */
-      Answer validate(const interface::Transaction &tx) const {
+     private:
+      template <typename CreatedTimeValidator>
+      Answer validateImpl(const interface::Transaction &tx,
+                          CreatedTimeValidator &&validator) const {
         Answer answer;
         std::string tx_reason_name = "Transaction";
         ReasonsGroupType tx_reason(tx_reason_name, GroupedReasons());
@@ -264,7 +255,8 @@ namespace shared_model {
 
         field_validator_.validateCreatorAccountId(tx_reason,
                                                   tx.creatorAccountId());
-        field_validator_.validateCreatedTime(tx_reason, tx.createdTime());
+        std::forward<CreatedTimeValidator>(validator)(tx_reason,
+                                                      tx.createdTime());
         field_validator_.validateQuorum(tx_reason, tx.quorum());
         if (tx.batchMeta() != boost::none)
           field_validator_.validateBatchMeta(tx_reason, **tx.batchMeta());
@@ -292,6 +284,33 @@ namespace shared_model {
         }
 
         return answer;
+      }
+
+     public:
+      TransactionValidator(
+          const FieldValidator &field_validator = FieldValidator(),
+          const CommandValidator &command_validator = CommandValidator())
+          : field_validator_(field_validator),
+            command_validator_(command_validator) {}
+
+      /**
+       * Applies validation to given transaction
+       * @param tx - transaction to validate
+       * @return Answer containing found error if any
+       */
+      Answer validate(const interface::Transaction &tx) const {
+        return validateImpl(tx, [this](auto &reason, auto time) {
+          field_validator_.validateCreatedTime(reason, time);
+        });
+      }
+
+      Answer validate(const interface::Transaction &tx,
+                      interface::types::TimestampType current_timestamp) const {
+        return validateImpl(
+            tx, [this, &current_timestamp](auto &reason, auto time) {
+              field_validator_.validateCreatedTime(
+                  reason, time, current_timestamp);
+            });
       }
 
      protected:

@@ -39,9 +39,10 @@ namespace shared_model {
      protected:
       void validateTransactions(
           ReasonsGroupType &reason,
-          const interface::types::TransactionsCollectionType &transactions)
-          const {
-        auto answer = transactions_collection_validator_.validate(transactions);
+          const interface::types::TransactionsCollectionType &transactions,
+          interface::types::TimestampType current_timestamp) const {
+        auto answer = transactions_collection_validator_.validate(
+            transactions, current_timestamp);
         if (answer.hasErrors()) {
           reason.second.push_back(answer.reason());
         }
@@ -61,11 +62,9 @@ namespace shared_model {
         Answer answer;
         ReasonsGroupType reason;
         reason.first = reason_name;
-        field_validator_.validateCreatedTime(reason, cont.createdTime());
         field_validator_.validateHeight(reason, cont.height());
 
-        field_validator_.setTime(cont.createdTime());
-        validateTransactions(reason, cont.transactions());
+        validateTransactions(reason, cont.transactions(), cont.createdTime());
         if (not reason.second.empty()) {
           answer.addReason(std::move(reason));
         }
