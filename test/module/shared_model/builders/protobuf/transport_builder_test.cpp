@@ -112,8 +112,8 @@ class TransportBuilderTest : public ::testing::Test {
   auto getBaseBlockBuilder() {
     return BlockBuilder()
         .transactions(std::vector<Transaction>({createTransaction()}))
-        .createdTime(created_time)
-        .height(1);
+        .height(1)
+        .createdTime(created_time);
   }
 
   auto createBlock() {

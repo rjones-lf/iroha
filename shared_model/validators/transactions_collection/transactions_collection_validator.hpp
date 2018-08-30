@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_TRANSACTION_SEQUENCE_VALIDATOR_HPP
-#define IROHA_TRANSACTION_SEQUENCE_VALIDATOR_HPP
+#ifndef IROHA_TRANSACTIONS_COLLECTION_VALIDATOR_HPP
+#define IROHA_TRANSACTIONS_COLLECTION_VALIDATOR_HPP
 
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "validators/answer.hpp"
@@ -60,4 +60,4 @@ namespace shared_model {
   }  // namespace validation
 }  // namespace shared_model
 
-#endif  // IROHA_TRANSACTION_SEQUENCE_VALIDATOR_HPP
+#endif  // IROHA_TRANSACTIONS_COLLECTION_VALIDATOR_HPP

@@ -77,7 +77,7 @@ namespace shared_model {
         const interface::types::TransactionsForwardCollectionType &transactions,
         interface::types::TimestampType current_timestamp) const {
       return validateImpl(
-          transactions, [this, &current_timestamp](const auto &tx) {
+          transactions, [this, current_timestamp](const auto &tx) {
             return transaction_validator_.validate(tx, current_timestamp);
           });
     }

@@ -264,19 +264,19 @@ namespace shared_model {
     void FieldValidator::validateCreatedTime(
         ReasonsGroupType &reason,
         interface::types::TimestampType timestamp,
-        interface::types::TimestampType current_timestamp) const {
-      if (current_timestamp + future_gap_ < timestamp) {
+        interface::types::TimestampType now) const {
+      if (now + future_gap_ < timestamp) {
         auto message = (boost::format("bad timestamp: sent from future, "
                                       "timestamp: %llu, now: %llu")
-                        % timestamp % current_timestamp)
+                        % timestamp % now)
                            .str();
         reason.second.push_back(std::move(message));
       }
 
-      if (current_timestamp > kMaxDelay + timestamp) {
+      if (now > kMaxDelay + timestamp) {
         auto message =
             (boost::format("bad timestamp: too old, timestamp: %llu, now: %llu")
-             % timestamp % current_timestamp)
+             % timestamp % now)
                 .str();
         reason.second.push_back(std::move(message));
       }

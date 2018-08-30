@@ -46,7 +46,7 @@ namespace shared_model {
 
       template <typename Validator>
       Answer validate(const Iface &cont,
-                      std::string reason_name,
+                      const std::string &reason_name,
                       Validator &&validator) const {
         Answer answer;
         ReasonsGroupType reason;
@@ -61,7 +61,7 @@ namespace shared_model {
         return answer;
       }
 
-      Answer validate(const Iface &cont, std::string reason_name) const {
+      Answer validate(const Iface &cont, const std::string &reason_name) const {
         return validate(cont, reason_name, [](auto &, const auto &) {});
       }
 
