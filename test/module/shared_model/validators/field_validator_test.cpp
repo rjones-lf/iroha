@@ -64,7 +64,7 @@ class FieldValidatorTest : public ValidatorsTest {
 
  public:
   FieldValidatorTest() {
-    for (const auto &field : {"public_key", "public_key", "pubkey"}) {
+    for (const auto &field : {"public_key"}) {
       field_validators.insert(makeTransformValidator(
           field,
           &FieldValidator::validatePubkey,
