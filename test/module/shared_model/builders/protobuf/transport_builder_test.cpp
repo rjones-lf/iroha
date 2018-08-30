@@ -6,10 +6,6 @@
 #include <gtest/gtest.h>
 
 #include <boost/range/irange.hpp>
-#include "builders/protobuf/block.hpp"
-#include "builders/protobuf/block_variant_transport_builder.hpp"
-#include "builders/protobuf/empty_block.hpp"
-#include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "builders/protobuf/transaction_sequence_builder.hpp"
@@ -20,6 +16,10 @@
 #include "framework/result_fixture.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
+#include "module/shared_model/builders/protobuf/block.hpp"
+#include "module/shared_model/builders/protobuf/block_variant_transport_builder.hpp"
+#include "module/shared_model/builders/protobuf/empty_block.hpp"
+#include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_empty_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
