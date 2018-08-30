@@ -63,13 +63,15 @@ namespace iroha {
         auto signature = shared_model::crypto::CryptoSigner<>::sign(
             blob, shared_model::crypto::Keypair(pubkey, privkey));
 
+        // TODO 30.08.2018 andrei: IR-1670 Remove optional from YAC
+        // CryptoProviderImpl::getVote
         factory_->createSignature(pubkey, signature)
             .match(
                 [&](iroha::expected::Value<
                     std::unique_ptr<shared_model::interface::Signature>> &sig) {
                   vote.signature = std::move(sig.value);
                 },
-                [&](iroha::expected::Error<std::string> &reason) {
+                [](iroha::expected::Error<std::string> &reason) {
                   logger::log("YacCryptoProvider::getVote")
                       ->error("Cannot build vote signature: {}", reason.error);
                 });
