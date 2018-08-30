@@ -293,7 +293,8 @@ namespace shared_model {
       }
 
       /**
-       * Validates transaction with current_timestamp instead of time provider
+       * Validates transaction against current_timestamp instead of time
+       * provider
        */
       Answer validate(const interface::Transaction &tx,
                       interface::types::TimestampType current_timestamp) const {

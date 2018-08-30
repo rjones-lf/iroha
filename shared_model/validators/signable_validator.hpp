@@ -36,7 +36,7 @@ namespace shared_model {
       Answer validate(const Model &model,
                       interface::types::TimestampType current_timestamp) const {
         return validateImpl(
-            model, [this, &current_timestamp](const auto &model) {
+            model, [this, current_timestamp](const auto &model) {
               return ModelValidator::validate(model, current_timestamp);
             });
       }
