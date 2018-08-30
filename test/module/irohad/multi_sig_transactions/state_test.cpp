@@ -13,6 +13,8 @@ using namespace std;
 using namespace iroha;
 using namespace iroha::model;
 
+// state with tx with A sig, receive with B, only B should be shared among others
+
 /**
  * @given empty state
  * @when  insert one batch

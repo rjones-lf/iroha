@@ -157,6 +157,11 @@ TEST_F(MstProcessorTest, completedTransactionUsecase) {
   check(observers);
 }
 
+// three more cases:
+//   - 0, 0, 0 - fix so that initial is, we send the same, nothing happens
+//   - 1, 0, 0 - existing with one more signature
+//             - completely new one
+
 /**
  * @given initialised mst processor
  * AND wrappers on mst observables

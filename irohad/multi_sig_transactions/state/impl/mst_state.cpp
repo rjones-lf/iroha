@@ -126,6 +126,8 @@ namespace iroha {
       return;
     }
 
+    // if we receive an old one with same signatures, return
+
     DataType found = *corresponding;
     // Append new signatures to the existing state
     mergeSignaturesInBatch(found, rhs_batch);
