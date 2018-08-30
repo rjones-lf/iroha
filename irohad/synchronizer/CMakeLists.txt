@@ -3,7 +3,7 @@ add_library(synchronizer
     )
 
 target_link_libraries(synchronizer
-    shared_model_proto_backend
+    ametsuchi
     rxcpp
     logger
     )
