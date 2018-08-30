@@ -147,94 +147,95 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
  * transactions
  * @then those transactions is returned
  */
-TEST_F(MstPipelineTest, DISABLED_GetPendingTxsAwaitingForThisPeer) {
+TEST_F(MstPipelineTest, GetPendingTxsAwaitingForThisPeer) {
   auto pending_tx = baseTx()
                         .setAccountDetail(kUserId, "fav_meme", "doge")
                         .quorum(kSignatories + 1);
-  auto pending_tx_check = [](auto &response) {
-    ASSERT_NO_THROW({
-        //      const auto &pending_tx_resp = boost::apply_visitor(
-        //          framework::SpecifiedVisitor<
-        //              shared_model::interface::GetPendingTransactions>(),
-        //          response.get());
-        //      ASSERT_EQ(pending_tx_resp.getTxs[0].hash(), pending_tx.hash());
-    });
-  };
 
   // prepare itf
   IntegrationTestFramework itf(1, {}, [](auto &i) { i.done(); }, true);
   itf.setInitialState(kAdminKeypair);
   auto &mst_itf = makeMstUser(itf);
+  auto signed_tx = signTx(pending_tx, kUserKeypair);
+
+  auto pending_tx_check = [&pending_hash = signed_tx.hash()](auto &response) {
+    ASSERT_NO_THROW({
+      const auto &pending_tx_resp = boost::apply_visitor(
+          framework::SpecifiedVisitor<
+              shared_model::interface::TransactionsResponse>(),
+          response.get());
+      ASSERT_EQ(pending_tx_resp.transactions().front().hash(), pending_hash);
+    });
+  };
 
   // send pending transaction, signing it only with one signatory
-  mst_itf.sendTx(signTx(pending_tx, signatories[0]))
-      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
-                 pending_tx_check);
+  mst_itf.sendTx(signed_tx).sendQuery(
+      makeGetPendingTxsQuery(kUserId, kUserKeypair), pending_tx_check);
 }
-
-/**
- * @given ledger with pending transactions, which lack two or more signatures
- * @when signing those transactions with one signature @and executing get
- * pending transactions
- * @then they are returned with initial number of signatures plus one
- */
-TEST_F(MstPipelineTest, DISABLED_GetPendingTxsLatestSignatures) {
-  auto pending_tx = baseTx()
-                        .setAccountDetail(kUserId, "fav_meme", "doge")
-                        .quorum(kSignatories + 1);
-  auto signatory_check = [](size_t expected_signatories_number) {
-    return [](auto &response) {
-      ASSERT_NO_THROW({
-          //        const auto &pending_tx_resp = boost::apply_visitor(
-          //            framework::SpecifiedVisitor<
-          //                shared_model::interface::GetPendingTransactions>(),
-          //            response.get());
-          //      ASSERT_EQ(pending_tx_resp.getTxs[0].signatures().size,
-          //      expected_signatories_number);
-      });
-    };
-  };
-
-  // prepare itf
-  IntegrationTestFramework itf(1, {}, [](auto &i) { i.done(); }, true);
-  itf.setInitialState(kAdminKeypair);
-  auto &mst_itf = makeMstUser(itf);
-
-  mst_itf.sendTx(signTx(pending_tx, signatories[0]))
-      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
-                 signatory_check(1))
-      .sendTx(signTx(pending_tx, signatories[1]))
-      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
-                 signatory_check(2));
-}
-
-/**
- * @given ledger with pending transactions
- * @when signing them with number of signatures to get over quorum @and
- * executing get pending transactions
- * @then those transactions are not returned
- */
-TEST_F(MstPipelineTest, DISABLED_GetPendingTxsNoSignedTxs) {
-  auto pending_tx = baseTx()
-                        .setAccountDetail(kUserId, "fav_meme", "doge")
-                        .quorum(kSignatories + 1);
-  auto no_txs_check = [](auto &response) {
-    ASSERT_NO_THROW({
-        //      const auto &pending_tx_resp = boost::apply_visitor(
-        //          framework::SpecifiedVisitor<
-        //              shared_model::interface::GetPendingTransactions>(),
-        //          response.get());
-        //      ASSERT_TRUE(pending_tx_resp.getTxs().empty);
-    });
-  };
-
-  // prepare itf
-  IntegrationTestFramework itf(1, {}, [](auto &i) { i.done(); }, true);
-  itf.setInitialState(kAdminKeypair);
-  auto &mst_itf = makeMstUser(itf);
-
-  mst_itf.sendTx(signTx(pending_tx, signatories[0]))
-      .sendTx(signTx(pending_tx, signatories[1]))
-      .sendTx(signTx(pending_tx, kUserKeypair))
-      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair), no_txs_check);
-}
+//
+///**
+// * @given ledger with pending transactions, which lack two or more signatures
+// * @when signing those transactions with one signature @and executing get
+// * pending transactions
+// * @then they are returned with initial number of signatures plus one
+// */
+// TEST_F(MstPipelineTest, DISABLED_GetPendingTxsLatestSignatures) {
+//  auto pending_tx = baseTx()
+//                        .setAccountDetail(kUserId, "fav_meme", "doge")
+//                        .quorum(kSignatories + 1);
+//  auto signatory_check = [](size_t expected_signatories_number) {
+//    return [](auto &response) {
+//      ASSERT_NO_THROW({
+//        const auto &pending_tx_resp = boost::apply_visitor(
+//            framework::SpecifiedVisitor<
+//                shared_model::interface::GetPendingTransactions>(),
+//            response.get());
+//        ASSERT_EQ(pending_tx_resp.getTxs[0].signatures().size,
+//                  expected_signatories_number);
+//      });
+//    };
+//  };
+//
+//  // prepare itf
+//  IntegrationTestFramework itf(1, {}, [](auto &i) { i.done(); }, true);
+//  itf.setInitialState(kAdminKeypair);
+//  auto &mst_itf = makeMstUser(itf);
+//
+//  mst_itf.sendTx(signTx(pending_tx, signatories[0]))
+//      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
+//                 signatory_check(1))
+//      .sendTx(signTx(pending_tx, signatories[1]))
+//      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
+//                 signatory_check(2));
+//}
+//
+///**
+// * @given ledger with pending transactions
+// * @when signing them with number of signatures to get over quorum @and
+// * executing get pending transactions
+// * @then those transactions are not returned
+// */
+// TEST_F(MstPipelineTest, DISABLED_GetPendingTxsNoSignedTxs) {
+//  auto pending_tx = baseTx()
+//                        .setAccountDetail(kUserId, "fav_meme", "doge")
+//                        .quorum(kSignatories + 1);
+//  auto no_txs_check = [](auto &response) {
+//    ASSERT_NO_THROW({
+//      const auto &pending_tx_resp = boost::apply_visitor(
+//          framework::SpecifiedVisitor<
+//              shared_model::interface::GetPendingTransactions>(),
+//          response.get());
+//      ASSERT_TRUE(pending_tx_resp.getTxs().empty);
+//    });
+//  };
+//
+//  // prepare itf
+//  IntegrationTestFramework itf(1, {}, [](auto &i) { i.done(); }, true);
+//  itf.setInitialState(kAdminKeypair);
+//  auto &mst_itf = makeMstUser(itf);
+//
+//  mst_itf.sendTx(signTx(pending_tx, signatories[0]))
+//      .sendTx(signTx(pending_tx, signatories[1]))
+//      .sendTx(signTx(pending_tx, kUserKeypair))
+//      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair), no_txs_check);
+//}
