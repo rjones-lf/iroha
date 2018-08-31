@@ -25,6 +25,7 @@ struct OnDemandOsServerGrpcTest : public ::testing::Test {
 
   std::shared_ptr<MockOdOsNotification> notification;
   std::shared_ptr<OnDemandOsServerGrpc> server;
+  Round round{1, 2};
 };
 
 /**
@@ -42,7 +43,6 @@ ACTION_P(SaveArg1Move, var) {
 TEST_F(OnDemandOsServerGrpcTest, SendTransactions) {
   OdOsNotification::CollectionType collection;
   auto creator = "test";
-  Round round{1, 1};
 
   EXPECT_CALL(*notification, onTransactions(round, _))
       .WillOnce(SaveArg1Move(&collection));
@@ -67,7 +67,6 @@ TEST_F(OnDemandOsServerGrpcTest, SendTransactions) {
  */
 TEST_F(OnDemandOsServerGrpcTest, RequestProposal) {
   auto creator = "test";
-  transport::Round round{1, 1};
   proto::ProposalRequest request;
   request.mutable_round()->set_block_round(round.block_round);
   request.mutable_round()->set_reject_round(round.reject_round);
@@ -102,7 +101,6 @@ TEST_F(OnDemandOsServerGrpcTest, RequestProposal) {
  * @then the result is correctly serialized
  */
 TEST_F(OnDemandOsServerGrpcTest, RequestProposalNone) {
-  transport::Round round{1, 1};
   proto::ProposalRequest request;
   request.mutable_round()->set_block_round(round.block_round);
   request.mutable_round()->set_reject_round(round.reject_round);

@@ -73,7 +73,7 @@ TEST_F(OnDemandConnectionManagerTest, FactoryUsed) {
  */
 TEST_F(OnDemandConnectionManagerTest, onTransactions) {
   OdOsNotification::CollectionType collection;
-  Round round{1, 1};
+  Round round{1, 2};
   const OnDemandConnectionManager::PeerType types[] = {
       OnDemandConnectionManager::kCurrentRoundRejectConsumer,
       OnDemandConnectionManager::kNextRoundRejectConsumer,

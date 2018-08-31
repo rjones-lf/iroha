@@ -26,7 +26,7 @@ void OnDemandOsClientGrpc::onTransactions(transport::Round round,
                                           CollectionType transactions) {
   proto::TransactionsRequest request;
   request.mutable_round()->set_block_round(round.block_round);
-  request.mutable_round()->set_reject_round(round.block_round);
+  request.mutable_round()->set_reject_round(round.reject_round);
   for (auto &transaction : transactions) {
     *request.add_transactions() = std::move(
         static_cast<shared_model::proto::Transaction *>(transaction.get())

@@ -37,6 +37,7 @@ struct OnDemandOsClientGrpcTest : public ::testing::Test {
   OnDemandOsClientGrpc::TimepointType timepoint;
   std::chrono::milliseconds timeout{1};
   std::shared_ptr<OnDemandOsClientGrpc> client;
+  Round round{1, 2};
 };
 
 /**
@@ -51,7 +52,6 @@ TEST_F(OnDemandOsClientGrpcTest, onTransactions) {
   EXPECT_CALL(*stub, AsyncSendTransactionsRaw(_, _, _))
       .WillOnce(DoAll(SaveArg<1>(&request), Return(r.get())));
 
-  Round round{1, 1};
   OdOsNotification::CollectionType collection;
   auto creator = "test";
   protocol::Transaction tx;
@@ -100,7 +100,6 @@ TEST_F(OnDemandOsClientGrpcTest, onRequestProposal) {
                       SetArgPointee<2>(response),
                       Return(grpc::Status::OK)));
 
-  transport::Round round{1, 1};
   auto proposal = client->onRequestProposal(round);
 
   ASSERT_EQ(timepoint + timeout, deadline);
@@ -127,7 +126,6 @@ TEST_F(OnDemandOsClientGrpcTest, onRequestProposalNone) {
                       SetArgPointee<2>(response),
                       Return(grpc::Status::OK)));
 
-  transport::Round round{1, 1};
   auto proposal = client->onRequestProposal(round);
 
   ASSERT_EQ(timepoint + timeout, deadline);
