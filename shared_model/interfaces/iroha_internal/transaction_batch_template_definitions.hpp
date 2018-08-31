@@ -88,11 +88,17 @@ namespace shared_model {
         const FieldValidator &field_validator) {
       validation::ReasonsGroupType reason;
       reason.first = "Transaction batch: ";
-      field_validator.validateSignatures(
-          reason, transaction->signatures(), transaction->payload());
+
+      if (not boost::empty(transaction->signatures())) {
+        field_validator.validateSignatures(
+            reason, transaction->signatures(), transaction->payload());
+      } else {
+        reason.second.emplace_back(
+            "Transaction should contain at least one signature");
+      }
 
       auto answer = transaction_validator.validate(*transaction);
-      if (answer.hasErrors()) {
+      if (not reason.second.empty() or answer.hasErrors()) {
         answer.addReason(std::move(reason));
         return iroha::expected::makeError(answer.reason());
       }
