@@ -20,9 +20,9 @@ class OnDemandOsTest : public ::testing::Test {
  public:
   std::shared_ptr<OnDemandOrderingService> os;
   const uint64_t transaction_limit = 20;
-  const uint64_t proposal_limit = 5;
-  const RoundType initial_round = {2, 1}, target_round = {4, 1},
-                  commit_round = {3, 1}, reject_round = {2, 2};
+  const uint32_t proposal_limit = 5;
+  const Round initial_round = {2, 1}, target_round = {4, 1},
+              commit_round = {3, 1}, reject_round = {2, 2};
 
   void SetUp() override {
     os = std::make_shared<OnDemandOrderingServiceImpl>(
@@ -34,7 +34,7 @@ class OnDemandOsTest : public ::testing::Test {
    * @param os - ordering service for insertion
    * @param range - pair of [from, to)
    */
-  void generateTransactionsAndInsert(RoundType round,
+  void generateTransactionsAndInsert(Round round,
                                      std::pair<uint64_t, uint64_t> range) {
     auto now = iroha::time::now();
     OnDemandOrderingService::CollectionType collection;
@@ -132,20 +132,21 @@ TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
  * @then  on second rounds check that old proposals are expired
  */
 TEST_F(OnDemandOsTest, Erase) {
-  for (size_t i = commit_round.first; i < commit_round.first + proposal_limit;
+  for (auto i = commit_round.block_round;
+       i < commit_round.block_round + proposal_limit;
        ++i) {
-    generateTransactionsAndInsert({i + 1, commit_round.second}, {1, 2});
-    os->onCollaborationOutcome({i, commit_round.second});
-    ASSERT_TRUE(os->onRequestProposal({i + 1, commit_round.second}));
+    generateTransactionsAndInsert({i + 1, commit_round.reject_round}, {1, 2});
+    os->onCollaborationOutcome({i, commit_round.reject_round});
+    ASSERT_TRUE(os->onRequestProposal({i + 1, commit_round.reject_round}));
   }
 
-  for (size_t i = commit_round.first + proposal_limit;
-       i < commit_round.first + 2 * proposal_limit;
+  for (BlockRoundType i = commit_round.block_round + proposal_limit;
+       i < commit_round.block_round + 2 * proposal_limit;
        ++i) {
-    generateTransactionsAndInsert({i + 1, commit_round.second}, {1, 2});
-    os->onCollaborationOutcome({i, commit_round.second});
-    ASSERT_FALSE(
-        os->onRequestProposal({i + 1 - proposal_limit, commit_round.second}));
+    generateTransactionsAndInsert({i + 1, commit_round.reject_round}, {1, 2});
+    os->onCollaborationOutcome({i, commit_round.reject_round});
+    ASSERT_FALSE(os->onRequestProposal(
+        {i + 1 - proposal_limit, commit_round.reject_round}));
   }
 }
 
@@ -156,19 +157,20 @@ TEST_F(OnDemandOsTest, Erase) {
  * @then  on second rounds check that old proposals are expired
  */
 TEST_F(OnDemandOsTest, EraseReject) {
-  for (size_t i = reject_round.second; i < reject_round.second + proposal_limit;
+  for (auto i = reject_round.reject_round;
+       i < reject_round.reject_round + proposal_limit;
        ++i) {
-    generateTransactionsAndInsert({reject_round.first, i + 1}, {1, 2});
-    os->onCollaborationOutcome({reject_round.first, i});
-    ASSERT_TRUE(os->onRequestProposal({reject_round.first, i + 1}));
+    generateTransactionsAndInsert({reject_round.block_round, i + 1}, {1, 2});
+    os->onCollaborationOutcome({reject_round.block_round, i});
+    ASSERT_TRUE(os->onRequestProposal({reject_round.block_round, i + 1}));
   }
 
-  for (size_t i = reject_round.second + proposal_limit;
-       i < reject_round.second + 2 * proposal_limit;
+  for (RejectRoundType i = reject_round.reject_round + proposal_limit;
+       i < reject_round.reject_round + 2 * proposal_limit;
        ++i) {
-    generateTransactionsAndInsert({reject_round.first, i + 1}, {1, 2});
-    os->onCollaborationOutcome({reject_round.first, i});
-    ASSERT_FALSE(
-        os->onRequestProposal({reject_round.first, i + 1 - proposal_limit}));
+    generateTransactionsAndInsert({reject_round.block_round, i + 1}, {1, 2});
+    os->onCollaborationOutcome({reject_round.block_round, i});
+    ASSERT_FALSE(os->onRequestProposal(
+        {reject_round.block_round, i + 1 - proposal_limit}));
   }
 }

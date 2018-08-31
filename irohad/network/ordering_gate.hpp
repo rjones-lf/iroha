@@ -20,13 +20,13 @@
 
 #include <rxcpp/rx-observable.hpp>
 
-#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "network/peer_communication_service.hpp"
 
 namespace shared_model {
   namespace interface {
     class Transaction;
     class Proposal;
+    class TransactionBatch;
   }  // namespace interface
 }  // namespace shared_model
 

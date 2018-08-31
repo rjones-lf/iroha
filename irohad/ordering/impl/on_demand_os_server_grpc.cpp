@@ -17,8 +17,7 @@ grpc::Status OnDemandOsServerGrpc::SendTransactions(
     ::grpc::ServerContext *context,
     const proto::TransactionsRequest *request,
     ::google::protobuf::Empty *response) {
-  RoundType round{request->round().block_round(),
-                  request->round().reject_round()};
+  Round round{request->round().block_round(), request->round().reject_round()};
   OdOsNotification::CollectionType transactions;
   for (const auto &transaction : request->transactions()) {
     transactions.push_back(std::make_unique<shared_model::proto::Transaction>(

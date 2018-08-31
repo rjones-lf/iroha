@@ -14,11 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
 
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 #include "validators/default_validator.hpp"
 
@@ -37,8 +39,8 @@ grpc::Status OrderingServiceTransportGrpc::onTransaction(
   if (subscriber_.expired()) {
     async_call_->log_->error("No subscriber");
   } else {
-    auto batch_result =
-        shared_model::interface::TransactionBatch::createTransactionBatch<
+    auto batch_result = shared_model::interface::TransactionBatchFactory::
+        createTransactionBatch<
             shared_model::validation::DefaultSignedTransactionValidator>(
             std::make_shared<shared_model::proto::Transaction>(
                 iroha::protocol::Transaction(*request)));
@@ -76,8 +78,8 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
           return std::make_shared<shared_model::proto::Transaction>(tx);
         });
 
-    auto batch_result =
-        shared_model::interface::TransactionBatch::createTransactionBatch(
+    auto batch_result = shared_model::interface::TransactionBatchFactory::
+        createTransactionBatch(
             txs,
             shared_model::validation::DefaultSignedTransactionsValidator());
     batch_result.match(

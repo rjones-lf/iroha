@@ -8,6 +8,7 @@
 
 #include <gmock/gmock.h>
 
+#include "ordering/on_demand_ordering_service.hpp"
 #include "ordering/on_demand_os_transport.hpp"
 
 namespace iroha {
@@ -15,10 +16,9 @@ namespace iroha {
     namespace transport {
 
       struct MockOdOsNotification : public OdOsNotification {
-        MOCK_METHOD2(onTransactions, void(RoundType, CollectionType));
+        MOCK_METHOD2(onTransactions, void(Round, CollectionType));
 
-        MOCK_METHOD1(onRequestProposal,
-                     boost::optional<ProposalType>(RoundType));
+        MOCK_METHOD1(onRequestProposal, boost::optional<ProposalType>(Round));
       };
 
       struct MockOdOsNotificationFactory : public OdOsNotificationFactory {
@@ -28,7 +28,17 @@ namespace iroha {
       };
 
     }  // namespace transport
-  }    // namespace ordering
+
+    struct MockOnDemandOrderingService : public OnDemandOrderingService {
+      MOCK_METHOD2(onTransactions, void(transport::Round, CollectionType));
+
+      MOCK_METHOD1(onRequestProposal,
+                   boost::optional<ProposalType>(transport::Round));
+
+      MOCK_METHOD1(onCollaborationOutcome, void(transport::Round));
+    };
+
+  }  // namespace ordering
 }  // namespace iroha
 
 #endif  // IROHA_ORDERING_MOCKS_HPP

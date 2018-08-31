@@ -73,14 +73,15 @@ TEST_F(OnDemandConnectionManagerTest, FactoryUsed) {
  */
 TEST_F(OnDemandConnectionManagerTest, onTransactions) {
   OdOsNotification::CollectionType collection;
-  RoundType round{1, 1};
+  Round round{1, 2};
   const OnDemandConnectionManager::PeerType types[] = {
       OnDemandConnectionManager::kCurrentRoundRejectConsumer,
       OnDemandConnectionManager::kNextRoundRejectConsumer,
       OnDemandConnectionManager::kNextRoundCommitConsumer};
-  const transport::RoundType rounds[] = {{round.first, round.second + 2},
-                                         {round.first + 1, 2},
-                                         {round.first + 2, 1}};
+  const transport::Round rounds[] = {
+      {round.block_round, round.reject_round + 2},
+      {round.block_round + 1, 2},
+      {round.block_round + 2, 1}};
   for (auto &&pair : boost::combine(types, rounds)) {
     EXPECT_CALL(*connections[boost::get<0>(pair)],
                 onTransactions(boost::get<1>(pair), collection))
@@ -98,7 +99,7 @@ TEST_F(OnDemandConnectionManagerTest, onTransactions) {
  * AND return data is forwarded
  */
 TEST_F(OnDemandConnectionManagerTest, onRequestProposal) {
-  RoundType round;
+  Round round;
   boost::optional<OnDemandConnectionManager::ProposalType> oproposal =
       OnDemandConnectionManager::ProposalType{};
   auto proposal = oproposal.value().get();
@@ -120,7 +121,7 @@ TEST_F(OnDemandConnectionManagerTest, onRequestProposal) {
  * AND return data is forwarded
  */
 TEST_F(OnDemandConnectionManagerTest, onRequestProposalNone) {
-  RoundType round;
+  Round round;
   boost::optional<OnDemandConnectionManager::ProposalType> oproposal;
   EXPECT_CALL(*connections[OnDemandConnectionManager::kIssuer],
               onRequestProposal(round))
