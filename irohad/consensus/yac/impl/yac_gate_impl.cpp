@@ -18,7 +18,6 @@
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 
 #include "backend/protobuf/block.hpp"
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "common/visitor.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/messages.hpp"

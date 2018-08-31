@@ -655,10 +655,13 @@ class FieldValidatorTest : public ValidatorsTest {
                     &FieldValidator::validateAssetName,
                     &FieldValidatorTest::asset_name,
                     asset_name_test_cases),
-      makeValidator("created_time",
-                    &FieldValidator::validateCreatedTime,
-                    &FieldValidatorTest::created_time,
-                    created_time_test_cases),
+      makeValidator(
+          "created_time",
+          static_cast<void (FieldValidator::*)(validation::ReasonsGroupType &,
+                                               interface::types::TimestampType)
+                          const>(&FieldValidator::validateCreatedTime),
+          &FieldValidatorTest::created_time,
+          created_time_test_cases),
       makeTransformValidator(
           "meta",
           &FieldValidator::validateQueryPayloadMeta,

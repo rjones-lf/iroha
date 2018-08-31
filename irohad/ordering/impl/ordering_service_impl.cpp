@@ -91,6 +91,8 @@ namespace iroha {
       for (std::unique_ptr<shared_model::interface::TransactionBatch> batch;
            txs.size() < max_size_ and queue_.try_pop(batch);) {
         auto batch_size = batch->transactions().size();
+        // TODO 29.08.2018 andrei IR-1667 Timestamp validation during proposal
+        // generation
         txs.insert(std::end(txs),
                    std::make_move_iterator(std::begin(batch->transactions())),
                    std::make_move_iterator(std::end(batch->transactions())));

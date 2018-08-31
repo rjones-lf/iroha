@@ -3,11 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
+
 #include <gtest/gtest.h>
+#include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
-#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
+#include "validators/field_validator.hpp"
 
 using namespace iroha::network;
 using namespace iroha::model;
@@ -29,7 +32,10 @@ using ::testing::InvokeWithoutArgs;
 TEST(TransportTest, SendAndReceive) {
   auto async_call_ = std::make_shared<
       iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
-  auto transport = std::make_shared<MstTransportGrpc>(async_call_);
+  auto factory =
+      std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
+          shared_model::validation::FieldValidator>>();
+  auto transport = std::make_shared<MstTransportGrpc>(async_call_, factory);
   auto notifications = std::make_shared<iroha::MockMstTransportNotification>();
   transport->subscribe(notifications);
 

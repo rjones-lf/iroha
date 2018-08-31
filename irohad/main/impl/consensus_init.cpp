@@ -42,8 +42,11 @@ namespace iroha {
       }
 
       auto YacInit::createCryptoProvider(
-          const shared_model::crypto::Keypair &keypair) {
-        auto crypto = std::make_shared<CryptoProviderImpl>(keypair);
+          const shared_model::crypto::Keypair &keypair,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              common_objects_factory) {
+        auto crypto = std::make_shared<CryptoProviderImpl>(
+            keypair, std::move(common_objects_factory));
 
         return crypto;
       }
@@ -88,12 +91,15 @@ namespace iroha {
           std::chrono::milliseconds delay_milliseconds,
           std::shared_ptr<
               iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
-              async_call) {
-        return Yac::create(YacVoteStorage(),
-                           createNetwork(std::move(async_call)),
-                           createCryptoProvider(keypair),
-                           createTimer(delay_milliseconds),
-                           initial_order);
+              async_call,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              common_objects_factory) {
+        return Yac::create(
+            YacVoteStorage(),
+            createNetwork(std::move(async_call)),
+            createCryptoProvider(keypair, std::move(common_objects_factory)),
+            createTimer(delay_milliseconds),
+            initial_order);
       }
 
       std::shared_ptr<YacGate> YacInit::initConsensusGate(
@@ -106,13 +112,16 @@ namespace iroha {
           std::chrono::milliseconds vote_delay_milliseconds,
           std::shared_ptr<
               iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
-              async_call) {
+              async_call,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              common_objects_factory) {
         auto peer_orderer = createPeerOrderer(peer_query_factory);
 
         auto yac = createYac(peer_orderer->getInitialOrdering().value(),
                              keypair,
                              vote_delay_milliseconds,
-                             std::move(async_call));
+                             std::move(async_call),
+                             std::move(common_objects_factory));
         consensus_network->subscribe(yac);
 
         auto hash_provider = createHashProvider();

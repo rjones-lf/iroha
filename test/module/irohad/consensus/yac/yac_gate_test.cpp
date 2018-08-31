@@ -19,7 +19,6 @@
 #include <rxcpp/rx-observable.hpp>
 
 #include "builders/protobuf/block.hpp"
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "consensus/yac/impl/yac_gate_impl.hpp"
@@ -30,6 +29,7 @@
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/simulator/simulator_mocks.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_signature_builder.hpp"
 
 using namespace iroha::consensus::yac;
 using namespace iroha::network;

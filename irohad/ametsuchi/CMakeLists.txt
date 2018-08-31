@@ -18,6 +18,7 @@ target_link_libraries(ametsuchi
     logger
     rxcpp
     libs_common
+    common
     query_execution
     shared_model_interfaces
     shared_model_stateless_validation

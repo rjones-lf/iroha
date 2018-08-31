@@ -17,7 +17,7 @@
 
 #include <gtest/gtest.h>
 
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_signature_builder.hpp"
 
 /**
  * @given fields for Signature object
