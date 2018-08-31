@@ -116,3 +116,10 @@ addtest(get_account_test
 target_link_libraries(get_account_test
     acceptance_fixture
     )
+
+addtest(remove_signatory_test
+    remove_signatory_test.cpp
+    )
+target_link_libraries(remove_signatory_test
+    acceptance_fixture
+    )
