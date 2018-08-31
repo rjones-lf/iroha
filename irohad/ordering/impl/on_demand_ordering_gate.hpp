@@ -62,11 +62,6 @@ namespace iroha {
           const iroha::network::PeerCommunicationService &pcs) override;
 
      private:
-      /**
-       * Update the local ordering service, request the proposal and vote for it
-       */
-      void vote();
-
       std::shared_ptr<OnDemandOrderingService> ordering_service_;
       std::shared_ptr<transport::OdOsNotification> network_client_;
       rxcpp::composite_subscription events_subscription_;
