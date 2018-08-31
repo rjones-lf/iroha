@@ -112,6 +112,10 @@ TEST(TransactionBatchTest, CreateSingleTxBatchWhenValid) {
   validation::DefaultUnsignedTransactionValidator transaction_validator;
 
   auto tx1 = createValidUnsignedTransaction();
+  auto keypair = crypto::DefaultCryptoAlgorithmType::generateKeypair();
+  auto signed_blob =
+      crypto::DefaultCryptoAlgorithmType::sign(tx1->payload(), keypair);
+  tx1->addSignature(signed_blob, keypair.publicKey());
 
   auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
       tx1, transaction_validator);
