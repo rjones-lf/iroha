@@ -18,18 +18,6 @@
 #ifndef IROHA_DEFAULT_BUILDERS_HPP
 #define IROHA_DEFAULT_BUILDERS_HPP
 
-#include "builders/common_objects/account_asset_builder.hpp"
-#include "builders/common_objects/account_builder.hpp"
-#include "builders/common_objects/asset_builder.hpp"
-#include "builders/common_objects/domain_builder.hpp"
-#include "builders/common_objects/peer_builder.hpp"
-#include "builders/common_objects/signature_builder.hpp"
-#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_domain_builder.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "builders/protobuf/query_responses/proto_block_query_response_builder.hpp"
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
 #include "builders/query_responses/block_query_response_builder.hpp"
@@ -39,38 +27,15 @@
 
 namespace shared_model {
   namespace builder {
-    using DefaultAccountBuilder = shared_model::builder::AccountBuilder<
-        shared_model::proto::AccountBuilder,
-        shared_model::validation::FieldValidator>;
-
-    using DefaultAssetBuilder = shared_model::builder::AssetBuilder<
-        shared_model::proto::AssetBuilder,
-        shared_model::validation::FieldValidator>;
-
-    using DefaultAccountAssetBuilder =
-        shared_model::builder::AccountAssetBuilder<
-            shared_model::proto::AccountAssetBuilder,
-            shared_model::validation::FieldValidator>;
-
-    using DefaultPeerBuilder = shared_model::builder::PeerBuilder<
-        shared_model::proto::PeerBuilder,
-        shared_model::validation::FieldValidator>;
-
-    using DefaultDomainBuilder = shared_model::builder::DomainBuilder<
-        shared_model::proto::DomainBuilder,
-        shared_model::validation::FieldValidator>;
 
     using DefaultTransactionStatusBuilder =
         shared_model::builder::TransactionStatusBuilder<
             shared_model::proto::TransactionStatusBuilder>;
 
-    using DefaultSignatureBuilder = shared_model::builder::SignatureBuilder<
-        shared_model::proto::SignatureBuilder,
-        shared_model::validation::FieldValidator>;
-
     using DefaultBlockQueryResponseBuilder =
         shared_model::builder::BlockQueryResponseBuilder<
             shared_model::proto::BlockQueryResponseBuilder>;
+
   }  // namespace builder
 }  // namespace shared_model
 

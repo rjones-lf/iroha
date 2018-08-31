@@ -59,7 +59,7 @@ def doReleaseBuild() {
 
   // push Docker image in case the current branch is develop,
   // or it is a commit into PR which base branch is develop (usually develop -> master)
-  if (GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop') {
+  if (GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop' || GIT_LOCAL_BRANCH == 'dev' || CHANGE_BRANCH_LOCAL == 'dev') {
     iCRelease.push("${platform}-develop")
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop",

@@ -48,7 +48,8 @@ class TransportBuilderTest : public ::testing::Test {
     account_id2 = "acccount@domain";
     quorum = 2;
     counter = 1048576;
-    hash = std::string(32, '0');
+    hash = shared_model::crypto::Hash(std::string(32, '0'));
+    invalid_hash = shared_model::crypto::Hash("");
     height = 1;
     invalid_account_id = "some#invalid?account@@id";
   }
@@ -112,12 +113,12 @@ class TransportBuilderTest : public ::testing::Test {
     return BlockBuilder()
         .transactions(std::vector<Transaction>({createTransaction()}))
         .height(1)
-        .prevHash(crypto::Hash("asd"));
+        .createdTime(created_time);
   }
 
   auto createBlock() {
     return getBaseBlockBuilder<shared_model::proto::BlockBuilder>()
-        .createdTime(created_time)
+        .prevHash(hash)
         .build()
         .signAndAddSignature(keypair)
         .finish();
@@ -125,26 +126,26 @@ class TransportBuilderTest : public ::testing::Test {
 
   auto createInvalidBlock() {
     return getBaseBlockBuilder<TestBlockBuilder>()
-        .createdTime(invalid_created_time)
+        .prevHash(invalid_hash)
         .build();
   }
 
   //-------------------------------------EmptyBlock-------------------------------------
   template <typename EmptyBlockBuilder>
   auto getBaseEmptyBlockBuilder() {
-    return EmptyBlockBuilder().height(1).prevHash(crypto::Hash("asd"));
+    return EmptyBlockBuilder().height(1).createdTime(created_time);
   }
 
   auto createEmptyBlock() {
     return getBaseEmptyBlockBuilder<
                shared_model::proto::UnsignedEmptyBlockBuilder>()
-        .createdTime(created_time)
+        .prevHash(hash)
         .build();
   }
 
   auto createInvalidEmptyBlock() {
     return getBaseEmptyBlockBuilder<TestEmptyBlockBuilder>()
-        .createdTime(invalid_created_time)
+        .prevHash(invalid_hash)
         .build();
   }
 
@@ -202,7 +203,8 @@ class TransportBuilderTest : public ::testing::Test {
   std::string account_id2;
   uint8_t quorum;
   uint64_t counter;
-  std::string hash;
+  shared_model::crypto::Hash hash;
+  shared_model::crypto::Hash invalid_hash;
   uint64_t height;
 
   std::string invalid_account_id;

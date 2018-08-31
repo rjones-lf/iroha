@@ -8,6 +8,7 @@
 
 #include "common/result.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
+#include "validators/field_validator.hpp"
 #include "validators/transactions_collection/transactions_collection_validator.hpp"
 
 namespace shared_model {
@@ -16,6 +17,8 @@ namespace shared_model {
     class TransactionBatch {
      public:
       TransactionBatch() = delete;
+      TransactionBatch(const TransactionBatch &) = default;
+      TransactionBatch(TransactionBatch &&) = default;
 
       /**
        * Create transaction batch out of collection of transactions

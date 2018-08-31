@@ -20,8 +20,6 @@
 #include <utility>
 
 #include "ametsuchi/mutable_storage.hpp"
-#include "backend/protobuf/block.hpp"
-#include "backend/protobuf/empty_block.hpp"
 #include "interfaces/iroha_internal/block_variant.hpp"
 
 namespace iroha {
