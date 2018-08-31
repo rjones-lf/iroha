@@ -5,6 +5,7 @@
 
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 
+#include "common/visitor.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 
@@ -16,7 +17,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<transport::OdOsNotification> network_client,
     rxcpp::observable<BlockRoundEventType> events,
     std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
-    transport::RoundType initial_round)
+    transport::Round initial_round)
     : ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {
@@ -24,14 +25,14 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         std::lock_guard<std::shared_timed_mutex> lock(mutex_);
 
         visit_in_place(event,
-                       [this](BlockEvent block) {
+                       [this](const BlockEvent &block) {
                          // block committed, increment block round
                          current_round_ = {block.height, 1};
                        },
-                       [this](EmptyEvent empty) {
+                       [this](const EmptyEvent &empty) {
                          // no blocks committed, increment reject round
-                         current_round_ = {current_round_.first,
-                                           current_round_.second + 1};
+                         current_round_ = {current_round_.block_round,
+                                           current_round_.reject_round + 1};
                        });
 
         // notify our ordering service about new round
@@ -44,7 +45,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         proposal_notifier_.get_subscriber().on_next(
             std::move(proposal).value_or_eval([&] {
               return proposal_factory_->unsafeCreateProposal(
-                  current_round_.first, current_round_.second, {});
+                  current_round_.block_round, current_round_.reject_round, {});
             }));
       })),
       proposal_factory_(std::move(factory)),
@@ -53,12 +54,11 @@ OnDemandOrderingGate::OnDemandOrderingGate(
 void OnDemandOrderingGate::propagateTransaction(
     std::shared_ptr<const shared_model::interface::Transaction> transaction)
     const {
-  throw std::logic_error("Not implemented");
+  throw std::logic_error("Method is deprecated. Use propagateBatch instead");
 }
 
 void OnDemandOrderingGate::propagateBatch(
     const shared_model::interface::TransactionBatch &batch) const {
-  // shared lock
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
   network_client_->onTransactions(current_round_, batch.transactions());
@@ -71,5 +71,6 @@ OnDemandOrderingGate::on_proposal() {
 
 void OnDemandOrderingGate::setPcs(
     const iroha::network::PeerCommunicationService &pcs) {
-  throw std::logic_error("Not implemented");
+  throw std::logic_error(
+      "Method is deprecated. PCS observable should be set in ctor");
 }

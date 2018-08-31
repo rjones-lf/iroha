@@ -10,10 +10,11 @@
 
 #include <shared_mutex>
 
+#include <boost/variant.hpp>
 #include <rxcpp/rx-observable.hpp>
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
-#include "network/proposal_gate.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
 
 namespace iroha {
@@ -45,9 +46,9 @@ namespace iroha {
           rxcpp::observable<BlockRoundEventType> events,
           std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
-          transport::RoundType initial_round);
+          transport::Round initial_round);
 
-      void propagateTransaction(
+      [[deprecated("Use propagateBatch")]] void propagateTransaction(
           std::shared_ptr<const shared_model::interface::Transaction>
               transaction) const override;
 
@@ -57,7 +58,8 @@ namespace iroha {
       rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
       on_proposal() override;
 
-      void setPcs(const iroha::network::PeerCommunicationService &pcs) override;
+      [[deprecated("Use ctor")]] void setPcs(
+          const iroha::network::PeerCommunicationService &pcs) override;
 
      private:
       /**
@@ -71,7 +73,7 @@ namespace iroha {
       std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
 
-      transport::RoundType current_round_;
+      transport::Round current_round_;
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::Proposal>>
           proposal_notifier_;

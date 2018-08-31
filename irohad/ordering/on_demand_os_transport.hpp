@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -39,15 +40,31 @@ namespace iroha {
       /**
        * Type of proposal round
        */
-      using RoundType = std::pair<BlockRoundType, RejectRoundType>;
+      struct Round {
+        BlockRoundType block_round;
+        RejectRoundType reject_round;
+
+        bool operator<(const Round &rhs) const {
+          return std::tie(block_round, reject_round)
+              < std::tie(rhs.block_round, rhs.reject_round);
+        }
+
+        bool operator==(const Round &rhs) const {
+          return std::tie(block_round, reject_round)
+              == std::tie(rhs.block_round, rhs.reject_round);
+        }
+      };
 
       /**
-       * Class provides hash function for RoundType
+       * Class provides hash function for Round
        */
       class RoundTypeHasher {
        public:
-        std::size_t operator()(const RoundType &val) const {
-          return boost::hash_value(val);
+        std::size_t operator()(const Round &val) const {
+          size_t seed = 0;
+          boost::hash_combine(seed, val.block_round);
+          boost::hash_combine(seed, val.reject_round);
+          return seed;
         }
       };
 
@@ -77,7 +94,7 @@ namespace iroha {
          * @param round - expected proposal round
          * @param transactions - vector of passed transactions
          */
-        virtual void onTransactions(RoundType round,
+        virtual void onTransactions(Round round,
                                     CollectionType transactions) = 0;
 
         /**
@@ -87,7 +104,7 @@ namespace iroha {
          * @return proposal for requested round
          */
         virtual boost::optional<ProposalType> onRequestProposal(
-            RoundType round) = 0;
+            Round round) = 0;
 
         virtual ~OdOsNotification() = default;
       };

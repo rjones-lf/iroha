@@ -24,7 +24,6 @@
 #include "network/consensus_gate.hpp"
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
-#include "network/proposal_gate.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -95,15 +94,6 @@ namespace iroha {
                    rxcpp::observable<shared_model::interface::BlockVariant>());
     };
 
-    struct MockProposalGate : public ProposalGate {
-      // Non-copyable argument workaround
-      MOCK_METHOD1(doVote, expected::Result<void, std::string>(ProposalVote &));
-      expected::Result<void, std::string> vote(ProposalVote vote) {
-        return doVote(vote);
-      }
-
-      MOCK_METHOD0(outcomes, rxcpp::observable<ProposalOutcomeType>());
-    };
   }  // namespace network
 }  // namespace iroha
 

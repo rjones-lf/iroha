@@ -42,13 +42,13 @@ ACTION_P(SaveArg1Move, var) {
 TEST_F(OnDemandOsServerGrpcTest, SendTransactions) {
   OdOsNotification::CollectionType collection;
   auto creator = "test";
-  RoundType round{1, 1};
+  Round round{1, 1};
 
   EXPECT_CALL(*notification, onTransactions(round, _))
       .WillOnce(SaveArg1Move(&collection));
   proto::TransactionsRequest request;
-  request.mutable_round()->set_block_round(round.first);
-  request.mutable_round()->set_reject_round(round.second);
+  request.mutable_round()->set_block_round(round.block_round);
+  request.mutable_round()->set_reject_round(round.reject_round);
   request.add_transactions()
       ->mutable_payload()
       ->mutable_reduced_payload()
@@ -67,10 +67,10 @@ TEST_F(OnDemandOsServerGrpcTest, SendTransactions) {
  */
 TEST_F(OnDemandOsServerGrpcTest, RequestProposal) {
   auto creator = "test";
-  transport::RoundType round{1, 1};
+  transport::Round round{1, 1};
   proto::ProposalRequest request;
-  request.mutable_round()->set_block_round(round.first);
-  request.mutable_round()->set_reject_round(round.second);
+  request.mutable_round()->set_block_round(round.block_round);
+  request.mutable_round()->set_reject_round(round.reject_round);
   proto::ProposalResponse response;
   protocol::Proposal proposal;
   proposal.add_transactions()
@@ -102,10 +102,10 @@ TEST_F(OnDemandOsServerGrpcTest, RequestProposal) {
  * @then the result is correctly serialized
  */
 TEST_F(OnDemandOsServerGrpcTest, RequestProposalNone) {
-  transport::RoundType round{1, 1};
+  transport::Round round{1, 1};
   proto::ProposalRequest request;
-  request.mutable_round()->set_block_round(round.first);
-  request.mutable_round()->set_reject_round(round.second);
+  request.mutable_round()->set_block_round(round.block_round);
+  request.mutable_round()->set_reject_round(round.reject_round);
   proto::ProposalResponse response;
   EXPECT_CALL(*notification, onRequestProposal(round))
       .WillOnce(Return(ByMove(std::move(boost::none))));

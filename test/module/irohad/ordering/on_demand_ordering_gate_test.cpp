@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 #include "framework/test_subscriber.hpp"
-#include "module/irohad/network/network_mocks.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
@@ -36,13 +36,12 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
   }
 
   rxcpp::subjects::subject<OnDemandOrderingGate::BlockRoundEventType> rounds;
-  rxcpp::subjects::subject<ProposalOutcomeType> outcomes;
   std::shared_ptr<MockOnDemandOrderingService> ordering_service;
   std::shared_ptr<MockOdOsNotification> notification;
   MockUnsafeProposalFactory *factory;
   std::shared_ptr<OnDemandOrderingGate> ordering_gate;
 
-  const RoundType initial_round = {2, 1};
+  const Round initial_round = {2, 1};
 };
 
 /**
@@ -68,7 +67,7 @@ TEST_F(OnDemandOrderingGateTest, propagateBatch) {
  */
 TEST_F(OnDemandOrderingGateTest, BlockEvent) {
   OnDemandOrderingGate::BlockEvent event{3};
-  RoundType round{event.height, 1};
+  Round round{event.height, 1};
 
   boost::optional<OdOsNotification::ProposalType> oproposal(nullptr);
   auto proposal = oproposal.value().get();
@@ -94,7 +93,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
  * @then new proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
-  RoundType round{initial_round.first, initial_round.second + 1};
+  Round round{initial_round.block_round, initial_round.reject_round + 1};
 
   boost::optional<OdOsNotification::ProposalType> oproposal(nullptr);
   auto proposal = oproposal.value().get();
@@ -121,7 +120,7 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
  */
 TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
   OnDemandOrderingGate::BlockEvent event{3};
-  RoundType round{event.height, 1};
+  Round round{event.height, 1};
 
   boost::optional<OdOsNotification::ProposalType> oproposal;
 
@@ -151,7 +150,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
  * @then new empty proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
-  RoundType round{initial_round.first, initial_round.second + 1};
+  Round round{initial_round.block_round, initial_round.reject_round + 1};
 
   boost::optional<OdOsNotification::ProposalType> oproposal;
 

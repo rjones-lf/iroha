@@ -51,7 +51,7 @@ TEST_F(OnDemandOsClientGrpcTest, onTransactions) {
   EXPECT_CALL(*stub, AsyncSendTransactionsRaw(_, _, _))
       .WillOnce(DoAll(SaveArg<1>(&request), Return(r.get())));
 
-  RoundType round;
+  Round round{1, 1};
   OdOsNotification::CollectionType collection;
   auto creator = "test";
   protocol::Transaction tx;
@@ -60,8 +60,8 @@ TEST_F(OnDemandOsClientGrpcTest, onTransactions) {
   collection.push_back(std::make_unique<shared_model::proto::Transaction>(tx));
   client->onTransactions(round, std::move(collection));
 
-  ASSERT_EQ(request.round().block_round(), round.first);
-  ASSERT_EQ(request.round().reject_round(), round.second);
+  ASSERT_EQ(request.round().block_round(), round.block_round);
+  ASSERT_EQ(request.round().reject_round(), round.reject_round);
   ASSERT_EQ(request.transactions()
                 .Get(0)
                 .payload()
@@ -100,12 +100,12 @@ TEST_F(OnDemandOsClientGrpcTest, onRequestProposal) {
                       SetArgPointee<2>(response),
                       Return(grpc::Status::OK)));
 
-  transport::RoundType round{1, 1};
+  transport::Round round{1, 1};
   auto proposal = client->onRequestProposal(round);
 
   ASSERT_EQ(timepoint + timeout, deadline);
-  ASSERT_EQ(request.round().block_round(), round.first);
-  ASSERT_EQ(request.round().reject_round(), round.second);
+  ASSERT_EQ(request.round().block_round(), round.block_round);
+  ASSERT_EQ(request.round().reject_round(), round.reject_round);
   ASSERT_TRUE(proposal);
   ASSERT_EQ(proposal.value()->transactions()[0].creatorAccountId(), creator);
 }
@@ -127,11 +127,11 @@ TEST_F(OnDemandOsClientGrpcTest, onRequestProposalNone) {
                       SetArgPointee<2>(response),
                       Return(grpc::Status::OK)));
 
-  transport::RoundType round{1, 1};
+  transport::Round round{1, 1};
   auto proposal = client->onRequestProposal(round);
 
   ASSERT_EQ(timepoint + timeout, deadline);
-  ASSERT_EQ(request.round().block_round(), round.first);
-  ASSERT_EQ(request.round().reject_round(), round.second);
+  ASSERT_EQ(request.round().block_round(), round.block_round);
+  ASSERT_EQ(request.round().reject_round(), round.reject_round);
   ASSERT_FALSE(proposal);
 }

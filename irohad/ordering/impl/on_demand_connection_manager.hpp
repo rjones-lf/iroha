@@ -53,11 +53,11 @@ namespace iroha {
           CurrentPeers initial_peers,
           rxcpp::observable<CurrentPeers> peers);
 
-      void onTransactions(transport::RoundType round,
+      void onTransactions(transport::Round round,
                           CollectionType transactions) override;
 
       boost::optional<ProposalType> onRequestProposal(
-          transport::RoundType round) override;
+          transport::Round round) override;
 
      private:
       /**

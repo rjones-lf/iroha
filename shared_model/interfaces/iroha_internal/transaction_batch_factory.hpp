@@ -14,6 +14,10 @@
 namespace shared_model {
   namespace interface {
 
+    /**
+     * Provides methods that create transaction batch from a single transaction,
+     * or a collection of transactions. Field validator is used by default
+     */
     class TransactionBatchFactory {
      public:
       /**

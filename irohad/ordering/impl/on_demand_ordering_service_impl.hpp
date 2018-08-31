@@ -32,29 +32,29 @@ namespace iroha {
       explicit OnDemandOrderingServiceImpl(
           size_t transaction_limit,
           size_t number_of_proposals,
-          const transport::RoundType &initial_round);
+          const transport::Round &initial_round);
 
       explicit OnDemandOrderingServiceImpl(size_t transaction_limit)
           : OnDemandOrderingServiceImpl(transaction_limit, 3, {2, 1}) {}
 
       // --------------------- | OnDemandOrderingService |_---------------------
 
-      void onCollaborationOutcome(transport::RoundType round) override;
+      void onCollaborationOutcome(transport::Round round) override;
 
       // ----------------------- | OdOsNotification | --------------------------
 
-      void onTransactions(transport::RoundType,
+      void onTransactions(transport::Round,
                           CollectionType transactions) override;
 
       boost::optional<ProposalType> onRequestProposal(
-          transport::RoundType round) override;
+          transport::Round round) override;
 
      private:
       /**
        * Packs new proposals and creates new rounds
        * Note: method is not thread-safe
        */
-      void packNextProposals(const transport::RoundType &round);
+      void packNextProposals(const transport::Round &round);
 
       /**
        * Removes last elements if it is required
@@ -67,7 +67,7 @@ namespace iroha {
        * @return packed proposal from the given round queue
        * Note: method is not thread-safe
        */
-      ProposalType emitProposal(const transport::RoundType &round);
+      ProposalType emitProposal(const transport::Round &round);
 
       /**
        * Max number of transaction in one proposal
@@ -82,12 +82,12 @@ namespace iroha {
       /**
        * Queue which holds all rounds in linear order
        */
-      std::queue<transport::RoundType> round_queue_;
+      std::queue<transport::Round> round_queue_;
 
       /**
        * Map of available proposals
        */
-      std::unordered_map<transport::RoundType,
+      std::unordered_map<transport::Round,
                          ProposalType,
                          transport::RoundTypeHasher>
           proposal_map_;
@@ -95,7 +95,7 @@ namespace iroha {
       /**
        * Proposals for current rounds
        */
-      std::unordered_map<transport::RoundType,
+      std::unordered_map<transport::Round,
                          tbb::concurrent_queue<TransactionType>,
                          transport::RoundTypeHasher>
           current_proposals_;
