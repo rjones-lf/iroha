@@ -92,7 +92,7 @@ namespace iroha {
      * @param rhs - batch for insertion
      * @return State with completed batches
      */
-    MstState operator+=(const DataType &rhs);
+    StateAndCompleteStatus operator+=(const DataType &rhs);
 
     /**
      * Concat internal data of states
@@ -166,8 +166,9 @@ namespace iroha {
      * Insert batch in own state and push it in out_state if required
      * @param out_state - state for inserting completed batches
      * @param rhs_tx - batch for insert
+     * @return if batch is complete after that insertion
      */
-    void insertOne(MstState &out_state, const DataType &rhs_tx);
+    bool insertOne(MstState &out_state, const DataType &rhs_tx);
 
     /**
      * Insert new value in state with keeping invariant

@@ -32,6 +32,13 @@ namespace iroha {
                     });
     }
   }
+  void shareState(
+      ConstRefState state,
+      rxcpp::subjects::subject<std::shared_ptr<MstState>> &subject) {
+    if (not state.isEmpty()) {
+      subject.get_subscriber().on_next(std::make_shared<MstState>(state));
+    }
+  }
 
   FairMstProcessor::FairMstProcessor(
       std::shared_ptr<iroha::network::MstTransport> transport,
@@ -56,7 +63,12 @@ namespace iroha {
 
   auto FairMstProcessor::propagateBatchImpl(const iroha::DataType &batch)
       -> decltype(propagateBatch(batch)) {
-    shareState(storage_->updateOwnState(batch), batches_subject_);
+    auto state_update = storage_->updateOwnState(batch);
+    if (state_update.second) {
+      shareState(state_update.first, batches_subject_);
+    } else {
+      shareState(state_update.first, state_subject_);
+    }
     shareState(
         storage_->getExpiredTransactions(time_provider_->getCurrentTime()),
         expired_subject_);

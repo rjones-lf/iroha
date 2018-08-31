@@ -49,10 +49,11 @@ namespace iroha {
     /**
      * Provide updating state of current peer with new transaction
      * @param tx - new transaction for insertion in state
-     * @return State with completed transaction
+     * @return state with inserted signatures and boolean, showing if this state
+     * has all needed signatures, i.e. complete
      * General note: implementation of method covered by lock
      */
-    MstState updateOwnState(const DataType &tx);
+    StateAndCompleteStatus updateOwnState(const DataType &tx);
 
     /**
      * Remove expired transactions and return them

@@ -20,10 +20,10 @@ namespace iroha {
     return MstState(completer);
   }
 
-  MstState MstState::operator+=(const DataType &rhs) {
+  StateAndCompleteStatus MstState::operator+=(const DataType &rhs) {
     auto result = MstState::empty(completer_);
-    insertOne(result, rhs);
-    return result;
+    auto complete_status = insertOne(result, rhs);
+    return StateAndCompleteStatus{result, complete_status};
   }
 
   MstState MstState::operator+=(const MstState &rhs) {
@@ -84,26 +84,23 @@ namespace iroha {
    * Merge signatures in batches
    * @param target - batch for inserting
    * @param donor - batch with transactions to copy signatures from
-   * @return return false when sequences of transactions inside input batches
-   * are different
+   * @return return if at least one new signature was inserted
    */
   bool mergeSignaturesInBatch(DataType &target, const DataType &donor) {
-    if (not(*target == *donor)) {
-      return false;
-    }
-
+    auto inserted_new_signatures = false;
     for (auto zip :
          boost::combine(target->transactions(), donor->transactions())) {
       const auto &target_tx = zip.get<0>();
       const auto &donor_tx = zip.get<1>();
-      std::for_each(donor_tx->signatures().begin(),
-                    donor_tx->signatures().end(),
-                    [&target_tx](const auto &signature) {
-                      target_tx->addSignature(signature.signedData(),
-                                              signature.publicKey());
-                    });
+      inserted_new_signatures = inserted_new_signatures
+          or std::any_of(donor_tx->signatures().begin(),
+                         donor_tx->signatures().end(),
+                         [&target_tx](const auto &signature) {
+                           return target_tx->addSignature(
+                               signature.signedData(), signature.publicKey());
+                         });
     }
-    return true;
+    return inserted_new_signatures;
   }
 
   MstState::MstState(const CompleterType &completer)
@@ -117,27 +114,33 @@ namespace iroha {
     log_ = logger::log("MstState");
   }
 
-  void MstState::insertOne(MstState &out_state, const DataType &rhs_batch) {
+  bool MstState::insertOne(MstState &out_state, const DataType &rhs_batch) {
     log_->info("batch: {}", rhs_batch->toString());
     auto corresponding = internal_state_.find(rhs_batch);
     if (corresponding == internal_state_.end()) {
       // when state not contains transaction
       rawInsert(rhs_batch);
-      return;
+      out_state.rawInsert(rhs_batch);
+      return false;
     }
-
-    // if we receive an old one with same signatures, return
 
     DataType found = *corresponding;
     // Append new signatures to the existing state
-    mergeSignaturesInBatch(found, rhs_batch);
+    auto inserted_new_signatures = mergeSignaturesInBatch(found, rhs_batch);
 
     if ((*completer_)(found)) {
       // state already has completed transaction,
       // remove from state and return it
       out_state += found;
       internal_state_.erase(internal_state_.find(found));
+      return true;
     }
+
+    // if batch still isn't completed, return it, if new signatures were updated
+    if (inserted_new_signatures) {
+      out_state.rawInsert(*corresponding);
+    }
+    return false;
   }
 
   void MstState::rawInsert(const DataType &rhs_batch) {

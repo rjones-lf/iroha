@@ -19,7 +19,7 @@ namespace iroha {
     return applyImpl(target_peer, new_state);
   }
 
-  MstState MstStorage::updateOwnState(const DataType &tx) {
+  StateAndCompleteStatus MstStorage::updateOwnState(const DataType &tx) {
     std::lock_guard<std::mutex> lock{this->mutex_};
     return updateOwnStateImpl(tx);
   }

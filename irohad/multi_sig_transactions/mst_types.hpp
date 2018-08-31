@@ -43,5 +43,7 @@ namespace iroha {
   using ConstRefState = ConstRefT<MstState>;
 
   using DataType = BatchPtr;
+
+  using StateAndCompleteStatus = std::pair<MstState, bool>;
 }  // namespace iroha
 #endif  // IROHA_MST_TYPES_HPP
