@@ -21,11 +21,12 @@ class OnDemandOsTest : public ::testing::Test {
   std::shared_ptr<OnDemandOrderingService> os;
   const uint64_t transaction_limit = 20;
   const uint64_t proposal_limit = 5;
-  const RoundType target_round = RoundType(2, 1);
+  const RoundType initial_round = {2, 1}, target_round = {4, 1},
+                  commit_round = {3, 1}, reject_round = {2, 2};
 
   void SetUp() override {
     os = std::make_shared<OnDemandOrderingServiceImpl>(
-        transaction_limit, proposal_limit, target_round);
+        transaction_limit, proposal_limit, initial_round);
   }
 
   /**
@@ -33,8 +34,8 @@ class OnDemandOsTest : public ::testing::Test {
    * @param os - ordering service for insertion
    * @param range - pair of [from, to)
    */
-  static void generateTransactionsAndInsert(
-      OnDemandOrderingService &os, std::pair<uint64_t, uint64_t> range) {
+  void generateTransactionsAndInsert(RoundType round,
+                                     std::pair<uint64_t, uint64_t> range) {
     auto now = iroha::time::now();
     OnDemandOrderingService::CollectionType collection;
     for (auto i = range.first; i < range.second; ++i) {
@@ -50,7 +51,7 @@ class OnDemandOsTest : public ::testing::Test {
                       generateKeypair())
               .finish()));
     }
-    os.onTransactions(std::move(collection));
+    os->onTransactions(round, std::move(collection));
   }
 };
 
@@ -61,12 +62,11 @@ class OnDemandOsTest : public ::testing::Test {
  * @then  check that previous round doesn't have proposal
  */
 TEST_F(OnDemandOsTest, EmptyRound) {
-  auto target_round = RoundType(1, 1);
-  ASSERT_FALSE(os->onRequestProposal(target_round));
+  ASSERT_FALSE(os->onRequestProposal(initial_round));
 
-  os->onCollaborationOutcome(RoundOutput::kCommitBlock);
+  os->onCollaborationOutcome(commit_round);
 
-  ASSERT_FALSE(os->onRequestProposal(target_round));
+  ASSERT_FALSE(os->onRequestProposal(initial_round));
 }
 
 /**
@@ -76,9 +76,9 @@ TEST_F(OnDemandOsTest, EmptyRound) {
  * @then  check that previous round has all transaction
  */
 TEST_F(OnDemandOsTest, NormalRound) {
-  generateTransactionsAndInsert(*os, {1, 2});
+  generateTransactionsAndInsert(target_round, {1, 2});
 
-  os->onCollaborationOutcome(RoundOutput::kCommitBlock);
+  os->onCollaborationOutcome(commit_round);
 
   ASSERT_TRUE(os->onRequestProposal(target_round));
 }
@@ -91,9 +91,9 @@ TEST_F(OnDemandOsTest, NormalRound) {
  * AND the rest of transactions isn't appeared in next after next round
  */
 TEST_F(OnDemandOsTest, OverflowRound) {
-  generateTransactionsAndInsert(*os, {1, transaction_limit * 2});
+  generateTransactionsAndInsert(target_round, {1, transaction_limit * 2});
 
-  os->onCollaborationOutcome(RoundOutput::kCommitBlock);
+  os->onCollaborationOutcome(commit_round);
 
   ASSERT_TRUE(os->onRequestProposal(target_round));
   ASSERT_EQ(transaction_limit,
@@ -108,12 +108,12 @@ TEST_F(OnDemandOsTest, OverflowRound) {
  */
 TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
   auto large_tx_limit = 10000u;
-  auto concurrent_os = std::make_shared<OnDemandOrderingServiceImpl>(
-      large_tx_limit, proposal_limit, target_round);
+  os = std::make_shared<OnDemandOrderingServiceImpl>(
+      large_tx_limit, proposal_limit, initial_round);
 
-  auto call = [&concurrent_os](auto bounds) {
+  auto call = [this](auto bounds) {
     for (auto i = bounds.first; i < bounds.second; ++i) {
-      generateTransactionsAndInsert(*concurrent_os, std::make_pair(i, i + 1));
+      this->generateTransactionsAndInsert(target_round, {i, i + 1});
     }
   };
 
@@ -121,12 +121,9 @@ TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
   std::thread two(call, std::make_pair(large_tx_limit / 2, large_tx_limit));
   one.join();
   two.join();
-  concurrent_os->onCollaborationOutcome(RoundOutput::kCommitBlock);
+  os->onCollaborationOutcome(commit_round);
   ASSERT_EQ(large_tx_limit,
-            concurrent_os->onRequestProposal(target_round)
-                .get()
-                ->transactions()
-                .size());
+            os->onRequestProposal(target_round).get()->transactions().size());
 }
 
 /**
@@ -135,20 +132,20 @@ TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
  * @then  on second rounds check that old proposals are expired
  */
 TEST_F(OnDemandOsTest, Erase) {
-  auto round = target_round;
-  for (auto i = target_round.first; i < proposal_limit + 1; ++i) {
-    generateTransactionsAndInsert(*os, {1, proposal_limit});
-    os->onCollaborationOutcome(RoundOutput::kCommitBlock);
-    round = {i, round.second};
-    ASSERT_TRUE(os->onRequestProposal({i, 1}));
+  for (size_t i = commit_round.first; i < commit_round.first + proposal_limit;
+       ++i) {
+    generateTransactionsAndInsert({i + 1, commit_round.second}, {1, 2});
+    os->onCollaborationOutcome({i, commit_round.second});
+    ASSERT_TRUE(os->onRequestProposal({i + 1, commit_round.second}));
   }
 
-  for (uint64_t i = proposal_limit + 1, j = 1; i < 2 * proposal_limit;
-       ++i, ++j) {
-    generateTransactionsAndInsert(*os, {1, proposal_limit});
-    ASSERT_FALSE(os->onRequestProposal({i, 1}));
-    os->onCollaborationOutcome(RoundOutput::kCommitBlock);
-    round = {round.first + 1, round.second};
+  for (size_t i = commit_round.first + proposal_limit;
+       i < commit_round.first + 2 * proposal_limit;
+       ++i) {
+    generateTransactionsAndInsert({i + 1, commit_round.second}, {1, 2});
+    os->onCollaborationOutcome({i, commit_round.second});
+    ASSERT_FALSE(
+        os->onRequestProposal({i + 1 - proposal_limit, commit_round.second}));
   }
 }
 
@@ -159,19 +156,19 @@ TEST_F(OnDemandOsTest, Erase) {
  * @then  on second rounds check that old proposals are expired
  */
 TEST_F(OnDemandOsTest, EraseReject) {
-  auto round = target_round;
-  for (auto i = target_round.second; i < proposal_limit + 1; ++i) {
-    generateTransactionsAndInsert(*os, {1, proposal_limit});
-    os->onCollaborationOutcome(RoundOutput::kReject);
-    round = {round.first, i};
-    ASSERT_TRUE(os->onRequestProposal({round.first, i}));
+  for (size_t i = reject_round.second; i < reject_round.second + proposal_limit;
+       ++i) {
+    generateTransactionsAndInsert({reject_round.first, i + 1}, {1, 2});
+    os->onCollaborationOutcome({reject_round.first, i});
+    ASSERT_TRUE(os->onRequestProposal({reject_round.first, i + 1}));
   }
 
-  for (uint64_t i = proposal_limit + 1, j = 1; i < 2 * proposal_limit;
-       ++i, ++j) {
-    generateTransactionsAndInsert(*os, {1, proposal_limit});
-    ASSERT_FALSE(os->onRequestProposal({round.first, i}));
-    os->onCollaborationOutcome(RoundOutput::kReject);
-    round = {round.first, round.second};
+  for (size_t i = reject_round.second + proposal_limit;
+       i < reject_round.second + 2 * proposal_limit;
+       ++i) {
+    generateTransactionsAndInsert({reject_round.first, i + 1}, {1, 2});
+    os->onCollaborationOutcome({reject_round.first, i});
+    ASSERT_FALSE(
+        os->onRequestProposal({reject_round.first, i + 1 - proposal_limit}));
   }
 }

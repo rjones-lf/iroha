@@ -24,7 +24,7 @@ namespace iroha {
 
         grpc::Status SendTransactions(
             ::grpc::ServerContext *context,
-            const proto::TransactionsCollection *request,
+            const proto::TransactionsRequest *request,
             ::google::protobuf::Empty *response) override;
 
         grpc::Status RequestProposal(

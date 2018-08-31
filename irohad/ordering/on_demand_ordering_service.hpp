@@ -12,22 +12,15 @@ namespace iroha {
   namespace ordering {
 
     /**
-     * Enum type with outcomes of proposal and block consensus
-     */
-    enum class RoundOutput { kCommitProposal, kCommitBlock, kReject };
-
-    /**
      * Ordering Service aka OS which can share proposals by request
      */
     class OnDemandOrderingService : public transport::OdOsNotification {
      public:
       /**
        * Method which should be invoked on outcome of collaboration for round
-       * @param outcome - status of collaboration on proposal
+       * @param round - proposal round which has started
        */
-      virtual void onCollaborationOutcome(RoundOutput outcome) = 0;
-
-      virtual ~OnDemandOrderingService() = default;
+      virtual void onCollaborationOutcome(transport::RoundType round) = 0;
     };
 
   }  // namespace ordering

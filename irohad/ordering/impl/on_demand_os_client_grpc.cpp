@@ -22,18 +22,21 @@ OnDemandOsClientGrpc::OnDemandOsClientGrpc(
       time_provider_(std::move(time_provider)),
       proposal_request_timeout_(proposal_request_timeout) {}
 
-void OnDemandOsClientGrpc::onTransactions(CollectionType transactions) {
-  proto::TransactionsCollection message;
+void OnDemandOsClientGrpc::onTransactions(transport::RoundType round,
+                                          CollectionType transactions) {
+  proto::TransactionsRequest request;
+  request.mutable_round()->set_block_round(round.first);
+  request.mutable_round()->set_reject_round(round.first);
   for (auto &transaction : transactions) {
-    *message.add_transactions() = std::move(
+    *request.add_transactions() = std::move(
         static_cast<shared_model::proto::Transaction *>(transaction.get())
             ->getTransport());
   }
 
-  log_->debug("Propagating: '{}'", message.DebugString());
+  log_->debug("Propagating: '{}'", request.DebugString());
 
   async_call_->Call([&](auto context, auto cq) {
-    return stub_->AsyncSendTransactions(context, message, cq);
+    return stub_->AsyncSendTransactions(context, request, cq);
   });
 }
 
@@ -42,8 +45,8 @@ OnDemandOsClientGrpc::onRequestProposal(transport::RoundType round) {
   grpc::ClientContext context;
   context.set_deadline(time_provider_() + proposal_request_timeout_);
   proto::ProposalRequest request;
-  request.set_block_round(round.first);
-  request.set_reject_round(round.second);
+  request.mutable_round()->set_block_round(round.first);
+  request.mutable_round()->set_reject_round(round.second);
   proto::ProposalResponse response;
   auto status = stub_->RequestProposal(&context, request, &response);
   if (not status.ok()) {

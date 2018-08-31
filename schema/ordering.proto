@@ -15,13 +15,18 @@ service OrderingServiceTransportGrpc {
   rpc onBatch (iroha.protocol.TxList) returns (google.protobuf.Empty);
 }
 
-message TransactionsCollection {
-  repeated protocol.Transaction transactions = 1;
+message ProposalRound {
+  uint64 block_round = 1;
+  uint32 reject_round = 2;
+}
+
+message TransactionsRequest {
+  ProposalRound round = 1;
+  repeated protocol.Transaction transactions = 2;
 }
 
 message ProposalRequest {
-  uint64 block_round = 1;
-  uint32 reject_round = 2;
+  ProposalRound round = 1;
 }
 
 message ProposalResponse {
@@ -31,6 +36,6 @@ message ProposalResponse {
 }
 
 service OnDemandOrdering {
-  rpc SendTransactions(TransactionsCollection) returns (google.protobuf.Empty);
+  rpc SendTransactions(TransactionsRequest) returns (google.protobuf.Empty);
   rpc RequestProposal(ProposalRequest) returns (ProposalResponse);
 }

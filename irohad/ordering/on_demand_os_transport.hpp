@@ -74,9 +74,11 @@ namespace iroha {
 
         /**
          * Callback on receiving transactions
+         * @param round - expected proposal round
          * @param transactions - vector of passed transactions
          */
-        virtual void onTransactions(CollectionType transactions) = 0;
+        virtual void onTransactions(RoundType round,
+                                    CollectionType transactions) = 0;
 
         /**
          * Callback on request about proposal

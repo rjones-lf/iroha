@@ -45,20 +45,23 @@ struct OnDemandOsClientGrpcTest : public ::testing::Test {
  * @then data is correctly serialized and sent
  */
 TEST_F(OnDemandOsClientGrpcTest, onTransactions) {
-  proto::TransactionsCollection request;
+  proto::TransactionsRequest request;
   auto r = std::make_unique<
       MockClientAsyncResponseReader<google::protobuf::Empty>>();
   EXPECT_CALL(*stub, AsyncSendTransactionsRaw(_, _, _))
       .WillOnce(DoAll(SaveArg<1>(&request), Return(r.get())));
 
+  RoundType round;
   OdOsNotification::CollectionType collection;
   auto creator = "test";
   protocol::Transaction tx;
   tx.mutable_payload()->mutable_reduced_payload()->set_creator_account_id(
       creator);
   collection.push_back(std::make_unique<shared_model::proto::Transaction>(tx));
-  client->onTransactions(std::move(collection));
+  client->onTransactions(round, std::move(collection));
 
+  ASSERT_EQ(request.round().block_round(), round.first);
+  ASSERT_EQ(request.round().reject_round(), round.second);
   ASSERT_EQ(request.transactions()
                 .Get(0)
                 .payload()
@@ -101,8 +104,8 @@ TEST_F(OnDemandOsClientGrpcTest, onRequestProposal) {
   auto proposal = client->onRequestProposal(round);
 
   ASSERT_EQ(timepoint + timeout, deadline);
-  ASSERT_EQ(request.block_round(), round.first);
-  ASSERT_EQ(request.reject_round(), round.second);
+  ASSERT_EQ(request.round().block_round(), round.first);
+  ASSERT_EQ(request.round().reject_round(), round.second);
   ASSERT_TRUE(proposal);
   ASSERT_EQ(proposal.value()->transactions()[0].creatorAccountId(), creator);
 }
@@ -128,7 +131,7 @@ TEST_F(OnDemandOsClientGrpcTest, onRequestProposalNone) {
   auto proposal = client->onRequestProposal(round);
 
   ASSERT_EQ(timepoint + timeout, deadline);
-  ASSERT_EQ(request.block_round(), round.first);
-  ASSERT_EQ(request.reject_round(), round.second);
+  ASSERT_EQ(request.round().block_round(), round.first);
+  ASSERT_EQ(request.round().reject_round(), round.second);
   ASSERT_FALSE(proposal);
 }

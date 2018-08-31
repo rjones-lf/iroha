@@ -15,14 +15,16 @@ OnDemandOsServerGrpc::OnDemandOsServerGrpc(
 
 grpc::Status OnDemandOsServerGrpc::SendTransactions(
     ::grpc::ServerContext *context,
-    const proto::TransactionsCollection *request,
+    const proto::TransactionsRequest *request,
     ::google::protobuf::Empty *response) {
+  RoundType round{request->round().block_round(),
+                  request->round().reject_round()};
   OdOsNotification::CollectionType transactions;
   for (const auto &transaction : request->transactions()) {
     transactions.push_back(std::make_unique<shared_model::proto::Transaction>(
         iroha::protocol::Transaction(transaction)));
   }
-  ordering_service_->onTransactions(std::move(transactions));
+  ordering_service_->onTransactions(round, std::move(transactions));
   return ::grpc::Status::OK;
 }
 
@@ -31,7 +33,7 @@ grpc::Status OnDemandOsServerGrpc::RequestProposal(
     const proto::ProposalRequest *request,
     proto::ProposalResponse *response) {
   ordering_service_->onRequestProposal(
-      {request->block_round(), request->reject_round()})
+      {request->round().block_round(), request->round().reject_round()})
       | [&](auto &&proposal) {
           *response->mutable_proposal() = std::move(
               static_cast<shared_model::proto::Proposal *>(proposal.get())

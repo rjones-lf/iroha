@@ -23,14 +23,15 @@ namespace iroha {
       /**
        * Responsibilities of individual peers from the peers array
        * Transactions are sent to three ordering services:
-       * current consumers, first and second, and previous consumer
+       * reject round for current block, reject round for next block, and
+       * commit for subsequent next round
        * Proposal is requested from the current ordering service: issuer
        */
       enum PeerType {
-        kIssuer = 0,
-        kPreviousConsumer,
-        kCurrentFirstConsumer,
-        kCurrentSecondConsumer,
+        kCurrentRoundRejectConsumer = 0,
+        kNextRoundRejectConsumer,
+        kNextRoundCommitConsumer,
+        kIssuer,
         kCount
       };
 
@@ -47,6 +48,18 @@ namespace iroha {
             peers;
       };
 
+      OnDemandConnectionManager(
+          std::shared_ptr<transport::OdOsNotificationFactory> factory,
+          CurrentPeers initial_peers,
+          rxcpp::observable<CurrentPeers> peers);
+
+      void onTransactions(transport::RoundType round,
+                          CollectionType transactions) override;
+
+      boost::optional<ProposalType> onRequestProposal(
+          transport::RoundType round) override;
+
+     private:
       /**
        * Corresponding connections created by OdOsNotificationFactory
        * @see PeerType for individual descriptions
@@ -55,17 +68,6 @@ namespace iroha {
         PeerCollectionType<std::unique_ptr<transport::OdOsNotification>> peers;
       };
 
-      OnDemandConnectionManager(
-          std::shared_ptr<transport::OdOsNotificationFactory> factory,
-          CurrentPeers initial_peers,
-          rxcpp::observable<CurrentPeers> peers);
-
-      void onTransactions(CollectionType transactions) override;
-
-      boost::optional<ProposalType> onRequestProposal(
-          transport::RoundType round) override;
-
-     private:
       /**
        * Initialize corresponding peers in connections_ using factory_
        * @param peers to initialize connections with

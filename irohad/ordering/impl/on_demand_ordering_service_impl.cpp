@@ -28,36 +28,42 @@ OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
     const transport::RoundType &initial_round)
     : transaction_limit_(transaction_limit),
       number_of_proposals_(number_of_proposals),
-      current_proposal_(std::make_pair(
-          initial_round, tbb::concurrent_queue<TransactionType>())),
-      log_(logger::log("OnDemandOrderingServiceImpl")) {}
+      log_(logger::log("OnDemandOrderingServiceImpl")) {
+  onCollaborationOutcome(initial_round);
+}
 
 // -------------------------| OnDemandOrderingService |-------------------------
 
-void OnDemandOrderingServiceImpl::onCollaborationOutcome(RoundOutput outcome) {
-  auto current_round = current_proposal_.first;
-  log_->info("onCollaborationOutcome => round[{}, {}]",
-             current_round.first,
-             current_round.second);
+void OnDemandOrderingServiceImpl::onCollaborationOutcome(
+    transport::RoundType round) {
+  log_->info(
+      "onCollaborationOutcome => round[{}, {}]", round.first, round.second);
   // exclusive write lock
   std::lock_guard<std::shared_timed_mutex> guard(lock_);
   log_->info("onCollaborationOutcome => write lock is acquired");
 
-  packNextProposal(outcome);
+  packNextProposals(round);
   tryErase();
 }
 
 // ----------------------------| OdOsNotification |-----------------------------
 
-void OnDemandOrderingServiceImpl::onTransactions(CollectionType transactions) {
+void OnDemandOrderingServiceImpl::onTransactions(transport::RoundType round,
+                                                 CollectionType transactions) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
-  log_->info("onTransactions => collections size = {}", transactions.size());
+  log_->info("onTransactions => collections size = {}, round[{}, {}]",
+             transactions.size(),
+             round.first,
+             round.second);
 
-  std::for_each(transactions.begin(), transactions.end(), [this](auto &obj) {
-    current_proposal_.second.push(std::move(obj));
-  });
-  log_->info("onTransactions => collection is inserted");
+  auto it = current_proposals_.find(round);
+  if (it != current_proposals_.end()) {
+    std::for_each(transactions.begin(), transactions.end(), [&it](auto &obj) {
+      it->second.push(std::move(obj));
+    });
+    log_->info("onTransactions => collection is inserted");
+  }
 }
 
 boost::optional<OnDemandOrderingServiceImpl::ProposalType>
@@ -74,45 +80,79 @@ OnDemandOrderingServiceImpl::onRequestProposal(transport::RoundType round) {
 
 // ---------------------------------| Private |---------------------------------
 
-void OnDemandOrderingServiceImpl::packNextProposal(RoundOutput outcome) {
-  log_->info("pack next proposal...size of queue = {}",
-             current_proposal_.second.unsafe_size());
-  if (not current_proposal_.second.empty()) {
-    proposal_map_.insert(
-        std::make_pair(current_proposal_.first, emitProposal()));
-    log_->info("packNextProposal: data has been fetched");
+void OnDemandOrderingServiceImpl::packNextProposals(
+    const transport::RoundType &round) {
+  auto close_round = [this](transport::RoundType round) {
+    auto it = current_proposals_.find(round);
+    if (it != current_proposals_.end()) {
+      if (not it->second.empty()) {
+        proposal_map_.emplace(round, emitProposal(round));
+        log_->info("packNextProposal: data has been fetched for round[{}, {}]",
+                   round.first,
+                   round.second);
+        round_queue_.push(round);
+      }
+      current_proposals_.erase(it);
+    }
+  };
+
+  /*
+   * The possible cases can be visualised as a diagram, where:
+   * o - current round, x - next round, v - target round
+   *
+   *   0 1 2
+   * 0 o x v
+   * 1 x v .
+   * 2 v . .
+   *
+   * Reject case:
+   *
+   *   0 1 2 3
+   * 0 . o x v
+   * 1 x v . .
+   * 2 v . . .
+   *
+   * (0,1) - current round. Round (0,2) is closed for transactions.
+   * Round (0,3) is now receiving transactions.
+   * Rounds (1,) and (2,) do not change.
+   *
+   * Commit case:
+   *
+   *   0 1 2
+   * 0 . . .
+   * 1 o x v
+   * 2 x v .
+   * 3 v . .
+   *
+   * (1,0) - current round. The diagram is similar to the initial case.
+   */
+
+  // close next reject round
+  close_round({round.first, round.second + 1});
+
+  if (round.second == kFirstRound) {
+    // new block round
+    close_round({round.first + 1, round.second});
+
+    // remove current queues
+    current_proposals_.clear();
+    // initialize the 3 diagonal rounds from the commit case diagram
+    for (size_t i = 0; i <= 2; ++i) {
+      current_proposals_[{round.first + i, round.second + 2 - i}];
+    }
+  } else {
+    // new reject round
+    current_proposals_[{round.first, round.second + 2}];
   }
-
-  round_queue_.push(current_proposal_.first);
-  log_->info("packNextProposal: pushed in queue");
-
-  auto current_round = current_proposal_.first;
-  decltype(current_round) next_round;
-  switch (outcome) {
-    case RoundOutput::kCommitProposal:
-      next_round = current_round;
-      break;
-    case RoundOutput::kCommitBlock:
-      next_round = std::make_pair(current_round.first + 1, kFirstRound);
-      break;
-    case RoundOutput::kReject:
-      next_round =
-          std::make_pair(current_round.first, current_round.second + 1);
-      break;
-  }
-
-  log_->info("nextRound is: [{}, {}]", next_round.first, next_round.second);
-
-  current_proposal_.first = next_round;
-  current_proposal_.second.clear();  // operator = of tbb::queue is closed
 }
 
 OnDemandOrderingServiceImpl::ProposalType
-OnDemandOrderingServiceImpl::emitProposal() {
+OnDemandOrderingServiceImpl::emitProposal(const transport::RoundType &round) {
   iroha::protocol::Proposal proto_proposal;
-  proto_proposal.set_height(current_proposal_.first.first);
+  proto_proposal.set_height(round.first);
   proto_proposal.set_created_time(iroha::time::now());
-  log_->info("Mutable proposal generation");
+  log_->info(
+      "Mutable proposal generation, round[{}, {}]", round.first, round.second);
 
   TransactionType current_tx;
   using ProtoTxType = shared_model::proto::Transaction;
@@ -122,12 +162,13 @@ OnDemandOrderingServiceImpl::emitProposal() {
   // outer method should guarantee availability of at least one transaction in
   // queue, also, code shouldn't fetch all transactions from queue. The rest
   // will be lost.
-  while (current_proposal_.second.try_pop(current_tx)
+  auto &current_proposal = current_proposals_[round];
+  while (current_proposal.try_pop(current_tx)
          and collection.size() < transaction_limit_
          and inserted.insert(current_tx->hash().hex()).second) {
-    collection.emplace_back(std::move(current_tx));
+    collection.push_back(std::move(current_tx));
   }
-  log_->info("Number of transaction in proposal  = {}", collection.size());
+  log_->info("Number of transactions in proposal = {}", collection.size());
   auto proto_txes = collection | boost::adaptors::transformed([](auto &tx) {
                       return static_cast<const ProtoTxType &>(*tx);
                     });
@@ -141,7 +182,9 @@ OnDemandOrderingServiceImpl::emitProposal() {
 
 void OnDemandOrderingServiceImpl::tryErase() {
   if (round_queue_.size() >= number_of_proposals_) {
-    proposal_map_.erase(round_queue_.front());
+    auto &round = round_queue_.front();
+    proposal_map_.erase(round);
+    log_->info("tryErase: erased round[{}, {}]", round.first, round.second);
     round_queue_.pop();
   }
 }

@@ -25,13 +25,33 @@ OnDemandConnectionManager::OnDemandConnectionManager(
   initializeConnections(initial_peers);
 }
 
-void OnDemandConnectionManager::onTransactions(CollectionType transactions) {
+void OnDemandConnectionManager::onTransactions(transport::RoundType round,
+                                               CollectionType transactions) {
   // shared lock
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
-  for (auto peer_type :
-       {kPreviousConsumer, kCurrentFirstConsumer, kCurrentSecondConsumer}) {
-    connections_.peers[peer_type]->onTransactions(transactions);
+  const PeerType types[] = {kCurrentRoundRejectConsumer,
+                            kNextRoundRejectConsumer,
+                            kNextRoundCommitConsumer};
+  /*
+   * Transactions are always sent to the round after the next round (+2)
+   * There are 3 possibilities - next reject in the current round, first reject
+   * in the next round, and first commit in the round after the next round
+   * This can be visualised as a diagram, where:
+   * o - current round, x - next round, v - target round
+   *
+   *   0 1 2
+   * 0 o x v
+   * 1 x v .
+   * 2 v . .
+   */
+  const transport::RoundType rounds[] = {{round.first, round.second + 2},
+                                         {round.first + 1, 2},
+                                         {round.first + 2, 1}};
+
+  for (auto &&pair : boost::combine(types, rounds)) {
+    connections_.peers[boost::get<0>(pair)]->onTransactions(boost::get<1>(pair),
+                                                            transactions);
   }
 }
 
@@ -49,7 +69,7 @@ void OnDemandConnectionManager::initializeConnections(
     ptr = factory_->create(*peer);
   };
 
-  for (auto pair : boost::combine(connections_.peers, peers.peers)) {
+  for (auto &&pair : boost::combine(connections_.peers, peers.peers)) {
     create_assign(boost::get<0>(pair), boost::get<1>(pair));
   }
 }
