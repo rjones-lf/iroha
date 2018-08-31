@@ -5,7 +5,6 @@
 
 #include <boost/range/join.hpp>
 
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
