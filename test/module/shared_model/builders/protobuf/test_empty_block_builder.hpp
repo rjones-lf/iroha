@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "builders/protobuf/builder_templates/empty_block_template.hpp"
+#include "module/shared_model/builders/protobuf/builder_templates/empty_block_template.hpp"
 #include "module/shared_model/validators/validators.hpp"
 
 #ifndef IROHA_TEST_EMPTY_BLOCK_BUILDER_HPP

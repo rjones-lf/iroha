@@ -4,8 +4,8 @@
  */
 
 #include "backend/protobuf/queries/proto_query.hpp"
-#include "utils/variant_deserializer.hpp"
 #include "backend/protobuf/util.hpp"
+#include "utils/variant_deserializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -76,7 +76,7 @@ namespace shared_model {
 
       auto sig = proto_->mutable_signature();
       sig->set_signature(crypto::toBinaryString(signed_blob));
-      sig->set_pubkey(crypto::toBinaryString(public_key));
+      sig->set_public_key(crypto::toBinaryString(public_key));
       return true;
     }
 

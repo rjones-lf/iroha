@@ -4,8 +4,6 @@
  */
 
 #include <boost/range/join.hpp>
-
-#include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
 #include "framework/specified_visitor.hpp"
@@ -16,6 +14,7 @@
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
 #include "module/shared_model/builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"

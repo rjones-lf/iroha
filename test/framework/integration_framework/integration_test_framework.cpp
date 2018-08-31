@@ -14,8 +14,6 @@
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
-#include "builders/protobuf/block.hpp"
-#include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "common/files.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
@@ -24,6 +22,8 @@
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "interfaces/permissions.hpp"
+#include "module/shared_model/builders/protobuf/block.hpp"
+#include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 
 using namespace shared_model::crypto;
