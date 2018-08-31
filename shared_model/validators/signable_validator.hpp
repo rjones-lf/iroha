@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_SHARED_MODEL_SIGNABLE_VALIDATOR_HPP
@@ -26,13 +14,10 @@ namespace shared_model {
 
     template <typename ModelValidator, typename Model, typename FieldValidator>
     class SignableModelValidator : public ModelValidator {
-     public:
-      explicit SignableModelValidator(
-          FieldValidator &&validator = FieldValidator())
-          : ModelValidator(validator), field_validator_(std::move(validator)) {}
-
-      Answer validate(const Model &model) const {
-        auto answer = ModelValidator::validate(model);
+     private:
+      template <typename Validator>
+      Answer validateImpl(const Model &model, Validator &&validator) const {
+        auto answer = std::forward<Validator>(validator)(model);
         std::string reason_name = "Signature";
         ReasonsGroupType reason(reason_name, GroupedReasons());
         field_validator_.validateSignatures(
@@ -41,6 +26,25 @@ namespace shared_model {
           answer.addReason(std::move(reason));
         }
         return answer;
+      }
+
+     public:
+      explicit SignableModelValidator(
+          FieldValidator &&validator = FieldValidator())
+          : ModelValidator(validator), field_validator_(std::move(validator)) {}
+
+      Answer validate(const Model &model,
+                      interface::types::TimestampType current_timestamp) const {
+        return validateImpl(
+            model, [this, current_timestamp](const auto &model) {
+              return ModelValidator::validate(model, current_timestamp);
+            });
+      }
+
+      Answer validate(const Model &model) const {
+        return validateImpl(model, [this](const auto &model) {
+          return ModelValidator::validate(model);
+        });
       }
 
      private:

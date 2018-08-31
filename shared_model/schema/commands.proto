@@ -30,7 +30,7 @@ message CreateAsset {
 message CreateAccount {
     string account_name = 1;
     string domain_id = 2;
-    bytes main_pubkey = 3;
+    bytes public_key = 3;
 }
 
 message SetAccountDetail{
@@ -104,10 +104,10 @@ message Command {
         CreateRole create_role = 8;
         DetachRole detach_role = 9;
         GrantPermission grant_permission = 10;
-        RemoveSignatory remove_sign = 11;
+        RemoveSignatory remove_signatory = 11;
         RevokePermission revoke_permission = 12;
         SetAccountDetail set_account_detail = 13;
-        SetAccountQuorum set_quorum = 14;
+        SetAccountQuorum set_account_quorum = 14;
         SubtractAssetQuantity subtract_asset_quantity = 15;
         TransferAsset transfer_asset = 16;
     }

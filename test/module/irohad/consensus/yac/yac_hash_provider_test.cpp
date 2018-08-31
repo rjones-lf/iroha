@@ -17,8 +17,8 @@
 
 #include <gtest/gtest.h>
 #include <string>
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 
 using namespace iroha::consensus::yac;

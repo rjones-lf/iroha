@@ -22,6 +22,31 @@ target_include_directories(bm_proto_creation PUBLIC
 
 target_link_libraries(bm_proto_creation
     benchmark
+    gtest::gtest
+    gmock::gmock
     shared_model_proto_backend
     )
 
+add_executable(bm_query
+    bm_query.cpp
+    )
+
+target_link_libraries(bm_query
+    benchmark
+    gtest::gtest
+    gmock::gmock
+    integration_framework
+    )
+
+add_executable(bm_pipeline
+    bm_pipeline.cpp)
+
+target_link_libraries(bm_pipeline
+    benchmark
+    gtest::gtest
+    gmock::gmock
+    application
+    raw_block_loader
+    integration_framework
+    shared_model_stateless_validation
+    )

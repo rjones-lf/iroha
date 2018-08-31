@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "builders/protobuf/proposal.hpp"
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
+#include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
+#include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
@@ -73,7 +74,8 @@ class ClientServerTest : public testing::Test {
 
     rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
         prop_notifier;
-    rxcpp::subjects::subject<iroha::Commit> commit_notifier;
+    rxcpp::subjects::subject<iroha::synchronizer::SynchronizationEvent>
+        commit_notifier;
     EXPECT_CALL(*pcsMock, on_proposal())
         .WillRepeatedly(Return(prop_notifier.get_observable()));
     EXPECT_CALL(*pcsMock, on_commit())
@@ -81,9 +83,9 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*pcsMock, on_verified_proposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
-    EXPECT_CALL(*mst, onPreparedTransactionsImpl())
+    EXPECT_CALL(*mst, onPreparedBatchesImpl())
         .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
-    EXPECT_CALL(*mst, onExpiredTransactionsImpl())
+    EXPECT_CALL(*mst, onExpiredBatchesImpl())
         .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
     auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
@@ -94,12 +96,17 @@ class ClientServerTest : public testing::Test {
     auto pb_tx_factory =
         std::make_shared<iroha::model::converters::PbTransactionFactory>();
 
+    auto pending_txs_storage =
+        std::make_shared<iroha::MockPendingTransactionStorage>();
+
     //----------- Query Service ----------
     EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage, std::make_shared<iroha::QueryExecutionImpl>(storage));
+        storage,
+        std::make_shared<iroha::QueryExecutionImpl>(storage,
+                                                    pending_txs_storage));
 
     //----------- Server run ----------------
     runner
@@ -146,7 +153,7 @@ class ClientServerTest : public testing::Test {
 
 TEST_F(ClientServerTest, SendTxWhenValid) {
   iroha_cli::CliClient client(ip, port);
-  EXPECT_CALL(*pcsMock, propagate_transaction(_)).Times(1);
+  EXPECT_CALL(*pcsMock, propagate_batch(_)).Times(1);
 
   auto shm_tx = shared_model::proto::TransactionBuilder()
                     .creatorAccountId("some@account")
@@ -225,7 +232,7 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
  */
 TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
   iroha_cli::CliClient client(ip, port);
-  EXPECT_CALL(*pcsMock, propagate_transaction(_)).Times(1);
+  EXPECT_CALL(*pcsMock, propagate_batch(_)).Times(1);
 
   // creating stateful invalid tx
   auto tx = TransactionBuilder()
@@ -256,8 +263,8 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
                              tx.hash())})));
   auto stringified_error = "Stateful validation error in transaction "
                            + tx.hash().hex() + ": command 'CommandName' with "
-                           "index '2' did not pass verification with "
-                           "error 'CommandError'";
+                                               "index '2' did not pass verification with "
+                                               "error 'CommandError'";
 
   auto getAnswer = [&]() {
     return client.getTxStatus(shared_model::crypto::toBinaryString(tx.hash()))

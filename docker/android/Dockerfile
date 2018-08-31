@@ -1,4 +1,3 @@
-# using fresh 18.04 as it contains suitable `cmake` in repos
 FROM ubuntu:18.04
 
 # number of concurrent threads during build
@@ -19,10 +18,20 @@ ENV DEPS_DIR="/iroha/dependencies"
 
 RUN apt-get update && \
     apt-get -y install --no-install-recommends git curl apt-utils software-properties-common libpthread-stubs0-dev libpcre3-dev \
-    unzip zip build-essential automake libtool ca-certificates ccache zlib1g-dev libcurl4-openssl-dev libc6-dbg cmake;  \
+    unzip zip build-essential automake libtool ca-certificates ccache zlib1g-dev libcurl4-openssl-dev libc6-dbg;  \
     rm -rf /var/lib/apt/lists/*
 
 RUN set -e; mkdir -p $DEPS_DIR/include $DEPS_DIR/lib
+
+# install cmake 3.11.4
+RUN set -e; \
+    git clone https://gitlab.kitware.com/cmake/cmake.git /tmp/cmake; \
+    (cd /tmp/cmake ; git checkout 316bd45439ad8ced6b31bcb10303a788038387ef); \
+    (cd /tmp/cmake ; /tmp/cmake/bootstrap --system-curl --parallel=${PARALLELISM} --enable-ccache); \
+    make -j${PARALLELISM} -C /tmp/cmake; \
+    make -C /tmp/cmake install; \
+    ldconfig; \
+    rm -rf /tmp/cmake
 
 # boost 1.66
 RUN set -e; \

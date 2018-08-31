@@ -10,6 +10,7 @@
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
+#include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
@@ -33,13 +34,17 @@ namespace iroha {
         PostgresOptions postgres_options,
         std::unique_ptr<KeyValueStorage> block_store,
         std::shared_ptr<soci::connection_pool> connection,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
+        size_t pool_size)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
           connection_(connection),
-          factory_(factory),
-          log_(logger::log("StorageImpl")) {
+          factory_(std::move(factory)),
+          converter_(std::move(converter)),
+          log_(logger::log("StorageImpl")),
+          pool_size_(pool_size) {
       soci::session sql(*connection_);
       sql << init_;
     }
@@ -79,6 +84,39 @@ namespace iroha {
                   }),
               std::move(sql),
               factory_));
+    }
+
+    boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery()
+        const {
+      auto wsv = getWsvQuery();
+      if (not wsv) {
+        return boost::none;
+      }
+      return boost::make_optional<std::shared_ptr<PeerQuery>>(
+          std::make_shared<PeerQueryWsv>(wsv));
+    }
+
+    boost::optional<std::shared_ptr<BlockQuery>> StorageImpl::createBlockQuery()
+        const {
+      auto block_query = getBlockQuery();
+      if (not block_query) {
+        return boost::none;
+      }
+      return boost::make_optional(block_query);
+    }
+
+    boost::optional<std::shared_ptr<OrderingServicePersistentState>>
+    StorageImpl::createOsPersistentState() const {
+      log_->info("create ordering service persistent state");
+      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+      if (not connection_) {
+        log_->info("connection to database is not initialised");
+        return boost::none;
+      }
+      return boost::make_optional<
+          std::shared_ptr<OrderingServicePersistentState>>(
+          std::make_shared<PostgresOrderingServicePersistentState>(
+              std::make_unique<soci::session>(*connection_)));
     }
 
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
@@ -149,16 +187,15 @@ namespace iroha {
         auto &db = dbname.value();
         std::unique_lock<std::shared_timed_mutex> lock(drop_mutex);
         log_->info("Drop database {}", db);
+        std::vector<std::shared_ptr<soci::session>> connections;
+        for (size_t i = 0; i < pool_size_; i++) {
+          connections.push_back(std::make_shared<soci::session>(*connection_));
+          connections[i]->close();
+        }
+        connections.clear();
         connection_.reset();
         soci::session sql(soci::postgresql,
                           postgres_options_.optionsStringWithoutDbName());
-        // kill active connections
-        sql << R"(
-SELECT pg_terminate_backend(pg_stat_activity.pid)
-FROM pg_stat_activity
-WHERE pg_stat_activity.datname = :dbname
-  AND pid <> pg_backend_pid();)",
-            soci::use(dbname.value());
         // perform dropping
         sql << "DROP DATABASE " + db;
       } else {
@@ -228,8 +265,9 @@ WHERE pg_stat_activity.datname = :dbname
     StorageImpl::create(
         std::string block_store_dir,
         std::string postgres_options,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-            factory) {
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
+        size_t pool_size) {
       boost::optional<std::string> string_res = boost::none;
 
       PostgresOptions options(postgres_options);
@@ -248,7 +286,7 @@ WHERE pg_stat_activity.datname = :dbname
       }
 
       auto ctx_result = initConnections(block_store_dir);
-      auto db_result = initPostgresConnection(postgres_options);
+      auto db_result = initPostgresConnection(postgres_options, pool_size);
       expected::Result<std::shared_ptr<StorageImpl>, std::string> storage;
       ctx_result.match(
           [&](expected::Value<ConnectionContext> &ctx) {
@@ -260,7 +298,9 @@ WHERE pg_stat_activity.datname = :dbname
                                       options,
                                       std::move(ctx.value.block_store),
                                       connection.value,
-                                      factory)));
+                                      factory,
+                                      converter,
+                                      pool_size)));
                 },
                 [&](expected::Error<std::string> &error) { storage = error; });
           },
@@ -272,12 +312,15 @@ WHERE pg_stat_activity.datname = :dbname
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
-        block_store_->add(
-            block.first,
-            stringToBytes(shared_model::converters::protobuf::modelToJson(
-                *std::static_pointer_cast<shared_model::proto::Block>(
-                    block.second))));
-        notifier_.get_subscriber().on_next(block.second);
+        auto json_result = converter_->serialize(*block.second);
+        json_result.match(
+            [this, &block](const expected::Value<std::string> &v) {
+              block_store_->add(block.first, stringToBytes(v.value));
+              notifier_.get_subscriber().on_next(block.second);
+            },
+            [this](const expected::Error<std::string> &e) {
+              log_->error(e.error);
+            });
       }
 
       *(storage->sql_) << "COMMIT";
@@ -310,22 +353,21 @@ WHERE pg_stat_activity.datname = :dbname
       /**
        * Factory method for query object creation which uses connection_pool
        * @tparam Query object type to create
-       * @tparam Backend object type to use as a backend for Query
-       * @param b is a backend obj
-       * @param conn is pointer to connection pool for getting and releaseing
+       * @param conn is pointer to connection pool for getting and releasing
        * the session
-       * @param log is a logger
        * @param drop_mutex is mutex for preventing connection destruction
        *        during the function
+       * @param log is a logger
+       * @param args - various other arguments needed to initalize Query object
        * @return pointer to created query object
-       * note: blocks untils connection can be leased from the pool
+       * note: blocks until connection can be leased from the pool
        */
-      template <typename Query, typename Backend>
+      template <typename Query, typename... QueryArgs>
       std::shared_ptr<Query> setupQuery(
-          Backend &b,
           std::shared_ptr<soci::connection_pool> conn,
+          std::shared_timed_mutex &drop_mutex,
           const logger::Logger &log,
-          std::shared_timed_mutex &drop_mutex) {
+          QueryArgs &&... args) {
         std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
         if (conn == nullptr) {
           log->warn("Storage was deleted, cannot perform setup");
@@ -334,19 +376,19 @@ WHERE pg_stat_activity.datname = :dbname
         auto pool_pos = conn->lease();
         soci::session &session = conn->at(pool_pos);
         lock.unlock();
-        return {new Query(session, b),
+        return {new Query(session, std::forward<QueryArgs>(args)...),
                 Deleter<Query>(std::move(conn), pool_pos)};
       }
     }  // namespace
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
       return setupQuery<PostgresWsvQuery>(
-          factory_, connection_, log_, drop_mutex);
+          connection_, drop_mutex, log_, factory_);
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
       return setupQuery<PostgresBlockQuery>(
-          *block_store_, connection_, log_, drop_mutex);
+          connection_, drop_mutex, log_, *block_store_, converter_);
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>

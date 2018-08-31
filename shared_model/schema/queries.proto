@@ -74,7 +74,7 @@ message Query {
     QueryPayloadMeta meta = 1;
      oneof query {
        GetAccount get_account = 3;
-       GetSignatories get_account_signatories = 4;
+       GetSignatories get_signatories = 4;
        GetAccountTransactions get_account_transactions = 5;
        GetAccountAssetTransactions get_account_asset_transactions = 6;
        GetTransactions get_transactions = 7;

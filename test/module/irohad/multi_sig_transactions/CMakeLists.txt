@@ -52,4 +52,5 @@ target_link_libraries(gossip_propagation_strategy_test
     mst_processor
     logger
     shared_model_cryptography
+    shared_model_stateless_validation
     )

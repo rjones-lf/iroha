@@ -19,10 +19,10 @@
 
 namespace iroha {
 
-  MstProcessor::MstProcessor() { log_ = logger::log("MstProcessor"); }
+  MstProcessor::MstProcessor() : log_(logger::log("MstProcessor")) {}
 
-  void MstProcessor::propagateTransaction(const DataType transaction) {
-    this->propagateTransactionImpl(transaction);
+  void MstProcessor::propagateBatch(const DataType &batch) {
+    this->propagateBatchImpl(batch);
   }
 
   rxcpp::observable<std::shared_ptr<MstState>> MstProcessor::onStateUpdate()
@@ -30,11 +30,11 @@ namespace iroha {
     return this->onStateUpdateImpl();
   }
 
-  rxcpp::observable<DataType> MstProcessor::onPreparedTransactions() const {
-    return this->onPreparedTransactionsImpl();
+  rxcpp::observable<DataType> MstProcessor::onPreparedBatches() const {
+    return this->onPreparedBatchesImpl();
   }
 
-  rxcpp::observable<DataType> MstProcessor::onExpiredTransactions() const {
-    return this->onExpiredTransactionsImpl();
+  rxcpp::observable<DataType> MstProcessor::onExpiredBatches() const {
+    return this->onExpiredBatchesImpl();
   }
 }  // namespace iroha

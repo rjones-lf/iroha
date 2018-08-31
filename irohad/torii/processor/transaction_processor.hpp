@@ -37,13 +37,6 @@ namespace iroha {
      */
     class TransactionProcessor {
      public:
-      /**
-       * Add transaction to the system for processing
-       * @param transaction - transaction for processing
-       */
-      virtual void transactionHandle(
-          std::shared_ptr<shared_model::interface::Transaction> transaction)
-          const = 0;
 
       /**
        * Process batch and propagate it to the MST or PCS

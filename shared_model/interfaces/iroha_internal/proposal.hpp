@@ -18,6 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_PROPOSAL_HPP
 #define IROHA_SHARED_MODEL_PROPOSAL_HPP
 
+#include "cryptography/default_hash_provider.hpp"
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/transaction.hpp"
@@ -69,7 +70,7 @@ namespace shared_model {
       using Lazy = detail::LazyInitializer<T>;
 
       const Lazy<types::HashType> hash_{
-          [this] { return HashProvider::makeHash(blob()); }};
+          [this] { return crypto::DefaultHashProvider::makeHash(blob()); }};
     };
 
   }  // namespace interface

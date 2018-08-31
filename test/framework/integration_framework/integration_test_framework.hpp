@@ -20,6 +20,7 @@
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
+#include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "logger/logger.hpp"
 
 namespace shared_model {
@@ -49,6 +50,9 @@ namespace integration_framework {
      * Construct test framework instance
      * @param maximum_proposal_size - Maximum number of transactions per
      * proposal
+     * @param proposal_waiting - maximum time of waiting before next proposal
+     * @param block_waiting - maximum time of waiting before appearing next
+     * committed block
      * @param destructor_lambda - (default nullptr) Pointer to function which
      * receives pointer to constructed instance of Integration Test Framework.
      * If specified, then will be called instead of default destructor's code
@@ -64,7 +68,9 @@ namespace integration_framework {
         const std::string &block_store_path =
             (boost::filesystem::temp_directory_path()
              / boost::filesystem::unique_path())
-                .string());
+                .string(),
+        milliseconds proposal_waiting = milliseconds(20000),
+        milliseconds block_waiting = milliseconds(20000));
 
     ~IntegrationTestFramework();
 
@@ -140,6 +146,29 @@ namespace integration_framework {
         std::function<void(const BlockType &)> check);
 
     /**
+     * Send transactions to Iroha and validate obtained statuses
+     * @param tx_sequence - transactions sequence
+     * @param validation - callback for transactions statuses validation.
+     * Applied to the vector of returned statuses
+     * @return this
+     */
+    IntegrationTestFramework &sendTxSequence(
+        const shared_model::interface::TransactionSequence &tx_sequence,
+        std::function<void(std::vector<shared_model::proto::TransactionResponse>
+                               &)> validation = [](const auto &) {});
+
+    /**
+     * Send transactions to Iroha with awaiting proposal and without status
+     * validation
+     * @param tx_sequence - sequence for sending
+     * @param check - callback for checking committed block
+     * @return this
+     */
+    IntegrationTestFramework &sendTxSequenceAwait(
+        const shared_model::interface::TransactionSequence &tx_sequence,
+        std::function<void(const BlockType &)> check);
+
+    /**
      * Check current status of transaction
      * @param hash - hash of transaction to check
      * @param validation - callback that receives transaction response
@@ -183,6 +212,22 @@ namespace integration_framework {
      * @return this
      */
     IntegrationTestFramework &skipProposal();
+
+    /**
+     * Request next verified proposal from queue and check it with provided
+     * function
+     * @param validation - callback that receives object of type \relates
+     * std::shared_ptr<shared_model::interface::Proposal> by reference
+     * @return this
+     */
+    IntegrationTestFramework &checkVerifiedProposal(
+        std::function<void(const ProposalType &)> validation);
+
+    /**
+     * Request next verified proposal from queue and skip it
+     * @return this
+     */
+    IntegrationTestFramework &skipVerifiedProposal();
 
     /**
      * Request next block from queue and serve it with custom handler
@@ -229,6 +274,7 @@ namespace integration_framework {
                         const std::string &error_reason);
 
     tbb::concurrent_queue<ProposalType> proposal_queue_;
+    tbb::concurrent_queue<ProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
     std::shared_ptr<IrohaInstance> iroha_instance_;
 
@@ -239,10 +285,10 @@ namespace integration_framework {
 
     /// maximum time of waiting before appearing next proposal
     // TODO 21/12/2017 muratovv make relation of time with instance's config
-    const milliseconds proposal_waiting = milliseconds(20000);
+    milliseconds proposal_waiting;
 
     /// maximum time of waiting before appearing next committed block
-    const milliseconds block_waiting = milliseconds(20000);
+    milliseconds block_waiting;
 
     size_t maximum_proposal_size_;
 

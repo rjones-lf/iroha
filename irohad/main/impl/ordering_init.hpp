@@ -18,8 +18,9 @@
 #ifndef IROHA_ORDERING_INIT_HPP
 #define IROHA_ORDERING_INIT_HPP
 
-#include "ametsuchi/block_query.hpp"
-#include "ametsuchi/peer_query.hpp"
+#include "ametsuchi/block_query_factory.hpp"
+#include "ametsuchi/peer_query_factory.hpp"
+#include "ametsuchi/os_persistent_state_factory.hpp"
 #include "logger/logger.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
@@ -44,43 +45,51 @@ namespace iroha {
        * service)
        * @param transport - object which will be notified
        * about incoming proposals and send transactions
-       * @param block_query - block store to get last block height
+       * @param block_query_factory - block store factory to get last block
+       * height
+       * @return ordering gate
        */
-      auto createGate(std::shared_ptr<OrderingGateTransport> transport,
-                      std::shared_ptr<ametsuchi::BlockQuery> block_query);
+      auto createGate(
+          std::shared_ptr<OrderingGateTransport> transport,
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory);
 
       /**
        * Init ordering service
-       * @param peers - endpoints of peers for connection
+       * @param peer_query_factory - factory to get peer list
        * @param max_size - limitation of proposal size
        * @param delay_milliseconds - delay before emitting proposal
-       * @param loop - handler of async events
+       * @param transport - ordering service transport
+       * @param persistent_state - factory to access persistent state
+       * @return ordering service
        */
       auto createService(
-          std::shared_ptr<ametsuchi::PeerQuery> wsv,
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           size_t max_size,
           std::chrono::milliseconds delay_milliseconds,
           std::shared_ptr<network::OrderingServiceTransport> transport,
-          std::shared_ptr<ametsuchi::OrderingServicePersistentState>
+          std::shared_ptr<ametsuchi::OsPersistentStateFactory>
               persistent_state);
 
      public:
       /**
        * Initialization of ordering gate(client) and ordering service (service)
-       * @param peers - endpoints of peers for connection
-       * @param loop - handler of async events
+       * @param peer_query_factory - factory to get peer list
        * @param max_size - limitation of proposal size
        * @param delay_milliseconds - delay before emitting proposal
-       * @param block_query - block store to get last block height
+       * @param persistent_state - factory to access persistent state
+       * @param block_query_factory - block store factory to get last block
+       * height
+       * @param async_call - async grpc client that is passed to transport
+       * components
        * @return efficient implementation of OrderingGate
        */
       std::shared_ptr<iroha::network::OrderingGate> initOrderingGate(
-          std::shared_ptr<ametsuchi::PeerQuery> wsv,
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           size_t max_size,
           std::chrono::milliseconds delay_milliseconds,
-          std::shared_ptr<ametsuchi::OrderingServicePersistentState>
+          std::shared_ptr<ametsuchi::OsPersistentStateFactory>
               persistent_state,
-          std::shared_ptr<ametsuchi::BlockQuery> block_query,
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call);
 

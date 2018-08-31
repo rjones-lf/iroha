@@ -77,8 +77,8 @@ Boost
 Iroha requires Boost of at least 1.65 version.
 To install Boost libraries (``libboost-all-dev``), use `current release 
 <http://www.boost.org/users/download/>`_ from Boost webpage. The only 
-dependencies are system and filesystem, so use 
-``./bootstrap.sh --with-libraries=system,filesystem`` when you are building 
+dependencies are thread, system and filesystem, so use
+``./bootstrap.sh --with-libraries=thread,system,filesystem`` when you are building
 the project.
 
 Other Dependencies

@@ -7,6 +7,7 @@
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
+#include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "execution/query_execution_impl.hpp"
@@ -79,6 +80,7 @@ void Irohad::init() {
   initPeerCommunicationService();
   initStatusBus();
   initMstProcessor();
+  initPendingTxsStorage();
 
   // Torii
   initTransactionCommandService();
@@ -90,34 +92,35 @@ void Irohad::init() {
  */
 void Irohad::dropStorage() {
   storage->reset();
-  ordering_service_storage_->resetState();
+  storage->createOsPersistentState() |
+      [](const auto &state) { state->resetState(); };
 }
 
 /**
  * Initializing iroha daemon storage
  */
 void Irohad::initStorage() {
-  auto factory =
+  common_objects_factory_ =
       std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
           shared_model::validation::FieldValidator>>();
-  auto storageResult = StorageImpl::create(block_store_dir_, pg_conn_, factory);
+  auto block_converter =
+      std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
+  auto storageResult = StorageImpl::create(block_store_dir_,
+                                           pg_conn_,
+                                           common_objects_factory_,
+                                           std::move(block_converter));
   storageResult.match(
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
         storage = _storage.value;
       },
       [&](expected::Error<std::string> &error) { log_->error(error.error); });
 
-  PostgresOrderingServicePersistentState::create(pg_conn_).match(
-      [&](expected::Value<
-          std::shared_ptr<ametsuchi::PostgresOrderingServicePersistentState>>
-              &_storage) { ordering_service_storage_ = _storage.value; },
-      [&](expected::Error<std::string> &error) { log_->error(error.error); });
-
   log_->info("[Init] => storage", logger::logBool(storage));
 }
 
 void Irohad::resetOrderingService() {
-  if (not ordering_service_storage_->resetState())
+  if (not(storage->createOsPersistentState() |
+          [](const auto &state) { return state->resetState(); }))
     log_->error("cannot reset ordering service storage");
 }
 
@@ -128,13 +131,6 @@ bool Irohad::restoreWsv() {
         log_->error(error.error);
         return false;
       });
-}
-
-/**
- * Initializing peer query interface
- */
-std::unique_ptr<iroha::ametsuchi::PeerQuery> Irohad::initPeerQuery() {
-  return std::make_unique<ametsuchi::PeerQueryWsv>(storage->getWsvQuery());
 }
 
 /**
@@ -173,11 +169,11 @@ void Irohad::initNetworkClient() {
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
-  ordering_gate = ordering_init.initOrderingGate(initPeerQuery(),
+  ordering_gate = ordering_init.initOrderingGate(storage,
                                                  max_proposal_size_,
                                                  proposal_delay_,
-                                                 ordering_service_storage_,
-                                                 storage->getBlockQuery(),
+                                                 storage,
+                                                 storage,
                                                  async_call_);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
@@ -192,7 +188,7 @@ void Irohad::initSimulator() {
   simulator = std::make_shared<Simulator>(ordering_gate,
                                           stateful_validator,
                                           storage,
-                                          storage->getBlockQuery(),
+                                          storage,
                                           crypto_signer_,
                                           std::move(block_factory));
 
@@ -212,8 +208,8 @@ void Irohad::initConsensusCache() {
  * Initializing block loader
  */
 void Irohad::initBlockLoader() {
-  block_loader = loader_init.initBlockLoader(
-      initPeerQuery(), storage->getBlockQuery(), consensus_result_cache_);
+  block_loader =
+      loader_init.initBlockLoader(storage, storage, consensus_result_cache_);
 
   log_->info("[Init] => block loader");
 }
@@ -222,13 +218,14 @@ void Irohad::initBlockLoader() {
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
-  consensus_gate = yac_init.initConsensusGate(initPeerQuery(),
+  consensus_gate = yac_init.initConsensusGate(storage,
                                               simulator,
                                               block_loader,
                                               keypair,
                                               consensus_result_cache_,
                                               vote_delay_,
-                                              async_call_);
+                                              async_call_,
+                                              common_objects_factory_);
 
   log_->info("[Init] => consensus gate");
 }
@@ -269,13 +266,14 @@ void Irohad::initStatusBus() {
 
 void Irohad::initMstProcessor() {
   if (is_mst_supported_) {
-    auto mst_transport = std::make_shared<MstTransportGrpc>(async_call_);
+    auto mst_transport = std::make_shared<MstTransportGrpc>(
+        async_call_, common_objects_factory_);
     auto mst_completer = std::make_shared<DefaultCompleter>();
     auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
     // cli parameters
     auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
-        std::make_shared<ametsuchi::PeerQueryWsv>(storage->getWsvQuery()),
+        storage,
         std::chrono::seconds(5) /*emitting period*/,
         2 /*amount per once*/);
     auto mst_time = std::make_shared<MstTimeProviderImpl>();
@@ -285,6 +283,14 @@ void Irohad::initMstProcessor() {
     mst_processor = std::make_shared<MstProcessorStub>();
   }
   log_->info("[Init] => MST processor");
+}
+
+void Irohad::initPendingTxsStorage() {
+  pending_txs_storage_ = std::make_shared<PendingTransactionStorageImpl>(
+      mst_processor->onStateUpdate(),
+      mst_processor->onPreparedBatches(),
+      mst_processor->onExpiredBatches());
+  log_->info("[Init] => pending transactions storage");
 }
 
 /**
@@ -309,7 +315,8 @@ void Irohad::initTransactionCommandService() {
  */
 void Irohad::initQueryService() {
   auto query_processor = std::make_shared<QueryProcessorImpl>(
-      storage, std::make_unique<QueryExecutionImpl>(storage));
+      storage,
+      std::make_unique<QueryExecutionImpl>(storage, pending_txs_storage_));
 
   query_service = std::make_shared<::torii::QueryService>(query_processor);
 

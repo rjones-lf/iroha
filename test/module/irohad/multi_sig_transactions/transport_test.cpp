@@ -1,25 +1,16 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
+
 #include <gtest/gtest.h>
+#include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
-#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
+#include "validators/field_validator.hpp"
 
 using namespace iroha::network;
 using namespace iroha::model;
@@ -41,21 +32,28 @@ using ::testing::InvokeWithoutArgs;
 TEST(TransportTest, SendAndReceive) {
   auto async_call_ = std::make_shared<
       iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
-  auto transport = std::make_shared<MstTransportGrpc>(async_call_);
+  auto factory =
+      std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
+          shared_model::validation::FieldValidator>>();
+  auto transport = std::make_shared<MstTransportGrpc>(async_call_, factory);
   auto notifications = std::make_shared<iroha::MockMstTransportNotification>();
   transport->subscribe(notifications);
 
   std::mutex mtx;
   std::condition_variable cv;
-  ON_CALL(*notifications, onNewState(_, _))
-      .WillByDefault(
-          InvokeWithoutArgs(&cv, &std::condition_variable::notify_one));
 
+  auto time = iroha::time::now();
   auto state = iroha::MstState::empty();
-  state += makeTx(1, iroha::time::now(), makeKey(), 3);
-  state += makeTx(1, iroha::time::now(), makeKey(), 4);
-  state += makeTx(1, iroha::time::now(), makeKey(), 5);
-  state += makeTx(1, iroha::time::now(), makeKey(), 5);
+  state += addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time)), 0, makeKey());
+  state += addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(2, time)), 0, makeKey());
+  state += addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(3, time)), 0, makeKey());
+  state += addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(3, time)), 0, makeKey());
+
+  ASSERT_EQ(3, state.getBatches().size());
 
   std::unique_ptr<grpc::Server> server;
 
@@ -73,12 +71,18 @@ TEST(TransportTest, SendAndReceive) {
       makePeer(addr + std::to_string(port), "abcdabcdabcdabcdabcdabcdabcdabcd");
   // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side
-  EXPECT_CALL(*notifications, onNewState(_, state))
-      .WillOnce(Invoke([&peer](auto &p, auto) { EXPECT_EQ(*p, *peer); }));
+  EXPECT_CALL(*notifications, onNewState(_, _))
+      .WillOnce(
+          Invoke([&peer, &cv, &state](const auto &p, auto const &target_state) {
+            EXPECT_EQ(*peer, *p);
+
+            EXPECT_EQ(state, target_state);
+            cv.notify_one();
+          }));
 
   transport->sendState(*peer, state);
   std::unique_lock<std::mutex> lock(mtx);
-  cv.wait_for(lock, std::chrono::milliseconds(100));
+  cv.wait_for(lock, std::chrono::milliseconds(5000));
 
   server->Shutdown();
 }

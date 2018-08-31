@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_SHARED_MODEL_TRANSACTION_VALIDATOR_HPP
@@ -240,19 +228,10 @@ namespace shared_model {
      */
     template <typename FieldValidator, typename CommandValidator>
     class TransactionValidator {
-     public:
-      TransactionValidator(
-          const FieldValidator &field_validator = FieldValidator(),
-          const CommandValidator &command_validator = CommandValidator())
-          : field_validator_(field_validator),
-            command_validator_(command_validator) {}
-
-      /**
-       * Applies validation to given transaction
-       * @param tx - transaction to validate
-       * @return Answer containing found error if any
-       */
-      Answer validate(const interface::Transaction &tx) const {
+     private:
+      template <typename CreatedTimeValidator>
+      Answer validateImpl(const interface::Transaction &tx,
+                          CreatedTimeValidator &&validator) const {
         Answer answer;
         std::string tx_reason_name = "Transaction";
         ReasonsGroupType tx_reason(tx_reason_name, GroupedReasons());
@@ -264,7 +243,8 @@ namespace shared_model {
 
         field_validator_.validateCreatorAccountId(tx_reason,
                                                   tx.creatorAccountId());
-        field_validator_.validateCreatedTime(tx_reason, tx.createdTime());
+        std::forward<CreatedTimeValidator>(validator)(tx_reason,
+                                                      tx.createdTime());
         field_validator_.validateQuorum(tx_reason, tx.quorum());
         if (tx.batchMeta() != boost::none)
           field_validator_.validateBatchMeta(tx_reason, **tx.batchMeta());
@@ -292,6 +272,37 @@ namespace shared_model {
         }
 
         return answer;
+      }
+
+     public:
+      explicit TransactionValidator(
+          const FieldValidator &field_validator = FieldValidator(),
+          const CommandValidator &command_validator = CommandValidator())
+          : field_validator_(field_validator),
+            command_validator_(command_validator) {}
+
+      /**
+       * Applies validation to given transaction
+       * @param tx - transaction to validate
+       * @return Answer containing found error if any
+       */
+      Answer validate(const interface::Transaction &tx) const {
+        return validateImpl(tx, [this](auto &reason, auto time) {
+          field_validator_.validateCreatedTime(reason, time);
+        });
+      }
+
+      /**
+       * Validates transaction against current_timestamp instead of time
+       * provider
+       */
+      Answer validate(const interface::Transaction &tx,
+                      interface::types::TimestampType current_timestamp) const {
+        return validateImpl(tx,
+                            [this, current_timestamp](auto &reason, auto time) {
+                              field_validator_.validateCreatedTime(
+                                  reason, time, current_timestamp);
+                            });
       }
 
      protected:

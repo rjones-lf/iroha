@@ -6,8 +6,9 @@
 #include "validators/transactions_collection/transactions_collection_validator.hpp"
 
 #include <algorithm>
-#include <boost/format.hpp>
 
+#include <boost/format.hpp>
+#include <boost/range/adaptor/indirected.hpp>
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
@@ -18,32 +19,17 @@
 namespace shared_model {
   namespace validation {
 
-    template <typename TransactionValidator, typename FieldValidator>
-    TransactionsCollectionValidator<TransactionValidator, FieldValidator>::
+    template <typename TransactionValidator>
+    TransactionsCollectionValidator<TransactionValidator>::
         TransactionsCollectionValidator(
-            const TransactionValidator &transactions_validator,
-            const FieldValidator &field_validator)
-        : transaction_validator_(transactions_validator),
-          field_validator_(field_validator) {}
+            const TransactionValidator &transactions_validator)
+        : transaction_validator_(transactions_validator) {}
 
-    template <typename TransactionValidator, typename FieldValidator>
-    Answer
-    TransactionsCollectionValidator<TransactionValidator, FieldValidator>::
-        validate(const shared_model::interface::types::
-                     TransactionsForwardCollectionType &transactions) const {
-      interface::types::SharedTxsCollectionType res;
-      std::transform(std::begin(transactions),
-                     std::end(transactions),
-                     std::back_inserter(res),
-                     [](const auto &tx) { return clone(tx); });
-      return validate(res);
-    }
-
-    template <typename TransactionValidator, typename FieldValidator>
-    Answer
-    TransactionsCollectionValidator<TransactionValidator, FieldValidator>::
-        validate(const shared_model::interface::types::SharedTxsCollectionType
-                     &transactions) const {
+    template <typename TransactionValidator>
+    template <typename Validator>
+    Answer TransactionsCollectionValidator<TransactionValidator>::validateImpl(
+        const interface::types::TransactionsForwardCollectionType &transactions,
+        Validator &&validator) const {
       Answer res;
       ReasonsGroupType reason;
       reason.first = "Transaction list";
@@ -55,10 +41,10 @@ namespace shared_model {
       }
 
       for (const auto &tx : transactions) {
-        auto answer = transaction_validator_.validate(*tx);
+        auto answer = std::forward<Validator>(validator)(tx);
         if (answer.hasErrors()) {
           auto message =
-              (boost::format("Tx %s : %s") % tx->hash().hex() % answer.reason())
+              (boost::format("Tx %s : %s") % tx.hash().hex() % answer.reason())
                   .str();
           reason.second.push_back(message);
         }
@@ -70,19 +56,51 @@ namespace shared_model {
       return res;
     }
 
-    template <typename TransactionValidator, typename FieldValidator>
+    template <typename TransactionValidator>
+    Answer TransactionsCollectionValidator<TransactionValidator>::validate(
+        const shared_model::interface::types::TransactionsForwardCollectionType
+            &transactions) const {
+      return validateImpl(transactions, [this](const auto &tx) {
+        return transaction_validator_.validate(tx);
+      });
+    }
+
+    template <typename TransactionValidator>
+    Answer TransactionsCollectionValidator<TransactionValidator>::validate(
+        const shared_model::interface::types::SharedTxsCollectionType
+            &transactions) const {
+      return validate(transactions | boost::adaptors::indirected);
+    }
+
+    template <typename TransactionValidator>
+    Answer TransactionsCollectionValidator<TransactionValidator>::validate(
+        const interface::types::TransactionsForwardCollectionType &transactions,
+        interface::types::TimestampType current_timestamp) const {
+      return validateImpl(
+          transactions, [this, current_timestamp](const auto &tx) {
+            return transaction_validator_.validate(tx, current_timestamp);
+          });
+    }
+
+    template <typename TransactionValidator>
+    Answer TransactionsCollectionValidator<TransactionValidator>::validate(
+        const interface::types::SharedTxsCollectionType &transactions,
+        interface::types::TimestampType current_timestamp) const {
+      return validate(transactions | boost::adaptors::indirected,
+                      current_timestamp);
+    }
+
+    template <typename TransactionValidator>
     const TransactionValidator &TransactionsCollectionValidator<
-        TransactionValidator,
-        FieldValidator>::getTransactionValidator() const {
+        TransactionValidator>::getTransactionValidator() const {
       return transaction_validator_;
     }
 
-    template class TransactionsCollectionValidator<DefaultUnsignedTransactionValidator,
-                                                   FieldValidator>;
+    template class TransactionsCollectionValidator<
+        DefaultUnsignedTransactionValidator>;
 
     template class TransactionsCollectionValidator<
-        DefaultSignedTransactionValidator,
-        FieldValidator>;
+        DefaultSignedTransactionValidator>;
 
   }  // namespace validation
 }  // namespace shared_model

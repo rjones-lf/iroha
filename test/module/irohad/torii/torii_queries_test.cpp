@@ -5,14 +5,15 @@
 
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
+#include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
-#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "builders/protobuf/queries.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_account_asset_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
@@ -46,6 +47,8 @@ class ToriiQueriesTest : public testing::Test {
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
     storage = std::make_shared<MockStorage>();
+    pending_txs_storage =
+        std::make_shared<iroha::MockPendingTransactionStorage>();
 
     //----------- Query Service ----------
 
@@ -53,7 +56,9 @@ class ToriiQueriesTest : public testing::Test {
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage, std::make_shared<iroha::QueryExecutionImpl>(storage));
+        storage,
+        std::make_shared<iroha::QueryExecutionImpl>(storage,
+                                                    pending_txs_storage));
 
     //----------- Server run ----------------
     runner->append(std::make_unique<torii::QueryService>(qpi))
@@ -78,6 +83,7 @@ class ToriiQueriesTest : public testing::Test {
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
   std::shared_ptr<MockStorage> storage;
+  std::shared_ptr<iroha::MockPendingTransactionStorage> pending_txs_storage;
 
   const std::string ip = "127.0.0.1";
   int port;
@@ -478,10 +484,8 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   auto creator = "a@domain";
   std::vector<wTransaction> txs;
   for (size_t i = 0; i < 3; ++i) {
-    std::shared_ptr<shared_model::interface::Transaction> current =
-        clone(TestTransactionBuilder()
-                  .creatorAccountId(account.accountId())
-                  .build());
+    std::shared_ptr<shared_model::interface::Transaction> current = clone(
+        TestTransactionBuilder().creatorAccountId(account.accountId()).build());
     txs.push_back(current);
   }
 

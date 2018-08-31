@@ -16,6 +16,8 @@
 
 namespace iroha {
 
+  class PendingTransactionStorage;
+
   class QueryExecutionImpl : public QueryExecution {
     using QueryResponseBuilder =
         shared_model::proto::TemplateQueryResponseBuilder<0>;
@@ -24,7 +26,9 @@ namespace iroha {
         shared_model::proto::TemplateQueryResponseBuilder<1>;
 
    public:
-    explicit QueryExecutionImpl(std::shared_ptr<ametsuchi::Storage> storage);
+    explicit QueryExecutionImpl(
+        std::shared_ptr<ametsuchi::Storage> storage,
+        std::shared_ptr<PendingTransactionStorage> pending_txs_storage);
 
     std::unique_ptr<shared_model::interface::QueryResponse> validateAndExecute(
         const shared_model::interface::Query &query) override;
@@ -136,6 +140,7 @@ namespace iroha {
         const shared_model::interface::types::AccountIdType &query_creator);
 
     std::shared_ptr<ametsuchi::Storage> storage_;
+    std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;
   };
 
 }  // namespace iroha

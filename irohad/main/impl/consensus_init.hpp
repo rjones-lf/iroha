@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-#include "ametsuchi/peer_query.hpp"
+#include "ametsuchi/peer_query_factory.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "consensus/yac/messages.hpp"
 #include "consensus/yac/timer.hpp"
@@ -32,6 +32,7 @@
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "consensus/yac/yac_peer_orderer.hpp"
 #include "cryptography/keypair.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "network/block_loader.hpp"
 #include "simulator/block_creator.hpp"
 
@@ -43,12 +44,16 @@ namespace iroha {
        private:
         // ----------| Yac dependencies |----------
 
-        auto createPeerOrderer(std::shared_ptr<ametsuchi::PeerQuery> wsv);
+        auto createPeerOrderer(
+            std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory);
 
         auto createNetwork(std::shared_ptr<iroha::network::AsyncGrpcClient<
                                google::protobuf::Empty>> async_call);
 
-        auto createCryptoProvider(const shared_model::crypto::Keypair &keypair);
+        auto createCryptoProvider(
+            const shared_model::crypto::Keypair &keypair,
+            std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                common_objects_factory);
 
         auto createTimer(std::chrono::milliseconds delay_milliseconds);
 
@@ -60,11 +65,13 @@ namespace iroha {
             std::chrono::milliseconds delay_milliseconds,
             std::shared_ptr<
                 iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
-                async_call);
+                async_call,
+            std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                common_objects_factory);
 
        public:
         std::shared_ptr<YacGate> initConsensusGate(
-            std::shared_ptr<ametsuchi::PeerQuery> wsv,
+            std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
             std::shared_ptr<simulator::BlockCreator> block_creator,
             std::shared_ptr<network::BlockLoader> block_loader,
             const shared_model::crypto::Keypair &keypair,
@@ -72,7 +79,9 @@ namespace iroha {
             std::chrono::milliseconds vote_delay_milliseconds,
             std::shared_ptr<
                 iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
-            async_call);
+                async_call,
+            std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                common_objects_factory);
 
         std::shared_ptr<NetworkImpl> consensus_network;
       };

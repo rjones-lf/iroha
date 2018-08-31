@@ -29,6 +29,7 @@
 #include "common/timeout.hpp"
 #include "common/types.hpp"
 #include "cryptography/default_hash_provider.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "validators/default_validator.hpp"
 
 namespace torii {
@@ -92,10 +93,23 @@ namespace torii {
                 return;
               }
 
-              // Send transaction to iroha
-              tx_processor_->transactionHandle(
-                  std::make_shared<shared_model::proto::Transaction>(
-                      std::move(iroha_tx.value)));
+              // TODO: 08/08/2018 @muratovv remove duplication between Torii and
+              // ListTorii IR-1583
+              auto single_batch_result = shared_model::interface::
+                  TransactionBatchFactory::createTransactionBatch(
+                      std::make_shared<shared_model::proto::Transaction>(
+                          std::move(iroha_tx.value)),
+                      shared_model::validation::
+                          DefaultSignedTransactionValidator());
+              single_batch_result.match(
+                  [this](const iroha::expected::Value<
+                         shared_model::interface::TransactionBatch> &value) {
+                    tx_processor_->batchHandle(value.value);
+                  },
+                  [this](const auto &err) {
+                    log_->warn("Transaction can't transformed to batch: {}",
+                               err.error);
+                  });
 
               this->pushStatus(
                   "Torii",
@@ -371,7 +385,7 @@ namespace torii {
     log_->debug("{}: adding item to cache: {}, status {} ",
                 who,
                 hash.hex(),
-                response.tx_status());
+                iroha::protocol::TxStatus_Name(response.tx_status()));
     status_bus_->publish(
         std::make_shared<shared_model::proto::TransactionResponse>(
             std::move(response)));

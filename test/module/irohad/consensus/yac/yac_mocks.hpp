@@ -20,7 +20,6 @@
 
 #include <gmock/gmock.h>
 
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "common/byteutils.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/messages.hpp"
@@ -34,6 +33,7 @@
 #include "consensus/yac/yac_peer_orderer.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
 
 namespace iroha {

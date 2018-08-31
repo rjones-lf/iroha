@@ -34,10 +34,10 @@ RUN set -e; \
         gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip zip; \
     apt-get -y clean
 
-# install cmake 3.10.2
+# install cmake 3.11.4
 RUN set -e; \
     git clone https://gitlab.kitware.com/cmake/cmake.git /tmp/cmake; \
-    (cd /tmp/cmake ; git checkout c1e087a9d3af74299d7681c9f9de59e5977a1539); \
+    (cd /tmp/cmake ; git checkout 316bd45439ad8ced6b31bcb10303a788038387ef); \
     (cd /tmp/cmake ; /tmp/cmake/bootstrap --system-curl --parallel=${PARALLELISM} --enable-ccache); \
     make -j${PARALLELISM} -C /tmp/cmake; \
     make -C /tmp/cmake install; \

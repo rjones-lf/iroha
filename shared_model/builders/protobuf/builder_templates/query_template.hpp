@@ -112,7 +112,7 @@ namespace shared_model {
       auto getSignatories(
           const interface::types::AccountIdType &account_id) const {
         return queryField([&](auto proto_query) {
-          auto query = proto_query->mutable_get_account_signatories();
+          auto query = proto_query->mutable_get_signatories();
           query->set_account_id(account_id);
         });
       }

@@ -5,6 +5,8 @@
 
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 
+#include <algorithm>
+
 #include <boost/range/adaptor/transformed.hpp>
 #include "utils/string_builder.hpp"
 
@@ -41,6 +43,29 @@ namespace shared_model {
           .append("transactions")
           .appendAll(transactions(), [](auto &tx) { return tx->toString(); })
           .finalize();
+    }
+
+    bool TransactionBatch::addSignature(
+        size_t number_of_tx,
+        const shared_model::crypto::Signed &signed_blob,
+        const shared_model::crypto::PublicKey &public_key) {
+      if (number_of_tx >= transactions_.size()) {
+        return false;
+      } else {
+        return transactions_.at(number_of_tx)
+            ->addSignature(signed_blob, public_key);
+      }
+    }
+
+    bool TransactionBatch::operator==(const TransactionBatch &rhs) const {
+      return reducedHash() == rhs.reducedHash()
+          and std::equal(transactions().begin(),
+                         transactions().end(),
+                         rhs.transactions().begin(),
+                         rhs.transactions().end(),
+                         [](auto const &left, auto const &right) {
+                           return left->equalsByValue(*right);
+                         });
     }
 
   }  // namespace interface

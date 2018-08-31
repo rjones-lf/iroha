@@ -23,12 +23,12 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "builders/common_objects/peer_builder.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "consensus/yac/impl/peer_orderer_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
+#include "module/shared_model/builders/common_objects/peer_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
 
 using namespace boost::adaptors;
 using namespace iroha::ametsuchi;
@@ -43,20 +43,26 @@ size_t N_PEERS = 4;
 
 class YacPeerOrdererTest : public ::testing::Test {
  public:
-  YacPeerOrdererTest() : orderer(make_shared<MockPeerQuery>()) {}
+  YacPeerOrdererTest() : orderer(make_shared<MockPeerQueryFactory>()) {}
 
   void SetUp() override {
     wsv = make_shared<MockPeerQuery>();
-    orderer = PeerOrdererImpl(wsv);
+    pbfactory = make_shared<MockPeerQueryFactory>();
+    EXPECT_CALL(*pbfactory, createPeerQuery())
+        .WillRepeatedly(testing::Return(boost::make_optional(
+            std::shared_ptr<iroha::ametsuchi::PeerQuery>(wsv))));
+    orderer = PeerOrdererImpl(pbfactory);
   }
 
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers = [] {
     std::vector<std::shared_ptr<shared_model::interface::Peer>> result;
     for (size_t i = 1; i <= N_PEERS; ++i) {
-       std::shared_ptr<shared_model::interface::Peer>peer =
+      std::shared_ptr<shared_model::interface::Peer> peer =
           clone(shared_model::proto::PeerBuilder()
-                      .address(std::to_string(i)).pubkey(shared_model::interface::types::PubkeyType(std::string(32, '0')))
-                      .build());
+                    .address(std::to_string(i))
+                    .pubkey(shared_model::interface::types::PubkeyType(
+                        std::string(32, '0')))
+                    .build());
       result.push_back(peer);
     }
     return result;
@@ -78,6 +84,7 @@ class YacPeerOrdererTest : public ::testing::Test {
   }();
 
   shared_ptr<MockPeerQuery> wsv;
+  shared_ptr<MockPeerQueryFactory> pbfactory;
   PeerOrdererImpl orderer;
 };
 

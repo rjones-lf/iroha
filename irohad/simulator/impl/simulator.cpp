@@ -17,17 +17,17 @@ namespace iroha {
         std::shared_ptr<network::OrderingGate> ordering_gate,
         std::shared_ptr<validation::StatefulValidator> statefulValidator,
         std::shared_ptr<ametsuchi::TemporaryFactory> factory,
-        std::shared_ptr<ametsuchi::BlockQuery> blockQuery,
+        std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
         std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
             crypto_signer,
         std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
             block_factory)
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
-          block_queries_(std::move(blockQuery)),
+          block_query_factory_(block_query_factory),
           crypto_signer_(std::move(crypto_signer)),
           block_factory_(std::move(block_factory)),
-          log_(logger::log("Simulator")){
+          log_(logger::log("Simulator")) {
       ordering_gate->on_proposal().subscribe(
           proposal_subscription_,
           [this](std::shared_ptr<shared_model::interface::Proposal> proposal) {
@@ -58,7 +58,8 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process proposal");
       // Get last block from local ledger
-      auto top_block_result = block_queries_->getTopBlock();
+      auto top_block_result = block_query_factory_->createBlockQuery() |
+          [](const auto &block_query) { return block_query->getTopBlock(); };
       auto block_fetched = top_block_result.match(
           [&](expected::Value<std::shared_ptr<shared_model::interface::Block>>
                   &block) {
@@ -101,12 +102,18 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process verified proposal");
 
-      auto height = block_queries_->getTopBlockHeight() + 1;
+      auto height = block_query_factory_->createBlockQuery() |
+          [&](const auto &block_query) {
+            return block_query->getTopBlockHeight() + 1;
+          };
+      if (not height) {
+        log_->error("Unable to query top block height");
+        return;
+      }
       auto block = block_factory_->unsafeCreateBlock(height,
                                                      last_block->hash(),
                                                      proposal.createdTime(),
                                                      proposal.transactions());
-
       crypto_signer_->sign(block);
       block_notifier_.get_subscriber().on_next(block);
     }

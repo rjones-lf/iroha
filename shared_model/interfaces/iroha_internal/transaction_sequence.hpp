@@ -9,6 +9,7 @@
 #include "common/result.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "validators/field_validator.hpp"
 #include "validators/transactions_collection/transactions_collection_validator.hpp"
 
 namespace shared_model {
@@ -51,6 +52,8 @@ namespace shared_model {
        * @return collection of batches from transaction sequence
        */
       const types::BatchesCollectionType &batches() const;
+
+      std::string toString() const;
 
      private:
       explicit TransactionSequence(const types::BatchesCollectionType &batches);

@@ -24,10 +24,6 @@ class AcceptanceTest : public AcceptanceFixture {
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); };
   const std::function<void(
       const std::shared_ptr<shared_model::interface::Block> &)>
-      checkStatefulInvalid =
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); };
-  const std::function<void(
-      const std::shared_ptr<shared_model::interface::Block> &)>
       checkStatefulValid =
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); };
 
@@ -36,13 +32,8 @@ class AcceptanceTest : public AcceptanceFixture {
     return Builder()
         .createdTime(getUniqueTime())
         .creatorAccountId(kAdmin)
-        .addAssetQuantity(kAsset, "1.0")
+        .addAssetQuantity(kAssetId, "1.0")
         .quorum(1);
-  }
-
-  template <typename T>
-  auto complete(T t) {
-    return t.build().signAndAddSignature(kAdminKeypair).finish();
   }
 };
 
@@ -50,16 +41,17 @@ class AcceptanceTest : public AcceptanceFixture {
  * @given non existent user
  * @when sending  transaction to the ledger
  * @then receive STATELESS_VALIDATION_SUCCESS status
- *       AND STATEFUL_VALIDATION_FAILED on that tx
+ *       @and verified proposal is empty for that transaction
  */
 TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
   const std::string kNonUser = "nonuser@test";
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(complete(baseTx<>().creatorAccountId(kNonUser)),
+      .sendTx(complete(baseTx<>().creatorAccountId(kNonUser), kAdminKeypair),
               checkStatelessValid)
       .checkProposal(checkProposal)
-      .checkBlock(checkStatefulInvalid)
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .done();
 }
 
@@ -73,7 +65,8 @@ TEST_F(AcceptanceTest, Transaction1HourOld) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>().createdTime(
-                  iroha::time::now(std::chrono::hours(-1)))),
+                           iroha::time::now(std::chrono::hours(-1))),
+                       kAdminKeypair),
               checkStatelessValid)
       .skipProposal()
       .checkBlock(checkStatefulValid)
@@ -90,7 +83,8 @@ TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
-                  std::chrono::hours(24) - std::chrono::minutes(1)))),
+                           std::chrono::hours(24) - std::chrono::minutes(1))),
+                       kAdminKeypair),
               checkStatelessValid)
       .skipProposal()
       .checkBlock(checkStatefulValid)
@@ -106,7 +100,8 @@ TEST_F(AcceptanceTest, TransactionMore24HourOld) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
-                  std::chrono::hours(24) + std::chrono::minutes(1)))),
+                           std::chrono::hours(24) + std::chrono::minutes(1))),
+                       kAdminKeypair),
               checkStatelessInvalid)
       .done();
 }
@@ -121,7 +116,8 @@ TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
-                  std::chrono::minutes(5) - std::chrono::seconds(10)))),
+                           std::chrono::minutes(5) - std::chrono::seconds(10))),
+                       kAdminKeypair),
               checkStatelessValid)
       .skipProposal()
       .checkBlock(checkStatefulValid)
@@ -137,7 +133,8 @@ TEST_F(AcceptanceTest, Transaction10MinutesFromFuture) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>().createdTime(
-                  iroha::time::now(std::chrono::minutes(10)))),
+                           iroha::time::now(std::chrono::minutes(10))),
+                       kAdminKeypair),
               checkStatelessInvalid)
       .done();
 }
@@ -228,7 +225,7 @@ TEST_F(AcceptanceTest, TransactionInvalidSignedBlob) {
 TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(complete(baseTx<>()), checkStatelessValid)
+      .sendTx(complete(baseTx<>(), kAdminKeypair), checkStatelessValid)
       .skipProposal()
       .checkBlock(checkStatefulValid)
       .done();
@@ -240,7 +237,6 @@ TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
  * @then the response is STATELESS_VALIDATION_FAILED
  */
 TEST_F(AcceptanceTest, EmptySignatures) {
-  std::string kAccountId = "some@account";
   auto proto_tx = baseTx<TestTransactionBuilder>().build().getTransport();
   proto_tx.clear_signatures();
   auto tx = shared_model::proto::Transaction(proto_tx);
