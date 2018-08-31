@@ -285,11 +285,8 @@ namespace integration_framework {
     iroha_instance_->getIrohaInstance()->getCommandService()->ListTorii(
         tx_list);
 
-    // make sure that the first (stateless) status is come
-    {
-      std::unique_lock<std::mutex> lk(m);
-      cv.wait(lk, [&] { return processed; });
-    }
+    std::unique_lock<std::mutex> lk(m);
+    cv.wait(lk, [&] { return processed; });
 
     validation(statuses);
     return *this;
