@@ -12,6 +12,7 @@
 #include <vector>
 #include "cryptography/keypair.hpp"
 #include "interfaces/permissions.hpp"
+#include "interfaces/query_responses/query_response.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
@@ -136,9 +137,16 @@ class AcceptanceFixture : public ::testing::Test {
    * @return built object
    */
   template <typename Builder>
-  auto complete(Builder builder)
-      -> decltype(builder.build()
-          .finish());
+  auto complete(Builder builder) -> decltype(builder.build().finish());
+
+  /**
+   * Checks whether a response contains particular error
+   * @tparam ErrorResponse is type of error to check against
+   * @param response to check for
+   */
+  template <typename ErrorResponse>
+  std::function<void(const shared_model::interface::QueryResponse &)>
+  checkQueryErrorResponse();
 
   /**
    * @return unique time for this fixture

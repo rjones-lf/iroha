@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "model/converters/pb_command_factory.hpp"
@@ -257,8 +245,8 @@ namespace iroha {
         protocol::CreateAccount pb_create_account;
         pb_create_account.set_account_name(create_account.account_name);
         pb_create_account.set_domain_id(create_account.domain_id);
-        pb_create_account.set_main_pubkey(create_account.pubkey.data(),
-                                          create_account.pubkey.size());
+        pb_create_account.set_public_key(create_account.pubkey.data(),
+                                     create_account.pubkey.size());
         return pb_create_account;
       }
       model::CreateAccount PbCommandFactory::deserializeCreateAccount(
@@ -266,8 +254,8 @@ namespace iroha {
         model::CreateAccount create_account;
         create_account.account_name = pb_create_account.account_name();
         create_account.domain_id = pb_create_account.domain_id();
-        std::copy(pb_create_account.main_pubkey().begin(),
-                  pb_create_account.main_pubkey().end(),
+        std::copy(pb_create_account.public_key().begin(),
+                  pb_create_account.public_key().end(),
                   create_account.pubkey.begin());
         return create_account;
       }
@@ -572,7 +560,7 @@ namespace iroha {
         if (instanceof <model::RemoveSignatory>(command)) {
           auto serialized = commandFactory.serializeRemoveSignatory(
               static_cast<const model::RemoveSignatory &>(command));
-          cmd.set_allocated_remove_sign(
+          cmd.set_allocated_remove_signatory(
               new protocol::RemoveSignatory(serialized));
         }
 
@@ -580,7 +568,7 @@ namespace iroha {
         if (instanceof <model::SetQuorum>(command)) {
           auto serialized = commandFactory.serializeSetQuorum(
               static_cast<const model::SetQuorum &>(command));
-          cmd.set_allocated_set_quorum(
+          cmd.set_allocated_set_account_quorum(
               new protocol::SetAccountQuorum(serialized));
         }
 
@@ -694,15 +682,15 @@ namespace iroha {
         }
 
         // -----|RemoveSignatory|-----
-        if (command.has_remove_sign()) {
-          auto pb_command = command.remove_sign();
+        if (command.has_remove_signatory()) {
+          auto pb_command = command.remove_signatory();
           auto cmd = commandFactory.deserializeRemoveSignatory(pb_command);
           val = std::make_shared<model::RemoveSignatory>(cmd);
         }
 
         // -----|SetAccountQuorum|-----
-        if (command.has_set_quorum()) {
-          auto pb_command = command.set_quorum();
+        if (command.has_set_account_quorum()) {
+          auto pb_command = command.set_account_quorum();
           auto cmd = commandFactory.deserializeSetQuorum(pb_command);
           val = std::make_shared<model::SetQuorum>(cmd);
         }

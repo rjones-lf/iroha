@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <limits>
@@ -76,14 +64,13 @@ class FieldValidatorTest : public ValidatorsTest {
 
  public:
   FieldValidatorTest() {
-    for (const auto &field : {"public_key", "main_pubkey", "pubkey"}) {
-      field_validators.insert(makeTransformValidator(
-          field,
-          &FieldValidator::validatePubkey,
-          &FieldValidatorTest::public_key,
-          [](auto &&x) { return interface::types::PubkeyType(x); },
-          public_key_test_cases));
-    }
+    field_validators.insert(makeTransformValidator(
+        "public_key",
+        &FieldValidator::validatePubkey,
+        &FieldValidatorTest::public_key,
+        [](auto &&x) { return interface::types::PubkeyType(x); },
+        public_key_test_cases));
+
     for (const auto &field : {"role_name", "default_role", "role_id"}) {
       field_validators.insert(makeValidator(field,
                                             &FieldValidator::validateRoleId,
@@ -668,10 +655,13 @@ class FieldValidatorTest : public ValidatorsTest {
                     &FieldValidator::validateAssetName,
                     &FieldValidatorTest::asset_name,
                     asset_name_test_cases),
-      makeValidator("created_time",
-                    &FieldValidator::validateCreatedTime,
-                    &FieldValidatorTest::created_time,
-                    created_time_test_cases),
+      makeValidator(
+          "created_time",
+          static_cast<void (FieldValidator::*)(validation::ReasonsGroupType &,
+                                               interface::types::TimestampType)
+                          const>(&FieldValidator::validateCreatedTime),
+          &FieldValidatorTest::created_time,
+          created_time_test_cases),
       makeTransformValidator(
           "meta",
           &FieldValidator::validateQueryPayloadMeta,

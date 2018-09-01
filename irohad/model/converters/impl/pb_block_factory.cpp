@@ -35,7 +35,7 @@ namespace iroha {
 
         for (const auto &sig_obj : block.sigs) {
           auto sig = pb_block.add_signatures();
-          sig->set_pubkey(sig_obj.pubkey.to_string());
+          sig->set_public_key(sig_obj.pubkey.to_string());
           sig->set_signature(sig_obj.signature.to_string());
         }
 
@@ -66,7 +66,7 @@ namespace iroha {
         for (const auto &pb_sig : pb_block.signatures()) {
           model::Signature sig;
           sig.signature = sig_t::from_string(pb_sig.signature());
-          sig.pubkey = pubkey_t::from_string(pb_sig.pubkey());
+          sig.pubkey = pubkey_t::from_string(pb_sig.public_key());
           block.sigs.push_back(std::move(sig));
         }
 

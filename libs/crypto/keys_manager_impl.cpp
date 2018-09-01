@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "crypto/keys_manager_impl.hpp"
@@ -53,9 +41,20 @@ namespace iroha {
    */
   static constexpr auto decrypt = encrypt<Blob::Bytes>;
 
-  KeysManagerImpl::KeysManagerImpl(const std::string &account_name)
-      : account_name_(std::move(account_name)),
+  KeysManagerImpl::KeysManagerImpl(
+      const std::string &account_id,
+      const boost::filesystem::path &path_to_keypair)
+      : path_to_keypair_(path_to_keypair),
+        account_id_(account_id),
         log_(logger::log("KeysManagerImpl")) {}
+
+  /**
+   * Here we use an empty string as a default value of path to file,
+   * since there are usages of KeysManagerImpl with path passed as a part of
+   * account_id.
+   */
+  KeysManagerImpl::KeysManagerImpl(const std::string account_id)
+      : KeysManagerImpl(account_id, "") {}
 
   bool KeysManagerImpl::validate(const Keypair &keypair) const {
     try {
@@ -73,55 +72,45 @@ namespace iroha {
     return true;
   }
 
-  bool KeysManagerImpl::loadFile(const std::string &filename,
-                                 std::string &res) {
-    std::ifstream file(filename);
+  boost::optional<std::string> KeysManagerImpl::loadFile(
+      const boost::filesystem::path &path) const {
+    auto file_path = path.string();
+    std::ifstream file(file_path);
     if (not file) {
-      log_->error("Cannot read '" + filename + "'");
-      return false;
+      log_->error("Cannot read '" + file_path + "'");
+      return {};
     }
-    file >> res;
-    return true;
+
+    std::string contents;
+    file >> contents;
+    return contents;
   }
 
   boost::optional<Keypair> KeysManagerImpl::loadKeys() {
-    std::string pub_key;
-    std::string priv_key;
-
-    if (not loadFile(account_name_ + kPublicKeyExtension, pub_key)
-        or not loadFile(account_name_ + kPrivateKeyExtension, priv_key))
-      return boost::none;
-
-    Keypair keypair = Keypair(PublicKey(Blob::fromHexString(pub_key)),
-                              PrivateKey(Blob::fromHexString(priv_key)));
-
-    return this->validate(keypair) ? boost::make_optional(keypair)
-                                   : boost::none;
+    return loadKeys("");
   }
 
   boost::optional<Keypair> KeysManagerImpl::loadKeys(
       const std::string &pass_phrase) {
-    std::string pub_key;
-    std::string priv_key;
+    auto public_key =
+        loadFile(path_to_keypair_ / (account_id_ + kPublicKeyExtension));
+    auto private_key =
+        loadFile(path_to_keypair_ / (account_id_ + kPrivateKeyExtension));
 
-    if (not loadFile(account_name_ + kPublicKeyExtension, pub_key)
-        or not loadFile(account_name_ + kPrivateKeyExtension, priv_key))
+    if (not public_key or not private_key) {
       return boost::none;
+    }
 
     Keypair keypair = Keypair(
-        PublicKey(Blob::fromHexString(pub_key)),
-        PrivateKey(decrypt(Blob::fromHexString(priv_key).blob(), pass_phrase)));
+        PublicKey(Blob::fromHexString(public_key.get())),
+        PrivateKey(decrypt(Blob::fromHexString(private_key.get()).blob(),
+                           pass_phrase)));
 
-    return this->validate(keypair) ? boost::make_optional(keypair)
-                                   : boost::none;
+    return validate(keypair) ? boost::make_optional(keypair) : boost::none;
   }
 
   bool KeysManagerImpl::createKeys() {
-    Keypair keypair = DefaultCryptoAlgorithmType::generateKeypair();
-
-    auto pub = keypair.publicKey().hex();
-    auto priv = keypair.privateKey().hex();
-    return store(pub, priv);
+    return createKeys("");
   }
 
   bool KeysManagerImpl::createKeys(const std::string &pass_phrase) {
@@ -134,8 +123,10 @@ namespace iroha {
   }
 
   bool KeysManagerImpl::store(const std::string &pub, const std::string &priv) {
-    std::ofstream pub_file(account_name_ + kPublicKeyExtension);
-    std::ofstream priv_file(account_name_ + kPrivateKeyExtension);
+    std::ofstream pub_file(
+        (path_to_keypair_ / (account_id_ + kPublicKeyExtension)).string());
+    std::ofstream priv_file(
+        (path_to_keypair_ / (account_id_ + kPrivateKeyExtension)).string());
     if (not pub_file or not priv_file) {
       return false;
     }

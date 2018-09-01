@@ -5,7 +5,6 @@
 
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/query_responses/proto_error_query_response.hpp"
-#include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/keypair.hpp"
 #include "execution/query_execution.hpp"
@@ -15,6 +14,7 @@
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/execution/execution_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"

@@ -17,7 +17,6 @@
 
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "backend/protobuf/transaction.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "builders/protobuf/transport_builder.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "validators/default_validator.hpp"
@@ -27,8 +26,9 @@ using namespace iroha::network;
 
 MstTransportGrpc::MstTransportGrpc(
     std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
-        async_call)
-    : async_call_(async_call) {}
+        async_call,
+    std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+    : async_call_(std::move(async_call)), factory_(std::move(factory)) {}
 
 grpc::Status MstTransportGrpc::SendState(
     ::grpc::ServerContext *context,
@@ -49,7 +49,6 @@ grpc::Status MstTransportGrpc::SendState(
           collection.push_back(
               std::make_shared<shared_model::proto::Transaction>(
                   std::move(v.value)));
-
         },
         [&](iroha::expected::Error<std::string> &e) {
           async_call_->log_->warn("Can't deserialize tx: {}", e.error);
@@ -82,12 +81,18 @@ grpc::Status MstTransportGrpc::SendState(
                           new_state.getBatches().size());
 
   auto &peer = request->peer();
-  auto from = std::make_shared<shared_model::proto::Peer>(
-      shared_model::proto::PeerBuilder()
-          .address(peer.address())
-          .pubkey(shared_model::crypto::PublicKey(peer.peer_key()))
-          .build());
-  subscriber_.lock()->onNewState(std::move(from), std::move(new_state));
+  factory_
+      ->createPeer(peer.address(),
+                   shared_model::crypto::PublicKey(peer.peer_key()))
+      .match(
+          [&](expected::Value<std::unique_ptr<shared_model::interface::Peer>>
+                  &v) {
+            subscriber_.lock()->onNewState(std::move(v.value),
+                                           std::move(new_state));
+          },
+          [&](expected::Error<std::string> &e) {
+            async_call_->log_->info(e.error);
+          });
 
   return grpc::Status::OK;
 }

@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
+#include "ametsuchi/impl/peer_query_wsv.hpp"
+
 #include <numeric>
 
-#include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/wsv_query.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -27,7 +27,8 @@ namespace iroha {
     PeerQueryWsv::PeerQueryWsv(std::shared_ptr<WsvQuery> wsv)
         : wsv_(std::move(wsv)) {}
 
-    boost::optional<std::vector<PeerQuery::wPeer>> PeerQueryWsv::getLedgerPeers() {
+    boost::optional<std::vector<PeerQuery::wPeer>>
+    PeerQueryWsv::getLedgerPeers() {
       auto peers = wsv_->getPeers();
       if (peers) {
         return boost::make_optional(peers.value());

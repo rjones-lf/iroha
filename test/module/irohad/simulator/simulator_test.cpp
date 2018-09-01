@@ -1,36 +1,24 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <vector>
 
-#include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/proto_block_factory.hpp"
-#include "builders/protobuf/proposal.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
+#include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/cryptography/crypto_model_signer_mock.hpp"
-#include "simulator/impl/simulator.hpp"
 #include "module/shared_model/validators/validators.hpp"
+#include "simulator/impl/simulator.hpp"
 
 using namespace iroha;
 using namespace iroha::validation;
@@ -71,8 +59,11 @@ class SimulatorTest : public ::testing::Test {
   }
 
   void init() {
-    simulator = std::make_shared<Simulator>(
-        ordering_gate, validator, factory, block_query_factory, crypto_signer,
+    simulator = std::make_shared<Simulator>(ordering_gate,
+                                            validator,
+                                            factory,
+                                            block_query_factory,
+                                            crypto_signer,
                                             std::move(block_factory));
   }
 

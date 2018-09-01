@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_PROTO_TRANSACTION_BUILDER_TEMPLATE_HPP
@@ -170,7 +158,7 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id,
           const interface::types::PubkeyType &public_key) const {
         return addCommand([&](auto proto_command) {
-          auto command = proto_command->mutable_remove_sign();
+          auto command = proto_command->mutable_remove_signatory();
           command->set_account_id(account_id);
           command->set_public_key(crypto::toBinaryString(public_key));
         });
@@ -204,7 +192,7 @@ namespace shared_model {
           auto command = proto_command->mutable_create_account();
           command->set_account_name(account_name);
           command->set_domain_id(domain_id);
-          command->set_main_pubkey(crypto::toBinaryString(main_pubkey));
+          command->set_public_key(crypto::toBinaryString(main_pubkey));
         });
       }
 
@@ -275,7 +263,7 @@ namespace shared_model {
       auto setAccountQuorum(const interface::types::AddressType &account_id,
                             interface::types::QuorumType quorum) const {
         return addCommand([&](auto proto_command) {
-          auto command = proto_command->mutable_set_quorum();
+          auto command = proto_command->mutable_set_account_quorum();
           command->set_account_id(account_id);
           command->set_quorum(quorum);
         });
