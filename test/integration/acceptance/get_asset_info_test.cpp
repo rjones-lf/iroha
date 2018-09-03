@@ -14,9 +14,6 @@
 using namespace integration_framework;
 using namespace shared_model;
 
-#define CHECK_BLOCK(i) \
-  [](auto &block) { ASSERT_EQ(block->transactions().size(), i); }
-
 class GetAssetInfo : public AcceptanceFixture {
  public:
   GetAssetInfo() : itf(1) {}
@@ -41,7 +38,9 @@ class GetAssetInfo : public AcceptanceFixture {
       const interface::RolePermissionSet &perms = {
           interface::permissions::Role::kReadAssets}) {
     itf.setInitialState(kAdminKeypair)
-        .sendTxAwait(makeUserWithPerms(perms), CHECK_BLOCK(1));
+        .sendTxAwait(makeUserWithPerms(perms), [=](auto &block) {
+          ASSERT_EQ(block->transactions().size(), 1);
+        });
     return itf;
   }
 
@@ -100,7 +99,7 @@ class GetAssetInfo : public AcceptanceFixture {
  * @given a user with GetMyAccount permission
  * @when GetAssetInfo is queried on the user
  * @then there is a valid AccountResponse
- * TODO: enable after IR-1668
+ * TODO(@l4l) 3/9/18: enable after IR-1668
  */
 TEST_F(GetAssetInfo, DISABLED_Basic) {
   prepareState().sendQuery(makeQuery(), checkValidAsset());
@@ -110,7 +109,7 @@ TEST_F(GetAssetInfo, DISABLED_Basic) {
  * C365 Pass an empty asset id
  * @given a user with all required permissions
  * @when GetAssetInfo is queried on the empty asset name
- * @then query is stateless invalid response
+ * @then query has stateless invalid response
  */
 TEST_F(GetAssetInfo, EmptyAsset) {
   prepareState().sendQuery(
@@ -123,7 +122,7 @@ TEST_F(GetAssetInfo, EmptyAsset) {
  * C366 Pass a non-existing asset id
  * @given a user with all required permissions
  * @when GetAssetInfo is queried on the user
- * @then query is stateful invalid response
+ * @then query has stateful invalid response
  */
 TEST_F(GetAssetInfo, NonexistentAsset) {
   prepareState().sendQuery(
@@ -135,7 +134,7 @@ TEST_F(GetAssetInfo, NonexistentAsset) {
  * C364 Get asset info without CanReadAssets permission
  * @given a user without any query-related permission
  * @when GetAssetInfo is queried on the user
- * @then query is stateful invalid response
+ * @then query has stateful invalid response
  */
 TEST_F(GetAssetInfo, NoPermission) {
   prepareState({}).sendQuery(
