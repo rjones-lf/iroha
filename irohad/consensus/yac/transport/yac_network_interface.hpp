@@ -19,11 +19,12 @@
 #define IROHA_YAC_NETWORK_INTERFACE_HPP
 
 #include <memory>
+#include <vector>
 
 namespace shared_model {
   namespace interface {
     class Peer;
-  }
+  }  // namespace interface
 }  // namespace shared_model
 
 namespace iroha {
@@ -64,4 +65,5 @@ namespace iroha {
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
+
 #endif  // IROHA_YAC_NETWORK_INTERFACE_HPP

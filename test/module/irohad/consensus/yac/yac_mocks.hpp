@@ -78,7 +78,7 @@ namespace iroha {
 
       class MockYacCryptoProvider : public YacCryptoProvider {
        public:
-        MOCK_METHOD1(verify, bool(std::vector<VoteMessage>));
+        MOCK_METHOD1(verify, bool(const std::vector<VoteMessage> &));
 
         VoteMessage getVote(YacHash hash) override {
           VoteMessage vote;

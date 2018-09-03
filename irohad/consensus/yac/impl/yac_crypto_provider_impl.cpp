@@ -29,7 +29,7 @@ namespace iroha {
               factory)
           : keypair_(keypair), factory_(std::move(factory)) {}
 
-      bool CryptoProviderImpl::verify(std::vector<VoteMessage> msg) {
+      bool CryptoProviderImpl::verify(const std::vector<VoteMessage> &msg) {
         return std::all_of(
             std::begin(msg), std::end(msg), [](const auto &vote) {
               auto serialized =

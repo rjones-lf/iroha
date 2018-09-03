@@ -33,7 +33,7 @@ namespace iroha {
          * @param msg - for verification
          * @return true if signature correct
          */
-        virtual bool verify(std::vector<VoteMessage> msg) = 0;
+        virtual bool verify(const std::vector<VoteMessage> &msg) = 0;
 
         /**
          * Generate vote for provided hash;

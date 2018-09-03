@@ -18,15 +18,16 @@
 #ifndef IROHA_NETWORK_IMPL_HPP
 #define IROHA_NETWORK_IMPL_HPP
 
-#include <consensus/yac/messages.hpp>
+#include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetwork
+#include "yac.grpc.pb.h"
+
 #include <memory>
 #include <unordered_map>
 
-#include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetwork
+#include "consensus/yac/messages.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
-#include "yac.grpc.pb.h"
 
 namespace iroha {
   namespace consensus {
