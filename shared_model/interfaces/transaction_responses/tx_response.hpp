@@ -32,6 +32,13 @@ namespace shared_model {
       template <typename... Value>
       using wrap = boost::variant<const Value &...>;
 
+     protected:
+      /**
+       * @return priority of this transaction response; transaction response can
+       * only be replaced with one with higher priority
+       */
+      virtual int priority() const noexcept = 0;
+
      public:
       /// Type of variant, that handle all concrete tx responses in the system
       using ResponseVariantType = wrap<StatelessFailedTxResponse,
@@ -64,6 +71,23 @@ namespace shared_model {
        * @return error message if present, otherwise - an empty string
        */
       virtual const ErrorMessageType &errorMessage() const = 0;
+
+      /**
+       * Compare priorities of two transaction responses
+       * @param other response
+       * @return:
+       *    - -1, if this response's priority is less, than other's
+       *    -  0, if it's equal
+       *    -  1, if it's greater
+       */
+      int comparePriorities(const ModelType &other) const noexcept {
+        if (this->priority() < other.priority()) {
+          return -1;
+        } else if (this->priority() == other.priority()) {
+          return 0;
+        }
+        return 1;
+      };
 
       // ------------------------| Primitive override |-------------------------
 

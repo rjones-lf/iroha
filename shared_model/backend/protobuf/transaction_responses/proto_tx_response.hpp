@@ -6,6 +6,8 @@
 #ifndef IROHA_PROTO_TX_RESPONSE_HPP
 #define IROHA_PROTO_TX_RESPONSE_HPP
 
+#include <limits>
+
 #include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
 #include "common/visitor.hpp"
 #include "utils/lazy_initializer.hpp"
@@ -61,23 +63,6 @@ namespace shared_model {
         return proto_->error_message();
       }
 
-      /**
-       * Compare priorities of two transaction responses
-       * @param other response
-       * @return:
-       *    - -1, if this response's priority is less, than other's
-       *    -  0, if it's equal
-       *    -  1, if it's greater
-       */
-      int comparePriorities(const TransactionResponse &other) const noexcept {
-        if (this->priority() < other.priority()) {
-          return -1;
-        } else if (this->priority() == other.priority()) {
-          return 0;
-        }
-        return 1;
-      };
-
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
@@ -110,22 +95,26 @@ namespace shared_model {
       const Lazy<crypto::Hash> hash_{
           [this] { return crypto::Hash(this->proto_->tx_hash()); }};
 
+      static constexpr int max_priority = std::numeric_limits<int>::max();
       /**
        * @return priority of this transaction response; transaction response can
        * only be replaced with one with higher priority
        */
-      int priority() const noexcept {
+      int priority() const noexcept override {
         return iroha::visit_in_place(
             *variant_,
+            // not received can be changed to any response
+            [](const NotReceivedTxResponse &) { return 0; },
+            // following types are sequential in pipeline
             [](const StatelessValidTxResponse &) { return 1; },
             [](const MstPendingResponse &) { return 2; },
             [](const EnoughSignaturesCollectedResponse &) { return 3; },
             [](const StatefulValidTxResponse &) { return 4; },
-            [](const CommittedTxResponse &) { return 5; },
-            [](const StatelessFailedTxResponse &) { return 6; },
-            [](const StatefulFailedTxResponse &) { return 7; },
-            [](const MstExpiredResponse &) { return 8; },
-            [](const NotReceivedTxResponse &) { return 9; });
+            // following types are the final ones
+            [](const CommittedTxResponse &) { return max_priority; },
+            [](const StatelessFailedTxResponse &) { return max_priority; },
+            [](const StatefulFailedTxResponse &) { return max_priority; },
+            [](const MstExpiredResponse &) { return max_priority; });
       }
     };
   }  // namespace  proto

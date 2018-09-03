@@ -274,7 +274,7 @@ namespace torii {
   CommandService::StatusStream(const shared_model::crypto::Hash &hash) {
     using ResponsePtrType =
         std::shared_ptr<shared_model::interface::TransactionResponse>;
-    ResponsePtrType initial_status = cache_->findItem(hash).value_or([&] {
+    auto initial_status = cache_->findItem(hash).value_or([&] {
       log_->debug("tx is not received: {}", hash.toString());
       return std::make_shared<shared_model::proto::TransactionResponse>(
           shared_model::proto::TransactionStatusBuilder()
