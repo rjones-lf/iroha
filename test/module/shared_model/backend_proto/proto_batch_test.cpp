@@ -21,22 +21,6 @@ using ::testing::Test;
 using ::testing::Truly;
 
 /**
- * Creates valid signed transaction
- * @param created_time assigned to transactions
- * @return std::shared_ptr<interface::Transaction> containing valid signed
- * transaction
- */
-auto createValidSignedTransaction(size_t created_time = iroha::time::now()) {
-  return std::shared_ptr<interface::Transaction>(
-      clone(framework::batch::prepareUnsignedTransactionBuilder("valid@account",
-                                                                created_time)
-                .build()
-                .signAndAddSignature(
-                    crypto::DefaultCryptoAlgorithmType::generateKeypair())
-                .finish()));
-}
-
-/**
  * Creates valid unsigned transaction
  * @param created_time assigned to transactions
  * @return std::shared_ptr<interface::Transaction> containing valid unsigned
@@ -68,12 +52,15 @@ auto createInvalidUnsignedTransaction(
  * @then transaction batch is created
  */
 TEST(TransactionBatchTest, CreateTransactionBatchWhenValid) {
-  auto txs = framework::batch::createUnsignedBatchTransactions(
-      interface::types::BatchType::ATOMIC,
-      std::vector<std::string>{"a@domain", "b@domain"});
+  using BatchTypeAndCreatorPair =
+      std::pair<interface::types::BatchType, std::string>;
 
-  // put one transaction with signature to pass validation
-  txs.push_back(createValidSignedTransaction());
+  auto txs = framework::batch::createBatchOneSignTransactions(
+      std::vector<BatchTypeAndCreatorPair>{
+          BatchTypeAndCreatorPair{interface::types::BatchType::ATOMIC,
+                                  "a@domain"},
+          BatchTypeAndCreatorPair{interface::types::BatchType::ATOMIC,
+                                  "b@domain"}});
 
   auto transaction_batch =
       interface::TransactionBatchFactory::createTransactionBatch(
@@ -129,6 +116,10 @@ TEST(TransactionBatchTest, CreateSingleTxBatchWhenValid) {
   validation::DefaultUnsignedTransactionValidator transaction_validator;
 
   auto tx1 = createValidUnsignedTransaction();
+  auto keypair = crypto::DefaultCryptoAlgorithmType::generateKeypair();
+  auto signed_blob =
+      crypto::DefaultCryptoAlgorithmType::sign(tx1->payload(), keypair);
+  tx1->addSignature(signed_blob, keypair.publicKey());
 
   auto transaction_batch =
       interface::TransactionBatchFactory::createTransactionBatch(

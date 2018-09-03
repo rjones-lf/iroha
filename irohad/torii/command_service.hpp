@@ -151,6 +151,13 @@ namespace torii {
                     const shared_model::crypto::Hash &hash,
                     const iroha::protocol::ToriiResponse &response);
 
+    /**
+     * Forward batch to transaction processor and set statuses of all
+     * transactions inside it
+     * @param batch to be processed
+     */
+    void processBatch(const shared_model::interface::TransactionBatch &batch);
+
    private:
     using CacheType = iroha::cache::Cache<shared_model::crypto::Hash,
                                           iroha::protocol::ToriiResponse,
