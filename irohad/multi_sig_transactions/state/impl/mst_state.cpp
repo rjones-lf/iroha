@@ -92,13 +92,15 @@ namespace iroha {
          boost::combine(target->transactions(), donor->transactions())) {
       const auto &target_tx = zip.get<0>();
       const auto &donor_tx = zip.get<1>();
-      inserted_new_signatures = inserted_new_signatures
-          or std::any_of(donor_tx->signatures().begin(),
-                         donor_tx->signatures().end(),
-                         [&target_tx](const auto &signature) {
-                           return target_tx->addSignature(
-                               signature.signedData(), signature.publicKey());
-                         });
+      inserted_new_signatures = std::accumulate(
+          std::begin(donor_tx->signatures()),
+          std::end(donor_tx->signatures()),
+          inserted_new_signatures,
+          [&target_tx](bool accumulator, const auto &signature) {
+            return accumulator
+                or target_tx->addSignature(signature.signedData(),
+                                           signature.publicKey());
+          });
     }
     return inserted_new_signatures;
   }

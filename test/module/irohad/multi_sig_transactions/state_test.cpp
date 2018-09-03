@@ -13,7 +13,8 @@ using namespace std;
 using namespace iroha;
 using namespace iroha::model;
 
-// state with tx with A sig, receive with B, only B should be shared among others
+// state with tx with A sig, receive with B, only B should be shared among
+// others
 
 /**
  * @given empty state
@@ -209,7 +210,9 @@ TEST(StateTest, DifferenceTest) {
 /**
  * @given an empty state
  * @when a partially signed transaction with quorum 3 is inserted 3 times
- * @then  the resulting state contains one signed transaction
+ * @then each time new signature inserted state gives this batch back @and
+ * returned statuses correspond to actual ones @and the resulting state contains
+ * one signed transaction
  */
 TEST(StateTest, UpdateTxUntillQuorum) {
   auto quorum = 3u;
@@ -219,15 +222,20 @@ TEST(StateTest, UpdateTxUntillQuorum) {
 
   auto state_after_one_tx = state += addSignatures(
       makeTestBatch(txBuilder(1, time, quorum)), 0, makeSignature("1", "1"));
-  ASSERT_EQ(0, state_after_one_tx.getBatches().size());
+  ASSERT_EQ(1, state_after_one_tx.first.getBatches().size());
+  ASSERT_FALSE(state_after_one_tx.second);
 
   auto state_after_two_txes = state += addSignatures(
       makeTestBatch(txBuilder(1, time, quorum)), 0, makeSignature("2", "2"));
-  ASSERT_EQ(0, state_after_one_tx.getBatches().size());
+  ASSERT_EQ(1, state_after_one_tx.first.getBatches().size());
+  ASSERT_FALSE(state_after_two_txes.second);
 
   auto state_after_three_txes = state += addSignatures(
       makeTestBatch(txBuilder(1, time, quorum)), 0, makeSignature("3", "3"));
-  ASSERT_EQ(1, state_after_three_txes.getBatches().size());
+  ASSERT_EQ(1, state_after_three_txes.first.getBatches().size());
+  ASSERT_TRUE(
+      state_after_three_txes.first.getBatches().front()->hasAllSignatures());
+  ASSERT_TRUE(state_after_three_txes.second);
   ASSERT_EQ(0, state.getBatches().size());
 }
 
