@@ -5,6 +5,7 @@
 
 #include <gtest/gtest.h>
 #include "framework/integration_framework/integration_test_framework.hpp"
+#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 
 using namespace integration_framework;
@@ -49,9 +50,25 @@ TEST_F(AddSignatory, Basic) {
       .sendTxAwait(makeFirstUser(), CHECK_BLOCK(1))
       .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
       .sendTxAwait(
-          complete(baseTx().addSignatory(kUserId, kUser2Keypair.publicKey()),
-                   kUserKeypair),
-          CHECK_BLOCK(1));
+          complete(baseTx().addSignatory(kUserId, kUser2Keypair.publicKey())),
+          CHECK_BLOCK(1))
+      .sendQuery(
+          complete(baseQry().creatorAccountId(kAdminId).getSignatories(kUserId),
+                   kAdminKeypair),
+          [this](auto &resp) {
+            ASSERT_NO_THROW({
+              auto &keys =
+                  boost::apply_visitor(
+                      framework::SpecifiedVisitor<
+                          shared_model::interface::SignatoriesResponse>(),
+                      resp.get())
+                      .keys();
+              ASSERT_EQ(keys.size(), 2);  // self + signatory
+              ASSERT_TRUE(
+                  std::find(keys.begin(), keys.end(), kUser2Keypair.publicKey())
+                  != keys.end());
+            });
+          });
 }
 
 /**
@@ -68,8 +85,7 @@ TEST_F(AddSignatory, NoPermission) {
                    CHECK_BLOCK(1))
       .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
       .sendTx(
-          complete(baseTx().addSignatory(kUserId, kUser2Keypair.publicKey()),
-                   kUserKeypair))
+          complete(baseTx().addSignatory(kUserId, kUser2Keypair.publicKey())))
       .checkVerifiedProposal(CHECK_BLOCK(0));
 }
 
@@ -101,7 +117,7 @@ TEST_F(AddSignatory, GrantedPermission) {
 }
 
 /**
- * C226 Add signatory to account, which haven't granted such permission
+ * C226 Add signatory to account, which isn't granted such permission
  * @given some user with CanAddMySignatory permission and a second user without
           granted CanAddMySignatory
  * @when execute tx with AddSignatory where the second is a creator and the
@@ -160,7 +176,7 @@ TEST_F(AddSignatory, InvalidKey) {
  *       with any user
  * @then there is no tx in proposal
  */
-TEST_F(AddSignatory, NonexistedKey) {
+TEST_F(AddSignatory, NonExistedKey) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTxAwait(makeFirstUser(), CHECK_BLOCK(1))
