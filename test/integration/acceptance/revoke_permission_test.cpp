@@ -355,7 +355,10 @@ namespace grantables {
 
                        ASSERT_NE(message.find("did not pass verification"),
                                  std::string::npos)
-                           << "Fail reason: " << message;
+                           << "Fail reason: " << message
+                           << "\nRaw status:" << status.toString();
+                       // we saw empty message was received once
+                       // that is why we have added the raw print of status
                      })
         .done();
   }
