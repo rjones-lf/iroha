@@ -30,7 +30,6 @@ class RemoveSignatory : public AcceptanceFixture {
   const std::string kRole2 = "roletwo";
   const std::string kUser2 = "usertwo";
   const std::string kUser2Id = kUser2 + "@test";
-  const std::string kAmount = "1.0";
   const crypto::Keypair kUser2Keypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
