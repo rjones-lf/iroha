@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "builders/protobuf/block.hpp"
-#include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "endpoint.pb.h"
 #include "main/server_runner.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
+#include "module/shared_model/builders/protobuf/block.hpp"
+#include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"

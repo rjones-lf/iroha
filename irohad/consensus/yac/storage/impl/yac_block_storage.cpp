@@ -26,7 +26,7 @@ namespace iroha {
 
       YacBlockStorage::YacBlockStorage(
           YacHash hash,
-          uint64_t peers_in_round,
+          PeersNumberType peers_in_round,
           std::shared_ptr<SupermajorityChecker> supermajority_checker)
           : hash_(std::move(hash)),
             peers_in_round_(peers_in_round),

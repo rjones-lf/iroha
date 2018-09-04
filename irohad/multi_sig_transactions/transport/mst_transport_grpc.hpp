@@ -18,12 +18,13 @@
 #ifndef IROHA_MST_TRANSPORT_GRPC_HPP
 #define IROHA_MST_TRANSPORT_GRPC_HPP
 
-#include <google/protobuf/empty.pb.h>
-#include "logger/logger.hpp"
-#include "model/converters/pb_transaction_factory.hpp"
 #include "mst.grpc.pb.h"
-#include "network/impl/async_grpc_client.hpp"
 #include "network/mst_transport.hpp"
+
+#include <google/protobuf/empty.pb.h>
+#include "interfaces/common_objects/common_objects_factory.hpp"
+#include "logger/logger.hpp"
+#include "network/impl/async_grpc_client.hpp"
 
 namespace iroha {
   namespace network {
@@ -32,7 +33,9 @@ namespace iroha {
      public:
       explicit MstTransportGrpc(
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
-              async_call);
+              async_call,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory);
 
       /**
        * Server part of grpc SendState method call
@@ -54,9 +57,9 @@ namespace iroha {
 
      private:
       std::weak_ptr<MstTransportNotification> subscriber_;
-      model::converters::PbTransactionFactory factory_;
       std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
           async_call_;
+      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
     };
   }  // namespace network
 }  // namespace iroha

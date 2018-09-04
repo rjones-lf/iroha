@@ -1,0 +1,14 @@
+#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
+
+addtest(pending_txs_storage_test
+    pending_txs_storage_test.cpp
+    )
+target_link_libraries(pending_txs_storage_test
+    rxcpp
+    pending_txs_storage
+    shared_model_stateless_validation
+    )

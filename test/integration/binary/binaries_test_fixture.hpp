@@ -9,11 +9,10 @@
 #include <gtest/gtest.h>
 
 #include <vector>
-#include "builders/protobuf/block.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 #include "integration/binary/launchers.hpp"
-
+#include "module/shared_model/builders/protobuf/block.hpp"
 
 namespace shared_model {
 
@@ -76,9 +75,10 @@ namespace query_validation {
      *    execution.
      */
     template <typename Head, typename... Tail>
-    inline void _validateQueries(::query_validation::QueryIterator it,
-                                 ::query_validation::QueryIterator end,
-                                 integration_framework::IntegrationTestFramework &itf) {
+    inline void _validateQueries(
+        ::query_validation::QueryIterator it,
+        ::query_validation::QueryIterator end,
+        integration_framework::IntegrationTestFramework &itf) {
       if (it != end) {
         itf.sendQuery(*it, checkQueryResponseType<Head>);
         _validateQueries<Tail...>(++it, end, itf);
@@ -109,9 +109,10 @@ namespace query_validation {
    *    execution.
    */
   template <typename... ExpectedResponsesTypes>
-  inline void validateQueriesResponseTypes(QueryIterator it,
-                                           QueryIterator end,
-                                           integration_framework::IntegrationTestFramework &itf) {
+  inline void validateQueriesResponseTypes(
+      QueryIterator it,
+      QueryIterator end,
+      integration_framework::IntegrationTestFramework &itf) {
     internal::_validateQueries<ExpectedResponsesTypes..., internal::Void>(
         it, end, itf);
   }
@@ -171,7 +172,8 @@ class BinaryTestFixture : public ::testing::Test {
               launcher.transactions.begin()),
           launcher.transactions.end(),
           [&itf](const auto &tx) {
-            itf.sendTx(tx).checkBlock(BinaryTestFixture::blockWithTransactionValidation);
+            itf.sendTx(tx).checkBlock(
+                BinaryTestFixture::blockWithTransactionValidation);
           });
 
       query_validation::validateQueriesResponseTypes<

@@ -18,14 +18,12 @@
 #ifndef IROHA_YAC_CRYPTO_PROVIDER_HPP
 #define IROHA_YAC_CRYPTO_PROVIDER_HPP
 
-#include "consensus/yac/yac_hash_provider.hpp" // for YacHash (passed by copy)
+#include "consensus/yac/yac_hash_provider.hpp"  // for YacHash (passed by copy)
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
-      struct CommitMessage;
-      struct RejectMessage;
       struct VoteMessage;
 
       class YacCryptoProvider {
@@ -35,21 +33,7 @@ namespace iroha {
          * @param msg - for verification
          * @return true if signature correct
          */
-        virtual bool verify(CommitMessage msg) = 0;
-
-        /**
-         * Verify signatory of message
-         * @param msg - for verification
-         * @return true if signature correct
-         */
-        virtual bool verify(RejectMessage msg) = 0;
-
-        /**
-         * Verify signatory of message
-         * @param msg - for verification
-         * @return true if signature correct
-         */
-        virtual bool verify(VoteMessage msg) = 0;
+        virtual bool verify(const std::vector<VoteMessage> &msg) = 0;
 
         /**
          * Generate vote for provided hash;

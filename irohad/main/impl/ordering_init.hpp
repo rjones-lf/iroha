@@ -24,8 +24,8 @@
 #include "logger/logger.hpp"
 #include "ordering/impl/ordering_gate_impl.hpp"
 #include "ordering/impl/ordering_gate_transport_grpc.hpp"
-#include "ordering/impl/ordering_service_impl.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
+#include "ordering/impl/single_peer_ordering_service.hpp"
 
 namespace iroha {
 
@@ -93,7 +93,7 @@ namespace iroha {
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call);
 
-      std::shared_ptr<iroha::network::OrderingService> ordering_service;
+      std::shared_ptr<ordering::SinglePeerOrderingService> ordering_service;
       std::shared_ptr<iroha::network::OrderingGate> ordering_gate;
       std::shared_ptr<ordering::OrderingGateTransportGrpc>
           ordering_gate_transport;

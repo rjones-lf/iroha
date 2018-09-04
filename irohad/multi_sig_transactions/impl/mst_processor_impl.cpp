@@ -103,12 +103,13 @@ namespace iroha {
 
   void FairMstProcessor::onPropagate(
       const PropagationStrategy::PropagationData &data) {
-    log_->info("Propagate new data[{}]", data.size());
     auto current_time = time_provider_->getCurrentTime();
+    auto size = data.size();
     std::for_each(
-        data.begin(), data.end(), [this, &current_time](const auto &peer) {
+        data.begin(), data.end(), [this, &current_time, size](const auto &peer) {
           auto diff = storage_->getDiffState(peer, current_time);
           if (not diff.isEmpty()) {
+            log_->info("Propagate new data[{}]", size);
             transport_->sendState(*peer, diff);
           }
         });

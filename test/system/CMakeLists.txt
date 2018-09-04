@@ -6,6 +6,11 @@ target_link_libraries(irohad_test
         rapidjson
         integration_framework_config_helper
         libs_common
+        shared_model_proto_backend
+        acceptance_fixture
+        command_client
+        query_client
+        keys_manager
         )
 add_dependencies(irohad_test irohad)
 add_definitions(-DPATHIROHAD="${PROJECT_BINARY_DIR}/bin")

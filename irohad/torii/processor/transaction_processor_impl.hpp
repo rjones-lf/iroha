@@ -20,6 +20,8 @@
 
 #include <mutex>
 
+#include <rxcpp/rx.hpp>
+
 #include "builders/default_builders.hpp"
 #include "interfaces/transaction_responses/tx_response.hpp"
 #include "logger/logger.hpp"

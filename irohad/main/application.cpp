@@ -80,6 +80,7 @@ void Irohad::init() {
   initPeerCommunicationService();
   initStatusBus();
   initMstProcessor();
+  initPendingTxsStorage();
 
   // Torii
   initTransactionCommandService();
@@ -99,14 +100,14 @@ void Irohad::dropStorage() {
  * Initializing iroha daemon storage
  */
 void Irohad::initStorage() {
-  auto factory =
+  common_objects_factory_ =
       std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
           shared_model::validation::FieldValidator>>();
   auto block_converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
   auto storageResult = StorageImpl::create(block_store_dir_,
                                            pg_conn_,
-                                           std::move(factory),
+                                           common_objects_factory_,
                                            std::move(block_converter));
   storageResult.match(
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
@@ -184,8 +185,11 @@ void Irohad::initOrderingGate() {
 void Irohad::initSimulator() {
   auto block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory>(
       std::make_unique<shared_model::validation::BlockVariantValidator>());
-  simulator = std::make_shared<Simulator>(
-      ordering_gate, stateful_validator, storage, storage, crypto_signer_,
+  simulator = std::make_shared<Simulator>(ordering_gate,
+                                          stateful_validator,
+                                          storage,
+                                          storage,
+                                          crypto_signer_,
                                           std::move(block_factory));
 
   log_->info("[Init] => init simulator");
@@ -220,7 +224,8 @@ void Irohad::initConsensusGate() {
                                               keypair,
                                               consensus_result_cache_,
                                               vote_delay_,
-                                              async_call_);
+                                              async_call_,
+                                              common_objects_factory_);
 
   log_->info("[Init] => consensus gate");
 }
@@ -261,7 +266,8 @@ void Irohad::initStatusBus() {
 
 void Irohad::initMstProcessor() {
   if (is_mst_supported_) {
-    auto mst_transport = std::make_shared<MstTransportGrpc>(async_call_);
+    auto mst_transport = std::make_shared<MstTransportGrpc>(
+        async_call_, common_objects_factory_);
     auto mst_completer = std::make_shared<DefaultCompleter>();
     auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
@@ -277,6 +283,14 @@ void Irohad::initMstProcessor() {
     mst_processor = std::make_shared<MstProcessorStub>();
   }
   log_->info("[Init] => MST processor");
+}
+
+void Irohad::initPendingTxsStorage() {
+  pending_txs_storage_ = std::make_shared<PendingTransactionStorageImpl>(
+      mst_processor->onStateUpdate(),
+      mst_processor->onPreparedBatches(),
+      mst_processor->onExpiredBatches());
+  log_->info("[Init] => pending transactions storage");
 }
 
 /**
@@ -301,7 +315,8 @@ void Irohad::initTransactionCommandService() {
  */
 void Irohad::initQueryService() {
   auto query_processor = std::make_shared<QueryProcessorImpl>(
-      storage, std::make_unique<QueryExecutionImpl>(storage));
+      storage,
+      std::make_unique<QueryExecutionImpl>(storage, pending_txs_storage_));
 
   query_service = std::make_shared<::torii::QueryService>(query_processor);
 

@@ -143,7 +143,7 @@ namespace iroha_cli {
                       params_description.value().end(),
                       [&params](auto &param) {
                         using namespace iroha;
-                        promptString(param) | [&](auto &val) {
+                        promptString(param) | [&](auto &&val) {
                           if (not val.empty()) {
                             // Update input cache
                             param.cache = val;

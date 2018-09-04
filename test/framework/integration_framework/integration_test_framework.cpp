@@ -14,8 +14,6 @@
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
-#include "builders/protobuf/block.hpp"
-#include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "common/files.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
@@ -24,6 +22,8 @@
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "interfaces/permissions.hpp"
+#include "module/shared_model/builders/protobuf/block.hpp"
+#include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 
 using namespace shared_model::crypto;
@@ -135,6 +135,7 @@ namespace integration_framework {
         ->getPeerCommunicationService()
         ->on_proposal()
         .subscribe([this](auto proposal) {
+          log_->info("Before push to proposal queue");
           proposal_queue_.push(proposal);
           log_->info("proposal");
           queue_cond.notify_all();
@@ -236,7 +237,9 @@ namespace integration_framework {
     log_->info("send transactions");
     const auto &transactions = tx_sequence.transactions();
 
-    boost::barrier bar(2);
+    std::mutex m;
+    std::condition_variable cv;
+    bool processed = false;
 
     // subscribe on status bus and save all stateless statuses into a vector
     std::vector<shared_model::proto::TransactionResponse> statuses;
@@ -265,7 +268,11 @@ namespace integration_framework {
               statuses.push_back(*std::static_pointer_cast<
                                  shared_model::proto::TransactionResponse>(s));
             },
-            [&bar] { bar.wait(); });
+            [&cv, &m, &processed] {
+              std::lock_guard<std::mutex> lock(m);
+              processed = true;
+              cv.notify_all();
+            });
 
     // put all transactions to the TxList and send them to iroha
     iroha::protocol::TxList tx_list;
@@ -278,8 +285,8 @@ namespace integration_framework {
     iroha_instance_->getIrohaInstance()->getCommandService()->ListTorii(
         tx_list);
 
-    // make sure that the first (stateless) status is come
-    bar.wait();
+    std::unique_lock<std::mutex> lk(m);
+    cv.wait(lk, [&] { return processed; });
 
     validation(statuses);
     return *this;

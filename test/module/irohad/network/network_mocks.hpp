@@ -95,6 +95,7 @@ namespace iroha {
       MOCK_METHOD0(on_commit,
                    rxcpp::observable<shared_model::interface::BlockVariant>());
     };
+
   }  // namespace network
 }  // namespace iroha
 

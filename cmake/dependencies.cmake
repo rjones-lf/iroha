@@ -1,6 +1,7 @@
 find_package(PackageHandleStandardArgs)
 
 include(ExternalProject)
+
 set(EP_PREFIX "${PROJECT_SOURCE_DIR}/external")
 set_directory_properties(PROPERTIES
     EP_PREFIX ${EP_PREFIX}
@@ -73,6 +74,7 @@ find_package(Boost 1.65.0 REQUIRED
     system
     thread
     )
+
 add_library(boost INTERFACE IMPORTED)
 set_target_properties(boost PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS}
@@ -96,3 +98,7 @@ endif()
 #          ed25519/sha3           #
 ###################################
 find_package(ed25519)
+
+if (USE_LIBIROHA)
+  find_package(libiroha)
+endif()

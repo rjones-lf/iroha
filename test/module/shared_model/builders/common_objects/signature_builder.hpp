@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-#ifndef IROHA_ASSET_BUILDER_HPP
-#define IROHA_ASSET_BUILDER_HPP
+#ifndef IROHA_SIGNATURE_BUILDER_HPP
+#define IROHA_SIGNATURE_BUILDER_HPP
 
-#include "builders/common_objects/common.hpp"
-#include "interfaces/common_objects/asset.hpp"
+#include "interfaces/common_objects/signature.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "module/shared_model/builders/common_objects/common.hpp"
 
 // TODO: 14.02.2018 nickaleks Add check for uninitialized fields IR-972
 
@@ -28,7 +28,7 @@ namespace shared_model {
   namespace builder {
 
     /**
-     * AssetBuilder is a class, used for construction of Asset objects
+     * SignatureBuilder is a class, used for construction of Signature objects
      * @tparam BuilderImpl is a type, which defines builder for implementation
      * of shared_model. Since we return abstract classes, it is necessary for
      * them to be instantiated with some concrete implementation
@@ -36,38 +36,34 @@ namespace shared_model {
      * to perform stateless validation on model fields
      */
     template <typename BuilderImpl, typename Validator>
-    class DEPRECATED AssetBuilder
-        : public CommonObjectBuilder<interface::Asset, BuilderImpl, Validator> {
+    class DEPRECATED SignatureBuilder
+        : public CommonObjectBuilder<interface::Signature,
+                                     BuilderImpl,
+                                     Validator> {
      public:
-      AssetBuilder assetId(const interface::types::AccountIdType &asset_id) {
-        AssetBuilder copy(*this);
-        copy.builder_ = this->builder_.assetId(asset_id);
+      SignatureBuilder publicKey(
+          const shared_model::interface::types::PubkeyType &key) {
+        SignatureBuilder copy(*this);
+        copy.builder_ = this->builder_.publicKey(key);
         return copy;
       }
 
-      AssetBuilder domainId(const interface::types::DomainIdType &domain_id) {
-        AssetBuilder copy(*this);
-        copy.builder_ = this->builder_.domainId(domain_id);
-        return copy;
-      }
-
-      AssetBuilder precision(const interface::types::PrecisionType &precision) {
-        AssetBuilder copy(*this);
-        copy.builder_ = this->builder_.precision(precision);
+      SignatureBuilder signedData(
+          const interface::Signature::SignedType &signed_data) {
+        SignatureBuilder copy(*this);
+        copy.builder_ = this->builder_.signedData(signed_data);
         return copy;
       }
 
      protected:
       virtual std::string builderName() const override {
-        return "Asset Builder";
+        return "Signature Builder";
       }
 
       virtual validation::ReasonsGroupType validate(
-          const interface::Asset &object) override {
+          const interface::Signature &object) override {
         validation::ReasonsGroupType reasons;
-        this->validator_.validateAssetId(reasons, object.assetId());
-        this->validator_.validateDomainId(reasons, object.domainId());
-        this->validator_.validatePrecision(reasons, object.precision());
+        this->validator_.validatePubkey(reasons, object.publicKey());
 
         return reasons;
       }
@@ -75,4 +71,4 @@ namespace shared_model {
   }  // namespace builder
 }  // namespace shared_model
 
-#endif  // IROHA_ASSET_BUILDER_HPP
+#endif  // IROHA_SIGNATURE_BUILDER_HPP

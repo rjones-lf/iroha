@@ -43,25 +43,21 @@ TEST_F(YacTest, InvalidCaseWhenNotReceiveSupermajority) {
 
   initYac(my_order.value());
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(my_peers.size());
-  EXPECT_CALL(*network, send_vote(_, _)).Times(my_peers.size());
+  EXPECT_CALL(*network, sendState(_, _)).Times(2 * my_peers.size());
 
   EXPECT_CALL(*timer, deny()).Times(0);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
   YacHash hash1("proposal_hash", "block_hash");
   YacHash hash2("proposal_hash", "block_hash2");
   yac->vote(hash1, my_order.value());
 
   for (auto i = 0; i < 2; ++i) {
-    yac->on_vote(create_vote(hash1, std::to_string(i)));
+    yac->onState({create_vote(hash1, std::to_string(i))});
   };
   for (auto i = 2; i < 4; ++i) {
-    yac->on_vote(create_vote(hash2, std::to_string(i)));
+    yac->onState({create_vote(hash2, std::to_string(i))});
   };
 }
 
@@ -81,23 +77,20 @@ TEST_F(YacTest, InvalidCaseWhenDoesNotVerify) {
 
   initYac(my_order.value());
 
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
+  EXPECT_CALL(*network, sendState(_, _)).Times(0);
 
   EXPECT_CALL(*timer, deny()).Times(0);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>()))
-      .WillRepeatedly(Return(false));
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(false));
+  EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(false));
 
   YacHash hash1("proposal_hash", "block_hash");
   YacHash hash2("proposal_hash", "block_hash2");
 
   for (auto i = 0; i < 2; ++i) {
-    yac->on_vote(create_vote(hash1, std::to_string(i)));
+    yac->onState({create_vote(hash1, std::to_string(i))});
   };
   for (auto i = 2; i < 4; ++i) {
-    yac->on_vote(create_vote(hash2, std::to_string(i)));
+    yac->onState({create_vote(hash2, std::to_string(i))});
   };
 }
 
@@ -120,18 +113,14 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
 
   initYac(my_order.value());
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _))
+  EXPECT_CALL(*network, sendState(_, _))
       .Times(my_peers.size() + 1);  // $(peers.size()) sendings done during
                                     // multicast + 1 for single peer, who votes
                                     // after reject happened
-  EXPECT_CALL(*network, send_vote(_, _)).Times(0);
 
   EXPECT_CALL(*timer, deny()).Times(1);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).WillOnce(Return(true));
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
   YacHash hash1("proposal_hash", "block_hash");
   YacHash hash2("proposal_hash", "block_hash2");
@@ -149,11 +138,11 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
   };
 
   for (const auto &vote : votes) {
-    yac->on_vote(vote);
+    yac->onState({vote});
   }
 
-  yac->on_reject(RejectMessage(votes));
+  yac->onState(votes);
   auto peer = my_order->getPeers().back();
   auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
-  yac->on_vote(create_vote(hash1, pubkey));
+  yac->onState({create_vote(hash1, pubkey)});
 }

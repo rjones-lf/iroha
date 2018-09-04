@@ -7,7 +7,6 @@
 
 #include <boost/format.hpp>
 
-#include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"

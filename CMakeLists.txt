@@ -1,7 +1,7 @@
 # Copyright Soramitsu Co., Ltd. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.11.4)
 
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
@@ -64,6 +64,7 @@ option(SWIG_JAVA    "Generate Swig Java bindings"    OFF)
 option(SUPPORT_PYTHON2 "ON if Python2, OFF if python3" OFF)
 option(SWIG_CSHARP  "Generate Swig C# bindings"      OFF)
 option(SWIG_NODE    "Generate Swig NodeJS"           OFF)
+option(USE_LIBIROHA "Use external model library"     OFF)
 
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -108,9 +109,13 @@ set(SM_SCHEMA_DIR "${PROJECT_SOURCE_DIR}/shared_model/schema")
 set(SCHEMA_OUT_DIR ${CMAKE_BINARY_DIR}/schema)
 include_directories(
   ${PROJECT_SOURCE_DIR}/irohad
-  ${PROJECT_SOURCE_DIR}/shared_model
   ${PROJECT_SOURCE_DIR}/libs
 )
+
+# fallback to local shared_model
+if (NOT USE_LIBIROHA)
+  include_directories(${PROJECT_SOURCE_DIR}/shared_model)
+endif()
 
 SET(IROHA_ROOT_PROJECT ON)
 
@@ -132,7 +137,11 @@ add_subdirectory(schema)
 add_subdirectory(libs)
 add_subdirectory(irohad)
 add_subdirectory(iroha-cli)
-add_subdirectory(shared_model)
+
+# fallback to local shared_model
+if (NOT USE_LIBIROHA)
+  add_subdirectory(shared_model)
+endif()
 
 if(TESTING)
   enable_testing()

@@ -9,8 +9,11 @@
 #include <boost/range/irange.hpp>
 
 #include "framework/result_fixture.hpp"
+#include "interfaces/iroha_internal/transaction_batch_template_definitions.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "module/shared_model/validators/validators.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
 
 namespace framework {
@@ -191,9 +194,8 @@ namespace framework {
 
       auto txs =
           createBatchOneSignTransactions(transaction_fields, created_time);
-      auto result_batch =
-          shared_model::interface::TransactionBatch::createTransactionBatch(
-              txs, TxsValidator());
+      auto result_batch = shared_model::interface::TransactionBatchFactory::
+          createTransactionBatch(txs, TxsValidator());
 
       return framework::expected::val(result_batch).value().value;
     }
@@ -205,19 +207,21 @@ namespace framework {
      */
     inline auto createBatchFromSingleTransaction(
         std::shared_ptr<shared_model::interface::Transaction> tx) {
-      return shared_model::interface::TransactionBatch::createTransactionBatch(
+      return shared_model::interface::TransactionBatchFactory::
+          createTransactionBatch(
                  tx,
                  shared_model::validation::DefaultSignedTransactionValidator())
-          .match(
-              [](const iroha::expected::Value<
-                  shared_model::interface::TransactionBatch> &value) {
-                return value.value;
-              },
-              [](const auto &err) -> shared_model::interface::TransactionBatch {
-                throw std::runtime_error(
-                    err.error
-                    + "Error transformation from transaction to batch");
-              });
+              .match(
+                  [](const iroha::expected::Value<
+                      shared_model::interface::TransactionBatch> &value) {
+                    return value.value;
+                  },
+                  [](const auto &err)
+                      -> shared_model::interface::TransactionBatch {
+                    throw std::runtime_error(
+                        err.error
+                        + "Error transformation from transaction to batch");
+                  });
     }
 
     /**

@@ -22,6 +22,7 @@
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
@@ -34,6 +35,7 @@
 #include "network/impl/peer_communication_service_impl.hpp"
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
+#include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
 #include "simulator/block_creator.hpp"
 #include "simulator/impl/simulator.hpp"
 #include "synchronizer/impl/synchronizer_impl.hpp"
@@ -136,6 +138,8 @@ class Irohad {
 
   virtual void initMstProcessor();
 
+  virtual void initPendingTxsStorage();
+
   virtual void initTransactionCommandService();
 
   virtual void initQueryService();
@@ -171,6 +175,10 @@ class Irohad {
   std::shared_ptr<iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
       async_call_;
 
+  // common objects factory
+  std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+      common_objects_factory_;
+
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;
 
@@ -178,7 +186,8 @@ class Irohad {
   std::shared_ptr<iroha::simulator::Simulator> simulator;
 
   // block cache for consensus and block loader
-  std::shared_ptr<iroha::consensus::ConsensusResultCache> consensus_result_cache_;
+  std::shared_ptr<iroha::consensus::ConsensusResultCache>
+      consensus_result_cache_;
 
   // block loader
   std::shared_ptr<iroha::network::BlockLoader> block_loader;
@@ -195,6 +204,10 @@ class Irohad {
   // mst
   std::shared_ptr<iroha::MstProcessor> mst_processor;
 
+  // pending transactions storage
+  std::shared_ptr<iroha::PendingTransactionStorage> pending_txs_storage_;
+
+  // status bus
   std::shared_ptr<iroha::torii::StatusBus> status_bus_;
 
   // transaction service

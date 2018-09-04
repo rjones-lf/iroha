@@ -13,14 +13,17 @@
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/query_response.hpp"
+#include "pending_txs_storage/pending_txs_storage.hpp"
 
 using namespace shared_model::interface::permissions;
 using namespace iroha;
 using namespace iroha::ametsuchi;
 
 QueryExecutionImpl::QueryExecutionImpl(
-    std::shared_ptr<ametsuchi::Storage> storage)
-    : storage_(storage) {}
+    std::shared_ptr<ametsuchi::Storage> storage,
+    std::shared_ptr<PendingTransactionStorage> pending_txs_storage)
+    : storage_(std::move(storage)),
+      pending_txs_storage_(std::move(pending_txs_storage)) {}
 
 std::string getDomainFromName(const std::string &account_id) {
   std::vector<std::string> res;
@@ -368,7 +371,20 @@ QueryExecutionImpl::executeGetPendingTransactions(
     const shared_model::interface::GetPendingTransactions &query,
     const shared_model::interface::types::AccountIdType &query_creator) {
   std::vector<shared_model::proto::Transaction> txs;
-  // TODO 2018-07-04, igor-egorov, IR-1486, the core logic is to be implemented
+  auto interface_txs =
+      pending_txs_storage_->getPendingTransactions(query_creator);
+  txs.reserve(interface_txs.size());
+
+  std::transform(
+      interface_txs.begin(),
+      interface_txs.end(),
+      std::back_inserter(txs),
+      [](auto &tx) {
+        return *(std::static_pointer_cast<shared_model::proto::Transaction>(tx));
+      });
+
+  // TODO 2018-08-07, rework response builder - it should take
+  // interface::Transaction, igor-egorov, IR-1041
   auto response = QueryResponseBuilder().transactionsResponse(txs);
   return response;
 }
