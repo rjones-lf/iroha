@@ -162,7 +162,7 @@ namespace torii {
    private:
     using CacheType = iroha::cache::Cache<
         shared_model::crypto::Hash,
-        std::shared_ptr<shared_model::proto::TransactionResponse>,
+        std::shared_ptr<shared_model::interface::TransactionResponse>,
         shared_model::crypto::Hash::Hasher>;
 
     std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor_;

@@ -186,7 +186,10 @@ namespace torii {
     auto tx_hash = shared_model::crypto::Hash(request.tx_hash());
     auto resp = cache_->findItem(tx_hash);
     if (resp) {
-      response.CopyFrom((*resp)->getTransport());
+      response.CopyFrom(
+          std::static_pointer_cast<shared_model::proto::TransactionResponse>(
+              *resp)
+              ->getTransport());
     } else {
       response.set_tx_hash(request.tx_hash());
       auto hash = shared_model::crypto::Hash(request.tx_hash());

@@ -96,10 +96,6 @@ namespace shared_model {
           [this] { return crypto::Hash(this->proto_->tx_hash()); }};
 
       static constexpr int max_priority = std::numeric_limits<int>::max();
-      /**
-       * @return priority of this transaction response; transaction response can
-       * only be replaced with one with higher priority
-       */
       int priority() const noexcept override {
         return iroha::visit_in_place(
             *variant_,
