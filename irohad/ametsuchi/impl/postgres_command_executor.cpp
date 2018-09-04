@@ -5,6 +5,7 @@
 
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/format.hpp>
 
 #include "ametsuchi/impl/soci_utils.hpp"
@@ -1085,7 +1086,7 @@ namespace iroha {
         const shared_model::interface::SetAccountDetail &command) {
       auto &account_id = command.accountId();
       auto &key = command.key();
-      auto &value = command.value();
+      auto value = command.value();
       if (creator_account_id_.empty()) {
         // When creator is not known, it is genesis block
         creator_account_id_ = "genesis";
@@ -1093,6 +1094,7 @@ namespace iroha {
       std::string json = "{" + creator_account_id_ + "}";
       std::string empty_json = "{}";
       std::string filled_json = "{" + creator_account_id_ + ", " + key + "}";
+      boost::replace_all(value, "\"", "\\\"");
       std::string val = "\"" + value + "\"";
 
       boost::format cmd(R"(

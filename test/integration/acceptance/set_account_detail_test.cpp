@@ -67,6 +67,44 @@ TEST_F(SetAccountDetail, Self) {
 }
 
 /**
+ * @given a user with can_set_detail perm
+ *        AND a json-object value with single quotes
+ * @when execute tx with SetAccountDetail command aimed to the user
+ * @then there is the tx in proposal
+ */
+TEST_F(SetAccountDetail, JsonObject) {
+  IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms())
+      .skipProposal()
+      .skipBlock()
+      .sendTx(complete(baseTx(kUserId, kKey, "{'value' : ['abc', 'dca']}")))
+      .skipProposal()
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .done();
+}
+
+/**
+ * @given a user with can_set_detail perm
+ *        AND a json-object value with double quotes
+ * @when execute tx with SetAccountDetail command aimed to the user
+ * @then there is the tx in proposal
+ */
+TEST_F(SetAccountDetail, JsonObjectDoubleQuotes) {
+  IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms())
+      .skipProposal()
+      .skipBlock()
+      .sendTx(complete(baseTx(kUserId, kKey, R"({"value" : ["abc", "dca"]})")))
+      .skipProposal()
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .done();
+}
+
+/**
  * @given a pair of users and first one without permissions
  * @when the first one tries to use SetAccountDetail on the second
  * @then there is an empty verified proposal
