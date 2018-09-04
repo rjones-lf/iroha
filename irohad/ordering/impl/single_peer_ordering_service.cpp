@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "ordering/impl/ordering_service_impl.hpp"
+#include "ordering/impl/single_peer_ordering_service.hpp"
 
 #include <algorithm>
 #include <iterator>
@@ -16,7 +16,7 @@
 
 namespace iroha {
   namespace ordering {
-    OrderingServiceImpl::OrderingServiceImpl(
+    SinglePeerOrderingService::SinglePeerOrderingService(
         std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
         size_t max_size,
         rxcpp::observable<TimeoutType> proposal_timeout,
@@ -68,7 +68,7 @@ namespace iroha {
       }
     }
 
-    void OrderingServiceImpl::onBatch(
+    void SinglePeerOrderingService::onBatch(
         shared_model::interface::TransactionBatch &&batch) {
       std::shared_lock<std::shared_timed_mutex> batch_prop_lock(
           batch_prop_mutex_);
@@ -84,7 +84,7 @@ namespace iroha {
       transactions_.get_subscriber().on_next(ProposalEvent::kBatchEvent);
     }
 
-    void OrderingServiceImpl::generateProposal() {
+    void SinglePeerOrderingService::generateProposal() {
       std::lock_guard<std::shared_timed_mutex> lock(batch_prop_mutex_);
       log_->info("Start proposal generation");
       std::vector<std::shared_ptr<shared_model::interface::Transaction>> txs;
@@ -125,7 +125,7 @@ namespace iroha {
           });
     }
 
-    void OrderingServiceImpl::publishProposal(
+    void SinglePeerOrderingService::publishProposal(
         std::unique_ptr<shared_model::interface::Proposal> proposal) {
       auto peers = peer_query_factory_->createPeerQuery() |
           [](const auto &query) { return query->getLedgerPeers(); };
@@ -141,7 +141,7 @@ namespace iroha {
       }
     }
 
-    OrderingServiceImpl::~OrderingServiceImpl() {
+    SinglePeerOrderingService::~SinglePeerOrderingService() {
       handle_.unsubscribe();
     }
   }  // namespace ordering

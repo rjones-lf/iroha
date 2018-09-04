@@ -32,6 +32,7 @@
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "consensus/yac/yac_peer_orderer.hpp"
 #include "cryptography/keypair.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "network/block_loader.hpp"
 #include "simulator/block_creator.hpp"
 
@@ -49,7 +50,10 @@ namespace iroha {
         auto createNetwork(std::shared_ptr<iroha::network::AsyncGrpcClient<
                                google::protobuf::Empty>> async_call);
 
-        auto createCryptoProvider(const shared_model::crypto::Keypair &keypair);
+        auto createCryptoProvider(
+            const shared_model::crypto::Keypair &keypair,
+            std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                common_objects_factory);
 
         auto createTimer(std::chrono::milliseconds delay_milliseconds);
 
@@ -61,7 +65,9 @@ namespace iroha {
             std::chrono::milliseconds delay_milliseconds,
             std::shared_ptr<
                 iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
-                async_call);
+                async_call,
+            std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                common_objects_factory);
 
        public:
         std::shared_ptr<YacGate> initConsensusGate(
@@ -73,7 +79,9 @@ namespace iroha {
             std::chrono::milliseconds vote_delay_milliseconds,
             std::shared_ptr<
                 iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
-            async_call);
+                async_call,
+            std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                common_objects_factory);
 
         std::shared_ptr<NetworkImpl> consensus_network;
       };

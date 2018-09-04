@@ -11,7 +11,7 @@ namespace shared_model {
     template <typename CommandType>
     RemoveSignatory::RemoveSignatory(CommandType &&command)
         : CopyableProto(std::forward<CommandType>(command)),
-          remove_signatory_{proto_->remove_sign()},
+          remove_signatory_{proto_->remove_signatory()},
           pubkey_{[this] {
             return interface::types::PubkeyType(remove_signatory_.public_key());
           }} {}

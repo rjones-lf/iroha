@@ -20,9 +20,7 @@
 #include <grpc++/server_builder.h>
 #include <gtest/gtest.h>
 
-#include "builders/common_objects/peer_builder.hpp"
 #include "builders/protobuf/builder_templates/transaction_template.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/hash.hpp"
@@ -30,6 +28,8 @@
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/shared_model/builders/common_objects/peer_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "network/impl/block_loader_impl.hpp"
@@ -69,8 +69,8 @@ class BlockLoaderTest : public testing::Test {
         peer_query_factory,
         block_query_factory,
         shared_model::proto::ProtoBlockFactory(std::move(validator_ptr)));
-    service = std::make_shared<BlockLoaderService>(block_query_factory,
-                                                   block_cache);
+    service =
+        std::make_shared<BlockLoaderService>(block_query_factory, block_cache);
 
     grpc::ServerBuilder builder;
     int port = 0;

@@ -46,7 +46,7 @@ namespace shared_model {
     // rework code duplication from transaction, block after fix protobuf
     // https://soramitsu.atlassian.net/browse/IR-1175
     bool Block::addSignature(const crypto::Signed &signed_blob,
-                      const crypto::PublicKey &public_key) {
+                             const crypto::PublicKey &public_key) {
       // if already has such signature
       if (std::find_if(signatures_->begin(),
                        signatures_->end(),
@@ -59,7 +59,7 @@ namespace shared_model {
 
       auto sig = proto_.add_signatures();
       sig->set_signature(crypto::toBinaryString(signed_blob));
-      sig->set_pubkey(crypto::toBinaryString(public_key));
+      sig->set_public_key(crypto::toBinaryString(public_key));
 
       signatures_.invalidate();
       return true;

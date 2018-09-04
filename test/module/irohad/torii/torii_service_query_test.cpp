@@ -131,5 +131,5 @@ TEST_F(ToriiQueryServiceTest, FetchBlocksWhenInvalidQuery) {
 
   ASSERT_EQ(responses.size(), 1);
   auto response = responses.at(0);
-  ASSERT_TRUE(response.has_error_response());
+  ASSERT_TRUE(response.has_block_error_response());
 }

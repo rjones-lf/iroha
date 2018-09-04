@@ -64,14 +64,13 @@ class FieldValidatorTest : public ValidatorsTest {
 
  public:
   FieldValidatorTest() {
-    for (const auto &field : {"public_key", "main_pubkey", "pubkey"}) {
-      field_validators.insert(makeTransformValidator(
-          field,
-          &FieldValidator::validatePubkey,
-          &FieldValidatorTest::public_key,
-          [](auto &&x) { return interface::types::PubkeyType(x); },
-          public_key_test_cases));
-    }
+    field_validators.insert(makeTransformValidator(
+        "public_key",
+        &FieldValidator::validatePubkey,
+        &FieldValidatorTest::public_key,
+        [](auto &&x) { return interface::types::PubkeyType(x); },
+        public_key_test_cases));
+
     for (const auto &field : {"role_name", "default_role", "role_id"}) {
       field_validators.insert(makeValidator(field,
                                             &FieldValidator::validateRoleId,

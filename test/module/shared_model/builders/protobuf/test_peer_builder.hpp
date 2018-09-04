@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
 
 #ifndef IROHA_TEST_PEER_BUILDER_HPP
 #define IROHA_TEST_PEER_BUILDER_HPP
@@ -26,4 +26,4 @@
  */
 using TestPeerBuilder = shared_model::proto::PeerBuilder;
 
-#endif //IROHA_TEST_PEER_BUILDER_HPP
+#endif  // IROHA_TEST_PEER_BUILDER_HPP

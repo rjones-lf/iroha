@@ -43,11 +43,10 @@ namespace iroha {
         size_t max_size,
         std::chrono::milliseconds delay_milliseconds,
         std::shared_ptr<network::OrderingServiceTransport> transport,
-        std::shared_ptr<ametsuchi::OsPersistentStateFactory>
-            persistent_state) {
+        std::shared_ptr<ametsuchi::OsPersistentStateFactory> persistent_state) {
       auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
           shared_model::validation::DefaultProposalValidator>>();
-      return std::make_shared<ordering::OrderingServiceImpl>(
+      return std::make_shared<ordering::SinglePeerOrderingService>(
           peer_query_factory,
           max_size,
           rxcpp::observable<>::interval(delay_milliseconds,
@@ -61,8 +60,7 @@ namespace iroha {
         std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
         size_t max_size,
         std::chrono::milliseconds delay_milliseconds,
-        std::shared_ptr<ametsuchi::OsPersistentStateFactory>
-            persistent_state,
+        std::shared_ptr<ametsuchi::OsPersistentStateFactory> persistent_state,
         std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call) {

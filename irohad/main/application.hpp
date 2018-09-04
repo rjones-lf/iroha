@@ -22,6 +22,7 @@
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
@@ -174,6 +175,10 @@ class Irohad {
   std::shared_ptr<iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
       async_call_;
 
+  // common objects factory
+  std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+      common_objects_factory_;
+
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;
 
@@ -181,7 +186,8 @@ class Irohad {
   std::shared_ptr<iroha::simulator::Simulator> simulator;
 
   // block cache for consensus and block loader
-  std::shared_ptr<iroha::consensus::ConsensusResultCache> consensus_result_cache_;
+  std::shared_ptr<iroha::consensus::ConsensusResultCache>
+      consensus_result_cache_;
 
   // block loader
   std::shared_ptr<iroha::network::BlockLoader> block_loader;

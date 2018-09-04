@@ -50,12 +50,10 @@ class ValidatorsTest : public ::testing::Test {
     for (const auto &id : {"account_id", "src_account_id"}) {
       field_setters[id] = setString(account_id);
     }
-    for (const auto &id : {"public_key", "main_pubkey"}) {
-      field_setters[id] = setString(public_key);
-    }
     for (const auto &id : {"role_name", "default_role", "role_id"}) {
       field_setters[id] = setString(role_name);
     }
+    field_setters["public_key"] = setString(public_key);
     field_setters["dest_account_id"] = setString(dest_id);
     field_setters["asset_id"] = setString(asset_id);
     field_setters["account_name"] = setString(account_name);

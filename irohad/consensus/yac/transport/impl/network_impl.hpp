@@ -18,14 +18,16 @@
 #ifndef IROHA_NETWORK_IMPL_HPP
 #define IROHA_NETWORK_IMPL_HPP
 
+#include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetwork
+#include "yac.grpc.pb.h"
+
 #include <memory>
 #include <unordered_map>
 
-#include "consensus/yac/transport/yac_network_interface.hpp"  // for YacNetwork
+#include "consensus/yac/messages.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
-#include "yac.grpc.pb.h"
 
 namespace iroha {
   namespace consensus {
@@ -46,41 +48,18 @@ namespace iroha {
                 async_call);
         void subscribe(
             std::shared_ptr<YacNetworkNotifications> handler) override;
-        void send_commit(const shared_model::interface::Peer &to,
-                         const CommitMessage &commit) override;
-        void send_reject(const shared_model::interface::Peer &to,
-                         RejectMessage reject) override;
-        void send_vote(const shared_model::interface::Peer &to,
-                       VoteMessage vote) override;
+
+        void sendState(const shared_model::interface::Peer &to,
+                       const std::vector<VoteMessage> &state) override;
 
         /**
-         * Receive vote from another peer;
+         * Receive votes from another peer;
          * Naming is confusing, because this is rpc call that
          * perform on another machine;
          */
-        grpc::Status SendVote(
+        grpc::Status SendState(
             ::grpc::ServerContext *context,
-            const ::iroha::consensus::yac::proto::Vote *request,
-            ::google::protobuf::Empty *response) override;
-
-        /**
-         * Receive commit from another peer;
-         * Naming is confusing, because this is rpc call that
-         * perform on another machine;
-         */
-        grpc::Status SendCommit(
-            ::grpc::ServerContext *context,
-            const ::iroha::consensus::yac::proto::Commit *request,
-            ::google::protobuf::Empty *response) override;
-
-        /**
-         * Receive reject from another peer;
-         * Naming is confusing, because this is rpc call that
-         * perform on another machine;
-         */
-        grpc::Status SendReject(
-            ::grpc::ServerContext *context,
-            const ::iroha::consensus::yac::proto::Reject *request,
+            const ::iroha::consensus::yac::proto::State *request,
             ::google::protobuf::Empty *response) override;
 
        private:
@@ -95,7 +74,7 @@ namespace iroha {
          * Mapping of peer objects to connections
          */
         std::unordered_map<shared_model::interface::types::AddressType,
-                           std::unique_ptr<proto::Yac::Stub>>
+                           std::unique_ptr<proto::Yac::StubInterface>>
             peers_;
 
         /**
