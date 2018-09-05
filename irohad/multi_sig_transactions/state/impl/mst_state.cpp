@@ -97,9 +97,9 @@ namespace iroha {
           std::end(donor_tx->signatures()),
           inserted_new_signatures,
           [&target_tx](bool accumulator, const auto &signature) {
-            return accumulator
-                or target_tx->addSignature(signature.signedData(),
-                                           signature.publicKey());
+            return target_tx->addSignature(signature.signedData(),
+                                           signature.publicKey())
+                or accumulator;
           });
     }
     return inserted_new_signatures;
@@ -140,7 +140,7 @@ namespace iroha {
 
     // if batch still isn't completed, return it, if new signatures were updated
     if (inserted_new_signatures) {
-      out_state.rawInsert(*corresponding);
+      out_state.rawInsert(found);
     }
     return false;
   }
