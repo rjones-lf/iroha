@@ -335,7 +335,7 @@ TEST(StateTest, TimeIndexInsertionByAddState) {
       makeTestBatch(txBuilder(3, time)), 0, makeSignature("3", "3"));
 
   auto completed_state = state1 += state2;
-  ASSERT_EQ(0, completed_state.getBatches().size());
+  ASSERT_EQ(2, completed_state.getBatches().size());
 }
 
 /**
