@@ -29,6 +29,8 @@ using namespace shared_model;
 
 class MstPipelineTest : public AcceptanceFixture {
  public:
+  MstPipelineTest() : mst_itf_{1, {}, [](auto &i) { i.done(); }, true} {}
+
   /**
    * Sign the transaction
    * @param tx pre-built transaction
@@ -110,6 +112,17 @@ class MstPipelineTest : public AcceptanceFixture {
         .finish();
   }
 
+  /**
+   * Prepares an instance of ITF with MST turned on
+   * @return reference to the MST ITF
+   */
+  IntegrationTestFramework &prepareMstItf() {
+    mst_itf_.setInitialState(kAdminKeypair);
+    return makeMstUser(mst_itf_);
+  }
+
+  IntegrationTestFramework mst_itf_;
+
   const std::string kNewRole = "rl"s;
   static const size_t kSignatories = 2;
   std::vector<crypto::Keypair> signatories;
@@ -125,10 +138,7 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
                 .setAccountDetail(kUserId, "fav_meme", "doge")
                 .quorum(kSignatories + 1);
 
-  IntegrationTestFramework itf(1, {}, [](auto &i) { i.done(); }, true);
-  itf.setInitialState(kAdminKeypair);
-  auto &mst_itf = makeMstUser(itf);
-  mst_itf
+  prepareMstItf()
       .sendTx(signTx(tx, kUserKeypair))
       // TODO(@l4l) 21/05/18 IR-1339
       // tx should be checked for MST_AWAIT status
@@ -142,23 +152,19 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
 }
 
 /**
- * @given ledger with pending transactions
- * @when get pending transactions is executed by peer, which is to sign those
- * transactions
- * @then those transactions is returned
+ * @given a user that has sent a semi-signed transaction to a ledger
+ * @when the user requests pending transactions
+ * @then user's semi-signed transaction is returned
  */
 TEST_F(MstPipelineTest, GetPendingTxsAwaitingForThisPeer) {
   auto pending_tx = baseTx()
                         .setAccountDetail(kUserId, "fav_meme", "doge")
                         .quorum(kSignatories + 1);
 
-  // prepare itf
-  IntegrationTestFramework itf(1, {}, [](auto &i) { i.done(); }, true);
-  itf.setInitialState(kAdminKeypair);
-  auto &mst_itf = makeMstUser(itf);
+  auto &mst_itf = prepareMstItf();
   auto signed_tx = signTx(pending_tx, kUserKeypair);
 
-  auto pending_tx_check = [&pending_hash = signed_tx.hash()](auto &response) {
+  auto pending_tx_check = [pending_hash = signed_tx.hash()](auto &response) {
     ASSERT_NO_THROW({
       const auto &pending_tx_resp = boost::apply_visitor(
           framework::SpecifiedVisitor<
@@ -174,7 +180,7 @@ TEST_F(MstPipelineTest, GetPendingTxsAwaitingForThisPeer) {
 }
 
 /**
- * @given ledger with pending transactions, which lack two or more signatures
+ * @given a ledger with pending transactions, which lack two or more signatures
  * @when signing those transactions with one signature @and executing get
  * pending transactions
  * @then they are returned with initial number of signatures plus one
@@ -190,18 +196,15 @@ TEST_F(MstPipelineTest, GetPendingTxsLatestSignatures) {
             framework::SpecifiedVisitor<
                 shared_model::interface::TransactionsResponse>(),
             response.get());
-        ASSERT_EQ(boost::size(pending_tx_resp.transactions().front().signatures()),
-                  expected_signatures_number);
+        ASSERT_EQ(
+            boost::size(pending_tx_resp.transactions().front().signatures()),
+            expected_signatures_number);
       });
     };
   };
 
-  // prepare itf
-  IntegrationTestFramework itf(1, {}, [](auto &i) { i.done(); }, true);
-  itf.setInitialState(kAdminKeypair);
-  auto &mst_itf = makeMstUser(itf);
-
-  mst_itf.sendTx(signTx(pending_tx, signatories[0]))
+  prepareMstItf()
+      .sendTx(signTx(pending_tx, signatories[0]))
       .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
                  signatory_check(1))
       .sendTx(signTx(pending_tx, signatories[1]))
@@ -210,7 +213,7 @@ TEST_F(MstPipelineTest, GetPendingTxsLatestSignatures) {
 }
 
 /**
- * @given ledger with pending transactions
+ * @given a ledger with pending transactions
  * @when signing them with number of signatures to get over quorum @and
  * executing get pending transactions
  * @then those transactions are not returned
@@ -229,12 +232,8 @@ TEST_F(MstPipelineTest, GetPendingTxsNoSignedTxs) {
     });
   };
 
-  // prepare itf
-  IntegrationTestFramework itf(1, {}, [](auto &i) { i.done(); }, true);
-  itf.setInitialState(kAdminKeypair);
-  auto &mst_itf = makeMstUser(itf);
-
-  mst_itf.sendTx(signTx(pending_tx, signatories[0]))
+  prepareMstItf()
+      .sendTx(signTx(pending_tx, signatories[0]))
       .sendTx(signTx(pending_tx, signatories[1]))
       .sendTx(signTx(pending_tx, kUserKeypair))
       .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair), no_txs_check);
