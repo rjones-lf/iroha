@@ -32,6 +32,12 @@ OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
   onCollaborationOutcome(initial_round);
 }
 
+OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
+    size_t transaction_limit)
+    : transaction_limit_(transaction_limit),
+      number_of_proposals_(3),
+      log_(logger::log("OnDemandOrderingServiceImpl")) {}
+
 // -------------------------| OnDemandOrderingService |-------------------------
 
 void OnDemandOrderingServiceImpl::onCollaborationOutcome(
@@ -41,7 +47,7 @@ void OnDemandOrderingServiceImpl::onCollaborationOutcome(
              round.reject_round);
   // exclusive write lock
   std::lock_guard<std::shared_timed_mutex> guard(lock_);
-  log_->info("onCollaborationOutcome => write lock is acquired");
+  log_->debug("onCollaborationOutcome => write lock is acquired");
 
   packNextProposals(round);
   tryErase();
@@ -63,7 +69,7 @@ void OnDemandOrderingServiceImpl::onTransactions(transport::Round round,
     std::for_each(transactions.begin(), transactions.end(), [&it](auto &obj) {
       it->second.push(std::move(obj));
     });
-    log_->info("onTransactions => collection is inserted");
+    log_->debug("onTransactions => collection is inserted");
   }
 }
 
@@ -84,17 +90,25 @@ OnDemandOrderingServiceImpl::onRequestProposal(transport::Round round) {
 void OnDemandOrderingServiceImpl::packNextProposals(
     const transport::Round &round) {
   auto close_round = [this](transport::Round round) {
+    log_->debug("close round[{}, {}]", round.block_round, round.reject_round);
+
     auto it = current_proposals_.find(round);
     if (it != current_proposals_.end()) {
+      log_->debug("proposal found");
       if (not it->second.empty()) {
         proposal_map_.emplace(round, emitProposal(round));
-        log_->info("packNextProposal: data has been fetched for round[{}, {}]",
-                   round.block_round,
-                   round.reject_round);
+        log_->debug("packNextProposal: data has been fetched for round[{}, {}]",
+                    round.block_round,
+                    round.reject_round);
         round_queue_.push(round);
       }
       current_proposals_.erase(it);
     }
+  };
+
+  auto open_round = [this](transport::Round round) {
+    log_->debug("open round[{}, {}]", round.block_round, round.reject_round);
+    current_proposals_[round];
   };
 
   /*
@@ -139,11 +153,11 @@ void OnDemandOrderingServiceImpl::packNextProposals(
     current_proposals_.clear();
     // initialize the 3 diagonal rounds from the commit case diagram
     for (uint32_t i = 0; i <= 2; ++i) {
-      current_proposals_[{round.block_round + i, round.reject_round + 2 - i}];
+      open_round({round.block_round + i, round.reject_round + 2 - i});
     }
   } else {
     // new reject round
-    current_proposals_[{round.block_round, round.reject_round + 2}];
+    open_round({round.block_round, round.reject_round + 2});
   }
 }
 
@@ -152,9 +166,9 @@ OnDemandOrderingServiceImpl::emitProposal(const transport::Round &round) {
   iroha::protocol::Proposal proto_proposal;
   proto_proposal.set_height(round.block_round);
   proto_proposal.set_created_time(iroha::time::now());
-  log_->info("Mutable proposal generation, round[{}, {}]",
-             round.block_round,
-             round.reject_round);
+  log_->debug("Mutable proposal generation, round[{}, {}]",
+              round.block_round,
+              round.reject_round);
 
   TransactionType current_tx;
   using ProtoTxType = shared_model::proto::Transaction;
@@ -170,7 +184,9 @@ OnDemandOrderingServiceImpl::emitProposal(const transport::Round &round) {
          and inserted.insert(current_tx->hash().hex()).second) {
     collection.push_back(std::move(current_tx));
   }
-  log_->info("Number of transactions in proposal = {}", collection.size());
+  log_->debug("Number of transactions in proposal = {}", collection.size());
+  log_->debug("Number of lost transactions = {}",
+              current_proposal.unsafe_size());
   auto proto_txes = collection | boost::adaptors::transformed([](auto &tx) {
                       return static_cast<const ProtoTxType &>(*tx);
                     });

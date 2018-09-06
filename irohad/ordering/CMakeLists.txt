@@ -59,6 +59,7 @@ target_link_libraries(on_demand_connection_manager
     shared_model_interfaces
     rxcpp
     boost
+    logger
     )
 
 add_library(on_demand_ordering_gate
@@ -68,4 +69,5 @@ target_link_libraries(on_demand_ordering_gate
     shared_model_interfaces
     rxcpp
     boost
+    logger
     )

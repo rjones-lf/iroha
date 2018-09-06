@@ -271,9 +271,9 @@ namespace iroha {
           createMutableStorage,
           expected::Result<std::unique_ptr<MutableStorage>, std::string>(void));
       MOCK_CONST_METHOD0(createPeerQuery,
-                   boost::optional<std::shared_ptr<PeerQuery>>());
+                         boost::optional<std::shared_ptr<PeerQuery>>());
       MOCK_CONST_METHOD0(createBlockQuery,
-                   boost::optional<std::shared_ptr<BlockQuery>>());
+                         boost::optional<std::shared_ptr<BlockQuery>>());
       MOCK_CONST_METHOD0(
           createOsPersistentState,
           boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
@@ -284,6 +284,7 @@ namespace iroha {
                         std::shared_ptr<shared_model::interface::Block>> &));
       MOCK_METHOD0(reset, void(void));
       MOCK_METHOD0(dropStorage, void(void));
+      MOCK_METHOD0(freeConnections, void(void));
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override {
@@ -308,13 +309,13 @@ namespace iroha {
     class MockPeerQueryFactory : public PeerQueryFactory {
      public:
       MOCK_CONST_METHOD0(createPeerQuery,
-                   boost::optional<std::shared_ptr<PeerQuery>>());
+                         boost::optional<std::shared_ptr<PeerQuery>>());
     };
 
     class MockBlockQueryFactory : public BlockQueryFactory {
      public:
       MOCK_CONST_METHOD0(createBlockQuery,
-                   boost::optional<std::shared_ptr<BlockQuery>>());
+                         boost::optional<std::shared_ptr<BlockQuery>>());
     };
 
     class MockOsPersistentStateFactory : public OsPersistentStateFactory {

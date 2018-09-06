@@ -12,15 +12,21 @@ using namespace iroha::ordering;
 
 OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
-    CurrentPeers initial_peers,
     rxcpp::observable<CurrentPeers> peers)
-    : factory_(std::move(factory)),
+    : log_(logger::log("OnDemandConnectionManager")),
+      factory_(std::move(factory)),
       subscription_(peers.subscribe([this](const auto &peers) {
         // exclusive lock
         std::lock_guard<std::shared_timed_mutex> lock(mutex_);
 
         this->initializeConnections(peers);
-      })) {
+      })) {}
+
+OnDemandConnectionManager::OnDemandConnectionManager(
+    std::shared_ptr<transport::OdOsNotificationFactory> factory,
+    rxcpp::observable<CurrentPeers> peers,
+    CurrentPeers initial_peers)
+    : OnDemandConnectionManager(std::move(factory), peers) {
   // using start_with(initial_peers) results in deadlock
   initializeConnections(initial_peers);
 }
@@ -51,7 +57,12 @@ void OnDemandConnectionManager::onTransactions(transport::Round round,
       {round.block_round + 2, 1}};
 
   for (auto &&pair : boost::combine(types, rounds)) {
-    connections_.peers[boost::get<0>(pair)]->onTransactions(boost::get<1>(pair),
+    auto &&round = boost::get<1>(pair);
+
+    log_->debug(
+        "onTransactions, round[{}, {}]", round.block_round, round.reject_round);
+
+    connections_.peers[boost::get<0>(pair)]->onTransactions(round,
                                                             transactions);
   }
 }
@@ -60,6 +71,10 @@ boost::optional<OnDemandConnectionManager::ProposalType>
 OnDemandConnectionManager::onRequestProposal(transport::Round round) {
   // shared lock
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
+
+  log_->debug("onRequestProposal, round[{}, {}]",
+              round.block_round,
+              round.reject_round);
 
   return connections_.peers[kIssuer]->onRequestProposal(round);
 }

@@ -15,6 +15,7 @@
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
+#include "logger/logger.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
 
 namespace iroha {
@@ -48,6 +49,13 @@ namespace iroha {
               factory,
           transport::Round initial_round);
 
+      OnDemandOrderingGate(
+          std::shared_ptr<OnDemandOrderingService> ordering_service,
+          std::shared_ptr<transport::OdOsNotification> network_client,
+          rxcpp::observable<BlockRoundEventType> events,
+          std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+              factory);
+
       [[deprecated("Use propagateBatch")]] void propagateTransaction(
           std::shared_ptr<const shared_model::interface::Transaction>
               transaction) const override;
@@ -62,6 +70,7 @@ namespace iroha {
           const iroha::network::PeerCommunicationService &pcs) override;
 
      private:
+      logger::Logger log_;
       std::shared_ptr<OnDemandOrderingService> ordering_service_;
       std::shared_ptr<transport::OdOsNotification> network_client_;
       rxcpp::composite_subscription events_subscription_;

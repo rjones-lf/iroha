@@ -18,6 +18,7 @@
 #ifndef IROHA_TESTIROHAD_HPP
 #define IROHA_TESTIROHAD_HPP
 
+#include "common/types.hpp"
 #include "cryptography/keypair.hpp"
 #include "main/application.hpp"
 
@@ -67,10 +68,10 @@ namespace integration_framework {
     }
 
     void run() override {
+      using iroha::operator|;
       internal_server = std::make_unique<ServerRunner>(
           "127.0.0.1:" + std::to_string(internal_port_));
-      internal_server->append(ordering_init.ordering_gate_transport)
-          .append(ordering_init.ordering_service_transport)
+      internal_server->append(ordering_init.service)
           .append(yac_init.consensus_network)
           .append(loader_init.service)
           .run()
@@ -79,6 +80,25 @@ namespace integration_framework {
                    BOOST_ASSERT_MSG(false, e.error.c_str());
                  });
       log_->info("===> iroha initialized");
+      pcs->on_commit()
+          .start_with(
+              storage->createBlockQuery() |
+              [](const auto &block_query) {
+                return block_query->getTopBlock().match(
+                    [](iroha::expected::Value<
+                        std::shared_ptr<shared_model::interface::Block>> &block)
+                        -> iroha::synchronizer::SynchronizationEvent {
+                      return {rxcpp::observable<>::just(block.value),
+                              iroha::synchronizer::SynchronizationOutcomeType::
+                                  kCommit};
+                    },
+                    [](iroha::expected::Error<std::string> &error)
+                        -> iroha::synchronizer::SynchronizationEvent {
+                      throw std::runtime_error("Failed to get the top block: "
+                                               + error.error);
+                    });
+              })
+          .subscribe(ordering_init.notifier.get_subscriber());
     }
 
     void terminate() {

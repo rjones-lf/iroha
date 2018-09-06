@@ -18,7 +18,8 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     rxcpp::observable<BlockRoundEventType> events,
     std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     transport::Round initial_round)
-    : ordering_service_(std::move(ordering_service)),
+    : log_(logger::log("OnDemandOrderingGate")),
+      ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {
         // exclusive lock
@@ -27,13 +28,18 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         visit_in_place(event,
                        [this](const BlockEvent &block) {
                          // block committed, increment block round
-                         current_round_ = {block.height, 1};
+                         log_->debug("BlockEvent. height {}", block.height);
+                         current_round_ = {block.height + 1, 1};
                        },
                        [this](const EmptyEvent &empty) {
                          // no blocks committed, increment reject round
+                         log_->debug("EmptyEvent");
                          current_round_ = {current_round_.block_round,
                                            current_round_.reject_round + 1};
                        });
+        log_->debug("Current round: [{}, {}]",
+                    current_round_.block_round,
+                    current_round_.reject_round);
 
         // notify our ordering service about new round
         ordering_service_->onCollaborationOutcome(current_round_);
@@ -50,6 +56,17 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       })),
       proposal_factory_(std::move(factory)),
       current_round_(initial_round) {}
+
+OnDemandOrderingGate::OnDemandOrderingGate(
+    std::shared_ptr<OnDemandOrderingService> ordering_service,
+    std::shared_ptr<transport::OdOsNotification> network_client,
+    rxcpp::observable<BlockRoundEventType> events,
+    std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory)
+    : OnDemandOrderingGate(std::move(ordering_service),
+                           std::move(network_client),
+                           events,
+                           std::move(factory),
+                           {2, 1}) {}
 
 void OnDemandOrderingGate::propagateTransaction(
     std::shared_ptr<const shared_model::interface::Transaction> transaction)

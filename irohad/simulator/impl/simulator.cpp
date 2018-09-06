@@ -58,9 +58,11 @@ namespace iroha {
         const shared_model::interface::Proposal &proposal) {
       log_->info("process proposal");
       // Get last block from local ledger
-      auto top_block_result = block_query_factory_->createBlockQuery() |
-          [](const auto &block_query) { return block_query->getTopBlock(); };
-      auto block_fetched = top_block_result.match(
+      auto block_query_opt = block_query_factory_->createBlockQuery();
+      if (not block_query_opt) {
+        return;
+      }
+      auto block_fetched = block_query_opt.value()->getTopBlock().match(
           [&](expected::Value<std::shared_ptr<shared_model::interface::Block>>
                   &block) {
             last_block = block.value;
@@ -80,22 +82,27 @@ namespace iroha {
                    proposal.height());
         return;
       }
-      auto temporaryStorageResult = ametsuchi_factory_->createTemporaryWsv();
-      temporaryStorageResult.match(
+      auto storage = ametsuchi_factory_->createTemporaryWsv().match(
           [&](expected::Value<std::unique_ptr<ametsuchi::TemporaryWsv>>
-                  &temporaryStorage) {
-            auto validated_proposal_and_errors =
-                std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
-                    validator_->validate(proposal, *temporaryStorage.value));
-            notifier_.get_subscriber().on_next(
-                std::move(validated_proposal_and_errors));
-          },
+                  &storage) { return std::move(storage.value); },
           [&](expected::Error<std::string> &error) {
             log_->error(error.error);
             // TODO: 13/02/18 Solonets - Handle the case when TemporaryWsv was
             // failed to produced - IR-966
-            throw std::runtime_error(error.error);
+            log_->error("could not create temporary storage: {}", error.error);
+            return std::unique_ptr<ametsuchi::TemporaryWsv>{};
           });
+      if (nullptr == storage) {
+        return;
+      }
+
+      auto validated_proposal_and_errors =
+          std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
+              validator_->validate(proposal, *storage));
+      storage.reset();
+
+      notifier_.get_subscriber().on_next(
+          std::move(validated_proposal_and_errors));
     }
 
     void Simulator::process_verified_proposal(

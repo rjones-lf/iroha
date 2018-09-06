@@ -35,7 +35,6 @@ namespace iroha {
         : top_hash_(top_hash),
           sql_(std::move(sql)),
           wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
-          executor_(std::make_shared<PostgresWsvCommand>(*sql_)),
           block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
           command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
           committed(false),
@@ -46,7 +45,7 @@ namespace iroha {
     bool MutableStorageImpl::check(
         const shared_model::interface::BlockVariant &block,
         MutableStorage::MutableStoragePredicateType<decltype(block)>
-        predicate) {
+            predicate) {
       return predicate(block, *wsv_, top_hash_);
     }
 

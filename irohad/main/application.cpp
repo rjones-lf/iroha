@@ -4,11 +4,11 @@
  */
 
 #include "main/application.hpp"
-#include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
+#include "common/types.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "execution/query_execution_impl.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
@@ -92,8 +92,6 @@ void Irohad::init() {
  */
 void Irohad::dropStorage() {
   storage->reset();
-  storage->createOsPersistentState() |
-      [](const auto &state) { state->resetState(); };
 }
 
 /**
@@ -116,12 +114,6 @@ void Irohad::initStorage() {
       [&](expected::Error<std::string> &error) { log_->error(error.error); });
 
   log_->info("[Init] => storage", logger::logBool(storage));
-}
-
-void Irohad::resetOrderingService() {
-  if (not(storage->createOsPersistentState() |
-          [](const auto &state) { return state->resetState(); }))
-    log_->error("cannot reset ordering service storage");
 }
 
 bool Irohad::restoreWsv() {
@@ -169,12 +161,13 @@ void Irohad::initNetworkClient() {
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
-  ordering_gate = ordering_init.initOrderingGate(storage,
-                                                 max_proposal_size_,
+  auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
+      shared_model::validation::DefaultProposalValidator>>();
+  ordering_gate = ordering_init.initOrderingGate(max_proposal_size_,
                                                  proposal_delay_,
                                                  storage,
-                                                 storage,
-                                                 async_call_);
+                                                 async_call_,
+                                                 std::move(factory));
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -253,9 +246,6 @@ void Irohad::initPeerCommunicationService() {
   pcs->on_commit().subscribe(
       [this](auto) { log_->info("~~~~~~~~~| COMMIT =^._.^= |~~~~~~~~~ "); });
 
-  // complete initialization of ordering gate
-  ordering_gate->setPcs(*pcs);
-
   log_->info("[Init] => pcs");
 }
 
@@ -332,6 +322,7 @@ void Irohad::initWsvRestorer() {
  */
 void Irohad::run() {
   using iroha::expected::operator|;
+  using iroha::operator|;
 
   // Initializing torii server
   std::string ip = "0.0.0.0";
@@ -347,8 +338,7 @@ void Irohad::run() {
    [&](const auto &port) {
      log_->info("Torii server bound on port {}", port);
      // Run internal server
-     return internal_server->append(ordering_init.ordering_gate_transport)
-         .append(ordering_init.ordering_service_transport)
+     return internal_server->append(ordering_init.service)
          .append(yac_init.consensus_network)
          .append(loader_init.service)
          .run();
@@ -357,6 +347,29 @@ void Irohad::run() {
           [&](const auto &port) {
             log_->info("Internal server bound on port {}", port.value);
             log_->info("===> iroha initialized");
+            pcs->on_commit()
+                .start_with(
+                    storage->createBlockQuery() |
+                    [](const auto &block_query) {
+                      return block_query->getTopBlock().match(
+                          [](expected::Value<
+                              std::shared_ptr<shared_model::interface::Block>>
+                                 &block) -> synchronizer::SynchronizationEvent {
+                            return {rxcpp::observable<>::just(block.value),
+                                    SynchronizationOutcomeType::kCommit};
+                          },
+                          [](expected::Error<std::string> &error)
+                              -> synchronizer::SynchronizationEvent {
+                            throw std::runtime_error(
+                                "Failed to get the top block: " + error.error);
+                          });
+                    })
+                .subscribe(ordering_init.notifier.get_subscriber());
           },
           [&](const expected::Error<std::string> &e) { log_->error(e.error); });
+}
+
+Irohad::~Irohad() {
+  // TODO storage destructor should be called
+  storage->freeConnections();
 }

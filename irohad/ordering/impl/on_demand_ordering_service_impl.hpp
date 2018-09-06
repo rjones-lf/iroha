@@ -29,13 +29,11 @@ namespace iroha {
        * @param initial_round - first round of agreement.
        * Default value is {2, 1} since genesis block height is 1
        */
-      explicit OnDemandOrderingServiceImpl(
-          size_t transaction_limit,
-          size_t number_of_proposals,
-          const transport::Round &initial_round);
+      OnDemandOrderingServiceImpl(size_t transaction_limit,
+                                  size_t number_of_proposals,
+                                  const transport::Round &initial_round);
 
-      explicit OnDemandOrderingServiceImpl(size_t transaction_limit)
-          : OnDemandOrderingServiceImpl(transaction_limit, 3, {2, 1}) {}
+      OnDemandOrderingServiceImpl(size_t transaction_limit);
 
       // --------------------- | OnDemandOrderingService |_---------------------
 
