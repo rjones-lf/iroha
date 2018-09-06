@@ -17,7 +17,7 @@ using namespace shared_model;
  * Get role permissions by user with allowed GetRoles permission
  * @given user with kGetRoles permission
  * @when user send query with getRolePermissions request
- * @then Iroha should
+ * @then there is a valid RolePermissionsResponse
  */
 TEST_F(AcceptanceFixture, CanGetRolePermissions) {
   auto checkQuery = [](auto &queryResponse) {
