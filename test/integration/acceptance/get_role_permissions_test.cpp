@@ -13,6 +13,12 @@
 using namespace integration_framework;
 using namespace shared_model;
 
+/**
+ * Get role permissions by user with allowed GetRoles permission
+ * @given user with kGetRoles permission
+ * @when user send query with getRolePermissions request
+ * @then Iroha should
+ */
 TEST_F(AcceptanceFixture, CanGetRolePermissions) {
   auto checkQuery = [](auto &queryResponse) {
     ASSERT_NO_THROW(boost::apply_visitor(
@@ -25,37 +31,28 @@ TEST_F(AcceptanceFixture, CanGetRolePermissions) {
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms(
-          {shared_model::interface::permissions::Role::kGetRoles}))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(boost::size(block->transactions()), 1); })
+      .sendTxAwait(
+          makeUserWithPerms(
+              {shared_model::interface::permissions::Role::kGetRoles}),
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .sendQuery(query, checkQuery);
 }
 
+/**
+ * Get role permissions without allowed GetRoles permission
+ * @given user without kGetRoles permission
+ * @when user send query with getRolePermissions request
+ * @then query should be recognized as stateful invalid
+ */
 TEST_F(AcceptanceFixture, CanNotGetRolePermissions) {
-  auto checkQuery = [](auto &queryResponse) {
-    ASSERT_NO_THROW({
-      boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              shared_model::interface::StatefulFailedErrorResponse>(),
-          boost::apply_visitor(
-              framework::SpecifiedVisitor<
-                  shared_model::interface::ErrorQueryResponse>(),
-              queryResponse.get())
-              .get());
-    });
-  };
-
   auto query = complete(baseQry().getRolePermissions(kRole));
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({}))
-      .skipProposal()
-      .checkVerifiedProposal(
+      .sendTxAwait(
+          makeUserWithPerms({}),
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(query, checkQuery);
+      .sendQuery(query,
+                 checkQueryErrorResponse<
+                     shared_model::interface::StatefulFailedErrorResponse>());
 }
