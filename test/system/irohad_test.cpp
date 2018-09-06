@@ -66,7 +66,7 @@ class IrohadTest : public AcceptanceFixture {
     launchIroha(setDefaultParams());
   }
 
-  void launchIroha(std::string parameters) {
+  void launchIroha(const std::string &parameters) {
     iroha_process_.emplace(irohad_executable.string() + parameters);
     std::this_thread::sleep_for(kTimeout);
     ASSERT_TRUE(iroha_process_->running());
