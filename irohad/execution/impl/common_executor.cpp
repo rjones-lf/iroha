@@ -27,37 +27,34 @@ namespace iroha {
   boost::optional<shared_model::interface::RolePermissionSet>
   getAccountPermissions(const std::string &account_id,
                         ametsuchi::WsvQuery &queries) {
-    auto roles = queries.getAccountRoles(account_id);
-    if (not roles) {
-      return boost::none;
-    }
-    auto r = roles.value();
-    shared_model::interface::RolePermissionSet permissions{};
-    std::for_each(r.begin(), r.end(), [&permissions, &queries](auto &role) {
-      auto perms = queries.getRolePermissions(role);
-      if (not perms) {
-        return;
-      }
-      permissions |= *perms;
-    });
-    return permissions;
+    return queries.getAccountRoles(account_id) | [&queries](const auto &roles) {
+      return std::accumulate(
+          roles.begin(),
+          roles.end(),
+          shared_model::interface::RolePermissionSet{},
+          [&queries](auto &&permissions, const auto &role) {
+            queries.getRolePermissions(role) |
+                [&](const auto &perms) { permissions |= perms; };
+            return std::forward<shared_model::interface::RolePermissionSet>(
+                permissions);
+          });
+    };
   }
 
   bool checkAccountRolePermission(
       const std::string &account_id,
       ametsuchi::WsvQuery &queries,
       shared_model::interface::permissions::Role permission) {
-    auto accountRoles = queries.getAccountRoles(account_id);
-    if (not accountRoles)
-      return false;
-    for (auto accountRole : *accountRoles) {
-      auto rolePerms = queries.getRolePermissions(accountRole);
-      if (not rolePerms)
-        continue;
-      if (rolePerms->test(permission)) {
-        return true;
-      }
-    }
-    return false;
+    return queries.getAccountRoles(account_id) |
+        [&permission, &queries](const auto &accountRoles) {
+          return std::any_of(accountRoles.begin(),
+                             accountRoles.end(),
+                             [&permission, &queries](const auto &role) {
+                               return queries.getRolePermissions(role) |
+                                   [&permission](const auto &perms) {
+                                     return perms.test(permission);
+                                   };
+                             });
+        };
   }
 }  // namespace iroha
