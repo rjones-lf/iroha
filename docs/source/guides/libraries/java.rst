@@ -86,12 +86,12 @@ to the root folder of your project:
 
   cp dist/libirohajava.jnilib /path_to_your_project
 
-If you use **Gradle**, you need to copy ``example/java/dist/iroha_lib.jar`` to the
+If you use **Gradle**, you need to copy ``example/java/dist/iroha-bindings-example.jar`` to the
 ``libs`` folder of your project
 
 .. code-block:: shell
 
-  cp dist/libirohajava.jnilib /path_to_your_project/libs
+  cp dist/iroha-bindings-example.jar /path_to_your_project/libs
 
 Then please add the following to your ``build.gradle`` file:
 
