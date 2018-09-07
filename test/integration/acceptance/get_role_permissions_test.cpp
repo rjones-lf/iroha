@@ -51,7 +51,7 @@ TEST_F(AcceptanceFixture, CanNotGetRolePermissions) {
       .setInitialState(kAdminKeypair)
       .sendTxAwait(
           makeUserWithPerms({}),
-          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(query,
                  checkQueryErrorResponse<
                      shared_model::interface::StatefulFailedErrorResponse>());
