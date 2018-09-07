@@ -90,14 +90,14 @@ namespace iroha {
     /**
      * Add batch to current state
      * @param rhs - batch for insertion
-     * @return State with completed batches or updated batches
+     * @return States with completed batches and updated batches
      */
     StateUpdateResult operator+=(const DataType &rhs);
 
     /**
      * Concat internal data of states
      * @param rhs - object for merging
-     * @return State with completed or updated batches
+     * @return States with completed and updated batches
      */
     StateUpdateResult operator+=(const MstState &rhs);
 
@@ -166,7 +166,7 @@ namespace iroha {
      * Insert batch in own state and push it in out_state if required
      * @param out_state - state for inserting completed batches
      * @param rhs_tx - batch for insert
-     * @return if batch is complete after that insertion
+     * @return true if batch is complete after that insertion; false otherwise
      */
     bool insertOne(MstState &out_state, const DataType &rhs_tx);
 

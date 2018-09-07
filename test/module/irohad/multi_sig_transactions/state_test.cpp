@@ -13,9 +13,6 @@ using namespace std;
 using namespace iroha;
 using namespace iroha::model;
 
-// state with tx with A sig, receive with B, only B should be shared among
-// others
-
 /**
  * @given empty state
  * @when  insert one batch
@@ -222,20 +219,21 @@ TEST(StateTest, UpdateTxUntillQuorum) {
 
   auto state_after_one_tx = state += addSignatures(
       makeTestBatch(txBuilder(1, time, quorum)), 0, makeSignature("1", "1"));
-  ASSERT_EQ(1, state_after_one_tx.first.getBatches().size());
-  ASSERT_FALSE(state_after_one_tx.second);
+  ASSERT_EQ(1, state_after_one_tx.updated_state_->getBatches().size());
+  ASSERT_EQ(0, state_after_one_tx.completed_state_->getBatches().size());
 
   auto state_after_two_txes = state += addSignatures(
       makeTestBatch(txBuilder(1, time, quorum)), 0, makeSignature("2", "2"));
-  ASSERT_EQ(1, state_after_one_tx.first.getBatches().size());
-  ASSERT_FALSE(state_after_two_txes.second);
+  ASSERT_EQ(1, state_after_two_txes.updated_state_->getBatches().size());
+  ASSERT_EQ(0, state_after_two_txes.completed_state_->getBatches().size());
 
   auto state_after_three_txes = state += addSignatures(
       makeTestBatch(txBuilder(1, time, quorum)), 0, makeSignature("3", "3"));
-  ASSERT_EQ(1, state_after_three_txes.first.getBatches().size());
-  ASSERT_TRUE(
-      state_after_three_txes.first.getBatches().front()->hasAllSignatures());
-  ASSERT_TRUE(state_after_three_txes.second);
+  ASSERT_EQ(0, state_after_three_txes.updated_state_->getBatches().size());
+  ASSERT_EQ(1, state_after_three_txes.completed_state_->getBatches().size());
+  ASSERT_TRUE(state_after_three_txes.completed_state_->getBatches()
+                  .front()
+                  ->hasAllSignatures());
   ASSERT_EQ(0, state.getBatches().size());
 }
 
@@ -268,8 +266,8 @@ TEST(StateTest, UpdateStateWithNewStateUntilQuorum) {
                           makeSignature("1_3", "1_3"));
   ASSERT_EQ(1, state2.getBatches().size());
 
-  auto completed_state = state1 += state2;
-  ASSERT_EQ(1, completed_state.getBatches().size());
+  auto final_state = state1 += state2;
+  ASSERT_EQ(1, final_state.completed_state_->getBatches().size());
   ASSERT_EQ(1, state1.getBatches().size());
 }
 
@@ -334,8 +332,9 @@ TEST(StateTest, TimeIndexInsertionByAddState) {
   state2 += addSignatures(
       makeTestBatch(txBuilder(3, time)), 0, makeSignature("3", "3"));
 
-  auto completed_state = state1 += state2;
-  ASSERT_EQ(2, completed_state.getBatches().size());
+  auto final_state = state1 += state2;
+  ASSERT_EQ(0, final_state.completed_state_->getBatches().size());
+  ASSERT_EQ(2, final_state.updated_state_->getBatches().size());
 }
 
 /**
