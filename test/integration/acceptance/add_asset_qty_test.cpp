@@ -34,8 +34,7 @@ TEST_F(AddAssetQuantity, Basic) {
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, kAmount)))
       .skipProposal()
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
@@ -52,9 +51,9 @@ TEST_F(AddAssetQuantity, NoPermissions) {
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, kAmount)))
       .skipProposal()
-      .checkVerifiedProposal(
-          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkVerifiedProposal([](auto &proposal) {
+        ASSERT_EQ(proposal->transactions().size(), 0);
+      });
 }
 
 /**

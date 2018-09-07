@@ -76,8 +76,7 @@ TEST(RegressionTest, SequentialInitialization) {
           ASSERT_EQ(proposal->transactions().size(), 0);
         })
         .checkBlock(
-            [](auto block) { ASSERT_EQ(block->transactions().size(), 0); })
-        .done();
+            [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
   }
 }
 
@@ -147,8 +146,7 @@ TEST(RegressionTest, StateRecovery) {
     integration_framework::IntegrationTestFramework(
         1, dbname, [](auto &itf) { itf.done(); }, false, path)
         .recoverState(kAdminKeypair)
-        .sendQuery(makeQuery(2, kAdminKeypair), checkQuery)
-        .done();
+        .sendQuery(makeQuery(2, kAdminKeypair), checkQuery);
   }
 }
 

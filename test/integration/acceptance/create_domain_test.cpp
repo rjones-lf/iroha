@@ -53,8 +53,7 @@ TEST_F(CreateDomain, NoPermissions) {
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .checkBlock(
-          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -75,8 +74,7 @@ TEST_F(CreateDomain, NoRole) {
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .checkBlock(
-          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -97,8 +95,7 @@ TEST_F(CreateDomain, ExistingName) {
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .checkBlock(
-          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -120,8 +117,7 @@ TEST_F(CreateDomain, MaxLenName) {
       .skipBlock()
       .sendTxAwait(
           complete(baseTx().createDomain(maxLongDomain, kRole)),
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**

@@ -49,8 +49,7 @@ TEST_F(CreateRole, Basic) {
       .sendTx(complete(baseTx()))
       .skipProposal()
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
@@ -70,8 +69,7 @@ TEST_F(CreateRole, HaveNoPerms) {
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .checkBlock(
-          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -139,8 +137,7 @@ TEST_F(CreateRole, MaxLenRoleName) {
                               std::string(32, 'a'))))
       .skipProposal()
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**

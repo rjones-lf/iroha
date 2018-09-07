@@ -73,8 +73,7 @@ TEST_F(GetTransactions, HaveNoGetPerms) {
       .sendTx(dummy_tx)
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(makeQuery(dummy_tx.hash()), check)
-      .done();
+      .sendQuery(makeQuery(dummy_tx.hash()), check);
 }
 
 /**
@@ -102,8 +101,7 @@ TEST_F(GetTransactions, HaveGetAllTx) {
       .sendTx(dummy_tx)
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(makeQuery(dummy_tx.hash()), check)
-      .done();
+      .sendQuery(makeQuery(dummy_tx.hash()), check);
 }
 
 /**
@@ -131,8 +129,7 @@ TEST_F(GetTransactions, HaveGetMyTx) {
       .sendTx(dummy_tx)
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(makeQuery(dummy_tx.hash()), check)
-      .done();
+      .sendQuery(makeQuery(dummy_tx.hash()), check);
 }
 
 /**
@@ -162,8 +159,7 @@ TEST_F(GetTransactions, InvalidSignatures) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipBlock()
-      .sendQuery(query, check)
-      .done();
+      .sendQuery(query, check);
 }
 
 /**
@@ -188,8 +184,7 @@ TEST_F(GetTransactions, NonexistentHash) {
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(makeQuery(crypto::Hash(std::string(
                      crypto::DefaultCryptoAlgorithmType::kHashLength, '0'))),
-                 check)
-      .done();
+                 check);
 }
 
 /**
@@ -213,6 +208,5 @@ TEST_F(GetTransactions, OtherUserTx) {
       .sendTx(tx)
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(makeQuery(tx.hash()), check)
-      .done();
+      .sendQuery(makeQuery(tx.hash()), check);
 }
