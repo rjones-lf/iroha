@@ -20,18 +20,26 @@ namespace iroha {
     return MstState(completer);
   }
 
-  StateAndCompleteStatus MstState::operator+=(const DataType &rhs) {
+  StateUpdateResult MstState::operator+=(const DataType &rhs) {
     auto result = MstState::empty(completer_);
-    auto complete_status = insertOne(result, rhs);
-    return StateAndCompleteStatus{result, complete_status};
+    return insertOne(result, rhs)
+        ? StateUpdateResult(std::move(result), MstState::empty())
+        : StateUpdateResult(MstState::empty(), std::move(result));
   }
 
-  MstState MstState::operator+=(const MstState &rhs) {
-    auto result = MstState::empty(completer_);
+  StateUpdateResult MstState::operator+=(const MstState &rhs) {
+    auto completed_state = MstState::empty(completer_);
+    auto updated_state = MstState::empty(completer_);
     for (auto &&rhs_tx : rhs.internal_state_) {
-      insertOne(result, rhs_tx);
+      auto temp_state = MstState::empty(completer_);
+      if (insertOne(temp_state, rhs_tx)) {
+        completed_state.rawInsert(rhs_tx);
+      } else {
+        updated_state.rawInsert(rhs_tx);
+      }
     }
-    return result;
+    return StateUpdateResult{std::move(completed_state),
+                             std::move(updated_state)};
   }
 
   MstState MstState::operator-(const MstState &rhs) const {

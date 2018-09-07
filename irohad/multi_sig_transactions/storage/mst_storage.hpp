@@ -39,21 +39,20 @@ namespace iroha {
      * Apply new state for peer
      * @param target_peer - key for for updating state
      * @param new_state - state with new data
-     * @return State with completed transaction
+     * @return State with completed or updated batches
      * General note: implementation of method covered by lock
      */
-    MstState apply(
+    StateUpdateResult apply(
         const std::shared_ptr<shared_model::interface::Peer> &target_peer,
         const MstState &new_state);
 
     /**
      * Provide updating state of current peer with new transaction
      * @param tx - new transaction for insertion in state
-     * @return state with inserted signatures and boolean, showing if this state
-     * has all needed signatures, i.e. complete
+     * @return completed or updated mst state
      * General note: implementation of method covered by lock
      */
-    StateAndCompleteStatus updateOwnState(const DataType &tx);
+    StateUpdateResult updateOwnState(const DataType &tx);
 
     /**
      * Remove expired transactions and return them

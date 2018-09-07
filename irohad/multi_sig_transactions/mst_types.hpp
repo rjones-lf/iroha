@@ -44,6 +44,20 @@ namespace iroha {
 
   using DataType = BatchPtr;
 
-  using StateAndCompleteStatus = std::pair<MstState, bool>;
+  /**
+   * Contains result of updating local state:
+   *   - state with completed batches
+   *     OR
+   *   - state with updated (still not enough signatures) batches
+   */
+  struct StateUpdateResult {
+    StateUpdateResult(MstState &&completed_state, MstState &&updated_state)
+        : completed_state_{std::make_shared<MstState>(
+              std::move(completed_state))},
+          updated_state_{std::make_shared<MstState>(std::move(updated_state))} {
+    }
+    std::shared_ptr<MstState> completed_state_;
+    std::shared_ptr<MstState> updated_state_;
+  };
 }  // namespace iroha
 #endif  // IROHA_MST_TYPES_HPP

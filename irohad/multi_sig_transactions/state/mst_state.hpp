@@ -90,16 +90,16 @@ namespace iroha {
     /**
      * Add batch to current state
      * @param rhs - batch for insertion
-     * @return State with completed batches
+     * @return State with completed batches or updated batches
      */
-    StateAndCompleteStatus operator+=(const DataType &rhs);
+    StateUpdateResult operator+=(const DataType &rhs);
 
     /**
      * Concat internal data of states
      * @param rhs - object for merging
-     * @return State with completed trasactions
+     * @return State with completed or updated batches
      */
-    MstState operator+=(const MstState &rhs);
+    StateUpdateResult operator+=(const MstState &rhs);
 
     /**
      * Operator provide difference between this and rhs operator
