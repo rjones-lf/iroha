@@ -120,20 +120,27 @@ class IrohadTest : public AcceptanceFixture {
         config_copy_, path_genesis_.string(), path_keypair_.string(), {});
   }
 
+  /**
+   * Send default transaction with given key pair.
+   * Method will wait until transaction reach COMMITTED status
+   * OR until limit of attempts is exceeded.
+   * @param key_pair Key pair for signing transaction
+   * @return Response object from Torii
+   */
   iroha::protocol::ToriiResponse sendDefaultTx(
-      boost::optional<shared_model::crypto::Keypair> key_pair) {
+      const shared_model::crypto::Keypair &key_pair) {
     iroha::protocol::TxStatusRequest tx_request;
     iroha::protocol::ToriiResponse torii_response;
 
     auto tx = complete(baseTx(kAdminId).setAccountQuorum(kAdminId, 1),
-                       key_pair.get());
+                       key_pair);
     tx_request.set_tx_hash(shared_model::crypto::toBinaryString(tx.hash()));
 
     auto client = torii::CommandSyncClient(kAddress, kPort);
     client.Torii(tx.getTransport());
 
     auto resub_counter(resubscribe_attempts);
-    const auto committed_status = iroha::protocol::TxStatus::COMMITTED;
+    constexpr auto committed_status = iroha::protocol::TxStatus::COMMITTED;
     do {
       std::this_thread::sleep_for(resubscribe_timeout);
       client.Status(tx_request, torii_response);
@@ -143,8 +150,15 @@ class IrohadTest : public AcceptanceFixture {
     return torii_response;
   }
 
+  /**
+   * Sending default transaction and assert that it was finished with
+   * COMMITED status.
+   * Method will wait until transaction reach COMMITTED status
+   * OR until limit of attempts is exceeded.
+   * @param key_pair Key pair for signing transaction
+   */
   void sendDefaultTxAndCheck(
-      boost::optional<shared_model::crypto::Keypair> key_pair) {
+      const shared_model::crypto::Keypair &key_pair) {
     iroha::protocol::ToriiResponse torii_response;
     torii_response = sendDefaultTx(key_pair);
     ASSERT_EQ(torii_response.tx_status(), iroha::protocol::TxStatus::COMMITTED);
@@ -240,7 +254,7 @@ TEST_F(IrohadTest, SendTx) {
   ASSERT_TRUE(key_pair);
 
   SCOPED_TRACE("From send transaction test");
-  sendDefaultTxAndCheck(key_pair);
+  sendDefaultTxAndCheck(key_pair.get());
 }
 
 /**
@@ -269,12 +283,14 @@ TEST_F(IrohadTest, SendQuery) {
 }
 
 /**
- * Test verifies that after restarting Iroha with --overwrite-ledger flag there
- * will be only one block in blockstorage
- * @given running Iroha with some transactions in storage
- * @when Iroha is shutdown and restarted with --overwrite-ledger flag
- * @then blockstorage should have height equal to 1 block and can commit
+ * Test verifies that after restarting with --overwrite-ledger flag Iroha
+ * contain single genesis block in storage and Iroha can accept and serve
  * transactions
+ * @given an Iroha with some transactions commited ontop of the genesis
+ * block
+ * @when the Iroha is restarted with --overwrite-ledger flag
+ * @then the Iroha started with single genesis block in storage
+ *  AND the Iroha accepts and able to commit new transactions
  */
 TEST_F(IrohadTest, RestartWithOverwriteLedger) {
   launchIroha();
@@ -284,7 +300,7 @@ TEST_F(IrohadTest, RestartWithOverwriteLedger) {
   ASSERT_TRUE(key_pair);
 
   SCOPED_TRACE("From restart with --overwrite-ledger flag test");
-  sendDefaultTxAndCheck(key_pair);
+  sendDefaultTxAndCheck(key_pair.get());
 
   iroha_process_->terminate();
 
@@ -296,15 +312,17 @@ TEST_F(IrohadTest, RestartWithOverwriteLedger) {
   ASSERT_EQ(getBlockCount(), 1);
 
   SCOPED_TRACE("From restart with --overwrite-ledger flag test");
-  sendDefaultTxAndCheck(key_pair);
+  sendDefaultTxAndCheck(key_pair.get());
 }
 
 /**
- * Test verifies that after common restart of Iroha it will keep height
- * @given running Iroha with some transactions in storage
- * @when Iroha is restarted without reinitializing blockchain
- * @then height of blockchain should be equal to the height before restart and
- * Iroha should commit transactions
+ * Test verifies that Iroha can accept and serve transactions after usual
+ * restart
+ * @given an Iroha with some transactions commited ontop of the genesis
+ * block
+ * @when the Iroha is restarted without --overwrite-ledger flag
+ * @then the state is successfully restored
+ *  AND the Iroha accepts and able to commit new transactions
  */
 TEST_F(IrohadTest, RestartWithoutResetting) {
   launchIroha();
@@ -314,7 +332,7 @@ TEST_F(IrohadTest, RestartWithoutResetting) {
   ASSERT_TRUE(key_pair);
 
   SCOPED_TRACE("From restart without resetting test");
-  sendDefaultTxAndCheck(key_pair);
+  sendDefaultTxAndCheck(key_pair.get());
 
   int height = getBlockCount();
 
@@ -325,5 +343,5 @@ TEST_F(IrohadTest, RestartWithoutResetting) {
   ASSERT_EQ(getBlockCount(), height);
 
   SCOPED_TRACE("From restart without resetting test");
-  sendDefaultTxAndCheck(key_pair);
+  sendDefaultTxAndCheck(key_pair.get());
 }
