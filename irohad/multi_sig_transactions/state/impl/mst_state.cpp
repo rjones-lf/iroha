@@ -23,8 +23,10 @@ namespace iroha {
   StateUpdateResult MstState::operator+=(const DataType &rhs) {
     auto result = MstState::empty(completer_);
     return insertOne(result, rhs)
-        ? StateUpdateResult(std::move(result), MstState::empty())
-        : StateUpdateResult(MstState::empty(), std::move(result));
+        ? StateUpdateResult(std::make_shared<MstState>(std::move(result)),
+                            std::make_shared<MstState>(MstState::empty()))
+        : StateUpdateResult(std::make_shared<MstState>(MstState::empty()),
+                            std::make_shared<MstState>(std::move(result)));
   }
 
   StateUpdateResult MstState::operator+=(const MstState &rhs) {
@@ -38,8 +40,9 @@ namespace iroha {
         updated_state.rawInsert(rhs_tx);
       }
     }
-    return StateUpdateResult{std::move(completed_state),
-                             std::move(updated_state)};
+    return StateUpdateResult{
+        std::make_shared<MstState>(std::move(completed_state)),
+        std::make_shared<MstState>(std::move(updated_state))};
   }
 
   MstState MstState::operator-(const MstState &rhs) const {
