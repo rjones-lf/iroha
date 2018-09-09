@@ -266,7 +266,8 @@ TEST_F(OrderingServiceTest, ConcurrentGenerateProposal) {
  * @then Ordering service should not crash and publishProposal() should not be
  * called after destructor call
  */
-TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
+// TODO, igor-egorov, 2018-09-03, enable the test, IR-1659
+TEST_F(OrderingServiceTest, DISABLED_GenerateProposalDestructor) {
   const auto max_proposal = 600;
   const auto commit_delay = 5s;
   EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
