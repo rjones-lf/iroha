@@ -36,6 +36,7 @@ TEST_F(CreateAccount, Basic) {
       .sendTx(complete(baseTx().createAccount(
           kNewUser, kDomain, kNewUserKeypair.publicKey())))
       .skipProposal()
+      .skipVerifiedProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
@@ -55,9 +56,10 @@ TEST_F(CreateAccount, NoPermissions) {
       .sendTx(complete(baseTx().createAccount(
           kNewUser, kDomain, kNewUserKeypair.publicKey())))
       .skipProposal()
-      .checkVerifiedProposal([](auto &proposal) {
-        ASSERT_EQ(proposal->transactions().size(), 0);
-      });
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -78,6 +80,9 @@ TEST_F(CreateAccount, NoDomain) {
       .skipProposal()
       .checkVerifiedProposal([](auto &proposal) {
         ASSERT_EQ(proposal->transactions().size(), 0);
+      })
+      .checkBlock([](auto block){
+        ASSERT_EQ(block->transactions().size(), 0);
       });
 }
 

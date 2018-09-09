@@ -50,9 +50,10 @@ TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
       .sendTx(complete(baseTx<>().creatorAccountId(kNonUser), kAdminKeypair),
               checkStatelessValid)
       .checkProposal(checkProposal)
-      .checkVerifiedProposal([](auto &proposal) {
-        ASSERT_EQ(proposal->transactions().size(), 0);
-      });
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -69,6 +70,7 @@ TEST_F(AcceptanceTest, Transaction1HourOld) {
                        kAdminKeypair),
               checkStatelessValid)
       .skipProposal()
+      .skipVerifiedProposal()
       .checkBlock(checkStatefulValid);
 }
 
@@ -86,6 +88,7 @@ TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
                        kAdminKeypair),
               checkStatelessValid)
       .skipProposal()
+      .skipVerifiedProposal()
       .checkBlock(checkStatefulValid);
 }
 
@@ -117,6 +120,7 @@ TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
                        kAdminKeypair),
               checkStatelessValid)
       .skipProposal()
+      .skipVerifiedProposal()
       .checkBlock(checkStatefulValid);
 }
 
@@ -218,6 +222,7 @@ TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
       .setInitialState(kAdminKeypair)
       .sendTx(complete(baseTx<>(), kAdminKeypair), checkStatelessValid)
       .skipProposal()
+      .skipVerifiedProposal()
       .checkBlock(checkStatefulValid);
 }
 

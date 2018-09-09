@@ -51,9 +51,10 @@ TEST_F(AddAssetQuantity, NoPermissions) {
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, kAmount)))
       .skipProposal()
-      .checkVerifiedProposal([](auto &proposal) {
-        ASSERT_EQ(proposal->transactions().size(), 0);
-      });
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -67,6 +68,7 @@ TEST_F(AddAssetQuantity, NegativeAmount) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, "-1.0")),
               checkStatelessInvalid);
@@ -83,6 +85,7 @@ TEST_F(AddAssetQuantity, ZeroAmount) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, "0.0")),
               checkStatelessInvalid);
