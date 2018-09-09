@@ -109,7 +109,7 @@ namespace iroha {
         log_->info("MST batch prepared");
         // TODO: 07/08/2018 @muratovv rework interface of pcs::propagate batch
         // and mst::propagate batch IR-1584
-        publishEnoughSignaturesStatus(batch->transactions());
+        this->publishEnoughSignaturesStatus(batch->transactions());
         this->pcs_->propagate_batch(*batch);
       });
       mst_processor_->onExpiredBatches().subscribe([this](auto &&batch) {
@@ -124,7 +124,7 @@ namespace iroha {
         const shared_model::interface::TransactionBatch &transaction_batch)
         const {
       if (transaction_batch.hasAllSignatures()) {
-        publishEnoughSignaturesStatus(transaction_batch.transactions());
+        this->publishEnoughSignaturesStatus(transaction_batch.transactions());
         pcs_->propagate_batch(transaction_batch);
       } else {
         // TODO: 07/08/2018 @muratovv rework interface of pcs::propagate batch
