@@ -106,11 +106,13 @@ namespace shared_model {
             [](const MstPendingResponse &) { return 2; },
             [](const EnoughSignaturesCollectedResponse &) { return 3; },
             [](const StatefulValidTxResponse &) { return 4; },
+            // following types are local on this peer and can be substituted by
+            // final ones, if consensus decides so
+            [](const StatelessFailedTxResponse &) { return max_priority - 1; },
+            [](const StatefulFailedTxResponse &) { return max_priority - 1; },
+            [](const MstExpiredResponse &) { return max_priority - 1; },
             // following types are the final ones
-            [](const CommittedTxResponse &) { return max_priority; },
-            [](const StatelessFailedTxResponse &) { return max_priority; },
-            [](const StatefulFailedTxResponse &) { return max_priority; },
-            [](const MstExpiredResponse &) { return max_priority; });
+            [](const CommittedTxResponse &) { return max_priority; });
       }
     };
   }  // namespace  proto

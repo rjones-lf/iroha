@@ -73,20 +73,22 @@ namespace shared_model {
       virtual const ErrorMessageType &errorMessage() const = 0;
 
       /**
+       * Enumeration for holding result of priorities comparison
+       */
+      enum class PrioritiesComparisonResult { kLess, kEqual, kGreater };
+      /**
        * Compare priorities of two transaction responses
        * @param other response
-       * @return:
-       *    - -1, if this response's priority is less, than other's
-       *    -  0, if it's equal
-       *    -  1, if it's greater
+       * @return enumeration result of that comparison
        */
-      int comparePriorities(const ModelType &other) const noexcept {
+      PrioritiesComparisonResult comparePriorities(const ModelType &other) const
+          noexcept {
         if (this->priority() < other.priority()) {
-          return -1;
+          return PrioritiesComparisonResult::kLess;
         } else if (this->priority() == other.priority()) {
-          return 0;
+          return PrioritiesComparisonResult::kEqual;
         }
-        return 1;
+        return PrioritiesComparisonResult::kGreater;
       };
 
       // ------------------------| Primitive override |-------------------------

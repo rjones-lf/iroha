@@ -57,7 +57,9 @@ namespace torii {
       auto tx_hash = proto_response->transactionHash();
       auto cached_tx_state = cache_->findItem(tx_hash);
       if (cached_tx_state
-          and proto_response->comparePriorities(**cached_tx_state) <= 0) {
+          and proto_response->comparePriorities(**cached_tx_state)
+              != shared_model::interface::TransactionResponse::
+                     PrioritiesComparisonResult::kGreater) {
         return;
       }
       cache_->addItem(tx_hash, proto_response);
