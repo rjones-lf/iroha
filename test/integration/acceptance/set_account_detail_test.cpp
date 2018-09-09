@@ -59,10 +59,8 @@ TEST_F(SetAccountDetail, Self) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx(kUserId)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .sendTx(complete(baseTx(kUserId)),
+              [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .done();
 }
 
@@ -90,7 +88,8 @@ TEST_F(SetAccountDetail, WithoutNoPerm) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -113,9 +112,9 @@ TEST_F(SetAccountDetail, WithPerm) {
       })
       .sendTx(complete(baseTx(kUser2Id)))
       .skipProposal()
+      .skipVerifiedProposal()
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
@@ -143,15 +142,14 @@ TEST_F(SetAccountDetail, WithGrantablePerm) {
         ASSERT_EQ(block->transactions().size(), 1)
             << "Cannot create second user account";
       })
-      .sendTx(complete(AcceptanceFixture::baseTx().grantPermission(
-          kUser2Id, interface::permissions::Grantable::kSetMyAccountDetail)))
-      .skipProposal()
-      .checkBlock([](auto &block) {
-        ASSERT_EQ(block->transactions().size(), 1) << "Cannot grant permission";
-      })
-      .sendTx(set_detail_cmd)
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(complete(AcceptanceFixture::baseTx().grantPermission(
+                       kUser2Id,
+                       interface::permissions::Grantable::kSetMyAccountDetail)),
+                   [](auto &block) {
+                     ASSERT_EQ(block->transactions().size(), 1)
+                         << "Cannot grant permission";
+                   })
+      .sendTxAwait(set_detail_cmd, [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
+      });
 }
