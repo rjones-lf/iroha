@@ -94,6 +94,15 @@ namespace iroha {
       void publishStatus(TxStatusType tx_status,
                          const shared_model::crypto::Hash &hash,
                          const std::string &error = "") const;
+
+      /**
+       * Publish kEnoughSignaturesCollected status for each transaction in
+       * collection
+       * @param txs - collection of those transactions
+       */
+      void publishEnoughSignaturesStatus(
+          const shared_model::interface::types::SharedTxsCollectionType &txs)
+          const;
     };
   }  // namespace torii
 }  // namespace iroha

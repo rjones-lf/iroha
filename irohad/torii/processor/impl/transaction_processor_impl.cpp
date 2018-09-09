@@ -72,7 +72,8 @@ namespace iroha {
                  proposal_and_errors->first->transactions()) {
               log_->info("on stateful validation success: {}",
                          successful_tx.hash().hex());
-              this->publishStatus(TxStatusType::kStatefulValid, successful_tx.hash());
+              this->publishStatus(TxStatusType::kStatefulValid,
+                                  successful_tx.hash());
             }
           });
 
@@ -108,9 +109,7 @@ namespace iroha {
         log_->info("MST batch prepared");
         // TODO: 07/08/2018 @muratovv rework interface of pcs::propagate batch
         // and mst::propagate batch IR-1584
-        for (const auto &tx : batch->transactions()) {
-          this->publishStatus(TxStatusType::kEnoughSignaturesCollected, tx->hash());
-        }
+        publishEnoughSignaturesStatus(batch->transactions());
         this->pcs_->propagate_batch(*batch);
       });
       mst_processor_->onExpiredBatches().subscribe([this](auto &&batch) {
@@ -125,9 +124,7 @@ namespace iroha {
         const shared_model::interface::TransactionBatch &transaction_batch)
         const {
       if (transaction_batch.hasAllSignatures()) {
-        for (const auto &tx : transaction_batch.transactions()) {
-          this->publishStatus(TxStatusType::kEnoughSignaturesCollected, tx->hash());
-        }
+        publishEnoughSignaturesStatus(transaction_batch.transactions());
         pcs_->propagate_batch(transaction_batch);
       } else {
         // TODO: 07/08/2018 @muratovv rework interface of pcs::propagate batch
@@ -189,6 +186,15 @@ namespace iroha {
         };
       }
       status_bus_->publish(builder.build());
+    }
+
+    void TransactionProcessorImpl::publishEnoughSignaturesStatus(
+        const shared_model::interface::types::SharedTxsCollectionType &txs)
+        const {
+      for (const auto &tx : txs) {
+        this->publishStatus(TxStatusType::kEnoughSignaturesCollected,
+                            tx->hash());
+      }
     }
   }  // namespace torii
 }  // namespace iroha
