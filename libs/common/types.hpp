@@ -158,6 +158,13 @@ namespace iroha {
    * boost::optional<double> d = f()
    *    | g;
    *
+   * std::forward should be used in any reference of arguments because
+   * operator bool, operator*, and operator() of arguments can have
+   * different implementation with ref-qualifiers
+   *
+   * Trailing return type checks that result of applying function to
+   * unwrapped value results in non-void type
+   *
    * @tparam T - monadic type
    * @tparam Transform - transform function type
    * @param t - monadic value
@@ -166,11 +173,13 @@ namespace iroha {
    * @return monadic value, which can be of another type
    */
   template <typename T, typename Transform>
-  auto operator|(T t, Transform f) ->
-      typename std::enable_if<not std::is_same<decltype(f(*t)), void>::value,
-                              decltype(f(*t))>::type {
-    if (t) {
-      return f(*t);
+  auto operator|(T &&t, Transform &&f) -> std::enable_if_t<
+      not std::is_same<
+          decltype(std::forward<Transform>(f)(*std::forward<T>(t))),
+          void>::value,
+      decltype(std::forward<Transform>(f)(*std::forward<T>(t)))> {
+    if (std::forward<T>(t)) {
+      return std::forward<Transform>(f)(*std::forward<T>(t));
     }
     return {};
   }
@@ -186,18 +195,25 @@ namespace iroha {
    *
    * f() | g;
    *
+   * std::forward should be used in any reference of arguments because
+   * operator bool, operator*, and operator() of arguments can have
+   * different implementation with ref-qualifiers
+   *
+   * Trailing return type checks that result of applying function to
+   * unwrapped value results in void type
+   *
    * @tparam T - monadic type
    * @tparam Transform - transform function type
    * @param t - monadic value
    * @param f - function, which takes dereferenced value, and returns
    * wrapped value
-   * @return monadic value, which can be of another type
    */
   template <typename T, typename Transform>
-  auto operator|(T t, Transform f) -> typename std::enable_if<
-      std::is_same<decltype(f(*t)), void>::value>::type {
-    if (t) {
-      f(*t);
+  auto operator|(T &&t, Transform &&f) -> std::enable_if_t<
+      std::is_same<decltype(std::forward<Transform>(f)(*std::forward<T>(t))),
+                   void>::value> {
+    if (std::forward<T>(t)) {
+      std::forward<Transform>(f)(*std::forward<T>(t));
     }
   }
 

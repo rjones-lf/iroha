@@ -18,9 +18,11 @@
 #ifndef IROHA_CLUSTER_ORDER_HPP
 #define IROHA_CLUSTER_ORDER_HPP
 
-#include <boost/optional.hpp>
-#include <vector>
 #include <memory>
+#include <vector>
+
+#include <boost/optional.hpp>
+#include "consensus/yac/yac_types.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -65,7 +67,7 @@ namespace iroha {
         std::vector<std::shared_ptr<shared_model::interface::Peer>> getPeers()
             const;
 
-        size_t getNumberOfPeers() const;
+        PeersNumberType getNumberOfPeers() const;
 
         virtual ~ClusterOrdering() = default;
 
@@ -77,7 +79,7 @@ namespace iroha {
             std::vector<std::shared_ptr<shared_model::interface::Peer>> order);
 
         std::vector<std::shared_ptr<shared_model::interface::Peer>> order_;
-        uint32_t index_ = 0;
+        PeersNumberType index_ = 0;
       };
     }  // namespace yac
   }    // namespace consensus

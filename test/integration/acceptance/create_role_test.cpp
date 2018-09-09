@@ -69,6 +69,8 @@ TEST_F(CreateRole, HaveNoPerms) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }
 
@@ -174,6 +176,7 @@ TEST_F(CreateRole, ExistingRole) {
       .sendTx(
           complete(baseTx({interface::permissions::Role::kGetMyTxs}, kNewRole)))
       .skipProposal()
-      .checkVerifiedProposal(
-          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); });
+      .checkVerifiedProposal([](auto &proposal) {
+        ASSERT_EQ(proposal->transactions().size(), 0);
+      });
 }

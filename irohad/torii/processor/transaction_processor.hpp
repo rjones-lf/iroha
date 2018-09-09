@@ -18,29 +18,23 @@
 #ifndef IROHA_TRANSACTION_PROCESSOR_HPP
 #define IROHA_TRANSACTION_PROCESSOR_HPP
 
-#include <rxcpp/rx.hpp>
-
 namespace shared_model {
   namespace interface {
-    class Transaction;
-    class TransactionResponse;
     class TransactionBatch;
   }  // namespace interface
 }  // namespace shared_model
 
 namespace iroha {
   namespace torii {
-
     /**
      * Transaction processor is interface with start point
      * for processing transaction in the system
      */
     class TransactionProcessor {
      public:
-
       /**
        * Process batch and propagate it to the MST or PCS
-       * @param transaction_sequence - transaction sequence for processing
+       * @param transaction_batch - transaction batch for processing
        */
       virtual void batchHandle(const shared_model::interface::TransactionBatch
                                    &transaction_batch) const = 0;

@@ -19,7 +19,7 @@
 #define IROHA_BUILDERS_TEST_FIXTURE_HPP
 
 #include <gtest/gtest.h>
-#include "builders/common_objects/common.hpp"
+#include "module/shared_model/builders/common_objects/common.hpp"
 
 /**
  * Perform testFunc on two objects of type std::shared_ptr<T> which are taken

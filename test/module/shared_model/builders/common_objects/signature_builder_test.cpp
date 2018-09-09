@@ -17,9 +17,9 @@
 
 #include <gtest/gtest.h>
 
-#include "builders/common_objects/signature_builder.hpp"
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "builders_test_fixture.hpp"
+#include "module/shared_model/builders/common_objects/signature_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "validators/field_validator.hpp"
 
 // TODO: 14.02.2018 nickaleks mock builder implementation IR-970

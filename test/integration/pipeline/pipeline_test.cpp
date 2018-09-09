@@ -24,24 +24,67 @@
 #include "framework/batch_helper.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
+#include "integration/acceptance/acceptance_fixture.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
-constexpr auto kAdmin = "admin@test";
-const shared_model::crypto::Keypair kAdminKeypair =
-    shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+class PipelineIntegrationTest : public AcceptanceFixture {
+ public:
+  /**
+   * prepares signed transaction with CreateDomain command
+   * @param domain_name name of the domain
+   * @return Transaction with CreateDomain command
+   */
+  auto prepareCreateDomainTransaction(std::string domain_name = "domain") {
+    return shared_model::proto::TransactionBuilder()
+        .createdTime(getUniqueTime())
+        .quorum(1)
+        .creatorAccountId(kAdminId)
+        .createDomain(domain_name, "user")
+        .build()
+        .signAndAddSignature(kAdminKeypair)
+        .finish();
+  }
 
+  /**
+   * prepares transaction sequence
+   * @param tx_size the size of transaction sequence
+   * @return  transaction sequence
+   */
+  auto prepareTransactionSequence(size_t tx_size) {
+    shared_model::interface::types::SharedTxsCollectionType txs;
+
+    for (size_t i = 0; i < tx_size; i++) {
+      auto &&tx = prepareCreateDomainTransaction(std::string("domain")
+                                                 + std::to_string(i));
+      txs.push_back(
+          std::make_shared<shared_model::proto::Transaction>(std::move(tx)));
+    }
+
+    auto tx_sequence_result =
+        shared_model::interface::TransactionSequence::createTransactionSequence(
+            txs,
+            shared_model::validation::DefaultSignedTransactionsValidator());
+
+    return framework::expected::val(tx_sequence_result).value().value;
+  }
+
+ protected:
+  const std::string kAdminId = "admin@test";
+  const shared_model::crypto::Keypair kAdminKeypair =
+      shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+};
 /**
  * @given GetAccount query with non-existing user
  * AND default-initialized IntegrationTestFramework
  * @when query is sent to the framework
  * @then query response is ErrorResponse with STATEFUL_INVALID reason
  */
-TEST(PipelineIntegrationTest, SendQuery) {
+TEST_F(PipelineIntegrationTest, SendQuery) {
   auto query = shared_model::proto::QueryBuilder()
                    .createdTime(iroha::time::now())
-                   .creatorAccountId(kAdmin)
+                   .creatorAccountId(kAdminId)
                    .queryCounter(1)
-                   .getAccount(kAdmin)
+                   .getAccount(kAdminId)
                    .build()
                    .signAndAddSignature(
                        // TODO: 30/03/17 @l4l use keygen adapter IR-1189
@@ -62,28 +105,12 @@ TEST(PipelineIntegrationTest, SendQuery) {
 }
 
 /**
- * prepares signed transaction with CreateDomain command
- * @param domain_name name of the domain
- * @return Transaction with CreateDomain command
- */
-auto prepareCreateDomainTransaction(std::string domain_name = "domain") {
-  return shared_model::proto::TransactionBuilder()
-      .createdTime(iroha::time::now())
-      .quorum(1)
-      .creatorAccountId(kAdmin)
-      .createDomain(domain_name, "user")
-      .build()
-      .signAndAddSignature(kAdminKeypair)
-      .finish();
-}
-
-/**
  * @given some user
  * @when sending sample CreateDomain transaction to the ledger
  * @then receive STATELESS_VALIDATION_SUCCESS status on that tx AND
  * tx is committed, thus non-empty verified proposal
  */
-TEST(PipelineIntegrationTest, SendTx) {
+TEST_F(PipelineIntegrationTest, SendTx) {
   auto tx = prepareCreateDomainTransaction();
 
   auto check_stateless_valid = [](auto &status) {
@@ -114,35 +141,13 @@ TEST(PipelineIntegrationTest, SendTx) {
 }
 
 /**
- * prepares transaction sequence
- * @param tx_size the size of transaction sequence
- * @return  transaction sequence
- */
-auto prepareTransactionSequence(size_t tx_size) {
-  shared_model::interface::types::SharedTxsCollectionType txs;
-
-  for (size_t i = 0; i < tx_size; i++) {
-    auto &&tx = prepareCreateDomainTransaction(std::string("domain")
-                                               + std::to_string(i));
-    txs.push_back(
-        std::make_shared<shared_model::proto::Transaction>(std::move(tx)));
-  }
-
-  auto tx_sequence_result =
-      shared_model::interface::TransactionSequence::createTransactionSequence(
-          txs, shared_model::validation::DefaultSignedTransactionsValidator());
-
-  return framework::expected::val(tx_sequence_result).value().value;
-}
-
-/**
  * @given some user
  * @when sending sample create domain transactions to the ledger
  * @then receive STATELESS_VALIDATION_SUCCESS status on that transactions,
  * all transactions are passed to proposal and appear in verified proposal and
  * block
  */
-TEST(PipelineIntegrationTest, SendTxSequence) {
+TEST_F(PipelineIntegrationTest, SendTxSequence) {
   size_t tx_size = 5;
   const auto &tx_sequence = prepareTransactionSequence(tx_size);
 
@@ -180,7 +185,7 @@ TEST(PipelineIntegrationTest, SendTxSequence) {
  * ledger using sendTxSequence await method
  * @then all transactions appear in the block
  */
-TEST(PipelineIntegrationTest, SendTxSequenceAwait) {
+TEST_F(PipelineIntegrationTest, SendTxSequenceAwait) {
   size_t tx_size = 5;
   const auto &tx_sequence = prepareTransactionSequence(tx_size);
 
@@ -192,4 +197,34 @@ TEST(PipelineIntegrationTest, SendTxSequenceAwait) {
       .setInitialState(kAdminKeypair)
       .sendTxSequenceAwait(tx_sequence, check_block)
       .done();
+}
+
+/**
+ * Check that after no transactions were committed we are able to send and apply
+ * new transactions
+ *
+ * @given createFirstDomain and createSecondDomain transactions
+ * @when first domain is created second time
+ * @then block with no transactions is created
+ * AND after that createSecondDomain transaction can be executed and applied
+ */
+TEST_F(PipelineIntegrationTest, SuccessfulCommitAfterEmptyBlock) {
+  auto createFirstDomain = [this] {
+    return prepareCreateDomainTransaction("domain1");
+  };
+  auto createSecondDomain = [this] {
+    return prepareCreateDomainTransaction("domain2");
+  };
+
+  integration_framework::IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
+      .sendTxAwait(
+          createFirstDomain(),
+          [](const auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .sendTxAwait(
+          createFirstDomain(),
+          [](const auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .sendTxAwait(createSecondDomain(), [](const auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
+      });
 }

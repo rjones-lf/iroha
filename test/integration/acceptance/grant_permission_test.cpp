@@ -32,6 +32,8 @@ TEST_F(GrantablePermissionsFixture, GrantToInexistingAccount) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }
 
@@ -54,20 +56,18 @@ TEST_F(GrantablePermissionsFixture, GrantAddSignatoryPermission) {
   itf.setInitialState(kAdminKeypair);
   auto &x = createTwoAccounts(
       itf, {Role::kAddMySignatory, Role::kGetMySignatories}, {Role::kReceive});
-  x.sendTx(grantPermission(kAccount1,
-                           kAccount1Keypair,
-                           kAccount2,
-                           permissions::Grantable::kAddMySignatory))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+  x.sendTxAwait(grantPermission(kAccount1,
+                                kAccount1Keypair,
+                                kAccount2,
+                                permissions::Grantable::kAddMySignatory),
+                [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       // Add signatory
-      .sendTx(permitteeModifySignatory(
-          &TestUnsignedTransactionBuilder::addSignatory,
-          kAccount2,
-          kAccount2Keypair,
-          kAccount1))
-      .checkBlock(
+      .sendTxAwait(
+          permitteeModifySignatory(
+              &TestUnsignedTransactionBuilder::addSignatory,
+              kAccount2,
+              kAccount2Keypair,
+              kAccount1),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(querySignatories(kAccount1, kAccount1Keypair),
                  check_if_signatory_is_contained)
@@ -102,29 +102,27 @@ TEST_F(GrantablePermissionsFixture, GrantRemoveSignatoryPermission) {
                               kAccount2,
                               permissions::Grantable::kAddMySignatory))
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(grantPermission(kAccount1,
-                              kAccount1Keypair,
-                              kAccount2,
-                              permissions::Grantable::kRemoveMySignatory))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          grantPermission(kAccount1,
+                          kAccount1Keypair,
+                          kAccount2,
+                          permissions::Grantable::kRemoveMySignatory),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(permitteeModifySignatory(
-          &TestUnsignedTransactionBuilder::addSignatory,
-          kAccount2,
-          kAccount2Keypair,
-          kAccount1))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          permitteeModifySignatory(
+              &TestUnsignedTransactionBuilder::addSignatory,
+              kAccount2,
+              kAccount2Keypair,
+              kAccount1),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(permitteeModifySignatory(
-          &TestUnsignedTransactionBuilder::removeSignatory,
-          kAccount2,
-          kAccount2Keypair,
-          kAccount1))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          permitteeModifySignatory(
+              &TestUnsignedTransactionBuilder::removeSignatory,
+              kAccount2,
+              kAccount2Keypair,
+              kAccount1),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(querySignatories(kAccount1, kAccount1Keypair),
                  check_if_signatory_is_not_contained)
@@ -170,9 +168,8 @@ TEST_F(GrantablePermissionsFixture, GrantSetQuorumPermission) {
           kAccount1))
       .skipProposal()
       .skipBlock()
-      .sendTx(setQuorum(kAccount2, kAccount2Keypair, kAccount1, 2))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          setQuorum(kAccount2, kAccount2Keypair, kAccount1, 2),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(queryAccount(kAccount1, kAccount1Keypair),
                  check_quorum_quantity)
@@ -203,13 +200,12 @@ TEST_F(GrantablePermissionsFixture, GrantSetAccountDetailPermission) {
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(setAccountDetail(kAccount2,
-                               kAccount2Keypair,
-                               kAccount1,
-                               kAccountDetailKey,
-                               kAccountDetailValue))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          setAccountDetail(kAccount2,
+                           kAccount2Keypair,
+                           kAccount1,
+                           kAccountDetailKey,
+                           kAccountDetailValue),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(queryAccountDetail(kAccount1, kAccount1Keypair),
                  check_account_detail)
@@ -273,6 +269,8 @@ TEST_F(GrantablePermissionsFixture, GrantWithoutGrantPermissions) {
         .checkVerifiedProposal([](auto &proposal) {
           ASSERT_EQ(proposal->transactions().size(), 0);
         })
+        .checkBlock(
+            [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
         .done();
   }
 }
@@ -303,5 +301,7 @@ TEST_F(GrantablePermissionsFixture, GrantMoreThanOnce) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }

@@ -18,9 +18,9 @@
 #ifndef IROHA_DOMAIN_BUILDER_HPP
 #define IROHA_DOMAIN_BUILDER_HPP
 
-#include "builders/common_objects/common.hpp"
 #include "interfaces/common_objects/domain.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "module/shared_model/builders/common_objects/common.hpp"
 
 namespace shared_model {
   namespace builder {

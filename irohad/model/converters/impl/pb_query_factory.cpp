@@ -1,22 +1,9 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "model/converters/pb_query_factory.hpp"
-#include <queries.pb.h>
 #include "model/common.hpp"
 #include "model/queries/get_account.hpp"
 #include "model/queries/get_account_assets.hpp"
@@ -25,6 +12,7 @@
 #include "model/queries/get_roles.hpp"
 #include "model/queries/get_signatories.hpp"
 #include "model/queries/get_transactions.hpp"
+#include "queries.pb.h"
 
 namespace iroha {
   namespace model {
@@ -93,9 +81,9 @@ namespace iroha {
               val = std::make_shared<model::GetAccountAssetTransactions>(query);
               break;
             }
-            case Query_Payload::QueryCase::kGetAccountSignatories: {
+            case Query_Payload::QueryCase::kGetSignatories: {
               // Convert to get Signatories
-              const auto &pb_cast = pl.get_account_signatories();
+              const auto &pb_cast = pl.get_signatories();
               auto query = GetSignatories();
               query.account_id = pb_cast.account_id();
               val = std::make_shared<model::GetSignatories>(query);
@@ -147,7 +135,7 @@ namespace iroha {
         const auto &pb_sign = pb_query.signature();
 
         Signature sign{};
-        sign.pubkey = pubkey_t::from_string(pb_sign.pubkey());
+        sign.pubkey = pubkey_t::from_string(pb_sign.public_key());
         sign.signature = sig_t::from_string(pb_sign.signature());
 
         val->query_counter = pl.meta().query_counter();
@@ -166,7 +154,7 @@ namespace iroha {
         // Set signatures
         auto sig = pb_query.mutable_signature();
         sig->set_signature(query->signature.signature.to_string());
-        sig->set_pubkey(query->signature.pubkey.to_string());
+        sig->set_public_key(query->signature.pubkey.to_string());
       }
 
       boost::optional<protocol::Query> PbQueryFactory::serialize(
@@ -262,7 +250,7 @@ namespace iroha {
         serializeQueryMetaData(pb_query, query);
         auto tmp = std::static_pointer_cast<const GetSignatories>(query);
         auto pb_query_mut =
-            pb_query.mutable_payload()->mutable_get_account_signatories();
+            pb_query.mutable_payload()->mutable_get_signatories();
         pb_query_mut->set_account_id(tmp->account_id);
         return pb_query;
       }

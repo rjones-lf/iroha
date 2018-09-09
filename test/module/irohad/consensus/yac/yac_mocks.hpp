@@ -20,7 +20,6 @@
 
 #include <gmock/gmock.h>
 
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "common/byteutils.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/messages.hpp"
@@ -34,6 +33,7 @@
 #include "consensus/yac/yac_peer_orderer.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
 
 namespace iroha {
@@ -78,9 +78,7 @@ namespace iroha {
 
       class MockYacCryptoProvider : public YacCryptoProvider {
        public:
-        MOCK_METHOD1(verify, bool(CommitMessage));
-        MOCK_METHOD1(verify, bool(RejectMessage));
-        MOCK_METHOD1(verify, bool(VoteMessage));
+        MOCK_METHOD1(verify, bool(const std::vector<VoteMessage> &));
 
         VoteMessage getVote(YacHash hash) override {
           VoteMessage vote;
@@ -126,14 +124,9 @@ namespace iroha {
           notification.reset();
         }
 
-        MOCK_METHOD2(send_commit,
+        MOCK_METHOD2(sendState,
                      void(const shared_model::interface::Peer &,
-                          const CommitMessage &));
-        MOCK_METHOD2(send_reject,
-                     void(const shared_model::interface::Peer &,
-                          RejectMessage));
-        MOCK_METHOD2(send_vote,
-                     void(const shared_model::interface::Peer &, VoteMessage));
+                          const std::vector<VoteMessage> &));
 
         MockYacNetwork() = default;
 
@@ -161,7 +154,7 @@ namespace iroha {
        public:
         MOCK_METHOD2(vote, void(YacHash, ClusterOrdering));
 
-        MOCK_METHOD0(on_commit, rxcpp::observable<CommitMessage>());
+        MOCK_METHOD0(onOutcome, rxcpp::observable<Answer>());
 
         MockHashGate() = default;
 
@@ -214,9 +207,7 @@ namespace iroha {
 
       class MockYacNetworkNotifications : public YacNetworkNotifications {
        public:
-        MOCK_METHOD1(on_commit, void(CommitMessage));
-        MOCK_METHOD1(on_reject, void(RejectMessage));
-        MOCK_METHOD1(on_vote, void(VoteMessage));
+        MOCK_METHOD1(onState, void(std::vector<VoteMessage>));
       };
 
       class MockSupermajorityChecker : public SupermajorityChecker {
@@ -227,7 +218,7 @@ namespace iroha {
                      &signatures,
                  const std::vector<
                      std::shared_ptr<shared_model::interface::Peer>> &peers));
-        MOCK_CONST_METHOD2(checkSize, bool(uint64_t current, uint64_t all));
+        MOCK_CONST_METHOD2(checkSize, bool(PeersNumberType, PeersNumberType));
         MOCK_CONST_METHOD2(
             peersSubset,
             bool(const shared_model::interface::types::SignatureRangeType
@@ -235,7 +226,7 @@ namespace iroha {
                  const std::vector<
                      std::shared_ptr<shared_model::interface::Peer>> &peers));
         MOCK_CONST_METHOD3(
-            hasReject, bool(uint64_t frequent, uint64_t voted, uint64_t all));
+            hasReject, bool(PeersNumberType, PeersNumberType, PeersNumberType));
       };
 
       class YacTest : public ::testing::Test {

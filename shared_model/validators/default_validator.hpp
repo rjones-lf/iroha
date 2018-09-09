@@ -106,7 +106,8 @@ namespace shared_model {
         ProposalValidator<FieldValidator, DefaultSignedTransactionsValidator>;
 
     /**
-     * Block validator which checks blocks WITHOUT signatures
+     * Block validator which checks blocks WITHOUT signatures. Note that it does
+     * not check transactions' signatures as well
      */
     using DefaultUnsignedBlockValidator =
         BlockValidator<FieldValidator, DefaultUnsignedTransactionsValidator>;

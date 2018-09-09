@@ -73,7 +73,7 @@ namespace iroha {
       optional_ptr<Query> JsonQueryFactory::deserialize(
           const std::string &query_json) {
         return stringToJson(query_json) |
-            [this](auto &json) { return this->deserialize(json); };
+            [this](auto &&json) { return this->deserialize(json); };
       }
 
       optional_ptr<Query> JsonQueryFactory::deserialize(
