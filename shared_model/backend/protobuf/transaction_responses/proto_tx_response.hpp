@@ -108,9 +108,9 @@ namespace shared_model {
             [](const StatefulValidTxResponse &) { return 4; },
             // following types are local on this peer and can be substituted by
             // final ones, if consensus decides so
-            [](const StatelessFailedTxResponse &) { return max_priority - 1; },
-            [](const StatefulFailedTxResponse &) { return max_priority - 1; },
-            [](const MstExpiredResponse &) { return max_priority - 1; },
+            [](const StatelessFailedTxResponse &) { return 5; },
+            [](const StatefulFailedTxResponse &) { return 5; },
+            [](const MstExpiredResponse &) { return 5; },
             // following types are the final ones
             [](const CommittedTxResponse &) { return max_priority; });
       }
