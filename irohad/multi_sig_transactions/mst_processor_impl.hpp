@@ -90,6 +90,12 @@ namespace iroha {
      */
     void updatedBatchesNotify(ConstRefState state) const;
 
+    /**
+     * Notify subscribers when some of the bathes get expired
+     * @param state with those batches
+     */
+    void expiredBatchesNotify(ConstRefState state) const;
+
     // -------------------------------| fields |--------------------------------
     std::shared_ptr<iroha::network::MstTransport> transport_;
     std::shared_ptr<MstStorage> storage_;

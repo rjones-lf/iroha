@@ -218,7 +218,7 @@ TEST_F(MstProcessorTest, completedTransactionUsecase) {
  * @given initialised mst processor
  * AND wrappers on mst observables
  *
- * @when insert (by propagate_transaction) method transaction that already
+ * @when insert (by propagate_batch method) batch that already
  * expired with quorum one
  *
  * @then check that:
@@ -248,7 +248,7 @@ TEST_F(MstProcessorTest, expiredTransactionUsecase) {
  * that contains TX with another signature
  *
  * @then check that:
- * state updated
+ * state observer is not called
  * AND 1 prepared transaction (although quorum 1)
  * AND 0 expired transactions
  */
@@ -258,7 +258,7 @@ TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
   mst_processor->propagateBatch(addSignaturesFromKeyPairs(
       makeTestBatch(txBuilder(1, time_now, quorum)), 0, makeKey()));
 
-  auto observers = initObservers(mst_processor, 1, 1, 0);
+  auto observers = initObservers(mst_processor, 0, 1, 0);
 
   // ---------------------------------| when |----------------------------------
   auto another_peer = makePeer("another", "another_pubkey");

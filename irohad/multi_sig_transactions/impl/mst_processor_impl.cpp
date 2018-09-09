@@ -47,7 +47,7 @@ namespace iroha {
     auto state_update = storage_->updateOwnState(batch);
     completedBatchesNotify(*state_update.completed_state_);
     updatedBatchesNotify(*state_update.updated_state_);
-    completedBatchesNotify(
+    expiredBatchesNotify(
         storage_->getExpiredTransactions(time_provider_->getCurrentTime()));
   }
 
@@ -81,6 +81,17 @@ namespace iroha {
     if (not state.isEmpty()) {
       state_subject_.get_subscriber().on_next(
           std::make_shared<MstState>(state));
+    }
+  }
+
+  void FairMstProcessor::expiredBatchesNotify(ConstRefState state) const {
+    if (not state.isEmpty()) {
+      auto expired_batches = state.getBatches();
+      std::for_each(expired_batches.begin(),
+                    expired_batches.end(),
+                    [this](const auto &batch) {
+                      expired_subject_.get_subscriber().on_next(batch);
+                    });
     }
   }
 

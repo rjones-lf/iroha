@@ -47,7 +47,6 @@ namespace iroha {
   /**
    * Contains result of updating local state:
    *   - state with completed batches
-   *     OR
    *   - state with updated (still not enough signatures) batches
    */
   struct StateUpdateResult {
