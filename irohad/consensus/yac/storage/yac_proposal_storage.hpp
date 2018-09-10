@@ -19,13 +19,14 @@
 #define IROHA_YAC_PROPOSAL_STORAGE_HPP
 
 #include <memory>
-#include <boost/optional.hpp>
 #include <vector>
 
+#include <boost/optional.hpp>
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "consensus/yac/storage/storage_result.hpp"
 #include "consensus/yac/storage/yac_block_storage.hpp"
 #include "consensus/yac/storage/yac_common.hpp"
+#include "consensus/yac/yac_types.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -56,7 +57,7 @@ namespace iroha {
 
         YacProposalStorage(
             ProposalHash hash,
-            uint64_t peers_in_round,
+            PeersNumberType peers_in_round,
             std::shared_ptr<SupermajorityChecker> supermajority_checker =
                 std::make_shared<SupermajorityCheckerImpl>());
 
@@ -64,7 +65,7 @@ namespace iroha {
          * Try to insert vote to storage
          * @param vote - object for insertion
          * @return result, that contains actual state of storage.
-         * Nullopt if not inserted, possible reasons - duplication,
+         * boost::none if not inserted, possible reasons - duplication,
          * wrong proposal hash.
          */
         boost::optional<Answer> insert(VoteMessage vote);
@@ -138,7 +139,7 @@ namespace iroha {
         /**
          * Provide number of peers participated in current round
          */
-        uint64_t peers_in_round_;
+        PeersNumberType peers_in_round_;
 
         /**
          * Provide functions to check supermajority

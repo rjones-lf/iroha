@@ -6,7 +6,7 @@
 #ifndef IROHA_PROTO_EMPTY_BLOCK_BUILDER_HPP
 #define IROHA_PROTO_EMPTY_BLOCK_BUILDER_HPP
 
-#include "builders/protobuf/builder_templates/empty_block_template.hpp"
+#include "module/shared_model/builders/protobuf/builder_templates/empty_block_template.hpp"
 
 namespace shared_model {
   namespace proto {

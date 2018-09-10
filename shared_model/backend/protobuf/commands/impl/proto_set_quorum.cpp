@@ -11,7 +11,7 @@ namespace shared_model {
     template <typename CommandType>
     SetQuorum::SetQuorum(CommandType &&command)
         : CopyableProto(std::forward<CommandType>(command)),
-          set_quorum_{proto_->set_quorum()} {}
+          set_account_quorum_{proto_->set_account_quorum()} {}
 
     template SetQuorum::SetQuorum(SetQuorum::TransportType &);
     template SetQuorum::SetQuorum(const SetQuorum::TransportType &);
@@ -23,11 +23,11 @@ namespace shared_model {
         : SetQuorum(std::move(o.proto_)) {}
 
     const interface::types::AccountIdType &SetQuorum::accountId() const {
-      return set_quorum_.account_id();
+      return set_account_quorum_.account_id();
     }
 
     interface::types::QuorumType SetQuorum::newQuorum() const {
-      return set_quorum_.quorum();
+      return set_account_quorum_.quorum();
     }
 
   }  // namespace proto

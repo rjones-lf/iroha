@@ -24,11 +24,6 @@ namespace iroha {
   namespace network {
     class OrderingService : public network::OrderingServiceNotification {
      public:
-      /**
-       * Collect transactions from queue
-       * Passes the generated proposal to publishProposal
-       */
-      virtual void generateProposal() = 0;
 
       /**
        * Transform model proposal to transport object and send to peers

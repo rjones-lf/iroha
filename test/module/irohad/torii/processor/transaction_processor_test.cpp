@@ -4,16 +4,17 @@
  */
 
 #include <boost/range/join.hpp>
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
-#include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
@@ -29,6 +30,8 @@ using namespace framework::test_subscriber;
 using ::testing::_;
 using ::testing::A;
 using ::testing::Return;
+
+using shared_model::interface::TransactionBatch;
 
 class TransactionProcessorTest : public ::testing::Test {
  public:
@@ -144,12 +147,10 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
   for (size_t i = 0; i < proposal_size; i++) {
     auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
     txs.push_back(tx);
-    status_map[tx.hash()] =
-        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   EXPECT_CALL(*status_bus, publish(_))
-      .Times(proposal_size)
+      .Times(proposal_size * 2)
       .WillRepeatedly(testing::Invoke([this](auto response) {
         status_map[response->transactionHash()] = response;
       }));
@@ -187,7 +188,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
       framework::batch::createValidBatch(proposal_size).transactions();
 
   EXPECT_CALL(*status_bus, publish(_))
-      .Times(proposal_size)
+      .Times(proposal_size * 2)
       .WillRepeatedly(testing::Invoke([this](auto response) {
         status_map[response->transactionHash()] = response;
       }));
@@ -239,12 +240,10 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   for (size_t i = 0; i < proposal_size; i++) {
     auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
     txs.push_back(tx);
-    status_map[tx.hash()] =
-        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   EXPECT_CALL(*status_bus, publish(_))
-      .Times(txs.size() * 2)
+      .Times(txs.size() * 3)
       .WillRepeatedly(testing::Invoke([this](auto response) {
         status_map[response->transactionHash()] = response;
       }));
@@ -283,8 +282,9 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   // Note blocks_notifier hasn't invoked on_completed, so
   // transactions are not commited
 
-  SCOPED_TRACE("Stateful valid status verification");
-  validateStatuses<shared_model::interface::StatefulValidTxResponse>(txs);
+  SCOPED_TRACE("Stateful Valid status verification");
+  validateStatuses<shared_model::interface::StatefulValidTxResponse>(
+      txs);
 }
 
 /**
@@ -299,12 +299,10 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   for (size_t i = 0; i < proposal_size; i++) {
     auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
     txs.push_back(tx);
-    status_map[tx.hash()] =
-        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   EXPECT_CALL(*status_bus, publish(_))
-      .Times(txs.size() * 3)
+      .Times(txs.size() * 4)
       .WillRepeatedly(testing::Invoke([this](auto response) {
         status_map[response->transactionHash()] = response;
       }));
@@ -462,7 +460,8 @@ TEST_F(TransactionProcessorTest, MultisigTransactionFromMst) {
 /**
  * @given valid multisig tx
  * @when transaction_processor handle it
- * @then ensure after expiring it leads to MST_EXPIRED status
+ * @then before expiring it will have MST_PENDING status @and after expiring
+ * MST_EXPIRED status
  */
 TEST_F(TransactionProcessorTest, MultisigExpired) {
   EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(1);
@@ -477,6 +476,12 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
                         generateKeypair())
                 .finish());
   EXPECT_CALL(*status_bus, publish(_))
+      .WillOnce(testing::Invoke([](auto response) {
+        ASSERT_NO_THROW(boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::MstPendingResponse>(),
+            response->get()));
+      }))
       .WillOnce(testing::Invoke([](auto response) {
         ASSERT_NO_THROW(boost::apply_visitor(
             framework::SpecifiedVisitor<

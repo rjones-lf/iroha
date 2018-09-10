@@ -236,6 +236,9 @@ TEST_F(BatchPipelineTest, InvalidAtomicBatch) {
       })
       .checkVerifiedProposal([](const auto verified_proposal) {
         ASSERT_THAT(verified_proposal->transactions(), IsEmpty());
+      })
+      .checkBlock([](const auto block) {
+        ASSERT_THAT(block->transactions(), IsEmpty());
       });
 }
 

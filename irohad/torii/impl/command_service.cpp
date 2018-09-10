@@ -29,6 +29,7 @@
 #include "common/timeout.hpp"
 #include "common/types.hpp"
 #include "cryptography/default_hash_provider.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "validators/default_validator.hpp"
 
 namespace torii {
@@ -56,11 +57,12 @@ namespace torii {
       auto tx_hash = proto_response->transactionHash();
       auto cached_tx_state = cache_->findItem(tx_hash);
       if (cached_tx_state
-          and proto_response->getTransport().tx_status()
-              <= cached_tx_state->tx_status()) {
+          and proto_response->comparePriorities(**cached_tx_state)
+              != shared_model::interface::TransactionResponse::
+                     PrioritiesComparisonResult::kGreater) {
         return;
       }
-      cache_->addItem(tx_hash, proto_response->getTransport());
+      cache_->addItem(tx_hash, proto_response);
     });
   }
 
@@ -73,142 +75,97 @@ namespace torii {
       response.set_tx_status(status);
       return response;
     }
+
+    /**
+     * Form an error message, which is to be shared between all transactions, if
+     * there are several of them, or individual message, if there's only one
+     * @param txs to form error message from
+     * @param error of those tx(s)
+     * @return message
+     */
+    std::string formErrorMessage(
+        const google::protobuf::RepeatedPtrField<iroha::protocol::Transaction>
+            &txs,
+        const std::string &error) {
+      auto first_tx_blob = shared_model::proto::makeBlob(txs[0].payload());
+      auto first_tx_hash =
+          shared_model::crypto::DefaultHashProvider::makeHash(first_tx_blob);
+
+      if (txs.size() == 1) {
+        return "Stateless invalid tx: " + first_tx_hash.hex()
+            + ". Error is: " + error;
+      }
+
+      auto last_tx_blob =
+          shared_model::proto::makeBlob(txs[txs.size() - 1].payload());
+      auto last_tx_hash =
+          shared_model::crypto::DefaultHashProvider::makeHash(last_tx_blob);
+      return "Stateless invalid tx in transaction sequence, beginning "
+             "with tx : "
+          + first_tx_hash.hex() + " and ending with tx " + last_tx_hash.hex()
+          + ". Error is: " + error;
+    }
   }  // namespace
 
+  void CommandService::processBatch(
+      const shared_model::interface::TransactionBatch &batch) {
+    tx_processor_->batchHandle(batch);
+    const auto &txs = batch.transactions();
+    std::for_each(txs.begin(), txs.end(), [this](const auto &tx) {
+      const auto &tx_hash = tx->hash();
+      if (cache_->findItem(tx_hash) and tx->quorum() < 2) {
+        log_->warn("Found transaction {} in cache, ignoring", tx_hash.hex());
+        return;
+      }
+
+      this->pushStatus(
+          "ToriiBatchProcessor",
+          tx_hash,
+          makeResponse(
+              tx_hash,
+              iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS));
+    });
+  }
+
   void CommandService::Torii(const iroha::protocol::Transaction &request) {
-    shared_model::proto::TransportBuilder<
-        shared_model::proto::Transaction,
-        shared_model::validation::DefaultSignedTransactionValidator>()
-        .build(request)
-        .match(
-            [this](
-                // success case
-                iroha::expected::Value<shared_model::proto::Transaction>
-                    &iroha_tx) {
-              auto tx_hash = iroha_tx.value.hash();
-              if (cache_->findItem(tx_hash) and iroha_tx.value.quorum() < 2) {
-                log_->warn("Found transaction {} in cache, ignoring",
-                           tx_hash.hex());
-                return;
-              }
-
-              // TODO: 08/08/2018 @muratovv remove duplication between Torii and
-              // ListTorii IR-1583
-              auto single_batch_result = shared_model::interface::
-                  TransactionBatch::createTransactionBatch(
-                      std::make_shared<shared_model::proto::Transaction>(
-                          std::move(iroha_tx.value)),
-                      shared_model::validation::
-                          DefaultSignedTransactionValidator());
-              single_batch_result.match(
-                  [this](const iroha::expected::Value<
-                         shared_model::interface::TransactionBatch> &value) {
-                    tx_processor_->batchHandle(value.value);
-                  },
-                  [this](const auto &err) {
-                    log_->warn("Transaction can't transformed to batch: {}",
-                               err.error);
-                  });
-
-              this->pushStatus(
-                  "Torii",
-                  std::move(tx_hash),
-                  makeResponse(
-                      tx_hash,
-                      iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS));
-            },
-            [this, &request](const auto &error) {
-              // getting hash from invalid transaction
-              auto blobPayload =
-                  shared_model::proto::makeBlob(request.payload());
-              auto tx_hash =
-                  shared_model::crypto::DefaultHashProvider::makeHash(
-                      blobPayload);
-              log_->warn("Stateless invalid tx: {}, hash: {}",
-                         error.error,
-                         tx_hash.hex());
-
-              // setting response
-              auto response = makeResponse(
-                  tx_hash,
-                  iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
-              response.set_error_message(std::move(error.error));
-
-              this->pushStatus(
-                  "Torii", std::move(tx_hash), std::move(response));
-            });
+    iroha::protocol::TxList single_tx_list;
+    *single_tx_list.add_transactions() = request;
+    ListTorii(single_tx_list);
   }
 
   void CommandService::ListTorii(const iroha::protocol::TxList &tx_list) {
-    shared_model::proto::TransportBuilder<
+    auto tx_list_builder = shared_model::proto::TransportBuilder<
         shared_model::interface::TransactionSequence,
-        shared_model::validation::DefaultUnsignedTransactionsValidator>()
-        .build(tx_list)
-        .match(
-            [this](
-                // success case
-                iroha::expected::Value<
-                    shared_model::interface::TransactionSequence>
-                    &tx_sequence) {
-              for (const auto &batch : tx_sequence.value.batches()) {
-                tx_processor_->batchHandle(batch);
-                const auto &txs = batch.transactions();
-                std::for_each(txs.begin(), txs.end(), [this](const auto &tx) {
-                  auto tx_hash = tx->hash();
-                  if (cache_->findItem(tx_hash) and tx->quorum() < 2) {
-                    log_->warn("Found transaction {} in cache, ignoring",
-                               tx_hash.hex());
-                    return;
-                  }
+        shared_model::validation::DefaultUnsignedTransactionsValidator>();
 
-                  this->pushStatus(
-                      "ToriiList",
-                      std::move(tx_hash),
-                      makeResponse(tx_hash,
-                                   iroha::protocol::TxStatus::
-                                       STATELESS_VALIDATION_SUCCESS));
-                });
-              }
-            },
-            [this, &tx_list](auto &error) {
-              auto &txs = tx_list.transactions();
-              if (txs.empty()) {
-                log_->warn("Received empty transaction sequence");
-                return;
-              }
-              // form an error message, shared between all txs in a sequence
-              auto first_tx_blob =
-                  shared_model::proto::makeBlob(txs[0].payload());
-              auto first_tx_hash =
-                  shared_model::crypto::DefaultHashProvider::makeHash(
-                      first_tx_blob);
-              auto last_tx_blob =
-                  shared_model::proto::makeBlob(txs[txs.size() - 1].payload());
-              auto last_tx_hash =
-                  shared_model::crypto::DefaultHashProvider::makeHash(
-                      last_tx_blob);
-              auto sequence_error =
-                  "Stateless invalid tx in transaction sequence, beginning "
-                  "with tx : "
-                  + first_tx_hash.hex() + " and ending with tx "
-                  + last_tx_hash.hex() + ". Error is: " + error.error;
+    tx_list_builder.build(tx_list).match(
+        [this](
+            // success case
+            iroha::expected::Value<shared_model::interface::TransactionSequence>
+                &tx_sequence) {
+          for (const auto &batch : tx_sequence.value.batches()) {
+            processBatch(batch);
+          }
+        },
+        [this, &tx_list](auto &error) {
+          auto &txs = tx_list.transactions();
+          if (txs.empty()) {
+            log_->warn("Received no transactions");
+            return;
+          }
+          auto error_msg = formErrorMessage(txs, error.error);
+          // set error response for each transaction in a sequence
+          std::for_each(txs.begin(), txs.end(), [this, &error_msg](auto &tx) {
+            auto hash = shared_model::crypto::DefaultHashProvider::makeHash(
+                shared_model::proto::makeBlob(tx.payload()));
 
-              // set error response for each transaction in a sequence
-              std::for_each(
-                  txs.begin(), txs.end(), [this, &sequence_error](auto &tx) {
-                    auto hash =
-                        shared_model::crypto::DefaultHashProvider::makeHash(
-                            shared_model::proto::makeBlob(tx.payload()));
+            auto response = makeResponse(
+                hash, iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
+            response.set_error_message(error_msg);
 
-                    auto response = makeResponse(
-                        hash,
-                        iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
-                    response.set_error_message(sequence_error);
-
-                    this->pushStatus(
-                        "ToriiList", std::move(hash), std::move(response));
-                  });
-            });
+            this->pushStatus("ToriiList", std::move(hash), std::move(response));
+          });
+        });
   }
 
   grpc::Status CommandService::Torii(
@@ -231,13 +188,19 @@ namespace torii {
     auto tx_hash = shared_model::crypto::Hash(request.tx_hash());
     auto resp = cache_->findItem(tx_hash);
     if (resp) {
-      response.CopyFrom(*resp);
+      response.CopyFrom(
+          std::static_pointer_cast<shared_model::proto::TransactionResponse>(
+              *resp)
+              ->getTransport());
     } else {
       response.set_tx_hash(request.tx_hash());
       auto hash = shared_model::crypto::Hash(request.tx_hash());
       if (storage_->getBlockQuery()->hasTxWithHash(hash)) {
         response.set_tx_status(iroha::protocol::TxStatus::COMMITTED);
-        cache_->addItem(std::move(hash), response);
+        cache_->addItem(
+            std::move(hash),
+            std::make_shared<shared_model::proto::TransactionResponse>(
+                shared_model::proto::TransactionResponse{response}));
       } else {
         log_->warn("Asked non-existing tx: {}",
                    iroha::bytestringToHexstring(request.tx_hash()));
@@ -272,16 +235,14 @@ namespace torii {
   CommandService::StatusStream(const shared_model::crypto::Hash &hash) {
     using ResponsePtrType =
         std::shared_ptr<shared_model::interface::TransactionResponse>;
-    ResponsePtrType initial_status =
-        clone(shared_model::proto::TransactionResponse(
-            cache_->findItem(hash).value_or([&] {
-              log_->debug("tx not received: {}", hash.toString());
-              return shared_model::proto::TransactionStatusBuilder()
-                  .txHash(hash)
-                  .notReceived()
-                  .build()
-                  .getTransport();
-            }())));
+    auto initial_status = cache_->findItem(hash).value_or([&] {
+      log_->debug("tx is not received: {}", hash.toString());
+      return std::make_shared<shared_model::proto::TransactionResponse>(
+          shared_model::proto::TransactionStatusBuilder()
+              .txHash(hash)
+              .notReceived()
+              .build());
+    }());
     return status_bus_
         ->statuses()
         // prepend initial status

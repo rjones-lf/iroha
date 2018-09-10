@@ -90,10 +90,16 @@ TEST(TransactionSequenceTest, CreateBatches) {
   }
 
   for (size_t i = 0; i < single_transactions; i++) {
-    tx_collection.emplace_back(
+    auto tx = std::shared_ptr<interface::Transaction>(
         clone(framework::batch::prepareTransactionBuilder(
                   "single_tx_account@domain" + std::to_string(i))
                   .build()));
+    auto keypair = crypto::DefaultCryptoAlgorithmType::generateKeypair();
+    auto signed_blob =
+        crypto::DefaultCryptoAlgorithmType::sign(tx->payload(), keypair);
+    tx->addSignature(signed_blob, keypair.publicKey());
+
+    tx_collection.emplace_back(tx);
   }
 
   auto tx_sequence_opt =

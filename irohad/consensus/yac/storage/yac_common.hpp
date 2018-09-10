@@ -42,7 +42,8 @@ namespace iroha {
       /**
        * Provide hash common for whole collection
        * @param votes - collection with votes
-       * @return hash, if collection has same proposal hash, otherwise nullopt
+       * @return hash, if collection has same proposal hash,
+       * otherwise boost::none
        */
       boost::optional<ProposalHash> getProposalHash(
           const std::vector<VoteMessage> &votes);
@@ -50,10 +51,13 @@ namespace iroha {
       /**
        * Get common hash from collection
        * @param votes - collection with votes
-       * @return hash, if collection elements have same hash, otherwise nullopt
+       * @return hash, if collection elements have same hash,
+       * otherwise boost::none
        */
       boost::optional<YacHash> getHash(const std::vector<VoteMessage> &votes);
+
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
+
 #endif  // IROHA_YAC_COMMON_HPP

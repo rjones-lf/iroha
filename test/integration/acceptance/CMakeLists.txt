@@ -98,6 +98,11 @@ target_link_libraries(get_roles_test
     acceptance_fixture
     )
 
+addtest(queries_acceptance_test queries_acceptance_test.cpp)
+target_link_libraries(queries_acceptance_test
+    acceptance_fixture
+    )
+
 addtest(create_asset_test create_asset_test.cpp)
 target_link_libraries(create_asset_test
     acceptance_fixture
@@ -114,5 +119,26 @@ addtest(get_account_test
     get_account_test.cpp
     )
 target_link_libraries(get_account_test
+    acceptance_fixture
+    )
+
+addtest(add_signatory_test
+    add_signatory_test.cpp
+    )
+target_link_libraries(add_signatory_test
+    acceptance_fixture
+    )
+
+addtest(remove_signatory_test
+    remove_signatory_test.cpp
+    )
+target_link_libraries(remove_signatory_test
+    acceptance_fixture
+    )
+
+addtest(get_asset_info_test
+    get_asset_info_test.cpp
+    )
+target_link_libraries(get_asset_info_test
     acceptance_fixture
     )

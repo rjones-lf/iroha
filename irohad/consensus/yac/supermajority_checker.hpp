@@ -19,6 +19,8 @@
 #define IROHA_CONSENSUS_SUPERMAJORITY_CHECKER_HPP
 
 #include <vector>
+
+#include "consensus/yac/yac_types.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
@@ -57,7 +59,8 @@ namespace iroha {
          * @param all number of peers
          * @return true if supermajority is possible or false otherwise
          */
-        virtual bool checkSize(uint64_t current, uint64_t all) const = 0;
+        virtual bool checkSize(PeersNumberType current,
+                               PeersNumberType all) const = 0;
 
         /**
          * Checks if signatures is a subset of signatures of peers
@@ -80,9 +83,9 @@ namespace iroha {
          * @param all - number of peers in round
          * @return true, if reject
          */
-        virtual bool hasReject(uint64_t frequent,
-                               uint64_t voted,
-                               uint64_t all) const = 0;
+        virtual bool hasReject(PeersNumberType frequent,
+                               PeersNumberType voted,
+                               PeersNumberType all) const = 0;
       };
 
     }  // namespace yac

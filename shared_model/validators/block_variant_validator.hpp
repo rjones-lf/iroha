@@ -20,7 +20,8 @@ namespace shared_model {
         : public shared_model::validation::AbstractValidator<
               shared_model::interface::BlockVariant> {
      public:
-      Answer validate(const shared_model::interface::BlockVariant &m) override {
+      Answer validate(
+          const shared_model::interface::BlockVariant &m) const override {
         return validator_.validate(m);
       }
 

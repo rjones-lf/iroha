@@ -20,9 +20,7 @@
 #include <grpc++/server_builder.h>
 #include <gtest/gtest.h>
 
-#include "builders/common_objects/peer_builder.hpp"
 #include "builders/protobuf/builder_templates/transaction_template.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/hash.hpp"
@@ -30,6 +28,8 @@
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/shared_model/builders/common_objects/peer_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "network/impl/block_loader_impl.hpp"
@@ -69,8 +69,8 @@ class BlockLoaderTest : public testing::Test {
         peer_query_factory,
         block_query_factory,
         shared_model::proto::ProtoBlockFactory(std::move(validator_ptr)));
-    service = std::make_shared<BlockLoaderService>(block_query_factory,
-                                                   block_cache);
+    service =
+        std::make_shared<BlockLoaderService>(block_query_factory, block_cache);
 
     grpc::ServerBuilder builder;
     int port = 0;
@@ -242,6 +242,9 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
   ASSERT_TRUE(wrapper.validate());
 }
 
+MATCHER_P(RefAndPointerEq, arg1, "") {
+  return arg == *arg1;
+}
 /**
  * @given block loader @and consensus cache with a block
  * @when retrieveBlock is called with the related hash
@@ -250,24 +253,20 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
  */
 TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   // Request existing block => success
-  auto requested = wrapBlock(std::make_shared<shared_model::proto::Block>(
-      getBaseBlockBuilder().build().signAndAddSignature(key).finish()));
+  auto block = std::make_shared<shared_model::proto::Block>(
+      getBaseBlockBuilder().build().signAndAddSignature(key).finish());
+  auto requested = wrapBlock(block);
   block_cache->insert(requested);
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*validator, validate(*requested)).WillOnce(Return(Answer{}));
+  EXPECT_CALL(*validator, validate(RefAndPointerEq(block)))
+      .WillOnce(Return(Answer{}));
   EXPECT_CALL(*storage, getBlocksFrom(_)).Times(0);
-  auto block_variant = loader->retrieveBlock(peer_key, requested->hash());
+  auto retrieved_block = loader->retrieveBlock(peer_key, requested->hash());
 
-  ASSERT_TRUE(block_variant);
-  ASSERT_NO_THROW({
-    auto unwrapped_block = boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            std::shared_ptr<shared_model::interface::Block>>(),
-        *block_variant);
-    ASSERT_EQ(*requested, unwrapped_block);
-  });
+  ASSERT_TRUE(retrieved_block);
+  ASSERT_EQ(*block, **retrieved_block);
 }
 
 /**

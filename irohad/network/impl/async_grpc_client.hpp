@@ -18,9 +18,12 @@
 #ifndef IROHA_ASYNC_GRPC_CLIENT_HPP
 #define IROHA_ASYNC_GRPC_CLIENT_HPP
 
+#include <thread>
+
 #include <google/protobuf/empty.pb.h>
 #include <grpc++/grpc++.h>
-#include <thread>
+#include <grpcpp/impl/codegen/async_unary_call.h>
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace network {
@@ -72,7 +75,7 @@ namespace iroha {
 
         grpc::Status status;
 
-        std::unique_ptr<grpc::ClientAsyncResponseReader<Response>>
+        std::unique_ptr<grpc::ClientAsyncResponseReaderInterface<Response>>
             response_reader;
       };
 

@@ -62,7 +62,7 @@ namespace shared_model {
 
         auto sig = proto_->add_signatures();
         sig->set_signature(crypto::toBinaryString(signed_blob));
-        sig->set_pubkey(crypto::toBinaryString(public_key));
+        sig->set_public_key(crypto::toBinaryString(public_key));
 
         signatures_.invalidate();
         return true;
