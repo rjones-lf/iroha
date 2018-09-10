@@ -131,6 +131,7 @@ namespace iroha {
       // when state does not contain transaction
       rawInsert(rhs_batch);
       out_updated_state.rawInsert(rhs_batch);
+      return;
     }
 
     DataType found = *corresponding;
@@ -142,6 +143,7 @@ namespace iroha {
       // remove from state and return it
       internal_state_.erase(internal_state_.find(found));
       out_completed_state.rawInsert(found);
+      return;
     }
 
     // if batch still isn't completed, return it, if new signatures were

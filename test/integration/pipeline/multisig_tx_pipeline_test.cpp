@@ -150,7 +150,8 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
             SpecifiedVisitor<interface::MstPendingResponse>(), resp.get()));
       };
 
-  prepareMstItf().sendTx(signTx(tx, kUserKeypair), checkMstPendingTxStatus)
+  prepareMstItf()
+      .sendTx(signTx(tx, kUserKeypair), checkMstPendingTxStatus)
       .sendTx(signTx(tx, signatories[0]), checkMstPendingTxStatus)
       .sendTx(signTx(tx, signatories[1]), checkEnoughSignaturesCollectedStatus)
       .skipProposal()
