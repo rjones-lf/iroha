@@ -16,7 +16,6 @@
 #include "multi_sig_transactions/mst_processor_stub.hpp"
 #include "multi_sig_transactions/mst_time_provider_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
-#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "validators/block_variant_validator.hpp"
 #include "validators/field_validator.hpp"
@@ -273,8 +272,9 @@ void Irohad::initStatusBus() {
 
 void Irohad::initMstProcessor() {
   if (is_mst_supported_) {
-    auto mst_transport = std::make_shared<MstTransportGrpc>(
-        async_call_, common_objects_factory_);
+    mst_transport =
+        std::make_shared<iroha::network::MstTransportGrpc>(
+            async_call_, common_objects_factory_);
     auto mst_completer = std::make_shared<DefaultCompleter>();
     auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
@@ -358,6 +358,7 @@ void Irohad::run() {
          .append(ordering_init.ordering_service_transport)
          .append(yac_init.consensus_network)
          .append(loader_init.service)
+         .append(mst_transport)
          .run();
    })
       .match(
