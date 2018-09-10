@@ -150,8 +150,8 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
             SpecifiedVisitor<interface::MstPendingResponse>(), resp.get()));
       };
 
-  prepareMstItf()
-      .sendTx(signTx(tx, kUserKeypair), checkMstPendingTxStatus)
+  auto &mst_itf = prepareMstItf();
+  mst_itf.sendTx(signTx(tx, kUserKeypair), checkMstPendingTxStatus)
       .sendTx(signTx(tx, signatories[0]), checkMstPendingTxStatus)
       .sendTx(signTx(tx, signatories[1]), checkEnoughSignaturesCollectedStatus)
       .skipProposal()
@@ -214,8 +214,8 @@ TEST_F(MstPipelineTest, GetPendingTxsLatestSignatures) {
     };
   };
 
-  prepareMstItf()
-      .sendTx(signTx(pending_tx, signatories[0]))
+  auto &mst_itf = prepareMstItf();
+  mst_itf.sendTx(signTx(pending_tx, signatories[0]))
       .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
                  signatory_check(1))
       .sendTx(signTx(pending_tx, signatories[1]))
@@ -243,8 +243,8 @@ TEST_F(MstPipelineTest, GetPendingTxsNoSignedTxs) {
     });
   };
 
-  prepareMstItf()
-      .sendTx(signTx(pending_tx, signatories[0]))
+  auto &mst_itf = prepareMstItf();
+  mst_itf.sendTx(signTx(pending_tx, signatories[0]))
       .sendTx(signTx(pending_tx, signatories[1]))
       .sendTx(signTx(pending_tx, kUserKeypair))
       .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair), no_txs_check);

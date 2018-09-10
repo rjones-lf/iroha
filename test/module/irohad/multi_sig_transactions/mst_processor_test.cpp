@@ -249,7 +249,7 @@ TEST_F(MstProcessorTest, expiredTransactionUsecase) {
  *
  * @then check that:
  * state observer is not called
- * AND 1 prepared transaction (although quorum 1)
+ * AND 1 prepared transaction
  * AND 0 expired transactions
  */
 TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {

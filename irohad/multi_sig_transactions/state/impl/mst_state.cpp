@@ -21,23 +21,21 @@ namespace iroha {
   }
 
   StateUpdateResult MstState::operator+=(const DataType &rhs) {
-    auto completed_state = MstState::empty(completer_);
-    auto updated_state = MstState::empty(completer_);
-    insertOne(completed_state, updated_state, rhs);
-    return StateUpdateResult{
-        std::make_shared<MstState>(std::move(completed_state)),
-        std::make_shared<MstState>(std::move(updated_state))};
+    auto state_update = StateUpdateResult{
+        std::make_shared<MstState>(MstState::empty(completer_)),
+        std::make_shared<MstState>(MstState::empty(completer_))};
+    insertOne(state_update, rhs);
+    return state_update;
   }
 
   StateUpdateResult MstState::operator+=(const MstState &rhs) {
-    auto completed_state = MstState::empty(completer_);
-    auto updated_state = MstState::empty(completer_);
+    auto state_update = StateUpdateResult{
+        std::make_shared<MstState>(MstState::empty(completer_)),
+        std::make_shared<MstState>(MstState::empty(completer_))};
     for (auto &&rhs_tx : rhs.internal_state_) {
-      insertOne(completed_state, updated_state, rhs_tx);
+      insertOne(state_update, rhs_tx);
     }
-    return StateUpdateResult{
-        std::make_shared<MstState>(std::move(completed_state)),
-        std::make_shared<MstState>(std::move(updated_state))};
+    return state_update;
   }
 
   MstState MstState::operator-(const MstState &rhs) const {
@@ -122,15 +120,14 @@ namespace iroha {
     log_ = logger::log("MstState");
   }
 
-  void MstState::insertOne(MstState &out_completed_state,
-                           MstState &out_updated_state,
+  void MstState::insertOne(StateUpdateResult &state_update,
                            const DataType &rhs_batch) {
     log_->info("batch: {}", rhs_batch->toString());
     auto corresponding = internal_state_.find(rhs_batch);
     if (corresponding == internal_state_.end()) {
       // when state does not contain transaction
       rawInsert(rhs_batch);
-      out_updated_state.rawInsert(rhs_batch);
+      state_update.updated_state_->rawInsert(rhs_batch);
       return;
     }
 
@@ -142,14 +139,14 @@ namespace iroha {
       // state already has completed transaction,
       // remove from state and return it
       internal_state_.erase(internal_state_.find(found));
-      out_completed_state.rawInsert(found);
+      state_update.completed_state_->rawInsert(found);
       return;
     }
 
     // if batch still isn't completed, return it, if new signatures were
     // inserted
     if (inserted_new_signatures) {
-      out_updated_state.rawInsert(found);
+      state_update.updated_state_->rawInsert(found);
     }
   }
 

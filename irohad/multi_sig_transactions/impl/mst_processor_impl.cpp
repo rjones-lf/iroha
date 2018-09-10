@@ -103,16 +103,18 @@ namespace iroha {
     log_->info("Applying new state");
     auto current_time = time_provider_->getCurrentTime();
 
-    // update state
-    auto new_batches = storage_->whatsNew(new_state);
-    updatedBatchesNotify(new_batches);
-    log_->info("New batches size: {}", new_batches.getBatches().size());
+    auto state_update = storage_->apply(from, new_state);
+
+    // updated batches
+    updatedBatchesNotify(*state_update.updated_state_);
+    log_->info("New batches size: {}",
+               state_update.updated_state_->getBatches().size());
 
     // completed batches
-    completedBatchesNotify(*storage_->apply(from, new_state).completed_state_);
+    completedBatchesNotify(*state_update.completed_state_);
 
     // expired batches
-    completedBatchesNotify(storage_->getDiffState(from, current_time));
+    expiredBatchesNotify(storage_->getDiffState(from, current_time));
   }
 
   // -----------------------------| private api |-----------------------------
@@ -121,14 +123,15 @@ namespace iroha {
       const PropagationStrategy::PropagationData &data) {
     auto current_time = time_provider_->getCurrentTime();
     auto size = data.size();
-    std::for_each(
-        data.begin(), data.end(), [this, &current_time, size](const auto &peer) {
-          auto diff = storage_->getDiffState(peer, current_time);
-          if (not diff.isEmpty()) {
-            log_->info("Propagate new data[{}]", size);
-            transport_->sendState(*peer, diff);
-          }
-        });
+    std::for_each(data.begin(),
+                  data.end(),
+                  [this, &current_time, size](const auto &peer) {
+                    auto diff = storage_->getDiffState(peer, current_time);
+                    if (not diff.isEmpty()) {
+                      log_->info("Propagate new data[{}]", size);
+                      transport_->sendState(*peer, diff);
+                    }
+                  });
   }
 
 }  // namespace iroha
