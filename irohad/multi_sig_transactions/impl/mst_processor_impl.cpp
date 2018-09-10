@@ -66,6 +66,7 @@ namespace iroha {
     return expired_subject_.get_observable();
   }
 
+  // TODO [IR-1687] Akvinikym 10.09.18: three methods below should be one
   void FairMstProcessor::completedBatchesNotify(ConstRefState state) const {
     if (not state.isEmpty()) {
       auto completed_batches = state.getBatches();
