@@ -131,10 +131,8 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
   init();
 
   // verify that block we voted for is in the cache
-  ASSERT_NO_THROW({
-    auto &cache_block = *block_cache->get();
-    ASSERT_EQ(cache_block, *expected_block);
-  });
+  auto &cache_block = *block_cache->get();
+  ASSERT_EQ(cache_block, *expected_block);
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
@@ -239,21 +237,17 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   init();
 
   // verify that block we voted for is in the cache
-  ASSERT_NO_THROW({
-    auto &cache_block = *block_cache->get();
-    ASSERT_EQ(cache_block, *expected_block);
-  });
+  auto &cache_block = *block_cache->get();
+  ASSERT_EQ(cache_block, *expected_block);
 
   // verify that yac gate emit expected block
   std::shared_ptr<shared_model::interface::Block> yac_emitted_block;
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
   gate_wrapper.subscribe([actual_block, &yac_emitted_block](auto block) {
-    ASSERT_NO_THROW({
-      ASSERT_EQ(*block, *actual_block);
+    ASSERT_EQ(*block, *actual_block);
 
-      // memorize the block came from the consensus for future
-      yac_emitted_block = block;
-    });
+    // memorize the block came from the consensus for future
+    yac_emitted_block = block;
   });
 
   // verify that block, which was received from consensus, is now in the

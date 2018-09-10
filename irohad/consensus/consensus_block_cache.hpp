@@ -18,7 +18,7 @@ namespace iroha {
   namespace consensus {
 
     /**
-     * Type to represent result of the consensus in form of block/empty_block
+     * Type to represent result of the consensus in form of block
      */
     using ConsensusResult = const shared_model::interface::Block &;
 

@@ -61,11 +61,9 @@ namespace iroha {
 
       /**
        * Process block, which can be applied to current storage directly:
-       *   - apply non-empty block and commit result to Ametsuchi
-       *     @or
-       *   - don't apply empty block
-       * In both cases notify the subscriber about commit
-       * @param committed_block_variant to be applied
+       *   - apply block and commit result to Ametsuchi
+       *   - notify the subscriber about commit
+       * @param commit_message to be applied
        */
       void processApplicableBlock(
           std::shared_ptr<shared_model::interface::Block> commit_message) const;

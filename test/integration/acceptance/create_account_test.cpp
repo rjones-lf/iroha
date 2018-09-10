@@ -33,8 +33,10 @@ TEST_F(CreateAccount, Basic) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTxAwait(complete(baseTx().createAccount(
-          kNewUser, kDomain, kNewUserKeypair.publicKey())), [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
+      .sendTxAwait(
+          complete(baseTx().createAccount(
+              kNewUser, kDomain, kNewUserKeypair.publicKey())),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
@@ -74,12 +76,10 @@ TEST_F(CreateAccount, NoDomain) {
       .sendTx(complete(baseTx().createAccount(
           kNewUser, nonexistent_domain, kNewUserKeypair.publicKey())))
       .skipProposal()
-      .checkVerifiedProposal([](auto &proposal) {
-        ASSERT_EQ(proposal->transactions().size(), 0);
-      })
-      .checkBlock([](auto block){
-        ASSERT_EQ(block->transactions().size(), 0);
-      });
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**

@@ -35,8 +35,10 @@ namespace iroha {
      public:
       /**
        * Providing data for consensus for voting
+       * @param block is the block for which current node is voting
        */
-      virtual void vote(const shared_model::interface::Block &) = 0;
+      virtual void vote(
+          std::shared_ptr<shared_model::interface::Block> block) = 0;
 
       /**
        * Emit committed blocks

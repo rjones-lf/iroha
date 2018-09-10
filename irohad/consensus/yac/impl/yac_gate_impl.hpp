@@ -51,7 +51,7 @@ namespace iroha {
                     std::shared_ptr<network::BlockLoader> block_loader,
                     std::shared_ptr<consensus::ConsensusResultCache>
                         consensus_result_cache);
-        void vote(const shared_model::interface::Block &) override;
+        void vote(std::shared_ptr<shared_model::interface::Block>) override;
         /**
          * Method called when commit received
          * assumes to retrieve a block eventually
