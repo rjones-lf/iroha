@@ -354,12 +354,14 @@ void Irohad::run() {
   (torii_server->append(command_service).append(query_service).run() |
    [&](const auto &port) {
      log_->info("Torii server bound on port {}", port);
+     if (is_mst_supported_) {
+       internal_server->append(mst_transport);
+     }
      // Run internal server
      return internal_server->append(ordering_init.ordering_gate_transport)
          .append(ordering_init.ordering_service_transport)
          .append(yac_init.consensus_network)
          .append(loader_init.service)
-         .append(mst_transport)
          .run();
    })
       .match(
