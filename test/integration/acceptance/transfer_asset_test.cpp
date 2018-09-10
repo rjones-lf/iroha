@@ -99,6 +99,7 @@ TEST_F(TransferAsset, WithoutCanTransfer) {
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
       .sendTx(makeTransfer())
+      .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .checkBlock(check(0));

@@ -33,12 +33,8 @@ TEST_F(CreateAccount, Basic) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().createAccount(
-          kNewUser, kDomain, kNewUserKeypair.publicKey())))
-      .skipProposal()
-      .skipVerifiedProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
+      .sendTxAwait(complete(baseTx().createAccount(
+          kNewUser, kDomain, kNewUserKeypair.publicKey())), [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**

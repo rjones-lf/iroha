@@ -49,10 +49,10 @@ TEST_F(SubtractAssetQuantity, Everything) {
       .skipBlock()
       .sendTx(replenish())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, kAmount)))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          complete(baseTx().subtractAssetQuantity(kAssetId, kAmount)),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 

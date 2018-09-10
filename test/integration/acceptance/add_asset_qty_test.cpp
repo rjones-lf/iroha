@@ -31,9 +31,8 @@ TEST_F(AddAssetQuantity, Basic) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().addAssetQuantity(kAssetId, kAmount)))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          complete(baseTx().addAssetQuantity(kAssetId, kAmount)),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
@@ -109,10 +108,8 @@ TEST_F(AddAssetQuantity, Uint256DestOverflow) {
       .skipVerifiedProposal()
       .skipBlock()
       // Add first half of the maximum
-      .sendTx(complete(baseTx().addAssetQuantity(kAssetId, uint256_halfmax)))
-      .skipProposal()
-      .skipVerifiedProposal()
-      .checkBlock(
+      .sendTxAwait(
+          complete(baseTx().addAssetQuantity(kAssetId, uint256_halfmax)),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       // Add second half of the maximum
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, uint256_halfmax)))
