@@ -49,7 +49,7 @@ namespace iroha {
     /**
      * Provide updating state of current peer with new transaction
      * @param tx - new transaction for insertion in state
-     * @return completed or updated mst state
+     * @return completed and updated mst states
      * General note: implementation of method covered by lock
      */
     StateUpdateResult updateOwnState(const DataType &tx);

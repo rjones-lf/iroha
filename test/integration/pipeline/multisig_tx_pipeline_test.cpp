@@ -180,9 +180,10 @@ TEST_F(MstPipelineTest, GetPendingTxsAwaitingForThisPeer) {
 }
 
 /**
- * @given a ledger with pending transactions, which lack two or more signatures
- * @when signing those transactions with one signature @and executing get
- * pending transactions
+ * @given an empty ledger
+ * @when creating pending transactions, which lack two or more signatures, @and
+ * signing those transactions with one signature @and executing get pending
+ * transactions
  * @then they are returned with initial number of signatures plus one
  */
 TEST_F(MstPipelineTest, GetPendingTxsLatestSignatures) {
@@ -213,9 +214,9 @@ TEST_F(MstPipelineTest, GetPendingTxsLatestSignatures) {
 }
 
 /**
- * @given a ledger with pending transactions
- * @when signing them with number of signatures to get over quorum @and
- * executing get pending transactions
+ * @given an empty ledger
+ * @when creating pending transactions @and signing them with number of
+ * signatures to get over quorum @and executing get pending transactions
  * @then those transactions are not returned
  */
 TEST_F(MstPipelineTest, GetPendingTxsNoSignedTxs) {

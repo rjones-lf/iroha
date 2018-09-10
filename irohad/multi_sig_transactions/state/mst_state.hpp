@@ -90,7 +90,7 @@ namespace iroha {
     /**
      * Add batch to current state
      * @param rhs - batch for insertion
-     * @return States with completed batches and updated batches
+     * @return States with completed and updated batches
      */
     StateUpdateResult operator+=(const DataType &rhs);
 
@@ -163,12 +163,17 @@ namespace iroha {
              const InternalStateType &transactions);
 
     /**
-     * Insert batch in own state and push it in out_state if required
-     * @param out_state - state for inserting completed batches
+     * Insert batch in own state and push it in out_completed_state or
+     * out_updated_state
+     * @param out_completed_state - state containing batches, which were
+     * completed after this insertion
+     * @param out_updated_state - state containing batches, which were only
+     * updated, but not completed, during this insertion
      * @param rhs_tx - batch for insert
-     * @return true if batch is complete after that insertion; false otherwise
      */
-    bool insertOne(MstState &out_state, const DataType &rhs_tx);
+    void insertOne(MstState &out_completed_state,
+                   MstState &out_updated_state,
+                   const DataType &rhs_tx);
 
     /**
      * Insert new value in state with keeping invariant
