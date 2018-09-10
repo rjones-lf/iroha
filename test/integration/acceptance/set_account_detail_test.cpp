@@ -59,7 +59,7 @@ TEST_F(SetAccountDetail, Self) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx(kUserId)),
+      .sendTxAwait(complete(baseTx(kUserId)),
               [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .done();
 }
