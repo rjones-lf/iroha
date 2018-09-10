@@ -60,7 +60,7 @@ TEST_F(RemoveSignatory, Basic) {
       .sendTx(complete(
           baseTx().removeSignatory(kUserId, kUser2Keypair.publicKey())))
       .checkVerifiedProposal(CHECK_BLOCK(0))
-      .checkBlock(CHECK_BLOCK(1));
+      .checkBlock(CHECK_BLOCK(0));
 }
 
 /**
