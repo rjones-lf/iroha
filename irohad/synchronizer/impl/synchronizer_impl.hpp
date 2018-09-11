@@ -71,7 +71,7 @@ namespace iroha {
       /**
        * Download part of chain, which is missed on this peer, from another; try
        * until success
-       * @param committed_message - top of chain to be downloaded
+       * @param commit_message - top of chain to be downloaded
        * @return observable with missed part of the chain
        */
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>

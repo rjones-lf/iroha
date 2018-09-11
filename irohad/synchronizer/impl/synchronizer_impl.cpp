@@ -87,8 +87,7 @@ namespace iroha {
         for (const auto &peer_signature : commit_message->signatures()) {
           auto chain = block_loader_->retrieveBlocks(
               shared_model::crypto::PublicKey(peer_signature.publicKey()));
-          // if committed block is not empty, it will be on top of downloaded
-          // chain; otherwise, it'll contain hash of top of that chain
+          // check that committed block is on the top of downloaded chain
           auto last_downloaded_block = chain.as_blocking().last();
           bool chain_ends_with_right_block =
               last_downloaded_block->hash() == commit_message->hash();
