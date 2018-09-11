@@ -155,7 +155,7 @@ namespace shared_model {
           const interface::types::PubkeyType &key,
           const interface::Signature::SignedType &signed_data) override {
         iroha::protocol::Signature signature;
-        signature.set_pubkey(crypto::toBinaryString(key));
+        signature.set_public_key(crypto::toBinaryString(key));
         signature.set_signature(crypto::toBinaryString(signed_data));
 
         auto proto_singature =

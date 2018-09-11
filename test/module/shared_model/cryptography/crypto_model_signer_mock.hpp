@@ -56,22 +56,22 @@ namespace shared_model {
 
     template <>
     template <>
-    void CryptoModelSigner<>::sign<shared_model::proto::Block>(
-        shared_model::proto::Block &signable) const noexcept {
+    void CryptoModelSigner<>::sign<shared_model::interface::Block>(
+        shared_model::interface::Block &signable) const noexcept {
       crypto_signer_expecter->sign(signable);
     }
 
     template <>
     template <>
-    void CryptoModelSigner<>::sign<shared_model::proto::Query>(
-        shared_model::proto::Query &signable) const noexcept {
+    void CryptoModelSigner<>::sign<shared_model::interface::Query>(
+        shared_model::interface::Query &signable) const noexcept {
       crypto_signer_expecter->sign(signable);
     }
 
     template <>
     template <>
-    void CryptoModelSigner<>::sign<shared_model::proto::Transaction>(
-        shared_model::proto::Transaction &signable) const noexcept {
+    void CryptoModelSigner<>::sign<shared_model::interface::Transaction>(
+        shared_model::interface::Transaction &signable) const noexcept {
       crypto_signer_expecter->sign(signable);
     }
 

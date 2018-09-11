@@ -17,9 +17,9 @@
 
 #include "torii/query_service.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
-#include "builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
 

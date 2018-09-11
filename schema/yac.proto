@@ -19,16 +19,10 @@ message Vote {
   Signature signature = 2;
 }
 
-message Commit {
-  repeated Vote votes = 1;
-}
-
-message Reject {
+message State {
   repeated Vote votes = 1;
 }
 
 service Yac {
-  rpc SendVote (Vote) returns (google.protobuf.Empty);
-  rpc SendCommit (Commit) returns (google.protobuf.Empty);
-  rpc SendReject (Reject) returns (google.protobuf.Empty);
+  rpc SendState (State) returns (google.protobuf.Empty);
 }

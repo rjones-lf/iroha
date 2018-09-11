@@ -18,10 +18,10 @@
 #include <gtest/gtest.h>
 
 #include "backend/protobuf/common_objects/signature.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "logger/logger.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 
 using namespace iroha::consensus::yac;

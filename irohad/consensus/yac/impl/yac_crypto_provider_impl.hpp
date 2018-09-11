@@ -1,44 +1,33 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_YAC_CRYPTO_PROVIDER_IMPL_HPP
 #define IROHA_YAC_CRYPTO_PROVIDER_IMPL_HPP
 
 #include "consensus/yac/yac_crypto_provider.hpp"
+
 #include "cryptography/keypair.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
       class CryptoProviderImpl : public YacCryptoProvider {
        public:
-        explicit CryptoProviderImpl(
-            const shared_model::crypto::Keypair &keypair);
+        CryptoProviderImpl(
+            const shared_model::crypto::Keypair &keypair,
+            std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+                factory);
 
-        bool verify(CommitMessage msg) override;
-
-        bool verify(RejectMessage msg) override;
-
-        bool verify(VoteMessage msg) override;
+        bool verify(const std::vector<VoteMessage> &msg) override;
 
         VoteMessage getVote(YacHash hash) override;
 
        private:
         shared_model::crypto::Keypair keypair_;
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
       };
     }  // namespace yac
   }    // namespace consensus

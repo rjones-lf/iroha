@@ -55,7 +55,7 @@ pipeline {
             CHANGE_BRANCH_LOCAL = env.CHANGE_BRANCH
           }
           catch(MissingPropertyException e) { }
-          if (GIT_LOCAL_BRANCH != "develop" && CHANGE_BRANCH_LOCAL != "develop") {
+          if (GIT_LOCAL_BRANCH != "develop" && CHANGE_BRANCH_LOCAL != "develop" && GIT_LOCAL_BRANCH != "dev" && CHANGE_BRANCH_LOCAL != "dev") {
             def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
             builds.cancelSameJobBuilds()
           }
@@ -80,13 +80,13 @@ pipeline {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (coverage.selectedBranchesCoverage(['develop', 'master'])) {
+              if (coverage.selectedBranchesCoverage(['develop', 'master', 'dev'])) {
                 debugBuild.doDebugBuild(true)
               }
               else {
                 debugBuild.doDebugBuild()
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -111,13 +111,13 @@ pipeline {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && !params.armv8_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
+              if (!params.x86_64_linux && !params.armv8_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['develop', 'master', 'dev']))) {
                 debugBuild.doDebugBuild(true)
               }
               else {
                 debugBuild.doDebugBuild()
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -142,13 +142,13 @@ pipeline {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
+              if (!params.x86_64_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['develop', 'master', 'dev']))) {
                 debugBuild.doDebugBuild(true)
               }
               else {
                 debugBuild.doDebugBuild()
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -174,7 +174,7 @@ pipeline {
               def coverageEnabled = false
               def cmakeOptions = ""
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
+              if (!params.x86_64_linux && (coverage.selectedBranchesCoverage(['develop', 'master', 'dev']))) {
                 coverageEnabled = true
                 cmakeOptions = " -DCOVERAGE=ON "
               }
@@ -233,7 +233,7 @@ pipeline {
                 sh "python /usr/local/bin/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
                 cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                 releaseBuild = load ".jenkinsci/mac-release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -244,7 +244,7 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
@@ -351,7 +351,7 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]

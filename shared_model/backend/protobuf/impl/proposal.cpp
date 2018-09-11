@@ -14,7 +14,10 @@ namespace shared_model {
 
     Proposal &Proposal::operator=(Proposal &&o) noexcept {
       proto_ = std::move(o.proto_);
+
+      hash_.invalidate();
       transactions_.invalidate();
+      blob_.invalidate();
 
       return *this;
     }
@@ -29,6 +32,10 @@ namespace shared_model {
 
     HeightType Proposal::height() const {
       return proto_.height();
+    }
+
+    const interface::types::BlobType &Proposal::blob() const {
+      return *blob_;
     }
 
   }  // namespace proto

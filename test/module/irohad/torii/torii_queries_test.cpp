@@ -10,10 +10,10 @@
 #include "module/irohad/validation/validation_mocks.hpp"
 
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
-#include "builders/protobuf/common_objects/proto_account_asset_builder.hpp"
-#include "builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "builders/protobuf/queries.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_account_asset_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 

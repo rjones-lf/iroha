@@ -25,6 +25,7 @@
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
 
+using ::testing::_;
 using ::testing::An;
 using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
@@ -127,21 +128,20 @@ std::shared_ptr<shared_model::interface::Peer> ConsensusSunnyDayTest::my_peer;
 std::vector<std::shared_ptr<shared_model::interface::Peer>>
     ConsensusSunnyDayTest::default_peers;
 
+/**
+ * @given num_peers peers with initialized YAC
+ * @when peers vote for same hash
+ * @then commit is achieved
+ */
 TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   std::condition_variable cv;
-  auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 1);
-  wrapper.subscribe(
-      [](auto hash) { std::cout << "^_^ COMMITTED!!!" << std::endl; });
+  auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
+  wrapper.subscribe([&cv](auto hash) {
+    std::cout << "^_^ COMMITTED!!!" << std::endl;
+    cv.notify_one();
+  });
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>()))
-      .Times(1)
-      .WillRepeatedly(DoAll(InvokeWithoutArgs([&cv] {
-                              // wake up after commit is received from the
-                              // network so that it is safe to shutdown
-                              cv.notify_one();
-                            }),
-                            Return(true)));
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
   // Wait for other peers to start
   std::this_thread::sleep_for(std::chrono::milliseconds(delay_before));

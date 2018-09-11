@@ -21,9 +21,9 @@ namespace shared_model {
      public:
       explicit ProtoBlockFactory(
           std::unique_ptr<shared_model::validation::AbstractValidator<
-              shared_model::interface::BlockVariant>> validator);
+              shared_model::interface::Block>> validator);
 
-      interface::BlockVariant unsafeCreateBlock(
+      std::unique_ptr<interface::Block> unsafeCreateBlock(
           interface::types::HeightType height,
           const interface::types::HashType &prev_hash,
           interface::types::TimestampType created_time,
@@ -36,12 +36,12 @@ namespace shared_model {
        * @return BlockVariant with block.
        *         Error if block is empty, or if it is invalid
        */
-      iroha::expected::Result<interface::BlockVariant, std::string> createBlock(
-          iroha::protocol::Block block);
+      iroha::expected::Result<std::unique_ptr<interface::Block>, std::string>
+      createBlock(iroha::protocol::Block block);
 
      private:
       std::unique_ptr<shared_model::validation::AbstractValidator<
-          shared_model::interface::BlockVariant>>
+          shared_model::interface::Block>>
           validator_;
     };
   }  // namespace proto

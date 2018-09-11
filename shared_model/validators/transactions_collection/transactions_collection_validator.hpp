@@ -3,12 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_TRANSACTION_SEQUENCE_VALIDATOR_HPP
-#define IROHA_TRANSACTION_SEQUENCE_VALIDATOR_HPP
+#ifndef IROHA_TRANSACTIONS_COLLECTION_VALIDATOR_HPP
+#define IROHA_TRANSACTIONS_COLLECTION_VALIDATOR_HPP
 
+#include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "validators/answer.hpp"
-#include "validators/field_validator.hpp"
-#include "validators/transactions_collection/any_order_validator.hpp"
 
 namespace shared_model {
   namespace validation {
@@ -17,18 +16,22 @@ namespace shared_model {
      * Validator of transaction's collection, this is not fair implementation
      * now, it always returns empty answer
      */
-    template <typename TransactionValidator,
-              typename FieldValidator = validation::FieldValidator>
+    template <typename TransactionValidator>
     class TransactionsCollectionValidator {
      protected:
       TransactionValidator transaction_validator_;
-      FieldValidator field_validator_;
+
+     private:
+      template <typename Validator>
+      Answer validateImpl(
+          const interface::types::TransactionsForwardCollectionType
+              &transactions,
+          Validator &&validator) const;
 
      public:
       explicit TransactionsCollectionValidator(
           const TransactionValidator &transactions_validator =
-              TransactionValidator(),
-          const FieldValidator &field_validator = FieldValidator());
+              TransactionValidator());
 
       // TODO: IR-1505, igor-egorov, 2018-07-05 Remove method below when
       // proposal and block will return collection of shared transactions
@@ -43,10 +46,18 @@ namespace shared_model {
       Answer validate(
           const interface::types::SharedTxsCollectionType &transactions) const;
 
+      Answer validate(const interface::types::TransactionsForwardCollectionType
+                          &transactions,
+                      interface::types::TimestampType current_timestamp) const;
+
+      Answer validate(
+          const interface::types::SharedTxsCollectionType &transactions,
+          interface::types::TimestampType current_timestamp) const;
+
       const TransactionValidator &getTransactionValidator() const;
     };
 
   }  // namespace validation
 }  // namespace shared_model
 
-#endif  // IROHA_TRANSACTION_SEQUENCE_VALIDATOR_HPP
+#endif  // IROHA_TRANSACTIONS_COLLECTION_VALIDATOR_HPP

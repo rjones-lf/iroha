@@ -18,7 +18,6 @@
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 
 #include "backend/protobuf/block.hpp"
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "common/visitor.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/messages.hpp"
@@ -74,7 +73,9 @@ namespace iroha {
 
       rxcpp::observable<shared_model::interface::BlockVariant>
       YacGateImpl::on_commit() {
-        return hash_gate_->on_commit().flat_map([this](auto commit_message) {
+        return hash_gate_->onOutcome().flat_map([this](auto message) {
+          // TODO 10.06.2018 andrei: IR-497 Work on reject case
+          auto commit_message = boost::get<CommitMessage>(message);
           // map commit to block if it is present or loaded from other peer
           return rxcpp::observable<>::create<
               shared_model::interface::BlockVariant>([this, commit_message](

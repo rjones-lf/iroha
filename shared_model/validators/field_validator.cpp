@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "validators/field_validator.hpp"
@@ -275,9 +263,8 @@ namespace shared_model {
 
     void FieldValidator::validateCreatedTime(
         ReasonsGroupType &reason,
-        const interface::types::TimestampType &timestamp) const {
-      iroha::ts64_t now = time_provider_();
-
+        interface::types::TimestampType timestamp,
+        interface::types::TimestampType now) const {
       if (now + future_gap_ < timestamp) {
         auto message = (boost::format("bad timestamp: sent from future, "
                                       "timestamp: %llu, now: %llu")
@@ -293,6 +280,12 @@ namespace shared_model {
                 .str();
         reason.second.push_back(std::move(message));
       }
+    }
+
+    void FieldValidator::validateCreatedTime(
+        ReasonsGroupType &reason,
+        interface::types::TimestampType timestamp) const {
+      validateCreatedTime(reason, timestamp, time_provider_());
     }
 
     void FieldValidator::validateCounter(
@@ -378,11 +371,5 @@ namespace shared_model {
       }
     }
 
-    void FieldValidator::setTime(
-        shared_model::interface::types::TimestampType time) const {
-      time_provider_ = [time]{
-        return time;
-      };
-    }
   }  // namespace validation
 }  // namespace shared_model

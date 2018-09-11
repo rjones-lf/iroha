@@ -100,6 +100,8 @@ TEST_F(CreateAccount, ExistingName) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .checkBlock(
+          [](const auto block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }
 
@@ -114,10 +116,9 @@ TEST_F(CreateAccount, MaxLenName) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().createAccount(
-          std::string(32, 'a'), kDomain, kNewUserKeypair.publicKey())))
-      .skipProposal()
-      .checkBlock(
+      .sendTxAwait(
+          complete(baseTx().createAccount(
+              std::string(32, 'a'), kDomain, kNewUserKeypair.publicKey())),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .done();
 }

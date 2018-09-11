@@ -40,18 +40,17 @@ namespace iroha {
           return iter;
         }
         // insert and return new
-        return block_storages_.emplace(
-            block_storages_.end(),
-            YacHash(proposal_hash, block_hash),
-            peers_in_round_,
-            supermajority_checker_);
+        return block_storages_.emplace(block_storages_.end(),
+                                       YacHash(proposal_hash, block_hash),
+                                       peers_in_round_,
+                                       supermajority_checker_);
       }
 
       // --------| public api |--------
 
       YacProposalStorage::YacProposalStorage(
           ProposalHash hash,
-          uint64_t peers_in_round,
+          PeersNumberType peers_in_round,
           std::shared_ptr<SupermajorityChecker> supermajority_checker)
           : current_state_(boost::none),
             hash_(std::move(hash)),

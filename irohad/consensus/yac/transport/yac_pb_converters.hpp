@@ -1,29 +1,18 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_YAC_PB_CONVERTERS_HPP
 #define IROHA_YAC_PB_CONVERTERS_HPP
 
-#include "builders/default_builders.hpp"
+#include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "common/byteutils.hpp"
 #include "consensus/yac/messages.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "logger/logger.hpp"
+#include "validators/field_validator.hpp"
 #include "yac.pb.h"
 
 namespace iroha {
@@ -76,46 +65,38 @@ namespace iroha {
 
         static boost::optional<VoteMessage> deserializeVote(
             const proto::Vote &pb_vote) {
+          static shared_model::proto::ProtoCommonObjectsFactory<
+              shared_model::validation::FieldValidator>
+              factory_;
+
           VoteMessage vote;
           vote.hash.proposal_hash = pb_vote.hash().proposal();
           vote.hash.block_hash = pb_vote.hash().block();
 
-          shared_model::builder::DefaultSignatureBuilder()
-              .publicKey(shared_model::crypto::PublicKey(
-                  pb_vote.hash().block_signature().pubkey()))
-              .signedData(shared_model::crypto::Signed(
-                  pb_vote.hash().block_signature().signature()))
-              .build()
-              .match(
-                  [&vote](iroha::expected::Value<
-                          std::shared_ptr<shared_model::interface::Signature>>
-                              &sig) { vote.hash.block_signature = sig.value; },
-                  [](iroha::expected::Error<std::shared_ptr<std::string>>
-                         &reason) {
-                    logger::log("YacPbConverter::deserializeVote")
-                        ->error("Cannot build vote hash block signature: {}",
-                                *reason.error);
-                  });
+          auto deserialize =
+              [&](auto &pubkey, auto &signature, auto &val, const auto &msg) {
+                factory_
+                    .createSignature(shared_model::crypto::PublicKey(pubkey),
+                                     shared_model::crypto::Signed(signature))
+                    .match(
+                        [&](iroha::expected::Value<
+                            std::unique_ptr<shared_model::interface::Signature>>
+                                &sig) { val = std::move(sig.value); },
+                        [&](iroha::expected::Error<std::string> &reason) {
+                          logger::log("YacPbConverter::deserializeVote")
+                              ->error(msg, reason.error);
+                        });
+              };
 
-          const auto &pubkey =
-              shared_model::crypto::PublicKey(pb_vote.signature().pubkey());
-          const auto &signed_data =
-              shared_model::crypto::Signed(pb_vote.signature().signature());
+          deserialize(pb_vote.hash().block_signature().pubkey(),
+                      pb_vote.hash().block_signature().signature(),
+                      vote.hash.block_signature,
+                      "Cannot build vote hash block signature: {}");
 
-          shared_model::builder::DefaultSignatureBuilder()
-              .publicKey(pubkey)
-              .signedData(signed_data)
-              .build()
-              .match(
-                  [&vote](iroha::expected::Value<
-                          std::shared_ptr<shared_model::interface::Signature>>
-                              &sig) { vote.signature = sig.value; },
-                  [](iroha::expected::Error<std::shared_ptr<std::string>>
-                         &reason) {
-                    logger::log("YacPbConverter::deserializeVote")
-                        ->error("Cannot build vote signature: {}",
-                                *reason.error);
-                  });
+          deserialize(pb_vote.signature().pubkey(),
+                      pb_vote.signature().signature(),
+                      vote.signature,
+                      "Cannot build vote signature: {}");
 
           return vote;
         }

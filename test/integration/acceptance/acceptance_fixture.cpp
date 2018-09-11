@@ -8,6 +8,7 @@
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
+#include "utils/query_error_response_visitor.hpp"
 
 AcceptanceFixture::AcceptanceFixture()
     : kUser("user"),
@@ -150,22 +151,54 @@ template auto AcceptanceFixture::complete<TestUnsignedQueryBuilder>(
             .finish());
 
 template <typename Builder>
-auto AcceptanceFixture::complete(Builder builder) -> decltype(
-    builder.build()
-        .finish()) {
+auto AcceptanceFixture::complete(Builder builder)
+    -> decltype(builder.build().finish()) {
   return complete(builder, kUserKeypair);
+}
+
+template <typename ErrorResponse>
+std::function<void(const shared_model::interface::QueryResponse &)>
+AcceptanceFixture::checkQueryErrorResponse() {
+  return [](auto &response) {
+    ASSERT_TRUE(boost::apply_visitor(
+        shared_model::interface::QueryErrorResponseChecker<ErrorResponse>(),
+        response.get()));
+  };
 }
 
 template auto AcceptanceFixture::complete<TestUnsignedTransactionBuilder>(
     TestUnsignedTransactionBuilder builder)
-    -> decltype(
-        builder.build()
-            .finish());
+    -> decltype(builder.build().finish());
 template auto AcceptanceFixture::complete<TestUnsignedQueryBuilder>(
-    TestUnsignedQueryBuilder builder)
-    -> decltype(
-        builder.build()
-            .finish());
+    TestUnsignedQueryBuilder builder) -> decltype(builder.build().finish());
+
+template std::function<void(const shared_model::interface::QueryResponse &)>
+AcceptanceFixture::checkQueryErrorResponse<
+    shared_model::interface::StatelessFailedErrorResponse>();
+template std::function<void(const shared_model::interface::QueryResponse &)>
+AcceptanceFixture::checkQueryErrorResponse<
+    shared_model::interface::StatefulFailedErrorResponse>();
+template std::function<void(const shared_model::interface::QueryResponse &)>
+AcceptanceFixture::checkQueryErrorResponse<
+    shared_model::interface::NoAccountErrorResponse>();
+template std::function<void(const shared_model::interface::QueryResponse &)>
+AcceptanceFixture::checkQueryErrorResponse<
+    shared_model::interface::NoAccountAssetsErrorResponse>();
+template std::function<void(const shared_model::interface::QueryResponse &)>
+AcceptanceFixture::checkQueryErrorResponse<
+    shared_model::interface::NoAccountDetailErrorResponse>();
+template std::function<void(const shared_model::interface::QueryResponse &)>
+AcceptanceFixture::checkQueryErrorResponse<
+    shared_model::interface::NoSignatoriesErrorResponse>();
+template std::function<void(const shared_model::interface::QueryResponse &)>
+AcceptanceFixture::checkQueryErrorResponse<
+    shared_model::interface::NotSupportedErrorResponse>();
+template std::function<void(const shared_model::interface::QueryResponse &)>
+AcceptanceFixture::checkQueryErrorResponse<
+    shared_model::interface::NoAssetErrorResponse>();
+template std::function<void(const shared_model::interface::QueryResponse &)>
+AcceptanceFixture::checkQueryErrorResponse<
+    shared_model::interface::NoRolesErrorResponse>();
 
 iroha::time::time_t AcceptanceFixture::getUniqueTime() {
   return initial_time + nonce_counter++;

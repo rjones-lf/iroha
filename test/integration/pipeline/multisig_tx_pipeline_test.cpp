@@ -19,11 +19,14 @@
 
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
+#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
+
+using framework::SpecifiedVisitor;
 
 class MstPipelineTest : public AcceptanceFixture {
  public:
@@ -104,16 +107,23 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
   auto tx = baseTx()
                 .setAccountDetail(kUserId, "fav_meme", "doge")
                 .quorum(kSignatories + 1);
+  auto checkMstPendingTxStatus =
+      [](const shared_model::proto::TransactionResponse &resp) {
+        ASSERT_NO_THROW(boost::apply_visitor(
+            SpecifiedVisitor<interface::MstPendingResponse>(), resp.get()));
+      };
+  auto checkEnoughSignaturesCollectedStatus =
+      [](const shared_model::proto::TransactionResponse &resp) {
+        ASSERT_NO_THROW(boost::apply_visitor(
+            SpecifiedVisitor<interface::MstPendingResponse>(), resp.get()));
+      };
 
   IntegrationTestFramework itf(1, {}, [](auto &i) { i.done(); }, true);
   itf.setInitialState(kAdminKeypair);
   auto &mst_itf = makeMstUser(itf);
-  mst_itf
-      .sendTx(signTx(tx, kUserKeypair))
-      // TODO(@l4l) 21/05/18 IR-1339
-      // tx should be checked for MST_AWAIT status
-      .sendTx(signTx(tx, signatories[0]))
-      .sendTx(signTx(tx, signatories[1]))
+  mst_itf.sendTx(signTx(tx, kUserKeypair), checkMstPendingTxStatus)
+      .sendTx(signTx(tx, signatories[0]), checkMstPendingTxStatus)
+      .sendTx(signTx(tx, signatories[1]), checkEnoughSignaturesCollectedStatus)
       .skipProposal()
       .skipVerifiedProposal()
       .checkBlock([](auto &proposal) {
