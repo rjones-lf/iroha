@@ -20,7 +20,7 @@ namespace iroha {
     /**
      * Type to represent result of the consensus in form of block
      */
-    using ConsensusResult = const shared_model::interface::Block &;
+    using ConsensusResult = shared_model::interface::Block;
 
     /**
      * Type to represent a consensus result cache with a single block

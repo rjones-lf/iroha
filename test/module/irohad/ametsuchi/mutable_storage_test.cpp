@@ -54,7 +54,7 @@ class MutableStorageTest : public AmetsuchiTest,
  * predicate
  */
 TEST_P(MutableStorageTest, TestCheckBlock) {
-  const auto &expected_block = getBlock();
+  auto expected_block = getBlock();
   bool expected_res = GetParam();
   ASSERT_EQ(expected_res,
             mutable_storage_->check(
