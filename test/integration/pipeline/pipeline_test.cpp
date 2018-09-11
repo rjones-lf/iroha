@@ -106,16 +106,16 @@ TEST_F(PipelineIntegrationTest, SendQuery) {
 /**
  * @given some user
  * @when sending sample CreateDomain transaction to the ledger
- * @then receive STATELESS_VALIDATION_SUCCESS status on that tx AND
+ * @then receive ENOUGH_SIGNATURES_COLLECTED status on that tx AND
  * tx is committed, thus non-empty verified proposal
  */
 TEST_F(PipelineIntegrationTest, SendTx) {
   auto tx = prepareCreateDomainTransaction();
 
-  auto check_stateless_valid = [](auto &status) {
+  auto check_enough_signatures_collected_status = [](auto &status) {
     ASSERT_NO_THROW(boost::apply_visitor(
         framework::SpecifiedVisitor<
-            shared_model::interface::StatelessValidTxResponse>(),
+            shared_model::interface::EnoughSignaturesCollectedResponse>(),
         status.get()));
   };
   auto check_proposal = [](auto &proposal) {
@@ -132,7 +132,7 @@ TEST_F(PipelineIntegrationTest, SendTx) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, check_stateless_valid)
+      .sendTx(tx, check_enough_signatures_collected_status)
       .checkProposal(check_proposal)
       .checkVerifiedProposal(check_verified_proposal)
       .checkBlock(check_block);

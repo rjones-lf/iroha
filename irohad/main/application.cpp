@@ -16,7 +16,6 @@
 #include "multi_sig_transactions/mst_processor_stub.hpp"
 #include "multi_sig_transactions/mst_time_provider_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
-#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "validators/field_validator.hpp"
 
@@ -272,7 +271,7 @@ void Irohad::initStatusBus() {
 
 void Irohad::initMstProcessor() {
   if (is_mst_supported_) {
-    auto mst_transport = std::make_shared<MstTransportGrpc>(
+    mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
         async_call_, common_objects_factory_);
     auto mst_completer = std::make_shared<DefaultCompleter>();
     auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
@@ -283,8 +282,10 @@ void Irohad::initMstProcessor() {
         std::chrono::seconds(5) /*emitting period*/,
         2 /*amount per once*/);
     auto mst_time = std::make_shared<MstTimeProviderImpl>();
-    mst_processor = std::make_shared<FairMstProcessor>(
+    auto fair_mst_processor = std::make_shared<FairMstProcessor>(
         mst_transport, mst_storage, mst_propagation, mst_time);
+    mst_processor = fair_mst_processor;
+    mst_transport->subscribe(fair_mst_processor);
   } else {
     mst_processor = std::make_shared<MstProcessorStub>();
   }
@@ -352,6 +353,9 @@ void Irohad::run() {
   (torii_server->append(command_service).append(query_service).run() |
    [&](const auto &port) {
      log_->info("Torii server bound on port {}", port);
+     if (is_mst_supported_) {
+       internal_server->append(mst_transport);
+     }
      // Run internal server
      return internal_server->append(ordering_init.ordering_gate_transport)
          .append(ordering_init.ordering_service_transport)

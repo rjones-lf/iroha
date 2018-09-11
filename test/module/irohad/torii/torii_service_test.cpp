@@ -276,7 +276,7 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
     client2.Status(tx_request, toriiResponse);
 
     ASSERT_EQ(toriiResponse.tx_status(),
-              iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+              iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED);
   }
 
   // create block from the all transactions but the last one
@@ -505,7 +505,8 @@ TEST_F(ToriiServiceTest, StreamingNoTx) {
  *
  * @given torii service and collection of transactions
  * @when that collection is asked to be processed by Torii
- * @then statuses of all transactions from that request are STATELESS_VALID
+ * @then statuses of all transactions from that request are
+ * ENOUGH_SIGNATURES_COLLECTED
  */
 TEST_F(ToriiServiceTest, ListOfTxs) {
   const auto test_txs_number = 5;
@@ -546,11 +547,11 @@ TEST_F(ToriiServiceTest, ListOfTxs) {
         do {
           client.Status(tx_request, toriiResponse);
         } while (toriiResponse.tx_status()
-                     != iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS
+                     != iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED
                  and --resub_counter);
 
         ASSERT_EQ(toriiResponse.tx_status(),
-                  iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+                  iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED);
       });
 }
 

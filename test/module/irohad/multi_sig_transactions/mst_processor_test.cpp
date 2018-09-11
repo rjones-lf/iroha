@@ -109,21 +109,78 @@ void check(T &t) {
 /**
  * @given initialised mst processor
  * AND wrappers on mst observables
+ * AND uncompleted batch in mst
+ *
+ * @when the same signature for that batch is received
+ *
+ * @then check that:
+ * absent state update transactions
+ * AND absent prepared transactions
+ * AND absent expired transactions
+ */
+TEST_F(MstProcessorTest, receivedSameSignatures) {
+  // ---------------------------------| given |---------------------------------
+  auto same_key = makeKey();
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, 2)), 0, same_key));
+
+  auto observers = initObservers(mst_processor, 0, 0, 0);
+
+  // ---------------------------------| when |----------------------------------
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, 2)), 0, same_key));
+
+  // ---------------------------------| then |----------------------------------
+  check(observers);
+}
+
+/**
+ * @given initialised mst processor
+ * AND wrappers on mst observables
  *
  * @when an incomplete batch is inserted
  *
  * @then check that:
- * state is not updated
+ * notification about new batch is sent
  * AND absent prepared transactions
  * AND absent expired transactions
  */
 TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto observers = initObservers(mst_processor, 0, 0, 0);
+  auto observers = initObservers(mst_processor, 1, 0, 0);
 
   // ---------------------------------| when |----------------------------------
   mst_processor->propagateBatch(
       addSignaturesFromKeyPairs(makeTestBatch(txBuilder(1)), 0, makeKey()));
+
+  // ---------------------------------| then |----------------------------------
+  check(observers);
+}
+
+/**
+ * @given initialised mst processor
+ * AND wrappers on mst observables
+ * AND uncompleted batch in mst
+ *
+ * @when new signature for that batch is received, but total number of them is
+ * still not enough
+ *
+ * @then check that:
+ * state update observer is called
+ * AND absent prepared transactions
+ * AND absent expired transactions
+ */
+TEST_F(MstProcessorTest, newSignatureNotCompleted) {
+  // ---------------------------------| given |---------------------------------
+  auto same_key = makeKey();
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, 3)), 0, makeKey()));
+
+  auto observers = initObservers(mst_processor, 1, 0, 0);
+
+  // ---------------------------------| when |----------------------------------
+  mst_processor->propagateBatch(addSignaturesFromKeyPairs(
+      makeTestBatch(txBuilder(1, time_now, 3)), 0, makeKey()));
 
   // ---------------------------------| then |----------------------------------
   check(observers);
@@ -137,13 +194,13 @@ TEST_F(MstProcessorTest, notCompletedTransactionUsecase) {
  * AND the resulting set of signatures satisfies the account quorum number
  *
  * @then check that:
- * state is not updated
+ * state is updated the same number of times as transaction arrival minus one
  * AND 1 prepared transaction
  * AND absent expired transactions
  */
 TEST_F(MstProcessorTest, completedTransactionUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto observers = initObservers(mst_processor, 0, 1, 0);
+  auto observers = initObservers(mst_processor, 2, 1, 0);
 
   // ---------------------------------| when |----------------------------------
   mst_processor->propagateBatch(addSignaturesFromKeyPairs(
@@ -161,17 +218,17 @@ TEST_F(MstProcessorTest, completedTransactionUsecase) {
  * @given initialised mst processor
  * AND wrappers on mst observables
  *
- * @when insert (by propagate_transaction) method transaction that already
+ * @when insert (by propagate_batch method) batch that already
  * expired with quorum one
  *
  * @then check that:
- * state not updated
+ * state is updated
  * AND 0 prepared transaction (although quorum 1)
  * AND 1 expired transactions
  */
 TEST_F(MstProcessorTest, expiredTransactionUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto observers = initObservers(mst_processor, 0, 0, 1);
+  auto observers = initObservers(mst_processor, 1, 0, 1);
 
   // ---------------------------------| when |----------------------------------
   auto quorum = 1u;
@@ -191,17 +248,17 @@ TEST_F(MstProcessorTest, expiredTransactionUsecase) {
  * that contains TX with another signature
  *
  * @then check that:
- * state updated
- * AND 1 prepared transaction (although quorum 1)
+ * state observer is not called
+ * AND 1 prepared transaction
  * AND 0 expired transactions
  */
 TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
   // ---------------------------------| given |---------------------------------
-  auto observers = initObservers(mst_processor, 1, 1, 0);
-
   auto quorum = 2;
   mst_processor->propagateBatch(addSignaturesFromKeyPairs(
       makeTestBatch(txBuilder(1, time_now, quorum)), 0, makeKey()));
+
+  auto observers = initObservers(mst_processor, 0, 1, 0);
 
   // ---------------------------------| when |----------------------------------
   auto another_peer = makePeer("another", "another_pubkey");

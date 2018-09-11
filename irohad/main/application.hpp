@@ -30,6 +30,7 @@
 #include "main/server_runner.hpp"
 #include "mst.grpc.pb.h"
 #include "multi_sig_transactions/mst_processor.hpp"
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/impl/peer_communication_service_impl.hpp"
@@ -223,6 +224,8 @@ class Irohad {
   iroha::network::OrderingInit ordering_init;
   iroha::consensus::yac::YacInit yac_init;
   iroha::network::BlockLoaderInit loader_init;
+
+  std::shared_ptr<iroha::network::MstTransportGrpc> mst_transport;
 
   logger::Logger log_;
 
