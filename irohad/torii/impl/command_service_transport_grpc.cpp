@@ -9,6 +9,7 @@
 
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
+#include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
 #include "builders/protobuf/transaction_sequence_builder.hpp"
 #include "common/timeout.hpp"
 #include "cryptography/default_hash_provider.hpp"
@@ -18,9 +19,11 @@ namespace torii {
 
   CommandServiceTransportGrpc::CommandServiceTransportGrpc(
       std::shared_ptr<CommandService> command_service,
+      std::shared_ptr<iroha::torii::StatusBus> status_bus,
       std::chrono::milliseconds initial_timeout,
       std::chrono::milliseconds nonfinal_timeout)
       : command_service_(std::move(command_service)),
+        status_bus_(std::move(status_bus)),
         initial_timeout_(initial_timeout),
         nonfinal_timeout_(nonfinal_timeout),
         log_(logger::log("CommandServiceTransportGrpc")) {}
@@ -33,6 +36,42 @@ namespace torii {
     *single_tx_list.add_transactions() = *request;
     return ListTorii(context, &single_tx_list, response);
   }
+
+  namespace {
+    /**
+     * Form an error message, which is to be shared between all transactions, if
+     * there are several of them, or individual message, if there's only one
+     * @param tx_hashes is non empty hash list to form error message from
+     * @param error of those tx(s)
+     * @return message
+     */
+    std::string formErrorMessage(
+        const std::vector<shared_model::crypto::Hash> &tx_hashes,
+        const std::string &error) {
+      if (tx_hashes.size() == 1) {
+        return (boost::format("Stateless invalid tx, error: %s, hash: %s")
+                % error % tx_hashes[0].hex())
+            .str();
+      }
+
+      std::string folded_hashes =
+          std::accumulate(tx_hashes.begin(),
+                          tx_hashes.end(),
+                          std::string(),
+                          [](auto &&acc, const auto &h) -> std::string {
+                            return acc + h.hex() + ", ";
+                          });
+
+      // remove leading ", "
+      folded_hashes.resize(folded_hashes.size() - 2);
+
+      return (boost::format(
+                  "Stateless invalid tx in transaction sequence, error: %s\n"
+                  "Hash list: [%s]")
+              % error % folded_hashes)
+          .str();
+    }
+  }  // namespace
 
   grpc::Status CommandServiceTransportGrpc::ListTorii(
       grpc::ServerContext *context,
@@ -65,8 +104,21 @@ namespace torii {
                 return shared_model::crypto::DefaultHashProvider::makeHash(
                     shared_model::proto::makeBlob(tx.payload()));
               });
-          this->command_service_->handleTransactionListError(hashes,
-                                                             error.error);
+
+          auto error_msg = formErrorMessage(hashes, error.error);
+          // set error response for each transaction in a sequence
+          std::for_each(
+              hashes.begin(), hashes.end(), [this, &error_msg](auto &hash) {
+                iroha::protocol::ToriiResponse response;
+                response.set_tx_hash(
+                    shared_model::crypto::toBinaryString(hash));
+                response.set_tx_status(
+                    iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
+                response.set_error_message(error_msg);
+                status_bus_->publish(
+                    std::make_shared<shared_model::proto::TransactionResponse>(
+                        std::move(response)));
+              });
         });
     return grpc::Status::OK;
   }

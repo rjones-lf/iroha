@@ -25,7 +25,7 @@ namespace torii {
   class CommandServiceImpl : public CommandService {
    public:
     /**
-     * Creates a new instance of CommandServiceImpl
+     * Creates a new instance of CommandService
      * @param tx_processor - processor of received transactions
      * @param storage - to query transactions outside the cache
      * @param status_bus is a common notifier for tx statuses
@@ -44,9 +44,6 @@ namespace torii {
 
     void handleTransactionList(
         const shared_model::interface::TransactionSequence &tx_list) override;
-    void handleTransactionListError(
-        const std::vector<shared_model::crypto::Hash> &tx_hashes,
-        const std::string &error) override;
 
     std::shared_ptr<shared_model::interface::TransactionResponse> getStatus(
         const shared_model::crypto::Hash &request) override;

@@ -25,20 +25,16 @@ namespace torii {
 
     /**
      * Actual implementation of sync Torii in CommandServiceImpl
-     * @param tx_lis - transactions we've received
+     * @param tx_list - transactions we've received
      */
     virtual void handleTransactionList(
         const shared_model::interface::TransactionSequence &tx_list) = 0;
-    virtual void handleTransactionListError(
-        const std::vector<shared_model::crypto::Hash> &tx_hashes,
-        const std::string &error) = 0;
 
     /**
      * Request to retrieve a status of any particular transaction
      * @param request - TxStatusRequest object which identifies transaction
      * uniquely
-     * @param response - TransactionResponse which contains a current state of
-     * requested transaction
+     * @return response which contains a current state of requested transaction
      */
     virtual std::shared_ptr<shared_model::interface::TransactionResponse>
     getStatus(const shared_model::crypto::Hash &request) = 0;

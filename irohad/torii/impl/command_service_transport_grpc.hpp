@@ -13,6 +13,7 @@
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
 #include "logger/logger.hpp"
+#include "torii/status_bus.hpp"
 
 namespace torii {
   class CommandServiceTransportGrpc
@@ -20,14 +21,16 @@ namespace torii {
    public:
     /**
      * Creates a new instance of CommandServiceTransportGrpc
-     * @param tx_processor - processor of received transactions
      * @param command_service - to delegate logic work
+     * @param status_bus is a common notifier for tx statuses
      * @param initial_timeout - streaming timeout when tx is not received
      * @param nonfinal_timeout - streaming timeout when tx is being processed
      */
-    CommandServiceTransportGrpc(std::shared_ptr<CommandService> command_service,
-                                std::chrono::milliseconds initial_timeout,
-                                std::chrono::milliseconds nonfinal_timeout);
+    CommandServiceTransportGrpc(
+        std::shared_ptr<CommandService> command_service,
+        std::shared_ptr<iroha::torii::StatusBus> status_bus,
+        std::chrono::milliseconds initial_timeout,
+        std::chrono::milliseconds nonfinal_timeout);
 
     /**
      * Torii call via grpc
@@ -80,6 +83,7 @@ namespace torii {
 
    private:
     std::shared_ptr<CommandService> command_service_;
+    std::shared_ptr<iroha::torii::StatusBus> status_bus_;
     const std::chrono::milliseconds initial_timeout_;
     const std::chrono::milliseconds nonfinal_timeout_;
     logger::Logger log_;

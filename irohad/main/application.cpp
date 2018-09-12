@@ -311,7 +311,10 @@ void Irohad::initTransactionCommandService() {
       tx_processor, storage, status_bus_);
   command_service_transport =
       std::make_shared<::torii::CommandServiceTransportGrpc>(
-          command_service, std::chrono::seconds(1), 2 * proposal_delay_);
+          command_service,
+          status_bus_,
+          std::chrono::seconds(1),
+          2 * proposal_delay_);
 
   log_->info("[Init] => command service");
 }

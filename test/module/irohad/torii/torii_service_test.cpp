@@ -122,6 +122,7 @@ class ToriiServiceTest : public testing::Test {
         ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
             std::make_shared<torii::CommandServiceImpl>(
                 tx_processor, storage, status_bus),
+            status_bus,
             initial_timeout,
             nonfinal_timeout))
         .run()

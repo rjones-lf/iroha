@@ -22,9 +22,9 @@ namespace torii {
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
       std::shared_ptr<iroha::ametsuchi::Storage> storage,
       std::shared_ptr<iroha::torii::StatusBus> status_bus)
-      : tx_processor_(tx_processor),
-        storage_(storage),
-        status_bus_(status_bus),
+      : tx_processor_(std::move(tx_processor)),
+        storage_(std::move(storage)),
+        status_bus_(std::move(status_bus)),
         cache_(std::make_shared<CacheType>()),
         log_(logger::log("CommandServiceImpl")) {
     // Notifier for all clients
@@ -57,40 +57,6 @@ namespace torii {
           std::make_shared<shared_model::proto::TransactionResponse>(
               std::move(response)));
     }
-
-    /**
-     * Form an error message, which is to be shared between all transactions, if
-     * there are several of them, or individual message, if there's only one
-     * @param tx_hashes is non empty hash list to form error message from
-     * @param error of those tx(s)
-     * @return message
-     */
-    std::string formErrorMessage(
-        const std::vector<shared_model::crypto::Hash> &tx_hashes,
-        const std::string &error) {
-      if (tx_hashes.size() == 1) {
-        return (boost::format("Stateless invalid tx, error: %s, hash: %s")
-                % error % tx_hashes[0].hex())
-            .str();
-      }
-
-      std::string folded_hashes =
-          std::accumulate(tx_hashes.begin(),
-                          tx_hashes.end(),
-                          std::string(),
-                          [](auto &&acc, const auto &h) -> std::string {
-                            return acc + h.hex() + ", ";
-                          });
-
-      // remove leading ", "
-      folded_hashes.resize(folded_hashes.size() - 2);
-
-      return (boost::format(
-                  "Stateless invalid tx in transaction sequence, error: %s\n"
-                  "Hash list: [%s]")
-              % error % folded_hashes)
-          .str();
-    }
   }  // namespace
 
   void CommandServiceImpl::handleTransactionList(
@@ -98,22 +64,6 @@ namespace torii {
     for (const auto &batch : tx_list.batches()) {
       processBatch(batch);
     }
-  }
-
-  void CommandServiceImpl::handleTransactionListError(
-      const std::vector<shared_model::crypto::Hash> &tx_hashes,
-      const std::string &error) {
-    auto error_msg = formErrorMessage(tx_hashes, error);
-    // set error response for each transaction in a sequence
-    std::for_each(
-        tx_hashes.begin(), tx_hashes.end(), [this, &error_msg](auto &hash) {
-          this->pushStatus(
-              "ToriiList",
-              makeResponse(
-                  hash,
-                  iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED,
-                  error_msg));
-        });
   }
 
   std::shared_ptr<shared_model::interface::TransactionResponse>
