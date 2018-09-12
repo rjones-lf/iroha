@@ -88,5 +88,6 @@ iroha::protocol::ToriiResponse ProtoTxStatusFactory::fillCommon(
 
 ProtoTxStatusFactory::FactoryReturnType ProtoTxStatusFactory::wrap(
     iroha::protocol::ToriiResponse &&value) {
-  return std::make_unique<shared_model::proto::TransactionResponse>(value);
+  return std::make_unique<shared_model::proto::TransactionResponse>(
+      std::move(value));
 }
