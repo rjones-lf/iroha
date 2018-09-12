@@ -29,6 +29,13 @@
 #include "interfaces/common_objects/types.hpp"
 
 namespace {
+
+  struct PreparedStatement {
+    std::string command_name;
+    std::string command_base;
+    std::vector<std::string> permission_checks;
+  };
+
   iroha::expected::Error<iroha::ametsuchi::CommandError> makeCommandError(
       const std::string &error_message,
       const std::string &command_name) noexcept {
@@ -37,18 +44,18 @@ namespace {
   }
 
   /**
-   * Executes sql query,
-   * which will have error message generated exception
-   * Assums that statement query returns 0 in case of success or error code
-   * @param result which can be received by calling execute_
+   * Executes sql query
+   * Assumes that statement query returns 0 in case of success
+   * or error code in case of failure
+   * @param sql - connection on which to execute statement
+   * @param cmd - sql query to be executed
+   * @param command_name - which command executes a query
    * @param error_generator functions which must generate error message
-   * to be used as a return error.
    * Functions are passed instead of string to avoid overhead of string
    * construction in successful case.
-   * @return CommandResult with combined error message
-   * in case of result contains error
+   * @return CommandResult with command name and error message
    */
-  iroha::ametsuchi::CommandResult makeCommandResultByReturnedValue(
+  iroha::ametsuchi::CommandResult executeQuery(
       soci::session &sql,
       std::string &&cmd,
       const std::string &command_name,
@@ -229,7 +236,7 @@ namespace iroha {
           insert_signatory AS
           (
               INSERT INTO signatory(public_key)
-              %s ON CONFLICT DO NOTHING RETURNING (1)
+              (SELECT $3 %s) ON CONFLICT DO NOTHING RETURNING (1)
           ),
           has_signatory AS (SELECT * FROM signatory WHERE public_key = $3),
           insert_account_signatory AS
@@ -656,8 +663,7 @@ namespace iroha {
           },
           [] { return std::string("Summation overflows uint256"); },
       };
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "AddAssetQuantity", message_gen);
+      return executeQuery(sql_, cmd.str(), "AddAssetQuantity", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -667,9 +673,9 @@ namespace iroha {
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%')");
 
       if (do_validation_) {
-        cmd = (cmd % "addAddPeerWithValidation");
+        cmd = (cmd % "addPeerWithValidation");
       } else {
-        cmd = (cmd % "addAddPeerWithoutValidation");
+        cmd = (cmd % "addPeerWithoutValidation");
       }
 
       cmd = (cmd % creator_account_id_ % peer.pubkey().hex() % peer.address());
@@ -687,8 +693,7 @@ namespace iroha {
                 .str();
           },
       };
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "AddPeer", message_gen);
+      return executeQuery(sql_, cmd.str(), "AddPeer", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -728,8 +733,7 @@ namespace iroha {
                 .str();
           },
       };
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "AddSignatory", message_gen);
+      return executeQuery(sql_, cmd.str(), "AddSignatory", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -772,8 +776,7 @@ namespace iroha {
                 .str();
           },
       };
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "AppendRole", message_gen);
+      return executeQuery(sql_, cmd.str(), "AppendRole", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -824,8 +827,7 @@ namespace iroha {
                 .str();
           },
       };
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "CreateAccount", message_gen);
+      return executeQuery(sql_, cmd.str(), "CreateAccount", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -854,8 +856,7 @@ namespace iroha {
                     % asset_id % domain_id % precision)
                 .str();
           }};
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "CreateAsset", message_gen);
+      return executeQuery(sql_, cmd.str(), "CreateAsset", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -882,8 +883,7 @@ namespace iroha {
                     % domain_id % default_role)
                 .str();
           }};
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "CreateDomain", message_gen);
+      return executeQuery(sql_, cmd.str(), "CreateDomain", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -928,8 +928,7 @@ namespace iroha {
                 .str();
           },
       };
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "CreateRole", message_gen);
+      return executeQuery(sql_, cmd.str(), "CreateRole", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -957,8 +956,7 @@ namespace iroha {
                     % account_id % role_name)
                 .str();
           }};
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "DetachRole", message_gen);
+      return executeQuery(sql_, cmd.str(), "DetachRole", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -1000,8 +998,7 @@ namespace iroha {
                 .str();
           }};
 
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "GrantPermission", message_gen);
+      return executeQuery(sql_, cmd.str(), "GrantPermission", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -1057,8 +1054,7 @@ namespace iroha {
                     kRemoveMySignatory);
           },
       };
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "RemoveSignatory", message_gen);
+      return executeQuery(sql_, cmd.str(), "RemoveSignatory", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -1103,8 +1099,7 @@ namespace iroha {
                     % shared_model::proto::permissions::toString(permission))
                 .str();
           }};
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "RevokePermission", message_gen);
+      return executeQuery(sql_, cmd.str(), "RevokePermission", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -1147,8 +1142,7 @@ namespace iroha {
                     % account_id % creator_account_id_ % key % value)
                 .str();
           }};
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "SetAccountDetail", message_gen);
+      return executeQuery(sql_, cmd.str(), "SetAccountDetail", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -1194,8 +1188,7 @@ namespace iroha {
                 .str();
           },
       };
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "SetQuorum", message_gen);
+      return executeQuery(sql_, cmd.str(), "SetQuorum", message_gen);
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -1222,7 +1215,7 @@ namespace iroha {
           [&] { return "Asset with given precision does not exist"; },
           [&] { return "Subtracts overdrafts account asset"; },
       };
-      return makeCommandResultByReturnedValue(
+      return executeQuery(
           sql_, cmd.str(), "SubtractAssetQuantity", message_gen);
     }
 
@@ -1268,76 +1261,95 @@ namespace iroha {
           [&] { return "Transfer overdrafts source account asset"; },
           [&] { return "Transfer overflows destanation account asset"; },
       };
-      return makeCommandResultByReturnedValue(
-          sql_, cmd.str(), "TransferAsset", message_gen);
+      return executeQuery(sql_, cmd.str(), "TransferAsset", message_gen);
+    }
+
+    std::pair<std::string, std::string> compileStatement(
+        const PreparedStatement &statement) {
+      auto initial = boost::format(statement.command_base);
+
+      try {
+        auto with_validation =
+            initial % (statement.command_name + "WithValidation");
+
+        for (const auto &check : statement.permission_checks) {
+          with_validation = with_validation % check;
+        }
+
+        initial = boost::format(statement.command_base);
+
+        auto without_validation =
+            initial % (statement.command_name + "WithoutValidation");
+
+        for (const auto &check : statement.permission_checks) {
+          without_validation = without_validation % "";
+        }
+        return {with_validation.str(), without_validation.str()};
+      } catch (...) {
+        throw std::out_of_range(statement.command_name);
+      }
     }
 
     void PostgresCommandExecutor::prepareStatements(soci::session &sql) {
-      std::string addAssetQuantityWithValidation =
-          (boost::format(addAssetQuantityBase)
-           % "addAssetQuantityWithValidation"
-           % (boost::format(R"(has_perm AS (%s),)")
-              % checkAccountRolePermission(
-                    shared_model::interface::permissions::Role::kAddAssetQty,
-                    "$1"))
-                 .str()
-           % "AND (SELECT * from has_perm)"
-           % "WHEN NOT (SELECT * from has_perm) THEN 1")
-              .str();
-      std::string addAssetQuantityWithoutValidation =
-          (boost::format(addAssetQuantityBase)
-           % "addAssetQuantityWithoutValidation" % "" % "" % "")
-              .str();
+      PreparedStatement add_asset_quantity{
+          "addAssetQuantity",
+          addAssetQuantityBase,
+          {(boost::format(R"(has_perm AS (%s),)")
+            % checkAccountRolePermission(
+                  shared_model::interface::permissions::Role::kAddAssetQty,
+                  "$1"))
+               .str(),
+           "AND (SELECT * from has_perm)",
+           "WHEN NOT (SELECT * from has_perm) THEN 1"}};
+      auto statements = compileStatement(add_asset_quantity);
 
-      sql << addAssetQuantityWithValidation;
-      sql << addAssetQuantityWithoutValidation;
+      sql << statements.first;
+      sql << statements.second;
 
-      std::string addPeerWithValidation =
-          (boost::format(addPeerBase) % "addAddPeerWithValidation"
-           % (boost::format(R"(has_perm AS (%s),)")
-              % checkAccountRolePermission(
-                    shared_model::interface::permissions::Role::kAddPeer, "$1"))
-                 .str()
-           % "WHERE (SELECT * FROM has_perm)"
-           % "WHEN NOT (SELECT * from has_perm) THEN 1")
-              .str();
-      std::string addPeerWithoutValidation =
-          (boost::format(addPeerBase) % "addAddPeerWithoutValidation" % "" % ""
-           % "")
-              .str();
+      PreparedStatement add_peer{
+          "addPeer",
+          addPeerBase,
+          {(boost::format(R"(has_perm AS (%s),)")
+            % checkAccountRolePermission(
+                  shared_model::interface::permissions::Role::kAddPeer, "$1"))
+               .str(),
+           "WHERE (SELECT * FROM has_perm)",
+           "WHEN NOT (SELECT * from has_perm) THEN 1"}};
 
-      sql << addPeerWithValidation;
-      sql << addPeerWithoutValidation;
+      statements = compileStatement(add_peer);
 
-      std::string addSignatoryWithValidation =
-          (boost::format(addSignatoryBase) % "addSignatoryWithValidation"
-           % (boost::format(R"(
-          has_perm AS (%s),)")
-              % checkAccountHasRoleOrGrantablePerm(
-                    shared_model::interface::permissions::Role::kAddSignatory,
-                    shared_model::interface::permissions::Grantable::
-                        kAddMySignatory,
-                    "$1",
-                    "$2"))
-                 .str()
-           % "(SELECT $3 WHERE (SELECT * FROM has_perm))"
-           % " AND (SELECT * FROM has_perm)"
-           % "WHEN NOT (SELECT * from has_perm) THEN 1")
-              .str();
-      std::string addSignatoryWithoutValidation =
-          (boost::format(addSignatoryBase) % "addSignatoryWithoutValidation"
-           % "" % "(SELECT $3)" % "" % "")
-              .str();
+      sql << statements.first;
+      sql << statements.second;
 
-      sql << addSignatoryWithValidation;
-      sql << addSignatoryWithoutValidation;
+      PreparedStatement add_signatory{
+          "addSignatory",
+          addSignatoryBase,
+          {(boost::format(R"(
+                has_perm AS (%s),)")
+            % checkAccountHasRoleOrGrantablePerm(
+                  shared_model::interface::permissions::Role::kAddSignatory,
+                  shared_model::interface::permissions::Grantable::
+                      kAddMySignatory,
+                  "$1",
+                  "$2"))
+               .str(),
+           " WHERE (SELECT * FROM has_perm)",
+           " AND (SELECT * FROM has_perm)",
+           "WHEN NOT (SELECT * from has_perm) THEN 1"}};
+
+      statements = compileStatement(add_signatory);
+
+      sql << statements.first;
+      sql << statements.second;
 
       const auto bits = shared_model::interface::RolePermissionSet::size();
       const auto grantable_bits =
           shared_model::interface::GrantablePermissionSet::size();
-      std::string appendRoleWithValidation =
-          (boost::format(appendRoleBase) % "appendRoleWithValidation"
-           % (boost::format(R"(
+
+      PreparedStatement append_role{
+          "appendRole",
+          appendRoleBase,
+          {(boost::format(R"(
             has_perm AS (%1%),
             role_permissions AS (
                 SELECT permission FROM role_has_permissions
@@ -1354,88 +1366,79 @@ namespace iroha {
                 JOIN account_has_roles AS ar on ar.role_id = rp.role_id
                 WHERE ar.account_id = $1
             ),)")
-              % checkAccountRolePermission(
-                    shared_model::interface::permissions::Role::kAppendRole,
-                    "$1")
-              % std::to_string(bits))
-                 .str()
-           % R"( WHERE
+            % checkAccountRolePermission(
+                  shared_model::interface::permissions::Role::kAppendRole, "$1")
+            % std::to_string(bits))
+               .str(),
+           R"( WHERE
                     EXISTS (SELECT * FROM account_roles) AND
                     (SELECT * FROM account_has_role_permissions)
-                    AND (SELECT * FROM has_perm))"
-           % R"(
+                    AND (SELECT * FROM has_perm))",
+           R"(
                 WHEN NOT EXISTS (SELECT * FROM account_roles) THEN 1
                 WHEN NOT (SELECT * FROM account_has_role_permissions) THEN 2
-                WHEN NOT (SELECT * FROM has_perm) THEN 3)")
-              .str();
-      std::string appendRoleWithoutValidation =
-          (boost::format(appendRoleBase) % "appendRoleWithoutValidation" % ""
-           % "" % "")
-              .str();
+                WHEN NOT (SELECT * FROM has_perm) THEN 3)"}};
 
-      sql << appendRoleWithValidation;
-      sql << appendRoleWithoutValidation;
+      statements = compileStatement(append_role);
 
-      std::string createAccountWithValidation =
-          (boost::format(createAccountBase) % "createAccountWithValidation"
-           % (boost::format(R"(
+      sql << statements.first;
+      sql << statements.second;
+
+      PreparedStatement create_account{
+          "createAccount",
+          createAccountBase,
+          {(boost::format(R"(
             has_perm AS (%s),)")
-              % checkAccountRolePermission(
-                    shared_model::interface::permissions::Role::kCreateAccount,
-                    "$1"))
-                 .str()
-           % R"(AND (SELECT * FROM has_perm))"
-           % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)")
-              .str();
-      std::string createAccountWithoutValidation =
-          (boost::format(createAccountBase) % "createAccountWithoutValidation"
-           % "" % "" % "")
-              .str();
+            % checkAccountRolePermission(
+                  shared_model::interface::permissions::Role::kCreateAccount,
+                  "$1"))
+               .str(),
+           R"(AND (SELECT * FROM has_perm))",
+           R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}};
 
-      sql << createAccountWithValidation;
-      sql << createAccountWithoutValidation;
+      statements = compileStatement(create_account);
 
-      std::string createAssetWithValidation =
-          (boost::format(createAssetBase) % "createAssetWithValidation"
-           % (boost::format(R"(
+      sql << statements.first;
+      sql << statements.second;
+
+      PreparedStatement create_asset{
+          "createAsset",
+          createAssetBase,
+          {(boost::format(R"(
               has_perm AS (%s),)")
-              % checkAccountRolePermission(
-                    shared_model::interface::permissions::Role::kCreateAsset,
-                    "$1"))
-                 .str()
-           % R"(WHERE (SELECT * FROM has_perm))"
-           % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)")
-              .str();
-      std::string createAssetWithoutValidation =
-          (boost::format(createAssetBase) % "createAssetWithoutValidation" % ""
-           % "" % "")
-              .str();
+            % checkAccountRolePermission(
+                  shared_model::interface::permissions::Role::kCreateAsset,
+                  "$1"))
+               .str(),
+           R"(WHERE (SELECT * FROM has_perm))",
+           R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}};
 
-      sql << createAssetWithValidation;
-      sql << createAssetWithoutValidation;
+      statements = compileStatement(create_asset);
 
-      std::string createDomainWithValidation =
-          (boost::format(createDomainBase) % "createDomainWithValidation"
-           % (boost::format(R"(
+      sql << statements.first;
+      sql << statements.second;
+
+      PreparedStatement create_domain{
+          "createDomain",
+          createDomainBase,
+          {(boost::format(R"(
               has_perm AS (%s),)")
-              % checkAccountRolePermission(
-                    shared_model::interface::permissions::Role::kCreateDomain,
-                    "$1"))
-                 .str()
-           % R"(WHERE (SELECT * FROM has_perm))"
-           % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)")
-              .str();
-      std::string createDomainWithoutValidation =
-          (boost::format(createDomainBase) % "createDomainWithoutValidation"
-           % "" % "" % "")
-              .str();
+            % checkAccountRolePermission(
+                  shared_model::interface::permissions::Role::kCreateDomain,
+                  "$1"))
+               .str(),
+           R"(WHERE (SELECT * FROM has_perm))",
+           R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}};
 
-      sql << createDomainWithValidation;
-      sql << createDomainWithoutValidation;
+      statements = compileStatement(create_domain);
 
-      std::string createRoleWithValidation =
-          (boost::format(createRoleBase) % "createRoleWithValidation"
-           % (boost::format(R"(
+      sql << statements.first;
+      sql << statements.second;
+
+      PreparedStatement create_role{
+          "createRole",
+          createRoleBase,
+          {(boost::format(R"(
           account_has_role_permissions AS (
                 SELECT COALESCE(bit_or(rp.permission), '0'::bit(%s)) &
                     $3 = $3
@@ -1443,67 +1446,61 @@ namespace iroha {
                 JOIN account_has_roles AS ar on ar.role_id = rp.role_id
                 WHERE ar.account_id = $1),
           has_perm AS (%s),)")
-              % std::to_string(bits)
-              % checkAccountRolePermission(
-                    shared_model::interface::permissions::Role::kCreateRole,
-                    "$1"))
-                 .str()
-           % R"(WHERE (SELECT * FROM account_has_role_permissions)
-                          AND (SELECT * FROM has_perm))"
-           % R"(WHEN NOT (SELECT * FROM
+            % std::to_string(bits)
+            % checkAccountRolePermission(
+                  shared_model::interface::permissions::Role::kCreateRole,
+                  "$1"))
+               .str(),
+           R"(WHERE (SELECT * FROM account_has_role_permissions)
+                          AND (SELECT * FROM has_perm))",
+           R"(WHEN NOT (SELECT * FROM
                                account_has_role_permissions) THEN 2
-                        WHEN NOT (SELECT * FROM has_perm) THEN 3)")
-              .str();
-      std::string createRoleWithoutValidation =
-          (boost::format(createRoleBase) % "createRoleWithoutValidation" % ""
-           % "" % "")
-              .str();
+                        WHEN NOT (SELECT * FROM has_perm) THEN 3)"}};
 
-      sql << createRoleWithValidation;
-      sql << createRoleWithoutValidation;
+      statements = compileStatement(create_role);
 
-      std::string detachRoleWithValidation =
-          (boost::format(detachRoleBase) % "detachRoleWithValidation"
-           % (boost::format(R"(
+      sql << statements.first;
+      sql << statements.second;
+
+      PreparedStatement detach_role{
+          "detachRole",
+          detachRoleBase,
+          {(boost::format(R"(
             has_perm AS (%s),)")
-              % checkAccountRolePermission(
-                    shared_model::interface::permissions::Role::kDetachRole,
-                    "$1"))
-                 .str()
-           % R"(AND (SELECT * FROM has_perm))"
-           % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)")
-              .str();
-      std::string detachRoleWithoutValidation =
-          (boost::format(detachRoleBase) % "detachRoleWithoutValidation" % ""
-           % "" % "")
-              .str();
+            % checkAccountRolePermission(
+                  shared_model::interface::permissions::Role::kDetachRole,
+                  "$1"))
+               .str(),
+           R"(AND (SELECT * FROM has_perm))",
+           R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}};
 
-      sql << detachRoleWithValidation;
-      sql << detachRoleWithoutValidation;
+      statements = compileStatement(detach_role);
 
-      std::string grantPermissionWithValidation =
-          (boost::format(grantPermissionBase) % "grantPermissionWithValidation"
-           % (boost::format(R"(
+      sql << statements.first;
+      sql << statements.second;
+
+      PreparedStatement grant_permission{
+          "grantPermission",
+          grantPermissionBase,
+          {(boost::format(R"(
             has_perm AS (SELECT COALESCE(bit_or(rp.permission), '0'::bit(%1%))
           & $4 = $4 FROM role_has_permissions AS rp
               JOIN account_has_roles AS ar on ar.role_id = rp.role_id
               WHERE ar.account_id = $1),)")
-              % bits)
-                 .str()
-           % R"( WHERE (SELECT * FROM has_perm))"
-           % R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)")
-              .str();
-      std::string grantPermissionWithoutValidation =
-          (boost::format(grantPermissionBase)
-           % "grantPermissionWithoutValidation" % "" % "" % "")
-              .str();
+            % bits)
+               .str(),
+           R"( WHERE (SELECT * FROM has_perm))",
+           R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}};
 
-      sql << grantPermissionWithValidation;
-      sql << grantPermissionWithoutValidation;
+      statements = compileStatement(grant_permission);
 
-      std::string removeSignatoryWithValidation =
-          (boost::format(removeSignatoryBase) % "removeSignatoryWithValidation"
-           % (boost::format(R"(
+      sql << statements.first;
+      sql << statements.second;
+
+      PreparedStatement remove_signatory{
+          "removeSignatory",
+          removeSignatoryBase,
+          {(boost::format(R"(
           has_perm AS (%s),
           get_account AS (
               SELECT quorum FROM account WHERE account_id = :account_id LIMIT 1
@@ -1517,60 +1514,53 @@ namespace iroha {
               WHERE quorum < (SELECT COUNT(*) FROM get_signatories)
           ),
           )")
-              % checkAccountHasRoleOrGrantablePerm(
-                    shared_model::interface::permissions::Role::
-                        kRemoveSignatory,
-                    shared_model::interface::permissions::Grantable::
-                        kRemoveMySignatory,
-                    "$1",
-                    "$2"))
-                 .str()
-           % R"(
+            % checkAccountHasRoleOrGrantablePerm(
+                  shared_model::interface::permissions::Role::kRemoveSignatory,
+                  shared_model::interface::permissions::Grantable::
+                      kRemoveMySignatory,
+                  "$1",
+                  "$2"))
+               .str(),
+           R"(
               AND (SELECT * FROM has_perm)
               AND EXISTS (SELECT * FROM get_account)
               AND EXISTS (SELECT * FROM get_signatories)
               AND EXISTS (SELECT * FROM check_account_signatories)
-          )"
-           % R"(
+          )",
+           R"(
               WHEN NOT (SELECT * FROM has_perm) THEN 6
               WHEN NOT EXISTS (SELECT * FROM get_account) THEN 3
               WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 4
               WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 5
-          )")
-              .str();
-      std::string removeSignatoryWithoutValidation =
-          (boost::format(removeSignatoryBase)
-           % "removeSignatoryWithoutValidation" % "" % "" % "")
-              .str();
+          )"}};
 
-      sql << removeSignatoryWithValidation;
-      sql << removeSignatoryWithoutValidation;
+      statements = compileStatement(remove_signatory);
 
-      std::string revokePermissionWithValidation =
-          (boost::format(revokePermissionBase)
-           % "revokePermissionWithValidation"
-           % (boost::format(R"(
+      sql << statements.first;
+      sql << statements.second;
+
+      PreparedStatement revoke_permission{
+          "revokePermission",
+          revokePermissionBase,
+          {(boost::format(R"(
             has_perm AS (SELECT COALESCE(bit_or(permission), '0'::bit(%1%))
           & $3 = $3 FROM account_has_grantable_permissions
               WHERE account_id = $1 AND
               permittee_account_id = $2),)")
-              % grantable_bits)
-                 .str()
-           % R"( AND (SELECT * FROM has_perm))"
-           % R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )")
-              .str();
-      std::string revokePermissionWithoutValidation =
-          (boost::format(revokePermissionBase)
-           % "revokePermissionWithoutValidation" % "" % "" % "")
-              .str();
+            % grantable_bits)
+               .str(),
+           R"( AND (SELECT * FROM has_perm))",
+           R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )"}};
 
-      sql << revokePermissionWithValidation;
-      sql << revokePermissionWithoutValidation;
+      statements = compileStatement(revoke_permission);
 
-      std::string setAccountDetailWithValidation =
-          (boost::format(setAccountDetailBase)
-           % "setAccountDetailWithValidation"
-           % (boost::format(R"(
+      sql << statements.first;
+      sql << statements.second;
+
+      PreparedStatement set_account_detail{
+          "setAccountDetail",
+          setAccountDetailBase,
+          {(boost::format(R"(
               has_role_perm AS (%s),
               has_grantable_perm AS (%s),
               has_perm AS (SELECT CASE
@@ -1580,88 +1570,78 @@ namespace iroha {
                                ELSE false END
               ),
               )")
-              % checkAccountRolePermission(
-                    shared_model::interface::permissions::Role::kSetDetail,
-                    "$1")
-              % checkAccountGrantablePermission(
-                    shared_model::interface::permissions::Grantable::
-                        kSetMyAccountDetail,
-                    "$1",
-                    "$2"))
-                 .str()
-           % R"( AND (SELECT * FROM has_perm))"
-           % R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )")
-              .str();
-      std::string setAccountDetailWithoutValidation =
-          (boost::format(setAccountDetailBase)
-           % "setAccountDetailWithoutValidation" % "" % "" % "")
-              .str();
+            % checkAccountRolePermission(
+                  shared_model::interface::permissions::Role::kSetDetail, "$1")
+            % checkAccountGrantablePermission(
+                  shared_model::interface::permissions::Grantable::
+                      kSetMyAccountDetail,
+                  "$1",
+                  "$2"))
+               .str(),
+           R"( AND (SELECT * FROM has_perm))",
+           R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )"}};
 
-      sql << setAccountDetailWithValidation;
-      sql << setAccountDetailWithoutValidation;
+      statements = compileStatement(set_account_detail);
 
-      std::string setQuorumWithValidation =
-          (boost::format(setQuorumBase) % "setQuorumWithValidation" % R"(
-          get_signatories AS (
-              SELECT public_key FROM account_has_signatory
-              WHERE account_id = $2
-          ),
-          check_account_signatories AS (
-              SELECT 1 FROM account
-              WHERE $3 >= (SELECT COUNT(*) FROM get_signatories)
-              AND account_id = $2
-          ),)"
-           % (boost::format(R"(
+      sql << statements.first;
+      sql << statements.second;
+
+      PreparedStatement set_quorum{
+          "setQuorum",
+          setQuorumBase,
+          {R"( get_signatories AS (
+                    SELECT public_key FROM account_has_signatory
+                    WHERE account_id = $2
+                ),
+                check_account_signatories AS (
+                    SELECT 1 FROM account
+                    WHERE $3 >= (SELECT COUNT(*) FROM get_signatories)
+                    AND account_id = $2
+                ),)",
+           (boost::format(R"(
           has_perm AS (%s),)")
-              % checkAccountHasRoleOrGrantablePerm(
-                    shared_model::interface::permissions::Role::kSetQuorum,
-                    shared_model::interface::permissions::Grantable::
-                        kSetMyQuorum,
-                    "$1",
-                    "$2"))
-                 .str()
-           % R"(AND EXISTS
+            % checkAccountHasRoleOrGrantablePerm(
+                  shared_model::interface::permissions::Role::kSetQuorum,
+                  shared_model::interface::permissions::Grantable::kSetMyQuorum,
+                  "$1",
+                  "$2"))
+               .str(),
+           R"(AND EXISTS
               (SELECT * FROM get_signatories)
               AND EXISTS (SELECT * FROM check_account_signatories)
-              AND (SELECT * FROM has_perm))"
-           % R"(
+              AND (SELECT * FROM has_perm))",
+           R"(
               WHEN NOT (SELECT * FROM has_perm) THEN 3
               WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 1
               WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 2
-              )")
-              .str();
-      std::string setQuorumWithoutValidation =
-          (boost::format(setQuorumBase) % "setQuorumWithoutValidation" % "" % ""
-           % "" % "")
-              .str();
+              )"}};
 
-      sql << setQuorumWithValidation;
-      sql << setQuorumWithoutValidation;
+      statements = compileStatement(set_quorum);
 
-      std::string subtractAssetQuantityWithValidation =
-          (boost::format(subtractAssetQuantityBase)
-           % "subtractAssetQuantityWithValidation"
-           % (boost::format(R"(
+      sql << statements.first;
+      sql << statements.second;
+
+      PreparedStatement subtract_asset_quantity{
+          "subtractAssetQuantity",
+          subtractAssetQuantityBase,
+          {(boost::format(R"(
                has_perm AS (%s),)")
-              % checkAccountRolePermission(
-                    shared_model::interface::permissions::Role::
-                        kSubtractAssetQty,
-                    "$1"))
-                 .str()
-           % R"( AND (SELECT * FROM has_perm))"
-           % R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )")
-              .str();
-      std::string subtractAssetQuantityWithoutValidation =
-          (boost::format(subtractAssetQuantityBase)
-           % "subtractAssetQuantityWithoutValidation" % "" % "" % "")
-              .str();
+            % checkAccountRolePermission(
+                  shared_model::interface::permissions::Role::kSubtractAssetQty,
+                  "$1"))
+               .str(),
+           R"( AND (SELECT * FROM has_perm))",
+           R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )"}};
 
-      sql << subtractAssetQuantityWithValidation;
-      sql << subtractAssetQuantityWithoutValidation;
+      statements = compileStatement(subtract_asset_quantity);
 
-      std::string transferAssetWithValidation =
-          (boost::format(transferAssetBase) % "transferAssetWithValidation"
-           % (boost::format(R"(
+      sql << statements.first;
+      sql << statements.second;
+
+      PreparedStatement transfer_asset{
+          "transferAsset",
+          transferAssetBase,
+          {(boost::format(R"(
               has_role_perm AS (%s),
               has_grantable_perm AS (%s),
               dest_can_receive AS (%s),
@@ -1679,27 +1659,24 @@ namespace iroha {
                                ELSE false END
               ),
               )")
-              % checkAccountRolePermission(
-                    shared_model::interface::permissions::Role::kTransfer, "$1")
-              % checkAccountGrantablePermission(
-                    shared_model::interface::permissions::Grantable::
-                        kTransferMyAssets,
-                    "$1",
-                    "$2")
-              % checkAccountRolePermission(
-                    shared_model::interface::permissions::Role::kReceive, "$3"))
-                 .str()
-           % R"( AND (SELECT * FROM has_perm))"
-           % R"( AND (SELECT * FROM has_perm))"
-           % R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )")
-              .str();
-      std::string transferAssetWithoutValidation =
-          (boost::format(transferAssetBase) % "transferAssetWithoutValidation"
-           % "" % "" % "" % "")
-              .str();
+            % checkAccountRolePermission(
+                  shared_model::interface::permissions::Role::kTransfer, "$1")
+            % checkAccountGrantablePermission(
+                  shared_model::interface::permissions::Grantable::
+                      kTransferMyAssets,
+                  "$1",
+                  "$2")
+            % checkAccountRolePermission(
+                  shared_model::interface::permissions::Role::kReceive, "$3"))
+               .str(),
+           R"( AND (SELECT * FROM has_perm))",
+           R"( AND (SELECT * FROM has_perm))",
+           R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )"}};
 
-      sql << transferAssetWithValidation;
-      sql << transferAssetWithoutValidation;
+      statements = compileStatement(transfer_asset);
+
+      sql << statements.first;
+      sql << statements.second;
     };
   }  // namespace ametsuchi
 }  // namespace iroha
