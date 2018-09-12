@@ -24,16 +24,17 @@ namespace shared_model {
                                TransactionResponse> {
      public:
       /// Type of variant, that handle all concrete tx responses in the system
-      using ProtoResponseVariantType = boost::variant<StatelessFailedTxResponse,
-                                                      StatelessValidTxResponse,
-                                                      StatefulFailedTxResponse,
-                                                      StatefulValidTxResponse,
-                                                      RejectedTxResponse,
-                                                      CommittedTxResponse,
-                                                      MstExpiredResponse,
-                                                      NotReceivedTxResponse,
-                                                      MstPendingResponse,
-                                                      EnoughSignaturesCollectedResponse>;
+      using ProtoResponseVariantType =
+          boost::variant<StatelessFailedTxResponse,
+                         StatelessValidTxResponse,
+                         StatefulFailedTxResponse,
+                         StatefulValidTxResponse,
+                         RejectedTxResponse,
+                         CommittedTxResponse,
+                         MstExpiredResponse,
+                         NotReceivedTxResponse,
+                         MstPendingResponse,
+                         EnoughSignaturesCollectedResponse>;
 
       /// Type with list of types in ResponseVariantType
       using ProtoResponseListType = ProtoResponseVariantType::types;
@@ -112,7 +113,8 @@ namespace shared_model {
             [](const StatefulFailedTxResponse &) { return 5; },
             [](const MstExpiredResponse &) { return 5; },
             // following types are the final ones
-            [](const CommittedTxResponse &) { return max_priority; });
+            [](const CommittedTxResponse &) { return max_priority; },
+            [](const RejectedTxResponse &) { return max_priority; });
       }
     };
   }  // namespace  proto

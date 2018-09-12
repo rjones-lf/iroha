@@ -66,6 +66,13 @@ ProtoTxStatusFactory::makeTxStatusNotReceived(TransactionHashType hash,
   return wrap(fillCommon(hash, error, iroha::protocol::TxStatus::NOT_RECEIVED));
 }
 
+ProtoTxStatusFactory::FactoryReturnType
+ProtoTxStatusFactory::makeEnoughSignaturesCollected(TransactionHashType hash,
+                                                    ErrorMessageType error) {
+  return wrap(fillCommon(
+      hash, error, iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED));
+}
+
 // -------------------------------| Private API |-------------------------------
 
 iroha::protocol::ToriiResponse ProtoTxStatusFactory::fillCommon(

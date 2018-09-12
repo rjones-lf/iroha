@@ -65,6 +65,10 @@ namespace shared_model {
       /// Creates transaction is not received status
       virtual FactoryReturnType makeTxStatusNotReceived(TransactionHashType,
                                                         ErrorMessageType) = 0;
+
+      // Creates status which shows that enough signatures were collected
+      virtual FactoryReturnType makeEnoughSignaturesCollected(
+          TransactionHashType, ErrorMessageType) = 0;
     };
   }  // namespace interface
 }  // namespace shared_model

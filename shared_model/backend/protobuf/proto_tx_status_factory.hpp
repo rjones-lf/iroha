@@ -14,6 +14,7 @@ namespace shared_model {
     class ProtoTxStatusFactory : public interface::TxStatusFactory {
      private:
       using FactoryReturnType = interface::TxStatusFactory::FactoryReturnType;
+
      public:
       // ------------------------| Stateless statuses |-------------------------
 
@@ -45,6 +46,9 @@ namespace shared_model {
 
       FactoryReturnType makeTxStatusNotReceived(TransactionHashType,
                                                 ErrorMessageType) override;
+
+      FactoryReturnType makeEnoughSignaturesCollected(
+          TransactionHashType, ErrorMessageType) override;
 
      private:
       /**
