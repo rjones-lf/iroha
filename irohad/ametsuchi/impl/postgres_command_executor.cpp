@@ -1268,26 +1268,30 @@ namespace iroha {
         const PreparedStatement &statement) {
       auto initial = boost::format(statement.command_base);
 
-      try {
-        auto with_validation =
-            initial % (statement.command_name + "WithValidation");
+      auto with_validation =
+          initial % (statement.command_name + "WithValidation");
 
-        for (const auto &check : statement.permission_checks) {
-          with_validation = with_validation % check;
-        }
-
-        initial = boost::format(statement.command_base);
-
-        auto without_validation =
-            initial % (statement.command_name + "WithoutValidation");
-
-        for (const auto &check : statement.permission_checks) {
-          without_validation = without_validation % "";
-        }
-        return {with_validation.str(), without_validation.str()};
-      } catch (...) {
-        throw std::out_of_range(statement.command_name);
+      for (const auto &check : statement.permission_checks) {
+        with_validation = with_validation % check;
       }
+
+      initial = boost::format(statement.command_base);
+
+      auto without_validation =
+          initial % (statement.command_name + "WithoutValidation");
+
+      for (int i = 0; i < statement.permission_checks.size(); i++) {
+        without_validation = without_validation % "";
+      }
+      return {with_validation.str(), without_validation.str()};
+    }
+
+    void prepareStatement(soci::session &sql,
+                          const PreparedStatement &statement) {
+      auto queries = compileStatement(statement);
+
+      sql << queries.first;
+      sql << queries.second;
     }
 
     void PostgresCommandExecutor::prepareStatements(soci::session &sql) {
@@ -1301,10 +1305,7 @@ namespace iroha {
                .str(),
            "AND (SELECT * from has_perm)",
            "WHEN NOT (SELECT * from has_perm) THEN 1"}};
-      auto statements = compileStatement(add_asset_quantity);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, add_asset_quantity);
 
       PreparedStatement add_peer{
           "addPeer",
@@ -1316,10 +1317,7 @@ namespace iroha {
            "WHERE (SELECT * FROM has_perm)",
            "WHEN NOT (SELECT * from has_perm) THEN 1"}};
 
-      statements = compileStatement(add_peer);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, add_peer);
 
       PreparedStatement add_signatory{
           "addSignatory",
@@ -1337,10 +1335,7 @@ namespace iroha {
            " AND (SELECT * FROM has_perm)",
            "WHEN NOT (SELECT * from has_perm) THEN 1"}};
 
-      statements = compileStatement(add_signatory);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, add_signatory);
 
       const auto bits = shared_model::interface::RolePermissionSet::size();
       const auto grantable_bits =
@@ -1379,10 +1374,7 @@ namespace iroha {
                 WHEN NOT (SELECT * FROM account_has_role_permissions) THEN 2
                 WHEN NOT (SELECT * FROM has_perm) THEN 3)"}};
 
-      statements = compileStatement(append_role);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, append_role);
 
       PreparedStatement create_account{
           "createAccount",
@@ -1396,10 +1388,7 @@ namespace iroha {
            R"(AND (SELECT * FROM has_perm))",
            R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}};
 
-      statements = compileStatement(create_account);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, create_account);
 
       PreparedStatement create_asset{
           "createAsset",
@@ -1413,10 +1402,7 @@ namespace iroha {
            R"(WHERE (SELECT * FROM has_perm))",
            R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}};
 
-      statements = compileStatement(create_asset);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, create_asset);
 
       PreparedStatement create_domain{
           "createDomain",
@@ -1430,10 +1416,7 @@ namespace iroha {
            R"(WHERE (SELECT * FROM has_perm))",
            R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}};
 
-      statements = compileStatement(create_domain);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, create_domain);
 
       PreparedStatement create_role{
           "createRole",
@@ -1457,10 +1440,7 @@ namespace iroha {
                                account_has_role_permissions) THEN 2
                         WHEN NOT (SELECT * FROM has_perm) THEN 3)"}};
 
-      statements = compileStatement(create_role);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, create_role);
 
       PreparedStatement detach_role{
           "detachRole",
@@ -1474,10 +1454,7 @@ namespace iroha {
            R"(AND (SELECT * FROM has_perm))",
            R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}};
 
-      statements = compileStatement(detach_role);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, detach_role);
 
       PreparedStatement grant_permission{
           "grantPermission",
@@ -1492,10 +1469,7 @@ namespace iroha {
            R"( WHERE (SELECT * FROM has_perm))",
            R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}};
 
-      statements = compileStatement(grant_permission);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, grant_permission);
 
       PreparedStatement remove_signatory{
           "removeSignatory",
@@ -1534,10 +1508,7 @@ namespace iroha {
               WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 5
           )"}};
 
-      statements = compileStatement(remove_signatory);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, remove_signatory);
 
       PreparedStatement revoke_permission{
           "revokePermission",
@@ -1552,10 +1523,7 @@ namespace iroha {
            R"( AND (SELECT * FROM has_perm))",
            R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )"}};
 
-      statements = compileStatement(revoke_permission);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, revoke_permission);
 
       PreparedStatement set_account_detail{
           "setAccountDetail",
@@ -1581,10 +1549,7 @@ namespace iroha {
            R"( AND (SELECT * FROM has_perm))",
            R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )"}};
 
-      statements = compileStatement(set_account_detail);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, set_account_detail);
 
       PreparedStatement set_quorum{
           "setQuorum",
@@ -1616,10 +1581,7 @@ namespace iroha {
               WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 2
               )"}};
 
-      statements = compileStatement(set_quorum);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, set_quorum);
 
       PreparedStatement subtract_asset_quantity{
           "subtractAssetQuantity",
@@ -1633,10 +1595,7 @@ namespace iroha {
            R"( AND (SELECT * FROM has_perm))",
            R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )"}};
 
-      statements = compileStatement(subtract_asset_quantity);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, subtract_asset_quantity);
 
       PreparedStatement transfer_asset{
           "transferAsset",
@@ -1673,10 +1632,7 @@ namespace iroha {
            R"( AND (SELECT * FROM has_perm))",
            R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )"}};
 
-      statements = compileStatement(transfer_asset);
-
-      sql << statements.first;
-      sql << statements.second;
+      prepareStatement(sql, transfer_asset);
     };
   }  // namespace ametsuchi
 }  // namespace iroha
