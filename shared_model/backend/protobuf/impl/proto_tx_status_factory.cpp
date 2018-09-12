@@ -7,17 +7,42 @@
 
 using namespace shared_model::proto;
 
+// -------------------------------| Private API |-------------------------------
+
+/**
+ * Fills common fields for all statuses
+ */
+iroha::protocol::ToriiResponse fillCommon(
+    ProtoTxStatusFactory::TransactionHashType hash,
+    ProtoTxStatusFactory::ErrorMessageType error,
+    iroha::protocol::TxStatus status) {
+  iroha::protocol::ToriiResponse response;
+  response.set_tx_hash(shared_model::crypto::toBinaryString(hash));
+  response.set_error_message(error);
+  response.set_tx_status(status);
+  return response;
+}
+
+/**
+ * Wraps status with model object
+ */
+ProtoTxStatusFactory::FactoryReturnType wrap(
+    iroha::protocol::ToriiResponse &&value) {
+  return std::make_unique<shared_model::proto::TransactionResponse>(
+      std::move(value));
+}
+
 // ---------------------------| Stateless statuses |----------------------------
 
 ProtoTxStatusFactory::FactoryReturnType
-ProtoTxStatusFactory::makeTxStatusStatelessFail(TransactionHashType hash,
+ProtoTxStatusFactory::makeStatelessFail(TransactionHashType hash,
                                                 ErrorMessageType error) {
   return wrap(fillCommon(
       hash, error, iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED));
 }
 
 ProtoTxStatusFactory::FactoryReturnType
-ProtoTxStatusFactory::makeTxStatusStatelessValid(TransactionHashType hash,
+ProtoTxStatusFactory::makeStatelessValid(TransactionHashType hash,
                                                  ErrorMessageType error) {
   return wrap(fillCommon(
       hash, error, iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS));
@@ -26,28 +51,28 @@ ProtoTxStatusFactory::makeTxStatusStatelessValid(TransactionHashType hash,
 // ---------------------------| Stateful statuses |-----------------------------
 
 ProtoTxStatusFactory::FactoryReturnType
-ProtoTxStatusFactory::makeTxStatusStatefulFail(TransactionHashType hash,
+ProtoTxStatusFactory::makeStatefulFail(TransactionHashType hash,
                                                ErrorMessageType error) {
   return wrap(fillCommon(
       hash, error, iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED));
 }
 ProtoTxStatusFactory::FactoryReturnType
-ProtoTxStatusFactory::makeTxStatusStatefulValid(TransactionHashType hash,
+ProtoTxStatusFactory::makeStatefulValid(TransactionHashType hash,
                                                 ErrorMessageType error) {
   return wrap(fillCommon(
       hash, error, iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS));
 }
 
-// ------------------------------| End statuses |-------------------------------
+// -----------------------------| Final statuses |------------------------------
 
 ProtoTxStatusFactory::FactoryReturnType
-ProtoTxStatusFactory::makeTxStatusCommitted(TransactionHashType hash,
+ProtoTxStatusFactory::makeCommitted(TransactionHashType hash,
                                             ErrorMessageType error) {
   return wrap(fillCommon(hash, error, iroha::protocol::TxStatus::COMMITTED));
 }
 
 ProtoTxStatusFactory::FactoryReturnType
-ProtoTxStatusFactory::makeTxStatusRejected(TransactionHashType hash,
+ProtoTxStatusFactory::makeRejected(TransactionHashType hash,
                                            ErrorMessageType error) {
   return wrap(fillCommon(hash, error, iroha::protocol::TxStatus::REJECTED));
 }
@@ -55,13 +80,13 @@ ProtoTxStatusFactory::makeTxStatusRejected(TransactionHashType hash,
 // -----------------------------| Rest statuses |-------------------------------
 
 ProtoTxStatusFactory::FactoryReturnType
-ProtoTxStatusFactory::makeTxStatusMstExpired(TransactionHashType hash,
+ProtoTxStatusFactory::makeMstExpired(TransactionHashType hash,
                                              ErrorMessageType error) {
   return wrap(fillCommon(hash, error, iroha::protocol::TxStatus::MST_EXPIRED));
 }
 
 ProtoTxStatusFactory::FactoryReturnType
-ProtoTxStatusFactory::makeTxStatusNotReceived(TransactionHashType hash,
+ProtoTxStatusFactory::makeNotReceived(TransactionHashType hash,
                                               ErrorMessageType error) {
   return wrap(fillCommon(hash, error, iroha::protocol::TxStatus::NOT_RECEIVED));
 }
@@ -71,23 +96,4 @@ ProtoTxStatusFactory::makeEnoughSignaturesCollected(TransactionHashType hash,
                                                     ErrorMessageType error) {
   return wrap(fillCommon(
       hash, error, iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED));
-}
-
-// -------------------------------| Private API |-------------------------------
-
-iroha::protocol::ToriiResponse ProtoTxStatusFactory::fillCommon(
-    TransactionHashType hash,
-    ErrorMessageType error,
-    iroha::protocol::TxStatus status) {
-  iroha::protocol::ToriiResponse response;
-  response.set_tx_hash(crypto::toBinaryString(hash));
-  response.set_error_message(error);
-  response.set_tx_status(status);
-  return response;
-}
-
-ProtoTxStatusFactory::FactoryReturnType ProtoTxStatusFactory::wrap(
-    iroha::protocol::ToriiResponse &&value) {
-  return std::make_unique<shared_model::proto::TransactionResponse>(
-      std::move(value));
 }

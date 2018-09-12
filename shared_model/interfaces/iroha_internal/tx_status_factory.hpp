@@ -18,57 +18,63 @@ namespace shared_model {
      */
     class TxStatusFactory {
      public:
-      virtual ~TxStatusFactory() = default;
-
+      /// return type of all generative methods
       using FactoryReturnType = std::unique_ptr<TransactionResponse>;
 
+      /// type of transaction hash
       using TransactionHashType =
           const TransactionResponse::TransactionHashType &;
 
+      /// type of error attached to \class TransactionResponse instance
       using ErrorMessageType = const TransactionResponse::ErrorMessageType &;
 
       // ------------------------| Stateless statuses |-------------------------
 
-      /// Creates stateless failed transaction status
-      virtual FactoryReturnType makeTxStatusStatelessFail(TransactionHashType,
-                                                          ErrorMessageType) = 0;
+      /**
+       * Creates stateless failed transaction status
+       * @param
+       */
+      virtual FactoryReturnType makeStatelessFail(TransactionHashType,
+                                                  ErrorMessageType) = 0;
 
       /// Creates stateless valid transaction status
-      virtual FactoryReturnType makeTxStatusStatelessValid(
-          TransactionHashType, ErrorMessageType) = 0;
+      virtual FactoryReturnType makeStatelessValid(TransactionHashType,
+                                                   ErrorMessageType) = 0;
 
       // ------------------------| Stateful statuses |--------------------------
 
       /// Creates stateful failed transaction status
-      virtual FactoryReturnType makeTxStatusStatefulFail(TransactionHashType,
-                                                         ErrorMessageType) = 0;
+      virtual FactoryReturnType makeStatefulFail(TransactionHashType,
+                                                 ErrorMessageType) = 0;
       /// Creates stateful valid transaction status
-      virtual FactoryReturnType makeTxStatusStatefulValid(TransactionHashType,
-                                                          ErrorMessageType) = 0;
+      virtual FactoryReturnType makeStatefulValid(TransactionHashType,
+                                                  ErrorMessageType) = 0;
 
-      // ---------------------------| End statuses |----------------------------
+      // --------------------------| Final statuses |---------------------------
 
       /// Creates committed transaction status
-      virtual FactoryReturnType makeTxStatusCommitted(TransactionHashType,
-                                                      ErrorMessageType) = 0;
+      virtual FactoryReturnType makeCommitted(TransactionHashType,
+                                              ErrorMessageType) = 0;
 
       /// Creates rejected transaction status
-      virtual FactoryReturnType makeTxStatusRejected(TransactionHashType,
-                                                     ErrorMessageType) = 0;
+      virtual FactoryReturnType makeRejected(TransactionHashType,
+                                             ErrorMessageType) = 0;
 
       // --------------------------| Rest statuses |----------------------------
 
       /// Creates transaction expired status
-      virtual FactoryReturnType makeTxStatusMstExpired(TransactionHashType,
-                                                       ErrorMessageType) = 0;
+      virtual FactoryReturnType makeMstExpired(TransactionHashType,
+                                               ErrorMessageType) = 0;
 
       /// Creates transaction is not received status
-      virtual FactoryReturnType makeTxStatusNotReceived(TransactionHashType,
-                                                        ErrorMessageType) = 0;
+      virtual FactoryReturnType makeNotReceived(TransactionHashType,
+                                                ErrorMessageType) = 0;
 
-      // Creates status which shows that enough signatures were collected
+      /// Creates status which shows that enough signatures were collected
       virtual FactoryReturnType makeEnoughSignaturesCollected(
           TransactionHashType, ErrorMessageType) = 0;
+
+      virtual ~TxStatusFactory() = default;
     };
   }  // namespace interface
 }  // namespace shared_model

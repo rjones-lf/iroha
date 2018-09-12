@@ -18,50 +18,37 @@ namespace shared_model {
      public:
       // ------------------------| Stateless statuses |-------------------------
 
-      FactoryReturnType makeTxStatusStatelessFail(TransactionHashType,
+      FactoryReturnType makeStatelessFail(TransactionHashType,
                                                   ErrorMessageType) override;
 
-      FactoryReturnType makeTxStatusStatelessValid(TransactionHashType,
+      FactoryReturnType makeStatelessValid(TransactionHashType,
                                                    ErrorMessageType) override;
 
       // ------------------------| Stateful statuses |--------------------------
 
-      FactoryReturnType makeTxStatusStatefulFail(TransactionHashType,
+      FactoryReturnType makeStatefulFail(TransactionHashType,
                                                  ErrorMessageType) override;
-      FactoryReturnType makeTxStatusStatefulValid(TransactionHashType,
+      FactoryReturnType makeStatefulValid(TransactionHashType,
                                                   ErrorMessageType) override;
 
-      // ---------------------------| End statuses |----------------------------
+      // --------------------------| Final statuses |---------------------------
 
-      FactoryReturnType makeTxStatusCommitted(TransactionHashType,
+      FactoryReturnType makeCommitted(TransactionHashType,
                                               ErrorMessageType) override;
 
-      FactoryReturnType makeTxStatusRejected(TransactionHashType,
+      FactoryReturnType makeRejected(TransactionHashType,
                                              ErrorMessageType) override;
 
       // --------------------------| Rest statuses |----------------------------
 
-      FactoryReturnType makeTxStatusMstExpired(TransactionHashType,
+      FactoryReturnType makeMstExpired(TransactionHashType,
                                                ErrorMessageType) override;
 
-      FactoryReturnType makeTxStatusNotReceived(TransactionHashType,
+      FactoryReturnType makeNotReceived(TransactionHashType,
                                                 ErrorMessageType) override;
 
       FactoryReturnType makeEnoughSignaturesCollected(
           TransactionHashType, ErrorMessageType) override;
-
-     private:
-      /**
-       * Fills common fields for all statuses
-       */
-      iroha::protocol::ToriiResponse fillCommon(TransactionHashType,
-                                                ErrorMessageType,
-                                                iroha::protocol::TxStatus);
-
-      /**
-       * Wraps status with model object
-       */
-      FactoryReturnType wrap(iroha::protocol::ToriiResponse &&);
     };
   }  // namespace proto
 }  // namespace shared_model

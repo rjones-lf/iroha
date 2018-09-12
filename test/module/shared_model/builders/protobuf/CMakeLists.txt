@@ -71,7 +71,7 @@ target_link_libraries(proto_transaction_responses_builder_test
     )
 
 addtest(proto_transaction_responses_factory_test
-    transaction_responses/proto_transaction_response_factory.cpp
+    transaction_responses/proto_transaction_response_factory_test.cpp
     )
 
 target_link_libraries(proto_transaction_responses_factory_test
