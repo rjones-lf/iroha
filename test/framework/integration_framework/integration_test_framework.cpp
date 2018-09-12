@@ -173,11 +173,12 @@ namespace integration_framework {
       const shared_model::crypto::Hash &hash,
       std::function<void(const shared_model::proto::TransactionResponse &)>
           validation) {
-    auto response =
-        iroha_instance_->getIrohaInstance()->getCommandService()->getStatus(
-            hash);
-    validation(static_cast<const shared_model::proto::TransactionResponse &>(
-        *response));
+    iroha::protocol::TxStatusRequest request;
+    request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
+    iroha::protocol::ToriiResponse response;
+    iroha_instance_->getIrohaInstance()->getCommandServiceTransport()->Status(
+        nullptr, &request, &response);
+    validation(shared_model::proto::TransactionResponse(std::move(response)));
     return *this;
   }
 

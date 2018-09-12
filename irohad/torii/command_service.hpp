@@ -24,7 +24,7 @@ namespace torii {
     virtual ~CommandService() = default;
 
     /**
-     * Actual implementation of sync Torii in CommandServiceImpl
+     * Actual implementation of sync Torii in CommandService
      * @param tx_list - transactions we've received
      */
     virtual void handleTransactionList(
