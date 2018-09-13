@@ -35,15 +35,15 @@ namespace shared_model {
 
       Answer validate(const Model &model,
                       interface::types::TimestampType current_timestamp) const {
-        return validateImpl(model, [&, current_timestamp](const auto &model) {
-          return ModelValidator::validate(model, current_timestamp);
-        });
+        auto f = [&, current_timestamp](const Model &m) {
+          return ModelValidator::validate(m, current_timestamp);
+        };
+        return validateImpl(model, f);
       }
 
       Answer validate(const Model &model) const {
-        return validateImpl(model, [&](const auto &model) {
-          return ModelValidator::validate(model);
-        });
+        auto f = [&](const Model &m) { return ModelValidator::validate(m); };
+        return validateImpl(model, f);
       }
 
      private:
