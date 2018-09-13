@@ -48,10 +48,6 @@ namespace iroha {
                               const protocol::Proposal *request,
                               ::google::protobuf::Empty *response) override;
 
-      void propagateTransaction(
-          std::shared_ptr<const shared_model::interface::Transaction>
-              transaction) override;
-
       void propagateBatch(
           const shared_model::interface::TransactionBatch &batch) override;
 

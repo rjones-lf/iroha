@@ -39,14 +39,6 @@ namespace iroha {
     class OrderingGate {
      public:
       /**
-       * Propagate a signed transaction for further processing
-       * @param transaction
-       */
-      virtual void propagateTransaction(
-          std::shared_ptr<const shared_model::interface::Transaction>
-              transaction) const = 0;
-
-      /**
        * Propagate a transaction batch for further processing
        * @param batch
        */

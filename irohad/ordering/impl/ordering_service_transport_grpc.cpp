@@ -19,34 +19,6 @@ void OrderingServiceTransportGrpc::subscribe(
   subscriber_ = subscriber;
 }
 
-grpc::Status OrderingServiceTransportGrpc::onTransaction(
-    ::grpc::ServerContext *context,
-    const iroha::protocol::Transaction *request,
-    ::google::protobuf::Empty *response) {
-  async_call_->log_->info("OrderingServiceTransportGrpc::onTransaction");
-  if (subscriber_.expired()) {
-    async_call_->log_->error("No subscriber");
-  } else {
-    auto batch_result = shared_model::interface::TransactionBatchFactory::
-        createTransactionBatch<
-            shared_model::validation::DefaultSignedTransactionValidator>(
-            std::make_shared<shared_model::proto::Transaction>(
-                iroha::protocol::Transaction(*request)));
-    batch_result.match(
-        [this](iroha::expected::Value<shared_model::interface::TransactionBatch>
-                   &batch) {
-          subscriber_.lock()->onBatch(std::move(batch.value));
-        },
-        [this](const iroha::expected::Error<std::string> &error) {
-          async_call_->log_->error(
-              "Could not create batch from received single transaction: {}",
-              error.error);
-        });
-  }
-
-  return ::grpc::Status::OK;
-}
-
 grpc::Status OrderingServiceTransportGrpc::onBatch(
     ::grpc::ServerContext *context,
     const protocol::TxList *request,

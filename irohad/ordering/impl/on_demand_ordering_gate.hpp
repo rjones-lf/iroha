@@ -48,10 +48,6 @@ namespace iroha {
               factory,
           transport::Round initial_round);
 
-      [[deprecated("Use propagateBatch")]] void propagateTransaction(
-          std::shared_ptr<const shared_model::interface::Transaction>
-              transaction) const override;
-
       void propagateBatch(const shared_model::interface::TransactionBatch
                               &batch) const override;
 

@@ -68,10 +68,6 @@ namespace iroha {
           shared_model::interface::types::HeightType initial_height,
           bool run_async = true);
 
-      void propagateTransaction(
-          std::shared_ptr<const shared_model::interface::Transaction>
-              transaction) const override;
-
       void propagateBatch(const shared_model::interface::TransactionBatch
                               &batch) const override;
 

@@ -48,21 +48,6 @@ OrderingGateTransportGrpc::OrderingGateTransportGrpc(
       factory_(std::make_unique<shared_model::proto::ProtoProposalFactory<
                    shared_model::validation::DefaultProposalValidator>>()) {}
 
-void OrderingGateTransportGrpc::propagateTransaction(
-    std::shared_ptr<const shared_model::interface::Transaction> transaction) {
-  async_call_->log_->info("Propagate tx (on transport)");
-
-  auto transaction_transport =
-      static_cast<const shared_model::proto::Transaction &>(*transaction)
-          .getTransport();
-  async_call_->log_->debug("Propagating: '{}'",
-                           transaction_transport.DebugString());
-
-  async_call_->Call([&](auto context, auto cq) {
-    return client_->AsynconTransaction(context, transaction_transport, cq);
-  });
-}
-
 void OrderingGateTransportGrpc::propagateBatch(
     const shared_model::interface::TransactionBatch &batch) {
   async_call_->log_->info("Propagate transaction batch (on transport)");

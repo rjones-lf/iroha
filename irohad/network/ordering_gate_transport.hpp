@@ -62,14 +62,6 @@ namespace iroha {
           std::shared_ptr<OrderingGateNotification> subscriber) = 0;
 
       /**
-       * Propagates transaction over network
-       * @param transaction : transaction to be propagated
-       */
-      virtual void propagateTransaction(
-          std::shared_ptr<const shared_model::interface::Transaction>
-              transaction) = 0;
-
-      /**
        * Propagates transaction batch over network
        * @param batch to be propagated
        */

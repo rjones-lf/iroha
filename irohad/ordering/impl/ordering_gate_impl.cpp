@@ -43,15 +43,6 @@ namespace iroha {
           log_(logger::log("OrderingGate")),
           run_async_(run_async) {}
 
-    void OrderingGateImpl::propagateTransaction(
-        std::shared_ptr<const shared_model::interface::Transaction> transaction)
-        const {
-      log_->info("propagate tx, account_id: {}",
-                 " account_id: " + transaction->creatorAccountId());
-
-      transport_->propagateTransaction(transaction);
-    }
-
     void OrderingGateImpl::propagateBatch(
         const shared_model::interface::TransactionBatch &batch) const {
       if (batch.transactions().empty()) {

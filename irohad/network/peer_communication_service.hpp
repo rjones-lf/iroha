@@ -42,15 +42,6 @@ namespace iroha {
     class PeerCommunicationService {
      public:
       /**
-       * @deprecated use propagate_batch instead
-       * Propagate transaction in network
-       * @param transaction - object for propagation
-       */
-      virtual void propagate_transaction(
-          std::shared_ptr<const shared_model::interface::Transaction>
-              transaction) const = 0;
-
-      /**
        * Propagate batch to the network
        * @param batch - batch for propagation
        */
