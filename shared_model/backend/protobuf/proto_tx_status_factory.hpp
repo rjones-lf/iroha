@@ -12,40 +12,39 @@
 namespace shared_model {
   namespace proto {
     class ProtoTxStatusFactory : public interface::TxStatusFactory {
-     private:
+     public:
       using FactoryReturnType = interface::TxStatusFactory::FactoryReturnType;
 
-     public:
       // ------------------------| Stateless statuses |-------------------------
 
       FactoryReturnType makeStatelessFail(TransactionHashType,
-                                                  ErrorMessageType) override;
+                                          ErrorMessageType) override;
 
       FactoryReturnType makeStatelessValid(TransactionHashType,
-                                                   ErrorMessageType) override;
+                                           ErrorMessageType) override;
 
       // ------------------------| Stateful statuses |--------------------------
 
       FactoryReturnType makeStatefulFail(TransactionHashType,
-                                                 ErrorMessageType) override;
+                                         ErrorMessageType) override;
       FactoryReturnType makeStatefulValid(TransactionHashType,
-                                                  ErrorMessageType) override;
+                                          ErrorMessageType) override;
 
       // --------------------------| Final statuses |---------------------------
 
       FactoryReturnType makeCommitted(TransactionHashType,
-                                              ErrorMessageType) override;
+                                      ErrorMessageType) override;
 
       FactoryReturnType makeRejected(TransactionHashType,
-                                             ErrorMessageType) override;
+                                     ErrorMessageType) override;
 
       // --------------------------| Rest statuses |----------------------------
 
       FactoryReturnType makeMstExpired(TransactionHashType,
-                                               ErrorMessageType) override;
+                                       ErrorMessageType) override;
 
       FactoryReturnType makeNotReceived(TransactionHashType,
-                                                ErrorMessageType) override;
+                                        ErrorMessageType) override;
 
       FactoryReturnType makeEnoughSignaturesCollected(
           TransactionHashType, ErrorMessageType) override;

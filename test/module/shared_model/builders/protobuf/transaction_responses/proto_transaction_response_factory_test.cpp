@@ -19,9 +19,8 @@ TEST(ProtoTransactionStatusFactoryTest, TestStatusType) {
   auto expected_hash = shared_model::crypto::Hash(std::string(32, '1'));
   auto error_massage = std::string("error");
 
-  auto response =
-      shared_model::proto::ProtoTxStatusFactory().makeTxStatusCommitted(
-          expected_hash, error_massage);
+  auto response = shared_model::proto::ProtoTxStatusFactory().makeCommitted(
+      expected_hash, error_massage);
 
   ASSERT_EQ(response->transactionHash(), expected_hash);
   ASSERT_EQ(response->errorMessage(), error_massage);
@@ -42,13 +41,11 @@ TEST(ProtoTransactionStatusFactoryTest, SeveralObjectsFromOneBuilder) {
   auto expected_hash = shared_model::crypto::Hash(std::string(32, '1'));
   auto error_massage = std::string("error");
 
-  auto response1 =
-      shared_model::proto::ProtoTxStatusFactory().makeTxStatusMstExpired(
-          expected_hash, error_massage);
+  auto response1 = shared_model::proto::ProtoTxStatusFactory().makeMstExpired(
+      expected_hash, error_massage);
 
-  auto response2 =
-      shared_model::proto::ProtoTxStatusFactory().makeTxStatusMstExpired(
-          expected_hash, error_massage);
+  auto response2 = shared_model::proto::ProtoTxStatusFactory().makeMstExpired(
+      expected_hash, error_massage);
 
   ASSERT_EQ(*response1, *response2);
 }
