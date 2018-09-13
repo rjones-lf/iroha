@@ -207,7 +207,9 @@ TEST(StateTest, DifferenceTest) {
 /**
  * @given an empty state
  * @when a partially signed transaction with quorum 3 is inserted 3 times
- * @then  the resulting state contains one signed transaction
+ * @then each time new signature inserted state gives this batch back @and
+ * returned statuses correspond to actual ones @and the resulting state contains
+ * one signed transaction
  */
 TEST(StateTest, UpdateTxUntillQuorum) {
   auto quorum = 3u;
@@ -217,15 +219,21 @@ TEST(StateTest, UpdateTxUntillQuorum) {
 
   auto state_after_one_tx = state += addSignatures(
       makeTestBatch(txBuilder(1, time, quorum)), 0, makeSignature("1", "1"));
-  ASSERT_EQ(0, state_after_one_tx.getBatches().size());
+  ASSERT_EQ(1, state_after_one_tx.updated_state_->getBatches().size());
+  ASSERT_EQ(0, state_after_one_tx.completed_state_->getBatches().size());
 
   auto state_after_two_txes = state += addSignatures(
       makeTestBatch(txBuilder(1, time, quorum)), 0, makeSignature("2", "2"));
-  ASSERT_EQ(0, state_after_one_tx.getBatches().size());
+  ASSERT_EQ(1, state_after_two_txes.updated_state_->getBatches().size());
+  ASSERT_EQ(0, state_after_two_txes.completed_state_->getBatches().size());
 
   auto state_after_three_txes = state += addSignatures(
       makeTestBatch(txBuilder(1, time, quorum)), 0, makeSignature("3", "3"));
-  ASSERT_EQ(1, state_after_three_txes.getBatches().size());
+  ASSERT_EQ(0, state_after_three_txes.updated_state_->getBatches().size());
+  ASSERT_EQ(1, state_after_three_txes.completed_state_->getBatches().size());
+  ASSERT_TRUE(state_after_three_txes.completed_state_->getBatches()
+                  .front()
+                  ->hasAllSignatures());
   ASSERT_EQ(0, state.getBatches().size());
 }
 
@@ -258,8 +266,8 @@ TEST(StateTest, UpdateStateWithNewStateUntilQuorum) {
                           makeSignature("1_3", "1_3"));
   ASSERT_EQ(1, state2.getBatches().size());
 
-  auto completed_state = state1 += state2;
-  ASSERT_EQ(1, completed_state.getBatches().size());
+  auto final_state = state1 += state2;
+  ASSERT_EQ(1, final_state.completed_state_->getBatches().size());
   ASSERT_EQ(1, state1.getBatches().size());
 }
 
@@ -324,8 +332,9 @@ TEST(StateTest, TimeIndexInsertionByAddState) {
   state2 += addSignatures(
       makeTestBatch(txBuilder(3, time)), 0, makeSignature("3", "3"));
 
-  auto completed_state = state1 += state2;
-  ASSERT_EQ(0, completed_state.getBatches().size());
+  auto final_state = state1 += state2;
+  ASSERT_EQ(0, final_state.completed_state_->getBatches().size());
+  ASSERT_EQ(2, final_state.updated_state_->getBatches().size());
 }
 
 /**

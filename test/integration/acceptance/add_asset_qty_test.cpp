@@ -31,11 +31,9 @@ TEST_F(AddAssetQuantity, Basic) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().addAssetQuantity(kAssetId, kAmount)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(
+          complete(baseTx().addAssetQuantity(kAssetId, kAmount)),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
@@ -54,7 +52,8 @@ TEST_F(AddAssetQuantity, NoPermissions) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -68,6 +67,7 @@ TEST_F(AddAssetQuantity, NegativeAmount) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, "-1.0")),
               checkStatelessInvalid);
@@ -84,6 +84,7 @@ TEST_F(AddAssetQuantity, ZeroAmount) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, "0.0")),
               checkStatelessInvalid);
@@ -107,17 +108,16 @@ TEST_F(AddAssetQuantity, Uint256DestOverflow) {
       .skipVerifiedProposal()
       .skipBlock()
       // Add first half of the maximum
-      .sendTx(complete(baseTx().addAssetQuantity(kAssetId, uint256_halfmax)))
-      .skipProposal()
-      .skipVerifiedProposal()
-      .checkBlock(
+      .sendTxAwait(
+          complete(baseTx().addAssetQuantity(kAssetId, uint256_halfmax)),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       // Add second half of the maximum
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, uint256_halfmax)))
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -137,5 +137,6 @@ TEST_F(AddAssetQuantity, NonexistentAsset) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }

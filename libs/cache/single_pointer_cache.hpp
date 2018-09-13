@@ -22,7 +22,7 @@ namespace iroha {
       /**
        * Pointer to data type
        */
-      using DataPointer = std::shared_ptr<DataType>;
+      using DataPointer = std::shared_ptr<std::decay_t<DataType>>;
 
       /**
        * Insert data to the cache

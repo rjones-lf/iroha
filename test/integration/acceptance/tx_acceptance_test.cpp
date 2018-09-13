@@ -52,7 +52,8 @@ TEST_F(AcceptanceTest, NonExistentCreatorAccountId) {
       .checkProposal(checkProposal)
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -69,8 +70,8 @@ TEST_F(AcceptanceTest, Transaction1HourOld) {
                        kAdminKeypair),
               checkEnoughSignaturesCollectedStatus)
       .skipProposal()
-      .checkBlock(checkStatefulValid)
-      .done();
+      .skipVerifiedProposal()
+      .checkBlock(checkStatefulValid);
 }
 
 /**
@@ -87,8 +88,8 @@ TEST_F(AcceptanceTest, DISABLED_TransactionLess24HourOld) {
                        kAdminKeypair),
               checkEnoughSignaturesCollectedStatus)
       .skipProposal()
-      .checkBlock(checkStatefulValid)
-      .done();
+      .skipVerifiedProposal()
+      .checkBlock(checkStatefulValid);
 }
 
 /**
@@ -102,8 +103,7 @@ TEST_F(AcceptanceTest, TransactionMore24HourOld) {
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
                            std::chrono::hours(24) + std::chrono::minutes(1))),
                        kAdminKeypair),
-              checkStatelessInvalid)
-      .done();
+              checkStatelessInvalid);
 }
 
 /**
@@ -120,8 +120,8 @@ TEST_F(AcceptanceTest, Transaction5MinutesFromFuture) {
                        kAdminKeypair),
               checkEnoughSignaturesCollectedStatus)
       .skipProposal()
-      .checkBlock(checkStatefulValid)
-      .done();
+      .skipVerifiedProposal()
+      .checkBlock(checkStatefulValid);
 }
 
 /**
@@ -135,8 +135,7 @@ TEST_F(AcceptanceTest, Transaction10MinutesFromFuture) {
       .sendTx(complete(baseTx<>().createdTime(
                            iroha::time::now(std::chrono::minutes(10))),
                        kAdminKeypair),
-              checkStatelessInvalid)
-      .done();
+              checkStatelessInvalid);
 }
 
 /**
@@ -153,8 +152,7 @@ TEST_F(AcceptanceTest, TransactionEmptyPubKey) {
   tx.addSignature(signedBlob, shared_model::crypto::PublicKey(""));
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid)
-      .done();
+      .sendTx(tx, checkStatelessInvalid);
 }
 
 /**
@@ -168,8 +166,7 @@ TEST_F(AcceptanceTest, TransactionEmptySignedblob) {
   tx.addSignature(shared_model::crypto::Signed(""), kAdminKeypair.publicKey());
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid)
-      .done();
+      .sendTx(tx, checkStatelessInvalid);
 }
 
 /**
@@ -189,8 +186,7 @@ TEST_F(AcceptanceTest, TransactionInvalidPublicKey) {
           'a')));
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid)
-      .done();
+      .sendTx(tx, checkStatelessInvalid);
 }
 
 /**
@@ -212,8 +208,7 @@ TEST_F(AcceptanceTest, TransactionInvalidSignedBlob) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid)
-      .done();
+      .sendTx(tx, checkStatelessInvalid);
 }
 
 /**
@@ -228,8 +223,8 @@ TEST_F(AcceptanceTest, TransactionValidSignedBlob) {
       .sendTx(complete(baseTx<>(), kAdminKeypair),
               checkEnoughSignaturesCollectedStatus)
       .skipProposal()
-      .checkBlock(checkStatefulValid)
-      .done();
+      .skipVerifiedProposal()
+      .checkBlock(checkStatefulValid);
 }
 
 /**
@@ -244,6 +239,5 @@ TEST_F(AcceptanceTest, EmptySignatures) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid)
-      .done();
+      .sendTx(tx, checkStatelessInvalid);
 }

@@ -20,7 +20,7 @@
 #include "ametsuchi/mutable_storage.hpp"
 #include "ametsuchi/wsv_query.hpp"
 #include "consensus/yac/supermajority_checker.hpp"
-#include "interfaces/iroha_internal/block_variant.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
   namespace validation {
@@ -31,26 +31,24 @@ namespace iroha {
           log_(logger::log("ChainValidator")) {}
 
     bool ChainValidatorImpl::validateBlock(
-        const shared_model::interface::BlockVariant &block_variant,
+        std::shared_ptr<shared_model::interface::Block> block,
         ametsuchi::MutableStorage &storage) const {
       log_->info("validate block: height {}, hash {}",
-                 block_variant.height(),
-                 block_variant.hash().hex());
+                 block->height(),
+                 block->hash().hex());
       auto check_block =
-          [this](const shared_model::interface::BlockVariant &block_var,
-                 auto &queries,
-                 const auto &top_hash) {
+          [this](const auto &block, auto &queries, const auto &top_hash) {
             auto peers = queries.getPeers();
             if (not peers) {
               return false;
             }
-            return block_var.prevHash() == top_hash
-                and supermajority_checker_->hasSupermajority(
-                        block_var.signatures(), peers.value());
+            return block.prevHash() == top_hash
+                and supermajority_checker_->hasSupermajority(block.signatures(),
+                                                             peers.value());
           };
 
       // check inside of temporary storage
-      return storage.check(block_variant, check_block);
+      return storage.check(*block, check_block);
     }
 
     bool ChainValidatorImpl::validateChain(
@@ -63,8 +61,7 @@ namespace iroha {
             log_->info("Validating block: height {}, hash {}",
                        block->height(),
                        block->hash().hex());
-            return this->validateBlock(
-                shared_model::interface::BlockVariant{block}, storage);
+            return this->validateBlock(block, storage);
           })
           .as_blocking()
           .first();

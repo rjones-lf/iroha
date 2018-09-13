@@ -116,13 +116,6 @@ class BlockLoaderTest : public testing::Test {
         .transactions(std::vector<decltype(tx)>{tx});
   }
 
-  // wrap block, so it could be inserted into consensus cache
-  iroha::consensus::ConsensusResultCache::DataPointer wrapBlock(
-      std::shared_ptr<shared_model::interface::Block> block) const {
-    return std::make_shared<shared_model::interface::BlockVariant>(
-        std::move(block));
-  }
-
   const Hash kPrevHash =
       Hash(std::string(DefaultCryptoAlgorithmType::kHashLength, '0'));
 
@@ -149,7 +142,6 @@ class BlockLoaderTest : public testing::Test {
 TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
   // Current block height 1 => Other block height 1 => no blocks received
   auto block = getBaseBlockBuilder().build().signAndAddSignature(key).finish();
-  auto variant = shared_model::interface::BlockVariant(wBlock(clone(block)));
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
@@ -255,15 +247,14 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
   // Request existing block => success
   auto block = std::make_shared<shared_model::proto::Block>(
       getBaseBlockBuilder().build().signAndAddSignature(key).finish());
-  auto requested = wrapBlock(block);
-  block_cache->insert(requested);
+  block_cache->insert(block);
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
   EXPECT_CALL(*validator, validate(RefAndPointerEq(block)))
       .WillOnce(Return(Answer{}));
   EXPECT_CALL(*storage, getBlocksFrom(_)).Times(0);
-  auto retrieved_block = loader->retrieveBlock(peer_key, requested->hash());
+  auto retrieved_block = loader->retrieveBlock(peer_key, block->hash());
 
   ASSERT_TRUE(retrieved_block);
   ASSERT_EQ(*block, **retrieved_block);
@@ -278,7 +269,7 @@ TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
   // Request nonexisting block => failure
   auto present = std::make_shared<shared_model::proto::Block>(
       getBaseBlockBuilder().build().signAndAddSignature(key).finish());
-  block_cache->insert(wrapBlock(present));
+  block_cache->insert(present);
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));

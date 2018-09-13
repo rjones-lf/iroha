@@ -100,8 +100,7 @@ TEST_F(PipelineIntegrationTest, SendQuery) {
   };
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendQuery(query, check)
-      .done();
+      .sendQuery(query, check);
 }
 
 /**
@@ -136,8 +135,7 @@ TEST_F(PipelineIntegrationTest, SendTx) {
       .sendTx(tx, check_enough_signatures_collected_status)
       .checkProposal(check_proposal)
       .checkVerifiedProposal(check_verified_proposal)
-      .checkBlock(check_block)
-      .done();
+      .checkBlock(check_block);
 }
 
 /**
@@ -175,8 +173,7 @@ TEST_F(PipelineIntegrationTest, SendTxSequence) {
       .sendTxSequence(tx_sequence, check_stateless_valid)
       .checkProposal(check_proposal)
       .checkVerifiedProposal(check_verified_proposal)
-      .checkBlock(check_block)
-      .done();
+      .checkBlock(check_block);
 }
 
 /**
@@ -195,8 +192,7 @@ TEST_F(PipelineIntegrationTest, SendTxSequenceAwait) {
   integration_framework::IntegrationTestFramework(
       tx_size)  // make all transactions to fit into a single proposal
       .setInitialState(kAdminKeypair)
-      .sendTxSequenceAwait(tx_sequence, check_block)
-      .done();
+      .sendTxSequenceAwait(tx_sequence, check_block);
 }
 
 /**

@@ -24,7 +24,6 @@
 namespace shared_model {
   namespace interface {
     class Block;
-    class BlockVariant;
   }  // namespace interface
 }  // namespace shared_model
 
@@ -40,11 +39,10 @@ namespace iroha {
     class MutableStorage {
      public:
       /**
-       * Predicate type checking type T
+       * Predicate type checking block
        */
-      template <typename T>
       using MutableStoragePredicateType =
-          std::function<bool(const T &,
+          std::function<bool(const shared_model::interface::Block &,
                              WsvQuery &,
                              const shared_model::interface::types::HashType &)>;
 
@@ -55,8 +53,8 @@ namespace iroha {
        * false otherwise
        * @return result of predicate
        */
-      virtual bool check(const shared_model::interface::BlockVariant &block,
-                         MutableStoragePredicateType<decltype(block)>) = 0;
+      virtual bool check(const shared_model::interface::Block &block,
+                         MutableStoragePredicateType function) = 0;
 
       /**
        * Applies a block to current mutable state
@@ -72,9 +70,8 @@ namespace iroha {
        * otherwise.
        * @return True if block was successfully applied, false otherwise.
        */
-      virtual bool apply(
-          const shared_model::interface::Block &block,
-          MutableStoragePredicateType<decltype(block)> function) = 0;
+      virtual bool apply(const shared_model::interface::Block &block,
+                         MutableStoragePredicateType function) = 0;
 
       virtual ~MutableStorage() = default;
     };

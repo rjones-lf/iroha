@@ -17,6 +17,7 @@ using ::testing::_;
 using ::testing::A;
 using ::testing::ByRef;
 using ::testing::InvokeArgument;
+using ::testing::Pointee;
 using ::testing::Return;
 
 class ChainValidationTest : public ::testing::Test {
@@ -47,7 +48,6 @@ class ChainValidationTest : public ::testing::Test {
   std::shared_ptr<MockMutableStorage> storage;
   std::shared_ptr<MockWsvQuery> query;
   std::shared_ptr<BlockMock> block = std::make_shared<BlockMock>();
-  shared_model::interface::BlockVariant block_variant = block;
 };
 
 /**
@@ -57,17 +57,15 @@ class ChainValidationTest : public ::testing::Test {
  */
 TEST_F(ChainValidationTest, ValidCase) {
   // Valid previous hash, has supermajority, correct peers subset => valid
-  EXPECT_CALL(*supermajority_checker,
-              hasSupermajority(block_variant.signatures(), _))
+  EXPECT_CALL(*supermajority_checker, hasSupermajority(block->signatures(), _))
       .WillOnce(Return(true));
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, check(testing::Ref(block_variant), _))
-      .WillOnce(
-          InvokeArgument<1>(ByRef(block_variant), ByRef(*query), ByRef(hash)));
+  EXPECT_CALL(*storage, check(testing::Ref(*block), _))
+      .WillOnce(InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(hash)));
 
-  ASSERT_TRUE(validator->validateBlock(block_variant, *storage));
+  ASSERT_TRUE(validator->validateBlock(block, *storage));
 }
 
 /**
@@ -82,11 +80,11 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, check(testing::Ref(block_variant), _))
-      .WillOnce(InvokeArgument<1>(
-          ByRef(block_variant), ByRef(*query), ByRef(another_hash)));
+  EXPECT_CALL(*storage, check(testing::Ref(*block), _))
+      .WillOnce(
+          InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(another_hash)));
 
-  ASSERT_FALSE(validator->validateBlock(block_variant, *storage));
+  ASSERT_FALSE(validator->validateBlock(block, *storage));
 }
 
 /**
@@ -96,17 +94,15 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
  */
 TEST_F(ChainValidationTest, FailWhenNoSupermajority) {
   // Valid previous hash, no supermajority, correct peers subset => invalid
-  EXPECT_CALL(*supermajority_checker,
-              hasSupermajority(block_variant.signatures(), _))
+  EXPECT_CALL(*supermajority_checker, hasSupermajority(block->signatures(), _))
       .WillOnce(Return(false));
 
   EXPECT_CALL(*query, getPeers()).WillOnce(Return(peers));
 
-  EXPECT_CALL(*storage, check(testing::Ref(block_variant), _))
-      .WillOnce(
-          InvokeArgument<1>(ByRef(block_variant), ByRef(*query), ByRef(hash)));
+  EXPECT_CALL(*storage, check(testing::Ref(*block), _))
+      .WillOnce(InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(hash)));
 
-  ASSERT_FALSE(validator->validateBlock(block_variant, *storage));
+  ASSERT_FALSE(validator->validateBlock(block, *storage));
 }
 
 /**
@@ -124,13 +120,10 @@ TEST_F(ChainValidationTest, ValidWhenValidateChainFromOnePeer) {
   // due to conversion to BlockVariant in validateChain() its impossible to pass
   // the block it will check() from here
   EXPECT_CALL(*storage, check(_, _))
-      .WillOnce(
-          InvokeArgument<1>(ByRef(block_variant), ByRef(*query), ByRef(hash)));
+      .WillOnce(InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(hash)));
 
   ASSERT_TRUE(validator->validateChain(
-      rxcpp::observable<>::just(boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              std::shared_ptr<shared_model::interface::Block>>(),
-          block_variant)),
+      rxcpp::observable<>::just<
+          std::shared_ptr<shared_model::interface::Block>>(block),
       *storage));
 }

@@ -90,16 +90,16 @@ namespace iroha {
     /**
      * Add batch to current state
      * @param rhs - batch for insertion
-     * @return State with completed batches
+     * @return States with completed and updated batches
      */
-    MstState operator+=(const DataType &rhs);
+    StateUpdateResult operator+=(const DataType &rhs);
 
     /**
      * Concat internal data of states
      * @param rhs - object for merging
-     * @return State with completed trasactions
+     * @return States with completed and updated batches
      */
-    MstState operator+=(const MstState &rhs);
+    StateUpdateResult operator+=(const MstState &rhs);
 
     /**
      * Operator provide difference between this and rhs operator
@@ -163,11 +163,12 @@ namespace iroha {
              const InternalStateType &transactions);
 
     /**
-     * Insert batch in own state and push it in out_state if required
-     * @param out_state - state for inserting completed batches
+     * Insert batch in own state and push it in out_completed_state or
+     * out_updated_state
+     * @param state_update consists of states with updated and completed batches
      * @param rhs_tx - batch for insert
      */
-    void insertOne(MstState &out_state, const DataType &rhs_tx);
+    void insertOne(StateUpdateResult &state_update, const DataType &rhs_tx);
 
     /**
      * Insert new value in state with keeping invariant

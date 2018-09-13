@@ -70,11 +70,10 @@ TEST_F(GetTransactions, HaveNoGetPerms) {
       .sendTx(makeUserWithPerms({interface::permissions::Role::kReadAssets}))
       .skipProposal()
       .skipBlock()
-      .sendTx(dummy_tx)
-      .checkBlock(
+      .sendTxAwait(
+          dummy_tx,
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(makeQuery(dummy_tx.hash()), check)
-      .done();
+      .sendQuery(makeQuery(dummy_tx.hash()), check);
 }
 
 /**
@@ -99,11 +98,10 @@ TEST_F(GetTransactions, HaveGetAllTx) {
       .sendTx(makeUserWithPerms({interface::permissions::Role::kGetAllTxs}))
       .skipProposal()
       .skipBlock()
-      .sendTx(dummy_tx)
-      .checkBlock(
+      .sendTxAwait(
+          dummy_tx,
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(makeQuery(dummy_tx.hash()), check)
-      .done();
+      .sendQuery(makeQuery(dummy_tx.hash()), check);
 }
 
 /**
@@ -128,11 +126,10 @@ TEST_F(GetTransactions, HaveGetMyTx) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(dummy_tx)
-      .checkBlock(
+      .sendTxAwait(
+          dummy_tx,
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(makeQuery(dummy_tx.hash()), check)
-      .done();
+      .sendQuery(makeQuery(dummy_tx.hash()), check);
 }
 
 /**
@@ -161,9 +158,10 @@ TEST_F(GetTransactions, InvalidSignatures) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
+      .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
-      .sendQuery(query, check)
-      .done();
+      .sendQuery(query, check);
 }
 
 /**
@@ -183,13 +181,12 @@ TEST_F(GetTransactions, NonexistentHash) {
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .checkBlock(
+      .sendTxAwait(
+          makeUserWithPerms(),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendQuery(makeQuery(crypto::Hash(std::string(
                      crypto::DefaultCryptoAlgorithmType::kHashLength, '0'))),
-                 check)
-      .done();
+                 check);
 }
 
 /**
@@ -210,9 +207,7 @@ TEST_F(GetTransactions, OtherUserTx) {
   auto tx = makeUserWithPerms();
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx)
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(makeQuery(tx.hash()), check)
-      .done();
+      .sendTxAwait(
+          tx, [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .sendQuery(makeQuery(tx.hash()), check);
 }

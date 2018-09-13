@@ -193,7 +193,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::BlockVariant &>()))
+              sign(A<shared_model::interface::Block &>()))
       .Times(0);
 
   init();
@@ -230,7 +230,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::BlockVariant &>()))
+              sign(A<shared_model::interface::Block &>()))
       .Times(0);
 
   init();

@@ -37,16 +37,16 @@ namespace iroha {
       friend class StorageImpl;
 
      public:
-      MutableStorageImpl(shared_model::interface::types::HashType top_hash,
-                         std::unique_ptr<soci::session> sql,
-                         std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-                         factory);
-      bool check(const shared_model::interface::BlockVariant &block,
-                 MutableStoragePredicateType<decltype(block)> function) override;
+      MutableStorageImpl(
+          shared_model::interface::types::HashType top_hash,
+          std::unique_ptr<soci::session> sql,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory);
+      bool check(const shared_model::interface::Block &block,
+                 MutableStoragePredicateType function) override;
 
-      bool apply(
-          const shared_model::interface::Block &block,
-          MutableStoragePredicateType<decltype(block)> function) override;
+      bool apply(const shared_model::interface::Block &block,
+                 MutableStoragePredicateType function) override;
 
       ~MutableStorageImpl() override;
 

@@ -59,11 +59,9 @@ TEST_F(SetAccountDetail, Self) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx(kUserId)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(complete(baseTx(kUserId)), [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
+      });
 }
 
 /**
@@ -79,18 +77,17 @@ TEST_F(SetAccountDetail, WithoutNoPerm) {
       .skipProposal()
       .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(second_user_tx)
-      .skipProposal()
-      .skipVerifiedProposal()
-      .checkBlock([](auto &block) {
-        ASSERT_EQ(block->transactions().size(), 1)
-            << "Cannot create second user account";
-      })
+      .sendTxAwait(second_user_tx,
+                   [](auto &block) {
+                     ASSERT_EQ(block->transactions().size(), 1)
+                         << "Cannot create second user account";
+                   })
       .sendTx(complete(baseTx(kUser2Id)))
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -105,17 +102,14 @@ TEST_F(SetAccountDetail, WithPerm) {
       .sendTx(makeUserWithPerms({interface::permissions::Role::kSetDetail}))
       .skipProposal()
       .skipBlock()
-      .sendTx(second_user_tx)
-      .skipProposal()
-      .checkBlock([](auto &block) {
-        ASSERT_EQ(block->transactions().size(), 1)
-            << "Cannot create second user account";
-      })
-      .sendTx(complete(baseTx(kUser2Id)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(second_user_tx,
+                   [](auto &block) {
+                     ASSERT_EQ(block->transactions().size(), 1)
+                         << "Cannot create second user account";
+                   })
+      .sendTxAwait(complete(baseTx(kUser2Id)), [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
+      });
 }
 
 /**
@@ -137,21 +131,19 @@ TEST_F(SetAccountDetail, WithGrantablePerm) {
           {interface::permissions::Role::kSetMyAccountDetail}))
       .skipProposal()
       .skipBlock()
-      .sendTx(second_user_tx)
-      .skipProposal()
-      .checkBlock([](auto &block) {
-        ASSERT_EQ(block->transactions().size(), 1)
-            << "Cannot create second user account";
-      })
-      .sendTx(complete(AcceptanceFixture::baseTx().grantPermission(
-          kUser2Id, interface::permissions::Grantable::kSetMyAccountDetail)))
-      .skipProposal()
-      .checkBlock([](auto &block) {
-        ASSERT_EQ(block->transactions().size(), 1) << "Cannot grant permission";
-      })
-      .sendTx(set_detail_cmd)
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(second_user_tx,
+                   [](auto &block) {
+                     ASSERT_EQ(block->transactions().size(), 1)
+                         << "Cannot create second user account";
+                   })
+      .sendTxAwait(complete(AcceptanceFixture::baseTx().grantPermission(
+                       kUser2Id,
+                       interface::permissions::Grantable::kSetMyAccountDetail)),
+                   [](auto &block) {
+                     ASSERT_EQ(block->transactions().size(), 1)
+                         << "Cannot grant permission";
+                   })
+      .sendTxAwait(set_detail_cmd, [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
+      });
 }
