@@ -29,6 +29,7 @@ namespace shared_model {
                          StatelessValidTxResponse,
                          StatefulFailedTxResponse,
                          StatefulValidTxResponse,
+                         RejectedTxResponse,
                          CommittedTxResponse,
                          MstExpiredResponse,
                          NotReceivedTxResponse,
@@ -112,7 +113,8 @@ namespace shared_model {
             [](const StatefulFailedTxResponse &) { return 5; },
             [](const MstExpiredResponse &) { return 5; },
             // following types are the final ones
-            [](const CommittedTxResponse &) { return max_priority; });
+            [](const CommittedTxResponse &) { return max_priority; },
+            [](const RejectedTxResponse &) { return max_priority; });
       }
     };
   }  // namespace  proto
