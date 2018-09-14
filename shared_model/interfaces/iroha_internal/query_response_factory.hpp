@@ -20,30 +20,35 @@ namespace shared_model {
      public:
       virtual ~QueryResponseFactory() = default;
 
-      virtual std::unique_ptr<AccountAssetResponse>
-      createAccountAssetResponse() = 0;
+      virtual std::unique_ptr<AccountAssetResponse> createAccountAssetResponse(
+          const std::vector<AccountAsset> &assets) = 0;
 
       virtual std::unique_ptr<AccountDetailResponse>
-      createAccountDetailResponse() = 0;
+      createAccountDetailResponse(const types::DetailType &account_detail) = 0;
 
-      virtual std::unique_ptr<AccountResponse>
-      createAccountAccountResponse() = 0;
+      virtual std::unique_ptr<AccountResponse> createAccountResponse(
+          const Account &account, const std::vector<std::string> &roles) = 0;
 
       virtual std::unique_ptr<ErrorQueryResponse>
       createErrorQueryResponse() = 0;
 
-      virtual std::unique_ptr<SignatoriesResponse>
-      createSignatoriesResponse() = 0;
+      virtual std::unique_ptr<SignatoriesResponse> createSignatoriesResponse(
+          const std::vector<types::PubkeyType> &signatories) = 0;
 
-      virtual std::unique_ptr<TransactionsResponse>
-      createTransactionsResponse() = 0;
+      virtual std::unique_ptr<TransactionsResponse> createTransactionsResponse(
+          const std::vector<Transaction> &transactions) = 0;
 
-      virtual std::unique_ptr<AssetResponse> createAssetResponse() = 0;
+      virtual std::unique_ptr<AssetResponse> createAssetResponse(
+          const std::string &asset_id,
+          const std::string &domain_id,
+          const uint32_t precision) = 0;
 
-      virtual std::unique_ptr<RolesResponse> createRolesResponse() = 0;
+      virtual std::unique_ptr<RolesResponse> createRolesResponse(
+          const std::vector<types::RoleIdType> &roles) = 0;
 
       virtual std::unique_ptr<RolePermissionsResponse>
-      createRolePermissionsResponse() = 0;
+      createRolePermissionsResponse(
+          const RolePermissionSet &role_permissions) = 0;
 
       /**
        * Create a block query response

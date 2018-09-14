@@ -16,29 +16,39 @@ namespace shared_model {
     class ProtoQueryResponseFactory : public interface::QueryResponseFactory {
      public:
       std::unique_ptr<interface::AccountAssetResponse>
-      createAccountAssetResponse() override;
+      createAccountAssetResponse(
+          const std::vector<interface::AccountAsset> &assets) override;
 
       std::unique_ptr<interface::AccountDetailResponse>
-      createAccountDetailResponse() override;
+      createAccountDetailResponse(
+          const interface::types::DetailType &account_detail) override;
 
-      std::unique_ptr<interface::AccountResponse> createAccountAccountResponse()
-          override;
+      std::unique_ptr<interface::AccountResponse> createAccountResponse(
+          const interface::Account &account,
+          const std::vector<std::string> &roles) override;
 
       std::unique_ptr<interface::ErrorQueryResponse> createErrorQueryResponse()
           override;
 
-      std::unique_ptr<interface::SignatoriesResponse>
-      createSignatoriesResponse() override;
+      std::unique_ptr<interface::SignatoriesResponse> createSignatoriesResponse(
+          const std::vector<interface::types::PubkeyType> &signatories)
+          override;
 
       std::unique_ptr<interface::TransactionsResponse>
-      createTransactionsResponse() override;
+      createTransactionsResponse(
+          const std::vector<interface::Transaction> &transactions) override;
 
-      std::unique_ptr<interface::AssetResponse> createAssetResponse() override;
+      std::unique_ptr<interface::AssetResponse> createAssetResponse(
+          const std::string &asset_id,
+          const std::string &domain_id,
+          const uint32_t precision) override;
 
-      std::unique_ptr<interface::RolesResponse> createRolesResponse() override;
+      std::unique_ptr<interface::RolesResponse> createRolesResponse(
+          const std::vector<interface::types::RoleIdType> &roles) override;
 
       std::unique_ptr<interface::RolePermissionsResponse>
-      createRolePermissionsResponse() override;
+      createRolePermissionsResponse(
+          const interface::RolePermissionSet &role_permissions) override;
 
       std::unique_ptr<interface::BlockQueryResponse> createBlockQueryResponse(
           const interface::Block &block) override;
