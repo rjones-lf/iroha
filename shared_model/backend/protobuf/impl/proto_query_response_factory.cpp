@@ -154,18 +154,22 @@ shared_model::proto::ProtoQueryResponseFactory::createBlockQueryResponse(
     const shared_model::interface::Block &block) {
   const auto &proto_block =
       static_cast<const shared_model::proto::Block &>(block);
-  iroha::protocol::BlockResponse response;
-  response.set_allocated_block(
+  iroha::protocol::BlockResponse protocol_response;
+
+  protocol_response.set_allocated_block(
       new iroha::protocol::Block(proto_block.getTransport()));
+
   return std::make_unique<shared_model::proto::BlockQueryResponse>(
-      std::move(response));
+      std::move(protocol_response));
 }
 
 std::unique_ptr<shared_model::interface::BlockQueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createBlockQueryResponse(
     const std::string &error_message) {
-  iroha::protocol::BlockErrorResponse response;
-  response.set_message(error_message);
+  iroha::protocol::BlockErrorResponse protocol_response;
+
+  protocol_response.set_message(error_message);
+
   return std::make_unique<shared_model::proto::BlockQueryResponse>(
-      std::move(response));
+      std::move(protocol_response));
 }
