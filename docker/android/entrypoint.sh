@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 export LIBP=lib
 case "$PLATFORM" in
   armeabi)
