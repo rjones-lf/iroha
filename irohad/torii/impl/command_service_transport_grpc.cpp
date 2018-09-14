@@ -21,11 +21,13 @@ namespace torii {
       std::shared_ptr<CommandService> command_service,
       std::shared_ptr<iroha::torii::StatusBus> status_bus,
       std::chrono::milliseconds initial_timeout,
-      std::chrono::milliseconds nonfinal_timeout)
+      std::chrono::milliseconds nonfinal_timeout,
+      std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory)
       : command_service_(std::move(command_service)),
         status_bus_(std::move(status_bus)),
         initial_timeout_(initial_timeout),
         nonfinal_timeout_(nonfinal_timeout),
+        status_factory_(std::move(status_factory)),
         log_(logger::log("CommandServiceTransportGrpc")) {}
 
   grpc::Status CommandServiceTransportGrpc::Torii(
@@ -109,15 +111,8 @@ namespace torii {
           // set error response for each transaction in a sequence
           std::for_each(
               hashes.begin(), hashes.end(), [this, &error_msg](auto &hash) {
-                iroha::protocol::ToriiResponse response;
-                response.set_tx_hash(
-                    shared_model::crypto::toBinaryString(hash));
-                response.set_tx_status(
-                    iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
-                response.set_error_message(error_msg);
                 status_bus_->publish(
-                    std::make_shared<shared_model::proto::TransactionResponse>(
-                        std::move(response)));
+                    status_factory_->makeStatelessFail(hash, error_msg));
               });
         });
     return grpc::Status::OK;

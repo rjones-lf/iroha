@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "endpoint.pb.h"
 #include "main/server_runner.hpp"
@@ -118,13 +119,16 @@ class ToriiServiceTest : public testing::Test {
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     //----------- Server run ----------------
+    auto status_factory =
+        std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     runner
         ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
             std::make_shared<torii::CommandServiceImpl>(
-                tx_processor, storage, status_bus),
+                tx_processor, storage, status_bus, status_factory),
             status_bus,
             initial_timeout,
-            nonfinal_timeout))
+            nonfinal_timeout,
+            status_factory))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {

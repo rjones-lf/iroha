@@ -11,9 +11,9 @@
 #include "endpoint.pb.h"
 
 #include "ametsuchi/storage.hpp"
-#include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "cache/cache.hpp"
 #include "cryptography/hash.hpp"
+#include "interfaces/iroha_internal/tx_status_factory.hpp"
 #include "logger/logger.hpp"
 #include "torii/processor/transaction_processor.hpp"
 #include "torii/status_bus.hpp"
@@ -33,7 +33,9 @@ namespace torii {
     CommandServiceImpl(
         std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
         std::shared_ptr<iroha::ametsuchi::Storage> storage,
-        std::shared_ptr<iroha::torii::StatusBus> status_bus);
+        std::shared_ptr<iroha::torii::StatusBus> status_bus,
+        std::shared_ptr<shared_model::interface::TxStatusFactory>
+            status_factory);
 
     /**
      * Disable copying in any way to prevent potential issues with common
@@ -87,6 +89,7 @@ namespace torii {
     std::shared_ptr<iroha::ametsuchi::Storage> storage_;
     std::shared_ptr<iroha::torii::StatusBus> status_bus_;
     std::shared_ptr<CacheType> cache_;
+    std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory_;
 
     logger::Logger log_;
   };

@@ -12,6 +12,7 @@
 
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
+#include "interfaces/iroha_internal/tx_status_factory.hpp"
 #include "logger/logger.hpp"
 #include "torii/status_bus.hpp"
 
@@ -30,7 +31,9 @@ namespace torii {
         std::shared_ptr<CommandService> command_service,
         std::shared_ptr<iroha::torii::StatusBus> status_bus,
         std::chrono::milliseconds initial_timeout,
-        std::chrono::milliseconds nonfinal_timeout);
+        std::chrono::milliseconds nonfinal_timeout,
+        std::shared_ptr<shared_model::interface::TxStatusFactory>
+            status_factory);
 
     /**
      * Torii call via grpc
@@ -86,6 +89,7 @@ namespace torii {
     std::shared_ptr<iroha::torii::StatusBus> status_bus_;
     const std::chrono::milliseconds initial_timeout_;
     const std::chrono::milliseconds nonfinal_timeout_;
+    std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory_;
     logger::Logger log_;
   };
 }  // namespace torii

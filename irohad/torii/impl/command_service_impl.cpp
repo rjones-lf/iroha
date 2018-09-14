@@ -8,7 +8,6 @@
 #include <thread>
 
 #include "ametsuchi/block_query.hpp"
-#include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
 #include "common/byteutils.hpp"
 #include "common/is_any.hpp"
 #include "cryptography/default_hash_provider.hpp"
@@ -21,11 +20,13 @@ namespace torii {
   CommandServiceImpl::CommandServiceImpl(
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
       std::shared_ptr<iroha::ametsuchi::Storage> storage,
-      std::shared_ptr<iroha::torii::StatusBus> status_bus)
+      std::shared_ptr<iroha::torii::StatusBus> status_bus,
+      std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory)
       : tx_processor_(std::move(tx_processor)),
         storage_(std::move(storage)),
         status_bus_(std::move(status_bus)),
         cache_(std::make_shared<CacheType>()),
+        status_factory_(std::move(status_factory)),
         log_(logger::log("CommandServiceImpl")) {
     // Notifier for all clients
     status_bus_->statuses().subscribe([this](auto response) {
@@ -43,22 +44,6 @@ namespace torii {
     });
   }
 
-  namespace {
-    std::shared_ptr<shared_model::interface::TransactionResponse> makeResponse(
-        const shared_model::crypto::Hash &h,
-        const iroha::protocol::TxStatus &status,
-        const std::string &error_msg) {
-      iroha::protocol::ToriiResponse response;
-      response.set_tx_hash(shared_model::crypto::toBinaryString(h));
-      response.set_tx_status(status);
-      response.set_error_message(error_msg);
-      return std::static_pointer_cast<
-          shared_model::interface::TransactionResponse>(
-          std::make_shared<shared_model::proto::TransactionResponse>(
-              std::move(response)));
-    }
-  }  // namespace
-
   void CommandServiceImpl::handleTransactionList(
       const shared_model::interface::TransactionSequence &tx_list) {
     for (const auto &batch : tx_list.batches()) {
@@ -74,19 +59,16 @@ namespace torii {
     }
 
     const bool is_present = storage_->getBlockQuery()->hasTxWithHash(request);
-    iroha::protocol::TxStatus status = is_present
-        ? iroha::protocol::TxStatus::COMMITTED
-        : iroha::protocol::TxStatus::NOT_RECEIVED;
-
-    auto response = makeResponse(request, status, "");
 
     if (is_present) {
+      std::shared_ptr<shared_model::interface::TransactionResponse> response =
+          status_factory_->makeCommitted(request, "");
       cache_->addItem(request, response);
+      return response;
     } else {
       log_->warn("Asked non-existing tx: {}", request.hex());
+      return status_factory_->makeNotReceived(request, "");
     }
-
-    return response;
   }
 
   /**
@@ -109,11 +91,7 @@ namespace torii {
         std::shared_ptr<shared_model::interface::TransactionResponse>;
     auto initial_status = cache_->findItem(hash).value_or([&] {
       log_->debug("tx is not received: {}", hash.toString());
-      return std::make_shared<shared_model::proto::TransactionResponse>(
-          shared_model::proto::TransactionStatusBuilder()
-              .txHash(hash)
-              .notReceived()
-              .build());
+      return status_factory_->makeNotReceived(hash, "");
     }());
     return status_bus_
         ->statuses()
@@ -145,12 +123,7 @@ namespace torii {
   void CommandServiceImpl::pushStatus(
       const std::string &who,
       std::shared_ptr<shared_model::interface::TransactionResponse> response) {
-    log_->debug(
-        "{}: adding item to cache: {}, status {} ",
-        who,
-        response->transactionHash().hex(),
-        iroha::protocol::TxStatus_Name(
-            static_cast<iroha::protocol::TxStatus>(response->get().which())));
+    log_->debug("{}: adding item to cache: {}", who, response->toString());
     status_bus_->publish(response);
   }
 
@@ -165,11 +138,8 @@ namespace torii {
         return;
       }
 
-      this->pushStatus(
-          "ToriiBatchProcessor",
-          makeResponse(tx_hash,
-                       iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS,
-                       ""));
+      this->pushStatus("ToriiBatchProcessor",
+                       status_factory_->makeStatelessValid(tx_hash, ""));
     });
   }
 
