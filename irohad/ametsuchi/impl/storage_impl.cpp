@@ -19,17 +19,17 @@
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "postgres_ordering_service_persistent_state.hpp"
 
+namespace {
+  void prepareStatements(soci::connection_pool &connections, size_t pool_size) {
+    for (size_t i = 0; i != pool_size; i++) {
+      soci::session &session = connections.at(i);
+      iroha::ametsuchi::PostgresCommandExecutor::prepareStatements(session);
+    }
+  };
+}  // namespace
+
 namespace iroha {
   namespace ametsuchi {
-
-    std::map<std::string, std::shared_ptr<soci::statement>>
-    &getPreparedStatements(
-        soci::session &sql,
-        std::shared_ptr<soci::connection_pool> pool,
-        size_t pool_size,
-        std::vector<std::map<std::string, std::shared_ptr<soci::statement>>>
-        statements);
-
     const char *kCommandExecutorError = "Cannot create CommandExecutorFactory";
     const char *kPsqlBroken = "Connection to PostgreSQL broken: %s";
     const char *kTmpWsv = "TemporaryWsv";
@@ -49,14 +49,14 @@ namespace iroha {
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
-          connection_(connection),
+          connection_(std::move(connection)),
           factory_(std::move(factory)),
           converter_(std::move(converter)),
           log_(logger::log("StorageImpl")),
           pool_size_(pool_size) {
       soci::session sql(*connection_);
       sql << init_;
-      prepareStatements();
+      prepareStatements(*connection_, pool_size_);
     }
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
@@ -269,13 +269,6 @@ namespace iroha {
         session.open(soci::postgresql, options_str);
       }
       return expected::makeValue(pool);
-    };
-
-    void StorageImpl::prepareStatements() {
-      for (size_t i = 0; i != pool_size_; i++) {
-        soci::session &session = connection_->at(i);
-        PostgresCommandExecutor::prepareStatements(session);
-      }
     };
 
     expected::Result<std::shared_ptr<StorageImpl>, std::string>

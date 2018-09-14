@@ -29,12 +29,41 @@
 #include "interfaces/common_objects/types.hpp"
 
 namespace {
-
   struct PreparedStatement {
     std::string command_name;
     std::string command_base;
     std::vector<std::string> permission_checks;
   };
+
+  std::pair<std::string, std::string> compileStatement(
+      const PreparedStatement &statement) {
+    auto initial = boost::format(statement.command_base);
+
+    auto with_validation =
+        initial % (statement.command_name + "WithValidation");
+
+    for (const auto &check : statement.permission_checks) {
+      with_validation = with_validation % check;
+    }
+
+    initial = boost::format(statement.command_base);
+
+    auto without_validation =
+        initial % (statement.command_name + "WithoutValidation");
+
+    for (size_t i = 0; i < statement.permission_checks.size(); i++) {
+      without_validation = without_validation % "";
+    }
+    return {with_validation.str(), without_validation.str()};
+  }
+
+  void prepareStatement(soci::session &sql,
+                        const PreparedStatement &statement) {
+    auto queries = compileStatement(statement);
+
+    sql << queries.first;
+    sql << queries.second;
+  }
 
   iroha::expected::Error<iroha::ametsuchi::CommandError> makeCommandError(
       const std::string &error_message,
@@ -57,7 +86,7 @@ namespace {
    */
   iroha::ametsuchi::CommandResult executeQuery(
       soci::session &sql,
-      std::string &&cmd,
+      const std::string &cmd,
       const std::string &command_name,
       std::vector<std::function<std::string()>> &error_generator) noexcept {
     uint32_t result;
@@ -74,7 +103,7 @@ namespace {
 
   std::string checkAccountRolePermission(
       shared_model::interface::permissions::Role permission,
-      const std::string &account_alias = ":role_account_id") {
+      const std::string &account_alias) {
     const auto perm_str =
         shared_model::interface::RolePermissionSet({permission}).toBitstring();
     const auto bits = shared_model::interface::RolePermissionSet::size();
@@ -90,8 +119,8 @@ namespace {
 
   std::string checkAccountGrantablePermission(
       shared_model::interface::permissions::Grantable permission,
-      std::string creator_id = ":grantable_permittee_account_id",
-      std::string account_id = ":grantable_account_id") {
+      const std::string &creator_id,
+      const std::string &account_id) {
     const auto perm_str =
         shared_model::interface::GrantablePermissionSet({permission})
             .toBitstring();
@@ -110,8 +139,8 @@ namespace {
   std::string checkAccountHasRoleOrGrantablePerm(
       shared_model::interface::permissions::Role role,
       shared_model::interface::permissions::Grantable grantable,
-      std::string creator_id = ":creator_id",
-      std::string account_id = ":account_id") {
+      const std::string &creator_id,
+      const std::string &account_id) {
     return (boost::format(R"(WITH
           has_role_perm AS (%s),
           has_grantable_perm AS (%s)
@@ -130,7 +159,7 @@ namespace {
         .str();
   }
 
-  inline std::string missRolePerm(
+  std::string missRolePerm(
       shared_model::interface::types::AccountIdType account,
       shared_model::interface::permissions::Role perm) {
     return (boost::format("command validation failed: account %s"
@@ -139,7 +168,7 @@ namespace {
         .str();
   }
 
-  inline std::string missGrantablePerm(
+  std::string missGrantablePerm(
       shared_model::interface::types::AccountIdType account,
       shared_model::interface::types::AccountIdType permittee,
       shared_model::interface::permissions::Grantable perm) {
@@ -151,7 +180,7 @@ namespace {
         .str();
   }
 
-  inline std::string missRoleOrGrantablePerm(
+  std::string missRoleOrGrantablePerm(
       shared_model::interface::types::AccountIdType account,
       shared_model::interface::types::AccountIdType permittee,
       shared_model::interface::permissions::Role role_perm,
@@ -164,11 +193,19 @@ namespace {
             % permittee)
         .str();
   }
+
+  template <typename Format>
+  void appendCommandName(const std::string &name,
+                           Format &cmd,
+                           bool do_validation) {
+    auto command_name =
+        name + (do_validation ? "WithValidation" : "WithoutValidation");
+    cmd % command_name;
+  }
 }  // namespace
 
 namespace iroha {
   namespace ametsuchi {
-
     const std::string PostgresCommandExecutor::addAssetQuantityBase = R"(
           PREPARE %s (text, text, int, text) AS
           WITH has_account AS (SELECT account_id FROM account
@@ -641,13 +678,10 @@ namespace iroha {
       auto amount = command.amount().toStringRepr();
       int precision = command.amount().precision();
 
+      // 14.09.2018 nickaleks: IR-1707 move common logic to separate function
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', %4%, '%5%')");
 
-      if (do_validation_) {
-        cmd = (cmd % "addAssetQuantityWithValidation");
-      } else {
-        cmd = (cmd % "addAssetQuantityWithoutValidation");
-      }
+      appendCommandName("addAssetQuantity", cmd, do_validation_);
 
       cmd = (cmd % account_id % asset_id % precision % amount);
 
@@ -672,11 +706,7 @@ namespace iroha {
 
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%')");
 
-      if (do_validation_) {
-        cmd = (cmd % "addPeerWithValidation");
-      } else {
-        cmd = (cmd % "addPeerWithoutValidation");
-      }
+      appendCommandName("addPeer", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % peer.pubkey().hex() % peer.address());
 
@@ -702,11 +732,7 @@ namespace iroha {
       auto pubkey = command.pubkey().hex();
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%')");
 
-      if (do_validation_) {
-        cmd = (cmd % "addSignatoryWithValidation");
-      } else {
-        cmd = (cmd % "addSignatoryWithoutValidation");
-      }
+      appendCommandName("addSignatory", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
 
@@ -742,11 +768,7 @@ namespace iroha {
       auto &role_name = command.roleName();
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%')");
 
-      if (do_validation_) {
-        cmd = (cmd % "appendRoleWithValidation");
-      } else {
-        cmd = (cmd % "appendRoleWithoutValidation");
-      }
+      appendCommandName("appendRole", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % account_id % role_name);
       std::vector<std::function<std::string()>> message_gen = {
@@ -788,11 +810,7 @@ namespace iroha {
 
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%', '%5%')");
 
-      if (do_validation_) {
-        cmd = (cmd % "createAccountWithValidation");
-      } else {
-        cmd = (cmd % "createAccountWithoutValidation");
-      }
+      appendCommandName("createAccount", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % account_id % domain_id % pubkey);
 
@@ -836,11 +854,8 @@ namespace iroha {
       auto asset_id = command.assetName() + "#" + domain_id;
       int precision = command.precision();
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%', %5%)");
-      if (do_validation_) {
-        cmd = (cmd % "createAssetWithValidation");
-      } else {
-        cmd = (cmd % "createAssetWithoutValidation");
-      }
+
+      appendCommandName("createAsset", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % asset_id % domain_id % precision);
 
@@ -864,11 +879,8 @@ namespace iroha {
       auto &domain_id = command.domainId();
       auto &default_role = command.userDefaultRole();
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%')");
-      if (do_validation_) {
-        cmd = (cmd % "createDomainWithValidation");
-      } else {
-        cmd = (cmd % "createDomainWithoutValidation");
-      }
+
+      appendCommandName("createDomain", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % domain_id % default_role);
       std::vector<std::function<std::string()>> message_gen = {
@@ -892,11 +904,8 @@ namespace iroha {
       auto &permissions = command.rolePermissions();
       auto perm_str = permissions.toBitstring();
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%')");
-      if (do_validation_) {
-        cmd = (cmd % "createRoleWithValidation");
-      } else {
-        cmd = (cmd % "createRoleWithoutValidation");
-      }
+
+      appendCommandName("createRole", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % role_id % perm_str);
       std::vector<std::function<std::string()>> message_gen = {
@@ -936,11 +945,8 @@ namespace iroha {
       auto &account_id = command.accountId();
       auto &role_name = command.roleName();
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%')");
-      if (do_validation_) {
-        cmd = (cmd % "detachRoleWithValidation");
-      } else {
-        cmd = (cmd % "detachRoleWithoutValidation");
-      }
+
+      appendCommandName("detachRole", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % account_id % role_name);
       std::vector<std::function<std::string()>> message_gen = {
@@ -971,11 +977,8 @@ namespace iroha {
           shared_model::interface::GrantablePermissionSet({permission})
               .toBitstring();
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%', '%5%')");
-      if (do_validation_) {
-        cmd = (cmd % "grantPermissionWithValidation");
-      } else {
-        cmd = (cmd % "grantPermissionWithoutValidation");
-      }
+
+      appendCommandName("grantPermission", cmd, do_validation_);
 
       cmd =
           (cmd % creator_account_id_ % permittee_account_id % perm_str % perm);
@@ -1006,11 +1009,8 @@ namespace iroha {
       auto &account_id = command.accountId();
       auto &pubkey = command.pubkey().hex();
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%')");
-      if (do_validation_) {
-        cmd = (cmd % "removeSignatoryWithValidation");
-      } else {
-        cmd = (cmd % "removeSignatoryWithoutValidation");
-      }
+
+      appendCommandName("removeSignatory", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
       std::vector<std::function<std::string()>> message_gen = {
@@ -1072,11 +1072,8 @@ namespace iroha {
                              .toBitstring();
 
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%', '%5%')");
-      if (do_validation_) {
-        cmd = (cmd % "revokePermissionWithValidation");
-      } else {
-        cmd = (cmd % "revokePermissionWithoutValidation");
-      }
+
+      appendCommandName("revokePermission", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % permittee_account_id % perms
              % without_perm_str);
@@ -1118,11 +1115,8 @@ namespace iroha {
 
       auto cmd = boost::format(
           "EXECUTE %1% ('%2%', '%3%', '%4%', '%5%', '%6%', '%7%')");
-      if (do_validation_) {
-        cmd = (cmd % "setAccountDetailWithValidation");
-      } else {
-        cmd = (cmd % "setAccountDetailWithoutValidation");
-      }
+
+      appendCommandName("setAccountDetail", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % account_id % json % filled_json % val
              % empty_json);
@@ -1150,11 +1144,8 @@ namespace iroha {
       auto &account_id = command.accountId();
       int quorum = command.newQuorum();
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', %4%)");
-      if (do_validation_) {
-        cmd = (cmd % "setQuorumWithValidation");
-      } else {
-        cmd = (cmd % "setQuorumWithoutValidation");
-      }
+
+      appendCommandName("setQuorum", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % account_id % quorum);
       std::vector<std::function<std::string()>> message_gen = {
@@ -1197,11 +1188,8 @@ namespace iroha {
       auto amount = command.amount().toStringRepr();
       uint32_t precision = command.amount().precision();
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', %4%, '%5%')");
-      if (do_validation_) {
-        cmd = (cmd % "subtractAssetQuantityWithValidation");
-      } else {
-        cmd = (cmd % "subtractAssetQuantityWithoutValidation");
-      }
+
+      appendCommandName("subtractAssetQuantity", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % asset_id % precision % amount);
 
@@ -1228,11 +1216,8 @@ namespace iroha {
       uint32_t precision = command.amount().precision();
       auto cmd =
           boost::format("EXECUTE %1% ('%2%', '%3%', '%4%', '%5%', %6%, '%7%')");
-      if (do_validation_) {
-        cmd = (cmd % "transferAssetWithValidation");
-      } else {
-        cmd = (cmd % "transferAssetWithoutValidation");
-      }
+
+      appendCommandName("transferAsset", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % src_account_id % dest_account_id
              % asset_id % precision % amount);
@@ -1262,36 +1247,6 @@ namespace iroha {
           [&] { return "Transfer overflows destanation account asset"; },
       };
       return executeQuery(sql_, cmd.str(), "TransferAsset", message_gen);
-    }
-
-    std::pair<std::string, std::string> compileStatement(
-        const PreparedStatement &statement) {
-      auto initial = boost::format(statement.command_base);
-
-      auto with_validation =
-          initial % (statement.command_name + "WithValidation");
-
-      for (const auto &check : statement.permission_checks) {
-        with_validation = with_validation % check;
-      }
-
-      initial = boost::format(statement.command_base);
-
-      auto without_validation =
-          initial % (statement.command_name + "WithoutValidation");
-
-      for (int i = 0; i < statement.permission_checks.size(); i++) {
-        without_validation = without_validation % "";
-      }
-      return {with_validation.str(), without_validation.str()};
-    }
-
-    void prepareStatement(soci::session &sql,
-                          const PreparedStatement &statement) {
-      auto queries = compileStatement(statement);
-
-      sql << queries.first;
-      sql << queries.second;
     }
 
     void PostgresCommandExecutor::prepareStatements(soci::session &sql) {

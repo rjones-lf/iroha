@@ -80,6 +80,7 @@ namespace iroha {
 
       shared_model::interface::types::AccountIdType creator_account_id_;
 
+      // 14.09.18 nickaleks: IR-1708 Load SQL from separate files
       static const std::string addAssetQuantityBase;
       static const std::string addPeerBase;
       static const std::string addSignatoryBase;

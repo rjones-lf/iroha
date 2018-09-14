@@ -109,8 +109,6 @@ namespace iroha {
                       converter,
                   size_t pool_size);
 
-      void prepareStatements();
-
       /**
        * Folder with raw blocks
        */
