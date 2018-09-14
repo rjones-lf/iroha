@@ -16,8 +16,7 @@ namespace iroha {
     class QueryExecutorFactory {
      public:
       /**
-       * Creates a query executor from the current state.
-       * @return Created query executor
+       * Creates a query executor from the current state
        */
       virtual boost::optional<std::shared_ptr<QueryExecutor>>
       createQueryExecutor(std::shared_ptr<PendingTransactionStorage>

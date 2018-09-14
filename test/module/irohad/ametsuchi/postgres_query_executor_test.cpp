@@ -1182,7 +1182,10 @@ namespace iroha {
             result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 3);
         for (const auto &tx : cast_resp.transactions()) {
-          EXPECT_EQ(account->accountId(), tx.creatorAccountId());
+          static size_t i = 0;
+          EXPECT_EQ(account->accountId(), tx.creatorAccountId())
+              << tx.toString() << " ~~ " << i;
+          ++i;
         }
       });
     }
@@ -1209,7 +1212,8 @@ namespace iroha {
             result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         for (const auto &tx : cast_resp.transactions()) {
-          EXPECT_EQ(account2->accountId(), tx.creatorAccountId());
+          EXPECT_EQ(account2->accountId(), tx.creatorAccountId())
+              << tx.toString();
         }
       });
     }
@@ -1236,7 +1240,8 @@ namespace iroha {
             result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         for (const auto &tx : cast_resp.transactions()) {
-          EXPECT_EQ(account2->accountId(), tx.creatorAccountId());
+          EXPECT_EQ(account2->accountId(), tx.creatorAccountId())
+              << tx.toString();
         }
       });
     }

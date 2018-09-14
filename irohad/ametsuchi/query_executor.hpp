@@ -20,23 +20,19 @@ namespace iroha {
   namespace ametsuchi {
 
     using QueryExecutorResult =
-            std::unique_ptr<shared_model::interface::QueryResponse>;
+        std::unique_ptr<shared_model::interface::QueryResponse>;
 
     class QueryExecutor {
      public:
       virtual ~QueryExecutor() = default;
       /**
        * Execute and validate query.
-       *
-       * @param query
-       * @return query response
        */
-      virtual QueryExecutorResult
-      validateAndExecute(const shared_model::interface::Query &query) = 0;
+      virtual QueryExecutorResult validateAndExecute(
+          const shared_model::interface::Query &query) = 0;
 
       /**
        * Perform BlocksQuery validation
-       * @param query to validate
        * @return true if valid, false otherwise
        */
       virtual bool validate(

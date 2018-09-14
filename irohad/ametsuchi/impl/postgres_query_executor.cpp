@@ -10,10 +10,13 @@
 #include <soci/postgresql/soci-postgresql.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/algorithm/transform.hpp>
+#include <boost/range/irange.hpp>
+#include "ametsuchi/impl/soci_utils.hpp"
 #include "common/types.hpp"
-#include "converters/protobuf/json_proto_converter.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 
 using namespace shared_model::interface::permissions;
@@ -23,45 +26,18 @@ namespace {
   using namespace iroha;
 
   /**
-   * Generates a query response that contains an error response
-   * @tparam T The error to return
-   * @param query_hash Query hash
-   * @return builder for QueryResponse
-   */
-  template <class T>
-  shared_model::proto::TemplateQueryResponseBuilder<1> buildError() {
-    return shared_model::proto::TemplateQueryResponseBuilder<0>()
-        .errorQueryResponse<T>();
-  }
-
-  /**
-   * Generates a query response that contains a concrete error (StatefulFailed)
-   * @param query_hash Query hash
-   * @return builder for QueryResponse
-   */
-  shared_model::proto::TemplateQueryResponseBuilder<1> statefulFailed() {
-    return buildError<shared_model::interface::StatefulFailedErrorResponse>();
-  }
-
-  /**
-   * Transforms result to optional
-   * value -> optional<value>
-   * error -> nullopt
-   * @tparam T type of object inside
-   * @param result BuilderResult
-   * @return optional<T>
+   * A query response that contains an error response
+   * @tparam T error type
    */
   template <typename T>
-  boost::optional<std::shared_ptr<T>> fromResult(
-      shared_model::interface::CommonObjectsFactory::FactoryResult<
-          std::unique_ptr<T>> &&result) {
-    return result.match(
-        [](expected::Value<std::unique_ptr<T>> &v) {
-          return boost::make_optional(std::shared_ptr<T>(std::move(v.value)));
-        },
-        [](expected::Error<std::string>)
-            -> boost::optional<std::shared_ptr<T>> { return boost::none; });
-  }
+  auto error_response = shared_model::proto::TemplateQueryResponseBuilder<>()
+                            .errorQueryResponse<T>();
+
+  /**
+   * A query response that contains StatefulFailed error
+   */
+  auto stateful_failed =
+      error_response<shared_model::interface::StatefulFailedErrorResponse>;
 
   std::string getDomainFromName(const std::string &account_id) {
     std::vector<std::string> res;
@@ -75,6 +51,7 @@ namespace {
     const auto perm_str =
         shared_model::interface::RolePermissionSet({permission}).toBitstring();
     const auto bits = shared_model::interface::RolePermissionSet::size();
+    // 14.09.18 andrei: IR-1708 Load SQL from separate files
     std::string query = (boost::format(R"(
           SELECT (COALESCE(bit_or(rp.permission), '0'::bit(%1%))
           & '%2%') = '%2%' AS perm FROM role_has_permissions AS rp
@@ -85,6 +62,12 @@ namespace {
     return query;
   }
 
+  /**
+   * Generate an SQL subquery which checks if creator has corresponding
+   * permissions for target account
+   * It verifies individual, domain, and global permissions, and returns true if
+   * any of listed permissions is present
+   */
   auto hasQueryPermission(const std::string &creator,
                           const std::string &target_account,
                           Role indiv_permission_id,
@@ -132,144 +115,20 @@ namespace {
         .str();
   }
 
-  /**
-   * Get transactions from block storage by block id and a list of tx indices
-   */
-  void callback(
-      std::vector<std::shared_ptr<shared_model::interface::Transaction>>
-          &blocks,
-      uint64_t block_id,
-      ametsuchi::KeyValueStorage &block_store,
-      std::vector<uint64_t> &result) {
-    auto block = block_store.get(block_id) | [](const auto &bytes) {
-      return shared_model::converters::protobuf::jsonToModel<
-          shared_model::proto::Block>(bytesToString(bytes));
-    };
-    if (not block) {
-      return;
-    }
-
-    std::transform(
-        result.begin(),
-        result.end(),
-        std::back_inserter(blocks),
-        [&](const auto &x) {
-          return std::shared_ptr<shared_model::interface::Transaction>(
-              clone(block->transactions()[x]));
-        });
-  }
-
   /// Query result is a tuple of optionals, since there could be no entry
   template <typename... Value>
   using QueryType = boost::tuple<boost::optional<Value>...>;
-
-  /// tuple length shortcut
-  template <typename T>
-  constexpr std::size_t length_v = boost::tuples::length<T>::value;
-
-  /// tuple element type shortcut
-  template <std::size_t N, typename T>
-  using element_t = typename boost::tuples::element<N, T>::type;
-
-  /// index sequence helper for concat
-  template <class Tuple1, class Tuple2, std::size_t... Is, std::size_t... Js>
-  auto concat_impl(std::index_sequence<Is...>, std::index_sequence<Js...>)
-      -> boost::tuple<element_t<Is, std::decay_t<Tuple1>>...,
-                      element_t<Js, std::decay_t<Tuple2>>...>;
-
-  /// tuple with types from two given tuples
-  template <class Tuple1, class Tuple2>
-  using concat = decltype(concat_impl<Tuple1, Tuple2>(
-      std::make_index_sequence<length_v<std::decay_t<Tuple1>>>{},
-      std::make_index_sequence<length_v<std::decay_t<Tuple2>>>{}));
-
-  /// index sequence helper for index_apply
-  template <typename F, std::size_t... Is>
-  constexpr decltype(auto) index_apply_impl(F &&f, std::index_sequence<Is...>) {
-    return std::forward<F>(f)(std::integral_constant<std::size_t, Is>{}...);
-  }
-
-  /// apply F to an integer sequence [0, N)
-  template <size_t N, typename F>
-  constexpr decltype(auto) index_apply(F &&f) {
-    return index_apply_impl(std::forward<F>(f), std::make_index_sequence<N>{});
-  }
-
-  /// apply F to Tuple
-  template <typename Tuple, typename F>
-  constexpr decltype(auto) apply(Tuple &&t, F &&f) {
-    return index_apply<length_v<std::decay_t<Tuple>>>(
-        [&](auto... Is) -> decltype(auto) {
-          return std::forward<F>(f)(
-              std::forward<Tuple>(t).template get<Is>()...);
-        });
-  }
-
-  /// view first length_v<R> elements of T without copying
-  template <typename R, typename T>
-  constexpr auto viewTuple(T &&t) {
-    return index_apply<length_v<std::decay_t<R>>>([&](auto... Is) {
-      return boost::make_tuple(std::forward<T>(t).template get<Is>()...);
-    });
-  }
-
-  /// view last length_v<R> elements of T without copying
-  template <typename R, typename T>
-  constexpr auto viewRest(T &&t) {
-    return index_apply<length_v<std::decay_t<R>>>([&](auto... Is) {
-      return boost::make_tuple(
-          std::forward<T>(t)
-              .template get<Is
-                            + length_v<std::decay_t<
-                                  T>> - length_v<std::decay_t<R>>>()...);
-    });
-  }
-
-  /// apply M to optional T
-  template <typename T, typename M>
-  constexpr decltype(auto) match(T &&t, M &&m) {
-    return std::forward<T>(t) ? std::forward<M>(m)(*std::forward<T>(t))
-                              : std::forward<M>(m)();
-  }
-
-  /// construct visitor from Fs and apply it to optional T
-  template <typename T, typename... Fs>
-  constexpr decltype(auto) match_in_place(T &&t, Fs &&... fs) {
-    return match(std::forward<T>(t), make_visitor(std::forward<Fs>(fs)...));
-  }
-
-  /// map tuple<optional<Ts>...> to optional<tuple<Ts...>>
-  template <typename T>
-  constexpr auto rebind(T &&t) {
-    auto transform = [](auto &&... vals) {
-      return boost::make_tuple(*std::forward<decltype(vals)>(vals)...);
-    };
-
-    using ReturnType =
-        decltype(boost::make_optional(apply(std::forward<T>(t), transform)));
-
-    return apply(std::forward<T>(t),
-                 [&](auto &&... vals) {
-                   bool temp[] = {static_cast<bool>(
-                       std::forward<decltype(vals)>(vals))...};
-                   return std::all_of(std::begin(temp),
-                                      std::end(temp),
-                                      [](auto b) { return b; });
-                 })
-        ? boost::make_optional(apply(std::forward<T>(t), transform))
-        : ReturnType{};
-  }
 
   /// return statefulFailed if no permissions in given tuple are set, nullopt
   /// otherwise
   template <typename T>
   auto validatePermissions(const T &t) {
-    return apply(t, [](auto... perms) {
+    return ametsuchi::apply(t, [](auto... perms) {
       bool temp[] = {not perms...};
       return boost::make_optional<ametsuchi::QueryResponseBuilderDone>(
           std::all_of(
               std::begin(temp), std::end(temp), [](auto b) { return b; }),
-          statefulFailed());
+          stateful_failed);
     });
   }
 
@@ -278,19 +137,63 @@ namespace {
 namespace iroha {
   namespace ametsuchi {
 
+    template <typename RangeGen, typename Pred>
+    auto PostgresQueryExecutorVisitor::getTransactionsFromBlock(
+        uint64_t block_id, RangeGen &&range_gen, Pred &&pred) {
+      std::vector<shared_model::proto::Transaction> result;
+      auto serialized_block = block_store_.get(block_id);
+      if (not serialized_block) {
+        log_->error("Failed to retrieve block with id {}", block_id);
+        return result;
+      }
+      auto deserialized_block =
+          converter_->deserialize(bytesToString(*serialized_block));
+      if (auto e =
+              boost::get<expected::Error<std::string>>(&deserialized_block)) {
+        log_->error(e->error);
+        return result;
+      }
+
+      auto &block =
+          boost::get<
+              expected::Value<std::unique_ptr<shared_model::interface::Block>>>(
+              deserialized_block)
+              .value;
+
+      boost::transform(
+          range_gen(boost::size(block->transactions()))
+              | boost::adaptors::transformed(
+                    [&block](auto i) -> decltype(auto) {
+                      return block->transactions()[i];
+                    })
+              | boost::adaptors::filtered(pred),
+          std::back_inserter(result),
+          [&](const auto &tx) {
+            return *static_cast<shared_model::proto::Transaction *>(
+                clone(tx).get());
+          });
+
+      return result;
+    }
+
     using QueryResponseBuilder =
-        shared_model::proto::TemplateQueryResponseBuilder<0>;
+        shared_model::proto::TemplateQueryResponseBuilder<>;
 
     PostgresQueryExecutor::PostgresQueryExecutor(
         std::unique_ptr<soci::session> sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         KeyValueStorage &block_store,
-        std::shared_ptr<PendingTransactionStorage> pending_txs_storage)
+        std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
+        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter)
         : sql_(std::move(sql)),
           block_store_(block_store),
           factory_(factory),
           pending_txs_storage_(pending_txs_storage),
-          visitor_(*sql_, factory_, block_store_, pending_txs_storage_) {}
+          visitor_(*sql_,
+                   factory_,
+                   block_store_,
+                   pending_txs_storage_,
+                   std::move(converter)) {}
 
     QueryExecutorResult PostgresQueryExecutor::validateAndExecute(
         const shared_model::interface::Query &query) {
@@ -315,11 +218,14 @@ namespace iroha {
         soci::session &sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         KeyValueStorage &block_store,
-        std::shared_ptr<PendingTransactionStorage> pending_txs_storage)
+        std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
+        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter)
         : sql_(sql),
           block_store_(block_store),
           factory_(factory),
-          pending_txs_storage_(pending_txs_storage) {}
+          pending_txs_storage_(pending_txs_storage),
+          converter_(std::move(converter)),
+          log_(logger::log("PostgresQueryExecutorVisitor")) {}
 
     void PostgresQueryExecutorVisitor::setCreatorId(
         const shared_model::interface::types::AccountIdType &creator_id) {
@@ -332,7 +238,7 @@ namespace iroha {
                           shared_model::interface::types::DomainIdType,
                           shared_model::interface::types::QuorumType,
                           shared_model::interface::types::DetailType,
-                          shared_model::interface::types::RoleIdType>;
+                          std::string>;
       using P = boost::tuple<int>;
       using T = concat<Q, P>;
 
@@ -363,23 +269,24 @@ namespace iroha {
                                 auto &quorum,
                                 auto &data,
                                 auto &roles_str) {
-        return match_in_place(
-            fromResult(
-                factory_->createAccount(account_id, domain_id, quorum, data)),
-            [&roles_str](auto account) {
-              roles_str.erase(0, 1);
-              roles_str.erase(roles_str.size() - 1, 1);
+        return factory_->createAccount(account_id, domain_id, quorum, data)
+            .match(
+                [roles_str =
+                     roles_str.substr(1, roles_str.size() - 2)](auto &v) {
+                  std::vector<shared_model::interface::types::RoleIdType> roles;
 
-              std::vector<shared_model::interface::types::RoleIdType> roles;
+                  boost::split(
+                      roles, roles_str, [](char c) { return c == ','; });
 
-              boost::split(roles, roles_str, [](char c) { return c == ','; });
-
-              return QueryResponseBuilder().accountResponse(
-                  *std::static_pointer_cast<shared_model::proto::Account>(
-                      account),
-                  roles);
-            },
-            [] { return statefulFailed(); });
+                  return QueryResponseBuilder().accountResponse(
+                      *static_cast<shared_model::proto::Account *>(
+                          v.value.get()),
+                      roles);
+                },
+                [this](expected::Error<std::string> &e) {
+                  log_->error(e.error);
+                  return stateful_failed;
+                });
       };
 
       return validatePermissions(viewRest<P>(tuple))
@@ -390,8 +297,8 @@ namespace iroha {
                   return apply(t, query_apply);
                 },
                 [] {
-                  return buildError<
-                      shared_model::interface::NoAccountErrorResponse>();
+                  return error_response<
+                      shared_model::interface::NoAccountErrorResponse>;
                 });
           });
     }
@@ -434,8 +341,8 @@ namespace iroha {
             });
             return boost::make_optional<QueryResponseBuilderDone>(
                        pubkeys.empty(),
-                       buildError<shared_model::interface::
-                                      NoSignatoriesErrorResponse>())
+                       error_response<
+                           shared_model::interface::NoSignatoriesErrorResponse>)
                 .value_or_eval([&pubkeys] {
                   return QueryResponseBuilder().signatoriesResponse(pubkeys);
                 });
@@ -444,7 +351,7 @@ namespace iroha {
 
     QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountTransactions &q) {
-      using Q = QueryType<uint64_t, uint64_t>;
+      using Q = QueryType<shared_model::interface::types::HeightType, uint64_t>;
       using P = boost::tuple<int>;
       using T = concat<Q, P>;
 
@@ -479,19 +386,14 @@ namespace iroha {
           };
         });
 
-        std::vector<std::shared_ptr<shared_model::interface::Transaction>> txs;
-        for (auto &block : index) {
-          callback(txs, block.first, block_store_, block.second);
-        }
-
         std::vector<shared_model::proto::Transaction> proto;
-        std::transform(txs.begin(),
-                       txs.end(),
-                       std::back_inserter(proto),
-                       [](const auto &tx) {
-                         return *std::static_pointer_cast<
-                             shared_model::proto::Transaction>(tx);
-                       });
+        for (auto &block : index) {
+          auto txs =
+              getTransactionsFromBlock(block.first,
+                                       [&block](auto) { return block.second; },
+                                       [](auto &) { return true; });
+          std::move(txs.begin(), txs.end(), std::back_inserter(proto));
+        }
 
         return QueryResponseBuilder().transactionsResponse(proto);
       };
@@ -502,14 +404,12 @@ namespace iroha {
 
     QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetTransactions &q) {
-      std::string hash_str;
-
-      for (size_t i = 0; i < q.transactionHashes().size(); i++) {
-        if (i > 0) {
-          hash_str += ",";
-        }
-        hash_str += "'" + q.transactionHashes()[i].hex() + "'";
-      }
+      auto escape = [](auto &hash) { return "'" + hash.hex() + "'"; };
+      std::string hash_str = std::accumulate(
+          std::next(q.transactionHashes().begin()),
+          q.transactionHashes().end(),
+          escape(q.transactionHashes().front()),
+          [&escape](auto &acc, auto &val) { return acc + "," + escape(val); });
 
       using Q =
           QueryType<shared_model::interface::types::HeightType, std::string>;
@@ -533,47 +433,29 @@ namespace iroha {
       auto begin = st.begin(), end = st.end();
 
       auto deserialize = [this, &begin, &end](auto &my_perm, auto &all_perm) {
-        std::cout << my_perm << " " << all_perm << std::endl;
-        std::map<uint64_t, std::vector<std::string>> index;
+        std::map<uint64_t, std::unordered_set<std::string>> index;
         std::for_each(begin, end, [&index](auto &t) {
           rebind(viewTuple<Q>(t)) | [&index](auto &&t) {
             apply(t, [&index](auto &height, auto &hash) {
-              index[height].push_back(hash);
+              index[height].insert(hash);
             });
           };
         });
 
-        std::vector<std::shared_ptr<shared_model::interface::Transaction>> txs;
-        for (auto &block : index) {
-          auto b = block_store_.get(block.first) | [](const auto &bytes) {
-            return shared_model::converters::protobuf::jsonToModel<
-                shared_model::proto::Block>(bytesToString(bytes));
-          };
-          if (not b) {
-            break;
-          }
-
-          boost::for_each(block.second, [&](const auto &x) {
-            boost::for_each(b->transactions(), [&](const auto &tx) {
-              if (tx.hash().hex() == x
-                  and (all_perm
-                       or (my_perm and tx.creatorAccountId() == creator_id_))) {
-                txs.push_back(
-                    std::shared_ptr<shared_model::interface::Transaction>(
-                        clone(tx)));
-              }
-            });
-          });
-        }
-
         std::vector<shared_model::proto::Transaction> proto;
-        std::transform(txs.begin(),
-                       txs.end(),
-                       std::back_inserter(proto),
-                       [](const auto &tx) {
-                         return *std::static_pointer_cast<
-                             shared_model::proto::Transaction>(tx);
-                       });
+        for (auto &block : index) {
+          auto txs = this->getTransactionsFromBlock(
+              block.first,
+              [](auto size) {
+                return boost::irange(static_cast<decltype(size)>(0), size);
+              },
+              [&](auto &tx) {
+                return block.second.count(tx.hash().hex()) > 0
+                    and (all_perm
+                         or (my_perm and tx.creatorAccountId() == creator_id_));
+              });
+          std::move(txs.begin(), txs.end(), std::back_inserter(proto));
+        }
 
         return QueryResponseBuilder().transactionsResponse(proto);
       };
@@ -586,7 +468,7 @@ namespace iroha {
 
     QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountAssetTransactions &q) {
-      using Q = QueryType<uint64_t, uint64_t>;
+      using Q = QueryType<shared_model::interface::types::HeightType, uint64_t>;
       using P = boost::tuple<int>;
       using T = concat<Q, P>;
 
@@ -625,19 +507,14 @@ namespace iroha {
           };
         });
 
-        std::vector<std::shared_ptr<shared_model::interface::Transaction>> txs;
-        for (auto &block : index) {
-          callback(txs, block.first, block_store_, block.second);
-        }
-
         std::vector<shared_model::proto::Transaction> proto;
-        std::transform(txs.begin(),
-                       txs.end(),
-                       std::back_inserter(proto),
-                       [](const auto &tx) {
-                         return *std::static_pointer_cast<
-                             shared_model::proto::Transaction>(tx);
-                       });
+        for (auto &block : index) {
+          auto txs =
+              getTransactionsFromBlock(block.first,
+                                       [&block](auto) { return block.second; },
+                                       [](auto &) { return true; });
+          std::move(txs.begin(), txs.end(), std::back_inserter(proto));
+        }
 
         return QueryResponseBuilder().transactionsResponse(proto);
       };
@@ -679,15 +556,21 @@ namespace iroha {
                 apply(t,
                       [this, &account_assets](
                           auto &account_id, auto &asset_id, auto &amount) {
-                        fromResult(factory_->createAccountAsset(
-                            account_id,
-                            asset_id,
-                            shared_model::interface::Amount(amount)))
-                            | [&account_assets](const auto &asset) {
-                                auto proto = *std::static_pointer_cast<
-                                    shared_model::proto::AccountAsset>(asset);
-                                account_assets.push_back(proto);
-                              };
+                        factory_
+                            ->createAccountAsset(
+                                account_id,
+                                asset_id,
+                                shared_model::interface::Amount(amount))
+                            .match(
+                                [&account_assets](auto &v) {
+                                  auto proto = *static_cast<
+                                      shared_model::proto::AccountAsset *>(
+                                      v.value.get());
+                                  account_assets.push_back(proto);
+                                },
+                                [this](expected::Error<std::string> &e) {
+                                  log_->error(e.error);
+                                });
                       });
               };
             });
@@ -757,8 +640,8 @@ namespace iroha {
                   });
                 },
                 [] {
-                  return buildError<
-                      shared_model::interface::NoAccountDetailErrorResponse>();
+                  return error_response<
+                      shared_model::interface::NoAccountDetailErrorResponse>;
                 });
           });
     }
@@ -826,15 +709,16 @@ namespace iroha {
                   });
                 },
                 [] {
-                  return buildError<
-                      shared_model::interface::NoRolesErrorResponse>();
+                  return error_response<
+                      shared_model::interface::NoRolesErrorResponse>;
                 });
           });
     }
 
     QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAssetInfo &q) {
-      using Q = QueryType<std::string, uint32_t>;
+      using Q =
+          QueryType<shared_model::interface::types::DomainIdType, uint32_t>;
       using P = boost::tuple<int>;
       using T = concat<Q, P>;
 
@@ -862,8 +746,8 @@ namespace iroha {
                   });
                 },
                 [] {
-                  return buildError<
-                      shared_model::interface::NoAssetErrorResponse>();
+                  return error_response<
+                      shared_model::interface::NoAssetErrorResponse>;
                 });
           });
     }

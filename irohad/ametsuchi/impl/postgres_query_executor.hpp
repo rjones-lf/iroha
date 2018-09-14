@@ -29,9 +29,11 @@
 #include "interfaces/commands/subtract_asset_quantity.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
+#include "interfaces/iroha_internal/block_json_converter.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/query_response.hpp"
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -47,7 +49,9 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory,
           KeyValueStorage &block_store,
-          std::shared_ptr<PendingTransactionStorage> pending_txs_storage);
+          std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
+          std::shared_ptr<shared_model::interface::BlockJsonConverter>
+              converter);
 
       void setCreatorId(
           const shared_model::interface::types::AccountIdType &creator_id);
@@ -86,11 +90,20 @@ namespace iroha {
           const shared_model::interface::GetPendingTransactions &q);
 
      private:
+      /// Get transactions from block using range from range_gen and filtered by
+      /// predicate pred
+      template <typename RangeGen, typename Pred>
+      auto getTransactionsFromBlock(uint64_t block_id,
+                                    RangeGen &&range_gen,
+                                    Pred &&pred);
+
       soci::session &sql_;
       KeyValueStorage &block_store_;
       shared_model::interface::types::AccountIdType creator_id_;
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;
+      std::shared_ptr<shared_model::interface::BlockJsonConverter> converter_;
+      logger::Logger log_;
     };
 
     class PostgresQueryExecutor : public QueryExecutor {
@@ -100,7 +113,9 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory,
           KeyValueStorage &block_store,
-          std::shared_ptr<PendingTransactionStorage> pending_txs_storage);
+          std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
+          std::shared_ptr<shared_model::interface::BlockJsonConverter>
+              converter);
 
       QueryExecutorResult validateAndExecute(
           const shared_model::interface::Query &query) override;

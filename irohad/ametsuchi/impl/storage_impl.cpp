@@ -133,7 +133,8 @@ namespace iroha {
               std::make_unique<soci::session>(*connection_),
               factory_,
               *block_store_,
-              pending_txs_storage));
+              pending_txs_storage,
+              converter_));
     }
 
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
