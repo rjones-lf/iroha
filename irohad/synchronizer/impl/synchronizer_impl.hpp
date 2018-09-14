@@ -37,8 +37,8 @@ namespace iroha {
 
       ~SynchronizerImpl() override;
 
-      void process_commit(const shared_model::interface::BlockVariant
-                              &committed_block_variant) override;
+      void process_commit(std::shared_ptr<shared_model::interface::Block>
+                              commit_message) override;
 
       rxcpp::observable<SynchronizationEvent> on_commit_chain() override;
 
@@ -61,24 +61,22 @@ namespace iroha {
 
       /**
        * Process block, which can be applied to current storage directly:
-       *   - apply non-empty block and commit result to Ametsuchi
-       *     @or
-       *   - don't apply empty block
-       * In both cases notify the subscriber about commit
-       * @param committed_block_variant to be applied
+       *   - apply block and commit result to Ametsuchi
+       *   - notify the subscriber about commit
+       * @param commit_message to be applied
        */
-      void processApplicableBlock(const shared_model::interface::BlockVariant
-                                      &committed_block_variant) const;
+      void processApplicableBlock(
+          std::shared_ptr<shared_model::interface::Block> commit_message) const;
 
       /**
        * Download part of chain, which is missed on this peer, from another; try
        * until success
-       * @param committed_block_variant - top of chain to be downloaded
+       * @param commit_message - top of chain to be downloaded
        * @return observable with missed part of the chain
        */
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-      downloadMissingChain(const shared_model::interface::BlockVariant
-                               &committed_block_variant) const;
+      downloadMissingChain(
+          std::shared_ptr<shared_model::interface::Block> commit_message) const;
     };
   }  // namespace synchronizer
 }  // namespace iroha

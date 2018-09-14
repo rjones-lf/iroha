@@ -33,12 +33,10 @@ TEST_F(CreateAccount, Basic) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().createAccount(
-          kNewUser, kDomain, kNewUserKeypair.publicKey())))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(
+          complete(baseTx().createAccount(
+              kNewUser, kDomain, kNewUserKeypair.publicKey())),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
@@ -58,7 +56,8 @@ TEST_F(CreateAccount, NoPermissions) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -79,7 +78,8 @@ TEST_F(CreateAccount, NoDomain) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -101,8 +101,7 @@ TEST_F(CreateAccount, ExistingName) {
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .checkBlock(
-          [](const auto block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](const auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -119,8 +118,7 @@ TEST_F(CreateAccount, MaxLenName) {
       .sendTxAwait(
           complete(baseTx().createAccount(
               std::string(32, 'a'), kDomain, kNewUserKeypair.publicKey())),
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**

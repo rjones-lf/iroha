@@ -259,55 +259,6 @@ TEST_F(OrderingServiceTest, ConcurrentGenerateProposal) {
 }
 
 /**
- * @given Ordering service up and running
- * @when Send 1000 transactions from a separate thread and perform 5 second
- * delay during generateProposal() so destructor of OrderingServiceImpl is
- * called before generateProposal() finished
- * @then Ordering service should not crash and publishProposal() should not be
- * called after destructor call
- */
-// TODO, igor-egorov, 2018-09-03, enable the test, IR-1659
-TEST_F(OrderingServiceTest, DISABLED_GenerateProposalDestructor) {
-  const auto max_proposal = 600;
-  const auto commit_delay = 5s;
-  EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
-      .Times(1)
-      .WillOnce(Return(boost::optional<size_t>(1)));
-  EXPECT_CALL(*fake_persistent_state, saveProposalHeight(_))
-      .WillRepeatedly(InvokeWithoutArgs([] {
-        std::this_thread::sleep_for(5s);
-        return true;
-      }));
-  EXPECT_CALL(*wsv, getLedgerPeers())
-      .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));
-
-  {
-    EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(AtLeast(1));
-    SinglePeerOrderingService ordering_service(
-        pqfactory,
-        max_proposal,
-        rxcpp::observable<>::interval(commit_delay,
-                                      rxcpp::observe_on_new_thread()),
-        fake_transport,
-        persistent_state_factory,
-        std::move(factory),
-        true);
-
-    auto on_tx = [&]() {
-      // create max_proposal+1 txs, so that publish proposal is invoked at least
-      // once (concurrency!)
-      for (int i = 0; i < max_proposal + 1; ++i) {
-        ordering_service.onBatch(framework::batch::createValidBatch(1));
-      }
-    };
-
-    std::thread thread(on_tx);
-    thread.join();
-  }
-  EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(0);
-}
-
-/**
  * Check that batches are processed by ordering service
  * @given ordering service up and running
  * @when feeding the ordering service two batches, such that number of

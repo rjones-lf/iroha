@@ -59,7 +59,8 @@ TEST_F(RemoveSignatory, Basic) {
                    CHECK_BLOCK(1))
       .sendTx(complete(
           baseTx().removeSignatory(kUserId, kUser2Keypair.publicKey())))
-      .checkVerifiedProposal(CHECK_BLOCK(0));
+      .checkVerifiedProposal(CHECK_BLOCK(0))
+      .checkBlock(CHECK_BLOCK(0));
 }
 
 /**
@@ -80,7 +81,8 @@ TEST_F(RemoveSignatory, NoPermission) {
           CHECK_BLOCK(1))
       .sendTx(complete(
           baseTx().removeSignatory(kUserId, kUser2Keypair.publicKey())))
-      .checkVerifiedProposal(CHECK_BLOCK(0));
+      .checkVerifiedProposal(CHECK_BLOCK(0))
+      .checkBlock(CHECK_BLOCK(0));
 }
 
 /**
@@ -133,7 +135,8 @@ TEST_F(RemoveSignatory, NonGrantedPermission) {
       .sendTx(complete(baseTx().creatorAccountId(kUser2Id).removeSignatory(
                            kUserId, kUser2Keypair.publicKey()),
                        kUser2Keypair))
-      .checkVerifiedProposal(CHECK_BLOCK(0));
+      .checkVerifiedProposal(CHECK_BLOCK(0))
+      .checkBlock(CHECK_BLOCK(0));
 }
 
 /**
@@ -148,7 +151,8 @@ TEST_F(RemoveSignatory, NonExistentUser) {
       .sendTx(complete(baseTx().removeSignatory("inexistent@" + kDomain,
                                                 kUserKeypair.publicKey()),
                        kUser2Keypair))
-      .checkVerifiedProposal(CHECK_BLOCK(0));
+      .checkVerifiedProposal(CHECK_BLOCK(0))
+      .checkBlock(CHECK_BLOCK(0));
 }
 
 /**
@@ -179,7 +183,8 @@ TEST_F(RemoveSignatory, NonExistedKey) {
       .sendTxAwait(makeFirstUser(), CHECK_BLOCK(1))
       .sendTx(complete(baseTx().removeSignatory(
           kUserId, shared_model::crypto::PublicKey(std::string(32, 'a')))))
-      .checkVerifiedProposal(CHECK_BLOCK(0));
+      .checkVerifiedProposal(CHECK_BLOCK(0))
+      .checkBlock(CHECK_BLOCK(0));
 }
 
 /**
@@ -207,5 +212,6 @@ TEST_F(RemoveSignatory, DISABLED_SignatoriesLesserThanQuorum) {
           CHECK_BLOCK(1))
       .sendTx(complete(
           baseTx().removeSignatory(kUserId, kUser2Keypair.publicKey())))
-      .checkVerifiedProposal(CHECK_BLOCK(0));
+      .checkVerifiedProposal(CHECK_BLOCK(0))
+      .checkBlock(CHECK_BLOCK(0));
 }

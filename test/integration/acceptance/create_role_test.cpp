@@ -45,12 +45,11 @@ TEST_F(CreateRole, Basic) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(complete(baseTx()))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(complete(baseTx()), [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
+      });
 }
 
 /**
@@ -70,8 +69,7 @@ TEST_F(CreateRole, HaveNoPerms) {
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .checkBlock(
-          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -85,6 +83,7 @@ TEST_F(CreateRole, EmptyRole) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs}, "")),
               checkStatelessInvalid);
@@ -101,6 +100,7 @@ TEST_F(CreateRole, EmptyPerms) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTxAwait(complete(baseTx({})), [](auto &block) {
         ASSERT_EQ(block->transactions().size(), 1);
@@ -118,6 +118,7 @@ TEST_F(CreateRole, LongRoleName) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs},
                               std::string(33, 'a'))),
@@ -135,12 +136,10 @@ TEST_F(CreateRole, MaxLenRoleName) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs},
-                              std::string(32, 'a'))))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(
+          complete(baseTx({interface::permissions::Role::kGetMyTxs},
+                          std::string(32, 'a'))),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
@@ -156,6 +155,7 @@ TEST_F(CreateRole, DISABLED_NonexistentPerm) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx({static_cast<interface::permissions::Role>(-1)})),
               checkStatelessInvalid);
@@ -176,7 +176,8 @@ TEST_F(CreateRole, ExistingRole) {
       .sendTx(
           complete(baseTx({interface::permissions::Role::kGetMyTxs}, kNewRole)))
       .skipProposal()
-      .checkVerifiedProposal([](auto &proposal) {
-        ASSERT_EQ(proposal->transactions().size(), 0);
-      });
+      .checkVerifiedProposal(
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
 }

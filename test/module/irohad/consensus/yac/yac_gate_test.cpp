@@ -131,25 +131,17 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
   init();
 
   // verify that block we voted for is in the cache
-  ASSERT_NO_THROW({
-    auto cache_block = boost::apply_visitor(
-        framework::SpecifiedVisitor<decltype(expected_block)>(),
-        *block_cache->get());
-    ASSERT_EQ(*cache_block, *expected_block);
-  });
+  auto &cache_block = *block_cache->get();
+  ASSERT_EQ(cache_block, *expected_block);
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe([this](const auto &block_variant) {
-    ASSERT_NO_THROW({
-      auto block = boost::apply_visitor(
-          framework::SpecifiedVisitor<decltype(expected_block)>(),
-          block_variant);
-      ASSERT_EQ(*block, *expected_block);
+  gate_wrapper.subscribe([this](auto block) {
+    ASSERT_EQ(*block, *expected_block);
 
-      // verify that gate has put to cache block received from consensus
-      ASSERT_EQ(block_variant, *block_cache->get());
-    });
+    // verify that gate has put to cache block received from consensus
+    auto &cache_block = *block_cache->get();
+    ASSERT_EQ(*block, cache_block);
   });
 
   ASSERT_TRUE(gate_wrapper.validate());
@@ -245,30 +237,18 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   init();
 
   // verify that block we voted for is in the cache
-  ASSERT_NO_THROW({
-    auto cache_block = boost::apply_visitor(
-        framework::SpecifiedVisitor<decltype(expected_block)>(),
-        *block_cache->get());
-    ASSERT_EQ(*cache_block, *expected_block);
-  });
+  auto &cache_block = *block_cache->get();
+  ASSERT_EQ(cache_block, *expected_block);
 
   // verify that yac gate emit expected block
-  std::shared_ptr<shared_model::interface::BlockVariant> yac_emitted_block;
+  std::shared_ptr<shared_model::interface::Block> yac_emitted_block;
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe(
-      [actual_block, &yac_emitted_block](const auto &block_variant) {
-        ASSERT_NO_THROW({
-          auto block = boost::apply_visitor(
-              framework::SpecifiedVisitor<decltype(expected_block)>(),
-              block_variant);
-          ASSERT_EQ(*block, *actual_block);
+  gate_wrapper.subscribe([actual_block, &yac_emitted_block](auto block) {
+    ASSERT_EQ(*block, *actual_block);
 
-          // memorize the block came from the consensus for future
-          yac_emitted_block =
-              std::make_shared<shared_model::interface::BlockVariant>(
-                  block_variant);
-        });
-      });
+    // memorize the block came from the consensus for future
+    yac_emitted_block = block;
+  });
 
   // verify that block, which was received from consensus, is now in the
   // cache
@@ -325,14 +305,8 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe([this](const auto &block_variant) {
-    ASSERT_NO_THROW({
-      auto block = boost::apply_visitor(
-          framework::SpecifiedVisitor<decltype(expected_block)>(),
-          block_variant);
-      ASSERT_EQ(*block, *expected_block);
-    });
-  });
+  gate_wrapper.subscribe(
+      [this](auto block) { ASSERT_EQ(*block, *expected_block); });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }

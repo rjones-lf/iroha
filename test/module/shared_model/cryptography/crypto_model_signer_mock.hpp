@@ -49,7 +49,6 @@ namespace shared_model {
       MOCK_CONST_METHOD1(sign, void(shared_model::interface::Block &));
       MOCK_CONST_METHOD1(sign, void(shared_model::interface::Query &));
       MOCK_CONST_METHOD1(sign, void(shared_model::interface::Transaction &));
-      MOCK_CONST_METHOD1(sign, void(shared_model::interface::BlockVariant &));
     };
 
     std::shared_ptr<CryptoModelSignerExpecter> crypto_signer_expecter;
@@ -72,13 +71,6 @@ namespace shared_model {
     template <>
     void CryptoModelSigner<>::sign<shared_model::interface::Transaction>(
         shared_model::interface::Transaction &signable) const noexcept {
-      crypto_signer_expecter->sign(signable);
-    }
-
-    template <>
-    template <>
-    void CryptoModelSigner<>::sign<shared_model::interface::BlockVariant>(
-        shared_model::interface::BlockVariant &signable) const noexcept {
       crypto_signer_expecter->sign(signable);
     }
 

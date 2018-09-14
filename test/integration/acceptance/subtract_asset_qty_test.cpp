@@ -49,12 +49,11 @@ TEST_F(SubtractAssetQuantity, Everything) {
       .skipBlock()
       .sendTx(replenish())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, kAmount)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(
+          complete(baseTx().subtractAssetQuantity(kAssetId, kAmount)),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
@@ -79,8 +78,7 @@ TEST_F(SubtractAssetQuantity, Overdraft) {
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .checkBlock(
-          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -104,8 +102,7 @@ TEST_F(SubtractAssetQuantity, NoPermissions) {
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .checkBlock(
-          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -161,6 +158,5 @@ TEST_F(SubtractAssetQuantity, NonexistentAsset) {
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
       .checkBlock(
-          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); })
-      .done();
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
