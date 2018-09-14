@@ -24,7 +24,6 @@
 
 namespace shared_model {
   namespace interface {
-    class Transaction;
     class Proposal;
     class TransactionBatch;
   }  // namespace interface

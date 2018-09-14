@@ -15,15 +15,14 @@
  * limitations under the License.
  */
 
+#include "ordering/impl/ordering_gate_impl.hpp"
+
 #include <tuple>
 #include <utility>
-
-#include "ordering/impl/ordering_gate_impl.hpp"
 
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
-#include "interfaces/transaction.hpp"
 
 namespace iroha {
   namespace ordering {

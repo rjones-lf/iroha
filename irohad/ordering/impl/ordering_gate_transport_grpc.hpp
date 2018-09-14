@@ -27,12 +27,6 @@
 #include "ordering.grpc.pb.h"
 #include "validators/default_validator.hpp"
 
-namespace shared_model {
-  namespace interface {
-    class Transaction;
-  }
-}  // namespace shared_model
-
 namespace iroha {
   namespace ordering {
     class OrderingGateTransportGrpc

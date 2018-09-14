@@ -31,7 +31,6 @@
 
 namespace shared_model {
   namespace interface {
-    class Transaction;
     class Proposal;
   }  // namespace interface
 }  // namespace shared_model
