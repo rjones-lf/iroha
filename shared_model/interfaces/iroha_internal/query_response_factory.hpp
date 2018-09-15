@@ -38,12 +38,12 @@ namespace shared_model {
           const std::vector<types::PubkeyType> &signatories) = 0;
 
       virtual std::unique_ptr<TransactionsResponse> createTransactionsResponse(
-          const std::vector<Transaction> &transactions) = 0;
+          const std::vector<
+              std::shared_ptr<shared_model::interface::Transaction>>
+              &transactions) = 0;
 
       virtual std::unique_ptr<AssetResponse> createAssetResponse(
-          const std::string &asset_id,
-          const std::string &domain_id,
-          const uint32_t precision) = 0;
+          const Asset &asset) = 0;
 
       virtual std::unique_ptr<RolesResponse> createRolesResponse(
           const std::vector<types::RoleIdType> &roles) = 0;

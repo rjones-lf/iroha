@@ -38,12 +38,12 @@ namespace shared_model {
 
       std::unique_ptr<interface::TransactionsResponse>
       createTransactionsResponse(
-          const std::vector<interface::Transaction> &transactions) override;
+          const std::vector<
+              std::shared_ptr<shared_model::interface::Transaction>>
+              &transactions) override;
 
       std::unique_ptr<interface::AssetResponse> createAssetResponse(
-          const std::string &asset_id,
-          const std::string &domain_id,
-          const uint32_t precision) override;
+          const shared_model::interface::Asset &asset) override;
 
       std::unique_ptr<interface::RolesResponse> createRolesResponse(
           const std::vector<interface::types::RoleIdType> &roles) override;

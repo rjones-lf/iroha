@@ -8,10 +8,17 @@
 
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
+#include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "framework/specified_visitor.hpp"
+#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace shared_model::proto;
 using namespace iroha::expected;
+using namespace shared_model::interface::types;
+
+using framework::SpecifiedVisitor;
 using shared_model::validation::FieldValidator;
 
 class ProtoQueryResponseFactoryTest : public ::testing::Test {
@@ -61,8 +68,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
     }
     assets.push_back(asset);
   }
-
   auto response = response_factory->createAccountAssetResponse(assets);
+
   ASSERT_TRUE(response);
   ASSERT_EQ(response->accountAssets().front().accountId(), kAccountId);
   ASSERT_EQ(response->accountAssets().front().assetId(), kAssetId);
@@ -72,22 +79,133 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
   }
 }
 
-TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {}
+TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {
+  const DetailType account_details = "{ fav_meme : doge }";
+  auto response =
+      response_factory->createAccountDetailResponse(account_details);
 
-TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {}
+  ASSERT_TRUE(response);
+  ASSERT_EQ(response->detail(), account_details);
+}
 
-TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {}
+TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
+  const AccountIdType kAccountId = "doge";
+  const DomainIdType kDomainId = "meme";
+  const QuorumType kQuorum = 1;
+  const JsonType kJson = "{ fav_meme : doge }";
+  const std::vector<RoleIdType> kRoles{"admin", "user"};
 
-TEST_F(ProtoQueryResponseFactoryTest, CreateSignatoriesResponse) {}
+  auto account = unwrapResult(
+      objects_factory->createAccount(kAccountId, kDomainId, kQuorum, kJson));
+  auto response = response_factory->createAccountResponse(*account, kRoles);
 
-TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {}
+  ASSERT_TRUE(response);
+  ASSERT_EQ(response->account().accountId(), kAccountId);
+  ASSERT_EQ(response->account().domainId(), kDomainId);
+  ASSERT_EQ(response->account().quorum(), kQuorum);
+  ASSERT_EQ(response->account().jsonData(), kJson);
+  ASSERT_EQ(response->roles(), kRoles);
+}
 
-TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {}
+TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
+  auto response = response_factory->createErrorQueryResponse();
 
-TEST_F(ProtoQueryResponseFactoryTest, CreateRolesResponse) {}
+  ASSERT_TRUE(response);
+  ASSERT_NO_THROW(boost::apply_visitor(
+      SpecifiedVisitor<shared_model::interface::StatelessFailedErrorResponse>(),
+      response->get()));
+}
 
-TEST_F(ProtoQueryResponseFactoryTest, CreateRolePermissionsResponse) {}
+TEST_F(ProtoQueryResponseFactoryTest, CreateSignatoriesResponse) {
+  const auto pub_key =
+      shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
+          .publicKey();
+  const std::vector<PubkeyType> signatories{pub_key};
+  auto response = response_factory->createSignatoriesResponse(signatories);
 
-TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithBlock) {}
+  ASSERT_TRUE(response);
+  ASSERT_EQ(response->keys(), signatories);
+}
 
-TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithError) {}
+TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
+  constexpr int kTransactionsNumber = 5;
+
+  std::vector<std::shared_ptr<shared_model::interface::Transaction>>
+      transactions;
+  for (auto i = 0; i < kTransactionsNumber; ++i) {
+    auto tx =
+        TestTransactionBuilder().creatorAccountId(std::to_string(i)).build();
+    transactions.push_back(
+        std::make_shared<shared_model::proto::Transaction>(std::move(tx)));
+  }
+  auto response = response_factory->createTransactionsResponse(transactions);
+
+  ASSERT_TRUE(response);
+  for (auto i = 0; i < kTransactionsNumber; ++i) {
+    ASSERT_EQ(response->transactions()[i].creatorAccountId(),
+              transactions[i]->creatorAccountId());
+  }
+}
+
+TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
+  const AssetIdType kAssetId = "doge";
+  const DomainIdType kDomainId = "coin";
+  const PrecisionType kPrecision = 2;
+
+  auto asset = unwrapResult(
+      objects_factory->createAsset(kAssetId, kDomainId, kPrecision));
+  auto response = response_factory->createAssetResponse(*asset);
+
+  ASSERT_TRUE(response);
+  ASSERT_EQ(response->asset().assetId(), kAssetId);
+  ASSERT_EQ(response->asset().domainId(), kDomainId);
+  ASSERT_EQ(response->asset().precision(), kPrecision);
+}
+
+TEST_F(ProtoQueryResponseFactoryTest, CreateRolesResponse) {
+  const std::vector<RoleIdType> roles{"admin", "user"};
+  auto response = response_factory->createRolesResponse(roles);
+
+  ASSERT_TRUE(response);
+  ASSERT_EQ(response->roles(), roles);
+}
+
+TEST_F(ProtoQueryResponseFactoryTest, CreateRolePermissionsResponse) {
+  const shared_model::interface::RolePermissionSet perms{
+      shared_model::interface::permissions::Role::kGetMyAccount,
+      shared_model::interface::permissions::Role::kAddSignatory};
+  auto response = response_factory->createRolePermissionsResponse(perms);
+
+  ASSERT_TRUE(response);
+  ASSERT_EQ(response->rolePermissions(), perms);
+}
+
+TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithBlock) {
+  constexpr HeightType kBlockHeight = 42;
+  const auto kCreatedTime = iroha::time::now();
+
+  auto block =
+      TestBlockBuilder().height(kBlockHeight).createdTime(kCreatedTime).build();
+  auto response = response_factory->createBlockQueryResponse(block);
+
+  ASSERT_TRUE(response);
+  ASSERT_NO_THROW({
+    const auto &block_resp = boost::apply_visitor(
+        SpecifiedVisitor<BlockResponse>(), response->get());
+    ASSERT_EQ(block_resp.block().txsNumber(), 0);
+    ASSERT_EQ(block_resp.block().height(), kBlockHeight);
+    ASSERT_EQ(block_resp.block().createdTime(), kCreatedTime);
+  });
+}
+
+TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithError) {
+  const std::string kErrorMsg = "something's wrong!";
+  auto response = response_factory->createBlockQueryResponse(kErrorMsg);
+
+  ASSERT_TRUE(response);
+  ASSERT_NO_THROW({
+    const auto &error_resp = boost::apply_visitor(
+        SpecifiedVisitor<BlockErrorResponse>(), response->get());
+    ASSERT_EQ(error_resp.message(), kErrorMsg);
+  });
+}

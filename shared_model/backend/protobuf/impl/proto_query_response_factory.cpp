@@ -89,15 +89,16 @@ shared_model::proto::ProtoQueryResponseFactory::createSignatoriesResponse(
 
 std::unique_ptr<shared_model::interface::TransactionsResponse>
 shared_model::proto::ProtoQueryResponseFactory::createTransactionsResponse(
-    const std::vector<shared_model::interface::Transaction> &transactions) {
+    const std::vector<std::shared_ptr<shared_model::interface::Transaction>>
+        &transactions) {
   iroha::protocol::QueryResponse protocol_query_response;
 
   iroha::protocol::TransactionsResponse *protocol_specific_response =
       protocol_query_response.mutable_transactions_response();
   for (const auto &tx : transactions) {
     protocol_specific_response->add_transactions()->CopyFrom(
-        static_cast<const shared_model::proto::Transaction &>(tx)
-            .getTransport());
+        std::static_pointer_cast<shared_model::proto::Transaction>(tx)
+            ->getTransport());
   }
 
   return std::make_unique<shared_model::proto::TransactionsResponse>(
@@ -106,17 +107,13 @@ shared_model::proto::ProtoQueryResponseFactory::createTransactionsResponse(
 
 std::unique_ptr<shared_model::interface::AssetResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
-    const std::string &asset_id,
-    const std::string &domain_id,
-    const uint32_t precision) {
+    const shared_model::interface::Asset &asset) {
   iroha::protocol::QueryResponse protocol_query_response;
 
   iroha::protocol::AssetResponse *protocol_specific_response =
       protocol_query_response.mutable_asset_response();
-  auto asset = protocol_specific_response->mutable_asset();
-  asset->set_asset_id(asset_id);
-  asset->set_domain_id(domain_id);
-  asset->set_precision(precision);
+  protocol_specific_response->mutable_asset()->CopyFrom(
+      static_cast<const shared_model::proto::Asset &>(asset).getTransport());
 
   return std::make_unique<shared_model::proto::AssetResponse>(
       protocol_query_response);
