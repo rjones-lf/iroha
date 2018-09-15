@@ -318,6 +318,63 @@ namespace integration_framework {
     return *this;
   }
 
+  IntegrationTestFramework &IntegrationTestFramework::sendTxSequence(
+      const shared_model::interface::TransactionSequence &tx_sequence,
+      std::vector<std::set<TxStatus>> statuses) {
+    auto tx = tx_sequence.transactions();
+
+    struct HashCmp {
+      bool operator()(const shared_model::crypto::Hash &h1,
+                      const shared_model::crypto::Hash &h2) {
+        return h1.blob() < h2.blob();
+      }
+    };
+    std::map<shared_model::crypto::Hash, std::set<TxStatus>, HashCmp>
+        tx_statsues;
+    if (tx.size() != statuses.size()) {
+      log_->error("TxSequence has lenth that differ from statuses'");
+    }
+    size_t count = 0;
+    for (auto i = 0u; i < tx.size() && i < statuses.size(); ++i) {
+      count += statuses[i].size();
+      tx_statsues[tx[i]->hash()] = std::move(statuses[i]);
+    }
+
+    std::condition_variable cv;
+    std::mutex m;
+    iroha_instance_->instance_->getStatusBus()
+        ->statuses()
+        .filter([&](auto s) {
+          return tx_statsues.find(s->transactionHash()) != tx_statsues.end();
+        })
+        .subscribe([&](auto s) {
+          auto status = TxStatus(s->get().which());
+          auto &statuses = tx_statsues[s->transactionHash()];
+          log_->info(
+              "Get status: {}, tx: {}", status, s->transactionHash().hex());
+          if (statuses.size() == 0 || statuses.count(status) == 0) {
+            return;
+          }
+
+          std::lock_guard<std::mutex> lock(m);
+          statuses.erase(statuses.find(status));
+          count--;
+          cv.notify_one();
+        });
+    iroha::protocol::TxList tx_list;
+    for (const auto &t : tx) {
+      auto proto_tx =
+          std::static_pointer_cast<shared_model::proto::Transaction>(t)
+              ->getTransport();
+      *tx_list.add_transactions() = proto_tx;
+    }
+    iroha_instance_->getIrohaInstance()->getCommandService()->ListTorii(
+        tx_list);
+    std::unique_lock<std::mutex> lock(m);
+    cv.wait(lock, [&] { return count == 0; });
+    return *this;
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::sendTxSequenceAwait(
       const shared_model::interface::TransactionSequence &tx_sequence,
       std::function<void(const BlockType &)> check) {

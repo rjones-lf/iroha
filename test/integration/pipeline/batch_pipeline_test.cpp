@@ -221,14 +221,9 @@ TEST_F(BatchPipelineTest, InvalidAtomicBatch) {
           createAndAddAssets(kSecondUserId, kAssetB, "1.0", kSecondUserKeypair),
           [](const auto &) {})
       .sendTxSequence(transaction_sequence,
-                      [](const auto &statuses) {
-                        for (const auto &status : statuses) {
-                          EXPECT_NO_THROW(boost::apply_visitor(
-                              framework::SpecifiedVisitor<
-                                  interface::StatelessValidTxResponse>(),
-                              status.get()));
-                        }
-                      })
+                      {{integration_framework::IntegrationTestFramework::
+                            kStatelessValidTxResponse},
+                       statefulInvalidStatuses})
       .checkProposal([&transaction_sequence](const auto proposal) {
         ASSERT_THAT(
             proposal->transactions(),

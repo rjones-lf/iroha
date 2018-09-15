@@ -180,6 +180,17 @@ namespace integration_framework {
                                &)> validation = [](const auto &) {});
 
     /**
+     * Send transactions to Iroha and validate obtained statuses
+     * @param tx_sequence - transactions sequence
+     * @param statuses - vector of statues list to be checked against, which
+     *        correspond to transactions in tx_seq
+     * @return this
+     */
+    IntegrationTestFramework &sendTxSequence(
+        const shared_model::interface::TransactionSequence &tx_sequence,
+        std::vector<std::set<TxStatus>> statuses);
+
+    /**
      * Send transactions to Iroha with awaiting proposal and without status
      * validation
      * @param tx_sequence - sequence for sending
