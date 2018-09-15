@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include "cryptography/keypair.hpp"
+#include "framework/integration_framework/integration_test_framework.hpp"
 #include "interfaces/permissions.hpp"
 #include "interfaces/query_responses/query_response.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -198,6 +199,24 @@ class AcceptanceFixture : public ::testing::Test {
           "domain#domain",
           "asd@asd",
           "ab..cd"};
+
+  const std::set<integration_framework::IntegrationTestFramework::TxStatus>
+      statelessInvalidStatuses{integration_framework::IntegrationTestFramework::
+                                   TxStatus::kStatelessFailedTxResponse};
+  const std::set<integration_framework::IntegrationTestFramework::TxStatus>
+      statefulInvalidStatuses{integration_framework::IntegrationTestFramework::
+                                  kStatelessValidTxResponse,
+                              integration_framework::IntegrationTestFramework::
+                                  TxStatus::kStatefulFailedTxResponse};
+  const std::set<integration_framework::IntegrationTestFramework::TxStatus>
+      committedStatuses{
+          integration_framework::IntegrationTestFramework::TxStatus::
+              kStatelessValidTxResponse,
+          integration_framework::IntegrationTestFramework::TxStatus::
+              kStatefulValidTxResponse,
+          integration_framework::IntegrationTestFramework::TxStatus::
+              kCommittedTxResponse,
+      };
 
  private:
   iroha::time::time_t initial_time;

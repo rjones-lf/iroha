@@ -13,6 +13,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using TxStatus = IntegrationTestFramework::TxStatus;
 
 class CreateRole : public AcceptanceFixture {
  public:
@@ -43,13 +44,8 @@ class CreateRole : public AcceptanceFixture {
 TEST_F(CreateRole, Basic) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .skipVerifiedProposal()
-      .skipBlock()
-      .sendTxAwait(complete(baseTx()), [](auto &block) {
-        ASSERT_EQ(block->transactions().size(), 1);
-      });
+      .sendTx(makeUserWithPerms(), committedStatuses)
+      .sendTx(complete(baseTx()), committedStatuses);
 }
 
 /**
@@ -60,16 +56,9 @@ TEST_F(CreateRole, Basic) {
 TEST_F(CreateRole, HaveNoPerms) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms({interface::permissions::Role::kGetMyTxs}))
-      .skipProposal()
-      .skipVerifiedProposal()
-      .skipBlock()
-      .sendTx(complete(baseTx()))
-      .skipProposal()
-      .checkVerifiedProposal(
-          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(
-          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
+      .sendTx(makeUserWithPerms({interface::permissions::Role::kGetMyTxs}),
+              committedStatuses)
+      .sendTx(complete(baseTx()), statefulInvalidStatuses);
 }
 
 /**
@@ -81,12 +70,9 @@ TEST_F(CreateRole, HaveNoPerms) {
 TEST_F(CreateRole, EmptyRole) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .skipVerifiedProposal()
-      .skipBlock()
+      .sendTx(makeUserWithPerms(), committedStatuses)
       .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs}, "")),
-              checkStatelessInvalid);
+              statelessInvalidStatuses);
 }
 
 /**
@@ -98,13 +84,8 @@ TEST_F(CreateRole, EmptyRole) {
 TEST_F(CreateRole, EmptyPerms) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .skipVerifiedProposal()
-      .skipBlock()
-      .sendTxAwait(complete(baseTx({})), [](auto &block) {
-        ASSERT_EQ(block->transactions().size(), 1);
-      });
+      .sendTx(makeUserWithPerms(), committedStatuses)
+      .sendTx(complete(baseTx({})), committedStatuses);
 }
 
 /**
@@ -116,13 +97,10 @@ TEST_F(CreateRole, EmptyPerms) {
 TEST_F(CreateRole, LongRoleName) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .skipVerifiedProposal()
-      .skipBlock()
+      .sendTx(makeUserWithPerms(), committedStatuses)
       .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs},
                               std::string(33, 'a'))),
-              checkStatelessInvalid);
+              statelessInvalidStatuses);
 }
 
 /**
@@ -133,13 +111,10 @@ TEST_F(CreateRole, LongRoleName) {
 TEST_F(CreateRole, MaxLenRoleName) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .skipBlock()
-      .sendTxAwait(
-          complete(baseTx({interface::permissions::Role::kGetMyTxs},
-                          std::string(32, 'a'))),
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
+      .sendTx(makeUserWithPerms(), committedStatuses)
+      .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs},
+                              std::string(32, 'a'))),
+              committedStatuses);
 }
 
 /**
@@ -153,12 +128,9 @@ TEST_F(CreateRole, MaxLenRoleName) {
 TEST_F(CreateRole, DISABLED_NonexistentPerm) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .skipVerifiedProposal()
-      .skipBlock()
+      .sendTx(makeUserWithPerms(), committedStatuses)
       .sendTx(complete(baseTx({static_cast<interface::permissions::Role>(-1)})),
-              checkStatelessInvalid);
+              statelessInvalidStatuses);
 }
 
 /**
@@ -169,15 +141,8 @@ TEST_F(CreateRole, DISABLED_NonexistentPerm) {
 TEST_F(CreateRole, ExistingRole) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .skipVerifiedProposal()
-      .skipBlock()
+      .sendTx(makeUserWithPerms(), committedStatuses)
       .sendTx(
-          complete(baseTx({interface::permissions::Role::kGetMyTxs}, kNewRole)))
-      .skipProposal()
-      .checkVerifiedProposal(
-          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
+          complete(baseTx({interface::permissions::Role::kGetMyTxs}, kNewRole)),
+          statefulInvalidStatuses);
 }

@@ -222,6 +222,33 @@ namespace integration_framework {
     return *this;
   }
 
+  IntegrationTestFramework &IntegrationTestFramework::sendTx(
+      const shared_model::proto::Transaction &tx, std::set<TxStatus> statuses) {
+    std::condition_variable cv;
+    std::mutex m;
+    size_t count = statuses.size();
+    iroha_instance_->instance_->getStatusBus()
+        ->statuses()
+        .filter([&](auto s) { return s->transactionHash() == tx.hash(); })
+        .map([](auto s) { return TxStatus(s->get().which()); })
+        .filter([&statuses](auto s) { return statuses.count(s) != 0; })
+        .take_while([&statuses](auto) { return statuses.size() != 0; })
+        .subscribe([&](auto s) {
+          auto response = statuses.find(s);
+          if (response != statuses.end()) {
+            statuses.erase(response);
+          }
+          std::lock_guard<std::mutex> lock(m);
+          count--;
+          cv.notify_one();
+        });
+    iroha_instance_->getIrohaInstance()->getCommandService()->Torii(
+        tx.getTransport());
+    std::unique_lock<std::mutex> lock(m);
+    cv.wait(lock, [&] { return count == 0; });
+    return *this;
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::sendTxAwait(
       const shared_model::proto::Transaction &tx,
       std::function<void(const BlockType &)> check) {

@@ -134,6 +134,28 @@ namespace integration_framework {
     IntegrationTestFramework &sendTx(
         const shared_model::proto::Transaction &tx);
 
+    enum TxStatus {
+      kStatelessFailedTxResponse = 0,
+      kStatelessValidTxResponse,
+      kStatefulFailedTxResponse,
+      kStatefulValidTxResponse,
+      kRejectTxResponse,
+      kCommittedTxResponse,
+      kMstExpiredResponse,
+      kNotReceivedTxResponse,
+      kMstPendingResponse,
+      kEnoughSignaturesCollectedResponse,
+    };
+
+    /**
+     * Send transaction to Iroha and validate its status
+     * @param tx - transaction for sending
+     * @param statuses - list of statuses to check against
+     * @return this
+     */
+    IntegrationTestFramework &sendTx(const shared_model::proto::Transaction &tx,
+                                     std::set<TxStatus> statuses);
+
     /**
      * Send transaction to Iroha with awaiting proposal
      * and without status validation
