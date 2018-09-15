@@ -17,7 +17,9 @@ namespace shared_model {
      public:
       std::unique_ptr<interface::AccountAssetResponse>
       createAccountAssetResponse(
-          const std::vector<interface::AccountAsset> &assets) override;
+          const std::vector<
+              std::shared_ptr<shared_model::interface::AccountAsset>> &assets)
+          override;
 
       std::unique_ptr<interface::AccountDetailResponse>
       createAccountDetailResponse(

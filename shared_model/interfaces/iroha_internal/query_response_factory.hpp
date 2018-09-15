@@ -21,7 +21,9 @@ namespace shared_model {
       virtual ~QueryResponseFactory() = default;
 
       virtual std::unique_ptr<AccountAssetResponse> createAccountAssetResponse(
-          const std::vector<AccountAsset> &assets) = 0;
+          const std::vector<
+              std::shared_ptr<shared_model::interface::AccountAsset>>
+              &assets) = 0;
 
       virtual std::unique_ptr<AccountDetailResponse>
       createAccountDetailResponse(const types::DetailType &account_detail) = 0;
