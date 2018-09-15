@@ -49,6 +49,7 @@ class SetAccountDetail : public AcceptanceFixture {
 };
 
 /**
+ * C274
  * @given a user without can_set_detail permission
  * @when execute tx with SetAccountDetail command aimed to the user
  * @then there is the tx in proposal
@@ -65,6 +66,24 @@ TEST_F(SetAccountDetail, Self) {
 }
 
 /**
+ * C273
+ * @given a user with required permission
+ * @when execute tx with SetAccountDetail command with inexistent user
+ * @then there is no tx in proposal
+ */
+TEST_F(SetAccountDetail, NonExistentUser) {
+  IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms({interface::permissions::Role::kSetDetail}))
+      .skipProposal()
+      .skipBlock()
+      .sendTxAwait(
+          complete(baseTx("inexistent@" + kDomain, kKey, kValue)),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
+}
+
+/**
+ * C280
  * @given a pair of users and first one without permissions
  * @when the first one tries to use SetAccountDetail on the second
  * @then there is an empty verified proposal
@@ -113,6 +132,7 @@ TEST_F(SetAccountDetail, WithPerm) {
 }
 
 /**
+ * C275
  * @given a pair of users
  *        @and second has been granted can_set_my_detail from the first
  * @when the first one tries to use SetAccountDetail on the second
@@ -146,4 +166,70 @@ TEST_F(SetAccountDetail, WithGrantablePerm) {
       .sendTxAwait(set_detail_cmd, [](auto &block) {
         ASSERT_EQ(block->transactions().size(), 1);
       });
+}
+
+/**
+ * C276
+ * @given a user with required permission
+ * @when execute tx with SetAccountDetail command with max key
+ * @then there is no tx in proposal
+ */
+TEST_F(SetAccountDetail, HugeKey) {
+  IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms())
+      .skipProposal()
+      .skipBlock()
+      .sendTxAwait(
+          complete(baseTx(kUserId, std::string(64, 'a'), kValue)),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
+}
+
+/**
+ * C277
+ * @given a user with required permission
+ * @when execute tx with SetAccountDetail command with empty key
+ * @then there is no tx in proposal
+ */
+TEST_F(SetAccountDetail, EmptyKey) {
+  IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms())
+      .skipProposal()
+      .skipBlock()
+      .sendTx(complete(baseTx(kUserId, "", kValue)), checkStatelessInvalid);
+}
+
+/**
+ * C278
+ * @given a user with required permission
+ * @when execute tx with SetAccountDetail command with empty value
+ * @then there is no tx in proposal
+ */
+TEST_F(SetAccountDetail, EmptyValue) {
+  IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms())
+      .skipProposal()
+      .skipBlock()
+      .sendTxAwait(complete(baseTx(kUserId, kKey, "")), [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
+      });
+}
+
+/**
+ * C279
+ * @given a user with required permission
+ * @when execute tx with SetAccountDetail command with huge both key and value
+ * @then there is no tx in proposal
+ */
+TEST_F(SetAccountDetail, HugeKeyValue) {
+  IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
+      .sendTx(makeUserWithPerms())
+      .skipProposal()
+      .skipBlock()
+      .sendTx(complete(baseTx(
+                  kUserId, std::string(10000, 'a'), std::string(10000, 'b'))),
+              checkStatelessInvalid);
 }
