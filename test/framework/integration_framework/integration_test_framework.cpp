@@ -226,6 +226,8 @@ namespace integration_framework {
       const shared_model::proto::Transaction &tx, std::set<TxStatus> statuses) {
     std::condition_variable cv;
     std::mutex m;
+
+    // statuses number that haven't being appeared yet
     size_t count = statuses.size();
     iroha_instance_->instance_->getStatusBus()
         ->statuses()
@@ -242,8 +244,12 @@ namespace integration_framework {
           count--;
           cv.notify_one();
         });
+
+    // send transaction
     iroha_instance_->getIrohaInstance()->getCommandService()->Torii(
         tx.getTransport());
+
+    // wait, until all of the statuses are recieved
     std::unique_lock<std::mutex> lock(m);
     cv.wait(lock, [&] { return count == 0; });
     return *this;
@@ -329,11 +335,15 @@ namespace integration_framework {
         return h1.blob() < h2.blob();
       }
     };
+
+    // mapping transaction hash to its statuses that need to be checked
     std::map<shared_model::crypto::Hash, std::set<TxStatus>, HashCmp>
         tx_statsues;
     if (tx.size() != statuses.size()) {
       log_->error("TxSequence has lenth that differ from statuses'");
     }
+
+    // statuses number that haven't being appeared yet
     size_t count = 0;
     for (auto i = 0u; i < tx.size() && i < statuses.size(); ++i) {
       count += statuses[i].size();
@@ -350,8 +360,6 @@ namespace integration_framework {
         .subscribe([&](auto s) {
           auto status = TxStatus(s->get().which());
           auto &statuses = tx_statsues[s->transactionHash()];
-          log_->info(
-              "Get status: {}, tx: {}", status, s->transactionHash().hex());
           if (statuses.size() == 0 || statuses.count(status) == 0) {
             return;
           }
@@ -361,6 +369,8 @@ namespace integration_framework {
           count--;
           cv.notify_one();
         });
+
+    // put all transactions to the TxList
     iroha::protocol::TxList tx_list;
     for (const auto &t : tx) {
       auto proto_tx =
@@ -368,8 +378,11 @@ namespace integration_framework {
               ->getTransport();
       *tx_list.add_transactions() = proto_tx;
     }
+    // and send them to iroha
     iroha_instance_->getIrohaInstance()->getCommandService()->ListTorii(
         tx_list);
+
+    // wait, until all of the statuses are recieved
     std::unique_lock<std::mutex> lock(m);
     cv.wait(lock, [&] { return count == 0; });
     return *this;
