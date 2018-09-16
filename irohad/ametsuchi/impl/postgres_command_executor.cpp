@@ -35,25 +35,30 @@ namespace {
     std::vector<std::string> permission_checks;
   };
 
+  // Transforms prepared statement into two strings:
+  //    1. SQL query with validation
+  //    2. SQL query without validation
   std::pair<std::string, std::string> compileStatement(
       const PreparedStatement &statement) {
-    auto initial = boost::format(statement.command_base);
 
-    auto with_validation =
-        initial % (statement.command_name + "WithValidation");
+    // Create query with validation
+    auto with_validation = boost::format(statement.command_base)
+        % (statement.command_name + "WithValidation");
 
+    // append all necessary checks to the query
     for (const auto &check : statement.permission_checks) {
       with_validation = with_validation % check;
     }
 
-    initial = boost::format(statement.command_base);
+    // Create query without validation
+    auto without_validation = boost::format(statement.command_base)
+        % (statement.command_name + "WithoutValidation");
 
-    auto without_validation =
-        initial % (statement.command_name + "WithoutValidation");
-
+    // since checks are not needed, append empty strings to their place
     for (size_t i = 0; i < statement.permission_checks.size(); i++) {
       without_validation = without_validation % "";
     }
+
     return {with_validation.str(), without_validation.str()};
   }
 
@@ -196,8 +201,8 @@ namespace {
 
   template <typename Format>
   void appendCommandName(const std::string &name,
-                           Format &cmd,
-                           bool do_validation) {
+                         Format &cmd,
+                         bool do_validation) {
     auto command_name =
         name + (do_validation ? "WithValidation" : "WithoutValidation");
     cmd % command_name;

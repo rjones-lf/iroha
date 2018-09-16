@@ -53,7 +53,6 @@ namespace iroha {
       }
 
       void TearDown() override {
-        statements.clear();
         sql->close();
         AmetsuchiTest::TearDown();
       }
@@ -104,8 +103,6 @@ namespace iroha {
       std::unique_ptr<shared_model::interface::Account> account;
       std::unique_ptr<shared_model::interface::Domain> domain;
       std::unique_ptr<shared_model::interface::types::PubkeyType> pubkey;
-
-      std::map<std::string, soci::statement *> statements;
       std::unique_ptr<soci::session> sql;
 
       std::unique_ptr<shared_model::interface::Command> command;
