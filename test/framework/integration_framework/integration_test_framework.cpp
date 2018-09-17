@@ -379,7 +379,7 @@ namespace integration_framework {
 
     struct HashCmp {
       bool operator()(const shared_model::crypto::Hash &h1,
-                      const shared_model::crypto::Hash &h2) {
+                      const shared_model::crypto::Hash &h2) const {
         return h1.blob() < h2.blob();
       }
     };
