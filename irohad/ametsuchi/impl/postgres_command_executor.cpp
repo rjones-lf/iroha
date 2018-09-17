@@ -1093,7 +1093,6 @@ namespace iroha {
       std::string json = "{" + creator_account_id_ + "}";
       std::string empty_json = "{}";
       std::string filled_json = "{" + creator_account_id_ + ", " + key + "}";
-      std::string val = "\"" + value + "\"";
 
       boost::format cmd(R"(
               WITH %s
@@ -1102,7 +1101,8 @@ namespace iroha {
                   UPDATE account SET data = jsonb_set(
                   CASE WHEN data ?:creator_account_id THEN data ELSE
                   jsonb_set(data, :json, :empty_json) END,
-                  :filled_json, :val) WHERE account_id=:account_id %s
+                  :filled_json, to_json(:val::text)::jsonb)
+                  WHERE account_id=:account_id %s
                   RETURNING (1)
               )
               SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
@@ -1136,7 +1136,7 @@ namespace iroha {
       st.exchange(soci::use(json, "json"));
       st.exchange(soci::use(empty_json, "empty_json"));
       st.exchange(soci::use(filled_json, "filled_json"));
-      st.exchange(soci::use(val, "val"));
+      st.exchange(soci::use(value, "val"));
       st.exchange(soci::use(account_id, "account_id"));
       st.exchange(soci::use(creator_account_id_, "role_account_id"));
       st.exchange(soci::use(creator_account_id_, "creator_id"));
