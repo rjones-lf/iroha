@@ -1,10 +1,12 @@
+#include <memory>
+
 /**
  * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/permissions.hpp"
+#include "backend/protobuf/proto_query_response_factory.hpp"
 
 std::unique_ptr<shared_model::interface::AccountAssetResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
@@ -34,7 +36,7 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountDetailResponse(
   protocol_specific_response->set_detail(account_detail);
 
   return std::make_unique<shared_model::proto::AccountDetailResponse>(
-      protocol_query_response);
+      std::move(protocol_query_response));
 }
 
 std::unique_ptr<shared_model::interface::AccountResponse>
@@ -53,7 +55,7 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
   }
 
   return std::make_unique<shared_model::proto::AccountResponse>(
-      protocol_query_response);
+      std::move(protocol_query_response));
 }
 
 std::unique_ptr<shared_model::interface::ErrorQueryResponse>
@@ -67,7 +69,7 @@ shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse() {
   protocol_specific_response->set_reason(reason);
 
   return std::make_unique<shared_model::proto::ErrorQueryResponse>(
-      protocol_query_response);
+      std::move(protocol_query_response));
 }
 
 std::unique_ptr<shared_model::interface::SignatoriesResponse>
@@ -84,7 +86,7 @@ shared_model::proto::ProtoQueryResponseFactory::createSignatoriesResponse(
   }
 
   return std::make_unique<shared_model::proto::SignatoriesResponse>(
-      protocol_query_response);
+      std::move(protocol_query_response));
 }
 
 std::unique_ptr<shared_model::interface::TransactionsResponse>
@@ -102,7 +104,7 @@ shared_model::proto::ProtoQueryResponseFactory::createTransactionsResponse(
   }
 
   return std::make_unique<shared_model::proto::TransactionsResponse>(
-      protocol_query_response);
+      std::move(protocol_query_response));
 }
 
 std::unique_ptr<shared_model::interface::AssetResponse>
@@ -116,7 +118,7 @@ shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
       static_cast<const shared_model::proto::Asset &>(asset).getTransport());
 
   return std::make_unique<shared_model::proto::AssetResponse>(
-      protocol_query_response);
+      std::move(protocol_query_response));
 }
 
 std::unique_ptr<shared_model::interface::RolesResponse>
@@ -131,7 +133,7 @@ shared_model::proto::ProtoQueryResponseFactory::createRolesResponse(
   }
 
   return std::make_unique<shared_model::proto::RolesResponse>(
-      protocol_query_response);
+      std::move(protocol_query_response));
 }
 
 std::unique_ptr<shared_model::interface::RolePermissionsResponse>
@@ -150,7 +152,7 @@ shared_model::proto::ProtoQueryResponseFactory::createRolePermissionsResponse(
   }
 
   return std::make_unique<shared_model::proto::RolePermissionsResponse>(
-      protocol_query_response);
+      std::move(protocol_query_response));
 }
 
 std::unique_ptr<shared_model::interface::BlockQueryResponse>

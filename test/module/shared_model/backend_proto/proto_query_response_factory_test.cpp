@@ -89,7 +89,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {
 }
 
 TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
-  const AccountIdType kAccountId = "doge";
+  const AccountIdType kAccountId = "doge@meme";
   const DomainIdType kDomainId = "meme";
   const QuorumType kQuorum = 1;
   const JsonType kJson = "{ fav_meme : doge }";
@@ -97,6 +97,9 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
 
   auto account = unwrapResult(
       objects_factory->createAccount(kAccountId, kDomainId, kQuorum, kJson));
+  if (not account) {
+    FAIL() << "could not create common object via factory";
+  }
   auto response = response_factory->createAccountResponse(*account, kRoles);
 
   ASSERT_TRUE(response);
@@ -148,12 +151,15 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
 }
 
 TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
-  const AssetIdType kAssetId = "doge";
+  const AssetIdType kAssetId = "doge#coin";
   const DomainIdType kDomainId = "coin";
   const PrecisionType kPrecision = 2;
 
   auto asset = unwrapResult(
       objects_factory->createAsset(kAssetId, kDomainId, kPrecision));
+  if (not asset) {
+    FAIL() << "could not create common object via factory";
+  }
   auto response = response_factory->createAssetResponse(*asset);
 
   ASSERT_TRUE(response);
@@ -191,7 +197,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithBlock) {
   ASSERT_TRUE(response);
   ASSERT_NO_THROW({
     const auto &block_resp = boost::apply_visitor(
-        SpecifiedVisitor<BlockResponse>(), response->get());
+        SpecifiedVisitor<shared_model::interface::BlockResponse>(), response->get());
     ASSERT_EQ(block_resp.block().txsNumber(), 0);
     ASSERT_EQ(block_resp.block().height(), kBlockHeight);
     ASSERT_EQ(block_resp.block().createdTime(), kCreatedTime);
@@ -205,7 +211,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithError) {
   ASSERT_TRUE(response);
   ASSERT_NO_THROW({
     const auto &error_resp = boost::apply_visitor(
-        SpecifiedVisitor<BlockErrorResponse>(), response->get());
+        SpecifiedVisitor<shared_model::interface::BlockErrorResponse>(), response->get());
     ASSERT_EQ(error_resp.message(), kErrorMsg);
   });
 }
