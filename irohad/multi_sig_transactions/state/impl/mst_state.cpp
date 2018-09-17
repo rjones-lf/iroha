@@ -44,13 +44,10 @@ namespace iroha {
   }
 
   bool MstState::operator==(const MstState &rhs) const {
-    return std::find_if(internal_state_.begin(),
-                        internal_state_.end(),
-                        [&rhs](auto &i) {
-                          return rhs.internal_state_.find(i)
-                              != rhs.internal_state_.end();
-                        })
-        != internal_state_.end();
+    return std::all_of(
+        internal_state_.begin(), internal_state_.end(), [&rhs](auto &i) {
+          return rhs.internal_state_.find(i) != rhs.internal_state_.end();
+        });
   }
 
   bool MstState::isEmpty() const {
