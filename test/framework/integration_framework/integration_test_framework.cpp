@@ -382,7 +382,7 @@ namespace integration_framework {
     iroha_instance_->getIrohaInstance()->getCommandService()->ListTorii(
         tx_list);
 
-    // wait, until all of the statuses are recieved
+    // wait, until all of the statuses are received
     std::unique_lock<std::mutex> lock(m);
     cv.wait(lock, [&] { return count == 0; });
     return *this;

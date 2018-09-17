@@ -182,7 +182,7 @@ namespace integration_framework {
     /**
      * Send transactions to Iroha and validate obtained statuses
      * @param tx_sequence - transactions sequence
-     * @param statuses - vector of statues list to be checked against, which
+     * @param statuses - vector of statuses list to be checked against, which
      *        correspond to transactions in tx_seq
      * @return this
      */
