@@ -187,13 +187,7 @@ namespace iroha {
         auto &db = dbname.value();
         std::unique_lock<std::shared_timed_mutex> lock(drop_mutex);
         log_->info("Drop database {}", db);
-        std::vector<std::shared_ptr<soci::session>> connections;
-        for (size_t i = 0; i < pool_size_; i++) {
-          connections.push_back(std::make_shared<soci::session>(*connection_));
-          connections[i]->close();
-        }
-        connections.clear();
-        connection_.reset();
+        freeConnections();
         soci::session sql(soci::postgresql,
                           postgres_options_.optionsStringWithoutDbName());
         // perform dropping
@@ -205,6 +199,21 @@ namespace iroha {
       // erase blocks
       log_->info("drop block store");
       block_store_->dropAll();
+    }
+
+    void StorageImpl::freeConnections() {
+      if (connection_ == nullptr) {
+        log_->warn("Tried to free connections without active connection");
+        return;
+      }
+      std::vector<std::shared_ptr<soci::session>> connections;
+      for (size_t i = 0; i < pool_size_; i++) {
+        connections.push_back(std::make_shared<soci::session>(*connection_));
+        connections[i]->close();
+        log_->debug("Closed connection {}", i);
+      }
+      connections.clear();
+      connection_.reset();
     }
 
     expected::Result<bool, std::string> StorageImpl::createDatabaseIfNotExist(
@@ -327,73 +336,35 @@ namespace iroha {
       storage->committed = true;
     }
 
-    namespace {
-      /**
-       * Deleter for an object which uses connection_pool
-       * @tparam Query object type to delete
-       */
-      template <typename Query>
-      class Deleter {
-       public:
-        Deleter(std::shared_ptr<soci::connection_pool> conn, size_t pool_pos)
-            : conn_(std::move(conn)), pool_pos_(pool_pos) {}
-
-        void operator()(Query *q) const {
-          if (conn_ != nullptr) {
-            conn_->give_back(pool_pos_);
-          }
-          delete q;
-        }
-
-       private:
-        std::shared_ptr<soci::connection_pool> conn_;
-        const size_t pool_pos_;
-      };
-
-      /**
-       * Factory method for query object creation which uses connection_pool
-       * @tparam Query object type to create
-       * @param conn is pointer to connection pool for getting and releasing
-       * the session
-       * @param drop_mutex is mutex for preventing connection destruction
-       *        during the function
-       * @param log is a logger
-       * @param args - various other arguments needed to initalize Query object
-       * @return pointer to created query object
-       * note: blocks until connection can be leased from the pool
-       */
-      template <typename Query, typename... QueryArgs>
-      std::shared_ptr<Query> setupQuery(
-          std::shared_ptr<soci::connection_pool> conn,
-          std::shared_timed_mutex &drop_mutex,
-          const logger::Logger &log,
-          QueryArgs &&... args) {
-        std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
-        if (conn == nullptr) {
-          log->warn("Storage was deleted, cannot perform setup");
-          return nullptr;
-        }
-        auto pool_pos = conn->lease();
-        soci::session &session = conn->at(pool_pos);
-        lock.unlock();
-        return {new Query(session, std::forward<QueryArgs>(args)...),
-                Deleter<Query>(std::move(conn), pool_pos)};
-      }
-    }  // namespace
-
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
-      return setupQuery<PostgresWsvQuery>(
-          connection_, drop_mutex, log_, factory_);
+      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+      if (not connection_) {
+        log_->info("connection to database is not initialised");
+        return nullptr;
+      }
+      return std::make_shared<PostgresWsvQuery>(
+          std::make_unique<soci::session>(*connection_), factory_);
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
-      return setupQuery<PostgresBlockQuery>(
-          connection_, drop_mutex, log_, *block_store_, converter_);
+      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+      if (not connection_) {
+        log_->info("connection to database is not initialised");
+        return nullptr;
+      }
+      return std::make_shared<PostgresBlockQuery>(
+          std::make_unique<soci::session>(*connection_),
+          *block_store_,
+          converter_);
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
     StorageImpl::on_commit() {
       return notifier_.get_observable();
+    }
+
+    StorageImpl::~StorageImpl() {
+      freeConnections();
     }
 
     const std::string &StorageImpl::drop_ = R"(

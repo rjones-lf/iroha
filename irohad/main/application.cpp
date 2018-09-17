@@ -370,3 +370,9 @@ void Irohad::run() {
           },
           [&](const expected::Error<std::string> &e) { log_->error(e.error); });
 }
+
+Irohad::~Irohad() {
+  // TODO andrei 17.09.18: IR-1710 Verify that all components' destructors are
+  // called in irohad destructor
+  storage->freeConnections();
+}
