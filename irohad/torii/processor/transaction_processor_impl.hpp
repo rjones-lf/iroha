@@ -44,8 +44,9 @@ namespace iroha {
           std::shared_ptr<MstProcessor> mst_processor,
           std::shared_ptr<iroha::torii::StatusBus> status_bus);
 
-      void batchHandle(const shared_model::interface::TransactionBatch
-                           &transaction_batch) const override;
+      void batchHandle(
+          std::shared_ptr<shared_model::interface::TransactionBatch>
+              transaction_batch) const override;
 
      private:
       // connections

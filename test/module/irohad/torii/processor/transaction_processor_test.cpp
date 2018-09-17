@@ -453,8 +453,7 @@ TEST_F(TransactionProcessorTest, MultisigTransactionFromMst) {
       std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
 
   EXPECT_CALL(*pcs, propagate_batch(_)).Times(1);
-  mst_prepared_notifier.get_subscriber().on_next(
-      std::make_shared<shared_model::interface::TransactionBatch>(after_mst));
+  mst_prepared_notifier.get_subscriber().on_next(after_mst);
 }
 
 /**
@@ -490,6 +489,5 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
       }));
   tp->batchHandle(framework::batch::createBatchFromSingleTransaction(tx));
   mst_expired_notifier.get_subscriber().on_next(
-      std::make_shared<shared_model::interface::TransactionBatch>(
-          framework::batch::createBatchFromSingleTransaction(tx)));
+      framework::batch::createBatchFromSingleTransaction(tx));
 }

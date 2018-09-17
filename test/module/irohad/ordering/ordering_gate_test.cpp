@@ -35,8 +35,9 @@ class MockOrderingGateTransportGrpcService
 
 class MockOrderingGateTransport : public OrderingGateTransport {
   MOCK_METHOD1(subscribe, void(std::shared_ptr<OrderingGateNotification>));
-  MOCK_METHOD1(propagateBatch,
-               void(const shared_model::interface::TransactionBatch &));
+  MOCK_METHOD1(
+      propagateBatch,
+      void(std::shared_ptr<shared_model::interface::TransactionBatch>));
 };
 
 class OrderingGateTest : public ::testing::Test {

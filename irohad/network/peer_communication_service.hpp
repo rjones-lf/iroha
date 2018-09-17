@@ -44,7 +44,8 @@ namespace iroha {
        * @param batch - batch for propagation
        */
       virtual void propagate_batch(
-          const shared_model::interface::TransactionBatch &batch) const = 0;
+          std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+          const = 0;
 
       /**
        * Event is triggered when proposal arrives from network.
