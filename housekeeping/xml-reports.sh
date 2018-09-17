@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 BUILD_DIR=/opt/iroha/build
 PARALLELISM=$(nproc --all)

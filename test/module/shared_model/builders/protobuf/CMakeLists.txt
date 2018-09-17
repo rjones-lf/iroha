@@ -70,6 +70,14 @@ target_link_libraries(proto_transaction_responses_builder_test
     shared_model_proto_builders
     )
 
+addtest(proto_transaction_responses_factory_test
+    transaction_responses/proto_transaction_response_factory_test.cpp
+    )
+
+target_link_libraries(proto_transaction_responses_factory_test
+    shared_model_proto_backend
+    )
+
 addtest(block_builder_test
     block_builder_test.cpp
     )
