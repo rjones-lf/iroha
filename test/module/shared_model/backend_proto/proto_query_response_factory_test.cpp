@@ -29,11 +29,11 @@ class ProtoQueryResponseFactoryTest : public ::testing::Test {
       std::make_shared<ProtoCommonObjectsFactory<FieldValidator>>();
 
   /**
-   * Put value of Result<unique_ptr, _> into a shared_ptr
+   * Put value of Result<unique_ptr<_>, _> into a shared_ptr
    * @tparam ResultType - type of result value inside a unique_ptr
    * @tparam ErrorType - type of result error
    * @param res - result to be unwrapped
-   * @return shared_ptr to result value
+   * @return shared_ptr to result value or to nullptr, if result containts error
    */
   template <typename ResultType, typename ErrorType>
   std::shared_ptr<ResultType> unwrapResult(
@@ -43,7 +43,7 @@ class ProtoQueryResponseFactoryTest : public ::testing::Test {
           std::shared_ptr<ResultType> ptr = std::move(val.value);
           return ptr;
         },
-        [](const Error<ErrorType> &err) -> std::shared_ptr<ResultType> {
+        [](const Error<ErrorType> &) -> std::shared_ptr<ResultType> {
           return nullptr;
         });
   }
@@ -52,6 +52,12 @@ class ProtoQueryResponseFactoryTest : public ::testing::Test {
   void TearDown() override {}
 };
 
+/**
+ * Checks createAccountAssetResponse method of QueryResponseFactory
+ * @given collection of account assets
+ * @when creating account asset query response via factory
+ * @then that response is created @and is well-formed
+ */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
   constexpr int kAccountAssetsNumber = 5;
   const std::string kAccountId = "doge@meme";
@@ -79,6 +85,12 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
   }
 }
 
+/**
+ * Checks createAccountDetailResponse method of QueryResponseFactory
+ * @given account details
+ * @when creating account detail query response via factory
+ * @then that response is created @and is well-formed
+ */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {
   const DetailType account_details = "{ fav_meme : doge }";
   auto response =
@@ -88,6 +100,12 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {
   ASSERT_EQ(response->detail(), account_details);
 }
 
+/**
+ * Checks createAccountResponse method of QueryResponseFactory
+ * @given account
+ * @when creating account query response via factory
+ * @then that response is created @and is well-formed
+ */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
   const AccountIdType kAccountId = "doge@meme";
   const DomainIdType kDomainId = "meme";
@@ -110,6 +128,12 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
   ASSERT_EQ(response->roles(), kRoles);
 }
 
+/**
+ * Checks createErrorQueryResponse method of QueryResponseFactory
+ * @given
+ * @when creating error query response via factory
+ * @then that response is created @and is well-formed
+ */
 TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   auto response = response_factory->createErrorQueryResponse();
 
@@ -119,6 +143,12 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
       response->get()));
 }
 
+/**
+ * Checks createSignatoriesResponse method of QueryResponseFactory
+ * @given signatories
+ * @when creating signatories query response via factory
+ * @then that response is created @and is well-formed
+ */
 TEST_F(ProtoQueryResponseFactoryTest, CreateSignatoriesResponse) {
   const auto pub_key =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
@@ -130,6 +160,12 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateSignatoriesResponse) {
   ASSERT_EQ(response->keys(), signatories);
 }
 
+/**
+ * Checks createTransactionsResponse method of QueryResponseFactory
+ * @given collection of transactions
+ * @when creating transactions query response via factory
+ * @then that response is created @and is well-formed
+ */
 TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
   constexpr int kTransactionsNumber = 5;
 
@@ -150,6 +186,12 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
   }
 }
 
+/**
+ * Checks createAssetResponse method of QueryResponseFactory
+ * @given asset
+ * @when creating asset query response via factory
+ * @then that response is created @and is well-formed
+ */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
   const AssetIdType kAssetId = "doge#coin";
   const DomainIdType kDomainId = "coin";
@@ -168,6 +210,12 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
   ASSERT_EQ(response->asset().precision(), kPrecision);
 }
 
+/**
+ * Checks createRolesResponse method of QueryResponseFactory
+ * @given collection of roles
+ * @when creating roles query response via factory
+ * @then that response is created @and is well-formed
+ */
 TEST_F(ProtoQueryResponseFactoryTest, CreateRolesResponse) {
   const std::vector<RoleIdType> roles{"admin", "user"};
   auto response = response_factory->createRolesResponse(roles);
@@ -176,6 +224,12 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateRolesResponse) {
   ASSERT_EQ(response->roles(), roles);
 }
 
+/**
+ * Checks createRolePermissionsResponse method of QueryResponseFactory
+ * @given collection of role permissions
+ * @when creating role permissions query response via factory
+ * @then that response is created @and is well-formed
+ */
 TEST_F(ProtoQueryResponseFactoryTest, CreateRolePermissionsResponse) {
   const shared_model::interface::RolePermissionSet perms{
       shared_model::interface::permissions::Role::kGetMyAccount,
@@ -186,6 +240,12 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateRolePermissionsResponse) {
   ASSERT_EQ(response->rolePermissions(), perms);
 }
 
+/**
+ * Checks createBlockQueryResponse method of QueryResponseFactory
+ * @given block
+ * @when creating block query query response with block via factory
+ * @then that response is created @and is well-formed
+ */
 TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithBlock) {
   constexpr HeightType kBlockHeight = 42;
   const auto kCreatedTime = iroha::time::now();
@@ -197,13 +257,20 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithBlock) {
   ASSERT_TRUE(response);
   ASSERT_NO_THROW({
     const auto &block_resp = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::BlockResponse>(), response->get());
+        SpecifiedVisitor<shared_model::interface::BlockResponse>(),
+        response->get());
     ASSERT_EQ(block_resp.block().txsNumber(), 0);
     ASSERT_EQ(block_resp.block().height(), kBlockHeight);
     ASSERT_EQ(block_resp.block().createdTime(), kCreatedTime);
   });
 }
 
+/**
+ * Checks createBlockQueryResponse method of QueryResponseFactory
+ * @given error
+ * @when creating block query query response with error via factory
+ * @then that response is created @and is well-formed
+ */
 TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithError) {
   const std::string kErrorMsg = "something's wrong!";
   auto response = response_factory->createBlockQueryResponse(kErrorMsg);
@@ -211,7 +278,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithError) {
   ASSERT_TRUE(response);
   ASSERT_NO_THROW({
     const auto &error_resp = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::BlockErrorResponse>(), response->get());
+        SpecifiedVisitor<shared_model::interface::BlockErrorResponse>(),
+        response->get());
     ASSERT_EQ(error_resp.message(), kErrorMsg);
   });
 }

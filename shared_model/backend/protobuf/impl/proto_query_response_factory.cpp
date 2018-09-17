@@ -1,12 +1,10 @@
-#include <memory>
-
 /**
  * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
+#include "backend/protobuf/permissions.hpp"
 
 std::unique_ptr<shared_model::interface::AccountAssetResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
