@@ -31,19 +31,10 @@ using ::testing::Return;
 using shared_model::interface::types::HeightType;
 
 class MockOrderingGateTransportGrpcService
-    : public proto::OrderingServiceTransportGrpc::Service {
- public:
-  MOCK_METHOD3(onTransaction,
-               ::grpc::Status(::grpc::ServerContext *,
-                              const iroha::protocol::Transaction *,
-                              ::google::protobuf::Empty *));
-};
+    : public proto::OrderingServiceTransportGrpc::Service {};
 
 class MockOrderingGateTransport : public OrderingGateTransport {
   MOCK_METHOD1(subscribe, void(std::shared_ptr<OrderingGateNotification>));
-  MOCK_METHOD1(
-      propagateTransaction,
-      void(std::shared_ptr<const shared_model::interface::Transaction>));
   MOCK_METHOD1(propagateBatch,
                void(const shared_model::interface::TransactionBatch &));
 };
@@ -90,31 +81,6 @@ class OrderingGateTest : public ::testing::Test {
   std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
       async_call_;
 };
-
-/**
- * @given Initialized OrderingGate
- * @when  Send 5 transactions to Ordering Gate
- * @then  Check that transactions are received
- */
-TEST_F(OrderingGateTest, TransactionReceivedByServerWhenSent) {
-  size_t call_count = 0;
-  EXPECT_CALL(*fake_service, onTransaction(_, _, _))
-      .Times(5)
-      .WillRepeatedly(InvokeWithoutArgs([&] {
-        ++call_count;
-        cv.notify_one();
-        return grpc::Status::OK;
-      }));
-
-  for (size_t i = 0; i < 5; ++i) {
-    auto tx = std::make_shared<shared_model::proto::Transaction>(
-        TestTransactionBuilder().build());
-    gate_impl->propagateTransaction(tx);
-  }
-
-  std::unique_lock<std::mutex> lock(m);
-  cv.wait_for(lock, 10s, [&] { return call_count == 5; });
-}
 
 /**
  * @given Initialized OrderingGate

@@ -31,7 +31,6 @@
 
 namespace shared_model {
   namespace interface {
-    class Transaction;
     class Proposal;
   }  // namespace interface
 }  // namespace shared_model
@@ -67,10 +66,6 @@ namespace iroha {
           std::shared_ptr<iroha::network::OrderingGateTransport> transport,
           shared_model::interface::types::HeightType initial_height,
           bool run_async = true);
-
-      void propagateTransaction(
-          std::shared_ptr<const shared_model::interface::Transaction>
-              transaction) const override;
 
       void propagateBatch(const shared_model::interface::TransactionBatch
                               &batch) const override;

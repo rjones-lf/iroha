@@ -57,11 +57,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
           verified_prop_notifier)
       : prop_notifier_(prop_notifier),
         commit_notifier_(commit_notifier),
-        verified_prop_notifier_(verified_prop_notifier){};
-
-  void propagate_transaction(
-      std::shared_ptr<const shared_model::interface::Transaction> transaction)
-      const override {}
+        verified_prop_notifier_(verified_prop_notifier) {}
 
   void propagate_batch(
       const shared_model::interface::TransactionBatch &batch) const override {}
@@ -70,6 +66,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
   on_proposal() const override {
     return prop_notifier_.get_observable();
   }
+
   rxcpp::observable<SynchronizationEvent> on_commit() const override {
     return commit_notifier_.get_observable();
   }
@@ -78,7 +75,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
   on_verified_proposal() const override {
     return verified_prop_notifier_.get_observable();
-  };
+  }
 
  private:
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>

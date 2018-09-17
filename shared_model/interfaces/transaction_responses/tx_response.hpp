@@ -15,6 +15,7 @@
 #include "interfaces/transaction_responses/mst_expired_response.hpp"
 #include "interfaces/transaction_responses/mst_pending_response.hpp"
 #include "interfaces/transaction_responses/not_received_tx_response.hpp"
+#include "interfaces/transaction_responses/rejected_tx_response.hpp"
 #include "interfaces/transaction_responses/stateful_failed_tx_response.hpp"
 #include "interfaces/transaction_responses/stateful_valid_tx_response.hpp"
 #include "interfaces/transaction_responses/stateless_failed_tx_response.hpp"
@@ -45,6 +46,7 @@ namespace shared_model {
                                        StatelessValidTxResponse,
                                        StatefulFailedTxResponse,
                                        StatefulValidTxResponse,
+                                       RejectTxResponse,
                                        CommittedTxResponse,
                                        MstExpiredResponse,
                                        NotReceivedTxResponse,
@@ -54,10 +56,13 @@ namespace shared_model {
       /// Type with list of types in ResponseVariantType
       using ResponseListType = ResponseVariantType::types;
 
+      /// Type of transaction hash
+      using TransactionHashType = interface::types::HashType;
+
       /**
        * @return hash of corresponding transaction
        */
-      virtual const interface::types::HashType &transactionHash() const = 0;
+      virtual const TransactionHashType &transactionHash() const = 0;
 
       /**
        * @return attached concrete tx response
@@ -104,7 +109,7 @@ namespace shared_model {
 
       bool operator==(const ModelType &rhs) const override {
         return transactionHash() == rhs.transactionHash()
-            and get() == rhs.get();
+            and errorMessage() == rhs.errorMessage() and get() == rhs.get();
       }
     };
   }  // namespace interface

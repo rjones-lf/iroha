@@ -15,15 +15,14 @@
  * limitations under the License.
  */
 
+#include "ordering/impl/ordering_gate_impl.hpp"
+
 #include <tuple>
 #include <utility>
-
-#include "ordering/impl/ordering_gate_impl.hpp"
 
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
-#include "interfaces/transaction.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -42,15 +41,6 @@ namespace iroha {
           last_block_height_(initial_height),
           log_(logger::log("OrderingGate")),
           run_async_(run_async) {}
-
-    void OrderingGateImpl::propagateTransaction(
-        std::shared_ptr<const shared_model::interface::Transaction> transaction)
-        const {
-      log_->info("propagate tx, account_id: {}",
-                 " account_id: " + transaction->creatorAccountId());
-
-      transport_->propagateTransaction(transaction);
-    }
 
     void OrderingGateImpl::propagateBatch(
         const shared_model::interface::TransactionBatch &batch) const {
