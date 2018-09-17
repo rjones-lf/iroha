@@ -222,6 +222,52 @@ namespace integration_framework {
     return *this;
   }
 
+  struct TxStatusVisitor
+      : public boost::static_visitor<IntegrationTestFramework::TxStatus> {
+    IntegrationTestFramework::TxStatus operator()(
+        const shared_model::interface::StatelessFailedTxResponse &) const {
+      return IntegrationTestFramework::TxStatus::kStatelessFailedTxResponse;
+    }
+    IntegrationTestFramework::TxStatus operator()(
+        const shared_model::interface::StatelessValidTxResponse &) const {
+      return IntegrationTestFramework::TxStatus::kStatelessValidTxResponse;
+    }
+    IntegrationTestFramework::TxStatus operator()(
+        const shared_model::interface::StatefulFailedTxResponse &) const {
+      return IntegrationTestFramework::TxStatus::kStatefulFailedTxResponse;
+    }
+    IntegrationTestFramework::TxStatus operator()(
+        const shared_model::interface::StatefulValidTxResponse &) const {
+      return IntegrationTestFramework::TxStatus::kStatefulValidTxResponse;
+    }
+    IntegrationTestFramework::TxStatus operator()(
+        const shared_model::interface::RejectTxResponse &) const {
+      return IntegrationTestFramework::TxStatus::kRejectTxResponse;
+    }
+    IntegrationTestFramework::TxStatus operator()(
+        const shared_model::interface::CommittedTxResponse &) const {
+      return IntegrationTestFramework::TxStatus::kCommittedTxResponse;
+    }
+    IntegrationTestFramework::TxStatus operator()(
+        const shared_model::interface::MstExpiredResponse &) const {
+      return IntegrationTestFramework::TxStatus::kMstExpiredResponse;
+    }
+    IntegrationTestFramework::TxStatus operator()(
+        const shared_model::interface::NotReceivedTxResponse &) const {
+      return IntegrationTestFramework::TxStatus::kNotReceivedTxResponse;
+    }
+    IntegrationTestFramework::TxStatus operator()(
+        const shared_model::interface::MstPendingResponse &) const {
+      return IntegrationTestFramework::TxStatus::kMstPendingResponse;
+    }
+    IntegrationTestFramework::TxStatus operator()(
+        const shared_model::interface::EnoughSignaturesCollectedResponse &)
+        const {
+      return IntegrationTestFramework::TxStatus::
+          kEnoughSignaturesCollectedResponse;
+    }
+  };
+
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
       const shared_model::proto::Transaction &tx, std::set<TxStatus> statuses) {
     std::condition_variable cv;
@@ -232,7 +278,9 @@ namespace integration_framework {
     iroha_instance_->instance_->getStatusBus()
         ->statuses()
         .filter([&](auto s) { return s->transactionHash() == tx.hash(); })
-        .map([](auto s) { return TxStatus(s->get().which()); })
+        .map([](auto s) {
+          return boost::apply_visitor(TxStatusVisitor(), s->get());
+        })
         .filter([&statuses](auto s) { return statuses.count(s) != 0; })
         .take_while([&statuses](auto) { return statuses.size() != 0; })
         .subscribe([&](auto s) {
@@ -358,7 +406,7 @@ namespace integration_framework {
           return tx_statsues.find(s->transactionHash()) != tx_statsues.end();
         })
         .subscribe([&](auto s) {
-          auto status = TxStatus(s->get().which());
+          auto status = boost::apply_visitor(TxStatusVisitor(), s->get());
           auto &statuses = tx_statsues[s->transactionHash()];
           if (statuses.size() == 0 || statuses.count(status) == 0) {
             return;

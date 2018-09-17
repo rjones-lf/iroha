@@ -135,7 +135,7 @@ namespace integration_framework {
         const shared_model::proto::Transaction &tx);
 
     enum TxStatus {
-      kStatelessFailedTxResponse = 0,
+      kStatelessFailedTxResponse,
       kStatelessValidTxResponse,
       kStatefulFailedTxResponse,
       kStatefulValidTxResponse,
