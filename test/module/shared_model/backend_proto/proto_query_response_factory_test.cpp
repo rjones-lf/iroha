@@ -131,16 +131,25 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
 /**
  * Checks createErrorQueryResponse method of QueryResponseFactory
  * @given
- * @when creating error query response via factory
+ * @when creating error query responses for a couple of cases via factory
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
-  auto response = response_factory->createErrorQueryResponse();
+  using ErrorTypes =
+      shared_model::interface::QueryResponseFactory::ErrorQueryType;
+  auto stateless_invalid_response =
+      response_factory->createErrorQueryResponse(ErrorTypes::kStatelessFailed);
+  auto no_signatories_response =
+      response_factory->createErrorQueryResponse(ErrorTypes::kNoSignatories);
 
-  ASSERT_TRUE(response);
+  ASSERT_TRUE(stateless_invalid_response);
   ASSERT_NO_THROW(boost::apply_visitor(
       SpecifiedVisitor<shared_model::interface::StatelessFailedErrorResponse>(),
-      response->get()));
+      stateless_invalid_response->get()));
+  ASSERT_TRUE(no_signatories_response);
+  ASSERT_NO_THROW(boost::apply_visitor(
+      SpecifiedVisitor<shared_model::interface::NoSignatoriesErrorResponse>(),
+      no_signatories_response->get()));
 }
 
 /**

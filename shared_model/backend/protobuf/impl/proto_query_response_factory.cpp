@@ -57,11 +57,40 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
 }
 
 std::unique_ptr<shared_model::interface::ErrorQueryResponse>
-shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse() {
+shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
+    ErrorQueryType error_type) {
   iroha::protocol::QueryResponse protocol_query_response;
 
-  constexpr iroha::protocol::ErrorResponse_Reason reason =
-      iroha::protocol::ErrorResponse_Reason_STATELESS_INVALID;
+  iroha::protocol::ErrorResponse_Reason reason;
+  switch (error_type) {
+    case ErrorQueryType::kStatelessFailed:
+      reason = iroha::protocol::ErrorResponse_Reason_STATELESS_INVALID;
+      break;
+    case ErrorQueryType::kStatefulFailed:
+      reason = iroha::protocol::ErrorResponse_Reason_STATEFUL_INVALID;
+      break;
+    case ErrorQueryType::kNoAccount:
+      reason = iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT;
+      break;
+    case ErrorQueryType::kNoAccountAssets:
+      reason = iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT_ASSETS;
+      break;
+    case ErrorQueryType::kNoAccountDetail:
+      reason = iroha::protocol::ErrorResponse_Reason_NO_ACCOUNT_DETAIL;
+      break;
+    case ErrorQueryType::kNoSignatories:
+      reason = iroha::protocol::ErrorResponse_Reason_NO_SIGNATORIES;
+      break;
+    case ErrorQueryType::kNotSupported:
+      reason = iroha::protocol::ErrorResponse_Reason_NOT_SUPPORTED;
+      break;
+    case ErrorQueryType::kNoAsset:
+      reason = iroha::protocol::ErrorResponse_Reason_NO_ASSET;
+      break;
+    case ErrorQueryType::kNoRoles:
+      reason = iroha::protocol::ErrorResponse_Reason_NO_ROLES;
+      break;
+  }
   iroha::protocol::ErrorResponse *protocol_specific_response =
       protocol_query_response.mutable_error_response();
   protocol_specific_response->set_reason(reason);

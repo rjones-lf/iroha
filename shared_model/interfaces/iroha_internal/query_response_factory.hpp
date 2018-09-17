@@ -49,11 +49,26 @@ namespace shared_model {
           const Account &account, const std::vector<std::string> &roles) = 0;
 
       /**
+       * Describes type of error to be placed inside the error query response
+       */
+      enum class ErrorQueryType {
+        kStatelessFailed,
+        kStatefulFailed,
+        kNoAccount,
+        kNoAccountAssets,
+        kNoAccountDetail,
+        kNoSignatories,
+        kNotSupported,
+        kNoAsset,
+        kNoRoles
+      };
+      /**
        * Create response for failed query
+       * @param error_type - type of error to be inserted into the response
        * @return error response
        */
-      virtual std::unique_ptr<ErrorQueryResponse>
-      createErrorQueryResponse() = 0;
+      virtual std::unique_ptr<ErrorQueryResponse> createErrorQueryResponse(
+          ErrorQueryType error_type) = 0;
 
       /**
        * Create response for signatories query

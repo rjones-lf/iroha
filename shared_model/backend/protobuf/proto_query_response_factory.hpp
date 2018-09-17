@@ -29,8 +29,8 @@ namespace shared_model {
           const interface::Account &account,
           const std::vector<std::string> &roles) override;
 
-      std::unique_ptr<interface::ErrorQueryResponse> createErrorQueryResponse()
-          override;
+      std::unique_ptr<interface::ErrorQueryResponse> createErrorQueryResponse(
+          ErrorQueryType error_type) override;
 
       std::unique_ptr<interface::SignatoriesResponse> createSignatoriesResponse(
           const std::vector<interface::types::PubkeyType> &signatories)
