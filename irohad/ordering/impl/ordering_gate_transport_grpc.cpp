@@ -49,11 +49,11 @@ OrderingGateTransportGrpc::OrderingGateTransportGrpc(
                    shared_model::validation::DefaultProposalValidator>>()) {}
 
 void OrderingGateTransportGrpc::propagateBatch(
-    const shared_model::interface::TransactionBatch &batch) {
+    std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
   async_call_->log_->info("Propagate transaction batch (on transport)");
 
   iroha::protocol::TxList batch_transport;
-  for (const auto tx : batch.transactions()) {
+  for (const auto tx : batch->transactions()) {
     new (batch_transport.add_transactions()) iroha::protocol::Transaction(
         std::static_pointer_cast<shared_model::proto::Transaction>(tx)
             ->getTransport());

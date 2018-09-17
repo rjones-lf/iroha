@@ -157,7 +157,8 @@ namespace torii {
      * transactions inside it
      * @param batch to be processed
      */
-    void processBatch(const shared_model::interface::TransactionBatch &batch);
+    void processBatch(
+        std::shared_ptr<shared_model::interface::TransactionBatch> batch);
 
    private:
     using CacheType = iroha::cache::Cache<

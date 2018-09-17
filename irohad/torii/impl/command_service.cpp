@@ -108,9 +108,9 @@ namespace torii {
   }  // namespace
 
   void CommandService::processBatch(
-      const shared_model::interface::TransactionBatch &batch) {
+      std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
     tx_processor_->batchHandle(batch);
-    const auto &txs = batch.transactions();
+    const auto &txs = batch->transactions();
     std::for_each(txs.begin(), txs.end(), [this](const auto &tx) {
       const auto &tx_hash = tx->hash();
       if (cache_->findItem(tx_hash) and tx->quorum() < 2) {

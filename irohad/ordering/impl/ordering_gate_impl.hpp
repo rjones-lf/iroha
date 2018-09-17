@@ -67,8 +67,9 @@ namespace iroha {
           shared_model::interface::types::HeightType initial_height,
           bool run_async = true);
 
-      void propagateBatch(const shared_model::interface::TransactionBatch
-                              &batch) const override;
+      void propagateBatch(
+          std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+          const override;
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
       on_proposal() override;

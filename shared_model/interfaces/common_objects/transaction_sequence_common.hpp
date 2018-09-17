@@ -24,7 +24,8 @@ namespace shared_model {
 
       using SharedTxsCollectionType = std::vector<std::shared_ptr<Transaction>>;
 
-      using BatchesCollectionType = std::vector<TransactionBatch>;
+      using BatchesCollectionType =
+          std::vector<std::shared_ptr<TransactionBatch>>;
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model

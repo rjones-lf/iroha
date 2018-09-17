@@ -214,10 +214,12 @@ namespace framework {
               .match(
                   [](const iroha::expected::Value<
                       shared_model::interface::TransactionBatch> &value) {
-                    return value.value;
-                  },
-                  [](const auto &err)
-                      -> shared_model::interface::TransactionBatch {
+                    return std::make_shared<
+                    shared_model::interface::TransactionBatch>(value.value);
+              },
+              [](const auto &err)
+                  -> std::shared_ptr<
+                      shared_model::interface::TransactionBatch> {
                     throw std::runtime_error(
                         err.error
                         + "Error transformation from transaction to batch");
