@@ -21,7 +21,7 @@ namespace shared_model {
     const std::string FieldValidator::account_name_pattern_ =
         R"#([a-z_0-9]{1,32})#";
     const std::string FieldValidator::amount_pattern_ =
-        "([1-9][0-9]*)(\\.[0-9]+)?";
+        "[1-9][0-9]*(\\.[0-9]+)?";
     const std::string FieldValidator::asset_name_pattern_ =
         R"#([a-z_0-9]{1,32})#";
     const std::string FieldValidator::domain_pattern_ =
@@ -105,12 +105,6 @@ namespace shared_model {
                                       "'%s'. Field should match regex '%s'")
                         % amount_str % amount_pattern_)
                            .str();
-        reason.second.push_back(message);
-      } else if (match[1].str() == "0") {
-        auto message =
-            (boost::format("Amount must be greater than 0, passed value: %s")
-             % amount_str)
-                .str();
         reason.second.push_back(message);
       }
     }
