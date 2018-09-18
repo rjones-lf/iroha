@@ -51,14 +51,14 @@ namespace iroha {
                     std::shared_ptr<network::BlockLoader> block_loader,
                     std::shared_ptr<consensus::ConsensusResultCache>
                         consensus_result_cache);
-        void vote(const shared_model::interface::BlockVariant &) override;
+        void vote(std::shared_ptr<shared_model::interface::Block>) override;
         /**
          * Method called when commit received
          * assumes to retrieve a block eventually
          * @return observable with the committed block
          */
-        rxcpp::observable<shared_model::interface::BlockVariant> on_commit()
-            override;
+        rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
+        on_commit() override;
 
        private:
         /**
@@ -78,7 +78,7 @@ namespace iroha {
 
         logger::Logger log_;
 
-        std::pair<YacHash, shared_model::interface::BlockVariant>
+        std::pair<YacHash, std::shared_ptr<shared_model::interface::Block>>
             current_block_;
       };
 

@@ -17,11 +17,8 @@
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
-#include "module/shared_model/builders/protobuf/block_variant_transport_builder.hpp"
-#include "module/shared_model/builders/protobuf/empty_block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_empty_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
@@ -126,25 +123,6 @@ class TransportBuilderTest : public ::testing::Test {
 
   auto createInvalidBlock() {
     return getBaseBlockBuilder<TestBlockBuilder>()
-        .prevHash(invalid_hash)
-        .build();
-  }
-
-  //-------------------------------------EmptyBlock-------------------------------------
-  template <typename EmptyBlockBuilder>
-  auto getBaseEmptyBlockBuilder() {
-    return EmptyBlockBuilder().height(1).createdTime(created_time);
-  }
-
-  auto createEmptyBlock() {
-    return getBaseEmptyBlockBuilder<
-               shared_model::proto::UnsignedEmptyBlockBuilder>()
-        .prevHash(hash)
-        .build();
-  }
-
-  auto createInvalidEmptyBlock() {
-    return getBaseEmptyBlockBuilder<TestEmptyBlockBuilder>()
         .prevHash(invalid_hash)
         .build();
   }
@@ -338,110 +316,6 @@ TEST_F(TransportBuilderTest, DISABLED_EmptyProposalCreationTest) {
       orig_model,
       [](const Value<decltype(orig_model)> &) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
-}
-
-//-------------------------------------EmptyBlock-------------------------------------
-
-/**
- * @given valid proto object of empty block
- * @when transport builder constructs model object from it
- * @then original and built objects are equal
- */
-TEST_F(TransportBuilderTest, EmptyBlockCreationTest) {
-  auto orig_model = createEmptyBlock();
-  testTransport<validation::DefaultEmptyBlockValidator>(
-      orig_model,
-      [&orig_model](const Value<decltype(orig_model)> &model) {
-        ASSERT_EQ(model.value.getTransport().SerializeAsString(),
-                  orig_model.getTransport().SerializeAsString());
-      },
-      [](const Error<std::string> &) { FAIL(); });
-}
-
-//-------------------------------------BlockVariant-------------------------------------
-
-/**
- * @given Valid block protobuf object with no transactions
- * @when TransportBuilder tries to build BlockVariant object
- * @then built object contains EmptyBlock shared model object
- * AND it is equal to the original object
- */
-TEST_F(TransportBuilderTest, BlockVariantWithValidEmptyBlock) {
-  auto emptyBlock = createEmptyBlock();
-  interface::BlockVariant orig_model =
-      std::make_shared<decltype(emptyBlock)>(emptyBlock.getTransport());
-
-  auto val = framework::expected::val(
-      TransportBuilder<interface::BlockVariant,
-                       validation::DefaultAnyBlockValidator>()
-          .build(emptyBlock.getTransport()));
-  ASSERT_TRUE(val);
-  val | [&emptyBlock](auto &block_variant) {
-    iroha::visit_in_place(
-        block_variant.value,
-        [&emptyBlock](
-            const std::shared_ptr<shared_model::interface::EmptyBlock> block) {
-          EXPECT_EQ(emptyBlock, *block);
-        },
-        [](const std::shared_ptr<shared_model::interface::Block>) { FAIL(); });
-  };
-}
-
-/**
- * @given Invalid block protobuf object with no transactions
- * @when TransportBuilder tries to build BlockVariant object
- * @then build fails
- */
-TEST_F(TransportBuilderTest, BlockVariantWithInvalidEmptyBlock) {
-  auto emptyBlock = createInvalidEmptyBlock();
-
-  auto error = framework::expected::err(
-      TransportBuilder<interface::BlockVariant,
-                       validation::DefaultAnyBlockValidator>()
-          .build(emptyBlock.getTransport()));
-  ASSERT_TRUE(error);
-}
-
-/**
- * @given Valid block protobuf object with non empty set of transactions
- * @when TransportBuilder tries to build BlockVariant object
- * @then built object contains Block shared model object
- * AND it is equal to the original object
- */
-TEST_F(TransportBuilderTest, BlockVariantWithValidBlock) {
-  auto block = createBlock();
-  interface::BlockVariant orig_model =
-      std::make_shared<decltype(block)>(block.getTransport());
-  auto built_block = TransportBuilder<decltype(orig_model),
-                                      validation::DefaultAnyBlockValidator>()
-                         .build(block.getTransport());
-  auto val = framework::expected::val(built_block);
-
-  ASSERT_TRUE(val) << framework::expected::err(built_block).value().error;
-  val | [&block](auto &block_variant) {
-    iroha::visit_in_place(
-        block_variant.value,
-        [](std::shared_ptr<shared_model::interface::EmptyBlock>) { FAIL(); },
-        [&block](
-            std::shared_ptr<shared_model::interface::Block> created_block) {
-          EXPECT_EQ(block, *created_block);
-        });
-  };
-}
-
-/**
- * @given Invalid block protobuf object with non-empty transactions set
- * @when TransportBuilder tries to build BlockVariant object
- * @then build fails
- */
-TEST_F(TransportBuilderTest, BlockVariantWithInvalidBlock) {
-  auto block = createInvalidBlock();
-
-  auto error = framework::expected::err(
-      TransportBuilder<interface::BlockVariant,
-                       validation::DefaultAnyBlockValidator>()
-          .build(block.getTransport()));
-  ASSERT_TRUE(error);
 }
 
 //---------------------------Transaction Sequence-------------------------------

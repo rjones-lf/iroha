@@ -20,7 +20,7 @@
 #include <utility>
 
 #include "ametsuchi/mutable_storage.hpp"
-#include "interfaces/iroha_internal/block_variant.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
   namespace synchronizer {
@@ -36,8 +36,8 @@ namespace iroha {
           log_(logger::log("synchronizer")) {
       consensus_gate->on_commit().subscribe(
           subscription_,
-          [&](const shared_model::interface::BlockVariant &block_variant) {
-            this->process_commit(block_variant);
+          [&](std::shared_ptr<shared_model::interface::Block> block) {
+            this->process_commit(block);
           });
     }
 
@@ -66,56 +66,31 @@ namespace iroha {
     }
 
     void SynchronizerImpl::processApplicableBlock(
-        const shared_model::interface::BlockVariant &committed_block_variant)
-        const {
-      iroha::visit_in_place(
-          committed_block_variant,
-          [&](std::shared_ptr<shared_model::interface::Block> block_ptr) {
-            auto storage = createTemporaryStorage();
-            if (not storage) {
-              return;
-            }
-            storage->apply(*block_ptr, trueStorageApplyPredicate);
-            mutable_factory_->commit(std::move(storage));
+        std::shared_ptr<shared_model::interface::Block> commit_message) const {
+      auto storage = createTemporaryStorage();
+      if (not storage) {
+        return;
+      }
+      storage->apply(*commit_message, trueStorageApplyPredicate);
+      mutable_factory_->commit(std::move(storage));
 
-            notifier_.get_subscriber().on_next(
-                SynchronizationEvent{rxcpp::observable<>::just(block_ptr),
-                                     SynchronizationOutcomeType::kCommit});
-          },
-          [this](std::shared_ptr<shared_model::interface::EmptyBlock>
-                     empty_block_ptr) {
-            notifier_.get_subscriber().on_next(SynchronizationEvent{
-                rxcpp::observable<>::empty<
-                    std::shared_ptr<shared_model::interface::Block>>(),
-                SynchronizationOutcomeType::kCommitEmpty});
-          });
+      notifier_.get_subscriber().on_next(
+          SynchronizationEvent{rxcpp::observable<>::just(commit_message),
+                               SynchronizationOutcomeType::kCommit});
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
     SynchronizerImpl::downloadMissingChain(
-        const shared_model::interface::BlockVariant &committed_block_variant)
-        const {
+        std::shared_ptr<shared_model::interface::Block> commit_message) const {
       auto check_storage = createTemporaryStorage();
       while (true) {
-        for (const auto &peer_signature :
-             committed_block_variant.signatures()) {
+        for (const auto &peer_signature : commit_message->signatures()) {
           auto chain = block_loader_->retrieveBlocks(
               shared_model::crypto::PublicKey(peer_signature.publicKey()));
-          // if committed block is not empty, it will be on top of downloaded
-          // chain; otherwise, it'll contain hash of top of that chain
-          auto chain_ends_with_right_block = iroha::visit_in_place(
-              committed_block_variant,
-              [last_downloaded_block = chain.as_blocking().last()](
-                  std::shared_ptr<shared_model::interface::Block>
-                      committed_block) {
-                return last_downloaded_block->hash() == committed_block->hash();
-              },
-              [last_downloaded_block = chain.as_blocking().last()](
-                  std::shared_ptr<shared_model::interface::EmptyBlock>
-                      committed_empty_block) {
-                return last_downloaded_block->hash()
-                    == committed_empty_block->prevHash();
-              });
+          // check that committed block is on the top of downloaded chain
+          auto last_downloaded_block = chain.as_blocking().last();
+          bool chain_ends_with_right_block =
+              last_downloaded_block->hash() == commit_message->hash();
 
           if (chain_ends_with_right_block
               and validator_->validateChain(chain, *check_storage)) {
@@ -127,17 +102,17 @@ namespace iroha {
     }
 
     void SynchronizerImpl::process_commit(
-        const shared_model::interface::BlockVariant &committed_block_variant) {
+        std::shared_ptr<shared_model::interface::Block> commit_message) {
       log_->info("processing commit");
       auto storage = createTemporaryStorage();
       if (not storage) {
         return;
       }
 
-      if (validator_->validateBlock(committed_block_variant, *storage)) {
-        processApplicableBlock(committed_block_variant);
+      if (validator_->validateBlock(commit_message, *storage)) {
+        processApplicableBlock(commit_message);
       } else {
-        auto missing_chain = downloadMissingChain(committed_block_variant);
+        auto missing_chain = downloadMissingChain(commit_message);
 
         // TODO [IR-1634] 23.08.18 Akvinikym: place this call to notifier after
         // downloaded chain application

@@ -51,7 +51,8 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
  */
 TEST_F(OnDemandOrderingGateTest, propagateBatch) {
   OdOsNotification::CollectionType collection;
-  shared_model::interface::TransactionBatch batch(collection);
+  auto batch =
+      std::make_shared<shared_model::interface::TransactionBatch>(collection);
 
   EXPECT_CALL(*notification, onTransactions(initial_round, collection))
       .Times(1);

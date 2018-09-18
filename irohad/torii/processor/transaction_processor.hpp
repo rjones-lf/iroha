@@ -36,8 +36,9 @@ namespace iroha {
        * Process batch and propagate it to the MST or PCS
        * @param transaction_batch - transaction batch for processing
        */
-      virtual void batchHandle(const shared_model::interface::TransactionBatch
-                                   &transaction_batch) const = 0;
+      virtual void batchHandle(
+          std::shared_ptr<shared_model::interface::TransactionBatch>
+              transaction_batch) const = 0;
 
       virtual ~TransactionProcessor() = default;
     };

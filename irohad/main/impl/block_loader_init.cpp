@@ -16,7 +16,6 @@
  */
 
 #include "main/impl/block_loader_init.hpp"
-#include "validators/block_variant_validator.hpp"
 #include "validators/default_validator.hpp"
 
 using namespace iroha;

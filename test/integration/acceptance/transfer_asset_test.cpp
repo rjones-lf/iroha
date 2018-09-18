@@ -83,8 +83,7 @@ TEST_F(TransferAsset, Basic) {
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
-      .sendTxAwait(makeTransfer(), check(1))
-      .done();
+      .sendTxAwait(makeTransfer(), check(1));
 }
 
 /**
@@ -100,10 +99,10 @@ TEST_F(TransferAsset, WithoutCanTransfer) {
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
       .sendTx(makeTransfer())
+      .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(check(0))
-      .done();
+      .checkBlock(check(0));
 }
 
 /**
@@ -124,8 +123,7 @@ TEST_F(TransferAsset, WithoutCanReceive) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(check(0))
-      .done();
+      .checkBlock(check(0));
 }
 
 /**
@@ -144,8 +142,7 @@ TEST_F(TransferAsset, NonexistentDest) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(check(0))
-      .done();
+      .checkBlock(check(0));
 }
 
 /**
@@ -165,8 +162,7 @@ TEST_F(TransferAsset, NonexistentAsset) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(check(0))
-      .done();
+      .checkBlock(check(0));
 }
 
 /**
@@ -181,8 +177,7 @@ TEST_F(TransferAsset, NegativeAmount) {
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
-      .sendTx(makeTransfer("-1.0"), checkStatelessInvalid)
-      .done();
+      .sendTx(makeTransfer("-1.0"), checkStatelessInvalid);
 }
 
 /**
@@ -197,8 +192,7 @@ TEST_F(TransferAsset, ZeroAmount) {
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
-      .sendTx(makeTransfer("0.0"), checkStatelessInvalid)
-      .done();
+      .sendTx(makeTransfer("0.0"), checkStatelessInvalid);
 }
 
 /**
@@ -214,8 +208,7 @@ TEST_F(TransferAsset, EmptyDesc) {
       .sendTxAwait(addAssets(), check(1))
       .sendTxAwait(complete(baseTx().transferAsset(
                        kUserId, kUser2Id, kAssetId, "", kAmount)),
-                   check(1))
-      .done();
+                   check(1));
 }
 
 /**
@@ -233,8 +226,7 @@ TEST_F(TransferAsset, LongDesc) {
       .sendTx(
           complete(baseTx().transferAsset(
               kUserId, kUser2Id, kAssetId, std::string(100000, 'a'), kAmount)),
-          checkStatelessInvalid)
-      .done();
+          checkStatelessInvalid);
 }
 
 /**
@@ -252,8 +244,7 @@ TEST_F(TransferAsset, MoreThanHas) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(check(0))
-      .done();
+      .checkBlock(check(0));
 }
 
 /**
@@ -282,8 +273,7 @@ TEST_F(TransferAsset, Uint256DestOverflow) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .checkBlock(check(0))
-      .done();
+      .checkBlock(check(0));
 }
 
 /**
@@ -334,8 +324,7 @@ TEST_F(TransferAsset, InterDomain) {
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(make_second_user, check(1))
       .sendTxAwait(add_assets, check(1))
-      .sendTxAwait(make_transfer, check(1))
-      .done();
+      .sendTxAwait(make_transfer, check(1));
 }
 
 /**
@@ -396,6 +385,5 @@ TEST_F(TransferAsset, BigPrecision) {
       .sendTxAwait(add_assets, check(1))
       .sendTxAwait(make_transfer, check(1))
       .sendQuery(make_query(kUserId), check_balance(kUserId, kLeft))
-      .sendQuery(make_query(kUser2Id), check_balance(kUser2Id, kForTransfer))
-      .done();
+      .sendQuery(make_query(kUser2Id), check_balance(kUser2Id, kForTransfer));
 }

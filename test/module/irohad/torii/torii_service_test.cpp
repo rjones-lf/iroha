@@ -57,19 +57,17 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
           verified_prop_notifier)
       : prop_notifier_(prop_notifier),
         commit_notifier_(commit_notifier),
-        verified_prop_notifier_(verified_prop_notifier){};
-
-  void propagate_transaction(
-      std::shared_ptr<const shared_model::interface::Transaction> transaction)
-      const override {}
+        verified_prop_notifier_(verified_prop_notifier) {}
 
   void propagate_batch(
-      const shared_model::interface::TransactionBatch &batch) const override {}
+      std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+      const override {}
 
   rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
   on_proposal() const override {
     return prop_notifier_.get_observable();
   }
+
   rxcpp::observable<SynchronizationEvent> on_commit() const override {
     return commit_notifier_.get_observable();
   }
@@ -78,7 +76,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
   on_verified_proposal() const override {
     return verified_prop_notifier_.get_observable();
-  };
+  }
 
  private:
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
@@ -276,7 +274,7 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
     client2.Status(tx_request, toriiResponse);
 
     ASSERT_EQ(toriiResponse.tx_status(),
-              iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+              iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED);
   }
 
   // create block from the all transactions but the last one
@@ -505,7 +503,8 @@ TEST_F(ToriiServiceTest, StreamingNoTx) {
  *
  * @given torii service and collection of transactions
  * @when that collection is asked to be processed by Torii
- * @then statuses of all transactions from that request are STATELESS_VALID
+ * @then statuses of all transactions from that request are
+ * ENOUGH_SIGNATURES_COLLECTED
  */
 TEST_F(ToriiServiceTest, ListOfTxs) {
   const auto test_txs_number = 5;
@@ -546,11 +545,11 @@ TEST_F(ToriiServiceTest, ListOfTxs) {
         do {
           client.Status(tx_request, toriiResponse);
         } while (toriiResponse.tx_status()
-                     != iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS
+                     != iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED
                  and --resub_counter);
 
         ASSERT_EQ(toriiResponse.tx_status(),
-                  iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+                  iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED);
       });
 }
 

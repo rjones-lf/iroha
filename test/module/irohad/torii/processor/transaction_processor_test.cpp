@@ -147,12 +147,10 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
   for (size_t i = 0; i < proposal_size; i++) {
     auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
     txs.push_back(tx);
-    status_map[tx.hash()] =
-        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   EXPECT_CALL(*status_bus, publish(_))
-      .Times(proposal_size)
+      .Times(proposal_size * 2)
       .WillRepeatedly(testing::Invoke([this](auto response) {
         status_map[response->transactionHash()] = response;
       }));
@@ -190,7 +188,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
       framework::batch::createValidBatch(proposal_size).transactions();
 
   EXPECT_CALL(*status_bus, publish(_))
-      .Times(proposal_size)
+      .Times(proposal_size * 2)
       .WillRepeatedly(testing::Invoke([this](auto response) {
         status_map[response->transactionHash()] = response;
       }));
@@ -242,12 +240,10 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   for (size_t i = 0; i < proposal_size; i++) {
     auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
     txs.push_back(tx);
-    status_map[tx.hash()] =
-        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   EXPECT_CALL(*status_bus, publish(_))
-      .Times(txs.size() * 2)
+      .Times(txs.size() * 3)
       .WillRepeatedly(testing::Invoke([this](auto response) {
         status_map[response->transactionHash()] = response;
       }));
@@ -286,8 +282,9 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   // Note blocks_notifier hasn't invoked on_completed, so
   // transactions are not commited
 
-  SCOPED_TRACE("Stateful valid status verification");
-  validateStatuses<shared_model::interface::StatefulValidTxResponse>(txs);
+  SCOPED_TRACE("Stateful Valid status verification");
+  validateStatuses<shared_model::interface::StatefulValidTxResponse>(
+      txs);
 }
 
 /**
@@ -302,12 +299,10 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   for (size_t i = 0; i < proposal_size; i++) {
     auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
     txs.push_back(tx);
-    status_map[tx.hash()] =
-        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   EXPECT_CALL(*status_bus, publish(_))
-      .Times(txs.size() * 3)
+      .Times(txs.size() * 4)
       .WillRepeatedly(testing::Invoke([this](auto response) {
         status_map[response->transactionHash()] = response;
       }));
@@ -458,14 +453,14 @@ TEST_F(TransactionProcessorTest, MultisigTransactionFromMst) {
       std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
 
   EXPECT_CALL(*pcs, propagate_batch(_)).Times(1);
-  mst_prepared_notifier.get_subscriber().on_next(
-      std::make_shared<shared_model::interface::TransactionBatch>(after_mst));
+  mst_prepared_notifier.get_subscriber().on_next(after_mst);
 }
 
 /**
  * @given valid multisig tx
  * @when transaction_processor handle it
- * @then ensure after expiring it leads to MST_EXPIRED status
+ * @then before expiring it will have MST_PENDING status @and after expiring
+ * MST_EXPIRED status
  */
 TEST_F(TransactionProcessorTest, MultisigExpired) {
   EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(1);
@@ -483,11 +478,16 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
       .WillOnce(testing::Invoke([](auto response) {
         ASSERT_NO_THROW(boost::apply_visitor(
             framework::SpecifiedVisitor<
+                shared_model::interface::MstPendingResponse>(),
+            response->get()));
+      }))
+      .WillOnce(testing::Invoke([](auto response) {
+        ASSERT_NO_THROW(boost::apply_visitor(
+            framework::SpecifiedVisitor<
                 shared_model::interface::MstExpiredResponse>(),
             response->get()));
       }));
   tp->batchHandle(framework::batch::createBatchFromSingleTransaction(tx));
   mst_expired_notifier.get_subscriber().on_next(
-      std::make_shared<shared_model::interface::TransactionBatch>(
-          framework::batch::createBatchFromSingleTransaction(tx)));
+      framework::batch::createBatchFromSingleTransaction(tx));
 }

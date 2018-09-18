@@ -20,7 +20,7 @@
 
 #include <gmock/gmock.h>
 
-#include "interfaces/iroha_internal/block_variant.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 #include "validators/abstract_validator.hpp"
 #include "validators/answer.hpp"
 

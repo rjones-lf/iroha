@@ -44,8 +44,9 @@ namespace iroha {
           std::shared_ptr<MstProcessor> mst_processor,
           std::shared_ptr<iroha::torii::StatusBus> status_bus);
 
-      void batchHandle(const shared_model::interface::TransactionBatch
-                           &transaction_batch) const override;
+      void batchHandle(
+          std::shared_ptr<shared_model::interface::TransactionBatch>
+              transaction_batch) const override;
 
      private:
       // connections
@@ -69,6 +70,40 @@ namespace iroha {
       /// prevents from emitting new tx statuses from different threads
       /// in parallel
       std::mutex notifier_mutex_;
+
+      // TODO: [IR-1665] Akvinikym 29.08.18: Refactor method publishStatus(..)
+      /**
+       * Complementary class for publishStatus method
+       */
+      enum class TxStatusType {
+        kStatelessFailed,
+        kStatelessValid,
+        kStatefulFailed,
+        kStatefulValid,
+        kCommitted,
+        kMstExpired,
+        kNotReceived,
+        kMstPending,
+        kEnoughSignaturesCollected
+      };
+      /**
+       * Publish status of transaction
+       * @param tx_status to be published
+       * @param hash of that transaction
+       * @param error, which can appear during validation
+       */
+      void publishStatus(TxStatusType tx_status,
+                         const shared_model::crypto::Hash &hash,
+                         const std::string &error = "") const;
+
+      /**
+       * Publish kEnoughSignaturesCollected status for each transaction in
+       * collection
+       * @param txs - collection of those transactions
+       */
+      void publishEnoughSignaturesStatus(
+          const shared_model::interface::types::SharedTxsCollectionType &txs)
+          const;
     };
   }  // namespace torii
 }  // namespace iroha

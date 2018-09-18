@@ -27,7 +27,7 @@ namespace iroha {
      * Outcome, which was decided by synchronizer based on consensus result and
      * current local ledger state
      */
-    enum class SynchronizationOutcomeType { kCommit, kCommitEmpty, kReject };
+    enum class SynchronizationOutcomeType { kCommit, kReject };
 
     /**
      * Event, which is emitted by synchronizer, when it receives and processes

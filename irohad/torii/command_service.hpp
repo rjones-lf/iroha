@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include "ametsuchi/storage.hpp"
+#include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "cache/cache.hpp"
 #include "cryptography/hash.hpp"
 #include "endpoint.grpc.pb.h"
@@ -156,12 +157,14 @@ namespace torii {
      * transactions inside it
      * @param batch to be processed
      */
-    void processBatch(const shared_model::interface::TransactionBatch &batch);
+    void processBatch(
+        std::shared_ptr<shared_model::interface::TransactionBatch> batch);
 
    private:
-    using CacheType = iroha::cache::Cache<shared_model::crypto::Hash,
-                                          iroha::protocol::ToriiResponse,
-                                          shared_model::crypto::Hash::Hasher>;
+    using CacheType = iroha::cache::Cache<
+        shared_model::crypto::Hash,
+        std::shared_ptr<shared_model::interface::TransactionResponse>,
+        shared_model::crypto::Hash::Hasher>;
 
     std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor_;
     std::shared_ptr<iroha::ametsuchi::Storage> storage_;

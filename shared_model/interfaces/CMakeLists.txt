@@ -54,7 +54,6 @@ if (IROHA_ROOT_PROJECT)
       query_responses/impl/block_error_response.cpp
       query_responses/impl/block_query_response.cpp
       query_responses/impl/block_response.cpp
-      iroha_internal/block_variant.cpp
       iroha_internal/transaction_sequence.cpp
       iroha_internal/transaction_batch.cpp
       iroha_internal/transaction_batch_factory.cpp

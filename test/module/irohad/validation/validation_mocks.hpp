@@ -20,8 +20,8 @@
 
 #include <gmock/gmock.h>
 
-#include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/iroha_internal/proposal.hpp"
 #include "validation/chain_validator.hpp"
 #include "validation/stateful_validator.hpp"
 
@@ -29,22 +29,23 @@ namespace iroha {
   namespace validation {
     class MockStatefulValidator : public validation::StatefulValidator {
      public:
-      MOCK_METHOD2(validate,
-                   VerifiedProposalAndErrors(
-                       const shared_model::interface::Proposal &,
-                       ametsuchi::TemporaryWsv &));
+      MOCK_METHOD2(
+          validate,
+          VerifiedProposalAndErrors(const shared_model::interface::Proposal &,
+                                    ametsuchi::TemporaryWsv &));
     };
 
     class MockChainValidator : public ChainValidator {
      public:
-      MOCK_CONST_METHOD2(validateChain,
-                   bool(rxcpp::observable<
-                            std::shared_ptr<shared_model::interface::Block>>,
-                        ametsuchi::MutableStorage &));
+      MOCK_CONST_METHOD2(
+          validateChain,
+          bool(rxcpp::observable<
+                   std::shared_ptr<shared_model::interface::Block>>,
+               ametsuchi::MutableStorage &));
 
       MOCK_CONST_METHOD2(validateBlock,
-                   bool(const shared_model::interface::BlockVariant &,
-                        ametsuchi::MutableStorage &));
+                         bool(std::shared_ptr<shared_model::interface::Block>,
+                              ametsuchi::MutableStorage &));
     };
   }  // namespace validation
 }  // namespace iroha

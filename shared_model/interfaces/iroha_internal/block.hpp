@@ -18,15 +18,25 @@
 #ifndef IROHA_SHARED_MODEL_BLOCK_HPP
 #define IROHA_SHARED_MODEL_BLOCK_HPP
 
-#include "interfaces/iroha_internal/abstract_block.hpp"
+#include "interfaces/base/signable.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "interfaces/transaction.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {
 
-    class Block : public AbstractBlock {
+    class Block : public Signable<Block> {
      public:
+      /**
+       * @return block number in the ledger
+       */
+      virtual types::HeightType height() const = 0;
+
+      /**
+       * @return hash of a previous block
+       */
+      virtual const types::HashType &prevHash() const = 0;
       /**
        * @return amount of transactions in block
        */

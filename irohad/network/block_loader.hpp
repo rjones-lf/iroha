@@ -24,7 +24,6 @@
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
-#include "interfaces/iroha_internal/block_variant.hpp"
 
 namespace iroha {
   namespace network {
