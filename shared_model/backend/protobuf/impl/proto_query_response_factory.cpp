@@ -10,9 +10,10 @@
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
-    std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
-        assets) {
+    std::vector<std::shared_ptr<shared_model::interface::AccountAsset>> assets,
+    const crypto::Hash &query_hash) {
   iroha::protocol::QueryResponse protocol_query_response;
+  protocol_query_response.set_query_hash(query_hash.hex());
 
   iroha::protocol::AccountAssetResponse *protocol_specific_response =
       protocol_query_response.mutable_account_assets_response();
@@ -28,8 +29,10 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountDetailResponse(
-    shared_model::interface::types::DetailType account_detail) {
+    shared_model::interface::types::DetailType account_detail,
+    const crypto::Hash &query_hash) {
   iroha::protocol::QueryResponse protocol_query_response;
+  protocol_query_response.set_query_hash(query_hash.hex());
 
   iroha::protocol::AccountDetailResponse *protocol_specific_response =
       protocol_query_response.mutable_account_detail_response();
@@ -42,8 +45,10 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountDetailResponse(
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
     std::unique_ptr<shared_model::interface::Account> account,
-    std::vector<std::string> roles) {
+    std::vector<std::string> roles,
+    const crypto::Hash &query_hash) {
   iroha::protocol::QueryResponse protocol_query_response;
+  protocol_query_response.set_query_hash(query_hash.hex());
 
   iroha::protocol::AccountResponse *protocol_specific_response =
       protocol_query_response.mutable_account_response();
@@ -60,8 +65,11 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
-    ErrorQueryType error_type, std::string error_msg) {
+    ErrorQueryType error_type,
+    std::string error_msg,
+    const crypto::Hash &query_hash) {
   iroha::protocol::QueryResponse protocol_query_response;
+  protocol_query_response.set_query_hash(query_hash.hex());
 
   iroha::protocol::ErrorResponse_Reason reason;
   switch (error_type) {
@@ -104,8 +112,10 @@ shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createSignatoriesResponse(
-    std::vector<shared_model::interface::types::PubkeyType> signatories) {
+    std::vector<shared_model::interface::types::PubkeyType> signatories,
+    const crypto::Hash &query_hash) {
   iroha::protocol::QueryResponse protocol_query_response;
+  protocol_query_response.set_query_hash(query_hash.hex());
 
   iroha::protocol::SignatoriesResponse *protocol_specific_response =
       protocol_query_response.mutable_signatories_response();
@@ -121,8 +131,10 @@ shared_model::proto::ProtoQueryResponseFactory::createSignatoriesResponse(
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createTransactionsResponse(
     std::vector<std::shared_ptr<shared_model::interface::Transaction>>
-        transactions) {
+        transactions,
+    const crypto::Hash &query_hash) {
   iroha::protocol::QueryResponse protocol_query_response;
+  protocol_query_response.set_query_hash(query_hash.hex());
 
   iroha::protocol::TransactionsResponse *protocol_specific_response =
       protocol_query_response.mutable_transactions_response();
@@ -138,8 +150,10 @@ shared_model::proto::ProtoQueryResponseFactory::createTransactionsResponse(
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
-    std::unique_ptr<shared_model::interface::Asset> asset) {
+    std::unique_ptr<shared_model::interface::Asset> asset,
+    const crypto::Hash &query_hash) {
   iroha::protocol::QueryResponse protocol_query_response;
+  protocol_query_response.set_query_hash(query_hash.hex());
 
   iroha::protocol::AssetResponse *protocol_specific_response =
       protocol_query_response.mutable_asset_response();
@@ -153,8 +167,10 @@ shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createRolesResponse(
-    std::vector<shared_model::interface::types::RoleIdType> roles) {
+    std::vector<shared_model::interface::types::RoleIdType> roles,
+    const crypto::Hash &query_hash) {
   iroha::protocol::QueryResponse protocol_query_response;
+  protocol_query_response.set_query_hash(query_hash.hex());
 
   iroha::protocol::RolesResponse *protocol_specific_response =
       protocol_query_response.mutable_roles_response();
@@ -168,8 +184,10 @@ shared_model::proto::ProtoQueryResponseFactory::createRolesResponse(
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createRolePermissionsResponse(
-    shared_model::interface::RolePermissionSet role_permissions) {
+    shared_model::interface::RolePermissionSet role_permissions,
+    const crypto::Hash &query_hash) {
   iroha::protocol::QueryResponse protocol_query_response;
+  protocol_query_response.set_query_hash(query_hash.hex());
 
   iroha::protocol::RolePermissionsResponse *protocol_specific_response =
       protocol_query_response.mutable_role_permissions_response();

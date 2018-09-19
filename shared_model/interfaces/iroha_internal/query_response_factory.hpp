@@ -12,6 +12,12 @@
 #include "interfaces/query_responses/query_response.hpp"
 
 namespace shared_model {
+  namespace crypto {
+    class Hash;
+  }
+}  // namespace shared_model
+
+namespace shared_model {
   namespace interface {
 
     /**
@@ -24,11 +30,13 @@ namespace shared_model {
       /**
        * Create response for account asset query
        * @param assets to be inserted into the response
+       * @param query_hash - hash of the query, for which response is created
        * @return account asset response
        */
       virtual std::unique_ptr<QueryResponse> createAccountAssetResponse(
           std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
-              assets) = 0;
+              assets,
+          const crypto::Hash &query_hash) = 0;
 
       /**
        * Create response for account detail query
@@ -36,16 +44,19 @@ namespace shared_model {
        * @return account detail response
        */
       virtual std::unique_ptr<QueryResponse> createAccountDetailResponse(
-          types::DetailType account_detail) = 0;
+          types::DetailType account_detail, const crypto::Hash &query_hash) = 0;
 
       /**
        * Create response for account query
        * @param account to be inserted into the response
        * @param roles to be inserted into the response
+       * @param query_hash - hash of the query, for which response is created
        * @return account response
        */
       virtual std::unique_ptr<QueryResponse> createAccountResponse(
-          std::unique_ptr<Account> account, std::vector<std::string> roles) = 0;
+          std::unique_ptr<Account> account,
+          std::vector<std::string> roles,
+          const crypto::Hash &query_hash) = 0;
 
       /**
        * Describes type of error to be placed inside the error query response
@@ -65,51 +76,63 @@ namespace shared_model {
        * Create response for failed query
        * @param error_type - type of error to be inserted into the response
        * @param error_msg - message, which is to be set in the response
+       * @param query_hash - hash of the query, for which response is created
        * @return error response
        */
       virtual std::unique_ptr<QueryResponse> createErrorQueryResponse(
-          ErrorQueryType error_type, std::string error_msg) = 0;
+          ErrorQueryType error_type,
+          std::string error_msg,
+          const crypto::Hash &query_hash) = 0;
 
       /**
        * Create response for signatories query
        * @param signatories to be inserted into the response
+       * @param query_hash - hash of the query, for which response is created
        * @return signatories response
        */
       virtual std::unique_ptr<QueryResponse> createSignatoriesResponse(
-          std::vector<types::PubkeyType> signatories) = 0;
+          std::vector<types::PubkeyType> signatories,
+          const crypto::Hash &query_hash) = 0;
 
       /**
        * Create response for transactions query
        * @param transactions to be inserted into the response
+       * @param query_hash - hash of the query, for which response is created
        * @return transactions response
        */
       virtual std::unique_ptr<QueryResponse> createTransactionsResponse(
           std::vector<std::shared_ptr<shared_model::interface::Transaction>>
-              transactions) = 0;
+              transactions,
+          const crypto::Hash &query_hash) = 0;
 
       /**
        * Create response for asset query
        * @param asset to be inserted into the response
+       * @param query_hash - hash of the query, for which response is created
        * @return asset response
        */
       virtual std::unique_ptr<QueryResponse> createAssetResponse(
-          std::unique_ptr<Asset> asset) = 0;
+          std::unique_ptr<Asset> asset, const crypto::Hash &query_hash) = 0;
 
       /**
        * Create response for roles query
        * @param roles to be inserted into the response
+       * @param query_hash - hash of the query, for which response is created
        * @return roles response
        */
       virtual std::unique_ptr<QueryResponse> createRolesResponse(
-          std::vector<types::RoleIdType> roles) = 0;
+          std::vector<types::RoleIdType> roles,
+          const crypto::Hash &query_hash) = 0;
 
       /**
        * Create response for role permissions query
        * @param role_permissions to be inserted into the response
+       * @param query_hash - hash of the query, for which response is created
        * @return role permissions response
        */
       virtual std::unique_ptr<QueryResponse> createRolePermissionsResponse(
-          RolePermissionSet role_permissions) = 0;
+          RolePermissionSet role_permissions,
+          const crypto::Hash &query_hash) = 0;
 
       /**
        * Create response for block query with block

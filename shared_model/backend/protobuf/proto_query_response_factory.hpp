@@ -15,33 +15,43 @@ namespace shared_model {
      public:
       std::unique_ptr<interface::QueryResponse> createAccountAssetResponse(
           std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
-              assets) override;
+              assets,
+          const crypto::Hash &query_hash) override;
 
       std::unique_ptr<interface::QueryResponse> createAccountDetailResponse(
-          interface::types::DetailType account_detail) override;
+          interface::types::DetailType account_detail,
+          const crypto::Hash &query_hash) override;
 
       std::unique_ptr<interface::QueryResponse> createAccountResponse(
           std::unique_ptr<interface::Account> account,
-          std::vector<std::string> roles) override;
+          std::vector<std::string> roles,
+          const crypto::Hash &query_hash) override;
 
       std::unique_ptr<interface::QueryResponse> createErrorQueryResponse(
-          ErrorQueryType error_type, std::string error_msg) override;
+          ErrorQueryType error_type,
+          std::string error_msg,
+          const crypto::Hash &query_hash) override;
 
       std::unique_ptr<interface::QueryResponse> createSignatoriesResponse(
-          std::vector<interface::types::PubkeyType> signatories) override;
+          std::vector<interface::types::PubkeyType> signatories,
+          const crypto::Hash &query_hash) override;
 
       std::unique_ptr<interface::QueryResponse> createTransactionsResponse(
           std::vector<std::shared_ptr<shared_model::interface::Transaction>>
-              transactions) override;
+              transactions,
+          const crypto::Hash &query_hash) override;
 
       std::unique_ptr<interface::QueryResponse> createAssetResponse(
-          std::unique_ptr<shared_model::interface::Asset> asset) override;
+          std::unique_ptr<shared_model::interface::Asset> asset,
+          const crypto::Hash &query_hash) override;
 
       std::unique_ptr<interface::QueryResponse> createRolesResponse(
-          std::vector<interface::types::RoleIdType> roles) override;
+          std::vector<interface::types::RoleIdType> roles,
+          const crypto::Hash &query_hash) override;
 
       std::unique_ptr<interface::QueryResponse> createRolePermissionsResponse(
-          interface::RolePermissionSet role_permissions) override;
+          interface::RolePermissionSet role_permissions,
+          const crypto::Hash &query_hash) override;
 
       std::unique_ptr<interface::BlockQueryResponse> createBlockQueryResponse(
           std::unique_ptr<interface::Block> block) override;

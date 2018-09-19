@@ -8,6 +8,7 @@
 
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
+#include "cryptography/blob.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/specified_visitor.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -19,6 +20,7 @@ using namespace iroha::expected;
 using namespace shared_model::interface::types;
 
 using framework::SpecifiedVisitor;
+using shared_model::crypto::Blob;
 using shared_model::validation::FieldValidator;
 
 class ProtoQueryResponseFactoryTest : public ::testing::Test {
@@ -58,6 +60,8 @@ class ProtoQueryResponseFactoryTest : public ::testing::Test {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
+  const HashType kQueryHash{Blob{"my_super_hash"}};
+
   constexpr int kAccountAssetsNumber = 5;
   const std::string kAccountId = "doge@meme";
   const std::string kAssetId = "dogecoin#iroha";
@@ -73,9 +77,11 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
     }
     assets.push_back(std::move(asset));
   }
-  auto query_response = response_factory->createAccountAssetResponse(assets);
+  auto query_response =
+      response_factory->createAccountAssetResponse(assets, kQueryHash);
 
   ASSERT_TRUE(query_response);
+  ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::AccountAssetResponse>(),
@@ -96,11 +102,14 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {
+  const HashType kQueryHash{Blob{"my_super_hash"}};
+
   const DetailType account_details = "{ fav_meme : doge }";
-  auto query_response =
-      response_factory->createAccountDetailResponse(account_details);
+  auto query_response = response_factory->createAccountDetailResponse(
+      account_details, kQueryHash);
 
   ASSERT_TRUE(query_response);
+  ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::AccountDetailResponse>(),
@@ -116,6 +125,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
+  const HashType kQueryHash{Blob{"my_super_hash"}};
+
   const AccountIdType kAccountId = "doge@meme";
   const DomainIdType kDomainId = "meme";
   const QuorumType kQuorum = 1;
@@ -127,10 +138,11 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
   if (not account) {
     FAIL() << "could not create common object via factory";
   }
-  auto query_response =
-      response_factory->createAccountResponse(std::move(account), kRoles);
+  auto query_response = response_factory->createAccountResponse(
+      std::move(account), kRoles, kQueryHash);
 
   ASSERT_TRUE(query_response);
+  ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::AccountResponse>(),
@@ -152,15 +164,18 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
 TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   using ErrorTypes =
       shared_model::interface::QueryResponseFactory::ErrorQueryType;
+  const HashType kQueryHash{Blob{"my_super_hash"}};
+
   const auto kStatelessErrorMsg = "stateless failed";
   const auto kNoSigsErrorMsg = "stateless failed";
 
   auto stateless_invalid_response = response_factory->createErrorQueryResponse(
-      ErrorTypes::kStatelessFailed, kStatelessErrorMsg);
+      ErrorTypes::kStatelessFailed, kStatelessErrorMsg, kQueryHash);
   auto no_signatories_response = response_factory->createErrorQueryResponse(
-      ErrorTypes::kNoSignatories, kNoSigsErrorMsg);
+      ErrorTypes::kNoSignatories, kNoSigsErrorMsg, kQueryHash);
 
   ASSERT_TRUE(stateless_invalid_response);
+  ASSERT_EQ(stateless_invalid_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &general_resp = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::ErrorQueryResponse>(),
@@ -172,6 +187,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
         general_resp.get());
   });
   ASSERT_TRUE(no_signatories_response);
+  ASSERT_EQ(no_signatories_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &general_resp = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::ErrorQueryResponse>(),
@@ -190,14 +206,17 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateSignatoriesResponse) {
+  const HashType kQueryHash{Blob{"my_super_hash"}};
+
   const auto pub_key =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
           .publicKey();
   const std::vector<PubkeyType> signatories{pub_key};
   auto query_response =
-      response_factory->createSignatoriesResponse(signatories);
+      response_factory->createSignatoriesResponse(signatories, kQueryHash);
 
   ASSERT_TRUE(query_response);
+  ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::SignatoriesResponse>(),
@@ -213,6 +232,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateSignatoriesResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
+  const HashType kQueryHash{Blob{"my_super_hash"}};
+
   constexpr int kTransactionsNumber = 5;
 
   std::vector<std::shared_ptr<shared_model::interface::Transaction>>
@@ -224,9 +245,10 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
         std::make_shared<shared_model::proto::Transaction>(std::move(tx)));
   }
   auto query_response =
-      response_factory->createTransactionsResponse(transactions);
+      response_factory->createTransactionsResponse(transactions, kQueryHash);
 
   ASSERT_TRUE(query_response);
+  ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::TransactionsResponse>(),
@@ -245,6 +267,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
+  const HashType kQueryHash{Blob{"my_super_hash"}};
+
   const AssetIdType kAssetId = "doge#coin";
   const DomainIdType kDomainId = "coin";
   const PrecisionType kPrecision = 2;
@@ -254,9 +278,11 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
   if (not asset) {
     FAIL() << "could not create common object via factory";
   }
-  auto query_response = response_factory->createAssetResponse(std::move(asset));
+  auto query_response =
+      response_factory->createAssetResponse(std::move(asset), kQueryHash);
 
   ASSERT_TRUE(query_response);
+  ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::AssetResponse>(),
@@ -274,10 +300,14 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateRolesResponse) {
+  const HashType kQueryHash{Blob{"my_super_hash"}};
+
   const std::vector<RoleIdType> roles{"admin", "user"};
-  auto query_response = response_factory->createRolesResponse(roles);
+  auto query_response =
+      response_factory->createRolesResponse(roles, kQueryHash);
 
   ASSERT_TRUE(query_response);
+  ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::RolesResponse>(),
@@ -293,12 +323,16 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateRolesResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateRolePermissionsResponse) {
+  const HashType kQueryHash{Blob{"my_super_hash"}};
+
   const shared_model::interface::RolePermissionSet perms{
       shared_model::interface::permissions::Role::kGetMyAccount,
       shared_model::interface::permissions::Role::kAddSignatory};
-  auto query_response = response_factory->createRolePermissionsResponse(perms);
+  auto query_response =
+      response_factory->createRolePermissionsResponse(perms, kQueryHash);
 
   ASSERT_TRUE(query_response);
+  ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::RolePermissionsResponse>(),
