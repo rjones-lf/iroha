@@ -64,10 +64,11 @@ namespace shared_model {
       /**
        * Create response for failed query
        * @param error_type - type of error to be inserted into the response
+       * @param error_msg - message, which is to be set in the response
        * @return error response
        */
       virtual std::unique_ptr<QueryResponse> createErrorQueryResponse(
-          ErrorQueryType error_type) = 0;
+          ErrorQueryType error_type, std::string error_msg) = 0;
 
       /**
        * Create response for signatories query

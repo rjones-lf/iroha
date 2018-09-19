@@ -6,8 +6,6 @@
 #ifndef IROHA_PROTO_QUERY_RESPONSE_FACTORY_HPP
 #define IROHA_PROTO_QUERY_RESPONSE_FACTORY_HPP
 
-#include "backend/protobuf/query_responses/proto_block_query_response.hpp"
-#include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "interfaces/iroha_internal/query_response_factory.hpp"
 
 namespace shared_model {
@@ -27,7 +25,7 @@ namespace shared_model {
           std::vector<std::string> roles) override;
 
       std::unique_ptr<interface::QueryResponse> createErrorQueryResponse(
-          ErrorQueryType error_type) override;
+          ErrorQueryType error_type, std::string error_msg) override;
 
       std::unique_ptr<interface::QueryResponse> createSignatoriesResponse(
           std::vector<interface::types::PubkeyType> signatories) override;

@@ -5,6 +5,8 @@
 
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/permissions.hpp"
+#include "backend/protobuf/query_responses/proto_block_query_response.hpp"
+#include "backend/protobuf/query_responses/proto_query_response.hpp"
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
@@ -58,7 +60,7 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
-    ErrorQueryType error_type) {
+    ErrorQueryType error_type, std::string error_msg) {
   iroha::protocol::QueryResponse protocol_query_response;
 
   iroha::protocol::ErrorResponse_Reason reason;
@@ -94,6 +96,7 @@ shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
   iroha::protocol::ErrorResponse *protocol_specific_response =
       protocol_query_response.mutable_error_response();
   protocol_specific_response->set_reason(reason);
+  protocol_specific_response->set_message(std::move(error_msg));
 
   return std::make_unique<shared_model::proto::QueryResponse>(
       std::move(protocol_query_response));

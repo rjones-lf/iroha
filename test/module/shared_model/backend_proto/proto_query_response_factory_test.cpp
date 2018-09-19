@@ -40,7 +40,6 @@ class ProtoQueryResponseFactoryTest : public ::testing::Test {
       Result<std::unique_ptr<ResultType>, ErrorType> &&res) {
     return res.match(
         [](Value<std::unique_ptr<ResultType>> &val) {
-          //          std::shared_ptr<ResultType> ptr = std::move(val.value);
           return std::move(val.value);
         },
         [](const Error<ErrorType> &) -> std::unique_ptr<ResultType> {
@@ -153,25 +152,35 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
 TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   using ErrorTypes =
       shared_model::interface::QueryResponseFactory::ErrorQueryType;
-  auto stateless_invalid_response =
-      response_factory->createErrorQueryResponse(ErrorTypes::kStatelessFailed);
-  auto no_signatories_response =
-      response_factory->createErrorQueryResponse(ErrorTypes::kNoSignatories);
+  const auto kStatelessErrorMsg = "stateless failed";
+  const auto kNoSigsErrorMsg = "stateless failed";
+
+  auto stateless_invalid_response = response_factory->createErrorQueryResponse(
+      ErrorTypes::kStatelessFailed, kStatelessErrorMsg);
+  auto no_signatories_response = response_factory->createErrorQueryResponse(
+      ErrorTypes::kNoSignatories, kNoSigsErrorMsg);
 
   ASSERT_TRUE(stateless_invalid_response);
-  ASSERT_NO_THROW(boost::apply_visitor(
-      SpecifiedVisitor<shared_model::interface::StatelessFailedErrorResponse>(),
-      (boost::apply_visitor(
-           SpecifiedVisitor<shared_model::interface::ErrorQueryResponse>(),
-           stateless_invalid_response->get()))
-          .get()));
+  ASSERT_NO_THROW({
+    const auto &general_resp = boost::apply_visitor(
+        SpecifiedVisitor<shared_model::interface::ErrorQueryResponse>(),
+        stateless_invalid_response->get());
+    ASSERT_EQ(general_resp.errorMessage(), kStatelessErrorMsg);
+    boost::apply_visitor(
+        SpecifiedVisitor<
+            shared_model::interface::StatelessFailedErrorResponse>(),
+        general_resp.get());
+  });
   ASSERT_TRUE(no_signatories_response);
-  ASSERT_NO_THROW(boost::apply_visitor(
-      SpecifiedVisitor<shared_model::interface::NoSignatoriesErrorResponse>(),
-      (boost::apply_visitor(
-           SpecifiedVisitor<shared_model::interface::ErrorQueryResponse>(),
-           no_signatories_response->get()))
-          .get()));
+  ASSERT_NO_THROW({
+    const auto &general_resp = boost::apply_visitor(
+        SpecifiedVisitor<shared_model::interface::ErrorQueryResponse>(),
+        no_signatories_response->get());
+    ASSERT_EQ(general_resp.errorMessage(), kNoSigsErrorMsg);
+    boost::apply_visitor(
+        SpecifiedVisitor<shared_model::interface::NoSignatoriesErrorResponse>(),
+        general_resp.get());
+  });
 }
 
 /**
