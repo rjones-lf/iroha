@@ -26,18 +26,17 @@ namespace shared_model {
        * @param assets to be inserted into the response
        * @return account asset response
        */
-      virtual std::unique_ptr<AccountAssetResponse> createAccountAssetResponse(
-          const std::vector<
-              std::shared_ptr<shared_model::interface::AccountAsset>>
-              &assets) = 0;
+      virtual std::unique_ptr<QueryResponse> createAccountAssetResponse(
+          std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
+              assets) = 0;
 
       /**
        * Create response for account detail query
        * @param account_detail to be inserted into the response
        * @return account detail response
        */
-      virtual std::unique_ptr<AccountDetailResponse>
-      createAccountDetailResponse(const types::DetailType &account_detail) = 0;
+      virtual std::unique_ptr<QueryResponse> createAccountDetailResponse(
+          types::DetailType account_detail) = 0;
 
       /**
        * Create response for account query
@@ -45,8 +44,8 @@ namespace shared_model {
        * @param roles to be inserted into the response
        * @return account response
        */
-      virtual std::unique_ptr<AccountResponse> createAccountResponse(
-          const Account &account, const std::vector<std::string> &roles) = 0;
+      virtual std::unique_ptr<QueryResponse> createAccountResponse(
+          std::unique_ptr<Account> account, std::vector<std::string> roles) = 0;
 
       /**
        * Describes type of error to be placed inside the error query response
@@ -67,7 +66,7 @@ namespace shared_model {
        * @param error_type - type of error to be inserted into the response
        * @return error response
        */
-      virtual std::unique_ptr<ErrorQueryResponse> createErrorQueryResponse(
+      virtual std::unique_ptr<QueryResponse> createErrorQueryResponse(
           ErrorQueryType error_type) = 0;
 
       /**
@@ -75,43 +74,41 @@ namespace shared_model {
        * @param signatories to be inserted into the response
        * @return signatories response
        */
-      virtual std::unique_ptr<SignatoriesResponse> createSignatoriesResponse(
-          const std::vector<types::PubkeyType> &signatories) = 0;
+      virtual std::unique_ptr<QueryResponse> createSignatoriesResponse(
+          std::vector<types::PubkeyType> signatories) = 0;
 
       /**
        * Create response for transactions query
        * @param transactions to be inserted into the response
        * @return transactions response
        */
-      virtual std::unique_ptr<TransactionsResponse> createTransactionsResponse(
-          const std::vector<
-              std::shared_ptr<shared_model::interface::Transaction>>
-              &transactions) = 0;
+      virtual std::unique_ptr<QueryResponse> createTransactionsResponse(
+          std::vector<std::shared_ptr<shared_model::interface::Transaction>>
+              transactions) = 0;
 
       /**
        * Create response for asset query
        * @param asset to be inserted into the response
        * @return asset response
        */
-      virtual std::unique_ptr<AssetResponse> createAssetResponse(
-          const Asset &asset) = 0;
+      virtual std::unique_ptr<QueryResponse> createAssetResponse(
+          std::unique_ptr<Asset> asset) = 0;
 
       /**
        * Create response for roles query
        * @param roles to be inserted into the response
        * @return roles response
        */
-      virtual std::unique_ptr<RolesResponse> createRolesResponse(
-          const std::vector<types::RoleIdType> &roles) = 0;
+      virtual std::unique_ptr<QueryResponse> createRolesResponse(
+          std::vector<types::RoleIdType> roles) = 0;
 
       /**
        * Create response for role permissions query
        * @param role_permissions to be inserted into the response
        * @return role permissions response
        */
-      virtual std::unique_ptr<RolePermissionsResponse>
-      createRolePermissionsResponse(
-          const RolePermissionSet &role_permissions) = 0;
+      virtual std::unique_ptr<QueryResponse> createRolePermissionsResponse(
+          RolePermissionSet role_permissions) = 0;
 
       /**
        * Create response for block query with block
@@ -119,7 +116,7 @@ namespace shared_model {
        * @return block query response with block
        */
       virtual std::unique_ptr<BlockQueryResponse> createBlockQueryResponse(
-          const interface::Block &block) = 0;
+          std::unique_ptr<Block> block) = 0;
 
       /**
        * Create response for block query with error
@@ -127,7 +124,7 @@ namespace shared_model {
        * @return block query response with error
        */
       virtual std::unique_ptr<BlockQueryResponse> createBlockQueryResponse(
-          const std::string &error_message) = 0;
+          std::string error_message) = 0;
     };
 
   }  // namespace interface

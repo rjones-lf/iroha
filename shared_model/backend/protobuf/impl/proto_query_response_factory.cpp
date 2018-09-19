@@ -6,10 +6,10 @@
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/permissions.hpp"
 
-std::unique_ptr<shared_model::interface::AccountAssetResponse>
+std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
-    const std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
-        &assets) {
+    std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
+        assets) {
   iroha::protocol::QueryResponse protocol_query_response;
 
   iroha::protocol::AccountAssetResponse *protocol_specific_response =
@@ -20,43 +20,43 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
             ->getTransport());
   }
 
-  return std::make_unique<shared_model::proto::AccountAssetResponse>(
+  return std::make_unique<shared_model::proto::QueryResponse>(
       std::move(protocol_query_response));
 }
 
-std::unique_ptr<shared_model::interface::AccountDetailResponse>
+std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountDetailResponse(
-    const shared_model::interface::types::DetailType &account_detail) {
+    shared_model::interface::types::DetailType account_detail) {
   iroha::protocol::QueryResponse protocol_query_response;
 
   iroha::protocol::AccountDetailResponse *protocol_specific_response =
       protocol_query_response.mutable_account_detail_response();
   protocol_specific_response->set_detail(account_detail);
 
-  return std::make_unique<shared_model::proto::AccountDetailResponse>(
+  return std::make_unique<shared_model::proto::QueryResponse>(
       std::move(protocol_query_response));
 }
 
-std::unique_ptr<shared_model::interface::AccountResponse>
+std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
-    const shared_model::interface::Account &account,
-    const std::vector<std::string> &roles) {
+    std::unique_ptr<shared_model::interface::Account> account,
+    std::vector<std::string> roles) {
   iroha::protocol::QueryResponse protocol_query_response;
 
   iroha::protocol::AccountResponse *protocol_specific_response =
       protocol_query_response.mutable_account_response();
-  protocol_specific_response->mutable_account()->CopyFrom(
-      static_cast<const shared_model::proto::Account &>(account)
-          .getTransport());
+  *protocol_specific_response->mutable_account() =
+      static_cast<shared_model::proto::Account *>(account.release())
+          ->getTransport();
   for (const auto &role : roles) {
     protocol_specific_response->add_account_roles(role);
   }
 
-  return std::make_unique<shared_model::proto::AccountResponse>(
+  return std::make_unique<shared_model::proto::QueryResponse>(
       std::move(protocol_query_response));
 }
 
-std::unique_ptr<shared_model::interface::ErrorQueryResponse>
+std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
     ErrorQueryType error_type) {
   iroha::protocol::QueryResponse protocol_query_response;
@@ -95,14 +95,13 @@ shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
       protocol_query_response.mutable_error_response();
   protocol_specific_response->set_reason(reason);
 
-  return std::make_unique<shared_model::proto::ErrorQueryResponse>(
+  return std::make_unique<shared_model::proto::QueryResponse>(
       std::move(protocol_query_response));
 }
 
-std::unique_ptr<shared_model::interface::SignatoriesResponse>
+std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createSignatoriesResponse(
-    const std::vector<shared_model::interface::types::PubkeyType>
-        &signatories) {
+    std::vector<shared_model::interface::types::PubkeyType> signatories) {
   iroha::protocol::QueryResponse protocol_query_response;
 
   iroha::protocol::SignatoriesResponse *protocol_specific_response =
@@ -112,14 +111,14 @@ shared_model::proto::ProtoQueryResponseFactory::createSignatoriesResponse(
     protocol_specific_response->add_keys(blob.data(), blob.size());
   }
 
-  return std::make_unique<shared_model::proto::SignatoriesResponse>(
+  return std::make_unique<shared_model::proto::QueryResponse>(
       std::move(protocol_query_response));
 }
 
-std::unique_ptr<shared_model::interface::TransactionsResponse>
+std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createTransactionsResponse(
-    const std::vector<std::shared_ptr<shared_model::interface::Transaction>>
-        &transactions) {
+    std::vector<std::shared_ptr<shared_model::interface::Transaction>>
+        transactions) {
   iroha::protocol::QueryResponse protocol_query_response;
 
   iroha::protocol::TransactionsResponse *protocol_specific_response =
@@ -130,27 +129,28 @@ shared_model::proto::ProtoQueryResponseFactory::createTransactionsResponse(
             ->getTransport());
   }
 
-  return std::make_unique<shared_model::proto::TransactionsResponse>(
+  return std::make_unique<shared_model::proto::QueryResponse>(
       std::move(protocol_query_response));
 }
 
-std::unique_ptr<shared_model::interface::AssetResponse>
+std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
-    const shared_model::interface::Asset &asset) {
+    std::unique_ptr<shared_model::interface::Asset> asset) {
   iroha::protocol::QueryResponse protocol_query_response;
 
   iroha::protocol::AssetResponse *protocol_specific_response =
       protocol_query_response.mutable_asset_response();
-  protocol_specific_response->mutable_asset()->CopyFrom(
-      static_cast<const shared_model::proto::Asset &>(asset).getTransport());
+  *protocol_specific_response->mutable_asset() =
+      static_cast<shared_model::proto::Asset *>(asset.release())
+          ->getTransport();
 
-  return std::make_unique<shared_model::proto::AssetResponse>(
+  return std::make_unique<shared_model::proto::QueryResponse>(
       std::move(protocol_query_response));
 }
 
-std::unique_ptr<shared_model::interface::RolesResponse>
+std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createRolesResponse(
-    const std::vector<shared_model::interface::types::RoleIdType> &roles) {
+    std::vector<shared_model::interface::types::RoleIdType> roles) {
   iroha::protocol::QueryResponse protocol_query_response;
 
   iroha::protocol::RolesResponse *protocol_specific_response =
@@ -159,13 +159,13 @@ shared_model::proto::ProtoQueryResponseFactory::createRolesResponse(
     protocol_specific_response->add_roles(role);
   }
 
-  return std::make_unique<shared_model::proto::RolesResponse>(
+  return std::make_unique<shared_model::proto::QueryResponse>(
       std::move(protocol_query_response));
 }
 
-std::unique_ptr<shared_model::interface::RolePermissionsResponse>
+std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createRolePermissionsResponse(
-    const shared_model::interface::RolePermissionSet &role_permissions) {
+    shared_model::interface::RolePermissionSet role_permissions) {
   iroha::protocol::QueryResponse protocol_query_response;
 
   iroha::protocol::RolePermissionsResponse *protocol_specific_response =
@@ -178,21 +178,20 @@ shared_model::proto::ProtoQueryResponseFactory::createRolePermissionsResponse(
     }
   }
 
-  return std::make_unique<shared_model::proto::RolePermissionsResponse>(
+  return std::make_unique<shared_model::proto::QueryResponse>(
       std::move(protocol_query_response));
 }
 
 std::unique_ptr<shared_model::interface::BlockQueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createBlockQueryResponse(
-    const shared_model::interface::Block &block) {
+    std::unique_ptr<shared_model::interface::Block> block) {
   iroha::protocol::BlockQueryResponse protocol_query_response;
 
   iroha::protocol::BlockResponse *protocol_specific_response =
       protocol_query_response.mutable_block_response();
-  const auto &proto_block =
-      static_cast<const shared_model::proto::Block &>(block);
-  protocol_specific_response->set_allocated_block(
-      new iroha::protocol::Block(proto_block.getTransport()));
+  *protocol_specific_response->mutable_block() =
+      static_cast<shared_model::proto::Block *>(block.release())
+          ->getTransport();
 
   return std::make_unique<shared_model::proto::BlockQueryResponse>(
       std::move(protocol_query_response));
@@ -200,7 +199,7 @@ shared_model::proto::ProtoQueryResponseFactory::createBlockQueryResponse(
 
 std::unique_ptr<shared_model::interface::BlockQueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createBlockQueryResponse(
-    const std::string &error_message) {
+    std::string error_message) {
   iroha::protocol::BlockQueryResponse protocol_query_response;
 
   iroha::protocol::BlockErrorResponse *protocol_specific_response =

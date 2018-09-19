@@ -36,14 +36,14 @@ class ProtoQueryResponseFactoryTest : public ::testing::Test {
    * @return shared_ptr to result value or to nullptr, if result containts error
    */
   template <typename ResultType, typename ErrorType>
-  std::shared_ptr<ResultType> unwrapResult(
+  std::unique_ptr<ResultType> unwrapResult(
       Result<std::unique_ptr<ResultType>, ErrorType> &&res) {
     return res.match(
         [](Value<std::unique_ptr<ResultType>> &val) {
-          std::shared_ptr<ResultType> ptr = std::move(val.value);
-          return ptr;
+          //          std::shared_ptr<ResultType> ptr = std::move(val.value);
+          return std::move(val.value);
         },
-        [](const Error<ErrorType> &) -> std::shared_ptr<ResultType> {
+        [](const Error<ErrorType> &) -> std::unique_ptr<ResultType> {
           return nullptr;
         });
   }
@@ -72,17 +72,22 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
     if (not asset) {
       FAIL() << "could not create common object via factory";
     }
-    assets.push_back(asset);
+    assets.push_back(std::move(asset));
   }
-  auto response = response_factory->createAccountAssetResponse(assets);
+  auto query_response = response_factory->createAccountAssetResponse(assets);
 
-  ASSERT_TRUE(response);
-  ASSERT_EQ(response->accountAssets().front().accountId(), kAccountId);
-  ASSERT_EQ(response->accountAssets().front().assetId(), kAssetId);
-  for (auto i = 1; i < kAccountAssetsNumber; i++) {
-    ASSERT_EQ(response->accountAssets()[i - 1].balance(),
-              assets[i - 1]->balance());
-  }
+  ASSERT_TRUE(query_response);
+  ASSERT_NO_THROW({
+    const auto &response = boost::apply_visitor(
+        SpecifiedVisitor<shared_model::interface::AccountAssetResponse>(),
+        query_response->get());
+    ASSERT_EQ(response.accountAssets().front().accountId(), kAccountId);
+    ASSERT_EQ(response.accountAssets().front().assetId(), kAssetId);
+    for (auto i = 1; i < kAccountAssetsNumber; i++) {
+      ASSERT_EQ(response.accountAssets()[i - 1].balance(),
+                assets[i - 1]->balance());
+    }
+  });
 }
 
 /**
@@ -93,11 +98,16 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {
   const DetailType account_details = "{ fav_meme : doge }";
-  auto response =
+  auto query_response =
       response_factory->createAccountDetailResponse(account_details);
 
-  ASSERT_TRUE(response);
-  ASSERT_EQ(response->detail(), account_details);
+  ASSERT_TRUE(query_response);
+  ASSERT_NO_THROW({
+    const auto &response = boost::apply_visitor(
+        SpecifiedVisitor<shared_model::interface::AccountDetailResponse>(),
+        query_response->get());
+    ASSERT_EQ(response.detail(), account_details);
+  });
 }
 
 /**
@@ -118,14 +128,20 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
   if (not account) {
     FAIL() << "could not create common object via factory";
   }
-  auto response = response_factory->createAccountResponse(*account, kRoles);
+  auto query_response =
+      response_factory->createAccountResponse(std::move(account), kRoles);
 
-  ASSERT_TRUE(response);
-  ASSERT_EQ(response->account().accountId(), kAccountId);
-  ASSERT_EQ(response->account().domainId(), kDomainId);
-  ASSERT_EQ(response->account().quorum(), kQuorum);
-  ASSERT_EQ(response->account().jsonData(), kJson);
-  ASSERT_EQ(response->roles(), kRoles);
+  ASSERT_TRUE(query_response);
+  ASSERT_NO_THROW({
+    const auto &response = boost::apply_visitor(
+        SpecifiedVisitor<shared_model::interface::AccountResponse>(),
+        query_response->get());
+    ASSERT_EQ(response.account().accountId(), kAccountId);
+    ASSERT_EQ(response.account().domainId(), kDomainId);
+    ASSERT_EQ(response.account().quorum(), kQuorum);
+    ASSERT_EQ(response.account().jsonData(), kJson);
+    ASSERT_EQ(response.roles(), kRoles);
+  });
 }
 
 /**
@@ -145,11 +161,17 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   ASSERT_TRUE(stateless_invalid_response);
   ASSERT_NO_THROW(boost::apply_visitor(
       SpecifiedVisitor<shared_model::interface::StatelessFailedErrorResponse>(),
-      stateless_invalid_response->get()));
+      (boost::apply_visitor(
+           SpecifiedVisitor<shared_model::interface::ErrorQueryResponse>(),
+           stateless_invalid_response->get()))
+          .get()));
   ASSERT_TRUE(no_signatories_response);
   ASSERT_NO_THROW(boost::apply_visitor(
       SpecifiedVisitor<shared_model::interface::NoSignatoriesErrorResponse>(),
-      no_signatories_response->get()));
+      (boost::apply_visitor(
+           SpecifiedVisitor<shared_model::interface::ErrorQueryResponse>(),
+           no_signatories_response->get()))
+          .get()));
 }
 
 /**
@@ -163,10 +185,16 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateSignatoriesResponse) {
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
           .publicKey();
   const std::vector<PubkeyType> signatories{pub_key};
-  auto response = response_factory->createSignatoriesResponse(signatories);
+  auto query_response =
+      response_factory->createSignatoriesResponse(signatories);
 
-  ASSERT_TRUE(response);
-  ASSERT_EQ(response->keys(), signatories);
+  ASSERT_TRUE(query_response);
+  ASSERT_NO_THROW({
+    const auto &response = boost::apply_visitor(
+        SpecifiedVisitor<shared_model::interface::SignatoriesResponse>(),
+        query_response->get());
+    ASSERT_EQ(response.keys(), signatories);
+  });
 }
 
 /**
@@ -186,13 +214,19 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
     transactions.push_back(
         std::make_shared<shared_model::proto::Transaction>(std::move(tx)));
   }
-  auto response = response_factory->createTransactionsResponse(transactions);
+  auto query_response =
+      response_factory->createTransactionsResponse(transactions);
 
-  ASSERT_TRUE(response);
-  for (auto i = 0; i < kTransactionsNumber; ++i) {
-    ASSERT_EQ(response->transactions()[i].creatorAccountId(),
-              transactions[i]->creatorAccountId());
-  }
+  ASSERT_TRUE(query_response);
+  ASSERT_NO_THROW({
+    const auto &response = boost::apply_visitor(
+        SpecifiedVisitor<shared_model::interface::TransactionsResponse>(),
+        query_response->get());
+    for (auto i = 0; i < kTransactionsNumber; ++i) {
+      ASSERT_EQ(response.transactions()[i].creatorAccountId(),
+                transactions[i]->creatorAccountId());
+    }
+  });
 }
 
 /**
@@ -211,12 +245,17 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
   if (not asset) {
     FAIL() << "could not create common object via factory";
   }
-  auto response = response_factory->createAssetResponse(*asset);
+  auto query_response = response_factory->createAssetResponse(std::move(asset));
 
-  ASSERT_TRUE(response);
-  ASSERT_EQ(response->asset().assetId(), kAssetId);
-  ASSERT_EQ(response->asset().domainId(), kDomainId);
-  ASSERT_EQ(response->asset().precision(), kPrecision);
+  ASSERT_TRUE(query_response);
+  ASSERT_NO_THROW({
+    const auto &response = boost::apply_visitor(
+        SpecifiedVisitor<shared_model::interface::AssetResponse>(),
+        query_response->get());
+    ASSERT_EQ(response.asset().assetId(), kAssetId);
+    ASSERT_EQ(response.asset().domainId(), kDomainId);
+    ASSERT_EQ(response.asset().precision(), kPrecision);
+  });
 }
 
 /**
@@ -227,10 +266,15 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateRolesResponse) {
   const std::vector<RoleIdType> roles{"admin", "user"};
-  auto response = response_factory->createRolesResponse(roles);
+  auto query_response = response_factory->createRolesResponse(roles);
 
-  ASSERT_TRUE(response);
-  ASSERT_EQ(response->roles(), roles);
+  ASSERT_TRUE(query_response);
+  ASSERT_NO_THROW({
+    const auto &response = boost::apply_visitor(
+        SpecifiedVisitor<shared_model::interface::RolesResponse>(),
+        query_response->get());
+    ASSERT_EQ(response.roles(), roles);
+  });
 }
 
 /**
@@ -243,10 +287,15 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateRolePermissionsResponse) {
   const shared_model::interface::RolePermissionSet perms{
       shared_model::interface::permissions::Role::kGetMyAccount,
       shared_model::interface::permissions::Role::kAddSignatory};
-  auto response = response_factory->createRolePermissionsResponse(perms);
+  auto query_response = response_factory->createRolePermissionsResponse(perms);
 
-  ASSERT_TRUE(response);
-  ASSERT_EQ(response->rolePermissions(), perms);
+  ASSERT_TRUE(query_response);
+  ASSERT_NO_THROW({
+    const auto &response = boost::apply_visitor(
+        SpecifiedVisitor<shared_model::interface::RolePermissionsResponse>(),
+        query_response->get());
+    ASSERT_EQ(response.rolePermissions(), perms);
+  });
 }
 
 /**
@@ -261,7 +310,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithBlock) {
 
   auto block =
       TestBlockBuilder().height(kBlockHeight).createdTime(kCreatedTime).build();
-  auto response = response_factory->createBlockQueryResponse(block);
+  auto response = response_factory->createBlockQueryResponse(
+      std::make_unique<Block>(std::move(block)));
 
   ASSERT_TRUE(response);
   ASSERT_NO_THROW({
