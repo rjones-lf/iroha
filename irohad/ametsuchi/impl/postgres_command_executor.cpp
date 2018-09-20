@@ -1453,8 +1453,8 @@ namespace iroha {
               AND EXISTS (SELECT * FROM check_account_signatories)
           )",
             R"(
-              WHEN NOT (SELECT * FROM has_perm) THEN 6
               WHEN NOT EXISTS (SELECT * FROM get_account) THEN 3
+              WHEN NOT (SELECT * FROM has_perm) THEN 6
               WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 4
               WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 5
           )"}});
