@@ -453,15 +453,15 @@ namespace iroha {
 
     TEST_F(AppendRole, ValidAppendRoleTestWhenEmptyPerms) {
       addAllPerms();
-      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
-          another_role, {})),
-                              true)));
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder().createRole(another_role, {})),
+          true)));
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().appendRole(
           account->accountId(), another_role)))));
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
       ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
-                      != roles->end());
+                  != roles->end());
     }
 
     class CreateAccount : public CommandExecutorTest {
@@ -703,8 +703,8 @@ namespace iroha {
      */
     TEST_F(CreateRole, ValidCreateRoleTest) {
       addAllPerms();
-      ASSERT_TRUE(val(execute(buildCommand(
-          TestTransactionBuilder().createRole(another_role, role_permissions)))));
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
+          another_role, role_permissions)))));
       auto rl = query->getRolePermissions(role);
       ASSERT_TRUE(rl);
       ASSERT_EQ(rl.get(), role_permissions);
@@ -718,8 +718,8 @@ namespace iroha {
     TEST_F(CreateRole, CreateRoleTestInvalidWhenHasNoPerms) {
       role_permissions2.set(
           shared_model::interface::permissions::Role::kRemoveMySignatory);
-      ASSERT_TRUE(err(execute(buildCommand(
-          TestTransactionBuilder().createRole(another_role, role_permissions2)))));
+      ASSERT_TRUE(err(execute(buildCommand(TestTransactionBuilder().createRole(
+          another_role, role_permissions2)))));
       auto rl = query->getRolePermissions(another_role);
       ASSERT_TRUE(rl);
       ASSERT_TRUE(rl->none());
@@ -959,6 +959,23 @@ namespace iroha {
               account->accountId(), pk)))));
     }
 
+    /**
+     * @given  command
+     * @when trying to remove signatory from a non existing account
+     * @then signatory is not removed
+     */
+    TEST_F(RemoveSignatory, RemoveSignatoryTestNonExistingAccount) {
+      addAllPerms();
+      shared_model::interface::types::PubkeyType pk(std::string('5', 32));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+                          account->accountId(), pk)),
+                      true)));
+
+      ASSERT_TRUE(err(execute(buildCommand(
+          TestTransactionBuilder().removeSignatory("hello", *pubkey)))));
+    }
+
     class RevokePermission : public CommandExecutorTest {
      public:
       void SetUp() override {
@@ -1168,7 +1185,7 @@ namespace iroha {
       shared_model::interface::types::PubkeyType pk(std::string('5', 32));
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().addSignatory(
-              account->accountId(), pk)),
+                          account->accountId(), pk)),
                       true)));
       ASSERT_TRUE(
           err(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(

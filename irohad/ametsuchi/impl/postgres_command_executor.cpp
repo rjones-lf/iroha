@@ -7,6 +7,7 @@
 
 #include <soci/postgresql/soci-postgresql.h>
 #include <boost/format.hpp>
+#include <iostream>
 
 #include "ametsuchi/impl/soci_utils.hpp"
 #include "backend/protobuf/permissions.hpp"
@@ -149,8 +150,8 @@ namespace {
   std::string checkAccountHasRoleOrGrantablePerm(
       shared_model::interface::permissions::Role role,
       shared_model::interface::permissions::Grantable grantable,
-      const std::string &creator_id,
-      const std::string &account_id) {
+      const shared_model::interface::types::AccountIdType &creator_id,
+      const shared_model::interface::types::AccountIdType &account_id) {
     return (boost::format(R"(WITH
           has_role_perm AS (%s),
           has_grantable_perm AS (%s)
@@ -1427,11 +1428,11 @@ namespace iroha {
            {(boost::format(R"(
           has_perm AS (%s),
           get_account AS (
-              SELECT quorum FROM account WHERE account_id = :account_id LIMIT 1
+              SELECT quorum FROM account WHERE account_id = $2 LIMIT 1
            ),
           get_signatories AS (
               SELECT public_key FROM account_has_signatory
-              WHERE account_id = :account_id
+              WHERE account_id = $2
           ),
           check_account_signatories AS (
               SELECT quorum FROM get_account
