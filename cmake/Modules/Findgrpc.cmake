@@ -79,9 +79,6 @@ set_target_properties(grpc PROPERTIES
     IMPORTED_LOCATION ${grpc_LIBRARY}
     )
 
-get_filename_component(grpc_LIBRARY_DIR ${grpc_LIBRARY} DIRECTORY)
-mark_as_advanced(grpc_LIBRARY_DIR)
-
 set_target_properties(grpc++ PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIR}
     INTERFACE_LINK_LIBRARIES grpc
