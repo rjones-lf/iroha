@@ -9,7 +9,7 @@
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
-#include "interfaces/iroha_internal/transaction_sequence.hpp"
+#include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
@@ -194,8 +194,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
       }));
 
   auto transaction_sequence_result =
-      shared_model::interface::TransactionSequence::createTransactionSequence(
-          transactions, TxsValidator());
+      shared_model::interface::TransactionSequenceFactory::
+          createTransactionSequence(transactions, TxsValidator());
   auto transaction_sequence =
       framework::expected::val(transaction_sequence_result).value().value;
 
@@ -283,8 +283,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   // transactions are not commited
 
   SCOPED_TRACE("Stateful Valid status verification");
-  validateStatuses<shared_model::interface::StatefulValidTxResponse>(
-      txs);
+  validateStatuses<shared_model::interface::StatefulValidTxResponse>(txs);
 }
 
 /**

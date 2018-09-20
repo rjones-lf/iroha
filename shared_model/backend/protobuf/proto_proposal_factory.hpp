@@ -6,9 +6,10 @@
 #ifndef IROHA_PROTO_PROPOSAL_FACTORY_HPP
 #define IROHA_PROTO_PROPOSAL_FACTORY_HPP
 
-#include "backend/protobuf/proposal.hpp"
 #include "interfaces/iroha_internal/proposal_factory.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
+
+#include "backend/protobuf/proposal.hpp"
 #include "proposal.pb.h"
 
 namespace shared_model {
@@ -20,8 +21,8 @@ namespace shared_model {
       FactoryResult<std::unique_ptr<interface::Proposal>> createProposal(
           interface::types::HeightType height,
           interface::types::TimestampType created_time,
-          const interface::types::TransactionsCollectionType &transactions)
-          override {
+          boost::any_range<interface::Transaction, boost::forward_traversal_tag>
+              transactions) override {
         return createProposal(
             createProtoProposal(height, created_time, transactions));
       }
@@ -29,8 +30,8 @@ namespace shared_model {
       std::unique_ptr<interface::Proposal> unsafeCreateProposal(
           interface::types::HeightType height,
           interface::types::TimestampType created_time,
-          const interface::types::TransactionsCollectionType &transactions)
-          override {
+          boost::any_range<interface::Transaction, boost::forward_traversal_tag>
+              transactions) override {
         return std::make_unique<Proposal>(
             createProtoProposal(height, created_time, transactions));
       }
@@ -47,7 +48,8 @@ namespace shared_model {
       iroha::protocol::Proposal createProtoProposal(
           interface::types::HeightType height,
           interface::types::TimestampType created_time,
-          const interface::types::TransactionsCollectionType &transactions) {
+          boost::any_range<interface::Transaction, boost::forward_traversal_tag>
+              transactions) {
         iroha::protocol::Proposal proposal;
 
         proposal.set_height(height);

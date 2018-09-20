@@ -37,6 +37,7 @@ target_link_libraries(torii_service
     logger
     shared_model_stateless_validation
     processors
+    shared_model_interfaces_factories
     )
 
 add_library(status_bus

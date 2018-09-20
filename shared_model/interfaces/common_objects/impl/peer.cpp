@@ -3,24 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "interfaces/commands/add_peer.hpp"
+#include "interfaces/common_objects/peer.hpp"
 
 #include "cryptography/public_key.hpp"
 
 namespace shared_model {
   namespace interface {
-
-    std::string AddPeer::toString() const {
+    std::string Peer::toString() const {
       return detail::PrettyStringBuilder()
-          .init("AddPeer")
-          .append("peer_address", peer().address())
-          .append("pubkey", peer().pubkey().toString())
+          .init("Peer")
+          .append("address", address())
+          .append("pubkey", pubkey().toString())
           .finalize();
     }
 
-    bool AddPeer::operator==(const ModelType &rhs) const {
-      return peer() == rhs.peer();
+    bool Peer::operator==(const ModelType &rhs) const {
+      return address() == rhs.address() and pubkey() == rhs.pubkey();
     }
-
   }  // namespace interface
 }  // namespace shared_model

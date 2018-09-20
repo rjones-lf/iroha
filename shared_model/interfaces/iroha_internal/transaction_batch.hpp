@@ -6,7 +6,10 @@
 #ifndef IROHA_TRANSACTION_BATCH_HPP
 #define IROHA_TRANSACTION_BATCH_HPP
 
+#include <boost/optional.hpp>
+#include "cryptography/hash.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -18,8 +21,7 @@ namespace shared_model {
       TransactionBatch(TransactionBatch &&) = default;
 
       explicit TransactionBatch(
-          const types::SharedTxsCollectionType &transactions)
-          : transactions_(transactions) {}
+          const types::SharedTxsCollectionType &transactions);
 
       /**
        * Get transactions list
@@ -58,23 +60,6 @@ namespace shared_model {
       bool addSignature(size_t number_of_tx,
                         const shared_model::crypto::Signed &signed_blob,
                         const shared_model::crypto::PublicKey &public_key);
-
-      /**
-       * Get the concatenation of reduced hashes as a single hash
-       * That kind of hash does not respect batch type
-       * @tparam Collection type of const ref iterator
-       * @param reduced_hashes
-       * @return concatenated reduced hashes
-       */
-      template <typename Collection>
-      static types::HashType calculateReducedBatchHash(
-          const Collection &reduced_hashes) {
-        std::stringstream concatenated_hash;
-        for (const auto &hash : reduced_hashes) {
-          concatenated_hash << hash.hex();
-        }
-        return types::HashType::fromHexString(concatenated_hash.str());
-      }
 
      private:
       types::SharedTxsCollectionType transactions_;

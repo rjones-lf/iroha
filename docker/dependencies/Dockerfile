@@ -36,23 +36,20 @@ RUN set -e; \
 
 # install cmake 3.11.4
 RUN set -e; \
-    git clone https://gitlab.kitware.com/cmake/cmake.git /tmp/cmake; \
-    (cd /tmp/cmake ; git checkout 316bd45439ad8ced6b31bcb10303a788038387ef); \
-    (cd /tmp/cmake ; /tmp/cmake/bootstrap --system-curl --parallel=${PARALLELISM} --enable-ccache); \
-    make -j${PARALLELISM} -C /tmp/cmake; \
-    make -C /tmp/cmake install; \
-    ldconfig; \
-    rm -rf /tmp/cmake
+    (cd /tmp ; curl -LO https://cmake.org/files/v3.11/cmake-3.11.4-Linux-x86_64.sh); \
+    sh /tmp/cmake-3.11.4-Linux-x86_64.sh --prefix=/usr/local --exclude-subdir --skip-license; \
+    rm /tmp/cmake-3.11.4-Linux-x86_64.sh
 
 # install boost 1.65.1
 RUN set -e; \
-    git clone https://github.com/boostorg/boost /tmp/boost; \
-    (cd /tmp/boost ; git checkout 436ad1dfcfc7e0246141beddd11c8a4e9c10b146); \
-    (cd /tmp/boost ; git submodule update --init --recursive); \
-    (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=system,filesystem,thread); \
+    (cd /tmp ; curl -LO https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz); \
+    mkdir -p /tmp/boost; \
+    tar xf /tmp/boost_1_65_1.tar.gz -C /tmp/boost --strip-components=1; \
+    (cd /tmp/boost ; /tmp/boost/bootstrap.sh); \
     (cd /tmp/boost ; /tmp/boost/b2 headers); \
     (cd /tmp/boost ; /tmp/boost/b2 cxxflags="-std=c++14" -j ${PARALLELISM} install --prefix=/opt/dependencies/boost); \
     ldconfig; \
+    rm /tmp/boost_1_65_1.tar.gz; \
     rm -rf /tmp/boost
 
 # install protobuf v3.5.1
