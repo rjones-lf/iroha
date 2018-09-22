@@ -5,6 +5,8 @@
 
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 
+#include <numeric>
+
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 
 namespace shared_model {
