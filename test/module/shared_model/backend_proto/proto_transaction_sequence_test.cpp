@@ -115,7 +115,7 @@ TEST(TransactionSequenceTest, CreateBatches) {
 
   size_t total_transactions = boost::accumulate(
       tx_sequence->value.batches(), 0ul, [](auto sum, const auto &batch) {
-        return sum + boost::size(batch.transactions());
+        return sum + boost::size(batch->transactions());
       });
   ASSERT_EQ(total_transactions,
             batches_number * txs_in_batch + single_transactions);

@@ -31,15 +31,9 @@ namespace iroha {
       log_ = logger::log("PCS");
     }
 
-    void PeerCommunicationServiceImpl::propagate_transaction(
-        std::shared_ptr<const shared_model::interface::Transaction> transaction)
-        const {
-      log_->info("propagate tx");
-      ordering_gate_->propagateTransaction(transaction);
-    }
-
     void PeerCommunicationServiceImpl::propagate_batch(
-        const shared_model::interface::TransactionBatch &batch) const {
+        std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+        const {
       log_->info("propagate batch");
       ordering_gate_->propagateBatch(batch);
     }

@@ -57,22 +57,25 @@ namespace iroha {
     void Simulator::process_proposal(
         const shared_model::interface::Proposal &proposal) {
       log_->info("process proposal");
+
       // Get last block from local ledger
-      auto top_block_result = block_query_factory_->createBlockQuery() |
-          [](const auto &block_query) { return block_query->getTopBlock(); };
-      auto block_fetched = top_block_result.match(
-          [&](expected::Value<std::shared_ptr<shared_model::interface::Block>>
-                  &block) {
-            last_block = block.value;
-            return true;
-          },
-          [this](expected::Error<std::string> &error) {
-            log_->warn("Could not fetch last block: " + error.error);
-            return false;
-          });
-      if (not block_fetched) {
+      auto block_query_opt = block_query_factory_->createBlockQuery();
+      if (not block_query_opt) {
+        log_->error("could not create block query");
         return;
       }
+
+      auto block_var = block_query_opt.value()->getTopBlock();
+      if (auto e = boost::get<expected::Error<std::string>>(&block_var)) {
+        log_->warn("Could not fetch last block: " + e->error);
+        return;
+      }
+
+      last_block =
+          boost::get<
+              expected::Value<std::shared_ptr<shared_model::interface::Block>>>(
+              &block_var)
+              ->value;
 
       if (last_block->height() + 1 != proposal.height()) {
         log_->warn("Last block height: {}, proposal height: {}",
@@ -80,22 +83,25 @@ namespace iroha {
                    proposal.height());
         return;
       }
-      auto temporaryStorageResult = ametsuchi_factory_->createTemporaryWsv();
-      temporaryStorageResult.match(
-          [&](expected::Value<std::unique_ptr<ametsuchi::TemporaryWsv>>
-                  &temporaryStorage) {
-            auto validated_proposal_and_errors =
-                std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
-                    validator_->validate(proposal, *temporaryStorage.value));
-            notifier_.get_subscriber().on_next(
-                std::move(validated_proposal_and_errors));
-          },
-          [&](expected::Error<std::string> &error) {
-            log_->error(error.error);
-            // TODO: 13/02/18 Solonets - Handle the case when TemporaryWsv was
-            // failed to produced - IR-966
-            throw std::runtime_error(error.error);
-          });
+
+      auto temporary_wsv_var = ametsuchi_factory_->createTemporaryWsv();
+      if (auto e =
+              boost::get<expected::Error<std::string>>(&temporary_wsv_var)) {
+        log_->error("could not create temporary storage: {}", e->error);
+        return;
+      }
+
+      auto storage = std::move(
+          boost::get<expected::Value<std::unique_ptr<ametsuchi::TemporaryWsv>>>(
+              &temporary_wsv_var)
+              ->value);
+      auto validated_proposal_and_errors =
+          std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
+              validator_->validate(proposal, *storage));
+      storage.reset();
+
+      notifier_.get_subscriber().on_next(
+          std::move(validated_proposal_and_errors));
     }
 
     void Simulator::process_verified_proposal(

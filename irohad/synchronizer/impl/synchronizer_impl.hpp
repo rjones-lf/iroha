@@ -27,6 +27,7 @@
 
 namespace iroha {
   namespace synchronizer {
+
     class SynchronizerImpl : public Synchronizer {
      public:
       SynchronizerImpl(
@@ -52,32 +53,8 @@ namespace iroha {
       rxcpp::composite_subscription subscription_;
 
       logger::Logger log_;
-
-      /**
-       * Creates a temporary storage out of the provided factory
-       * @return pointer to created storage
-       */
-      std::unique_ptr<ametsuchi::MutableStorage> createTemporaryStorage() const;
-
-      /**
-       * Process block, which can be applied to current storage directly:
-       *   - apply block and commit result to Ametsuchi
-       *   - notify the subscriber about commit
-       * @param commit_message to be applied
-       */
-      void processApplicableBlock(
-          std::shared_ptr<shared_model::interface::Block> commit_message) const;
-
-      /**
-       * Download part of chain, which is missed on this peer, from another; try
-       * until success
-       * @param commit_message - top of chain to be downloaded
-       * @return observable with missed part of the chain
-       */
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-      downloadMissingChain(
-          std::shared_ptr<shared_model::interface::Block> commit_message) const;
     };
+
   }  // namespace synchronizer
 }  // namespace iroha
 

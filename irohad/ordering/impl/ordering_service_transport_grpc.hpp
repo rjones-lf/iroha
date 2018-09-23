@@ -43,10 +43,6 @@ namespace iroha {
           std::unique_ptr<shared_model::interface::Proposal> proposal,
           const std::vector<std::string> &peers) override;
 
-      grpc::Status onTransaction(::grpc::ServerContext *context,
-                                 const protocol::Transaction *request,
-                                 ::google::protobuf::Empty *response) override;
-
       grpc::Status onBatch(::grpc::ServerContext *context,
                            const protocol::TxList *request,
                            ::google::protobuf::Empty *response) override;
