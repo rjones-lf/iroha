@@ -27,6 +27,7 @@ constexpr size_t TimesToriiBlocking = 5;
 using ::testing::_;
 using ::testing::A;
 using ::testing::AtLeast;
+using ::testing::HasSubstr;
 using ::testing::Return;
 
 using namespace iroha::network;
@@ -609,9 +610,8 @@ TEST_F(ToriiServiceTest, FailedListOfTxs) {
         ASSERT_EQ(toriiResponse.tx_status(),
                   iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
         auto msg = toriiResponse.error_message();
-        ASSERT_EQ(
-            msg.find("Stateless invalid tx in transaction sequence, error: "),
-            0);
+        ASSERT_THAT(toriiResponse.error_message(),
+                    HasSubstr("bad timestamp: sent from future"));
         ASSERT_NE(msg.find(hash.hex()), std::string::npos);
       });
 }

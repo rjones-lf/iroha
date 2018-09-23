@@ -40,7 +40,7 @@ namespace torii {
      * @param context - call context (see grpc docs for details)
      * @param request - transaction received
      * @param response - no actual response (grpc stub for empty answer)
-     * @return - grpc::Status
+     * @return status
      */
     grpc::Status Torii(grpc::ServerContext *context,
                        const iroha::protocol::Transaction *request,
@@ -51,7 +51,7 @@ namespace torii {
      * @param context - call context (see grpc docs for details)
      * @param request - list of transactions received
      * @param response - no actual response (grpc stub for empty answer)
-     * @return - grpc::Status
+     * @return status
      */
     grpc::Status ListTorii(grpc::ServerContext *context,
                            const iroha::protocol::TxList *request,
@@ -64,7 +64,7 @@ namespace torii {
      * uniquely
      * @param response - ToriiResponse which contains a current state of
      * requested transaction
-     * @return - grpc::Status
+     * @return status
      */
     grpc::Status Status(grpc::ServerContext *context,
                         const iroha::protocol::TxStatusRequest *request,
@@ -77,7 +77,7 @@ namespace torii {
      * uniquely
      * @param response_writer - grpc::ServerWriter which can repeatedly send
      * transaction statuses back to the client
-     * @return - grpc::Status
+     * @return status
      */
     grpc::Status StatusStream(grpc::ServerContext *context,
                               const iroha::protocol::TxStatusRequest *request,

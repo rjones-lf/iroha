@@ -57,15 +57,12 @@ namespace torii {
       }
 
       std::string folded_hashes =
-          std::accumulate(tx_hashes.begin(),
+          std::accumulate(std::next(tx_hashes.begin()),
                           tx_hashes.end(),
-                          std::string(),
+                          tx_hashes[0].hex(),
                           [](auto &&acc, const auto &h) -> std::string {
-                            return acc + h.hex() + ", ";
+                            return acc + ", " + h.hex();
                           });
-
-      // remove leading ", "
-      folded_hashes.resize(folded_hashes.size() - 2);
 
       return (boost::format(
                   "Stateless invalid tx in transaction sequence, error: %s\n"
@@ -124,11 +121,11 @@ namespace torii {
       iroha::protocol::ToriiResponse *response) {
     auto status = command_service_->getStatus(
         shared_model::crypto::Hash(request->tx_hash()));
-    response->set_tx_hash(
-        shared_model::crypto::toBinaryString(status->transactionHash()));
-    response->set_error_message(std::move(status->errorMessage()));
-    response->set_tx_status(
-        static_cast<iroha::protocol::TxStatus>(status->get().which()));
+    *response =
+        std::static_pointer_cast<shared_model::proto::TransactionResponse>(
+            command_service_->getStatus(
+                shared_model::crypto::Hash(request->tx_hash())))
+            ->getTransport();
     return grpc::Status::OK;
   }
 
