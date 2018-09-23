@@ -153,8 +153,12 @@ namespace integration_framework {
      * @param statuses - list of statuses to check against
      * @return this
      */
-    IntegrationTestFramework &sendTx(const shared_model::proto::Transaction &tx,
-                                     std::set<TxStatus> statuses);
+    IntegrationTestFramework &sendTx(
+        const shared_model::proto::Transaction &tx,
+        std::function<
+            void(const std::vector<shared_model::proto::TransactionResponse> &)>
+            validation,
+        size_t status_count);
 
     /**
      * Send transaction to Iroha with awaiting proposal

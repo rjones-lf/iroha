@@ -269,27 +269,26 @@ namespace integration_framework {
   };
 
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
-      const shared_model::proto::Transaction &tx, std::set<TxStatus> statuses) {
+      const shared_model::proto::Transaction &tx,
+      std::function<
+          void(const std::vector<shared_model::proto::TransactionResponse> &)>
+          validation,
+      size_t status_count) {
     std::condition_variable cv;
     std::mutex m;
+    std::vector<shared_model::proto::TransactionResponse> status_list;
 
     // statuses number that haven't being appeared yet
-    size_t count = statuses.size();
     iroha_instance_->instance_->getStatusBus()
         ->statuses()
         .filter([&](auto s) { return s->transactionHash() == tx.hash(); })
-        .map([](auto s) {
-          return boost::apply_visitor(TxStatusVisitor(), s->get());
-        })
-        .filter([&statuses](auto s) { return statuses.count(s) != 0; })
-        .take_while([&statuses](auto) { return statuses.size() != 0; })
+        .take_while([&status_count](auto) { return status_count != 0; })
         .subscribe([&](auto s) {
-          auto response = statuses.find(s);
-          if (response != statuses.end()) {
-            statuses.erase(response);
-          }
+          status_list.emplace_back(iroha::protocol::ToriiResponse(
+              static_cast<shared_model::proto::TransactionResponse &>(*s)
+                  .getTransport()));
           std::lock_guard<std::mutex> lock(m);
-          count--;
+          status_count--;
           cv.notify_one();
         });
 
@@ -299,7 +298,8 @@ namespace integration_framework {
 
     // wait, until all of the statuses are recieved
     std::unique_lock<std::mutex> lock(m);
-    cv.wait(lock, [&] { return count == 0; });
+    cv.wait(lock, [&] { return status_count == 0; });
+    validation(status_list);
     return *this;
   }
 
