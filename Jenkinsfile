@@ -75,7 +75,7 @@ pipeline {
             beforeAgent true
             expression { return params.x86_64_linux }
           }
-          agent { label 'x86_64' }
+          agent { label 'docker-build-agent' }
           steps {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
@@ -172,11 +172,8 @@ pipeline {
           steps {
             script {
               def coverageEnabled = false
-              def cmakeOptions = ""
-              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
               if (!params.x86_64_linux && (coverage.selectedBranchesCoverage(['develop', 'master', 'dev']))) {
                 coverageEnabled = true
-                cmakeOptions = " -DCOVERAGE=ON "
               }
               def scmVars = checkout scm
               env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
@@ -195,14 +192,10 @@ pipeline {
                   -H. \
                   -Bbuild \
                   -DCMAKE_BUILD_TYPE=${params.build_type} \
-                  -DIROHA_VERSION=${env.IROHA_VERSION} \
-                  ${cmakeOptions}
+                  -DIROHA_VERSION=${env.IROHA_VERSION}
               """
               sh "cmake --build build -- -j${params.PARALLELISM}"
               sh "ccache --show-stats"
-              if ( coverageEnabled ) {
-                sh "cmake --build build --target coverage.init.info"
-              }
               sh """
                 export IROHA_POSTGRES_PASSWORD=${IROHA_POSTGRES_PASSWORD}; \
                 export IROHA_POSTGRES_USER=${IROHA_POSTGRES_USER}; \
@@ -229,9 +222,6 @@ pipeline {
                       -Dsonar.github.oauth=${SORABOT_TOKEN}
                   """
                 }
-                sh "cmake --build build --target coverage.info"
-                sh "python /usr/local/bin/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
-                cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
               }
               if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                 releaseBuild = load ".jenkinsci/mac-release-build.groovy"
@@ -375,7 +365,7 @@ pipeline {
       }
       // build docs on any vacant node. Prefer `x86_64` over
       // others as nodes are more powerful
-      agent { label 'x86_64' }
+      agent { label 'docker-build-agent' }
       steps {
         script {
           def doxygen = load ".jenkinsci/doxygen.groovy"
@@ -409,7 +399,7 @@ pipeline {
             beforeAgent true
             expression { return params.x86_64_linux }
           }
-          agent { label 'x86_64' }
+          agent { label 'docker-build-agent' }
           environment {
             JAVA_HOME = "/usr/lib/jvm/java-8-oracle"
           }
