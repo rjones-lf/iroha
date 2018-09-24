@@ -52,9 +52,9 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
 
   iroha::protocol::AccountResponse *protocol_specific_response =
       protocol_query_response.mutable_account_response();
-  *protocol_specific_response->mutable_account() =
+  protocol_specific_response->mutable_account()->CopyFrom(
       static_cast<shared_model::proto::Account *>(account.get())
-          ->getTransport();
+          ->getTransport());
   for (const auto &role : roles) {
     protocol_specific_response->add_account_roles(role);
   }
@@ -157,9 +157,8 @@ shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
 
   iroha::protocol::AssetResponse *protocol_specific_response =
       protocol_query_response.mutable_asset_response();
-  *protocol_specific_response->mutable_asset() =
-      static_cast<shared_model::proto::Asset *>(asset.get())
-          ->getTransport();
+  protocol_specific_response->mutable_asset()->CopyFrom(
+      static_cast<shared_model::proto::Asset *>(asset.get())->getTransport());
 
   return std::make_unique<shared_model::proto::QueryResponse>(
       std::move(protocol_query_response));
@@ -210,9 +209,8 @@ shared_model::proto::ProtoQueryResponseFactory::createBlockQueryResponse(
 
   iroha::protocol::BlockResponse *protocol_specific_response =
       protocol_query_response.mutable_block_response();
-  *protocol_specific_response->mutable_block() =
-      static_cast<shared_model::proto::Block *>(block.get())
-          ->getTransport();
+  protocol_specific_response->mutable_block()->CopyFrom(
+      static_cast<shared_model::proto::Block *>(block.get())->getTransport());
 
   return std::make_unique<shared_model::proto::BlockQueryResponse>(
       std::move(protocol_query_response));

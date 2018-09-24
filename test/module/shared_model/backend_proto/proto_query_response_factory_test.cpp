@@ -104,7 +104,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {
-  const HashType kQueryHash{Blob{"my_super_hash"}};
+  const HashType kQueryHash{"my_super_hash"};
 
   const DetailType account_details = "{ fav_meme : doge }";
   auto query_response = response_factory->createAccountDetailResponse(
@@ -129,7 +129,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
-  const HashType kQueryHash{Blob{"my_super_hash"}};
+  const HashType kQueryHash{"my_super_hash"};
 
   const AccountIdType kAccountId = "doge@meme";
   const DomainIdType kDomainId = "meme";
@@ -170,7 +170,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
 TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   using ErrorTypes =
       shared_model::interface::QueryResponseFactory::ErrorQueryType;
-  const HashType kQueryHash{Blob{"my_super_hash"}};
+  const HashType kQueryHash{"my_super_hash"};
 
   const auto kStatelessErrorMsg = "stateless failed";
   const auto kNoSigsErrorMsg = "stateless failed";
@@ -216,7 +216,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateSignatoriesResponse) {
-  const HashType kQueryHash{Blob{"my_super_hash"}};
+  const HashType kQueryHash{"my_super_hash"};
 
   const auto pub_key =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
@@ -244,7 +244,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateSignatoriesResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
-  const HashType kQueryHash{Blob{"my_super_hash"}};
+  const HashType kQueryHash{"my_super_hash"};
 
   constexpr int kTransactionsNumber = 5;
 
@@ -281,7 +281,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
-  const HashType kQueryHash{Blob{"my_super_hash"}};
+  const HashType kQueryHash{"my_super_hash"};
 
   const AssetIdType kAssetId = "doge#coin";
   const DomainIdType kDomainId = "coin";
@@ -316,7 +316,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateRolesResponse) {
-  const HashType kQueryHash{Blob{"my_super_hash"}};
+  const HashType kQueryHash{"my_super_hash"};
 
   const std::vector<RoleIdType> roles{"admin", "user"};
   auto query_response =
@@ -341,7 +341,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateRolesResponse) {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateRolePermissionsResponse) {
-  const HashType kQueryHash{Blob{"my_super_hash"}};
+  const HashType kQueryHash{"my_super_hash"};
 
   const shared_model::interface::RolePermissionSet perms{
       shared_model::interface::permissions::Role::kGetMyAccount,
