@@ -7,6 +7,7 @@
 #define IROHA_TRANSACTION_BATCH_TEMPLATE_DEFINITIONS_HPP
 
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -39,7 +40,7 @@ namespace shared_model {
     }
 
     template <typename TransactionValidator, typename FieldValidator>
-    iroha::expected::Result<TransactionBatch, std::string>
+    iroha::expected::Result<std::unique_ptr<TransactionBatch>, std::string>
     TransactionBatchFactory::createTransactionBatch(
         const types::SharedTxsCollectionType &transactions,
         const validation::TransactionsCollectionValidator<TransactionValidator>
@@ -77,11 +78,12 @@ namespace shared_model {
         return iroha::expected::makeError(answer.reason());
       }
 
-      return iroha::expected::makeValue(TransactionBatch(transactions));
+      return iroha::expected::makeValue(
+          std::make_unique<TransactionBatchImpl>(transactions));
     }
 
     template <typename TransactionValidator, typename FieldValidator>
-    iroha::expected::Result<TransactionBatch, std::string>
+    iroha::expected::Result<std::unique_ptr<TransactionBatch>, std::string>
     TransactionBatchFactory::createTransactionBatch(
         std::shared_ptr<Transaction> transaction,
         const TransactionValidator &transaction_validator,
@@ -102,8 +104,8 @@ namespace shared_model {
         answer.addReason(std::move(reason));
         return iroha::expected::makeError(answer.reason());
       }
-      return iroha::expected::makeValue(
-          TransactionBatch(types::SharedTxsCollectionType{transaction}));
+      return iroha::expected::makeValue(std::make_unique<TransactionBatchImpl>(
+          types::SharedTxsCollectionType{transaction}));
     }
 
   }  // namespace interface

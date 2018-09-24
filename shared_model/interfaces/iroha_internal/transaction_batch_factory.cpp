@@ -11,26 +11,30 @@
 namespace shared_model {
   namespace interface {
 
-    template iroha::expected::Result<TransactionBatch, std::string>
+    template iroha::expected::Result<std::unique_ptr<TransactionBatch>,
+                                     std::string>
     TransactionBatchFactory::createTransactionBatch(
         const types::SharedTxsCollectionType &transactions,
         const validation::DefaultUnsignedTransactionsValidator &validator,
         const validation::FieldValidator &field_validator);
 
-    template iroha::expected::Result<TransactionBatch, std::string>
+    template iroha::expected::Result<std::unique_ptr<TransactionBatch>,
+                                     std::string>
     TransactionBatchFactory::createTransactionBatch(
         const types::SharedTxsCollectionType &transactions,
         const validation::DefaultSignedTransactionsValidator &validator,
         const validation::FieldValidator &field_validator);
 
-    template iroha::expected::Result<TransactionBatch, std::string>
+    template iroha::expected::Result<std::unique_ptr<TransactionBatch>,
+                                     std::string>
     TransactionBatchFactory::createTransactionBatch(
         std::shared_ptr<Transaction> transaction,
         const validation::DefaultUnsignedTransactionValidator
             &transaction_validator,
         const validation::FieldValidator &field_validator);
 
-    template iroha::expected::Result<TransactionBatch, std::string>
+    template iroha::expected::Result<std::unique_ptr<TransactionBatch>,
+                                     std::string>
     TransactionBatchFactory::createTransactionBatch(
         std::shared_ptr<Transaction> transaction,
         const validation::DefaultSignedTransactionValidator

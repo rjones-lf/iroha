@@ -33,7 +33,8 @@ namespace shared_model {
        */
       template <typename TransactionValidator,
                 typename FieldValidator = validation::FieldValidator>
-      static iroha::expected::Result<TransactionBatch, std::string>
+      static iroha::expected::Result<std::unique_ptr<TransactionBatch>,
+                                     std::string>
       createTransactionBatch(const types::SharedTxsCollectionType &transactions,
                              const validation::TransactionsCollectionValidator<
                                  TransactionValidator> &validator,
@@ -50,7 +51,8 @@ namespace shared_model {
        */
       template <typename TransactionValidator,
                 typename FieldValidator = validation::FieldValidator>
-      static iroha::expected::Result<TransactionBatch, std::string>
+      static iroha::expected::Result<std::unique_ptr<TransactionBatch>,
+                                     std::string>
       createTransactionBatch(
           std::shared_ptr<Transaction> transaction,
           const TransactionValidator &transaction_validator =
