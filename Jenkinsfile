@@ -267,7 +267,7 @@ pipeline {
             beforeAgent true
             expression { return params.x86_64_linux }
           }
-          agent { label 'x86_64' }
+          agent { label 'docker-build-agent' }
           steps {
             script {
               def releaseBuild = load ".jenkinsci/release-build.groovy"
