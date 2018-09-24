@@ -35,103 +35,90 @@ namespace iroha {
             block_loader_(std::move(block_loader)),
             consensus_result_cache_(std::move(consensus_result_cache)),
             log_(logger::log("YacGate")) {
-        block_creator_->on_block().subscribe(
-            [this](auto block) { this->vote(block); });
+        block_creator_->on_block().subscribe([this](auto block) {
+          // TODO(@l4l) 24/09/18 IR-1717
+          // update BlockCreator iface according to YacGate
+          this->vote(nullptr, block, {0, 0});
+        });
       }
 
-      void YacGateImpl::vote(std::shared_ptr<shared_model::interface::Block> block) {
-        auto hash = hash_provider_->makeHash(*block);
-        log_->info("vote for block ({}, {})",
-                   hash.vote_hashes.proposal_hash,
-                   block->hash().toString());
-        auto order = orderer_->getOrdering(hash);
+      void YacGateImpl::vote(
+          std::shared_ptr<shared_model::interface::Proposal> proposal,
+          std::shared_ptr<shared_model::interface::Block> block,
+          Round round) {
+        current_block_ = std::move(block);
+
+        current_hash_ =
+            hash_provider_->makeHash(*current_block_ /*, *proposal, round*/);
+        log_->info("vote for (proposal: {}, block: {})",
+                   current_hash_.vote_hashes.proposal_hash,
+                   current_hash_.vote_hashes.block_hash);
+        auto order = orderer_->getOrdering(current_hash_);
         if (not order) {
           log_->error("ordering doesn't provide peers => pass round");
           return;
         }
-        current_block_ = std::make_pair(hash, block);
-        hash_gate_->vote(hash, *order);
+
+        hash_gate_->vote(current_hash_, *order);
 
         // insert the block we voted for to the consensus cache
         consensus_result_cache_->insert(block);
       }
 
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-      YacGateImpl::on_commit() {
+      rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::onOutcome() {
         return hash_gate_->onOutcome().flat_map([this](auto message) {
-          // TODO 10.06.2018 andrei: IR-497 Work on reject case
-          auto commit_message = boost::get<CommitMessage>(message);
-          // map commit to block if it is present or loaded from other peer
-          return rxcpp::observable<>::create<
-              std::shared_ptr<shared_model::interface::Block>>(
-              [this, commit_message](auto subscriber) {
-                const auto hash = getHash(commit_message.votes);
-                if (not hash) {
-                  log_->info("Invalid commit message, hashes are different");
-                  subscriber.on_completed();
-                  return;
-                }
-                // if node has voted for the committed block
-                if (hash == current_block_.first) {
-                  // append signatures of other nodes
-                  this->copySignatures(commit_message);
-                  log_->info("consensus: commit top block: height {}, hash {}",
-                             current_block_.second->height(),
-                             current_block_.second->hash().hex());
-                  subscriber.on_next(current_block_.second);
-                  subscriber.on_completed();
-                  return;
-                }
-                // node has voted for another block - load committed block
-                const auto model_hash =
-                    hash_provider_->toModelHash(hash.value());
-                // iterate over peers who voted for the committed block
-                rxcpp::observable<>::iterate(commit_message.votes)
-                    // allow other peers to apply commit
-                    .flat_map([this, model_hash](auto vote) {
-                      // map vote to block if it can be loaded
-                      return rxcpp::observable<>::create<
-                          std::shared_ptr<shared_model::interface::Block>>(
-                          [this, model_hash, vote](auto subscriber) {
-                            auto block = block_loader_->retrieveBlock(
-                                vote.signature->publicKey(),
-                                shared_model::crypto::Hash(model_hash));
-                            // if load is successful
-                            if (block) {
-                              // update the cache with block consensus voted for
-                              consensus_result_cache_->insert(*block);
-                              subscriber.on_next(*block);
-                            } else {
-                              log_->error(
-                                  "Could not get block from block loader");
-                            }
-                            subscriber.on_completed();
-                          });
-                    })
-                    // need only the first
-                    .first()
-                    .retry()
-                    .subscribe(
-                        // if load is successful from at least one node
-                        [subscriber](auto block) {
-                          subscriber.on_next(block);
-                          subscriber.on_completed();
-                        },
-                        // if load has failed, no peers provided the block
-                        [this, subscriber](std::exception_ptr) {
-                          log_->error("Cannot load committed block");
-                          subscriber.on_completed();
-                        });
-              });
+          return visit_in_place(
+              message,
+              [this](const CommitMessage &msg) { return handleCommit(msg); },
+              [this](const RejectMessage &msg) { return handleReject(msg); });
         });
       }
 
       void YacGateImpl::copySignatures(const CommitMessage &commit) {
         for (const auto &vote : commit.votes) {
           auto sig = vote.hash.block_signature;
-          current_block_.second->addSignature(sig->signedData(),
-                                              sig->publicKey());
+          current_block_->addSignature(sig->signedData(), sig->publicKey());
         }
+      }
+
+      rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::handleCommit(
+          const CommitMessage &msg) {
+        return rxcpp::observable<>::create<GateObject>([&](auto subscriber) {
+          const auto hash = getHash(msg.votes).value();
+          if (hash.vote_hashes.proposal_hash.size() == 0) {
+            // if consensus agreed on nothing for commit
+            log_->debug("Consensus skipped round, voted for nothing");
+            subscriber.on_next(network::AgreementOnNone{});
+          } else if (hash == current_hash_) {
+            // if node has voted for the committed block
+            // append signatures of other nodes
+            this->copySignatures(msg);
+            log_->info("consensus: commit top block: height {}, hash {}",
+                       current_block_->height(),
+                       current_block_->hash().hex());
+            subscriber.on_next(network::PairValid{current_block_});
+          } else {
+            log_->info("Voted for another block, waiting for sync");
+            subscriber.on_next(network::VoteOther{current_block_});
+          }
+          subscriber.on_completed();
+        });
+      }
+
+      rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::handleReject(
+          const RejectMessage &msg) {
+        return rxcpp::observable<>::create<GateObject>([&](auto subscriber) {
+          const auto hash = getHash(msg.votes);
+          if (not hash) {
+            log_->info("Proposal reject since all hashes are different");
+            subscriber.on_next(network::ProposalReject{});
+            subscriber.on_completed();
+            return;
+          }
+          log_->info("Block reject since proposal hashes match");
+          subscriber.on_next(network::BlockReject{current_block_});
+          subscriber.on_completed();
+        });
       }
     }  // namespace yac
   }    // namespace consensus
