@@ -41,6 +41,7 @@ namespace shared_model {
       /**
        * Create response for account detail query
        * @param account_detail to be inserted into the response
+       * @param query_hash - hash of the query, for which response is created
        * @return account detail response
        */
       virtual std::unique_ptr<QueryResponse> createAccountDetailResponse(

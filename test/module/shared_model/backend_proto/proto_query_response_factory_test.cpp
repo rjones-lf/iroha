@@ -60,7 +60,7 @@ class ProtoQueryResponseFactoryTest : public ::testing::Test {
  * @then that response is created @and is well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
-  const HashType kQueryHash{Blob{"my_super_hash"}};
+  const HashType kQueryHash{"my_super_hash"};
 
   constexpr int kAccountAssetsNumber = 5;
   const std::string kAccountId = "doge@meme";
@@ -86,6 +86,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::AccountAssetResponse>(),
         query_response->get());
+
+    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(response.accountAssets().front().accountId(), kAccountId);
     ASSERT_EQ(response.accountAssets().front().assetId(), kAssetId);
     for (auto i = 1; i < kAccountAssetsNumber; i++) {
@@ -114,6 +116,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::AccountDetailResponse>(),
         query_response->get());
+
+    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(response.detail(), account_details);
   });
 }
@@ -147,6 +151,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::AccountResponse>(),
         query_response->get());
+
+    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(response.account().accountId(), kAccountId);
     ASSERT_EQ(response.account().domainId(), kDomainId);
     ASSERT_EQ(response.account().quorum(), kQuorum);
@@ -180,6 +186,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
     const auto &general_resp = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::ErrorQueryResponse>(),
         stateless_invalid_response->get());
+
+    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(general_resp.errorMessage(), kStatelessErrorMsg);
     boost::apply_visitor(
         SpecifiedVisitor<
@@ -192,6 +200,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
     const auto &general_resp = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::ErrorQueryResponse>(),
         no_signatories_response->get());
+
+    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(general_resp.errorMessage(), kNoSigsErrorMsg);
     boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::NoSignatoriesErrorResponse>(),
@@ -221,6 +231,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateSignatoriesResponse) {
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::SignatoriesResponse>(),
         query_response->get());
+
+    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(response.keys(), signatories);
   });
 }
@@ -253,6 +265,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::TransactionsResponse>(),
         query_response->get());
+
+    SCOPED_TRACE("Query response type was deduced");
     for (auto i = 0; i < kTransactionsNumber; ++i) {
       ASSERT_EQ(response.transactions()[i].creatorAccountId(),
                 transactions[i]->creatorAccountId());
@@ -287,6 +301,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::AssetResponse>(),
         query_response->get());
+
+    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(response.asset().assetId(), kAssetId);
     ASSERT_EQ(response.asset().domainId(), kDomainId);
     ASSERT_EQ(response.asset().precision(), kPrecision);
@@ -312,6 +328,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateRolesResponse) {
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::RolesResponse>(),
         query_response->get());
+
+    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(response.roles(), roles);
   });
 }
@@ -337,6 +355,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateRolePermissionsResponse) {
     const auto &response = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::RolePermissionsResponse>(),
         query_response->get());
+
+    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(response.rolePermissions(), perms);
   });
 }
@@ -361,6 +381,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithBlock) {
     const auto &block_resp = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::BlockResponse>(),
         response->get());
+
+    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(block_resp.block().txsNumber(), 0);
     ASSERT_EQ(block_resp.block().height(), kBlockHeight);
     ASSERT_EQ(block_resp.block().createdTime(), kCreatedTime);
@@ -382,6 +404,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithError) {
     const auto &error_resp = boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::BlockErrorResponse>(),
         response->get());
+
+    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(error_resp.message(), kErrorMsg);
   });
 }
