@@ -29,7 +29,7 @@ static logger::Logger log_ = logger::testLog("YacProposalStorage");
 class YacProposalStorageTest : public ::testing::Test {
  public:
   YacHash hash;
-  uint64_t number_of_peers;
+  PeersNumberType number_of_peers;
   YacProposalStorage storage = YacProposalStorage("proposal", 4);
   std::vector<VoteMessage> valid_votes;
 

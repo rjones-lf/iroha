@@ -9,6 +9,7 @@
 #include "framework/batch_helper.hpp"
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/transaction_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
@@ -61,8 +62,9 @@ TEST(TransactionBatchTest, CreateTransactionBatchWhenValid) {
           BatchTypeAndCreatorPair{interface::types::BatchType::ATOMIC,
                                   "b@domain"}});
 
-  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
-      txs, validation::DefaultUnsignedTransactionsValidator());
+  auto transaction_batch =
+      interface::TransactionBatchFactory::createTransactionBatch(
+          txs, validation::DefaultUnsignedTransactionsValidator());
   ASSERT_TRUE(framework::expected::val(transaction_batch))
       << framework::expected::err(transaction_batch).value().error;
 }
@@ -82,8 +84,9 @@ TEST(TransactionBatchTest, CreateTransactionBatchWhenDifferentBatchType) {
   auto txs = framework::batch::createUnsignedBatchTransactions(
       std::vector<decltype(tx1_fields)>{tx1_fields, tx2_fields});
 
-  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
-      txs, validation::DefaultUnsignedTransactionsValidator());
+  auto transaction_batch =
+      interface::TransactionBatchFactory::createTransactionBatch(
+          txs, validation::DefaultUnsignedTransactionsValidator());
   ASSERT_TRUE(framework::expected::err(transaction_batch));
 }
 
@@ -98,8 +101,9 @@ TEST(TransactionBatchTest, CreateBatchWithValidAndInvalidTx) {
       interface::types::BatchType::ATOMIC,
       std::vector<std::string>{"valid@name", "invalid#@name"});
 
-  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
-      txs, validation::DefaultUnsignedTransactionsValidator());
+  auto transaction_batch =
+      interface::TransactionBatchFactory::createTransactionBatch(
+          txs, validation::DefaultUnsignedTransactionsValidator());
   ASSERT_TRUE(framework::expected::err(transaction_batch));
 }
 
@@ -117,8 +121,9 @@ TEST(TransactionBatchTest, CreateSingleTxBatchWhenValid) {
       crypto::DefaultCryptoAlgorithmType::sign(tx1->payload(), keypair);
   tx1->addSignature(signed_blob, keypair.publicKey());
 
-  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
-      tx1, transaction_validator);
+  auto transaction_batch =
+      interface::TransactionBatchFactory::createTransactionBatch(
+          tx1, transaction_validator);
 
   ASSERT_TRUE(framework::expected::val(transaction_batch))
       << framework::expected::err(transaction_batch).value().error;
@@ -134,8 +139,9 @@ TEST(TransactionBatchTest, CreateSingleTxBatchWhenInvalid) {
 
   auto tx1 = createInvalidUnsignedTransaction();
 
-  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
-      tx1, transaction_validator);
+  auto transaction_batch =
+      interface::TransactionBatchFactory::createTransactionBatch(
+          tx1, transaction_validator);
 
   ASSERT_TRUE(framework::expected::err(transaction_batch));
 }
@@ -162,7 +168,7 @@ auto createBatchWithTransactionsWithQuorum(
       now,
       quorum);
 
-  return interface::TransactionBatch::createTransactionBatch(
+  return interface::TransactionBatchFactory::createTransactionBatch(
       transactions, validation::DefaultUnsignedTransactionsValidator());
 }
 
@@ -206,9 +212,10 @@ TEST(TransactionBatchTest, BatchWithNoSignatures) {
   auto unsigned_transactions =
       framework::batch::createUnsignedBatchTransactions(
           interface::types::BatchType::ATOMIC, batch_size);
-  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
-      unsigned_transactions,
-      validation::DefaultUnsignedTransactionsValidator());
+  auto transaction_batch =
+      interface::TransactionBatchFactory::createTransactionBatch(
+          unsigned_transactions,
+          validation::DefaultUnsignedTransactionsValidator());
   ASSERT_TRUE(framework::expected::err(transaction_batch));
 }
 
@@ -243,9 +250,10 @@ inline auto makeSignedTxBuilder(
 TEST(TransactionBatchTest, BatchWithOneSignature) {
   auto unsigned_transactions = framework::batch::makeTestBatchTransactions(
       makeTxBuilder(1), makeTxBuilder(2), makeSignedTxBuilder(1));
-  auto transaction_batch = interface::TransactionBatch::createTransactionBatch(
-      unsigned_transactions,
-      validation::DefaultUnsignedTransactionsValidator());
+  auto transaction_batch =
+      interface::TransactionBatchFactory::createTransactionBatch(
+          unsigned_transactions,
+          validation::DefaultUnsignedTransactionsValidator());
   ASSERT_TRUE(framework::expected::val(transaction_batch))
       << framework::expected::err(transaction_batch).value().error;
 }

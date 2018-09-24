@@ -23,7 +23,6 @@
 namespace shared_model {
   namespace interface {
     class Block;
-    class BlockVariant;
   }  // namespace interface
 }  // namespace shared_model
 
@@ -65,7 +64,7 @@ namespace iroha {
        * @return true if block is valid, false otherwise
        */
       virtual bool validateBlock(
-          const shared_model::interface::BlockVariant &block_variant,
+          std::shared_ptr<shared_model::interface::Block> block,
           ametsuchi::MutableStorage &storage) const = 0;
     };
   }  // namespace validation

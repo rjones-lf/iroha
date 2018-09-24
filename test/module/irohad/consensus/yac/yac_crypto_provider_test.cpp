@@ -50,7 +50,7 @@ namespace iroha {
 
         auto vote = crypto_provider->getVote(hash);
 
-        ASSERT_TRUE(crypto_provider->verify(vote));
+        ASSERT_TRUE(crypto_provider->verify({vote}));
       }
 
       TEST_F(YacCryptoProviderTest, InvalidWhenMessageChanged) {
@@ -66,7 +66,7 @@ namespace iroha {
 
         vote.hash.block_hash = "hash changed";
 
-        ASSERT_FALSE(crypto_provider->verify(vote));
+        ASSERT_FALSE(crypto_provider->verify({vote}));
       }
 
     }  // namespace yac

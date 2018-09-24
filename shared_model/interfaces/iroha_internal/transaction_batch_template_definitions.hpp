@@ -6,7 +6,7 @@
 #ifndef IROHA_TRANSACTION_BATCH_TEMPLATE_DEFINITIONS_HPP
 #define IROHA_TRANSACTION_BATCH_TEMPLATE_DEFINITIONS_HPP
 
-#include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -40,7 +40,7 @@ namespace shared_model {
 
     template <typename TransactionValidator, typename FieldValidator>
     iroha::expected::Result<TransactionBatch, std::string>
-    TransactionBatch::createTransactionBatch(
+    TransactionBatchFactory::createTransactionBatch(
         const types::SharedTxsCollectionType &transactions,
         const validation::TransactionsCollectionValidator<TransactionValidator>
             &validator,
@@ -82,7 +82,7 @@ namespace shared_model {
 
     template <typename TransactionValidator, typename FieldValidator>
     iroha::expected::Result<TransactionBatch, std::string>
-    TransactionBatch::createTransactionBatch(
+    TransactionBatchFactory::createTransactionBatch(
         std::shared_ptr<Transaction> transaction,
         const TransactionValidator &transaction_validator,
         const FieldValidator &field_validator) {

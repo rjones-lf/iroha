@@ -6,6 +6,7 @@
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "validators/default_validator.hpp"
 
 namespace shared_model {
@@ -22,13 +23,14 @@ namespace shared_model {
                          std::vector<std::shared_ptr<Transaction>>,
                          interface::types::HashType::Hasher>
           extracted_batches;
-      std::vector<TransactionBatch> batches;
 
       const auto &transaction_validator = validator.getTransactionValidator();
 
+      types::BatchesCollectionType batches;
       auto insert_batch =
           [&batches](const iroha::expected::Value<TransactionBatch> &value) {
-            batches.push_back(value.value);
+            batches.push_back(
+                std::make_shared<TransactionBatch>(std::move(value.value)));
           };
 
       validation::Answer result;
@@ -43,7 +45,7 @@ namespace shared_model {
           auto batch_hash = TransactionBatch::calculateReducedBatchHash(hashes);
           extracted_batches[batch_hash].push_back(tx);
         } else {
-          TransactionBatch::createTransactionBatch<TransactionValidator,
+          TransactionBatchFactory::createTransactionBatch<TransactionValidator,
                                                    FieldValidator>(
               tx, transaction_validator, field_validator)
               .match(insert_batch, [&tx, &result](const auto &err) {
@@ -56,7 +58,7 @@ namespace shared_model {
       }
 
       for (const auto &it : extracted_batches) {
-        TransactionBatch::createTransactionBatch(it.second, validator)
+        TransactionBatchFactory::createTransactionBatch(it.second, validator)
             .match(insert_batch, [&it, &result](const auto &err) {
               result.addReason(std::make_pair(
                   it.first.toString(), std::vector<std::string>{err.error}));
@@ -86,13 +88,16 @@ namespace shared_model {
         const {
       if (not transactions_) {
         types::SharedTxsCollectionType result;
-        auto transactions_amount = 0u;
-        for (const auto &batch : batches_) {
-          transactions_amount += batch.transactions().size();
-        }
+        auto transactions_amount =
+            std::accumulate(std::begin(batches_),
+                            std::end(batches_),
+                            0ul,
+                            [](size_t acc_size, auto batch) {
+                              return acc_size + batch->transactions().size();
+                            });
         result.reserve(transactions_amount);
         for (const auto &batch : batches_) {
-          auto &transactions = batch.transactions();
+          auto &transactions = batch->transactions();
           std::copy(transactions.begin(),
                     transactions.end(),
                     std::back_inserter(result));
@@ -110,7 +115,7 @@ namespace shared_model {
       return detail::PrettyStringBuilder()
           .init("TransactionSequence")
           .appendAll(batches_,
-                     [](const auto &batch) { return batch.toString(); })
+                     [](const auto &batch) { return batch->toString(); })
           .finalize();
     }
 

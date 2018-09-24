@@ -21,18 +21,6 @@
 
 namespace iroha {
 
-  template <typename Subject>
-  void shareState(ConstRefState state, Subject &subject) {
-    if (not state.isEmpty()) {
-      auto completed_batches = state.getBatches();
-      std::for_each(completed_batches.begin(),
-                    completed_batches.end(),
-                    [&subject](const auto &batch) {
-                      subject.get_subscriber().on_next(batch);
-                    });
-    }
-  }
-
   FairMstProcessor::FairMstProcessor(
       std::shared_ptr<iroha::network::MstTransport> transport,
       std::shared_ptr<MstStorage> storage,
@@ -56,10 +44,11 @@ namespace iroha {
 
   auto FairMstProcessor::propagateBatchImpl(const iroha::DataType &batch)
       -> decltype(propagateBatch(batch)) {
-    shareState(storage_->updateOwnState(batch), batches_subject_);
-    shareState(
-        storage_->getExpiredTransactions(time_provider_->getCurrentTime()),
-        expired_subject_);
+    auto state_update = storage_->updateOwnState(batch);
+    completedBatchesNotify(*state_update.completed_state_);
+    updatedBatchesNotify(*state_update.updated_state_);
+    expiredBatchesNotify(
+        storage_->getExpiredTransactions(time_provider_->getCurrentTime()));
   }
 
   auto FairMstProcessor::onStateUpdateImpl() const
@@ -77,6 +66,36 @@ namespace iroha {
     return expired_subject_.get_observable();
   }
 
+  // TODO [IR-1687] Akvinikym 10.09.18: three methods below should be one
+  void FairMstProcessor::completedBatchesNotify(ConstRefState state) const {
+    if (not state.isEmpty()) {
+      auto completed_batches = state.getBatches();
+      std::for_each(completed_batches.begin(),
+                    completed_batches.end(),
+                    [this](const auto &batch) {
+                      batches_subject_.get_subscriber().on_next(batch);
+                    });
+    }
+  }
+
+  void FairMstProcessor::updatedBatchesNotify(ConstRefState state) const {
+    if (not state.isEmpty()) {
+      state_subject_.get_subscriber().on_next(
+          std::make_shared<MstState>(state));
+    }
+  }
+
+  void FairMstProcessor::expiredBatchesNotify(ConstRefState state) const {
+    if (not state.isEmpty()) {
+      auto expired_batches = state.getBatches();
+      std::for_each(expired_batches.begin(),
+                    expired_batches.end(),
+                    [this](const auto &batch) {
+                      expired_subject_.get_subscriber().on_next(batch);
+                    });
+    }
+  }
+
   // -------------------| MstTransportNotification override |-------------------
 
   void FairMstProcessor::onNewState(
@@ -85,33 +104,35 @@ namespace iroha {
     log_->info("Applying new state");
     auto current_time = time_provider_->getCurrentTime();
 
-    // update state
-    auto new_batches =
-        std::make_shared<MstState>(storage_->whatsNew(new_state));
-    state_subject_.get_subscriber().on_next(new_batches);
+    auto state_update = storage_->apply(from, new_state);
 
-    log_->info("New batches size: {}", new_batches->getBatches().size());
+    // updated batches
+    updatedBatchesNotify(*state_update.updated_state_);
+    log_->info("New batches size: {}",
+               state_update.updated_state_->getBatches().size());
+
     // completed batches
-    shareState(storage_->apply(from, new_state), batches_subject_);
+    completedBatchesNotify(*state_update.completed_state_);
 
     // expired batches
-    auto expired_batches = storage_->getDiffState(from, current_time);
-    shareState(expired_batches, this->expired_subject_);
+    expiredBatchesNotify(storage_->getDiffState(from, current_time));
   }
 
   // -----------------------------| private api |-----------------------------
 
   void FairMstProcessor::onPropagate(
       const PropagationStrategy::PropagationData &data) {
-    log_->info("Propagate new data[{}]", data.size());
     auto current_time = time_provider_->getCurrentTime();
-    std::for_each(
-        data.begin(), data.end(), [this, &current_time](const auto &peer) {
-          auto diff = storage_->getDiffState(peer, current_time);
-          if (not diff.isEmpty()) {
-            transport_->sendState(*peer, diff);
-          }
-        });
+    auto size = data.size();
+    std::for_each(data.begin(),
+                  data.end(),
+                  [this, &current_time, size](const auto &peer) {
+                    auto diff = storage_->getDiffState(peer, current_time);
+                    if (not diff.isEmpty()) {
+                      log_->info("Propagate new data[{}]", size);
+                      transport_->sendState(*peer, diff);
+                    }
+                  });
   }
 
 }  // namespace iroha

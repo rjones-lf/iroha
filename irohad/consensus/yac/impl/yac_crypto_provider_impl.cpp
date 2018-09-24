@@ -29,27 +29,18 @@ namespace iroha {
               factory)
           : keypair_(keypair), factory_(std::move(factory)) {}
 
-      bool CryptoProviderImpl::verify(CommitMessage msg) {
+      bool CryptoProviderImpl::verify(const std::vector<VoteMessage> &msg) {
         return std::all_of(
-            std::begin(msg.votes),
-            std::end(msg.votes),
-            [this](const auto &vote) { return this->verify(vote); });
-      }
+            std::begin(msg), std::end(msg), [](const auto &vote) {
+              auto serialized =
+                  PbConverters::serializeVote(vote).hash().SerializeAsString();
+              auto blob = shared_model::crypto::Blob(serialized);
 
-      bool CryptoProviderImpl::verify(RejectMessage msg) {
-        return std::all_of(
-            std::begin(msg.votes),
-            std::end(msg.votes),
-            [this](const auto &vote) { return this->verify(vote); });
-      }
-
-      bool CryptoProviderImpl::verify(VoteMessage msg) {
-        auto serialized =
-            PbConverters::serializeVote(msg).hash().SerializeAsString();
-        auto blob = shared_model::crypto::Blob(serialized);
-
-        return shared_model::crypto::CryptoVerifier<>::verify(
-            msg.signature->signedData(), blob, msg.signature->publicKey());
+              return shared_model::crypto::CryptoVerifier<>::verify(
+                  vote.signature->signedData(),
+                  blob,
+                  vote.signature->publicKey());
+            });
       }
 
       VoteMessage CryptoProviderImpl::getVote(YacHash hash) {

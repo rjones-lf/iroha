@@ -151,7 +151,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::BlockVariant &>()))
+              sign(A<shared_model::interface::Block &>()))
       .Times(1);
 
   init();
@@ -167,15 +167,9 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
 
   auto block_wrapper =
       make_test_subscriber<CallExact>(simulator->on_block(), 1);
-  block_wrapper.subscribe([&proposal](const auto &block_variant) {
-    ASSERT_EQ(block_variant.height(), proposal->height());
-    ASSERT_NO_THROW({
-      auto block = boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              std::shared_ptr<shared_model::interface::Block>>(),
-          block_variant);
-      ASSERT_EQ(block->transactions(), proposal->transactions());
-    });
+  block_wrapper.subscribe([&proposal](const auto block) {
+    ASSERT_EQ(block->height(), proposal->height());
+    ASSERT_EQ(block->transactions(), proposal->transactions());
   });
 
   simulator->process_proposal(*proposal);
@@ -199,7 +193,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::BlockVariant &>()))
+              sign(A<shared_model::interface::Block &>()))
       .Times(0);
 
   init();
@@ -236,7 +230,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::BlockVariant &>()))
+              sign(A<shared_model::interface::Block &>()))
       .Times(0);
 
   init();
@@ -311,7 +305,7 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
                        std::shared_ptr<shared_model::interface::Proposal>>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
-              sign(A<shared_model::interface::BlockVariant &>()))
+              sign(A<shared_model::interface::Block &>()))
       .Times(1);
 
   init();

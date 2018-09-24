@@ -35,7 +35,6 @@ namespace iroha {
         : top_hash_(top_hash),
           sql_(std::move(sql)),
           wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
-          executor_(std::make_shared<PostgresWsvCommand>(*sql_)),
           block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
           command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
           committed(false),
@@ -44,16 +43,13 @@ namespace iroha {
     }
 
     bool MutableStorageImpl::check(
-        const shared_model::interface::BlockVariant &block,
-        MutableStorage::MutableStoragePredicateType<decltype(block)>
-        predicate) {
+        const shared_model::interface::Block &block,
+        MutableStorage::MutableStoragePredicateType predicate) {
       return predicate(block, *wsv_, top_hash_);
     }
 
-    bool MutableStorageImpl::apply(
-        const shared_model::interface::Block &block,
-        MutableStoragePredicateType<const shared_model::interface::Block &>
-            function) {
+    bool MutableStorageImpl::apply(const shared_model::interface::Block &block,
+                                   MutableStoragePredicateType function) {
       auto execute_transaction = [this](auto &transaction) {
         command_executor_->setCreatorAccountId(transaction.creatorAccountId());
         command_executor_->doValidation(false);

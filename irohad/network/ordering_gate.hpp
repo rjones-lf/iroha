@@ -20,13 +20,12 @@
 
 #include <rxcpp/rx-observable.hpp>
 
-#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "network/peer_communication_service.hpp"
 
 namespace shared_model {
   namespace interface {
-    class Transaction;
     class Proposal;
+    class TransactionBatch;
   }  // namespace interface
 }  // namespace shared_model
 
@@ -39,19 +38,12 @@ namespace iroha {
     class OrderingGate {
      public:
       /**
-       * Propagate a signed transaction for further processing
-       * @param transaction
-       */
-      virtual void propagateTransaction(
-          std::shared_ptr<const shared_model::interface::Transaction>
-              transaction) const = 0;
-
-      /**
        * Propagate a transaction batch for further processing
        * @param batch
        */
       virtual void propagateBatch(
-          const shared_model::interface::TransactionBatch &batch) const = 0;
+          std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+          const = 0;
 
       /**
        * Return observable of all proposals in the consensus

@@ -7,41 +7,11 @@
 
 #include <algorithm>
 
-#include "interfaces/iroha_internal/transaction_batch_template_definitions.hpp"
+#include <boost/range/adaptor/transformed.hpp>
 #include "utils/string_builder.hpp"
-#include "validators/default_validator.hpp"
-#include "validators/field_validator.hpp"
-#include "validators/transaction_validator.hpp"
-#include "validators/transactions_collection/batch_order_validator.hpp"
 
 namespace shared_model {
   namespace interface {
-
-    template iroha::expected::Result<TransactionBatch, std::string>
-    TransactionBatch::createTransactionBatch(
-        const types::SharedTxsCollectionType &transactions,
-        const validation::DefaultUnsignedTransactionsValidator &validator,
-        const validation::FieldValidator &field_validator);
-
-    template iroha::expected::Result<TransactionBatch, std::string>
-    TransactionBatch::createTransactionBatch(
-        const types::SharedTxsCollectionType &transactions,
-        const validation::DefaultSignedTransactionsValidator &validator,
-        const validation::FieldValidator &field_validator);
-
-    template iroha::expected::Result<TransactionBatch, std::string>
-    TransactionBatch::createTransactionBatch(
-        std::shared_ptr<Transaction> transaction,
-        const validation::DefaultUnsignedTransactionValidator
-            &transaction_validator,
-        const validation::FieldValidator &field_validator);
-
-    template iroha::expected::Result<TransactionBatch, std::string>
-    TransactionBatch::createTransactionBatch(
-        std::shared_ptr<Transaction> transaction,
-        const validation::DefaultSignedTransactionValidator
-            &transaction_validator,
-        const validation::FieldValidator &field_validator);
 
     const types::SharedTxsCollectionType &TransactionBatch::transactions()
         const {

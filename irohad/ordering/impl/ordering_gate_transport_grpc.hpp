@@ -27,12 +27,6 @@
 #include "ordering.grpc.pb.h"
 #include "validators/default_validator.hpp"
 
-namespace shared_model {
-  namespace interface {
-    class Transaction;
-  }
-}  // namespace shared_model
-
 namespace iroha {
   namespace ordering {
     class OrderingGateTransportGrpc
@@ -48,19 +42,17 @@ namespace iroha {
                               const protocol::Proposal *request,
                               ::google::protobuf::Empty *response) override;
 
-      void propagateTransaction(
-          std::shared_ptr<const shared_model::interface::Transaction>
-              transaction) override;
-
       void propagateBatch(
-          const shared_model::interface::TransactionBatch &batch) override;
+          std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+          override;
 
       void subscribe(std::shared_ptr<iroha::network::OrderingGateNotification>
                          subscriber) override;
 
      private:
       std::weak_ptr<iroha::network::OrderingGateNotification> subscriber_;
-      std::unique_ptr<proto::OrderingServiceTransportGrpc::Stub> client_;
+      std::unique_ptr<proto::OrderingServiceTransportGrpc::StubInterface>
+          client_;
       std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
           async_call_;
       std::unique_ptr<shared_model::proto::ProtoProposalFactory<

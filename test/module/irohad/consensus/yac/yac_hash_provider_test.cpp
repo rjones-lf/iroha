@@ -25,15 +25,15 @@ using namespace iroha::consensus::yac;
 
 TEST(YacHashProviderTest, MakeYacHashTest) {
   YacHashProviderImpl hash_provider;
-  shared_model::interface::BlockVariant block =
+  auto block =
       std::make_shared<shared_model::proto::Block>(TestBlockBuilder().build());
 
-  block.addSignature(shared_model::crypto::Signed("data"),
-                     shared_model::crypto::PublicKey("key"));
+  block->addSignature(shared_model::crypto::Signed("data"),
+                      shared_model::crypto::PublicKey("key"));
 
-  auto hex_test_hash = block.hash().hex();
+  auto hex_test_hash = block->hash().hex();
 
-  auto yac_hash = hash_provider.makeHash(block);
+  auto yac_hash = hash_provider.makeHash(*block);
 
   ASSERT_EQ(hex_test_hash, yac_hash.proposal_hash);
   ASSERT_EQ(hex_test_hash, yac_hash.block_hash);
@@ -41,15 +41,15 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
 
 TEST(YacHashProviderTest, ToModelHashTest) {
   YacHashProviderImpl hash_provider;
-  shared_model::interface::BlockVariant block =
+  auto block =
       std::make_shared<shared_model::proto::Block>(TestBlockBuilder().build());
 
-  block.addSignature(shared_model::crypto::Signed("data"),
-                     shared_model::crypto::PublicKey("key"));
+  block->addSignature(shared_model::crypto::Signed("data"),
+                      shared_model::crypto::PublicKey("key"));
 
-  auto yac_hash = hash_provider.makeHash(block);
+  auto yac_hash = hash_provider.makeHash(*block);
 
   auto model_hash = hash_provider.toModelHash(yac_hash);
 
-  ASSERT_EQ(model_hash, block.hash());
+  ASSERT_EQ(model_hash, block->hash());
 }

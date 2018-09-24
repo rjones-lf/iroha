@@ -21,11 +21,7 @@ namespace iroha {
             std::shared_ptr<shared_model::interface::CommonObjectsFactory>
                 factory);
 
-        bool verify(CommitMessage msg) override;
-
-        bool verify(RejectMessage msg) override;
-
-        bool verify(VoteMessage msg) override;
+        bool verify(const std::vector<VoteMessage> &msg) override;
 
         VoteMessage getVote(YacHash hash) override;
 

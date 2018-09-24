@@ -49,12 +49,11 @@ TEST_F(SubtractAssetQuantity, Everything) {
       .skipBlock()
       .sendTx(replenish())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, kAmount)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(
+          complete(baseTx().subtractAssetQuantity(kAssetId, kAmount)),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
@@ -78,7 +77,8 @@ TEST_F(SubtractAssetQuantity, Overdraft) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -101,7 +101,8 @@ TEST_F(SubtractAssetQuantity, NoPermissions) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -116,9 +117,7 @@ TEST_F(SubtractAssetQuantity, NegativeAmount) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(replenish())
-      .skipProposal()
-      .skipBlock()
+      .sendTxAwait(replenish(), [](auto &) {})
       .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, "-1.0")),
               checkStatelessInvalid);
 }
@@ -135,9 +134,7 @@ TEST_F(SubtractAssetQuantity, ZeroAmount) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(replenish())
-      .skipProposal()
-      .skipBlock()
+      .sendTxAwait(replenish(), [](auto &) {})
       .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, "0.0")),
               checkStatelessInvalid);
 }
@@ -155,13 +152,11 @@ TEST_F(SubtractAssetQuantity, NonexistentAsset) {
       .skipProposal()
       .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(replenish())
-      .skipProposal()
-      .skipVerifiedProposal()
-      .skipBlock()
+      .sendTxAwait(replenish(), [](auto &) {})
       .sendTx(complete(baseTx().subtractAssetQuantity(nonexistent, kAmount)))
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }

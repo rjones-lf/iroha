@@ -66,10 +66,7 @@ grpc::Status MstTransportGrpc::SendState(
                 std::for_each(
                     seq.value.batches().begin(),
                     seq.value.batches().end(),
-                    [&new_state](const auto &batch) {
-                      new_state += std::make_shared<
-                          shared_model::interface::TransactionBatch>(batch);
-                    });
+                    [&new_state](const auto &batch) { new_state += batch; });
                 return new_state;
               },
               [this](const auto &err) {
@@ -105,8 +102,9 @@ void MstTransportGrpc::subscribe(
 void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
                                  ConstRefState providing_state) {
   async_call_->log_->info("Propagate MstState to peer {}", to.address());
-  auto client = transport::MstTransportGrpc::NewStub(
-      grpc::CreateChannel(to.address(), grpc::InsecureChannelCredentials()));
+  std::unique_ptr<transport::MstTransportGrpc::StubInterface> client =
+      transport::MstTransportGrpc::NewStub(grpc::CreateChannel(
+          to.address(), grpc::InsecureChannelCredentials()));
 
   transport::MstState protoState;
   auto peer = protoState.mutable_peer();
@@ -121,7 +119,13 @@ void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
     }
   }
 
-  async_call_->Call([&](auto context, auto cq) {
-    return client->AsyncSendState(context, protoState, cq);
-  });
+  //TODO: 15.09.2018 @x3medima17: IR-1709 replace synchronous SendState with
+  // AsycnSendState,
+  ::grpc::ClientContext context;
+  ::google::protobuf::Empty empty;
+  client->SendState(&context, protoState, &empty);
+
+//  async_call_->Call([&](auto context, auto cq) {
+//    return client->AsyncSendState(context, protoState, cq);
+//  });
 }

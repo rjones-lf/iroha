@@ -12,14 +12,14 @@ namespace iroha {
     log_ = logger::log("MstStorage");
   }
 
-  MstState MstStorage::apply(
+  StateUpdateResult MstStorage::apply(
       const std::shared_ptr<shared_model::interface::Peer> &target_peer,
       const MstState &new_state) {
     std::lock_guard<std::mutex> lock{this->mutex_};
     return applyImpl(target_peer, new_state);
   }
 
-  MstState MstStorage::updateOwnState(const DataType &tx) {
+  StateUpdateResult MstStorage::updateOwnState(const DataType &tx) {
     std::lock_guard<std::mutex> lock{this->mutex_};
     return updateOwnStateImpl(tx);
   }

@@ -26,8 +26,7 @@ TEST_F(InvalidField, Signature) {
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(proto::Transaction(tx), checkStatelessInvalid)
-      .done();
+      .sendTx(proto::Transaction(tx), checkStatelessInvalid);
 }
 
 /**
@@ -43,6 +42,5 @@ TEST_F(InvalidField, Pubkey) {
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(proto::Transaction(tx), checkStatelessInvalid)
-      .done();
+      .sendTx(proto::Transaction(tx), checkStatelessInvalid);
 }

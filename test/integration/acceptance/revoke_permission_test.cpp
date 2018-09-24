@@ -38,7 +38,8 @@ TEST_F(GrantablePermissionsFixture, RevokeFromNonExistingAccount) {
       .checkVerifiedProposal(
           // transaction is not stateful valid (kAccount2 does not exist)
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -60,13 +61,13 @@ TEST_F(GrantablePermissionsFixture, RevokeTwice) {
       .checkBlock(
           // permission was successfully granted
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(revokePermission(kAccount1,
-                               kAccount1Keypair,
-                               kAccount2,
-                               permissions::Grantable::kSetMyQuorum))
-      .skipVerifiedProposal()
-      .checkBlock(
-          // permission was successfully revoked
+      .sendTxAwait(
+          revokePermission(
+              kAccount1,
+              kAccount1Keypair,
+              kAccount2,
+              permissions::Grantable::kSetMyQuorum),  // permission was
+                                                      // successfully revoked
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(revokePermission(kAccount1,
                                kAccount1Keypair,
@@ -75,7 +76,8 @@ TEST_F(GrantablePermissionsFixture, RevokeTwice) {
       .checkVerifiedProposal(
           // permission cannot be revoked twice
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -104,18 +106,14 @@ TEST_F(GrantablePermissionsFixture, DISABLED_RevokeWithoutPermission) {
   IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair);
   createTwoAccounts(itf, {Role::kSetMyQuorum}, {Role::kReceive})
-      .sendTx(grantPermission(kAccount1,
-                              kAccount1Keypair,
-                              kAccount2,
-                              permissions::Grantable::kSetMyQuorum))
-      .skipProposal()
-      .skipVerifiedProposal()
-      .checkBlock(
+      .sendTxAwait(
+          grantPermission(kAccount1,
+                          kAccount1Keypair,
+                          kAccount2,
+                          permissions::Grantable::kSetMyQuorum),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(detach_role_tx)
-      .skipProposal()
-      .skipVerifiedProposal()
-      .checkBlock(
+      .sendTxAwait(
+          detach_role_tx,
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTx(revokePermission(kAccount1,
                                kAccount1Keypair,
@@ -125,6 +123,8 @@ TEST_F(GrantablePermissionsFixture, DISABLED_RevokeWithoutPermission) {
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+      .checkBlock(
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
       .done();
 }
 
@@ -307,14 +307,11 @@ namespace grantables {
                             Role::kAddSignatory,
                             Role::kReceive},
                            {Role::kReceive})
-        .sendTx(
+        .sendTxAwait(
             gpf::grantPermission(gpf::kAccount1,
                                  gpf::kAccount1Keypair,
                                  gpf::kAccount2,
-                                 this->grantable_type_.grantable_permission_))
-        .skipProposal()
-        .skipVerifiedProposal()
-        .checkBlock(
+                                 this->grantable_type_.grantable_permission_),
             // permission was successfully granted
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
     this->grantable_type_.prepare(*this, itf)
@@ -325,14 +322,11 @@ namespace grantables {
         .skipVerifiedProposal()
         .checkBlock(
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-        .sendTx(
+        .sendTxAwait(
             gpf::revokePermission(gpf::kAccount1,
                                   gpf::kAccount1Keypair,
                                   gpf::kAccount2,
-                                  this->grantable_type_.grantable_permission_))
-        .skipProposal()
-        .skipVerifiedProposal()
-        .checkBlock(
+                                  this->grantable_type_.grantable_permission_),
             // permission was successfully revoked
             [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
     auto last_check_tx = this->grantable_type_.testTransaction(*this);
@@ -349,13 +343,18 @@ namespace grantables {
         .checkProposal([](auto &proposal) {
           ASSERT_EQ(proposal->transactions().size(), 1);
         })
+        .skipVerifiedProposal()
+        .skipBlock()
         .getTxStatus(last_check_tx.hash(),
                      [](auto &status) {
                        auto message = status.errorMessage();
 
                        ASSERT_NE(message.find("did not pass verification"),
                                  std::string::npos)
-                           << "Fail reason: " << message;
+                           << "Fail reason: " << message
+                           << "\nRaw status:" << status.toString();
+                       // we saw empty message was received once
+                       // that is why we have added the raw print of status
                      })
         .done();
   }

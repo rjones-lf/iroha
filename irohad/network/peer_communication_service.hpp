@@ -25,9 +25,7 @@
 
 namespace shared_model {
   namespace interface {
-    class Block;
     class Proposal;
-    class Transaction;
     class TransactionBatch;
   }  // namespace interface
 }  // namespace shared_model
@@ -42,20 +40,12 @@ namespace iroha {
     class PeerCommunicationService {
      public:
       /**
-       * @deprecated use propagate_batch instead
-       * Propagate transaction in network
-       * @param transaction - object for propagation
-       */
-      virtual void propagate_transaction(
-          std::shared_ptr<const shared_model::interface::Transaction>
-              transaction) const = 0;
-
-      /**
        * Propagate batch to the network
        * @param batch - batch for propagation
        */
       virtual void propagate_batch(
-          const shared_model::interface::TransactionBatch &batch) const = 0;
+          std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+          const = 0;
 
       /**
        * Event is triggered when proposal arrives from network.

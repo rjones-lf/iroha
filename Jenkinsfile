@@ -248,7 +248,7 @@ pipeline {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                      artifacts.uploadArtifacts(filePaths, sprintf('iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
                     }
                   }
                   finally {
@@ -355,7 +355,7 @@ pipeline {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                      artifacts.uploadArtifacts(filePaths, sprintf('iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
                     }
                   }
                   finally {
@@ -458,15 +458,15 @@ pipeline {
                 def commit = env.GIT_COMMIT
                 if (params.JavaBindings) {
                   javaBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(javaBindingsFilePaths, '/iroha/bindings/java')
+                  artifacts.uploadArtifacts(javaBindingsFilePaths, 'iroha/bindings/java')
                 }
                 if (params.PythonBindings) {
                   pythonBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(pythonBindingsFilePaths, '/iroha/bindings/python')
+                  artifacts.uploadArtifacts(pythonBindingsFilePaths, 'iroha/bindings/python')
                 }
                 if (params.AndroidBindings) {
                   androidBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/android-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(androidBindingsFilePaths, '/iroha/bindings/android')
+                  artifacts.uploadArtifacts(androidBindingsFilePaths, 'iroha/bindings/android')
                 }
               }
             }
@@ -500,11 +500,11 @@ pipeline {
                 def commit = env.GIT_COMMIT
                 if (params.JavaBindings) {
                   javaBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(javaBindingsFilePaths, '/iroha/bindings/java')
+                  artifacts.uploadArtifacts(javaBindingsFilePaths, 'iroha/bindings/java')
                 }
                 if (params.PythonBindings) {
                   pythonBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(pythonBindingsFilePaths, '/iroha/bindings/python')
+                  artifacts.uploadArtifacts(pythonBindingsFilePaths, 'iroha/bindings/python')
                 }
               }
             }

@@ -38,11 +38,11 @@ class QueriesAcceptanceTest : public AcceptanceFixture {
 
   void SetUp() {
     itf.setInitialState(kAdminKeypair)
-        .sendTx(makeUserWithPerms({interface::permissions::Role::kGetRoles}))
-        .skipProposal()
-        .checkBlock([](auto &block) {
-          ASSERT_EQ(boost::size(block->transactions()), 1);
-        });
+        .sendTxAwait(
+            makeUserWithPerms({interface::permissions::Role::kGetRoles}),
+            [](auto &block) {
+              ASSERT_EQ(boost::size(block->transactions()), 1);
+            });
   };
 
   static void checkRolesResponse(const proto::QueryResponse &response) {

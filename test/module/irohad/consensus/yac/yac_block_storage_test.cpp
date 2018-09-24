@@ -18,8 +18,8 @@
 #include <gtest/gtest.h>
 #include <boost/optional.hpp>
 
-#include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/storage/yac_block_storage.hpp"
+#include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/storage/yac_vote_storage.hpp"
 #include "logger/logger.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
@@ -31,7 +31,7 @@ static logger::Logger log_ = logger::testLog("YacBlockStorage");
 class YacBlockStorageTest : public ::testing::Test {
  public:
   YacHash hash;
-  uint64_t number_of_peers;
+  PeersNumberType number_of_peers;
   YacBlockStorage storage = YacBlockStorage(YacHash("proposal", "commit"), 4);
   std::vector<VoteMessage> valid_votes;
 

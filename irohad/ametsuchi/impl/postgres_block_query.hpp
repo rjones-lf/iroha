@@ -30,6 +30,12 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
               converter);
 
+      PostgresBlockQuery(
+          std::unique_ptr<soci::session> sql,
+          KeyValueStorage &file_store,
+          std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
+              converter);
+
       std::vector<wTransaction> getAccountTransactions(
           const shared_model::interface::types::AccountIdType &account_id)
           override;
@@ -95,6 +101,7 @@ namespace iroha {
                        std::string>
       getBlock(shared_model::interface::types::HeightType id) const;
 
+      std::unique_ptr<soci::session> psql_;
       soci::session &sql_;
 
       KeyValueStorage &block_store_;

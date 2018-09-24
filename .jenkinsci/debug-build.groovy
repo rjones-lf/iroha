@@ -22,7 +22,7 @@ def doDebugBuild(coverageEnabled=false) {
   def iC = dPullOrBuild.dockerPullOrUpdate("${platform}-develop-build",
                                            "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
                                            "${env.GIT_RAW_BASE_URL}/${previousCommit}/docker/develop/Dockerfile",
-                                           "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
+                                           "${env.GIT_RAW_BASE_URL}/dev/docker/develop/Dockerfile",
                                            ['PARALLELISM': parallelism])
   // push Docker image in case the current branch is develop,
   // or it is a commit into PR which base branch is develop (usually develop -> master)
