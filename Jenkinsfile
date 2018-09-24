@@ -18,7 +18,7 @@ properties([parameters([
   choice(choices: 'Release\nDebug', description: 'Android bindings build type', name: 'ABBuildType'),
   choice(choices: 'arm64-v8a\narmeabi-v7a\narmeabi\nx86_64\nx86', description: 'Android bindings platform', name: 'ABPlatform'),
   booleanParam(defaultValue: true, description: 'Build docs', name: 'Doxygen'),
-  string(defaultValue: '4', description: 'How much parallelism should we exploit. "4" is optimal for machines with modest amount of memory and at least 4 cores', name: 'PARALLELISM')])])
+  string(defaultValue: '8', description: 'How much parallelism should we exploit. "4" is optimal for machines with modest amount of memory and at least 4 cores', name: 'PARALLELISM')])])
 
 
 pipeline {
@@ -172,6 +172,7 @@ pipeline {
           steps {
             script {
               def coverageEnabled = false
+              coverage = load ".jenkinsci/selected-branches-coverage.groovy"
               if (!params.x86_64_linux && (coverage.selectedBranchesCoverage(['develop', 'master', 'dev']))) {
                 coverageEnabled = true
               }
@@ -363,8 +364,6 @@ pipeline {
         beforeAgent true
         expression { return params.Doxygen }
       }
-      // build docs on any vacant node. Prefer `x86_64` over
-      // others as nodes are more powerful
       agent { label 'docker-build-agent' }
       steps {
         script {
@@ -375,7 +374,7 @@ pipeline {
             "$platform-develop-build",
             "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
             "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
-            "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
+            "${env.GIT_RAW_BASE_URL}/dev/docker/develop/Dockerfile",
             ['PARALLELISM': params.PARALLELISM])
           iC.inside() {
             doxygen.doDoxygen()
@@ -413,7 +412,7 @@ pipeline {
                   "$platform-develop-build",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
-                  "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/dev/docker/develop/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM])
                 if (params.JavaBindings) {
                   iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
@@ -431,7 +430,7 @@ pipeline {
                   "android-${params.ABPlatform}-${params.ABBuildType}",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/Dockerfile",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
-                  "${env.GIT_RAW_BASE_URL}/develop/docker/android/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/dev/docker/android/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM, 'PLATFORM': params.ABPlatform, 'BUILD_TYPE': params.ABBuildType])
                 sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/entrypoint.sh"
                 sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
