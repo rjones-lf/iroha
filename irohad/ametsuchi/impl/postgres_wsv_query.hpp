@@ -92,6 +92,8 @@ namespace iroha {
           shared_model::interface::permissions::Grantable permission) override;
 
      private:
+      // TODO andrei 24.09.2018: IR-1718 Consistent soci::session fields in
+      // storage classes
       std::unique_ptr<soci::session> psql_;
       soci::session &sql_;
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
