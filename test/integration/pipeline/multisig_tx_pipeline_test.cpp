@@ -16,6 +16,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <chrono>
 
 #include "builders/protobuf/queries.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
@@ -214,13 +215,17 @@ TEST_F(MstPipelineTest, GetPendingTxsLatestSignatures) {
     };
   };
 
+  using namespace std::chrono_literals;
+
   auto &mst_itf = prepareMstItf();
   mst_itf.sendTx(signTx(pending_tx, signatories[0]))
       .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
                  signatory_check(1))
-      .sendTx(signTx(pending_tx, signatories[1]))
-      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
-                 signatory_check(2));
+      .sendTx(signTx(pending_tx, signatories[1]));
+  std::this_thread::sleep_for(500ms);
+
+  mst_itf.sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
+                    signatory_check(2));
 }
 
 /**

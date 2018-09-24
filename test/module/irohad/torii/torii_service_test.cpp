@@ -60,7 +60,8 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
         verified_prop_notifier_(verified_prop_notifier) {}
 
   void propagate_batch(
-      const shared_model::interface::TransactionBatch &batch) const override {}
+      std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+      const override {}
 
   rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
   on_proposal() const override {

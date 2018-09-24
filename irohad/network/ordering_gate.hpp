@@ -42,7 +42,8 @@ namespace iroha {
        * @param batch
        */
       virtual void propagateBatch(
-          const shared_model::interface::TransactionBatch &batch) const = 0;
+          std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+          const = 0;
 
       /**
        * Return observable of all proposals in the consensus

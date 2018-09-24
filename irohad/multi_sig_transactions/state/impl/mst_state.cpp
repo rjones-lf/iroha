@@ -44,30 +44,21 @@ namespace iroha {
   }
 
   bool MstState::operator==(const MstState &rhs) const {
-    const auto &lhs_batches = getBatches();
-    const auto &rhs_batches = rhs.getBatches();
-
-    return std::equal(lhs_batches.begin(),
-                      lhs_batches.end(),
-                      rhs_batches.begin(),
-                      rhs_batches.end(),
-                      [](const auto &l, const auto &r) { return *l == *r; });
+    return std::all_of(
+        internal_state_.begin(), internal_state_.end(), [&rhs](auto &i) {
+          return rhs.internal_state_.find(i) != rhs.internal_state_.end();
+        });
   }
 
   bool MstState::isEmpty() const {
     return internal_state_.empty();
   }
 
-  std::vector<DataType> MstState::getBatches() const {
-    std::vector<DataType> result(internal_state_.begin(),
-                                 internal_state_.end());
-    // sorting is provided for clear comparison of states
-    // TODO: 15/08/2018 @muratovv Rework return type with set IR-1621
-    std::sort(
-        result.begin(), result.end(), [](const auto &left, const auto &right) {
-          return left->reducedHash().hex() < right->reducedHash().hex();
-        });
-    return result;
+  std::unordered_set<DataType,
+                     iroha::model::PointerBatchHasher<DataType>,
+                     BatchHashEquality>
+  MstState::getBatches() const {
+    return {internal_state_.begin(), internal_state_.end()};
   }
 
   MstState MstState::eraseByTime(const TimeType &time) {
