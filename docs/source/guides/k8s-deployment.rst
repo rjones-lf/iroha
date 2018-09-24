@@ -17,7 +17,13 @@ You do not need the items below if you already have a working Kubernetes (k8s) c
 
 Preparation
 ^^^^^^^^^^^
-You need to obtain AWS key for managing resources. We recommend to create a separate IAM user for that. Go to your AWS console, head to "My Security Credentials" menu and create a user in "Users" section. Assign "AmazonEC2FullAccess" and "AmazonVPCFullAccess" policies to that user. Click "Create access key" on Security credentials tab. Take a note for values of Access key ID and Secret key. Set these values as environment variables in your console:
+You need to obtain AWS key for managing resources.
+We recommend to create a separate IAM user for that.
+Go to your AWS console, head to "My Security Credentials" menu and create a user in "Users" section.
+Assign "AmazonEC2FullAccess" and "AmazonVPCFullAccess" policies to that user.
+Click "Create access key" on Security credentials tab.
+Take a note for values of Access key ID and Secret key.
+Set these values as environment variables in your console:
 
 .. code-block:: shell
 
