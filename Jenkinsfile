@@ -80,7 +80,7 @@ pipeline {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (coverage.selectedBranchesCoverage(['develop', 'master', 'dev'])) {
+              if (coverage.selectedBranchesCoverage(['master'])) {
                 debugBuild.doDebugBuild(true)
               }
               else {
@@ -111,7 +111,7 @@ pipeline {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && !params.armv8_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['develop', 'master', 'dev']))) {
+              if (!params.x86_64_linux && !params.armv8_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['master']))) {
                 debugBuild.doDebugBuild(true)
               }
               else {
@@ -142,7 +142,7 @@ pipeline {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['develop', 'master', 'dev']))) {
+              if (!params.x86_64_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['master']))) {
                 debugBuild.doDebugBuild(true)
               }
               else {
@@ -172,9 +172,11 @@ pipeline {
           steps {
             script {
               def coverageEnabled = false
+              def cmakeOptions = ""
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && (coverage.selectedBranchesCoverage(['develop', 'master', 'dev']))) {
+              if (!params.x86_64_linux && (coverage.selectedBranchesCoverage(['master']))) {
                 coverageEnabled = true
+                cmakeOptions = " -DCOVERAGE=ON "
               }
               def scmVars = checkout scm
               env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
@@ -193,10 +195,14 @@ pipeline {
                   -H. \
                   -Bbuild \
                   -DCMAKE_BUILD_TYPE=${params.build_type} \
-                  -DIROHA_VERSION=${env.IROHA_VERSION}
+                  -DIROHA_VERSION=${env.IROHA_VERSION} \
+                  ${cmakeOptions}
               """
               sh "cmake --build build -- -j${params.PARALLELISM}"
               sh "ccache --show-stats"
+              if ( coverageEnabled ) {
+                sh "cmake --build build --target coverage.init.info"
+              }
               sh """
                 export IROHA_POSTGRES_PASSWORD=${IROHA_POSTGRES_PASSWORD}; \
                 export IROHA_POSTGRES_USER=${IROHA_POSTGRES_USER}; \
@@ -223,6 +229,9 @@ pipeline {
                       -Dsonar.github.oauth=${SORABOT_TOKEN}
                   """
                 }
+                sh "cmake --build build --target coverage.info"
+                sh "python /usr/local/bin/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
+                cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
               }
               if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                 releaseBuild = load ".jenkinsci/mac-release-build.groovy"
