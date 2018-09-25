@@ -222,61 +222,13 @@ namespace integration_framework {
     return *this;
   }
 
-  struct TxStatusVisitor
-      : public boost::static_visitor<IntegrationTestFramework::TxStatus> {
-    IntegrationTestFramework::TxStatus operator()(
-        const shared_model::interface::StatelessFailedTxResponse &) const {
-      return IntegrationTestFramework::TxStatus::kStatelessFailedTxResponse;
-    }
-    IntegrationTestFramework::TxStatus operator()(
-        const shared_model::interface::StatelessValidTxResponse &) const {
-      return IntegrationTestFramework::TxStatus::kStatelessValidTxResponse;
-    }
-    IntegrationTestFramework::TxStatus operator()(
-        const shared_model::interface::StatefulFailedTxResponse &) const {
-      return IntegrationTestFramework::TxStatus::kStatefulFailedTxResponse;
-    }
-    IntegrationTestFramework::TxStatus operator()(
-        const shared_model::interface::StatefulValidTxResponse &) const {
-      return IntegrationTestFramework::TxStatus::kStatefulValidTxResponse;
-    }
-    IntegrationTestFramework::TxStatus operator()(
-        const shared_model::interface::RejectTxResponse &) const {
-      return IntegrationTestFramework::TxStatus::kRejectTxResponse;
-    }
-    IntegrationTestFramework::TxStatus operator()(
-        const shared_model::interface::CommittedTxResponse &) const {
-      return IntegrationTestFramework::TxStatus::kCommittedTxResponse;
-    }
-    IntegrationTestFramework::TxStatus operator()(
-        const shared_model::interface::MstExpiredResponse &) const {
-      return IntegrationTestFramework::TxStatus::kMstExpiredResponse;
-    }
-    IntegrationTestFramework::TxStatus operator()(
-        const shared_model::interface::NotReceivedTxResponse &) const {
-      return IntegrationTestFramework::TxStatus::kNotReceivedTxResponse;
-    }
-    IntegrationTestFramework::TxStatus operator()(
-        const shared_model::interface::MstPendingResponse &) const {
-      return IntegrationTestFramework::TxStatus::kMstPendingResponse;
-    }
-    IntegrationTestFramework::TxStatus operator()(
-        const shared_model::interface::EnoughSignaturesCollectedResponse &)
-        const {
-      return IntegrationTestFramework::TxStatus::
-          kEnoughSignaturesCollectedResponse;
-    }
-  };
-
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
       const shared_model::proto::Transaction &tx,
-      std::function<
-          void(const std::vector<shared_model::proto::TransactionResponse> &)>
-          validation,
+      std::function<void(TxResponseList)> validation,
       size_t status_count) {
     std::condition_variable cv;
     std::mutex m;
-    std::vector<shared_model::proto::TransactionResponse> status_list;
+    TxResponseList status_list;
 
     // statuses number that haven't being appeared yet
     iroha_instance_->instance_->getStatusBus()
@@ -284,9 +236,7 @@ namespace integration_framework {
         .filter([&](auto s) { return s->transactionHash() == tx.hash(); })
         .take_while([&status_count](auto) { return status_count != 0; })
         .subscribe([&](auto s) {
-          status_list.emplace_back(iroha::protocol::ToriiResponse(
-              static_cast<shared_model::proto::TransactionResponse &>(*s)
-                  .getTransport()));
+          status_list.emplace_back(clone(*s));
           std::lock_guard<std::mutex> lock(m);
           status_count--;
           cv.notify_one();
@@ -374,7 +324,8 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::sendTxSequence(
       const shared_model::interface::TransactionSequence &tx_sequence,
-      std::vector<std::set<TxStatus>> statuses) {
+      std::function<void(const std::vector<TxResponseList>)> validation,
+      size_t status_count) {
     auto tx = tx_sequence.transactions();
 
     struct HashCmp {
@@ -384,18 +335,13 @@ namespace integration_framework {
       }
     };
 
-    // mapping transaction hash to its statuses that need to be checked
-    std::map<shared_model::crypto::Hash, std::set<TxStatus>, HashCmp>
-        tx_statsues;
-    if (tx.size() != statuses.size()) {
-      log_->error("TxSequence has lenth that differ from statuses'");
-    }
+    // mapping transaction hash to its indexes
+    std::map<shared_model::crypto::Hash, size_t, HashCmp> index_map;
+    // mapping tx index to list of related responses
+    std::map<size_t, TxResponseList> tx_statuses;
 
-    // statuses number that haven't being appeared yet
-    size_t count = 0;
-    for (auto i = 0u; i < tx.size() && i < statuses.size(); ++i) {
-      count += statuses[i].size();
-      tx_statsues[tx[i]->hash()] = std::move(statuses[i]);
+    for (auto i = 0u; i < tx.size(); ++i) {
+      index_map[tx[i]->hash()] = i;
     }
 
     std::condition_variable cv;
@@ -403,18 +349,14 @@ namespace integration_framework {
     iroha_instance_->instance_->getStatusBus()
         ->statuses()
         .filter([&](auto s) {
-          return tx_statsues.find(s->transactionHash()) != tx_statsues.end();
+          return index_map.find(s->transactionHash()) != index_map.end();
         })
+        .take_while([&status_count](auto) { return status_count != 0; })
         .subscribe([&](auto s) {
-          auto status = boost::apply_visitor(TxStatusVisitor(), s->get());
-          auto &statuses = tx_statsues[s->transactionHash()];
-          if (statuses.size() == 0 || statuses.count(status) == 0) {
-            return;
-          }
+          tx_statuses[index_map[s->transactionHash()]].push_back(s);
 
           std::lock_guard<std::mutex> lock(m);
-          statuses.erase(statuses.find(status));
-          count--;
+          status_count--;
           cv.notify_one();
         });
 
@@ -432,7 +374,14 @@ namespace integration_framework {
 
     // wait, until all of the statuses are received
     std::unique_lock<std::mutex> lock(m);
-    cv.wait(lock, [&] { return count == 0; });
+    cv.wait(lock, [&] { return status_count == 0; });
+
+    // Since it's easier to use vector instead of map, there's a vector for that
+    std::vector<TxResponseList> v;
+    for (auto &&kv : tx_statuses) {
+      v.emplace_back(std::move(kv.second));
+    }
+    validation(std::move(v));
     return *this;
   }
 

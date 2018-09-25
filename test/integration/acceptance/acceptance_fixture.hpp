@@ -200,23 +200,14 @@ class AcceptanceFixture : public ::testing::Test {
           "asd@asd",
           "ab..cd"};
 
-  const std::set<integration_framework::IntegrationTestFramework::TxStatus>
-      statelessInvalidStatuses{integration_framework::IntegrationTestFramework::
-                                   TxStatus::kStatelessFailedTxResponse};
-  const std::set<integration_framework::IntegrationTestFramework::TxStatus>
-      statefulInvalidStatuses{integration_framework::IntegrationTestFramework::
-                                  kStatelessValidTxResponse,
-                              integration_framework::IntegrationTestFramework::
-                                  TxStatus::kStatefulFailedTxResponse};
-  const std::set<integration_framework::IntegrationTestFramework::TxStatus>
-      committedStatuses{
-          integration_framework::IntegrationTestFramework::TxStatus::
-              kStatelessValidTxResponse,
-          integration_framework::IntegrationTestFramework::TxStatus::
-              kStatefulValidTxResponse,
-          integration_framework::IntegrationTestFramework::TxStatus::
-              kCommittedTxResponse,
-      };
+  using TxResponseList =
+      integration_framework::IntegrationTestFramework::TxResponseList;
+
+  const std::function<void(TxResponseList)> checkForStatelessInvalid;
+  const std::function<void(TxResponseList)> checkForStatelessValid;
+  const std::function<void(TxResponseList)> checkForStatefulInvalid;
+  const std::function<void(TxResponseList)> checkForStatefulValid;
+  const std::function<void(TxResponseList)> checkForCommitted;
 
  private:
   iroha::time::time_t initial_time;

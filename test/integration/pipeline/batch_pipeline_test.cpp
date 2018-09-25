@@ -221,9 +221,12 @@ TEST_F(BatchPipelineTest, InvalidAtomicBatch) {
           createAndAddAssets(kSecondUserId, kAssetB, "1.0", kSecondUserKeypair),
           [](const auto &) {})
       .sendTxSequence(transaction_sequence,
-                      {{integration_framework::IntegrationTestFramework::
-                            kStatelessValidTxResponse},
-                       statefulInvalidStatuses})
+                      [this](auto responses_list) {
+                        ASSERT_EQ(responses_list.size(), 2);
+                        checkForStatelessValid(std::move(responses_list[0]));
+                        checkForStatefulInvalid(std::move(responses_list[1]));
+                      },
+                      5)
       .checkProposal([&transaction_sequence](const auto proposal) {
         ASSERT_THAT(
             proposal->transactions(),

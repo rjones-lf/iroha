@@ -43,27 +43,7 @@ class CreateRole : public AcceptanceFixture {
 TEST_F(CreateRole, Basic) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(
-          makeUserWithPerms(),
-          [](auto &resps) {
-            for (auto &&r : resps) {
-              std::cout << r.get().which() << std::endl;
-            }
-
-            ASSERT_NO_THROW(boost::apply_visitor(
-                framework::SpecifiedVisitor<const shared_model::interface::
-                                                StatelessValidTxResponse &>(),
-                resps[2].get()));
-            ASSERT_NO_THROW(boost::apply_visitor(
-                framework::SpecifiedVisitor<
-                    const shared_model::interface::StatefulValidTxResponse &>(),
-                resps[1].get()));
-            ASSERT_NO_THROW(boost::apply_visitor(
-                framework::SpecifiedVisitor<
-                    const shared_model::interface::CommittedTxResponse &>(),
-                resps[3].get()));
-          },
-          4)
+      .sendTx(makeUserWithPerms(), checkForCommitted, 4)
       .sendTxAwait(complete(baseTx()), [](auto &block) {
         ASSERT_EQ(block->transactions().size(), 1);
       });

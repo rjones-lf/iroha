@@ -134,30 +134,19 @@ namespace integration_framework {
     IntegrationTestFramework &sendTx(
         const shared_model::proto::Transaction &tx);
 
-    enum TxStatus {
-      kStatelessFailedTxResponse,
-      kStatelessValidTxResponse,
-      kStatefulFailedTxResponse,
-      kStatefulValidTxResponse,
-      kRejectTxResponse,
-      kCommittedTxResponse,
-      kMstExpiredResponse,
-      kNotReceivedTxResponse,
-      kMstPendingResponse,
-      kEnoughSignaturesCollectedResponse,
-    };
+    using TxResponseList = std::vector<
+        std::shared_ptr<shared_model::interface::TransactionResponse>>;
 
     /**
      * Send transaction to Iroha and validate its status
      * @param tx - transaction for sending
-     * @param statuses - list of statuses to check against
+     * @param callback for checking status list
+     * @param status_count is number of statuses to wait
      * @return this
      */
     IntegrationTestFramework &sendTx(
         const shared_model::proto::Transaction &tx,
-        std::function<
-            void(const std::vector<shared_model::proto::TransactionResponse> &)>
-            validation,
+        std::function<void(TxResponseList)> validation,
         size_t status_count);
 
     /**
@@ -186,13 +175,14 @@ namespace integration_framework {
     /**
      * Send transactions to Iroha and validate obtained statuses
      * @param tx_sequence - transactions sequence
-     * @param statuses - vector of statuses list to be checked against, which
-     *        correspond to transactions in tx_seq
+     * @param callback for checking vector of responses list
+     * @param status_count is number of statuses to wait
      * @return this
      */
     IntegrationTestFramework &sendTxSequence(
         const shared_model::interface::TransactionSequence &tx_sequence,
-        std::vector<std::set<TxStatus>> statuses);
+        std::function<void(std::vector<TxResponseList>)> validation,
+        size_t status_count);
 
     /**
      * Send transactions to Iroha with awaiting proposal and without status
