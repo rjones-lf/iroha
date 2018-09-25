@@ -9,14 +9,11 @@
 #include "builders/protobuf/queries.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
-
-using framework::SpecifiedVisitor;
 
 class MstPipelineTest : public AcceptanceFixture {
  public:
@@ -31,13 +28,12 @@ class MstPipelineTest : public AcceptanceFixture {
   IntegrationTestFramework &makeMstUser(IntegrationTestFramework &itf,
                                         size_t sigs = kSignatories) {
     auto create_user_tx =
-        createUserWithPerms(
-            kUser,
-            kUserKeypair.publicKey(),
-            kNewRole,
-            {shared_model::interface::permissions::Role::kSetQuorum,
-             shared_model::interface::permissions::Role::kAddSignatory,
-             shared_model::interface::permissions::Role::kSetDetail})
+        createUserWithPerms(kUser,
+                            kUserKeypair.publicKey(),
+                            kNewRole,
+                            {interface::permissions::Role::kSetQuorum,
+                             interface::permissions::Role::kAddSignatory,
+                             interface::permissions::Role::kSetDetail})
             .build()
             .signAndAddSignature(kAdminKeypair)
             .finish();
@@ -89,30 +85,29 @@ class MstPipelineTest : public AcceptanceFixture {
    * Query validation lambda - check that empty transactions response returned
    * @param response - query response
    */
-  static void no_txs_check(const shared_model::proto::QueryResponse &response) {
+  static void no_txs_check(const proto::QueryResponse &response) {
     ASSERT_NO_THROW({
-      const auto &pending_tx_resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              shared_model::interface::TransactionsResponse>(),
-          response.get());
-      ASSERT_TRUE(pending_tx_resp.transactions().empty());
+      const auto &pending_txs_resp =
+          boost::get<interface::TransactionsResponse>(response.get());
+
+      ASSERT_TRUE(pending_txs_resp.transactions().empty());
     });
   }
 
   /**
-   * Checks the number of signatures of the first pending transaction
+   * Returns lambda that checks the number of signatures of the first pending
+   * transaction
    * @param expected_signatures_number
    * @return query validation lambda
    */
-  auto signatory_check(size_t expected_signatures_number) {
-    return [expected_signatures_number](auto &response) {
+  static auto signatory_check(size_t expected_signatures_number) {
+    return [expected_signatures_number](const auto &response) {
       ASSERT_NO_THROW({
-        const auto &pending_tx_resp = boost::apply_visitor(
-            framework::SpecifiedVisitor<
-                shared_model::interface::TransactionsResponse>(),
-            response.get());
+        const auto &pending_txs_resp =
+            boost::get<interface::TransactionsResponse>(response.get());
+
         ASSERT_EQ(
-            boost::size(pending_tx_resp.transactions().front().signatures()),
+            boost::size(pending_txs_resp.transactions().front().signatures()),
             expected_signatures_number);
       });
     };
@@ -143,22 +138,23 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
   auto tx = baseTx()
                 .setAccountDetail(kUserId, "fav_meme", "doge")
                 .quorum(kSignatories + 1);
-  auto checkMstPendingTxStatus =
-      [](const shared_model::proto::TransactionResponse &resp) {
-        ASSERT_NO_THROW(boost::apply_visitor(
-            SpecifiedVisitor<interface::MstPendingResponse>(), resp.get()));
+  auto check_mst_pending_tx_status =
+      [](const proto::TransactionResponse &resp) {
+        ASSERT_NO_THROW(boost::get<interface::MstPendingResponse>(resp.get()));
       };
-  auto checkEnoughSignaturesCollectedStatus =
-      [](const shared_model::proto::TransactionResponse &resp) {
-        ASSERT_NO_THROW(boost::apply_visitor(
-            SpecifiedVisitor<interface::MstPendingResponse>(), resp.get()));
+  auto check_enough_signatures_collected_tx_status =
+      [](const proto::TransactionResponse &resp) {
+        ASSERT_NO_THROW(
+            boost::get<interface::EnoughSignaturesCollectedResponse>(
+                resp.get()));
       };
 
   auto &mst_itf = prepareMstItf();
-  mst_itf.sendTx(complete(tx, kUserKeypair), checkMstPendingTxStatus)
-      .sendTx(complete(tx, signatories[0]), checkMstPendingTxStatus)
-      .sendTx(complete(tx, signatories[1]),
-              checkEnoughSignaturesCollectedStatus)
+  mst_itf.sendTx(complete(tx, kUserKeypair), check_mst_pending_tx_status)
+      .sendTx(complete(tx, signatories[0]), check_mst_pending_tx_status)
+      .sendTx(complete(tx, signatories[1]))
+      .getTxStatus(tx.build().hash(),
+                   check_enough_signatures_collected_tx_status)
       .skipProposal()
       .skipVerifiedProposal()
       .checkBlock([](auto &proposal) {
@@ -181,10 +177,8 @@ TEST_F(MstPipelineTest, GetPendingTxsAwaitingForThisPeer) {
 
   auto pending_tx_check = [pending_hash = signed_tx.hash()](auto &response) {
     ASSERT_NO_THROW({
-      const auto &pending_tx_resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              shared_model::interface::TransactionsResponse>(),
-          response.get());
+      const auto &pending_tx_resp =
+          boost::get<interface::TransactionsResponse>(response.get());
       ASSERT_EQ(pending_tx_resp.transactions().front().hash(), pending_hash);
     });
   };
@@ -238,11 +232,11 @@ TEST_F(MstPipelineTest, GetPendingTxsNoSignedTxs) {
 }
 
 /**
- * Disabled because fully signed transaction goes no through MST and pending
+ * Disabled because fully signed transaction doesn't go through MST and pending
  * transaction remains in query response IR-1329
  * @given a ledger with mst user (quorum=3) created
- * @when the user sends a transactions with only one signature, then sends the
- * transactions with all three signatures
+ * @when the user sends a transaction with only one signature, then sends the
+ * transaction with all three signatures
  * @then there should be no pending transactions
  */
 TEST_F(MstPipelineTest, DISABLED_ReplayViaFullySignedTransaction) {
