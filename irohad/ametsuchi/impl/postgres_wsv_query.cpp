@@ -231,7 +231,8 @@ namespace iroha {
       });
 
       return mapValues<std::vector<PubkeyType>>(result, [&](auto &public_key) {
-        return shared_model::crypto::Blob::fromHexString(public_key);
+        return shared_model::crypto::PublicKey{
+            shared_model::crypto::Blob::fromHexString(public_key)};
       });
     }
 
