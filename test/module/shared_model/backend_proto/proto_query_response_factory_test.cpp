@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "backend/protobuf/proto_query_response_factory.hpp"
 #include <gtest/gtest.h>
 #include <boost/optional.hpp>
-#include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "cryptography/blob.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
@@ -82,7 +82,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response =
-        boost::get<shared_model::interface::AccountAssetResponse>(
+        boost::get<const shared_model::interface::AccountAssetResponse &>(
             query_response->get());
     ASSERT_EQ(response.accountAssets().front().accountId(), kAccountId);
     ASSERT_EQ(response.accountAssets().front().assetId(), kAssetId);
@@ -110,7 +110,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response =
-        boost::get<shared_model::interface::AccountDetailResponse>(
+        boost::get<const shared_model::interface::AccountDetailResponse &>(
             query_response->get());
     ASSERT_EQ(response.detail(), account_details);
   });
@@ -143,8 +143,9 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
   ASSERT_TRUE(query_response);
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &response = boost::get<shared_model::interface::AccountResponse>(
-        query_response->get());
+    const auto &response =
+        boost::get<const shared_model::interface::AccountResponse &>(
+            query_response->get());
 
     ASSERT_EQ(response.account().accountId(), kAccountId);
     ASSERT_EQ(response.account().domainId(), kDomainId);
@@ -177,7 +178,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   ASSERT_EQ(stateless_invalid_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &general_resp =
-        boost::get<shared_model::interface::ErrorQueryResponse>(
+        boost::get<const shared_model::interface::ErrorQueryResponse &>(
             stateless_invalid_response->get());
 
     ASSERT_EQ(general_resp.errorMessage(), kStatelessErrorMsg);
@@ -190,7 +191,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   ASSERT_EQ(no_signatories_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &general_resp =
-        boost::get<shared_model::interface::ErrorQueryResponse>(
+        boost::get<const shared_model::interface::ErrorQueryResponse &>(
             no_signatories_response->get());
 
     ASSERT_EQ(general_resp.errorMessage(), kNoSigsErrorMsg);
@@ -220,7 +221,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateSignatoriesResponse) {
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response =
-        boost::get<shared_model::interface::SignatoriesResponse>(
+        boost::get<const shared_model::interface::SignatoriesResponse &>(
             query_response->get());
 
     ASSERT_EQ(response.keys(), signatories);
@@ -255,7 +256,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response =
-        boost::get<shared_model::interface::TransactionsResponse>(
+        boost::get<const shared_model::interface::TransactionsResponse &>(
             query_response->get());
 
     for (auto i = 0; i < kTransactionsNumber; ++i) {
@@ -290,8 +291,9 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
   ASSERT_TRUE(query_response);
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &response = boost::get<shared_model::interface::AssetResponse>(
-        query_response->get());
+    const auto &response =
+        boost::get<const shared_model::interface::AssetResponse &>(
+            query_response->get());
 
     ASSERT_EQ(response.asset().assetId(), kAssetId);
     ASSERT_EQ(response.asset().domainId(), kDomainId);
@@ -315,8 +317,9 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateRolesResponse) {
   ASSERT_TRUE(query_response);
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &response = boost::get<shared_model::interface::RolesResponse>(
-        query_response->get());
+    const auto &response =
+        boost::get<const shared_model::interface::RolesResponse &>(
+            query_response->get());
 
     ASSERT_EQ(response.roles(), roles);
   });
@@ -341,7 +344,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateRolePermissionsResponse) {
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
     const auto &response =
-        boost::get<shared_model::interface::RolePermissionsResponse>(
+        boost::get<const shared_model::interface::RolePermissionsResponse &>(
             query_response->get());
 
     ASSERT_EQ(response.rolePermissions(), perms);
@@ -366,7 +369,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithBlock) {
   ASSERT_TRUE(response);
   ASSERT_NO_THROW({
     const auto &block_resp =
-        boost::get<shared_model::interface::BlockResponse>(response->get());
+        boost::get<const shared_model::interface::BlockResponse &>(
+            response->get());
 
     ASSERT_EQ(block_resp.block().txsNumber(), 0);
     ASSERT_EQ(block_resp.block().height(), kBlockHeight);
@@ -387,7 +391,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithError) {
   ASSERT_TRUE(response);
   ASSERT_NO_THROW({
     const auto &error_resp =
-        boost::get<shared_model::interface::BlockErrorResponse>(
+        boost::get<const shared_model::interface::BlockErrorResponse &>(
             response->get());
 
     ASSERT_EQ(error_resp.message(), kErrorMsg);
