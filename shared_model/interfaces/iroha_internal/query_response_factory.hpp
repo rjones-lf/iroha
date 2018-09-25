@@ -34,7 +34,7 @@ namespace shared_model {
        * @return account asset response
        */
       virtual std::unique_ptr<QueryResponse> createAccountAssetResponse(
-          std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
+          std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
               assets,
           const crypto::Hash &query_hash) = 0;
 
@@ -102,7 +102,7 @@ namespace shared_model {
        * @return transactions response
        */
       virtual std::unique_ptr<QueryResponse> createTransactionsResponse(
-          std::vector<std::shared_ptr<shared_model::interface::Transaction>>
+          std::vector<std::unique_ptr<shared_model::interface::Transaction>>
               transactions,
           const crypto::Hash &query_hash) = 0;
 

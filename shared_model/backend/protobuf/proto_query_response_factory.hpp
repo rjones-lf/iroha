@@ -14,7 +14,7 @@ namespace shared_model {
     class ProtoQueryResponseFactory : public interface::QueryResponseFactory {
      public:
       std::unique_ptr<interface::QueryResponse> createAccountAssetResponse(
-          std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>
+          std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
               assets,
           const crypto::Hash &query_hash) override;
 
@@ -37,7 +37,7 @@ namespace shared_model {
           const crypto::Hash &query_hash) override;
 
       std::unique_ptr<interface::QueryResponse> createTransactionsResponse(
-          std::vector<std::shared_ptr<shared_model::interface::Transaction>>
+          std::vector<std::unique_ptr<shared_model::interface::Transaction>>
               transactions,
           const crypto::Hash &query_hash) override;
 

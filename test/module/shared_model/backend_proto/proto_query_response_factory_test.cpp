@@ -5,9 +5,8 @@
 
 #include <gtest/gtest.h>
 #include <boost/optional.hpp>
-
-#include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
+#include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "cryptography/blob.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/specified_visitor.hpp"
@@ -31,26 +30,20 @@ class ProtoQueryResponseFactoryTest : public ::testing::Test {
       std::make_shared<ProtoCommonObjectsFactory<FieldValidator>>();
 
   /**
-   * Put value of Result<unique_ptr<_>, _> into a shared_ptr
+   * Get value of Result<unique_ptr<_>, _>; throws exception, if there's error
+   * inside of result
    * @tparam ResultType - type of result value inside a unique_ptr
    * @tparam ErrorType - type of result error
    * @param res - result to be unwrapped
-   * @return shared_ptr to result value or to nullptr, if result containts error
+   * @return shared_ptr to result value
    */
   template <typename ResultType, typename ErrorType>
   std::unique_ptr<ResultType> unwrapResult(
       Result<std::unique_ptr<ResultType>, ErrorType> &&res) {
-    return res.match(
-        [](Value<std::unique_ptr<ResultType>> &val) {
-          return std::move(val.value);
-        },
-        [](const Error<ErrorType> &) -> std::unique_ptr<ResultType> {
-          return nullptr;
-        });
+    return boost::get<iroha::expected::Value<std::unique_ptr<ResultType>>>(
+               std::move(res))
+        .value;
   }
-
-  void SetUp() override {}
-  void TearDown() override {}
 };
 
 /**
@@ -66,33 +59,36 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
   const std::string kAccountId = "doge@meme";
   const std::string kAssetId = "dogecoin#iroha";
 
-  std::vector<std::shared_ptr<shared_model::interface::AccountAsset>> assets;
+  std::vector<std::unique_ptr<shared_model::interface::AccountAsset>> assets,
+      assets_test_copy;
   for (auto i = 1; i < kAccountAssetsNumber; ++i) {
-    auto asset = unwrapResult(objects_factory->createAccountAsset(
-        kAccountId,
-        kAssetId,
-        shared_model::interface::Amount(std::to_string(i))));
-    if (not asset) {
-      FAIL() << "could not create common object via factory";
-    }
-    assets.push_back(std::move(asset));
+    ASSERT_NO_THROW({
+      auto asset = unwrapResult(objects_factory->createAccountAsset(
+          kAccountId,
+          kAssetId,
+          shared_model::interface::Amount(std::to_string(i))));
+      auto asset_copy = unwrapResult(objects_factory->createAccountAsset(
+          kAccountId,
+          kAssetId,
+          shared_model::interface::Amount(std::to_string(i))));
+      assets.push_back(std::move(asset));
+      assets_test_copy.push_back(std::move(asset_copy));
+    });
   }
-  auto query_response =
-      response_factory->createAccountAssetResponse(assets, kQueryHash);
+  auto query_response = response_factory->createAccountAssetResponse(
+      std::move(assets), kQueryHash);
 
   ASSERT_TRUE(query_response);
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &response = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::AccountAssetResponse>(),
-        query_response->get());
-
-    SCOPED_TRACE("Query response type was deduced");
+    const auto &response =
+        boost::get<shared_model::interface::AccountAssetResponse>(
+            query_response->get());
     ASSERT_EQ(response.accountAssets().front().accountId(), kAccountId);
     ASSERT_EQ(response.accountAssets().front().assetId(), kAssetId);
     for (auto i = 1; i < kAccountAssetsNumber; i++) {
       ASSERT_EQ(response.accountAssets()[i - 1].balance(),
-                assets[i - 1]->balance());
+                assets_test_copy[i - 1]->balance());
     }
   });
 }
@@ -113,11 +109,9 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountDetailResponse) {
   ASSERT_TRUE(query_response);
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &response = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::AccountDetailResponse>(),
-        query_response->get());
-
-    SCOPED_TRACE("Query response type was deduced");
+    const auto &response =
+        boost::get<shared_model::interface::AccountDetailResponse>(
+            query_response->get());
     ASSERT_EQ(response.detail(), account_details);
   });
 }
@@ -137,22 +131,21 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
   const JsonType kJson = "{ fav_meme : doge }";
   const std::vector<RoleIdType> kRoles{"admin", "user"};
 
-  auto account = unwrapResult(
-      objects_factory->createAccount(kAccountId, kDomainId, kQuorum, kJson));
-  if (not account) {
-    FAIL() << "could not create common object via factory";
-  }
-  auto query_response = response_factory->createAccountResponse(
-      std::move(account), kRoles, kQueryHash);
+  std::unique_ptr<shared_model::interface::Account> account;
+  std::unique_ptr<shared_model::interface::QueryResponse> query_response;
+  ASSERT_NO_THROW({
+    account = unwrapResult(
+        objects_factory->createAccount(kAccountId, kDomainId, kQuorum, kJson));
+    query_response = response_factory->createAccountResponse(
+        std::move(account), kRoles, kQueryHash);
+  });
 
   ASSERT_TRUE(query_response);
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &response = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::AccountResponse>(),
+    const auto &response = boost::get<shared_model::interface::AccountResponse>(
         query_response->get());
 
-    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(response.account().accountId(), kAccountId);
     ASSERT_EQ(response.account().domainId(), kDomainId);
     ASSERT_EQ(response.account().quorum(), kQuorum);
@@ -183,11 +176,10 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   ASSERT_TRUE(stateless_invalid_response);
   ASSERT_EQ(stateless_invalid_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &general_resp = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::ErrorQueryResponse>(),
-        stateless_invalid_response->get());
+    const auto &general_resp =
+        boost::get<shared_model::interface::ErrorQueryResponse>(
+            stateless_invalid_response->get());
 
-    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(general_resp.errorMessage(), kStatelessErrorMsg);
     boost::apply_visitor(
         SpecifiedVisitor<
@@ -197,11 +189,10 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   ASSERT_TRUE(no_signatories_response);
   ASSERT_EQ(no_signatories_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &general_resp = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::ErrorQueryResponse>(),
-        no_signatories_response->get());
+    const auto &general_resp =
+        boost::get<shared_model::interface::ErrorQueryResponse>(
+            no_signatories_response->get());
 
-    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(general_resp.errorMessage(), kNoSigsErrorMsg);
     boost::apply_visitor(
         SpecifiedVisitor<shared_model::interface::NoSignatoriesErrorResponse>(),
@@ -228,11 +219,10 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateSignatoriesResponse) {
   ASSERT_TRUE(query_response);
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &response = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::SignatoriesResponse>(),
-        query_response->get());
+    const auto &response =
+        boost::get<shared_model::interface::SignatoriesResponse>(
+            query_response->get());
 
-    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(response.keys(), signatories);
   });
 }
@@ -248,28 +238,29 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
 
   constexpr int kTransactionsNumber = 5;
 
-  std::vector<std::shared_ptr<shared_model::interface::Transaction>>
-      transactions;
+  std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+      transactions, transactions_test_copy;
   for (auto i = 0; i < kTransactionsNumber; ++i) {
-    auto tx =
-        TestTransactionBuilder().creatorAccountId(std::to_string(i)).build();
-    transactions.push_back(
-        std::make_shared<shared_model::proto::Transaction>(std::move(tx)));
+    auto tx = std::make_unique<shared_model::proto::Transaction>(
+        TestTransactionBuilder().creatorAccountId(std::to_string(i)).build());
+    auto tx_copy = std::make_unique<shared_model::proto::Transaction>(
+        TestTransactionBuilder().creatorAccountId(std::to_string(i)).build());
+    transactions.push_back(std::move(tx));
+    transactions_test_copy.push_back(std::move(tx_copy));
   }
-  auto query_response =
-      response_factory->createTransactionsResponse(transactions, kQueryHash);
+  auto query_response = response_factory->createTransactionsResponse(
+      std::move(transactions), kQueryHash);
 
   ASSERT_TRUE(query_response);
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &response = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::TransactionsResponse>(),
-        query_response->get());
+    const auto &response =
+        boost::get<shared_model::interface::TransactionsResponse>(
+            query_response->get());
 
-    SCOPED_TRACE("Query response type was deduced");
     for (auto i = 0; i < kTransactionsNumber; ++i) {
       ASSERT_EQ(response.transactions()[i].creatorAccountId(),
-                transactions[i]->creatorAccountId());
+                transactions_test_copy[i]->creatorAccountId());
     }
   });
 }
@@ -287,22 +278,21 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
   const DomainIdType kDomainId = "coin";
   const PrecisionType kPrecision = 2;
 
-  auto asset = unwrapResult(
-      objects_factory->createAsset(kAssetId, kDomainId, kPrecision));
-  if (not asset) {
-    FAIL() << "could not create common object via factory";
-  }
-  auto query_response =
-      response_factory->createAssetResponse(std::move(asset), kQueryHash);
+  std::unique_ptr<shared_model::interface::Asset> asset;
+  std::unique_ptr<shared_model::interface::QueryResponse> query_response;
+  ASSERT_NO_THROW({
+    asset = unwrapResult(
+        objects_factory->createAsset(kAssetId, kDomainId, kPrecision));
+    query_response =
+        response_factory->createAssetResponse(std::move(asset), kQueryHash);
+  });
 
   ASSERT_TRUE(query_response);
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &response = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::AssetResponse>(),
+    const auto &response = boost::get<shared_model::interface::AssetResponse>(
         query_response->get());
 
-    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(response.asset().assetId(), kAssetId);
     ASSERT_EQ(response.asset().domainId(), kDomainId);
     ASSERT_EQ(response.asset().precision(), kPrecision);
@@ -325,11 +315,9 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateRolesResponse) {
   ASSERT_TRUE(query_response);
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &response = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::RolesResponse>(),
+    const auto &response = boost::get<shared_model::interface::RolesResponse>(
         query_response->get());
 
-    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(response.roles(), roles);
   });
 }
@@ -352,11 +340,10 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateRolePermissionsResponse) {
   ASSERT_TRUE(query_response);
   ASSERT_EQ(query_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
-    const auto &response = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::RolePermissionsResponse>(),
-        query_response->get());
+    const auto &response =
+        boost::get<shared_model::interface::RolePermissionsResponse>(
+            query_response->get());
 
-    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(response.rolePermissions(), perms);
   });
 }
@@ -378,11 +365,9 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithBlock) {
 
   ASSERT_TRUE(response);
   ASSERT_NO_THROW({
-    const auto &block_resp = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::BlockResponse>(),
-        response->get());
+    const auto &block_resp =
+        boost::get<shared_model::interface::BlockResponse>(response->get());
 
-    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(block_resp.block().txsNumber(), 0);
     ASSERT_EQ(block_resp.block().height(), kBlockHeight);
     ASSERT_EQ(block_resp.block().createdTime(), kCreatedTime);
@@ -401,11 +386,10 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateBlockQueryResponseWithError) {
 
   ASSERT_TRUE(response);
   ASSERT_NO_THROW({
-    const auto &error_resp = boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::BlockErrorResponse>(),
-        response->get());
+    const auto &error_resp =
+        boost::get<shared_model::interface::BlockErrorResponse>(
+            response->get());
 
-    SCOPED_TRACE("Query response type was deduced");
     ASSERT_EQ(error_resp.message(), kErrorMsg);
   });
 }
