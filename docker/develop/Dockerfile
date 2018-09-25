@@ -294,7 +294,7 @@ RUN set -e; \
     mkdir -p /tmp/ccache -m 777; \
     ccache --clear
 
-RUN echo CMAKE_PREFIX_PATH="$(ls -d1 /opt/dependencies/* | paste -s -d\; -);$CMAKE_PREFIX_PATH" \
+RUN echo export CMAKE_PREFIX_PATH="$(ls -d1 /opt/dependencies/* | paste -s -d\: -):$CMAKE_PREFIX_PATH" \
     | tee -a /root/.bashrc /home/iroha-ci/.bashrc
 USER iroha-ci
-CMD ["/bin/bash"]
+ENTRYPOINT ["/bin/bash"]
