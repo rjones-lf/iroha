@@ -82,7 +82,8 @@ static bool validateVerbosity(const char *flagname, int32_t val) {
   if (val >= 0 && val <= 6)
     return true;
 
-  printf("Invalid value for %s: should be in range [0, 6]\n", flagname);
+  std::cout << "Invalid value for " << flagname << ": should be in range [0, 6]"
+            << std::endl;
   return false;
 }
 
