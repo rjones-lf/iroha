@@ -31,7 +31,7 @@ RUN set -e; \
         libpcre3-dev autoconf bison  \
         # other
         wget curl file gdb gdbserver ccache \
-        gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip zip; \
+        gcovr cppcheck doxygen graphviz graphviz-dev unzip zip; \
     apt-get -y clean
 
 # install cmake 3.11.4
@@ -51,7 +51,7 @@ RUN set -e; \
     (cd /tmp/boost ; git submodule update --init --recursive); \
     (cd /tmp/boost ; /tmp/boost/bootstrap.sh --with-libraries=system,filesystem,thread); \
     (cd /tmp/boost ; /tmp/boost/b2 headers); \
-    (cd /tmp/boost ; /tmp/boost/b2 cxxflags="-std=c++14" -j ${PARALLELISM} install); \
+    (cd /tmp/boost ; /tmp/boost/b2 cxxflags="-std=c++14" -j ${PARALLELISM} install --prefix=/opt/dependencies/boost); \
     ldconfig; \
     rm -rf /tmp/boost
 
@@ -64,7 +64,8 @@ RUN set -e; \
         -Dprotobuf_BUILD_TESTS=OFF \
         -Dprotobuf_BUILD_SHARED_LIBS=ON \
         -H/tmp/protobuf/cmake \
-        -B/tmp/protobuf/.build; \
+        -B/tmp/protobuf/.build \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/protobuf; \
     cmake --build /tmp/protobuf/.build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/protobuf
@@ -76,7 +77,8 @@ RUN set -e; \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/gflags \
-        -B/tmp/gflags/build; \
+        -B/tmp/gflags/build \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/gflags; \
     cmake --build /tmp/gflags/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/gflags
@@ -88,13 +90,15 @@ RUN set -e; \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/c-ares \
-        -B/tmp/c-ares/build; \
+        -B/tmp/c-ares/build \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/c-ares; \
     cmake --build /tmp/c-ares/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/c-ares
 
 # install grpc 1.11.0
 RUN set -e; \
+    export LD_LIBRARY_PATH="/opt/dependencies/protobuf/lib:$LD_LIBRARY_PATH"; \
     git clone https://github.com/grpc/grpc /tmp/grpc; \
     (cd /tmp/grpc ; git checkout bd44e485f69d70ca4095cea92decd98de3892aa6); \
     cmake \
@@ -107,7 +111,9 @@ RUN set -e; \
         -DgRPC_GFLAGS_PROVIDER=package \
         -DBUILD_SHARED_LIBS=ON \
         -H/tmp/grpc \
-        -B/tmp/grpc/.build; \
+        -B/tmp/grpc/.build \
+        -DCMAKE_PREFIX_PATH="/opt/dependencies/c-ares;/opt/dependencies/protobuf" \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/grpc; \
     cmake --build /tmp/grpc/.build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/grpc
@@ -119,7 +125,8 @@ RUN set -e; \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/googletest \
-        -B/tmp/googletest/build; \
+        -B/tmp/googletest/build \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/gtest; \
     cmake --build /tmp/googletest/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/googletest
@@ -130,7 +137,8 @@ RUN set -e; \
     (cd /tmp/spdlog ; git checkout ccd675a286f457068ee8c823f8207f13c2325b26); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
-        -DSPDLOG_BUILD_TESTING=OFF -H/tmp/spdlog -B/tmp/spdlog/build; \
+        -DSPDLOG_BUILD_TESTING=OFF -H/tmp/spdlog -B/tmp/spdlog/build \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/spdlog; \
     cmake --build /tmp/spdlog/build --target install; \
     rm -rf /tmp/spdlog
 
@@ -141,7 +149,8 @@ RUN set -e; \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/RxCpp \
-        -B/tmp/RxCpp/build; \
+        -B/tmp/RxCpp/build \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/rxcpp; \
     cmake --build /tmp/RxCpp/build --target install; \
     rm -rf /tmp/RxCpp
 
@@ -153,7 +162,8 @@ RUN set -e; \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DRAPIDJSON_BUILD_EXAMPLES=OFF \
         -H/tmp/rapidjson \
-        -B/tmp/rapidjson/build; \
+        -B/tmp/rapidjson/build \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/rapidjson; \
     cmake --build /tmp/rapidjson/build --target install; \
     ldconfig; \
     rm -rf /tmp/rapidjson
@@ -163,7 +173,7 @@ RUN set -e; \
     git clone --progress https://git.postgresql.org/git/postgresql.git /tmp/postgresql; \
     cd /tmp/postgresql; \
     git checkout 029386ccbddd0a33d481b94e511f5219b03e6636; \
-    ./configure --without-readline --prefix=/usr/local; \
+    ./configure --without-readline --prefix=/opt/dependencies/libpq; \
     # build
     make -j${PARALLELISM} -C src/bin/pg_config; \
     make -j${PARALLELISM} -C src/interfaces/libpq; \
@@ -192,7 +202,9 @@ RUN set -e; \
         -DWITH_POSTGRESQL=ON \
         -DWITH_SQLITE3=OFF \
         -H/tmp/soci/src \
-        -B/tmp/soci/build; \
+        -B/tmp/soci/build \
+        -DCMAKE_PREFIX_PATH="/opt/dependencies/libpq" \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/soci; \
     cmake --build /tmp/soci/build --target install; \
     ldconfig; \
     rm -rf /tmp/soci
@@ -202,9 +214,10 @@ RUN set -e; \
     git clone https://github.com/01org/tbb /tmp/tbb; \
     (cd /tmp/tbb ; git checkout eb6336ad29450f2a64af5123ca1b9429ff6bc11d); \
     make -j${PARALLELISM} -C /tmp/tbb tbb_build_prefix=build; \
-    cp /tmp/tbb/build/build_debug/*.so* /usr/local/lib; \
-    cp /tmp/tbb/build/build_release/*.so* /usr/local/lib; \
-    cp -r /tmp/tbb/include/* /usr/local/include; \
+    mkdir /opt/dependencies/tbb /opt/dependencies/tbb/lib /opt/dependencies/tbb/include; \
+    cp /tmp/tbb/build/build_debug/*.so* /opt/dependencies/tbb/lib; \
+    cp /tmp/tbb/build/build_release/*.so* /opt/dependencies/tbb/lib; \
+    cp -r /tmp/tbb/include/* /opt/dependencies/tbb/include; \
     ldconfig; \
     rm -rf /tmp/tbb
 
@@ -226,7 +239,8 @@ RUN set -e; \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -DTESTING=OFF \
         -H/tmp/ed25519 \
-        -B/tmp/ed25519/build; \
+        -B/tmp/ed25519/build \
+        -DCMAKE_INSTALL_PREFIX=/opt/dependencies/ed25519; \
     cmake --build /tmp/ed25519/build --target install -- -j${PARALLELISM}; \
     ldconfig; \
     rm -rf /tmp/ed25519
@@ -280,6 +294,7 @@ RUN set -e; \
     mkdir -p /tmp/ccache -m 777; \
     ccache --clear
 
-
+RUN echo CMAKE_PREFIX_PATH="$(ls -d1 /opt/dependencies/* | paste -s -d\: -):$CMAKE_PREFIX_PATH" \
+    | tee -a /root/.bashrc /home/iroha-ci/.bashrc
 USER iroha-ci
 CMD ["/bin/bash"]
