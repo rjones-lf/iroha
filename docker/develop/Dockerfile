@@ -31,7 +31,7 @@ RUN set -e; \
         libpcre3-dev autoconf bison  \
         # other
         wget curl file gdb gdbserver ccache \
-        gcovr cppcheck doxygen graphviz graphviz-dev unzip zip; \
+        gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip zip; \
     apt-get -y clean
 
 # install cmake 3.11.4
@@ -294,7 +294,7 @@ RUN set -e; \
     mkdir -p /tmp/ccache -m 777; \
     ccache --clear
 
-RUN echo CMAKE_PREFIX_PATH="$(ls -d1 /opt/dependencies/* | paste -s -d\: -):$CMAKE_PREFIX_PATH" \
+RUN echo CMAKE_PREFIX_PATH="$(ls -d1 /opt/dependencies/* | paste -s -d\; -);$CMAKE_PREFIX_PATH" \
     | tee -a /root/.bashrc /home/iroha-ci/.bashrc
 USER iroha-ci
 CMD ["/bin/bash"]

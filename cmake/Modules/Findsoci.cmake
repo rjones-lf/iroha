@@ -12,6 +12,14 @@ get_filename_component(_SOCI_INCLUDE_PARENT_DIR ${SOCI_INCLUDE_DIR} DIRECTORY)
 set(SOCI_INCLUDE_DIRS ${SOCI_INCLUDE_DIR} ${_SOCI_INCLUDE_PARENT_DIR})
 mark_as_advanced(SOCI_INCLUDE_DIRS)
 
+if (NOT LIB_SUFFIX)
+  if(APPLE OR CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(LIB_SUFFIX "")
+  else()
+    set(LIB_SUFFIX "64")
+  endif()
+endif()
+
 find_library(
     SOCI_LIBRARY
     NAMES soci_core
