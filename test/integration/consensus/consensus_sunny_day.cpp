@@ -56,8 +56,7 @@ class ConsensusSunnyDayTest : public ::testing::Test {
 
   static const size_t port = 50541;
 
-  ConsensusSunnyDayTest() {
-    my_peer = mk_local_peer(port + my_num);
+  ConsensusSunnyDayTest() : my_peer(mk_local_peer(port + my_num)) {
     for (decltype(num_peers) i = 0; i < num_peers; ++i) {
       default_peers.push_back(mk_local_peer(port + i));
     }
