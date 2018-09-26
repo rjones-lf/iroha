@@ -42,6 +42,7 @@
 #include "synchronizer/impl/synchronizer_impl.hpp"
 #include "synchronizer/synchronizer.hpp"
 #include "torii/command_service.hpp"
+#include "torii/impl/command_service_transport_grpc.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 #include "torii/query_service.hpp"
@@ -213,6 +214,7 @@ class Irohad {
 
   // transaction service
   std::shared_ptr<torii::CommandService> command_service;
+  std::shared_ptr<torii::CommandServiceTransportGrpc> command_service_transport;
 
   // query service
   std::shared_ptr<torii::QueryService> query_service;

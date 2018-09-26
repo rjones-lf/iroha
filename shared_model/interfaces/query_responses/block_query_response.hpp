@@ -8,11 +8,13 @@
 
 #include <boost/variant.hpp>
 #include "interfaces/base/model_primitive.hpp"
-#include "interfaces/query_responses/block_error_response.hpp"
-#include "interfaces/query_responses/block_response.hpp"
 
 namespace shared_model {
   namespace interface {
+
+    class BlockResponse;
+    class BlockErrorResponse;
+
     /**
      * Class BlockQueryResponse(qr) provides container with concrete block query
      * responses available in the system. General note: this class is container

@@ -93,4 +93,24 @@ namespace shared_model {
   }  // namespace proto
 }  // namespace shared_model
 
+namespace boost {
+  extern template class variant<shared_model::proto::AddAssetQuantity,
+                                shared_model::proto::AddPeer,
+                                shared_model::proto::AddSignatory,
+                                shared_model::proto::AppendRole,
+                                shared_model::proto::CreateAccount,
+                                shared_model::proto::CreateAsset,
+                                shared_model::proto::CreateDomain,
+                                shared_model::proto::CreateRole,
+                                shared_model::proto::DetachRole,
+                                shared_model::proto::GrantPermission,
+                                shared_model::proto::RemoveSignatory,
+                                shared_model::proto::RevokePermission,
+                                shared_model::proto::SetAccountDetail,
+                                shared_model::proto::SetQuorum,
+                                shared_model::proto::SubtractAssetQuantity,
+                                shared_model::proto::TransferAsset>;
+
+}  // namespace boost
+
 #endif  // IROHA_SHARED_MODEL_PROTO_COMMAND_HPP

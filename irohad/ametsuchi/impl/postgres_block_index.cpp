@@ -1,30 +1,20 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
+
+#include "ametsuchi/impl/postgres_block_index.hpp"
+
+#include <unordered_set>
 
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/numeric.hpp>
-#include <unordered_set>
-
-#include "ametsuchi/impl/postgres_block_index.hpp"
 #include "common/types.hpp"
 #include "common/visitor.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
+#include "interfaces/commands/command.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
@@ -122,14 +112,13 @@ namespace iroha {
 
             // to make index account_id:height -> list of tx indexes
             // (where tx is placed in the block)
-            st =
-                (sql_.prepare
-                     << "INSERT INTO index_by_creator_height(creator_id, "
-                        "height, index) "
-                        "VALUES (:id, :height, :index)",
-                 soci::use(creator_id),
-                 soci::use(height),
-                 soci::use(index));
+            st = (sql_.prepare
+                      << "INSERT INTO index_by_creator_height(creator_id, "
+                         "height, index) "
+                         "VALUES (:id, :height, :index)",
+                  soci::use(creator_id),
+                  soci::use(height),
+                  soci::use(index));
             execute(st);
 
             this->indexAccountAssets(

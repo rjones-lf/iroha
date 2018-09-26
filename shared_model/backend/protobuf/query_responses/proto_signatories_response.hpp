@@ -21,6 +21,7 @@
 #include "interfaces/query_responses/signatories_response.hpp"
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "cryptography/public_key.hpp"
 #include "qry_responses.pb.h"
 #include "utils/lazy_initializer.hpp"
 

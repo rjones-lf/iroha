@@ -7,10 +7,9 @@
 
 #include <soci/postgresql/soci-postgresql.h>
 #include <boost/format.hpp>
-#include <iostream>
-
 #include "ametsuchi/impl/soci_utils.hpp"
 #include "backend/protobuf/permissions.hpp"
+#include "cryptography/public_key.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"
 #include "interfaces/commands/add_signatory.hpp"

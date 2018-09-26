@@ -7,6 +7,9 @@
 #define IROHA_SHARED_MODEL_INTERFACE_MOCKS_HPP
 
 #include <gmock/gmock.h>
+#include "cryptography/public_key.hpp"
+#include "cryptography/signed.hpp"
+#include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
@@ -90,12 +93,12 @@ struct MockPeer : public shared_model::interface::Peer {
 
 struct MockUnsafeProposalFactory
     : public shared_model::interface::UnsafeProposalFactory {
-  MOCK_METHOD3(
-      unsafeCreateProposal,
-      std::unique_ptr<shared_model::interface::Proposal>(
-          shared_model::interface::types::HeightType,
-          shared_model::interface::types::TimestampType,
-          const shared_model::interface::types::TransactionsCollectionType &));
+  MOCK_METHOD3(unsafeCreateProposal,
+               std::unique_ptr<shared_model::interface::Proposal>(
+                   shared_model::interface::types::HeightType,
+                   shared_model::interface::types::TimestampType,
+                   boost::any_range<shared_model::interface::Transaction,
+                                    boost::forward_traversal_tag>));
 };
 
 #endif  // IROHA_SHARED_MODEL_INTERFACE_MOCKS_HPP

@@ -6,9 +6,11 @@
 #ifndef IROHA_PROTO_BATCH_META_HPP
 #define IROHA_PROTO_BATCH_META_HPP
 
-#include <boost/range/numeric.hpp>
+#include "interfaces/iroha_internal/batch_meta.hpp"
+
 #include <numeric>
 
+#include <boost/range/numeric.hpp>
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "backend/protobuf/util.hpp"
 #include "interfaces/common_objects/amount.hpp"

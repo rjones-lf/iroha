@@ -8,6 +8,7 @@
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "interfaces/commands/command.hpp"
 
 namespace iroha {
   namespace ametsuchi {
