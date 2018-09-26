@@ -142,3 +142,10 @@ addtest(get_asset_info_test
 target_link_libraries(get_asset_info_test
     acceptance_fixture
     )
+
+addtest(get_role_permissions_test
+    get_role_permissions_test.cpp
+    )
+target_link_libraries(get_role_permissions_test
+    acceptance_fixture
+    )

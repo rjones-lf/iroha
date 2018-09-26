@@ -21,6 +21,17 @@ namespace iroha {
           converter_(std::move(converter)),
           log_(logger::log("PostgresBlockQuery")) {}
 
+    PostgresBlockQuery::PostgresBlockQuery(
+        std::unique_ptr<soci::session> sql,
+        KeyValueStorage &file_store,
+        std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
+            converter)
+        : psql_(std::move(sql)),
+          sql_(*psql_),
+          block_store_(file_store),
+          converter_(std::move(converter)),
+          log_(logger::log("PostgresBlockQuery")) {}
+
     std::vector<BlockQuery::wBlock> PostgresBlockQuery::getBlocks(
         shared_model::interface::types::HeightType height, uint32_t count) {
       shared_model::interface::types::HeightType last_id =

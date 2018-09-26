@@ -5,9 +5,10 @@
 
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 
+#include <numeric>
+
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
-#include "validators/default_validator.hpp"
 
 namespace shared_model {
   namespace interface {

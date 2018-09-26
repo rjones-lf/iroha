@@ -284,6 +284,7 @@ namespace iroha {
                         std::shared_ptr<shared_model::interface::Block>> &));
       MOCK_METHOD0(reset, void(void));
       MOCK_METHOD0(dropStorage, void(void));
+      MOCK_METHOD0(freeConnections, void(void));
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override {

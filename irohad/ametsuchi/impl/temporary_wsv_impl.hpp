@@ -39,14 +39,15 @@ namespace iroha {
         ~SavepointWrapperImpl() override;
 
        private:
-        std::shared_ptr<soci::session> sql_;
+        soci::session &sql_;
         std::string savepoint_name_;
         bool is_released_;
       };
 
-      explicit TemporaryWsvImpl(std::unique_ptr<soci::session> sql,
-                                std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-                                factory);
+      explicit TemporaryWsvImpl(
+          std::unique_ptr<soci::session> sql,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory);
 
       expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &,
@@ -60,7 +61,7 @@ namespace iroha {
       ~TemporaryWsvImpl() override;
 
      private:
-      std::shared_ptr<soci::session> sql_;
+      std::unique_ptr<soci::session> sql_;
       std::shared_ptr<WsvQuery> wsv_;
       std::unique_ptr<CommandExecutor> command_executor_;
 
