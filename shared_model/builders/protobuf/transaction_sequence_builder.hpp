@@ -8,7 +8,7 @@
 
 #include "builders/protobuf/transport_builder.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/iroha_internal/transaction_sequence.hpp"
+#include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -41,7 +41,7 @@ namespace shared_model {
                        [](const iroha::protocol::Transaction &tx) {
                          return std::make_shared<Transaction>(tx);
                        });
-        return interface::TransactionSequence::createTransactionSequence(
+        return interface::TransactionSequenceFactory::createTransactionSequence(
             shm_txs, stateless_validator_);
       }
 

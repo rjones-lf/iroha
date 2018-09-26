@@ -10,13 +10,18 @@
 
 #include "datetime/time.hpp"
 #include "interfaces/base/signable.hpp"
-#include "interfaces/commands/command.hpp"
 #include "interfaces/permissions.hpp"
 #include "interfaces/queries/query_payload_meta.hpp"
-#include "interfaces/transaction.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
+
+  namespace interface {
+    class Amount;
+    class BatchMeta;
+    class Peer;
+  }  // namespace interface
+
   namespace validation {
 
     /**

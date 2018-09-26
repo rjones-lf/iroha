@@ -7,7 +7,6 @@
 #define IROHA_YAC_MOCKS_HPP
 
 #include <gmock/gmock.h>
-
 #include "common/byteutils.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/messages.hpp"

@@ -23,10 +23,13 @@ namespace shared_model {
       template <typename T>
       using FactoryResult = iroha::expected::Result<T, std::string>;
 
+      using TransactionsCollectionType =
+          boost::any_range<Transaction, boost::forward_traversal_tag>;
+
       virtual FactoryResult<std::unique_ptr<Proposal>> createProposal(
           types::HeightType height,
           types::TimestampType created_time,
-          const types::TransactionsCollectionType &transactions) = 0;
+          TransactionsCollectionType transactions) = 0;
 
       virtual ~ProposalFactory() = default;
     };

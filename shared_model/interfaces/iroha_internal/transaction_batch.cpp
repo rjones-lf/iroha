@@ -8,10 +8,16 @@
 #include <algorithm>
 
 #include <boost/range/adaptor/transformed.hpp>
+#include "interfaces/iroha_internal/transaction_batch_helpers.hpp"
+#include "interfaces/transaction.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {
+
+    TransactionBatch::TransactionBatch(
+        const types::SharedTxsCollectionType &transactions)
+        : transactions_(transactions) {}
 
     const types::SharedTxsCollectionType &TransactionBatch::transactions()
         const {
@@ -20,7 +26,7 @@ namespace shared_model {
 
     const types::HashType &TransactionBatch::reducedHash() const {
       if (not reduced_hash_) {
-        reduced_hash_ = TransactionBatch::calculateReducedBatchHash(
+        reduced_hash_ = TransactionBatchHelpers::calculateReducedBatchHash(
             transactions_ | boost::adaptors::transformed([](const auto &tx) {
               return tx->reducedHash();
             }));

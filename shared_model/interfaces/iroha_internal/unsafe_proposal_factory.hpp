@@ -19,10 +19,13 @@ namespace shared_model {
      */
     class UnsafeProposalFactory {
      public:
+      using TransactionsCollectionType =
+          boost::any_range<Transaction, boost::forward_traversal_tag>;
+
       virtual std::unique_ptr<Proposal> unsafeCreateProposal(
           types::HeightType height,
           types::TimestampType created_time,
-          const types::TransactionsCollectionType &transactions) = 0;
+          TransactionsCollectionType transactions) = 0;
 
       virtual ~UnsafeProposalFactory() = default;
     };

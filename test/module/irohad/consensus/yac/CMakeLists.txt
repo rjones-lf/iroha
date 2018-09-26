@@ -45,6 +45,7 @@ target_link_libraries(yac_timer_test
 addtest(yac_network_test network_test.cpp)
 target_link_libraries(yac_network_test
     yac
+    yac_transport
     )
 
 addtest(yac_peer_orderer_test peer_orderer_test.cpp)
@@ -70,6 +71,7 @@ target_link_libraries(yac_common_test
 addtest(yac_crypto_provider_test yac_crypto_provider_test.cpp)
 target_link_libraries(yac_crypto_provider_test
     yac
+    yac_transport
     )
 
 addtest(supermajority_checker_test supermajority_checker_test.cpp)

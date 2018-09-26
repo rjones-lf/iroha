@@ -1,0 +1,56 @@
+---
+  - name: Make CSV header
+    shell: "echo 'host;port;priv_key_b64_encoded;pub_key_b64_encoded' > {{ playbook_dir }}/scripts/peers.csv"
+    args:
+      chdir: "{{ playbook_dir }}/../../roles/iroha-k8s/files"
+
+  - name: Make keys
+    shell: "{{ playbook_dir }}/scripts/ed25519-cli keygen | tr -d [:blank:] | cut -d':' -f2"
+    loop: "{{ range(replicas|int)|list }}"
+    register: result
+
+  - name: Generate CSV with peers
+    shell: >
+      echo '{{ pod_basename }}-{{ item }}.{{ service_name }};{{ iroha_port }};{{ result.results[item].stdout_lines[0] }};{{ result.results[item].stdout_lines[1] }}'
+      >> {{ playbook_dir }}/scripts/peers.csv
+    args:
+      chdir: "{{ playbook_dir }}/../../roles/iroha-k8s/files"
+    loop: "{{ range(replicas|int)|list }}"
+
+  - name: Remove old keys
+    shell: "rm -f node*.priv node*.pub"
+    args:
+      chdir: "{{ playbook_dir }}/../../roles/iroha-k8s/files/conf"
+
+  - name: Generate node key files
+    command: "python3 {{ playbook_dir }}/scripts/genesis-add-peers.py make_key_files {{ playbook_dir }}/scripts/peers.csv"
+    args:
+      chdir: "{{ playbook_dir }}/../../roles/iroha-k8s/files"
+
+  - name: Move iroha keys
+    shell: "mv node*.priv node*.pub conf/"
+    args:
+      chdir: "{{ playbook_dir }}/../../roles/iroha-k8s/files"
+
+  - name: Generate config.sample
+    template:
+      src: config.sample.j2
+      dest: "{{ playbook_dir }}/../../roles/iroha-k8s/files/conf/config.sample"
+    delegate_to: localhost
+
+  - name: Make genesis block file
+    command: >
+      python3 {{ playbook_dir }}/scripts/genesis-add-peers.py add_iroha_peers {{ playbook_dir }}/scripts/peers.csv genesis.block
+    args:
+      chdir: "{{ playbook_dir }}/../../roles/iroha-k8s/files"
+
+  - name: Move genesis block
+    command: "cp genesis.block conf/genesis.block"
+    args:
+      chdir: "{{ playbook_dir }}/../../roles/iroha-k8s/files"
+
+  - name: Generate k8s config
+    template:
+      src: k8s-iroha.yaml.j2
+      dest: "{{ playbook_dir }}/../../roles/iroha-k8s/files/k8s-iroha.yaml"
+    delegate_to: localhost

@@ -1,27 +1,16 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "validation/impl/stateful_validator_impl.hpp"
 
-#include <boost/format.hpp>
 #include <string>
 
-#include "backend/protobuf/transaction.hpp"
+#include <boost/format.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 #include "common/result.hpp"
+#include "interfaces/iroha_internal/batch_meta.hpp"
 #include "validation/utils.hpp"
 
 namespace iroha {
@@ -154,15 +143,12 @@ namespace iroha {
      * @param log to write errors to console
      * @return vector of proto transactions, which passed stateful validation
      */
-    static std::vector<shared_model::proto::Transaction> validateTransactions(
+    static std::vector<size_t> validateTransactions(
         const shared_model::interface::types::TransactionsCollectionType &txs,
         ametsuchi::TemporaryWsv &temporary_wsv,
         validation::TransactionsErrors &transactions_errors_log,
         const logger::Logger &log) {
-      std::vector<shared_model::proto::Transaction> valid_proto_txs{};
-      // TODO: kamilsa IR-1010 20.02.2018 rework validation logic, so that
-      // casts to proto are not needed and stateful validator does not know
-      // about the transport
+      std::vector<size_t> valid_ids{};
       auto txs_begin = std::begin(txs);
       auto txs_end = std::end(txs);
       for (size_t i = 0; i < txs.size(); ++i) {
@@ -174,9 +160,7 @@ namespace iroha {
           if (checkTransactions(
                   temporary_wsv, transactions_errors_log, *current_tx_it)) {
             // and it is valid
-            valid_proto_txs.push_back(
-                static_cast<const shared_model::proto::Transaction &>(
-                    *current_tx_it));
+            valid_ids.push_back(i);
           }
         } else {
           // find the batch end in proposal's transactions
@@ -201,7 +185,7 @@ namespace iroha {
                     "batch stateful validation", batch_error_msg, true},
                 current_tx_it->hash()));
             log->error(std::move(batch_error_msg));
-            return std::vector<shared_model::proto::Transaction>{};
+            return {};
           }
 
           // check all batch's transactions for validness
@@ -215,14 +199,12 @@ namespace iroha {
                           })) {
             // batch is successful; add it to the list of valid_txs and
             // release savepoint
-            std::transform(
-                current_tx_it,
-                batch_end_it + 1,
-                std::back_inserter(valid_proto_txs),
-                [](const auto &tx) {
-                  return static_cast<const shared_model::proto::Transaction &>(
-                      tx);
-                });
+            auto batch_size =
+                boost::size(current_tx_it->batchMeta()->get()->reducedHashes());
+            for (size_t j = 0; j < batch_size; ++j) {
+              valid_ids.push_back(i + j);
+            }
+
             savepoint->release();
           }
 
@@ -230,7 +212,7 @@ namespace iroha {
           i += std::distance(current_tx_it, batch_end_it);
         }
       }
-      return valid_proto_txs;
+      return valid_ids;
     }
 
     StatefulValidatorImpl::StatefulValidatorImpl(
@@ -244,14 +226,19 @@ namespace iroha {
                  proposal.transactions().size());
 
       auto transactions_errors_log = validation::TransactionsErrors{};
-      auto valid_proto_txs = validateTransactions(
+      auto valid_ids = validateTransactions(
           proposal.transactions(), temporaryWsv, transactions_errors_log, log_);
 
       // Since proposal came from ordering gate it was already validated.
       // All transactions has been validated as well
       // This allows for unsafe construction of proposal
       auto validated_proposal = factory_->unsafeCreateProposal(
-          proposal.height(), proposal.createdTime(), valid_proto_txs);
+          proposal.height(),
+          proposal.createdTime(),
+          valid_ids
+              | boost::adaptors::transformed([&](auto i) -> decltype(auto) {
+                  return proposal.transactions()[i];
+                }));
 
       log_->info("transactions in verified proposal: {}",
                  validated_proposal->transactions().size());

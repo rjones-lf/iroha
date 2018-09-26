@@ -9,9 +9,9 @@
 #include <iterator>
 
 #include <boost/range/adaptor/indirected.hpp>
-
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "datetime/time.hpp"
+#include "interfaces/common_objects/peer.hpp"
 #include "network/ordering_service_transport.hpp"
 
 namespace iroha {
