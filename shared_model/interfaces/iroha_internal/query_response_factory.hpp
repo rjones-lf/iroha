@@ -15,6 +15,9 @@ namespace shared_model {
   namespace crypto {
     class Hash;
   }
+  namespace interface {
+    class Block;
+  }
 }  // namespace shared_model
 
 namespace shared_model {
