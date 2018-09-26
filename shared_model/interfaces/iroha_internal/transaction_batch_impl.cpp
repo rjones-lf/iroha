@@ -15,9 +15,9 @@
 namespace shared_model {
   namespace interface {
 
-  TransactionBatch::TransactionBatch(
-      const types::SharedTxsCollectionType &transactions)
-      : transactions_(transactions) {}
+    TransactionBatchImpl::TransactionBatchImpl(
+        types::SharedTxsCollectionType transactions)
+        : transactions_(std::move(transactions)) {}
 
     const types::SharedTxsCollectionType &TransactionBatchImpl::transactions()
         const {
