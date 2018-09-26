@@ -9,6 +9,8 @@
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "cryptography/blob.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "interfaces/query_responses/block_error_response.hpp"
+#include "interfaces/query_responses/block_response.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/field_validator.hpp"
