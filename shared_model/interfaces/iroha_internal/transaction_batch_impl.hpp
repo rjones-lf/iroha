@@ -21,8 +21,8 @@ namespace shared_model {
       TransactionBatchImpl &operator=(TransactionBatchImpl &&) = default;
 
       explicit TransactionBatchImpl(
-          const types::SharedTxsCollectionType &transactions)
-          : transactions_(transactions) {}
+          types::SharedTxsCollectionType transactions)
+          : transactions_(std::move(transactions)) {}
 
       const types::SharedTxsCollectionType &transactions() const override;
 
