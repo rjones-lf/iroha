@@ -85,10 +85,10 @@ class MstPipelineTest : public AcceptanceFixture {
    * Query validation lambda - check that empty transactions response returned
    * @param response - query response
    */
-  static void no_txs_check(const proto::QueryResponse &response) {
+  static void noTxsCheck(const proto::QueryResponse &response) {
     ASSERT_NO_THROW({
       const auto &pending_txs_resp =
-          boost::get<interface::TransactionsResponse>(response.get());
+          boost::get<const interface::TransactionsResponse &>(response.get());
 
       ASSERT_TRUE(pending_txs_resp.transactions().empty());
     });
@@ -100,11 +100,11 @@ class MstPipelineTest : public AcceptanceFixture {
    * @param expected_signatures_number
    * @return query validation lambda
    */
-  static auto signatory_check(size_t expected_signatures_number) {
+  static auto signatoryCheck(size_t expected_signatures_number) {
     return [expected_signatures_number](const auto &response) {
       ASSERT_NO_THROW({
         const auto &pending_txs_resp =
-            boost::get<interface::TransactionsResponse>(response.get());
+            boost::get<const interface::TransactionsResponse &>(response.get());
 
         ASSERT_EQ(
             boost::size(pending_txs_resp.transactions().front().signatures()),
@@ -140,12 +140,13 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
                 .quorum(kSignatories + 1);
   auto check_mst_pending_tx_status =
       [](const proto::TransactionResponse &resp) {
-        ASSERT_NO_THROW(boost::get<interface::MstPendingResponse>(resp.get()));
+        ASSERT_NO_THROW(
+            boost::get<const interface::MstPendingResponse &>(resp.get()));
       };
   auto check_enough_signatures_collected_tx_status =
       [](const proto::TransactionResponse &resp) {
         ASSERT_NO_THROW(
-            boost::get<interface::EnoughSignaturesCollectedResponse>(
+            boost::get<const interface::EnoughSignaturesCollectedResponse &>(
                 resp.get()));
       };
 
@@ -178,7 +179,7 @@ TEST_F(MstPipelineTest, GetPendingTxsAwaitingForThisPeer) {
   auto pending_tx_check = [pending_hash = signed_tx.hash()](auto &response) {
     ASSERT_NO_THROW({
       const auto &pending_tx_resp =
-          boost::get<interface::TransactionsResponse>(response.get());
+          boost::get<const interface::TransactionsResponse &>(response.get());
       ASSERT_EQ(pending_tx_resp.transactions().front().hash(), pending_hash);
     });
   };
@@ -205,12 +206,12 @@ TEST_F(MstPipelineTest, GetPendingTxsLatestSignatures) {
   auto &mst_itf = prepareMstItf();
   mst_itf.sendTx(complete(pending_tx, signatories[0]))
       .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
-                 signatory_check(1))
+                 signatoryCheck(1))
       .sendTx(complete(pending_tx, signatories[1]));
   std::this_thread::sleep_for(500ms);
 
   mst_itf.sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
-                    signatory_check(2));
+                    signatoryCheck(2));
 }
 
 /**
@@ -228,7 +229,7 @@ TEST_F(MstPipelineTest, GetPendingTxsNoSignedTxs) {
   mst_itf.sendTx(complete(pending_tx, signatories[0]))
       .sendTx(complete(pending_tx, signatories[1]))
       .sendTx(complete(pending_tx, kUserKeypair))
-      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair), no_txs_check);
+      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair), noTxsCheck);
 }
 
 /**
@@ -253,7 +254,7 @@ TEST_F(MstPipelineTest, DISABLED_ReplayViaFullySignedTransaction) {
 
   mst_itf.sendTx(complete(pending_tx, signatories[0]))
       .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
-                 signatory_check(1))
+                 signatoryCheck(1))
       .sendTx(fully_signed_tx)
-      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair), no_txs_check);
+      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair), noTxsCheck);
 }
