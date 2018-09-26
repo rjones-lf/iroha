@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: iroha
+  name: iroha
+spec:
+  clusterIP: None
+  ports:
+  - port: 50051
+  selector:
+    app: iroha
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: iroha
+  labels:
+    app: iroha
+spec:
+  serviceName: iroha
+  replicas: 4
+  selector:
+    matchLabels:
+      app: iroha
+  template:
+    metadata:
+      labels:
+        app: iroha
+    spec:
+      terminationGracePeriodSeconds: 7
+      containers:
+      - name: postgres
+        image: postgres:9.5
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5432
+          name: pg-port
+        env:
+          - name: POSTGRES_PASSWORD
+            value: mysecretpassword
+      - name: iroha
+        #image: hyperledger/iroha@sha256:eb059d2a03544e2bde91a0e16b7d03076b09bc31e9b970c1c4269f02084e8e91
+        image: hyperledger/iroha:develop
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 10001
+          name: inter-peer
+        - containerPort: 50051
+          name: external
+        env:
+          - name: KEY
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: pg-host
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+        command: ['bash', '/opt/iroha_data/entrypoint.sh']
+        volumeMounts:
+        - name: block-store
+          mountPath: /tmp/block_store
+        - name: iroha-config
+          mountPath: /opt/iroha_data
+      volumes:
+        # TODO: secrets
+        - name: iroha-config
+          configMap:
+            name: iroha-config
+        - name: block-store
+          emptyDir: {}

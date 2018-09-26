@@ -15,12 +15,14 @@
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "builders/protobuf/transaction_sequence_builder.hpp"
 #include "common/files.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "datetime/time.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
+#include "framework/result_fixture.hpp"
 #include "interfaces/permissions.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
@@ -174,8 +176,8 @@ namespace integration_framework {
     iroha::protocol::TxStatusRequest request;
     request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
     iroha::protocol::ToriiResponse response;
-    iroha_instance_->getIrohaInstance()->getCommandService()->Status(request,
-                                                                     response);
+    iroha_instance_->getIrohaInstance()->getCommandServiceTransport()->Status(
+        nullptr, &request, &response);
     validation(shared_model::proto::TransactionResponse(std::move(response)));
     return *this;
   }
@@ -200,8 +202,8 @@ namespace integration_framework {
           }
         });
 
-    iroha_instance_->getIrohaInstance()->getCommandService()->Torii(
-        tx.getTransport());
+    iroha_instance_->getIrohaInstance()->getCommandServiceTransport()->Torii(
+        nullptr, &tx.getTransport(), nullptr);
     // make sure that the first (stateless) status is come
     bar1.wait();
     // fetch status of transaction
@@ -281,8 +283,9 @@ namespace integration_framework {
               ->getTransport();
       *tx_list.add_transactions() = proto_tx;
     }
-    iroha_instance_->getIrohaInstance()->getCommandService()->ListTorii(
-        tx_list);
+    iroha_instance_->getIrohaInstance()
+        ->getCommandServiceTransport()
+        ->ListTorii(nullptr, &tx_list, nullptr);
 
     std::unique_lock<std::mutex> lk(m);
     cv.wait(lk, [&] { return processed; });

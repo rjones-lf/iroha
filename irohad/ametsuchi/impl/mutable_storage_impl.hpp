@@ -59,7 +59,6 @@ namespace iroha {
 
       std::unique_ptr<soci::session> sql_;
       std::shared_ptr<WsvQuery> wsv_;
-      std::shared_ptr<WsvCommand> executor_;
       std::unique_ptr<BlockIndex> block_index_;
       std::shared_ptr<CommandExecutor> command_executor_;
 

@@ -126,7 +126,10 @@ namespace iroha {
     /**
      * @return the batches from the state
      */
-    std::vector<DataType> getBatches() const;
+    std::unordered_set<DataType,
+                       iroha::model::PointerBatchHasher<DataType>,
+                       BatchHashEquality>
+    getBatches() const;
 
     /**
      * Erase expired batches

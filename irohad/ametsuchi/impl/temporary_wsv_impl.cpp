@@ -80,10 +80,10 @@ namespace iroha {
     TemporaryWsvImpl::SavepointWrapperImpl::SavepointWrapperImpl(
         const iroha::ametsuchi::TemporaryWsvImpl &wsv,
         std::string savepoint_name)
-        : sql_{wsv.sql_},
+        : sql_{*wsv.sql_},
           savepoint_name_{std::move(savepoint_name)},
           is_released_{false} {
-      *sql_ << "SAVEPOINT " + savepoint_name_ + ";";
+      sql_ << "SAVEPOINT " + savepoint_name_ + ";";
     };
 
     void TemporaryWsvImpl::SavepointWrapperImpl::release() {
@@ -92,9 +92,9 @@ namespace iroha {
 
     TemporaryWsvImpl::SavepointWrapperImpl::~SavepointWrapperImpl() {
       if (not is_released_) {
-        *sql_ << "ROLLBACK TO SAVEPOINT " + savepoint_name_ + ";";
+        sql_ << "ROLLBACK TO SAVEPOINT " + savepoint_name_ + ";";
       } else {
-        *sql_ << "RELEASE SAVEPOINT " + savepoint_name_ + ";";
+        sql_ << "RELEASE SAVEPOINT " + savepoint_name_ + ";";
       }
     }
 

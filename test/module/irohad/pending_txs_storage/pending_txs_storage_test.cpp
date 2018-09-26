@@ -49,7 +49,7 @@ TEST_F(PendingTxsStorageFixture, FixutureSelfCheck) {
 
   *state += transactions;
   ASSERT_EQ(state->getBatches().size(), 1) << "Failed to prepare MST state";
-  ASSERT_EQ(state->getBatches().front()->transactions().size(), 2)
+  ASSERT_EQ((*state->getBatches().begin())->transactions().size(), 2)
       << "Test batch contains wrong amount of transactions";
 }
 
