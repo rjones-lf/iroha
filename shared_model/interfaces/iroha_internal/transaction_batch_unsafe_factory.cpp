@@ -9,7 +9,7 @@
 
 std::unique_ptr<shared_model::interface::TransactionBatch>
 shared_model::interface::TransactionBatchUnsafeFactory::createTransactionBatch(
-    std::shared_ptr<shared_model::interface::Transaction> transaction) {
+    std::unique_ptr<shared_model::interface::Transaction> transaction) {
   return std::make_unique<TransactionBatchImpl>(
       shared_model::interface::types::SharedTxsCollectionType{
           std::move(transaction)});

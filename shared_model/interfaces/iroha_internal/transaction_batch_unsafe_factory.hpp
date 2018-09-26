@@ -13,11 +13,26 @@
 namespace shared_model {
   namespace interface {
 
+    /**
+     * Abstract unsafe (no validations are performed) factory for transaction
+     * batches
+     */
     class TransactionBatchUnsafeFactory {
-      static std::unique_ptr<TransactionBatch> createTransactionBatch(
-          std::shared_ptr<Transaction> transaction);
+     public:
+      /**
+       * Create transaction batch from a single transaction
+       * @param transaction to be in the batch
+       * @return unique_ptr to the created batch
+       */
+      std::unique_ptr<TransactionBatch> createTransactionBatch(
+          std::unique_ptr<Transaction> transaction);
 
-      static std::unique_ptr<TransactionBatch> createTransactionBatch(
+      /**
+       * Create transaction batch from a collection of transactions
+       * @param transactions to be in the batch
+       * @return unique_ptr to the created batch
+       */
+      std::unique_ptr<TransactionBatch> createTransactionBatch(
           types::SharedTxsCollectionType transactions);
     };
 
