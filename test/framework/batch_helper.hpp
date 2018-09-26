@@ -9,9 +9,9 @@
 #include <boost/range/irange.hpp>
 
 #include "framework/result_fixture.hpp"
-#include "interfaces/iroha_internal/transaction_batch_template_definitions.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_template_definitions.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
@@ -197,7 +197,10 @@ namespace framework {
       auto result_batch = shared_model::interface::TransactionBatchFactory::
           createTransactionBatch(txs, TxsValidator());
 
-      return framework::expected::val(result_batch).value().value;
+      return boost::get<iroha::expected::Value<
+          std::unique_ptr<shared_model::interface::TransactionBatch>>>(
+                 std::move(result_batch))
+          .value;
     }
 
     /**
@@ -209,17 +212,18 @@ namespace framework {
         std::shared_ptr<shared_model::interface::Transaction> tx) {
       return shared_model::interface::TransactionBatchFactory::
           createTransactionBatch(
-                 tx,
+                 std::move(tx),
                  shared_model::validation::DefaultSignedTransactionValidator())
               .match(
-                  [](const iroha::expected::Value<
-                      shared_model::interface::TransactionBatch> &value) {
-                    return std::make_shared<
-                    shared_model::interface::TransactionBatch>(value.value);
-              },
-              [](const auto &err)
-                  -> std::shared_ptr<
-                      shared_model::interface::TransactionBatch> {
+                  [](iroha::expected::Value<std::unique_ptr<
+                         shared_model::interface::TransactionBatch>> &value)
+                      -> std::shared_ptr<
+                          shared_model::interface::TransactionBatch> {
+                    return std::move(value.value);
+                  },
+                  [](const auto &err)
+                      -> std::shared_ptr<
+                          shared_model::interface::TransactionBatch> {
                     throw std::runtime_error(
                         err.error
                         + "Error transformation from transaction to batch");
@@ -372,7 +376,7 @@ namespace framework {
       auto transactions =
           makeTestBatchTransactions(std::forward<TxBuilders>(builders)...);
 
-      return std::make_shared<shared_model::interface::TransactionBatch>(
+      return std::make_shared<shared_model::interface::TransactionBatchImpl>(
           transactions);
     }
 

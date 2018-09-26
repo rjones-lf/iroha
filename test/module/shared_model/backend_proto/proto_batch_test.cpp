@@ -65,8 +65,12 @@ TEST(TransactionBatchTest, CreateTransactionBatchWhenValid) {
   auto transaction_batch =
       interface::TransactionBatchFactory::createTransactionBatch(
           txs, validation::DefaultUnsignedTransactionsValidator());
-  ASSERT_TRUE(framework::expected::val(transaction_batch))
-      << framework::expected::err(transaction_batch).value().error;
+  transaction_batch.match(
+      [](const iroha::expected::Value<
+          std::unique_ptr<shared_model::interface::TransactionBatch>> &) {},
+      [](const iroha::expected::Error<std::string> &err) {
+        FAIL() << err.error;
+      });
 }
 
 /**
@@ -87,7 +91,12 @@ TEST(TransactionBatchTest, CreateTransactionBatchWhenDifferentBatchType) {
   auto transaction_batch =
       interface::TransactionBatchFactory::createTransactionBatch(
           txs, validation::DefaultUnsignedTransactionsValidator());
-  ASSERT_TRUE(framework::expected::err(transaction_batch));
+  transaction_batch.match(
+      [](const iroha::expected::Value<
+          std::unique_ptr<shared_model::interface::TransactionBatch>> &) {
+        FAIL() << "must be error";
+      },
+      [](const iroha::expected::Error<std::string> &) {});
 }
 
 /**
@@ -104,7 +113,12 @@ TEST(TransactionBatchTest, CreateBatchWithValidAndInvalidTx) {
   auto transaction_batch =
       interface::TransactionBatchFactory::createTransactionBatch(
           txs, validation::DefaultUnsignedTransactionsValidator());
-  ASSERT_TRUE(framework::expected::err(transaction_batch));
+  transaction_batch.match(
+      [](const iroha::expected::Value<
+          std::unique_ptr<shared_model::interface::TransactionBatch>> &) {
+        FAIL() << "must be error";
+      },
+      [](const iroha::expected::Error<std::string> &) {});
 }
 
 /**
@@ -124,9 +138,12 @@ TEST(TransactionBatchTest, CreateSingleTxBatchWhenValid) {
   auto transaction_batch =
       interface::TransactionBatchFactory::createTransactionBatch(
           tx1, transaction_validator);
-
-  ASSERT_TRUE(framework::expected::val(transaction_batch))
-      << framework::expected::err(transaction_batch).value().error;
+  transaction_batch.match(
+      [](const iroha::expected::Value<
+          std::unique_ptr<shared_model::interface::TransactionBatch>> &) {},
+      [](const iroha::expected::Error<std::string> &err) {
+        FAIL() << err.error;
+      });
 }
 
 /**
@@ -143,7 +160,12 @@ TEST(TransactionBatchTest, CreateSingleTxBatchWhenInvalid) {
       interface::TransactionBatchFactory::createTransactionBatch(
           tx1, transaction_validator);
 
-  ASSERT_TRUE(framework::expected::err(transaction_batch));
+  transaction_batch.match(
+      [](const iroha::expected::Value<
+          std::unique_ptr<shared_model::interface::TransactionBatch>> &) {
+        FAIL() << "must be error";
+      },
+      [](const iroha::expected::Error<std::string> &) {});
 }
 
 /**
@@ -181,10 +203,19 @@ auto createBatchWithTransactionsWithQuorum(
 TEST(TransactionBatchTest, BatchWithAllSignatures) {
   auto quorum = 1;
   auto transaction_batch = createBatchWithTransactionsWithQuorum(quorum);
-  auto transaction_batch_val = framework::expected::val(transaction_batch);
-  ASSERT_TRUE(transaction_batch_val)
-      << framework::expected::err(transaction_batch).value().error;
-  ASSERT_TRUE(transaction_batch_val->value.hasAllSignatures());
+  auto transaction_batch_val = transaction_batch.match(
+      [](iroha::expected::Value<
+          std::unique_ptr<shared_model::interface::TransactionBatch>> &value)
+          -> std::unique_ptr<shared_model::interface::TransactionBatch> {
+        return std::move(value.value);
+      },
+      [](const iroha::expected::Error<std::string> &err)
+          -> std::unique_ptr<shared_model::interface::TransactionBatch> {
+        std::cerr << err.error;
+        return nullptr;
+      });
+  ASSERT_TRUE(transaction_batch_val);
+  ASSERT_TRUE(transaction_batch_val->hasAllSignatures());
 }
 
 /**
@@ -196,10 +227,19 @@ TEST(TransactionBatchTest, BatchWithAllSignatures) {
 TEST(TransactionBatchTest, BatchWithMissingSignatures) {
   auto quorum = 2;
   auto transaction_batch = createBatchWithTransactionsWithQuorum(quorum);
-  auto transaction_batch_val = framework::expected::val(transaction_batch);
-  ASSERT_TRUE(transaction_batch_val)
-      << framework::expected::err(transaction_batch).value().error;
-  ASSERT_FALSE(transaction_batch_val->value.hasAllSignatures());
+  auto transaction_batch_val = transaction_batch.match(
+      [](iroha::expected::Value<
+          std::unique_ptr<shared_model::interface::TransactionBatch>> &value)
+          -> std::unique_ptr<shared_model::interface::TransactionBatch> {
+        return std::move(value.value);
+      },
+      [](const iroha::expected::Error<std::string> &err)
+          -> std::unique_ptr<shared_model::interface::TransactionBatch> {
+        std::cerr << err.error;
+        return nullptr;
+      });
+  ASSERT_TRUE(transaction_batch_val);
+  ASSERT_FALSE(transaction_batch_val->hasAllSignatures());
 }
 
 /**
@@ -216,7 +256,12 @@ TEST(TransactionBatchTest, BatchWithNoSignatures) {
       interface::TransactionBatchFactory::createTransactionBatch(
           unsigned_transactions,
           validation::DefaultUnsignedTransactionsValidator());
-  ASSERT_TRUE(framework::expected::err(transaction_batch));
+  transaction_batch.match(
+      [](const iroha::expected::Value<
+          std::unique_ptr<shared_model::interface::TransactionBatch>> &) {
+        FAIL() << "must be error";
+      },
+      [](const iroha::expected::Error<std::string> &) {});
 }
 
 /**
@@ -254,8 +299,12 @@ TEST(TransactionBatchTest, BatchWithOneSignature) {
       interface::TransactionBatchFactory::createTransactionBatch(
           unsigned_transactions,
           validation::DefaultUnsignedTransactionsValidator());
-  ASSERT_TRUE(framework::expected::val(transaction_batch))
-      << framework::expected::err(transaction_batch).value().error;
+  transaction_batch.match(
+      [](const iroha::expected::Value<
+          std::unique_ptr<shared_model::interface::TransactionBatch>> &) {},
+      [](const iroha::expected::Error<std::string> &err) {
+        FAIL() << err.error;
+      });
 }
 
 /**

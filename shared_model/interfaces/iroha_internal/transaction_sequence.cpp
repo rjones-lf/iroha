@@ -5,8 +5,8 @@
 
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 
-#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "validators/default_validator.hpp"
 
 namespace shared_model {
@@ -28,13 +28,11 @@ namespace shared_model {
 
       types::BatchesCollectionType batches;
       auto insert_batch =
-          [&batches](const iroha::expected::Value<TransactionBatch> &value) {
-            batches.push_back(
-                std::make_shared<TransactionBatch>(std::move(value.value)));
-          };
+          [&batches](iroha::expected::Value<std::unique_ptr<TransactionBatch>>
+                         &value) { batches.push_back(std::move(value.value)); };
 
       validation::Answer result;
-      if (transactions.size() == 0) {
+      if (transactions.empty()) {
         result.addReason(std::make_pair(
             "Transaction collection error",
             std::vector<std::string>{"sequence can not be empty"}));
@@ -46,23 +44,29 @@ namespace shared_model {
           extracted_batches[batch_hash].push_back(tx);
         } else {
           TransactionBatchFactory::createTransactionBatch<TransactionValidator,
-                                                   FieldValidator>(
+                                                          FieldValidator>(
               tx, transaction_validator, field_validator)
-              .match(insert_batch, [&tx, &result](const auto &err) {
-                result.addReason(std::make_pair(
-                    std::string("Error in transaction with reduced hash: ")
-                        + tx->reducedHash().hex(),
-                    std::vector<std::string>{err.error}));
-              });
+              .match(
+                  insert_batch,
+                  [&tx,
+                   &result](const iroha::expected::Error<std::string> &err) {
+                    result.addReason(std::make_pair(
+                        std::string("Error in transaction with reduced hash: ")
+                            + tx->reducedHash().hex(),
+                        std::vector<std::string>{err.error}));
+                  });
         }
       }
 
       for (const auto &it : extracted_batches) {
         TransactionBatchFactory::createTransactionBatch(it.second, validator)
-            .match(insert_batch, [&it, &result](const auto &err) {
-              result.addReason(std::make_pair(
-                  it.first.toString(), std::vector<std::string>{err.error}));
-            });
+            .match(
+                insert_batch,
+                [&it, &result](const iroha::expected::Error<std::string> &err) {
+                  result.addReason(
+                      std::make_pair(it.first.toString(),
+                                     std::vector<std::string>{err.error}));
+                });
       }
 
       if (result.hasErrors()) {

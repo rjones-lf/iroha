@@ -78,8 +78,9 @@ namespace shared_model {
         return iroha::expected::makeError(answer.reason());
       }
 
-      return iroha::expected::makeValue(
-          std::make_unique<TransactionBatchImpl>(transactions));
+      std::unique_ptr<TransactionBatch> batch_ptr =
+          std::make_unique<TransactionBatchImpl>(transactions);
+      return iroha::expected::makeValue(std::move(batch_ptr));
     }
 
     template <typename TransactionValidator, typename FieldValidator>
@@ -104,8 +105,11 @@ namespace shared_model {
         answer.addReason(std::move(reason));
         return iroha::expected::makeError(answer.reason());
       }
-      return iroha::expected::makeValue(std::make_unique<TransactionBatchImpl>(
-          types::SharedTxsCollectionType{transaction}));
+
+      std::unique_ptr<TransactionBatch> batch_ptr =
+          std::make_unique<TransactionBatchImpl>(
+              types::SharedTxsCollectionType{transaction});
+      return iroha::expected::makeValue(std::move(batch_ptr));
     }
 
   }  // namespace interface

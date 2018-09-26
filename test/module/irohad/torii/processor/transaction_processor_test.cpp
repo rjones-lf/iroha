@@ -185,7 +185,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
   using TxsValidator = DefaultSignedTransactionsValidator;
 
   auto transactions =
-      framework::batch::createValidBatch(proposal_size).transactions();
+      framework::batch::createValidBatch(proposal_size)->transactions();
 
   EXPECT_CALL(*status_bus, publish(_))
       .Times(proposal_size * 2)

@@ -12,6 +12,7 @@
 
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "datetime/time.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "network/ordering_service_transport.hpp"
 
 namespace iroha {
@@ -74,8 +75,11 @@ namespace iroha {
           batch_prop_mutex_);
 
       current_size_.fetch_add(batch.transactions().size());
-      queue_.push(std::make_unique<shared_model::interface::TransactionBatch>(
-          std::move(batch)));
+      queue_.push(
+          std::make_unique<shared_model::interface::TransactionBatchImpl>(
+              std::move(
+                  static_cast<shared_model::interface::TransactionBatchImpl &&>(
+                      batch))));
       log_->info("Queue size is {}", current_size_.load());
 
       batch_prop_lock.unlock();

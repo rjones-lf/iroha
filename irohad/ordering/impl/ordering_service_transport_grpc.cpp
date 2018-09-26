@@ -43,9 +43,9 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
             txs,
             shared_model::validation::DefaultSignedTransactionsValidator());
     batch_result.match(
-        [this](iroha::expected::Value<shared_model::interface::TransactionBatch>
-                   &batch) {
-          subscriber_.lock()->onBatch(std::move(batch.value));
+        [this](iroha::expected::Value<std::unique_ptr<
+                   shared_model::interface::TransactionBatch>> &batch) {
+          subscriber_.lock()->onBatch(std::move(*batch.value));
         },
         [this](const iroha::expected::Error<std::string> &error) {
           async_call_->log_->error(

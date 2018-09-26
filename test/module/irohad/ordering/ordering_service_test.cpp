@@ -161,7 +161,8 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
   fake_transport->subscribe(ordering_service);
 
   for (size_t i = 0; i < tx_num; ++i) {
-    ordering_service->onBatch(framework::batch::createValidBatch(1));
+    ordering_service->onBatch(
+        std::move(*framework::batch::createValidBatch(1)));
   }
 }
 
@@ -192,12 +193,13 @@ TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
   fake_transport->subscribe(ordering_service);
 
   for (size_t i = 0; i < 8; ++i) {
-    ordering_service->onBatch(framework::batch::createValidBatch(1));
+    ordering_service->onBatch(
+        std::move(*framework::batch::createValidBatch(1)));
   }
   makeProposalTimeout();
 
-  ordering_service->onBatch(framework::batch::createValidBatch(1));
-  ordering_service->onBatch(framework::batch::createValidBatch(1));
+  ordering_service->onBatch(std::move(*framework::batch::createValidBatch(1)));
+  ordering_service->onBatch(std::move(*framework::batch::createValidBatch(1)));
 
   makeProposalTimeout();
 }
@@ -219,7 +221,7 @@ TEST_F(OrderingServiceTest, BrokenPersistentState) {
       .WillRepeatedly(Return(false));
 
   auto ordering_service = initOs(max_proposal);
-  ordering_service->onBatch(framework::batch::createValidBatch(1));
+  ordering_service->onBatch(std::move(*framework::batch::createValidBatch(1)));
 
   makeProposalTimeout();
 }
@@ -241,7 +243,8 @@ TEST_F(OrderingServiceTest, ConcurrentGenerateProposal) {
 
   auto on_tx = [&]() {
     for (int i = 0; i < 1000; ++i) {
-      ordering_service->onBatch(framework::batch::createValidBatch(1));
+      ordering_service->onBatch(
+          std::move(*framework::batch::createValidBatch(1)));
     }
   };
 
@@ -289,6 +292,6 @@ TEST_F(OrderingServiceTest, BatchesProceed) {
   auto ordering_service = initOs(max_proposal);
   fake_transport->subscribe(ordering_service);
 
-  ordering_service->onBatch(std::move(batch_one));
-  ordering_service->onBatch(std::move(batch_two));
+  ordering_service->onBatch(std::move(*batch_one));
+  ordering_service->onBatch(std::move(*batch_two));
 }
