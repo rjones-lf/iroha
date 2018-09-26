@@ -9,7 +9,6 @@
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "cryptography/blob.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
-#include "framework/specified_visitor.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/field_validator.hpp"
@@ -18,7 +17,6 @@ using namespace shared_model::proto;
 using namespace iroha::expected;
 using namespace shared_model::interface::types;
 
-using framework::SpecifiedVisitor;
 using shared_model::crypto::Blob;
 using shared_model::validation::FieldValidator;
 
@@ -182,9 +180,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
             stateless_invalid_response->get());
 
     ASSERT_EQ(general_resp.errorMessage(), kStatelessErrorMsg);
-    boost::apply_visitor(
-        SpecifiedVisitor<
-            shared_model::interface::StatelessFailedErrorResponse>(),
+    (void)boost::get<
+        const shared_model::interface::StatelessFailedErrorResponse &>(
         general_resp.get());
   });
   ASSERT_TRUE(no_signatories_response);
@@ -195,9 +192,9 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
             no_signatories_response->get());
 
     ASSERT_EQ(general_resp.errorMessage(), kNoSigsErrorMsg);
-    boost::apply_visitor(
-        SpecifiedVisitor<shared_model::interface::NoSignatoriesErrorResponse>(),
-        general_resp.get());
+    (void)
+        boost::get<const shared_model::interface::NoSignatoriesErrorResponse &>(
+            general_resp.get());
   });
 }
 
