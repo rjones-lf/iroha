@@ -6,6 +6,7 @@
 #include "interfaces/iroha_internal/transaction_batch_unsafe_factory.hpp"
 
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
+#include "interfaces/transaction.hpp"
 
 std::unique_ptr<shared_model::interface::TransactionBatch>
 shared_model::interface::TransactionBatchUnsafeFactory::createTransactionBatch(

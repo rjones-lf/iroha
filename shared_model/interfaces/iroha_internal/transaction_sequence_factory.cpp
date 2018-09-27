@@ -5,9 +5,9 @@
 
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 
-#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_helpers.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "validators/default_validator.hpp"
 
 namespace shared_model {
@@ -28,10 +28,8 @@ namespace shared_model {
 
       types::BatchesCollectionType batches;
       auto insert_batch =
-          [&batches](const iroha::expected::Value<TransactionBatch> &value) {
-            batches.push_back(
-                std::make_shared<TransactionBatch>(std::move(value.value)));
-          };
+          [&batches](iroha::expected::Value<std::unique_ptr<TransactionBatch>>
+                         &value) { batches.push_back(std::move(value.value)); };
 
       validation::Answer result;
       if (transactions.size() == 0) {
