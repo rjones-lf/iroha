@@ -40,7 +40,7 @@ namespace iroha {
       };
 
       TEST_F(YacCryptoProviderTest, ValidWhenSameMessage) {
-        YacHash hash("1", "1");
+        YacHash hash(Round{1, 1}, "1", "1");
         auto sig = shared_model::proto::SignatureBuilder()
                        .publicKey(shared_model::crypto::PublicKey(pubkey))
                        .signedData(shared_model::crypto::Signed(signed_data))
@@ -54,7 +54,7 @@ namespace iroha {
       }
 
       TEST_F(YacCryptoProviderTest, InvalidWhenMessageChanged) {
-        YacHash hash("1", "1");
+        YacHash hash(Round{1, 1}, "1", "1");
         auto sig = shared_model::proto::SignatureBuilder()
                        .publicKey(shared_model::crypto::PublicKey(pubkey))
                        .signedData(shared_model::crypto::Signed(signed_data))
@@ -64,7 +64,7 @@ namespace iroha {
 
         auto vote = crypto_provider->getVote(hash);
 
-        vote.hash.block_hash = "hash changed";
+        vote.hash.vote_hashes_.block_hash = "hash changed";
 
         ASSERT_FALSE(crypto_provider->verify({vote}));
       }

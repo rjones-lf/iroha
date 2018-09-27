@@ -87,11 +87,10 @@ namespace iroha {
         /**
          * Make hash from block
          * @param block - for hashing
-         * @param round, in which block appeared
          * @return hashed value of block
          */
-        virtual YacHash makeHash(const shared_model::interface::Block &block,
-                                 const Round &round) const = 0;
+        virtual YacHash makeHash(
+            const shared_model::interface::Block &block) const = 0;
 
         /**
          * Convert YacHash to model hash

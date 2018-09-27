@@ -37,8 +37,8 @@ namespace iroha {
               network::AsyncGrpcClient<google::protobuf::Empty>>();
           network = std::make_shared<NetworkImpl>(async_call);
 
-          message.hash.proposal_hash = "proposal";
-          message.hash.block_hash = "block";
+          message.hash.vote_hashes_.proposal_hash = "proposal";
+          message.hash.vote_hashes_.block_hash = "block";
 
           auto sig = shared_model::proto::SignatureBuilder()
                          .publicKey(shared_model::crypto::PublicKey("key"))

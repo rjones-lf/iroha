@@ -38,7 +38,7 @@ class YacGateTest : public ::testing::Test {
     auto keypair =
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
-    expected_hash = YacHash("proposal", "block");
+    expected_hash = YacHash(iroha::consensus::Round{1, 1}, "proposal", "block");
     auto tx = shared_model::proto::TransactionBuilder()
                   .creatorAccountId("account@domain")
                   .setAccountQuorum("account@domain", 1)
@@ -216,7 +216,8 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
                 .finish());
   const auto &signature = *(actual_block->signatures().begin());
 
-  message.hash = YacHash("actual_proposal", "actual_block");
+  message.hash =
+      YacHash(iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
   message.signature = clone(signature);
   commit_message = CommitMessage({message});
   expected_commit = rxcpp::observable<>::just(Answer(commit_message));
@@ -280,7 +281,8 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
   EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
 
   // expected values
-  expected_hash = YacHash("actual_proposal", "actual_block");
+  expected_hash =
+      YacHash(iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
 
   message.hash = expected_hash;
 
