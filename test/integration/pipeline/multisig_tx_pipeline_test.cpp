@@ -153,9 +153,8 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
   auto &mst_itf = prepareMstItf();
   mst_itf.sendTx(complete(tx, kUserKeypair), check_mst_pending_tx_status)
       .sendTx(complete(tx, signatories[0]), check_mst_pending_tx_status)
-      .sendTx(complete(tx, signatories[1]))
-      .getTxStatus(tx.build().hash(),
-                   check_enough_signatures_collected_tx_status)
+      .sendTx(complete(tx, signatories[1]),
+              check_enough_signatures_collected_tx_status)
       .skipProposal()
       .skipVerifiedProposal()
       .checkBlock([](auto &proposal) {
