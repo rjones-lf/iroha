@@ -46,7 +46,7 @@ def doDebugBuild(coverageEnabled=false) {
   }
 
   docker.image('postgres:9.5').withRun(""
-    + " -e POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
+    + " -e POSTGRES_USER=qqq-${env.IROHA_POSTGRES_USER}"
     + " -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
     + " --name ${env.IROHA_POSTGRES_HOST}"
     + " --network=${env.IROHA_NETWORK}") {
@@ -92,7 +92,7 @@ def doDebugBuild(coverageEnabled=false) {
       // if (testExitCode != 0) {
       //   currentBuild.result = "UNSTABLE"
       // }
-      sh "cd build; ctest --output-on-failure --no-compress-output -T Test"
+      sh "cd build; ctest --output-on-failure --no-compress-output -T Test || true"
       sh 'python .jenkinsci/helpers/platform_tag.py "Linux \$(uname -m)" \$(ls build/Testing/*/Test.xml)'
       // Mark build as UNSTABLE if there are any failed tests (threshold <100%)
       xunit testTimeMargin: '3000', thresholdMode: 2, thresholds: [passed(unstableNewThreshold: '100', \
