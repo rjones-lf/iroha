@@ -39,26 +39,9 @@ namespace shared_model {
        */
       virtual const interface::types::PubkeyType &pubkey() const = 0;
 
-      /**
-       * Stringify the data.
-       * @return the content of account asset.
-       */
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("Peer")
-            .append("address", address())
-            .append("pubkey", pubkey().toString())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      /**
-       * Checks equality of objects inside
-       * @param rhs - other wrapped value
-       * @return true, if wrapped objects are same
-       */
-      bool operator==(const ModelType &rhs) const override {
-        return address() == rhs.address() and pubkey() == rhs.pubkey();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

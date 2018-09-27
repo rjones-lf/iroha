@@ -1,25 +1,12 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_YAC_MOCKS_HPP
 #define IROHA_YAC_MOCKS_HPP
 
 #include <gmock/gmock.h>
-
 #include "common/byteutils.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/messages.hpp"
@@ -33,8 +20,7 @@
 #include "consensus/yac/yac_peer_orderer.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "interfaces/iroha_internal/block.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -43,12 +29,14 @@ namespace iroha {
           const std::string &address) {
         auto key = std::string(32, '0');
         std::copy(address.begin(), address.end(), key.begin());
-        auto ptr = shared_model::proto::PeerBuilder()
-                       .address(address)
-                       .pubkey(shared_model::interface::types::PubkeyType(key))
-                       .build();
+        auto peer = std::make_shared<MockPeer>();
+        EXPECT_CALL(*peer, address())
+            .WillRepeatedly(::testing::ReturnRefOfCopy(address));
+        EXPECT_CALL(*peer, pubkey())
+            .WillRepeatedly(::testing::ReturnRefOfCopy(
+                shared_model::interface::types::PubkeyType(key)));
 
-        return clone(ptr);
+        return peer;
       }
 
       /**
@@ -63,10 +51,15 @@ namespace iroha {
                 .publicKey();
         std::string key(tmp.blob().size(), 0);
         std::copy(pub_key.begin(), pub_key.end(), key.begin());
+        auto sig = std::make_shared<MockSignature>();
+        EXPECT_CALL(*sig, publicKey())
+            .WillRepeatedly(::testing::ReturnRefOfCopy(
+                shared_model::crypto::PublicKey(key)));
+        EXPECT_CALL(*sig, signedData())
+            .WillRepeatedly(
+                ::testing::ReturnRefOfCopy(shared_model::crypto::Signed("")));
 
-        return clone(TestSignatureBuilder()
-                         .publicKey(shared_model::crypto::PublicKey(key))
-                         .build());
+        return sig;
       }
 
       VoteMessage create_vote(YacHash hash, std::string pub_key) {

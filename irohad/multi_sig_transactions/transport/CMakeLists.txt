@@ -19,4 +19,5 @@ add_library(mst_transport
 target_link_libraries(mst_transport
         mst_grpc
         mst_state
+        shared_model_interfaces_factories
         )

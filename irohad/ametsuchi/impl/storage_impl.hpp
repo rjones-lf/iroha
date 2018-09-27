@@ -89,6 +89,8 @@ namespace iroha {
 
       void dropStorage() override;
 
+      void freeConnections() override;
+
       void commit(std::unique_ptr<MutableStorage> mutableStorage) override;
 
       std::shared_ptr<WsvQuery> getWsvQuery() const override;
@@ -97,6 +99,8 @@ namespace iroha {
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override;
+
+      ~StorageImpl() override;
 
      protected:
       StorageImpl(std::string block_store_dir,
