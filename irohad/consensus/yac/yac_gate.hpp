@@ -39,6 +39,7 @@ namespace iroha {
         /**
          * Proposal new hash in network
          * @param hash - hash for voting
+         * @param order - peer ordering
          */
         virtual void vote(YacHash hash, ClusterOrdering order) = 0;
 

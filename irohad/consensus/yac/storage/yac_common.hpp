@@ -28,9 +28,9 @@ namespace iroha {
 
       struct VoteMessage;
 
-      using ProposalHash = decltype(YacHash::proposal_hash);
+      using ProposalHash = decltype(YacHash::vote_hashes_.proposal_hash);
 
-      using BlockHash = decltype(YacHash::block_hash);
+      using BlockHash = decltype(YacHash::vote_hashes_.block_hash);
 
       /**
        * Check that all votes in collection has same proposal hash

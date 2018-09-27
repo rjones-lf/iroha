@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 
+#include "consensus/round.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
@@ -36,21 +37,32 @@ namespace iroha {
 
       class YacHash {
        public:
-        YacHash(std::string proposal, std::string block)
-            : proposal_hash(std::move(proposal)),
-              block_hash(std::move(block)) {}
+        YacHash(Round round, std::string proposal, std::string block)
+            : vote_round_{round},
+              vote_hashes_{std::move(proposal), std::move(block)} {}
 
         YacHash() = default;
 
         /**
-         * Hash computed from proposal
+         * Round, in which peer voted
          */
-        std::string proposal_hash;
+        Round vote_round_;
 
         /**
-         * Hash computed from block;
+         * Contains hashes of proposal and block, for which peer voted
          */
-        std::string block_hash;
+        struct VoteHashes {
+          /**
+           * Hash computed from proposal
+           */
+          std::string proposal_hash;
+
+          /**
+           * Hash computed from block;
+           */
+          std::string block_hash;
+        };
+        VoteHashes vote_hashes_;
 
         /**
          * Peer signature of block
@@ -58,8 +70,8 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::Signature> block_signature;
 
         bool operator==(const YacHash &obj) const {
-          return proposal_hash == obj.proposal_hash
-              and block_hash == obj.block_hash;
+          return vote_hashes_.proposal_hash == obj.vote_hashes_.proposal_hash
+              and vote_hashes_.block_hash == obj.vote_hashes_.block_hash;
         };
 
         bool operator!=(const YacHash &obj) const {
@@ -75,10 +87,11 @@ namespace iroha {
         /**
          * Make hash from block
          * @param block - for hashing
+         * @param round, in which block appeared
          * @return hashed value of block
          */
-        virtual YacHash makeHash(
-            const shared_model::interface::Block &block) const = 0;
+        virtual YacHash makeHash(const shared_model::interface::Block &block,
+                                 const Round &round) const = 0;
 
         /**
          * Convert YacHash to model hash

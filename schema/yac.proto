@@ -8,9 +8,19 @@ message Signature {
   bytes signature = 2;
 }
 
-message Hash {
+message VoteHashes {
   bytes proposal = 1;
   bytes block = 2;
+}
+
+message VoteRound {
+  uint64 block_round = 1;
+  uint32 reject_round = 2;
+}
+
+message Hash {
+  VoteHashes vote_hashes = 1;
+  VoteRound vote_round = 2;
   Signature block_signature = 3;
 }
 

@@ -24,8 +24,12 @@ namespace iroha {
           proto::Vote pb_vote;
 
           auto hash = pb_vote.mutable_hash();
-          hash->set_block(vote.hash.block_hash);
-          hash->set_proposal(vote.hash.proposal_hash);
+          auto hash_round = hash->mutable_vote_round();
+          hash_round->set_block_round(vote.hash.vote_round_.block_round);
+          hash_round->set_reject_round(vote.hash.vote_round_.reject_round);
+          auto hash_vote_hashes = hash->mutable_vote_hashes();
+          hash_vote_hashes->set_proposal(vote.hash.vote_hashes_.proposal_hash);
+          hash_vote_hashes->set_block(vote.hash.vote_hashes_.block_hash);
 
           auto block_signature = hash->mutable_block_signature();
 
@@ -42,8 +46,12 @@ namespace iroha {
           proto::Vote pb_vote;
 
           auto hash = pb_vote.mutable_hash();
-          hash->set_block(vote.hash.block_hash);
-          hash->set_proposal(vote.hash.proposal_hash);
+          auto hash_round = hash->mutable_vote_round();
+          hash_round->set_block_round(vote.hash.vote_round_.block_round);
+          hash_round->set_reject_round(vote.hash.vote_round_.reject_round);
+          auto hash_vote_hashes = hash->mutable_vote_hashes();
+          hash_vote_hashes->set_proposal(vote.hash.vote_hashes_.proposal_hash);
+          hash_vote_hashes->set_block(vote.hash.vote_hashes_.block_hash);
 
           auto block_signature = hash->mutable_block_signature();
 
@@ -70,8 +78,12 @@ namespace iroha {
               factory_;
 
           VoteMessage vote;
-          vote.hash.proposal_hash = pb_vote.hash().proposal();
-          vote.hash.block_hash = pb_vote.hash().block();
+          vote.hash.vote_round_ =
+              Round{pb_vote.hash().vote_round().block_round(),
+                    pb_vote.hash().vote_round().reject_round()};
+          vote.hash.vote_hashes_ =
+              YacHash::VoteHashes{pb_vote.hash().vote_hashes().proposal(),
+                                  pb_vote.hash().vote_hashes().block()};
 
           auto deserialize =
               [&](auto &pubkey, auto &signature, auto &val, const auto &msg) {
