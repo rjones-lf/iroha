@@ -65,7 +65,7 @@ namespace iroha {
        * @param batch to be propagated
        */
       virtual void propagateBatch(
-          const shared_model::interface::TransactionBatch &batch) = 0;
+          std::shared_ptr<shared_model::interface::TransactionBatch> batch) = 0;
 
       virtual ~OrderingGateTransport() = default;
     };

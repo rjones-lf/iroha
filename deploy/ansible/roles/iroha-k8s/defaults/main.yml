@@ -1,0 +1,4 @@
+# config.sample
+max_proposal_size: 3000
+proposal_delay: 300
+vote_delay: 5000

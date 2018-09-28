@@ -8,6 +8,9 @@
 
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 
+#include "interfaces/iroha_internal/batch_meta.hpp"
+#include "interfaces/transaction.hpp"
+
 namespace shared_model {
   namespace interface {
 

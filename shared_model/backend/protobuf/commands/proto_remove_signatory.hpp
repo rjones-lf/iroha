@@ -18,9 +18,11 @@
 #ifndef IROHA_PROTO_REMOVE_SIGNATORY_HPP
 #define IROHA_PROTO_REMOVE_SIGNATORY_HPP
 
+#include "interfaces/commands/remove_signatory.hpp"
+
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "commands.pb.h"
-#include "interfaces/commands/remove_signatory.hpp"
+#include "cryptography/public_key.hpp"
 
 namespace shared_model {
   namespace proto {

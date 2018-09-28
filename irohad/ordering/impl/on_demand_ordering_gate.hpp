@@ -48,8 +48,9 @@ namespace iroha {
               factory,
           transport::Round initial_round);
 
-      void propagateBatch(const shared_model::interface::TransactionBatch
-                              &batch) const override;
+      void propagateBatch(
+          std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+          const override;
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
       on_proposal() override;

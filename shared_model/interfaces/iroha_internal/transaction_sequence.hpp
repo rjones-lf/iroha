@@ -6,11 +6,8 @@
 #ifndef IROHA_TRANSACTION_SEQUENCE_HPP
 #define IROHA_TRANSACTION_SEQUENCE_HPP
 
-#include "common/result.hpp"
+#include <boost/optional.hpp>
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
-#include "interfaces/iroha_internal/transaction_batch.hpp"
-#include "validators/field_validator.hpp"
-#include "validators/transactions_collection/transactions_collection_validator.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -23,21 +20,11 @@ namespace shared_model {
      */
     class TransactionSequence {
      public:
-      /**
-       * Creator of transaction sequence
-       * @param transactions collection of transactions
-       * @param validator validator of the collections
-       * @return Result containing transaction sequence if validation
-       * successful and string message containing error otherwise
-       */
-      template <typename TransactionValidator,
-                typename FieldValidator = validation::FieldValidator>
-      static iroha::expected::Result<TransactionSequence, std::string>
-      createTransactionSequence(
-          const types::SharedTxsCollectionType &transactions,
-          const validation::TransactionsCollectionValidator<
-              TransactionValidator> &validator,
-          const FieldValidator &field_validator = FieldValidator());
+      TransactionSequence() = delete;
+      TransactionSequence(const TransactionSequence &) = default;
+      TransactionSequence(TransactionSequence &&) = default;
+
+      explicit TransactionSequence(const types::BatchesCollectionType &batches);
 
       /**
        * Retrieves transactions from all batches as single collection
@@ -56,8 +43,6 @@ namespace shared_model {
       std::string toString() const;
 
      private:
-      explicit TransactionSequence(const types::BatchesCollectionType &batches);
-
       types::BatchesCollectionType batches_;
       mutable boost::optional<types::SharedTxsCollectionType> transactions_;
     };

@@ -6,7 +6,9 @@
 #ifndef IROHA_BATCH_ORDER_VALIDATOR_HPP
 #define IROHA_BATCH_ORDER_VALIDATOR_HPP
 
-#include "order_validator.hpp"
+#include "validators/transactions_collection/order_validator.hpp"
+
+#include <boost/optional.hpp>
 
 namespace shared_model {
   namespace validation {

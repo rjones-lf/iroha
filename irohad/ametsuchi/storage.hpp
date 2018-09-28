@@ -10,8 +10,8 @@
 #include <vector>
 
 #include "ametsuchi/block_query_factory.hpp"
-#include "ametsuchi/os_persistent_state_factory.hpp"
 #include "ametsuchi/mutable_factory.hpp"
+#include "ametsuchi/os_persistent_state_factory.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "common/result.hpp"
@@ -76,6 +76,8 @@ namespace iroha {
        * Tables and the database will be removed too
        */
       virtual void dropStorage() = 0;
+
+      virtual void freeConnections() = 0;
 
       virtual ~Storage() = default;
     };

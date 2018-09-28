@@ -27,6 +27,7 @@ target_link_libraries(ordering_service
     shared_model_proto_backend
     ordering_grpc
     logger
+    shared_model_interfaces_factories
     )
 
 add_library(on_demand_ordering_service

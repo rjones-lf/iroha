@@ -19,7 +19,8 @@
 
 #include "execution/query_execution_impl.hpp"
 #include "main/server_runner.hpp"
-#include "torii/command_service.hpp"
+#include "torii/impl/command_service_impl.hpp"
+#include "torii/impl/command_service_transport_grpc.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
@@ -30,6 +31,7 @@
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 
+#include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 
@@ -109,12 +111,16 @@ class ClientServerTest : public testing::Test {
                                                     pending_txs_storage));
 
     //----------- Server run ----------------
+    auto status_factory =
+        std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     runner
-        ->append(std::make_unique<torii::CommandService>(tx_processor,
-                                                         storage,
-                                                         status_bus,
-                                                         initial_timeout,
-                                                         nonfinal_timeout))
+        ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
+            std::make_shared<torii::CommandServiceImpl>(
+                tx_processor, storage, status_bus, status_factory),
+            status_bus,
+            initial_timeout,
+            nonfinal_timeout,
+            status_factory))
         .append(std::make_unique<torii::QueryService>(qpi))
         .run()
         .match(

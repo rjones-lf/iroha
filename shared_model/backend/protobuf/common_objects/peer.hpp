@@ -18,9 +18,11 @@
 #ifndef IROHA_SHARED_MODEL_PROTO_PEER_HPP
 #define IROHA_SHARED_MODEL_PROTO_PEER_HPP
 
+#include "interfaces/common_objects/peer.hpp"
+
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "backend/protobuf/util.hpp"
-#include "interfaces/common_objects/peer.hpp"
+#include "cryptography/public_key.hpp"
 #include "primitive.pb.h"
 #include "utils/lazy_initializer.hpp"
 

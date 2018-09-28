@@ -4,12 +4,12 @@
  */
 
 #include <gtest/gtest.h>
-
 #include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 
 using namespace shared_model;
 using ::testing::ElementsAre;
@@ -113,7 +113,7 @@ class BatchPipelineTest
   auto createTransactionSequence(
       const interface::types::SharedTxsCollectionType &txs) {
     auto transaction_sequence_result =
-        interface::TransactionSequence::createTransactionSequence(
+        interface::TransactionSequenceFactory::createTransactionSequence(
             txs, validation::DefaultUnsignedTransactionsValidator());
 
     auto transaction_sequence_value =

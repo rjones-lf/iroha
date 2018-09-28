@@ -25,6 +25,7 @@ using namespace iroha::network;
 using namespace framework::test_subscriber;
 
 using ::testing::_;
+using ::testing::ByMove;
 using ::testing::DefaultValue;
 using ::testing::Return;
 
@@ -102,7 +103,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
 
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
-  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(2);
+  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 
@@ -146,7 +147,8 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
 
   DefaultValue<
       expected::Result<std::unique_ptr<MutableStorage>, std::string>>::Clear();
-  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
+  EXPECT_CALL(*mutable_factory, createMutableStorage())
+      .WillOnce(Return(ByMove(expected::makeError("Connection was closed"))));
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(0);
 
@@ -179,7 +181,7 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
 
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
-  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(2);
+  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 
@@ -228,7 +230,7 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
 
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
-  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(2);
+  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
   EXPECT_CALL(*consensus_gate, on_commit())
       .WillOnce(Return(rxcpp::observable<>::empty<
@@ -273,7 +275,7 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
 
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
-  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(2);
+  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 

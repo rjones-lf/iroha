@@ -22,7 +22,6 @@
 #include <vector>
 
 #include "interfaces/base/model_primitive.hpp"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace crypto {

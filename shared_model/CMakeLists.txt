@@ -44,7 +44,6 @@ add_subdirectory(builders)
 add_subdirectory(converters)
 add_subdirectory(cryptography)
 add_subdirectory(interfaces)
-add_subdirectory(utils)
 add_subdirectory(validators)
 add_subdirectory(schema)
 

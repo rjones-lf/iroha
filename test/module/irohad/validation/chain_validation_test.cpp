@@ -32,7 +32,7 @@ class ChainValidationTest : public ::testing::Test {
     EXPECT_CALL(*block, prevHash()).WillRepeatedly(testing::ReturnRef(hash));
     EXPECT_CALL(*block, signatures())
         .WillRepeatedly(
-            testing::Return(std::initializer_list<SignatureMock>{}));
+            testing::Return(std::initializer_list<MockSignature>{}));
     EXPECT_CALL(*block, payload()).WillRepeatedly(testing::ReturnRef(payload));
   }
 
@@ -47,7 +47,7 @@ class ChainValidationTest : public ::testing::Test {
   std::shared_ptr<ChainValidatorImpl> validator;
   std::shared_ptr<MockMutableStorage> storage;
   std::shared_ptr<MockWsvQuery> query;
-  std::shared_ptr<BlockMock> block = std::make_shared<BlockMock>();
+  std::shared_ptr<MockBlock> block = std::make_shared<MockBlock>();
 };
 
 /**

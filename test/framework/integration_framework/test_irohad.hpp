@@ -50,6 +50,10 @@ namespace integration_framework {
       return command_service;
     }
 
+    auto &getCommandServiceTransport() {
+      return command_service_transport;
+    }
+
     auto &getQueryService() {
       return query_service;
     }

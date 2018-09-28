@@ -22,6 +22,15 @@
 #include "ametsuchi/mutable_storage.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
+namespace {
+  /**
+   * Lambda always returning true specially for applying blocks to storage
+   */
+  auto trueStorageApplyPredicate = [](const auto &, auto &, const auto &) {
+    return true;
+  };
+}  // namespace
+
 namespace iroha {
   namespace synchronizer {
 
@@ -41,100 +50,76 @@ namespace iroha {
           });
     }
 
-    SynchronizerImpl::~SynchronizerImpl() {
-      subscription_.unsubscribe();
-    }
-
-    namespace {
-      /**
-       * Lambda always returning true specially for applying blocks to storage
-       */
-      auto trueStorageApplyPredicate = [](const auto &, auto &, const auto &) {
-        return true;
-      };
-    }  // namespace
-
-    std::unique_ptr<ametsuchi::MutableStorage>
-    SynchronizerImpl::createTemporaryStorage() const {
-      return mutable_factory_->createMutableStorage().match(
-          [](expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>
-                 &created_storage) { return std::move(created_storage.value); },
-          [this](expected::Error<std::string> &error) {
-            log_->error("could not create mutable storage: {}", error.error);
-            return std::unique_ptr<ametsuchi::MutableStorage>{};
-          });
-    }
-
-    void SynchronizerImpl::processApplicableBlock(
-        std::shared_ptr<shared_model::interface::Block> commit_message) const {
-      auto storage = createTemporaryStorage();
-      if (not storage) {
-        return;
-      }
-      storage->apply(*commit_message, trueStorageApplyPredicate);
-      mutable_factory_->commit(std::move(storage));
-
-      notifier_.get_subscriber().on_next(
-          SynchronizationEvent{rxcpp::observable<>::just(commit_message),
-                               SynchronizationOutcomeType::kCommit});
-    }
-
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-    SynchronizerImpl::downloadMissingChain(
-        std::shared_ptr<shared_model::interface::Block> commit_message) const {
-      auto check_storage = createTemporaryStorage();
-      while (true) {
-        for (const auto &peer_signature : commit_message->signatures()) {
-          auto chain = block_loader_->retrieveBlocks(
-              shared_model::crypto::PublicKey(peer_signature.publicKey()));
-          // check that committed block is on the top of downloaded chain
-          auto last_downloaded_block = chain.as_blocking().last();
-          bool chain_ends_with_right_block =
-              last_downloaded_block->hash() == commit_message->hash();
-
-          if (chain_ends_with_right_block
-              and validator_->validateChain(chain, *check_storage)) {
-            // peer sent valid chain
-            return chain;
-          }
-        }
-      }
-    }
-
     void SynchronizerImpl::process_commit(
         std::shared_ptr<shared_model::interface::Block> commit_message) {
       log_->info("processing commit");
-      auto storage = createTemporaryStorage();
-      if (not storage) {
+
+      auto mutable_storage_var = mutable_factory_->createMutableStorage();
+      if (auto e =
+              boost::get<expected::Error<std::string>>(&mutable_storage_var)) {
+        log_->error("could not create mutable storage: {}", e->error);
         return;
       }
+      auto storage = std::move(
+          boost::get<
+              expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>>(
+              &mutable_storage_var)
+              ->value);
+
+      SynchronizationEvent result;
 
       if (validator_->validateBlock(commit_message, *storage)) {
-        processApplicableBlock(commit_message);
-      } else {
-        auto missing_chain = downloadMissingChain(commit_message);
-
-        // TODO [IR-1634] 23.08.18 Akvinikym: place this call to notifier after
-        // downloaded chain application
-        notifier_.get_subscriber().on_next(SynchronizationEvent{
-            missing_chain, SynchronizationOutcomeType::kCommit});
-
-        // apply downloaded chain
-        std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
-        missing_chain.as_blocking().subscribe(
-            [&blocks](auto block) { blocks.push_back(block); });
-        for (const auto &block : blocks) {
-          // we don't need to check correctness of downloaded blocks, as
-          // it was done earlier on another peer
-          storage->apply(*block, trueStorageApplyPredicate);
-        }
+        storage->apply(*commit_message, trueStorageApplyPredicate);
         mutable_factory_->commit(std::move(storage));
+
+        result = {rxcpp::observable<>::just(commit_message),
+                  SynchronizationOutcomeType::kCommit};
+      } else {
+        auto hash = commit_message->hash();
+
+        // while blocks are not loaded and not committed
+        while (storage) {
+          for (const auto &peer_signature : commit_message->signatures()) {
+            auto network_chain = block_loader_->retrieveBlocks(
+                shared_model::crypto::PublicKey(peer_signature.publicKey()));
+
+            std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
+            network_chain.as_blocking().subscribe(
+                [&blocks](auto block) { blocks.push_back(block); });
+            if (blocks.empty()) {
+              log_->info("Downloaded an empty chain");
+              continue;
+            }
+
+            auto chain = rxcpp::observable<>::iterate(
+                blocks, rxcpp::identity_immediate());
+
+            if (blocks.back()->hash() == hash
+                and validator_->validateChain(chain, *storage)) {
+              // apply downloaded chain
+              for (const auto &block : blocks) {
+                // we don't need to check correctness of downloaded blocks, as
+                // it was done earlier on another peer
+                storage->apply(*block, trueStorageApplyPredicate);
+              }
+              mutable_factory_->commit(std::move(storage));
+
+              result = {chain, SynchronizationOutcomeType::kCommit};
+            }
+          }
+        }
       }
+
+      notifier_.get_subscriber().on_next(result);
     }
 
     rxcpp::observable<SynchronizationEvent>
     SynchronizerImpl::on_commit_chain() {
       return notifier_.get_observable();
+    }
+
+    SynchronizerImpl::~SynchronizerImpl() {
+      subscription_.unsubscribe();
     }
 
   }  // namespace synchronizer

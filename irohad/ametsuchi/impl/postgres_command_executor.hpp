@@ -71,11 +71,32 @@ namespace iroha {
       CommandResult operator()(
           const shared_model::interface::TransferAsset &command) override;
 
+      static void
+      prepareStatements(soci::session &sql);
+
      private:
       soci::session &sql_;
       bool do_validation_;
 
       shared_model::interface::types::AccountIdType creator_account_id_;
+
+      // 14.09.18 nickaleks: IR-1708 Load SQL from separate files
+      static const std::string addAssetQuantityBase;
+      static const std::string addPeerBase;
+      static const std::string addSignatoryBase;
+      static const std::string appendRoleBase;
+      static const std::string createAccountBase;
+      static const std::string createAssetBase;
+      static const std::string createDomainBase;
+      static const std::string createRoleBase;
+      static const std::string detachRoleBase;
+      static const std::string grantPermissionBase;
+      static const std::string removeSignatoryBase;
+      static const std::string revokePermissionBase;
+      static const std::string setAccountDetailBase;
+      static const std::string setQuorumBase;
+      static const std::string subtractAssetQuantityBase;
+      static const std::string transferAssetBase;
     };
   }  // namespace ametsuchi
 }  // namespace iroha
