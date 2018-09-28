@@ -7,7 +7,6 @@ add_subdirectory(converters)
 add_subdirectory(builders)
 add_subdirectory(validators)
 add_subdirectory(cryptography)
-add_subdirectory(factories)
 
 AddTest(lazy_test
     lazy_test.cpp
