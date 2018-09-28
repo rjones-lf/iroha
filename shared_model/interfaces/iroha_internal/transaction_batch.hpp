@@ -19,7 +19,7 @@ namespace shared_model {
     /**
      * Represents collection of transactions, which are to be processed together
      */
-    class TransactionBatch : ModelPrimitive<TransactionBatch> {
+    class TransactionBatch : public ModelPrimitive<TransactionBatch> {
      public:
       /**
        * Get transactions list
