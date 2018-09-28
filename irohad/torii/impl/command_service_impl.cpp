@@ -135,6 +135,8 @@ namespace torii {
     std::for_each(txs.begin(), txs.end(), [this](const auto &tx) {
       const auto &tx_hash = tx->hash();
       auto found = cache_->findItem(tx_hash);
+      // StatlessValid status goes only after EnoughSignaturesCollectedResponse
+      // So doesn't skip publishing status after it
       if (found
           and iroha::visit_in_place(
                   found.value()->get(),
