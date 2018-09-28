@@ -29,4 +29,5 @@ target_link_libraries(mst_processor
     mst_storage
     mst_transport
     mst_state
+    rxcpp
     )
