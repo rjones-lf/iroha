@@ -13,15 +13,13 @@ namespace shared_model {
 
     class TransactionBatchImpl : public TransactionBatch {
      public:
-      TransactionBatchImpl() = delete;
+      explicit TransactionBatchImpl(
+          types::SharedTxsCollectionType transactions);
 
       TransactionBatchImpl(const TransactionBatchImpl &) = default;
       TransactionBatchImpl &operator=(const TransactionBatchImpl &) = default;
       TransactionBatchImpl(TransactionBatchImpl &&) = default;
       TransactionBatchImpl &operator=(TransactionBatchImpl &&) = default;
-
-      explicit TransactionBatchImpl(
-          types::SharedTxsCollectionType transactions);
 
       const types::SharedTxsCollectionType &transactions() const override;
 
@@ -43,6 +41,7 @@ namespace shared_model {
 
       mutable boost::optional<types::HashType> reduced_hash_;
     };
+
   }  // namespace interface
 }  // namespace shared_model
 

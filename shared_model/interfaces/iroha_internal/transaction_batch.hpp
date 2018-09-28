@@ -7,7 +7,9 @@
 #define IROHA_TRANSACTION_BATCH_HPP
 
 #include <boost/optional.hpp>
+
 #include "cryptography/hash.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "interfaces/common_objects/types.hpp"
 
@@ -17,10 +19,8 @@ namespace shared_model {
     /**
      * Represents collection of transactions, which are to be processed together
      */
-    class TransactionBatch {
+    class TransactionBatch : ModelPrimitive<TransactionBatch> {
      public:
-      virtual ~TransactionBatch() = default;
-
       /**
        * Get transactions list
        * @return list of transactions from the batch
@@ -42,18 +42,6 @@ namespace shared_model {
       virtual bool hasAllSignatures() const = 0;
 
       /**
-       * Checks of two transaction batches are the same
-       * @param rhs - another batch
-       * @return true if they are equal, false otherwise
-       */
-      virtual bool operator==(const TransactionBatch &rhs) const = 0;
-
-      /**
-       * @return string representation of the object
-       */
-      virtual std::string toString() const = 0;
-
-      /**
        * Add signature to concrete transaction in the batch
        * @param number_of_tx - number of transaction for inserting signature
        * @param signed_blob - signed blob of transaction
@@ -64,10 +52,8 @@ namespace shared_model {
           size_t number_of_tx,
           const shared_model::crypto::Signed &signed_blob,
           const shared_model::crypto::PublicKey &public_key) = 0;
-
-     private:
-      types::SharedTxsCollectionType transactions_;
     };
+
   }  // namespace interface
 }  // namespace shared_model
 
