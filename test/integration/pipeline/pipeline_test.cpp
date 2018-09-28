@@ -25,6 +25,7 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 class PipelineIntegrationTest : public AcceptanceFixture {
@@ -60,8 +61,8 @@ class PipelineIntegrationTest : public AcceptanceFixture {
           std::make_shared<shared_model::proto::Transaction>(std::move(tx)));
     }
 
-    auto tx_sequence_result =
-        shared_model::interface::TransactionSequence::createTransactionSequence(
+    auto tx_sequence_result = shared_model::interface::
+        TransactionSequenceFactory::createTransactionSequence(
             txs,
             shared_model::validation::DefaultSignedTransactionsValidator());
 

@@ -20,6 +20,7 @@
 
 #include <vector>
 
+#include <boost/optional.hpp>
 #include "consensus/yac/yac_hash_provider.hpp"  // for YacHash::proposal_hash
 
 namespace iroha {

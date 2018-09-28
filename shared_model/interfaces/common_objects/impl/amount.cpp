@@ -7,7 +7,6 @@
 
 #include <regex>
 
-#include <boost/multiprecision/cpp_dec_float.hpp>
 #include "utils/string_builder.hpp"
 
 namespace shared_model {
