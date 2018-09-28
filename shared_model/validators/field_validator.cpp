@@ -231,7 +231,7 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::permissions::Role &permission) const {
       if (not isValid(permission)) {
-        reason.second.push_back("Provided role permission does not exist");
+        reason.second.emplace_back("Provided role permission does not exist");
       }
     }
 
@@ -239,7 +239,7 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::permissions::Grantable &permission) const {
       if (not isValid(permission)) {
-        reason.second.push_back("Provided grantable permission does not exist");
+        reason.second.emplace_back("Provided grantable permission does not exist");
       }
     }
 
@@ -247,7 +247,7 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::types::QuorumType &quorum) const {
       if (quorum == 0 or quorum > 128) {
-        reason.second.push_back("Quorum should be within range (0, 128]");
+        reason.second.emplace_back("Quorum should be within range (0, 128]");
       }
     }
 
@@ -307,7 +307,7 @@ namespace shared_model {
         const interface::types::SignatureRangeType &signatures,
         const crypto::Blob &source) const {
       if (boost::empty(signatures)) {
-        reason.second.push_back("Signatures cannot be empty");
+        reason.second.emplace_back("Signatures cannot be empty");
       }
       for (const auto &signature : signatures) {
         const auto &sign = signature.signedData();

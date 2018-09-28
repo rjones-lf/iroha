@@ -6,39 +6,67 @@
 #ifndef IROHA_PROTO_TRANSACTION_VALIDATOR_HPP
 #define IROHA_PROTO_TRANSACTION_VALIDATOR_HPP
 
-#include "cryptography/default_hash_provider.hpp"
-#include "transaction.pb.h"
-#include "validators/abstract_validator.hpp"
+#include <typeinfo>
+#include "validators/transaction_validator.hpp"
 
 namespace shared_model {
   namespace validation {
 
+    template <typename FieldValidator, typename CommandValidator>
     class ProtoTransactionValidator
-        : public AbstractValidator<iroha::protocol::Transaction> {
-     public:
-      Answer validate(
-          const iroha::protocol::Transaction &transaction) const override {
-        Answer answer;
-        auto hash = shared_model::crypto::DefaultHashProvider::makeHash(
-            proto::makeBlob(tx.payload()));
-        std::string tx_reason_name = "Transaction " + hash.toString();
-        ReasonsGroupType tx_reason(tx_reason_name, GroupedReasons());
-
+        : public TransactionValidator<FieldValidator, CommandValidator> {
+     private:
+      void validateProtoTx(const iroha::protocol::Transaction &transaction,
+                           ReasonsGroupType &reason) {
         for (const auto &command :
              transaction.payload().reduced_payload().commands()) {
-          switch (command.command_case()) {
-            case iroha::protocol::Command::COMMAND_NOT_SET:
-              tx_reason.second.emplace_back("Command is not set");
+          if (command.command_case()
+              == iroha::protocol::Command::COMMAND_NOT_SET) {
+            reason.second.emplace_back("Undefined command is found");
+            break;
+          } else if (command.command_case()
+                     == iroha::protocol::Command::kCreateRole) {
+            const auto &cr = command.create_role();
+            bool all_permissions_valid = std::all_of(
+                cr.permissions().begin(),
+                cr.permissions().end(),
+                [](const auto &perm) {
+                  return interface::permissions::isValid(
+                      static_cast<interface::permissions::Role>(perm));
+                });
+            if (not all_permissions_valid) {
+              reason.second.emplace_back("Undefined command is found");
               break;
-            default:
-              break;
+            }
           }
         }
-
-        return answer;
       }
-    };
 
+     public:
+      Answer validate(const interface::Transaction &tx) const {
+        Answer answer;
+        std::string tx_reason_name = "Transaction ";
+        ReasonsGroupType tx_reason(tx_reason_name, GroupedReasons());
+        try {
+          validateProtoTx(
+              dynamic_cast<const proto::Transaction &>(tx).getTransport(),
+              tx_reason);
+          auto interface_validation =
+              TransactionValidator<FieldValidator, CommandValidator>::validate(
+                  tx);
+          if (interface_validation.hasErrors()) {
+            tx_reason.second.push_back(interface_validation.reason());
+          }
+        } catch (std::bad_cast &) {
+          tx_reason.second.emplace_back(
+              "Non proto transaction is sent to proto validator");
+        }
+        if (not tx_reason.second.empty()) {
+          answer.addReason(std::move(tx_reason));
+        }
+        return answer;
+      };
+    };
   }  // namespace validation
 }  // namespace shared_model
 

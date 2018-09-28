@@ -106,14 +106,9 @@ namespace shared_model {
         addInvalidCommand(reason, "CreateRole");
 
         validator_.validateRoleId(reason, cr.roleName());
-        for (auto i : static_cast<const shared_model::proto::CreateRole &>(cr)
-                          .getTransport()
-                          .create_role()
-                          .permissions()) {
-          validator_.validateRolePermission(
-              reason,
-              static_cast<shared_model::interface::permissions::Role>(i));
-        }
+        cr.rolePermissions().iterate([&reason, this](auto i) {
+          validator_.validateRolePermission(reason, i);
+        });
 
         return reason;
       }
@@ -195,7 +190,7 @@ namespace shared_model {
         addInvalidCommand(reason, "TransferAsset");
 
         if (ta.srcAccountId() == ta.destAccountId()) {
-          reason.second.push_back(
+          reason.second.emplace_back(
               "Source and destination accounts cannot be the same");
         }
 
@@ -254,17 +249,6 @@ namespace shared_model {
         }
 
         for (const auto &command : tx.commands()) {
-          auto cmd_case =
-              static_cast<const shared_model::proto::Command &>(command)
-                  .getTransport()
-                  .command_case();
-          if (iroha::protocol::Command::COMMAND_NOT_SET == cmd_case) {
-            ReasonsGroupType reason;
-            reason.first = "Undefined";
-            reason.second.push_back("command is undefined");
-            answer.addReason(std::move(reason));
-            continue;
-          }
           auto reason = boost::apply_visitor(command_validator_, command.get());
           if (not reason.second.empty()) {
             answer.addReason(std::move(reason));
@@ -281,12 +265,14 @@ namespace shared_model {
           : field_validator_(field_validator),
             command_validator_(command_validator) {}
 
+      virtual ~TransactionValidator() = default;
+
       /**
        * Applies validation to given transaction
        * @param tx - transaction to validate
        * @return Answer containing found error if any
        */
-      Answer validate(const interface::Transaction &tx) const {
+      virtual Answer validate(const interface::Transaction &tx) const {
         return validateImpl(tx, [this](auto &reason, auto time) {
           field_validator_.validateCreatedTime(reason, time);
         });
