@@ -478,8 +478,9 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
                 .finish());
   EXPECT_CALL(*status_bus, publish(_))
       .WillRepeatedly(testing::Invoke([](auto response) {
-        ASSERT_NO_THROW(boost::get<shared_model::interface::MstExpiredResponse>(
-            response->get()));
+        ASSERT_NO_THROW(
+            boost::get<const shared_model::interface::MstExpiredResponse &>(
+                response->get()));
       }));
   tp->batchHandle(framework::batch::createBatchFromSingleTransaction(tx));
   mst_expired_notifier.get_subscriber().on_next(
