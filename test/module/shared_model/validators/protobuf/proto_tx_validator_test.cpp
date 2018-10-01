@@ -111,7 +111,8 @@ TEST_F(ProtoTxValidatorTest, CreateRoleValid) {
 }
 
 /**
- * @given iroha::protocol::Transaction
+ * @given iroha::protocol::Transaction containing create role transaction with
+ * undefined role permission
  * @when it is validated
  * @then answer with no errors is returned
  */
