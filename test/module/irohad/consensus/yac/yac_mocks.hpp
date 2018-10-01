@@ -20,8 +20,7 @@
 #include "consensus/yac/yac_peer_orderer.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "interfaces/iroha_internal/block.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -30,12 +29,14 @@ namespace iroha {
           const std::string &address) {
         auto key = std::string(32, '0');
         std::copy(address.begin(), address.end(), key.begin());
-        auto ptr = shared_model::proto::PeerBuilder()
-                       .address(address)
-                       .pubkey(shared_model::interface::types::PubkeyType(key))
-                       .build();
+        auto peer = std::make_shared<MockPeer>();
+        EXPECT_CALL(*peer, address())
+            .WillRepeatedly(::testing::ReturnRefOfCopy(address));
+        EXPECT_CALL(*peer, pubkey())
+            .WillRepeatedly(::testing::ReturnRefOfCopy(
+                shared_model::interface::types::PubkeyType(key)));
 
-        return clone(ptr);
+        return peer;
       }
 
       /**
@@ -50,10 +51,15 @@ namespace iroha {
                 .publicKey();
         std::string key(tmp.blob().size(), 0);
         std::copy(pub_key.begin(), pub_key.end(), key.begin());
+        auto sig = std::make_shared<MockSignature>();
+        EXPECT_CALL(*sig, publicKey())
+            .WillRepeatedly(::testing::ReturnRefOfCopy(
+                shared_model::crypto::PublicKey(key)));
+        EXPECT_CALL(*sig, signedData())
+            .WillRepeatedly(
+                ::testing::ReturnRefOfCopy(shared_model::crypto::Signed("")));
 
-        return clone(TestSignatureBuilder()
-                         .publicKey(shared_model::crypto::PublicKey(key))
-                         .build());
+        return sig;
       }
 
       VoteMessage create_vote(YacHash hash, std::string pub_key) {

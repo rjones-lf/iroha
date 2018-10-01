@@ -6,13 +6,13 @@
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 
 #include <gtest/gtest.h>
-#include "backend/protobuf/common_objects/signature.hpp"
+#include <boost/range/adaptor/indirected.hpp>
 #include "logger/logger.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_signature_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha::consensus::yac;
+
+using ::testing::ReturnRefOfCopy;
 
 static logger::Logger log_ = logger::testLog("YacCommon");
 
@@ -87,22 +87,25 @@ TEST_F(SupermajorityCheckerTest, RejectProofNegativeCase) {
  */
 TEST_F(SupermajorityCheckerTest, PublicKeyUniqueness) {
   using namespace shared_model::crypto;
+  using namespace std::string_literals;
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
   auto make_peer_key = [&peers](const std::string &key) {
     PublicKey pub_key(key);
-    peers.emplace_back(clone(shared_model::proto::PeerBuilder()
-                                 .address("localhost")
-                                 .pubkey(pub_key)
-                                 .build()));
+    auto peer = std::make_shared<MockPeer>();
+    EXPECT_CALL(*peer, pubkey()).WillRepeatedly(ReturnRefOfCopy(pub_key));
+
+    peers.push_back(peer);
     return pub_key;
   };
 
   auto peer_key = make_peer_key(std::string(32, '0'));
   make_peer_key(std::string(32, '1'));
 
-  auto block = TestBlockBuilder().build();
-  block.addSignature(Signed("1"), peer_key);
-  block.addSignature(Signed("2"), peer_key);
+  auto sig = std::make_shared<MockSignature>();
+  EXPECT_CALL(*sig, publicKey()).WillRepeatedly(ReturnRefOfCopy(peer_key));
 
-  ASSERT_FALSE(hasSupermajority(block.signatures(), peers));
+  // previous version of the test relied on Block interface, which stored a set
+  // of signatures by public key
+  std::vector<decltype(sig)> sigs{1, sig};
+  ASSERT_FALSE(hasSupermajority(sigs | boost::adaptors::indirected, peers));
 }
