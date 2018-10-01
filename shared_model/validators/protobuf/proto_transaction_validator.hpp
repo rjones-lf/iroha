@@ -42,7 +42,7 @@ namespace shared_model {
       }
 
      public:
-      Answer validate(const interface::Transaction &tx) const {
+      Answer validate(const interface::Transaction &tx) const override {
         Answer answer;
         std::string tx_reason_name = "Transaction ";
         ReasonsGroupType tx_reason(tx_reason_name, GroupedReasons());
