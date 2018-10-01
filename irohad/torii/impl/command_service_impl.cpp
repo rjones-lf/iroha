@@ -10,10 +10,7 @@
 #include "ametsuchi/block_query.hpp"
 #include "common/byteutils.hpp"
 #include "common/is_any.hpp"
-#include "cryptography/default_hash_provider.hpp"
-#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
-#include "interfaces/iroha_internal/transaction_sequence.hpp"
-#include "validators/default_validator.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 
 namespace torii {
 
@@ -44,11 +41,9 @@ namespace torii {
     });
   }
 
-  void CommandServiceImpl::handleTransactionList(
-      const shared_model::interface::TransactionSequence &tx_list) {
-    for (const auto &batch : tx_list.batches()) {
-      processBatch(batch);
-    }
+  void CommandServiceImpl::handleTransactionBatch(
+      std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
+    processBatch(batch);
   }
 
   std::shared_ptr<shared_model::interface::TransactionResponse>

@@ -6,9 +6,10 @@
 #ifndef IROHA_STATEFUL_VALIDATIOR_IMPL_HPP
 #define IROHA_STATEFUL_VALIDATIOR_IMPL_HPP
 
-#include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "validation/stateful_validator.hpp"
 
+#include "interfaces/iroha_internal/transaction_batch_parser.hpp"
+#include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -21,13 +22,18 @@ namespace iroha {
      public:
       explicit StatefulValidatorImpl(
           std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
-              factory);
+              factory,
+          std::shared_ptr<shared_model::interface::TransactionBatchParser>
+              batch_parser);
 
       VerifiedProposalAndErrors validate(
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) override;
 
+     private:
       std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory_;
+      std::shared_ptr<shared_model::interface::TransactionBatchParser>
+          batch_parser_;
       logger::Logger log_;
     };
 

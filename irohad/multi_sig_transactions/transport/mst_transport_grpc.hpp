@@ -23,6 +23,8 @@
 
 #include <google/protobuf/empty.pb.h>
 #include "interfaces/common_objects/common_objects_factory.hpp"
+#include "interfaces/iroha_internal/abstract_transport_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
 
@@ -31,11 +33,19 @@ namespace iroha {
     class MstTransportGrpc : public MstTransport,
                              public transport::MstTransportGrpc::Service {
      public:
-      explicit MstTransportGrpc(
+      using TransportFactoryType =
+          shared_model::interface::AbstractTransportFactory<
+              shared_model::interface::Transaction,
+              iroha::protocol::Transaction>;
+
+      MstTransportGrpc(
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory);
+              factory,
+          std::shared_ptr<TransportFactoryType> transaction_factory,
+          std::shared_ptr<shared_model::interface::TransactionBatchParser>
+              batch_parser);
 
       /**
        * Server part of grpc SendState method call
@@ -60,6 +70,9 @@ namespace iroha {
       std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
           async_call_;
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
+      std::shared_ptr<TransportFactoryType> transaction_factory_;
+      std::shared_ptr<shared_model::interface::TransactionBatchParser>
+          batch_parser_;
     };
   }  // namespace network
 }  // namespace iroha

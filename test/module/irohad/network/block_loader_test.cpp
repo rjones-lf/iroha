@@ -63,7 +63,8 @@ class BlockLoaderTest : public testing::Test {
         .WillRepeatedly(testing::Return(boost::make_optional(
             std::shared_ptr<iroha::ametsuchi::BlockQuery>(storage))));
     block_cache = std::make_shared<iroha::consensus::ConsensusResultCache>();
-    auto validator_ptr = std::make_unique<MockBlockValidator>();
+    auto validator_ptr =
+        std::make_unique<MockValidator<shared_model::interface::Block>>();
     validator = validator_ptr.get();
     loader = std::make_shared<BlockLoaderImpl>(
         peer_query_factory,
@@ -131,7 +132,7 @@ class BlockLoaderTest : public testing::Test {
   std::shared_ptr<BlockLoaderService> service;
   std::unique_ptr<grpc::Server> server;
   std::shared_ptr<iroha::consensus::ConsensusResultCache> block_cache;
-  MockBlockValidator *validator;
+  MockValidator<shared_model::interface::Block> *validator;
 };
 
 /**

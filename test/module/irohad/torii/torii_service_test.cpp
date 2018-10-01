@@ -3,9 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "endpoint.pb.h"
+#include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "main/server_runner.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
@@ -120,6 +122,17 @@ class ToriiServiceTest : public testing::Test {
     //----------- Server run ----------------
     auto status_factory =
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        shared_model::interface::Transaction>>
+        transaction_validator = std::make_unique<
+            shared_model::validation::DefaultUnsignedTransactionValidator>();
+    auto transaction_factory =
+        std::make_shared<shared_model::proto::ProtoTransportFactory<
+            shared_model::interface::Transaction,
+            shared_model::proto::Transaction>>(
+            std::move(transaction_validator));
+    auto batch_parser =
+        std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     runner
         ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
             std::make_shared<torii::CommandServiceImpl>(
@@ -127,7 +140,9 @@ class ToriiServiceTest : public testing::Test {
             status_bus,
             initial_timeout,
             nonfinal_timeout,
-            status_factory))
+            status_factory,
+            transaction_factory,
+            batch_parser))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -610,8 +625,6 @@ TEST_F(ToriiServiceTest, FailedListOfTxs) {
         ASSERT_EQ(toriiResponse.tx_status(),
                   iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
         auto msg = toriiResponse.error_message();
-        ASSERT_THAT(toriiResponse.error_message(),
-                    HasSubstr("bad timestamp: sent from future"));
-        ASSERT_NE(msg.find(hash.hex()), std::string::npos);
+        ASSERT_THAT(msg, HasSubstr("bad timestamp: sent from future"));
       });
 }

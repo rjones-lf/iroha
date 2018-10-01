@@ -10,6 +10,7 @@
 
 namespace shared_model {
   namespace validation {
+
     // validator which can be overloaded for dynamic polymorphism
     template <typename Model>
     class AbstractValidator {
@@ -18,6 +19,7 @@ namespace shared_model {
 
       virtual ~AbstractValidator() = default;
     };
+
   }  // namespace validation
 }  // namespace shared_model
 

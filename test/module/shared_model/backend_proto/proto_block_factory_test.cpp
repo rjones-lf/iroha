@@ -16,10 +16,11 @@ using namespace shared_model;
 class ProtoBlockFactoryTest : public ::testing::Test {
  public:
   std::unique_ptr<proto::ProtoBlockFactory> factory;
-  validation::MockBlockValidator *validator;
+  validation::MockValidator<interface::Block> *validator;
 
   ProtoBlockFactoryTest() {
-    auto validator_ptr = std::make_unique<validation::MockBlockValidator>();
+    auto validator_ptr =
+        std::make_unique<validation::MockValidator<interface::Block>>();
     validator = validator_ptr.get();
     factory =
         std::make_unique<proto::ProtoBlockFactory>(std::move(validator_ptr));

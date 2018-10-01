@@ -59,6 +59,7 @@ if (IROHA_ROOT_PROJECT)
       query_responses/impl/block_response.cpp
       iroha_internal/transaction_sequence.cpp
       iroha_internal/transaction_batch.cpp
+      iroha_internal/transaction_batch_parser_impl.cpp
       iroha_internal/block.cpp
       )
 
