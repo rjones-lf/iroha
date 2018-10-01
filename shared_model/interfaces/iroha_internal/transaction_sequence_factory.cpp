@@ -5,13 +5,21 @@
 
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 
-#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
+#include <unordered_map>
+
+#include "interfaces/iroha_internal/batch_meta.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_helpers.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
-#include "validators/default_validator.hpp"
+#include "interfaces/transaction.hpp"
+#include "validators/answer.hpp"
 
 namespace shared_model {
   namespace interface {
+    const std::unique_ptr<TransactionBatchFactory>
+        TransactionSequenceFactory::batch_factory_ =
+            std::make_unique<TransactionBatchFactoryImpl>();
+
     template <typename TransactionValidator, typename FieldValidator>
     iroha::expected::Result<TransactionSequence, std::string>
     TransactionSequenceFactory::createTransactionSequence(
@@ -32,22 +40,47 @@ namespace shared_model {
                          &value) { batches.push_back(std::move(value.value)); };
 
       validation::Answer result;
-      if (transactions.size() == 0) {
+      if (transactions.empty()) {
         result.addReason(std::make_pair(
             "Transaction collection error",
             std::vector<std::string>{"sequence can not be empty"}));
       }
       for (const auto &tx : transactions) {
+        // perform stateless validation checks
+        validation::ReasonsGroupType reason;
+        reason.first = "Transaction: ";
+        // check signatures and their validness
+        if (not boost::empty(tx->signatures())) {
+          validation::ReasonsGroupType reason;
+          field_validator.validateSignatures(
+              reason, tx->signatures(), tx->payload());
+          if (not reason.second.empty()) {
+            result.addReason(std::move(reason));
+            continue;
+          }
+        } else {
+          reason.second.emplace_back(
+              "Transaction should contain at least one signature");
+          result.addReason(std::move(reason));
+          continue;
+        }
+        // check transaction itself
+        auto tx_errors = transaction_validator.validate(*tx);
+        if (tx_errors) {
+          reason.second.emplace_back(tx_errors.reason());
+          result.addReason(std::move(reason));
+          continue;
+        }
+
+        // if transaction is valid, try to form batch out of it
         if (auto meta = tx->batchMeta()) {
           auto hashes = meta.get()->reducedHashes();
           auto batch_hash =
               TransactionBatchHelpers::calculateReducedBatchHash(hashes);
           extracted_batches[batch_hash].push_back(tx);
         } else {
-          TransactionBatchFactory::createTransactionBatch<TransactionValidator,
-                                                          FieldValidator>(
-              tx, transaction_validator, field_validator)
-              .match(insert_batch, [&tx, &result](const auto &err) {
+          batch_factory_->createTransactionBatch(tx).match(
+              insert_batch, [&tx, &result](const auto &err) {
                 result.addReason(std::make_pair(
                     std::string("Error in transaction with reduced hash: ")
                         + tx->reducedHash().hex(),
@@ -57,8 +90,8 @@ namespace shared_model {
       }
 
       for (const auto &it : extracted_batches) {
-        TransactionBatchFactory::createTransactionBatch(it.second, validator)
-            .match(insert_batch, [&it, &result](const auto &err) {
+        batch_factory_->createTransactionBatch(it.second).match(
+            insert_batch, [&it, &result](const auto &err) {
               result.addReason(std::make_pair(
                   it.first.toString(), std::vector<std::string>{err.error}));
             });

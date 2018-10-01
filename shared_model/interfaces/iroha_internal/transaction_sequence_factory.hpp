@@ -9,17 +9,20 @@
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 
 #include "common/result.hpp"
-#include "validators/field_validator.hpp"
-#include "validators/transactions_collection/transactions_collection_validator.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
+#include "validators/default_validator.hpp"
 
 namespace shared_model {
   namespace interface {
 
     /**
      * Provides a method that creates a transaction sequence from  a collection
-     * of transactions. Field validator is used by default
+     * of transactions
      */
     class TransactionSequenceFactory {
+     private:
+      static const std::unique_ptr<TransactionBatchFactory> batch_factory_;
+
      public:
       /**
        * Creator of transaction sequence
@@ -37,6 +40,7 @@ namespace shared_model {
               TransactionValidator> &validator,
           const FieldValidator &field_validator = FieldValidator());
     };
+
   }  // namespace interface
 }  // namespace shared_model
 

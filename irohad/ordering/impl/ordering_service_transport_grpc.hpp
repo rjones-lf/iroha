@@ -19,6 +19,7 @@
 
 #include <google/protobuf/empty.pb.h>
 
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_service_transport.hpp"
@@ -53,6 +54,8 @@ namespace iroha {
       std::weak_ptr<iroha::network::OrderingServiceNotification> subscriber_;
       std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
           async_call_;
+      std::unique_ptr<shared_model::interface::TransactionBatchFactory>
+          batch_factory_;
     };
 
   }  // namespace ordering

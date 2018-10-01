@@ -12,4 +12,5 @@ target_link_libraries(pending_txs_storage_test
     pending_txs_storage
     shared_model_stateless_validation
     shared_model_proto_backend
+    shared_model_interfaces_factories
     )

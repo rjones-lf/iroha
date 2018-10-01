@@ -12,6 +12,7 @@
 #include "common/is_any.hpp"
 #include "common/visitor.hpp"
 #include "cryptography/default_hash_provider.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "validators/default_validator.hpp"

@@ -8,9 +8,8 @@
 #include "backend/protobuf/proposal.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
-#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
-#include "validators/default_validator.hpp"
 
 using namespace iroha::ordering;
 
@@ -38,10 +37,7 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
           return std::make_shared<shared_model::proto::Transaction>(tx);
         });
 
-    auto batch_result = shared_model::interface::TransactionBatchFactory::
-        createTransactionBatch(
-            txs,
-            shared_model::validation::DefaultSignedTransactionsValidator());
+    auto batch_result = batch_factory_->createTransactionBatch(txs);
     batch_result.match(
         [this](iroha::expected::Value<std::unique_ptr<
                    shared_model::interface::TransactionBatch>> &batch) {
@@ -84,4 +80,6 @@ void OrderingServiceTransportGrpc::publishProposal(
 OrderingServiceTransportGrpc::OrderingServiceTransportGrpc(
     std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
         async_call)
-    : async_call_(std::move(async_call)) {}
+    : async_call_(std::move(async_call)),
+      batch_factory_(std::make_unique<
+                     shared_model::interface::TransactionBatchFactoryImpl>()) {}
