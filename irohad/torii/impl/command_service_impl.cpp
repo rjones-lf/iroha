@@ -10,6 +10,7 @@
 #include "ametsuchi/block_query.hpp"
 #include "common/byteutils.hpp"
 #include "common/is_any.hpp"
+#include "common/visitor.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
@@ -133,7 +134,16 @@ namespace torii {
     const auto &txs = batch->transactions();
     std::for_each(txs.begin(), txs.end(), [this](const auto &tx) {
       const auto &tx_hash = tx->hash();
-      if (cache_->findItem(tx_hash) and tx->quorum() < 2) {
+      auto found = cache_->findItem(tx_hash);
+      // StatlessValid status goes only after EnoughSignaturesCollectedResponse
+      // So doesn't skip publishing status after it
+      if (found
+          and iroha::visit_in_place(
+                  found.value()->get(),
+                  [](const shared_model::interface::
+                         EnoughSignaturesCollectedResponse &) { return false; },
+                  [](auto &) { return true; })
+          and tx->quorum() < 2) {
         log_->warn("Found transaction {} in cache, ignoring", tx_hash.hex());
         return;
       }

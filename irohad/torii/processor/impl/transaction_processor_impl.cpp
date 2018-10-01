@@ -45,15 +45,6 @@ namespace iroha {
           mst_processor_(std::move(mst_processor)),
           status_bus_(std::move(status_bus)),
           log_(logger::log("TxProcessor")) {
-      // notify about stateless success
-      pcs_->on_proposal().subscribe([this](auto model_proposal) {
-        for (const auto &tx : model_proposal->transactions()) {
-          const auto &hash = tx.hash();
-          log_->info("on proposal stateless success: {}", hash.hex());
-          this->publishStatus(TxStatusType::kStatelessValid, hash);
-        }
-      });
-
       // process stateful validation results
       pcs_->on_verified_proposal().subscribe(
           [this](std::shared_ptr<validation::VerifiedProposalAndErrors>
