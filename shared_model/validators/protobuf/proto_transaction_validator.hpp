@@ -47,14 +47,12 @@ namespace shared_model {
         Answer answer;
         std::string tx_reason_name = "Transaction ";
         ReasonsGroupType tx_reason(tx_reason_name, GroupedReasons());
-        try {
-          validateProtoTx(
-              dynamic_cast<const proto::Transaction &>(tx).getTransport(),
-              tx_reason);
-        } catch (std::bad_cast &) {
-          tx_reason.second.emplace_back(
-              "Non proto transaction is sent to proto validator");
-        }
+
+        // validate proto-backend of transaction
+        validateProtoTx(
+            static_cast<const proto::Transaction &>(tx).getTransport(),
+            tx_reason);
+
         if (not tx_reason.second.empty()) {
           answer.addReason(std::move(tx_reason));
           return answer;
