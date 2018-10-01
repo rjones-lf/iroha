@@ -74,5 +74,16 @@ namespace shared_model {
                          });
     }
 
+    TransactionBatch *TransactionBatchImpl::clone() const {
+      const auto &original_txs = this->transactions_;
+      types::SharedTxsCollectionType copy_txs;
+      std::for_each(std::begin(original_txs),
+                    std::end(original_txs),
+                    [&copy_txs](std::shared_ptr<Transaction> tx) {
+                      copy_txs.push_back(::clone(*tx));
+                    });
+      return new TransactionBatchImpl(std::move(copy_txs));
+    }
+
   }  // namespace interface
 }  // namespace shared_model

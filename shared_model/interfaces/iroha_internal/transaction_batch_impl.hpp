@@ -36,6 +36,9 @@ namespace shared_model {
           const shared_model::crypto::Signed &signed_blob,
           const shared_model::crypto::PublicKey &public_key) override;
 
+     protected:
+      TransactionBatch *clone() const override;
+
      private:
       types::SharedTxsCollectionType transactions_;
 
