@@ -420,9 +420,8 @@ TEST_F(TransactionProcessorTest, MultisigTransactionToMst) {
 
   auto &&after_mst = framework::batch::createBatchFromSingleTransaction(
       std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
-  EXPECT_CALL(*status_bus, publish(_)).Times(1);
-  EXPECT_CALL(*mst, propagateBatchImpl(_)).Times(1);
 
+  EXPECT_CALL(*mst, propagateBatchImpl(_)).Times(1);
   tp->batchHandle(std::move(after_mst));
 }
 
