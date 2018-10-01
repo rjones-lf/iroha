@@ -11,4 +11,5 @@ target_link_libraries(pending_txs_storage_test
     rxcpp
     pending_txs_storage
     shared_model_stateless_validation
+    shared_model_proto_backend
     )
