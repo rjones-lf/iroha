@@ -6,7 +6,6 @@
 #ifndef IROHA_PROTO_TRANSACTION_VALIDATOR_HPP
 #define IROHA_PROTO_TRANSACTION_VALIDATOR_HPP
 
-#include <typeinfo>
 #include "validators/transaction_validator.hpp"
 
 namespace shared_model {
