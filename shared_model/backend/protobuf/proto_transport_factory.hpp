@@ -24,7 +24,7 @@ namespace shared_model {
       using ValidatorType = std::unique_ptr<
           shared_model::validation::AbstractValidator<Interface>>;
 
-      ProtoTransportFactory(ValidatorType validator)
+      explicit ProtoTransportFactory(ValidatorType validator)
           : validator_(std::move(validator)) {}
 
       iroha::expected::Result<std::unique_ptr<Interface>, Error> build(

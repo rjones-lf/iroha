@@ -25,8 +25,7 @@ namespace {
         bool tx_has_meta = has_meta(tx), begin_has_meta = has_meta(*begin);
 
         return not(tx_has_meta and begin_has_meta)
-            or (tx_has_meta and begin_has_meta
-                and **meta(tx) != **meta(*begin));
+            or (**meta(tx) != **meta(*begin));
       });
 
       result.emplace_back(it(begin), it(next));
