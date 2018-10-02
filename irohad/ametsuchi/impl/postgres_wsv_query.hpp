@@ -105,8 +105,10 @@ namespace iroha {
           shared_model::interface::CommonObjectsFactory::FactoryResult<
               std::unique_ptr<T>> &&result);
 
-      /// Executes given lambda of type F, catches exceptions if any, logs the
-      /// message, and returns an optional rowset<T>
+      /**
+       * Executes given lambda of type F, catches exceptions if any, logs the
+       * message, and returns an optional rowset<T>
+       */
       template <typename T, typename F>
       auto execute(F &&f) -> boost::optional<soci::rowset<T>>;
 

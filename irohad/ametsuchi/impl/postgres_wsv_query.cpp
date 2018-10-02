@@ -58,7 +58,7 @@ namespace iroha {
     auto PostgresWsvQuery::execute(F &&f) -> boost::optional<soci::rowset<T>> {
       try {
         return soci::rowset<T>{std::forward<F>(f)()};
-      } catch (std::exception &e) {
+      } catch (const std::exception &e) {
         log_->error("Failed to execute query: {}", e.what());
         return boost::none;
       }
@@ -243,7 +243,7 @@ namespace iroha {
         return (
             sql_.prepare
                 << "SELECT domain_id, precision FROM asset WHERE asset_id = "
-                   ":account_id",
+                   ":asset_id",
             soci::use(asset_id));
       });
 
