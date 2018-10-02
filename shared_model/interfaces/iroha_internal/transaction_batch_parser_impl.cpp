@@ -19,17 +19,17 @@ namespace {
     auto begin = std::begin(range), end = std::end(range);
     while (begin != end) {
       auto next = std::find_if(std::next(begin), end, [begin](const auto &its) {
-        bool tx_has_meta = boost::get<0>(its).batchMeta(),
-             begin_has_meta = boost::get<0>(*begin).batchMeta();
+        auto get_meta = [](auto &tx) { return boost::get<0>(tx).batchMeta(); };
+        bool tx_has_meta = static_cast<bool>(get_meta(its)),
+             begin_has_meta = static_cast<bool>(get_meta(*begin));
 
         return not(tx_has_meta and begin_has_meta)
             or (tx_has_meta and begin_has_meta
-                and **boost::get<0>(its).batchMeta()
-                    != **boost::get<0>(*begin).batchMeta());
+                and **get_meta(its) != **get_meta(*begin));
       });
 
-      result.emplace_back(boost::get<1>(begin.get_iterator_tuple()),
-                          boost::get<1>(next.get_iterator_tuple()));
+      auto it = [](auto &p) { return boost::get<1>(p.get_iterator_tuple()); };
+      result.emplace_back(it(begin), it(next));
       begin = next;
     }
 
