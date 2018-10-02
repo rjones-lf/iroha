@@ -7,6 +7,7 @@
 
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/transport_builder.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 #include "validators/default_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"

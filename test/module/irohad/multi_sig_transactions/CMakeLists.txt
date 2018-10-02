@@ -54,4 +54,5 @@ target_link_libraries(gossip_propagation_strategy_test
     logger
     shared_model_cryptography
     shared_model_stateless_validation
+    shared_model_proto_backend
     )

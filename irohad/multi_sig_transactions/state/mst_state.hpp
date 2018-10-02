@@ -50,9 +50,7 @@ namespace iroha {
      * The function used to compare batches for equality:
      * check only hashes of batches, without signatures
      */
-    bool operator()(const DataType &left_tx, const DataType &right_tx) const {
-      return left_tx->reducedHash() == right_tx->reducedHash();
-    }
+    bool operator()(const DataType &left_tx, const DataType &right_tx) const;
   };
 
   /**
@@ -60,17 +58,9 @@ namespace iroha {
    * complete, if all transactions have at least quorum number of signatures
    */
   class DefaultCompleter : public Completer {
-    bool operator()(const DataType &batch) const override {
-      return std::all_of(batch->transactions().begin(),
-                         batch->transactions().end(),
-                         [](const auto &tx) {
-                           return boost::size(tx->signatures()) >= tx->quorum();
-                         });
-    }
+    bool operator()(const DataType &batch) const override;
 
-    bool operator()(const DataType &tx, const TimeType &time) const override {
-      return false;
-    }
+    bool operator()(const DataType &tx, const TimeType &time) const override;
   };
 
   using CompleterType = std::shared_ptr<const Completer>;
@@ -127,7 +117,7 @@ namespace iroha {
      * @return the batches from the state
      */
     std::unordered_set<DataType,
-                       iroha::model::PointerBatchHasher<DataType>,
+                       iroha::model::PointerBatchHasher,
                        BatchHashEquality>
     getBatches() const;
 
@@ -146,15 +136,12 @@ namespace iroha {
      */
     class Less {
      public:
-      bool operator()(const DataType &left, const DataType &right) const {
-        return left->transactions().at(0)->createdTime()
-            < right->transactions().at(0)->createdTime();
-      }
+      bool operator()(const DataType &left, const DataType &right) const;
     };
 
     using InternalStateType =
         std::unordered_set<DataType,
-                           iroha::model::PointerBatchHasher<DataType>,
+                           iroha::model::PointerBatchHasher,
                            BatchHashEquality>;
 
     using IndexType =
@@ -191,4 +178,5 @@ namespace iroha {
   };
 
 }  // namespace iroha
+
 #endif  // IROHA_MST_STATE_HPP
