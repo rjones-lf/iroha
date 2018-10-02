@@ -104,7 +104,7 @@ namespace iroha {
         bool uniqueVote(VoteMessage &vote);
 
         /**
-         * Verify that vote has the same round attached as the storage
+         * Verify that vote has the same hash attached as the storage
          * @param vote - vote to be checked
          * @return true, if validation passed
          */

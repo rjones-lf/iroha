@@ -38,10 +38,13 @@ namespace iroha {
           return iter;
         }
         // insert and return new
-        return block_storages_.emplace(block_storages_.end(),
-                                       store_hash,
-                                       peers_in_round_,
-                                       supermajority_checker_);
+        return block_storages_.emplace(
+            block_storages_.end(),
+            YacHash(store_hash.vote_round,
+                    store_hash.vote_hashes.proposal_hash,
+                    store_hash.vote_hashes.block_hash),
+            peers_in_round_,
+            supermajority_checker_);
       }
 
       // --------| public api |--------

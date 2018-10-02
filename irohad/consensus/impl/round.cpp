@@ -5,6 +5,7 @@
 
 #include "consensus/round.hpp"
 
+#include <boost/functional/hash.hpp>
 #include <tuple>
 #include <utility>
 
@@ -25,6 +26,13 @@ namespace iroha {
 
     bool Round::operator!=(const Round &rhs) const {
       return not(*this == rhs);
+    }
+
+    std::size_t RoundTypeHasher::operator()(const consensus::Round &val) const {
+      size_t seed = 0;
+      boost::hash_combine(seed, val.block_round);
+      boost::hash_combine(seed, val.reject_round);
+      return seed;
     }
   }  // namespace consensus
 }  // namespace iroha

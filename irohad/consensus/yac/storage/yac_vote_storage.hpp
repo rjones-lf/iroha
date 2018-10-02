@@ -113,7 +113,8 @@ namespace iroha {
         /**
          * Method provide state of processing for concrete proposal/block
          * @param round, in which that proposal/block is being voted
-         * @return value attached to parameter's round. Default is false.
+         * @return value attached to parameter's round. Default is
+         * kNotSentNotProcessed.
          */
         ProposalState getProcessingState(const Round &round);
 

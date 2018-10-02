@@ -22,6 +22,8 @@
 
 #include <boost/optional.hpp>
 
+#include "consensus/round.hpp"
+
 namespace iroha {
   namespace consensus {
     namespace yac {
@@ -34,20 +36,19 @@ namespace iroha {
       using BlockHash = std::string;
 
       /**
-       * Check that all votes in collection has same proposal hash
+       * Check that all votes in collection have the same key
        * @param votes - collection of votes
-       * @return true, if proposals same
+       * @return true, if rounds of those votes are the same
        */
-      bool sameProposals(const std::vector<VoteMessage> &votes);
+      bool sameKeys(const std::vector<VoteMessage> &votes);
 
       /**
-       * Provide hash common for whole collection
+       * Provide key common for whole collection
        * @param votes - collection with votes
-       * @return hash, if collection has same proposal hash,
+       * @return vote round, if collection shared the same round,
        * otherwise boost::none
        */
-      boost::optional<ProposalHash> getProposalHash(
-          const std::vector<VoteMessage> &votes);
+      boost::optional<Round> getKey(const std::vector<VoteMessage> &votes);
 
       /**
        * Get common hash from collection

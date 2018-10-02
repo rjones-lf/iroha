@@ -71,7 +71,8 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::Signature> block_signature;
 
         bool operator==(const YacHash &obj) const {
-          return vote_hashes.proposal_hash == obj.vote_hashes.proposal_hash
+          return vote_round == obj.vote_round
+              and vote_hashes.proposal_hash == obj.vote_hashes.proposal_hash
               and vote_hashes.block_hash == obj.vote_hashes.block_hash;
         };
 

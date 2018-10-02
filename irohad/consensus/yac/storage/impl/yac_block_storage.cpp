@@ -16,7 +16,6 @@
  */
 
 #include "consensus/yac/storage/yac_block_storage.hpp"
-#include "consensus/yac/yac_hash_provider.hpp"
 
 using namespace logger;
 

@@ -6,9 +6,8 @@
 #ifndef IROHA_ROUND_HPP
 #define IROHA_ROUND_HPP
 
+#include <cstddef>
 #include <cstdint>
-
-#include <boost/functional/hash.hpp>
 
 namespace iroha {
   namespace consensus {
@@ -46,12 +45,7 @@ namespace iroha {
      */
     class RoundTypeHasher {
      public:
-      std::size_t operator()(const consensus::Round &val) const {
-        size_t seed = 0;
-        boost::hash_combine(seed, val.block_round);
-        boost::hash_combine(seed, val.reject_round);
-        return seed;
-      }
+      std::size_t operator()(const consensus::Round &val) const;
     };
 
   }  // namespace consensus
