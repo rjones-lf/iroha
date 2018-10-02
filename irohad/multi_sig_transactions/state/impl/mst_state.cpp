@@ -9,7 +9,6 @@
 #include <boost/range/combine.hpp>
 #include <utility>
 
-#include "backend/protobuf/transaction.hpp"
 #include "common/set.hpp"
 
 namespace iroha {

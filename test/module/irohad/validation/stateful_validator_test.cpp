@@ -7,6 +7,7 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm_ext/push_back.hpp>
 
+#include "backend/protobuf/proto_proposal_factory.hpp"
 #include "common/result.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "interfaces/iroha_internal/batch_meta.hpp"
@@ -18,7 +19,6 @@
 #include "validation/impl/stateful_validator_impl.hpp"
 #include "validation/stateful_validator.hpp"
 #include "validation/utils.hpp"
-#include "backend/protobuf/proto_proposal_factory.hpp"
 
 using namespace iroha::validation;
 using namespace shared_model::crypto;
@@ -42,7 +42,7 @@ class SignaturesSubset : public testing::Test {
  * @then returned true
  */
 TEST_F(SignaturesSubset, Equal) {
-  std::array<SignatureMock, 3> signatures;
+  std::array<MockSignature, 3> signatures;
   for (size_t i = 0; i < signatures.size(); ++i) {
     EXPECT_CALL(signatures[i], publicKey())
         .WillRepeatedly(testing::ReturnRef(keys[i]));
@@ -58,7 +58,7 @@ TEST_F(SignaturesSubset, Equal) {
  */
 TEST_F(SignaturesSubset, Lesser) {
   std::vector<PublicKey> subkeys{keys.begin(), keys.end() - 1};
-  std::array<SignatureMock, 3> signatures;
+  std::array<MockSignature, 3> signatures;
   for (size_t i = 0; i < signatures.size(); ++i) {
     EXPECT_CALL(signatures[i], publicKey())
         .WillRepeatedly(testing::ReturnRef(keys[i]));
@@ -72,7 +72,7 @@ TEST_F(SignaturesSubset, Lesser) {
  * @then returned true
  */
 TEST_F(SignaturesSubset, StrictSubset) {
-  std::array<SignatureMock, 2> signatures;
+  std::array<MockSignature, 2> signatures;
   for (size_t i = 0; i < signatures.size(); ++i) {
     EXPECT_CALL(signatures[i], publicKey())
         .WillRepeatedly(testing::ReturnRef(keys[i]));
@@ -87,7 +87,7 @@ TEST_F(SignaturesSubset, StrictSubset) {
  */
 TEST_F(SignaturesSubset, PublickeyUniqueness) {
   std::vector<PublicKey> repeated_keys{2, keys[0]};
-  std::array<SignatureMock, 2> signatures;
+  std::array<MockSignature, 2> signatures;
   for (size_t i = 0; i < signatures.size(); ++i) {
     EXPECT_CALL(signatures[i], publicKey())
         .WillRepeatedly(testing::ReturnRef(keys[i]));

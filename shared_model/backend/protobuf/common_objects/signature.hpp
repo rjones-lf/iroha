@@ -6,8 +6,11 @@
 #ifndef IROHA_PROTO_SIGNATURE_HPP
 #define IROHA_PROTO_SIGNATURE_HPP
 
-#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/common_objects/signature.hpp"
+
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "cryptography/public_key.hpp"
+#include "cryptography/signed.hpp"
 #include "primitive.pb.h"
 
 namespace shared_model {

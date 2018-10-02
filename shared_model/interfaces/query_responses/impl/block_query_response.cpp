@@ -5,7 +5,9 @@
 
 #include "interfaces/query_responses/block_query_response.hpp"
 
-#include "utils/string_builder.hpp"
+#include "interfaces/query_responses/block_error_response.hpp"
+#include "interfaces/query_responses/block_response.hpp"
+#include "utils/visitor_apply_for_all.hpp"
 
 namespace shared_model {
   namespace interface {

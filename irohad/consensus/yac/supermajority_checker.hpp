@@ -18,6 +18,7 @@
 #ifndef IROHA_CONSENSUS_SUPERMAJORITY_CHECKER_HPP
 #define IROHA_CONSENSUS_SUPERMAJORITY_CHECKER_HPP
 
+#include <memory>
 #include <vector>
 
 #include "consensus/yac/yac_types.hpp"

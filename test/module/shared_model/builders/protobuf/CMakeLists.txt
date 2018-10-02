@@ -19,6 +19,7 @@ if (IROHA_ROOT_PROJECT)
   target_link_libraries(transport_builder_test
       shared_model_proto_builders
       shared_model_stateless_validation
+      shared_model_interfaces_factories
       )
 endif ()
 

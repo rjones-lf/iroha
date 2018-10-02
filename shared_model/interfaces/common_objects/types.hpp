@@ -24,11 +24,16 @@
 #include <vector>
 
 #include <boost/range/any_range.hpp>
-#include "cryptography/hash.hpp"
-#include "cryptography/public_key.hpp"
 #include "utils/swig_keyword_hider.hpp"
 
 namespace shared_model {
+
+  namespace crypto {
+    class Blob;
+    class Hash;
+    class PublicKey;
+    class Signed;
+  }  // namespace crypto
 
   namespace interface {
 
@@ -100,7 +105,7 @@ namespace shared_model {
       /// Type of the transfer message
       using DescriptionType = std::string;
 
-      enum class BatchType { ATOMIC = 0, ORDERED = 1};
+      enum class BatchType { ATOMIC = 0, ORDERED = 1 };
     }  // namespace types
   }    // namespace interface
 }  // namespace shared_model

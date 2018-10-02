@@ -17,5 +17,5 @@ add_library(mst_state
     )
 
 target_link_libraries(mst_state
-    model
+    logger
     )

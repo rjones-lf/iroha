@@ -9,6 +9,7 @@
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
+#include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "execution/query_execution_impl.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
@@ -16,6 +17,7 @@
 #include "multi_sig_transactions/mst_processor_stub.hpp"
 #include "multi_sig_transactions/mst_time_provider_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
+#include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "validators/field_validator.hpp"
 
@@ -306,13 +308,17 @@ void Irohad::initPendingTxsStorage() {
 void Irohad::initTransactionCommandService() {
   auto tx_processor = std::make_shared<TransactionProcessorImpl>(
       pcs, mst_processor, status_bus_);
-
-  command_service =
-      std::make_shared<::torii::CommandService>(tx_processor,
-                                                storage,
-                                                status_bus_,
-                                                std::chrono::seconds(1),
-                                                2 * proposal_delay_);
+  auto status_factory =
+      std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
+  command_service = std::make_shared<::torii::CommandServiceImpl>(
+      tx_processor, storage, status_bus_, status_factory);
+  command_service_transport =
+      std::make_shared<::torii::CommandServiceTransportGrpc>(
+          command_service,
+          status_bus_,
+          std::chrono::seconds(1),
+          2 * proposal_delay_,
+          status_factory);
 
   log_->info("[Init] => command service");
 }
@@ -350,7 +356,7 @@ void Irohad::run() {
       std::make_unique<ServerRunner>(ip + ":" + std::to_string(internal_port_));
 
   // Run torii server
-  (torii_server->append(command_service).append(query_service).run() |
+  (torii_server->append(command_service_transport).append(query_service).run() |
    [&](const auto &port) {
      log_->info("Torii server bound on port {}", port);
      if (is_mst_supported_) {
