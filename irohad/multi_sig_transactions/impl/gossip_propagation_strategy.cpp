@@ -43,7 +43,7 @@ namespace iroha {
                       auto range = boost::irange(0u, amount);
                       // push until find empty element
                       std::find_if_not(
-                          range.begin(), range.end(), [this, &vec](auto) {
+                          range.begin(), range.end(), [this, &vec](int) {
                             return this->visit() | [&vec](auto e) -> bool {
                               vec.push_back(e);
                               return true;  // proceed

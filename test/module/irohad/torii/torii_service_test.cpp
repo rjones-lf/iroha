@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "endpoint.pb.h"
 #include "main/server_runner.hpp"
@@ -16,7 +17,8 @@
 #include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "torii/command_client.hpp"
-#include "torii/command_service.hpp"
+#include "torii/impl/command_service_impl.hpp"
+#include "torii/impl/command_service_transport_grpc.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 
@@ -25,6 +27,7 @@ constexpr size_t TimesToriiBlocking = 5;
 using ::testing::_;
 using ::testing::A;
 using ::testing::AtLeast;
+using ::testing::HasSubstr;
 using ::testing::Return;
 
 using namespace iroha::network;
@@ -57,19 +60,17 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
           verified_prop_notifier)
       : prop_notifier_(prop_notifier),
         commit_notifier_(commit_notifier),
-        verified_prop_notifier_(verified_prop_notifier){};
-
-  void propagate_transaction(
-      std::shared_ptr<const shared_model::interface::Transaction> transaction)
-      const override {}
+        verified_prop_notifier_(verified_prop_notifier) {}
 
   void propagate_batch(
-      const shared_model::interface::TransactionBatch &batch) const override {}
+      std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+      const override {}
 
   rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
   on_proposal() const override {
     return prop_notifier_.get_observable();
   }
+
   rxcpp::observable<SynchronizationEvent> on_commit() const override {
     return commit_notifier_.get_observable();
   }
@@ -78,7 +79,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
   on_verified_proposal() const override {
     return verified_prop_notifier_.get_observable();
-  };
+  }
 
  private:
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
@@ -117,12 +118,16 @@ class ToriiServiceTest : public testing::Test {
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     //----------- Server run ----------------
+    auto status_factory =
+        std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     runner
-        ->append(std::make_unique<torii::CommandService>(tx_processor,
-                                                         storage,
-                                                         status_bus,
-                                                         initial_timeout,
-                                                         nonfinal_timeout))
+        ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
+            std::make_shared<torii::CommandServiceImpl>(
+                tx_processor, storage, status_bus, status_factory),
+            status_bus,
+            initial_timeout,
+            nonfinal_timeout,
+            status_factory))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -276,7 +281,7 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
     client2.Status(tx_request, toriiResponse);
 
     ASSERT_EQ(toriiResponse.tx_status(),
-              iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+              iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED);
   }
 
   // create block from the all transactions but the last one
@@ -505,7 +510,8 @@ TEST_F(ToriiServiceTest, StreamingNoTx) {
  *
  * @given torii service and collection of transactions
  * @when that collection is asked to be processed by Torii
- * @then statuses of all transactions from that request are STATELESS_VALID
+ * @then statuses of all transactions from that request are
+ * ENOUGH_SIGNATURES_COLLECTED
  */
 TEST_F(ToriiServiceTest, ListOfTxs) {
   const auto test_txs_number = 5;
@@ -546,11 +552,11 @@ TEST_F(ToriiServiceTest, ListOfTxs) {
         do {
           client.Status(tx_request, toriiResponse);
         } while (toriiResponse.tx_status()
-                     != iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS
+                     != iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED
                  and --resub_counter);
 
         ASSERT_EQ(toriiResponse.tx_status(),
-                  iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+                  iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED);
       });
 }
 
@@ -588,19 +594,9 @@ TEST_F(ToriiServiceTest, FailedListOfTxs) {
   // send the txs
   client.ListTorii(tx_list);
 
-  // actual error message is too big and hardly predictable, so we want at least
-  // to make sure that edges of tx list are right
-  auto error_msg_beginning =
-      "Stateless invalid tx in transaction sequence, beginning "
-      "with tx : "
-      + tx_hashes.front().hex() + " and ending with tx "
-      + tx_hashes.back().hex();
-
   // check their statuses
   std::for_each(
-      std::begin(tx_hashes),
-      std::end(tx_hashes),
-      [&client, &error_msg_beginning](auto &hash) {
+      std::begin(tx_hashes), std::end(tx_hashes), [&client](auto &hash) {
         iroha::protocol::TxStatusRequest tx_request;
         tx_request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
         iroha::protocol::ToriiResponse toriiResponse;
@@ -611,11 +607,11 @@ TEST_F(ToriiServiceTest, FailedListOfTxs) {
                      != iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED
                  and --resub_counter);
 
-        auto error_beginning = toriiResponse.error_message().substr(
-            0, toriiResponse.error_message().find_first_of('.'));
-
         ASSERT_EQ(toriiResponse.tx_status(),
                   iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
-        ASSERT_EQ(error_beginning, error_msg_beginning);
+        auto msg = toriiResponse.error_message();
+        ASSERT_THAT(toriiResponse.error_message(),
+                    HasSubstr("bad timestamp: sent from future"));
+        ASSERT_NE(msg.find(hash.hex()), std::string::npos);
       });
 }

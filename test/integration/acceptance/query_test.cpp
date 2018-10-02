@@ -65,12 +65,12 @@ TEST_F(QueryAcceptanceTest, ParallelBlockQuery) {
 
   IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .checkBlock(
+      .sendTxAwait(
+          makeUserWithPerms(),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(dummy_tx)
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
+      .sendTxAwait(dummy_tx, [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
+      });
 
   const auto num_queries = 5;
   const auto hash = dummy_tx.hash();

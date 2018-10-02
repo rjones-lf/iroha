@@ -48,6 +48,7 @@ namespace iroha {
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
                 shared_model::validation::FieldValidator>>();
         query = std::make_unique<PostgresWsvQuery>(*sql, factory);
+        PostgresCommandExecutor::prepareStatements(*sql);
         executor = std::make_unique<PostgresCommandExecutor>(*sql);
 
         *sql << init_;
@@ -104,7 +105,6 @@ namespace iroha {
       std::unique_ptr<shared_model::interface::Account> account;
       std::unique_ptr<shared_model::interface::Domain> domain;
       std::unique_ptr<shared_model::interface::types::PubkeyType> pubkey;
-
       std::unique_ptr<soci::session> sql;
 
       std::unique_ptr<shared_model::interface::Command> command;
@@ -961,6 +961,23 @@ namespace iroha {
               account->accountId(), pk)))));
     }
 
+    /**
+     * @given  command
+     * @when trying to remove signatory from a non existing account
+     * @then signatory is not removed
+     */
+    TEST_F(RemoveSignatory, RemoveSignatoryTestNonExistingAccount) {
+      addAllPerms();
+      shared_model::interface::types::PubkeyType pk(std::string('5', 32));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+                          account->accountId(), pk)),
+                      true)));
+
+      ASSERT_TRUE(err(execute(buildCommand(
+          TestTransactionBuilder().removeSignatory("hello", *pubkey)))));
+    }
+
     class RevokePermission : public CommandExecutorTest {
      public:
       void SetUp() override {
@@ -1008,6 +1025,10 @@ namespace iroha {
           account->accountId(), account->accountId(), perm));
 
       ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder()
+              .revokePermission(account->accountId(), grantable_permission)
+              .creatorAccountId(account->accountId())))));
+      ASSERT_TRUE(err(execute(buildCommand(
           TestTransactionBuilder()
               .revokePermission(account->accountId(), grantable_permission)
               .creatorAccountId(account->accountId())))));

@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
+
 #include <gmock/gmock.h>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/irange.hpp>
 #include "framework/batch_helper.hpp"
 #include "framework/result_fixture.hpp"
-#include "interfaces/iroha_internal/transaction_sequence.hpp"
 
 using namespace shared_model;
 using ::testing::_;
@@ -42,8 +43,9 @@ TEST(TransactionSequenceTest, CreateTransactionSequenceWhenValid) {
                      std::vector<shared_model::interface::types::HashType>{})
           .build()));
 
-  auto tx_sequence = interface::TransactionSequence::createTransactionSequence(
-      transactions, tx_collection_validator);
+  auto tx_sequence =
+      interface::TransactionSequenceFactory::createTransactionSequence(
+          transactions, tx_collection_validator);
 
   ASSERT_TRUE(framework::expected::val(tx_sequence));
 }
@@ -61,8 +63,9 @@ TEST(TransactionSequenceTest, CreateTransactionSequenceWhenInvalid) {
       clone(framework::batch::prepareTransactionBuilder("invalid@#account#name")
                 .build()));
 
-  auto tx_sequence = interface::TransactionSequence::createTransactionSequence(
-      std::vector<decltype(tx)>{tx, tx, tx}, tx_collection_validator);
+  auto tx_sequence =
+      interface::TransactionSequenceFactory::createTransactionSequence(
+          std::vector<decltype(tx)>{tx, tx, tx}, tx_collection_validator);
 
   ASSERT_TRUE(framework::expected::err(tx_sequence));
 }
@@ -103,8 +106,8 @@ TEST(TransactionSequenceTest, CreateBatches) {
   }
 
   auto tx_sequence_opt =
-      interface::TransactionSequence::createTransactionSequence(tx_collection,
-                                                                txs_validator);
+      interface::TransactionSequenceFactory::createTransactionSequence(
+          tx_collection, txs_validator);
 
   auto tx_sequence = framework::expected::val(tx_sequence_opt);
   ASSERT_TRUE(tx_sequence)
@@ -115,7 +118,7 @@ TEST(TransactionSequenceTest, CreateBatches) {
 
   size_t total_transactions = boost::accumulate(
       tx_sequence->value.batches(), 0ul, [](auto sum, const auto &batch) {
-        return sum + boost::size(batch.transactions());
+        return sum + boost::size(batch->transactions());
       });
   ASSERT_EQ(total_transactions,
             batches_number * txs_in_batch + single_transactions);

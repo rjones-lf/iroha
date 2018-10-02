@@ -32,13 +32,12 @@ class MutableStorageTest : public AmetsuchiTest,
     AmetsuchiTest::TearDown();
   };
 
-  shared_model::interface::BlockVariant getBlock() {
-    return std::make_shared<shared_model::proto::Block>(
-        TestBlockBuilder()
-            .transactions(std::vector<shared_model::proto::Transaction>({}))
-            .height(1)
-            .prevHash(fake_hash)
-            .build());
+  auto getBlock() {
+    return TestBlockBuilder()
+        .transactions(std::vector<shared_model::proto::Transaction>({}))
+        .height(1)
+        .prevHash(fake_hash)
+        .build();
   }
 
   std::string zero_string{32, '0'};

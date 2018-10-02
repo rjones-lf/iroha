@@ -20,7 +20,6 @@
 
 #include <rxcpp/rx-observable.hpp>
 
-#include "interfaces/iroha_internal/block_variant.hpp"
 #include "network/peer_communication_service.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 
@@ -36,7 +35,7 @@ namespace iroha {
        * Processing last committed block
        */
       virtual void process_commit(
-          const shared_model::interface::BlockVariant &commit_message) = 0;
+          std::shared_ptr<shared_model::interface::Block> commit_message) = 0;
 
       /**
        * After synchronization this observable emits zero or more blocks plus

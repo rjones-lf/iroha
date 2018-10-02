@@ -63,9 +63,34 @@ class IrohadTest : public AcceptanceFixture {
   }
 
   void launchIroha() {
-    iroha_process_.emplace(irohad_executable.string() + setDefaultParams());
+    launchIroha(setDefaultParams());
+  }
+
+  void launchIroha(const std::string &parameters) {
+    iroha_process_.emplace(irohad_executable.string() + parameters);
     std::this_thread::sleep_for(kTimeout);
     ASSERT_TRUE(iroha_process_->running());
+  }
+
+  void launchIroha(const boost::optional<std::string> &config_path,
+                   const boost::optional<std::string> &genesis_block,
+                   const boost::optional<std::string> &keypair_path,
+                   const boost::optional<std::string> &additional_params) {
+    launchIroha(
+        params(config_path, genesis_block, keypair_path, additional_params));
+  }
+
+  int getBlockCount() {
+    int block_count = 0;
+
+    for (directory_iterator itr(blockstore_path_); itr != directory_iterator();
+         ++itr) {
+      if (is_regular_file(itr->path())) {
+        ++block_count;
+      }
+    }
+
+    return block_count;
   }
 
   void TearDown() override {
@@ -80,16 +105,63 @@ class IrohadTest : public AcceptanceFixture {
 
   std::string params(const boost::optional<std::string> &config_path,
                      const boost::optional<std::string> &genesis_block,
-                     const boost::optional<std::string> &keypair_path) {
+                     const boost::optional<std::string> &keypair_path,
+                     const boost::optional<std::string> &additional_params) {
     std::string res;
     config_path | [&res](auto &&s) { res += " --config " + s; };
     genesis_block | [&res](auto &&s) { res += " --genesis_block " + s; };
     keypair_path | [&res](auto &&s) { res += " --keypair_name " + s; };
+    additional_params | [&res](auto &&s) { res += " " + s; };
     return res;
   }
 
   std::string setDefaultParams() {
-    return params(config_copy_, path_genesis_.string(), path_keypair_.string());
+    return params(
+        config_copy_, path_genesis_.string(), path_keypair_.string(), {});
+  }
+
+  /**
+   * Send default transaction with given key pair.
+   * Method will wait until transaction reach COMMITTED status
+   * OR until limit of attempts is exceeded.
+   * @param key_pair Key pair for signing transaction
+   * @return Response object from Torii
+   */
+  iroha::protocol::ToriiResponse sendDefaultTx(
+      const shared_model::crypto::Keypair &key_pair) {
+    iroha::protocol::TxStatusRequest tx_request;
+    iroha::protocol::ToriiResponse torii_response;
+
+    auto tx = complete(baseTx(kAdminId).setAccountQuorum(kAdminId, 1),
+                       key_pair);
+    tx_request.set_tx_hash(shared_model::crypto::toBinaryString(tx.hash()));
+
+    auto client = torii::CommandSyncClient(kAddress, kPort);
+    client.Torii(tx.getTransport());
+
+    auto resub_counter(resubscribe_attempts);
+    constexpr auto committed_status = iroha::protocol::TxStatus::COMMITTED;
+    do {
+      std::this_thread::sleep_for(resubscribe_timeout);
+      client.Status(tx_request, torii_response);
+    } while (torii_response.tx_status() != committed_status
+             and --resub_counter);
+
+    return torii_response;
+  }
+
+  /**
+   * Sending default transaction and assert that it was finished with
+   * COMMITED status.
+   * Method will wait until transaction reach COMMITTED status
+   * OR until limit of attempts is exceeded.
+   * @param key_pair Key pair for signing transaction
+   */
+  void sendDefaultTxAndCheck(
+      const shared_model::crypto::Keypair &key_pair) {
+    iroha::protocol::ToriiResponse torii_response;
+    torii_response = sendDefaultTx(key_pair);
+    ASSERT_EQ(torii_response.tx_status(), iroha::protocol::TxStatus::COMMITTED);
   }
 
  private:
@@ -176,28 +248,13 @@ TEST_F(IrohadTest, RunIrohad) {
  */
 TEST_F(IrohadTest, SendTx) {
   launchIroha();
+
   auto key_manager = iroha::KeysManagerImpl(kAdminId, path_example_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 
-  iroha::protocol::TxStatusRequest tx_request;
-  iroha::protocol::ToriiResponse torii_response;
-
-  auto tx =
-      complete(baseTx(kAdminId).setAccountQuorum(kAdminId, 1), key_pair.get());
-  tx_request.set_tx_hash(shared_model::crypto::toBinaryString(tx.hash()));
-
-  auto client = torii::CommandSyncClient(kAddress, kPort);
-  client.Torii(tx.getTransport());
-
-  auto resub_counter(resubscribe_attempts);
-  const auto committed_status = iroha::protocol::TxStatus::COMMITTED;
-  do {
-    std::this_thread::sleep_for(resubscribe_timeout);
-    client.Status(tx_request, torii_response);
-  } while (torii_response.tx_status() != committed_status and --resub_counter);
-
-  ASSERT_EQ(torii_response.tx_status(), committed_status);
+  SCOPED_TRACE("From send transaction test");
+  sendDefaultTxAndCheck(key_pair.get());
 }
 
 /**
@@ -223,4 +280,68 @@ TEST_F(IrohadTest, SendQuery) {
         framework::SpecifiedVisitor<shared_model::interface::RolesResponse>(),
         resp.get());
   });
+}
+
+/**
+ * Test verifies that after restarting with --overwrite-ledger flag Iroha
+ * contain single genesis block in storage and Iroha can accept and serve
+ * transactions
+ * @given an Iroha with some transactions commited ontop of the genesis
+ * block
+ * @when the Iroha is restarted with --overwrite-ledger flag
+ * @then the Iroha started with single genesis block in storage
+ *  AND the Iroha accepts and able to commit new transactions
+ */
+TEST_F(IrohadTest, RestartWithOverwriteLedger) {
+  launchIroha();
+
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, path_example_);
+  auto key_pair = key_manager.loadKeys();
+  ASSERT_TRUE(key_pair);
+
+  SCOPED_TRACE("From restart with --overwrite-ledger flag test");
+  sendDefaultTxAndCheck(key_pair.get());
+
+  iroha_process_->terminate();
+
+  launchIroha(config_copy_,
+              path_genesis_.string(),
+              path_keypair_.string(),
+              std::string("--overwrite-ledger"));
+
+  ASSERT_EQ(getBlockCount(), 1);
+
+  SCOPED_TRACE("From restart with --overwrite-ledger flag test");
+  sendDefaultTxAndCheck(key_pair.get());
+}
+
+/**
+ * Test verifies that Iroha can accept and serve transactions after usual
+ * restart
+ * @given an Iroha with some transactions commited ontop of the genesis
+ * block
+ * @when the Iroha is restarted without --overwrite-ledger flag
+ * @then the state is successfully restored
+ *  AND the Iroha accepts and able to commit new transactions
+ */
+TEST_F(IrohadTest, RestartWithoutResetting) {
+  launchIroha();
+
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, path_example_);
+  auto key_pair = key_manager.loadKeys();
+  ASSERT_TRUE(key_pair);
+
+  SCOPED_TRACE("From restart without resetting test");
+  sendDefaultTxAndCheck(key_pair.get());
+
+  int height = getBlockCount();
+
+  iroha_process_->terminate();
+
+  launchIroha(config_copy_, {}, path_keypair_.string(), {});
+
+  ASSERT_EQ(getBlockCount(), height);
+
+  SCOPED_TRACE("From restart without resetting test");
+  sendDefaultTxAndCheck(key_pair.get());
 }

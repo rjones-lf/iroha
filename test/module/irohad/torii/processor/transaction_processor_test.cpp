@@ -9,7 +9,7 @@
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
-#include "interfaces/iroha_internal/transaction_sequence.hpp"
+#include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
@@ -39,8 +39,6 @@ class TransactionProcessorTest : public ::testing::Test {
     pcs = std::make_shared<MockPeerCommunicationService>();
     mp = std::make_shared<MockMstProcessor>();
 
-    EXPECT_CALL(*pcs, on_proposal())
-        .WillRepeatedly(Return(prop_notifier.get_observable()));
     EXPECT_CALL(*pcs, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
     EXPECT_CALL(*pcs, on_verified_proposal())
@@ -126,8 +124,6 @@ class TransactionProcessorTest : public ::testing::Test {
       shared_model::proto::TransactionStatusBuilder>
       status_builder;
 
-  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
-      prop_notifier;
   rxcpp::subjects::subject<SynchronizationEvent> commit_notifier;
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
@@ -140,15 +136,14 @@ class TransactionProcessorTest : public ::testing::Test {
  * @given transaction processor
  * @when transactions passed to processor compose proposal which is sent to peer
  * communication service
- * @then for every transaction in batches STATELESS_VALID status is returned
+ * @then for every transaction in batches ENOUGH_SIGNATURES_COLLECTED status is
+ * returned
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
   std::vector<shared_model::proto::Transaction> txs;
   for (size_t i = 0; i < proposal_size; i++) {
     auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
     txs.push_back(tx);
-    status_map[tx.hash()] =
-        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   EXPECT_CALL(*status_bus, publish(_))
@@ -169,18 +164,16 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
       TestProposalBuilder().transactions(txs).build());
 
-  prop_notifier.get_subscriber().on_next(proposal);
-  prop_notifier.get_subscriber().on_completed();
-
-  SCOPED_TRACE("Stateless valid status verification");
-  validateStatuses<shared_model::interface::StatelessValidTxResponse>(txs);
+  SCOPED_TRACE("Enough signatures collected status verification");
+  validateStatuses<shared_model::interface::EnoughSignaturesCollectedResponse>(
+      txs);
 }
 
 /**
  * @given transactions from the same batch
  * @when transactions sequence is created and propagated
  * AND all transactions were returned by pcs in proposal notifier
- * @then all transactions in batches have stateless valid status
+ * @then all transactions in batches have ENOUGH_SIGNATURES_COLLECTED status
  */
 TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
   using namespace shared_model::validation;
@@ -196,8 +189,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
       }));
 
   auto transaction_sequence_result =
-      shared_model::interface::TransactionSequence::createTransactionSequence(
-          transactions, TxsValidator());
+      shared_model::interface::TransactionSequenceFactory::
+          createTransactionSequence(transactions, TxsValidator());
   auto transaction_sequence =
       framework::expected::val(transaction_sequence_result).value().value;
 
@@ -223,11 +216,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
       TestProposalBuilder().transactions(proto_transactions).build());
 
-  prop_notifier.get_subscriber().on_next(proposal);
-  prop_notifier.get_subscriber().on_completed();
-
-  SCOPED_TRACE("Stateless valid status verification");
-  validateStatuses<shared_model::interface::StatelessValidTxResponse>(
+  SCOPED_TRACE("Enough signatures collected status verification");
+  validateStatuses<shared_model::interface::EnoughSignaturesCollectedResponse>(
       proto_transactions);
 }
 
@@ -242,8 +232,6 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   for (size_t i = 0; i < proposal_size; i++) {
     auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
     txs.push_back(tx);
-    status_map[tx.hash()] =
-        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   EXPECT_CALL(*status_bus, publish(_))
@@ -264,9 +252,6 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
       TestProposalBuilder().transactions(txs).build());
 
-  prop_notifier.get_subscriber().on_next(proposal);
-  prop_notifier.get_subscriber().on_completed();
-
   // empty transactions errors - all txs are valid
   verified_prop_notifier.get_subscriber().on_next(
       std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
@@ -286,7 +271,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   // Note blocks_notifier hasn't invoked on_completed, so
   // transactions are not commited
 
-  SCOPED_TRACE("Stateful valid status verification");
+  SCOPED_TRACE("Stateful Valid status verification");
   validateStatuses<shared_model::interface::StatefulValidTxResponse>(txs);
 }
 
@@ -302,8 +287,6 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   for (size_t i = 0; i < proposal_size; i++) {
     auto &&tx = addSignaturesFromKeyPairs(baseTestTx(), makeKey());
     txs.push_back(tx);
-    status_map[tx.hash()] =
-        status_builder.notReceived().txHash(tx.hash()).build();
   }
 
   EXPECT_CALL(*status_bus, publish(_))
@@ -323,9 +306,6 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   // 1. Create proposal and notify transaction processor about it
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
       TestProposalBuilder().transactions(txs).build());
-
-  prop_notifier.get_subscriber().on_next(proposal);
-  prop_notifier.get_subscriber().on_completed();
 
   // empty transactions errors - all txs are valid
   verified_prop_notifier.get_subscriber().on_next(
@@ -380,7 +360,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
   // Plus all transactions from block will
   // be committed and corresponding status will be sent
   EXPECT_CALL(*status_bus, publish(_))
-      .Times(proposal_size * 2 + block_size)
+      .Times(proposal_size + block_size)
       .WillRepeatedly(testing::Invoke([this](auto response) {
         status_map[response->transactionHash()] = response;
       }));
@@ -389,9 +369,6 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
       TestProposalBuilder()
           .transactions(boost::join(block_txs, invalid_txs))
           .build());
-
-  prop_notifier.get_subscriber().on_next(proposal);
-  prop_notifier.get_subscriber().on_completed();
 
   // trigger the verified event with txs, which we want to fail, as errors
   auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
@@ -434,11 +411,12 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
  * @when transaction_processor handle the batch
  * @then checks that batch is relayed to MST
  */
-TEST_F(TransactionProcessorTest, MultisigTransactionToMST) {
+TEST_F(TransactionProcessorTest, MultisigTransactionToMst) {
   auto &&tx = addSignaturesFromKeyPairs(baseTestTx(2), makeKey());
 
   auto &&after_mst = framework::batch::createBatchFromSingleTransaction(
       std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
+  EXPECT_CALL(*status_bus, publish(_)).Times(1);
   EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(1);
 
   tp->batchHandle(std::move(after_mst));
@@ -457,15 +435,16 @@ TEST_F(TransactionProcessorTest, MultisigTransactionFromMst) {
   auto &&after_mst = framework::batch::createBatchFromSingleTransaction(
       std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
 
+  EXPECT_CALL(*status_bus, publish(_)).Times(1);
   EXPECT_CALL(*pcs, propagate_batch(_)).Times(1);
-  mst_prepared_notifier.get_subscriber().on_next(
-      std::make_shared<shared_model::interface::TransactionBatch>(after_mst));
+  mst_prepared_notifier.get_subscriber().on_next(after_mst);
 }
 
 /**
  * @given valid multisig tx
  * @when transaction_processor handle it
- * @then ensure after expiring it leads to MST_EXPIRED status
+ * @then before expiring it will have MST_PENDING status @and after expiring
+ * MST_EXPIRED status
  */
 TEST_F(TransactionProcessorTest, MultisigExpired) {
   EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(1);
@@ -483,11 +462,16 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
       .WillOnce(testing::Invoke([](auto response) {
         ASSERT_NO_THROW(boost::apply_visitor(
             framework::SpecifiedVisitor<
+                shared_model::interface::MstPendingResponse>(),
+            response->get()));
+      }))
+      .WillOnce(testing::Invoke([](auto response) {
+        ASSERT_NO_THROW(boost::apply_visitor(
+            framework::SpecifiedVisitor<
                 shared_model::interface::MstExpiredResponse>(),
             response->get()));
       }));
   tp->batchHandle(framework::batch::createBatchFromSingleTransaction(tx));
   mst_expired_notifier.get_subscriber().on_next(
-      std::make_shared<shared_model::interface::TransactionBatch>(
-          framework::batch::createBatchFromSingleTransaction(tx)));
+      framework::batch::createBatchFromSingleTransaction(tx));
 }

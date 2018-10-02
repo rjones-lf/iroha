@@ -9,15 +9,15 @@
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
+#include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/mst_processor_stub.hpp"
 #include "multi_sig_transactions/mst_time_provider_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
-#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
+#include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
-#include "validators/block_variant_validator.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace iroha;
@@ -183,7 +183,14 @@ void Irohad::initOrderingGate() {
  */
 void Irohad::initSimulator() {
   auto block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory>(
-      std::make_unique<shared_model::validation::BlockVariantValidator>());
+      //  Block factory in simulator uses UnsignedBlockValidator because it is
+      //  not required to check signatures of block here, as they will be
+      //  checked when supermajority of peers will sign the block. It is also
+      //  not required to validate signatures of transactions here because they
+      //  are validated in the ordering gate, where they are received from the
+      //  ordering service.
+      std::make_unique<
+          shared_model::validation::DefaultUnsignedBlockValidator>());
   simulator = std::make_shared<Simulator>(ordering_gate,
                                           stateful_validator,
                                           storage,
@@ -265,7 +272,7 @@ void Irohad::initStatusBus() {
 
 void Irohad::initMstProcessor() {
   if (is_mst_supported_) {
-    auto mst_transport = std::make_shared<MstTransportGrpc>(
+    mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
         async_call_, common_objects_factory_);
     auto mst_completer = std::make_shared<DefaultCompleter>();
     auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
@@ -276,8 +283,10 @@ void Irohad::initMstProcessor() {
         std::chrono::seconds(5) /*emitting period*/,
         2 /*amount per once*/);
     auto mst_time = std::make_shared<MstTimeProviderImpl>();
-    mst_processor = std::make_shared<FairMstProcessor>(
+    auto fair_mst_processor = std::make_shared<FairMstProcessor>(
         mst_transport, mst_storage, mst_propagation, mst_time);
+    mst_processor = fair_mst_processor;
+    mst_transport->subscribe(fair_mst_processor);
   } else {
     mst_processor = std::make_shared<MstProcessorStub>();
   }
@@ -298,13 +307,17 @@ void Irohad::initPendingTxsStorage() {
 void Irohad::initTransactionCommandService() {
   auto tx_processor = std::make_shared<TransactionProcessorImpl>(
       pcs, mst_processor, status_bus_);
-
-  command_service =
-      std::make_shared<::torii::CommandService>(tx_processor,
-                                                storage,
-                                                status_bus_,
-                                                std::chrono::seconds(1),
-                                                2 * proposal_delay_);
+  auto status_factory =
+      std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
+  command_service = std::make_shared<::torii::CommandServiceImpl>(
+      tx_processor, storage, status_bus_, status_factory);
+  command_service_transport =
+      std::make_shared<::torii::CommandServiceTransportGrpc>(
+          command_service,
+          status_bus_,
+          std::chrono::seconds(1),
+          2 * proposal_delay_,
+          status_factory);
 
   log_->info("[Init] => command service");
 }
@@ -341,9 +354,12 @@ void Irohad::run() {
       std::make_unique<ServerRunner>(ip + ":" + std::to_string(internal_port_));
 
   // Run torii server
-  (torii_server->append(command_service).append(query_service).run() |
+  (torii_server->append(command_service_transport).append(query_service).run() |
    [&](const auto &port) {
      log_->info("Torii server bound on port {}", port);
+     if (is_mst_supported_) {
+       internal_server->append(mst_transport);
+     }
      // Run internal server
      return internal_server->append(ordering_init.ordering_gate_transport)
          .append(ordering_init.ordering_service_transport)
@@ -357,4 +373,10 @@ void Irohad::run() {
             log_->info("===> iroha initialized");
           },
           [&](const expected::Error<std::string> &e) { log_->error(e.error); });
+}
+
+Irohad::~Irohad() {
+  // TODO andrei 17.09.18: IR-1710 Verify that all components' destructors are
+  // called in irohad destructor
+  storage->freeConnections();
 }

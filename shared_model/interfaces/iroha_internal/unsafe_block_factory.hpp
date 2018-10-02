@@ -6,7 +6,7 @@
 #ifndef IROHA_UNSAFE_BLOCK_FACTORY_HPP
 #define IROHA_UNSAFE_BLOCK_FACTORY_HPP
 
-#include "interfaces/iroha_internal/block_variant.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -15,15 +15,15 @@ namespace shared_model {
      */
     class UnsafeBlockFactory {
      public:
-       /**
-        * Create block without any validation
-        * @param height - block height
-        * @param prev_hash - hash of the previous block
-        * @param created_time - time the block is created
-        * @param txs - list of transactions. If it empty, EmptyBlock is creted
-        * @return BlockVariant with block or empty block
-        */
-      virtual BlockVariant unsafeCreateBlock(
+      /**
+       * Create block without any validation
+       * @param height - block height
+       * @param prev_hash - hash of the previous block
+       * @param created_time - time the block is created
+       * @param txs - list of transactions. If it empty, EmptyBlock is creted
+       * @return BlockVariant with block or empty block
+       */
+      virtual std::unique_ptr<Block> unsafeCreateBlock(
           types::HeightType height,
           const types::HashType &prev_hash,
           types::TimestampType created_time,

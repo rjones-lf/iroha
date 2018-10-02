@@ -71,11 +71,9 @@ TEST_F(HeavyTransactionTest, DISABLED_ManyLargeTxes) {
     itf.sendTx(complete(setAcountDetailTx("foo_" + std::to_string(i),
                                           generateData(2 * 1024 * 1024))));
   }
-  itf.skipProposal()
-      .checkBlock([&](auto &b) {
-        ASSERT_EQ(b->transactions().size(), number_of_txes + 1);
-      })
-      .done();
+  itf.skipProposal().skipVerifiedProposal().checkBlock([&](auto &b) {
+    ASSERT_EQ(b->transactions().size(), number_of_txes + 1);
+  });
 }
 
 /**
@@ -94,11 +92,12 @@ TEST_F(HeavyTransactionTest, DISABLED_VeryLargeTxWithManyCommands) {
   IntegrationTestFramework(2)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
-      .sendTx(complete(large_tx_builder))
       .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 2); })
-      .done();
+      .skipVerifiedProposal()
+      .skipBlock()
+      .sendTxAwait(complete(large_tx_builder), [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 2);
+      });
 }
 
 /**
@@ -140,14 +139,12 @@ TEST_F(HeavyTransactionTest, DISABLED_QueryLargeData) {
   itf.setInitialState(kAdminKeypair).sendTx(makeUserWithPerms());
 
   for (auto i = 0u; i < number_of_times; ++i) {
-    itf.sendTx(complete(setAcountDetailTx(name_generator(i), data)))
-        .skipProposal()
-        .checkBlock(
-            [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
+    itf.sendTxAwait(
+        complete(setAcountDetailTx(name_generator(i), data)),
+        [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
   }
 
   // The query works fine only with ITF. It doesn't work in production version
   // of Iroha
-  itf.sendQuery(complete(baseQuery().getAccount(kUserId)), query_checker)
-      .done();
+  itf.sendQuery(complete(baseQuery().getAccount(kUserId)), query_checker);
 }

@@ -30,6 +30,7 @@
 #include "main/server_runner.hpp"
 #include "mst.grpc.pb.h"
 #include "multi_sig_transactions/mst_processor.hpp"
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/impl/peer_communication_service_impl.hpp"
@@ -41,6 +42,7 @@
 #include "synchronizer/impl/synchronizer_impl.hpp"
 #include "synchronizer/synchronizer.hpp"
 #include "torii/command_service.hpp"
+#include "torii/impl/command_service_transport_grpc.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 #include "torii/query_service.hpp"
@@ -107,7 +109,7 @@ class Irohad {
    */
   virtual void run();
 
-  virtual ~Irohad() = default;
+  virtual ~Irohad();
 
  protected:
   // -----------------------| component initialization |------------------------
@@ -212,6 +214,7 @@ class Irohad {
 
   // transaction service
   std::shared_ptr<torii::CommandService> command_service;
+  std::shared_ptr<torii::CommandServiceTransportGrpc> command_service_transport;
 
   // query service
   std::shared_ptr<torii::QueryService> query_service;
@@ -223,6 +226,8 @@ class Irohad {
   iroha::network::OrderingInit ordering_init;
   iroha::consensus::yac::YacInit yac_init;
   iroha::network::BlockLoaderInit loader_init;
+
+  std::shared_ptr<iroha::network::MstTransportGrpc> mst_transport;
 
   logger::Logger log_;
 

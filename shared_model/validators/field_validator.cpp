@@ -5,11 +5,14 @@
 
 #include "validators/field_validator.hpp"
 
+#include <limits>
+
 #include <boost/algorithm/string_regex.hpp>
 #include <boost/format.hpp>
-#include <limits>
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/crypto_provider/crypto_verifier.hpp"
+#include "interfaces/common_objects/amount.hpp"
+#include "interfaces/common_objects/peer.hpp"
 #include "interfaces/queries/query_payload_meta.hpp"
 #include "validators/field_validator.hpp"
 

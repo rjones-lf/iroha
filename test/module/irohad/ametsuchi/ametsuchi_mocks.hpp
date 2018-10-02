@@ -214,9 +214,9 @@ namespace iroha {
      public:
       MOCK_METHOD2(
           check,
-          bool(const shared_model::interface::BlockVariant &,
+          bool(const shared_model::interface::Block &,
                std::function<
-                   bool(const shared_model::interface::BlockVariant &,
+                   bool(const shared_model::interface::Block &,
                         WsvQuery &,
                         const shared_model::interface::types::HashType &)>));
       MOCK_METHOD2(
@@ -288,6 +288,7 @@ namespace iroha {
                         std::shared_ptr<shared_model::interface::Block>> &));
       MOCK_METHOD0(reset, void(void));
       MOCK_METHOD0(dropStorage, void(void));
+      MOCK_METHOD0(freeConnections, void(void));
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override {

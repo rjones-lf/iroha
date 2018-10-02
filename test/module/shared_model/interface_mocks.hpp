@@ -7,13 +7,17 @@
 #define IROHA_SHARED_MODEL_INTERFACE_MOCKS_HPP
 
 #include <gmock/gmock.h>
+#include "cryptography/public_key.hpp"
+#include "cryptography/signed.hpp"
+#include "interfaces/commands/command.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "interfaces/transaction.hpp"
 
-struct BlockMock : public shared_model::interface::Block {
+struct MockBlock : public shared_model::interface::Block {
   MOCK_CONST_METHOD0(txsNumber,
                      shared_model::interface::types::TransactionsNumberType());
   MOCK_CONST_METHOD0(
@@ -32,7 +36,7 @@ struct BlockMock : public shared_model::interface::Block {
   MOCK_METHOD2(addSignature,
                bool(const shared_model::crypto::Signed &,
                     const shared_model::crypto::PublicKey &));
-  MOCK_CONST_METHOD0(clone, BlockMock *());
+  MOCK_CONST_METHOD0(clone, MockBlock *());
 };
 
 struct MockTransaction : public shared_model::interface::Transaction {
@@ -63,10 +67,10 @@ struct MockTransaction : public shared_model::interface::Transaction {
       boost::optional<std::shared_ptr<shared_model::interface::BatchMeta>>());
 };
 
-struct SignatureMock : public shared_model::interface::Signature {
+struct MockSignature : public shared_model::interface::Signature {
   MOCK_CONST_METHOD0(publicKey, const PublicKeyType &());
   MOCK_CONST_METHOD0(signedData, const SignedType &());
-  MOCK_CONST_METHOD0(clone, SignatureMock *());
+  MOCK_CONST_METHOD0(clone, MockSignature *());
 };
 
 struct MockProposal : public shared_model::interface::Proposal {
@@ -90,12 +94,51 @@ struct MockPeer : public shared_model::interface::Peer {
 
 struct MockUnsafeProposalFactory
     : public shared_model::interface::UnsafeProposalFactory {
+  MOCK_METHOD3(unsafeCreateProposal,
+               std::unique_ptr<shared_model::interface::Proposal>(
+                   shared_model::interface::types::HeightType,
+                   shared_model::interface::types::TimestampType,
+                   boost::any_range<shared_model::interface::Transaction,
+                                    boost::forward_traversal_tag>));
+};
+
+struct MockCommonObjectsFactory
+    : public shared_model::interface::CommonObjectsFactory {
+  MOCK_METHOD2(createPeer,
+               FactoryResult<std::unique_ptr<shared_model::interface::Peer>>(
+                   const shared_model::interface::types::AddressType &,
+                   const shared_model::interface::types::PubkeyType &));
+
+  MOCK_METHOD4(createAccount,
+               FactoryResult<std::unique_ptr<shared_model::interface::Account>>(
+                   const shared_model::interface::types::AccountIdType &,
+                   const shared_model::interface::types::DomainIdType &,
+                   shared_model::interface::types::QuorumType,
+                   const shared_model::interface::types::JsonType &));
+
   MOCK_METHOD3(
-      unsafeCreateProposal,
-      std::unique_ptr<shared_model::interface::Proposal>(
-          shared_model::interface::types::HeightType,
-          shared_model::interface::types::TimestampType,
-          const shared_model::interface::types::TransactionsCollectionType &));
+      createAccountAsset,
+      FactoryResult<std::unique_ptr<shared_model::interface::AccountAsset>>(
+          const shared_model::interface::types::AccountIdType &,
+          const shared_model::interface::types::AssetIdType &,
+          const shared_model::interface::Amount &));
+
+  MOCK_METHOD3(createAsset,
+               FactoryResult<std::unique_ptr<shared_model::interface::Asset>>(
+                   const shared_model::interface::types::AssetIdType &,
+                   const shared_model::interface::types::DomainIdType &,
+                   shared_model::interface::types::PrecisionType));
+
+  MOCK_METHOD2(createDomain,
+               FactoryResult<std::unique_ptr<shared_model::interface::Domain>>(
+                   const shared_model::interface::types::DomainIdType &,
+                   const shared_model::interface::types::RoleIdType &));
+
+  MOCK_METHOD2(
+      createSignature,
+      FactoryResult<std::unique_ptr<shared_model::interface::Signature>>(
+          const shared_model::interface::types::PubkeyType &,
+          const shared_model::interface::Signature::SignedType &));
 };
 
 #endif  // IROHA_SHARED_MODEL_INTERFACE_MOCKS_HPP

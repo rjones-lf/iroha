@@ -6,9 +6,10 @@
 #ifndef IROHA_PROTO_PROPOSAL_FACTORY_HPP
 #define IROHA_PROTO_PROPOSAL_FACTORY_HPP
 
-#include "backend/protobuf/proposal.hpp"
 #include "interfaces/iroha_internal/proposal_factory.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
+
+#include "backend/protobuf/proposal.hpp"
 #include "proposal.pb.h"
 
 namespace shared_model {
@@ -17,11 +18,15 @@ namespace shared_model {
     class ProtoProposalFactory : public interface::ProposalFactory,
                                  public interface::UnsafeProposalFactory {
      public:
+      using TransactionsCollectionType =
+          interface::ProposalFactory::TransactionsCollectionType;
+      using UnsafeTransactionsCollectionType =
+          interface::UnsafeProposalFactory::TransactionsCollectionType;
+
       FactoryResult<std::unique_ptr<interface::Proposal>> createProposal(
           interface::types::HeightType height,
           interface::types::TimestampType created_time,
-          const interface::types::TransactionsCollectionType &transactions)
-          override {
+          TransactionsCollectionType transactions) override {
         return createProposal(
             createProtoProposal(height, created_time, transactions));
       }
@@ -29,8 +34,7 @@ namespace shared_model {
       std::unique_ptr<interface::Proposal> unsafeCreateProposal(
           interface::types::HeightType height,
           interface::types::TimestampType created_time,
-          const interface::types::TransactionsCollectionType &transactions)
-          override {
+          UnsafeTransactionsCollectionType transactions) override {
         return std::make_unique<Proposal>(
             createProtoProposal(height, created_time, transactions));
       }
@@ -47,7 +51,7 @@ namespace shared_model {
       iroha::protocol::Proposal createProtoProposal(
           interface::types::HeightType height,
           interface::types::TimestampType created_time,
-          const interface::types::TransactionsCollectionType &transactions) {
+          UnsafeTransactionsCollectionType transactions) {
         iroha::protocol::Proposal proposal;
 
         proposal.set_height(height);

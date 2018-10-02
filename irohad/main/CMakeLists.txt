@@ -41,6 +41,7 @@ add_library(application
 target_link_libraries(application
     logger
     yac
+    yac_transport
     server_runner
     ametsuchi
     networking

@@ -31,6 +31,7 @@ target_link_libraries(storage_test
 AddTest(transport_test transport_test.cpp)
 target_link_libraries(transport_test
     mst_transport
+    mst_processor
     logger
     shared_model_cryptography
     shared_model_stateless_validation

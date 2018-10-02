@@ -1,24 +1,13 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
+
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/transport_builder.hpp"
-#include "interfaces/iroha_internal/transaction_sequence.hpp"
+#include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 #include "validators/default_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
 
@@ -57,25 +46,25 @@ grpc::Status MstTransportGrpc::SendState(
 
   using namespace shared_model::validation;
   auto new_state =
-      shared_model::interface::TransactionSequence::createTransactionSequence(
-          collection, DefaultSignedTransactionsValidator())
-          .match(
-              [](expected::Value<shared_model::interface::TransactionSequence>
-                     &seq) {
-                MstState new_state = MstState::empty();
-                std::for_each(
-                    seq.value.batches().begin(),
-                    seq.value.batches().end(),
-                    [&new_state](const auto &batch) {
-                      new_state += std::make_shared<
-                          shared_model::interface::TransactionBatch>(batch);
-                    });
-                return new_state;
-              },
-              [this](const auto &err) {
-                async_call_->log_->warn("Can't create sequence: {}", err.error);
-                return MstState::empty();
-              });
+      shared_model::interface::TransactionSequenceFactory::
+          createTransactionSequence(collection,
+                                    DefaultSignedTransactionsValidator())
+              .match(
+                  [](expected::Value<
+                      shared_model::interface::TransactionSequence> &seq) {
+                    MstState new_state = MstState::empty();
+                    std::for_each(seq.value.batches().begin(),
+                                  seq.value.batches().end(),
+                                  [&new_state](const auto &batch) {
+                                    new_state += batch;
+                                  });
+                    return new_state;
+                  },
+                  [this](const auto &err) {
+                    async_call_->log_->warn("Can't create sequence: {}",
+                                            err.error);
+                    return MstState::empty();
+                  });
 
   async_call_->log_->info("batches in MstState: {}",
                           new_state.getBatches().size());
@@ -122,7 +111,13 @@ void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
     }
   }
 
-  async_call_->Call([&](auto context, auto cq) {
-    return client->AsyncSendState(context, protoState, cq);
-  });
+  // TODO: 15.09.2018 @x3medima17: IR-1709 replace synchronous SendState with
+  // AsycnSendState,
+  ::grpc::ClientContext context;
+  ::google::protobuf::Empty empty;
+  client->SendState(&context, protoState, &empty);
+
+  //  async_call_->Call([&](auto context, auto cq) {
+  //    return client->AsyncSendState(context, protoState, cq);
+  //  });
 }

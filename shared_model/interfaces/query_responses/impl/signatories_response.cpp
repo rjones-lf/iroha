@@ -4,6 +4,8 @@
  */
 
 #include "interfaces/query_responses/signatories_response.hpp"
+
+#include "cryptography/public_key.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {

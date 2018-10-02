@@ -11,7 +11,6 @@ service OrderingGateTransportGrpc {
 }
 
 service OrderingServiceTransportGrpc {
-  rpc onTransaction (iroha.protocol.Transaction) returns (google.protobuf.Empty);
   rpc onBatch (iroha.protocol.TxList) returns (google.protobuf.Empty);
 }
 
