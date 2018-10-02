@@ -103,14 +103,16 @@ namespace iroha {
       // ------|Private interface|------
 
       void Yac::votingStep(VoteMessage vote) {
-        auto committed = vote_storage_.isCommitted(vote.hash.vote_round_);
+        auto committed = vote_storage_.isCommitted(vote.hash.vote_round);
         if (committed) {
           return;
         }
 
-        log_->info("Vote for hash ({}, {})",
-                   vote.hash.vote_hashes_.proposal_hash,
-                   vote.hash.vote_hashes_.block_hash);
+        log_->info("Vote for round ({}, {}), hash ({}, {})",
+                   vote.hash.vote_round.block_round,
+                   vote.hash.vote_round.reject_round,
+                   vote.hash.vote_hashes.proposal_hash,
+                   vote.hash.vote_hashes.block_hash);
 
         network_->sendState(cluster_order_.currentLeader(), {vote});
         cluster_order_.switchToNext();
@@ -144,7 +146,7 @@ namespace iroha {
         // separate entity
 
         answer | [&](const auto &answer) {
-          auto &proposal_round = state.at(0).hash.vote_round_;
+          auto &proposal_round = state.at(0).hash.vote_round;
 
           /*
            * It is possible that a new peer with an outdated peers list may

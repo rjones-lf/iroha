@@ -22,6 +22,7 @@
 #include <string>
 
 #include "consensus/round.hpp"
+#include "consensus/yac/storage/yac_common.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
@@ -37,16 +38,16 @@ namespace iroha {
 
       class YacHash {
        public:
-        YacHash(Round round, std::string proposal, std::string block)
-            : vote_round_{round},
-              vote_hashes_{std::move(proposal), std::move(block)} {}
+        YacHash(Round round, ProposalHash proposal, BlockHash block)
+            : vote_round{round},
+              vote_hashes{std::move(proposal), std::move(block)} {}
 
         YacHash() = default;
 
         /**
          * Round, in which peer voted
          */
-        Round vote_round_;
+        Round vote_round;
 
         /**
          * Contains hashes of proposal and block, for which peer voted
@@ -55,14 +56,14 @@ namespace iroha {
           /**
            * Hash computed from proposal
            */
-          std::string proposal_hash;
+          ProposalHash proposal_hash;
 
           /**
            * Hash computed from block;
            */
-          std::string block_hash;
+          BlockHash block_hash;
         };
-        VoteHashes vote_hashes_;
+        VoteHashes vote_hashes;
 
         /**
          * Peer signature of block
@@ -70,8 +71,8 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::Signature> block_signature;
 
         bool operator==(const YacHash &obj) const {
-          return vote_hashes_.proposal_hash == obj.vote_hashes_.proposal_hash
-              and vote_hashes_.block_hash == obj.vote_hashes_.block_hash;
+          return vote_hashes.proposal_hash == obj.vote_hashes.proposal_hash
+              and vote_hashes.block_hash == obj.vote_hashes.block_hash;
         };
 
         bool operator!=(const YacHash &obj) const {

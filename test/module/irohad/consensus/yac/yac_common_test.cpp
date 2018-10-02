@@ -26,7 +26,7 @@ TEST(YacCommonTest, SameProposalTest) {
   ASSERT_TRUE(sameProposals(votes));
 
   votes.push_back(
-      create_vote(YacHash(Round{1, 1}, "not-proposal", "commit"), "five"));
+      create_vote(YacHash(Round{1, 2}, "not-proposal", "commit"), "five"));
   ASSERT_FALSE(sameProposals(votes));
 }
 
@@ -38,9 +38,9 @@ TEST(YacCommonTest, getProposalHashTest) {
                                  create_vote(hash, "three"),
                                  create_vote(hash, "four")};
 
-  ASSERT_EQ(hash.vote_hashes_.proposal_hash, getProposalHash(votes).value());
+  ASSERT_EQ(hash.vote_hashes.proposal_hash, getProposalHash(votes).value());
 
   votes.push_back(
-      create_vote(YacHash(Round{1, 1}, "not-proposal", "commit"), "five"));
+      create_vote(YacHash(Round{1, 2}, "not-proposal", "commit"), "five"));
   ASSERT_FALSE(getProposalHash(votes));
 }

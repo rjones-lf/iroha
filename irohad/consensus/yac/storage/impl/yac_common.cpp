@@ -33,8 +33,7 @@ namespace iroha {
         auto first = votes.at(0);
         return std::all_of(
             votes.begin(), votes.end(), [&first](const auto &current) {
-              return first.hash.vote_hashes_.proposal_hash
-                  == current.hash.vote_hashes_.proposal_hash;
+              return first.hash.vote_round == current.hash.vote_round;
             });
       }
 
@@ -42,7 +41,7 @@ namespace iroha {
           const std::vector<VoteMessage> &votes) {
         auto &&hash = getHash(votes);
         if (hash) {
-          return (*hash).vote_hashes_.proposal_hash;
+          return (*hash).vote_hashes.proposal_hash;
         }
         return boost::none;
       }

@@ -21,17 +21,17 @@
 #include <vector>
 
 #include <boost/optional.hpp>
-#include "consensus/yac/yac_hash_provider.hpp"  // for YacHash::proposal_hash
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
+      class YacHash;
       struct VoteMessage;
 
-      using ProposalHash = decltype(YacHash::vote_hashes_.proposal_hash);
+      using ProposalHash = std::string;
 
-      using BlockHash = decltype(YacHash::vote_hashes_.block_hash);
+      using BlockHash = std::string;
 
       /**
        * Check that all votes in collection has same proposal hash

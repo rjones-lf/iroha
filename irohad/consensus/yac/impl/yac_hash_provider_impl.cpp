@@ -4,7 +4,6 @@
  */
 
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
-#include "consensus/round.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
@@ -15,9 +14,9 @@ namespace iroha {
           const shared_model::interface::Block &block) const {
         YacHash result;
         auto hex_hash = block.hash().hex();
-        result.vote_hashes_.proposal_hash = hex_hash;
-        result.vote_hashes_.block_hash = hex_hash;
-        result.vote_round_ = Round{block.height(), 1};
+        result.vote_round = {block.height(), 1};
+        result.vote_hashes.proposal_hash = hex_hash;
+        result.vote_hashes.block_hash = hex_hash;
         result.block_signature = clone(block.signatures().front());
         return result;
       }
@@ -25,7 +24,7 @@ namespace iroha {
       shared_model::interface::types::HashType YacHashProviderImpl::toModelHash(
           const YacHash &hash) const {
         auto blob = shared_model::crypto::Blob::fromHexString(
-            hash.vote_hashes_.block_hash);
+            hash.vote_hashes.block_hash);
         auto string_blob = shared_model::crypto::toBinaryString(blob);
         return shared_model::interface::types::HashType(string_blob);
       }

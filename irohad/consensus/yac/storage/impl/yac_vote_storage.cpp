@@ -38,13 +38,13 @@ namespace iroha {
 
       auto YacVoteStorage::findProposalStorage(const VoteMessage &msg,
                                                PeersNumberType peers_in_round) {
-        auto val = getProposalStorage(msg.hash.vote_round_);
+        auto val = getProposalStorage(msg.hash.vote_round);
         if (val != proposal_storages_.end()) {
           return val;
         }
         return proposal_storages_.emplace(
             proposal_storages_.end(),
-            msg.hash.vote_round_,
+            msg.hash.vote_round,
             peers_in_round,
             std::make_shared<SupermajorityCheckerImpl>());
       }

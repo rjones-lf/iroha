@@ -42,8 +42,8 @@ namespace iroha {
         return peer_query_factory_->createPeerQuery() |
             [](const auto &query) { return query->getLedgerPeers(); } |
             [&hash](auto peers) {
-              std::seed_seq seed(hash.vote_hashes_.block_hash.begin(),
-                                 hash.vote_hashes_.block_hash.end());
+              std::seed_seq seed(hash.vote_hashes.block_hash.begin(),
+                                 hash.vote_hashes.block_hash.end());
               std::default_random_engine gen(seed);
               std::shuffle(peers.begin(), peers.end(), gen);
               return ClusterOrdering::create(peers);

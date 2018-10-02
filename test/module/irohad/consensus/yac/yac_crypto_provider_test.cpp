@@ -81,7 +81,7 @@ namespace iroha {
 
         auto vote = crypto_provider->getVote(hash);
 
-        vote.hash.vote_hashes_.block_hash = "hash changed";
+        vote.hash.vote_hashes.block_hash = "hash changed";
 
         ASSERT_FALSE(crypto_provider->verify({vote}));
       }

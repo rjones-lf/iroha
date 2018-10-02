@@ -54,8 +54,8 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
 
   auto yac_hash = hash_provider.makeHash(*block);
 
-  ASSERT_EQ(hex_test_hash, yac_hash.vote_hashes_.proposal_hash);
-  ASSERT_EQ(hex_test_hash, yac_hash.vote_hashes_.block_hash);
+  ASSERT_EQ(hex_test_hash, yac_hash.vote_hashes.proposal_hash);
+  ASSERT_EQ(hex_test_hash, yac_hash.vote_hashes.block_hash);
 }
 
 TEST(YacHashProviderTest, ToModelHashTest) {

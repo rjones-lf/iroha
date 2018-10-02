@@ -7,17 +7,8 @@
 #define IROHA_ROUND_HPP
 
 #include <cstdint>
-#include <tuple>
-#include <utility>
 
 #include <boost/functional/hash.hpp>
-
-namespace shared_model {
-  namespace interface {
-    class Proposal;
-    class Block;
-  }  // namespace interface
-}  // namespace shared_model
 
 namespace iroha {
   namespace consensus {
@@ -41,22 +32,13 @@ namespace iroha {
 
       Round() = default;
 
-      Round(BlockRoundType block_r, RejectRoundType reject_r)
-          : block_round{block_r}, reject_round{reject_r} {}
+      Round(BlockRoundType block_r, RejectRoundType reject_r);
 
-      bool operator<(const Round &rhs) const {
-        return std::tie(block_round, reject_round)
-            < std::tie(rhs.block_round, rhs.reject_round);
-      }
+      bool operator<(const Round &rhs) const;
 
-      bool operator==(const Round &rhs) const {
-        return std::tie(block_round, reject_round)
-            == std::tie(rhs.block_round, rhs.reject_round);
-      }
+      bool operator==(const Round &rhs) const;
 
-      bool operator!=(const Round &rhs) const {
-        return not(*this == rhs);
-      }
+      bool operator!=(const Round &rhs) const;
     };
 
     /**

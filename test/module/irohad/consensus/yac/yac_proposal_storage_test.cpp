@@ -79,7 +79,7 @@ TEST_F(YacProposalStorageTest, YacProposalStorageWhenRejectCase) {
 
   // insert 2 for other hash
   auto other_hash = YacHash(iroha::consensus::Round{1, 1},
-                            hash.vote_hashes_.proposal_hash,
+                            hash.vote_hashes.proposal_hash,
                             "other_commit");
   for (auto i = 0; i < 2; ++i) {
     auto answer = storage.insert(

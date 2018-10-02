@@ -41,10 +41,10 @@ namespace iroha {
           votes_.push_back(msg);
 
           log_->info("Vote with rounds ({}, {}) and hashes ({}, {}) inserted",
-                     msg.hash.vote_round_.block_round,
-                     msg.hash.vote_round_.reject_round,
-                     msg.hash.vote_hashes_.proposal_hash,
-                     msg.hash.vote_hashes_.block_hash);
+                     msg.hash.vote_round.block_round,
+                     msg.hash.vote_round.reject_round,
+                     msg.hash.vote_hashes.proposal_hash,
+                     msg.hash.vote_hashes.block_hash);
           log_->info(
               "Votes in storage [{}/{}]", votes_.size(), peers_in_round_);
         }
