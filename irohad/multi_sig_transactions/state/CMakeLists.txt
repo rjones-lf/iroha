@@ -6,7 +6,7 @@ add_library(mst_state
     )
 
 target_link_libraries(mst_state
-	mst_hash
-	boost
+    mst_hash
+    boost
     logger
     )
