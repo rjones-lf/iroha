@@ -14,21 +14,21 @@ namespace {
   template <typename InRange, typename OutRange>
   auto parseBatchesImpl(InRange in_range, const OutRange &out_range) {
     std::vector<OutRange> result;
+    auto meta = [](const auto &tx) { return boost::get<0>(tx).batchMeta(); };
+    auto has_meta = [&](const auto &tx) { return static_cast<bool>(meta(tx)); };
+    auto it = [](auto &p) { return boost::get<1>(p.get_iterator_tuple()); };
 
     auto range = boost::combine(in_range, out_range);
     auto begin = std::begin(range), end = std::end(range);
     while (begin != end) {
-      auto next = std::find_if(std::next(begin), end, [begin](const auto &its) {
-        auto get_meta = [](auto &tx) { return boost::get<0>(tx).batchMeta(); };
-        bool tx_has_meta = static_cast<bool>(get_meta(its)),
-             begin_has_meta = static_cast<bool>(get_meta(*begin));
+      auto next = std::find_if(std::next(begin), end, [&](const auto &tx) {
+        bool tx_has_meta = has_meta(tx), begin_has_meta = has_meta(*begin);
 
         return not(tx_has_meta and begin_has_meta)
             or (tx_has_meta and begin_has_meta
-                and **get_meta(its) != **get_meta(*begin));
+                and **meta(tx) != **meta(*begin));
       });
 
-      auto it = [](auto &p) { return boost::get<1>(p.get_iterator_tuple()); };
       result.emplace_back(it(begin), it(next));
       begin = next;
     }
