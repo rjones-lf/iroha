@@ -67,11 +67,20 @@ class IrohadTest : public AcceptanceFixture {
   }
 
   void launchIroha(const std::string &parameters) {
-    iroha_process_.emplace(irohad_executable.string() + parameters);
-    std::this_thread::sleep_for(kTimeout);
+    boost::process::ipstream output;
+    std::thread wait_init([&output] {
+        std::string line;
+        while (std::getline(output, line)) {
+          if (line.find("iroha initialized") != std::string::npos) {
+            return;
+          }
+        }
+
+    });
+    iroha_process_.emplace(irohad_executable.string() + parameters, boost::process::std_out > output);
+    wait_init.join();
     ASSERT_TRUE(iroha_process_->running());
   }
-
   void launchIroha(const boost::optional<std::string> &config_path,
                    const boost::optional<std::string> &genesis_block,
                    const boost::optional<std::string> &keypair_path,
@@ -199,7 +208,6 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
  public:
   boost::filesystem::path irohad_executable;
-  const std::chrono::milliseconds kTimeout = std::chrono::seconds(1);
   const std::string kAddress;
   const uint16_t kPort;
 
