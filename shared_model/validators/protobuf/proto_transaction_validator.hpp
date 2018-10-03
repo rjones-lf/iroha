@@ -42,6 +42,22 @@ namespace shared_model {
               answer.addReason(std::move(reason));
               return answer;
             }
+          } else if (command.command_case()
+                     == iroha::protocol::Command::kGrantPermission) {
+            if (not iroha::protocol::GrantablePermission_IsValid(
+                    command.grant_permission().permission())) {
+              reason.second.emplace_back("Invalid grantable permission");
+              answer.addReason(std::move(reason));
+              return answer;
+            }
+          } else if (command.command_case()
+                     == iroha::protocol::Command::kRevokePermission) {
+            if (not iroha::protocol::GrantablePermission_IsValid(
+                    command.revoke_permission().permission())) {
+              reason.second.emplace_back("Invalid grantable permission");
+              answer.addReason(std::move(reason));
+              return answer;
+            }
           }
         }
         return answer;

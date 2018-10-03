@@ -28,15 +28,12 @@ class ProtoTxValidatorTest : public ValidatorsTest {
       iroha::protocol::RolePermission permission) {
     auto tx = generateEmptyTransaction();
 
-    iroha::protocol::CreateRole cr;
-    cr.set_role_name(role_name);
-    cr.add_permissions(permission);
-
-    tx.mutable_payload()
-        ->mutable_reduced_payload()
-        ->add_commands()
-        ->mutable_create_role()
-        ->CopyFrom(cr);
+    auto cr = tx.mutable_payload()
+                  ->mutable_reduced_payload()
+                  ->add_commands()
+                  ->mutable_create_role();
+    cr->set_role_name(role_name);
+    cr->add_permissions(permission);
     return tx;
   }
 };
@@ -93,7 +90,7 @@ TEST_F(ProtoTxValidatorTest, CommandNotSet) {
  * @given iroha::protocol::Transaction containing create role transaction with
  * valid role permission
  * @when it is validated
- * @then answer with errors is returned
+ * @then answer with no errors is returned
  */
 TEST_F(ProtoTxValidatorTest, CreateRoleValid) {
   auto tx = generateCreateRoleTransaction(
