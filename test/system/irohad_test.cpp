@@ -67,18 +67,18 @@ class IrohadTest : public AcceptanceFixture {
   }
 
   void launchIroha(const std::string &parameters) {
-    boost::process::ipstream output;
-    std::thread wait_init([&output] {
+    output_ = boost::process::ipstream();
+    reader_ = std::thread([this] {
         std::string line;
-        while (std::getline(output, line)) {
+        while (std::getline(this->output_, line)) {
           if (line.find("iroha initialized") != std::string::npos) {
             return;
           }
         }
 
     });
-    iroha_process_.emplace(irohad_executable.string() + parameters, boost::process::std_out > output);
-    wait_init.join();
+    iroha_process_.emplace(irohad_executable.string() + parameters, boost::process::std_out > output_);
+    reader_.join();
     ASSERT_TRUE(iroha_process_->running());
   }
   void launchIroha(const boost::optional<std::string> &config_path,
@@ -235,6 +235,8 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
   std::string pgopts_;
   std::string blockstore_path_;
   std::string config_copy_;
+  boost::process::ipstream output_;
+  std::thread reader_;
 };
 
 /**
