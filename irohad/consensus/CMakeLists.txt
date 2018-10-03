@@ -16,3 +16,7 @@
 #
 
 add_subdirectory(yac)
+
+add_library(consensus_round
+    impl/round.cpp
+    )
