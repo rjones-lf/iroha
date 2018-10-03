@@ -10,6 +10,7 @@
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "model/sha3_hash.hpp"
@@ -32,8 +33,12 @@ namespace iroha {
 
     bool MutableStorageImpl::check(
         const shared_model::interface::Block &block,
-        MutableStorage::MutableStoragePredicateType predicate) {
-      return predicate(block, *wsv_, top_hash_);
+        std::function<bool(const shared_model::interface::Block &,
+                           PeerQuery &,
+                           const shared_model::interface::types::HashType &)>
+            predicate) {
+      PeerQueryWsv peer_query(wsv_);
+      return predicate(block, peer_query, top_hash_);
     }
 
     bool MutableStorageImpl::apply(const shared_model::interface::Block &block,

@@ -31,6 +31,7 @@ namespace iroha {
   namespace ametsuchi {
 
     class WsvQuery;
+    class PeerQuery;
 
     /**
      * Mutable storage is used apply blocks to the storage.
@@ -53,8 +54,12 @@ namespace iroha {
        * false otherwise
        * @return result of predicate
        */
-      virtual bool check(const shared_model::interface::Block &block,
-                         MutableStoragePredicateType function) = 0;
+      virtual bool check(
+          const shared_model::interface::Block &block,
+          std::function<bool(const shared_model::interface::Block &,
+                             PeerQuery &,
+                             const shared_model::interface::types::HashType &)>
+              function) = 0;
 
       /**
        * Applies a block to current mutable state
