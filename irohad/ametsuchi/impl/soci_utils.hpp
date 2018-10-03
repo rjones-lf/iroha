@@ -79,7 +79,7 @@ namespace iroha {
 
     /// view first length_v<R> elements of T without copying
     template <typename R, typename T>
-    constexpr auto viewTuple(T &&t) {
+    constexpr auto viewQuery(T &&t) {
       return index_apply<length_v<std::decay_t<R>>>([&](auto... Is) {
         return boost::make_tuple(std::forward<T>(t).template get<Is>()...);
       });
@@ -87,7 +87,7 @@ namespace iroha {
 
     /// view last length_v<R> elements of T without copying
     template <typename R, typename T>
-    constexpr auto viewRest(T &&t) {
+    constexpr auto viewPermissions(T &&t) {
       return index_apply<length_v<std::decay_t<R>>>([&](auto... Is) {
         return boost::make_tuple(
             std::forward<T>(t)

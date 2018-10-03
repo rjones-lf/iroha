@@ -90,12 +90,21 @@ namespace iroha {
           const shared_model::interface::GetPendingTransactions &q);
 
      private:
-      /// Get transactions from block using range from range_gen and filtered by
-      /// predicate pred
+      /**
+       * Get transactions from block using range from range_gen and filtered by
+       * predicate pred
+       */
       template <typename RangeGen, typename Pred>
       auto getTransactionsFromBlock(uint64_t block_id,
                                     RangeGen &&range_gen,
                                     Pred &&pred);
+
+      /**
+       * Execute query in F and return builder result from B
+       * Q is query tuple, P is permission tuple
+       */
+      template <typename Q, typename P, typename F, typename B>
+      QueryResponseBuilderDone executeQuery(F &&f, B &&b);
 
       soci::session &sql_;
       KeyValueStorage &block_store_;
@@ -128,6 +137,7 @@ namespace iroha {
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;
       PostgresQueryExecutorVisitor visitor_;
+      logger::Logger log_;
     };
 
   }  // namespace ametsuchi

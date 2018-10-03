@@ -65,13 +65,14 @@ namespace iroha {
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
                 shared_model::validation::FieldValidator>>();
         query_executor = storage;
+        PostgresCommandExecutor::prepareStatements(*sql);
         executor = std::make_unique<PostgresCommandExecutor>(*sql);
         pending_txs_storage = std::make_shared<MockPendingTransactionStorage>();
 
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createRole(
-                            role, role_permissions)),
-                        true)));
+        auto result = execute(buildCommand(TestTransactionBuilder().createRole(
+                                  role, role_permissions)),
+                              true);
+        ASSERT_TRUE(val(result)) << err(result)->error.toString();
         ASSERT_TRUE(
             val(execute(buildCommand(TestTransactionBuilder().createDomain(
                             domain->domainId(), role)),
