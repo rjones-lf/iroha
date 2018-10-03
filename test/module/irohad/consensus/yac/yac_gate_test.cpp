@@ -37,7 +37,7 @@ class YacGateTest : public ::testing::Test {
     auto keypair =
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
-    expected_hash = YacHash("proposal", "block");
+    expected_hash = YacHash(iroha::consensus::Round{1, 1}, "proposal", "block");
 
     auto block = std::make_shared<MockBlock>();
     EXPECT_CALL(*block, payload())
@@ -190,7 +190,8 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   EXPECT_CALL(*signature, publicKey())
       .WillRepeatedly(ReturnRefOfCopy(actual_pubkey));
 
-  message.hash = YacHash("actual_proposal", "actual_block");
+  message.hash = YacHash(
+      iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
   message.signature = signature;
   commit_message = CommitMessage({message});
   expected_commit = rxcpp::observable<>::just(Answer(commit_message));
@@ -252,7 +253,8 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
   EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
 
   // expected values
-  expected_hash = YacHash("actual_proposal", "actual_block");
+  expected_hash =
+      YacHash(iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
 
   Hash actual_hash("actual_hash");
   message.hash = expected_hash;

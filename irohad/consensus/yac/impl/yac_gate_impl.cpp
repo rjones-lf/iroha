@@ -42,7 +42,7 @@ namespace iroha {
       void YacGateImpl::vote(std::shared_ptr<shared_model::interface::Block> block) {
         auto hash = hash_provider_->makeHash(*block);
         log_->info("vote for block ({}, {})",
-                   hash.proposal_hash,
+                   hash.vote_hashes.proposal_hash,
                    block->hash().toString());
         auto order = orderer_->getOrdering(hash);
         if (not order) {

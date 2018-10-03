@@ -31,7 +31,7 @@ TEST_F(YacTest, UnknownVoteBeforeCommit) {
   EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
 
   VoteMessage vote;
-  vote.hash = YacHash("my_proposal", "my_block");
+  vote.hash = YacHash(iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
   std::string unknown = "unknown";
   vote.signature = createSig(unknown);
 
@@ -63,7 +63,7 @@ TEST_F(YacTest, UnknownVoteAfterCommit) {
 
   EXPECT_CALL(*crypto, verify(_)).Times(2).WillRepeatedly(Return(true));
 
-  YacHash my_hash("proposal_hash", "block_hash");
+  YacHash my_hash(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
 
   std::vector<VoteMessage> votes;
 

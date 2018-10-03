@@ -96,6 +96,14 @@ namespace iroha {
                 });
           });
 
+      mst_processor_->onStateUpdate().subscribe([this](auto &&state) {
+        log_->info("MST state updated");
+        for (auto &&batch : state->getBatches()) {
+          for (auto &&tx : batch->transactions()) {
+            this->publishStatus(TxStatusType::kMstPending, tx->hash());
+          }
+        }
+      });
       mst_processor_->onPreparedBatches().subscribe([this](auto &&batch) {
         log_->info("MST batch prepared");
         this->publishEnoughSignaturesStatus(batch->transactions());
@@ -118,9 +126,6 @@ namespace iroha {
         this->publishEnoughSignaturesStatus(transaction_batch->transactions());
         pcs_->propagate_batch(transaction_batch);
       } else {
-        for (const auto &tx : transaction_batch->transactions()) {
-          this->publishStatus(TxStatusType::kMstPending, tx->hash());
-        }
         log_->info("propagating batch to MST");
         mst_processor_->propagateBatch(transaction_batch);
       }

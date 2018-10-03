@@ -73,11 +73,11 @@ namespace iroha {
         // --------| private api |--------
 
         /**
-         * Retrieve iterator for storage with parameters hash
-         * @param hash - object for finding
+         * Retrieve iterator for storage with specified key
+         * @param round - key of that storage
          * @return iterator to proposal storage
          */
-        auto getProposalStorage(ProposalHash hash);
+        auto getProposalStorage(const Round &round);
 
         /**
          * Find existed proposal storage or create new if required
@@ -104,28 +104,29 @@ namespace iroha {
                                       PeersNumberType peers_in_round);
 
         /**
-         * Provide status about closing round with parameters hash
-         * @param hash - target hash of round
+         * Provide status about closing round of proposal/block
+         * @param round, in which proposal/block is supposed to be committed
          * @return true, if round closed
          */
-        bool isHashCommitted(ProposalHash hash);
+        bool isCommitted(const Round &round);
 
         /**
-         * Method provide state of processing for concrete hash
-         * @param hash - target tag
-         * @return value attached to parameter's hash. Default is false.
+         * Method provide state of processing for concrete proposal/block
+         * @param round, in which that proposal/block is being voted
+         * @return value attached to parameter's round. Default is
+         * kNotSentNotProcessed.
          */
-        ProposalState getProcessingState(const ProposalHash &hash);
+        ProposalState getProcessingState(const Round &round);
 
         /**
-         * Mark hash with following transition:
+         * Mark round with following transition:
          * kNotSentNotProcessed -> kSentNotProcessed
          * kSentNotProcessed -> kSentProcessed
          * kSentProcessed -> kSentProcessed
          * @see ProposalState description for transition cases
-         * @param hash - target tag
+         * @param round - target tag
          */
-        void nextProcessingState(const ProposalHash &hash);
+        void nextProcessingState(const Round &round);
 
        private:
         // --------| fields |--------
@@ -136,10 +137,12 @@ namespace iroha {
         std::vector<YacProposalStorage> proposal_storages_;
 
         /**
-         * Processing set provide user flags about processing some hashes.
-         * If hash exists <=> processed
+         * Processing set provide user flags about processing some
+         * proposals/blocks.
+         * If such round exists <=> processed
          */
-        std::unordered_map<ProposalHash, ProposalState> processing_state_;
+        std::unordered_map<Round, ProposalState, RoundTypeHasher>
+            processing_state_;
       };
 
     }  // namespace yac

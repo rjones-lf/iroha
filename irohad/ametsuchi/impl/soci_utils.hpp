@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_POSTGRES_WSV_COMMON_HPP
@@ -20,10 +8,15 @@
 
 #include <soci/soci.h>
 #include <boost/optional.hpp>
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/iterator_range.hpp>
 #include <boost/tuple/tuple.hpp>
+#include "common/types.hpp"
 
 namespace iroha {
   namespace ametsuchi {
+
     template <typename ParamType, typename Function>
     inline void processSoci(soci::statement &st,
                             soci::indicator &ind,
@@ -80,7 +73,7 @@ namespace iroha {
       return index_apply<length_v<std::decay_t<Tuple>>>(
           [&](auto... Is) -> decltype(auto) {
             return std::forward<F>(f)(
-                std::forward<Tuple>(t).template get<Is>()...);
+                boost::get<Is>(std::forward<Tuple>(t))...);
           });
     }
 
@@ -126,6 +119,45 @@ namespace iroha {
           : ReturnType{};
     }
 
+    template <typename C, typename T, typename F>
+    auto mapValues(T &t, F &&f) {
+      return t | [&](auto &st) -> boost::optional<C> {
+        return boost::copy_range<C>(
+            st | boost::adaptors::transformed([&](auto &t) {
+              return apply(t, std::forward<F>(f));
+            }));
+      };
+    }
+
+    template <typename C, typename T, typename F>
+    auto flatMapValues(T &t, F &&f) {
+      return t | [&](auto &st) -> boost::optional<C> {
+        return boost::copy_range<C>(
+            st | boost::adaptors::transformed([&](auto &t) {
+              return apply(t, std::forward<F>(f));
+            })
+            | boost::adaptors::filtered(
+                  [](auto &r) { return static_cast<bool>(r); })
+            | boost::adaptors::transformed([](auto &&r) { return *r; }));
+      };
+    }
+
+    template <typename T, typename F>
+    auto flatMapValue(T &t, F &&f) {
+      return t | [&](auto &st) -> decltype(
+                                   apply(boost::make_iterator_range(st).front(),
+                                         std::forward<F>(f))) {
+        auto range = boost::make_iterator_range(st);
+
+        if (range.empty()) {
+          return boost::none;
+        }
+
+        return apply(range.front(), std::forward<F>(f));
+      };
+    }
+
   }  // namespace ametsuchi
 }  // namespace iroha
+
 #endif  // IROHA_POSTGRES_WSV_COMMON_HPP
