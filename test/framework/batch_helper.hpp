@@ -194,10 +194,7 @@ namespace framework {
           createBatchOneSignTransactions(transaction_fields, created_time);
       auto result_batch = batch_factory->createTransactionBatch(txs);
 
-      return boost::get<iroha::expected::Value<
-          std::unique_ptr<shared_model::interface::TransactionBatch>>>(
-                 std::move(result_batch))
-          .value;
+      return framework::expected::val(result_batch).value().value;
     }
 
     /**
@@ -207,9 +204,8 @@ namespace framework {
      */
     inline auto createBatchFromSingleTransaction(
         std::shared_ptr<shared_model::interface::Transaction> tx) {
-      std::shared_ptr<shared_model::interface::TransactionBatchFactory>
-          batch_factory = std::make_shared<
-              shared_model::interface::TransactionBatchFactoryImpl>();
+      auto batch_factory = std::make_shared<
+          shared_model::interface::TransactionBatchFactoryImpl>();
       return batch_factory->createTransactionBatch(std::move(tx))
           .match(
               [](iroha::expected::Value<std::unique_ptr<

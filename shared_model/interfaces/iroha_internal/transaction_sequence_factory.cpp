@@ -16,9 +16,8 @@
 
 namespace shared_model {
   namespace interface {
-    const std::unique_ptr<TransactionBatchFactory>
-        TransactionSequenceFactory::batch_factory_ =
-            std::make_unique<TransactionBatchFactoryImpl>();
+    const std::unique_ptr<TransactionBatchFactory> batch_factory =
+        std::make_unique<TransactionBatchFactoryImpl>();
 
     template <typename TransactionValidator, typename FieldValidator>
     iroha::expected::Result<TransactionSequence, std::string>
@@ -49,22 +48,16 @@ namespace shared_model {
         // perform stateless validation checks
         validation::ReasonsGroupType reason;
         reason.first = "Transaction: ";
-        // check signatures and their validness
+        // check signatures validness
         if (not boost::empty(tx->signatures())) {
-          validation::ReasonsGroupType reason;
           field_validator.validateSignatures(
               reason, tx->signatures(), tx->payload());
           if (not reason.second.empty()) {
             result.addReason(std::move(reason));
             continue;
           }
-        } else {
-          reason.second.emplace_back(
-              "Transaction should contain at least one signature");
-          result.addReason(std::move(reason));
-          continue;
         }
-        // check transaction itself
+        // check transaction validness
         auto tx_errors = transaction_validator.validate(*tx);
         if (tx_errors) {
           reason.second.emplace_back(tx_errors.reason());
@@ -79,7 +72,7 @@ namespace shared_model {
               TransactionBatchHelpers::calculateReducedBatchHash(hashes);
           extracted_batches[batch_hash].push_back(tx);
         } else {
-          batch_factory_->createTransactionBatch(tx).match(
+          batch_factory->createTransactionBatch(tx).match(
               insert_batch, [&tx, &result](const auto &err) {
                 result.addReason(std::make_pair(
                     std::string("Error in transaction with reduced hash: ")
@@ -90,7 +83,7 @@ namespace shared_model {
       }
 
       for (const auto &it : extracted_batches) {
-        batch_factory_->createTransactionBatch(it.second).match(
+        batch_factory->createTransactionBatch(it.second).match(
             insert_batch, [&it, &result](const auto &err) {
               result.addReason(std::make_pair(
                   it.first.toString(), std::vector<std::string>{err.error}));

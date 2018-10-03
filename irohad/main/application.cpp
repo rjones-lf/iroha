@@ -12,6 +12,7 @@
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "execution/query_execution_impl.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/mst_processor_stub.hpp"
@@ -56,7 +57,7 @@ Irohad::Irohad(const std::string &block_store_dir,
   log_ = logger::log("IROHAD");
   log_->info("created");
   // Initializing storage at this point in order to insert genesis block before
-  // initialization of iroha deamon
+  // initialization of iroha daemon
   initStorage();
 }
 
@@ -169,11 +170,14 @@ void Irohad::initNetworkClient() {
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
+  transaction_batch_factory_ =
+      std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
   ordering_gate = ordering_init.initOrderingGate(storage,
                                                  max_proposal_size_,
                                                  proposal_delay_,
                                                  storage,
                                                  storage,
+                                                 transaction_batch_factory_,
                                                  async_call_);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));

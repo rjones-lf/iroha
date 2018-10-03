@@ -614,9 +614,8 @@ TEST_F(ToriiServiceTest, FailedListOfTxs) {
         ASSERT_EQ(toriiResponse.tx_status(),
                   iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
         auto msg = toriiResponse.error_message();
-        ASSERT_THAT(
-            toriiResponse.error_message(),
-            HasSubstr("Transaction should contain at least one signature"));
+        ASSERT_THAT(toriiResponse.error_message(),
+                    HasSubstr("bad timestamp: sent from future"));
         ASSERT_NE(msg.find(hash.hex()), std::string::npos);
       });
 }

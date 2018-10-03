@@ -16,8 +16,6 @@ namespace shared_model {
       explicit TransactionBatchImpl(
           types::SharedTxsCollectionType transactions);
 
-      TransactionBatchImpl(const TransactionBatchImpl &) = default;
-      TransactionBatchImpl &operator=(const TransactionBatchImpl &) = default;
       TransactionBatchImpl(TransactionBatchImpl &&) = default;
       TransactionBatchImpl &operator=(TransactionBatchImpl &&) = default;
 

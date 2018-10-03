@@ -6,8 +6,10 @@
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 
 #include <algorithm>
+#include <numeric>
 
 #include <boost/range/adaptor/transformed.hpp>
+
 #include "interfaces/iroha_internal/transaction_batch_helpers.hpp"
 #include "interfaces/transaction.hpp"
 #include "utils/string_builder.hpp"
@@ -76,12 +78,15 @@ namespace shared_model {
 
     TransactionBatch *TransactionBatchImpl::clone() const {
       const auto &original_txs = this->transactions_;
-      types::SharedTxsCollectionType copy_txs;
-      std::for_each(std::begin(original_txs),
-                    std::end(original_txs),
-                    [&copy_txs](std::shared_ptr<Transaction> tx) {
-                      copy_txs.push_back(::clone(*tx));
-                    });
+      types::SharedTxsCollectionType copy_txs =
+          std::accumulate(std::begin(original_txs),
+                          std::end(original_txs),
+                          types::SharedTxsCollectionType{},
+                          [](types::SharedTxsCollectionType acc,
+                             std::shared_ptr<Transaction> tx) {
+                            acc.push_back(::clone(*tx));
+                            return acc;
+                          });
       return new TransactionBatchImpl(std::move(copy_txs));
     }
 

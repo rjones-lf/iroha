@@ -22,8 +22,7 @@ class TransactionBatchTest : public Test {
   /**
    * Creates valid unsigned transaction
    * @param created_time assigned to transactions
-   * @return std::shared_ptr<interface::Transaction> containing valid unsigned
-   * transaction
+   * @return valid unsigned transaction
    */
   auto createValidUnsignedTransaction(
       size_t created_time = iroha::time::now()) {
@@ -36,8 +35,7 @@ class TransactionBatchTest : public Test {
   /**
    * Creates invalid unsigned transaction
    * @param created_time assigned to transactions
-   * @return std::shared_ptr<interface::Transaction> containing invalid unsigned
-   * transaction
+   * @return invalid unsigned transaction
    */
   auto createInvalidUnsignedTransaction(
       size_t created_time = iroha::time::now()) {

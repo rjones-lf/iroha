@@ -33,7 +33,9 @@ namespace iroha {
         : public iroha::network::OrderingServiceTransport,
           public proto::OrderingServiceTransportGrpc::Service {
      public:
-      explicit OrderingServiceTransportGrpc(
+      OrderingServiceTransportGrpc(
+          std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+              transaction_batch_factory,
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call);
       void subscribe(
@@ -54,7 +56,7 @@ namespace iroha {
       std::weak_ptr<iroha::network::OrderingServiceNotification> subscriber_;
       std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
           async_call_;
-      std::unique_ptr<shared_model::interface::TransactionBatchFactory>
+      std::shared_ptr<shared_model::interface::TransactionBatchFactory>
           batch_factory_;
     };
 

@@ -8,7 +8,6 @@
 #include "backend/protobuf/proposal.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
-#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 
 using namespace iroha::ordering;
@@ -41,7 +40,7 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
     batch_result.match(
         [this](iroha::expected::Value<std::unique_ptr<
                    shared_model::interface::TransactionBatch>> &batch) {
-          subscriber_.lock()->onBatch(std::move(*batch.value));
+          subscriber_.lock()->onBatch(std::move(batch.value));
         },
         [this](const iroha::expected::Error<std::string> &error) {
           async_call_->log_->error(
@@ -78,8 +77,9 @@ void OrderingServiceTransportGrpc::publishProposal(
 }
 
 OrderingServiceTransportGrpc::OrderingServiceTransportGrpc(
+    std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+        transaction_batch_factory,
     std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
         async_call)
     : async_call_(std::move(async_call)),
-      batch_factory_(std::make_unique<
-                     shared_model::interface::TransactionBatchFactoryImpl>()) {}
+      batch_factory_(std::move(transaction_batch_factory)) {}

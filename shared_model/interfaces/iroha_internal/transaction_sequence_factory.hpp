@@ -9,20 +9,16 @@
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 
 #include "common/result.hpp"
-#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "validators/default_validator.hpp"
 
 namespace shared_model {
   namespace interface {
 
     /**
-     * Provides a method that creates a transaction sequence from  a collection
+     * Provides a method that creates a transaction sequence from a collection
      * of transactions
      */
     class TransactionSequenceFactory {
-     private:
-      static const std::unique_ptr<TransactionBatchFactory> batch_factory_;
-
      public:
       /**
        * Creator of transaction sequence

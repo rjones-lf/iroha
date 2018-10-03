@@ -70,16 +70,12 @@ namespace iroha {
     }
 
     void SinglePeerOrderingService::onBatch(
-        shared_model::interface::TransactionBatch &&batch) {
+        std::unique_ptr<shared_model::interface::TransactionBatch> batch) {
       std::shared_lock<std::shared_timed_mutex> batch_prop_lock(
           batch_prop_mutex_);
 
-      current_size_.fetch_add(batch.transactions().size());
-      queue_.push(
-          std::make_unique<shared_model::interface::TransactionBatchImpl>(
-              std::move(
-                  static_cast<shared_model::interface::TransactionBatchImpl &&>(
-                      batch))));
+      current_size_.fetch_add(batch->transactions().size());
+      queue_.push(std::move(batch));
       log_->info("Queue size is {}", current_size_.load());
 
       batch_prop_lock.unlock();
