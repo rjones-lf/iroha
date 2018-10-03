@@ -5,6 +5,7 @@
 
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 
+#include "interfaces/iroha_internal/batch_meta.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_helpers.hpp"

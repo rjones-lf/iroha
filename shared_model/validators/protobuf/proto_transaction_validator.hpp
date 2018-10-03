@@ -6,6 +6,7 @@
 #ifndef IROHA_PROTO_TRANSACTION_VALIDATOR_HPP
 #define IROHA_PROTO_TRANSACTION_VALIDATOR_HPP
 
+#include "backend/protobuf/transaction.hpp"
 #include "validators/transaction_validator.hpp"
 
 namespace shared_model {
@@ -15,14 +16,18 @@ namespace shared_model {
     class ProtoTransactionValidator
         : public TransactionValidator<FieldValidator, CommandValidator> {
      private:
-      void validateProtoTx(const iroha::protocol::Transaction &transaction,
-                           ReasonsGroupType &reason) const {
+      Answer validateProtoTx(
+          const iroha::protocol::Transaction &transaction) const {
+        Answer answer;
+        std::string tx_reason_name = "Protobuf Transaction";
+        ReasonsGroupType reason(tx_reason_name, GroupedReasons());
         for (const auto &command :
              transaction.payload().reduced_payload().commands()) {
           if (command.command_case()
               == iroha::protocol::Command::COMMAND_NOT_SET) {
             reason.second.emplace_back("Undefined command is found");
-            break;
+            answer.addReason(std::move(reason));
+            return answer;
           } else if (command.command_case()
                      == iroha::protocol::Command::kCreateRole) {
             const auto &cr = command.create_role();
@@ -30,43 +35,29 @@ namespace shared_model {
                 cr.permissions().begin(),
                 cr.permissions().end(),
                 [](const auto &perm) {
-                  return interface::permissions::isValid(
-                      static_cast<interface::permissions::Role>(perm));
+                  return iroha::protocol::RolePermission_IsValid(perm);
                 });
             if (not all_permissions_valid) {
-              reason.second.emplace_back("Undefined command is found");
-              break;
+              reason.second.emplace_back("Invalid role permission");
+              answer.addReason(std::move(reason));
+              return answer;
             }
           }
         }
+        return answer;
       }
 
      public:
       Answer validate(const interface::Transaction &tx) const override {
-        Answer answer;
-        std::string tx_reason_name = "Transaction ";
-        ReasonsGroupType tx_reason(tx_reason_name, GroupedReasons());
-
         // validate proto-backend of transaction
-        validateProtoTx(
-            static_cast<const proto::Transaction &>(tx).getTransport(),
-            tx_reason);
+        auto proto_validation_answer = validateProtoTx(
+            static_cast<const proto::Transaction &>(tx).getTransport());
+        if (proto_validation_answer.hasErrors()) {
+          return proto_validation_answer;
+        }
 
-        if (not tx_reason.second.empty()) {
-          answer.addReason(std::move(tx_reason));
-          return answer;
-        }
-        auto interface_validation =
-            TransactionValidator<FieldValidator, CommandValidator>::validate(
-                tx);
-
-        if (interface_validation.hasErrors()) {
-          tx_reason.second.push_back(interface_validation.reason());
-        }
-        if (not tx_reason.second.empty()) {
-          answer.addReason(std::move(tx_reason));
-        }
-        return answer;
+        return TransactionValidator<FieldValidator, CommandValidator>::validate(
+            tx);
       };
     };
   }  // namespace validation

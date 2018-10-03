@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gtest/gtest.h>
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
+#include <gtest/gtest.h>
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
-#include "validators/protobuf/proto_transaction_validator.hpp"
 
 class ProtoTxValidatorTest : public ValidatorsTest {
  protected:
@@ -48,7 +48,7 @@ class ProtoTxValidatorTest : public ValidatorsTest {
  */
 TEST_F(ProtoTxValidatorTest, CommandIsSet) {
   auto tx = generateEmptyTransaction();
-  // add not set command
+
   iroha::protocol::CreateDomain cd;
   cd.set_domain_id(domain_id);
   cd.set_default_role(role_name);
@@ -114,7 +114,7 @@ TEST_F(ProtoTxValidatorTest, CreateRoleValid) {
  * @given iroha::protocol::Transaction containing create role transaction with
  * undefined role permission
  * @when it is validated
- * @then answer with no errors is returned
+ * @then answer with errors is returned
  */
 TEST_F(ProtoTxValidatorTest, CreateRoleInvalid) {
   auto tx = generateCreateRoleTransaction(
