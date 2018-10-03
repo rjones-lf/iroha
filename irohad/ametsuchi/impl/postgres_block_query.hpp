@@ -6,11 +6,11 @@
 #ifndef IROHA_POSTGRES_FLAT_BLOCK_QUERY_HPP
 #define IROHA_POSTGRES_FLAT_BLOCK_QUERY_HPP
 
-#include <boost/optional.hpp>
-
 #include "ametsuchi/block_query.hpp"
+
+#include <soci/soci.h>
+#include <boost/optional.hpp>
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
-#include "ametsuchi/impl/soci_utils.hpp"
 #include "interfaces/iroha_internal/block_json_deserializer.hpp"
 #include "logger/logger.hpp"
 

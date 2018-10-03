@@ -103,6 +103,8 @@ class ToriiServiceTest : public testing::Test {
     block_query = std::make_shared<MockBlockQuery>();
     storage = std::make_shared<MockStorage>();
 
+    EXPECT_CALL(*mst, onStateUpdateImpl())
+        .WillRepeatedly(Return(mst_update_notifier.get_observable()));
     EXPECT_CALL(*mst, onPreparedBatchesImpl())
         .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
     EXPECT_CALL(*mst, onExpiredBatchesImpl())
@@ -152,6 +154,8 @@ class ToriiServiceTest : public testing::Test {
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       verified_prop_notifier_;
+  rxcpp::subjects::subject<std::shared_ptr<iroha::MstState>>
+      mst_update_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 

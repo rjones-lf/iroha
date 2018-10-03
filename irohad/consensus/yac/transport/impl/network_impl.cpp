@@ -70,7 +70,7 @@ namespace iroha {
           auto vote = *PbConverters::deserializeVote(pb_vote);
           state.push_back(vote);
         }
-        if (not sameProposals(state)) {
+        if (not sameKeys(state)) {
           async_call_->log_->info(
               "Votes are stateless invalid: proposals are different, or empty "
               "collection");

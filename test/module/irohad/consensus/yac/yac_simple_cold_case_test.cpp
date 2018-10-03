@@ -33,7 +33,8 @@ TEST_F(YacTest, YacWhenVoting) {
 
   EXPECT_CALL(*network, sendState(_, _)).Times(default_peers.size());
 
-  YacHash my_hash("my_proposal_hash", "my_block_hash");
+  YacHash my_hash(
+      iroha::consensus::Round{1, 1}, "my_proposal_hash", "my_block_hash");
 
   auto order = ClusterOrdering::create(default_peers);
   ASSERT_TRUE(order);
@@ -55,7 +56,8 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveOneVote) {
 
   EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
 
-  YacHash received_hash("my_proposal", "my_block");
+  YacHash received_hash(
+      iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
   auto peer = default_peers.at(0);
   // assume that our peer receive message
   network->notification->onState({crypto->getVote(received_hash)});
@@ -82,7 +84,8 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveSupermajorityOfVotes) {
       .Times(default_peers.size())
       .WillRepeatedly(Return(true));
 
-  YacHash received_hash("my_proposal", "my_block");
+  YacHash received_hash(
+      iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
   for (size_t i = 0; i < default_peers.size(); ++i) {
     network->notification->onState({crypto->getVote(received_hash)});
   }
@@ -97,7 +100,8 @@ TEST_F(YacTest, YacWhenColdStartAndAchieveSupermajorityOfVotes) {
  * AND commit is emitted to observable
  */
 TEST_F(YacTest, YacWhenColdStartAndAchieveCommitMessage) {
-  YacHash propagated_hash("my_proposal", "my_block");
+  YacHash propagated_hash(
+      iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
 
   // verify that commit emitted
   auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
@@ -184,7 +188,9 @@ TEST_F(YacTest, PropagateCommitBeforeNotifyingSubscribersApplyReject) {
 
   auto vote = create_vote(YacHash{}, std::to_string(2 * f + 1));
   RejectMessage reject(
-      {vote, create_vote(YacHash("", "my_block"), std::to_string(2 * f + 2))});
+      {vote,
+       create_vote(YacHash(iroha::consensus::Round{1, 1}, "", "my_block"),
+                   std::to_string(2 * f + 2))});
   commit.push_back(vote);
 
   yac->onState(reject.votes);

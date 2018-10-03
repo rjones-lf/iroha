@@ -37,8 +37,8 @@ TEST_F(YacTest, InvalidCaseWhenNotReceiveSupermajority) {
 
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
-  YacHash hash1("proposal_hash", "block_hash");
-  YacHash hash2("proposal_hash", "block_hash2");
+  YacHash hash1(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
+  YacHash hash2(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash2");
   yac->vote(hash1, my_order.value());
 
   for (auto i = 0; i < 2; ++i) {
@@ -71,8 +71,8 @@ TEST_F(YacTest, InvalidCaseWhenDoesNotVerify) {
 
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(false));
 
-  YacHash hash1("proposal_hash", "block_hash");
-  YacHash hash2("proposal_hash", "block_hash2");
+  YacHash hash1(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
+  YacHash hash2(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash2");
 
   for (auto i = 0; i < 2; ++i) {
     yac->onState({create_vote(hash1, std::to_string(i))});
@@ -110,8 +110,8 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
 
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
-  YacHash hash1("proposal_hash", "block_hash");
-  YacHash hash2("proposal_hash", "block_hash2");
+  YacHash hash1(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
+  YacHash hash2(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash2");
 
   std::vector<VoteMessage> votes;
   for (size_t i = 0; i < peers_number / 2; ++i) {

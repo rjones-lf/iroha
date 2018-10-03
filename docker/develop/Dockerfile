@@ -31,7 +31,7 @@ RUN set -e; \
         libpcre3-dev autoconf bison  \
         # other
         wget curl file gdb gdbserver ccache \
-        gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip zip; \
+        gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip vim zip; \
     apt-get -y clean
 
 # install cmake 3.11.4

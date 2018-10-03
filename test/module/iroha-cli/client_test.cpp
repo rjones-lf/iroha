@@ -85,6 +85,8 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*pcsMock, on_verified_proposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
+    EXPECT_CALL(*mst, onStateUpdateImpl())
+        .WillRepeatedly(Return(mst_update_notifier.get_observable()));
     EXPECT_CALL(*mst, onPreparedBatchesImpl())
         .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
     EXPECT_CALL(*mst, onExpiredBatchesImpl())
@@ -146,6 +148,8 @@ class ClientServerTest : public testing::Test {
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       verified_prop_notifier;
+  rxcpp::subjects::subject<std::shared_ptr<iroha::MstState>>
+      mst_update_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 

@@ -132,8 +132,8 @@ class IrohadTest : public AcceptanceFixture {
     iroha::protocol::TxStatusRequest tx_request;
     iroha::protocol::ToriiResponse torii_response;
 
-    auto tx = complete(baseTx(kAdminId).setAccountQuorum(kAdminId, 1),
-                       key_pair);
+    auto tx =
+        complete(baseTx(kAdminId).setAccountQuorum(kAdminId, 1), key_pair);
     tx_request.set_tx_hash(shared_model::crypto::toBinaryString(tx.hash()));
 
     auto client = torii::CommandSyncClient(kAddress, kPort);
@@ -157,8 +157,7 @@ class IrohadTest : public AcceptanceFixture {
    * OR until limit of attempts is exceeded.
    * @param key_pair Key pair for signing transaction
    */
-  void sendDefaultTxAndCheck(
-      const shared_model::crypto::Keypair &key_pair) {
+  void sendDefaultTxAndCheck(const shared_model::crypto::Keypair &key_pair) {
     iroha::protocol::ToriiResponse torii_response;
     torii_response = sendDefaultTx(key_pair);
     ASSERT_EQ(torii_response.tx_status(), iroha::protocol::TxStatus::COMMITTED);

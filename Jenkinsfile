@@ -211,10 +211,12 @@ pipeline {
                 pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ -o '-p 5433' -l /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/events.log start; \
                 psql -h localhost -d postgres -p 5433 -U ${IROHA_POSTGRES_USER} --file=<(echo create database ${IROHA_POSTGRES_USER};)
               """
-              def testExitCode = sh(script: """cd build && IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 ctest --output-on-failure """, returnStatus: true)
-              if (testExitCode != 0) {
-                currentBuild.result = "UNSTABLE"
-              }
+              sh "cd build; IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 ctest --output-on-failure --no-compress-output -T Test || true"
+              sh 'python .jenkinsci/helpers/platform_tag.py "Darwin \$(uname -m)" \$(ls build/Testing/*/Test.xml)'
+              // Mark build as UNSTABLE if there are any failed tests (threshold <100%)
+              xunit testTimeMargin: '3000', thresholdMode: 2, thresholds: [passed(unstableThreshold: '100')], \
+                tools: [CTest(deleteOutputFiles: true, failIfNotNew: false, \
+                pattern: 'build/Testing/**/Test.xml', skipNoTestFiles: false, stopProcessingIfError: true)]
               if ( coverageEnabled ) {
                 sh "cmake --build build --target cppcheck"
                 // Sonar
