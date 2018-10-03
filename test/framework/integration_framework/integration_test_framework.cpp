@@ -47,11 +47,13 @@ namespace integration_framework {
       bool mst_support,
       const std::string &block_store_path,
       milliseconds proposal_waiting,
-      milliseconds block_waiting)
+      milliseconds block_waiting,
+      milliseconds tx_response_waiting)
       : iroha_instance_(std::make_shared<IrohaInstance>(
             mst_support, block_store_path, dbname)),
         proposal_waiting(proposal_waiting),
         block_waiting(block_waiting),
+        tx_response_waiting(tx_response_waiting),
         maximum_proposal_size_(maximum_proposal_size),
         deleter_(deleter) {}
 
@@ -163,6 +165,12 @@ namespace integration_framework {
           log_->info("commit");
           queue_cond.notify_all();
         });
+    iroha_instance_->getIrohaInstance()->getStatusBus()->statuses().subscribe(
+        [this](auto responses) {
+          responses_queues_[responses->transactionHash()].push(responses);
+          log_->info("response");
+          queue_cond.notify_all();
+        });
 
     // start instance
     iroha_instance_->run();
@@ -221,37 +229,6 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
       const shared_model::proto::Transaction &tx) {
     sendTx(tx, [](const auto &) {});
-    return *this;
-  }
-
-  IntegrationTestFramework &IntegrationTestFramework::sendTx(
-      const shared_model::proto::Transaction &tx,
-      std::function<void(TxResponseList)> validation,
-      size_t status_count) {
-    std::condition_variable cv;
-    std::mutex m;
-    TxResponseList status_list;
-
-    // statuses number that haven't being appeared yet
-    iroha_instance_->instance_->getStatusBus()
-        ->statuses()
-        .filter([&](auto s) { return s->transactionHash() == tx.hash(); })
-        .take_while([&status_count](auto) { return status_count != 0; })
-        .subscribe([&](auto s) {
-          status_list.emplace_back(clone(*s));
-          std::lock_guard<std::mutex> lock(m);
-          status_count--;
-          cv.notify_one();
-        });
-
-    // send transaction
-    iroha_instance_->getIrohaInstance()->getCommandServiceTransport()->Torii(
-        nullptr, &tx.getTransport(), nullptr);
-
-    // wait, until all of the statuses are recieved
-    std::unique_lock<std::mutex> lock(m);
-    cv.wait(lock, [&] { return status_count == 0; });
-    validation(status_list);
     return *this;
   }
 
@@ -322,70 +299,6 @@ namespace integration_framework {
     cv.wait(lk, [&] { return processed; });
 
     validation(statuses);
-    return *this;
-  }
-
-  IntegrationTestFramework &IntegrationTestFramework::sendTxSequence(
-      const shared_model::interface::TransactionSequence &tx_sequence,
-      std::function<void(const std::vector<TxResponseList>)> validation,
-      size_t status_count) {
-    auto tx = tx_sequence.transactions();
-
-    struct HashCmp {
-      bool operator()(const shared_model::crypto::Hash &h1,
-                      const shared_model::crypto::Hash &h2) const {
-        return h1.blob() < h2.blob();
-      }
-    };
-
-    // mapping transaction hash to its indexes
-    std::map<shared_model::crypto::Hash, size_t, HashCmp> index_map;
-    // mapping tx index to list of related responses
-    std::map<size_t, TxResponseList> tx_statuses;
-
-    for (auto i = 0u; i < tx.size(); ++i) {
-      index_map[tx[i]->hash()] = i;
-    }
-
-    std::condition_variable cv;
-    std::mutex m;
-    iroha_instance_->instance_->getStatusBus()
-        ->statuses()
-        .filter([&](auto s) {
-          return index_map.find(s->transactionHash()) != index_map.end();
-        })
-        .take_while([&status_count](auto) { return status_count != 0; })
-        .subscribe([&](auto s) {
-          tx_statuses[index_map[s->transactionHash()]].push_back(s);
-
-          std::lock_guard<std::mutex> lock(m);
-          status_count--;
-          cv.notify_one();
-        });
-
-    // put all transactions to the TxList
-    iroha::protocol::TxList tx_list;
-    for (const auto &t : tx) {
-      auto proto_tx =
-          std::static_pointer_cast<shared_model::proto::Transaction>(t)
-              ->getTransport();
-      *tx_list.add_transactions() = proto_tx;
-    }
-    // and send them to iroha
-    iroha_instance_->getIrohaInstance()
-        ->getCommandServiceTransport()
-        ->ListTorii(nullptr, &tx_list, nullptr);
-
-    // wait, until all of the statuses are received
-    std::unique_lock<std::mutex> lock(m);
-    cv.wait(lock, [&] { return status_count == 0; });
-
-    // Since it's easier to use vector instead of map, there's a vector for that
-    std::vector<TxResponseList> v;
-    for (auto &&kv : tx_statuses) {
-      v.emplace_back(std::move(kv.second));
-    }
-    validation(std::move(v));
     return *this;
   }
 
@@ -467,6 +380,21 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::skipBlock() {
     checkBlock([](const auto &) {});
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::checkStatus(
+      const shared_model::interface::types::HashType &tx_hash,
+      std::function<void(const shared_model::proto::TransactionResponse &)>
+          validation) {
+    // fetch first proposal from proposal queue
+    TxResponseType response;
+    fetchFromQueue(responses_queues_[tx_hash],
+                   response,
+                   tx_response_waiting,
+                   "missed status");
+    validation(static_cast<const shared_model::proto::TransactionResponse &>(
+        *response));
     return *this;
   }
 

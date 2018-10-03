@@ -13,10 +13,9 @@
 
 namespace {
   template <typename T>
-  void checkStatus(integration_framework::IntegrationTestFramework::
-                       TxResponseList::value_type &resp) {
+  void checkStatus(const shared_model::interface::TransactionResponse &resp) {
     ASSERT_NO_THROW(
-        boost::apply_visitor(framework::SpecifiedVisitor<T>(), resp->get()));
+        boost::apply_visitor(framework::SpecifiedVisitor<T>(), resp.get()));
   }
 }  // namespace
 
@@ -35,54 +34,24 @@ AcceptanceFixture::AcceptanceFixture()
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()),
       kUserKeypair(
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()),
+      checkEnoughSignatures([](auto &status) {
+        checkStatus<shared_model::interface::EnoughSignaturesCollectedResponse>(
+            status);
+      }),
       checkStatelessInvalid([](auto &status) {
-        ASSERT_NO_THROW(boost::apply_visitor(
-            framework::SpecifiedVisitor<
-                shared_model::interface::StatelessFailedTxResponse>(),
-            status.get()));
+        checkStatus<shared_model::interface::StatelessFailedTxResponse>(status);
       }),
-      checkForStatelessInvalid([](auto status_list) {
-        ASSERT_EQ(status_list.size(), 2);
-        checkStatus<shared_model::interface::EnoughSignaturesCollectedResponse>(
-            status_list[0]);
-        checkStatus<shared_model::interface::StatelessFailedTxResponse>(
-            status_list[1]);
+      checkStatelessValid([](auto &status) {
+        checkStatus<shared_model::interface::StatelessValidTxResponse>(status);
       }),
-      checkForStatelessValid([](auto status_list) {
-        ASSERT_GE(status_list.size(), 2);
-        checkStatus<shared_model::interface::EnoughSignaturesCollectedResponse>(
-            status_list[0]);
-        checkStatus<shared_model::interface::StatelessValidTxResponse>(
-            status_list[1]);
+      checkStatefulInvalid([](auto &status) {
+        checkStatus<shared_model::interface::StatefulFailedTxResponse>(status);
       }),
-      checkForStatefulInvalid([](auto status_list) {
-        ASSERT_EQ(status_list.size(), 3);
-        checkStatus<shared_model::interface::EnoughSignaturesCollectedResponse>(
-            status_list[0]);
-        checkStatus<shared_model::interface::StatelessValidTxResponse>(
-            status_list[1]);
-        checkStatus<shared_model::interface::StatefulFailedTxResponse>(
-            status_list[2]);
+      checkStatefulValid([](auto &status) {
+        checkStatus<shared_model::interface::StatefulValidTxResponse>(status);
       }),
-      checkForStatefulValid([](auto status_list) {
-        ASSERT_GE(status_list.size(), 3);
-        checkStatus<shared_model::interface::EnoughSignaturesCollectedResponse>(
-            status_list[0]);
-        checkStatus<shared_model::interface::StatelessValidTxResponse>(
-            status_list[1]);
-        checkStatus<shared_model::interface::StatefulValidTxResponse>(
-            status_list[2]);
-      }),
-      checkForCommitted([](auto status_list) {
-        ASSERT_EQ(status_list.size(), 4);
-        checkStatus<shared_model::interface::EnoughSignaturesCollectedResponse>(
-            status_list[0]);
-        checkStatus<shared_model::interface::StatelessValidTxResponse>(
-            status_list[1]);
-        checkStatus<shared_model::interface::StatefulValidTxResponse>(
-            status_list[2]);
-        checkStatus<shared_model::interface::CommittedTxResponse>(
-            status_list[3]);
+      checkCommitted([](auto &status) {
+        checkStatus<shared_model::interface::CommittedTxResponse>(status);
       }),
       initial_time(iroha::time::now()),
       nonce_counter(1) {}

@@ -164,7 +164,17 @@ class AcceptanceFixture : public ::testing::Test {
   const shared_model::crypto::Keypair kUserKeypair;
 
   const std::function<void(const shared_model::proto::TransactionResponse &)>
+      checkEnoughSignatures;
+  const std::function<void(const shared_model::proto::TransactionResponse &)>
       checkStatelessInvalid;
+  const std::function<void(const shared_model::proto::TransactionResponse &)>
+      checkStatelessValid;
+  const std::function<void(const shared_model::proto::TransactionResponse &)>
+      checkStatefulInvalid;
+  const std::function<void(const shared_model::proto::TransactionResponse &)>
+      checkStatefulValid;
+  const std::function<void(const shared_model::proto::TransactionResponse &)>
+      checkCommitted;
 
   const std::vector<shared_model::interface::types::AssetNameType>
       kIllegalAssetNames = {"",
@@ -199,15 +209,6 @@ class AcceptanceFixture : public ::testing::Test {
           "domain#domain",
           "asd@asd",
           "ab..cd"};
-
-  using TxResponseList =
-      integration_framework::IntegrationTestFramework::TxResponseList;
-
-  const std::function<void(TxResponseList)> checkForStatelessInvalid;
-  const std::function<void(TxResponseList)> checkForStatelessValid;
-  const std::function<void(TxResponseList)> checkForStatefulInvalid;
-  const std::function<void(TxResponseList)> checkForStatefulValid;
-  const std::function<void(TxResponseList)> checkForCommitted;
 
  private:
   iroha::time::time_t initial_time;

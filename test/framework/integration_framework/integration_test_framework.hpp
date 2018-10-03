@@ -44,6 +44,8 @@ namespace integration_framework {
    private:
     using ProposalType = std::shared_ptr<shared_model::interface::Proposal>;
     using BlockType = std::shared_ptr<shared_model::interface::Block>;
+    using TxResponseType =
+        std::shared_ptr<shared_model::interface::TransactionResponse>;
 
    public:
     /**
@@ -70,7 +72,8 @@ namespace integration_framework {
              / boost::filesystem::unique_path())
                 .string(),
         milliseconds proposal_waiting = milliseconds(20000),
-        milliseconds block_waiting = milliseconds(20000));
+        milliseconds block_waiting = milliseconds(20000),
+        milliseconds tx_response_waiting = milliseconds(10000));
 
     ~IntegrationTestFramework();
 
@@ -134,21 +137,6 @@ namespace integration_framework {
     IntegrationTestFramework &sendTx(
         const shared_model::proto::Transaction &tx);
 
-    using TxResponseList = std::vector<
-        std::shared_ptr<shared_model::interface::TransactionResponse>>;
-
-    /**
-     * Send transaction to Iroha and validate its status
-     * @param tx - transaction for sending
-     * @param callback for checking status list
-     * @param status_count is number of statuses to wait
-     * @return this
-     */
-    IntegrationTestFramework &sendTx(
-        const shared_model::proto::Transaction &tx,
-        std::function<void(TxResponseList)> validation,
-        size_t status_count);
-
     /**
      * Send transaction to Iroha with awaiting proposal
      * and without status validation
@@ -171,18 +159,6 @@ namespace integration_framework {
         const shared_model::interface::TransactionSequence &tx_sequence,
         std::function<void(std::vector<shared_model::proto::TransactionResponse>
                                &)> validation = [](const auto &) {});
-
-    /**
-     * Send transactions to Iroha and validate obtained statuses
-     * @param tx_sequence - transactions sequence
-     * @param callback for checking vector of responses list
-     * @param status_count is number of statuses to wait
-     * @return this
-     */
-    IntegrationTestFramework &sendTxSequence(
-        const shared_model::interface::TransactionSequence &tx_sequence,
-        std::function<void(std::vector<TxResponseList>)> validation,
-        size_t status_count);
 
     /**
      * Send transactions to Iroha with awaiting proposal and without status
@@ -272,6 +248,16 @@ namespace integration_framework {
     IntegrationTestFramework &skipBlock();
 
     /**
+     * Request next status of the transaction
+     * @param tx_hash is hash for filtering responses
+     * @return this
+     */
+    IntegrationTestFramework &checkStatus(
+        const shared_model::interface::types::HashType &tx_hash,
+        std::function<void(const shared_model::proto::TransactionResponse &)>
+            validation);
+
+    /**
      * Shutdown ITF instance
      */
     void done();
@@ -303,6 +289,18 @@ namespace integration_framework {
     tbb::concurrent_queue<ProposalType> proposal_queue_;
     tbb::concurrent_queue<ProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
+
+    struct HashCmp {
+      bool operator()(const shared_model::crypto::Hash &h1,
+                      const shared_model::crypto::Hash &h2) const {
+        return h1.blob() < h2.blob();
+      }
+    };
+
+    std::map<shared_model::interface::types::HashType,
+             tbb::concurrent_queue<TxResponseType>,
+             HashCmp>
+        responses_queues_;
     std::shared_ptr<IrohaInstance> iroha_instance_;
 
     void initPipeline(const shared_model::crypto::Keypair &keypair);
@@ -316,6 +314,9 @@ namespace integration_framework {
 
     /// maximum time of waiting before appearing next committed block
     milliseconds block_waiting;
+
+    /// maximum time of waiting before appearing next transaction response
+    milliseconds tx_response_waiting;
 
     size_t maximum_proposal_size_;
 

@@ -41,9 +41,14 @@ class CreateRole : public AcceptanceFixture {
  * @then there is the tx in proposal
  */
 TEST_F(CreateRole, Basic) {
+  auto tx = makeUserWithPerms();
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms(), checkForCommitted, 4)
+      .sendTx(tx)
+      .checkStatus(tx.hash(), checkEnoughSignatures)
+      .checkStatus(tx.hash(), checkStatelessValid)
+      .checkStatus(tx.hash(), checkStatefulValid)
+      .checkStatus(tx.hash(), checkCommitted)
       .sendTxAwait(complete(baseTx()), [](auto &block) {
         ASSERT_EQ(block->transactions().size(), 1);
       });

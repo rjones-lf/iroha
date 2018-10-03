@@ -221,12 +221,19 @@ TEST_F(BatchPipelineTest, InvalidAtomicBatch) {
           createAndAddAssets(kSecondUserId, kAssetB, "1.0", kSecondUserKeypair),
           [](const auto &) {})
       .sendTxSequence(transaction_sequence,
-                      [this](auto responses_list) {
-                        ASSERT_EQ(responses_list.size(), 2);
-                        checkForStatelessValid(std::move(responses_list[0]));
-                        checkForStatefulInvalid(std::move(responses_list[1]));
-                      },
-                      5)
+                      [](const auto &statuses) {
+                        for (const auto &status : statuses) {
+                          EXPECT_NO_THROW(boost::apply_visitor(
+                              framework::SpecifiedVisitor<
+                                  interface::StatelessValidTxResponse>(),
+                              status.get()));
+                        }
+                      })
+      .checkStatus(batch_transactions[0]->hash(), checkEnoughSignatures)
+      .checkStatus(batch_transactions[0]->hash(), checkStatelessValid)
+      .checkStatus(batch_transactions[1]->hash(), checkEnoughSignatures)
+      .checkStatus(batch_transactions[1]->hash(), checkStatelessValid)
+      .checkStatus(batch_transactions[1]->hash(), checkStatefulInvalid)
       .checkProposal([&transaction_sequence](const auto proposal) {
         ASSERT_THAT(
             proposal->transactions(),
