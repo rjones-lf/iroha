@@ -14,7 +14,9 @@ void OnDemandCache::addToBack(
 }
 
 OgCache::BatchesListType OnDemandCache::dequeue() {
-  return iroha::ordering::cache::OgCache::BatchesListType();
+  auto &front = queue_.front();
+  queue_.pop();
+  return front;
 }
 
 void OnDemandCache::remove(const OgCache::BatchesListType &remove_batches) {

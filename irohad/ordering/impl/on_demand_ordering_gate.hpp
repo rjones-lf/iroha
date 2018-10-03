@@ -16,6 +16,7 @@
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
+#include "ordering/impl/og_cache/on_demand_cache.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -67,6 +68,9 @@ namespace iroha {
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::Proposal>>
           proposal_notifier_;
+
+      cache::OnDemandCache cache_;
+
       mutable std::shared_timed_mutex mutex_;
     };
 

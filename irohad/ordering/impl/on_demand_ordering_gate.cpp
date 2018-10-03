@@ -28,6 +28,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                        [this](const BlockEvent &block_event) {
                          // block committed, increment block round
                          current_round_ = {block_event->height(), 1};
+                         cache_.remove(block_event->);
                        },
                        [this](const EmptyEvent &empty) {
                          // no blocks committed, increment reject round
