@@ -67,20 +67,18 @@ class IrohadTest : public AcceptanceFixture {
   }
 
   void launchIroha(const std::string &parameters) {
-    output_ = boost::process::ipstream();
-    reader_ = std::thread([this] {
-        std::string line;
-        while (std::getline(this->output_, line)) {
-          if (line.find("iroha initialized") != std::string::npos) {
-            return;
-          }
-        }
-
-    });
-    iroha_process_.emplace(irohad_executable.string() + parameters, boost::process::std_out > output_);
-    reader_.join();
+    iroha_process_.emplace(irohad_executable.string() + parameters);
+    auto channel = grpc::CreateChannel(kAddress + ":" + std::to_string(kPort),
+                                       grpc::InsecureChannelCredentials());
+    auto state = channel->GetState(true);
+    while (state != grpc_connectivity_state::GRPC_CHANNEL_READY) {
+      channel->WaitForStateChange(state,
+                                  std::chrono::system_clock::now() + kTimeout);
+      state = channel->GetState(true);
+    }
     ASSERT_TRUE(iroha_process_->running());
   }
+
   void launchIroha(const boost::optional<std::string> &config_path,
                    const boost::optional<std::string> &genesis_block,
                    const boost::optional<std::string> &keypair_path,
@@ -208,6 +206,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
  public:
   boost::filesystem::path irohad_executable;
+  const std::chrono::milliseconds kTimeout = std::chrono::seconds(5);
   const std::string kAddress;
   const uint16_t kPort;
 
@@ -235,8 +234,6 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
   std::string pgopts_;
   std::string blockstore_path_;
   std::string config_copy_;
-  boost::process::ipstream output_;
-  std::thread reader_;
 };
 
 /**
