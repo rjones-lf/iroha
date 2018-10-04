@@ -4,9 +4,11 @@
  */
 
 #include "ametsuchi/impl/postgres_command_executor.hpp"
+#include "ametsuchi/impl/postgres_query_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_account_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_asset_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_domain_builder.hpp"
@@ -1591,6 +1593,5 @@ namespace iroha {
                                                  "desc",
                                                  "2.0")))));
     }
-
   }  // namespace ametsuchi
 }  // namespace iroha

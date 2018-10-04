@@ -277,6 +277,10 @@ namespace iroha {
       MOCK_CONST_METHOD0(
           createOsPersistentState,
           boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
+      MOCK_CONST_METHOD1(
+          createQueryExecutor,
+          boost::optional<std::shared_ptr<QueryExecutor>>(
+              std::shared_ptr<PendingTransactionStorage> pending_txs_storage));
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
       MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block &));
       MOCK_METHOD1(insertBlocks,
@@ -324,6 +328,20 @@ namespace iroha {
           createOsPersistentState,
           boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
     };
+
+    class MockQueryExecutor : public QueryExecutor {
+     public:
+      MOCK_METHOD1(validateAndExecute_,
+                   shared_model::interface::QueryResponse *(
+                       const shared_model::interface::Query &));
+      QueryExecutorResult validateAndExecute(
+          const shared_model::interface::Query &q) override {
+        return QueryExecutorResult(validateAndExecute_(q));
+      }
+      MOCK_METHOD1(validate,
+                   bool(const shared_model::interface::BlocksQuery &));
+    };
+
   }  // namespace ametsuchi
 }  // namespace iroha
 

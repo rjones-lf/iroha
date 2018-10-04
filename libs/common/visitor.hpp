@@ -93,6 +93,19 @@ namespace iroha {
         make_visitor(std::forward<TVisitors>(visitors)...),
         std::forward<TVariant>(variant));
   }
+
+  /// apply Matcher to optional T
+  template <typename T, typename Matcher>
+  constexpr decltype(auto) match(T &&t, Matcher &&m) {
+    return std::forward<T>(t) ? std::forward<Matcher>(m)(*std::forward<T>(t))
+                              : std::forward<Matcher>(m)();
+  }
+
+  /// construct visitor from Fs and apply it to optional T
+  template <typename T, typename... Fs>
+  constexpr decltype(auto) match_in_place(T &&t, Fs &&... fs) {
+    return match(std::forward<T>(t), make_visitor(std::forward<Fs>(fs)...));
+  }
 }  // namespace iroha
 
 #endif  // IROHA_VISITOR_HPP

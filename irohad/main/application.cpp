@@ -11,7 +11,6 @@
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
-#include "execution/query_execution_impl.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/mst_processor_stub.hpp"
@@ -328,8 +327,7 @@ void Irohad::initTransactionCommandService() {
  */
 void Irohad::initQueryService() {
   auto query_processor = std::make_shared<QueryProcessorImpl>(
-      storage,
-      std::make_unique<QueryExecutionImpl>(storage, pending_txs_storage_));
+      storage, storage, pending_txs_storage_);
 
   query_service = std::make_shared<::torii::QueryService>(query_processor);
 
