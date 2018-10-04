@@ -8,7 +8,7 @@
 
 #include <rxcpp/rx.hpp>
 
-#include "ordering/on_demand_os_transport.hpp"
+#include "consensus/round.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -21,12 +21,12 @@ namespace iroha {
   namespace network {
     /// Current pair is valid
     struct PairValid {
-      std::shared_ptr<shared_model::interface::Block> block_;
+      std::shared_ptr<shared_model::interface::Block> block;
     };
 
     /// Network votes for another pair and round
     struct VoteOther {
-      std::shared_ptr<shared_model::interface::Block> block_;
+      std::shared_ptr<shared_model::interface::Block> block;
     };
 
     /// Reject on proposal
@@ -34,7 +34,7 @@ namespace iroha {
 
     /// Reject on block
     struct BlockReject {
-      std::shared_ptr<shared_model::interface::Block> block_;
+      std::shared_ptr<shared_model::interface::Block> block;
     };
 
     /// Agreement on <None, None>
@@ -45,7 +45,7 @@ namespace iroha {
      */
     class ConsensusGate {
      public:
-      using Round = iroha::ordering::transport::Round;
+      using Round = iroha::consensus::Round;
       /**
        * Providing data for consensus for voting
        * @param block is the block for which current node is voting

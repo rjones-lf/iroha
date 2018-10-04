@@ -12,7 +12,6 @@
 #include "consensus/round.hpp"
 #include "consensus/yac/storage/yac_common.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "ordering/on_demand_os_transport.hpp"
 
 namespace shared_model {
   namespace interface {
