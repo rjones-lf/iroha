@@ -10,21 +10,21 @@
 
 #include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "interfaces/queries/get_account.hpp"
-#include "interfaces/queries/get_account_asset_transactions.hpp"
-#include "interfaces/queries/get_account_assets.hpp"
-#include "interfaces/queries/get_account_detail.hpp"
-#include "interfaces/queries/get_account_transactions.hpp"
-#include "interfaces/queries/get_asset_info.hpp"
-#include "interfaces/queries/get_role_permissions.hpp"
-#include "interfaces/queries/get_roles.hpp"
-#include "interfaces/queries/get_signatories.hpp"
-#include "interfaces/queries/get_transactions.hpp"
-#include "interfaces/queries/get_pending_transactions.hpp"
-#include "interfaces/queries/query_payload_meta.hpp"
 
 namespace shared_model {
   namespace interface {
+
+    class GetAccount;
+    class GetSignatories;
+    class GetAccountTransactions;
+    class GetAccountAssetTransactions;
+    class GetTransactions;
+    class GetAccountAssets;
+    class GetAccountDetail;
+    class GetRoles;
+    class GetRolePermissions;
+    class GetAssetInfo;
+    class GetPendingTransactions;
 
     /**
      * Class Query provides container with one of concrete query available in
@@ -79,4 +79,19 @@ namespace shared_model {
     };
   }  // namespace interface
 }  // namespace shared_model
+
+namespace boost {
+  extern template class variant<
+      const shared_model::interface::GetAccount &,
+      const shared_model::interface::GetSignatories &,
+      const shared_model::interface::GetAccountTransactions &,
+      const shared_model::interface::GetAccountAssetTransactions &,
+      const shared_model::interface::GetTransactions &,
+      const shared_model::interface::GetAccountAssets &,
+      const shared_model::interface::GetAccountDetail &,
+      const shared_model::interface::GetRoles &,
+      const shared_model::interface::GetRolePermissions &,
+      const shared_model::interface::GetAssetInfo &,
+      const shared_model::interface::GetPendingTransactions &>;
+}  // namespace boost
 #endif  // IROHA_SHARED_MODEL_QUERY_HPP
