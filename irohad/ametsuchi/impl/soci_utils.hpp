@@ -37,6 +37,22 @@ namespace iroha {
     template <typename T>
     constexpr std::size_t length_v = boost::tuples::length<T>::value;
 
+    /// tuple element type shortcut
+    template <std::size_t N, typename T>
+    using element_t = typename boost::tuples::element<N, T>::type;
+
+    /// index sequence helper for concat
+    template <class Tuple1, class Tuple2, std::size_t... Is, std::size_t... Js>
+    auto concat_impl(std::index_sequence<Is...>, std::index_sequence<Js...>)
+        -> boost::tuple<element_t<Is, std::decay_t<Tuple1>>...,
+                        element_t<Js, std::decay_t<Tuple2>>...>;
+
+    /// tuple with types from two given tuples
+    template <class Tuple1, class Tuple2>
+    using concat = decltype(concat_impl<Tuple1, Tuple2>(
+        std::make_index_sequence<length_v<std::decay_t<Tuple1>>>{},
+        std::make_index_sequence<length_v<std::decay_t<Tuple2>>>{}));
+
     /// index sequence helper for index_apply
     template <typename F, std::size_t... Is>
     constexpr decltype(auto) index_apply_impl(F &&f,
@@ -59,6 +75,48 @@ namespace iroha {
             return std::forward<F>(f)(
                 boost::get<Is>(std::forward<Tuple>(t))...);
           });
+    }
+
+    /// view first length_v<R> elements of T without copying
+    template <typename R, typename T>
+    constexpr auto viewQuery(T &&t) {
+      return index_apply<length_v<std::decay_t<R>>>([&](auto... Is) {
+        return boost::make_tuple(std::forward<T>(t).template get<Is>()...);
+      });
+    }
+
+    /// view last length_v<R> elements of T without copying
+    template <typename R, typename T>
+    constexpr auto viewPermissions(T &&t) {
+      return index_apply<length_v<std::decay_t<R>>>([&](auto... Is) {
+        return boost::make_tuple(
+            std::forward<T>(t)
+                .template get<Is
+                              + length_v<std::decay_t<
+                                    T>> - length_v<std::decay_t<R>>>()...);
+      });
+    }
+
+    /// map tuple<optional<Ts>...> to optional<tuple<Ts...>>
+    template <typename T>
+    constexpr auto rebind(T &&t) {
+      auto transform = [](auto &&... vals) {
+        return boost::make_tuple(*std::forward<decltype(vals)>(vals)...);
+      };
+
+      using ReturnType =
+          decltype(boost::make_optional(apply(std::forward<T>(t), transform)));
+
+      return apply(std::forward<T>(t),
+                   [&](auto &&... vals) {
+                     bool temp[] = {static_cast<bool>(
+                         std::forward<decltype(vals)>(vals))...};
+                     return std::all_of(std::begin(temp),
+                                        std::end(temp),
+                                        [](auto b) { return b; });
+                   })
+          ? boost::make_optional(apply(std::forward<T>(t), transform))
+          : ReturnType{};
     }
 
     template <typename C, typename T, typename F>
