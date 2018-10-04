@@ -73,8 +73,8 @@ Configuring Iroha Network
 
 .. note:: To keep things simple, in this guide we will create a network
   containing only one node. To understand how to run several peers, follow
-  this guide.
-
+  `this guide. <github.com/hyperledger/iroha/tree/master/deploy/ansible>`_
+  
 Now we need to configure our Iroha network. This includes creating a
 configuration file, generating keypairs for a users, writing a list of peers
 and creating a genesis block. However, we have prepared an example
