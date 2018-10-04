@@ -11,6 +11,11 @@
 #include "interfaces/transaction.hpp"
 
 namespace {
+  /**
+   * Zips in_range and out_range, where in_range elements are objects, parses
+   * batches based on batchMeta values of in_range, and returns a collection of
+   * corresponding sub-ranges of out_range
+   */
   template <typename InRange, typename OutRange>
   auto parseBatchesImpl(InRange in_range, const OutRange &out_range) {
     std::vector<OutRange> result;

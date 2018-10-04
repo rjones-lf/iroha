@@ -25,13 +25,10 @@ MstTransportGrpc::MstTransportGrpc(
       transaction_factory_(std::move(transaction_factory)),
       batch_parser_(std::move(batch_parser)) {}
 
-grpc::Status MstTransportGrpc::SendState(
-    ::grpc::ServerContext *context,
-    const ::iroha::network::transport::MstState *request,
-    ::google::protobuf::Empty *response) {
-  async_call_->log_->info("MstState Received");
-
-  auto transactions = boost::copy_range<
+shared_model::interface::types::SharedTxsCollectionType
+MstTransportGrpc::deserializeTransactions(
+    const ::iroha::network::transport::MstState *request) {
+  return boost::copy_range<
       shared_model::interface::types::SharedTxsCollectionType>(
       request->transactions()
       | boost::adaptors::transformed(
@@ -57,6 +54,15 @@ grpc::Status MstTransportGrpc::SendState(
                          result))
               .value;
         }));
+}
+
+grpc::Status MstTransportGrpc::SendState(
+    ::grpc::ServerContext *context,
+    const ::iroha::network::transport::MstState *request,
+    ::google::protobuf::Empty *response) {
+  async_call_->log_->info("MstState Received");
+
+  auto transactions = deserializeTransactions(request);
 
   auto batches = batch_parser_->parseBatches(transactions);
 

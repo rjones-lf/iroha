@@ -78,11 +78,10 @@ namespace torii {
     }
   }  // namespace
 
-  grpc::Status CommandServiceTransportGrpc::ListTorii(
-      grpc::ServerContext *context,
-      const iroha::protocol::TxList *request,
-      google::protobuf::Empty *response) {
-    auto transactions = boost::copy_range<
+  shared_model::interface::types::SharedTxsCollectionType
+  CommandServiceTransportGrpc::deserializeTransactions(
+      const iroha::protocol::TxList *request) {
+    return boost::copy_range<
         shared_model::interface::types::SharedTxsCollectionType>(
         request->transactions()
         | boost::adaptors::transformed(
@@ -106,6 +105,13 @@ namespace torii {
                            result))
                 .value;
           }));
+  }
+
+  grpc::Status CommandServiceTransportGrpc::ListTorii(
+      grpc::ServerContext *context,
+      const iroha::protocol::TxList *request,
+      google::protobuf::Empty *response) {
+    auto transactions = deserializeTransactions(request);
 
     auto batches = batch_parser_->parseBatches(transactions);
 

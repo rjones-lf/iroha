@@ -95,6 +95,12 @@ namespace torii {
                                   *response_writer) override;
 
    private:
+    /**
+     * Flat map transport transactions to shared model
+     */
+    shared_model::interface::types::SharedTxsCollectionType
+    deserializeTransactions(const iroha::protocol::TxList *request);
+
     std::shared_ptr<CommandService> command_service_;
     std::shared_ptr<iroha::torii::StatusBus> status_bus_;
     const std::chrono::milliseconds initial_timeout_;
