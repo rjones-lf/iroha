@@ -72,6 +72,7 @@ void Irohad::init() {
   initCryptoProvider();
   initValidators();
   initNetworkClient();
+  initBatchFactory();
   initOrderingGate();
   initSimulator();
   initConsensusCache();
@@ -166,12 +167,17 @@ void Irohad::initNetworkClient() {
       std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
 }
 
+void Irohad::initBatchFactory() {
+  transaction_batch_factory_ =
+      std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
+
+  log_->info("[Init] => transaction batch factory");
+}
+
 /**
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
-  transaction_batch_factory_ =
-      std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
   ordering_gate = ordering_init.initOrderingGate(storage,
                                                  max_proposal_size_,
                                                  proposal_delay_,

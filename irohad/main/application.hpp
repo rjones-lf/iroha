@@ -123,6 +123,8 @@ class Irohad {
 
   virtual void initNetworkClient();
 
+  virtual void initBatchFactory();
+
   virtual void initOrderingGate();
 
   virtual void initSimulator();

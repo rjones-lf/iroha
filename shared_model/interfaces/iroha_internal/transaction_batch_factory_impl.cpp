@@ -43,14 +43,14 @@ namespace {
       return BatchCheckResult::kIncorrectBatchMetaSize;
     }
 
-    auto metasAndTxs = boost::combine(batch_hashes, transactions);
+    auto metas_and_txs = boost::combine(batch_hashes, transactions);
     auto hashes_are_correct =
-        std::all_of(boost::begin(metasAndTxs),
-                    boost::end(metasAndTxs),
-                    [](const auto &metaAndTx) {
+        std::all_of(boost::begin(metas_and_txs),
+                    boost::end(metas_and_txs),
+                    [](const auto &meta_and_tx) {
                       shared_model::interface::types::HashType batch_hash;
                       std::shared_ptr<shared_model::interface::Transaction> tx;
-                      boost::tie(batch_hash, tx) = metaAndTx;
+                      boost::tie(batch_hash, tx) = meta_and_tx;
                       return batch_hash == tx->reducedHash();
                     });
     if (not hashes_are_correct) {

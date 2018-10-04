@@ -36,6 +36,8 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
           return std::make_shared<shared_model::proto::Transaction>(tx);
         });
 
+    // TODO [IR-1730] Akvinikym 04.10.18: use transaction factory to stateless
+    // validate transactions before wrapping them into batches
     auto batch_result = batch_factory_->createTransactionBatch(txs);
     batch_result.match(
         [this](iroha::expected::Value<std::unique_ptr<
