@@ -6,8 +6,8 @@
 #ifndef IROHA_TRANSACTION_BATCH_PARSER_HPP
 #define IROHA_TRANSACTION_BATCH_PARSER_HPP
 
+#include "interfaces/common_objects/range_types.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
-#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
