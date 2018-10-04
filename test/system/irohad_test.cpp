@@ -71,11 +71,14 @@ class IrohadTest : public AcceptanceFixture {
     auto channel = grpc::CreateChannel(kAddress + ":" + std::to_string(kPort),
                                        grpc::InsecureChannelCredentials());
     auto state = channel->GetState(true);
-    while (state != grpc_connectivity_state::GRPC_CHANNEL_READY) {
+    auto start = std::chrono::system_clock::now();
+    while (state != grpc_connectivity_state::GRPC_CHANNEL_READY
+           and start + kTimeout > std::chrono::system_clock::now()) {
       channel->WaitForStateChange(state,
                                   std::chrono::system_clock::now() + kTimeout);
       state = channel->GetState(true);
     }
+    ASSERT_EQ(state, grpc_connectivity_state::GRPC_CHANNEL_READY);
     ASSERT_TRUE(iroha_process_->running());
   }
 
