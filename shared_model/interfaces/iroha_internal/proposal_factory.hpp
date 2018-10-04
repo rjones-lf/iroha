@@ -8,6 +8,7 @@
 
 #include <memory>
 
+#include <boost/range/any_range.hpp>
 #include "common/result.hpp"
 #include "interfaces/common_objects/types.hpp"
 

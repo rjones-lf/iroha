@@ -92,6 +92,26 @@ namespace iroha {
           shared_model::interface::permissions::Grantable permission) override;
 
      private:
+      /**
+       * Transforms result to optional
+       * value -> optional<value>
+       * error -> nullopt
+       * @tparam T type of object inside
+       * @param result BuilderResult
+       * @return optional<T>
+       */
+      template <typename T>
+      boost::optional<std::shared_ptr<T>> fromResult(
+          shared_model::interface::CommonObjectsFactory::FactoryResult<
+              std::unique_ptr<T>> &&result);
+
+      /**
+       * Executes given lambda of type F, catches exceptions if any, logs the
+       * message, and returns an optional rowset<T>
+       */
+      template <typename T, typename F>
+      auto execute(F &&f) -> boost::optional<soci::rowset<T>>;
+
       // TODO andrei 24.09.2018: IR-1718 Consistent soci::session fields in
       // storage classes
       std::unique_ptr<soci::session> psql_;

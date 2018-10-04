@@ -18,6 +18,7 @@
 #include <tbb/concurrent_queue.h>
 #include <boost/filesystem.hpp>
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"

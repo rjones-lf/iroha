@@ -125,7 +125,7 @@ TEST_F(ConsensusSunnyDayTest, SunnyDayTest) {
   // Wait for other peers to start
   std::this_thread::sleep_for(std::chrono::milliseconds(delay_before));
 
-  YacHash my_hash("proposal_hash", "block_hash");
+  YacHash my_hash(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
   my_hash.block_signature = createSig("");
   auto order = ClusterOrdering::create(default_peers);
   ASSERT_TRUE(order);

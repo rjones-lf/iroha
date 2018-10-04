@@ -8,6 +8,7 @@
 #include <boost/format.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
+#include "ametsuchi/impl/soci_utils.hpp"
 
 namespace iroha {
   namespace ametsuchi {

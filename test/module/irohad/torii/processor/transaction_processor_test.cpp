@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "torii/processor/transaction_processor_impl.hpp"
+
 #include <boost/range/join.hpp>
+#include "builders/default_builders.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
 #include "framework/specified_visitor.hpp"
@@ -19,7 +22,6 @@
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "torii/impl/status_bus_impl.hpp"
-#include "torii/processor/transaction_processor_impl.hpp"
 
 using namespace iroha;
 using namespace iroha::network;
@@ -37,20 +39,22 @@ class TransactionProcessorTest : public ::testing::Test {
  public:
   void SetUp() override {
     pcs = std::make_shared<MockPeerCommunicationService>();
-    mp = std::make_shared<MockMstProcessor>();
+    mst = std::make_shared<MockMstProcessor>();
 
     EXPECT_CALL(*pcs, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
     EXPECT_CALL(*pcs, on_verified_proposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
-    EXPECT_CALL(*mp, onPreparedBatchesImpl())
+    EXPECT_CALL(*mst, onStateUpdateImpl())
+        .WillRepeatedly(Return(mst_update_notifier.get_observable()));
+    EXPECT_CALL(*mst, onPreparedBatchesImpl())
         .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
-    EXPECT_CALL(*mp, onExpiredBatchesImpl())
+    EXPECT_CALL(*mst, onExpiredBatchesImpl())
         .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
     status_bus = std::make_shared<MockStatusBus>();
-    tp = std::make_shared<TransactionProcessorImpl>(pcs, mp, status_bus);
+    tp = std::make_shared<TransactionProcessorImpl>(pcs, mst, status_bus);
   }
 
   auto base_tx() {
@@ -111,13 +115,15 @@ class TransactionProcessorTest : public ::testing::Test {
     }
   }
 
+  rxcpp::subjects::subject<std::shared_ptr<iroha::MstState>>
+      mst_update_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 
   std::shared_ptr<MockPeerCommunicationService> pcs;
   std::shared_ptr<MockStatusBus> status_bus;
   std::shared_ptr<TransactionProcessorImpl> tp;
-  std::shared_ptr<MockMstProcessor> mp;
+  std::shared_ptr<MockMstProcessor> mst;
 
   StatusMapType status_map;
   shared_model::builder::TransactionStatusBuilder<
@@ -152,7 +158,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
         status_map[response->transactionHash()] = response;
       }));
 
-  EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(0);
+  EXPECT_CALL(*mst, propagateBatchImpl(_)).Times(0);
   EXPECT_CALL(*pcs, propagate_batch(_)).Times(txs.size());
 
   for (const auto &tx : txs) {
@@ -194,7 +200,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
   auto transaction_sequence =
       framework::expected::val(transaction_sequence_result).value().value;
 
-  EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(0);
+  EXPECT_CALL(*mst, propagateBatchImpl(_)).Times(0);
   EXPECT_CALL(*pcs, propagate_batch(_))
       .Times(transaction_sequence.batches().size());
 
@@ -240,7 +246,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
         status_map[response->transactionHash()] = response;
       }));
 
-  EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(0);
+  EXPECT_CALL(*mst, propagateBatchImpl(_)).Times(0);
   EXPECT_CALL(*pcs, propagate_batch(_)).Times(txs.size());
 
   for (const auto &tx : txs) {
@@ -295,7 +301,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
         status_map[response->transactionHash()] = response;
       }));
 
-  EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(0);
+  EXPECT_CALL(*mst, propagateBatchImpl(_)).Times(0);
   EXPECT_CALL(*pcs, propagate_batch(_)).Times(txs.size());
 
   for (const auto &tx : txs) {
@@ -416,9 +422,8 @@ TEST_F(TransactionProcessorTest, MultisigTransactionToMst) {
 
   auto &&after_mst = framework::batch::createBatchFromSingleTransaction(
       std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
-  EXPECT_CALL(*status_bus, publish(_)).Times(1);
-  EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(1);
 
+  EXPECT_CALL(*mst, propagateBatchImpl(_)).Times(1);
   tp->batchHandle(std::move(after_mst));
 }
 
@@ -435,7 +440,6 @@ TEST_F(TransactionProcessorTest, MultisigTransactionFromMst) {
   auto &&after_mst = framework::batch::createBatchFromSingleTransaction(
       std::shared_ptr<shared_model::interface::Transaction>(clone(tx)));
 
-  EXPECT_CALL(*status_bus, publish(_)).Times(1);
   EXPECT_CALL(*pcs, propagate_batch(_)).Times(1);
   mst_prepared_notifier.get_subscriber().on_next(after_mst);
 }
@@ -443,11 +447,10 @@ TEST_F(TransactionProcessorTest, MultisigTransactionFromMst) {
 /**
  * @given valid multisig tx
  * @when transaction_processor handle it
- * @then before expiring it will have MST_PENDING status @and after expiring
- * MST_EXPIRED status
+ * @then it will has MST_EXPIRED status
  */
 TEST_F(TransactionProcessorTest, MultisigExpired) {
-  EXPECT_CALL(*mp, propagateBatchImpl(_)).Times(1);
+  EXPECT_CALL(*mst, propagateBatchImpl(_)).Times(1);
   EXPECT_CALL(*pcs, propagate_batch(_)).Times(0);
 
   std::shared_ptr<shared_model::interface::Transaction> tx =
@@ -459,17 +462,10 @@ TEST_F(TransactionProcessorTest, MultisigExpired) {
                         generateKeypair())
                 .finish());
   EXPECT_CALL(*status_bus, publish(_))
-      .WillOnce(testing::Invoke([](auto response) {
-        ASSERT_NO_THROW(boost::apply_visitor(
-            framework::SpecifiedVisitor<
-                shared_model::interface::MstPendingResponse>(),
-            response->get()));
-      }))
-      .WillOnce(testing::Invoke([](auto response) {
-        ASSERT_NO_THROW(boost::apply_visitor(
-            framework::SpecifiedVisitor<
-                shared_model::interface::MstExpiredResponse>(),
-            response->get()));
+      .WillRepeatedly(testing::Invoke([](auto response) {
+        ASSERT_NO_THROW(
+            boost::get<const shared_model::interface::MstExpiredResponse &>(
+                response->get()));
       }));
   tp->batchHandle(framework::batch::createBatchFromSingleTransaction(tx));
   mst_expired_notifier.get_subscriber().on_next(
