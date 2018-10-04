@@ -167,7 +167,7 @@ namespace integration_framework {
         });
     iroha_instance_->getIrohaInstance()->getStatusBus()->statuses().subscribe(
         [this](auto responses) {
-          responses_queues_[responses->transactionHash()].push(responses);
+          responses_queues_[responses->transactionHash().hex()].push(responses);
           log_->info("response");
           queue_cond.notify_all();
         });
@@ -389,7 +389,7 @@ namespace integration_framework {
           validation) {
     // fetch first proposal from proposal queue
     TxResponseType response;
-    fetchFromQueue(responses_queues_[tx_hash],
+    fetchFromQueue(responses_queues_[tx_hash.hex()],
                    response,
                    tx_response_waiting,
                    "missed status");

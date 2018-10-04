@@ -290,16 +290,7 @@ namespace integration_framework {
     tbb::concurrent_queue<ProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
 
-    struct HashCmp {
-      bool operator()(const shared_model::crypto::Hash &h1,
-                      const shared_model::crypto::Hash &h2) const {
-        return h1.blob() < h2.blob();
-      }
-    };
-
-    std::map<shared_model::interface::types::HashType,
-             tbb::concurrent_queue<TxResponseType>,
-             HashCmp>
+    std::map<std::string, tbb::concurrent_queue<TxResponseType>>
         responses_queues_;
     std::shared_ptr<IrohaInstance> iroha_instance_;
 

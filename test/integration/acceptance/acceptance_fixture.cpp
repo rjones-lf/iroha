@@ -8,14 +8,14 @@
 #include <utility>
 
 #include "datetime/time.hpp"
+#include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 namespace {
   template <typename T>
   void checkStatus(const shared_model::interface::TransactionResponse &resp) {
-    ASSERT_NO_THROW(
-        boost::apply_visitor(framework::SpecifiedVisitor<T>(), resp.get()));
+    ASSERT_NO_THROW(boost::get<T>(resp.get()));
   }
 }  // namespace
 

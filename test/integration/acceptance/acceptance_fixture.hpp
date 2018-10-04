@@ -11,7 +11,6 @@
 #include <string>
 #include <vector>
 #include "cryptography/keypair.hpp"
-#include "framework/integration_framework/integration_test_framework.hpp"
 #include "interfaces/permissions.hpp"
 #include "interfaces/query_responses/query_response.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
