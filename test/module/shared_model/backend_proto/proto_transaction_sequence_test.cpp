@@ -35,7 +35,7 @@ TEST(TransactionSequenceTest, CreateTransactionSequenceWhenValid) {
 
   size_t transactions_size = 3;
   auto transactions =
-      framework::batch::createValidBatch(transactions_size).transactions();
+      framework::batch::createValidBatch(transactions_size)->transactions();
 
   std::shared_ptr<interface::Transaction> tx(clone(
       framework::batch::prepareTransactionBuilder("account@domain")
@@ -88,7 +88,7 @@ TEST(TransactionSequenceTest, CreateBatches) {
   auto now = iroha::time::now();
   for (size_t i = 0; i < batches_number; i++) {
     auto batch = framework::batch::createValidBatch(txs_in_batch, now + i)
-                     .transactions();
+                     ->transactions();
     tx_collection.insert(tx_collection.begin(), batch.begin(), batch.end());
   }
 

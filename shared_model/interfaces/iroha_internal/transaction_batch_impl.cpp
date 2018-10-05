@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 
 #include <algorithm>
+#include <numeric>
 
 #include <boost/range/adaptor/transformed.hpp>
+
 #include "interfaces/iroha_internal/transaction_batch_helpers.hpp"
 #include "interfaces/transaction.hpp"
 #include "utils/string_builder.hpp"
@@ -15,16 +17,16 @@
 namespace shared_model {
   namespace interface {
 
-    TransactionBatch::TransactionBatch(
-        const types::SharedTxsCollectionType &transactions)
-        : transactions_(transactions) {}
+    TransactionBatchImpl::TransactionBatchImpl(
+        types::SharedTxsCollectionType transactions)
+        : transactions_(std::move(transactions)) {}
 
-    const types::SharedTxsCollectionType &TransactionBatch::transactions()
+    const types::SharedTxsCollectionType &TransactionBatchImpl::transactions()
         const {
       return transactions_;
     }
 
-    const types::HashType &TransactionBatch::reducedHash() const {
+    const types::HashType &TransactionBatchImpl::reducedHash() const {
       if (not reduced_hash_) {
         reduced_hash_ = TransactionBatchHelpers::calculateReducedBatchHash(
             transactions_ | boost::adaptors::transformed([](const auto &tx) {
@@ -34,14 +36,14 @@ namespace shared_model {
       return reduced_hash_.value();
     }
 
-    bool TransactionBatch::hasAllSignatures() const {
+    bool TransactionBatchImpl::hasAllSignatures() const {
       return std::all_of(
           transactions_.begin(), transactions_.end(), [](const auto tx) {
             return boost::size(tx->signatures()) >= tx->quorum();
           });
     }
 
-    std::string TransactionBatch::toString() const {
+    std::string TransactionBatchImpl::toString() const {
       return detail::PrettyStringBuilder()
           .init("Batch")
           .append("reducedHash", reducedHash().toString())
@@ -51,7 +53,7 @@ namespace shared_model {
           .finalize();
     }
 
-    bool TransactionBatch::addSignature(
+    bool TransactionBatchImpl::addSignature(
         size_t number_of_tx,
         const shared_model::crypto::Signed &signed_blob,
         const shared_model::crypto::PublicKey &public_key) {
@@ -63,7 +65,7 @@ namespace shared_model {
       }
     }
 
-    bool TransactionBatch::operator==(const TransactionBatch &rhs) const {
+    bool TransactionBatchImpl::operator==(const TransactionBatch &rhs) const {
       return reducedHash() == rhs.reducedHash()
           and std::equal(transactions().begin(),
                          transactions().end(),
@@ -72,6 +74,20 @@ namespace shared_model {
                          [](auto const &left, auto const &right) {
                            return left->equalsByValue(*right);
                          });
+    }
+
+    TransactionBatch *TransactionBatchImpl::clone() const {
+      const auto &original_txs = this->transactions_;
+      types::SharedTxsCollectionType copy_txs =
+          std::accumulate(std::begin(original_txs),
+                          std::end(original_txs),
+                          types::SharedTxsCollectionType{},
+                          [](types::SharedTxsCollectionType acc,
+                             std::shared_ptr<Transaction> tx) {
+                            acc.push_back(::clone(*tx));
+                            return acc;
+                          });
+      return new TransactionBatchImpl(std::move(copy_txs));
     }
 
   }  // namespace interface

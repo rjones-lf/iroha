@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 #include "framework/test_subscriber.hpp"
-#include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
@@ -51,8 +51,9 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
  */
 TEST_F(OnDemandOrderingGateTest, propagateBatch) {
   OdOsNotification::CollectionType collection;
-  auto batch =
-      std::make_shared<shared_model::interface::TransactionBatch>(collection);
+  std::shared_ptr<shared_model::interface::TransactionBatch> batch =
+      std::make_shared<shared_model::interface::TransactionBatchImpl>(
+          collection);
 
   EXPECT_CALL(*notification, onTransactions(initial_round, collection))
       .Times(1);
