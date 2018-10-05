@@ -23,7 +23,7 @@ namespace {
    * Check that all transactions from the collection are mentioned in batch_meta
    * and are positioned correctly
    * @param transactions to be checked
-   * @return true, if those transactions form a correct batch, false otherwise
+   * @return enum, reporting about success result or containing a found error
    */
   BatchCheckResult batchIsWellFormed(
       const shared_model::interface::types::SharedTxsCollectionType
@@ -69,10 +69,6 @@ namespace shared_model {
       std::string reason_name = "Transaction batch factory: ";
       validation::ReasonsGroupType batch_reason;
       batch_reason.first = reason_name;
-
-      if (boost::empty(transactions)) {
-        batch_reason.second.emplace_back("Provided transactions list is empty");
-      }
 
       bool has_at_least_one_signature = std::any_of(
           transactions.begin(), transactions.end(), [](const auto tx) {
