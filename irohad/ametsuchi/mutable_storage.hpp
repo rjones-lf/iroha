@@ -43,10 +43,9 @@ namespace iroha {
       /**
        * Predicate type checking block
        */
-      template <typename Query>
       using MutableStoragePredicate =
           std::function<bool(const shared_model::interface::Block &,
-                             Query &,
+                             PeerQuery &,
                              const shared_model::interface::types::HashType &)>;
 
       /**
@@ -57,7 +56,7 @@ namespace iroha {
        * @return result of predicate
        */
       virtual bool check(const shared_model::interface::Block &block,
-                         MutableStoragePredicate<PeerQuery> function) = 0;
+                         MutableStoragePredicate function) = 0;
 
       /**
        * Applies a block to current mutable state
@@ -73,8 +72,7 @@ namespace iroha {
        * otherwise.
        * @return True if block was successfully applied, false otherwise.
        */
-      virtual bool apply(const shared_model::interface::Block &block,
-                         MutableStoragePredicate<WsvQuery> function) = 0;
+      virtual bool apply(const shared_model::interface::Block &block) = 0;
 
       virtual ~MutableStorage() = default;
     };

@@ -219,13 +219,9 @@ namespace iroha {
                    bool(const shared_model::interface::Block &,
                         PeerQuery &,
                         const shared_model::interface::types::HashType &)>));
-      MOCK_METHOD2(
+      MOCK_METHOD1(
           apply,
-          bool(const shared_model::interface::Block &,
-               std::function<
-                   bool(const shared_model::interface::Block &,
-                        WsvQuery &,
-                        const shared_model::interface::types::HashType &)>));
+          bool(const shared_model::interface::Block &));
     };
 
     /**
