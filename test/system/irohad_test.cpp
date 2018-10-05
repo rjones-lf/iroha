@@ -71,11 +71,10 @@ class IrohadTest : public AcceptanceFixture {
     auto channel = grpc::CreateChannel(kAddress + ":" + std::to_string(kPort),
                                        grpc::InsecureChannelCredentials());
     auto state = channel->GetState(true);
-    auto start = std::chrono::system_clock::now();
+    auto deadline = std::chrono::system_clock::now() + kTimeout;
     while (state != grpc_connectivity_state::GRPC_CHANNEL_READY
-           and start + kTimeout > std::chrono::system_clock::now()) {
-      channel->WaitForStateChange(state,
-                                  std::chrono::system_clock::now() + kTimeout);
+           and deadline > std::chrono::system_clock::now()) {
+      channel->WaitForStateChange(state, deadline);
       state = channel->GetState(true);
     }
     ASSERT_EQ(state, grpc_connectivity_state::GRPC_CHANNEL_READY);
@@ -209,7 +208,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
  public:
   boost::filesystem::path irohad_executable;
-  const std::chrono::milliseconds kTimeout = std::chrono::seconds(5);
+  const std::chrono::milliseconds kTimeout = 30s;
   const std::string kAddress;
   const uint16_t kPort;
 
