@@ -8,6 +8,7 @@
 
 #include <memory>
 
+#include <boost/range/any_range.hpp>
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {

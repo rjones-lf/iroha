@@ -13,6 +13,7 @@
 #include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_command_executor.hpp"
+#include "ametsuchi/impl/postgres_query_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
 #include "backend/protobuf/permissions.hpp"
@@ -127,6 +128,23 @@ namespace iroha {
           std::shared_ptr<OrderingServicePersistentState>>(
           std::make_shared<PostgresOrderingServicePersistentState>(
               std::make_unique<soci::session>(*connection_)));
+    }
+
+    boost::optional<std::shared_ptr<QueryExecutor>>
+    StorageImpl::createQueryExecutor(
+        std::shared_ptr<PendingTransactionStorage> pending_txs_storage) const {
+      std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+      if (not connection_) {
+        log_->info("connection to database is not initialised");
+        return boost::none;
+      }
+      return boost::make_optional<std::shared_ptr<QueryExecutor>>(
+          std::make_shared<PostgresQueryExecutor>(
+              std::make_unique<soci::session>(*connection_),
+              factory_,
+              *block_store_,
+              pending_txs_storage,
+              converter_));
     }
 
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
