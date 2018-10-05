@@ -7,6 +7,7 @@ target_link_libraries(state_test
     logger
     shared_model_proto_builders
     shared_model_stateless_validation
+    shared_model_interfaces_factories
     )
 
 AddTest(storage_test storage_test.cpp)
@@ -15,6 +16,7 @@ target_link_libraries(storage_test
     logger
     shared_model_proto_builders
     shared_model_stateless_validation
+    shared_model_interfaces_factories
     )
 
 AddTest(transport_test transport_test.cpp)
