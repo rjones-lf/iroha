@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
@@ -21,29 +9,15 @@
 #include "builders/protobuf/queries.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
 
-using framework::SpecifiedVisitor;
-
 class MstPipelineTest : public AcceptanceFixture {
  public:
   MstPipelineTest() : mst_itf_{1, {}, [](auto &i) { i.done(); }, true} {}
-
-  /**
-   * Sign the transaction
-   * @param tx pre-built transaction
-   * @param key to sign the transaction
-   * @return signed transaction
-   */
-  template <typename TxBuilder>
-  auto signTx(TxBuilder tx, const crypto::Keypair &key) const {
-    return tx.build().signAndAddSignature(key).finish();
-  }
 
   /**
    * Creates a mst user
@@ -54,13 +28,12 @@ class MstPipelineTest : public AcceptanceFixture {
   IntegrationTestFramework &makeMstUser(IntegrationTestFramework &itf,
                                         size_t sigs = kSignatories) {
     auto create_user_tx =
-        createUserWithPerms(
-            kUser,
-            kUserKeypair.publicKey(),
-            kNewRole,
-            {shared_model::interface::permissions::Role::kSetQuorum,
-             shared_model::interface::permissions::Role::kAddSignatory,
-             shared_model::interface::permissions::Role::kSetDetail})
+        createUserWithPerms(kUser,
+                            kUserKeypair.publicKey(),
+                            kNewRole,
+                            {interface::permissions::Role::kSetQuorum,
+                             interface::permissions::Role::kAddSignatory,
+                             interface::permissions::Role::kSetDetail})
             .build()
             .signAndAddSignature(kAdminKeypair)
             .finish();
@@ -105,14 +78,39 @@ class MstPipelineTest : public AcceptanceFixture {
    */
   auto makeGetPendingTxsQuery(const std::string &creator,
                               const crypto::Keypair &key) {
-    return shared_model::proto::QueryBuilder()
-        .createdTime(iroha::time::now())
-        .creatorAccountId(creator)
-        .queryCounter(1)
-        .getPendingTransactions()
-        .build()
-        .signAndAddSignature(key)
-        .finish();
+    return complete(baseQry(creator).getPendingTransactions(), key);
+  }
+
+  /**
+   * Query validation lambda - check that empty transactions response returned
+   * @param response - query response
+   */
+  static void noTxsCheck(const proto::QueryResponse &response) {
+    ASSERT_NO_THROW({
+      const auto &pending_txs_resp =
+          boost::get<const interface::TransactionsResponse &>(response.get());
+
+      ASSERT_TRUE(pending_txs_resp.transactions().empty());
+    });
+  }
+
+  /**
+   * Returns lambda that checks the number of signatures of the first pending
+   * transaction
+   * @param expected_signatures_number
+   * @return query validation lambda
+   */
+  static auto signatoryCheck(size_t expected_signatures_number) {
+    return [expected_signatures_number](const auto &response) {
+      ASSERT_NO_THROW({
+        const auto &pending_txs_resp =
+            boost::get<const interface::TransactionsResponse &>(response.get());
+
+        ASSERT_EQ(
+            boost::size(pending_txs_resp.transactions().front().signatures()),
+            expected_signatures_number);
+      });
+    };
   }
 
   /**
@@ -140,21 +138,23 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
   auto tx = baseTx()
                 .setAccountDetail(kUserId, "fav_meme", "doge")
                 .quorum(kSignatories + 1);
-  auto checkMstPendingTxStatus =
-      [](const shared_model::proto::TransactionResponse &resp) {
-        ASSERT_NO_THROW(boost::apply_visitor(
-            SpecifiedVisitor<interface::MstPendingResponse>(), resp.get()));
+  auto check_mst_pending_tx_status =
+      [](const proto::TransactionResponse &resp) {
+        ASSERT_NO_THROW(
+            boost::get<const interface::MstPendingResponse &>(resp.get()));
       };
-  auto checkEnoughSignaturesCollectedStatus =
-      [](const shared_model::proto::TransactionResponse &resp) {
-        ASSERT_NO_THROW(boost::apply_visitor(
-            SpecifiedVisitor<interface::MstPendingResponse>(), resp.get()));
+  auto check_enough_signatures_collected_tx_status =
+      [](const proto::TransactionResponse &resp) {
+        ASSERT_NO_THROW(
+            boost::get<const interface::EnoughSignaturesCollectedResponse &>(
+                resp.get()));
       };
 
   auto &mst_itf = prepareMstItf();
-  mst_itf.sendTx(signTx(tx, kUserKeypair), checkMstPendingTxStatus)
-      .sendTx(signTx(tx, signatories[0]), checkMstPendingTxStatus)
-      .sendTx(signTx(tx, signatories[1]), checkEnoughSignaturesCollectedStatus)
+  mst_itf.sendTx(complete(tx, kUserKeypair), check_mst_pending_tx_status)
+      .sendTx(complete(tx, signatories[0]), check_mst_pending_tx_status)
+      .sendTx(complete(tx, signatories[1]),
+              check_enough_signatures_collected_tx_status)
       .skipProposal()
       .skipVerifiedProposal()
       .checkBlock([](auto &proposal) {
@@ -173,14 +173,12 @@ TEST_F(MstPipelineTest, GetPendingTxsAwaitingForThisPeer) {
                         .quorum(kSignatories + 1);
 
   auto &mst_itf = prepareMstItf();
-  auto signed_tx = signTx(pending_tx, kUserKeypair);
+  auto signed_tx = complete(pending_tx, kUserKeypair);
 
   auto pending_tx_check = [pending_hash = signed_tx.hash()](auto &response) {
     ASSERT_NO_THROW({
-      const auto &pending_tx_resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              shared_model::interface::TransactionsResponse>(),
-          response.get());
+      const auto &pending_tx_resp =
+          boost::get<const interface::TransactionsResponse &>(response.get());
       ASSERT_EQ(pending_tx_resp.transactions().front().hash(), pending_hash);
     });
   };
@@ -192,40 +190,27 @@ TEST_F(MstPipelineTest, GetPendingTxsAwaitingForThisPeer) {
 
 /**
  * @given an empty ledger
- * @when creating pending transactions, which lack two or more signatures, @and
- * signing those transactions with one signature @and executing get pending
- * transactions
+ * @when creating pending transactions, which lack two or more signatures,
+ * @and signing those transactions with one signature @and executing get
+ * pending transactions
  * @then they are returned with initial number of signatures plus one
  */
 TEST_F(MstPipelineTest, GetPendingTxsLatestSignatures) {
   auto pending_tx = baseTx()
                         .setAccountDetail(kUserId, "fav_meme", "doge")
                         .quorum(kSignatories + 1);
-  auto signatory_check = [](size_t expected_signatures_number) {
-    return [expected_signatures_number](auto &response) {
-      ASSERT_NO_THROW({
-        const auto &pending_tx_resp = boost::apply_visitor(
-            framework::SpecifiedVisitor<
-                shared_model::interface::TransactionsResponse>(),
-            response.get());
-        ASSERT_EQ(
-            boost::size(pending_tx_resp.transactions().front().signatures()),
-            expected_signatures_number);
-      });
-    };
-  };
 
   using namespace std::chrono_literals;
 
   auto &mst_itf = prepareMstItf();
-  mst_itf.sendTx(signTx(pending_tx, signatories[0]))
+  mst_itf.sendTx(complete(pending_tx, signatories[0]))
       .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
-                 signatory_check(1))
-      .sendTx(signTx(pending_tx, signatories[1]));
+                 signatoryCheck(1))
+      .sendTx(complete(pending_tx, signatories[1]));
   std::this_thread::sleep_for(500ms);
 
   mst_itf.sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
-                    signatory_check(2));
+                    signatoryCheck(2));
 }
 
 /**
@@ -238,19 +223,37 @@ TEST_F(MstPipelineTest, GetPendingTxsNoSignedTxs) {
   auto pending_tx = baseTx()
                         .setAccountDetail(kUserId, "fav_meme", "doge")
                         .quorum(kSignatories + 1);
-  auto no_txs_check = [](auto &response) {
-    ASSERT_NO_THROW({
-      const auto &pending_tx_resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              shared_model::interface::TransactionsResponse>(),
-          response.get());
-      ASSERT_TRUE(pending_tx_resp.transactions().empty());
-    });
-  };
 
   auto &mst_itf = prepareMstItf();
-  mst_itf.sendTx(signTx(pending_tx, signatories[0]))
-      .sendTx(signTx(pending_tx, signatories[1]))
-      .sendTx(signTx(pending_tx, kUserKeypair))
-      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair), no_txs_check);
+  mst_itf.sendTx(complete(pending_tx, signatories[0]))
+      .sendTx(complete(pending_tx, signatories[1]))
+      .sendTx(complete(pending_tx, kUserKeypair))
+      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair), noTxsCheck);
+}
+
+/**
+ * Disabled because fully signed transaction doesn't go through MST and pending
+ * transaction remains in query response IR-1329
+ * @given a ledger with mst user (quorum=3) created
+ * @when the user sends a transaction with only one signature, then sends the
+ * transaction with all three signatures
+ * @then there should be no pending transactions
+ */
+TEST_F(MstPipelineTest, DISABLED_ReplayViaFullySignedTransaction) {
+  // TODO igor-egorov, 2018-09-25, IR-1329, enable the test
+  auto &mst_itf = prepareMstItf();
+  auto pending_tx =
+      baseTx().setAccountDetail(kUserId, "age", "10").quorum(kSignatories + 1);
+
+  auto fully_signed_tx = pending_tx.build()
+                             .signAndAddSignature(signatories[0])
+                             .signAndAddSignature(signatories[1])
+                             .signAndAddSignature(kUserKeypair)
+                             .finish();
+
+  mst_itf.sendTx(complete(pending_tx, signatories[0]))
+      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
+                 signatoryCheck(1))
+      .sendTx(fully_signed_tx)
+      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair), noTxsCheck);
 }

@@ -7,7 +7,6 @@
 #include <memory>
 #include "libfuzzer/libfuzzer_macro.h"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
-#include "module/irohad/execution/execution_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/query_service.hpp"

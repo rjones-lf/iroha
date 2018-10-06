@@ -23,6 +23,7 @@
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
@@ -122,6 +123,8 @@ class Irohad {
 
   virtual void initNetworkClient();
 
+  virtual void initBatchFactory();
+
   virtual void initOrderingGate();
 
   virtual void initSimulator();
@@ -180,6 +183,10 @@ class Irohad {
   // common objects factory
   std::shared_ptr<shared_model::interface::CommonObjectsFactory>
       common_objects_factory_;
+
+  // transaction batch factory
+  std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+      transaction_batch_factory_;
 
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;

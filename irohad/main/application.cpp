@@ -11,7 +11,7 @@
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
-#include "execution/query_execution_impl.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/mst_processor_stub.hpp"
@@ -56,7 +56,7 @@ Irohad::Irohad(const std::string &block_store_dir,
   log_ = logger::log("IROHAD");
   log_->info("created");
   // Initializing storage at this point in order to insert genesis block before
-  // initialization of iroha deamon
+  // initialization of iroha daemon
   initStorage();
 }
 
@@ -71,6 +71,7 @@ void Irohad::init() {
   initCryptoProvider();
   initValidators();
   initNetworkClient();
+  initBatchFactory();
   initOrderingGate();
   initSimulator();
   initConsensusCache();
@@ -165,6 +166,13 @@ void Irohad::initNetworkClient() {
       std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
 }
 
+void Irohad::initBatchFactory() {
+  transaction_batch_factory_ =
+      std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
+
+  log_->info("[Init] => transaction batch factory");
+}
+
 /**
  * Initializing ordering gate
  */
@@ -174,6 +182,7 @@ void Irohad::initOrderingGate() {
                                                  proposal_delay_,
                                                  storage,
                                                  storage,
+                                                 transaction_batch_factory_,
                                                  async_call_);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
@@ -328,8 +337,7 @@ void Irohad::initTransactionCommandService() {
  */
 void Irohad::initQueryService() {
   auto query_processor = std::make_shared<QueryProcessorImpl>(
-      storage,
-      std::make_unique<QueryExecutionImpl>(storage, pending_txs_storage_));
+      storage, storage, pending_txs_storage_);
 
   query_service = std::make_shared<::torii::QueryService>(query_processor);
 

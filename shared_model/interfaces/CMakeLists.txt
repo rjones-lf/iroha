@@ -58,13 +58,13 @@ if (IROHA_ROOT_PROJECT)
       query_responses/impl/block_query_response.cpp
       query_responses/impl/block_response.cpp
       iroha_internal/transaction_sequence.cpp
-      iroha_internal/transaction_batch.cpp
+      iroha_internal/transaction_batch_impl.cpp
       iroha_internal/block.cpp
       )
 
   add_library(shared_model_interfaces_factories
-      iroha_internal/transaction_batch_factory.cpp
       iroha_internal/transaction_sequence_factory.cpp
+      iroha_internal/transaction_batch_factory_impl.cpp
     )
 
   target_link_libraries(shared_model_interfaces_factories

@@ -7,8 +7,10 @@
 
 #include <boost/format.hpp>
 
+#include "builders/default_builders.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "validation/stateful_validator_common.hpp"
 
@@ -45,15 +47,6 @@ namespace iroha {
           mst_processor_(std::move(mst_processor)),
           status_bus_(std::move(status_bus)),
           log_(logger::log("TxProcessor")) {
-      // notify about stateless success
-      pcs_->on_proposal().subscribe([this](auto model_proposal) {
-        for (const auto &tx : model_proposal->transactions()) {
-          const auto &hash = tx.hash();
-          log_->info("on proposal stateless success: {}", hash.hex());
-          this->publishStatus(TxStatusType::kStatelessValid, hash);
-        }
-      });
-
       // process stateful validation results
       pcs_->on_verified_proposal().subscribe(
           [this](std::shared_ptr<validation::VerifiedProposalAndErrors>
@@ -105,6 +98,14 @@ namespace iroha {
                 });
           });
 
+      mst_processor_->onStateUpdate().subscribe([this](auto &&state) {
+        log_->info("MST state updated");
+        for (auto &&batch : state->getBatches()) {
+          for (auto &&tx : batch->transactions()) {
+            this->publishStatus(TxStatusType::kMstPending, tx->hash());
+          }
+        }
+      });
       mst_processor_->onPreparedBatches().subscribe([this](auto &&batch) {
         log_->info("MST batch prepared");
         this->publishEnoughSignaturesStatus(batch->transactions());
@@ -127,9 +128,6 @@ namespace iroha {
         this->publishEnoughSignaturesStatus(transaction_batch->transactions());
         pcs_->propagate_batch(transaction_batch);
       } else {
-        for (const auto &tx : transaction_batch->transactions()) {
-          this->publishStatus(TxStatusType::kMstPending, tx->hash());
-        }
         log_->info("propagating batch to MST");
         mst_processor_->propagateBatch(transaction_batch);
       }

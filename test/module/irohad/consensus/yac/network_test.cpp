@@ -27,8 +27,8 @@ namespace iroha {
               network::AsyncGrpcClient<google::protobuf::Empty>>();
           network = std::make_shared<NetworkImpl>(async_call);
 
-          message.hash.proposal_hash = "proposal";
-          message.hash.block_hash = "block";
+          message.hash.vote_hashes.proposal_hash = "proposal";
+          message.hash.vote_hashes.block_hash = "block";
 
           // getTransport is not used in network at the moment, please check if
           // test fails

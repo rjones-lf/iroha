@@ -31,12 +31,12 @@ namespace framework {
      *         otherwise none
      */
     template <typename ResultType>
-    boost::optional<ValueOf<ResultType>> val(const ResultType &res) noexcept {
-      using RetType = boost::optional<ValueOf<ResultType>>;
-      return iroha::visit_in_place(
-          res,
-          [](ValueOf<ResultType> v) { return RetType(v); },
-          [](ErrorOf<ResultType> e) -> RetType { return {}; });
+    boost::optional<ValueOf<std::decay_t<ResultType>>> val(
+        ResultType &&res) noexcept {
+      if (auto *val = boost::get<ValueOf<std::decay_t<ResultType>>>(&res)) {
+        return std::move(*val);
+      }
+      return {};
     }
 
     /**
@@ -44,12 +44,12 @@ namespace framework {
      *         otherwise none
      */
     template <typename ResultType>
-    boost::optional<ErrorOf<ResultType>> err(const ResultType &res) noexcept {
-      using RetType = boost::optional<ErrorOf<ResultType>>;
-      return iroha::visit_in_place(
-          res,
-          [](ValueOf<ResultType> v) -> RetType { return {}; },
-          [](ErrorOf<ResultType> e) { return RetType(e); });
+    boost::optional<ErrorOf<std::decay_t<ResultType>>> err(
+        ResultType &&res) noexcept {
+      if (auto *val = boost::get<ErrorOf<std::decay_t<ResultType>>>(&res)) {
+        return std::move(*val);
+      }
+      return {};
     }
   }  // namespace expected
 }  // namespace framework
