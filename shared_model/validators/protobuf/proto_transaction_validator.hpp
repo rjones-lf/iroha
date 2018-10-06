@@ -23,41 +23,46 @@ namespace shared_model {
         ReasonsGroupType reason(tx_reason_name, GroupedReasons());
         for (const auto &command :
              transaction.payload().reduced_payload().commands()) {
-          if (command.command_case()
-              == iroha::protocol::Command::COMMAND_NOT_SET) {
-            reason.second.emplace_back("Undefined command is found");
-            answer.addReason(std::move(reason));
-            return answer;
-          } else if (command.command_case()
-                     == iroha::protocol::Command::kCreateRole) {
-            const auto &cr = command.create_role();
-            bool all_permissions_valid = std::all_of(
-                cr.permissions().begin(),
-                cr.permissions().end(),
-                [](const auto &perm) {
-                  return iroha::protocol::RolePermission_IsValid(perm);
-                });
-            if (not all_permissions_valid) {
-              reason.second.emplace_back("Invalid role permission");
+          switch (command.command_case()) {
+            case iroha::protocol::Command::COMMAND_NOT_SET: {
+              reason.second.emplace_back("Undefined command is found");
               answer.addReason(std::move(reason));
               return answer;
             }
-          } else if (command.command_case()
-                     == iroha::protocol::Command::kGrantPermission) {
-            if (not iroha::protocol::GrantablePermission_IsValid(
-                    command.grant_permission().permission())) {
-              reason.second.emplace_back("Invalid grantable permission");
-              answer.addReason(std::move(reason));
-              return answer;
+            case iroha::protocol::Command::kCreateRole: {
+              const auto &cr = command.create_role();
+              bool all_permissions_valid = std::all_of(
+                  cr.permissions().begin(),
+                  cr.permissions().end(),
+                  [](const auto &perm) {
+                    return iroha::protocol::RolePermission_IsValid(perm);
+                  });
+              if (not all_permissions_valid) {
+                reason.second.emplace_back("Invalid role permission");
+                answer.addReason(std::move(reason));
+                return answer;
+              }
+              break;
             }
-          } else if (command.command_case()
-                     == iroha::protocol::Command::kRevokePermission) {
-            if (not iroha::protocol::GrantablePermission_IsValid(
-                    command.revoke_permission().permission())) {
-              reason.second.emplace_back("Invalid grantable permission");
-              answer.addReason(std::move(reason));
-              return answer;
+            case iroha::protocol::Command::kGrantPermission: {
+              if (not iroha::protocol::GrantablePermission_IsValid(
+                      command.grant_permission().permission())) {
+                reason.second.emplace_back("Invalid grantable permission");
+                answer.addReason(std::move(reason));
+                return answer;
+              }
+              break;
             }
+            case iroha::protocol::Command::kRevokePermission: {
+              if (not iroha::protocol::GrantablePermission_IsValid(
+                      command.revoke_permission().permission())) {
+                reason.second.emplace_back("Invalid grantable permission");
+                answer.addReason(std::move(reason));
+                return answer;
+              }
+              break;
+            }
+            default: { break; }
           }
         }
         return answer;
