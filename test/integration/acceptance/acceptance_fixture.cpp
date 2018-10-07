@@ -15,7 +15,7 @@
 namespace {
   template <typename T>
   void checkStatus(const shared_model::interface::TransactionResponse &resp) {
-    ASSERT_NO_THROW(boost::get<T>(resp.get()));
+    ASSERT_NO_THROW(boost::get<const T &>(resp.get()));
   }
 }  // namespace
 
