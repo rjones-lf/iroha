@@ -6,6 +6,7 @@
 #ifndef IROHA_CONSENSUS_GATE_HPP
 #define IROHA_CONSENSUS_GATE_HPP
 
+#include <boost/optional.hpp>
 #include <rxcpp/rx.hpp>
 
 #include "consensus/round.hpp"
@@ -51,8 +52,10 @@ namespace iroha {
        * @param block is the block for which current node is voting
        */
       virtual void vote(
-          std::shared_ptr<shared_model::interface::Proposal> proposal,
-          std::shared_ptr<shared_model::interface::Block> block,
+          boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+              proposal,
+          boost::optional<std::shared_ptr<shared_model::interface::Block>>
+              block,
           Round round) = 0;
 
       using GateObject = boost::variant<PairValid,

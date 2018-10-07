@@ -38,21 +38,32 @@ namespace iroha {
         block_creator_->on_block().subscribe([this](auto block) {
           // TODO(@l4l) 24/09/18 IR-1717
           // update BlockCreator iface according to YacGate
-          this->vote(nullptr, block, {0, 0});
+          this->vote({std::shared_ptr<shared_model::interface::Proposal>()},
+                     {block},
+                     {0, 0});
         });
       }
 
       void YacGateImpl::vote(
-          std::shared_ptr<shared_model::interface::Proposal> proposal,
-          std::shared_ptr<shared_model::interface::Block> block,
+          boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+              proposal,
+          boost::optional<std::shared_ptr<shared_model::interface::Block>>
+              block,
           Round round) {
-        current_block_ = std::move(block);
+        bool is_none = not proposal or not block;
+        if (is_none) {
+          current_block_ = nullptr;
+          current_hash_ = {};
+          log_->debug("Agreed on nothing to commit");
+        } else {
+          current_block_ = std::move(block.value());
+          current_hash_ =
+              hash_provider_->makeHash(*current_block_ /*, *proposal, round*/);
+          log_->info("vote for (proposal: {}, block: {})",
+                     current_hash_.vote_hashes.proposal_hash,
+                     current_hash_.vote_hashes.block_hash);
+        }
 
-        current_hash_ =
-            hash_provider_->makeHash(*current_block_ /*, *proposal, round*/);
-        log_->info("vote for (proposal: {}, block: {})",
-                   current_hash_.vote_hashes.proposal_hash,
-                   current_hash_.vote_hashes.block_hash);
         auto order = orderer_->getOrdering(current_hash_);
         if (not order) {
           log_->error("ordering doesn't provide peers => pass round");
@@ -62,7 +73,9 @@ namespace iroha {
         hash_gate_->vote(current_hash_, *order);
 
         // insert the block we voted for to the consensus cache
-        consensus_result_cache_->insert(block);
+        if (is_none) {
+          consensus_result_cache_->insert(block.value());
+        }
       }
 
       rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::onOutcome() {

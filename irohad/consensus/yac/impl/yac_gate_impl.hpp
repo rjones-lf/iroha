@@ -40,9 +40,12 @@ namespace iroha {
                     std::shared_ptr<consensus::ConsensusResultCache>
                         consensus_result_cache);
 
-        void vote(std::shared_ptr<shared_model::interface::Proposal> proposal,
-                  std::shared_ptr<shared_model::interface::Block> block,
-                  Round round) override;
+        void vote(
+            boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+                proposal,
+            boost::optional<std::shared_ptr<shared_model::interface::Block>>
+                block,
+            Round round) override;
 
         rxcpp::observable<GateObject> onOutcome() override;
 
