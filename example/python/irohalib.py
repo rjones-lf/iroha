@@ -121,7 +121,7 @@ class IrohaCrypto(object):
 
 class Iroha(object):
     """
-    Collection of fabric methods for transactions and queries creation
+    Collection of factory methods for transactions and queries creation
     """
 
     def __init__(self, creator_account=None):
@@ -141,8 +141,8 @@ class Iroha(object):
     def transaction(self, commands, quorum=1, creator_account=None, created_time=None):
         """
         Creates a protobuf transaction with specified set of entities
-        :param commands: list of commands generated via command fabric method
-        :param quorum: required amount of signatures, 1 is default
+        :param commands: list of commands generated via command factory method
+        :param quorum: required number of signatures, 1 is default
         :param creator_account: id of transaction creator account
         :param created_time: transaction creation timestamp in milliseconds
         :return: a proto transaction
@@ -182,7 +182,7 @@ class Iroha(object):
     def query(self, name, counter=1, creator_account=None, created_time=None, **kwargs):
         """
         Creates a protobuf query with specified set of entities
-        :param name: CamelCase name of query to be executed
+        :param name: CamelCased name of query to be executed
         :param counter: query counter, should be incremented for each new query
         :param creator_account: account id of query creator
         :param created_time: query creation timestamp in milliseconds
@@ -238,7 +238,10 @@ class IrohaGrpc(object):
     """
 
     def __init__(self, address=None):
-        self.address = address if address else '127.0.0.1:50051'
+        self._address = address if address else '127.0.0.1:50051'
+        self._channel = grpc.insecure_channel(self._address)
+        self._command_service_stub = endpoint_pb2_grpc.CommandServiceStub(self._channel)
+        self._query_service_stub = endpoint_pb2_grpc.QueryServiceStub(self._channel)
 
     def send_tx(self, transaction):
         """
@@ -246,9 +249,13 @@ class IrohaGrpc(object):
         :param transaction: protobuf Transaction
         :return: None
         """
-        channel = grpc.insecure_channel(self.address)
-        stub = endpoint_pb2_grpc.CommandServiceStub(channel)
-        stub.Torii(transaction)
+        code = grpc.StatusCode.OK
+        try:
+            self._command_service_stub.Torii(transaction)
+        except grpc.RpcError as error:
+            code = error.code()
+            print('Error occurred inside send_tx:', error)
+        return code
 
     def send_txs(self, *transactions):
         """
@@ -259,19 +266,22 @@ class IrohaGrpc(object):
         """
         tx_list = endpoint_pb2.TxList()
         tx_list.transactions.extend(transactions)
-        channel = grpc.insecure_channel(self.address)
-        stub = endpoint_pb2_grpc.CommandServiceStub(channel)
-        stub.ListTorii(tx_list)
+        code = grpc.StatusCode.OK
+        try:
+            self._command_service_stub.ListTorii(tx_list)
+        except grpc.RpcError as error:
+            code = error.code()
+            print('Error occurred inside send_txs:', error)
+        return code
 
     def send_query(self, query):
         """
         Send a query to Iroha
         :param query: protobuf Query
         :return: a protobuf response to the query
+        :raise: grpc.RpcError with .code() available in case of any error
         """
-        channel = grpc.insecure_channel(self.address)
-        stub = endpoint_pb2_grpc.QueryServiceStub(channel)
-        response = stub.Find(query)
+        response = self._query_service_stub.Find(query)
         return response
 
     def tx_status(self, transaction):
@@ -283,9 +293,7 @@ class IrohaGrpc(object):
         """
         request = endpoint_pb2.TxStatusRequest()
         request.tx_hash = IrohaCrypto.hash(transaction)
-        channel = grpc.insecure_channel(self.address)
-        stub = endpoint_pb2_grpc.CommandServiceStub(channel)
-        response = stub.Status(request)
+        response = self._command_service_stub.Status(request)
         status_code = response.tx_status
         status_name = endpoint_pb2.TxStatus.Name(response.tx_status)
         error_message = response.error_message
@@ -300,9 +308,7 @@ class IrohaGrpc(object):
         """
         request = endpoint_pb2.TxStatusRequest()
         request.tx_hash = IrohaCrypto.hash(transaction)
-        channel = grpc.insecure_channel(self.address)
-        stub = endpoint_pb2_grpc.CommandServiceStub(channel)
-        response = stub.StatusStream(request)
+        response = self._command_service_stub.StatusStream(request)
         for status in response:
             status_name = endpoint_pb2.TxStatus.Name(status.tx_status)
             status_code = status.tx_status
