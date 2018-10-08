@@ -46,19 +46,19 @@ namespace shared_model {
 
     std::vector<types::TransactionsForwardCollectionType>
     TransactionBatchParserImpl::parseBatches(
-        types::TransactionsForwardCollectionType txs) {
+        types::TransactionsForwardCollectionType txs) const noexcept {
       return parseBatchesImpl(txs, txs);
     }
 
     std::vector<types::TransactionsCollectionType>
     TransactionBatchParserImpl::parseBatches(
-        types::TransactionsCollectionType txs) {
+        types::TransactionsCollectionType txs) const noexcept {
       return parseBatchesImpl(txs, txs);
     }
 
     std::vector<types::SharedTxsCollectionType>
     TransactionBatchParserImpl::parseBatches(
-        const types::SharedTxsCollectionType &txs) {
+        const types::SharedTxsCollectionType &txs) const noexcept {
       return parseBatchesImpl(txs | boost::adaptors::indirected, txs);
     }
 

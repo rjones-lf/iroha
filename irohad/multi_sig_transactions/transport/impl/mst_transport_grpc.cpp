@@ -8,8 +8,11 @@
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 
 #include <boost/range/adaptor/filtered.hpp>
-#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
-#include "validators/default_validator.hpp"
+#include <boost/range/adaptor/transformed.hpp>
+#include "backend/protobuf/transaction.hpp"
+#include "cryptography/public_key.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/transaction.hpp"
 
 using namespace iroha::network;
 
@@ -19,15 +22,17 @@ MstTransportGrpc::MstTransportGrpc(
     std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
     std::shared_ptr<TransportFactoryType> transaction_factory,
     std::shared_ptr<shared_model::interface::TransactionBatchParser>
-        batch_parser)
+        batch_parser,
+    std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+        transaction_batch_factory)
     : async_call_(std::move(async_call)),
       factory_(std::move(factory)),
       transaction_factory_(std::move(transaction_factory)),
-      batch_parser_(std::move(batch_parser)) {}
+      batch_parser_(std::move(batch_parser)),
+      batch_factory_(std::move(transaction_batch_factory)) {}
 
 shared_model::interface::types::SharedTxsCollectionType
-MstTransportGrpc::deserializeTransactions(
-    const ::iroha::network::transport::MstState *request) {
+MstTransportGrpc::deserializeTransactions(const transport::MstState *request) {
   return boost::copy_range<
       shared_model::interface::types::SharedTxsCollectionType>(
       request->transactions()
@@ -69,19 +74,14 @@ grpc::Status MstTransportGrpc::SendState(
   MstState new_state = MstState::empty();
 
   for (auto &batch : batches) {
-    shared_model::interface::TransactionBatchFactory::createTransactionBatch(
-        batch, shared_model::validation::DefaultUnsignedTransactionsValidator())
-        .match(
-            [&](iroha::expected::Value<
-                shared_model::interface::TransactionBatch> &value) {
-              new_state +=
-                  std::make_shared<shared_model::interface::TransactionBatch>(
-                      std::move(value).value);
-            },
-            [&](iroha::expected::Error<std::string> &error) {
-              async_call_->log_->warn("Batch deserialization failed: {}",
-                                      error.error);
-            });
+    batch_factory_->createTransactionBatch(batch).match(
+        [&](iroha::expected::Value<
+            std::unique_ptr<shared_model::interface::TransactionBatch>>
+                &value) { new_state += std::move(value).value; },
+        [&](iroha::expected::Error<std::string> &error) {
+          async_call_->log_->warn("Batch deserialization failed: {}",
+                                  error.error);
+        });
   }
 
   async_call_->log_->info("batches in MstState: {}",

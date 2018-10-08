@@ -146,14 +146,15 @@ namespace iroha {
      * @param temporary_wsv to apply transactions on
      * @param transactions_errors_log to write errors to
      * @param log to write errors to console
-     * @return vector of proto transactions, which passed stateful validation
+     * @param batch_parser to parse batches from transaction range
+     * @return range of transactions, which passed stateful validation
      */
     static auto validateTransactions(
         const shared_model::interface::types::TransactionsCollectionType &txs,
         ametsuchi::TemporaryWsv &temporary_wsv,
         validation::TransactionsErrors &transactions_errors_log,
         const logger::Logger &log,
-        shared_model::interface::TransactionBatchParser &batch_parser) {
+        const shared_model::interface::TransactionBatchParser &batch_parser) {
       boost::any_range<shared_model::interface::Transaction,
                        boost::forward_traversal_tag,
                        const shared_model::interface::Transaction &>
@@ -170,8 +171,7 @@ namespace iroha {
           auto savepoint = temporary_wsv.createSavepoint(
               "batch_" + batch.front().hash().hex());
           if (boost::algorithm::all_of(batch, validation)) {
-            // batch is successful; add it to the list of valid_txs and
-            // release savepoint
+            // batch is successful; join with result and release savepoint
             result = boost::join(result, batch);
 
             savepoint->release();

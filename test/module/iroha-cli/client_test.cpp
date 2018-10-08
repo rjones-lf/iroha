@@ -35,6 +35,7 @@
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 
 using ::testing::_;
@@ -132,6 +133,8 @@ class ClientServerTest : public testing::Test {
             std::move(transaction_validator));
     auto batch_parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
+    auto batch_factory = std::make_shared<
+        shared_model::interface::TransactionBatchFactoryImpl>();
     runner
         ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
             std::make_shared<torii::CommandServiceImpl>(
@@ -141,7 +144,8 @@ class ClientServerTest : public testing::Test {
             nonfinal_timeout,
             status_factory,
             transaction_factory,
-            batch_parser))
+            batch_parser,
+            batch_factory))
         .append(std::make_unique<torii::QueryService>(qpi))
         .run()
         .match(

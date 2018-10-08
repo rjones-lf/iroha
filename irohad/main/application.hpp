@@ -119,11 +119,13 @@ class Irohad {
 
   virtual void initCryptoProvider();
 
+  virtual void initBatchParser();
+
   virtual void initValidators();
 
   virtual void initNetworkClient();
 
-  virtual void initBatchFactory();
+  virtual void initFactories();
 
   virtual void initOrderingGate();
 

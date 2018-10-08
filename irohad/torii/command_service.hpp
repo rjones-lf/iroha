@@ -28,7 +28,7 @@ namespace torii {
 
     /**
      * Actual implementation of sync Torii in CommandService
-     * @param tx_list - transactions we've received
+     * @param batch - transactions we've received
      */
     virtual void handleTransactionBatch(
         std::shared_ptr<shared_model::interface::TransactionBatch> batch) = 0;

@@ -9,12 +9,12 @@
 
 #include <iterator>
 
+#include <boost/format.hpp>
 #include <boost/range/adaptor/filtered.hpp>
-#include <boost/range/adaptor/indirected.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "common/timeout.hpp"
-#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
-#include "validators/default_validator.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 
 namespace torii {
 
@@ -26,7 +26,9 @@ namespace torii {
       std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory,
       std::shared_ptr<TransportFactoryType> transaction_factory,
       std::shared_ptr<shared_model::interface::TransactionBatchParser>
-          batch_parser)
+          batch_parser,
+      std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+          transaction_batch_factory)
       : command_service_(std::move(command_service)),
         status_bus_(std::move(status_bus)),
         initial_timeout_(initial_timeout),
@@ -34,6 +36,7 @@ namespace torii {
         status_factory_(std::move(status_factory)),
         transaction_factory_(std::move(transaction_factory)),
         batch_parser_(std::move(batch_parser)),
+        batch_factory_(std::move(transaction_batch_factory)),
         log_(logger::log("CommandServiceTransportGrpc")) {}
 
   grpc::Status CommandServiceTransportGrpc::Torii(
@@ -116,34 +119,28 @@ namespace torii {
     auto batches = batch_parser_->parseBatches(transactions);
 
     for (auto &batch : batches) {
-      shared_model::interface::TransactionBatchFactory::createTransactionBatch(
-          batch,
-          shared_model::validation::DefaultUnsignedTransactionsValidator())
-          .match(
-              [&](iroha::expected::Value<
-                  shared_model::interface::TransactionBatch> &value) {
-                this->command_service_->handleTransactionBatch(
-                    std::make_shared<shared_model::interface::TransactionBatch>(
-                        std::move(value).value));
-              },
-              [&](iroha::expected::Error<std::string> &error) {
-                std::vector<shared_model::crypto::Hash> hashes;
+      batch_factory_->createTransactionBatch(batch).match(
+          [&](iroha::expected::Value<std::unique_ptr<
+                  shared_model::interface::TransactionBatch>> &value) {
+            this->command_service_->handleTransactionBatch(
+                std::move(value).value);
+          },
+          [&](iroha::expected::Error<std::string> &error) {
+            std::vector<shared_model::crypto::Hash> hashes;
 
-                std::transform(batch.begin(),
-                               batch.end(),
-                               std::back_inserter(hashes),
-                               [](const auto &tx) { return tx->hash(); });
+            std::transform(batch.begin(),
+                           batch.end(),
+                           std::back_inserter(hashes),
+                           [](const auto &tx) { return tx->hash(); });
 
-                auto error_msg = formErrorMessage(hashes, error.error);
-                // set error response for each transaction in a sequence
-                std::for_each(
-                    hashes.begin(),
-                    hashes.end(),
-                    [this, &error_msg](auto &hash) {
-                      status_bus_->publish(
-                          status_factory_->makeStatelessFail(hash, error_msg));
-                    });
-              });
+            auto error_msg = formErrorMessage(hashes, error.error);
+            // set error response for each transaction in a batch candidate
+            std::for_each(
+                hashes.begin(), hashes.end(), [this, &error_msg](auto &hash) {
+                  status_bus_->publish(
+                      status_factory_->makeStatelessFail(hash, error_msg));
+                });
+          });
     }
 
     return grpc::Status::OK;

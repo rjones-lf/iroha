@@ -14,13 +14,13 @@ namespace shared_model {
     class TransactionBatchParserImpl : public TransactionBatchParser {
      public:
       std::vector<types::TransactionsForwardCollectionType> parseBatches(
-          types::TransactionsForwardCollectionType txs) override;
+          types::TransactionsForwardCollectionType txs) const noexcept override;
 
       std::vector<types::TransactionsCollectionType> parseBatches(
-          types::TransactionsCollectionType txs) override;
+          types::TransactionsCollectionType txs) const noexcept override;
 
       std::vector<types::SharedTxsCollectionType> parseBatches(
-          const types::SharedTxsCollectionType &txs) override;
+          const types::SharedTxsCollectionType &txs) const noexcept override;
     };
   }  // namespace interface
 }  // namespace shared_model

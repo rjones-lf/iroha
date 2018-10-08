@@ -13,6 +13,7 @@
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser.hpp"
 #include "interfaces/iroha_internal/tx_status_factory.hpp"
 #include "logger/logger.hpp"
@@ -43,7 +44,9 @@ namespace torii {
             status_factory,
         std::shared_ptr<TransportFactoryType> transaction_factory,
         std::shared_ptr<shared_model::interface::TransactionBatchParser>
-            batch_parser);
+            batch_parser,
+        std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+            transaction_batch_factory);
 
     /**
      * Torii call via grpc
@@ -109,6 +112,8 @@ namespace torii {
     std::shared_ptr<TransportFactoryType> transaction_factory_;
     std::shared_ptr<shared_model::interface::TransactionBatchParser>
         batch_parser_;
+    std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+        batch_factory_;
     logger::Logger log_;
   };
 }  // namespace torii
