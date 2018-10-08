@@ -11,7 +11,6 @@
 #include "ametsuchi/impl/soci_utils.hpp"
 #include "ametsuchi/key_value_storage.hpp"
 #include "ametsuchi/storage.hpp"
-#include "builders/protobuf/builder_templates/query_response_template.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"
 #include "interfaces/commands/add_signatory.hpp"
@@ -30,6 +29,7 @@
 #include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/block_json_converter.hpp"
+#include "interfaces/iroha_internal/query_response_factory.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/query_response.hpp"
@@ -38,11 +38,11 @@
 namespace iroha {
   namespace ametsuchi {
 
-    using QueryResponseBuilderDone =
-        shared_model::proto::TemplateQueryResponseBuilder<1>;
+    using QueryErrorType =
+        shared_model::interface::QueryResponseFactory::ErrorQueryType;
 
     class PostgresQueryExecutorVisitor
-        : public boost::static_visitor<QueryResponseBuilderDone> {
+        : public boost::static_visitor<QueryExecutorResult> {
      public:
       PostgresQueryExecutorVisitor(
           soci::session &sql,
@@ -51,42 +51,46 @@ namespace iroha {
           KeyValueStorage &block_store,
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
-              converter);
+              converter,
+          std::shared_ptr<shared_model::interface::QueryResponseFactory>
+              response_factory);
 
       void setCreatorId(
           const shared_model::interface::types::AccountIdType &creator_id);
 
-      QueryResponseBuilderDone operator()(
+      void setQueryHash(const shared_model::crypto::Hash &query_hash);
+
+      QueryExecutorResult operator()(
           const shared_model::interface::GetAccount &q);
 
-      QueryResponseBuilderDone operator()(
+      QueryExecutorResult operator()(
           const shared_model::interface::GetSignatories &q);
 
-      QueryResponseBuilderDone operator()(
+      QueryExecutorResult operator()(
           const shared_model::interface::GetAccountTransactions &q);
 
-      QueryResponseBuilderDone operator()(
+      QueryExecutorResult operator()(
           const shared_model::interface::GetTransactions &q);
 
-      QueryResponseBuilderDone operator()(
+      QueryExecutorResult operator()(
           const shared_model::interface::GetAccountAssetTransactions &q);
 
-      QueryResponseBuilderDone operator()(
+      QueryExecutorResult operator()(
           const shared_model::interface::GetAccountAssets &q);
 
-      QueryResponseBuilderDone operator()(
+      QueryExecutorResult operator()(
           const shared_model::interface::GetAccountDetail &q);
 
-      QueryResponseBuilderDone operator()(
+      QueryExecutorResult operator()(
           const shared_model::interface::GetRoles &q);
 
-      QueryResponseBuilderDone operator()(
+      QueryExecutorResult operator()(
           const shared_model::interface::GetRolePermissions &q);
 
-      QueryResponseBuilderDone operator()(
+      QueryExecutorResult operator()(
           const shared_model::interface::GetAssetInfo &q);
 
-      QueryResponseBuilderDone operator()(
+      QueryExecutorResult operator()(
           const shared_model::interface::GetPendingTransactions &q);
 
      private:
@@ -95,23 +99,28 @@ namespace iroha {
        * predicate pred
        */
       template <typename RangeGen, typename Pred>
-      auto getTransactionsFromBlock(uint64_t block_id,
-                                    RangeGen &&range_gen,
-                                    Pred &&pred);
+      std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+      getTransactionsFromBlock(uint64_t block_id,
+                               RangeGen &&range_gen,
+                               Pred &&pred);
 
       /**
-       * Execute query in F and return builder result from B
+       * Execute query in F and return query response from B
        * Q is query tuple, P is permission tuple
        */
       template <typename Q, typename P, typename F, typename B>
-      QueryResponseBuilderDone executeQuery(F &&f, B &&b);
+      QueryExecutorResult executeQuery(F &&f, B &&b);
 
       soci::session &sql_;
       KeyValueStorage &block_store_;
       shared_model::interface::types::AccountIdType creator_id_;
-      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
+      shared_model::crypto::Hash query_hash_;
+      std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+          common_objects_factory_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;
       std::shared_ptr<shared_model::interface::BlockJsonConverter> converter_;
+      std::shared_ptr<shared_model::interface::QueryResponseFactory>
+          query_response_factory_;
       logger::Logger log_;
     };
 
@@ -124,7 +133,9 @@ namespace iroha {
           KeyValueStorage &block_store,
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
-              converter);
+              converter,
+          std::shared_ptr<shared_model::interface::QueryResponseFactory>
+              response_factory);
 
       QueryExecutorResult validateAndExecute(
           const shared_model::interface::Query &query) override;
@@ -137,6 +148,8 @@ namespace iroha {
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;
       PostgresQueryExecutorVisitor visitor_;
+      std::shared_ptr<shared_model::interface::QueryResponseFactory>
+          query_response_factory_;
       logger::Logger log_;
     };
 

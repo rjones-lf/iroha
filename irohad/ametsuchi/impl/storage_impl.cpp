@@ -132,7 +132,9 @@ namespace iroha {
 
     boost::optional<std::shared_ptr<QueryExecutor>>
     StorageImpl::createQueryExecutor(
-        std::shared_ptr<PendingTransactionStorage> pending_txs_storage) const {
+        std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
+        std::shared_ptr<shared_model::interface::QueryResponseFactory>
+            response_factory) const {
       std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
       if (not connection_) {
         log_->info("connection to database is not initialised");
@@ -144,7 +146,8 @@ namespace iroha {
               factory_,
               *block_store_,
               pending_txs_storage,
-              converter_));
+              converter_,
+              std::move(response_factory)));
     }
 
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
