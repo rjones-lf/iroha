@@ -58,6 +58,7 @@ namespace iroha {
               block,
           Round round) = 0;
 
+      // TODO(@l4l) 10/10/18: IR-1749 move instantiation to separate cpp
       using GateObject = boost::variant<PairValid,
                                         VoteOther,
                                         ProposalReject,
