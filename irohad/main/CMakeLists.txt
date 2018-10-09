@@ -41,6 +41,7 @@ add_library(application
 target_link_libraries(application
     logger
     yac
+    yac_transport
     server_runner
     ametsuchi
     networking
@@ -55,6 +56,7 @@ target_link_libraries(application
     block_loader_service
     mst_processor
     torii_service
+    pending_txs_storage
     )
 
 add_executable(irohad irohad.cpp)

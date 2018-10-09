@@ -20,40 +20,46 @@
 
 #include <vector>
 
-#include "consensus/yac/yac_hash_provider.hpp"  // for YacHash::proposal_hash
+#include <boost/optional.hpp>
+
+#include "consensus/round.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
+      class YacHash;
       struct VoteMessage;
 
-      using ProposalHash = decltype(YacHash::proposal_hash);
+      using ProposalHash = std::string;
 
-      using BlockHash = decltype(YacHash::block_hash);
+      using BlockHash = std::string;
 
       /**
-       * Check that all votes in collection has same proposal hash
+       * Check that all votes in collection have the same key
        * @param votes - collection of votes
-       * @return true, if proposals same
+       * @return true, if rounds of those votes are the same
        */
-      bool sameProposals(const std::vector<VoteMessage> &votes);
+      bool sameKeys(const std::vector<VoteMessage> &votes);
 
       /**
-       * Provide hash common for whole collection
+       * Provide key common for whole collection
        * @param votes - collection with votes
-       * @return hash, if collection has same proposal hash, otherwise nullopt
+       * @return vote round, if collection shared the same round,
+       * otherwise boost::none
        */
-      boost::optional<ProposalHash> getProposalHash(
-          const std::vector<VoteMessage> &votes);
+      boost::optional<Round> getKey(const std::vector<VoteMessage> &votes);
 
       /**
        * Get common hash from collection
        * @param votes - collection with votes
-       * @return hash, if collection elements have same hash, otherwise nullopt
+       * @return hash, if collection elements have same hash,
+       * otherwise boost::none
        */
       boost::optional<YacHash> getHash(const std::vector<VoteMessage> &votes);
+
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
+
 #endif  // IROHA_YAC_COMMON_HPP

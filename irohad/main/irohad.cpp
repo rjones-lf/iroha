@@ -78,9 +78,24 @@ DEFINE_validator(keypair_name, &validate_keypair_name);
  */
 DEFINE_bool(overwrite_ledger, false, "Overwrite ledger data if existing");
 
+static bool validateVerbosity(const char *flagname, int32_t val) {
+  if (val >= 0 && val <= 6)
+    return true;
+
+  std::cout << "Invalid value for " << flagname << ": should be in range [0, 6]"
+            << std::endl;
+  return false;
+}
+
+/// Verbosity flag for spdlog configuration
+DEFINE_int32(verbosity, spdlog::level::info, "Log verbosity");
+DEFINE_validator(verbosity, validateVerbosity);
+
 std::promise<void> exit_requested;
 
 int main(int argc, char *argv[]) {
+  spdlog::set_level(spdlog::level::level_enum(FLAGS_verbosity));
+
   auto log = logger::log("MAIN");
   log->info("start");
 
@@ -120,7 +135,6 @@ int main(int argc, char *argv[]) {
                 config[mbr::MaxProposalSize].GetUint(),
                 std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()),
                 std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()),
-                std::chrono::milliseconds(config[mbr::LoadDelay].GetUint()),
                 *keypair,
                 config[mbr::MstSupport].GetBool());
 
@@ -156,6 +170,9 @@ int main(int argc, char *argv[]) {
           "overwrite it. Shutting down...");
       return EXIT_FAILURE;
     }
+
+    // TODO igor-egorov, 2018-08-10, IR-1569, create system test for
+    // --overwrite-ledger option
 
     // clear previous storage if any
     irohad.dropStorage();

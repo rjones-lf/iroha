@@ -1,30 +1,18 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gtest/gtest.h>
-
-#include "backend/protobuf/common_objects/signature.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
+
+#include <gtest/gtest.h>
+#include <boost/range/adaptor/indirected.hpp>
 #include "logger/logger.hpp"
-#include "module/shared_model/builders/protobuf/test_block_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha::consensus::yac;
+
+using ::testing::ReturnRefOfCopy;
 
 static logger::Logger log_ = logger::testLog("YacCommon");
 
@@ -99,22 +87,25 @@ TEST_F(SupermajorityCheckerTest, RejectProofNegativeCase) {
  */
 TEST_F(SupermajorityCheckerTest, PublicKeyUniqueness) {
   using namespace shared_model::crypto;
+  using namespace std::string_literals;
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers;
   auto make_peer_key = [&peers](const std::string &key) {
     PublicKey pub_key(key);
-    peers.emplace_back(clone(shared_model::proto::PeerBuilder()
-                                 .address("localhost")
-                                 .pubkey(pub_key)
-                                 .build()));
+    auto peer = std::make_shared<MockPeer>();
+    EXPECT_CALL(*peer, pubkey()).WillRepeatedly(ReturnRefOfCopy(pub_key));
+
+    peers.push_back(peer);
     return pub_key;
   };
 
   auto peer_key = make_peer_key(std::string(32, '0'));
   make_peer_key(std::string(32, '1'));
 
-  auto block = TestBlockBuilder().build();
-  block.addSignature(Signed("1"), peer_key);
-  block.addSignature(Signed("2"), peer_key);
+  auto sig = std::make_shared<MockSignature>();
+  EXPECT_CALL(*sig, publicKey()).WillRepeatedly(ReturnRefOfCopy(peer_key));
 
-  ASSERT_FALSE(hasSupermajority(block.signatures(), peers));
+  // previous version of the test relied on Block interface, which stored a set
+  // of signatures by public key
+  std::vector<decltype(sig)> sigs{1, sig};
+  ASSERT_FALSE(hasSupermajority(sigs | boost::adaptors::indirected, peers));
 }

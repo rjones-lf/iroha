@@ -26,8 +26,7 @@ TEST_F(InvalidField, Signature) {
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(proto::Transaction(tx), checkStatelessInvalid)
-      .done();
+      .sendTx(proto::Transaction(tx), checkStatelessInvalid);
 }
 
 /**
@@ -38,11 +37,10 @@ TEST_F(InvalidField, Signature) {
 TEST_F(InvalidField, Pubkey) {
   auto tx = complete(baseTx()).getTransport();
   // extend public key to invalid size
-  auto pkey = tx.mutable_signatures(0)->mutable_pubkey();
+  auto pkey = tx.mutable_signatures(0)->mutable_public_key();
   pkey->resize(pkey->size() + 1, 'a');
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(proto::Transaction(tx), checkStatelessInvalid)
-      .done();
+      .sendTx(proto::Transaction(tx), checkStatelessInvalid);
 }

@@ -1,33 +1,23 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <vector>
 
+#include "backend/protobuf/proto_block_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
-#include "builders/protobuf/proposal.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
+#include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/cryptography/crypto_model_signer_mock.hpp"
+#include "module/shared_model/validators/validators.hpp"
 #include "simulator/impl/simulator.hpp"
 
 using namespace iroha;
@@ -56,6 +46,13 @@ class SimulatorTest : public ::testing::Test {
     ordering_gate = std::make_shared<MockOrderingGate>();
     crypto_signer = std::make_shared<shared_model::crypto::CryptoModelSigner<>>(
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair());
+    block_query_factory = std::make_shared<MockBlockQueryFactory>();
+    EXPECT_CALL(*block_query_factory, createBlockQuery())
+        .WillRepeatedly(testing::Return(boost::make_optional(
+            std::shared_ptr<iroha::ametsuchi::BlockQuery>(query))));
+    block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory>(
+        std::make_unique<shared_model::validation::MockValidator<
+            shared_model::interface::Block>>());
   }
 
   void TearDown() override {
@@ -63,15 +60,21 @@ class SimulatorTest : public ::testing::Test {
   }
 
   void init() {
-    simulator = std::make_shared<Simulator>(
-        ordering_gate, validator, factory, query, crypto_signer);
+    simulator = std::make_shared<Simulator>(ordering_gate,
+                                            validator,
+                                            factory,
+                                            block_query_factory,
+                                            crypto_signer,
+                                            std::move(block_factory));
   }
 
   std::shared_ptr<MockStatefulValidator> validator;
   std::shared_ptr<MockTemporaryFactory> factory;
   std::shared_ptr<MockBlockQuery> query;
+  std::shared_ptr<MockBlockQueryFactory> block_query_factory;
   std::shared_ptr<MockOrderingGate> ordering_gate;
   std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer;
+  std::unique_ptr<shared_model::interface::UnsafeBlockFactory> block_factory;
 
   std::shared_ptr<Simulator> simulator;
 };
@@ -138,7 +141,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   EXPECT_CALL(*query, getTopBlock())
       .WillOnce(Return(expected::makeValue(wBlock(clone(block)))));
 
-  EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(1));
+  EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(block.height()));
 
   EXPECT_CALL(*validator, validate(_, _))
       .WillOnce(Return(
@@ -165,15 +168,9 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
 
   auto block_wrapper =
       make_test_subscriber<CallExact>(simulator->on_block(), 1);
-  block_wrapper.subscribe([&proposal](const auto &block_variant) {
-    ASSERT_EQ(block_variant.height(), proposal->height());
-    ASSERT_NO_THROW({
-      auto block = boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              std::shared_ptr<shared_model::interface::Block>>(),
-          block_variant);
-      ASSERT_EQ(block->transactions(), proposal->transactions());
-    });
+  block_wrapper.subscribe([&proposal](const auto block) {
+    ASSERT_EQ(block->height(), proposal->height());
+    ASSERT_EQ(block->transactions(), proposal->transactions());
   });
 
   simulator->process_proposal(*proposal);

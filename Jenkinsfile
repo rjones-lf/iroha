@@ -18,7 +18,7 @@ properties([parameters([
   choice(choices: 'Release\nDebug', description: 'Android bindings build type', name: 'ABBuildType'),
   choice(choices: 'arm64-v8a\narmeabi-v7a\narmeabi\nx86_64\nx86', description: 'Android bindings platform', name: 'ABPlatform'),
   booleanParam(defaultValue: true, description: 'Build docs', name: 'Doxygen'),
-  string(defaultValue: '4', description: 'How much parallelism should we exploit. "4" is optimal for machines with modest amount of memory and at least 4 cores', name: 'PARALLELISM')])])
+  string(defaultValue: '8', description: 'Expect ~3GB memory consumtion per CPU core', name: 'PARALLELISM')])])
 
 
 pipeline {
@@ -55,7 +55,7 @@ pipeline {
             CHANGE_BRANCH_LOCAL = env.CHANGE_BRANCH
           }
           catch(MissingPropertyException e) { }
-          if (GIT_LOCAL_BRANCH != "develop" && CHANGE_BRANCH_LOCAL != "develop") {
+          if (GIT_LOCAL_BRANCH != "develop" && CHANGE_BRANCH_LOCAL != "develop" && GIT_LOCAL_BRANCH != "dev" && CHANGE_BRANCH_LOCAL != "dev") {
             def builds = load ".jenkinsci/cancel-builds-same-job.groovy"
             builds.cancelSameJobBuilds()
           }
@@ -75,18 +75,18 @@ pipeline {
             beforeAgent true
             expression { return params.x86_64_linux }
           }
-          agent { label 'x86_64' }
+          agent { label 'docker-build-agent' }
           steps {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (coverage.selectedBranchesCoverage(['develop', 'master'])) {
+              if (coverage.selectedBranchesCoverage(['master'])) {
                 debugBuild.doDebugBuild(true)
               }
               else {
                 debugBuild.doDebugBuild()
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -111,13 +111,13 @@ pipeline {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && !params.armv8_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
+              if (!params.x86_64_linux && !params.armv8_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['master']))) {
                 debugBuild.doDebugBuild(true)
               }
               else {
                 debugBuild.doDebugBuild()
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -142,13 +142,13 @@ pipeline {
             script {
               debugBuild = load ".jenkinsci/debug-build.groovy"
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
+              if (!params.x86_64_linux && !params.x86_64_macos && (coverage.selectedBranchesCoverage(['master']))) {
                 debugBuild.doDebugBuild(true)
               }
               else {
                 debugBuild.doDebugBuild()
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                 releaseBuild = load ".jenkinsci/release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -174,7 +174,7 @@ pipeline {
               def coverageEnabled = false
               def cmakeOptions = ""
               coverage = load ".jenkinsci/selected-branches-coverage.groovy"
-              if (!params.x86_64_linux && (coverage.selectedBranchesCoverage(['develop', 'master']))) {
+              if (!params.x86_64_linux && (coverage.selectedBranchesCoverage(['master']))) {
                 coverageEnabled = true
                 cmakeOptions = " -DCOVERAGE=ON "
               }
@@ -211,10 +211,12 @@ pipeline {
                 pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ -o '-p 5433' -l /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/events.log start; \
                 psql -h localhost -d postgres -p 5433 -U ${IROHA_POSTGRES_USER} --file=<(echo create database ${IROHA_POSTGRES_USER};)
               """
-              def testExitCode = sh(script: """cd build && IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 ctest --output-on-failure """, returnStatus: true)
-              if (testExitCode != 0) {
-                currentBuild.result = "UNSTABLE"
-              }
+              sh "cd build; IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 ctest --output-on-failure --no-compress-output -T Test || true"
+              sh 'python .jenkinsci/helpers/platform_tag.py "Darwin \$(uname -m)" \$(ls build/Testing/*/Test.xml)'
+              // Mark build as UNSTABLE if there are any failed tests (threshold <100%)
+              xunit testTimeMargin: '3000', thresholdMode: 2, thresholds: [passed(unstableThreshold: '100')], \
+                tools: [CTest(deleteOutputFiles: true, failIfNotNew: false, \
+                pattern: 'build/Testing/**/Test.xml', skipNoTestFiles: false, stopProcessingIfError: true)]
               if ( coverageEnabled ) {
                 sh "cmake --build build --target cppcheck"
                 // Sonar
@@ -233,7 +235,7 @@ pipeline {
                 sh "python /usr/local/bin/lcov_cobertura.py build/reports/coverage.info -o build/reports/coverage.xml"
                 cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: '**/build/reports/coverage.xml', conditionalCoverageTargets: '75, 50, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50, methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
               }
-              if (GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+              if (GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                 releaseBuild = load ".jenkinsci/mac-release-build.groovy"
                 releaseBuild.doReleaseBuild()
               }
@@ -244,11 +246,11 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                      artifacts.uploadArtifacts(filePaths, sprintf('iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
                     }
                   }
                   finally {
@@ -276,7 +278,7 @@ pipeline {
             beforeAgent true
             expression { return params.x86_64_linux }
           }
-          agent { label 'x86_64' }
+          agent { label 'docker-build-agent' }
           steps {
             script {
               def releaseBuild = load ".jenkinsci/release-build.groovy"
@@ -351,11 +353,11 @@ pipeline {
               script {
                 timeout(time: 600, unit: "SECONDS") {
                   try {
-                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
+                    if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
                       def artifacts = load ".jenkinsci/artifacts.groovy"
                       def commit = env.GIT_COMMIT
                       filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-                      artifacts.uploadArtifacts(filePaths, sprintf('/iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+                      artifacts.uploadArtifacts(filePaths, sprintf('iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
                     }
                   }
                   finally {
@@ -373,9 +375,7 @@ pipeline {
         beforeAgent true
         expression { return params.Doxygen }
       }
-      // build docs on any vacant node. Prefer `x86_64` over
-      // others as nodes are more powerful
-      agent { label 'x86_64' }
+      agent { label 'docker-build-agent' }
       steps {
         script {
           def doxygen = load ".jenkinsci/doxygen.groovy"
@@ -385,7 +385,7 @@ pipeline {
             "$platform-develop-build",
             "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
             "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
-            "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
+            "${env.GIT_RAW_BASE_URL}/dev/docker/develop/Dockerfile",
             ['PARALLELISM': params.PARALLELISM])
           iC.inside() {
             doxygen.doDoxygen()
@@ -409,7 +409,7 @@ pipeline {
             beforeAgent true
             expression { return params.x86_64_linux }
           }
-          agent { label 'x86_64' }
+          agent { label 'docker-build-agent' }
           environment {
             JAVA_HOME = "/usr/lib/jvm/java-8-oracle"
           }
@@ -423,7 +423,7 @@ pipeline {
                   "$platform-develop-build",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/develop/Dockerfile",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/develop/Dockerfile",
-                  "${env.GIT_RAW_BASE_URL}/develop/docker/develop/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/dev/docker/develop/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM])
                 if (params.JavaBindings) {
                   iC.inside("-v /tmp/${env.GIT_COMMIT}/bindings-artifact:/tmp/bindings-artifact") {
@@ -441,7 +441,7 @@ pipeline {
                   "android-${params.ABPlatform}-${params.ABBuildType}",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/Dockerfile",
                   "${env.GIT_RAW_BASE_URL}/${env.GIT_PREVIOUS_COMMIT}/docker/android/Dockerfile",
-                  "${env.GIT_RAW_BASE_URL}/develop/docker/android/Dockerfile",
+                  "${env.GIT_RAW_BASE_URL}/dev/docker/android/Dockerfile",
                   ['PARALLELISM': params.PARALLELISM, 'PLATFORM': params.ABPlatform, 'BUILD_TYPE': params.ABBuildType])
                 sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/android/entrypoint.sh"
                 sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
@@ -458,15 +458,15 @@ pipeline {
                 def commit = env.GIT_COMMIT
                 if (params.JavaBindings) {
                   javaBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(javaBindingsFilePaths, '/iroha/bindings/java')
+                  artifacts.uploadArtifacts(javaBindingsFilePaths, 'iroha/bindings/java')
                 }
                 if (params.PythonBindings) {
                   pythonBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(pythonBindingsFilePaths, '/iroha/bindings/python')
+                  artifacts.uploadArtifacts(pythonBindingsFilePaths, 'iroha/bindings/python')
                 }
                 if (params.AndroidBindings) {
                   androidBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/android-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(androidBindingsFilePaths, '/iroha/bindings/android')
+                  artifacts.uploadArtifacts(androidBindingsFilePaths, 'iroha/bindings/android')
                 }
               }
             }
@@ -500,11 +500,11 @@ pipeline {
                 def commit = env.GIT_COMMIT
                 if (params.JavaBindings) {
                   javaBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/java-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(javaBindingsFilePaths, '/iroha/bindings/java')
+                  artifacts.uploadArtifacts(javaBindingsFilePaths, 'iroha/bindings/java')
                 }
                 if (params.PythonBindings) {
                   pythonBindingsFilePaths = [ '/tmp/${GIT_COMMIT}/bindings-artifact/python-bindings-*.zip' ]
-                  artifacts.uploadArtifacts(pythonBindingsFilePaths, '/iroha/bindings/python')
+                  artifacts.uploadArtifacts(pythonBindingsFilePaths, 'iroha/bindings/python')
                 }
               }
             }

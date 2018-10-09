@@ -1,0 +1,80 @@
+  - name: Make conf dir
+    file:
+      path: "{{ docker_dir }}"
+      state: directory
+      mode: 0755
+      owner: "{{ ansible_user }}"
+    with_sequence: start=0 end={{ nodes_in_region - 1 | int }}
+    # tag: deliver
+    become: yes
+
+  - name: Make conf dir
+    file:
+      path: "{{ iroha_conf }}{{ item }}"
+      state: directory
+      mode: 0755
+      owner: "{{ ansible_user }}"
+    with_sequence: start=0 end={{ nodes_in_region - 1 | int }}
+    # tag: deliver
+    become: yes
+
+  - name: stop and remove all docker-compose containers before operations
+    command: docker-compose down
+    args:
+      chdir: "{{ docker_dir }}"
+    ignore_errors: yes
+    # tag: deliver
+    become: yes
+
+  - name: generate configs
+    template:
+      src: config.j2
+      dest: "{{ iroha_conf }}{{ item }}/config.docker"
+    with_sequence: start=0 end={{ nodes_in_region - 1 | int }}
+    # tag: deliver
+
+  - name: copy genesis block
+    copy:
+      src: "{{ playbook_dir }}/files/genesis.block"
+      dest: "{{ iroha_conf }}{{ item }}/genesis.block"
+    with_sequence: start=0 end={{ nodes_in_region - 1 | int }}
+    # tag: deliver
+
+  - name: copy public keys
+    copy:
+      src: "{{ playbook_dir }}/files/node{{ key + item | int}}.pub"
+      dest: "{{ iroha_conf }}{{ item }}/"
+    with_sequence: start=0 end={{ nodes_in_region - 1 | int }}
+    # tag: deliver
+
+  - name: copy private keys
+    copy:
+      src: "{{ playbook_dir }}/files/node{{ key + item | int}}.priv"
+      dest: "{{ iroha_conf }}{{ item }}/"
+    with_sequence: start=0 end={{ nodes_in_region - 1 | int }}
+    # tag: deliver
+
+  - name: generate compose
+    template:
+      src: docker-compose.yml.j2
+      dest: "{{ docker_dir }}/docker-compose.yml"
+    # tag: deliver
+
+  - name: pull fresh docker image of postgres
+    docker_image:
+      name: "{{ pg_image_name }}"
+      tag: "{{ pg_image_tag }}"
+    # tag: deploy
+
+  - name: pull fresh docker image of iroha
+    docker_image:
+      name: "{{ iroha_image_name }}"
+      tag: "{{ iroha_image_tag }}"
+    # tag: deploy
+
+  - name: run docker compose
+    command: docker-compose up -d
+    args:
+      chdir: "{{ docker_dir }}"
+    # tag: deploy
+    become: yes

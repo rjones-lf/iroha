@@ -19,6 +19,7 @@
 #include <boost/optional.hpp>
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
+#include "backend/protobuf/proto_block_json_converter.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
@@ -42,8 +43,11 @@ class BlockQueryTest : public AmetsuchiTest {
     sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
 
     index = std::make_shared<PostgresBlockIndex>(*sql);
-    blocks = std::make_shared<PostgresBlockQuery>(*sql, *file);
-    empty_blocks = std::make_shared<PostgresBlockQuery>(*sql, *mock_file);
+    auto converter =
+        std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
+    blocks = std::make_shared<PostgresBlockQuery>(*sql, *file, converter);
+    empty_blocks =
+        std::make_shared<PostgresBlockQuery>(*sql, *mock_file, converter);
 
     *sql << init_;
 
@@ -86,6 +90,11 @@ class BlockQueryTest : public AmetsuchiTest {
       index->index(b);
       blocks_total++;
     }
+  }
+
+  void TearDown() override {
+    sql->close();
+    AmetsuchiTest::TearDown();
   }
 
   std::unique_ptr<soci::session> sql;
@@ -379,6 +388,7 @@ TEST_F(BlockQueryTest, GetTopBlockFail) {
 
   auto top_block_error = framework::expected::err(empty_blocks->getTopBlock());
   ASSERT_TRUE(top_block_error);
+  auto expected_error = boost::format("Failed to retrieve block with id %d");
   ASSERT_EQ(top_block_error.value().error,
-            "error while fetching the last block");
+            (expected_error % mock_file->last_id()).str());
 }

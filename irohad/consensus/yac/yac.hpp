@@ -58,17 +58,13 @@ namespace iroha {
 
         // ------|Hash gate|------
 
-        virtual void vote(YacHash hash, ClusterOrdering order);
+        void vote(YacHash hash, ClusterOrdering order) override;
 
-        virtual rxcpp::observable<CommitMessage> on_commit();
+        rxcpp::observable<Answer> onOutcome() override;
 
         // ------|Network notifications|------
 
-        virtual void on_commit(CommitMessage commit);
-
-        virtual void on_reject(RejectMessage reject);
-
-        virtual void on_vote(VoteMessage vote);
+        void onState(std::vector<VoteMessage> state) override;
 
        private:
         // ------|Private interface|------
@@ -87,45 +83,25 @@ namespace iroha {
         /**
          * Find corresponding peer in the ledger from vote message
          * @param vote message containing peer information
-         * @return peer if it is present in the ledger, nullopt otherwise
+         * @return peer if it is present in the ledger, boost::none otherwise
          */
         boost::optional<std::shared_ptr<shared_model::interface::Peer>>
         findPeer(const VoteMessage &vote);
 
         // ------|Apply data|------
-
-        /**
-         * Methods take optional peer as argument since peer which sent the
-         * message could be missing from the ledger. This is the case when the
-         * top block in ledger does not correspond to consensus round number
-         */
-
-        void applyCommit(
-            boost::optional<std::shared_ptr<shared_model::interface::Peer>>
-                from,
-            const CommitMessage &commit);
-        void applyReject(
-            boost::optional<std::shared_ptr<shared_model::interface::Peer>>
-                from,
-            const RejectMessage &reject);
-        void applyVote(boost::optional<
-                           std::shared_ptr<shared_model::interface::Peer>> from,
-                       const VoteMessage &vote);
+        void applyState(const std::vector<VoteMessage> &state);
 
         // ------|Propagation|------
-        void propagateCommit(const CommitMessage &msg);
-        void propagateCommitDirectly(const shared_model::interface::Peer &to,
-                                     const CommitMessage &msg);
-        void propagateReject(const RejectMessage &msg);
-        void propagateRejectDirectly(const shared_model::interface::Peer &to,
-                                     const RejectMessage &msg);
+        void propagateState(const std::vector<VoteMessage> &msg);
+        void propagateStateDirectly(const shared_model::interface::Peer &to,
+                                    const std::vector<VoteMessage> &msg);
 
         // ------|Fields|------
         YacVoteStorage vote_storage_;
         std::shared_ptr<YacNetwork> network_;
         std::shared_ptr<YacCryptoProvider> crypto_;
         std::shared_ptr<Timer> timer_;
-        rxcpp::subjects::subject<CommitMessage> notifier_;
+        rxcpp::subjects::subject<Answer> notifier_;
         std::mutex mutex_;
 
         // ------|One round|------

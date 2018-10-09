@@ -18,9 +18,12 @@
 #ifndef IROHA_ASYNC_GRPC_CLIENT_HPP
 #define IROHA_ASYNC_GRPC_CLIENT_HPP
 
+#include <thread>
+
 #include <google/protobuf/empty.pb.h>
 #include <grpc++/grpc++.h>
-#include <thread>
+#include <grpcpp/impl/codegen/async_unary_call.h>
+#include "logger/logger.hpp"
 
 namespace iroha {
   namespace network {
@@ -32,9 +35,9 @@ namespace iroha {
     template <typename Response>
     class AsyncGrpcClient {
      public:
-      explicit AsyncGrpcClient(logger::Logger &&log)
+      AsyncGrpcClient()
           : thread_(&AsyncGrpcClient::asyncCompleteRpc, this),
-            log_(std::move(log)) {}
+            log_(logger::log("AsyncGrpcClient")) {}
 
       /**
        * Listen to gRPC server responses
@@ -72,9 +75,21 @@ namespace iroha {
 
         grpc::Status status;
 
-        std::unique_ptr<grpc::ClientAsyncResponseReader<Response>>
+        std::unique_ptr<grpc::ClientAsyncResponseReaderInterface<Response>>
             response_reader;
       };
+
+      /**
+       * Universal method to perform all needed sends
+       * @tparam lambda which must return unique pointer to
+       * ClientAsyncResponseReader<Response> object
+       */
+      template <typename F>
+      void Call(F &&lambda) {
+        auto call = new AsyncClientCall;
+        call->response_reader = lambda(&call->context, &cq_);
+        call->response_reader->Finish(&call->reply, &call->status, call);
+      }
     };
   }  // namespace network
 }  // namespace iroha

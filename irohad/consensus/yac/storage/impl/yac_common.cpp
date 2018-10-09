@@ -25,7 +25,7 @@ namespace iroha {
   namespace consensus {
     namespace yac {
 
-      bool sameProposals(const std::vector<VoteMessage> &votes) {
+      bool sameKeys(const std::vector<VoteMessage> &votes) {
         if (votes.empty()) {
           return false;
         }
@@ -33,21 +33,19 @@ namespace iroha {
         auto first = votes.at(0);
         return std::all_of(
             votes.begin(), votes.end(), [&first](const auto &current) {
-              return first.hash.proposal_hash == current.hash.proposal_hash;
+              return first.hash.vote_round == current.hash.vote_round;
             });
       }
 
-      boost::optional<ProposalHash> getProposalHash(
-          const std::vector<VoteMessage> &votes) {
-        auto &&hash = getHash(votes);
-        if (hash) {
-          return (*hash).proposal_hash;
+      boost::optional<Round> getKey(const std::vector<VoteMessage> &votes) {
+        if (not sameKeys(votes)) {
+          return boost::none;
         }
-        return boost::none;
+        return votes[0].hash.vote_round;
       }
 
       boost::optional<YacHash> getHash(const std::vector<VoteMessage> &votes) {
-        if (not sameProposals(votes)) {
+        if (not sameKeys(votes)) {
           return boost::none;
         }
 

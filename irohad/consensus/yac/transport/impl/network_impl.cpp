@@ -21,134 +21,66 @@
 #include <memory>
 
 #include "consensus/yac/messages.hpp"
+#include "consensus/yac/storage/yac_common.hpp"
 #include "consensus/yac/transport/yac_pb_converters.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
+#include "yac.pb.h"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
       // ----------| Public API |----------
 
-      NetworkImpl::NetworkImpl()
-          : network::AsyncGrpcClient<google::protobuf::Empty>(
-                logger::log("YacNetwork")) {}
+      NetworkImpl::NetworkImpl(
+          std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+              async_call)
+          : async_call_(async_call) {}
 
       void NetworkImpl::subscribe(
           std::shared_ptr<YacNetworkNotifications> handler) {
         handler_ = handler;
       }
 
-      void NetworkImpl::send_vote(const shared_model::interface::Peer &to,
-                                  VoteMessage vote) {
+      void NetworkImpl::sendState(const shared_model::interface::Peer &to,
+                                  const std::vector<VoteMessage> &state) {
         createPeerConnection(to);
 
-        auto request = PbConverters::serializeVote(vote);
-
-        auto call = new AsyncClientCall;
-
-        call->response_reader =
-            peers_.at(to.address())
-                ->AsyncSendVote(&call->context, request, &cq_);
-
-        call->response_reader->Finish(&call->reply, &call->status, call);
-
-        log_->info("Send vote {} to {}", vote.hash.block_hash, to.address());
-      }
-
-      void NetworkImpl::send_commit(const shared_model::interface::Peer &to,
-                                    const CommitMessage &commit) {
-        createPeerConnection(to);
-
-        proto::Commit request;
-        for (const auto &vote : commit.votes) {
+        proto::State request;
+        for (const auto &vote : state) {
           auto pb_vote = request.add_votes();
           *pb_vote = PbConverters::serializeVote(vote);
         }
 
-        auto call = new AsyncClientCall;
+        async_call_->Call([&](auto context, auto cq) {
+          return peers_.at(to.address())->AsyncSendState(context, request, cq);
+        });
 
-        call->response_reader =
-            peers_.at(to.address())
-                ->AsyncSendCommit(&call->context, request, &cq_);
-
-        call->response_reader->Finish(&call->reply, &call->status, call);
-
-        log_->info("Send votes bundle[size={}] commit to {}",
-                   commit.votes.size(),
-                   to.address());
+        async_call_->log_->info(
+            "Send votes bundle[size={}] to {}", state.size(), to.address());
       }
 
-      void NetworkImpl::send_reject(const shared_model::interface::Peer &to,
-                                    RejectMessage reject) {
-        createPeerConnection(to);
-
-        proto::Reject request;
-        for (const auto &vote : reject.votes) {
-          auto pb_vote = request.add_votes();
-          *pb_vote = PbConverters::serializeVote(vote);
-        }
-
-        auto call = new AsyncClientCall;
-
-        call->response_reader =
-            peers_.at(to.address())
-                ->AsyncSendReject(&call->context, request, &cq_);
-
-        call->response_reader->Finish(&call->reply, &call->status, call);
-
-        log_->info("Send votes bundle[size={}] reject to {}",
-                   reject.votes.size(),
-                   to.address());
-      }
-
-      grpc::Status NetworkImpl::SendVote(
+      grpc::Status NetworkImpl::SendState(
           ::grpc::ServerContext *context,
-          const ::iroha::consensus::yac::proto::Vote *request,
+          const ::iroha::consensus::yac::proto::State *request,
           ::google::protobuf::Empty *response) {
-        auto vote = *PbConverters::deserializeVote(*request);
-
-        log_->info(
-            "Receive vote {} from {}", vote.hash.block_hash, context->peer());
-
-        handler_.lock()->on_vote(vote);
-        return grpc::Status::OK;
-      }
-
-      grpc::Status NetworkImpl::SendCommit(
-          ::grpc::ServerContext *context,
-          const ::iroha::consensus::yac::proto::Commit *request,
-          ::google::protobuf::Empty *response) {
-        CommitMessage commit(std::vector<VoteMessage>{});
+        std::vector<VoteMessage> state;
         for (const auto &pb_vote : request->votes()) {
           auto vote = *PbConverters::deserializeVote(pb_vote);
-          commit.votes.push_back(vote);
+          state.push_back(vote);
+        }
+        if (not sameKeys(state)) {
+          async_call_->log_->info(
+              "Votes are stateless invalid: proposals are different, or empty "
+              "collection");
+          return grpc::Status::CANCELLED;
         }
 
-        log_->info("Receive commit[size={}] from {}",
-                   commit.votes.size(),
-                   context->peer());
+        async_call_->log_->info(
+            "Receive votes[size={}] from {}", state.size(), context->peer());
 
-        handler_.lock()->on_commit(commit);
-        return grpc::Status::OK;
-      }
-
-      grpc::Status NetworkImpl::SendReject(
-          ::grpc::ServerContext *context,
-          const ::iroha::consensus::yac::proto::Reject *request,
-          ::google::protobuf::Empty *response) {
-        RejectMessage reject(std::vector<VoteMessage>{});
-        for (const auto &pb_vote : request->votes()) {
-          auto vote = *PbConverters::deserializeVote(pb_vote);
-          reject.votes.push_back(vote);
-        }
-
-        log_->info("Receive reject[size={}] from {}",
-                   reject.votes.size(),
-                   context->peer());
-
-        handler_.lock()->on_reject(reject);
+        handler_.lock()->onState(state);
         return grpc::Status::OK;
       }
 

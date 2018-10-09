@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "consensus/yac/storage/yac_block_storage.hpp"
 
 using namespace logger;
@@ -26,11 +27,11 @@ namespace iroha {
 
       YacBlockStorage::YacBlockStorage(
           YacHash hash,
-          uint64_t peers_in_round,
+          PeersNumberType peers_in_round,
           std::shared_ptr<SupermajorityChecker> supermajority_checker)
-          : hash_(std::move(hash)),
+          : storage_key_(std::move(hash)),
             peers_in_round_(peers_in_round),
-            supermajority_checker_(supermajority_checker) {
+            supermajority_checker_(std::move(supermajority_checker)) {
         log_ = log("YacBlockStorage");
       }
 
@@ -38,9 +39,11 @@ namespace iroha {
         if (validScheme(msg) and uniqueVote(msg)) {
           votes_.push_back(msg);
 
-          log_->info("Vote ({}, {}) inserted",
-                     msg.hash.proposal_hash,
-                     msg.hash.block_hash);
+          log_->info("Vote with rounds ({}, {}) and hashes ({}, {}) inserted",
+                     msg.hash.vote_round.block_round,
+                     msg.hash.vote_round.reject_round,
+                     msg.hash.vote_hashes.proposal_hash,
+                     msg.hash.vote_hashes.block_hash);
           log_->info(
               "Votes in storage [{}/{}]", votes_.size(), peers_in_round_);
         }
@@ -76,8 +79,8 @@ namespace iroha {
         return std::count(votes_.begin(), votes_.end(), msg) != 0;
       }
 
-      YacHash YacBlockStorage::getStorageHash() {
-        return hash_;
+      YacHash YacBlockStorage::getStorageKey() const {
+        return storage_key_;
       }
 
       // --------| private api |--------
@@ -90,7 +93,7 @@ namespace iroha {
       }
 
       bool YacBlockStorage::validScheme(VoteMessage &vote) {
-        return getStorageHash() == vote.hash;
+        return getStorageKey() == vote.hash;
       }
 
     }  // namespace yac

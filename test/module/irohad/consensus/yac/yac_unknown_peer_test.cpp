@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
@@ -35,26 +23,20 @@ using namespace std;
  */
 TEST_F(YacTest, UnknownVoteBeforeCommit) {
   // verify that commit not emitted
-  auto wrapper = make_test_subscriber<CallExact>(yac->on_commit(), 0);
+  auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 0);
   wrapper.subscribe();
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(0);
+  EXPECT_CALL(*network, sendState(_, _)).Times(0);
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>()))
-      .Times(1)
-      .WillRepeatedly(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
 
   VoteMessage vote;
-  vote.hash = YacHash("my_proposal", "my_block");
+  vote.hash = YacHash(iroha::consensus::Round{1, 1}, "my_proposal", "my_block");
   std::string unknown = "unknown";
   vote.signature = createSig(unknown);
 
   // assume that our peer receive message
-  network->notification->on_vote(vote);
+  network->notification->onState({vote});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -75,28 +57,24 @@ TEST_F(YacTest, UnknownVoteAfterCommit) {
 
   initYac(my_order.value());
 
-  EXPECT_CALL(*network, send_commit(_, _)).Times(0);
-  EXPECT_CALL(*network, send_reject(_, _)).Times(0);
-  EXPECT_CALL(*network, send_vote(_, _)).Times(0);
+  EXPECT_CALL(*network, sendState(_, _)).Times(0);
 
   EXPECT_CALL(*timer, deny()).Times(AtLeast(1));
 
-  EXPECT_CALL(*crypto, verify(An<CommitMessage>())).WillOnce(Return(true));
-  EXPECT_CALL(*crypto, verify(An<RejectMessage>())).Times(0);
-  EXPECT_CALL(*crypto, verify(An<VoteMessage>())).WillOnce(Return(true));
+  EXPECT_CALL(*crypto, verify(_)).Times(2).WillRepeatedly(Return(true));
 
-  YacHash my_hash("proposal_hash", "block_hash");
+  YacHash my_hash(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
 
   std::vector<VoteMessage> votes;
 
   for (auto i = 0; i < 3; ++i) {
     votes.push_back(create_vote(my_hash, std::to_string(i)));
   };
-  yac->on_commit(CommitMessage(votes));
+  yac->onState(votes);
 
   VoteMessage vote;
   vote.hash = my_hash;
   std::string unknown = "unknown";
   vote.signature = createSig(unknown);
-  yac->on_vote(vote);
+  yac->onState({vote});
 }

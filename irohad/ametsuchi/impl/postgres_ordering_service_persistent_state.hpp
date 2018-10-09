@@ -18,8 +18,9 @@
 #ifndef IROHA_POSTGRES_ORDERING_SERVICE_PERSISTENT_STATE_HPP
 #define IROHA_POSTGRES_ORDERING_SERVICE_PERSISTENT_STATE_HPP
 
-#include "ametsuchi/impl/soci_utils.hpp"
 #include "ametsuchi/ordering_service_persistent_state.hpp"
+
+#include <soci/soci.h>
 #include "common/result.hpp"
 #include "logger/logger.hpp"
 
@@ -65,18 +66,22 @@ namespace iroha {
       /**
        * Save proposal height that it can be restored
        * after launch
+       * @param height is height of last proposal
+       * @return if height has been saved
        */
-      virtual bool saveProposalHeight(size_t height);
+      bool saveProposalHeight(size_t height) override;
 
       /**
        * Load proposal height
+       * @return proposal height if it was saved, otherwise boost::none
        */
-      virtual boost::optional<size_t> loadProposalHeight() const;
+      boost::optional<size_t> loadProposalHeight() const override;
 
       /**
        * Reset storage state to default
+       * @return whether state was reset successfully
        */
-      virtual bool resetState();
+      bool resetState() override;
 
      private:
       std::unique_ptr<soci::session> sql_;

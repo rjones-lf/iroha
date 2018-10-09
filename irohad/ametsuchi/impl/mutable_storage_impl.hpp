@@ -21,15 +21,13 @@
 #include <soci/soci.h>
 #include <map>
 
+#include "ametsuchi/command_executor.hpp"
 #include "ametsuchi/mutable_storage.hpp"
-#include "execution/command_executor.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
-
   namespace ametsuchi {
-
     class BlockIndex;
     class WsvCommand;
 
@@ -37,16 +35,16 @@ namespace iroha {
       friend class StorageImpl;
 
      public:
-      MutableStorageImpl(shared_model::interface::types::HashType top_hash,
-                         std::unique_ptr<soci::session> sql,
-                         std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-                         factory);
-      bool check(const shared_model::interface::BlockVariant &block,
-                 MutableStoragePredicateType<decltype(block)> function) override;
+      MutableStorageImpl(
+          shared_model::interface::types::HashType top_hash,
+          std::unique_ptr<soci::session> sql,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory);
 
-      bool apply(
-          const shared_model::interface::Block &block,
-          MutableStoragePredicateType<decltype(block)> function) override;
+      bool check(const shared_model::interface::Block &block,
+                 MutableStoragePredicate function) override;
+
+      bool apply(const shared_model::interface::Block &block) override;
 
       ~MutableStorageImpl() override;
 
@@ -59,7 +57,6 @@ namespace iroha {
 
       std::unique_ptr<soci::session> sql_;
       std::shared_ptr<WsvQuery> wsv_;
-      std::shared_ptr<WsvCommand> executor_;
       std::unique_ptr<BlockIndex> block_index_;
       std::shared_ptr<CommandExecutor> command_executor_;
 

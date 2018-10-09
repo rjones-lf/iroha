@@ -17,7 +17,7 @@
 
 #include <gtest/gtest.h>
 
-#include "builders/protobuf/common_objects/proto_account_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
 
 /**
  * @given fields for Account object

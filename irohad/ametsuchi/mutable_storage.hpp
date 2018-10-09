@@ -19,12 +19,12 @@
 #define IROHA_MUTABLE_STORAGE_HPP
 
 #include <functional>
+
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
     class Block;
-    class BlockVariant;
   }  // namespace interface
 }  // namespace shared_model
 
@@ -32,6 +32,7 @@ namespace iroha {
   namespace ametsuchi {
 
     class WsvQuery;
+    class PeerQuery;
 
     /**
      * Mutable storage is used apply blocks to the storage.
@@ -40,12 +41,11 @@ namespace iroha {
     class MutableStorage {
      public:
       /**
-       * Predicate type checking type T
+       * Predicate type checking block
        */
-      template <typename T>
-      using MutableStoragePredicateType =
-          std::function<bool(const T &,
-                             WsvQuery &,
+      using MutableStoragePredicate =
+          std::function<bool(const shared_model::interface::Block &,
+                             PeerQuery &,
                              const shared_model::interface::types::HashType &)>;
 
       /**
@@ -55,8 +55,8 @@ namespace iroha {
        * false otherwise
        * @return result of predicate
        */
-      virtual bool check(const shared_model::interface::BlockVariant &block,
-                         MutableStoragePredicateType<decltype(block)>) = 0;
+      virtual bool check(const shared_model::interface::Block &block,
+                         MutableStoragePredicate function) = 0;
 
       /**
        * Applies a block to current mutable state
@@ -72,9 +72,7 @@ namespace iroha {
        * otherwise.
        * @return True if block was successfully applied, false otherwise.
        */
-      virtual bool apply(
-          const shared_model::interface::Block &block,
-          MutableStoragePredicateType<decltype(block)> function) = 0;
+      virtual bool apply(const shared_model::interface::Block &block) = 0;
 
       virtual ~MutableStorage() = default;
     };

@@ -3,22 +3,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "validation/impl/stateful_validator_impl.hpp"
+
 #include <gtest/gtest.h>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm_ext/push_back.hpp>
-
+#include "backend/protobuf/proto_proposal_factory.hpp"
 #include "common/result.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "interfaces/iroha_internal/batch_meta.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "interfaces/transaction.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "module/shared_model/interface_mocks.hpp"
-#include "validation/impl/stateful_validator_impl.hpp"
-#include "validation/stateful_validator.hpp"
 #include "validation/utils.hpp"
-#include "backend/protobuf/proto_proposal_factory.hpp"
 
 using namespace iroha::validation;
 using namespace shared_model::crypto;
@@ -42,7 +42,7 @@ class SignaturesSubset : public testing::Test {
  * @then returned true
  */
 TEST_F(SignaturesSubset, Equal) {
-  std::array<SignatureMock, 3> signatures;
+  std::array<MockSignature, 3> signatures;
   for (size_t i = 0; i < signatures.size(); ++i) {
     EXPECT_CALL(signatures[i], publicKey())
         .WillRepeatedly(testing::ReturnRef(keys[i]));
@@ -58,7 +58,7 @@ TEST_F(SignaturesSubset, Equal) {
  */
 TEST_F(SignaturesSubset, Lesser) {
   std::vector<PublicKey> subkeys{keys.begin(), keys.end() - 1};
-  std::array<SignatureMock, 3> signatures;
+  std::array<MockSignature, 3> signatures;
   for (size_t i = 0; i < signatures.size(); ++i) {
     EXPECT_CALL(signatures[i], publicKey())
         .WillRepeatedly(testing::ReturnRef(keys[i]));
@@ -72,7 +72,7 @@ TEST_F(SignaturesSubset, Lesser) {
  * @then returned true
  */
 TEST_F(SignaturesSubset, StrictSubset) {
-  std::array<SignatureMock, 2> signatures;
+  std::array<MockSignature, 2> signatures;
   for (size_t i = 0; i < signatures.size(); ++i) {
     EXPECT_CALL(signatures[i], publicKey())
         .WillRepeatedly(testing::ReturnRef(keys[i]));
@@ -87,7 +87,7 @@ TEST_F(SignaturesSubset, StrictSubset) {
  */
 TEST_F(SignaturesSubset, PublickeyUniqueness) {
   std::vector<PublicKey> repeated_keys{2, keys[0]};
-  std::array<SignatureMock, 2> signatures;
+  std::array<MockSignature, 2> signatures;
   for (size_t i = 0; i < signatures.size(); ++i) {
     EXPECT_CALL(signatures[i], publicKey())
         .WillRepeatedly(testing::ReturnRef(keys[i]));
@@ -100,7 +100,10 @@ class Validator : public testing::Test {
   void SetUp() override {
     factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
         shared_model::validation::DefaultProposalValidator>>();
-    sfv = std::make_shared<StatefulValidatorImpl>(std::move(factory));
+    parser =
+        std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
+    sfv = std::make_shared<StatefulValidatorImpl>(std::move(factory),
+                                                  std::move(parser));
     temp_wsv_mock = std::make_shared<iroha::ametsuchi::MockTemporaryWsv>();
   }
 
@@ -135,6 +138,7 @@ class Validator : public testing::Test {
   std::shared_ptr<StatefulValidator> sfv;
   std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory;
   std::shared_ptr<iroha::ametsuchi::MockTemporaryWsv> temp_wsv_mock;
+  std::shared_ptr<shared_model::interface::TransactionBatchParser> parser;
 };
 
 /**

@@ -39,3 +39,14 @@ def grant_can_add_my_signatory_tx():
         .build()
     return iroha.ModelProtoTransaction(tx) \
         .signAndAddSignature(alice['key']).finish()
+
+
+@commons.hex
+def revoke_can_add_my_signatory_tx():
+    tx = iroha.ModelTransactionBuilder() \
+        .createdTime(commons.now()) \
+        .creatorAccountId(alice['id']) \
+        .revokePermission(bob['id'], iroha.Grantable_kAddMySignatory) \
+        .build()
+    return iroha.ModelProtoTransaction(tx) \
+        .signAndAddSignature(alice['key']).finish()

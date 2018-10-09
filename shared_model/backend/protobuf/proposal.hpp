@@ -33,6 +33,8 @@ namespace shared_model {
 
       interface::types::HeightType height() const override;
 
+      const interface::types::BlobType &blob() const override;
+
      private:
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
@@ -42,6 +44,9 @@ namespace shared_model {
             proto_.mutable_transactions()->begin(),
             proto_.mutable_transactions()->end());
       }};
+
+      Lazy<interface::types::BlobType> blob_{
+          [this] { return makeBlob(proto_); }};
     };
   }  // namespace proto
 }  // namespace shared_model

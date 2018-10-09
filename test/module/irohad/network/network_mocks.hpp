@@ -24,6 +24,7 @@
 #include "network/consensus_gate.hpp"
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
+#include "synchronizer/synchronizer_common.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -41,14 +42,15 @@ namespace iroha {
 
       MOCK_CONST_METHOD1(
           propagate_batch,
-          void(const shared_model::interface::TransactionBatch &));
+          void(std::shared_ptr<shared_model::interface::TransactionBatch>));
 
       MOCK_CONST_METHOD0(
           on_proposal,
           rxcpp::observable<
               std::shared_ptr<shared_model::interface::Proposal>>());
 
-      MOCK_CONST_METHOD0(on_commit, rxcpp::observable<Commit>());
+      MOCK_CONST_METHOD0(
+          on_commit, rxcpp::observable<synchronizer::SynchronizationEvent>());
 
       MOCK_CONST_METHOD0(
           on_verified_proposal,
@@ -78,7 +80,7 @@ namespace iroha {
 
       MOCK_CONST_METHOD1(
           propagateBatch,
-          void(const shared_model::interface::TransactionBatch &));
+          void(std::shared_ptr<shared_model::interface::TransactionBatch>));
 
       MOCK_METHOD0(on_proposal,
                    rxcpp::observable<
@@ -89,11 +91,13 @@ namespace iroha {
 
     class MockConsensusGate : public ConsensusGate {
      public:
-      MOCK_METHOD1(vote, void(const shared_model::interface::BlockVariant &));
+      MOCK_METHOD1(vote, void(std::shared_ptr<shared_model::interface::Block>));
 
-      MOCK_METHOD0(on_commit,
-                   rxcpp::observable<shared_model::interface::BlockVariant>());
+      MOCK_METHOD0(
+          on_commit,
+          rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>());
     };
+
   }  // namespace network
 }  // namespace iroha
 

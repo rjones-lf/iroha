@@ -48,7 +48,7 @@ namespace shared_model {
     void validateQuery(const Blob &b) {
       auto blob = convert(b);
       auto s = get<iroha::protocol::Query>(blob) | [](auto qry) {
-        static validation::DefaultSignableQueryValidator val;
+        static validation::DefaultSignedQueryValidator val;
         return boost::make_optional(val.validate(proto::Query(qry)).reason());
       };
       if (s) {
@@ -69,7 +69,7 @@ namespace shared_model {
 
         auto sig = tx.add_signatures();
         sig->set_signature(crypto::toBinaryString(signature));
-        sig->set_pubkey(crypto::toBinaryString(key.publicKey()));
+        sig->set_public_key(crypto::toBinaryString(key.publicKey()));
         return boost::make_optional(tx);
       };
       if (s) {
@@ -86,7 +86,7 @@ namespace shared_model {
 
         auto sig = qry.mutable_signature();
         sig->set_signature(crypto::toBinaryString(signature));
-        sig->set_pubkey(crypto::toBinaryString(key.publicKey()));
+        sig->set_public_key(crypto::toBinaryString(key.publicKey()));
         return boost::make_optional(qry);
       };
       if (s) {
@@ -119,6 +119,12 @@ namespace shared_model {
         return Blob(s->begin(), s->end());
       }
       throw std::invalid_argument("unknown object");
+    }
+
+    interface::types::HashType utxReducedHash(
+        const shared_model::proto::UnsignedWrapper<
+            shared_model::proto::Transaction> &utx) {
+      return utx.reducedHash();
     }
   }  // namespace bindings
 }  // namespace shared_model

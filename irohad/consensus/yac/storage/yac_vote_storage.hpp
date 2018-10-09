@@ -19,18 +19,51 @@
 #define IROHA_YAC_VOTE_STORAGE_HPP
 
 #include <memory>
-#include <boost/optional.hpp>
-#include <unordered_set>
+#include <unordered_map>
 #include <vector>
 
+#include <boost/optional.hpp>
 #include "consensus/yac/messages.hpp"  // because messages passed by value
 #include "consensus/yac/storage/storage_result.hpp"  // for Answer
 #include "consensus/yac/storage/yac_common.hpp"      // for ProposalHash
+#include "consensus/yac/yac_types.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
       class YacProposalStorage;
+
+      /**
+       * Proposal outcome states for multicast propagation strategy
+       *
+       * Outcome is either CommitMessage, which guarantees that supermajority of
+       * votes for the proposal-block hashes is collected, or RejectMessage,
+       * which states that supermajority of votes for a block hash cannot be
+       * achieved
+       *
+       * kNotSentNotProcessed - outcome was not propagated in the network
+       * AND it was not passed to pipeline. Initial state after receiving an
+       * outcome from storage. Outcome with votes is propagated to the network
+       * in this state.
+       *
+       * kSentNotProcessed - outcome was propagated in the network
+       * AND it was not passed to pipeline. State can be set in two cases:
+       * 1. Outcome is received from the network. Some node has already achieved
+       * an outcome and has propagated it to the network, so the first state is
+       * skipped.
+       * 2. Outcome was propagated to the network
+       * Outcome is passed to pipeline in this state.
+       *
+       * kSentProcessed - outcome was propagated in the network
+       * AND it was passed to pipeline. Set after passing proposal to pipeline.
+       * This state is final. Receiving a network message in this state results
+       * in direct propagation of outcome to message sender.
+       */
+      enum class ProposalState {
+        kNotSentNotProcessed,
+        kSentNotProcessed,
+        kSentProcessed
+      };
 
       /**
        * Class provide storage for votes and useful methods for it.
@@ -40,11 +73,11 @@ namespace iroha {
         // --------| private api |--------
 
         /**
-         * Retrieve iterator for storage with parameters hash
-         * @param hash - object for finding
+         * Retrieve iterator for storage with specified key
+         * @param round - key of that storage
          * @return iterator to proposal storage
          */
-        auto getProposalStorage(ProposalHash hash);
+        auto getProposalStorage(const Round &round);
 
         /**
          * Find existed proposal storage or create new if required
@@ -55,72 +88,47 @@ namespace iroha {
          * @return - iter for required proposal storage
          */
         auto findProposalStorage(const VoteMessage &msg,
-                                 uint64_t peers_in_round);
+                                 PeersNumberType peers_in_round);
 
        public:
         // --------| public api |--------
 
         /**
-         * Insert vote in storage
-         * @param msg - current vote message
+         * Insert votes in storage
+         * @param state - current message with votes
          * @param peers_in_round - number of peers participated in round
-         * @return structure with result of inserting. Nullopt if mgs not valid.
-         */
-        boost::optional<Answer> store(VoteMessage msg,
-                                       uint64_t peers_in_round);
-
-        /**
-         * Insert commit in storage
-         * @param commit - message with votes
-         * @param peers_in_round - number of peers in current consensus round
          * @return structure with result of inserting.
-         * Nullopt if commit not valid.
+         * boost::none if msg not valid.
          */
-        boost::optional<Answer> store(CommitMessage commit,
-                                       uint64_t peers_in_round);
+        boost::optional<Answer> store(std::vector<VoteMessage> state,
+                                      PeersNumberType peers_in_round);
 
         /**
-         * Insert reject message in storage
-         * @param reject - message with votes
-         * @param peers_in_round - number of peers in current consensus round
-         * @return structure with result of inserting.
-         * Nullopt if reject not valid.
+         * Provide status about closing round of proposal/block
+         * @param round, in which proposal/block is supposed to be committed
+         * @return true, if round closed
          */
-        boost::optional<Answer> store(RejectMessage reject,
-                                       uint64_t peers_in_round);
+        bool isCommitted(const Round &round);
 
         /**
-         * Provide status about closing round with parameters hash
-         * @param hash - target hash of round
-         * @return true, if rould closed
+         * Method provide state of processing for concrete proposal/block
+         * @param round, in which that proposal/block is being voted
+         * @return value attached to parameter's round. Default is
+         * kNotSentNotProcessed.
          */
-        bool isHashCommitted(ProposalHash hash);
+        ProposalState getProcessingState(const Round &round);
 
         /**
-         * Method provide state of processing for concrete hash
-         * @param hash - target tag
-         * @return value attached to parameter's hash. Default is false.
+         * Mark round with following transition:
+         * kNotSentNotProcessed -> kSentNotProcessed
+         * kSentNotProcessed -> kSentProcessed
+         * kSentProcessed -> kSentProcessed
+         * @see ProposalState description for transition cases
+         * @param round - target tag
          */
-        bool getProcessingState(const ProposalHash &hash);
-
-        /**
-         * Mark hash as processed.
-         * @param hash - target tag
-         */
-        void markAsProcessedState(const ProposalHash &hash);
+        void nextProcessingState(const Round &round);
 
        private:
-        // --------| private api |--------
-
-        /**
-         * Insert votes in storage
-         * @param votes - collection for insertion
-         * @param peers_in_round - number of peers in current round
-         * @return answer after insertion collection
-         */
-        boost::optional<Answer> insert_votes(std::vector<VoteMessage> &votes,
-                                              uint64_t peers_in_round);
-
         // --------| fields |--------
 
         /**
@@ -129,13 +137,16 @@ namespace iroha {
         std::vector<YacProposalStorage> proposal_storages_;
 
         /**
-         * Processing set provide user flags about processing some hashes.
-         * If hash exists <=> processed
+         * Processing set provide user flags about processing some
+         * proposals/blocks.
+         * If such round exists <=> processed
          */
-        std::unordered_set<ProposalHash> processing_state_;
+        std::unordered_map<Round, ProposalState, RoundTypeHasher>
+            processing_state_;
       };
 
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
+
 #endif  // IROHA_YAC_VOTE_STORAGE_HPP

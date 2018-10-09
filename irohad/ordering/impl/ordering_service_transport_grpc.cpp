@@ -1,26 +1,14 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
+
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
 
+#include "backend/protobuf/proposal.hpp"
 #include "backend/protobuf/transaction.hpp"
-#include "builders/protobuf/proposal.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
-#include "validators/default_validator.hpp"
 
 using namespace iroha::ordering;
 
@@ -29,41 +17,13 @@ void OrderingServiceTransportGrpc::subscribe(
   subscriber_ = subscriber;
 }
 
-grpc::Status OrderingServiceTransportGrpc::onTransaction(
-    ::grpc::ServerContext *context,
-    const iroha::protocol::Transaction *request,
-    ::google::protobuf::Empty *response) {
-  log_->info("OrderingServiceTransportGrpc::onTransaction");
-  if (subscriber_.expired()) {
-    log_->error("No subscriber");
-  } else {
-    auto batch_result =
-        shared_model::interface::TransactionBatch::createTransactionBatch<
-            shared_model::validation::DefaultTransactionValidator>(
-            std::make_shared<shared_model::proto::Transaction>(
-                iroha::protocol::Transaction(*request)));
-    batch_result.match(
-        [this](iroha::expected::Value<shared_model::interface::TransactionBatch>
-                   &batch) {
-          subscriber_.lock()->onBatch(std::move(batch.value));
-        },
-        [this](const iroha::expected::Error<std::string> &error) {
-          log_->error(
-              "Could not create batch from received single transaction: {}",
-              error.error);
-        });
-  }
-
-  return ::grpc::Status::OK;
-}
-
 grpc::Status OrderingServiceTransportGrpc::onBatch(
     ::grpc::ServerContext *context,
     const protocol::TxList *request,
     ::google::protobuf::Empty *response) {
-  log_->info("OrderingServiceTransportGrpc::onBatch");
+  async_call_->log_->info("OrderingServiceTransportGrpc::onBatch");
   if (subscriber_.expired()) {
-    log_->error("No subscriber");
+    async_call_->log_->error("No subscriber");
   } else {
     auto txs =
         std::vector<std::shared_ptr<shared_model::interface::Transaction>>(
@@ -76,19 +36,16 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
           return std::make_shared<shared_model::proto::Transaction>(tx);
         });
 
-    auto batch_result =
-        shared_model::interface::TransactionBatch::createTransactionBatch(
-            txs,
-            shared_model::validation::SignedTransactionsCollectionValidator<
-                shared_model::validation::DefaultTransactionValidator,
-                shared_model::validation::BatchOrderValidator>());
+    // TODO [IR-1730] Akvinikym 04.10.18: use transaction factory to stateless
+    // validate transactions before wrapping them into batches
+    auto batch_result = batch_factory_->createTransactionBatch(txs);
     batch_result.match(
-        [this](iroha::expected::Value<shared_model::interface::TransactionBatch>
-                   &batch) {
+        [this](iroha::expected::Value<std::unique_ptr<
+                   shared_model::interface::TransactionBatch>> &batch) {
           subscriber_.lock()->onBatch(std::move(batch.value));
         },
         [this](const iroha::expected::Error<std::string> &error) {
-          log_->error(
+          async_call_->log_->error(
               "Could not create batch from received transaction list: {}",
               error.error);
         });
@@ -99,9 +56,10 @@ grpc::Status OrderingServiceTransportGrpc::onBatch(
 void OrderingServiceTransportGrpc::publishProposal(
     std::unique_ptr<shared_model::interface::Proposal> proposal,
     const std::vector<std::string> &peers) {
-  log_->info("OrderingServiceTransportGrpc::publishProposal");
-  std::unordered_map<std::string,
-                     std::unique_ptr<proto::OrderingGateTransportGrpc::Stub>>
+  async_call_->log_->info("OrderingServiceTransportGrpc::publishProposal");
+  std::unordered_map<
+      std::string,
+      std::unique_ptr<proto::OrderingGateTransportGrpc::StubInterface>>
       peers_map;
   for (const auto &peer : peers) {
     peers_map[peer] =
@@ -109,17 +67,21 @@ void OrderingServiceTransportGrpc::publishProposal(
   }
 
   for (const auto &peer : peers_map) {
-    auto call = new AsyncClientCall;
     auto proto = static_cast<shared_model::proto::Proposal *>(proposal.get());
-    log_->debug("Publishing proposal: '{}'",
-                proto->getTransport().DebugString());
-    call->response_reader = peer.second->AsynconProposal(
-        &call->context, proto->getTransport(), &cq_);
+    async_call_->log_->debug("Publishing proposal: '{}'",
+                             proto->getTransport().DebugString());
 
-    call->response_reader->Finish(&call->reply, &call->status, call);
+    auto transport = proto->getTransport();
+    async_call_->Call([&](auto context, auto cq) {
+      return peer.second->AsynconProposal(context, transport, cq);
+    });
   }
 }
 
-OrderingServiceTransportGrpc::OrderingServiceTransportGrpc()
-    : network::AsyncGrpcClient<google::protobuf::Empty>(
-          logger::log("OrderingServiceTransportGrpc")) {}
+OrderingServiceTransportGrpc::OrderingServiceTransportGrpc(
+    std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+        transaction_batch_factory,
+    std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+        async_call)
+    : async_call_(std::move(async_call)),
+      batch_factory_(std::move(transaction_batch_factory)) {}

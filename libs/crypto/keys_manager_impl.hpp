@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_KEYS_MANAGER_IMPL_HPP
@@ -20,6 +8,7 @@
 
 #include "crypto/keys_manager.hpp"
 
+#include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include "cryptography/keypair.hpp"
 #include "logger/logger.hpp"
@@ -28,12 +17,27 @@ namespace iroha {
 
   class KeysManagerImpl : public KeysManager {
    public:
-    explicit KeysManagerImpl(const std::string &account_name);
+    /**
+     * Initialize key manager for a specific account
+     * @param account_id - fully qualified account id, e.g. admin@test
+     * @param path_to_keypair - path to directory that contains priv and pub key
+     * of an account
+     */
+    explicit KeysManagerImpl(const std::string &account_id,
+                             const boost::filesystem::path &path_to_keypair);
+
+    /**
+     * Initialize key manager for a specific account
+     * @param account_id - fully qualified account id, e.g. admin@test
+     */
+    explicit KeysManagerImpl(const std::string account_id);
 
     bool createKeys() override;
+
     bool createKeys(const std::string &pass_phrase) override;
 
     boost::optional<shared_model::crypto::Keypair> loadKeys() override;
+
     boost::optional<shared_model::crypto::Keypair> loadKeys(
         const std::string &pass_phrase) override;
 
@@ -49,12 +53,12 @@ namespace iroha {
     bool validate(const shared_model::crypto::Keypair &keypair) const;
 
     /**
-     * Tries to load file to the resulting string
-     * @param filename file to read from
-     * @param res is where result is stored
-     * @return true, if no problem with file reading
+     * Tries to read the file
+     * @param path - path to the target file
+     * @return file contents if reading was successful, otherwise - boost::none
      */
-    bool loadFile(const std::string &filename, std::string &res);
+    boost::optional<std::string> loadFile(
+        const boost::filesystem::path &path) const;
 
     /**
      * Stores strings, that represent public and private keys on disk
@@ -64,7 +68,8 @@ namespace iroha {
      */
     bool store(const std::string &pub, const std::string &priv);
 
-    std::string account_name_;
+    boost::filesystem::path path_to_keypair_;
+    std::string account_id_;
     logger::Logger log_;
   };
 }  // namespace iroha

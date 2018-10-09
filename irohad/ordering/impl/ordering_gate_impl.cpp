@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
+#include "ordering/impl/ordering_gate_impl.hpp"
+
 #include <tuple>
 #include <utility>
 
-#include "ordering/impl/ordering_gate_impl.hpp"
-
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
-#include "interfaces/transaction.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -42,23 +42,15 @@ namespace iroha {
           log_(logger::log("OrderingGate")),
           run_async_(run_async) {}
 
-    void OrderingGateImpl::propagateTransaction(
-        std::shared_ptr<const shared_model::interface::Transaction> transaction)
-        const {
-      log_->info("propagate tx, account_id: {}",
-                 " account_id: " + transaction->creatorAccountId());
-
-      transport_->propagateTransaction(transaction);
-    }
-
     void OrderingGateImpl::propagateBatch(
-        const shared_model::interface::TransactionBatch &batch) const {
-      if (batch.transactions().empty()) {
+        std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+        const {
+      if (batch->transactions().empty()) {
         log_->warn("trying to propagate empty batch");
         return;
       }
       log_->info("propagate batch, account_id: {}",
-                 batch.transactions().front()->creatorAccountId());
+                 batch->transactions().front()->creatorAccountId());
 
       transport_->propagateBatch(batch);
     }
@@ -72,17 +64,29 @@ namespace iroha {
         const iroha::network::PeerCommunicationService &pcs) {
       log_->info("setPcs");
 
+      /// observable which contains heights of the top committed blocks
       auto top_block_height =
           pcs.on_commit()
-              .transform([](const Commit &commit) {
-                // find height of last commited block
-                return commit.as_blocking().last()->height();
-              })
+              .transform(
+                  [this](const synchronizer::SynchronizationEvent &sync_event) {
+                    sync_event.synced_blocks.subscribe(
+                        // take height of next block
+                        [this](std::shared_ptr<shared_model::interface::Block>
+                                   block_ptr) {
+                          last_block_height_ = block_ptr->height();
+                        });
+                    return last_block_height_;
+                  })
               .start_with(last_block_height_);
 
+      /// merge_strategy - observable with another source of block heights
       auto subscribe = [&](auto merge_strategy) {
         pcs_subscriber_ = merge_strategy(net_proposals_.get_observable())
                               .subscribe([this](const auto &t) {
+                                // t is zip of two observables, there is
+                                // intentionally ignored first value (with stub
+                                // values) because it is required only for
+                                // synchronization
                                 this->tryNextRound(std::get<1>(t));
                               });
       };
@@ -104,6 +108,7 @@ namespace iroha {
       log_->info("Received new proposal, height: {}", proposal->height());
       proposal_queue_.push(std::move(proposal));
       std::lock_guard<std::mutex> lock(proposal_mutex_);
+      // intentionally pass stub value
       net_proposals_.get_subscriber().on_next(0);
     }
 

@@ -1,24 +1,12 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gtest/gtest.h>
-
-#include "consensus/yac/storage/yac_common.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+
+#include <gtest/gtest.h>
+#include "consensus/yac/storage/yac_common.hpp"
 #include "logger/logger.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 
@@ -29,14 +17,16 @@ static logger::Logger log_ = logger::testLog("YacProposalStorage");
 class YacProposalStorageTest : public ::testing::Test {
  public:
   YacHash hash;
-  uint64_t number_of_peers;
-  YacProposalStorage storage = YacProposalStorage("proposal", 4);
+  PeersNumberType number_of_peers;
+  YacProposalStorage storage =
+      YacProposalStorage(iroha::consensus::Round{1, 1}, 4);
   std::vector<VoteMessage> valid_votes;
 
   void SetUp() override {
-    hash = YacHash("proposal", "commit");
+    hash = YacHash(iroha::consensus::Round{1, 1}, "proposal", "commit");
     number_of_peers = 7;
-    storage = YacProposalStorage(hash.proposal_hash, number_of_peers);
+    storage =
+        YacProposalStorage(iroha::consensus::Round{1, 1}, number_of_peers);
     valid_votes = [this]() {
       std::vector<VoteMessage> votes;
       for (auto i = 0u; i < number_of_peers; ++i) {
@@ -88,7 +78,9 @@ TEST_F(YacProposalStorageTest, YacProposalStorageWhenRejectCase) {
   }
 
   // insert 2 for other hash
-  auto other_hash = YacHash(hash.proposal_hash, "other_commit");
+  auto other_hash = YacHash(iroha::consensus::Round{1, 1},
+                            hash.vote_hashes.proposal_hash,
+                            "other_commit");
   for (auto i = 0; i < 2; ++i) {
     auto answer = storage.insert(
         create_vote(other_hash, std::to_string(valid_votes.size() + 1 + i)));

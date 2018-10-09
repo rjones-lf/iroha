@@ -1,0 +1,14 @@
+---
+  # docker container postgres settings
+  pg_name: opt_postgres
+  pg_port: 5432
+  pg_user: psql
+  pg_pass: psql
+  iroha_net_name: iroha_network  # name of docker network
+  iroha_conf_docker: /opt/iroha_data  # path to folder with config files inside docker container
+  iroha_conf: /opt/docker/iroha/conf  # config files directory on target host
+  docker_dir: /opt
+  iroha_image_name: hyperledger/iroha # docker image name
+  iroha_image_tag: latest  # docker image tag
+  pg_image_name: postgres
+  pg_image_tag: 9.5

@@ -5,12 +5,14 @@
 
 #include "multi_sig_transactions/mst_processor_stub.hpp"
 
+#include "interfaces/iroha_internal/transaction_batch.hpp"
+
 using namespace iroha;
 
-auto MstProcessorStub::propagateTransactionImpl(const DataType transaction)
-    -> decltype(propagateTransaction(transaction)) {
-  log_->error("Multisig transactions are disabled. Skipping transaction: {}",
-              transaction->toString());
+auto MstProcessorStub::propagateBatchImpl(const DataType &batch)
+    -> decltype(propagateBatch(batch)) {
+  log_->error("Multisig transactions are disabled. Skipping batch: {}",
+              batch->reducedHash().toString());
 }
 
 auto MstProcessorStub::onStateUpdateImpl() const -> decltype(onStateUpdate()) {
@@ -20,16 +22,16 @@ auto MstProcessorStub::onStateUpdateImpl() const -> decltype(onStateUpdate()) {
   return rxcpp::observable<>::empty<std::shared_ptr<MstState>>();
 }
 
-auto MstProcessorStub::onPreparedTransactionsImpl() const
-    -> decltype(onPreparedTransactions()) {
+auto MstProcessorStub::onPreparedBatchesImpl() const
+    -> decltype(onPreparedBatches()) {
   log_->warn(
       "Multisig transactions are disabled, so MstProcessor observable won't "
       "emit any events");
   return rxcpp::observable<>::empty<DataType>();
 }
 
-auto MstProcessorStub::onExpiredTransactionsImpl() const
-    -> decltype(onExpiredTransactions()) {
+auto MstProcessorStub::onExpiredBatchesImpl() const
+    -> decltype(onExpiredBatches()) {
   log_->warn(
       "Multisig transactions are disabled, so MstProcessor observable won't "
       "emit any events");

@@ -40,7 +40,8 @@ namespace iroha {
             const std::vector<std::shared_ptr<shared_model::interface::Peer>>
                 &peers) const override;
 
-        virtual bool checkSize(uint64_t current, uint64_t all) const override;
+        virtual bool checkSize(PeersNumberType current,
+                               PeersNumberType all) const override;
 
         virtual bool peersSubset(
             const shared_model::interface::types::SignatureRangeType
@@ -48,9 +49,9 @@ namespace iroha {
             const std::vector<std::shared_ptr<shared_model::interface::Peer>>
                 &peers) const override;
 
-        virtual bool hasReject(uint64_t frequent,
-                               uint64_t voted,
-                               uint64_t all) const override;
+        virtual bool hasReject(PeersNumberType frequent,
+                               PeersNumberType voted,
+                               PeersNumberType all) const override;
       };
     }  // namespace yac
   }    // namespace consensus

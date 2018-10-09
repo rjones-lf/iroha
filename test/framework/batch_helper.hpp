@@ -9,9 +9,9 @@
 #include <boost/range/irange.hpp>
 
 #include "framework/result_fixture.hpp"
-#include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
-#include "validators/transactions_collection/batch_order_validator.hpp"
 
 namespace framework {
   namespace batch {
@@ -169,15 +169,15 @@ namespace framework {
       return createUnsignedBatchTransactions(batch_type, creators, now);
     }
 
-    auto createValidBatch(const size_t &size) {
+    /**
+     * Creates a batch of expected size
+     * @param size - number of transactions in the batch
+     * @param created_time - time of batch creation
+     * @return valid batch
+     */
+    auto createValidBatch(const size_t &size,
+                          const size_t &created_time = iroha::time::now()) {
       using namespace shared_model::validation;
-      using TxValidator =
-          TransactionValidator<FieldValidator,
-                               CommandValidatorVisitor<FieldValidator>>;
-
-      using TxsValidator =
-          UnsignedTransactionsCollectionValidator<TxValidator,
-                                                  BatchOrderValidator>;
 
       auto batch_type = shared_model::interface::types::BatchType::ATOMIC;
       std::vector<std::pair<decltype(batch_type), std::string>>
@@ -187,12 +187,40 @@ namespace framework {
             batch_type, "account" + std::to_string(i) + "@domain"));
       }
 
-      auto txs = createBatchOneSignTransactions(transaction_fields);
-      auto result_batch =
-          shared_model::interface::TransactionBatch::createTransactionBatch(
-              txs, TxsValidator());
+      std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+          batch_factory = std::make_shared<
+              shared_model::interface::TransactionBatchFactoryImpl>();
+      auto txs =
+          createBatchOneSignTransactions(transaction_fields, created_time);
+      auto result_batch = batch_factory->createTransactionBatch(txs);
 
       return framework::expected::val(result_batch).value().value;
+    }
+
+    /**
+     * Wrap a transaction with batch
+     * @param tx - interested transaction
+     * @return created batch or throw std::runtime_error
+     */
+    inline auto createBatchFromSingleTransaction(
+        std::shared_ptr<shared_model::interface::Transaction> tx) {
+      auto batch_factory = std::make_shared<
+          shared_model::interface::TransactionBatchFactoryImpl>();
+      return batch_factory->createTransactionBatch(std::move(tx))
+          .match(
+              [](iroha::expected::Value<std::unique_ptr<
+                     shared_model::interface::TransactionBatch>> &value)
+                  -> std::shared_ptr<
+                      shared_model::interface::TransactionBatch> {
+                return std::move(value.value);
+              },
+              [](const auto &err)
+                  -> std::shared_ptr<
+                      shared_model::interface::TransactionBatch> {
+                throw std::runtime_error(
+                    err.error
+                    + "Error transformation from transaction to batch");
+              });
     }
 
     /**
@@ -201,66 +229,135 @@ namespace framework {
      */
     namespace internal {
 
+      using HashesType = std::vector<shared_model::interface::types::HashType>;
+
       /**
-       * Create list of hashes
-       * @tparam TxBuilderCollection - type of builder
-       * @param builders - initializer list which contains all builders
-       * @return vector with transactions hashes
+       * Struct containing batch meta information: Type of the batch and reduced
+       * hash
+       */
+      struct BatchMeta {
+        HashesType reduced_hashes;
+        shared_model::interface::types::BatchType batch_type;
+      };
+
+      template <typename TxBuilder>
+      auto fetchReducedHashes(const TxBuilder &builder) {
+        return HashesType{builder.build().reducedHash()};
+      }
+
+      auto fetchReducedHashes() {
+        return HashesType{};
+      }
+
+      template <typename FirstTxBuilder, typename... RestTxBuilders>
+      auto fetchReducedHashes(const FirstTxBuilder &first,
+                              const RestTxBuilders &... rest) {
+        auto first_vector = fetchReducedHashes(first);
+        auto rest_vector = fetchReducedHashes(rest...);
+        std::copy(rest_vector.begin(),
+                  rest_vector.end(),
+                  boost::back_move_inserter(first_vector));
+        return first_vector;
+      }
+
+      auto makeTxBatchCollection(const BatchMeta &) {
+        return shared_model::interface::types::SharedTxsCollectionType();
+      }
+
+      /**
+       * Creates a vector containing single signed transaction
+       * @tparam TxBuilder is any builder which creates
+       * UnsignedWrapper<Transaction>
+       * @param reduced_hashes are the reduced hashes of the batch containing
+       * that transaction
+       * @param builder is builder with set information about the transaction
+       * @return vector containing single signed transaction
+       *
+       * NOTE: SFINAE was added to check that provided builder returns
+       * UnsignedWrapper<Transaction>
        */
       template <typename TxBuilder>
-      auto fetchReducedHashes(
-          const std::initializer_list<TxBuilder> &builders) {
-        std::vector<shared_model::interface::types::HashType> hashes;
-        std::transform(
-            builders.begin(),
-            builders.end(),
-            std::back_inserter(hashes),
-            [](const auto &builder) { return builder.build().reducedHash(); });
-        return hashes;
+      auto makeTxBatchCollection(const BatchMeta &batch_meta,
+                                 TxBuilder &&builder) ->
+          typename std::enable_if_t<
+              std::is_same<
+                  decltype(builder.build()),
+                  shared_model::proto::UnsignedWrapper<ProtoTxType>>::value,
+              shared_model::interface::types::SharedTxsCollectionType> {
+        return shared_model::interface::types::SharedTxsCollectionType{
+            completeUnsignedTxBuilder(builder.batchMeta(
+                batch_meta.batch_type, batch_meta.reduced_hashes))};
       }
 
       /**
-       * Variadic to initializer list adapter
-       */
-      template <typename... TxBuilders>
-      auto fetchReducedHashes(const TxBuilders &... builders) {
-        return fetchReducedHashes({builders...});
-      }
-
-      /**
-       * Function create transactions from builder and passed hashes
-       * @tparam TxBuilder - type of one builder
-       * @param hashes - vector of hashes of transactions
-       * @param builders - initializer list of tx builders
-       * @return transactions with correct batch meta
+       * Creates a vector containing single unsigned transaction
+       * @tparam TxBuilder is any builder which creates Transaction
+       * @param reduced_hashes are the reduced hashes of the batch containing
+       * that transaction
+       * @param builder is builder with set information about the transaction
+       * @return vector containing single unsigned transaction
+       *
+       * NOTE: SFINAE was added to check that builder returns Transaction object
        */
       template <typename TxBuilder>
-      auto makeTxBatchCollection(
-          const std::vector<shared_model::interface::types::HashType> &hashes,
-          std::initializer_list<TxBuilder> builders) {
-        shared_model::interface::types::SharedTxsCollectionType transactions;
-
-        std::transform(
-            builders.begin(),
-            builders.end(),
-            std::back_inserter(transactions),
-            [&hashes](const auto &builder) {
-              return makePolyTxFromBuilder(builder.batchMeta(
-                  shared_model::interface::types::BatchType::ATOMIC, hashes));
-            });
-        return transactions;
+      auto makeTxBatchCollection(const BatchMeta &batch_meta,
+                                 TxBuilder &&builder) ->
+          typename std::enable_if<
+              std::is_same<decltype(builder.build()), ProtoTxType>::value,
+              shared_model::interface::types::SharedTxsCollectionType>::type {
+        return shared_model::interface::types::SharedTxsCollectionType{
+            makePolyTxFromBuilder(builder.batchMeta(
+                batch_meta.batch_type, batch_meta.reduced_hashes))};
       }
 
-      /**
-       * Variadic to initializer list adapter
-       */
-      template <typename... TxBuilders>
-      auto makeTxBatchCollection(TxBuilders &&... builders) {
-        auto hashes = fetchReducedHashes(builders...);
-        return makeTxBatchCollection(std::move(hashes),
-                                     {std::forward<TxBuilders>(builders)...});
+      template <typename FirstTxBuilder, typename... RestTxBuilders>
+      auto makeTxBatchCollection(const BatchMeta &batch_meta,
+                                 FirstTxBuilder &&first,
+                                 RestTxBuilders &&... rest) {
+        auto first_vector = makeTxBatchCollection(batch_meta, first);
+        auto rest_vector = makeTxBatchCollection(batch_meta, rest...);
+        std::copy(rest_vector.begin(),
+                  rest_vector.end(),
+                  boost::back_move_inserter(first_vector));
+        return first_vector;
       }
     }  // namespace internal
+
+    /**
+     * Create test batch transactions from passed transaction builders with
+     * provided batch meta
+     * @tparam TxBuilders variadic types of tx builders
+     * @param batch_type type of the batch
+     * @param builders transaction builders
+     * @return vector of transactions
+     */
+    template <typename... TxBuilders>
+    auto makeTestBatchTransactions(
+        shared_model::interface::types::BatchType batch_type,
+        TxBuilders &&... builders) {
+      internal::BatchMeta batch_meta;
+      batch_meta.batch_type = batch_type;
+      batch_meta.reduced_hashes = internal::fetchReducedHashes(builders...);
+
+      // makes clang avoid sending warning with unused function
+      // (makeTxBatchCollection)
+      //      internal::makeTxBatchCollection(batch_meta);
+
+      return internal::makeTxBatchCollection(
+          batch_meta, std::forward<TxBuilders>(builders)...);
+    }
+
+    /**
+     * Create test batch transactions from passed transaction builders
+     * @tparam TxBuilders - variadic types of tx builders
+     * @return vector of transactions
+     */
+    template <typename... TxBuilders>
+    auto makeTestBatchTransactions(TxBuilders &&... builders) {
+      return makeTestBatchTransactions(
+          shared_model::interface::types::BatchType::ATOMIC,
+          std::forward<TxBuilders>(builders)...);
+    }
 
     /**
      * Create test batch from passed transaction builders
@@ -269,24 +366,11 @@ namespace framework {
      */
     template <typename... TxBuilders>
     auto makeTestBatch(TxBuilders &&... builders) {
-      auto transactions = internal::makeTxBatchCollection(
-          std::forward<TxBuilders>(builders)...);
+      auto transactions =
+          makeTestBatchTransactions(std::forward<TxBuilders>(builders)...);
 
-      using namespace shared_model::validation;
-      using TxValidator =
-          TransactionValidator<FieldValidator,
-                               CommandValidatorVisitor<FieldValidator>>;
-
-      using TxsValidator =
-          UnsignedTransactionsCollectionValidator<TxValidator,
-                                                  BatchOrderValidator>;
-
-      auto batch =
-          shared_model::interface::TransactionBatch::createTransactionBatch(
-              transactions, TxsValidator());
-
-      return std::make_shared<shared_model::interface::TransactionBatch>(
-          framework::expected::val(batch).value().value);
+      return std::make_shared<shared_model::interface::TransactionBatchImpl>(
+          transactions);
     }
 
   }  // namespace batch

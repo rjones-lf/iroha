@@ -18,8 +18,9 @@
 #ifndef IROHA_YAC_GATE_HPP
 #define IROHA_YAC_GATE_HPP
 
-#include "network/consensus_gate.hpp"
 #include <rxcpp/rx-observable.hpp>
+#include "consensus/yac/storage/storage_result.hpp"
+#include "network/consensus_gate.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -27,7 +28,6 @@ namespace iroha {
 
       class YacHash;
       class ClusterOrdering;
-      struct CommitMessage;
 
       class YacGate : public network::ConsensusGate {};
 
@@ -39,14 +39,15 @@ namespace iroha {
         /**
          * Proposal new hash in network
          * @param hash - hash for voting
+         * @param order - peer ordering
          */
         virtual void vote(YacHash hash, ClusterOrdering order) = 0;
 
         /**
-         * Observable with committed hashes in network
+         * Observable with consensus outcomes - commits and rejects - in network
          * @return observable for subscription
          */
-        virtual rxcpp::observable<CommitMessage> on_commit() = 0;
+        virtual rxcpp::observable<Answer> onOutcome() = 0;
 
         virtual ~HashGate() = default;
       };

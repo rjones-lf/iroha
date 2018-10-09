@@ -1,0 +1,33 @@
+---
+# tasks file for iroha-standalone-config-gen
+- name: create peers.csv file
+  template:
+    src: peers.csv.j2
+    dest: "{{ playbook_dir }}/scripts/peers.csv"
+
+- name: add temp files playbook_dir
+  file:
+    path: "{{ playbook_dir }}/files"
+    state: directory
+    mode: 0760
+
+- name: make ed25519-cli executable
+  file:
+    path: "{{ playbook_dir }}/scripts/ed25519-cli"
+    state: touch
+    mode: "a+x"
+
+- name: generate keys for peers
+  command: "python3 {{ playbook_dir }}/scripts/generate-peers-keys.py {{ playbook_dir }}/scripts/peers.csv"
+  args:
+    chdir: "{{ playbook_dir }}/scripts"
+
+- name: Generate node key files 
+  command: "python3 {{ playbook_dir }}/scripts/genesis-add-peers.py make_key_files {{ playbook_dir }}/scripts/peers.csv"
+  args:
+    chdir: "{{ playbook_dir }}/files"
+
+- name: Make genesis block file
+  command: "python3 {{ playbook_dir }}/scripts/genesis-add-peers.py add_iroha_peers {{ playbook_dir }}/scripts/peers.csv {{ role_path }}/files/genesis.block"
+  args:
+    chdir: "{{ playbook_dir }}/files"

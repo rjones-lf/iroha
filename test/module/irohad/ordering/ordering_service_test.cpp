@@ -7,16 +7,16 @@
 
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
-#include "builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "framework/batch_helper.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "logger/logger.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/ordering/mock_ordering_service_persistent_state.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
-#include "ordering/impl/ordering_service_impl.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
+#include "ordering/impl/single_peer_ordering_service.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -63,20 +63,30 @@ class OrderingServiceTest : public ::testing::Test {
 
   void SetUp() override {
     wsv = std::make_shared<MockPeerQuery>();
+    pqfactory = std::make_shared<MockPeerQueryFactory>();
     fake_transport = std::make_shared<MockOrderingServiceTransport>();
     fake_persistent_state =
         std::make_shared<MockOrderingServicePersistentState>();
+    persistent_state_factory = std::make_shared<MockOsPersistentStateFactory>();
     factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
         shared_model::validation::AlwaysValidValidator>>();
+
+    EXPECT_CALL(*pqfactory, createPeerQuery())
+        .WillRepeatedly(
+            Return(boost::make_optional(std::shared_ptr<PeerQuery>(wsv))));
+    EXPECT_CALL(*persistent_state_factory, createOsPersistentState())
+        .WillRepeatedly(Return(boost::make_optional(
+            std::shared_ptr<OrderingServicePersistentState>(
+                fake_persistent_state))));
   }
 
   auto initOs(size_t max_proposal) {
-    return std::make_shared<OrderingServiceImpl>(
-        wsv,
+    return std::make_shared<SinglePeerOrderingService>(
+        pqfactory,
         max_proposal,
         proposal_timeout.get_observable(),
         fake_transport,
-        fake_persistent_state,
+        persistent_state_factory,
         std::move(factory),
         false);
   }
@@ -87,13 +97,16 @@ class OrderingServiceTest : public ::testing::Test {
 
   std::shared_ptr<MockOrderingServiceTransport> fake_transport;
   std::shared_ptr<MockOrderingServicePersistentState> fake_persistent_state;
+  std::shared_ptr<MockOsPersistentStateFactory> persistent_state_factory;
   std::condition_variable cv;
   std::mutex m;
   std::string address{"0.0.0.0:50051"};
   std::shared_ptr<shared_model::interface::Peer> peer;
   std::shared_ptr<MockPeerQuery> wsv;
+  std::shared_ptr<MockPeerQueryFactory> pqfactory;
   std::unique_ptr<shared_model::interface::ProposalFactory> factory;
-  rxcpp::subjects::subject<OrderingServiceImpl::TimeoutType> proposal_timeout;
+  rxcpp::subjects::subject<SinglePeerOrderingService::TimeoutType>
+      proposal_timeout;
 };
 
 /**
@@ -243,54 +256,6 @@ TEST_F(OrderingServiceTest, ConcurrentGenerateProposal) {
     threads.at(i).join();
   }
   makeProposalTimeout();
-}
-
-/**
- * @given Ordering service up and running
- * @when Send 1000 transactions from a separate thread and perform 5 second
- * delay during generateProposal() so destructor of OrderingServiceImpl is
- * called before generateProposal() finished
- * @then Ordering service should not crash and publishProposal() should not be
- * called after destructor call
- */
-TEST_F(OrderingServiceTest, GenerateProposalDestructor) {
-  const auto max_proposal = 600;
-  const auto commit_delay = 5s;
-  EXPECT_CALL(*fake_persistent_state, loadProposalHeight())
-      .Times(1)
-      .WillOnce(Return(boost::optional<size_t>(1)));
-  EXPECT_CALL(*fake_persistent_state, saveProposalHeight(_))
-      .WillRepeatedly(InvokeWithoutArgs([] {
-        std::this_thread::sleep_for(5s);
-        return true;
-      }));
-  EXPECT_CALL(*wsv, getLedgerPeers())
-      .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));
-
-  {
-    EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(AtLeast(1));
-    OrderingServiceImpl ordering_service(
-        wsv,
-        max_proposal,
-        rxcpp::observable<>::interval(commit_delay,
-                                      rxcpp::observe_on_new_thread()),
-        fake_transport,
-        fake_persistent_state,
-        std::move(factory),
-        true);
-
-    auto on_tx = [&]() {
-      // create max_proposal+1 txs, so that publish proposal is invoked at least
-      // once (concurrency!)
-      for (int i = 0; i < max_proposal + 1; ++i) {
-        ordering_service.onBatch(framework::batch::createValidBatch(1));
-      }
-    };
-
-    std::thread thread(on_tx);
-    thread.join();
-  }
-  EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(0);
 }
 
 /**

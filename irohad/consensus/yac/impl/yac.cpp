@@ -25,6 +25,8 @@
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/timer.hpp"
 #include "consensus/yac/yac_crypto_provider.hpp"
+#include "cryptography/public_key.hpp"
+#include "cryptography/signed.hpp"
 #include "interfaces/common_objects/peer.hpp"
 
 namespace iroha {
@@ -44,11 +46,6 @@ namespace iroha {
           return result;
         });
         return result;
-      }
-
-      template <typename T>
-      static std::string cryptoError(const std::initializer_list<T> &votes) {
-        return cryptoError<std::initializer_list<T>>(votes);
       }
 
       std::shared_ptr<Yac> Yac::create(
@@ -83,57 +80,41 @@ namespace iroha {
 
         cluster_order_ = order;
         auto vote = crypto_->getVote(hash);
+        // TODO 10.06.2018 andrei: IR-1407 move YAC propagation strategy to a
+        // separate entity
         votingStep(vote);
       }
 
-      rxcpp::observable<CommitMessage> Yac::on_commit() {
+      rxcpp::observable<Answer> Yac::onOutcome() {
         return notifier_.get_observable();
       }
 
       // ------|Network notifications|------
 
-      void Yac::on_vote(VoteMessage vote) {
+      void Yac::onState(std::vector<VoteMessage> state) {
         std::lock_guard<std::mutex> guard(mutex_);
-        if (crypto_->verify(vote)) {
-          applyVote(findPeer(vote), vote);
+        if (crypto_->verify(state)) {
+          applyState(state);
         } else {
-          log_->warn(cryptoError({vote}));
-        }
-      }
-
-      void Yac::on_commit(CommitMessage commit) {
-        std::lock_guard<std::mutex> guard(mutex_);
-        if (crypto_->verify(commit)) {
-          // Commit does not contain data about peer which sent the message
-          applyCommit(boost::none, commit);
-        } else {
-          log_->warn(cryptoError(commit.votes));
-        }
-      }
-
-      void Yac::on_reject(RejectMessage reject) {
-        std::lock_guard<std::mutex> guard(mutex_);
-        if (crypto_->verify(reject)) {
-          // Reject does not contain data about peer which sent the message
-          applyReject(boost::none, reject);
-        } else {
-          log_->warn(cryptoError(reject.votes));
+          log_->warn(cryptoError(state));
         }
       }
 
       // ------|Private interface|------
 
       void Yac::votingStep(VoteMessage vote) {
-        auto committed = vote_storage_.isHashCommitted(vote.hash.proposal_hash);
+        auto committed = vote_storage_.isCommitted(vote.hash.vote_round);
         if (committed) {
           return;
         }
 
-        log_->info("Vote for hash ({}, {})",
-                   vote.hash.proposal_hash,
-                   vote.hash.block_hash);
+        log_->info("Vote for round ({}, {}), hash ({}, {})",
+                   vote.hash.vote_round.block_round,
+                   vote.hash.vote_round.reject_round,
+                   vote.hash.vote_hashes.proposal_hash,
+                   vote.hash.vote_hashes.block_hash);
 
-        network_->send_vote(cluster_order_.currentLeader(), vote);
+        network_->sendState(cluster_order_.currentLeader(), {vote});
         cluster_order_.switchToNext();
         if (cluster_order_.hasNext()) {
           timer_->invokeAfterDelay([this, vote] { this->votingStep(vote); });
@@ -157,137 +138,84 @@ namespace iroha {
 
       // ------|Apply data|------
 
-      const char *kRejectMsg = "reject case";
-      const char *kRejectOnHashMsg = "Reject case on hash {} achieved";
-
-      void Yac::applyCommit(
-          boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
-          const CommitMessage &commit) {
+      void Yac::applyState(const std::vector<VoteMessage> &state) {
         auto answer =
-            vote_storage_.store(commit, cluster_order_.getNumberOfPeers());
+            vote_storage_.store(state, cluster_order_.getNumberOfPeers());
+
+        // TODO 10.06.2018 andrei: IR-1407 move YAC propagation strategy to a
+        // separate entity
+
         answer | [&](const auto &answer) {
-          auto proposal_hash = getProposalHash(commit.votes).value();
-          auto already_processed =
-              vote_storage_.getProcessingState(proposal_hash);
-          if (not already_processed) {
-            vote_storage_.markAsProcessedState(proposal_hash);
-            visit_in_place(answer,
-                           [&](const CommitMessage &commit) {
-                             notifier_.get_subscriber().on_next(commit);
-                           },
-                           [&](const RejectMessage &reject) {
-                             log_->warn(kRejectMsg);
-                             // TODO 14/08/17 Muratov: work on reject case
-                             // IR-497
-                           });
+          auto &proposal_round = state.at(0).hash.vote_round;
+
+          /*
+           * It is possible that a new peer with an outdated peers list may
+           * collect an outcome from a smaller number of peers which are
+           * included in set of `f` peers in the system. The new peer will not
+           * accept our message with valid supermajority because he cannot apply
+           * votes from unknown peers.
+           */
+          if (state.size() > 1) {
+            // some peer has already collected commit/reject, so it is sent
+            if (vote_storage_.getProcessingState(proposal_round)
+                == ProposalState::kNotSentNotProcessed) {
+              vote_storage_.nextProcessingState(proposal_round);
+              log_->info(
+                  "Received supermajority of votes for ({}, {}), skip "
+                  "propagation",
+                  proposal_round.block_round,
+                  proposal_round.reject_round);
+            }
           }
-          this->closeRound();
-        };
-      }
 
-      void Yac::applyReject(
-          boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
-          const RejectMessage &reject) {
-        auto answer =
-            vote_storage_.store(reject, cluster_order_.getNumberOfPeers());
-        answer | [&](const auto &answer) {
-          auto proposal_hash = getProposalHash(reject.votes).value();
-          auto already_processed =
-              vote_storage_.getProcessingState(proposal_hash);
+          auto processing_state =
+              vote_storage_.getProcessingState(proposal_round);
 
-          if (not already_processed) {
-            vote_storage_.markAsProcessedState(proposal_hash);
-            visit_in_place(answer,
-                           [&](const RejectMessage &reject) {
-                             log_->warn(kRejectMsg);
-                             // TODO 14/08/17 Muratov: work on reject case
-                             // IR-497
-                           },
-                           [&](const CommitMessage &commit) {
-                             this->propagateCommit(commit);
-                             notifier_.get_subscriber().on_next(commit);
-                           });
-          }
-          this->closeRound();
-        };
-      }
+          auto votes = [](const auto &state) { return state.votes; };
 
-      void Yac::applyVote(
-          boost::optional<std::shared_ptr<shared_model::interface::Peer>> from,
-          const VoteMessage &vote) {
-        if (from) {
-          log_->info("Apply vote: {} from ledger peer {}",
-                     vote.hash.block_hash,
-                     (*from)->address());
-        } else {
-          log_->info("Apply vote: {} from unknown peer {}",
-                     vote.hash.block_hash,
-                     vote.signature->publicKey().hex());
-        }
-
-        auto answer =
-            vote_storage_.store(vote, cluster_order_.getNumberOfPeers());
-
-        answer | [&](const auto &answer) {
-          auto &proposal_hash = vote.hash.proposal_hash;
-          auto already_processed =
-              vote_storage_.getProcessingState(proposal_hash);
-
-          if (not already_processed) {
-            vote_storage_.markAsProcessedState(proposal_hash);
-            visit_in_place(answer,
-                           [&](const CommitMessage &commit) {
-                             // propagate for all
-                             log_->info("Propagate commit {} to whole network",
-                                        vote.hash.block_hash);
-                             this->propagateCommit(commit);
-                             notifier_.get_subscriber().on_next(commit);
-                           },
-                           [&](const RejectMessage &reject) {
-                             // propagate reject for all
-                             log_->info(kRejectOnHashMsg, proposal_hash);
-                             this->propagateReject(reject);
-                           });
-          } else {
-            from | [&](const auto &from) {
-              visit_in_place(answer,
-                             [&](const CommitMessage &commit) {
-                               log_->info("Propagate commit {} directly to {}",
-                                          vote.hash.block_hash,
-                                          from->address());
-                               this->propagateCommitDirectly(*from, commit);
-                             },
-                             [&](const RejectMessage &reject) {
-                               log_->info(kRejectOnHashMsg, proposal_hash);
-                               this->propagateRejectDirectly(*from, reject);
-                             });
-            };
+          switch (processing_state) {
+            case ProposalState::kNotSentNotProcessed:
+              vote_storage_.nextProcessingState(proposal_round);
+              log_->info("Propagate state ({}, {}) to whole network",
+                         proposal_round.block_round,
+                         proposal_round.reject_round);
+              this->propagateState(visit_in_place(answer, votes));
+              break;
+            case ProposalState::kSentNotProcessed:
+              vote_storage_.nextProcessingState(proposal_round);
+              log_->info("Pass outcome for ({}, {}) to pipeline",
+                         proposal_round.block_round,
+                         proposal_round.reject_round);
+              this->closeRound();
+              notifier_.get_subscriber().on_next(answer);
+              break;
+            case ProposalState::kSentProcessed:
+              if (state.size() == 1) {
+                this->findPeer(state.at(0)) | [&](const auto &from) {
+                  log_->info("Propagate state ({}, {}) directly to {}",
+                             proposal_round.block_round,
+                             proposal_round.reject_round,
+                             from->address());
+                  this->propagateStateDirectly(*from,
+                                               visit_in_place(answer, votes));
+                };
+              }
+              break;
           }
         };
       }
 
       // ------|Propagation|------
 
-      void Yac::propagateCommit(const CommitMessage &msg) {
+      void Yac::propagateState(const std::vector<VoteMessage> &msg) {
         for (const auto &peer : cluster_order_.getPeers()) {
-          propagateCommitDirectly(*peer, msg);
+          propagateStateDirectly(*peer, msg);
         }
       }
 
-      void Yac::propagateCommitDirectly(const shared_model::interface::Peer &to,
-                                        const CommitMessage &msg) {
-        network_->send_commit(to, msg);
-      }
-
-      void Yac::propagateReject(const RejectMessage &msg) {
-        for (const auto &peer : cluster_order_.getPeers()) {
-          propagateRejectDirectly(*peer, msg);
-        }
-      }
-
-      void Yac::propagateRejectDirectly(const shared_model::interface::Peer &to,
-                                        const RejectMessage &msg) {
-        network_->send_reject(std::move(to), std::move(msg));
+      void Yac::propagateStateDirectly(const shared_model::interface::Peer &to,
+                                       const std::vector<VoteMessage> &msg) {
+        network_->sendState(to, msg);
       }
 
     }  // namespace yac

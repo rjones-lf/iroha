@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "torii/query_service.hpp"
@@ -42,7 +30,7 @@ namespace torii {
 
     shared_model::proto::TransportBuilder<
         shared_model::proto::Query,
-        shared_model::validation::DefaultSignableQueryValidator>()
+        shared_model::validation::DefaultSignedQueryValidator>()
         .build(request)
         .match(
             [this, &hash, &response](
@@ -80,7 +68,7 @@ namespace torii {
     log_->debug("Fetching commits");
     shared_model::proto::TransportBuilder<
         shared_model::proto::BlocksQuery,
-        shared_model::validation::DefaultSignableBlocksQueryValidator>()
+        shared_model::validation::DefaultSignedBlocksQueryValidator>()
         .build(*request)
         .match(
             [this, context, request, writer](
@@ -135,7 +123,7 @@ namespace torii {
             [this, writer](const auto &error) {
               log_->debug("Stateless invalid: {}", error.error);
               iroha::protocol::BlockQueryResponse response;
-              response.mutable_error_response()->set_message(
+              response.mutable_block_error_response()->set_message(
                   std::move(error.error));
               writer->WriteLast(response, grpc::WriteOptions());
             });

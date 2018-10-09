@@ -82,10 +82,16 @@ endfunction()
 function(compile_proto_only_grpc_to_cpp PROTO)
   string(REGEX REPLACE "\\.proto$" ".grpc.pb.h" GEN_GRPC_PB_HEADER ${PROTO})
   string(REGEX REPLACE "\\.proto$" ".grpc.pb.cc" GEN_GRPC_PB ${PROTO})
+  if(TESTING)
+    # Generate gRPC mock classes for services
+    set(GENERATE_MOCKS "generate_mock_code=true:")
+    string(REGEX REPLACE "\\.proto$" "_mock.grpc.pb.h" GEN_GRPC_PB_MOCK_HEADER ${PROTO})
+    set(TEST_OUTPUT ${SCHEMA_OUT_DIR}/${GEN_GRPC_PB_MOCK_HEADER})
+  endif(TESTING)
   add_custom_command(
-      OUTPUT ${SCHEMA_OUT_DIR}/${GEN_GRPC_PB_HEADER} ${SCHEMA_OUT_DIR}/${GEN_GRPC_PB}
+      OUTPUT ${SCHEMA_OUT_DIR}/${GEN_GRPC_PB_HEADER} ${SCHEMA_OUT_DIR}/${GEN_GRPC_PB} ${TEST_OUTPUT}
       COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}"
-      ARGS -I${protobuf_INCLUDE_DIR} -I${CMAKE_CURRENT_SOURCE_DIR} ${ARGN} --grpc_out=${SCHEMA_OUT_DIR} --plugin=protoc-gen-grpc="${grpc_CPP_PLUGIN}" ${PROTO}
+      ARGS -I${protobuf_INCLUDE_DIR} -I${CMAKE_CURRENT_SOURCE_DIR} ${ARGN} --grpc_out=${GENERATE_MOCKS}${SCHEMA_OUT_DIR} --plugin=protoc-gen-grpc="${grpc_CPP_PLUGIN}" ${PROTO}
       DEPENDS grpc_cpp_plugin ${SCHEMA_PATH}/${PROTO}
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
       )

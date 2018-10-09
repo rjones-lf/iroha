@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_CONTAINER_VALIDATOR_HPP
@@ -24,8 +12,6 @@
 #include "interfaces/iroha_internal/block.hpp"
 #include "validators/answer.hpp"
 
-// TODO 22/01/2018 x3medima17: write stateless validator IR-837
-
 namespace shared_model {
   namespace validation {
 
@@ -34,24 +20,15 @@ namespace shared_model {
      */
     template <typename Iface,
               typename FieldValidator,
-              typename TransactionValidator,
               typename TransactionsCollectionValidator>
     class ContainerValidator {
      protected:
-      void validateTransaction(
-          ReasonsGroupType &reason,
-          const interface::Transaction &transaction) const {
-        auto answer = transaction_validator_.validate(transaction);
-        if (answer.hasErrors()) {
-          auto message = (boost::format("Tx: %s") % answer.reason()).str();
-          reason.second.push_back(message);
-        }
-      }
       void validateTransactions(
           ReasonsGroupType &reason,
-          const interface::types::TransactionsCollectionType &transactions)
-          const {
-        auto answer = transactions_collection_validator_.validate(transactions);
+          const interface::types::TransactionsCollectionType &transactions,
+          interface::types::TimestampType current_timestamp) const {
+        auto answer = transactions_collection_validator_.validate(
+            transactions, current_timestamp);
         if (answer.hasErrors()) {
           reason.second.push_back(answer.reason());
         }
@@ -62,30 +39,34 @@ namespace shared_model {
           const FieldValidator &field_validator = FieldValidator(),
           const TransactionsCollectionValidator
               &transactions_collection_validator =
-                  TransactionsCollectionValidator(),
-          const TransactionValidator &transaction_validator =
-              TransactionValidator())
+                  TransactionsCollectionValidator())
           : transactions_collection_validator_(
                 transactions_collection_validator),
-            transaction_validator_(transaction_validator),
             field_validator_(field_validator) {}
 
-      Answer validate(const Iface &cont, std::string reason_name) const {
+      template <typename Validator>
+      Answer validate(const Iface &cont,
+                      const std::string &reason_name,
+                      Validator &&validator) const {
         Answer answer;
         ReasonsGroupType reason;
         reason.first = reason_name;
-        field_validator_.validateCreatedTime(reason, cont.createdTime());
         field_validator_.validateHeight(reason, cont.height());
-        validateTransactions(reason, cont.transactions());
+        std::forward<Validator>(validator)(reason, cont);
+
+        validateTransactions(reason, cont.transactions(), cont.createdTime());
         if (not reason.second.empty()) {
           answer.addReason(std::move(reason));
         }
         return answer;
       }
 
+      Answer validate(const Iface &cont, const std::string &reason_name) const {
+        return validate(cont, reason_name, [](auto &, const auto &) {});
+      }
+
      private:
       TransactionsCollectionValidator transactions_collection_validator_;
-      TransactionValidator transaction_validator_;
 
      protected:
       FieldValidator field_validator_;

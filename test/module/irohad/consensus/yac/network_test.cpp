@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
@@ -22,7 +10,9 @@
 #include "consensus/yac/transport/impl/network_impl.hpp"
 
 using ::testing::_;
+using ::testing::DoAll;
 using ::testing::InvokeWithoutArgs;
+using ::testing::SaveArg;
 
 namespace iroha {
   namespace consensus {
@@ -33,18 +23,16 @@ namespace iroha {
         static constexpr auto default_address = "0.0.0.0:0";
         void SetUp() override {
           notifications = std::make_shared<MockYacNetworkNotifications>();
+          async_call = std::make_shared<
+              network::AsyncGrpcClient<google::protobuf::Empty>>();
+          network = std::make_shared<NetworkImpl>(async_call);
 
-          network = std::make_shared<NetworkImpl>();
+          message.hash.vote_hashes.proposal_hash = "proposal";
+          message.hash.vote_hashes.block_hash = "block";
 
-          message.hash.proposal_hash = "proposal";
-          message.hash.block_hash = "block";
-
-          auto sig = shared_model::proto::SignatureBuilder()
-                         .publicKey(shared_model::crypto::PublicKey("key"))
-                         .signedData(shared_model::crypto::Signed("data"))
-                         .build();
-
-          message.hash.block_signature = clone(sig);
+          // getTransport is not used in network at the moment, please check if
+          // test fails
+          message.hash.block_signature = createSig("");
           message.signature = createSig("");
           network->subscribe(notifications);
 
@@ -65,6 +53,8 @@ namespace iroha {
         }
 
         std::shared_ptr<MockYacNetworkNotifications> notifications;
+        std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+            async_call;
         std::shared_ptr<NetworkImpl> network;
         std::shared_ptr<shared_model::interface::Peer> peer;
         VoteMessage message;
@@ -79,16 +69,25 @@ namespace iroha {
        * @then vote handled
        */
       TEST_F(YacNetworkTest, MessageHandledWhenMessageSent) {
-        EXPECT_CALL(*notifications, on_vote(message))
-            .Times(1)
-            .WillRepeatedly(
-                InvokeWithoutArgs(&cv, &std::condition_variable::notify_one));
+        bool processed = false;
 
-        network->send_vote(*peer, message);
+        std::vector<VoteMessage> state;
+        EXPECT_CALL(*notifications, onState(_))
+            .Times(1)
+            .WillRepeatedly(DoAll(SaveArg<0>(&state), InvokeWithoutArgs([&] {
+                                    std::lock_guard<std::mutex> lock(mtx);
+                                    processed = true;
+                                    cv.notify_all();
+                                  })));
+
+        network->sendState(*peer, {message});
 
         // wait for response reader thread
-        std::unique_lock<std::mutex> lock(mtx);
-        cv.wait_for(lock, std::chrono::milliseconds(100));
+        std::unique_lock<std::mutex> lk(mtx);
+        cv.wait(lk, [&] { return processed; });
+
+        ASSERT_EQ(1, state.size());
+        ASSERT_EQ(message, state.front());
       }
     }  // namespace yac
   }    // namespace consensus

@@ -19,6 +19,7 @@ if (IROHA_ROOT_PROJECT)
   target_link_libraries(transport_builder_test
       shared_model_proto_builders
       shared_model_stateless_validation
+      shared_model_interfaces_factories
       )
 endif ()
 
@@ -68,6 +69,14 @@ addtest(proto_transaction_responses_builder_test
 
 target_link_libraries(proto_transaction_responses_builder_test
     shared_model_proto_builders
+    )
+
+addtest(proto_transaction_responses_factory_test
+    transaction_responses/proto_transaction_response_factory_test.cpp
+    )
+
+target_link_libraries(proto_transaction_responses_factory_test
+    shared_model_proto_backend
     )
 
 addtest(block_builder_test

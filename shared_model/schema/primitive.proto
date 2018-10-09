@@ -86,8 +86,8 @@ enum GrantablePermission {
 }
 
 message Signature {
-  bytes pubkey    = 1;
-  bytes signature = 2;
+  bytes public_key = 1;
+  bytes signature  = 2;
 }
 
 message Peer {

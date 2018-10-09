@@ -1,37 +1,42 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_MST_TRANSPORT_GRPC_HPP
 #define IROHA_MST_TRANSPORT_GRPC_HPP
 
-#include <google/protobuf/empty.pb.h>
-#include "logger/logger.hpp"
-#include "model/converters/pb_transaction_factory.hpp"
 #include "mst.grpc.pb.h"
-#include "network/impl/async_grpc_client.hpp"
 #include "network/mst_transport.hpp"
+
+#include <google/protobuf/empty.pb.h>
+#include "interfaces/common_objects/common_objects_factory.hpp"
+#include "interfaces/iroha_internal/abstract_transport_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser.hpp"
+#include "logger/logger.hpp"
+#include "network/impl/async_grpc_client.hpp"
 
 namespace iroha {
   namespace network {
     class MstTransportGrpc : public MstTransport,
-                             public transport::MstTransportGrpc::Service,
-                             private AsyncGrpcClient<google::protobuf::Empty> {
+                             public transport::MstTransportGrpc::Service {
      public:
-      MstTransportGrpc();
+      using TransportFactoryType =
+          shared_model::interface::AbstractTransportFactory<
+              shared_model::interface::Transaction,
+              iroha::protocol::Transaction>;
+
+      MstTransportGrpc(
+          std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+              async_call,
+          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+              factory,
+          std::shared_ptr<TransportFactoryType> transaction_factory,
+          std::shared_ptr<shared_model::interface::TransactionBatchParser>
+              batch_parser,
+          std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+              transaction_batch_factory);
 
       /**
        * Server part of grpc SendState method call
@@ -52,8 +57,21 @@ namespace iroha {
                      ConstRefState providing_state) override;
 
      private:
+      /**
+       * Flat map transport transactions to shared model
+       */
+      shared_model::interface::types::SharedTxsCollectionType
+      deserializeTransactions(const transport::MstState *request);
+
       std::weak_ptr<MstTransportNotification> subscriber_;
-      model::converters::PbTransactionFactory factory_;
+      std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
+          async_call_;
+      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
+      std::shared_ptr<TransportFactoryType> transaction_factory_;
+      std::shared_ptr<shared_model::interface::TransactionBatchParser>
+          batch_parser_;
+      std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+          batch_factory_;
     };
   }  // namespace network
 }  // namespace iroha

@@ -18,7 +18,9 @@
 #ifndef IROHA_VALIDATOR_MOCKS_HPP
 #define IROHA_VALIDATOR_MOCKS_HPP
 
-#include "validators/answer.hpp"
+#include "validators/abstract_validator.hpp"
+
+#include <gmock/gmock.h>
 
 namespace shared_model {
   namespace validation {
@@ -31,6 +33,12 @@ namespace shared_model {
       Answer validate(const T &) const {
         return {};
       }
+    };
+
+    template <typename T>
+    class MockValidator : public AbstractValidator<T> {
+     public:
+      MOCK_CONST_METHOD1_T(validate, Answer(const T &));
     };
 
   }  // namespace validation

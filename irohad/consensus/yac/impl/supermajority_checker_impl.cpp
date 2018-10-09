@@ -33,8 +33,8 @@ namespace iroha {
             and peersSubset(signatures, peers);
       }
 
-      bool SupermajorityCheckerImpl::checkSize(uint64_t current,
-                                               uint64_t all) const {
+      bool SupermajorityCheckerImpl::checkSize(PeersNumberType current,
+                                               PeersNumberType all) const {
         if (current > all) {
           return false;
         }
@@ -55,9 +55,9 @@ namespace iroha {
                       }));
       }
 
-      bool SupermajorityCheckerImpl::hasReject(uint64_t frequent,
-                                               uint64_t voted,
-                                               uint64_t all) const {
+      bool SupermajorityCheckerImpl::hasReject(PeersNumberType frequent,
+                                               PeersNumberType voted,
+                                               PeersNumberType all) const {
         auto not_voted = all - voted;
         return not checkSize(frequent + not_voted, all);
       }

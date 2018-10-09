@@ -18,11 +18,11 @@
 #ifndef IROHA_TEST_SIGNATURE_BUILDER_HPP
 #define IROHA_TEST_SIGNATURE_BUILDER_HPP
 
-#include "builders/protobuf/common_objects/proto_signature_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_signature_builder.hpp"
 
 /**
- * Builder alias, for building shared model proto block object avoiding validation
- * and "required fields" check
+ * Builder alias, for building shared model proto block object avoiding
+ * validation and "required fields" check
  */
 using TestSignatureBuilder = shared_model::proto::SignatureBuilder;
 

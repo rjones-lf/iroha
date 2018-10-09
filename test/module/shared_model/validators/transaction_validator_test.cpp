@@ -39,7 +39,7 @@ class TransactionValidatorTest : public ValidatorsTest {
         .getTransport();
     return tx;
   }
-  shared_model::validation::DefaultTransactionValidator transaction_validator;
+  shared_model::validation::DefaultUnsignedTransactionValidator transaction_validator;
 };
 
 /**
@@ -71,7 +71,7 @@ TEST_F(TransactionValidatorTest, InvalidCreateRolePermission) {
       static_cast<iroha::protocol::RolePermission>(-1));
   *tx.mutable_payload()->mutable_reduced_payload()->add_commands() =
       std::move(cmd);
-  shared_model::validation::DefaultTransactionValidator transaction_validator;
+  shared_model::validation::DefaultUnsignedTransactionValidator transaction_validator;
   auto result = proto::Transaction(iroha::protocol::Transaction(tx));
   auto answer = transaction_validator.validate(result);
   ASSERT_EQ(answer.getReasonsMap().size(), 1);
@@ -181,7 +181,7 @@ TEST_F(TransactionValidatorTest, BatchValidTest) {
       .createDomain("test", "test")
       .build()
       .getTransport();
-  shared_model::validation::DefaultTransactionValidator transaction_validator;
+  shared_model::validation::DefaultUnsignedTransactionValidator transaction_validator;
   auto result = proto::Transaction(iroha::protocol::Transaction(tx));
   auto answer = transaction_validator.validate(result);
 

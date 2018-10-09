@@ -185,7 +185,7 @@ Schema
     message CreateAccount {
         string account_name = 1;
         string domain_id = 2;
-        bytes main_pubkey = 3;
+        bytes public_key = 3;
     }
 
 Structure
@@ -197,7 +197,7 @@ Structure
 
     "Account name", "domain-unique name for account", "`[a-z_0-9]{1,32}`", "morgan_stanley"
     "Domain ID", "target domain to make relation with", "should be created before the account", "america"
-    "Main pubkey", "first public key to add to the account", "ed25519 public key", "407e57f50ca48969b08ba948171bb2435e035d82cec417e18e4a38f5fb113f83"
+    "Public key", "first public key to add to the account", "ed25519 public key", "407e57f50ca48969b08ba948171bb2435e035d82cec417e18e4a38f5fb113f83"
 
 Validation
 ^^^^^^^^^^

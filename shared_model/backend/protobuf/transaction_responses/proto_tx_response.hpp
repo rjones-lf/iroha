@@ -1,24 +1,15 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_PROTO_TX_RESPONSE_HPP
 #define IROHA_PROTO_TX_RESPONSE_HPP
 
+#include <limits>
+
 #include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
+#include "common/visitor.hpp"
 #include "utils/lazy_initializer.hpp"
 #include "utils/variant_deserializer.hpp"
 
@@ -31,16 +22,19 @@ namespace shared_model {
         : public CopyableProto<interface::TransactionResponse,
                                iroha::protocol::ToriiResponse,
                                TransactionResponse> {
-     private:
      public:
       /// Type of variant, that handle all concrete tx responses in the system
-      using ProtoResponseVariantType = boost::variant<StatelessFailedTxResponse,
-                                                      StatelessValidTxResponse,
-                                                      StatefulFailedTxResponse,
-                                                      StatefulValidTxResponse,
-                                                      CommittedTxResponse,
-                                                      MstExpiredResponse,
-                                                      NotReceivedTxResponse>;
+      using ProtoResponseVariantType =
+          boost::variant<StatelessFailedTxResponse,
+                         StatelessValidTxResponse,
+                         StatefulFailedTxResponse,
+                         StatefulValidTxResponse,
+                         RejectedTxResponse,
+                         CommittedTxResponse,
+                         MstExpiredResponse,
+                         NotReceivedTxResponse,
+                         MstPendingResponse,
+                         EnoughSignaturesCollectedResponse>;
 
       /// Type with list of types in ResponseVariantType
       using ProtoResponseListType = ProtoResponseVariantType::types;
@@ -55,18 +49,19 @@ namespace shared_model {
       TransactionResponse(TransactionResponse &&r) noexcept
           : TransactionResponse(std::move(r.proto_)) {}
 
-      /**
-       * @return hash of corresponding transaction
-       */
       const interface::types::HashType &transactionHash() const override {
         return *hash_;
       }
 
       /**
-       * @return attached concrete tx response
+       * @return attached interface tx response
        */
       const ResponseVariantType &get() const override {
         return *ivariant_;
+      }
+
+      const ErrorMessageType &errorMessage() const override {
+        return proto_->error_message();
       }
 
      private:
@@ -100,6 +95,27 @@ namespace shared_model {
       // stub hash
       const Lazy<crypto::Hash> hash_{
           [this] { return crypto::Hash(this->proto_->tx_hash()); }};
+
+      static constexpr int max_priority = std::numeric_limits<int>::max();
+      int priority() const noexcept override {
+        return iroha::visit_in_place(
+            *variant_,
+            // not received can be changed to any response
+            [](const NotReceivedTxResponse &) { return 0; },
+            // following types are sequential in pipeline
+            [](const StatelessValidTxResponse &) { return 1; },
+            [](const MstPendingResponse &) { return 2; },
+            [](const EnoughSignaturesCollectedResponse &) { return 3; },
+            [](const StatefulValidTxResponse &) { return 4; },
+            // following types are local on this peer and can be substituted by
+            // final ones, if consensus decides so
+            [](const StatelessFailedTxResponse &) { return 5; },
+            [](const StatefulFailedTxResponse &) { return 5; },
+            [](const MstExpiredResponse &) { return 5; },
+            // following types are the final ones
+            [](const CommittedTxResponse &) { return max_priority; },
+            [](const RejectedTxResponse &) { return max_priority; });
+      }
     };
   }  // namespace  proto
 }  // namespace shared_model

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "builders/protobuf/common_objects/proto_account_builder.hpp"
+#include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
 
 #ifndef IROHA_TEST_ACCOUNT_BUILDER_HPP
 #define IROHA_TEST_ACCOUNT_BUILDER_HPP
@@ -26,4 +26,4 @@
  */
 using TestAccountBuilder = shared_model::proto::AccountBuilder;
 
-#endif //IROHA_TEST_ACCOUNT_BUILDER_HPP
+#endif  // IROHA_TEST_ACCOUNT_BUILDER_HPP

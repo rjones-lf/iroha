@@ -18,8 +18,10 @@
 #ifndef IROHA_PROTO_GET_TRANSACTIONS_HPP
 #define IROHA_PROTO_GET_TRANSACTIONS_HPP
 
-#include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/queries/get_transactions.hpp"
+
+#include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "cryptography/hash.hpp"
 #include "queries.pb.h"
 
 namespace shared_model {

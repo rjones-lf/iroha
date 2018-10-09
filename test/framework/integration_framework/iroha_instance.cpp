@@ -38,8 +38,6 @@ namespace integration_framework {
         proposal_delay_(1h),
         // not required due to solo consensus
         vote_delay_(0ms),
-        // same as above
-        load_delay_(0ms),
         is_mst_supported_(mst_support) {}
 
   void IrohaInstance::makeGenesis(const shared_model::interface::Block &block) {
@@ -62,7 +60,6 @@ namespace integration_framework {
                                              max_proposal_size,
                                              proposal_delay_,
                                              vote_delay_,
-                                             load_delay_,
                                              key_pair,
                                              is_mst_supported_);
   }

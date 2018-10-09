@@ -23,7 +23,7 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 
-constexpr auto kUser = "user@test";
+constexpr auto kAdmin = "user@test";
 constexpr auto kAsset = "asset#domain";
 const auto kAdminKeypair =
     shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
@@ -36,7 +36,7 @@ const auto kAdminKeypair =
 TEST(RegressionTest, SequentialInitialization) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
-                .creatorAccountId(kUser)
+                .creatorAccountId(kAdmin)
                 .addAssetQuantity(kAsset, "1.0")
                 .quorum(1)
                 .build()
@@ -45,34 +45,38 @@ TEST(RegressionTest, SequentialInitialization) {
                         generateKeypair())
                 .finish();
 
-  auto checkStatelessValid = [](auto &status) {
+  auto check_enough_signatures_collected_status = [](auto &status) {
     ASSERT_NO_THROW(boost::apply_visitor(
         framework::SpecifiedVisitor<
-            shared_model::interface::StatelessValidTxResponse>(),
+            shared_model::interface::EnoughSignaturesCollectedResponse>(),
         status.get()));
   };
   auto checkProposal = [](auto &proposal) {
     ASSERT_EQ(proposal->transactions().size(), 1);
-  };
-  auto checkBlock = [](auto &block) {
-    ASSERT_EQ(block->transactions().size(), 0);
   };
 
   const std::string dbname = "dbseqinit";
   {
     integration_framework::IntegrationTestFramework(1, dbname, [](auto &) {})
         .setInitialState(kAdminKeypair)
-        .sendTx(tx, checkStatelessValid)
+        .sendTx(tx, check_enough_signatures_collected_status)
         .skipProposal()
-        .skipBlock();
+        .checkVerifiedProposal([](auto &proposal) {
+          ASSERT_EQ(proposal->transactions().size(), 0);
+        })
+        .checkBlock(
+            [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
   }
   {
     integration_framework::IntegrationTestFramework(1, dbname)
         .setInitialState(kAdminKeypair)
-        .sendTx(tx, checkStatelessValid)
+        .sendTx(tx, check_enough_signatures_collected_status)
         .checkProposal(checkProposal)
-        .checkBlock(checkBlock)
-        .done();
+        .checkVerifiedProposal([](auto &proposal) {
+          ASSERT_EQ(proposal->transactions().size(), 0);
+        })
+        .checkBlock(
+            [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
   }
 }
 
@@ -134,6 +138,7 @@ TEST(RegressionTest, StateRecovery) {
         .setInitialState(kAdminKeypair)
         .sendTx(tx)
         .checkProposal(checkOne)
+        .checkVerifiedProposal(checkOne)
         .checkBlock(checkOne)
         .sendQuery(makeQuery(1, kAdminKeypair), checkQuery);
   }
@@ -141,8 +146,7 @@ TEST(RegressionTest, StateRecovery) {
     integration_framework::IntegrationTestFramework(
         1, dbname, [](auto &itf) { itf.done(); }, false, path)
         .recoverState(kAdminKeypair)
-        .sendQuery(makeQuery(2, kAdminKeypair), checkQuery)
-        .done();
+        .sendQuery(makeQuery(2, kAdminKeypair), checkQuery);
   }
 }
 

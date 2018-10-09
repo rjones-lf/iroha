@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef IROHA_SYNCHRONIZER_IMPL_HPP
 #define IROHA_SYNCHRONIZER_IMPL_HPP
 
@@ -26,6 +27,7 @@
 
 namespace iroha {
   namespace synchronizer {
+
     class SynchronizerImpl : public Synchronizer {
      public:
       SynchronizerImpl(
@@ -34,24 +36,25 @@ namespace iroha {
           std::shared_ptr<ametsuchi::MutableFactory> mutableFactory,
           std::shared_ptr<network::BlockLoader> blockLoader);
 
-      ~SynchronizerImpl();
+      ~SynchronizerImpl() override;
 
-      void process_commit(
-          const shared_model::interface::BlockVariant &commit_message) override;
+      void process_commit(std::shared_ptr<shared_model::interface::Block>
+                              commit_message) override;
 
-      rxcpp::observable<Commit> on_commit_chain() override;
+      rxcpp::observable<SynchronizationEvent> on_commit_chain() override;
 
      private:
       std::shared_ptr<validation::ChainValidator> validator_;
-      std::shared_ptr<ametsuchi::MutableFactory> mutableFactory_;
-      std::shared_ptr<network::BlockLoader> blockLoader_;
+      std::shared_ptr<ametsuchi::MutableFactory> mutable_factory_;
+      std::shared_ptr<network::BlockLoader> block_loader_;
 
       // internal
-      rxcpp::subjects::subject<Commit> notifier_;
+      rxcpp::subjects::subject<SynchronizationEvent> notifier_;
       rxcpp::composite_subscription subscription_;
 
       logger::Logger log_;
     };
+
   }  // namespace synchronizer
 }  // namespace iroha
 

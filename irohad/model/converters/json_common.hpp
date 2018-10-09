@@ -50,16 +50,16 @@ namespace iroha {
          * @return optional of output type from input value
          */
         template <typename T>
-        auto operator()(T &&x) {
-          return boost::optional<V>(x);
+        auto operator()(T &&x) const {
+          return boost::optional<V>(std::forward<T>(x));
         }
       };
 
       template <size_t size>
       struct Convert<blob_t<size>> {
         template <typename T>
-        auto operator()(T &&x) {
-          return hexstringToArray<size>(x);
+        auto operator()(T &&x) const {
+          return hexstringToArray<size>(std::forward<T>(x));
         }
       };
 
@@ -73,7 +73,7 @@ namespace iroha {
        */
       template <typename T, typename D>
       boost::optional<T> deserializeField(const D &document,
-                                           const std::string &field) {
+                                          const std::string &field) {
         if (document.HasMember(field.c_str())
             and document[field.c_str()].template Is<T>()) {
           return document[field.c_str()].template Get<T>();
@@ -233,8 +233,8 @@ namespace iroha {
       template <>
       struct Convert<Signature> {
         template <typename T>
-        auto operator()(T &&x) {
-          auto des = makeFieldDeserializer(x);
+        auto operator()(T &&x) const {
+          auto des = makeFieldDeserializer(std::forward<T>(x));
           return boost::make_optional(Signature())
               | des.String(&Signature::pubkey, "pubkey")
               | des.String(&Signature::signature, "signature");
@@ -244,7 +244,7 @@ namespace iroha {
       template <>
       struct Convert<Block::SignaturesType> {
         template <typename T>
-        auto operator()(T &&x) {
+        auto operator()(T &&x) const {
           auto acc_signatures = [](auto init, auto &x) {
             return init | [&x](auto signatures) {
               return Convert<Signature>()(x) | [&signatures](auto signature) {
@@ -263,7 +263,7 @@ namespace iroha {
       template <>
       struct Convert<GetTransactions::TxHashCollectionType> {
         template <typename T>
-        auto operator()(T &&x) {
+        auto operator()(T &&x) const {
           auto acc_hashes = [](auto init, auto &x) {
             return init | [&x](auto tx_hashes)
                        -> boost::optional<

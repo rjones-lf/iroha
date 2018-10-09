@@ -1,7 +1,7 @@
 # Copyright Soramitsu Co., Ltd. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.11.4)
 
 project(shared_model C CXX)
 
@@ -44,7 +44,6 @@ add_subdirectory(builders)
 add_subdirectory(converters)
 add_subdirectory(cryptography)
 add_subdirectory(interfaces)
-add_subdirectory(utils)
 add_subdirectory(validators)
 add_subdirectory(schema)
 

@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
@@ -28,12 +16,14 @@ namespace iroha {
 
   using PropagationData = PropagationStrategy::PropagationData;
   using OptPeer = GossipPropagationStrategy::OptPeer;
-  using PeerProvider = GossipPropagationStrategy::PeerProvider;
+  using PeerProviderFactory = GossipPropagationStrategy::PeerProviderFactory;
   using std::chrono::steady_clock;
 
   GossipPropagationStrategy::GossipPropagationStrategy(
-      PeerProvider query, std::chrono::milliseconds period, uint32_t amount)
-      : query(query),
+      PeerProviderFactory peer_factory,
+      std::chrono::milliseconds period,
+      uint32_t amount)
+      : peer_factory(peer_factory),
         non_visited({}),
         emitent(rxcpp::observable<>::interval(steady_clock::now(), period)
                     .map([this, amount](int) {
@@ -41,7 +31,7 @@ namespace iroha {
                       auto range = boost::irange(0u, amount);
                       // push until find empty element
                       std::find_if_not(
-                          range.begin(), range.end(), [this, &vec](auto) {
+                          range.begin(), range.end(), [this, &vec](int) {
                             return this->visit() | [&vec](auto e) -> bool {
                               vec.push_back(e);
                               return true;  // proceed
@@ -57,12 +47,13 @@ namespace iroha {
   GossipPropagationStrategy::~GossipPropagationStrategy() {
     // Make sure that emitent callback have finish and haven't started yet
     std::lock_guard<std::mutex> lock(m);
-    query.reset();
+    peer_factory.reset();
   }
 
   bool GossipPropagationStrategy::initQueue() {
-    return query->getLedgerPeers() |
-               [](auto &&data) -> boost::optional<PropagationData> {
+    return peer_factory->createPeerQuery() | [](const auto &query) {
+      return query->getLedgerPeers();
+    } | [](auto &&data) -> boost::optional<PropagationData> {
       if (data.size() == 0) {
         return {};
       }
@@ -79,9 +70,8 @@ namespace iroha {
   }
 
   OptPeer GossipPropagationStrategy::visit() {
-    // Make sure that dtor isn't running
     std::lock_guard<std::mutex> lock(m);
-    if (not query or (non_visited.empty() and not initQueue())) {
+    if (not peer_factory or (non_visited.empty() and not initQueue())) {
       // either PeerProvider doesn't gives peers / dtor have been called
       return {};
     }

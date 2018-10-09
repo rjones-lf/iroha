@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_MST_STATE_HPP
@@ -21,56 +9,58 @@
 #include <queue>
 #include <unordered_set>
 #include <vector>
-#include "logger/logger.hpp"
 
+#include "logger/logger.hpp"
 #include "multi_sig_transactions/hash.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 
 namespace iroha {
 
   /**
-   * Completer is strategy for verification transactions on
+   * Completer is strategy for verification batches on
    * completeness and expiration
    */
   class Completer {
    public:
     /**
-     * Verify that transaction is completed
-     * @param tx - transaction for verification
+     * Verify that batch is completed
+     * @param batch - target object for verification
      * @return true, if complete
      */
-    virtual bool operator()(const DataType tx) const = 0;
+    virtual bool operator()(const DataType &batch) const = 0;
 
     /**
-     * Check that invariant for time expiration for transaction
-     * @param tx - transaction for validation
+     * Operator checks whether the batch has expired
+     * @param batch - object for validation
      * @param time - current time
-     * @return true, if transaction was expired
+     * @return true, if the batch has expired
      */
-    virtual bool operator()(const DataType &tx, const TimeType &time) const = 0;
+    virtual bool operator()(const DataType &batch,
+                            const TimeType &time) const = 0;
 
     virtual ~Completer() = default;
   };
 
-  class TxHashEquality {
+  /**
+   * Class provides operator() for batch comparison
+   */
+  class BatchHashEquality {
    public:
-    bool operator()(const DataType &left_tx, const DataType &right_tx) const {
-      return shared_model::crypto::toBinaryString((*left_tx).hash())
-          == shared_model::crypto::toBinaryString((*right_tx).hash());
-    }
+    /**
+     * The function used to compare batches for equality:
+     * check only hashes of batches, without signatures
+     */
+    bool operator()(const DataType &left_tx, const DataType &right_tx) const;
   };
 
   /**
-   * Class provide default behaviour for transaction completer
+   * Class provides the default behavior for the batch completer:
+   * complete, if all transactions have at least quorum number of signatures
    */
   class DefaultCompleter : public Completer {
-    bool operator()(const DataType transaction) const override {
-      return boost::size(transaction->signatures()) >= transaction->quorum();
-    }
+    bool operator()(const DataType &batch) const override;
 
-    bool operator()(const DataType &tx, const TimeType &time) const override {
-      return false;
-    }
+    bool operator()(const DataType &tx, const TimeType &time) const override;
   };
 
   using CompleterType = std::shared_ptr<const Completer>;
@@ -81,26 +71,25 @@ namespace iroha {
 
     /**
      * Create empty state
-     * @param completer - stategy for determine complete transactions
-     * and expired signatures
+     * @param completer - strategy for determine completed and expired batches
      * @return empty mst state
      */
     static MstState empty(
         const CompleterType &completer = std::make_shared<DefaultCompleter>());
 
     /**
-     * Add transaction to current state
-     * @param rhs - transaction for insertion
-     * @return State with completed transactions
+     * Add batch to current state
+     * @param rhs - batch for insertion
+     * @return States with completed and updated batches
      */
-    MstState operator+=(const DataType &rhs);
+    StateUpdateResult operator+=(const DataType &rhs);
 
     /**
      * Concat internal data of states
      * @param rhs - object for merging
-     * @return State with completed trasactions
+     * @return States with completed and updated batches
      */
-    MstState operator+=(const MstState &rhs);
+    StateUpdateResult operator+=(const MstState &rhs);
 
     /**
      * Operator provide difference between this and rhs operator
@@ -113,7 +102,7 @@ namespace iroha {
     MstState operator-(const MstState &rhs) const;
 
     /**
-     * @return true, if there is no transactions inside
+     * @return true, if there is no batches inside
      */
     bool isEmpty() const;
 
@@ -125,14 +114,17 @@ namespace iroha {
     bool operator==(const MstState &rhs) const;
 
     /**
-     * Provide transactions, that contains in state
+     * @return the batches from the state
      */
-    std::vector<DataType> getTransactions() const;
+    std::unordered_set<DataType,
+                       iroha::model::PointerBatchHasher,
+                       BatchHashEquality>
+    getBatches() const;
 
     /**
-     * Erase expired transactions
+     * Erase expired batches
      * @param time - current time
-     * @return state with expired transactions
+     * @return state with expired batches
      */
     MstState eraseByTime(const TimeType &time);
 
@@ -140,19 +132,17 @@ namespace iroha {
     // --------------------------| private api |------------------------------
 
     /**
-     * Class for providing operator < for transactions
+     * Class provides operator < for batches
      */
     class Less {
      public:
-      bool operator()(const DataType &left, const DataType &right) const {
-        return left->createdTime() < right->createdTime();
-      }
+      bool operator()(const DataType &left, const DataType &right) const;
     };
 
     using InternalStateType =
         std::unordered_set<DataType,
-                           iroha::model::PointerTxHasher<DataType>,
-                           TxHashEquality>;
+                           iroha::model::PointerBatchHasher,
+                           BatchHashEquality>;
 
     using IndexType =
         std::priority_queue<DataType, std::vector<DataType>, Less>;
@@ -163,11 +153,12 @@ namespace iroha {
              const InternalStateType &transactions);
 
     /**
-     * Insert transaction in own state and push it in out_state if required
-     * @param out_state - state for inserting completed transactions
-     * @param rhs_tx - transaction for insert
+     * Insert batch in own state and push it in out_completed_state or
+     * out_updated_state
+     * @param state_update consists of states with updated and completed batches
+     * @param rhs_tx - batch for insert
      */
-    void insertOne(MstState &out_state, const DataType &rhs_tx);
+    void insertOne(StateUpdateResult &state_update, const DataType &rhs_tx);
 
     /**
      * Insert new value in state with keeping invariant
@@ -187,4 +178,5 @@ namespace iroha {
   };
 
 }  // namespace iroha
+
 #endif  // IROHA_MST_STATE_HPP

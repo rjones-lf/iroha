@@ -8,9 +8,19 @@ message Signature {
   bytes signature = 2;
 }
 
-message Hash {
+message VoteRound {
+  uint64 block_round = 1;
+  uint32 reject_round = 2;
+}
+
+message VoteHashes {
   bytes proposal = 1;
   bytes block = 2;
+}
+
+message Hash {
+  VoteRound vote_round = 1;
+  VoteHashes vote_hashes = 2;
   Signature block_signature = 3;
 }
 
@@ -19,16 +29,10 @@ message Vote {
   Signature signature = 2;
 }
 
-message Commit {
-  repeated Vote votes = 1;
-}
-
-message Reject {
+message State {
   repeated Vote votes = 1;
 }
 
 service Yac {
-  rpc SendVote (Vote) returns (google.protobuf.Empty);
-  rpc SendCommit (Commit) returns (google.protobuf.Empty);
-  rpc SendReject (Reject) returns (google.protobuf.Empty);
+  rpc SendState (State) returns (google.protobuf.Empty);
 }

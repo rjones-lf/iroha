@@ -88,14 +88,14 @@
                         "createAccount":{
                            "accountName":"admin",
                            "domainId":"test",
-                           "mainPubkey":"MToH5jhHdu2VRHcQ0V5ZFIRzzPwFKmgTF6cqafKkmRA="
+                           "publicKey":"MToH5jhHdu2VRHcQ0V5ZFIRzzPwFKmgTF6cqafKkmRA="
                         }
                      },
                      {
                         "createAccount":{
                            "accountName":"test",
                            "domainId":"test",
-                           "mainPubkey":"cW/lBfafGFEaGwg5Faqf9z7zbmaIGZ85WXUNs4uPS/w="
+                           "publicKey":"cW/lBfafGFEaGwg5Faqf9z7zbmaIGZ85WXUNs4uPS/w="
                         }
                      },
                      {
