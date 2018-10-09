@@ -28,6 +28,8 @@
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
+using namespace common_constants;
+
 class PipelineIntegrationTest : public AcceptanceFixture {
  public:
   /**
@@ -35,12 +37,13 @@ class PipelineIntegrationTest : public AcceptanceFixture {
    * @param domain_name name of the domain
    * @return Transaction with CreateDomain command
    */
-  auto prepareCreateDomainTransaction(std::string domain_name = "domain") {
+  auto prepareCreateDomainTransaction(
+      std::string domain_name = "anotherdomain") {
     return shared_model::proto::TransactionBuilder()
         .createdTime(getUniqueTime())
         .quorum(1)
         .creatorAccountId(kAdminId)
-        .createDomain(domain_name, "user")
+        .createDomain(domain_name, kDefaultRole)
         .build()
         .signAndAddSignature(kAdminKeypair)
         .finish();
@@ -68,11 +71,6 @@ class PipelineIntegrationTest : public AcceptanceFixture {
 
     return framework::expected::val(tx_sequence_result).value().value;
   }
-
- protected:
-  const std::string kAdminId = "admin@test";
-  const shared_model::crypto::Keypair kAdminKeypair =
-      shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
 /**
  * @given GetAccount query with non-existing user

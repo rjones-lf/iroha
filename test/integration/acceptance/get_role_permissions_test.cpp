@@ -12,6 +12,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 /**
  * C369 Get role permissions by user with allowed GetRoles permission

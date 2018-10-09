@@ -32,6 +32,7 @@
 using namespace boost::process;
 using namespace boost::filesystem;
 using namespace std::chrono_literals;
+using namespace common_constants;
 using iroha::operator|;
 
 class IrohadTest : public AcceptanceFixture {
@@ -176,10 +177,10 @@ class IrohadTest : public AcceptanceFixture {
   void setPaths() {
     path_irohad_ = boost::filesystem::path(PATHIROHAD);
     irohad_executable = path_irohad_ / "irohad";
-    path_example_ = boost::filesystem::path(PATHEXAMPLE);
-    path_config_ = path_example_ / "config.sample";
-    path_genesis_ = path_example_ / "genesis.block";
-    path_keypair_ = path_example_ / "node0";
+    test_data_path_ = boost::filesystem::path(PATHTESTDATA);
+    path_config_ = test_data_path_ / "config.sample";
+    path_genesis_ = test_data_path_ / "genesis.block";
+    path_keypair_ = test_data_path_ / "node0";
     config_copy_ = path_config_.string() + std::string(".copy");
   }
 
@@ -229,7 +230,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
  protected:
   boost::filesystem::path path_irohad_;
-  boost::filesystem::path path_example_;
+  boost::filesystem::path test_data_path_;
   boost::filesystem::path path_config_;
   boost::filesystem::path path_genesis_;
   boost::filesystem::path path_keypair_;
@@ -257,7 +258,7 @@ TEST_F(IrohadTest, RunIrohad) {
 TEST_F(IrohadTest, SendTx) {
   launchIroha();
 
-  auto key_manager = iroha::KeysManagerImpl(kAdminId, path_example_);
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, test_data_path_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 
@@ -273,7 +274,7 @@ TEST_F(IrohadTest, SendTx) {
  */
 TEST_F(IrohadTest, SendQuery) {
   launchIroha();
-  auto key_manager = iroha::KeysManagerImpl(kAdminId, path_example_);
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, test_data_path_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 
@@ -303,7 +304,7 @@ TEST_F(IrohadTest, SendQuery) {
 TEST_F(IrohadTest, RestartWithOverwriteLedger) {
   launchIroha();
 
-  auto key_manager = iroha::KeysManagerImpl(kAdminId, path_example_);
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, test_data_path_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 
@@ -335,7 +336,7 @@ TEST_F(IrohadTest, RestartWithOverwriteLedger) {
 TEST_F(IrohadTest, RestartWithoutResetting) {
   launchIroha();
 
-  auto key_manager = iroha::KeysManagerImpl(kAdminId, path_example_);
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, test_data_path_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 

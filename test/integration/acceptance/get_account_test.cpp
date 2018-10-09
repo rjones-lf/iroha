@@ -13,6 +13,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 #define CHECK_BLOCK(i) \
   [](auto &block) { ASSERT_EQ(block->transactions().size(), i); }
@@ -125,7 +126,7 @@ class GetAccount : public AcceptanceFixture {
   auto makeSecondInterdomainUser() {
     return complete(
         baseTx()
-            .creatorAccountId(IntegrationTestFramework::kAdminId)
+            .creatorAccountId(kAdminId)
             .createRole(kRole2, {interface::permissions::Role::kSetQuorum})
             .createDomain(kNewDomain, kRole2)
             .createAccount(kUser2, kNewDomain, kUser2Keypair.publicKey()),
