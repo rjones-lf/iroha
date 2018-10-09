@@ -17,7 +17,7 @@
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
-#include "multi_sig_transactions/mst_processor_stub.hpp"
+#include "multi_sig_transactions/mst_propagation_strategy_stub.hpp"
 #include "multi_sig_transactions/mst_time_provider_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 #include "torii/impl/command_service_impl.hpp"
@@ -300,29 +300,32 @@ void Irohad::initStatusBus() {
 }
 
 void Irohad::initMstProcessor() {
+  // if (is_mst_supported_) {
+  mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
+      async_call_,
+      common_objects_factory_,
+      transaction_factory,
+      batch_parser,
+      transaction_batch_factory_);
+  auto mst_completer = std::make_shared<DefaultCompleter>();
+  auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
+  // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
+  // cli parameters
+  std::shared_ptr<iroha::PropagationStrategy> mst_propagation;
   if (is_mst_supported_) {
-    mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
-        async_call_,
-        common_objects_factory_,
-        transaction_factory,
-        batch_parser,
-        transaction_batch_factory_);
-    auto mst_completer = std::make_shared<DefaultCompleter>();
-    auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
-    // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
-    // cli parameters
-    auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
+    mst_propagation = std::make_shared<GossipPropagationStrategy>(
         storage,
         std::chrono::seconds(5) /*emitting period*/,
         2 /*amount per once*/);
-    auto mst_time = std::make_shared<MstTimeProviderImpl>();
-    auto fair_mst_processor = std::make_shared<FairMstProcessor>(
-        mst_transport, mst_storage, mst_propagation, mst_time);
-    mst_processor = fair_mst_processor;
-    mst_transport->subscribe(fair_mst_processor);
   } else {
-    mst_processor = std::make_shared<MstProcessorStub>();
+    mst_propagation = std::make_shared<iroha::PropagationStrategyStub>();
   }
+
+  auto mst_time = std::make_shared<MstTimeProviderImpl>();
+  auto fair_mst_processor = std::make_shared<FairMstProcessor>(
+      mst_transport, mst_storage, mst_propagation, mst_time);
+  mst_processor = fair_mst_processor;
+  mst_transport->subscribe(fair_mst_processor);
   log_->info("[Init] => MST processor");
 }
 
