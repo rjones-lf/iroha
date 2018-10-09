@@ -1,0 +1,3 @@
+  torii_port: 50051                 # torii port start value
+  internal_port: 10001              # iroha port start value
+  nodes_in_region: 3
