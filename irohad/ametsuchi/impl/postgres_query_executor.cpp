@@ -311,7 +311,9 @@ namespace iroha {
                 [this](expected::Error<std::string> &e) {
                   log_->error(e.error);
                   return query_response_factory_->createErrorQueryResponse(
-                      QueryErrorType::kStatefulFailed, e.error, query_hash_);
+                      QueryErrorType::kStatefulFailed,
+                      "could not create account object: " + e.error,
+                      query_hash_);
                 });
       };
 
@@ -418,7 +420,7 @@ namespace iroha {
             }
 
             return query_response_factory_->createTransactionsResponse(
-                response_txs, query_hash_);
+                std::move(response_txs), query_hash_);
           });
     }
 
@@ -479,7 +481,7 @@ namespace iroha {
             }
 
             return query_response_factory_->createTransactionsResponse(
-                response_txs, query_hash_);
+                std::move(response_txs), query_hash_);
           });
     }
 
@@ -534,7 +536,7 @@ namespace iroha {
             }
 
             return query_response_factory_->createTransactionsResponse(
-                response_txs, query_hash_);
+                std::move(response_txs), query_hash_);
           });
     }
 
@@ -579,13 +581,15 @@ namespace iroha {
                                 account_assets.push_back(clone(*v.value.get()));
                               },
                               [this](expected::Error<std::string> &e) {
-                                log_->error(e.error);
+                                log_->error(
+                                    "could not create account asset object: {}",
+                                    e.error);
                               });
                     });
             });
 
             return query_response_factory_->createAccountAssetResponse(
-                account_assets, query_hash_);
+                std::move(account_assets), query_hash_);
           });
     }
 
@@ -760,7 +764,7 @@ namespace iroha {
                         return query_response_factory_
                             ->createErrorQueryResponse(
                                 QueryErrorType::kStatefulFailed,
-                                "could not create asset: " + err.error,
+                                "could not create asset object: " + err.error,
                                 query_hash_);
                       });
                 });
@@ -779,8 +783,8 @@ namespace iroha {
                      interface_txs.end(),
                      std::back_inserter(response_txs),
                      [](auto &tx) { return clone(*tx); });
-      return query_response_factory_->createTransactionsResponse(response_txs,
-                                                                 query_hash_);
+      return query_response_factory_->createTransactionsResponse(
+          std::move(response_txs), query_hash_);
     }
 
   }  // namespace ametsuchi

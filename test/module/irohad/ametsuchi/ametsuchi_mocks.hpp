@@ -277,10 +277,11 @@ namespace iroha {
       MOCK_CONST_METHOD0(
           createOsPersistentState,
           boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
-      MOCK_CONST_METHOD1(
+      MOCK_CONST_METHOD2(
           createQueryExecutor,
           boost::optional<std::shared_ptr<QueryExecutor>>(
-              std::shared_ptr<PendingTransactionStorage> pending_txs_storage));
+              std::shared_ptr<PendingTransactionStorage>,
+              std::shared_ptr<shared_model::interface::QueryResponseFactory>));
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
       MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block &));
       MOCK_METHOD1(insertBlocks,
