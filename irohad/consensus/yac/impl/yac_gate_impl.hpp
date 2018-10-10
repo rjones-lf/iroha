@@ -70,7 +70,8 @@ namespace iroha {
 
         logger::Logger log_;
 
-        std::shared_ptr<shared_model::interface::Block> current_block_;
+        boost::optional<std::shared_ptr<shared_model::interface::Block>>
+            current_block_;
         YacHash current_hash_;
       };
 

@@ -52,13 +52,14 @@ namespace iroha {
           Round round) {
         bool is_none = not proposal or not block;
         if (is_none) {
-          current_block_ = nullptr;
+          current_block_ = boost::none;
           current_hash_ = {};
+          current_hash_.vote_round = round;
           log_->debug("Agreed on nothing to commit");
         } else {
           current_block_ = std::move(block.value());
-          current_hash_ =
-              hash_provider_->makeHash(*current_block_ /*, *proposal, round*/);
+          current_hash_ = hash_provider_->makeHash(
+              *current_block_.value() /*, *proposal, round*/);
           log_->info("vote for (proposal: {}, block: {})",
                      current_hash_.vote_hashes.proposal_hash,
                      current_hash_.vote_hashes.block_hash);
@@ -73,7 +74,7 @@ namespace iroha {
         hash_gate_->vote(current_hash_, *order);
 
         // insert the block we voted for to the consensus cache
-        if (is_none) {
+        if (not is_none) {
           consensus_result_cache_->insert(block.value());
         }
       }
@@ -90,7 +91,8 @@ namespace iroha {
       void YacGateImpl::copySignatures(const CommitMessage &commit) {
         for (const auto &vote : commit.votes) {
           auto sig = vote.hash.block_signature;
-          current_block_->addSignature(sig->signedData(), sig->publicKey());
+          current_block_.value()->addSignature(sig->signedData(),
+                                               sig->publicKey());
         }
       }
 
@@ -106,17 +108,16 @@ namespace iroha {
           // if node has voted for the committed block
           // append signatures of other nodes
           this->copySignatures(msg);
+          auto &block = current_block_.value();
           log_->info("consensus: commit top block: height {}, hash {}",
-                     current_block_->height(),
-                     current_block_->hash().hex());
+                     block->height(),
+                     block->hash().hex());
           return rxcpp::observable<>::just<GateObject>(
-              network::PairValid{current_block_});
-        } else {
-          log_->info("Voted for another block, waiting for sync");
-          return rxcpp::observable<>::just<GateObject>(
-              network::VoteOther{current_block_});
+              network::PairValid{block});
         }
-        return rxcpp::observable<>::empty<GateObject>();
+        log_->info("Voted for another block, waiting for sync");
+        return rxcpp::observable<>::just<GateObject>(
+            network::VoteOther{current_block_.value()});
       }
 
       rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::handleReject(
@@ -129,7 +130,7 @@ namespace iroha {
         }
         log_->info("Block reject since proposal hashes match");
         return rxcpp::observable<>::just<GateObject>(
-            network::BlockReject{current_block_});
+            network::BlockReject{current_block_.value()});
       }
     }  // namespace yac
   }    // namespace consensus
