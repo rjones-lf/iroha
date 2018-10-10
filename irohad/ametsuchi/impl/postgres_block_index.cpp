@@ -100,26 +100,19 @@ namespace iroha {
             const auto &index = std::to_string(tx.index());
 
             // tx hash -> block where hash is stored
-            soci::statement st =
-                (sql_.prepare << "INSERT INTO height_by_hash(hash, height) "
-                                 "VALUES (:hash, "
-                                 ":height)",
-                 soci::use(hash),
-                 soci::use(height));
-            execute(st);
+            sql_ << "INSERT INTO height_by_hash(hash, height) "
+                    "VALUES (:hash, "
+                    ":height)",
+                soci::use(hash), soci::use(height);
 
             this->indexAccountIdHeight(creator_id, height);
 
             // to make index account_id:height -> list of tx indexes
             // (where tx is placed in the block)
-            st = (sql_.prepare
-                      << "INSERT INTO index_by_creator_height(creator_id, "
-                         "height, index) "
-                         "VALUES (:id, :height, :index)",
-                  soci::use(creator_id),
-                  soci::use(height),
-                  soci::use(index));
-            execute(st);
+            sql_ << "INSERT INTO index_by_creator_height(creator_id, "
+                    "height, index) "
+                    "VALUES (:id, :height, :index)",
+                soci::use(creator_id), soci::use(height), soci::use(index);
 
             this->indexAccountAssets(
                 creator_id, height, index, tx.value().commands());
