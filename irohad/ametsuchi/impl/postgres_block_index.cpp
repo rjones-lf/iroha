@@ -18,17 +18,30 @@
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
-#include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 
 namespace {
-  std::string createHashIndexQuery(
+  // tx hash -> block where hash is stored
+  std::string makeHashIndexQuery(
       const shared_model::interface::types::HashType &hash,
       const std::string &height) {
     boost::format base(
         "INSERT INTO height_by_hash(hash, height) VALUES ('%s', "
         "'%s');");
     return (base % hash.hex() % height).str();
+  }
+
+  // make index account_id:height -> list of tx indexes
+  // (where tx is placed in the block)
+  std::string makeCreatorHeightIndexQuery(
+      const shared_model::interface::types::AccountIdType creator,
+      const std::string &height,
+      const std::string &tx_index) {
+    boost::format base(
+        "INSERT INTO index_by_creator_height(creator_id, height, index) VALUES "
+        "('%s', '%s', '%s');");
+    return (base % creator % height % tx_index).str();
   }
 }  // namespace
 
@@ -106,39 +119,29 @@ namespace iroha {
     void PostgresBlockIndex::index(
         const shared_model::interface::Block &block) {
       const auto &height = std::to_string(block.height());
-      auto begin = std::cbegin(block.transactions());
-      auto end = std::cend(block.transactions());
+      auto indexed_txs = block.transactions() | boost::adaptors::indexed(0);
       std::string index_query = std::accumulate(
-          begin, end, std::string{}, [&height](auto query, const auto &tx) {
-            return query + createHashIndexQuery(tx.hash(), height);
+          indexed_txs.begin(),
+          indexed_txs.end(),
+          std::string{},
+          [&height](auto query, const auto &tx) {
+            const auto &creator_id = tx.value().creatorAccountId();
+            const auto &index = std::to_string(tx.index());
+            return query + makeHashIndexQuery(tx.value().hash(), height)
+                + makeCreatorHeightIndexQuery(creator_id, height, index);
           });
 
       sql_ << index_query;
-      boost::for_each(
-          block.transactions() | boost::adaptors::indexed(0),
-          [&](const auto &tx) {
-            const auto &creator_id = tx.value().creatorAccountId();
-            // const auto &hash = tx.value().hash().hex();
-            const auto &index = std::to_string(tx.index());
+      boost::for_each(block.transactions() | boost::adaptors::indexed(0),
+                      [&](const auto &tx) {
+                        const auto &creator_id = tx.value().creatorAccountId();
+                        const auto &index = std::to_string(tx.index());
 
-            // // tx hash -> block where hash is stored
-            // sql_ << "INSERT INTO height_by_hash(hash, height) "
-            //         "VALUES (:hash, "
-            //         ":height)",
-            //     soci::use(hash), soci::use(height);
+                        this->indexAccountIdHeight(creator_id, height);
 
-            this->indexAccountIdHeight(creator_id, height);
-
-            // to make index account_id:height -> list of tx indexes
-            // (where tx is placed in the block)
-            sql_ << "INSERT INTO index_by_creator_height(creator_id, "
-                    "height, index) "
-                    "VALUES (:id, :height, :index)",
-                soci::use(creator_id), soci::use(height), soci::use(index);
-
-            this->indexAccountAssets(
-                creator_id, height, index, tx.value().commands());
-          });
+                        this->indexAccountAssets(
+                            creator_id, height, index, tx.value().commands());
+                      });
     }
   }  // namespace ametsuchi
 }  // namespace iroha
