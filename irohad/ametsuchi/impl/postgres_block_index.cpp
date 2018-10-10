@@ -5,8 +5,10 @@
 
 #include "ametsuchi/impl/postgres_block_index.hpp"
 
+#include <numeric>
 #include <unordered_set>
 
+#include <boost/format.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
@@ -17,6 +19,18 @@
 #include "interfaces/commands/command.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "interfaces/common_objects/types.hpp"
+
+namespace {
+  std::string createHashIndexQuery(
+      const shared_model::interface::types::HashType &hash,
+      const std::string &height) {
+    boost::format base(
+        "INSERT INTO height_by_hash(hash, height) VALUES ('%s', "
+        "'%s');");
+    return (base % hash.hex() % height).str();
+  }
+}  // namespace
 
 namespace iroha {
   namespace ametsuchi {
@@ -92,18 +106,26 @@ namespace iroha {
     void PostgresBlockIndex::index(
         const shared_model::interface::Block &block) {
       const auto &height = std::to_string(block.height());
+      auto begin = std::cbegin(block.transactions());
+      auto end = std::cend(block.transactions());
+      std::string index_query = std::accumulate(
+          begin, end, std::string{}, [&height](auto query, const auto &tx) {
+            return query + createHashIndexQuery(tx.hash(), height);
+          });
+
+      sql_ << index_query;
       boost::for_each(
           block.transactions() | boost::adaptors::indexed(0),
           [&](const auto &tx) {
             const auto &creator_id = tx.value().creatorAccountId();
-            const auto &hash = tx.value().hash().hex();
+            // const auto &hash = tx.value().hash().hex();
             const auto &index = std::to_string(tx.index());
 
-            // tx hash -> block where hash is stored
-            sql_ << "INSERT INTO height_by_hash(hash, height) "
-                    "VALUES (:hash, "
-                    ":height)",
-                soci::use(hash), soci::use(height);
+            // // tx hash -> block where hash is stored
+            // sql_ << "INSERT INTO height_by_hash(hash, height) "
+            //         "VALUES (:hash, "
+            //         ":height)",
+            //     soci::use(hash), soci::use(height);
 
             this->indexAccountIdHeight(creator_id, height);
 
