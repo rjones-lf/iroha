@@ -6,7 +6,6 @@
 #ifndef IROHA_SHARED_MODEL_STRING_BUILDER_HPP
 #define IROHA_SHARED_MODEL_STRING_BUILDER_HPP
 
-#include <algorithm>
 #include <string>
 
 namespace shared_model {
@@ -56,9 +55,9 @@ namespace shared_model {
       template <typename Collection, typename Transform>
       PrettyStringBuilder &appendAll(Collection &&c, Transform &&t) {
         insertLevel();
-        std::for_each(c.begin(), c.end(), [this, &t](auto &val) {
-          this->append(t(val));
-        });
+        for (auto &val : c) {
+          append(t(val));
+        }
         removeLevel();
         return *this;
       }
