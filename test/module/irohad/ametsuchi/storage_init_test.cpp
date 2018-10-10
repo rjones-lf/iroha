@@ -47,7 +47,9 @@ class StorageInitTest : public ::testing::Test {
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
 
   void SetUp() override {
-    ASSERT_FALSE(boost::filesystem::exists(block_store_path));
+    ASSERT_FALSE(boost::filesystem::exists(block_store_path))
+        << "Temporary block store " << block_store_path
+        << " directory already exists";
   }
 
   void TearDown() override {

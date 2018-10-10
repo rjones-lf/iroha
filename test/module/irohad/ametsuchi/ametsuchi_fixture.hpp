@@ -50,7 +50,9 @@ namespace iroha {
       }
 
       void SetUp() override {
-        ASSERT_FALSE(boost::filesystem::exists(block_store_path));
+        ASSERT_FALSE(boost::filesystem::exists(block_store_path))
+            << "Temporary block store " << block_store_path
+            << " directory already exists";
         connect();
       }
 
