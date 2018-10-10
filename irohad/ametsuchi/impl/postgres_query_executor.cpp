@@ -351,7 +351,9 @@ namespace iroha {
           [&](auto range, auto &) {
             if (range.empty()) {
               return query_response_factory_->createErrorQueryResponse(
-                  QueryErrorType::kNoAccount, "", query_hash_);
+                  QueryErrorType::kNoAccount,
+                  "no account with such id found: " + q.accountId(),
+                  query_hash_);
             }
 
             return apply(range.front(), query_apply);
@@ -386,7 +388,10 @@ namespace iroha {
           [&](auto range, auto &) {
             if (range.empty()) {
               return query_response_factory_->createErrorQueryResponse(
-                  QueryErrorType::kNoSignatories, "", query_hash_);
+                  QueryErrorType::kNoSignatories,
+                  "no signatories found in account with such id: "
+                      + q.accountId(),
+                  query_hash_);
             }
 
             auto pubkeys = boost::copy_range<
@@ -689,7 +694,9 @@ namespace iroha {
           [&](auto range, auto &) {
             if (range.empty()) {
               return query_response_factory_->createErrorQueryResponse(
-                  QueryErrorType::kNoAccountDetail, "", query_hash_);
+                  QueryErrorType::kNoAccountDetail,
+                  "no details in account with such id: " + q.accountId(),
+                  query_hash_);
             }
 
             return apply(range.front(), [this](auto &json) {
@@ -755,7 +762,10 @@ namespace iroha {
           [&](auto range, auto &) {
             if (range.empty()) {
               return query_response_factory_->createErrorQueryResponse(
-                  QueryErrorType::kNoRoles, "", query_hash_);
+                  QueryErrorType::kNoRoles,
+                  "no role " + q.roleId()
+                      + " in account with such id: " + creator_id_,
+                  query_hash_);
             }
 
             return apply(range.front(), [this](auto &permission) {
@@ -791,7 +801,10 @@ namespace iroha {
           [&](auto range, auto &) {
             if (range.empty()) {
               return query_response_factory_->createErrorQueryResponse(
-                  QueryErrorType::kNoAsset, "", query_hash_);
+                  QueryErrorType::kNoAsset,
+                  "no asset " + q.assetId()
+                      + " in account with such id: " + creator_id_,
+                  query_hash_);
             }
 
             return apply(
