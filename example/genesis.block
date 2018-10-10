@@ -9,7 +9,7 @@
                         "addPeer":{
                            "peer":{
                               "address":"0.0.0.0:10001",
-                              "peerKey":"vd1YQE0TFeDrJ5AsXXyOsGAsFiOPAFdz30BrwZEwiSk="
+                              "peerKey":"bddd58404d1315e0eb27902c5d7c8eb0602c16238f005773df406bc191308929"
                            }
                         }
                      },
@@ -88,14 +88,14 @@
                         "createAccount":{
                            "accountName":"admin",
                            "domainId":"test",
-                           "publicKey":"MToH5jhHdu2VRHcQ0V5ZFIRzzPwFKmgTF6cqafKkmRA="
+                           "publicKey":"313a07e6384776ed95447710d15e59148473ccfc052a681317a72a69f2a49910"
                         }
                      },
                      {
                         "createAccount":{
                            "accountName":"test",
                            "domainId":"test",
-                           "publicKey":"cW/lBfafGFEaGwg5Faqf9z7zbmaIGZ85WXUNs4uPS/w="
+                           "publicKey":"716fe505f69f18511a1b083915aa9ff73ef36e6688199f3959750db38b8f4bfc"
                         }
                      },
                      {

@@ -20,6 +20,7 @@
 #include "model/commands/all.hpp"
 #include "model/domain.hpp"
 #include "qry_responses.pb.h"
+#include "common/byteutils.hpp"
 
 namespace iroha {
   namespace model {
@@ -28,15 +29,16 @@ namespace iroha {
       protocol::Peer serializePeer(iroha::model::Peer iroha_peer) {
         protocol::Peer res;
         res.set_address(iroha_peer.address);
-        res.set_peer_key(iroha_peer.pubkey.data(), iroha_peer.pubkey.size());
+        res.set_peer_key(iroha_peer.pubkey.to_hexstring());
         return res;
       }
 
       iroha::model::Peer deserializePeer(protocol::Peer pb_peer) {
         iroha::model::Peer res;
         res.address = pb_peer.address();
-        std::copy(pb_peer.peer_key().begin(),
-                  pb_peer.peer_key().end(),
+        auto key = iroha::hexstringToBytestring(pb_peer.peer_key());
+        std::copy(key->begin(),
+                  key->end(),
                   res.pubkey.begin());
         return res;
       }

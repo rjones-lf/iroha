@@ -53,7 +53,7 @@ class ValidatorsTest : public ::testing::Test {
     for (const auto &id : {"role_name", "default_role", "role_id"}) {
       field_setters[id] = setString(role_name);
     }
-    field_setters["public_key"] = setString(public_key);
+    field_setters["public_key"] = setString(public_key_hex);
     field_setters["dest_account_id"] = setString(dest_id);
     field_setters["asset_id"] = setString(asset_id);
     field_setters["account_name"] = setString(account_name);
@@ -170,6 +170,7 @@ class ValidatorsTest : public ::testing::Test {
     precision = 2;
     amount = "10.00";
     public_key_size = 32;
+    public_key_hex_size = 64;
     hash_size = 32;
     counter = 1048576;
     account_id = "account@domain";
@@ -185,16 +186,18 @@ class ValidatorsTest : public ::testing::Test {
     detail_key = "key";
     writer = "account@domain";
     public_key = std::string(public_key_size, '0');
+    public_key_hex = std::string(public_key_hex_size, '0');
     hash = std::string(public_key_size, '0');
     role_permission = iroha::protocol::RolePermission::can_append_role;
     grantable_permission =
         iroha::protocol::GrantablePermission::can_add_my_signatory;
     quorum = 2;
     peer.set_address(address_localhost);
-    peer.set_peer_key(public_key);
+    peer.set_peer_key(public_key_hex);
   }
 
   size_t public_key_size{0};
+  size_t public_key_hex_size{0};
   size_t hash_size{0};
   uint64_t counter{0};
   std::string account_id;
@@ -211,6 +214,7 @@ class ValidatorsTest : public ::testing::Test {
   std::string detail_value;
   std::string description;
   std::string public_key;
+  std::string public_key_hex;
   std::string hash;
   std::string writer;
   iroha::protocol::Transaction::Payload::BatchMeta batch_meta;

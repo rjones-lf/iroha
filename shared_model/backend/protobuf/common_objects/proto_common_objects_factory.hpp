@@ -34,7 +34,7 @@ namespace shared_model {
           const interface::types::PubkeyType &public_key) override {
         iroha::protocol::Peer peer;
         peer.set_address(address);
-        peer.set_peer_key(crypto::toBinaryString(public_key));
+        peer.set_peer_key(public_key.hex());
         auto proto_peer = std::make_unique<Peer>(std::move(peer));
 
         auto errors =
@@ -194,6 +194,7 @@ namespace shared_model {
       }
 
       Validator validator_;
+
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -41,7 +41,7 @@ TEST(ProtoPeerBuilderTest, AddressFieldBuild) {
 TEST(ProtoPeerBuilderTest, KeyFieldBuild) {
   shared_model::proto::PeerBuilder builder;
 
-  auto expected_key = shared_model::crypto::PublicKey("very_secure_key");
+  auto expected_key = shared_model::crypto::PublicKey("_very_secure_key");
   auto peer = builder.pubkey(expected_key).build();
 
   EXPECT_EQ(peer.pubkey(), expected_key);

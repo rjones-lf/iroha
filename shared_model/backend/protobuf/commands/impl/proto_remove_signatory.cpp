@@ -13,7 +13,8 @@ namespace shared_model {
         : CopyableProto(std::forward<CommandType>(command)),
           remove_signatory_{proto_->remove_signatory()},
           pubkey_{[this] {
-            return interface::types::PubkeyType(remove_signatory_.public_key());
+            return interface::types::PubkeyType(
+                crypto::Blob::fromHexString(remove_signatory_.public_key()));
           }} {}
 
     template RemoveSignatory::RemoveSignatory(RemoveSignatory::TransportType &);

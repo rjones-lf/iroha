@@ -342,49 +342,49 @@ class FieldValidatorTest : public ValidatorsTest {
   std::vector<FieldTestCase> peer_test_cases{
       // clang-format off
       // ip addresses
-      makeValidPeerAddressTestCase("zeros_ip","0.0.0.0:0", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeValidPeerAddressTestCase("max_ip", "255.255.255.255:65535", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeValidPeerAddressTestCase("common_ip","192.168.0.1:8080", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeValidPeerAddressTestCase("zeros_ip","0.0.0.0:0", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeValidPeerAddressTestCase("max_ip", "255.255.255.255:65535", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeValidPeerAddressTestCase("common_ip","192.168.0.1:8080", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
 
-      makeInvalidPeerAddressTestCase("invalid_peer_address", "182.13.35.1:3040xx", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("invalid symbol in ip", "-0.0.0.0:0", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("too big number in ip", "256.256.256.255:65535", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("too big port", "192.168.0.1:65536", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("invalid_peer_address", "182.13.35.1:3040xx", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("invalid symbol in ip", "-0.0.0.0:0", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("too big number in ip", "256.256.256.255:65535", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("too big port", "192.168.0.1:65536", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
 
       // hostname
-      makeValidPeerAddressTestCase("valid hostname with port", "abc.efg:0", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeValidPeerAddressTestCase("valid hostname with max port", "abc.efg.hij:65535", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeValidPeerAddressTestCase("hostname with hyphen", "a-hyphen.ru-i:8080", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeValidPeerAddressTestCase("common hostname with port", "altplus.com.jp:80", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeValidPeerAddressTestCase("max label length in hostname with port", "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad:8080", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeValidPeerAddressTestCase("valid hostname with port", "abc.efg:0", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeValidPeerAddressTestCase("valid hostname with max port", "abc.efg.hij:65535", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeValidPeerAddressTestCase("hostname with hyphen", "a-hyphen.ru-i:8080", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeValidPeerAddressTestCase("common hostname with port", "altplus.com.jp:80", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeValidPeerAddressTestCase("max label length in hostname with port", "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad:8080", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
       makeValidPeerAddressTestCase("max domain name length in hostname with port",
                                    "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
                                    "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
                                    "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
-                                   "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad:256", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+                                   "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad:256", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
 
 
-      makeInvalidPeerAddressTestCase("hostname starting with nonletter", "9.start.with.non.letter:0", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("hostname starting with dash", "-startWithDash:65535", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("hostname starting with at", "@.is.not.allowed:8080", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("hostname with space", "no space is allowed:80", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("hostname with too big port", "too.big.port:65536", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("hostname with not allowed character", "some\u2063host:123", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("hostname ending with hyphen", "endWith-:909", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("hostname with too large label", "aLabelMustNotExceeds63charactersALabelMustNotExceeds63characters:9090", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname starting with nonletter", "9.start.with.non.letter:0", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname starting with dash", "-startWithDash:65535", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname starting with at", "@.is.not.allowed:8080", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname with space", "no space is allowed:80", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname with too big port", "too.big.port:65536", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname with not allowed character", "some\u2063host:123", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname ending with hyphen", "endWith-:909", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("hostname with too large label", "aLabelMustNotExceeds63charactersALabelMustNotExceeds63characters:9090", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
       makeInvalidPeerAddressTestCase("hostname with more than 256 character domain",
       "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
       "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
       "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPad."
-      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP:256", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("empty address", "", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("empty domain", ":6565", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
-      makeInvalidPeerAddressTestCase("empty domain two : symbols", "::6565:", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, '0')),
+      "maxLabelLengthIs63paddingPaddingPaddingPaddingPaddingPaddingPadP:256", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("empty address", "", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("empty domain", ":6565", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
+      makeInvalidPeerAddressTestCase("empty domain two : symbols", "::6565:", std::string(crypto::DefaultCryptoAlgorithmType::kPublicKeyHexLength, '0')),
 
       // invalid pubkey
       makeInvalidPeerPubkeyTestCase("invalid_peer_pubkey_length",
                                     "182.13.35.1:3040",
-                                    std::string(64, '0')),
+                                    std::string(32, '0')),
       makeInvalidPeerPubkeyTestCase(
           "invalid_peer_pubkey_empty", "182.13.35.1:3040", "")
       // clang-format on

@@ -53,7 +53,8 @@ namespace shared_model {
       using Lazy = detail::LazyInitializer<T>;
 
       const Lazy<interface::types::PubkeyType> public_key_{
-          [this] { return interface::types::PubkeyType(proto_->peer_key()); }};
+          [this] { return interface::types::PubkeyType(
+                  crypto::Blob::fromHexString(proto_->peer_key())); }};
     };
 
   }  // namespace proto

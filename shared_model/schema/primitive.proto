@@ -92,5 +92,5 @@ message Signature {
 
 message Peer {
   string address = 1;
-  bytes peer_key = 2;
+  string peer_key = 2;
 }

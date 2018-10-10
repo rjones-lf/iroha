@@ -75,6 +75,7 @@ namespace shared_model {
 
       static const size_t kHashLength;
       static const size_t kPublicKeyLength;
+      static const size_t kPublicKeyHexLength;
       static const size_t kPrivateKeyLength;
       static const size_t kSignatureLength;
       static const size_t kSeedLength;
