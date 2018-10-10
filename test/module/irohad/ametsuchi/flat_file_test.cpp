@@ -41,6 +41,7 @@ class BlStore_Test : public ::testing::Test {
   }
   std::string block_store_path =
       (fs::temp_directory_path() / fs::unique_path()).string();
+
   std::vector<uint8_t> block;
 };
 
