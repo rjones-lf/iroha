@@ -20,6 +20,8 @@
 #include "ametsuchi/mutable_storage.hpp"
 #include "ametsuchi/peer_query.hpp"
 #include "consensus/yac/supermajority_checker.hpp"
+#include "cryptography/public_key.hpp"
+#include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
@@ -40,11 +42,38 @@ namespace iroha {
           [this](const auto &block, auto &queries, const auto &top_hash) {
             auto peers = queries.getLedgerPeers();
             if (not peers) {
+              log_->info("Cannot retrieve peers from storage");
               return false;
             }
-            return block.prevHash() == top_hash
-                and supermajority_checker_->hasSupermajority(block.signatures(),
-                                                             peers.value());
+            auto has_prev_hash = block.prevHash() == top_hash;
+            if (not has_prev_hash) {
+              log_->info(
+                  "Previous hash {} of block does not match top block hash {} "
+                  "in storage",
+                  block.prevHash().hex(),
+                  top_hash.hex());
+            }
+            auto has_supermajority = supermajority_checker_->hasSupermajority(
+                block.signatures(), peers.value());
+            if (not has_supermajority) {
+              log_->info(
+                  "Block does not contain signatures of supermajority of "
+                  "peers. Block signatures public keys: [{}], ledger peers "
+                  "public keys: [{}]",
+                  std::accumulate(std::next(std::begin(block.signatures())),
+                                  std::end(block.signatures()),
+                                  block.signatures().front().publicKey().hex(),
+                                  [](auto acc, auto &sig) {
+                                    return acc + ", " + sig.publicKey().hex();
+                                  }),
+                  std::accumulate(std::next(std::begin(peers.value())),
+                                  std::end(peers.value()),
+                                  peers.value().front()->pubkey().hex(),
+                                  [](auto acc, auto &peer) {
+                                    return acc + ", " + peer->pubkey().hex();
+                                  }));
+            }
+            return has_prev_hash and has_supermajority;
           };
 
       // check inside of temporary storage
