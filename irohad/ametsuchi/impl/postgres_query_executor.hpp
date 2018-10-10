@@ -108,8 +108,14 @@ namespace iroha {
        * Execute query in F and return query response from B
        * Q is query tuple, P is permission tuple
        */
-      template <typename Q, typename P, typename F, typename B>
-      QueryExecutorResult executeQuery(F &&f, B &&b);
+      template <typename Q,
+                typename P,
+                typename F,
+                typename B,
+                typename ErrResponse>
+      QueryExecutorResult executeQuery(F &&f,
+                                       B &&b,
+                                       ErrResponse &&err_response);
 
       soci::session &sql_;
       KeyValueStorage &block_store_;

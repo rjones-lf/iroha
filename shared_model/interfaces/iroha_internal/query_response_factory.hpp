@@ -50,6 +50,8 @@ namespace shared_model {
       virtual std::unique_ptr<QueryResponse> createAccountDetailResponse(
           types::DetailType account_detail, const crypto::Hash &query_hash) = 0;
 
+      // TODO [IR-1750] Akvinikym 10.10.18: Make QueryResponseFactory accept
+      // parameters for objects creation
       /**
        * Create response for account query
        * @param account to be inserted into the response

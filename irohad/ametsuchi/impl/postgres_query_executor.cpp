@@ -16,6 +16,7 @@
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/range/irange.hpp>
 #include "ametsuchi/impl/soci_utils.hpp"
+#include "backend/protobuf/permissions.hpp"
 #include "common/types.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/queries/blocks_query.hpp"
@@ -109,6 +110,24 @@ namespace {
   template <typename... Value>
   using QueryType = boost::tuple<boost::optional<Value>...>;
 
+  /**
+   * Create an error response in case user does not have permissions to perform
+   * a query
+   * @tparam Roles - type of roles
+   * @param roles, which user lacks
+   * @return lambda returning the error response itself
+   */
+  template <typename... Roles>
+  auto notEnoughPermissionsResponse(Roles... roles) {
+    return [roles...] {
+      std::string error = "user must have at least one of the permissions: ";
+      for (auto role : {roles...}) {
+        error += shared_model::proto::permissions::toString(role) + ", ";
+      }
+      return error;
+    };
+  }
+
 }  // namespace
 
 namespace iroha {
@@ -153,9 +172,13 @@ namespace iroha {
       return result;
     }
 
-    template <typename Q, typename P, typename F, typename B>
-    QueryExecutorResult PostgresQueryExecutorVisitor::executeQuery(F &&f,
-                                                                   B &&b) {
+    template <typename Q,
+              typename P,
+              typename F,
+              typename B,
+              typename ErrResponse>
+    QueryExecutorResult PostgresQueryExecutorVisitor::executeQuery(
+        F &&f, B &&b, ErrResponse &&err_response) {
       using T = concat<Q, P>;
       try {
         soci::rowset<T> st = std::forward<F>(f)();
@@ -163,14 +186,15 @@ namespace iroha {
 
         return apply(
             viewPermissions<P>(range.front()),
-            [this, range, &b](auto... perms) {
+            [this, range, &b, err_response = std::move(err_response)](
+                auto... perms) {
               bool temp[] = {not perms...};
               if (std::all_of(std::begin(temp), std::end(temp), [](auto b) {
                     return b;
                   })) {
                 return query_response_factory_->createErrorQueryResponse(
                     QueryErrorType::kStatefulFailed,
-                    "not enough permissions",
+                    err_response(),
                     this->query_hash_);
               }
               auto query_range = range
@@ -295,6 +319,8 @@ namespace iroha {
                                 auto &quorum,
                                 auto &data,
                                 auto &roles_str) {
+        // TODO [IR-1750] Akvinikym 10.10.18: Make QueryResponseFactory accept
+        // parameters for objects creation
         return common_objects_factory_
             ->createAccount(account_id, domain_id, quorum, data)
             .match(
@@ -329,7 +355,10 @@ namespace iroha {
             }
 
             return apply(range.front(), query_apply);
-          });
+          },
+          notEnoughPermissionsResponse(Role::kGetMyAccount,
+                                       Role::kGetAllAccounts,
+                                       Role::kGetDomainAccounts));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -371,7 +400,10 @@ namespace iroha {
 
             return query_response_factory_->createSignatoriesResponse(
                 pubkeys, query_hash_);
-          });
+          },
+          notEnoughPermissionsResponse(Role::kGetMySignatories,
+                                       Role::kGetAllSignatories,
+                                       Role::kGetDomainSignatories));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -421,7 +453,9 @@ namespace iroha {
 
             return query_response_factory_->createTransactionsResponse(
                 std::move(response_txs), query_hash_);
-          });
+          },
+          notEnoughPermissionsResponse(
+              Role::kGetMyAccTxs, Role::kGetAllAccTxs, Role::kGetDomainAccTxs));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -482,7 +516,8 @@ namespace iroha {
 
             return query_response_factory_->createTransactionsResponse(
                 std::move(response_txs), query_hash_);
-          });
+          },
+          notEnoughPermissionsResponse(Role::kGetMyTxs, Role::kGetAllTxs));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -537,7 +572,10 @@ namespace iroha {
 
             return query_response_factory_->createTransactionsResponse(
                 std::move(response_txs), query_hash_);
-          });
+          },
+          notEnoughPermissionsResponse(Role::kGetMyAccAstTxs,
+                                       Role::kGetAllAccAstTxs,
+                                       Role::kGetDomainAccAstTxs));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -590,7 +628,9 @@ namespace iroha {
 
             return query_response_factory_->createAccountAssetResponse(
                 std::move(account_assets), query_hash_);
-          });
+          },
+          notEnoughPermissionsResponse(
+              Role::kGetMyAccAst, Role::kGetAllAccAst, Role::kGetDomainAccAst));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -656,7 +696,10 @@ namespace iroha {
               return query_response_factory_->createAccountDetailResponse(
                   json, query_hash_);
             });
-          });
+          },
+          notEnoughPermissionsResponse(Role::kGetMyAccDetail,
+                                       Role::kGetAllAccDetail,
+                                       Role::kGetDomainAccDetail));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -685,7 +728,8 @@ namespace iroha {
 
             return query_response_factory_->createRolesResponse(roles,
                                                                 query_hash_);
-          });
+          },
+          notEnoughPermissionsResponse(Role::kGetRoles));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -719,7 +763,8 @@ namespace iroha {
                   shared_model::interface::RolePermissionSet(permission),
                   query_hash_);
             });
-          });
+          },
+          notEnoughPermissionsResponse(Role::kGetRoles));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -768,7 +813,8 @@ namespace iroha {
                                 query_hash_);
                       });
                 });
-          });
+          },
+          notEnoughPermissionsResponse(Role::kReadAssets));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
