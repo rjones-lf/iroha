@@ -59,7 +59,7 @@ class GetAccountAssets : public AcceptanceFixture {
                 query_response.get());
 
             ASSERT_EQ(resp.accountAssets().size(), quantity);
-          });
+          }) << query_response.toString();
         };
   }
 

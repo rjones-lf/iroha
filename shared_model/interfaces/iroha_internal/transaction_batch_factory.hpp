@@ -6,14 +6,15 @@
 #ifndef IROHA_TRANSACTION_BATCH_FACTORY_HPP
 #define IROHA_TRANSACTION_BATCH_FACTORY_HPP
 
+#include <memory>
+
 #include "common/result.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
-#include "interfaces/iroha_internal/transaction_batch.hpp"
-#include "validators/field_validator.hpp"
-#include "validators/transactions_collection/transactions_collection_validator.hpp"
 
 namespace shared_model {
   namespace interface {
+
+    class TransactionBatch;
 
     /**
      * Provides methods that create transaction batch from a single transaction,
@@ -21,59 +22,33 @@ namespace shared_model {
      */
     class TransactionBatchFactory {
      public:
+      virtual ~TransactionBatchFactory() = default;
+
+      template <typename BatchType>
+      using FactoryResult = iroha::expected::Result<BatchType, std::string>;
+
       /**
        * Create transaction batch out of collection of transactions
-       * @tparam TransactionValidator validates every single transaction
-       * @tparam OrderValidator validates order of transactions
        * @param transactions collection of transactions, should be from the same
        * batch
-       * @param validator transactions collection validator with provided
-       * transaction validator and order validator
-       * @return valid batch of transactions
+       * @return valid batch of transactions or string error
        */
-      template <typename TransactionValidator,
-                typename FieldValidator = validation::FieldValidator>
-      static iroha::expected::Result<TransactionBatch, std::string>
-      createTransactionBatch(const types::SharedTxsCollectionType &transactions,
-                             const validation::TransactionsCollectionValidator<
-                                 TransactionValidator> &validator,
-                             const FieldValidator & = FieldValidator());
+      FactoryResult<std::unique_ptr<TransactionBatch>>
+      virtual createTransactionBatch(
+          const types::SharedTxsCollectionType &transactions) const = 0;
 
       /**
        * Creates transaction batch from single transaction
-       * @tparam TransactionValidator validates every single transaction
        * @param transaction is transaction being validated and used to create
        * batch
-       * @param transaction_validator transaction validation logic
-       * @return batch with single transaction
+       * @return batch with single transaction or string error
        * @note transactions in such batches may not have batch meta information
        */
-      template <typename TransactionValidator,
-                typename FieldValidator = validation::FieldValidator>
-      static iroha::expected::Result<TransactionBatch, std::string>
-      createTransactionBatch(
-          std::shared_ptr<Transaction> transaction,
-          const TransactionValidator &transaction_validator =
-              TransactionValidator(),
-          const FieldValidator &field_validator = FieldValidator());
-
-      /**
-       * Get the concatenation of reduced hashes as a single hash
-       * That kind of hash does not respect batch type
-       * @tparam Collection type of const ref iterator
-       * @param reduced_hashes
-       * @return concatenated reduced hashes
-       */
-      template <typename Collection>
-      static types::HashType calculateReducedBatchHash(
-          const Collection &reduced_hashes) {
-        std::stringstream concatenated_hash;
-        for (const auto &hash : reduced_hashes) {
-          concatenated_hash << hash.hex();
-        }
-        return types::HashType::fromHexString(concatenated_hash.str());
-      }
+      FactoryResult<std::unique_ptr<TransactionBatch>>
+      virtual createTransactionBatch(
+          std::shared_ptr<Transaction> transaction) const = 0;
     };
+
   }  // namespace interface
 }  // namespace shared_model
 

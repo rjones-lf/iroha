@@ -12,6 +12,9 @@
 
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
+#include "interfaces/iroha_internal/abstract_transport_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser.hpp"
 #include "interfaces/iroha_internal/tx_status_factory.hpp"
 #include "logger/logger.hpp"
 #include "torii/status_bus.hpp"
@@ -20,6 +23,11 @@ namespace torii {
   class CommandServiceTransportGrpc
       : public iroha::protocol::CommandService::Service {
    public:
+    using TransportFactoryType =
+        shared_model::interface::AbstractTransportFactory<
+            shared_model::interface::Transaction,
+            iroha::protocol::Transaction>;
+
     /**
      * Creates a new instance of CommandServiceTransportGrpc
      * @param command_service - to delegate logic work
@@ -33,7 +41,12 @@ namespace torii {
         std::chrono::milliseconds initial_timeout,
         std::chrono::milliseconds nonfinal_timeout,
         std::shared_ptr<shared_model::interface::TxStatusFactory>
-            status_factory);
+            status_factory,
+        std::shared_ptr<TransportFactoryType> transaction_factory,
+        std::shared_ptr<shared_model::interface::TransactionBatchParser>
+            batch_parser,
+        std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+            transaction_batch_factory);
 
     /**
      * Torii call via grpc
@@ -85,11 +98,22 @@ namespace torii {
                                   *response_writer) override;
 
    private:
+    /**
+     * Flat map transport transactions to shared model
+     */
+    shared_model::interface::types::SharedTxsCollectionType
+    deserializeTransactions(const iroha::protocol::TxList *request);
+
     std::shared_ptr<CommandService> command_service_;
     std::shared_ptr<iroha::torii::StatusBus> status_bus_;
     const std::chrono::milliseconds initial_timeout_;
     const std::chrono::milliseconds nonfinal_timeout_;
     std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory_;
+    std::shared_ptr<TransportFactoryType> transaction_factory_;
+    std::shared_ptr<shared_model::interface::TransactionBatchParser>
+        batch_parser_;
+    std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+        batch_factory_;
     logger::Logger log_;
   };
 }  // namespace torii

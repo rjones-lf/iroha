@@ -54,6 +54,7 @@ target_link_libraries(storage_init_test
     ametsuchi
     libs_common
     integration_framework_config_helper
+    shared_model_proto_backend
     )
 
 addtest(postgres_options_test postgres_options_test.cpp)
@@ -65,6 +66,13 @@ target_link_libraries(postgres_options_test
 addtest(postgres_executor_test postgres_executor_test.cpp)
 target_link_libraries(postgres_executor_test
     integration_framework
+    ametsuchi
+    libs_common
+    )
+
+addtest(postgres_query_executor_test postgres_query_executor_test.cpp)
+target_link_libraries(postgres_query_executor_test
+    ametsuchi_fixture
     ametsuchi
     libs_common
     )
