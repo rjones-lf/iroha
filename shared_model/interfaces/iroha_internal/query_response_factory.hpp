@@ -8,6 +8,9 @@
 
 #include <memory>
 
+#include "interfaces/common_objects/account.hpp"
+#include "interfaces/common_objects/asset.hpp"
+#include "interfaces/permissions.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
 #include "interfaces/query_responses/query_response.hpp"
 

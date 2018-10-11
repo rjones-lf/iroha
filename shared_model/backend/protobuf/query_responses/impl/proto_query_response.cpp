@@ -7,6 +7,15 @@
 #include "common/byteutils.hpp"
 #include "utils/variant_deserializer.hpp"
 
+using Variant =
+    shared_model::proto::QueryResponse::ProtoQueryResponseVariantType;
+template Variant::~variant();
+template Variant::variant(Variant &&);
+template void Variant::destroy_content();
+template int Variant::which() const;
+template void Variant::indicate_which(int);
+template bool Variant::using_backup() const;
+
 namespace shared_model {
   namespace proto {
 
