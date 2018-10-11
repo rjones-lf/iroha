@@ -39,7 +39,8 @@ namespace iroha {
             [this](auto block) { this->vote(block); });
       }
 
-      void YacGateImpl::vote(std::shared_ptr<shared_model::interface::Block> block) {
+      void YacGateImpl::vote(
+          std::shared_ptr<shared_model::interface::Block> block) {
         auto hash = hash_provider_->makeHash(*block);
         log_->info("vote for block ({}, {})",
                    hash.vote_hashes.proposal_hash,
@@ -86,6 +87,8 @@ namespace iroha {
                 const auto model_hash =
                     hash_provider_->toModelHash(hash.value());
                 // iterate over peers who voted for the committed block
+                // TODO [IR-1753] Akvinikym 11.10.18: add exponential backoff
+                // for each peer iteration
                 rxcpp::observable<>::iterate(commit_message.votes)
                     // allow other peers to apply commit
                     .flat_map([this, model_hash](auto vote) {
