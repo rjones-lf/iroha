@@ -3,7 +3,8 @@ target_link_libraries(blob_converter_test
     common
     )
 
-AddTest(raw_block_loader_test raw_block_loader_test.cpp)
-target_link_libraries(raw_block_loader_test
-    raw_block_loader
-    )
+# TODO(@l4l) 11/10/18 IR-1754: uncomment
+# AddTest(raw_block_loader_test raw_block_loader_test.cpp)
+# target_link_libraries(raw_block_loader_test
+#     raw_block_loader
+#     )

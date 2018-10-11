@@ -64,7 +64,7 @@ target_link_libraries(postgres_options_test
 
 addtest(postgres_executor_test postgres_executor_test.cpp)
 target_link_libraries(postgres_executor_test
-    integration_framework
+    integration_framework_config_helper
     ametsuchi
     libs_common
     )

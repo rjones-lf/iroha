@@ -14,14 +14,15 @@
 
 add_subdirectory(ametsuchi)
 add_subdirectory(consensus)
-add_subdirectory(main)
+# TODO(@l4l) 11/10/18 IR-1754: uncomment
+# add_subdirectory(main)
 add_subdirectory(ordering)
 add_subdirectory(validation)
 add_subdirectory(torii)
 add_subdirectory(network)
 add_subdirectory(model)
 add_subdirectory(simulator)
-add_subdirectory(synchronizer)
+# add_subdirectory(synchronizer)
 add_subdirectory(multi_sig_transactions)
 add_subdirectory(execution)
 add_subdirectory(pending_txs_storage)

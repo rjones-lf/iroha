@@ -21,9 +21,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(module)
 add_subdirectory(framework)
-add_subdirectory(integration)
-add_subdirectory(regression)
-add_subdirectory(system)
+# TODO(@l4l) 11/10/18 IR-1754: uncomment
+# add_subdirectory(integration)
+# add_subdirectory(regression)
+# add_subdirectory(system)
 
 if(BENCHMARKING)
   add_subdirectory(benchmark)
