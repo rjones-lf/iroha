@@ -36,7 +36,6 @@ namespace iroha {
                     std::shared_ptr<YacPeerOrderer> orderer,
                     std::shared_ptr<YacHashProvider> hash_provider,
                     std::shared_ptr<simulator::BlockCreator> block_creator,
-                    std::shared_ptr<network::BlockLoader> block_loader,
                     std::shared_ptr<consensus::ConsensusResultCache>
                         consensus_result_cache);
 
@@ -63,7 +62,6 @@ namespace iroha {
         std::shared_ptr<YacPeerOrderer> orderer_;
         std::shared_ptr<YacHashProvider> hash_provider_;
         std::shared_ptr<simulator::BlockCreator> block_creator_;
-        std::shared_ptr<network::BlockLoader> block_loader_;
 
         std::shared_ptr<consensus::ConsensusResultCache>
             consensus_result_cache_;

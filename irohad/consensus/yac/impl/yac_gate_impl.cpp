@@ -25,14 +25,12 @@ namespace iroha {
           std::shared_ptr<YacPeerOrderer> orderer,
           std::shared_ptr<YacHashProvider> hash_provider,
           std::shared_ptr<simulator::BlockCreator> block_creator,
-          std::shared_ptr<network::BlockLoader> block_loader,
           std::shared_ptr<consensus::ConsensusResultCache>
               consensus_result_cache)
           : hash_gate_(std::move(hash_gate)),
             orderer_(std::move(orderer)),
             hash_provider_(std::move(hash_provider)),
             block_creator_(std::move(block_creator)),
-            block_loader_(std::move(block_loader)),
             consensus_result_cache_(std::move(consensus_result_cache)),
             log_(logger::log("YacGate")) {
         block_creator_->on_block().subscribe([this](auto block) {
@@ -50,14 +48,16 @@ namespace iroha {
           boost::optional<std::shared_ptr<shared_model::interface::Block>>
               block,
           Round round) {
-        bool is_none = not proposal or not block;
+        // TODO IR-1717: uncomment
+        bool is_none = /*not proposal or */ not block;
         if (is_none) {
           current_block_ = boost::none;
           current_hash_ = {};
           current_hash_.vote_round = round;
           log_->debug("Agreed on nothing to commit");
         } else {
-          current_block_ = std::move(block.value());
+          current_block_ = block.value();
+          // TODO IR-1717: uncomment
           current_hash_ = hash_provider_->makeHash(
               *current_block_.value() /*, *proposal, round*/);
           log_->info("vote for (proposal: {}, block: {})",
