@@ -54,7 +54,8 @@ for i in range(tx_num):
     tx_commands = tx.payload.reduced_payload.commands
     for com in tx_commands:
         if com.HasField("create_asset"):
-            assets.append(str(com.create_asset.asset_name) + "#" + str(com.create_asset.domain_id))
+            assets.append(
+                [str(com.create_asset.asset_name) + "#" + str(com.create_asset.domain_id), com.create_asset.precision])
         if com.HasField("create_domain"):
             domains[str(com.create_domain.domain_id)] = str(com.create_domain.default_role)
             d_wr.append([str(com.create_domain.domain_id), str(com.create_domain.default_role)])
@@ -89,7 +90,11 @@ domain_writer.value_matrix = d_wr
 domain_table = domain_writer.dumps()
 
 # Assets
-asset_str = "#Assets \n " + " ,".join(assets) + "\n\n"
+asts_writer = pytablewriter.MarkdownTableWriter()
+asts_writer.table_name = "Assets"
+asts_writer.header_list = ["Asset id", "Precision:"]
+asts_writer.value_matrix = assets
+ast_table = asts_writer.dumps()
 
 # Roles
 role_writer.value_matrix = r_wr
@@ -97,6 +102,6 @@ role_domain = role_writer.dumps()
 
 with open("genesis.md", "w") as f:
     f.write(domain_table)
-    f.write(asset_str)
+    f.write(ast_table)
     f.write(role_domain)
     f.write(acc_table)
