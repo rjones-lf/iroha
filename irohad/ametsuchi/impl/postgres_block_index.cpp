@@ -132,7 +132,7 @@ namespace iroha {
           });
 
       sql_ << index_query;
-      boost::for_each(block.transactions() | boost::adaptors::indexed(0),
+      boost::for_each(indexed_txs,
                       [&](const auto &tx) {
                         const auto &creator_id = tx.value().creatorAccountId();
                         const auto &index = std::to_string(tx.index());
