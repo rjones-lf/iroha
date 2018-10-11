@@ -171,3 +171,23 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
 
   init();
 }
+
+/**
+ * @given yac gate
+ * @when voted on nothing
+ * @then cache isn't changed
+ */
+TEST_F(YacGateTest, AgreementOnNone) {
+  EXPECT_CALL(*hash_gate, vote(_, _)).Times(1);
+  EXPECT_CALL(*block_creator, on_block())
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Block>>()));
+  EXPECT_CALL(*peer_orderer, getOrdering(_))
+      .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
+
+  init();
+
+  ASSERT_EQ(block_cache->get(), nullptr);
+  gate->vote(boost::none, boost::none, {});
+  ASSERT_EQ(block_cache->get(), nullptr);
+}
