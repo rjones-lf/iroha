@@ -55,25 +55,25 @@ for i in range(tx_num):
             d_wr.append([str(com.create_domain.domain_id), str(com.create_domain.default_role)])
         if com.HasField("create_role"):
             perms = [str(name_by_val[x].name) for x in com.create_role.permissions]
-            perm_string = ', \n'.join(map(str, perms))
+            perm_string = ', \n\n'.join(map(str, perms))
             roles[str(com.create_role.role_name)] = perms
             r_wr.append([str(com.create_role.role_name), perm_string])
         if com.HasField("create_account"):
             acc_id = com.create_account.account_name + "@" + com.create_account.domain_id
             # User default role
             def_role = domains[com.create_account.domain_id]
-            perms_set = roles[def_role]
+            perms_set = set(roles[def_role])
             accounts[acc_id] = ([def_role], perms_set)
         if com.HasField("append_role"):
             acc_id = com.append_role.account_id
             role = com.append_role.role_name
             accounts[acc_id][0].append(role)
-            accounts[acc_id][1].extend(roles[role])
+            accounts[acc_id][1].update(roles[role])
 
 for acc in accounts.keys():
-    str1 = ", \n".join(list(accounts[acc][0]))
+    str1 = ", \n\n".join(list(accounts[acc][0]))
     perms_sort = sorted(accounts[acc][1])
-    ac_wr.append([acc, str1, ", \n".join(perms_sort)])
+    ac_wr.append([acc, str1, ", \n\n".join(perms_sort)])
 
 # Account
 acc_writer.value_matrix = ac_wr
@@ -84,7 +84,7 @@ domain_writer.value_matrix = d_wr
 domain_table = domain_writer.dumps()
 
 # Assets
-asset_str = "#Assets \n " + " ,".join(assets) + "\n"
+asset_str = "#Assets \n " + " ,".join(assets) + "\n\n"
 
 # Roles
 role_writer.value_matrix = r_wr
