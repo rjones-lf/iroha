@@ -2,6 +2,11 @@ import sys
 
 sys.path.insert(0, 'build/shared_model/bindings')
 
+'''
+This script will parse Iroha block and form a markdown file with accounts, assets, domains, roles tables.
+Markdown file will be saved locally in the same folder  
+'''
+
 import block_pb2
 import primitive_pb2
 from google.protobuf import json_format
