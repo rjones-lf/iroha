@@ -40,6 +40,20 @@ bool validate_config(const char *flag_name, std::string const &path) {
 
 /**
  * Gflag validator.
+ * Validator for the blockstrore strategy.
+ * strategy is overwrite, continue or abort.
+ * @param flag_name - flag name. Must be 'keypair_name' in this case
+ * @param path      - file name. Should be path to the keypair files
+ * @return true if argument is valid
+ */
+bool validate_blockstore_strategy(const char *flag_name,
+                                  std::string const &strategy) {
+  return strategy == "overwrite" or strategy == "continue"
+      or strategy == "abort";
+}
+
+/**
+ * Gflag validator.
  * Validator for the keypair files path input argument.
  * Path is considered to be valid if it is not empty.
  * @param flag_name - flag name. Must be 'keypair_name' in this case
@@ -76,7 +90,14 @@ DEFINE_validator(keypair_name, &validate_keypair_name);
 /**
  * Creating boolean flag for overwriting already existing block storage
  */
-DEFINE_bool(overwrite_ledger, false, "Overwrite ledger data if existing");
+DEFINE_string(blockstore_strategy,
+              "abort",
+              "Strategy for applying genesis block to block store. Can be "
+              "overwrite, continue or abort");
+/**
+ * Registering validator for the blockstore strategy.
+ */
+DEFINE_validator(blockstore_strategy, &validate_blockstore_strategy);
 
 static bool validateVerbosity(const char *flagname, int32_t val) {
   if (val >= 0 && val <= 6)
@@ -146,7 +167,8 @@ int main(int argc, char *argv[]) {
   }
 
   // Check if genesis block path was specified
-  if (not FLAGS_genesis_block.empty()) {
+  if (not FLAGS_genesis_block.empty()
+      and FLAGS_blockstore_strategy != "continue") {
     // If it is so, read genesis block and store it to iroha storage
     iroha::main::BlockLoader loader;
     auto file = loader.loadFile(FLAGS_genesis_block);
@@ -164,16 +186,15 @@ int main(int argc, char *argv[]) {
         irohad.storage->getBlockQuery()->getTopBlockHeight() != 0;
 
     // Check if force flag to overwrite ledger is specified
-    if (ledger_not_empty && not FLAGS_overwrite_ledger) {
+    if (ledger_not_empty && FLAGS_blockstore_strategy == "abort") {
       log->error(
-          "Block store not empty. Use '--overwrite_ledger' to force "
-          "overwrite it. Shutting down...");
+          "Block store not empty. Use '--blockstore_strategy=overwrite' to "
+          "force overwrite it. Shutting down...");
       return EXIT_FAILURE;
     }
 
     // TODO igor-egorov, 2018-08-10, IR-1569, create system test for
     // --overwrite-ledger option
-
     // clear previous storage if any
     irohad.dropStorage();
 

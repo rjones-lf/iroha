@@ -296,7 +296,7 @@ TEST_F(IrohadTest, SendQuery) {
  * transactions
  * @given an Iroha with some transactions commited ontop of the genesis
  * block
- * @when the Iroha is restarted with --overwrite-ledger flag
+ * @when the Iroha is restarted with --blockstore_strategy=overwrite flag
  * @then the Iroha started with single genesis block in storage
  *  AND the Iroha accepts and able to commit new transactions
  */
@@ -307,7 +307,7 @@ TEST_F(IrohadTest, RestartWithOverwriteLedger) {
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 
-  SCOPED_TRACE("From restart with --overwrite-ledger flag test");
+  SCOPED_TRACE("From restart with --blockstore_strategy=overwrite flag test");
   sendDefaultTxAndCheck(key_pair.get());
 
   iroha_process_->terminate();
@@ -315,11 +315,11 @@ TEST_F(IrohadTest, RestartWithOverwriteLedger) {
   launchIroha(config_copy_,
               path_genesis_.string(),
               path_keypair_.string(),
-              std::string("--overwrite-ledger"));
+              std::string("--blockstore_strategy=overwrite"));
 
   ASSERT_EQ(getBlockCount(), 1);
 
-  SCOPED_TRACE("From restart with --overwrite-ledger flag test");
+  SCOPED_TRACE("From restart with --blockstore_strategy=overwrite flag test");
   sendDefaultTxAndCheck(key_pair.get());
 }
 
@@ -328,12 +328,15 @@ TEST_F(IrohadTest, RestartWithOverwriteLedger) {
  * restart
  * @given an Iroha with some transactions commited ontop of the genesis
  * block
- * @when the Iroha is restarted without --overwrite-ledger flag
+ * @when the Iroha is restarted without ---blockstore_strategy=continue flag
  * @then the state is successfully restored
  *  AND the Iroha accepts and able to commit new transactions
  */
 TEST_F(IrohadTest, RestartWithoutResetting) {
-  launchIroha();
+  launchIroha(config_copy_,
+              path_genesis_.string(),
+              path_keypair_.string(),
+              std::string("--blockstore_strategy=continue"));
 
   auto key_manager = iroha::KeysManagerImpl(kAdminId, path_example_);
   auto key_pair = key_manager.loadKeys();
@@ -346,7 +349,10 @@ TEST_F(IrohadTest, RestartWithoutResetting) {
 
   iroha_process_->terminate();
 
-  launchIroha(config_copy_, {}, path_keypair_.string(), {});
+  launchIroha(config_copy_,
+              path_genesis_.string(),
+              path_keypair_.string(),
+              std::string("--blockstore_strategy=continue"));
 
   ASSERT_EQ(getBlockCount(), height);
 
