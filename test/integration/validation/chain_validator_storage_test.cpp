@@ -44,8 +44,8 @@ namespace iroha {
     }
 
     /// Generate a dummy transaction with create role command
-    auto dummyTx() {
-      return completeTx(baseTx().createRole("role", {}));
+    auto dummyTx(std::size_t i) {
+      return completeTx(baseTx().createRole("role" + std::to_string(i), {}));
     }
 
     /// Create block unsigned wrapper with given transactions, height, prev hash
@@ -126,7 +126,7 @@ namespace iroha {
                                     .signAndAddSignature(keys.at(1))
                                     .signAndAddSignature(keys.at(2)));
 
-    auto block3 = completeBlock(baseBlock({dummyTx()}, 3, block2.hash())
+    auto block3 = completeBlock(baseBlock({dummyTx(3)}, 3, block2.hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1))
                                     .signAndAddSignature(keys.at(2))
@@ -145,12 +145,12 @@ namespace iroha {
   TEST_F(ChainValidatorStorageTest, NoPeerAdded) {
     auto block1 = generateAndApplyFirstBlock();
 
-    auto block2 = completeBlock(baseBlock({dummyTx()}, 2, block1.hash())
+    auto block2 = completeBlock(baseBlock({dummyTx(2)}, 2, block1.hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1))
                                     .signAndAddSignature(keys.at(2)));
 
-    auto block3 = completeBlock(baseBlock({dummyTx()}, 3, block2.hash())
+    auto block3 = completeBlock(baseBlock({dummyTx(3)}, 3, block2.hash())
                                     .signAndAddSignature(keys.at(0))
                                     .signAndAddSignature(keys.at(1))
                                     .signAndAddSignature(keys.at(2))
