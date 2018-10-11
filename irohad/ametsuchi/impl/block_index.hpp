@@ -36,7 +36,7 @@ namespace iroha {
       virtual ~BlockIndex() = default;
 
       /**
-       * Add block to index
+       * Create necessary indexes for block
        * @param block to be indexed
        */
       virtual void index(const shared_model::interface::Block &) = 0;

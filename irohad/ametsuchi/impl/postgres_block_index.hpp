@@ -31,24 +31,21 @@ namespace iroha {
      public:
       explicit PostgresBlockIndex(soci::session &sql);
 
+      /**
+       * Create several indices for block. Namely:
+       * transaction hash -> block, where this transaction is stored
+       * transaction creator -> block where his transaction is located
+       *
+       * Additionally, for each Transfer Asset command:
+       *   1. (account, asset) -> block for each:
+       *     a. creator of the transaction
+       *     b. source account
+       *     c. destination account
+       *   2. account -> block for source and destination accounts
+       */
       void index(const shared_model::interface::Block &block) override;
 
      private:
-      /**
-       *
-       * @param account_id of transaction creator
-       * @param height of block
-       */
-
-      /**
-       * (where
-       * tx with certain asset is placed in the block)
-       * @param account_id of transaction creator
-       * @param height of block
-       * @param index of transaction in the block
-       * @param commands in the transaction
-       */
-
       soci::session &sql_;
       logger::Logger log_;
     };

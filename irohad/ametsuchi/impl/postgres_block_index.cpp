@@ -6,24 +6,32 @@
 #include "ametsuchi/impl/postgres_block_index.hpp"
 
 #include <numeric>
-#include <unordered_set>
 
 #include <boost/format.hpp>
-#include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indexed.hpp>
-#include <boost/range/algorithm/for_each.hpp>
-#include <boost/range/numeric.hpp>
 #include "common/types.hpp"
 #include "common/visitor.hpp"
-#include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
 namespace {
+  // Return transfer asset if command contains it
+  boost::optional<const shared_model::interface::TransferAsset &>
+  getTransferAsset(const shared_model::interface::Command &cmd) noexcept {
+    using ReturnType =
+        boost::optional<const shared_model::interface::TransferAsset &>;
+    return iroha::visit_in_place(
+        cmd.get(),
+        [](const shared_model::interface::TransferAsset &c) {
+          return ReturnType(c);
+        },
+        [&](const auto &command) -> ReturnType { return boost::none; });
+  }
+
   // tx hash -> block where hash is stored
-  std::string makeHashIndexQuery(
+  std::string makeHashIndex(
       const shared_model::interface::types::HashType &hash,
       const std::string &height) {
     boost::format base(
@@ -34,7 +42,7 @@ namespace {
 
   // make index account_id:height -> list of tx indexes
   // (where tx is placed in the block)
-  std::string makeCreatorHeightIndexQuery(
+  std::string makeCreatorHeightIndex(
       const shared_model::interface::types::AccountIdType creator,
       const std::string &height,
       const std::string &tx_index) {
@@ -45,19 +53,19 @@ namespace {
   }
 
   // Make index account_id -> list of blocks where his txs exist
-  std::string makeAccountHeightIndexQuery(const std::string &account_id,
-                                          const std::string &height) {
+  std::string makeAccountHeightIndex(const std::string &account_id,
+                                     const std::string &height) {
     boost::format base(
         "INSERT INTO height_by_account_set(account_id, "
         "height) VALUES "
         "('%s', '%s');");
-
     return (base % account_id % height).str();
   }
 
   // Collect all assets belonging to creator, sender, and receiver
   // to make account_id:height:asset_id -> list of tx indexes
-  std::string makeAccountAssetIndexQuery(
+  // for transfer asset in command
+  std::string makeAccountAssetIndex(
       const shared_model::interface::types::AccountIdType &account_id,
       const std::string &height,
       const std::string &index,
@@ -67,29 +75,27 @@ namespace {
         commands.end(),
         std::string{},
         [&](auto query, const auto &cmd) {
-          iroha::visit_in_place(
-              cmd.get(),
-              [&](const shared_model::interface::TransferAsset &command) {
-                query +=
-                    makeAccountHeightIndexQuery(command.srcAccountId(), height);
-                query += makeAccountHeightIndexQuery(command.destAccountId(),
-                                                     height);
+          auto transfer = getTransferAsset(cmd);
+          if (not transfer) {
+            return query;
+          }
+          const auto &src_id = transfer.value().srcAccountId();
+          const auto &dest_id = transfer.value().destAccountId();
 
-                auto ids = {account_id,
-                            command.srcAccountId(),
-                            command.destAccountId()};
-                auto &asset_id = command.assetId();
-                // flat map accounts to unindexed keys
-                boost::for_each(ids, [&](const auto &id) {
-                  boost::format base(
-                      "INSERT INTO index_by_id_height_asset(id, "
-                      "height, asset_id, "
-                      "index) "
-                      "VALUES ('%s', '%s', '%s', '%s');");
-                  query += (base % id % height % asset_id % index).str();
-                });
-              },
-              [&](const auto &command) {});
+          query += makeAccountHeightIndex(src_id, height);
+          query += makeAccountHeightIndex(dest_id, height);
+
+          const auto ids = {account_id, src_id, dest_id};
+          const auto &asset_id = transfer.value().assetId();
+          // flat map accounts to unindexed keys
+          for (const auto &id : ids) {
+            boost::format base(
+                "INSERT INTO index_by_id_height_asset(id, "
+                "height, asset_id, "
+                "index) "
+                "VALUES ('%s', '%s', '%s', '%s');");
+            query += (base % id % height % asset_id % index).str();
+          }
           return query;
         });
   }
@@ -112,11 +118,11 @@ namespace iroha {
             const auto &creator_id = tx.value().creatorAccountId();
             const auto index = std::to_string(tx.index());
 
-            query += makeAccountHeightIndexQuery(creator_id, height);
-            query += makeAccountAssetIndexQuery(
+            query += makeAccountHeightIndex(creator_id, height);
+            query += makeAccountAssetIndex(
                 creator_id, height, index, tx.value().commands());
-            query += makeHashIndexQuery(tx.value().hash(), height);
-            query += makeCreatorHeightIndexQuery(creator_id, height, index);
+            query += makeHashIndex(tx.value().hash(), height);
+            query += makeCreatorHeightIndex(creator_id, height, index);
             return query;
           });
       sql_ << index_query;
