@@ -7,3 +7,4 @@
 !permissions/*
 !prepare.sh
 !README.md
+!genesis_parser.py
