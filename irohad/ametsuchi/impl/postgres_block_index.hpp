@@ -35,27 +35,19 @@ namespace iroha {
 
      private:
       /**
-       * Make index account_id -> list of blocks where his txs exist
+       *
        * @param account_id of transaction creator
        * @param height of block
        */
-      auto indexAccountIdHeight(const std::string &account_id,
-                                const std::string &height);
 
       /**
-       * Collect all assets belonging to creator, sender, and receiver
-       * to make account_id:height:asset_id -> list of tx indexes (where
+       * (where
        * tx with certain asset is placed in the block)
        * @param account_id of transaction creator
        * @param height of block
        * @param index of transaction in the block
        * @param commands in the transaction
        */
-      auto indexAccountAssets(
-          const std::string &account_id,
-          const std::string &height,
-          const std::string &index,
-          const shared_model::interface::Transaction::CommandsType &commands);
 
       soci::session &sql_;
       logger::Logger log_;

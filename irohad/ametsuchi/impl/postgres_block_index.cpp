@@ -43,78 +43,62 @@ namespace {
         "('%s', '%s', '%s');");
     return (base % creator % height % tx_index).str();
   }
+
+  // Make index account_id -> list of blocks where his txs exist
+  std::string makeAccountHeightIndexQuery(const std::string &account_id,
+                                          const std::string &height) {
+    boost::format base(
+        "INSERT INTO height_by_account_set(account_id, "
+        "height) VALUES "
+        "('%s', '%s');");
+
+    return (base % account_id % height).str();
+  }
+
+  // Collect all assets belonging to creator, sender, and receiver
+  // to make account_id:height:asset_id -> list of tx indexes
+  std::string makeAccountAssetIndexQuery(
+      const shared_model::interface::types::AccountIdType &account_id,
+      const std::string &height,
+      const std::string &index,
+      const shared_model::interface::Transaction::CommandsType &commands) {
+    return std::accumulate(
+        commands.begin(),
+        commands.end(),
+        std::string{},
+        [&](auto query, const auto &cmd) {
+          iroha::visit_in_place(
+              cmd.get(),
+              [&](const shared_model::interface::TransferAsset &command) {
+                query +=
+                    makeAccountHeightIndexQuery(command.srcAccountId(), height);
+                query += makeAccountHeightIndexQuery(command.destAccountId(),
+                                                     height);
+
+                auto ids = {account_id,
+                            command.srcAccountId(),
+                            command.destAccountId()};
+                auto &asset_id = command.assetId();
+                // flat map accounts to unindexed keys
+                boost::for_each(ids, [&](const auto &id) {
+                  boost::format base(
+                      "INSERT INTO index_by_id_height_asset(id, "
+                      "height, asset_id, "
+                      "index) "
+                      "VALUES ('%s', '%s', '%s', '%s');");
+                  query += (base % id % height % asset_id % index).str();
+                });
+              },
+              [&](const auto &command) {});
+          return query;
+        });
+  }
 }  // namespace
 
 namespace iroha {
   namespace ametsuchi {
-
-    bool execute(soci::statement &st) {
-      st.define_and_bind();
-      try {
-        st.execute(true);
-        return true;
-      } catch (const std::exception &e) {
-        return false;
-      }
-    }
-
     PostgresBlockIndex::PostgresBlockIndex(soci::session &sql)
         : sql_(sql), log_(logger::log("PostgresBlockIndex")) {}
-
-    auto PostgresBlockIndex::indexAccountIdHeight(const std::string &account_id,
-                                                  const std::string &height) {
-      soci::statement st =
-          (sql_.prepare << "INSERT INTO height_by_account_set(account_id, "
-                           "height) VALUES "
-                           "(:id, :height)",
-           soci::use(account_id),
-           soci::use(height));
-      return execute(st);
-    }
-
-    auto PostgresBlockIndex::indexAccountAssets(
-        const std::string &account_id,
-        const std::string &height,
-        const std::string &index,
-        const shared_model::interface::Transaction::CommandsType &commands) {
-      // flat map abstract commands to transfers
-
-      return std::accumulate(
-          commands.begin(),
-          commands.end(),
-          true,
-          [&](auto &status, const auto &cmd) {
-            return visit_in_place(
-                cmd.get(),
-                [&](const shared_model::interface::TransferAsset &command) {
-                  status &=
-                      this->indexAccountIdHeight(command.srcAccountId(), height)
-                      & this->indexAccountIdHeight(command.destAccountId(),
-                                                   height);
-
-                  auto ids = {account_id,
-                              command.srcAccountId(),
-                              command.destAccountId()};
-                  auto &asset_id = command.assetId();
-                  // flat map accounts to unindexed keys
-                  boost::for_each(ids, [&](const auto &id) {
-                    soci::statement st =
-                        (sql_.prepare
-                             << "INSERT INTO index_by_id_height_asset(id, "
-                                "height, asset_id, "
-                                "index) "
-                                "VALUES (:id, :height, :asset_id, :index)",
-                         soci::use(id),
-                         soci::use(height),
-                         soci::use(asset_id),
-                         soci::use(index));
-                    status &= execute(st);
-                  });
-                  return status;
-                },
-                [&](const auto &command) { return true; });
-          });
-    }
 
     void PostgresBlockIndex::index(
         const shared_model::interface::Block &block) {
@@ -126,22 +110,16 @@ namespace iroha {
           std::string{},
           [&height](auto query, const auto &tx) {
             const auto &creator_id = tx.value().creatorAccountId();
-            const auto &index = std::to_string(tx.index());
-            return query + makeHashIndexQuery(tx.value().hash(), height)
-                + makeCreatorHeightIndexQuery(creator_id, height, index);
+            const auto index = std::to_string(tx.index());
+
+            query += makeAccountHeightIndexQuery(creator_id, height);
+            query += makeAccountAssetIndexQuery(
+                creator_id, height, index, tx.value().commands());
+            query += makeHashIndexQuery(tx.value().hash(), height);
+            query += makeCreatorHeightIndexQuery(creator_id, height, index);
+            return query;
           });
-
       sql_ << index_query;
-      boost::for_each(indexed_txs,
-                      [&](const auto &tx) {
-                        const auto &creator_id = tx.value().creatorAccountId();
-                        const auto &index = std::to_string(tx.index());
-
-                        this->indexAccountIdHeight(creator_id, height);
-
-                        this->indexAccountAssets(
-                            creator_id, height, index, tx.value().commands());
-                      });
     }
   }  // namespace ametsuchi
 }  // namespace iroha
