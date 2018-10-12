@@ -67,8 +67,10 @@ namespace integration_framework {
 
   void IrohaInstance::run() {
     instance_->run().match(
-        [](const auto &) {},
-        [](const auto &error) { BOOST_ASSERT_MSG(false, error.error); });
+        [](const Irohad::RunResult::ValueType &) {},
+        [](const Irohad::RunResult::ErrorType &error) {
+          BOOST_THROW_EXCEPTION(std::runtime_error(error.error));
+        });
   }
 
   std::shared_ptr<TestIrohad> &IrohaInstance::getIrohaInstance() {

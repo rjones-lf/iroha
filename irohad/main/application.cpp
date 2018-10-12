@@ -412,7 +412,7 @@ Irohad::RunResult Irohad::run() {
           [&](const auto &port) -> RunResult {
             log_->info("Internal server bound on port {}", port.value);
             log_->info("===> iroha initialized");
-            return {}; //RunResult(Resultexpected::Value<void>{});
+            return {};
           },
           [&](const expected::Error<std::string> &e) -> RunResult {
             log_->error(e.error);
