@@ -38,6 +38,7 @@ namespace integration_framework {
                bool is_mst_supported)
         : Irohad(block_store_dir,
                  pg_conn,
+                 "127.0.0.1",
                  torii_port,
                  internal_port,
                  max_proposal_size,
