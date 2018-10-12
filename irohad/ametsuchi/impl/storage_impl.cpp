@@ -154,11 +154,7 @@ namespace iroha {
       storageResult.match(
           [&](expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>
                   &storage) {
-            inserted =
-                storage.value->apply(block,
-                                     [](const auto &current_block,
-                                        auto &query,
-                                        const auto &top_hash) { return true; });
+            inserted = storage.value->apply(block);
             log_->info("block inserted: {}", inserted);
             commit(std::move(storage.value));
           },
@@ -179,10 +175,7 @@ namespace iroha {
           [&](iroha::expected::Value<std::unique_ptr<MutableStorage>>
                   &mutableStorage) {
             std::for_each(blocks.begin(), blocks.end(), [&](auto block) {
-              inserted &= mutableStorage.value->apply(
-                  *block, [](const auto &block, auto &query, const auto &hash) {
-                    return true;
-                  });
+              inserted &= mutableStorage.value->apply(*block);
             });
             commit(std::move(mutableStorage.value));
           },

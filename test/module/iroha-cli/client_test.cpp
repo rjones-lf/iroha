@@ -31,9 +31,12 @@
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 
+#include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 
 using ::testing::_;
 using ::testing::A;
@@ -119,6 +122,19 @@ class ClientServerTest : public testing::Test {
     //----------- Server run ----------------
     auto status_factory =
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        shared_model::interface::Transaction>>
+        transaction_validator = std::make_unique<
+            shared_model::validation::DefaultUnsignedTransactionValidator>();
+    auto transaction_factory =
+        std::make_shared<shared_model::proto::ProtoTransportFactory<
+            shared_model::interface::Transaction,
+            shared_model::proto::Transaction>>(
+            std::move(transaction_validator));
+    auto batch_parser =
+        std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
+    auto batch_factory = std::make_shared<
+        shared_model::interface::TransactionBatchFactoryImpl>();
     runner
         ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
             std::make_shared<torii::CommandServiceImpl>(
@@ -126,7 +142,10 @@ class ClientServerTest : public testing::Test {
             status_bus,
             initial_timeout,
             nonfinal_timeout,
-            status_factory))
+            status_factory,
+            transaction_factory,
+            batch_parser,
+            batch_factory))
         .append(std::make_unique<torii::QueryService>(qpi))
         .run()
         .match(

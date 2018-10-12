@@ -379,6 +379,7 @@ namespace integration_framework {
     log_->info("done");
     if (iroha_instance_->instance_ and iroha_instance_->instance_->storage) {
       iroha_instance_->instance_->storage->dropStorage();
+      boost::filesystem::remove_all(iroha_instance_->block_store_dir_);
     }
   }
 }  // namespace integration_framework

@@ -119,11 +119,13 @@ class Irohad {
 
   virtual void initCryptoProvider();
 
+  virtual void initBatchParser();
+
   virtual void initValidators();
 
   virtual void initNetworkClient();
 
-  virtual void initBatchFactory();
+  virtual void initFactories();
 
   virtual void initOrderingGate();
 
@@ -169,6 +171,9 @@ class Irohad {
   // crypto provider
   std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer_;
 
+  // batch parser
+  std::shared_ptr<shared_model::interface::TransactionBatchParser> batch_parser;
+
   // validators
   std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;
   std::shared_ptr<iroha::validation::ChainValidator> chain_validator;
@@ -209,6 +214,12 @@ class Irohad {
 
   // pcs
   std::shared_ptr<iroha::network::PeerCommunicationService> pcs;
+
+  // transaction factory
+  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::Transaction,
+      iroha::protocol::Transaction>>
+      transaction_factory;
 
   // mst
   std::shared_ptr<iroha::MstProcessor> mst_processor;

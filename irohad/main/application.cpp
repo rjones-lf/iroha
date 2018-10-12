@@ -4,14 +4,17 @@
  */
 
 #include "main/application.hpp"
+
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
+#include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/mst_processor_stub.hpp"
@@ -69,9 +72,10 @@ void Irohad::init() {
   restoreWsv();
 
   initCryptoProvider();
+  initBatchParser();
   initValidators();
   initNetworkClient();
-  initBatchFactory();
+  initFactories();
   initOrderingGate();
   initSimulator();
   initConsensusCache();
@@ -144,6 +148,13 @@ void Irohad::initCryptoProvider() {
   log_->info("[Init] => crypto provider");
 }
 
+void Irohad::initBatchParser() {
+  batch_parser =
+      std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
+
+  log_->info("[Init] => transaction batch parser");
+}
+
 /**
  * Initializing validators
  */
@@ -151,7 +162,7 @@ void Irohad::initValidators() {
   auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
       shared_model::validation::DefaultProposalValidator>>();
   stateful_validator =
-      std::make_shared<StatefulValidatorImpl>(std::move(factory));
+      std::make_shared<StatefulValidatorImpl>(std::move(factory), batch_parser);
   chain_validator = std::make_shared<ChainValidatorImpl>(
       std::make_shared<consensus::yac::SupermajorityCheckerImpl>());
 
@@ -166,11 +177,19 @@ void Irohad::initNetworkClient() {
       std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
 }
 
-void Irohad::initBatchFactory() {
+void Irohad::initFactories() {
   transaction_batch_factory_ =
       std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
-
-  log_->info("[Init] => transaction batch factory");
+  std::unique_ptr<shared_model::validation::AbstractValidator<
+      shared_model::interface::Transaction>>
+      transaction_validator =
+          std::make_unique<shared_model::validation::
+                               DefaultOptionalSignedTransactionValidator>();
+  transaction_factory =
+      std::make_shared<shared_model::proto::ProtoTransportFactory<
+          shared_model::interface::Transaction,
+          shared_model::proto::Transaction>>(std::move(transaction_validator));
+  log_->info("[Init] => factories");
 }
 
 /**
@@ -283,7 +302,11 @@ void Irohad::initStatusBus() {
 void Irohad::initMstProcessor() {
   if (is_mst_supported_) {
     mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
-        async_call_, common_objects_factory_);
+        async_call_,
+        common_objects_factory_,
+        transaction_factory,
+        batch_parser,
+        transaction_batch_factory_);
     auto mst_completer = std::make_shared<DefaultCompleter>();
     auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
@@ -327,7 +350,10 @@ void Irohad::initTransactionCommandService() {
           status_bus_,
           std::chrono::seconds(1),
           2 * proposal_delay_,
-          status_factory);
+          status_factory,
+          transaction_factory,
+          batch_parser,
+          transaction_batch_factory_);
 
   log_->info("[Init] => command service");
 }
