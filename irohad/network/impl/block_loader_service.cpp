@@ -79,6 +79,8 @@ grpc::Status BlockLoaderService::retrieveBlock(
 
   // cache missed: notify and try to fetch the block from block storage itself
   auto blocks = block_query_factory_->createBlockQuery() |
+      // TODO [IR-1757] Akvinikym 12.10.18: use block height to get one block
+      // instead of the whole chain
       [](const auto &block_query) { return block_query->getBlocksFrom(1); };
   auto found_block = std::find_if(
       std::begin(blocks), std::end(blocks), [&hash](const auto &block) {
