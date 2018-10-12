@@ -20,11 +20,12 @@ class YacBlockStorageTest : public ::testing::Test {
  public:
   YacHash hash;
   PeersNumberType number_of_peers;
-  YacBlockStorage storage = YacBlockStorage(YacHash("proposal", "commit"), 4);
+  YacBlockStorage storage = YacBlockStorage(
+      YacHash(iroha::consensus::Round{1, 1}, "proposal", "commit"), 4);
   std::vector<VoteMessage> valid_votes;
 
   void SetUp() override {
-    hash = YacHash("proposal", "commit");
+    hash = YacHash(iroha::consensus::Round{1, 1}, "proposal", "commit");
     number_of_peers = 4;
     storage = YacBlockStorage(hash, number_of_peers);
     valid_votes = {create_vote(hash, "one"),

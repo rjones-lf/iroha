@@ -37,7 +37,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
 
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
-  YacHash my_hash("proposal_hash", "block_hash");
+  YacHash my_hash(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
   yac->vote(my_hash, my_order.value());
 
   for (auto i = 0; i < 3; ++i) {
@@ -57,7 +57,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
 
   initYac(my_order.value());
 
-  YacHash my_hash("proposal_hash", "block_hash");
+  YacHash my_hash(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
   auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
   wrapper.subscribe([my_hash](auto val) {
     ASSERT_EQ(my_hash, boost::get<CommitMessage>(val).votes.at(0).hash);
@@ -100,7 +100,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
 
   initYac(my_order.value());
 
-  YacHash my_hash("proposal_hash", "block_hash");
+  YacHash my_hash(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
   auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
   wrapper.subscribe([my_hash](auto val) {
     ASSERT_EQ(my_hash, boost::get<CommitMessage>(val).votes.at(0).hash);
@@ -144,7 +144,7 @@ TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
 
   EXPECT_CALL(*crypto, verify(_)).Times(2).WillRepeatedly(Return(true));
 
-  YacHash my_hash("proposal_hash", "block_hash");
+  YacHash my_hash(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
 
   auto wrapper = make_test_subscriber<CallExact>(yac->onOutcome(), 1);
   wrapper.subscribe([my_hash](auto val) {
@@ -180,7 +180,7 @@ TEST_F(YacTest, ValidCaseWhenVoteAfterCommit) {
 
   EXPECT_CALL(*crypto, verify(_)).Times(1).WillRepeatedly(Return(true));
 
-  YacHash my_hash("proposal_hash", "block_hash");
+  YacHash my_hash(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
 
   std::vector<VoteMessage> votes;
 

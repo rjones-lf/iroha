@@ -31,7 +31,7 @@ RUN set -e; \
         libpcre3-dev autoconf bison  \
         # other
         wget curl file gdb gdbserver ccache \
-        gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip zip; \
+        gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip vim zip; \
     apt-get -y clean
 
 # install cmake 3.11.4
@@ -212,7 +212,7 @@ RUN set -e; \
 ENV SONAR_CLI_VERSION=3.0.3.778
 RUN set -e; \
     mkdir -p /opt/sonar; \
-    curl -L -o /tmp/sonar.zip https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_CLI_VERSION}-linux.zip; \
+    curl -L -o /tmp/sonar.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_CLI_VERSION}-linux.zip; \
     unzip -o -d /tmp/sonar-scanner /tmp/sonar.zip; \
     mv /tmp/sonar-scanner/sonar-scanner-${SONAR_CLI_VERSION}-linux /opt/sonar/scanner; \
     ln -s -f /opt/sonar/scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner; \

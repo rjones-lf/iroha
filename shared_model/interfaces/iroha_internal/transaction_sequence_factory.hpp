@@ -9,15 +9,14 @@
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 
 #include "common/result.hpp"
-#include "validators/field_validator.hpp"
-#include "validators/transactions_collection/transactions_collection_validator.hpp"
+#include "validators/default_validator.hpp"
 
 namespace shared_model {
   namespace interface {
 
     /**
-     * Provides a method that creates a transaction sequence from  a collection
-     * of transactions. Field validator is used by default
+     * Provides a method that creates a transaction sequence from a collection
+     * of transactions
      */
     class TransactionSequenceFactory {
      public:
@@ -37,6 +36,7 @@ namespace shared_model {
               TransactionValidator> &validator,
           const FieldValidator &field_validator = FieldValidator());
     };
+
   }  // namespace interface
 }  // namespace shared_model
 

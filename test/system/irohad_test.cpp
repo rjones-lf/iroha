@@ -68,7 +68,16 @@ class IrohadTest : public AcceptanceFixture {
 
   void launchIroha(const std::string &parameters) {
     iroha_process_.emplace(irohad_executable.string() + parameters);
-    std::this_thread::sleep_for(kTimeout);
+    auto channel = grpc::CreateChannel(kAddress + ":" + std::to_string(kPort),
+                                       grpc::InsecureChannelCredentials());
+    auto state = channel->GetState(true);
+    auto deadline = std::chrono::system_clock::now() + kTimeout;
+    while (state != grpc_connectivity_state::GRPC_CHANNEL_READY
+           and deadline > std::chrono::system_clock::now()) {
+      channel->WaitForStateChange(state, deadline);
+      state = channel->GetState(true);
+    }
+    ASSERT_EQ(state, grpc_connectivity_state::GRPC_CHANNEL_READY);
     ASSERT_TRUE(iroha_process_->running());
   }
 
@@ -98,7 +107,7 @@ class IrohadTest : public AcceptanceFixture {
       iroha_process_->terminate();
     }
 
-    iroha::remove_dir_contents(blockstore_path_);
+    boost::filesystem::remove_all(blockstore_path_);
     dropPostgres();
     boost::filesystem::remove(config_copy_);
   }
@@ -132,8 +141,8 @@ class IrohadTest : public AcceptanceFixture {
     iroha::protocol::TxStatusRequest tx_request;
     iroha::protocol::ToriiResponse torii_response;
 
-    auto tx = complete(baseTx(kAdminId).setAccountQuorum(kAdminId, 1),
-                       key_pair);
+    auto tx =
+        complete(baseTx(kAdminId).setAccountQuorum(kAdminId, 1), key_pair);
     tx_request.set_tx_hash(shared_model::crypto::toBinaryString(tx.hash()));
 
     auto client = torii::CommandSyncClient(kAddress, kPort);
@@ -157,8 +166,7 @@ class IrohadTest : public AcceptanceFixture {
    * OR until limit of attempts is exceeded.
    * @param key_pair Key pair for signing transaction
    */
-  void sendDefaultTxAndCheck(
-      const shared_model::crypto::Keypair &key_pair) {
+  void sendDefaultTxAndCheck(const shared_model::crypto::Keypair &key_pair) {
     iroha::protocol::ToriiResponse torii_response;
     torii_response = sendDefaultTx(key_pair);
     ASSERT_EQ(torii_response.tx_status(), iroha::protocol::TxStatus::COMMITTED);
@@ -200,7 +208,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
  public:
   boost::filesystem::path irohad_executable;
-  const std::chrono::milliseconds kTimeout = std::chrono::seconds(1);
+  const std::chrono::milliseconds kTimeout = 30s;
   const std::string kAddress;
   const uint16_t kPort;
 

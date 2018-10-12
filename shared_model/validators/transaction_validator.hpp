@@ -227,7 +227,8 @@ namespace shared_model {
      * @tparam CommandValidator
      */
     template <typename FieldValidator, typename CommandValidator>
-    class TransactionValidator {
+    class TransactionValidator
+        : public AbstractValidator<interface::Transaction> {
      private:
       template <typename CreatedTimeValidator>
       Answer validateImpl(const interface::Transaction &tx,
@@ -286,7 +287,7 @@ namespace shared_model {
        * @param tx - transaction to validate
        * @return Answer containing found error if any
        */
-      Answer validate(const interface::Transaction &tx) const {
+      Answer validate(const interface::Transaction &tx) const override {
         return validateImpl(tx, [this](auto &reason, auto time) {
           field_validator_.validateCreatedTime(reason, time);
         });

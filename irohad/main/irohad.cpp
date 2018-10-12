@@ -78,9 +78,24 @@ DEFINE_validator(keypair_name, &validate_keypair_name);
  */
 DEFINE_bool(overwrite_ledger, false, "Overwrite ledger data if existing");
 
+static bool validateVerbosity(const char *flagname, int32_t val) {
+  if (val >= 0 && val <= 6)
+    return true;
+
+  std::cout << "Invalid value for " << flagname << ": should be in range [0, 6]"
+            << std::endl;
+  return false;
+}
+
+/// Verbosity flag for spdlog configuration
+DEFINE_int32(verbosity, spdlog::level::info, "Log verbosity");
+DEFINE_validator(verbosity, validateVerbosity);
+
 std::promise<void> exit_requested;
 
 int main(int argc, char *argv[]) {
+  spdlog::set_level(spdlog::level::level_enum(FLAGS_verbosity));
+
   auto log = logger::log("MAIN");
   log->info("start");
 

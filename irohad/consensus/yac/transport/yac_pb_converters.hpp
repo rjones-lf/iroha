@@ -19,19 +19,44 @@ namespace iroha {
   namespace consensus {
     namespace yac {
       class PbConverters {
-       public:
-        static proto::Vote serializeVotePayload(const VoteMessage &vote) {
+       private:
+        static inline proto::Vote serializeRoundAndHashes(
+            const VoteMessage &vote) {
           proto::Vote pb_vote;
 
           auto hash = pb_vote.mutable_hash();
-          hash->set_block(vote.hash.block_hash);
-          hash->set_proposal(vote.hash.proposal_hash);
+          auto hash_round = hash->mutable_vote_round();
+          hash_round->set_block_round(vote.hash.vote_round.block_round);
+          hash_round->set_reject_round(vote.hash.vote_round.reject_round);
+          auto hash_vote_hashes = hash->mutable_vote_hashes();
+          hash_vote_hashes->set_proposal(vote.hash.vote_hashes.proposal_hash);
+          hash_vote_hashes->set_block(vote.hash.vote_hashes.block_hash);
 
-          auto block_signature = hash->mutable_block_signature();
+          return pb_vote;
+        }
 
+        static inline VoteMessage deserealizeRoundAndHashes(
+            const proto::Vote &pb_vote) {
+          VoteMessage vote;
+
+          vote.hash.vote_round =
+              Round{pb_vote.hash().vote_round().block_round(),
+                    pb_vote.hash().vote_round().reject_round()};
+          vote.hash.vote_hashes =
+              YacHash::VoteHashes{pb_vote.hash().vote_hashes().proposal(),
+                                  pb_vote.hash().vote_hashes().block()};
+
+          return vote;
+        }
+
+       public:
+        static proto::Vote serializeVotePayload(const VoteMessage &vote) {
+          auto pb_vote = serializeRoundAndHashes(vote);
+
+          auto block_signature =
+              pb_vote.mutable_hash()->mutable_block_signature();
           block_signature->set_signature(shared_model::crypto::toBinaryString(
               vote.hash.block_signature->signedData()));
-
           block_signature->set_pubkey(shared_model::crypto::toBinaryString(
               vote.hash.block_signature->publicKey()));
 
@@ -39,17 +64,12 @@ namespace iroha {
         }
 
         static proto::Vote serializeVote(const VoteMessage &vote) {
-          proto::Vote pb_vote;
+          auto pb_vote = serializeRoundAndHashes(vote);
 
-          auto hash = pb_vote.mutable_hash();
-          hash->set_block(vote.hash.block_hash);
-          hash->set_proposal(vote.hash.proposal_hash);
-
-          auto block_signature = hash->mutable_block_signature();
-
+          auto block_signature =
+              pb_vote.mutable_hash()->mutable_block_signature();
           block_signature->set_signature(shared_model::crypto::toBinaryString(
               vote.hash.block_signature->signedData()));
-
           block_signature->set_pubkey(shared_model::crypto::toBinaryString(
               vote.hash.block_signature->publicKey()));
 
@@ -69,9 +89,7 @@ namespace iroha {
               shared_model::validation::FieldValidator>
               factory_;
 
-          VoteMessage vote;
-          vote.hash.proposal_hash = pb_vote.hash().proposal();
-          vote.hash.block_hash = pb_vote.hash().block();
+          auto vote = deserealizeRoundAndHashes(pb_vote);
 
           auto deserialize =
               [&](auto &pubkey, auto &signature, auto &val, const auto &msg) {

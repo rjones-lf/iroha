@@ -7,8 +7,13 @@
 
 #include <string>
 
+#include <boost/algorithm/cxx11/all_of.hpp>
 #include <boost/format.hpp>
-#include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/adaptor/indexed.hpp>
+#include <boost/range/adaptor/sliced.hpp>
+#include <boost/range/algorithm/for_each.hpp>
+#include <boost/range/join.hpp>
 #include "common/result.hpp"
 #include "interfaces/iroha_internal/batch_meta.hpp"
 #include "validation/utils.hpp"
@@ -141,83 +146,57 @@ namespace iroha {
      * @param temporary_wsv to apply transactions on
      * @param transactions_errors_log to write errors to
      * @param log to write errors to console
-     * @return vector of proto transactions, which passed stateful validation
+     * @param batch_parser to parse batches from transaction range
+     * @return range of transactions, which passed stateful validation
      */
-    static std::vector<size_t> validateTransactions(
+    static auto validateTransactions(
         const shared_model::interface::types::TransactionsCollectionType &txs,
         ametsuchi::TemporaryWsv &temporary_wsv,
         validation::TransactionsErrors &transactions_errors_log,
-        const logger::Logger &log) {
-      std::vector<size_t> valid_ids{};
-      auto txs_begin = std::begin(txs);
-      auto txs_end = std::end(txs);
-      for (size_t i = 0; i < txs.size(); ++i) {
-        auto current_tx_it = txs_begin + i;
-        if (not current_tx_it->batchMeta()
-            or current_tx_it->batchMeta()->get()->type()
-                != shared_model::interface::types::BatchType::ATOMIC) {
-          // if transaction does not belong to atomic batch
-          if (checkTransactions(
-                  temporary_wsv, transactions_errors_log, *current_tx_it)) {
-            // and it is valid
-            valid_ids.push_back(i);
-          }
-        } else {
-          // find the batch end in proposal's transactions
-          auto batch_end_hash =
-              current_tx_it->batchMeta()->get()->reducedHashes().back();
-          auto batch_end_it =
-              std::find_if(current_tx_it, txs_end, [&batch_end_hash](auto &tx) {
-                return tx.reducedHash() == batch_end_hash;
-              });
-          if (batch_end_it == txs_end) {
-            // exceptional case, such batch should not have passed stateless
-            // validation, so fail the whole proposal
-            auto batch_error_msg =
-                (boost::format("batch is formed incorrectly: could not "
-                               "find end of batch; "
-                               "first transaction is %s, supposed last "
-                               "transaction is %s")
-                 % current_tx_it->hash().hex() % batch_end_hash.hex())
-                    .str();
-            transactions_errors_log.emplace_back(std::make_pair(
-                validation::CommandError{
-                    "batch stateful validation", batch_error_msg, true},
-                current_tx_it->hash()));
-            log->error(std::move(batch_error_msg));
-            return {};
-          }
+        const logger::Logger &log,
+        const shared_model::interface::TransactionBatchParser &batch_parser) {
+      boost::any_range<shared_model::interface::Transaction,
+                       boost::forward_traversal_tag,
+                       const shared_model::interface::Transaction &>
+          result;
 
+      for (auto batch : batch_parser.parseBatches(txs)) {
+        auto validation = [&](auto &tx) {
+          return checkTransactions(temporary_wsv, transactions_errors_log, tx);
+        };
+        if (batch.front().batchMeta()
+            and batch.front().batchMeta()->get()->type()
+                == shared_model::interface::types::BatchType::ATOMIC) {
           // check all batch's transactions for validness
           auto savepoint = temporary_wsv.createSavepoint(
-              "batch_" + current_tx_it->hash().hex());
-          if (std::all_of(current_tx_it,
-                          batch_end_it + 1,
-                          [&temporary_wsv, &transactions_errors_log](auto &tx) {
-                            return checkTransactions(
-                                temporary_wsv, transactions_errors_log, tx);
-                          })) {
-            // batch is successful; add it to the list of valid_txs and
-            // release savepoint
-            auto batch_size =
-                boost::size(current_tx_it->batchMeta()->get()->reducedHashes());
-            for (size_t j = 0; j < batch_size; ++j) {
-              valid_ids.push_back(i + j);
-            }
+              "batch_" + batch.front().hash().hex());
+          if (boost::algorithm::all_of(batch, validation)) {
+            // batch is successful; join with result and release savepoint
+            result = boost::join(result, batch);
 
             savepoint->release();
           }
-
-          // move directly to transaction after batch
-          i += std::distance(current_tx_it, batch_end_it);
+        } else {
+          boost::for_each(batch | boost::adaptors::indexed(), [&](auto &&el) {
+            if (validation(el.value())) {
+              result = boost::join(
+                  result,
+                  batch | boost::adaptors::sliced(el.index(), el.index() + 1));
+            }
+          });
         }
       }
-      return valid_ids;
+
+      return result;
     }
 
     StatefulValidatorImpl::StatefulValidatorImpl(
-        std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory)
-        : factory_(std::move(factory)), log_(logger::log("SFV")) {}
+        std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
+        std::shared_ptr<shared_model::interface::TransactionBatchParser>
+            batch_parser)
+        : factory_(std::move(factory)),
+          batch_parser_(std::move(batch_parser)),
+          log_(logger::log("SFV")) {}
 
     validation::VerifiedProposalAndErrors StatefulValidatorImpl::validate(
         const shared_model::interface::Proposal &proposal,
@@ -226,19 +205,17 @@ namespace iroha {
                  proposal.transactions().size());
 
       auto transactions_errors_log = validation::TransactionsErrors{};
-      auto valid_ids = validateTransactions(
-          proposal.transactions(), temporaryWsv, transactions_errors_log, log_);
+      auto valid_txs = validateTransactions(proposal.transactions(),
+                                            temporaryWsv,
+                                            transactions_errors_log,
+                                            log_,
+                                            *batch_parser_);
 
       // Since proposal came from ordering gate it was already validated.
       // All transactions has been validated as well
       // This allows for unsafe construction of proposal
       auto validated_proposal = factory_->unsafeCreateProposal(
-          proposal.height(),
-          proposal.createdTime(),
-          valid_ids
-              | boost::adaptors::transformed([&](auto i) -> decltype(auto) {
-                  return proposal.transactions()[i];
-                }));
+          proposal.height(), proposal.createdTime(), valid_txs);
 
       log_->info("transactions in verified proposal: {}",
                  validated_proposal->transactions().size());

@@ -13,11 +13,11 @@
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
+#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 #include "client.hpp"
 
-#include "execution/query_execution_impl.hpp"
 #include "main/server_runner.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/command_service_transport_grpc.hpp"
@@ -31,13 +31,17 @@
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 
+#include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 
 using ::testing::_;
 using ::testing::A;
 using ::testing::AtLeast;
+using ::testing::ByMove;
 using ::testing::Return;
 
 using namespace iroha::ametsuchi;
@@ -72,6 +76,7 @@ class ClientServerTest : public testing::Test {
     mst = std::make_shared<iroha::MockMstProcessor>();
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
+    query_executor = std::make_shared<MockQueryExecutor>();
     storage = std::make_shared<MockStorage>();
 
     rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
@@ -85,10 +90,16 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*pcsMock, on_verified_proposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
+    EXPECT_CALL(*mst, onStateUpdateImpl())
+        .WillRepeatedly(Return(mst_update_notifier.get_observable()));
     EXPECT_CALL(*mst, onPreparedBatchesImpl())
         .WillRepeatedly(Return(mst_prepared_notifier.get_observable()));
     EXPECT_CALL(*mst, onExpiredBatchesImpl())
         .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
+
+    EXPECT_CALL(*storage, createQueryExecutor(_))
+        .WillRepeatedly(Return(boost::make_optional(
+            std::shared_ptr<QueryExecutor>(query_executor))));
 
     auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
     auto tx_processor =
@@ -106,13 +117,24 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage,
-        std::make_shared<iroha::QueryExecutionImpl>(storage,
-                                                    pending_txs_storage));
+        storage, storage, pending_txs_storage);
 
     //----------- Server run ----------------
     auto status_factory =
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        shared_model::interface::Transaction>>
+        transaction_validator = std::make_unique<
+            shared_model::validation::DefaultUnsignedTransactionValidator>();
+    auto transaction_factory =
+        std::make_shared<shared_model::proto::ProtoTransportFactory<
+            shared_model::interface::Transaction,
+            shared_model::proto::Transaction>>(
+            std::move(transaction_validator));
+    auto batch_parser =
+        std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
+    auto batch_factory = std::make_shared<
+        shared_model::interface::TransactionBatchFactoryImpl>();
     runner
         ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
             std::make_shared<torii::CommandServiceImpl>(
@@ -120,7 +142,10 @@ class ClientServerTest : public testing::Test {
             status_bus,
             initial_timeout,
             nonfinal_timeout,
-            status_factory))
+            status_factory,
+            transaction_factory,
+            batch_parser,
+            batch_factory))
         .append(std::make_unique<torii::QueryService>(qpi))
         .run()
         .match(
@@ -146,11 +171,14 @@ class ClientServerTest : public testing::Test {
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
       verified_prop_notifier;
+  rxcpp::subjects::subject<std::shared_ptr<iroha::MstState>>
+      mst_update_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
 
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
+  std::shared_ptr<MockQueryExecutor> query_executor;
   std::shared_ptr<MockStorage> storage;
 
   const std::string ip = "127.0.0.1";
@@ -338,15 +366,11 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));
 
-  EXPECT_CALL(*wsv_query, getAccountDetail("test@test", "", ""))
-      .WillOnce(Return(boost::make_optional(std::string("value"))));
+  auto *resp =
+      clone(TestQueryResponseBuilder().accountDetailResponse("value").build())
+          .release();
 
-  const std::vector<std::string> kRole{"role"};
-  EXPECT_CALL(*wsv_query, getAccountRoles("admin@test"))
-      .WillOnce(Return(boost::make_optional(kRole)));
-  EXPECT_CALL(*wsv_query, getRolePermissions(kRole[0]))
-      .WillOnce(Return(shared_model::interface::RolePermissionSet{
-          shared_model::interface::permissions::Role::kGetAllAccDetail}));
+  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
 
   auto query = QueryBuilder()
                    .createdTime(iroha::time::now())
@@ -367,8 +391,14 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));
 
-  EXPECT_CALL(*wsv_query, getAccountRoles("admin@test"))
-      .WillOnce(Return(boost::none));
+  auto *resp =
+      clone(TestQueryResponseBuilder()
+                .errorQueryResponse<
+                    shared_model::interface::StatefulFailedErrorResponse>()
+                .build())
+          .release();
+
+  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
 
   auto query = QueryBuilder()
                    .createdTime(iroha::time::now())

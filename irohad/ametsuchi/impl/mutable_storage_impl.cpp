@@ -6,6 +6,7 @@
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 
 #include <boost/variant/apply_visitor.hpp>
+#include "ametsuchi/impl/peer_query_wsv.hpp"
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
@@ -32,12 +33,12 @@ namespace iroha {
 
     bool MutableStorageImpl::check(
         const shared_model::interface::Block &block,
-        MutableStorage::MutableStoragePredicateType predicate) {
-      return predicate(block, *wsv_, top_hash_);
+        MutableStoragePredicate predicate) {
+      PeerQueryWsv peer_query(wsv_);
+      return predicate(block, peer_query, top_hash_);
     }
 
-    bool MutableStorageImpl::apply(const shared_model::interface::Block &block,
-                                   MutableStoragePredicateType function) {
+    bool MutableStorageImpl::apply(const shared_model::interface::Block &block) {
       auto execute_transaction = [this](auto &transaction) {
         command_executor_->setCreatorAccountId(transaction.creatorAccountId());
         command_executor_->doValidation(false);
@@ -55,8 +56,7 @@ namespace iroha {
       };
 
       *sql_ << "SAVEPOINT savepoint_";
-      auto result = function(block, *wsv_, top_hash_)
-          and std::all_of(block.transactions().begin(),
+      auto result = std::all_of(block.transactions().begin(),
                           block.transactions().end(),
                           execute_transaction);
 
