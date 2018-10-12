@@ -153,7 +153,8 @@ namespace iroha {
         validation::TransactionsErrors &transactions_errors_log,
         const logger::Logger &log,
         const shared_model::interface::TransactionBatchParser &batch_parser) {
-      std::vector<uint8_t> validation_results;
+      std::vector<bool> validation_results;
+      validation_results.reserve(boost::size(txs));
 
       for (auto batch : batch_parser.parseBatches(txs)) {
         auto validation = [&](auto &tx) {
