@@ -166,13 +166,16 @@ namespace iroha {
           // check all batch's transactions for validness
           auto savepoint = temporary_wsv.createSavepoint(
               "batch_" + batch.front().hash().hex());
-          if (boost::algorithm::all_of(batch, validation)) {
-            // batch is successful; join with result and release savepoint
-            validation_results.insert(
-                validation_results.end(), boost::size(batch), true);
+          bool validation_result = false;
 
+          if (boost::algorithm::all_of(batch, validation)) {
+            // batch is successful; release savepoint
+            validation_result = true;
             savepoint->release();
           }
+
+          validation_results.insert(
+              validation_results.end(), boost::size(batch), validation_result);
         } else {
           for (const auto &tx : batch) {
             validation_results.push_back(validation(tx));
