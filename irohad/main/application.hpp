@@ -60,6 +60,9 @@ namespace iroha {
 
 class Irohad {
  public:
+
+  using RunResult = iroha::expected::Result<void, std::string>;
+
   /**
    * Constructor that initializes common iroha pipeline
    * @param block_store_dir - folder where blocks will be stored
@@ -109,8 +112,9 @@ class Irohad {
 
   /**
    * Run worker threads for start performing
+   * @return void value on success, error message otherwise
    */
-  virtual void run();
+  RunResult run();
 
   virtual ~Irohad();
 

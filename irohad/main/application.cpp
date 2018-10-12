@@ -379,7 +379,7 @@ void Irohad::initWsvRestorer() {
 /**
  * Run iroha daemon
  */
-void Irohad::run() {
+Irohad::RunResult Irohad::run() {
   using iroha::expected::operator|;
 
   // Initializing torii server
@@ -391,25 +391,33 @@ void Irohad::run() {
       listen_ip_ + ":" + std::to_string(internal_port_));
 
   // Run torii server
-  (torii_server->append(command_service_transport).append(query_service).run() |
-   [&](const auto &port) {
-     log_->info("Torii server bound on port {}", port);
-     if (is_mst_supported_) {
-       internal_server->append(mst_transport);
-     }
-     // Run internal server
-     return internal_server->append(ordering_init.ordering_gate_transport)
-         .append(ordering_init.ordering_service_transport)
-         .append(yac_init.consensus_network)
-         .append(loader_init.service)
-         .run();
-   })
-      .match(
+  return (torii_server->append(command_service_transport)
+              .append(query_service)
+              .run()
+          |
           [&](const auto &port) {
+            log_->info("Torii server bound on port {}", port);
+            if (is_mst_supported_) {
+              internal_server->append(mst_transport);
+            }
+            // Run internal server
+            return internal_server
+                ->append(ordering_init.ordering_gate_transport)
+                .append(ordering_init.ordering_service_transport)
+                .append(yac_init.consensus_network)
+                .append(loader_init.service)
+                .run();
+          })
+      .match(
+          [&](const auto &port) -> RunResult {
             log_->info("Internal server bound on port {}", port.value);
             log_->info("===> iroha initialized");
+            return {}; //RunResult(Resultexpected::Value<void>{});
           },
-          [&](const expected::Error<std::string> &e) { log_->error(e.error); });
+          [&](const expected::Error<std::string> &e) -> RunResult {
+            log_->error(e.error);
+            return expected::makeError<std::string>(std::string(e.error));
+          });
 }
 
 Irohad::~Irohad() {
