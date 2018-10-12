@@ -53,6 +53,7 @@ namespace integration_framework {
       : iroha_instance_(std::make_shared<IrohaInstance>(
             mst_support, block_store_path, kToriiPort, dbname)),
         command_client_("127.0.0.1", kToriiPort),
+        query_client_("127.0.0.1", kToriiPort),
         proposal_waiting(proposal_waiting),
         block_waiting(block_waiting),
         maximum_proposal_size_(maximum_proposal_size),
@@ -307,10 +308,10 @@ namespace integration_framework {
       std::function<void(const shared_model::proto::QueryResponse &)>
           validation) {
     log_->info("send query");
+    log_->debug(qry.toString());
 
     iroha::protocol::QueryResponse response;
-    iroha_instance_->getIrohaInstance()->getQueryService()->Find(
-        qry.getTransport(), response);
+    query_client_.Find(qry.getTransport(), response);
     auto query_response =
         shared_model::proto::QueryResponse(std::move(response));
 

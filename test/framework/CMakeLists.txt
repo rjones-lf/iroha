@@ -29,6 +29,7 @@ target_link_libraries(integration_framework
     application
     integration_framework_config_helper
     command_client
+    query_client
     )
 
 target_include_directories(integration_framework PUBLIC ${PROJECT_SOURCE_DIR}/test)
