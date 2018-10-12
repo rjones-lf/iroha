@@ -105,16 +105,24 @@ namespace iroha {
                                Pred &&pred);
 
       /**
-       * Execute query in F and return query response from B
-       * Q is query tuple, P is permission tuple
+       * Execute query and return its response
+       * @tparam QueryTuple - types of values, returned by the query
+       * @tparam PermissionTuple - permissions, needed for the query
+       * @tparam QueryExecutor - function, which executes the query
+       * @tparam ResponseCreator - function, which creates response of the query
+       * @tparam ErrResponse - function, which creates error response
+       * @param query_executor
+       * @param response_creator
+       * @param err_response
+       * @return query response
        */
-      template <typename Q,
-                typename P,
-                typename F,
-                typename B,
+      template <typename QueryTuple,
+                typename PermissionTuple,
+                typename QueryExecutor,
+                typename ResponseCreator,
                 typename ErrResponse>
-      QueryExecutorResult executeQuery(F &&f,
-                                       B &&b,
+      QueryExecutorResult executeQuery(QueryExecutor &&query_executor,
+                                       ResponseCreator &&response_creator,
                                        ErrResponse &&err_response);
 
       soci::session &sql_;

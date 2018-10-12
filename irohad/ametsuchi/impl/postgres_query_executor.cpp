@@ -160,34 +160,38 @@ namespace iroha {
               deserialized_block)
               .value;
 
-      boost::transform(range_gen(boost::size(block->transactions()))
-                           | boost::adaptors::transformed(
-                                 [&block](auto i) -> decltype(auto) {
-                                   return block->transactions()[i];
-                                 })
-                           | boost::adaptors::filtered(pred),
+      auto filtered_txs = range_gen(boost::size(block->transactions()))
+          | boost::adaptors::transformed([&block](auto i) -> decltype(auto) {
+                            return block->transactions()[i];
+                          })
+          | boost::adaptors::filtered(pred);
+      boost::transform(filtered_txs,
                        std::back_inserter(result),
                        [&](const auto &tx) { return clone(tx); });
 
       return result;
     }
 
-    template <typename Q,
-              typename P,
-              typename F,
-              typename B,
+    template <typename QueryTuple,
+              typename PermissionTuple,
+              typename QueryExecutor,
+              typename ResponseCreator,
               typename ErrResponse>
     QueryExecutorResult PostgresQueryExecutorVisitor::executeQuery(
-        F &&f, B &&b, ErrResponse &&err_response) {
-      using T = concat<Q, P>;
+        QueryExecutor &&query_executor,
+        ResponseCreator &&response_creator,
+        ErrResponse &&err_response) {
+      using T = concat<QueryTuple, PermissionTuple>;
       try {
-        soci::rowset<T> st = std::forward<F>(f)();
+        soci::rowset<T> st = std::forward<QueryExecutor>(query_executor)();
         auto range = boost::make_iterator_range(st.begin(), st.end());
 
         return apply(
-            viewPermissions<P>(range.front()),
-            [this, range, &b, err_response = std::move(err_response)](
-                auto... perms) {
+            viewPermissions<PermissionTuple>(range.front()),
+            [this,
+             range,
+             &response_creator,
+             err_response = std::move(err_response)](auto... perms) {
               bool temp[] = {not perms...};
               if (std::all_of(std::begin(temp), std::end(temp), [](auto b) {
                     return b;
@@ -199,13 +203,14 @@ namespace iroha {
               }
               auto query_range = range
                   | boost::adaptors::transformed([](auto &t) {
-                                   return rebind(viewQuery<Q>(t));
+                                   return rebind(viewQuery<QueryTuple>(t));
                                  })
                   | boost::adaptors::filtered([](const auto &t) {
                                    return static_cast<bool>(t);
                                  })
                   | boost::adaptors::transformed([](auto t) { return *t; });
-              return std::forward<B>(b)(query_range, perms...);
+              return std::forward<ResponseCreator>(response_creator)(
+                  query_range, perms...);
             });
       } catch (const std::exception &e) {
         log_->error("Failed to execute query: {}", e.what());
@@ -289,12 +294,13 @@ namespace iroha {
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccount &q) {
-      using Q = QueryType<shared_model::interface::types::AccountIdType,
-                          shared_model::interface::types::DomainIdType,
-                          shared_model::interface::types::QuorumType,
-                          shared_model::interface::types::DetailType,
-                          std::string>;
-      using P = boost::tuple<int>;
+      using QueryTuple =
+          QueryType<shared_model::interface::types::AccountIdType,
+                    shared_model::interface::types::DomainIdType,
+                    shared_model::interface::types::QuorumType,
+                    shared_model::interface::types::DetailType,
+                    std::string>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
       t AS (
@@ -343,7 +349,7 @@ namespace iroha {
                 });
       };
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd,
                     soci::use(q.accountId(), "target_account_id"));
@@ -365,8 +371,8 @@ namespace iroha {
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetSignatories &q) {
-      using Q = QueryType<std::string>;
-      using P = boost::tuple<int>;
+      using QueryTuple = QueryType<std::string>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
       t AS (
@@ -383,7 +389,7 @@ namespace iroha {
                                        Role::kGetDomainSignatories))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] { return (sql_.prepare << cmd, soci::use(q.accountId())); },
           [&](auto range, auto &) {
             if (range.empty()) {
@@ -413,8 +419,9 @@ namespace iroha {
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountTransactions &q) {
-      using Q = QueryType<shared_model::interface::types::HeightType, uint64_t>;
-      using P = boost::tuple<int>;
+      using QueryTuple =
+          QueryType<shared_model::interface::types::HeightType, uint64_t>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
       t AS (
@@ -435,7 +442,7 @@ namespace iroha {
                                        Role::kGetDomainAccTxs))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] { return (sql_.prepare << cmd, soci::use(q.accountId())); },
           [&](auto range, auto &) {
             std::map<uint64_t, std::vector<uint64_t>> index;
@@ -472,9 +479,9 @@ namespace iroha {
           escape(q.transactionHashes().front()),
           [&escape](auto &acc, auto &val) { return acc + "," + escape(val); });
 
-      using Q =
+      using QueryTuple =
           QueryType<shared_model::interface::types::HeightType, std::string>;
-      using P = boost::tuple<int, int>;
+      using PermissionTuple = boost::tuple<int, int>;
 
       auto cmd = (boost::format(R"(WITH has_my_perm AS (%s),
       has_all_perm AS (%s),
@@ -489,7 +496,7 @@ namespace iroha {
                   % hash_str)
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd, soci::use(creator_id_, "account_id"));
           },
@@ -527,8 +534,9 @@ namespace iroha {
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountAssetTransactions &q) {
-      using Q = QueryType<shared_model::interface::types::HeightType, uint64_t>;
-      using P = boost::tuple<int>;
+      using QueryTuple =
+          QueryType<shared_model::interface::types::HeightType, uint64_t>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
       t AS (
@@ -550,7 +558,7 @@ namespace iroha {
                                        Role::kGetDomainAccAstTxs))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd,
                     soci::use(q.accountId(), "account_id"),
@@ -585,10 +593,11 @@ namespace iroha {
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountAssets &q) {
-      using Q = QueryType<shared_model::interface::types::AccountIdType,
-                          shared_model::interface::types::AssetIdType,
-                          std::string>;
-      using P = boost::tuple<int>;
+      using QueryTuple =
+          QueryType<shared_model::interface::types::AccountIdType,
+                    shared_model::interface::types::AssetIdType,
+                    std::string>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
       t AS (
@@ -605,7 +614,7 @@ namespace iroha {
                                        Role::kGetDomainAccAst))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] { return (sql_.prepare << cmd, soci::use(q.accountId())); },
           [&](auto range, auto &) {
             std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
@@ -640,8 +649,8 @@ namespace iroha {
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountDetail &q) {
-      using Q = QueryType<shared_model::interface::types::DetailType>;
-      using P = boost::tuple<int>;
+      using QueryTuple = QueryType<shared_model::interface::types::DetailType>;
+      using PermissionTuple = boost::tuple<int>;
 
       std::string query_detail;
       if (q.key() and q.writer()) {
@@ -686,7 +695,7 @@ namespace iroha {
                   % query_detail)
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd,
                     soci::use(q.accountId(), "account_id"));
@@ -711,8 +720,8 @@ namespace iroha {
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetRoles &q) {
-      using Q = QueryType<shared_model::interface::types::RoleIdType>;
-      using P = boost::tuple<int>;
+      using QueryTuple = QueryType<shared_model::interface::types::RoleIdType>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(
                       R"(WITH has_perms AS (%s)
@@ -721,7 +730,7 @@ namespace iroha {
       )") % checkAccountRolePermission(Role::kGetRoles))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd,
                     soci::use(creator_id_, "role_account_id"));
@@ -741,8 +750,8 @@ namespace iroha {
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetRolePermissions &q) {
-      using Q = QueryType<std::string>;
-      using P = boost::tuple<int>;
+      using QueryTuple = QueryType<std::string>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(
                       R"(WITH has_perms AS (%s),
@@ -753,7 +762,7 @@ namespace iroha {
       )") % checkAccountRolePermission(Role::kGetRoles))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd,
                     soci::use(creator_id_, "role_account_id"),
@@ -779,9 +788,9 @@ namespace iroha {
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAssetInfo &q) {
-      using Q =
+      using QueryTuple =
           QueryType<shared_model::interface::types::DomainIdType, uint32_t>;
-      using P = boost::tuple<int>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(
                       R"(WITH has_perms AS (%s),
@@ -792,7 +801,7 @@ namespace iroha {
       )") % checkAccountRolePermission(Role::kReadAssets))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd,
                     soci::use(creator_id_, "role_account_id"),
