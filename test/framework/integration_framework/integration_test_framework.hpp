@@ -23,6 +23,7 @@
 #include "framework/integration_framework/test_irohad.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "logger/logger.hpp"
+#include "torii/command_client.hpp"
 
 namespace shared_model {
   namespace crypto {
@@ -278,6 +279,7 @@ namespace integration_framework {
     tbb::concurrent_queue<ProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
     std::shared_ptr<IrohaInstance> iroha_instance_;
+    torii::CommandSyncClient command_client_;
 
     void initPipeline(const shared_model::crypto::Keypair &keypair);
     void subscribeQueuesAndRun();

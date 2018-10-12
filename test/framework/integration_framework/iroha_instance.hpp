@@ -43,10 +43,12 @@ namespace integration_framework {
     /**
      * @param mst_support enables multisignature tx support
      * @param block_store_path
+     * @param torii_port - port to bind Torii service to
      * @param dbname is a name of postgres database
      */
     IrohaInstance(bool mst_support,
                   const std::string &block_store_path,
+                  size_t torii_port,
                   const boost::optional<std::string> &dbname = boost::none);
 
     void makeGenesis(const shared_model::interface::Block &block);

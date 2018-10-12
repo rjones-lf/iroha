@@ -31,6 +31,8 @@
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
 
+static size_t kToriiPort = 11501;
+
 namespace integration_framework {
 
   const std::string IntegrationTestFramework::kDefaultDomain = "test";
@@ -49,7 +51,8 @@ namespace integration_framework {
       milliseconds proposal_waiting,
       milliseconds block_waiting)
       : iroha_instance_(std::make_shared<IrohaInstance>(
-            mst_support, block_store_path, dbname)),
+            mst_support, block_store_path, kToriiPort, dbname)),
+        command_client_("127.0.0.1", kToriiPort),
         proposal_waiting(proposal_waiting),
         block_waiting(block_waiting),
         maximum_proposal_size_(maximum_proposal_size),
@@ -172,8 +175,7 @@ namespace integration_framework {
     iroha::protocol::TxStatusRequest request;
     request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
     iroha::protocol::ToriiResponse response;
-    iroha_instance_->getIrohaInstance()->getCommandServiceTransport()->Status(
-        nullptr, &request, &response);
+    command_client_.Status(request, response);
     validation(shared_model::proto::TransactionResponse(std::move(response)));
     return *this;
   }
@@ -182,7 +184,8 @@ namespace integration_framework {
       const shared_model::proto::Transaction &tx,
       std::function<void(const shared_model::proto::TransactionResponse &)>
           validation) {
-    log_->info("send transaction");
+    log_->info("sending transaction");
+    log_->debug(tx.toString());
 
     // Required for StatusBus synchronization
     boost::barrier bar1(2);
@@ -199,9 +202,8 @@ namespace integration_framework {
           }
         });
 
-    iroha_instance_->getIrohaInstance()->getCommandServiceTransport()->Torii(
-        nullptr, &tx.getTransport(), nullptr);
-    // make sure that the first (stateless) status is come
+    command_client_.Torii(tx.getTransport());
+    // make sure that the first (stateless) status has come
     bar1.wait();
     // fetch status of transaction
     getTxStatus(tx.hash(), [&validation, &bar2](auto &status) {
@@ -281,9 +283,7 @@ namespace integration_framework {
               ->getTransport();
       *tx_list.add_transactions() = proto_tx;
     }
-    iroha_instance_->getIrohaInstance()
-        ->getCommandServiceTransport()
-        ->ListTorii(nullptr, &tx_list, nullptr);
+    command_client_.ListTorii(tx_list);
 
     std::unique_lock<std::mutex> lk(m);
     cv.wait(lk, [&] { return processed; });
