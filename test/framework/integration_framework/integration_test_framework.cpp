@@ -112,7 +112,7 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::recoverState(
       const Keypair &keypair) {
     initPipeline(keypair);
-    iroha_instance_->instance_->init();
+    iroha_instance_->getIrohaInstance()->init();
     subscribeQueuesAndRun();
     return *this;
   }
@@ -123,7 +123,7 @@ namespace integration_framework {
     // peer initialization
     iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
-    iroha_instance_->instance_->resetOrderingService();
+    iroha_instance_->getIrohaInstance()->resetOrderingService();
   }
 
   void IntegrationTestFramework::subscribeQueuesAndRun() {
@@ -187,7 +187,8 @@ namespace integration_framework {
     // Required for StatusBus synchronization
     boost::barrier bar1(2);
     auto bar2 = std::make_shared<boost::barrier>(2);
-    iroha_instance_->instance_->getStatusBus()
+    iroha_instance_->getIrohaInstance()
+        ->getStatusBus()
         ->statuses()
         .filter([&](auto s) { return s->transactionHash() == tx.hash(); })
         .take(1)
@@ -240,7 +241,8 @@ namespace integration_framework {
 
     // subscribe on status bus and save all stateless statuses into a vector
     std::vector<shared_model::proto::TransactionResponse> statuses;
-    iroha_instance_->instance_->getStatusBus()
+    iroha_instance_->getIrohaInstance()
+        ->getStatusBus()
         ->statuses()
         .filter([&transactions](auto s) {
           // filter statuses for transactions from sequence
@@ -373,8 +375,9 @@ namespace integration_framework {
 
   void IntegrationTestFramework::done() {
     log_->info("done");
-    if (iroha_instance_->instance_ and iroha_instance_->instance_->storage) {
-      iroha_instance_->instance_->storage->dropStorage();
+    if (iroha_instance_->getIrohaInstance()
+        and iroha_instance_->getIrohaInstance()->storage) {
+      iroha_instance_->getIrohaInstance()->storage->dropStorage();
       boost::filesystem::remove_all(iroha_instance_->block_store_dir_);
     }
   }

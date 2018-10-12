@@ -62,8 +62,6 @@ namespace integration_framework {
     std::string getPostgreCredsOrDefault(
         const boost::optional<std::string> &dbname);
 
-    std::shared_ptr<TestIrohad> instance_;
-
     // config area
     const std::string block_store_dir_;
     const std::string pg_conn_;
@@ -72,6 +70,9 @@ namespace integration_framework {
     const std::chrono::milliseconds proposal_delay_;
     const std::chrono::milliseconds vote_delay_;
     const bool is_mst_supported_;
+
+   private:
+    std::shared_ptr<TestIrohad> instance_;
   };
 }  // namespace integration_framework
 #endif  // IROHA_IROHA_INSTANCE_HPP
