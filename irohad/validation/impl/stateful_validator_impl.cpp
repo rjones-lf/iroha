@@ -11,7 +11,7 @@
 #include <boost/format.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indexed.hpp>
-#include <boost/range/adaptor/sliced.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/join.hpp>
 #include "common/result.hpp"
@@ -160,6 +160,7 @@ namespace iroha {
                        const shared_model::interface::Transaction &>
           result;
 
+      std::vector<uint8_t> validation_results;
       for (auto batch : batch_parser.parseBatches(txs)) {
         auto validation = [&](auto &tx) {
           return checkTransactions(temporary_wsv, transactions_errors_log, tx);
@@ -173,21 +174,26 @@ namespace iroha {
           if (boost::algorithm::all_of(batch, validation)) {
             // batch is successful; join with result and release savepoint
             result = boost::join(result, batch);
+            validation_results.insert(
+                validation_results.end(), boost::size(batch), true);
 
             savepoint->release();
           }
         } else {
           boost::for_each(batch | boost::adaptors::indexed(), [&](auto &&el) {
-            if (validation(el.value())) {
-              result = boost::join(
-                  result,
-                  batch | boost::adaptors::sliced(el.index(), el.index() + 1));
-            }
+            validation_results.push_back(validation(el.value()));
           });
         }
       }
 
-      return result;
+      return txs | boost::adaptors::indexed()
+          | boost::adaptors::filtered(
+                 [validation_results =
+                      std::move(validation_results)](const auto &el) {
+                   return validation_results.at(el.index());
+                 })
+          | boost::adaptors::transformed(
+                 [](const auto &el) -> decltype(auto) { return el.value(); });
     }
 
     StatefulValidatorImpl::StatefulValidatorImpl(
