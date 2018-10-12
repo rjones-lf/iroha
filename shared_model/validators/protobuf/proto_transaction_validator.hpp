@@ -6,8 +6,9 @@
 #ifndef IROHA_PROTO_TRANSACTION_VALIDATOR_HPP
 #define IROHA_PROTO_TRANSACTION_VALIDATOR_HPP
 
-#include "backend/protobuf/transaction.hpp"
 #include "validators/transaction_validator.hpp"
+
+#include "backend/protobuf/transaction.hpp"
 
 namespace shared_model {
   namespace validation {

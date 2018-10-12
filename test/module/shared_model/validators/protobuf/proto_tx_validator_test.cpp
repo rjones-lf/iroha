@@ -10,6 +10,13 @@
 #include "module/shared_model/validators/validators_fixture.hpp"
 
 class ProtoTxValidatorTest : public ValidatorsTest {
+ private:
+  shared_model::validation::ProtoTransactionValidator<
+      shared_model::validation::FieldValidator,
+      shared_model::validation::CommandValidatorVisitor<
+          shared_model::validation::FieldValidator>>
+      validator;
+
  protected:
   iroha::protocol::Transaction generateEmptyTransaction() {
     std::string creator_account_id = "admin@test";
@@ -77,11 +84,6 @@ TEST_F(ProtoTxValidatorTest, CommandNotSet) {
   tx.mutable_payload()->mutable_reduced_payload()->add_commands();
   shared_model::proto::Transaction proto_tx(tx);
 
-  shared_model::validation::ProtoTransactionValidator<
-      shared_model::validation::FieldValidator,
-      shared_model::validation::CommandValidatorVisitor<
-          shared_model::validation::FieldValidator>>
-      validator;
   auto answer = validator.validate(proto_tx);
   ASSERT_TRUE(answer.hasErrors());
 }
@@ -97,12 +99,6 @@ TEST_F(ProtoTxValidatorTest, CreateRoleValid) {
       role_name, iroha::protocol::RolePermission::can_read_assets);
 
   shared_model::proto::Transaction proto_tx(tx);
-
-  shared_model::validation::ProtoTransactionValidator<
-      shared_model::validation::FieldValidator,
-      shared_model::validation::CommandValidatorVisitor<
-          shared_model::validation::FieldValidator>>
-      validator;
   auto answer = validator.validate(proto_tx);
   ASSERT_FALSE(answer.hasErrors());
 }
@@ -118,12 +114,6 @@ TEST_F(ProtoTxValidatorTest, CreateRoleInvalid) {
       role_name, static_cast<iroha::protocol::RolePermission>(-1));
 
   shared_model::proto::Transaction proto_tx(tx);
-
-  shared_model::validation::ProtoTransactionValidator<
-      shared_model::validation::FieldValidator,
-      shared_model::validation::CommandValidatorVisitor<
-          shared_model::validation::FieldValidator>>
-      validator;
   auto answer = validator.validate(proto_tx);
   ASSERT_TRUE(answer.hasErrors());
 }
