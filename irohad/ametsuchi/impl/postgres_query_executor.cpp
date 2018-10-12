@@ -122,6 +122,8 @@ namespace {
     return [roles...] {
       std::string error = "user must have at least one of the permissions: ";
       for (auto role : {roles...}) {
+        // TODO [IR-1758] Akvinikym 12.10.18: get rid of this protobuf
+        // dependency and convert role to string in another way
         error += shared_model::proto::permissions::toString(role) + ", ";
       }
       return error;
@@ -191,7 +193,8 @@ namespace iroha {
             [this,
              range,
              &response_creator,
-             err_response = std::move(err_response)](auto... perms) {
+             err_response =
+                 std::forward<ErrResponse>(err_response)](auto... perms) {
               bool temp[] = {not perms...};
               if (std::all_of(std::begin(temp), std::end(temp), [](auto b) {
                     return b;
@@ -341,10 +344,11 @@ namespace iroha {
                       std::move(v.value), std::move(roles), query_hash_);
                 },
                 [this](expected::Error<std::string> &e) {
-                  log_->error(e.error);
+                  auto error = "could not create account object: " + e.error;
+                  log_->error(error);
                   return query_response_factory_->createErrorQueryResponse(
                       QueryErrorType::kStatefulFailed,
-                      "could not create account object: " + e.error,
+                      std::move(error),
                       query_hash_);
                 });
       };
@@ -827,11 +831,13 @@ namespace iroha {
                             std::move(asset.value), query_hash_);
                       },
                       [this](const expected::Error<std::string> &err) {
-                        log_->error("could not create asset: {}", err.error);
+                        auto error =
+                            "could not create asset object: " + err.error;
+                        log_->error(error);
                         return query_response_factory_
                             ->createErrorQueryResponse(
                                 QueryErrorType::kStatefulFailed,
-                                "could not create asset object: " + err.error,
+                                std::move(error),
                                 query_hash_);
                       });
                 });

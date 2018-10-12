@@ -30,8 +30,10 @@ namespace iroha {
           log_{logger::log("QueryProcessorImpl")} {
       storage_->on_commit().subscribe(
           [this](std::shared_ptr<shared_model::interface::Block> block) {
+            auto block_response =
+                response_factory_->createBlockQueryResponse(clone(*block));
             blocks_query_subject_.get_subscriber().on_next(
-                response_factory_->createBlockQueryResponse(clone(*block)));
+                std::move(block_response));
           });
     }
 
