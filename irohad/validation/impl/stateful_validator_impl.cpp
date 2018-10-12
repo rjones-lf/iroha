@@ -12,8 +12,6 @@
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/adaptor/transformed.hpp>
-#include <boost/range/algorithm/for_each.hpp>
-#include <boost/range/join.hpp>
 #include "common/result.hpp"
 #include "interfaces/iroha_internal/batch_meta.hpp"
 #include "validation/utils.hpp"
@@ -155,12 +153,8 @@ namespace iroha {
         validation::TransactionsErrors &transactions_errors_log,
         const logger::Logger &log,
         const shared_model::interface::TransactionBatchParser &batch_parser) {
-      boost::any_range<shared_model::interface::Transaction,
-                       boost::forward_traversal_tag,
-                       const shared_model::interface::Transaction &>
-          result;
-
       std::vector<uint8_t> validation_results;
+
       for (auto batch : batch_parser.parseBatches(txs)) {
         auto validation = [&](auto &tx) {
           return checkTransactions(temporary_wsv, transactions_errors_log, tx);
@@ -173,16 +167,15 @@ namespace iroha {
               "batch_" + batch.front().hash().hex());
           if (boost::algorithm::all_of(batch, validation)) {
             // batch is successful; join with result and release savepoint
-            result = boost::join(result, batch);
             validation_results.insert(
                 validation_results.end(), boost::size(batch), true);
 
             savepoint->release();
           }
         } else {
-          boost::for_each(batch | boost::adaptors::indexed(), [&](auto &&el) {
-            validation_results.push_back(validation(el.value()));
-          });
+          for (const auto &tx : batch) {
+            validation_results.push_back(validation(tx));
+          }
         }
       }
 
