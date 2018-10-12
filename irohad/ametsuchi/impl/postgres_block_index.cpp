@@ -27,13 +27,13 @@ namespace {
         [](const shared_model::interface::TransferAsset &c) {
           return ReturnType(c);
         },
-        [&](const auto &command) -> ReturnType { return boost::none; });
+        [](const auto &) -> ReturnType { return boost::none; });
   }
 
-  // tx hash -> block where hash is stored
+  // make index tx hash -> block where hash is stored
   std::string makeHashIndex(
       const shared_model::interface::types::HashType &hash,
-      const std::string &height) {
+      shared_model::interface::types::HeightType height) {
     boost::format base(
         "INSERT INTO height_by_hash(hash, height) VALUES ('%s', "
         "'%s');");
@@ -44,8 +44,8 @@ namespace {
   // (where tx is placed in the block)
   std::string makeCreatorHeightIndex(
       const shared_model::interface::types::AccountIdType creator,
-      const std::string &height,
-      const std::string &tx_index) {
+      shared_model::interface::types::HeightType height,
+      size_t tx_index) {
     boost::format base(
         "INSERT INTO index_by_creator_height(creator_id, height, index) VALUES "
         "('%s', '%s', '%s');");
@@ -53,8 +53,9 @@ namespace {
   }
 
   // Make index account_id -> list of blocks where his txs exist
-  std::string makeAccountHeightIndex(const std::string &account_id,
-                                     const std::string &height) {
+  std::string makeAccountHeightIndex(
+      const shared_model::interface::types::AccountIdType &account_id,
+      shared_model::interface::types::HeightType height) {
     boost::format base(
         "INSERT INTO height_by_account_set(account_id, "
         "height) VALUES "
@@ -67,8 +68,8 @@ namespace {
   // for transfer asset in command
   std::string makeAccountAssetIndex(
       const shared_model::interface::types::AccountIdType &account_id,
-      const std::string &height,
-      const std::string &index,
+      shared_model::interface::types::HeightType height,
+      size_t index,
       const shared_model::interface::Transaction::CommandsType &commands) {
     return std::accumulate(
         commands.begin(),
@@ -108,7 +109,7 @@ namespace iroha {
 
     void PostgresBlockIndex::index(
         const shared_model::interface::Block &block) {
-      const auto &height = std::to_string(block.height());
+      const auto &height = block.height();
       auto indexed_txs = block.transactions() | boost::adaptors::indexed(0);
       std::string index_query = std::accumulate(
           indexed_txs.begin(),
@@ -116,7 +117,7 @@ namespace iroha {
           std::string{},
           [&height](auto query, const auto &tx) {
             const auto &creator_id = tx.value().creatorAccountId();
-            const auto index = std::to_string(tx.index());
+            const auto index = tx.index();
 
             query += makeAccountHeightIndex(creator_id, height);
             query += makeAccountAssetIndex(
