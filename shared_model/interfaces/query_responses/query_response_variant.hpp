@@ -12,7 +12,7 @@
 
 namespace boost {
   extern template class variant<
-      shared_model::interface::AccountAssetResponse &,
+      const shared_model::interface::AccountAssetResponse &,
       const shared_model::interface::AccountDetailResponse &,
       const shared_model::interface::AccountResponse &,
       const shared_model::interface::ErrorQueryResponse &,
