@@ -43,10 +43,20 @@ namespace iroha {
           mutable_factory_(std::move(mutableFactory)),
           block_loader_(std::move(blockLoader)),
           log_(logger::log("synchronizer")) {
-      consensus_gate->on_commit().subscribe(
+      consensus_gate->onOutcome().subscribe(
           subscription_,
-          [&](std::shared_ptr<shared_model::interface::Block> block) {
-            this->process_commit(block);
+          // TODO(@l4l) 11/10/18  rework at IR-1754
+          [&](const network::ConsensusGate::GateObject &gate_object) {
+            visit_in_place(gate_object,
+                           [this](const network::PairValid &pv) {
+                             this->process_commit(pv.block);
+                           },
+                           [this](const network::VoteOther &vo) {
+                             this->process_commit(vo.block);
+                           },
+                           [](const auto &obj) {
+                             throw std::runtime_error("Unhandled object");
+                           });
           });
     }
 
