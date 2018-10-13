@@ -8,16 +8,8 @@
 #include <utility>
 
 #include "datetime/time.hpp"
-#include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 #include "utils/query_error_response_visitor.hpp"
-
-namespace {
-  template <typename T>
-  void checkStatus(const shared_model::interface::TransactionResponse &resp) {
-    ASSERT_NO_THROW(boost::get<const T &>(resp.get()));
-  }
-}  // namespace
 
 AcceptanceFixture::AcceptanceFixture()
     : kUser("user"),
@@ -34,25 +26,6 @@ AcceptanceFixture::AcceptanceFixture()
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()),
       kUserKeypair(
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()),
-      checkEnoughSignatures([](auto &status) {
-        checkStatus<shared_model::interface::EnoughSignaturesCollectedResponse>(
-            status);
-      }),
-      checkStatelessInvalid([](auto &status) {
-        checkStatus<shared_model::interface::StatelessFailedTxResponse>(status);
-      }),
-      checkStatelessValid([](auto &status) {
-        checkStatus<shared_model::interface::StatelessValidTxResponse>(status);
-      }),
-      checkStatefulInvalid([](auto &status) {
-        checkStatus<shared_model::interface::StatefulFailedTxResponse>(status);
-      }),
-      checkStatefulValid([](auto &status) {
-        checkStatus<shared_model::interface::StatefulValidTxResponse>(status);
-      }),
-      checkCommitted([](auto &status) {
-        checkStatus<shared_model::interface::CommittedTxResponse>(status);
-      }),
       initial_time(iroha::time::now()),
       nonce_counter(1) {}
 

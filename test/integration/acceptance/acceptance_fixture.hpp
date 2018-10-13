@@ -11,16 +11,55 @@
 #include <string>
 #include <vector>
 #include "cryptography/keypair.hpp"
+#include "framework/integration_framework/integration_test_framework.hpp"
 #include "interfaces/permissions.hpp"
 #include "interfaces/query_responses/query_response.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
-namespace shared_model {
-  namespace proto {
-    class TransactionResponse;
-  }  // namespace proto
-}  // namespace shared_model
+namespace {
+  template <typename Type>
+  void __checkFunction(const shared_model::proto::TransactionResponse &resp) {
+    ASSERT_NO_THROW(boost::get<const Type &>(resp.get()));
+  }
+
+#define CHECK_ENOUGH_SIGNATURES                                            \
+  [](const shared_model::proto::TransactionResponse &resp) {               \
+    SCOPED_TRACE("CHECK_ENOUGH_SIGNATURES");                               \
+    __checkFunction<                                                       \
+        shared_model::interface::EnoughSignaturesCollectedResponse>(resp); \
+  }
+
+#define CHECK_STATELESS_INVALID                                                \
+  [](const shared_model::proto::TransactionResponse &resp) {                   \
+    SCOPED_TRACE("CHECK_STATELESS_INVALID");                                   \
+    __checkFunction<shared_model::interface::StatelessFailedTxResponse>(resp); \
+  }
+
+#define CHECK_STATELESS_VALID                                                 \
+  [](const shared_model::proto::TransactionResponse &resp) {                  \
+    SCOPED_TRACE("CHECK_STATELESS_VALID");                                    \
+    __checkFunction<shared_model::interface::StatelessValidTxResponse>(resp); \
+  }
+
+#define CHECK_STATEFUL_INVALID                                                \
+  [](const shared_model::proto::TransactionResponse &resp) {                  \
+    SCOPED_TRACE("CHECK_STATEFUL_INVALID");                                   \
+    __checkFunction<shared_model::interface::StatefulFailedTxResponse>(resp); \
+  }
+
+#define CHECK_STATEFUL_VALID                                                 \
+  [](const shared_model::proto::TransactionResponse &resp) {                 \
+    SCOPED_TRACE("CHECK_STATEFUL_VALID");                                    \
+    __checkFunction<shared_model::interface::StatefulValidTxResponse>(resp); \
+  }
+
+#define CHECK_COMMITTED                                                  \
+  [](const shared_model::proto::TransactionResponse &resp) {             \
+    SCOPED_TRACE("CHECK_COMMITTE");                                      \
+    __checkFunction<shared_model::interface::CommittedTxResponse>(resp); \
+  }
+}  // namespace
 
 /**
  * Common values (user, domain, asset)
@@ -161,19 +200,6 @@ class AcceptanceFixture : public ::testing::Test {
   const shared_model::interface::types::AccountIdType kAdminId;
   const shared_model::crypto::Keypair kAdminKeypair;
   const shared_model::crypto::Keypair kUserKeypair;
-
-  const std::function<void(const shared_model::proto::TransactionResponse &)>
-      checkEnoughSignatures;
-  const std::function<void(const shared_model::proto::TransactionResponse &)>
-      checkStatelessInvalid;
-  const std::function<void(const shared_model::proto::TransactionResponse &)>
-      checkStatelessValid;
-  const std::function<void(const shared_model::proto::TransactionResponse &)>
-      checkStatefulInvalid;
-  const std::function<void(const shared_model::proto::TransactionResponse &)>
-      checkStatefulValid;
-  const std::function<void(const shared_model::proto::TransactionResponse &)>
-      checkCommitted;
 
   const std::vector<shared_model::interface::types::AssetNameType>
       kIllegalAssetNames = {"",

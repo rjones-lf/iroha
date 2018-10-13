@@ -45,10 +45,10 @@ TEST_F(CreateRole, Basic) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(tx)
-      .checkStatus(tx.hash(), checkEnoughSignatures)
-      .checkStatus(tx.hash(), checkStatelessValid)
-      .checkStatus(tx.hash(), checkStatefulValid)
-      .checkStatus(tx.hash(), checkCommitted)
+      .checkStatus(tx.hash(), CHECK_ENOUGH_SIGNATURES)
+      .checkStatus(tx.hash(), CHECK_STATELESS_VALID)
+      .checkStatus(tx.hash(), CHECK_STATEFUL_VALID)
+      .checkStatus(tx.hash(), CHECK_COMMITTED)
       .sendTxAwait(complete(baseTx()), [](auto &block) {
         ASSERT_EQ(block->transactions().size(), 1);
       });
@@ -88,7 +88,7 @@ TEST_F(CreateRole, EmptyRole) {
       .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs}, "")),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -124,7 +124,7 @@ TEST_F(CreateRole, LongRoleName) {
       .skipBlock()
       .sendTx(complete(baseTx({interface::permissions::Role::kGetMyTxs},
                               std::string(33, 'a'))),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -160,7 +160,7 @@ TEST_F(CreateRole, DISABLED_NonexistentPerm) {
       .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx({static_cast<interface::permissions::Role>(-1)})),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
