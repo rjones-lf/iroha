@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "datetime/time.hpp"
+#include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 #include "utils/query_error_response_visitor.hpp"
 

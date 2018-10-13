@@ -166,8 +166,8 @@ namespace integration_framework {
           queue_cond.notify_all();
         });
     iroha_instance_->getIrohaInstance()->getStatusBus()->statuses().subscribe(
-        [this](auto responses) {
-          responses_queues_[responses->transactionHash().hex()].push(responses);
+        [this](auto response) {
+          responses_queues_[response->transactionHash().hex()].push(response);
           log_->info("response");
           queue_cond.notify_all();
         });
@@ -387,7 +387,7 @@ namespace integration_framework {
       const shared_model::interface::types::HashType &tx_hash,
       std::function<void(const shared_model::proto::TransactionResponse &)>
           validation) {
-    // fetch first proposal from proposal queue
+    // fetch first response associated with the tx from related queue
     TxResponseType response;
     fetchFromQueue(responses_queues_[tx_hash.hex()],
                    response,
