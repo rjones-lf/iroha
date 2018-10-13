@@ -16,8 +16,7 @@
 #
 
 # Reusable tests
-# TODO(@l4l) 11/10/18 IR-1754: uncomment
-# add_subdirectory(iroha-cli)
+add_subdirectory(iroha-cli)
 add_subdirectory(irohad)
 add_subdirectory(libs)
 add_subdirectory(vendor)
