@@ -5,11 +5,8 @@ set -xe
 GENESISBLOCK_PATH=${GENESISBLOCK_PATH:-genesis.block}
 CONFIG_PATH=${CONFIG_PATH:-config.docker}
 POSTGRES_PORT=${POSTGRES_PORT:-5432}
-
-pgHostAutodetect=`cat ${CONFIG_PATH} | jq -r .pg_opt | grep -Eo "host=(.*?)\s" | cut -d'=' -f2 | xargs`
-blocksPathAutodetect=`cat ${CONFIG_PATH} | jq -r .block_store_path`
-BLOCKS_PATH=${BLOCKS_PATH:-${blocksPathAutodetect:-/tmp/block_store}}
-POSTGRES_HOST=${POSTGRES_HOST:-${pgHostAutodetect:-localhost}}
+BLOCKS_PATH=${BLOCKS_PATH:-`cat ${CONFIG_PATH} | jq -r .pg_opt | grep -Eo "host=(.*?)\s" | cut -d'=' -f2 | xargs`}
+POSTGRES_HOST=${POSTGRES_HOST:-`cat ${CONFIG_PATH} | jq -r .block_store_path`}
 
 # postgres host is always defined
 /wait-for-it.sh -h ${POSTGRES_HOST} -p ${POSTGRES_PORT} -t 30 -- true
