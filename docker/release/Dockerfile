@@ -1,15 +1,16 @@
 FROM ubuntu:16.04
 
 RUN apt-get update; \
-    apt-get install -y libc-ares-dev
+    apt-get install -y libc-ares-dev jq
+
+COPY run-iroha.sh /run-iroha.sh
 
 #Install iroha
 COPY iroha.deb /tmp/iroha.deb
 RUN apt-get install -y /tmp/iroha.deb; \
-    rm -f /tmp/iroha.deb
+    rm -f /tmp/iroha.deb; \
+    chmod +x /run-iroha.sh
 
 WORKDIR /opt/iroha_data
 
-COPY entrypoint.sh /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
-CMD ["/sbin/init"]
+CMD ["/run-iroha.sh"]
