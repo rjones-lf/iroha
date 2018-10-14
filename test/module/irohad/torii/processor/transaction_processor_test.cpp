@@ -90,7 +90,7 @@ class TransactionProcessorTest : public ::testing::Test {
     int temp[] = {(create_signature(std::forward<KeyPairs>(keypairs)), 0)...};
     (void)temp;
 
-    return tx;
+    return std::forward<Transaction>(tx);
   }
 
  protected:
