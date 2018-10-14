@@ -107,6 +107,9 @@ namespace iroha {
    * @return return if at least one new signature was inserted
    */
   bool mergeSignaturesInBatch(DataType &target, const DataType &donor) {
+    if (target->transactions().size() != donor->transactions().size()) {
+      return false;
+    }
     auto inserted_new_signatures = false;
     for (auto zip :
          boost::combine(target->transactions(), donor->transactions())) {
