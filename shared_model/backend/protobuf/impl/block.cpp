@@ -7,74 +7,49 @@
 
 namespace shared_model {
   namespace proto {
-    Block::Block(Block &&o) noexcept : NonCopyableProto(std::move(o.proto_)) {}
+    Block::Block(Block &&o) noexcept
+        : AbstractNonCopyableProto(std::move(o.impl->getTransport())) {}
 
     Block &Block::operator=(Block &&o) noexcept {
-      proto_ = std::move(o.proto_);
-      payload_ = *proto_.mutable_payload();
-
-      transactions_.invalidate();
-      blob_.invalidate();
-      prev_hash_.invalidate();
-      signatures_.invalidate();
-      payload_blob_.invalidate();
-
+      impl = std::move(o.impl);
       return *this;
     }
 
     interface::types::TransactionsCollectionType Block::transactions() const {
-      return *transactions_;
+      return impl->transactions();
     }
 
     interface::types::HeightType Block::height() const {
-      return payload_.height();
+      return impl->height();
     }
 
     const interface::types::HashType &Block::prevHash() const {
-      return *prev_hash_;
+      return impl->prevHash();
     }
 
     const interface::types::BlobType &Block::blob() const {
-      return *blob_;
+      return impl->blob();
     }
 
     interface::types::SignatureRangeType Block::signatures() const {
-      return *signatures_;
+      return impl->signatures();
     }
 
-    // TODO Alexey Chernyshov - 2018-03-28 -
-    // rework code duplication from transaction, block after fix protobuf
-    // https://soramitsu.atlassian.net/browse/IR-1175
     bool Block::addSignature(const crypto::Signed &signed_blob,
                              const crypto::PublicKey &public_key) {
-      // if already has such signature
-      if (std::find_if(signatures_->begin(),
-                       signatures_->end(),
-                       [&public_key](const auto &signature) {
-                         return signature.publicKey() == public_key;
-                       })
-          != signatures_->end()) {
-        return false;
-      }
-
-      auto sig = proto_.add_signatures();
-      sig->set_signature(crypto::toBinaryString(signed_blob));
-      sig->set_public_key(crypto::toBinaryString(public_key));
-
-      signatures_.invalidate();
-      return true;
+      return impl->addSignature(signed_blob, public_key);
     }
 
     interface::types::TimestampType Block::createdTime() const {
-      return payload_.created_time();
+      return impl->createdTime();
     }
 
     interface::types::TransactionsNumberType Block::txsNumber() const {
-      return payload_.tx_number();
+      return impl->txsNumber();
     }
 
     const interface::types::BlobType &Block::payload() const {
-      return *payload_blob_;
+      return impl->payload();
     }
   }  // namespace proto
 }  // namespace shared_model
