@@ -2,8 +2,10 @@
 import argparse
 import csv
 import binascii
-import sys
-import subprocess
+# import sys
+import ed25519
+import secrets
+# import subprocess
 
 class Peer:
     def __init__(self, host, port, priv_key, pub_key):
@@ -14,9 +16,14 @@ class Peer:
 
 
 # returns a list of [public_key, private_key]
+# def generate_keypair():
+#     k = subprocess.check_output(['./ed25519-cli', 'keygen']).decode('utf-8').split('\n')
+#     return [k[0].split(':')[1].replace(' ', ''), k[1].split(':')[1].replace(' ', '')]
+
 def generate_keypair():
-    k = subprocess.check_output(['./ed25519-cli', 'keygen']).decode('utf-8').split('\n')
-    return [k[0].split(':')[1].replace(' ', ''), k[1].split(':')[1].replace(' ', '')]
+    priv = secrets.token_bytes(32)
+    return [binascii.hexlify(ed25519.derive_pubkey_from_priv(priv)), binascii.hexlify(priv)]
+
 
 def main():
     parser = argparse.ArgumentParser()

@@ -36,28 +36,6 @@ def genesis_add_peers(peers_list, genesis_block_fp):
             json.dump(genesis_dict, genesis_json_dump, sort_keys=True)
             genesis_json_dump.truncate()
 
-def caliper_add_peers(peers_list, caliper_conf_fp):
-    with open(caliper_conf_fp, 'r+') as caliper_conf_json:
-        caliper_conf_dict = json.load(caliper_conf_json)
-        try:
-            caliper_conf_dict['iroha']['network'] = {}
-        except KeyError:
-            pass
-        for i, p in enumerate(peers_list):
-            p_node = {"node%s" % i: {"torii": "%s:%s" % (p.host, p.port)}}
-            caliper_conf_dict['iroha']['network'].update(p_node)
-        caliper_conf_json.seek(0)
-        json.dump(caliper_conf_dict, caliper_conf_json, sort_keys=True)
-        caliper_conf_json.truncate()
-
-def caliper_rename_keys(priv_key_name, pub_key_name, caliper_conf_fp):
-    with open(caliper_conf_fp, 'r+') as caliper_conf_json:
-        caliper_conf_dict = json.load(caliper_conf_json)
-        caliper_conf_dict['iroha']['admin']['key-pub'] = "network/iroha/simplenetwork/%s" % pub_key_name
-        caliper_conf_dict['iroha']['admin']['key-priv'] = "network/iroha/simplenetwork/%s" % priv_key_name
-        caliper_conf_json.seek(0)
-        json.dump(caliper_conf_dict, caliper_conf_json, sort_keys=True)
-        caliper_conf_json.truncate()
 
 def hex_to_b64(hex_string):
     hex_string = base64.b64encode(bytearray.fromhex(hex_string))
@@ -80,9 +58,6 @@ if __name__ ==  "__main__":
     peers = parse_peers(peers_csv)
     if command == 'add_iroha_peers':
         genesis_add_peers(peers, json_conf)
-    elif command == 'add_caliper_peers':
-        caliper_add_peers(peers, json_conf)
-        caliper_rename_keys('admin-test.priv', 'admin-test.pub', json_conf)
     elif command == 'make_key_files':
         make_keys(peers)
     else:
