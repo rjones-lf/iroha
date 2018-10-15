@@ -39,9 +39,9 @@ def trace(func):
     """
     def tracer(*args, **kwargs):
         name = func.__name__
-        print('Entering "{}"'.format(name))
+        print('\tEntering "{}"'.format(name))
         result = func(*args, **kwargs)
-        print('Leaving "{}"'.format(name))
+        print('\tLeaving "{}"'.format(name))
         return result
     return tracer
 
@@ -50,29 +50,24 @@ def trace(func):
 def send_transaction_and_print_status(transaction):
     global net
     hex_hash = binascii.hexlify(ic.hash(transaction))
-    print('+' * 40)
     print('Transaction hash = {}, creator = {}'.format(
         hex_hash, transaction.payload.reduced_payload.creator_account_id))
     net.send_tx(transaction)
     for status in net.tx_status_stream(transaction):
         print(status)
-    print('-' * 40)
 
 
 @trace
 def send_batch_and_print_status(*transactions):
     global net
-    print('#' * 40)
     net.send_txs(*transactions)
     for tx in transactions:
         hex_hash = binascii.hexlify(ic.hash(tx))
-        print('+' * 20)
+        print('\t' + '-' * 20)
         print('Transaction hash = {}, creator = {}'.format(
             hex_hash, tx.payload.reduced_payload.creator_account_id))
         for status in net.tx_status_stream(tx):
             print(status)
-        print('-' * 20)
-    print('*' * 40)
 
 
 @trace
