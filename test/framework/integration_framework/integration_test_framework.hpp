@@ -21,8 +21,10 @@
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
+#include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "logger/logger.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 #include "torii/command_client.hpp"
 #include "torii/query_client.hpp"
 
@@ -205,6 +207,17 @@ namespace integration_framework {
     IntegrationTestFramework &sendQuery(const shared_model::proto::Query &qry);
 
     /**
+     * Send MST state message to this peer.
+     * @param src_key - the key of the peer which the message appears to come
+     * from
+     * @param mst_state - the MST state to send
+     * @return this
+     */
+    IntegrationTestFramework &sendMstState(
+        const shared_model::crypto::PublicKey &src_key,
+        const iroha::MstState &mst_state);
+
+    /**
      * Request next proposal from queue and serve it with custom handler
      * @param validation - callback that receives object of type \relates
      * std::shared_ptr<shared_model::interface::Proposal> by reference
@@ -315,6 +328,20 @@ namespace integration_framework {
     milliseconds tx_response_waiting;
 
     size_t maximum_proposal_size_;
+
+    std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+        common_objects_factory_;
+    std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+        shared_model::interface::Transaction,
+        iroha::protocol::Transaction>>
+        transaction_factory_;
+    std::shared_ptr<shared_model::interface::TransactionBatchParser>
+        batch_parser_;
+    std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+        transaction_batch_factory_;
+    std::shared_ptr<iroha::network::MstTransportGrpc> mst_transport_;
+
+    std::unique_ptr<shared_model::interface::Peer> this_peer_;
 
    private:
     logger::Logger log_ = logger::log("IntegrationTestFramework");

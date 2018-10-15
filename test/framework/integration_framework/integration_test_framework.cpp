@@ -10,6 +10,8 @@
 #include <boost/thread/barrier.hpp>
 
 #include "backend/protobuf/block.hpp"
+#include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
+#include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "backend/protobuf/transaction.hpp"
@@ -23,14 +25,32 @@
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "framework/result_fixture.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "interfaces/permissions.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
+#include "module/shared_model/validators/validators.hpp"
+#include "network/impl/async_grpc_client.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
 
+using AlwaysValidProtoCommonObjectsFactory =
+    shared_model::proto::ProtoCommonObjectsFactory<
+        shared_model::validation::AlwaysValidFieldValidator>;
+using ProtoTransactionFactory = shared_model::proto::ProtoTransportFactory<
+    shared_model::interface::Transaction,
+    shared_model::proto::Transaction>;
+using AbstractTransactionValidator =
+    shared_model::validation::AbstractValidator<
+        shared_model::interface::Transaction>;
+using AlwaysValidTransactionValidator =
+    shared_model::validation::AlwaysValidModelValidator<
+        shared_model::interface::Transaction>;
+
+static std::string kLocalHost = "127.0.0.1";
 static size_t kToriiPort = 11501;
 
 namespace integration_framework {
@@ -59,6 +79,16 @@ namespace integration_framework {
         block_waiting(block_waiting),
         tx_response_waiting(tx_response_waiting),
         maximum_proposal_size_(maximum_proposal_size),
+        common_objects_factory_(
+            std::make_shared<AlwaysValidProtoCommonObjectsFactory>()),
+        transaction_factory_(std::make_shared<ProtoTransactionFactory>(
+            std::unique_ptr<AbstractTransactionValidator>(
+                new AlwaysValidTransactionValidator()))),
+        batch_parser_(std::make_shared<
+                      shared_model::interface::TransactionBatchParserImpl>()),
+        transaction_batch_factory_(
+            std::make_shared<
+                shared_model::interface::TransactionBatchFactoryImpl>()),
         deleter_(deleter) {}
 
   IntegrationTestFramework::~IntegrationTestFramework() {
@@ -131,6 +161,29 @@ namespace integration_framework {
       const shared_model::crypto::Keypair &keypair) {
     log_->info("init state");
     // peer initialization
+    common_objects_factory_->createPeer(kLocalHost, keypair.publicKey())
+        .match(
+            [this](iroha::expected::Result<
+                   std::unique_ptr<shared_model::interface::Peer>,
+                   std::string>::ValueType &result) {
+              this->this_peer_ = std::move(result.value);
+            },
+            [](const iroha::expected::Result<
+                std::unique_ptr<shared_model::interface::Peer>,
+                std::string>::ErrorType &error) {
+              BOOST_THROW_EXCEPTION(std::runtime_error(
+                  "Failed to create peer object for current irohad instance. "
+                  + error.error));
+            });
+
+    mst_transport_ = std::make_shared<iroha::network::MstTransportGrpc>(
+        std::make_shared<
+            iroha::network::AsyncGrpcClient<google::protobuf::Empty>>(),
+        transaction_factory_,
+        batch_parser_,
+        transaction_batch_factory_,
+        keypair.publicKey());
+
     iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
     iroha_instance_->getIrohaInstance()->resetOrderingService();
@@ -334,6 +387,13 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::sendQuery(
       const shared_model::proto::Query &qry) {
     sendQuery(qry, [](const auto &) {});
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::sendMstState(
+      const shared_model::crypto::PublicKey &src_key,
+      const iroha::MstState &mst_state) {
+    mst_transport_->sendState(*this_peer_, mst_state);
     return *this;
   }
 
