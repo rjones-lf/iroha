@@ -10,13 +10,6 @@
 #include "module/shared_model/validators/validators_fixture.hpp"
 
 class ProtoTxValidatorTest : public ValidatorsTest {
- private:
-  shared_model::validation::ProtoTransactionValidator<
-      shared_model::validation::FieldValidator,
-      shared_model::validation::CommandValidatorVisitor<
-          shared_model::validation::FieldValidator>>
-      validator;
-
  protected:
   iroha::protocol::Transaction generateEmptyTransaction() {
     std::string creator_account_id = "admin@test";
@@ -43,6 +36,40 @@ class ProtoTxValidatorTest : public ValidatorsTest {
     cr->add_permissions(permission);
     return tx;
   }
+
+  iroha::protocol::Transaction generateGrantPermissionTransaction(
+      const std::string &account_id,
+      iroha::protocol::GrantablePermission permission) {
+    auto tx = generateEmptyTransaction();
+
+    auto gp = tx.mutable_payload()
+                  ->mutable_reduced_payload()
+                  ->add_commands()
+                  ->mutable_grant_permission();
+    gp->set_account_id(account_id);
+    gp->set_permission(permission);
+    return tx;
+  }
+
+  iroha::protocol::Transaction generateRevokePermissionTransaction(
+      const std::string &account_id,
+      iroha::protocol::GrantablePermission permission) {
+    auto tx = generateEmptyTransaction();
+
+    auto gp = tx.mutable_payload()
+                  ->mutable_reduced_payload()
+                  ->add_commands()
+                  ->mutable_revoke_permission();
+    gp->set_account_id(account_id);
+    gp->set_permission(permission);
+    return tx;
+  }
+
+  shared_model::validation::ProtoTransactionValidator<
+      shared_model::validation::FieldValidator,
+      shared_model::validation::CommandValidatorVisitor<
+          shared_model::validation::FieldValidator>>
+      validator;
 };
 
 /**
@@ -112,6 +139,66 @@ TEST_F(ProtoTxValidatorTest, CreateRoleValid) {
 TEST_F(ProtoTxValidatorTest, CreateRoleInvalid) {
   auto tx = generateCreateRoleTransaction(
       role_name, static_cast<iroha::protocol::RolePermission>(-1));
+
+  shared_model::proto::Transaction proto_tx(tx);
+  auto answer = validator.validate(proto_tx);
+  ASSERT_TRUE(answer.hasErrors());
+}
+
+/**
+ * @given iroha::protocol::Transaction containing grant permission transaction
+ * with valid grantable permission
+ * @when it is validated
+ * @then answer with no errors is returned
+ */
+TEST_F(ProtoTxValidatorTest, GrantPermissionValid) {
+  auto tx = generateGrantPermissionTransaction(
+      account_id, iroha::protocol::GrantablePermission::can_add_my_signatory);
+
+  shared_model::proto::Transaction proto_tx(tx);
+  auto answer = validator.validate(proto_tx);
+  ASSERT_FALSE(answer.hasErrors()) << answer.reason();
+}
+
+/**
+ * @given iroha::protocol::Transaction containing grant permission transaction
+ * with valid grantable permission
+ * @when it is validated
+ * @then answer with no errors is returned
+ */
+TEST_F(ProtoTxValidatorTest, GrantPermissionInvalid) {
+  auto tx = generateGrantPermissionTransaction(
+      account_id, static_cast<iroha::protocol::GrantablePermission>(-1));
+
+  shared_model::proto::Transaction proto_tx(tx);
+  auto answer = validator.validate(proto_tx);
+  ASSERT_TRUE(answer.hasErrors());
+}
+
+/**
+ * @given iroha::protocol::Transaction containing revoke permission transaction
+ * with valid grantable permission
+ * @when it is validated
+ * @then answer with no errors is returned
+ */
+TEST_F(ProtoTxValidatorTest, RevokePermissionValid) {
+  auto tx = generateRevokePermissionTransaction(
+      account_id, iroha::protocol::GrantablePermission::can_add_my_signatory);
+
+  shared_model::proto::Transaction proto_tx(tx);
+  auto answer = validator.validate(proto_tx);
+  ASSERT_FALSE(answer.hasErrors()) << answer.reason();
+}
+
+/**
+ * @given iroha::protocol::Transaction containing revoke permission transaction
+ * with valid grantable permission
+ * @when it is validated
+ * @then answer with no errors is returned
+ */
+TEST_F(ProtoTxValidatorTest, RevokePermissionInvalid) {
+  auto tx = generateRevokePermissionTransaction(
+      account_id, static_cast<iroha::protocol::GrantablePermission>(-1));
 
   shared_model::proto::Transaction proto_tx(tx);
   auto answer = validator.validate(proto_tx);

@@ -7,7 +7,7 @@
 #define IROHA_SHARED_MODEL_TRANSACTION_VALIDATOR_HPP
 
 #include <boost/format.hpp>
-#include <boost/variant/static_visitor.hpp>
+#include <boost/variant.hpp>
 
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"
