@@ -91,11 +91,6 @@ TEST_F(ProtoTxValidatorTest, CommandIsSet) {
       ->CopyFrom(cd);
   shared_model::proto::Transaction proto_tx(tx);
 
-  shared_model::validation::ProtoTransactionValidator<
-      shared_model::validation::FieldValidator,
-      shared_model::validation::CommandValidatorVisitor<
-          shared_model::validation::FieldValidator>>
-      validator;
   auto answer = validator.validate(proto_tx);
   ASSERT_FALSE(answer.hasErrors()) << answer.reason();
 }
@@ -162,7 +157,7 @@ TEST_F(ProtoTxValidatorTest, GrantPermissionValid) {
 
 /**
  * @given iroha::protocol::Transaction containing grant permission transaction
- * with valid grantable permission
+ * with invalid grantable permission
  * @when it is validated
  * @then answer with errors is returned
  */
