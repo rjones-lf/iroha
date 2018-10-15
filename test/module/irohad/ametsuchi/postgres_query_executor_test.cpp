@@ -1088,8 +1088,7 @@ namespace iroha {
             [](iroha::expected::Error<std::string> &error) {
               FAIL() << "MutableStorage: " << error.error;
             });
-        ms->apply(block,
-                  [](const auto &, auto &, const auto &) { return true; });
+        ms->apply(block);
         storage->commit(std::move(ms));
       }
 
