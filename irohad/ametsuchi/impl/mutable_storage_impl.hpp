@@ -27,9 +27,7 @@
 #include "logger/logger.hpp"
 
 namespace iroha {
-
   namespace ametsuchi {
-
     class BlockIndex;
     class WsvCommand;
 
@@ -42,11 +40,11 @@ namespace iroha {
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory);
-      bool check(const shared_model::interface::Block &block,
-                 MutableStoragePredicateType function) override;
 
-      bool apply(const shared_model::interface::Block &block,
-                 MutableStoragePredicateType function) override;
+      bool check(const shared_model::interface::Block &block,
+                 MutableStoragePredicate function) override;
+
+      bool apply(const shared_model::interface::Block &block) override;
 
       ~MutableStorageImpl() override;
 

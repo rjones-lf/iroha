@@ -25,7 +25,9 @@ namespace shared_model {
       using FactoryResult = iroha::expected::Result<T, std::string>;
 
       using TransactionsCollectionType =
-          boost::any_range<Transaction, boost::forward_traversal_tag>;
+          boost::any_range<Transaction,
+                           boost::forward_traversal_tag,
+                           const Transaction &>;
 
       virtual FactoryResult<std::unique_ptr<Proposal>> createProposal(
           types::HeightType height,

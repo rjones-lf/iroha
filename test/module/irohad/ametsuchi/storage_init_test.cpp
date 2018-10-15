@@ -26,8 +26,9 @@ class StorageInitTest : public ::testing::Test {
   }
 
  protected:
-  std::string block_store_path =
-      (boost::filesystem::temp_directory_path() / "block_store").string();
+  std::string block_store_path = (boost::filesystem::temp_directory_path()
+                                  / boost::filesystem::unique_path())
+                                     .string();
 
   // generate random valid dbname
   std::string dbname_ = "d"
@@ -45,10 +46,17 @@ class StorageInitTest : public ::testing::Test {
   std::shared_ptr<shared_model::proto::ProtoBlockJsonConverter> converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
 
+  void SetUp() override {
+    ASSERT_FALSE(boost::filesystem::exists(block_store_path))
+        << "Temporary block store " << block_store_path
+        << " directory already exists";
+  }
+
   void TearDown() override {
     soci::session sql(soci::postgresql, pg_opt_without_dbname_);
     std::string query = "DROP DATABASE IF EXISTS " + dbname_;
     sql << query;
+    boost::filesystem::remove_all(block_store_path);
   }
 };
 
@@ -58,15 +66,21 @@ class StorageInitTest : public ::testing::Test {
  * @then Database is created
  */
 TEST_F(StorageInitTest, CreateStorageWithDatabase) {
+  std::shared_ptr<StorageImpl> storage;
   StorageImpl::create(block_store_path, pgopt_, factory, converter)
-      .match([](const Value<std::shared_ptr<StorageImpl>> &) { SUCCEED(); },
-             [](const Error<std::string> &error) { FAIL() << error.error; });
+      .match(
+          [&storage](const Value<std::shared_ptr<StorageImpl>> &value) {
+            storage = value.value;
+            SUCCEED();
+          },
+          [](const Error<std::string> &error) { FAIL() << error.error; });
   soci::session sql(soci::postgresql, pg_opt_without_dbname_);
   int size;
   sql << "SELECT COUNT(datname) FROM pg_catalog.pg_database WHERE datname = "
          ":dbname",
       soci::into(size), soci::use(dbname_);
   ASSERT_EQ(size, 1);
+  storage->dropStorage();
 }
 
 /**
