@@ -109,13 +109,13 @@ namespace iroha {
 
     void PostgresBlockIndex::index(
         const shared_model::interface::Block &block) {
-      const auto &height = block.height();
+      auto height = block.height();
       auto indexed_txs = block.transactions() | boost::adaptors::indexed(0);
       std::string index_query = std::accumulate(
           indexed_txs.begin(),
           indexed_txs.end(),
           std::string{},
-          [&height](auto query, const auto &tx) {
+          [height](auto query, const auto &tx) {
             const auto &creator_id = tx.value().creatorAccountId();
             const auto index = tx.index();
 
@@ -126,7 +126,11 @@ namespace iroha {
             query += makeCreatorHeightIndex(creator_id, height, index);
             return query;
           });
-      sql_ << index_query;
+      try {
+        sql_ << index_query;
+      } catch (std::exception &e) {
+        log_->error(e.what());
+      }
     }
   }  // namespace ametsuchi
 }  // namespace iroha

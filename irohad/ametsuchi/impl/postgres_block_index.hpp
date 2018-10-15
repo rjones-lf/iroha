@@ -42,6 +42,7 @@ namespace iroha {
        *     b. source account
        *     c. destination account
        *   2. account -> block for source and destination accounts
+       *   3. (account, height) -> list of txes
        */
       void index(const shared_model::interface::Block &block) override;
 
