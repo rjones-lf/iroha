@@ -58,23 +58,24 @@ grpc::Status BlockLoaderService::retrieveBlock(
 
   // try to fetch block from the consensus cache
   auto block = consensus_result_cache_->get();
-  if (block and block->hash() == hash) {
-    auto transport_block =
-        std::static_pointer_cast<shared_model::proto::Block>(block)
-            ->getTransport();
-    response->CopyFrom(transport_block);
-    return grpc::Status::OK;
-  } else if (not block) {
-    log_->info(
-        "Tried to retrieve a block from an empty cache: requested block hash "
-        "{}",
-        hash.hex());
-  } else {
+  if (block) {
+    if (block->hash() == hash) {
+      auto transport_block =
+          std::static_pointer_cast<shared_model::proto::Block>(block)
+              ->getTransport();
+      response->CopyFrom(transport_block);
+      return grpc::Status::OK;
+    }
     log_->info(
         "Requested to retrieve a block, but cache contains another block: "
         "requested {}, in cache {}",
         hash.hex(),
         block->hash().hex());
+  } else {
+    log_->info(
+        "Tried to retrieve a block from an empty cache: requested block hash "
+        "{}",
+        hash.hex());
   }
 
   // cache missed: notify and try to fetch the block from block storage itself

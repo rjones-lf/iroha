@@ -88,7 +88,7 @@ namespace iroha {
                     hash_provider_->toModelHash(hash.value());
                 // iterate over peers who voted for the committed block
                 // TODO [IR-1753] Akvinikym 11.10.18: add exponential backoff
-                // for each peer iteration
+                // for each peer iteration and shuffle peers order
                 rxcpp::observable<>::iterate(commit_message.votes)
                     // allow other peers to apply commit
                     .flat_map([this, model_hash](auto vote) {
