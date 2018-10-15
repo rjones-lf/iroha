@@ -33,6 +33,20 @@ bob_private_keys = [
 bob_public_keys = [ic.derive_public_key(x) for x in bob_private_keys]
 
 
+def trace(func):
+    """
+    A decorator for tracing methods' begin/end execution points
+    """
+    def tracer(*args, **kwargs):
+        name = func.__name__
+        print('Entering "{}"'.format(name))
+        result = func(*args, **kwargs)
+        print('Leaving "{}"'.format(name))
+        return result
+    return tracer
+
+
+@trace
 def send_transaction_and_print_status(transaction):
     global net
     hex_hash = binascii.hexlify(ic.hash(transaction))
@@ -45,6 +59,7 @@ def send_transaction_and_print_status(transaction):
     print('-' * 40)
 
 
+@trace
 def send_batch_and_print_status(*transactions):
     global net
     print('#' * 40)
@@ -60,6 +75,7 @@ def send_batch_and_print_status(*transactions):
     print('*' * 40)
 
 
+@trace
 def create_users():
     global iroha
     init_cmds = [
@@ -81,6 +97,7 @@ def create_users():
     send_transaction_and_print_status(init_tx)
 
 
+@trace
 def add_keys_and_set_quorum():
     alice_iroha = Iroha('alice@test')
     alice_cmds = [
@@ -102,6 +119,7 @@ def add_keys_and_set_quorum():
     send_transaction_and_print_status(bob_tx)
 
 
+@trace
 def alice_creates_exchange_batch():
     alice_tx = iroha.transaction(
         [iroha.command(
@@ -127,6 +145,7 @@ def alice_creates_exchange_batch():
     send_batch_and_print_status(alice_tx, bob_tx)
 
 
+@trace
 def bob_accepts_exchange_request():
     global net
     q = ic.sign_query(
@@ -142,6 +161,7 @@ def bob_accepts_exchange_request():
     send_batch_and_print_status(*pending_transactions.transactions_response.transactions)
 
 
+@trace
 def check_no_pending_txs():
     print(' ~~~ No pending txs expected:')
     print(
@@ -155,7 +175,13 @@ def check_no_pending_txs():
     print(' ~~~')
 
 
+@trace
 def bob_declines_exchange_request():
+    print("""
+    
+    IT IS EXPECTED HERE THAT THE BATCH WILL FAIL STATEFUL VALIDATION
+    
+    """)
     global net
     q = ic.sign_query(
         Iroha('bob@test').query('GetPendingTransactions'),
