@@ -46,7 +46,8 @@ namespace iroha {
         std::shared_ptr<soci::connection_pool> connection,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
-        size_t pool_size)
+        size_t pool_size,
+        bool enable_prepared_transactions)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
@@ -55,6 +56,11 @@ namespace iroha {
           converter_(std::move(converter)),
           log_(logger::log("StorageImpl")),
           pool_size_(pool_size) {
+      if (enable_prepared_transactions) {
+        prepared_transaction_id_ = "hello";
+      } else {
+        prepared_transaction_id_ = "";
+      }
       soci::session sql(*connection_);
       sql << init_;
       prepareStatements(*connection_, pool_size_);
@@ -69,7 +75,7 @@ namespace iroha {
       auto sql = std::make_unique<soci::session>(*connection_);
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
-          std::make_unique<TemporaryWsvImpl>(std::move(sql), factory_));
+          std::make_unique<TemporaryWsvImpl>(std::move(sql), factory_, prepared_transaction_id_));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
@@ -94,7 +100,8 @@ namespace iroha {
                     return shared_model::interface::types::HashType("");
                   }),
               std::move(sql),
-              factory_));
+              factory_,
+              prepared_transaction_id_));
     }
 
     boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery()
@@ -297,7 +304,8 @@ namespace iroha {
         std::string postgres_options,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
-        size_t pool_size) {
+        size_t pool_size,
+        bool enable_prepared_transactions) {
       boost::optional<std::string> string_res = boost::none;
 
       PostgresOptions options(postgres_options);
@@ -323,6 +331,17 @@ namespace iroha {
             db_result.match(
                 [&](expected::Value<std::shared_ptr<soci::connection_pool>>
                         &connection) {
+                  if (enable_prepared_transactions) {
+                    int prepared_txs_count;
+                    soci::session sql(*connection.value);
+                    sql << "SHOW max_prepared_transactions;",
+                        soci::into(prepared_txs_count);
+                    if (!prepared_txs_count) {
+                      storage = expected::makeError(
+                          "prepared transactions are not enabled");
+                          return;
+                    }
+                  }
                   storage = expected::makeValue(std::shared_ptr<StorageImpl>(
                       new StorageImpl(block_store_dir,
                                       options,
@@ -330,7 +349,8 @@ namespace iroha {
                                       connection.value,
                                       factory,
                                       converter,
-                                      pool_size)));
+                                      pool_size,
+                                      enable_prepared_transactions)));
                 },
                 [&](expected::Error<std::string> &error) { storage = error; });
           },
@@ -352,7 +372,6 @@ namespace iroha {
               log_->error(e.error);
             });
       }
-
       *(storage->sql_) << "COMMIT";
       storage->committed = true;
     }

@@ -52,7 +52,8 @@ namespace iroha {
               factory,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
               converter,
-          size_t pool_size = 10);
+          size_t pool_size = 10,
+          bool enable_prepared_transactions = false);
 
       expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
       createTemporaryWsv() override;
@@ -115,7 +116,8 @@ namespace iroha {
                       factory,
                   std::shared_ptr<shared_model::interface::BlockJsonConverter>
                       converter,
-                  size_t pool_size);
+                  size_t pool_size,
+                  bool enable_prepared_transactions);
 
       /**
        * Folder with raw blocks
@@ -142,6 +144,8 @@ namespace iroha {
       mutable std::shared_timed_mutex drop_mutex;
 
       size_t pool_size_;
+
+      std::string prepared_transaction_id_;
 
      protected:
       static const std::string &drop_;

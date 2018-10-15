@@ -39,7 +39,8 @@ namespace iroha {
           shared_model::interface::types::HashType top_hash,
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory);
+              factory,
+          std::string& prepared_tx_id);
 
       bool check(const shared_model::interface::Block &block,
                  MutableStoragePredicate function) override;
@@ -63,6 +64,7 @@ namespace iroha {
       bool committed;
 
       logger::Logger log_;
+      std::string& prepared_tx_id_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

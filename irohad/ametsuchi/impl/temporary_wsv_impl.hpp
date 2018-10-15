@@ -47,7 +47,8 @@ namespace iroha {
       explicit TemporaryWsvImpl(
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory);
+              factory,
+              std::string &prepared_transaction_id);
 
       expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &,
@@ -66,6 +67,8 @@ namespace iroha {
       std::unique_ptr<CommandExecutor> command_executor_;
 
       logger::Logger log_;
+
+      std::string prepared_transaction_id_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha
