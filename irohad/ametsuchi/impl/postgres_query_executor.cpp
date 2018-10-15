@@ -130,6 +130,58 @@ namespace {
     };
   }
 
+  std::unique_ptr<shared_model::interface::QueryResponse>
+  logAndReturnErrorResponse(
+      iroha::ametsuchi::QueryErrorType error_type,
+      std::string error_body,
+      const shared_model::crypto::Hash &query_hash,
+      std::shared_ptr<shared_model::interface::QueryResponseFactory>
+          query_response_factory,
+      const logger::Logger &log) {
+    using QueryErrorType = iroha::ametsuchi::QueryErrorType;
+
+    std::string error;
+    switch (error_type) {
+      case QueryErrorType::kNoAccount: {
+        error = "could find account with such id: " + error_body;
+        log->error(error);
+        return query_response_factory->createErrorQueryResponse(
+            QueryErrorType::kNoAccount, std::move(error), query_hash);
+      }
+      case QueryErrorType::kNoSignatories: {
+        error = "no signatories found in account with such id: " + error_body;
+        log->error(error);
+        return query_response_factory->createErrorQueryResponse(
+            QueryErrorType::kNoSignatories, std::move(error), query_hash);
+      }
+      case QueryErrorType::kNoAccountDetail: {
+        error = "no details in account with such id: " + error_body;
+        log->error(error);
+        return query_response_factory->createErrorQueryResponse(
+            QueryErrorType::kNoAccountDetail, std::move(error), query_hash);
+      }
+      case QueryErrorType::kNoRoles: {
+        error = "no role with such name in account with such id: " + error_body;
+        log->error(error);
+        return query_response_factory->createErrorQueryResponse(
+            QueryErrorType::kNoRoles, std::move(error), query_hash);
+      }
+      case QueryErrorType::kNoAsset: {
+        error =
+            "no asset with such name in account with such id: " + error_body;
+        log->error(error);
+        return query_response_factory->createErrorQueryResponse(
+            QueryErrorType::kNoAsset, std::move(error), query_hash);
+      }
+      // other error are either handled by generic response or do not appear yet
+      default: {
+        error = "failed to execute query: " + error_body;
+        log->error(error);
+        return query_response_factory->createErrorQueryResponse(
+            QueryErrorType::kStatefulFailed, std::move(error), query_hash);
+      }
+    }
+  }
 }  // namespace
 
 namespace iroha {
@@ -140,8 +192,7 @@ namespace iroha {
     PostgresQueryExecutorVisitor::getTransactionsFromBlock(uint64_t block_id,
                                                            RangeGen &&range_gen,
                                                            Pred &&pred) {
-      std::vector<std::unique_ptr<shared_model::interface::Transaction>>
-          result{};
+      std::vector<std::unique_ptr<shared_model::interface::Transaction>> result;
       auto serialized_block = block_store_.get(block_id);
       if (not serialized_block) {
         log_->error("Failed to retrieve block with id {}", block_id);
@@ -199,10 +250,12 @@ namespace iroha {
               if (std::all_of(std::begin(temp), std::end(temp), [](auto b) {
                     return b;
                   })) {
-                return query_response_factory_->createErrorQueryResponse(
+                return logAndReturnErrorResponse(
                     QueryErrorType::kStatefulFailed,
                     err_response(),
-                    this->query_hash_);
+                    this->query_hash_,
+                    query_response_factory_,
+                    log_);
               }
               auto query_range = range
                   | boost::adaptors::transformed([](auto &t) {
@@ -216,11 +269,11 @@ namespace iroha {
                   query_range, perms...);
             });
       } catch (const std::exception &e) {
-        log_->error("Failed to execute query: {}", e.what());
-        return query_response_factory_->createErrorQueryResponse(
-            QueryErrorType::kStatefulFailed,
-            "failed to execute query: " + std::string(e.what()),
-            query_hash_);
+        return logAndReturnErrorResponse(QueryErrorType::kStatefulFailed,
+                                         e.what(),
+                                         this->query_hash_,
+                                         query_response_factory_,
+                                         log_);
       }
     }
 
@@ -291,7 +344,7 @@ namespace iroha {
     }
 
     void PostgresQueryExecutorVisitor::setQueryHash(
-        const shared_model::crypto::Hash &query_hash) {
+        const shared_model::interface::types::HashType &query_hash) {
       query_hash_ = query_hash;
     }
 
@@ -344,12 +397,12 @@ namespace iroha {
                       std::move(v.value), std::move(roles), query_hash_);
                 },
                 [this](expected::Error<std::string> &e) {
-                  auto error = "could not create account object: " + e.error;
-                  log_->error(error);
-                  return query_response_factory_->createErrorQueryResponse(
+                  return logAndReturnErrorResponse(
                       QueryErrorType::kStatefulFailed,
-                      std::move(error),
-                      query_hash_);
+                      std::move(e.error),
+                      this->query_hash_,
+                      query_response_factory_,
+                      log_);
                 });
       };
 
@@ -360,10 +413,11 @@ namespace iroha {
           },
           [&](auto range, auto &) {
             if (range.empty()) {
-              return query_response_factory_->createErrorQueryResponse(
-                  QueryErrorType::kNoAccount,
-                  "no account with such id found: " + q.accountId(),
-                  query_hash_);
+              return logAndReturnErrorResponse(QueryErrorType::kNoAccount,
+                                               q.accountId(),
+                                               this->query_hash_,
+                                               query_response_factory_,
+                                               log_);
             }
 
             return apply(range.front(), query_apply);
@@ -397,11 +451,11 @@ namespace iroha {
           [&] { return (sql_.prepare << cmd, soci::use(q.accountId())); },
           [&](auto range, auto &) {
             if (range.empty()) {
-              return query_response_factory_->createErrorQueryResponse(
-                  QueryErrorType::kNoSignatories,
-                  "no signatories found in account with such id: "
-                      + q.accountId(),
-                  query_hash_);
+              return logAndReturnErrorResponse(QueryErrorType::kNoSignatories,
+                                               q.accountId(),
+                                               this->query_hash_,
+                                               query_response_factory_,
+                                               log_);
             }
 
             auto pubkeys = boost::copy_range<
@@ -706,10 +760,11 @@ namespace iroha {
           },
           [&](auto range, auto &) {
             if (range.empty()) {
-              return query_response_factory_->createErrorQueryResponse(
-                  QueryErrorType::kNoAccountDetail,
-                  "no details in account with such id: " + q.accountId(),
-                  query_hash_);
+              return logAndReturnErrorResponse(QueryErrorType::kNoAccountDetail,
+                                               q.accountId(),
+                                               this->query_hash_,
+                                               query_response_factory_,
+                                               log_);
             }
 
             return apply(range.front(), [this](auto &json) {
@@ -774,11 +829,12 @@ namespace iroha {
           },
           [&](auto range, auto &) {
             if (range.empty()) {
-              return query_response_factory_->createErrorQueryResponse(
+              return logAndReturnErrorResponse(
                   QueryErrorType::kNoRoles,
-                  "no role " + q.roleId()
-                      + " in account with such id: " + creator_id_,
-                  query_hash_);
+                  "{" + q.roleId() + ", " + creator_id_ + "}",
+                  this->query_hash_,
+                  query_response_factory_,
+                  log_);
             }
 
             return apply(range.front(), [this](auto &permission) {
@@ -813,11 +869,12 @@ namespace iroha {
           },
           [&](auto range, auto &) {
             if (range.empty()) {
-              return query_response_factory_->createErrorQueryResponse(
+              return logAndReturnErrorResponse(
                   QueryErrorType::kNoAsset,
-                  "no asset " + q.assetId()
-                      + " in account with such id: " + creator_id_,
-                  query_hash_);
+                  "{" + q.assetId() + ", " + creator_id_ + "}",
+                  this->query_hash_,
+                  query_response_factory_,
+                  log_);
             }
 
             return apply(
@@ -831,14 +888,12 @@ namespace iroha {
                             std::move(asset.value), query_hash_);
                       },
                       [this](const expected::Error<std::string> &err) {
-                        auto error =
-                            "could not create asset object: " + err.error;
-                        log_->error(error);
-                        return query_response_factory_
-                            ->createErrorQueryResponse(
-                                QueryErrorType::kStatefulFailed,
-                                std::move(error),
-                                query_hash_);
+                        return logAndReturnErrorResponse(
+                            QueryErrorType::kStatefulFailed,
+                            err.error,
+                            this->query_hash_,
+                            query_response_factory_,
+                            log_);
                       });
                 });
           },
