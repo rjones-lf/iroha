@@ -137,7 +137,7 @@ def alice_creates_exchange_batch():
         creator_account='bob@test'
         # we intentionally omit here bob's quorum, since alice is the originator of the exchange and in general case
         # alice does not know bob's quorum.
-        # bob knowing onw quorum in case of accept should sign the tx using all the number of missing keys at once
+        # bob knowing own quorum in case of accept should sign the tx using all the number of missing keys at once
     )
     iroha.batch(alice_tx, bob_tx, atomic=True)
     # sign transactions only after batch meta creation
