@@ -164,7 +164,7 @@ TEST_F(ProtoTxValidatorTest, GrantPermissionValid) {
  * @given iroha::protocol::Transaction containing grant permission transaction
  * with valid grantable permission
  * @when it is validated
- * @then answer with no errors is returned
+ * @then answer with errors is returned
  */
 TEST_F(ProtoTxValidatorTest, GrantPermissionInvalid) {
   auto tx = generateGrantPermissionTransaction(
@@ -192,9 +192,9 @@ TEST_F(ProtoTxValidatorTest, RevokePermissionValid) {
 
 /**
  * @given iroha::protocol::Transaction containing revoke permission transaction
- * with valid grantable permission
+ * with invalid grantable permission
  * @when it is validated
- * @then answer with no errors is returned
+ * @then answer with errors is returned
  */
 TEST_F(ProtoTxValidatorTest, RevokePermissionInvalid) {
   auto tx = generateRevokePermissionTransaction(
