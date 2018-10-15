@@ -5,7 +5,7 @@ import binascii
 # import sys
 import ed25519
 import secrets
-# import subprocess
+import subprocess
 
 class Peer:
     def __init__(self, host, port, priv_key, pub_key):
