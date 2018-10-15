@@ -15,8 +15,8 @@
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
-#include "ordering/on_demand_ordering_service.hpp"
 #include "ordering/impl/og_cache/on_demand_cache.hpp"
+#include "ordering/on_demand_ordering_service.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -49,7 +49,7 @@ namespace iroha {
 
       void propagateBatch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)
-          const override;
+          override;
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
       on_proposal() override;
