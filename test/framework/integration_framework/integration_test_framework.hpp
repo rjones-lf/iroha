@@ -103,6 +103,11 @@ namespace integration_framework {
     IntegrationTestFramework &setInitialState(
         const shared_model::crypto::Keypair &keypair);
 
+    /// Set Gossip MST propagation parameters.
+    IntegrationTestFramework &setMstGossipParams(
+        std::chrono::milliseconds mst_gossip_emitting_period,
+        uint32_t mst_gossip_amount_per_once);
+
     /**
      * Initialize Iroha instance with provided genesis block and signing key
      * @param keypair - signing key

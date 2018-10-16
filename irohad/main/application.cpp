@@ -25,6 +25,10 @@
 #include "torii/impl/status_bus_impl.hpp"
 #include "validators/field_validator.hpp"
 
+constexpr std::chrono::milliseconds kDefGossipEmittingPeriod =
+    std::chrono::seconds(5);
+constexpr uint32_t kDefGossipAmountPerOnce = 2;
+
 using namespace iroha;
 using namespace iroha::ametsuchi;
 using namespace iroha::simulator;
@@ -39,16 +43,19 @@ using namespace std::chrono_literals;
 /**
  * Configuring iroha daemon
  */
-Irohad::Irohad(const std::string &block_store_dir,
-               const std::string &pg_conn,
-               const std::string &listen_ip,
-               size_t torii_port,
-               size_t internal_port,
-               size_t max_proposal_size,
-               std::chrono::milliseconds proposal_delay,
-               std::chrono::milliseconds vote_delay,
-               const shared_model::crypto::Keypair &keypair,
-               bool is_mst_supported)
+Irohad::Irohad(
+    const std::string &block_store_dir,
+    const std::string &pg_conn,
+    const std::string &listen_ip,
+    size_t torii_port,
+    size_t internal_port,
+    size_t max_proposal_size,
+    std::chrono::milliseconds proposal_delay,
+    std::chrono::milliseconds vote_delay,
+    const shared_model::crypto::Keypair &keypair,
+    bool is_mst_supported,
+    boost::optional<std::chrono::milliseconds> mst_gossip_emitting_period,
+    boost::optional<uint32_t> mst_gossip_amount_per_once)
     : block_store_dir_(block_store_dir),
       pg_conn_(pg_conn),
       listen_ip_(listen_ip),
@@ -58,6 +65,10 @@ Irohad::Irohad(const std::string &block_store_dir,
       proposal_delay_(proposal_delay),
       vote_delay_(vote_delay),
       is_mst_supported_(is_mst_supported),
+      mst_gossip_emitting_period_(
+          mst_gossip_emitting_period.value_or(kDefGossipEmittingPeriod)),
+      mst_gossip_amount_per_once_(
+          mst_gossip_amount_per_once.value_or(kDefGossipAmountPerOnce)),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
   log_->info("created");
@@ -319,9 +330,7 @@ void Irohad::initMstProcessor() {
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
     // cli parameters
     auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
-        storage,
-        std::chrono::seconds(5) /*emitting period*/,
-        2 /*amount per once*/);
+        storage, mst_gossip_emitting_period_, mst_gossip_amount_per_once_);
     auto mst_time = std::make_shared<MstTimeProviderImpl>();
     auto fair_mst_processor = std::make_shared<FairMstProcessor>(
         mst_transport, mst_storage, mst_propagation, mst_time);

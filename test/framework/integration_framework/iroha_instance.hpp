@@ -54,6 +54,11 @@ namespace integration_framework {
     void makeGenesis(const shared_model::interface::Block &block);
 
     void rawInsertBlock(const shared_model::interface::Block &block);
+
+    void setMstGossipParams(
+        std::chrono::milliseconds mst_gossip_emitting_period,
+        uint32_t mst_gossip_amount_per_once);
+
     void initPipeline(const shared_model::crypto::Keypair &key_pair,
                       size_t max_proposal_size = 10);
 
@@ -75,6 +80,9 @@ namespace integration_framework {
 
    private:
     std::shared_ptr<TestIrohad> instance_;
+
+    boost::optional<std::chrono::milliseconds> mst_gossip_emitting_period_;
+    boost::optional<uint32_t> mst_gossip_amount_per_once_;
   };
 }  // namespace integration_framework
 #endif  // IROHA_IROHA_INSTANCE_HPP

@@ -140,6 +140,14 @@ namespace integration_framework {
                            IntegrationTestFramework::defaultBlock(keypair));
   }
 
+  IntegrationTestFramework &IntegrationTestFramework::setMstGossipParams(
+      std::chrono::milliseconds mst_gossip_emitting_period,
+      uint32_t mst_gossip_amount_per_once) {
+    iroha_instance_->setMstGossipParams(mst_gossip_emitting_period,
+                                        mst_gossip_amount_per_once);
+    return *this;
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::setInitialState(
       const Keypair &keypair, const shared_model::interface::Block &block) {
     initPipeline(keypair);

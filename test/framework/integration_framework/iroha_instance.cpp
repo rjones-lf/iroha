@@ -52,6 +52,16 @@ namespace integration_framework {
     instance_->storage->insertBlock(block);
   }
 
+  void IrohaInstance::setMstGossipParams(
+      std::chrono::milliseconds mst_gossip_emitting_period,
+      uint32_t mst_gossip_amount_per_once) {
+    BOOST_ASSERT_MSG(
+        !instance_,
+        "Gossip propafation params must be set before Irohad is started!");
+    mst_gossip_emitting_period_ = mst_gossip_emitting_period;
+    mst_gossip_amount_per_once_ = mst_gossip_amount_per_once;
+  }
+
   void IrohaInstance::initPipeline(
       const shared_model::crypto::Keypair &key_pair, size_t max_proposal_size) {
     instance_ = std::make_shared<TestIrohad>(block_store_dir_,
@@ -62,7 +72,9 @@ namespace integration_framework {
                                              proposal_delay_,
                                              vote_delay_,
                                              key_pair,
-                                             is_mst_supported_);
+                                             is_mst_supported_,
+                                             mst_gossip_emitting_period_,
+                                             mst_gossip_amount_per_once_);
   }
 
   void IrohaInstance::run() {
