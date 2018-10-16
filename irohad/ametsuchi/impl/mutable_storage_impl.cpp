@@ -58,10 +58,18 @@ namespace iroha {
                  block.height(),
                  block.hash().hex());
 
-      return predicate(block, *peer_query_, top_hash_)
+      auto block_applied = predicate(block, *peer_query_, top_hash_)
           and std::all_of(block.transactions().begin(),
                           block.transactions().end(),
                           execute_transaction);
+      if (block_applied) {
+        block_store_.insert(std::make_pair(block.height(), clone(block)));
+        block_index_->index(block);
+
+        top_hash_ = block.hash();
+      }
+
+      return block_applied;
     }
 
     template <typename Function>
@@ -72,10 +80,6 @@ namespace iroha {
 
       if (function_executed) {
         *sql_ << "RELEASE SAVEPOINT savepoint_";
-        block_store_.insert(std::make_pair(block.height(), clone(block)));
-        block_index_->index(block);
-
-        top_hash_ = block.hash();
       } else {
         *sql_ << "ROLLBACK TO SAVEPOINT savepoint_";
       }
