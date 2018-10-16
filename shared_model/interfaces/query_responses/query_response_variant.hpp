@@ -8,7 +8,7 @@
 
 #include "interfaces/query_responses/query_response.hpp"
 
-#include <boost/variant/variant_fwd.hpp>
+#include <boost/variant.hpp>
 
 namespace boost {
   extern template class variant<

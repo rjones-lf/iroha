@@ -18,7 +18,7 @@
 #ifndef IROHA_SHARED_MODEL_QUERY_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_QUERY_RESPONSE_HPP
 
-#include <boost/variant.hpp>
+#include <boost/variant/variant_fwd.hpp>
 
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
