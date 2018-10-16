@@ -57,7 +57,7 @@ namespace {
 
 #define CHECK_COMMITTED                                                  \
   [](const shared_model::interface::TransactionResponse &resp) {         \
-    SCOPED_TRACE("CHECK_COMMITTE");                                      \
+    SCOPED_TRACE("CHECK_COMMITTED");                                     \
     __checkFunction<shared_model::interface::CommittedTxResponse>(resp); \
   }
 }  // namespace
