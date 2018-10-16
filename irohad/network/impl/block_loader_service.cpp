@@ -60,17 +60,16 @@ grpc::Status BlockLoaderService::retrieveBlock(
   auto block = consensus_result_cache_->get();
   if (block) {
     if (block->hash() == hash) {
-      auto transport_block =
-          std::static_pointer_cast<shared_model::proto::Block>(block)
-              ->getTransport();
-      response->CopyFrom(transport_block);
+      *response = std::static_pointer_cast<shared_model::proto::Block>(block)
+                      ->getTransport();
       return grpc::Status::OK;
+    } else {
+      log_->info(
+          "Requested to retrieve a block, but cache contains another block: "
+          "requested {}, in cache {}",
+          hash.hex(),
+          block->hash().hex());
     }
-    log_->info(
-        "Requested to retrieve a block, but cache contains another block: "
-        "requested {}, in cache {}",
-        hash.hex(),
-        block->hash().hex());
   } else {
     log_->info(
         "Tried to retrieve a block from an empty cache: requested block hash "
@@ -82,19 +81,25 @@ grpc::Status BlockLoaderService::retrieveBlock(
   auto blocks = block_query_factory_->createBlockQuery() |
       // TODO [IR-1757] Akvinikym 12.10.18: use block height to get one block
       // instead of the whole chain
-      [](const auto &block_query) { return block_query->getBlocksFrom(1); };
+      [](const auto &block_query) {
+        return boost::make_optional(block_query->getBlocksFrom(1));
+      };
+  if (not blocks) {
+    log_->error("Could not create block query to retrieve block from storage");
+    return grpc::Status(grpc::StatusCode::INTERNAL, "internal error happened");
+  }
+  
   auto found_block = std::find_if(
-      std::begin(blocks), std::end(blocks), [&hash](const auto &block) {
+      std::begin(*blocks), std::end(*blocks), [&hash](const auto &block) {
         return block->hash() == hash;
       });
-  if (found_block == std::end(blocks)) {
+  if (found_block == std::end(*blocks)) {
     log_->error("Could not retrieve a block from block storage: requested {}",
                 hash.hex());
     return grpc::Status(grpc::StatusCode::NOT_FOUND, "Block not found");
   }
 
-  response->CopyFrom(
-      std::static_pointer_cast<shared_model::proto::Block>(*found_block)
-          ->getTransport());
+  *response = std::static_pointer_cast<shared_model::proto::Block>(*found_block)
+                  ->getTransport();
   return grpc::Status::OK;
 }
