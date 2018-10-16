@@ -1145,7 +1145,6 @@ namespace iroha {
                          .creatorAccountId(account->accountId())
                          .createRole("user3", {})
                          .build()
-
                     }))
                 .height(2)
                 .prevHash(block1.hash())

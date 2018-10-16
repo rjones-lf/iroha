@@ -161,12 +161,12 @@ namespace iroha {
               deserialized_block)
               .value;
 
-      auto filtered_txs = range_gen(boost::size(block->transactions()))
-          | boost::adaptors::transformed([&block](auto i) -> decltype(auto) {
-                            return block->transactions()[i];
-                          })
-          | boost::adaptors::filtered(pred);
-      boost::transform(filtered_txs,
+      boost::transform(range_gen(boost::size(block->transactions()))
+                           | boost::adaptors::transformed(
+                                 [&block](auto i) -> decltype(auto) {
+                                   return block->transactions()[i];
+                                 })
+                           | boost::adaptors::filtered(pred),
                        std::back_inserter(result),
                        [&](const auto &tx) { return clone(tx); });
 
