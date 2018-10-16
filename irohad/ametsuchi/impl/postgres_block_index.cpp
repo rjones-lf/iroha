@@ -10,7 +10,7 @@
 #include <boost/format.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 #include "common/visitor.hpp"
-#include "interfaces/commands/command.hpp"
+#include "interfaces/commands/command_variant.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"

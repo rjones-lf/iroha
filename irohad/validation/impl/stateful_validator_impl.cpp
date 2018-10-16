@@ -11,9 +11,7 @@
 #include <boost/format.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indexed.hpp>
-#include <boost/range/adaptor/sliced.hpp>
-#include <boost/range/algorithm/for_each.hpp>
-#include <boost/range/join.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 #include "common/result.hpp"
 #include "interfaces/iroha_internal/batch_meta.hpp"
 #include "validation/utils.hpp"
@@ -155,10 +153,8 @@ namespace iroha {
         validation::TransactionsErrors &transactions_errors_log,
         const logger::Logger &log,
         const shared_model::interface::TransactionBatchParser &batch_parser) {
-      boost::any_range<shared_model::interface::Transaction,
-                       boost::forward_traversal_tag,
-                       const shared_model::interface::Transaction &>
-          result;
+      std::vector<bool> validation_results;
+      validation_results.reserve(boost::size(txs));
 
       for (auto batch : batch_parser.parseBatches(txs)) {
         auto validation = [&](auto &tx) {
@@ -170,24 +166,31 @@ namespace iroha {
           // check all batch's transactions for validness
           auto savepoint = temporary_wsv.createSavepoint(
               "batch_" + batch.front().hash().hex());
-          if (boost::algorithm::all_of(batch, validation)) {
-            // batch is successful; join with result and release savepoint
-            result = boost::join(result, batch);
+          bool validation_result = false;
 
+          if (boost::algorithm::all_of(batch, validation)) {
+            // batch is successful; release savepoint
+            validation_result = true;
             savepoint->release();
           }
+
+          validation_results.insert(
+              validation_results.end(), boost::size(batch), validation_result);
         } else {
-          boost::for_each(batch | boost::adaptors::indexed(), [&](auto &&el) {
-            if (validation(el.value())) {
-              result = boost::join(
-                  result,
-                  batch | boost::adaptors::sliced(el.index(), el.index() + 1));
-            }
-          });
+          for (const auto &tx : batch) {
+            validation_results.push_back(validation(tx));
+          }
         }
       }
 
-      return result;
+      return txs | boost::adaptors::indexed()
+          | boost::adaptors::filtered(
+                 [validation_results =
+                      std::move(validation_results)](const auto &el) {
+                   return validation_results.at(el.index());
+                 })
+          | boost::adaptors::transformed(
+                 [](const auto &el) -> decltype(auto) { return el.value(); });
     }
 
     StatefulValidatorImpl::StatefulValidatorImpl(

@@ -29,11 +29,7 @@ namespace iroha {
      public:
       AmetsuchiTest()
           : pgopt_("dbname=" + dbname_ + " "
-                   + integration_framework::getPostgresCredsOrDefault()) {
-        auto log = logger::testLog("AmetsuchiTest");
-
-        boost::filesystem::create_directory(block_store_path);
-      }
+                   + integration_framework::getPostgresCredsOrDefault()) {}
 
      protected:
       virtual void disconnect() {
@@ -54,12 +50,16 @@ namespace iroha {
       }
 
       void SetUp() override {
+        ASSERT_FALSE(boost::filesystem::exists(block_store_path))
+            << "Temporary block store " << block_store_path
+            << " directory already exists";
         connect();
       }
 
       void TearDown() override {
         sql->close();
         storage->dropStorage();
+        boost::filesystem::remove_all(block_store_path);
       }
 
       std::shared_ptr<soci::session> sql;
