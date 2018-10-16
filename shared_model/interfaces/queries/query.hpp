@@ -6,7 +6,7 @@
 #ifndef IROHA_SHARED_MODEL_QUERY_HPP
 #define IROHA_SHARED_MODEL_QUERY_HPP
 
-#include <boost/variant.hpp>
+#include <boost/variant/variant_fwd.hpp>
 
 #include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/types.hpp"
@@ -51,9 +51,6 @@ namespace shared_model {
                                     GetAssetInfo,
                                     GetPendingTransactions>;
 
-      /// Types of concrete commands, in attached variant
-      using QueryListType = QueryVariantType::types;
-
       /**
        * @return reference to const variant with concrete command
        */
@@ -80,18 +77,4 @@ namespace shared_model {
   }  // namespace interface
 }  // namespace shared_model
 
-namespace boost {
-  extern template class variant<
-      const shared_model::interface::GetAccount &,
-      const shared_model::interface::GetSignatories &,
-      const shared_model::interface::GetAccountTransactions &,
-      const shared_model::interface::GetAccountAssetTransactions &,
-      const shared_model::interface::GetTransactions &,
-      const shared_model::interface::GetAccountAssets &,
-      const shared_model::interface::GetAccountDetail &,
-      const shared_model::interface::GetRoles &,
-      const shared_model::interface::GetRolePermissions &,
-      const shared_model::interface::GetAssetInfo &,
-      const shared_model::interface::GetPendingTransactions &>;
-}  // namespace boost
 #endif  // IROHA_SHARED_MODEL_QUERY_HPP
