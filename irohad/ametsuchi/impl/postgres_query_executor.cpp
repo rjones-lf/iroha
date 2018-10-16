@@ -194,7 +194,7 @@ namespace iroha {
               if (std::all_of(std::begin(temp), std::end(temp), [](auto b) {
                     return b;
                   })) {
-                return logAndReturnErrorResponse(
+                return this->logAndReturnErrorResponse(
                     QueryErrorType::kStatefulFailed,
                     std::forward<std::string>(err_response()));
               }
@@ -376,7 +376,7 @@ namespace iroha {
                       std::move(v.value), std::move(roles), query_hash_);
                 },
                 [this](expected::Error<std::string> &e) {
-                  return logAndReturnErrorResponse(
+                  return this->logAndReturnErrorResponse(
                       QueryErrorType::kStatefulFailed, std::move(e.error));
                 });
       };
@@ -386,10 +386,10 @@ namespace iroha {
             return (sql_.prepare << cmd,
                     soci::use(q.accountId(), "target_account_id"));
           },
-          [&](auto range, auto &) {
+          [this, &q, &query_apply](auto range, auto &) {
             if (range.empty()) {
-              return logAndReturnErrorResponse(QueryErrorType::kNoAccount,
-                                               q.accountId());
+              return this->logAndReturnErrorResponse(QueryErrorType::kNoAccount,
+                                                     q.accountId());
             }
 
             return apply(range.front(), query_apply);
@@ -421,10 +421,10 @@ namespace iroha {
 
       return executeQuery<QueryTuple, PermissionTuple>(
           [&] { return (sql_.prepare << cmd, soci::use(q.accountId())); },
-          [&](auto range, auto &) {
+          [this, &q](auto range, auto &) {
             if (range.empty()) {
-              return logAndReturnErrorResponse(QueryErrorType::kNoSignatories,
-                                               q.accountId());
+              return this->logAndReturnErrorResponse(
+                  QueryErrorType::kNoSignatories, q.accountId());
             }
 
             auto pubkeys = boost::copy_range<
@@ -727,10 +727,10 @@ namespace iroha {
             return (sql_.prepare << cmd,
                     soci::use(q.accountId(), "account_id"));
           },
-          [&](auto range, auto &) {
+          [this, &q](auto range, auto &) {
             if (range.empty()) {
-              return logAndReturnErrorResponse(QueryErrorType::kNoAccountDetail,
-                                               q.accountId());
+              return this->logAndReturnErrorResponse(
+                  QueryErrorType::kNoAccountDetail, q.accountId());
             }
 
             return apply(range.front(), [this](auto &json) {
@@ -793,9 +793,9 @@ namespace iroha {
                     soci::use(creator_id_, "role_account_id"),
                     soci::use(q.roleId(), "role_name"));
           },
-          [&](auto range, auto &) {
+          [this, &q](auto range, auto &) {
             if (range.empty()) {
-              return logAndReturnErrorResponse(
+              return this->logAndReturnErrorResponse(
                   QueryErrorType::kNoRoles,
                   "{" + q.roleId() + ", " + creator_id_ + "}");
             }
@@ -830,9 +830,9 @@ namespace iroha {
                     soci::use(creator_id_, "role_account_id"),
                     soci::use(q.assetId(), "asset_id"));
           },
-          [&](auto range, auto &) {
+          [this, &q](auto range, auto &) {
             if (range.empty()) {
-              return logAndReturnErrorResponse(
+              return this->logAndReturnErrorResponse(
                   QueryErrorType::kNoAsset,
                   "{" + q.assetId() + ", " + creator_id_ + "}");
             }
@@ -848,7 +848,7 @@ namespace iroha {
                             std::move(asset.value), query_hash_);
                       },
                       [this](const expected::Error<std::string> &err) {
-                        return logAndReturnErrorResponse(
+                        return this->logAndReturnErrorResponse(
                             QueryErrorType::kStatefulFailed, err.error);
                       });
                 });
