@@ -9,21 +9,23 @@
 #include <boost/variant.hpp>
 
 #include "interfaces/base/model_primitive.hpp"
-#include "interfaces/transaction.hpp"
-#include "interfaces/transaction_responses/committed_tx_response.hpp"
-#include "interfaces/transaction_responses/enough_signatures_collected_response.hpp"
-#include "interfaces/transaction_responses/mst_expired_response.hpp"
-#include "interfaces/transaction_responses/mst_pending_response.hpp"
-#include "interfaces/transaction_responses/not_received_tx_response.hpp"
-#include "interfaces/transaction_responses/rejected_tx_response.hpp"
-#include "interfaces/transaction_responses/stateful_failed_tx_response.hpp"
-#include "interfaces/transaction_responses/stateful_valid_tx_response.hpp"
-#include "interfaces/transaction_responses/stateless_failed_tx_response.hpp"
-#include "interfaces/transaction_responses/stateless_valid_tx_response.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "utils/visitor_apply_for_all.hpp"
 
 namespace shared_model {
   namespace interface {
+
+    class StatelessFailedTxResponse;
+    class StatelessValidTxResponse;
+    class StatefulFailedTxResponse;
+    class StatefulValidTxResponse;
+    class RejectTxResponse;
+    class CommittedTxResponse;
+    class MstExpiredResponse;
+    class NotReceivedTxResponse;
+    class MstPendingResponse;
+    class EnoughSignaturesCollectedResponse;
+
     /**
      * TransactionResponse is a status of transaction in system
      */
@@ -52,9 +54,6 @@ namespace shared_model {
                                        NotReceivedTxResponse,
                                        MstPendingResponse,
                                        EnoughSignaturesCollectedResponse>;
-
-      /// Type with list of types in ResponseVariantType
-      using ResponseListType = ResponseVariantType::types;
 
       /// Type of transaction hash
       using TransactionHashType = interface::types::HashType;
@@ -87,30 +86,13 @@ namespace shared_model {
        * @return enumeration result of that comparison
        */
       PrioritiesComparisonResult comparePriorities(const ModelType &other) const
-          noexcept {
-        if (this->priority() < other.priority()) {
-          return PrioritiesComparisonResult::kLess;
-        } else if (this->priority() == other.priority()) {
-          return PrioritiesComparisonResult::kEqual;
-        }
-        return PrioritiesComparisonResult::kGreater;
-      };
+          noexcept;
 
       // ------------------------| Primitive override |-------------------------
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("TransactionResponse")
-            .append("transactionHash", transactionHash().hex())
-            .append(boost::apply_visitor(detail::ToStringVisitor(), get()))
-            .append("errorMessage", errorMessage())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return transactionHash() == rhs.transactionHash()
-            and errorMessage() == rhs.errorMessage() and get() == rhs.get();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model
