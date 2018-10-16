@@ -20,6 +20,7 @@
 #include "multi_sig_transactions/mst_propagation_strategy_stub.hpp"
 #include "multi_sig_transactions/mst_time_provider_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
+#include "multi_sig_transactions/transport/mst_transport_stub.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "validators/field_validator.hpp"
@@ -300,13 +301,21 @@ void Irohad::initStatusBus() {
 }
 
 void Irohad::initMstProcessor() {
-  // if (is_mst_supported_) {
-  mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
-      async_call_,
-      common_objects_factory_,
-      transaction_factory,
-      batch_parser,
-      transaction_batch_factory_);
+  if (is_mst_supported_) {
+    mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
+        async_call_,
+        common_objects_factory_,
+        transaction_factory,
+        batch_parser,
+        transaction_batch_factory_);
+  } else {
+    mst_transport = std::make_shared<iroha::network::MstTransportStub>(
+        async_call_,
+        common_objects_factory_,
+        transaction_factory,
+        batch_parser,
+        transaction_batch_factory_);
+  }
   auto mst_completer = std::make_shared<DefaultCompleter>();
   auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
   // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
