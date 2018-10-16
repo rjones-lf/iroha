@@ -9,7 +9,6 @@
 
 #include <boost/format.hpp>
 #include <boost/range/adaptor/indexed.hpp>
-#include "common/types.hpp"
 #include "common/visitor.hpp"
 #include "interfaces/commands/command.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
@@ -128,7 +127,7 @@ namespace iroha {
           });
       try {
         sql_ << index_query;
-      } catch (std::exception &e) {
+      } catch (const std::exception &e) {
         log_->error(e.what());
       }
     }
