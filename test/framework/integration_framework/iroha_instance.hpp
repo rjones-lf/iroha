@@ -59,7 +59,7 @@ namespace integration_framework {
 
     std::shared_ptr<TestIrohad> &getIrohaInstance();
 
-    std::string getPostgreCredsOrDefault(
+    static std::string getPostgreCredsOrDefault(
         const boost::optional<std::string> &dbname);
 
     std::shared_ptr<TestIrohad> instance_;
