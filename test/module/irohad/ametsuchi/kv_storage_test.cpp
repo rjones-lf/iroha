@@ -74,9 +74,7 @@ class KVTest : public AmetsuchiTest {
             FAIL() << "MutableStorage: " << error.error;
           });
 
-      ms->apply(block1, [](const auto &blk, auto &query, const auto &top_hash) {
-        return true;
-      });
+      ms->apply(block1);
       storage->commit(std::move(ms));
     }
   }

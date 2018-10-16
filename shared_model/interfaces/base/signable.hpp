@@ -6,12 +6,13 @@
 #ifndef IROHA_SIGNABLE_HPP
 #define IROHA_SIGNABLE_HPP
 
+#include "interfaces/base/model_primitive.hpp"
+
 #include <boost/functional/hash.hpp>
 #include <boost/optional.hpp>
 #include <unordered_set>
-
 #include "cryptography/default_hash_provider.hpp"
-#include "interfaces/base/model_primitive.hpp"
+#include "interfaces/common_objects/range_types.hpp"
 #include "interfaces/common_objects/signature.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "utils/string_builder.hpp"

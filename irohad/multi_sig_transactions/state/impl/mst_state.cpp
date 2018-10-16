@@ -5,14 +5,33 @@
 
 #include "multi_sig_transactions/state/mst_state.hpp"
 
-#include <boost/range/algorithm/find.hpp>
-#include <boost/range/combine.hpp>
 #include <utility>
 
-#include "backend/protobuf/transaction.hpp"
+#include <boost/range/algorithm/find.hpp>
+#include <boost/range/combine.hpp>
 #include "common/set.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/transaction.hpp"
 
 namespace iroha {
+
+  bool BatchHashEquality::operator()(const DataType &left_tx,
+                                     const DataType &right_tx) const {
+    return left_tx->reducedHash() == right_tx->reducedHash();
+  }
+
+  bool DefaultCompleter::operator()(const DataType &batch) const {
+    return std::all_of(batch->transactions().begin(),
+                       batch->transactions().end(),
+                       [](const auto &tx) {
+                         return boost::size(tx->signatures()) >= tx->quorum();
+                       });
+  }
+
+  bool DefaultCompleter::operator()(const DataType &tx,
+                                    const TimeType &time) const {
+    return false;
+  }
 
   // ------------------------------| public api |-------------------------------
 
@@ -55,7 +74,7 @@ namespace iroha {
   }
 
   std::unordered_set<DataType,
-                     iroha::model::PointerBatchHasher<DataType>,
+                     iroha::model::PointerBatchHasher,
                      BatchHashEquality>
   MstState::getBatches() const {
     return {internal_state_.begin(), internal_state_.end()};
@@ -74,6 +93,12 @@ namespace iroha {
   }
 
   // ------------------------------| private api |------------------------------
+
+  bool MstState::Less::operator()(const DataType &left,
+                                  const DataType &right) const {
+    return left->transactions().at(0)->createdTime()
+        < right->transactions().at(0)->createdTime();
+  }
 
   /**
    * Merge signatures in batches

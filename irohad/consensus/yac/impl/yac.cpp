@@ -103,14 +103,16 @@ namespace iroha {
       // ------|Private interface|------
 
       void Yac::votingStep(VoteMessage vote) {
-        auto committed = vote_storage_.isHashCommitted(vote.hash.proposal_hash);
+        auto committed = vote_storage_.isCommitted(vote.hash.vote_round);
         if (committed) {
           return;
         }
 
-        log_->info("Vote for hash ({}, {})",
-                   vote.hash.proposal_hash,
-                   vote.hash.block_hash);
+        log_->info("Vote for round ({}, {}), hash ({}, {})",
+                   vote.hash.vote_round.block_round,
+                   vote.hash.vote_round.reject_round,
+                   vote.hash.vote_hashes.proposal_hash,
+                   vote.hash.vote_hashes.block_hash);
 
         network_->sendState(cluster_order_.currentLeader(), {vote});
         cluster_order_.switchToNext();
@@ -144,7 +146,7 @@ namespace iroha {
         // separate entity
 
         answer | [&](const auto &answer) {
-          auto &proposal_hash = state.at(0).hash.proposal_hash;
+          auto &proposal_round = state.at(0).hash.vote_round;
 
           /*
            * It is possible that a new peer with an outdated peers list may
@@ -155,37 +157,44 @@ namespace iroha {
            */
           if (state.size() > 1) {
             // some peer has already collected commit/reject, so it is sent
-            if (vote_storage_.getProcessingState(proposal_hash)
+            if (vote_storage_.getProcessingState(proposal_round)
                 == ProposalState::kNotSentNotProcessed) {
-              vote_storage_.nextProcessingState(proposal_hash);
+              vote_storage_.nextProcessingState(proposal_round);
               log_->info(
-                  "Received supermajority of votes for {}, skip propagation",
-                  proposal_hash);
+                  "Received supermajority of votes for ({}, {}), skip "
+                  "propagation",
+                  proposal_round.block_round,
+                  proposal_round.reject_round);
             }
           }
 
           auto processing_state =
-              vote_storage_.getProcessingState(proposal_hash);
+              vote_storage_.getProcessingState(proposal_round);
 
           auto votes = [](const auto &state) { return state.votes; };
 
           switch (processing_state) {
             case ProposalState::kNotSentNotProcessed:
-              vote_storage_.nextProcessingState(proposal_hash);
-              log_->info("Propagate state {} to whole network", proposal_hash);
+              vote_storage_.nextProcessingState(proposal_round);
+              log_->info("Propagate state ({}, {}) to whole network",
+                         proposal_round.block_round,
+                         proposal_round.reject_round);
               this->propagateState(visit_in_place(answer, votes));
               break;
             case ProposalState::kSentNotProcessed:
-              vote_storage_.nextProcessingState(proposal_hash);
-              log_->info("Pass outcome for {} to pipeline", proposal_hash);
+              vote_storage_.nextProcessingState(proposal_round);
+              log_->info("Pass outcome for ({}, {}) to pipeline",
+                         proposal_round.block_round,
+                         proposal_round.reject_round);
               this->closeRound();
               notifier_.get_subscriber().on_next(answer);
               break;
             case ProposalState::kSentProcessed:
               if (state.size() == 1) {
                 this->findPeer(state.at(0)) | [&](const auto &from) {
-                  log_->info("Propagate state {} directly to {}",
-                             proposal_hash,
+                  log_->info("Propagate state ({}, {}) directly to {}",
+                             proposal_round.block_round,
+                             proposal_round.reject_round,
                              from->address());
                   this->propagateStateDirectly(*from,
                                                visit_in_place(answer, votes));

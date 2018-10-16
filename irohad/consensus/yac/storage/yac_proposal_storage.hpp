@@ -36,8 +36,8 @@ namespace iroha {
       struct VoteMessage;
 
       /**
-       * Class for storing votes related to given proposal hash
-       * and gain information about commits/rejects for those hash
+       * Class for storing votes related to given proposal/block round
+       * and gain information about commits/rejects for this round
        */
       class YacProposalStorage {
        private:
@@ -46,17 +46,16 @@ namespace iroha {
         /**
          * Find block index with provided parameters,
          * if those store absent - create new
-         * @param proposal_hash - hash of proposal
-         * @param block_hash - hash of block
+         * @param store_hash - hash of store of interest
          * @return iterator to storage
          */
-        auto findStore(ProposalHash proposal_hash, BlockHash block_hash);
+        auto findStore(const YacHash &store_hash);
 
        public:
         // --------| public api |--------
 
         YacProposalStorage(
-            ProposalHash hash,
+            Round store_round,
             PeersNumberType peers_in_round,
             std::shared_ptr<SupermajorityChecker> supermajority_checker =
                 std::make_shared<SupermajorityCheckerImpl>());
@@ -66,7 +65,7 @@ namespace iroha {
          * @param vote - object for insertion
          * @return result, that contains actual state of storage.
          * boost::none if not inserted, possible reasons - duplication,
-         * wrong proposal hash.
+         * wrong proposal/block round.
          */
         boost::optional<Answer> insert(VoteMessage vote);
 
@@ -79,9 +78,9 @@ namespace iroha {
         boost::optional<Answer> insert(std::vector<VoteMessage> messages);
 
         /**
-         * Provides hash assigned for storage
+         * Provides key for storage
          */
-        ProposalHash getProposalHash();
+        const Round &getStorageKey() const;
 
         /**
          * @return current state of storage
@@ -100,10 +99,10 @@ namespace iroha {
 
         /**
          * Is this vote valid for insertion in proposal storage
-         * @param vote_hash - hash for verification
+         * @param vote_round - round for verification
          * @return true if it may be applied
          */
-        bool checkProposalHash(ProposalHash vote_hash);
+        bool checkProposalRound(const Round &vote_round);
 
         /**
          * Is this peer first time appear in this proposal storage
@@ -132,9 +131,9 @@ namespace iroha {
         std::vector<YacBlockStorage> block_storages_;
 
         /**
-         * Hash of proposal
+         * Key of the storage
          */
-        ProposalHash hash_;
+        Round storage_key_;
 
         /**
          * Provide number of peers participated in current round

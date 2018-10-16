@@ -8,8 +8,6 @@
 
 #include "torii/command_service.hpp"
 
-#include "endpoint.pb.h"
-
 #include "ametsuchi/storage.hpp"
 #include "cache/cache.hpp"
 #include "cryptography/hash.hpp"
@@ -44,8 +42,9 @@ namespace torii {
     CommandServiceImpl(const CommandServiceImpl &) = delete;
     CommandServiceImpl &operator=(const CommandServiceImpl &) = delete;
 
-    void handleTransactionList(
-        const shared_model::interface::TransactionSequence &tx_list) override;
+    void handleTransactionBatch(
+        std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+        override;
 
     std::shared_ptr<shared_model::interface::TransactionResponse> getStatus(
         const shared_model::crypto::Hash &request) override;

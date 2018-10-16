@@ -50,6 +50,16 @@ namespace shared_model {
                                const interface::Transaction &,
                                FieldValidator>;
 
+    /**
+     * Same as DefaultSignedTransactionValidator, but checks signatures only if
+     * they are present
+     */
+    using DefaultOptionalSignedTransactionValidator =
+        SignableModelValidator<DefaultUnsignedTransactionValidator,
+                               const interface::Transaction &,
+                               FieldValidator,
+                               false>;
+
     // --------------------------| Query validation |---------------------------
 
     /**

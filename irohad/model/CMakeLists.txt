@@ -36,7 +36,6 @@ target_link_libraries(model
     sha3_hash
     rxcpp
     logger
-    common_execution
     schema
     ed25519_crypto
     rapidjson

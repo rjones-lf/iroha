@@ -55,7 +55,7 @@ namespace iroha {
       };
 
       TEST_F(YacCryptoProviderTest, ValidWhenSameMessage) {
-        YacHash hash("1", "1");
+        YacHash hash(Round{1, 1}, "1", "1");
 
         EXPECT_CALL(*factory, createSignature(keypair.publicKey(), _))
             .WillOnce(Invoke([this](auto &pubkey, auto &sig) {
@@ -70,7 +70,7 @@ namespace iroha {
       }
 
       TEST_F(YacCryptoProviderTest, InvalidWhenMessageChanged) {
-        YacHash hash("1", "1");
+        YacHash hash(Round{1, 1}, "1", "1");
 
         EXPECT_CALL(*factory, createSignature(keypair.publicKey(), _))
             .WillOnce(Invoke([this](auto &pubkey, auto &sig) {
@@ -81,7 +81,7 @@ namespace iroha {
 
         auto vote = crypto_provider->getVote(hash);
 
-        vote.hash.block_hash = "hash changed";
+        vote.hash.vote_hashes.block_hash = "hash changed";
 
         ASSERT_FALSE(crypto_provider->verify({vote}));
       }

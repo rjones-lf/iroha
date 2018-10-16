@@ -131,7 +131,10 @@ TEST_F(YacPeerOrdererTest, FairnessTest) {
   auto peers_set =
       transform(boost::counting_range(1, times + 1), [this](const auto &i) {
         std::string hash = std::to_string(i);
-        return orderer.getOrdering(YacHash(hash, hash)).value().getPeers();
+        return orderer
+            .getOrdering(YacHash(iroha::consensus::Round{1, 1}, hash, hash))
+            .value()
+            .getPeers();
       });
   for (const auto &peers : peers_set) {
     std::string res = std::accumulate(peers.begin(),
