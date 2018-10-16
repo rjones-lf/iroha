@@ -40,6 +40,7 @@ target_link_libraries(yac
     rxcpp
     logger
     hash
+    consensus_round
     )
 
 add_library(yac_transport

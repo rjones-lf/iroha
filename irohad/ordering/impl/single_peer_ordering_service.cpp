@@ -12,6 +12,7 @@
 #include "ametsuchi/ordering_service_persistent_state.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/peer.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "network/ordering_service_transport.hpp"
 
 namespace iroha {
@@ -69,13 +70,12 @@ namespace iroha {
     }
 
     void SinglePeerOrderingService::onBatch(
-        shared_model::interface::TransactionBatch &&batch) {
+        std::unique_ptr<shared_model::interface::TransactionBatch> batch) {
       std::shared_lock<std::shared_timed_mutex> batch_prop_lock(
           batch_prop_mutex_);
 
-      current_size_.fetch_add(batch.transactions().size());
-      queue_.push(std::make_unique<shared_model::interface::TransactionBatch>(
-          std::move(batch)));
+      current_size_.fetch_add(batch->transactions().size());
+      queue_.push(std::move(batch));
       log_->info("Queue size is {}", current_size_.load());
 
       batch_prop_lock.unlock();

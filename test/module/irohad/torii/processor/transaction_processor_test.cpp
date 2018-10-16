@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "torii/processor/transaction_processor_impl.hpp"
+
 #include <boost/range/join.hpp>
+#include "builders/default_builders.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
 #include "framework/specified_visitor.hpp"
@@ -19,7 +22,6 @@
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "torii/impl/status_bus_impl.hpp"
-#include "torii/processor/transaction_processor_impl.hpp"
 
 using namespace iroha;
 using namespace iroha::network;
@@ -184,7 +186,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
   using TxsValidator = DefaultSignedTransactionsValidator;
 
   auto transactions =
-      framework::batch::createValidBatch(proposal_size).transactions();
+      framework::batch::createValidBatch(proposal_size)->transactions();
 
   EXPECT_CALL(*status_bus, publish(_))
       .Times(proposal_size)

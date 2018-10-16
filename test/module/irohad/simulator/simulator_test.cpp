@@ -51,7 +51,8 @@ class SimulatorTest : public ::testing::Test {
         .WillRepeatedly(testing::Return(boost::make_optional(
             std::shared_ptr<iroha::ametsuchi::BlockQuery>(query))));
     block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory>(
-        std::make_unique<shared_model::validation::MockBlockValidator>());
+        std::make_unique<shared_model::validation::MockValidator<
+            shared_model::interface::Block>>());
   }
 
   void TearDown() override {
