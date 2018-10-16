@@ -32,19 +32,21 @@ namespace iroha {
     }
 
     bool MutableStorageImpl::apply(const shared_model::interface::Block &block,
-                                   MutableStoragePredicate function) {
+                                   MutableStoragePredicate predicate) {
       auto execute_transaction = [this](auto &transaction) {
         command_executor_->setCreatorAccountId(transaction.creatorAccountId());
         command_executor_->doValidation(false);
 
-        auto execute_command = [this](auto &command) {
-          auto result = boost::apply_visitor(*command_executor_, command.get());
+        auto execute_command = [this](const auto &command) {
+          auto command_applied =
+              boost::apply_visitor(*command_executor_, command.get());
 
-          return result.match([](expected::Value<void> &v) { return true; },
-                              [&](expected::Error<CommandError> &e) {
-                                log_->error(e.error.toString());
-                                return false;
-                              });
+          return command_applied.match(
+              [](expected::Value<void> &v) { return true; },
+              [&](expected::Error<CommandError> &e) {
+                log_->error(e.error.toString());
+                return false;
+              });
         };
 
         return std::all_of(transaction.commands().begin(),
@@ -56,46 +58,49 @@ namespace iroha {
                  block.height(),
                  block.hash().hex());
 
-      if (not function(block, *peer_query_, top_hash_)) {
-        return false;
-      }
+      return predicate(block, *peer_query_, top_hash_)
+          and std::all_of(block.transactions().begin(),
+                          block.transactions().end(),
+                          execute_transaction);
+    }
 
-      auto result = std::all_of(block.transactions().begin(),
-                                block.transactions().end(),
-                                execute_transaction);
-      if (result) {
+    template <typename Function>
+    bool MutableStorageImpl::withSavepoint(Function &&function) {
+      *sql_ << "SAVEPOINT savepoint_";
+
+      auto function_executed = std::forward<Function>(function)();
+
+      if (function_executed) {
+        *sql_ << "RELEASE SAVEPOINT savepoint_";
         block_store_.insert(std::make_pair(block.height(), clone(block)));
         block_index_->index(block);
 
         top_hash_ = block.hash();
+      } else {
+        *sql_ << "ROLLBACK TO SAVEPOINT savepoint_";
       }
 
-      return result;
+      return function_executed;
     }
 
     bool MutableStorageImpl::apply(
         const shared_model::interface::Block &block) {
-      return apply(block,
-                   [](const auto &, auto &, const auto &) { return true; });
+      return withSavepoint([&] {
+        return this->apply(
+            block, [](const auto &, auto &, const auto &) { return true; });
+      });
     }
 
     bool MutableStorageImpl::apply(
         rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
             blocks,
-        MutableStoragePredicate function) {
-      *sql_ << "SAVEPOINT savepoint_";
-
-      auto result =
-          blocks.all([&](auto block) { return this->apply(*block, function); })
-              .as_blocking()
-              .first();
-
-      if (result) {
-        *sql_ << "RELEASE SAVEPOINT savepoint_";
-      } else {
-        *sql_ << "ROLLBACK TO SAVEPOINT savepoint_";
-      }
-      return result;
+        MutableStoragePredicate predicate) {
+      return withSavepoint([&] {
+        return blocks
+            .all([&](auto block) { return this->apply(*block, predicate); })
+            .as_blocking()
+            .first();
+      });
     }
 
     MutableStorageImpl::~MutableStorageImpl() {

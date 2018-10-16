@@ -110,10 +110,12 @@ namespace iroha {
   };
 
   /**
-   * @given initialized storage with 4 peers, second block with add peer
-   * command, third block signed by new peer, blocks are signed by supermajority
-   * of ledger peers
-   * @when chain with second and third blocks is validated
+   * @given initialized storage
+   * block 1 - initial block with 4 peers
+   * block 2 - new peer added. signed by supermajority of ledger peers
+   * block 3 - signed by supermajority of ledger peers, contains signature of
+   * new peer
+   * @when blocks 2 and 3 are validated
    * @then result is successful
    */
   TEST_F(ChainValidatorStorageTest, PeerAdded) {
@@ -137,9 +139,11 @@ namespace iroha {
   }
 
   /**
-   * @given initialized storage with 4 peers, second and third blocks signed by
-   * supermajority of ledger peers
-   * @when chain with second and third blocks is validated
+   * @given initialized storage with 4 peers
+   * block 1 - initial block with 4 peers
+   * block 2 - signed by supermajority of ledger peers
+   * block 3 - signed by supermajority of ledger peers
+   * @when blocks 2 and 3 are validated
    * @then result is successful
    */
   TEST_F(ChainValidatorStorageTest, NoPeerAdded) {
@@ -157,6 +161,45 @@ namespace iroha {
                                     .signAndAddSignature(keys.at(3)));
 
     ASSERT_TRUE(createAndValidateChain({clone(block2), clone(block3)}));
+  }
+
+  /**
+   * @given initialized storage
+   * block 1 - initial block with 4 peers
+   * block 2 - invalid previous hash, signed by supermajority
+   * @when block 2 is validated
+   * @then result is not successful
+   */
+  TEST_F(ChainValidatorStorageTest, InvalidHash) {
+    auto block1 = generateAndApplyFirstBlock();
+
+    auto block2 = completeBlock(
+        baseBlock({dummyTx(2)},
+                  2,
+                  shared_model::crypto::DefaultHashProvider::makeHash(
+                      shared_model::crypto::Blob("bad_hash")))
+            .signAndAddSignature(keys.at(0))
+            .signAndAddSignature(keys.at(1))
+            .signAndAddSignature(keys.at(2)));
+
+    ASSERT_FALSE(createAndValidateChain({clone(block2)}));
+  }
+
+  /**
+   * @given initialized storage
+   * block 1 - initial block with 4 peers
+   * block 2 - signed by only 2 out of 4 peers, no supermajority
+   * @when block 2 is validated
+   * @then result is not successful
+   */
+  TEST_F(ChainValidatorStorageTest, NoSupermajority) {
+    auto block1 = generateAndApplyFirstBlock();
+
+    auto block2 = completeBlock(baseBlock({dummyTx(2)}, 2, block1.hash())
+                                    .signAndAddSignature(keys.at(0))
+                                    .signAndAddSignature(keys.at(1)));
+
+    ASSERT_FALSE(createAndValidateChain({clone(block2)}));
   }
 
 }  // namespace iroha

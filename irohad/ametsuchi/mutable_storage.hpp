@@ -51,14 +51,14 @@ namespace iroha {
        * Applies an observable of blocks to current mutable state using logic
        * specified in function
        * @param blocks Blocks to be applied
-       * @param function Function that specifies the logic used to apply the
-       * block
+       * @param predicate Checks whether block is applicable prior to applying
+       * transactions
        * @return True if blocks were successfully applied, false otherwise.
        */
       virtual bool apply(
           rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
               blocks,
-          MutableStoragePredicate function) = 0;
+          MutableStoragePredicate predicate) = 0;
 
       virtual ~MutableStorage() = default;
     };

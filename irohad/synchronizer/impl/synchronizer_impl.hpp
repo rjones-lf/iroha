@@ -32,6 +32,10 @@ namespace iroha {
       rxcpp::observable<SynchronizationEvent> on_commit_chain() override;
 
      private:
+      SynchronizationEvent downloadMissingBlocks(
+          std::shared_ptr<shared_model::interface::Block> commit_message,
+          std::unique_ptr<ametsuchi::MutableStorage> storage);
+
       std::shared_ptr<validation::ChainValidator> validator_;
       std::shared_ptr<ametsuchi::MutableFactory> mutable_factory_;
       std::shared_ptr<network::BlockLoader> block_loader_;

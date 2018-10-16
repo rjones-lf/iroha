@@ -29,6 +29,8 @@ namespace iroha {
      public:
       virtual ~ChainValidator() = default;
 
+      // TODO andrei 16.10.18 IR-1761 Rename methods in validators
+
       /**
        * Validate method provide chain validation for application it to ledger.
        *

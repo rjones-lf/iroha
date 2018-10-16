@@ -18,7 +18,6 @@
 namespace iroha {
   namespace ametsuchi {
     class BlockIndex;
-    class WsvCommand;
 
     class MutableStorageImpl : public MutableStorage {
       friend class StorageImpl;
@@ -34,13 +33,25 @@ namespace iroha {
 
       bool apply(rxcpp::observable<
                      std::shared_ptr<shared_model::interface::Block>> blocks,
-                 MutableStoragePredicate function) override;
+                 MutableStoragePredicate predicate) override;
 
       ~MutableStorageImpl() override;
 
      private:
+      /**
+       * Performs a function inside savepoint, does a rollback if function
+       * returned false, and removes the savepoint otherwise. Returns function
+       * result
+       */
+      template <typename Function>
+      bool withSavepoint(Function &&function);
+
+      /**
+       * Verifies whether the block is applicable using predicate, and applies
+       * the block
+       */
       bool apply(const shared_model::interface::Block &block,
-                 MutableStoragePredicate function);
+                 MutableStoragePredicate predicate);
 
       shared_model::interface::types::HashType top_hash_;
       // ordered collection is used to enforce block insertion order in

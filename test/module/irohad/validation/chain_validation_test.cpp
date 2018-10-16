@@ -100,8 +100,8 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
       shared_model::crypto::Hash(std::string(32, '1'));
 
   shared_model::interface::types::SignatureRangeType block_signatures;
-  EXPECT_CALL(*supermajority_checker, hasSupermajority(_, _))
-      .WillOnce(DoAll(SaveArg<0>(&block_signatures), Return(true)));
+  ON_CALL(*supermajority_checker, hasSupermajority(_, _))
+      .WillByDefault(DoAll(SaveArg<0>(&block_signatures), Return(true)));
 
   EXPECT_CALL(*query, getLedgerPeers()).WillOnce(Return(peers));
 
@@ -110,7 +110,6 @@ TEST_F(ChainValidationTest, FailWhenDifferentPrevHash) {
           InvokeArgument<1>(ByRef(*block), ByRef(*query), ByRef(another_hash)));
 
   ASSERT_FALSE(validator->validateChain(blocks, *storage));
-  ASSERT_EQ(block->signatures(), block_signatures);
 }
 
 /**

@@ -29,11 +29,57 @@ namespace iroha {
       return storage.apply(
           blocks,
           [this](const auto &block, auto &queries, const auto &top_hash) {
-            return this->applyBlock(block, queries, top_hash);
+            return this->validateBlock(block, queries, top_hash);
           });
     }
 
-    bool ChainValidatorImpl::applyBlock(
+    bool ChainValidatorImpl::validatePreviousHash(
+        const shared_model::interface::Block &block,
+        const shared_model::interface::types::HashType &top_hash) const {
+      auto has_prev_hash = block.prevHash() == top_hash;
+
+      if (not has_prev_hash) {
+        log_->info(
+            "Previous hash {} of block does not match top block hash {} "
+            "in storage",
+            block.prevHash().hex(),
+            top_hash.hex());
+      }
+
+      return has_prev_hash;
+    }
+
+    bool ChainValidatorImpl::validatePeerSupermajority(
+        const shared_model::interface::Block &block,
+        const std::vector<std::shared_ptr<shared_model::interface::Peer>>
+            &peers) const {
+      const auto &signatures = block.signatures();
+      auto has_supermajority =
+          supermajority_checker_->hasSupermajority(signatures, peers);
+
+      if (not has_supermajority) {
+        log_->info(
+            "Block does not contain signatures of supermajority of "
+            "peers. Block signatures public keys: [{}], ledger peers "
+            "public keys: [{}]",
+            std::accumulate(std::next(std::begin(signatures)),
+                            std::end(signatures),
+                            signatures.front().publicKey().hex(),
+                            [](auto acc, auto &sig) {
+                              return acc + ", " + sig.publicKey().hex();
+                            }),
+            std::accumulate(std::next(std::begin(peers)),
+                            std::end(peers),
+                            peers.front()->pubkey().hex(),
+                            [](auto acc, auto &peer) {
+                              return acc + ", " + peer->pubkey().hex();
+                            }));
+      }
+
+      return has_supermajority;
+    }
+
+    bool ChainValidatorImpl::validateBlock(
         const shared_model::interface::Block &block,
         ametsuchi::PeerQuery &queries,
         const shared_model::interface::types::HashType &top_hash) const {
@@ -47,37 +93,8 @@ namespace iroha {
         return false;
       }
 
-      auto has_prev_hash = block.prevHash() == top_hash;
-      if (not has_prev_hash) {
-        log_->info(
-            "Previous hash {} of block does not match top block hash {} "
-            "in storage",
-            block.prevHash().hex(),
-            top_hash.hex());
-      }
-
-      auto has_supermajority = supermajority_checker_->hasSupermajority(
-          block.signatures(), peers.value());
-      if (not has_supermajority) {
-        log_->info(
-            "Block does not contain signatures of supermajority of "
-            "peers. Block signatures public keys: [{}], ledger peers "
-            "public keys: [{}]",
-            std::accumulate(std::next(std::begin(block.signatures())),
-                            std::end(block.signatures()),
-                            block.signatures().front().publicKey().hex(),
-                            [](auto acc, auto &sig) {
-                              return acc + ", " + sig.publicKey().hex();
-                            }),
-            std::accumulate(std::next(std::begin(peers.value())),
-                            std::end(peers.value()),
-                            peers.value().front()->pubkey().hex(),
-                            [](auto acc, auto &peer) {
-                              return acc + ", " + peer->pubkey().hex();
-                            }));
-      }
-
-      return has_prev_hash and has_supermajority;
+      return validatePreviousHash(block, top_hash)
+          and validatePeerSupermajority(block, *peers);
     }
 
   }  // namespace validation

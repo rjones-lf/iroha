@@ -13,6 +13,12 @@
 #include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
 
+namespace shared_model {
+  namespace interface {
+    class Peer;
+  }  // namespace interface
+}  // namespace shared_model
+
 namespace iroha {
 
   namespace consensus {
@@ -37,7 +43,22 @@ namespace iroha {
           ametsuchi::MutableStorage &storage) const override;
 
      private:
-      bool applyBlock(
+      /// Verfies whether block previous hash matches top_hash
+      bool validatePreviousHash(
+          const shared_model::interface::Block &block,
+          const shared_model::interface::types::HashType &top_hash) const;
+
+      /// Verifies whether whether supermajority of peers have signed the block
+      bool validatePeerSupermajority(
+          const shared_model::interface::Block &block,
+          const std::vector<std::shared_ptr<shared_model::interface::Peer>>
+              &peers) const;
+
+      /**
+       * Verifies previous hash and whether supermajority of ledger peers have
+       * signed the block
+       */
+      bool validateBlock(
           const shared_model::interface::Block &block,
           ametsuchi::PeerQuery &queries,
           const shared_model::interface::types::HashType &top_hash) const;

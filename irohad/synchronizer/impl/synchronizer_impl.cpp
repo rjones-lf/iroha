@@ -29,6 +29,38 @@ namespace iroha {
           });
     }
 
+    SynchronizationEvent SynchronizerImpl::downloadMissingBlocks(
+        std::shared_ptr<shared_model::interface::Block> commit_message,
+        std::unique_ptr<ametsuchi::MutableStorage> storage) {
+      auto hash = commit_message->hash();
+
+      // while blocks are not loaded and not committed
+      while (true) {
+        for (const auto &peer_signature : commit_message->signatures()) {
+          auto network_chain = block_loader_->retrieveBlocks(
+              shared_model::crypto::PublicKey(peer_signature.publicKey()));
+
+          std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
+          network_chain.as_blocking().subscribe(
+              [&blocks](auto block) { blocks.push_back(block); });
+          if (blocks.empty()) {
+            log_->info("Downloaded an empty chain");
+            continue;
+          }
+
+          auto chain =
+              rxcpp::observable<>::iterate(blocks, rxcpp::identity_immediate());
+
+          if (blocks.back()->hash() == hash
+              and validator_->validateChain(chain, *storage)) {
+            mutable_factory_->commit(std::move(storage));
+
+            return {chain, SynchronizationOutcomeType::kCommit};
+          }
+        }
+      }
+    }
+
     void SynchronizerImpl::process_commit(
         std::shared_ptr<shared_model::interface::Block> commit_message) {
       log_->info("processing commit");
@@ -54,37 +86,8 @@ namespace iroha {
 
         result = {commit, SynchronizationOutcomeType::kCommit};
       } else {
-        auto hash = commit_message->hash();
-
-        [&] {
-          // while blocks are not loaded and not committed
-          while (true) {
-            for (const auto &peer_signature : commit_message->signatures()) {
-              auto network_chain = block_loader_->retrieveBlocks(
-                  shared_model::crypto::PublicKey(peer_signature.publicKey()));
-
-              std::vector<std::shared_ptr<shared_model::interface::Block>>
-                  blocks;
-              network_chain.as_blocking().subscribe(
-                  [&blocks](auto block) { blocks.push_back(block); });
-              if (blocks.empty()) {
-                log_->info("Downloaded an empty chain");
-                continue;
-              }
-
-              auto chain = rxcpp::observable<>::iterate(
-                  blocks, rxcpp::identity_immediate());
-
-              if (blocks.back()->hash() == hash
-                  and validator_->validateChain(chain, *storage)) {
-                mutable_factory_->commit(std::move(storage));
-
-                result = {chain, SynchronizationOutcomeType::kCommit};
-                return;
-              }
-            }
-          }
-        }();
+        result = downloadMissingBlocks(std::move(commit_message),
+                                       std::move(storage));
       }
 
       notifier_.get_subscriber().on_next(result);
