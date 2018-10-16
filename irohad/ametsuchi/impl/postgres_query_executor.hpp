@@ -108,13 +108,14 @@ namespace iroha {
        * Execute query and return its response
        * @tparam QueryTuple - types of values, returned by the query
        * @tparam PermissionTuple - permissions, needed for the query
-       * @tparam QueryExecutor - function, which executes the query
-       * @tparam ResponseCreator - function, which creates response of the query
-       * @tparam ErrResponse - function, which creates error response
-       * @param query_executor
-       * @param response_creator
-       * @param err_response
-       * @return query response
+       * @tparam QueryExecutor - type of function, which executes the query
+       * @tparam ResponseCreator - type of function, which creates response of
+       * the query
+       * @tparam ErrResponse - type of function, which creates error response
+       * @param query_executor - function, executing query
+       * @param response_creator - function, creating query response
+       * @param err_response - function, creating error response
+       * @return query response created as a result of query execution
        */
       template <typename QueryTuple,
                 typename PermissionTuple,
@@ -125,10 +126,20 @@ namespace iroha {
                                        ResponseCreator &&response_creator,
                                        ErrResponse &&err_response);
 
+      /**
+       * Create a query error response and log it
+       * @param error_type - type of query error
+       * @param error body as string message
+       * @return ptr to created error response
+       */
+      std::unique_ptr<shared_model::interface::QueryResponse>
+      logAndReturnErrorResponse(iroha::ametsuchi::QueryErrorType error_type,
+                                std::string error_body) const;
+
       soci::session &sql_;
       KeyValueStorage &block_store_;
       shared_model::interface::types::AccountIdType creator_id_;
-      shared_model::crypto::Hash query_hash_;
+      shared_model::interface::types::HashType query_hash_;
       std::shared_ptr<shared_model::interface::CommonObjectsFactory>
           common_objects_factory_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;
