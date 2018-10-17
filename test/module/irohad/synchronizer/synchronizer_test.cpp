@@ -61,8 +61,7 @@ class SynchronizerTest : public ::testing::Test {
         consensus_gate, chain_validator, mutable_factory, block_loader);
   }
 
-  std::shared_ptr<shared_model::interface::Block> makeCommit(
-      size_t time = iroha::time::now()) const {
+  Commit makeCommit(size_t time = iroha::time::now()) const {
     auto block = TestUnsignedBlockBuilder()
                      .height(5)
                      .createdTime(time)
@@ -71,7 +70,7 @@ class SynchronizerTest : public ::testing::Test {
                          shared_model::crypto::DefaultCryptoAlgorithmType::
                              generateKeypair())
                      .finish();
-    return std::make_shared<shared_model::proto::Block>(std::move(block));
+    return {std::make_shared<shared_model::proto::Block>(std::move(block)), CommitType::kOther};
   }
 
   std::shared_ptr<MockChainValidator> chain_validator;
@@ -129,7 +128,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
     ASSERT_TRUE(block_wrapper.validate());
   });
 
-  synchronizer->process_commit(test_block);
+  synchronizer->process_commit(Commit{test_block, CommitType::kOther});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -163,7 +162,7 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 0);
   wrapper.subscribe();
 
-  synchronizer->process_commit(test_block);
+  synchronizer->process_commit(Commit{test_block, CommitType::kOther});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -182,13 +181,13 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 
-  EXPECT_CALL(*chain_validator, validateBlock(commit_message, _))
+  EXPECT_CALL(*chain_validator, validateBlock(commit_message.block, _))
       .WillOnce(Return(false));
 
   EXPECT_CALL(*chain_validator, validateChain(_, _)).WillOnce(Return(true));
 
   EXPECT_CALL(*block_loader, retrieveBlocks(_))
-      .WillOnce(Return(rxcpp::observable<>::just(commit_message)));
+      .WillOnce(Return(rxcpp::observable<>::just(commit_message.block)));
 
   EXPECT_CALL(*consensus_gate, on_commit())
       .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
@@ -202,7 +201,7 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
         make_test_subscriber<CallExact>(commit_event.synced_blocks, 1);
     block_wrapper.subscribe([commit_message](auto block) {
       // Check commit block
-      ASSERT_EQ(block->height(), commit_message->height());
+      ASSERT_EQ(block->height(), commit_message.block->height());
     });
     ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kCommit);
     ASSERT_TRUE(block_wrapper.validate());
@@ -245,7 +244,7 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
         if (times++ > 4) {
           FAIL() << "Observable of retrieveBlocks must be evaluated four times";
         }
-        s.on_next(commit_message);
+        s.on_next(commit_message.block);
         s.on_completed();
       })));
 
@@ -274,11 +273,11 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 
-  EXPECT_CALL(*chain_validator, validateBlock(commit_message, _))
+  EXPECT_CALL(*chain_validator, validateBlock(commit_message.block, _))
       .WillOnce(Return(false));
 
   EXPECT_CALL(*block_loader, retrieveBlocks(_))
-      .WillRepeatedly(Return(rxcpp::observable<>::just(commit_message)));
+      .WillRepeatedly(Return(rxcpp::observable<>::just(commit_message.block)));
 
   // fail the chain validation two times so that synchronizer will try more
   EXPECT_CALL(*chain_validator, validateChain(_, _))
@@ -298,7 +297,7 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
         make_test_subscriber<CallExact>(commit_event.synced_blocks, 1);
     block_wrapper.subscribe([commit_message](auto block) {
       // Check commit block
-      ASSERT_EQ(block->height(), commit_message->height());
+      ASSERT_EQ(block->height(), commit_message.block->height());
     });
     ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kCommit);
     ASSERT_TRUE(block_wrapper.validate());

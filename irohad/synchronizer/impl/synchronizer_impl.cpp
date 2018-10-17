@@ -36,13 +36,10 @@ namespace iroha {
           log_(logger::log("synchronizer")) {
       consensus_gate->on_commit().subscribe(
           subscription_,
-          [&](network::Commit commit) {
-            this->process_commit(commit.block);
-          });
+          [&](network::Commit commit) { this->process_commit(commit); });
     }
 
-    void SynchronizerImpl::process_commit(
-        std::shared_ptr<shared_model::interface::Block> commit_message) {
+    void SynchronizerImpl::process_commit(network::Commit commit_message) {
       log_->info("processing commit");
 
       auto mutable_storage_var = mutable_factory_->createMutableStorage();
@@ -57,20 +54,26 @@ namespace iroha {
               &mutable_storage_var)
               ->value);
 
+      const auto &block = commit_message.block;
+
+      if (commit_message.type == network::CommitType::kVoted) {
+        log_->info("Applying prepared commit {}", block->hash().hex());
+        // TODO: add mutable storage call, block store and early return
+      }
       SynchronizationEvent result;
 
-      if (validator_->validateBlock(commit_message, *storage)) {
-        storage->apply(*commit_message);
+      if (validator_->validateBlock(block, *storage)) {
+        storage->apply(*block);
         mutable_factory_->commit(std::move(storage));
 
-        result = {rxcpp::observable<>::just(commit_message),
+        result = {rxcpp::observable<>::just(block),
                   SynchronizationOutcomeType::kCommit};
       } else {
-        auto hash = commit_message->hash();
+        auto hash = block->hash();
 
         // while blocks are not loaded and not committed
         while (storage) {
-          for (const auto &peer_signature : commit_message->signatures()) {
+          for (const auto &peer_signature : block->signatures()) {
             auto network_chain = block_loader_->retrieveBlocks(
                 shared_model::crypto::PublicKey(peer_signature.publicKey()));
 
