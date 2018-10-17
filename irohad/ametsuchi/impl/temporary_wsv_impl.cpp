@@ -14,13 +14,11 @@ namespace iroha {
   namespace ametsuchi {
     TemporaryWsvImpl::TemporaryWsvImpl(
         std::unique_ptr<soci::session> sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
-        std::string &prepared_transaction_id)
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
         : sql_(std::move(sql)),
           wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
           command_executor_(std::make_unique<PostgresCommandExecutor>(*sql_)),
-          log_(logger::log("TemporaryWSV")),
-          prepared_transaction_id_(prepared_transaction_id) {
+          log_(logger::log("TemporaryWSV")) {
       *sql_ << "BEGIN";
     }
 
@@ -76,11 +74,7 @@ namespace iroha {
     }
 
     TemporaryWsvImpl::~TemporaryWsvImpl() {
-      if (prepared_transaction_id_ != "") {
-        *sql_ << "PREPARE TRANSACTION '" + prepared_transaction_id_ + "';";
-      } else {
         *sql_ << "ROLLBACK";
-      }
     }
 
     TemporaryWsvImpl::SavepointWrapperImpl::SavepointWrapperImpl(

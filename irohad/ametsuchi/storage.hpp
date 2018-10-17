@@ -13,8 +13,8 @@
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/os_persistent_state_factory.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
-#include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/query_executor_factory.hpp"
+#include "ametsuchi/temporary_factory.hpp"
 #include "common/result.hpp"
 
 namespace shared_model {
@@ -60,6 +60,14 @@ namespace iroha {
       virtual bool insertBlocks(
           const std::vector<std::shared_ptr<shared_model::interface::Block>>
               &blocks) = 0;
+
+      /**
+       * Prepare block for insertion
+       * @param block - block to be inserted later
+       * @return true if preparation is successful
+       */
+      virtual bool prepareBlock(
+          const shared_model::interface::Block &block) = 0;
 
       /**
        * method called when block is written to the storage

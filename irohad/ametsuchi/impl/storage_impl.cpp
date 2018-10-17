@@ -47,7 +47,7 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
         size_t pool_size,
-        bool enable_prepared_transactions)
+        bool enable_prepared_blocks)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
@@ -55,12 +55,8 @@ namespace iroha {
           factory_(std::move(factory)),
           converter_(std::move(converter)),
           log_(logger::log("StorageImpl")),
-          pool_size_(pool_size) {
-      if (enable_prepared_transactions) {
-        prepared_transaction_id_ = "hello";
-      } else {
-        prepared_transaction_id_ = "";
-      }
+          pool_size_(pool_size),
+          prepared_blocks_enabled_(enable_prepared_blocks){
       soci::session sql(*connection_);
       sql << init_;
       prepareStatements(*connection_, pool_size_);
@@ -75,7 +71,8 @@ namespace iroha {
       auto sql = std::make_unique<soci::session>(*connection_);
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
-          std::make_unique<TemporaryWsvImpl>(std::move(sql), factory_, prepared_transaction_id_));
+          std::make_unique<TemporaryWsvImpl>(
+              std::move(sql), factory_));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
@@ -100,8 +97,7 @@ namespace iroha {
                     return shared_model::interface::types::HashType("");
                   }),
               std::move(sql),
-              factory_,
-              prepared_transaction_id_));
+              factory_));
     }
 
     boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery()
@@ -193,6 +189,25 @@ namespace iroha {
 
       log_->info("insert blocks finished");
       return inserted;
+    }
+
+    bool StorageImpl::prepareBlock(
+        const shared_model::interface::Block &block) {
+      if (not prepared_blocks_enabled_) {
+        log_->error("Prepared blocks are not enabled in storage");
+        return false;
+      }
+      const std::string block_id = block.hash().hex();
+      try {
+        soci::session sql(*connection_);
+        sql << "PREPARE TRANSACTION '" + block_id + "';";
+        log_->info("Prepared block {}", block_id);
+        return true;
+      } catch (const std::exception &e) {
+        log_->error(
+            "Failed to prepare block {}: {}", block_id, e.what());
+        return false;
+      }
     }
 
     void StorageImpl::reset() {
@@ -339,7 +354,7 @@ namespace iroha {
                     if (!prepared_txs_count) {
                       storage = expected::makeError(
                           "prepared transactions are not enabled");
-                          return;
+                      return;
                     }
                   }
                   storage = expected::makeValue(std::shared_ptr<StorageImpl>(

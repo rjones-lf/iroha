@@ -219,9 +219,7 @@ namespace iroha {
                    bool(const shared_model::interface::Block &,
                         PeerQuery &,
                         const shared_model::interface::types::HashType &)>));
-      MOCK_METHOD1(
-          apply,
-          bool(const shared_model::interface::Block &));
+      MOCK_METHOD1(apply, bool(const shared_model::interface::Block &));
     };
 
     /**
@@ -282,6 +280,7 @@ namespace iroha {
       MOCK_METHOD1(insertBlocks,
                    bool(const std::vector<
                         std::shared_ptr<shared_model::interface::Block>> &));
+      MOCK_METHOD1(prepareBlock, bool(const shared_model::interface::Block &));
       MOCK_METHOD0(reset, void(void));
       MOCK_METHOD0(dropStorage, void(void));
       MOCK_METHOD0(freeConnections, void(void));

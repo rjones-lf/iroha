@@ -20,19 +20,15 @@ namespace iroha {
     MutableStorageImpl::MutableStorageImpl(
         shared_model::interface::types::HashType top_hash,
         std::unique_ptr<soci::session> sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
-        std::string &prepared_tx_id)
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
         : top_hash_(top_hash),
           sql_(std::move(sql)),
           wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
           block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
           command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
           committed(false),
-          log_(logger::log("MutableStorage")),
-          prepared_tx_id_(prepared_tx_id) {
-      if (prepared_tx_id_ == "") {
-        *sql_ << "BEGIN";
-      }
+          log_(logger::log("MutableStorage")) {
+      *sql_ << "BEGIN";
     }
 
     bool MutableStorageImpl::check(const shared_model::interface::Block &block,
@@ -43,19 +39,19 @@ namespace iroha {
 
     bool MutableStorageImpl::apply(
         const shared_model::interface::Block &block) {
-      if (prepared_tx_id_ != "") {
-        try {
-          *sql_ << "COMMIT PREPARED '" + prepared_tx_id_ + "';";
-          log_->info("Executing prepared block: {}", prepared_tx_id_);
-          committed = true;
-          block_store_.insert(std::make_pair(block.height(), clone(block)));
-          block_index_->index(block);
-          return true;
-        } catch (std::exception &e) {
-          log_->error(e.what());
-          *sql_ << "BEGIN";
-        }
-      }
+      // if (prepared_tx_id_ != "") {
+      //   try {
+      //     *sql_ << "COMMIT PREPARED '" + prepared_tx_id_ + "';";
+      //     log_->info("Executing prepared block: {}", prepared_tx_id_);
+      //     committed = true;
+      //     block_store_.insert(std::make_pair(block.height(), clone(block)));
+      //     block_index_->index(block);
+      //     return true;
+      //   } catch (std::exception &e) {
+      //     log_->error(e.what());
+      //     *sql_ << "BEGIN";
+      //   }
+      // }
 
       auto execute_transaction = [this](auto &transaction) {
         command_executor_->setCreatorAccountId(transaction.creatorAccountId());

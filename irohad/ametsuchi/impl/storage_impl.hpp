@@ -53,7 +53,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
               converter,
           size_t pool_size = 10,
-          bool enable_prepared_transactions = false);
+          bool enable_prepared_blocks = false);
 
       expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
       createTemporaryWsv() override;
@@ -90,6 +90,8 @@ namespace iroha {
           const std::vector<std::shared_ptr<shared_model::interface::Block>>
               &blocks) override;
 
+      bool prepareBlock(const shared_model::interface::Block &block) override;
+
       void reset() override;
 
       void dropStorage() override;
@@ -117,7 +119,7 @@ namespace iroha {
                   std::shared_ptr<shared_model::interface::BlockJsonConverter>
                       converter,
                   size_t pool_size,
-                  bool enable_prepared_transactions);
+                  bool enable_prepared_blocks);
 
       /**
        * Folder with raw blocks
@@ -145,7 +147,7 @@ namespace iroha {
 
       size_t pool_size_;
 
-      std::string prepared_transaction_id_;
+      bool prepared_blocks_enabled_;
 
      protected:
       static const std::string &drop_;
