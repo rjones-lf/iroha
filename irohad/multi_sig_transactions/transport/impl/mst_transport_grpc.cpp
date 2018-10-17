@@ -3,22 +3,63 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "common/default_constructible_unary_fn.hpp"  // non-copyable value workaround
+
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/transaction.hpp"
-#include "builders/protobuf/transport_builder.hpp"
+#include "cryptography/public_key.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
-#include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
-#include "validators/default_validator.hpp"
-#include "validators/transactions_collection/batch_order_validator.hpp"
+#include "interfaces/transaction.hpp"
 
 using namespace iroha::network;
 
 MstTransportGrpc::MstTransportGrpc(
     std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
         async_call,
-    std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
-    : async_call_(std::move(async_call)), factory_(std::move(factory)) {}
+    std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+    std::shared_ptr<TransportFactoryType> transaction_factory,
+    std::shared_ptr<shared_model::interface::TransactionBatchParser>
+        batch_parser,
+    std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+        transaction_batch_factory)
+    : async_call_(std::move(async_call)),
+      factory_(std::move(factory)),
+      transaction_factory_(std::move(transaction_factory)),
+      batch_parser_(std::move(batch_parser)),
+      batch_factory_(std::move(transaction_batch_factory)) {}
+
+shared_model::interface::types::SharedTxsCollectionType
+MstTransportGrpc::deserializeTransactions(const transport::MstState *request) {
+  return boost::copy_range<
+      shared_model::interface::types::SharedTxsCollectionType>(
+      request->transactions()
+      | boost::adaptors::transformed(
+            [&](const auto &tx) { return transaction_factory_->build(tx); })
+      | boost::adaptors::filtered([&](const auto &result) {
+          return result.match(
+              [](const iroha::expected::Value<
+                  std::unique_ptr<shared_model::interface::Transaction>> &) {
+                return true;
+              },
+              [&](const iroha::expected::Error<TransportFactoryType::Error>
+                      &error) {
+                async_call_->log_->info(
+                    "Transaction deserialization failed: hash {}, {}",
+                    error.error.hash.toString(),
+                    error.error.error);
+                return false;
+              });
+        })
+      | boost::adaptors::transformed([&](auto result) {
+          return std::move(
+                     boost::get<iroha::expected::ValueOf<decltype(result)>>(
+                         result))
+              .value;
+        }));
+}
 
 grpc::Status MstTransportGrpc::SendState(
     ::grpc::ServerContext *context,
@@ -26,46 +67,22 @@ grpc::Status MstTransportGrpc::SendState(
     ::google::protobuf::Empty *response) {
   async_call_->log_->info("MstState Received");
 
-  shared_model::proto::TransportBuilder<
-      shared_model::proto::Transaction,
-      shared_model::validation::DefaultUnsignedTransactionValidator>
-      builder;
+  auto transactions = deserializeTransactions(request);
 
-  shared_model::interface::types::SharedTxsCollectionType collection;
+  auto batches = batch_parser_->parseBatches(transactions);
 
-  for (const auto &proto_tx : request->transactions()) {
-    builder.build(proto_tx).match(
-        [&](iroha::expected::Value<shared_model::proto::Transaction> &v) {
-          collection.push_back(
-              std::make_shared<shared_model::proto::Transaction>(
-                  std::move(v.value)));
-        },
-        [&](iroha::expected::Error<std::string> &e) {
-          async_call_->log_->warn("Can't deserialize tx: {}", e.error);
+  MstState new_state = MstState::empty();
+
+  for (auto &batch : batches) {
+    batch_factory_->createTransactionBatch(batch).match(
+        [&](iroha::expected::Value<
+            std::unique_ptr<shared_model::interface::TransactionBatch>>
+                &value) { new_state += std::move(value).value; },
+        [&](iroha::expected::Error<std::string> &error) {
+          async_call_->log_->warn("Batch deserialization failed: {}",
+                                  error.error);
         });
   }
-
-  using namespace shared_model::validation;
-  auto new_state =
-      shared_model::interface::TransactionSequenceFactory::
-          createTransactionSequence(collection,
-                                    DefaultSignedTransactionsValidator())
-              .match(
-                  [](expected::Value<
-                      shared_model::interface::TransactionSequence> &seq) {
-                    MstState new_state = MstState::empty();
-                    std::for_each(seq.value.batches().begin(),
-                                  seq.value.batches().end(),
-                                  [&new_state](const auto &batch) {
-                                    new_state += batch;
-                                  });
-                    return new_state;
-                  },
-                  [this](const auto &err) {
-                    async_call_->log_->warn("Can't create sequence: {}",
-                                            err.error);
-                    return MstState::empty();
-                  });
 
   async_call_->log_->info("batches in MstState: {}",
                           new_state.getBatches().size());

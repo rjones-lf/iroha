@@ -62,7 +62,8 @@ namespace iroha {
        * Enqueues transactions and publishes corresponding event
        * @param batch, in which transactions are packed
        */
-      void onBatch(shared_model::interface::TransactionBatch &&batch) override;
+      void onBatch(std::unique_ptr<shared_model::interface::TransactionBatch>
+                       batch) override;
 
       ~SinglePeerOrderingService() override;
 

@@ -14,7 +14,7 @@
 #include "common/types.hpp"
 #include "common/visitor.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
-#include "interfaces/commands/command.hpp"
+#include "interfaces/commands/command_variant.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 

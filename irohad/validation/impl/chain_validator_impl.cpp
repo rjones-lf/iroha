@@ -18,7 +18,7 @@
 #include "validation/impl/chain_validator_impl.hpp"
 
 #include "ametsuchi/mutable_storage.hpp"
-#include "ametsuchi/wsv_query.hpp"
+#include "ametsuchi/peer_query.hpp"
 #include "consensus/yac/supermajority_checker.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
@@ -38,7 +38,7 @@ namespace iroha {
                  block->hash().hex());
       auto check_block =
           [this](const auto &block, auto &queries, const auto &top_hash) {
-            auto peers = queries.getPeers();
+            auto peers = queries.getLedgerPeers();
             if (not peers) {
               return false;
             }

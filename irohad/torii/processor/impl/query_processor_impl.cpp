@@ -18,6 +18,7 @@
 
 namespace iroha {
   namespace torii {
+
     /**
      * Builds QueryResponse that contains StatefulError
      * @param hash - original query hash
@@ -32,6 +33,7 @@ namespace iroha {
                   shared_model::interface::StatefulFailedErrorResponse>()
               .build());
     }
+
     std::shared_ptr<shared_model::interface::BlockQueryResponse>
     buildBlocksQueryError(const std::string &message) {
       return clone(shared_model::proto::BlockQueryResponseBuilder()
@@ -48,14 +50,19 @@ namespace iroha {
 
     QueryProcessorImpl::QueryProcessorImpl(
         std::shared_ptr<ametsuchi::Storage> storage,
-        std::shared_ptr<QueryExecution> qry_exec)
-        : storage_(storage), qry_exec_(qry_exec) {
+        std::shared_ptr<ametsuchi::QueryExecutorFactory> qry_exec,
+        std::shared_ptr<iroha::PendingTransactionStorage> pending_transactions)
+        : storage_(storage),
+          qry_exec_(qry_exec),
+          pending_transactions_(pending_transactions),
+          log_(logger::log("QueryProcessorImpl")) {
       storage_->on_commit().subscribe(
           [this](std::shared_ptr<shared_model::interface::Block> block) {
             auto response = buildBlocksQueryBlock(*block);
             blocks_query_subject_.get_subscriber().on_next(response);
           });
     }
+
     template <class Q>
     bool QueryProcessorImpl::checkSignatories(const Q &qry) {
       const auto &wsv_query = storage_->getWsvQuery();
@@ -81,7 +88,13 @@ namespace iroha {
         return buildStatefulError(qry.hash());
       }
 
-      return qry_exec_->validateAndExecute(qry);
+      auto executor = qry_exec_->createQueryExecutor(pending_transactions_);
+      if (not executor) {
+        log_->error("Cannot create query executor");
+        return nullptr;
+      }
+
+      return executor.value()->validateAndExecute(qry);
     }
 
     rxcpp::observable<
@@ -93,7 +106,10 @@ namespace iroha {
         return rxcpp::observable<>::just(response);
       }
 
-      if (not qry_exec_->validate(qry)) {
+      auto exec = qry_exec_->createQueryExecutor(pending_transactions_);
+      if (not exec or not(exec | [&qry](const auto &executor) {
+            return executor->validate(qry);
+          })) {
         auto response = buildBlocksQueryError("Stateful invalid");
         return rxcpp::observable<>::just(response);
       }

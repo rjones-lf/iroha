@@ -7,65 +7,53 @@
 #define IROHA_TRANSACTION_BATCH_HPP
 
 #include <boost/optional.hpp>
+
 #include "cryptography/hash.hpp"
+#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
 
-    class TransactionBatch {
+    /**
+     * Represents collection of transactions, which are to be processed together
+     */
+    class TransactionBatch : public ModelPrimitive<TransactionBatch> {
      public:
-      TransactionBatch() = delete;
-      TransactionBatch(const TransactionBatch &) = default;
-      TransactionBatch(TransactionBatch &&) = default;
-
-      explicit TransactionBatch(
-          const types::SharedTxsCollectionType &transactions);
-
       /**
        * Get transactions list
        * @return list of transactions from the batch
        */
-      const types::SharedTxsCollectionType &transactions() const;
+      virtual const types::SharedTxsCollectionType &transactions() const = 0;
 
       /**
        * Get the concatenation of reduced hashes as a single hash
        * @param reduced_hashes collection of reduced hashes
        * @return concatenated reduced hashes
        */
-      const types::HashType &reducedHash() const;
+      virtual const types::HashType &reducedHash() const = 0;
 
       /**
        * Checks if every transaction has quorum signatures
        * @return true if every transaction has quorum signatures, false
        * otherwise
        */
-      bool hasAllSignatures() const;
-
-      bool operator==(const TransactionBatch &rhs) const;
-
-      /**
-       * @return string representation of the object
-       */
-      std::string toString() const;
+      virtual bool hasAllSignatures() const = 0;
 
       /**
        * Add signature to concrete transaction in the batch
        * @param number_of_tx - number of transaction for inserting signature
-       * @param singed - signed blob of transaction
+       * @param signed_blob - signed blob of transaction
        * @param public_key - public key of inserter
        * @return true if signature has been inserted
        */
-      bool addSignature(size_t number_of_tx,
-                        const shared_model::crypto::Signed &signed_blob,
-                        const shared_model::crypto::PublicKey &public_key);
-
-     private:
-      types::SharedTxsCollectionType transactions_;
-
-      mutable boost::optional<types::HashType> reduced_hash_;
+      virtual bool addSignature(
+          size_t number_of_tx,
+          const shared_model::crypto::Signed &signed_blob,
+          const shared_model::crypto::PublicKey &public_key) = 0;
     };
+
   }  // namespace interface
 }  // namespace shared_model
 

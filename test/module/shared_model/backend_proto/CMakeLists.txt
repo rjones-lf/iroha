@@ -79,6 +79,7 @@ addtest(proto_batch_test
 target_link_libraries(proto_batch_test
     shared_model_proto_backend
     shared_model_stateless_validation
+    shared_model_interfaces_factories
     )
 
 addtest(proto_transaction_sequence_test

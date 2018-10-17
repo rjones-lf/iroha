@@ -22,15 +22,6 @@
 #include "ametsuchi/mutable_storage.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
-namespace {
-  /**
-   * Lambda always returning true specially for applying blocks to storage
-   */
-  auto trueStorageApplyPredicate = [](const auto &, auto &, const auto &) {
-    return true;
-  };
-}  // namespace
-
 namespace iroha {
   namespace synchronizer {
 
@@ -79,7 +70,7 @@ namespace iroha {
       SynchronizationEvent result;
 
       if (validator_->validateBlock(commit_message, *storage)) {
-        storage->apply(*commit_message, trueStorageApplyPredicate);
+        storage->apply(*commit_message);
         mutable_factory_->commit(std::move(storage));
 
         result = {rxcpp::observable<>::just(commit_message),
@@ -110,7 +101,7 @@ namespace iroha {
               for (const auto &block : blocks) {
                 // we don't need to check correctness of downloaded blocks, as
                 // it was done earlier on another peer
-                storage->apply(*block, trueStorageApplyPredicate);
+                storage->apply(*block);
               }
               mutable_factory_->commit(std::move(storage));
 

@@ -16,7 +16,6 @@
 add_subdirectory(ametsuchi)
 add_subdirectory(common)
 add_subdirectory(consensus)
-add_subdirectory(execution)
 add_subdirectory(logger)
 add_subdirectory(main)
 add_subdirectory(model)
