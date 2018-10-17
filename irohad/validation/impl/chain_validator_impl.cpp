@@ -36,9 +36,9 @@ namespace iroha {
     bool ChainValidatorImpl::validatePreviousHash(
         const shared_model::interface::Block &block,
         const shared_model::interface::types::HashType &top_hash) const {
-      auto has_prev_hash = block.prevHash() == top_hash;
+      auto same_prev_hash = block.prevHash() == top_hash;
 
-      if (not has_prev_hash) {
+      if (not same_prev_hash) {
         log_->info(
             "Previous hash {} of block does not match top block hash {} "
             "in storage",
@@ -46,7 +46,7 @@ namespace iroha {
             top_hash.hex());
       }
 
-      return has_prev_hash;
+      return same_prev_hash;
     }
 
     bool ChainValidatorImpl::validatePeerSupermajority(

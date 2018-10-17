@@ -36,6 +36,7 @@ namespace iroha {
 
       // while blocks are not loaded and not committed
       while (true) {
+        // TODO andrei 17.10.18 IR-1763 Add delay strategy for loading blocks
         for (const auto &peer_signature : commit_message->signatures()) {
           auto network_chain = block_loader_->retrieveBlocks(
               shared_model::crypto::PublicKey(peer_signature.publicKey()));

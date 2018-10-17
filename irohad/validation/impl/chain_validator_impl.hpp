@@ -43,20 +43,20 @@ namespace iroha {
           ametsuchi::MutableStorage &storage) const override;
 
      private:
-      /// Verfies whether block previous hash matches top_hash
+      /// Verifies whether previous hash of block matches top_hash
       bool validatePreviousHash(
           const shared_model::interface::Block &block,
           const shared_model::interface::types::HashType &top_hash) const;
 
-      /// Verifies whether whether supermajority of peers have signed the block
+      /// Verifies whether the block is signed by supermajority of peers
       bool validatePeerSupermajority(
           const shared_model::interface::Block &block,
           const std::vector<std::shared_ptr<shared_model::interface::Peer>>
               &peers) const;
 
       /**
-       * Verifies previous hash and whether supermajority of ledger peers have
-       * signed the block
+       * Verifies previous hash and whether the block is signed by supermajority
+       * of ledger peers
        */
       bool validateBlock(
           const shared_model::interface::Block &block,

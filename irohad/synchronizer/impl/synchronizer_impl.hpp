@@ -32,6 +32,10 @@ namespace iroha {
       rxcpp::observable<SynchronizationEvent> on_commit_chain() override;
 
      private:
+      /**
+       * Iterate through the peers which signed the commit_message, load and
+       * apply the missing blocks
+       */
       SynchronizationEvent downloadMissingBlocks(
           std::shared_ptr<shared_model::interface::Block> commit_message,
           std::unique_ptr<ametsuchi::MutableStorage> storage);

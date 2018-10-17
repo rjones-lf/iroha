@@ -23,7 +23,7 @@ namespace iroha {
         : top_hash_(top_hash),
           sql_(std::move(sql)),
           peer_query_(std::make_unique<PeerQueryWsv>(
-              std::make_shared<PostgresWsvQuery>(*sql_, factory))),
+              std::make_shared<PostgresWsvQuery>(*sql_, std::move(factory)))),
           block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
           command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
           committed(false),
@@ -42,7 +42,7 @@ namespace iroha {
               boost::apply_visitor(*command_executor_, command.get());
 
           return command_applied.match(
-              [](expected::Value<void> &v) { return true; },
+              [](expected::Value<void> &) { return true; },
               [&](expected::Error<CommandError> &e) {
                 log_->error(e.error.toString());
                 return false;
