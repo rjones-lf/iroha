@@ -57,8 +57,7 @@ namespace iroha {
          * assumes to retrieve a block eventually
          * @return observable with the committed block
          */
-        rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-        on_commit() override;
+        rxcpp::observable<network::Commit> on_commit() override;
 
        private:
         /**

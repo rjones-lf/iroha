@@ -28,6 +28,21 @@ namespace shared_model {
 
 namespace iroha {
   namespace network {
+
+    enum class CommitType {
+      kVoted,  // peer voted for the same block
+      kOther   // peer has not voted for this block
+    };
+
+    /**
+     * Commit message which contains commited block and information about
+     * whether or not the peer has voted for this block
+     */
+    struct Commit {
+      std::shared_ptr<shared_model::interface::Block> block;
+      CommitType type;
+    };
+
     /**
      * Public api of consensus module
      */
@@ -45,8 +60,7 @@ namespace iroha {
        * Note: committed block may be not satisfy for top block in ledger
        * because synchronization reasons
        */
-      virtual rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-      on_commit() = 0;
+      virtual rxcpp::observable<Commit> on_commit() = 0;
 
       virtual ~ConsensusGate() = default;
     };
