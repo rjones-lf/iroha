@@ -196,7 +196,7 @@ namespace iroha {
                   })) {
                 return this->logAndReturnErrorResponse(
                     QueryErrorType::kStatefulFailed,
-                    std::forward<std::string>(err_response()));
+                    std::forward<ErrResponse>(err_response)());
               }
               auto query_range = range
                   | boost::adaptors::transformed([](auto &t) {
