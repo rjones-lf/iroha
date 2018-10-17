@@ -125,12 +125,12 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
 
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe([this](auto block) {
-    ASSERT_EQ(block, expected_block);
+  gate_wrapper.subscribe([this](auto commit) {
+    ASSERT_EQ(commit.block, expected_block);
 
     // verify that gate has put to cache block received from consensus
     auto cache_block = block_cache->get();
-    ASSERT_EQ(block, cache_block);
+    ASSERT_EQ(commit.block, cache_block);
   });
 
   ASSERT_TRUE(gate_wrapper.validate());
@@ -216,11 +216,11 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   // verify that yac gate emit expected block
   std::shared_ptr<shared_model::interface::Block> yac_emitted_block;
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe([actual_block, &yac_emitted_block](auto block) {
-    ASSERT_EQ(block, actual_block);
+  gate_wrapper.subscribe([actual_block, &yac_emitted_block](auto commit) {
+    ASSERT_EQ(commit.block, actual_block);
 
     // memorize the block came from the consensus for future
-    yac_emitted_block = block;
+    yac_emitted_block = commit.block;
   });
 
   // verify that block, which was received from consensus, is now in the
@@ -279,7 +279,7 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
   gate_wrapper.subscribe(
-      [this](auto block) { ASSERT_EQ(block, expected_block); });
+      [this](auto commit) { ASSERT_EQ(commit.block, expected_block); });
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
