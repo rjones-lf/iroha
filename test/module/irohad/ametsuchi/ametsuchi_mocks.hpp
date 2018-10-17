@@ -213,8 +213,9 @@ namespace iroha {
     class MockMutableStorage : public MutableStorage {
      public:
       MOCK_METHOD2(
-          check,
-          bool(const shared_model::interface::Block &,
+          apply,
+          bool(rxcpp::observable<
+                   std::shared_ptr<shared_model::interface::Block>>,
                std::function<
                    bool(const shared_model::interface::Block &,
                         PeerQuery &,

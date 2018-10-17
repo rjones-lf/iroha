@@ -20,17 +20,16 @@ namespace {
   auto parseBatchesImpl(InRange in_range, const OutRange &out_range) {
     std::vector<OutRange> result;
     auto meta = [](const auto &tx) { return boost::get<0>(tx).batchMeta(); };
-    auto has_meta = [&](const auto &tx) { return static_cast<bool>(meta(tx)); };
     auto it = [](auto &p) { return boost::get<1>(p.get_iterator_tuple()); };
 
     auto range = boost::combine(in_range, out_range);
     auto begin = std::begin(range), end = std::end(range);
     while (begin != end) {
+      const auto beginning_tx_meta_opt = meta(*begin);
       auto next = std::find_if(std::next(begin), end, [&](const auto &tx) {
-        bool tx_has_meta = has_meta(tx), begin_has_meta = has_meta(*begin);
-
-        return not(tx_has_meta and begin_has_meta)
-            or (**meta(tx) != **meta(*begin));
+        const auto current_tx_meta_opt = meta(tx);
+        return not(current_tx_meta_opt and beginning_tx_meta_opt)
+            or (**current_tx_meta_opt != **beginning_tx_meta_opt);
       });
 
       result.emplace_back(it(begin), it(next));

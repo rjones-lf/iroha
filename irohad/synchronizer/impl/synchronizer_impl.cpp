@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "synchronizer/impl/synchronizer_impl.hpp"
@@ -39,6 +27,39 @@ namespace iroha {
           [&](network::Commit commit) { this->process_commit(commit); });
     }
 
+    SynchronizationEvent SynchronizerImpl::downloadMissingBlocks(
+        std::shared_ptr<shared_model::interface::Block> commit_message,
+        std::unique_ptr<ametsuchi::MutableStorage> storage) {
+      auto hash = commit_message->hash();
+
+      // while blocks are not loaded and not committed
+      while (true) {
+        // TODO andrei 17.10.18 IR-1763 Add delay strategy for loading blocks
+        for (const auto &peer_signature : commit_message->signatures()) {
+          auto network_chain = block_loader_->retrieveBlocks(
+              shared_model::crypto::PublicKey(peer_signature.publicKey()));
+
+          std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
+          network_chain.as_blocking().subscribe(
+              [&blocks](auto block) { blocks.push_back(block); });
+          if (blocks.empty()) {
+            log_->info("Downloaded an empty chain");
+            continue;
+          }
+
+          auto chain =
+              rxcpp::observable<>::iterate(blocks, rxcpp::identity_immediate());
+
+          if (blocks.back()->hash() == hash
+              and validator_->validateChain(chain, *storage)) {
+            mutable_factory_->commit(std::move(storage));
+
+            return {chain, SynchronizationOutcomeType::kCommit};
+          }
+        }
+      }
+    }
+
     void SynchronizerImpl::process_commit(network::Commit commit_message) {
       log_->info("processing commit");
 
@@ -48,60 +69,30 @@ namespace iroha {
         log_->error("could not create mutable storage: {}", e->error);
         return;
       }
-      auto storage = std::move(
-          boost::get<
-              expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>>(
-              &mutable_storage_var)
-              ->value);
+      auto storage =
+          std::move(
+              boost::get<
+                  expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>>(
+                  mutable_storage_var))
+              .value;
 
       const auto &block = commit_message.block;
 
       if (commit_message.type == network::CommitType::kVoted) {
         log_->info("Applying prepared commit {}", block->hash().hex());
-        // TODO: add mutable storage call, block store and early return
+        // TODO: add mutable storage call and early return
       }
+
+      auto commit = rxcpp::observable<>::just(block);
       SynchronizationEvent result;
 
-      if (validator_->validateBlock(block, *storage)) {
-        storage->apply(*block);
+      if (validator_->validateChain(commit, *storage)) {
         mutable_factory_->commit(std::move(storage));
 
-        result = {rxcpp::observable<>::just(block),
-                  SynchronizationOutcomeType::kCommit};
+        result = {commit, SynchronizationOutcomeType::kCommit};
       } else {
-        auto hash = block->hash();
-
-        // while blocks are not loaded and not committed
-        while (storage) {
-          for (const auto &peer_signature : block->signatures()) {
-            auto network_chain = block_loader_->retrieveBlocks(
-                shared_model::crypto::PublicKey(peer_signature.publicKey()));
-
-            std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
-            network_chain.as_blocking().subscribe(
-                [&blocks](auto block) { blocks.push_back(block); });
-            if (blocks.empty()) {
-              log_->info("Downloaded an empty chain");
-              continue;
-            }
-
-            auto chain = rxcpp::observable<>::iterate(
-                blocks, rxcpp::identity_immediate());
-
-            if (blocks.back()->hash() == hash
-                and validator_->validateChain(chain, *storage)) {
-              // apply downloaded chain
-              for (const auto &block : blocks) {
-                // we don't need to check correctness of downloaded blocks, as
-                // it was done earlier on another peer
-                storage->apply(*block);
-              }
-              mutable_factory_->commit(std::move(storage));
-
-              result = {chain, SynchronizationOutcomeType::kCommit};
-            }
-          }
-        }
+        result = downloadMissingBlocks(std::move(block),
+                                       std::move(storage));
       }
 
       notifier_.get_subscriber().on_next(result);
