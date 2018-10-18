@@ -5,7 +5,6 @@
 
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 
-#include <boost/algorithm/string/join.hpp>
 #include <numeric>
 
 #include "common/visitor.hpp"
@@ -19,6 +18,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<OnDemandOrderingService> ordering_service,
     std::shared_ptr<transport::OdOsNotification> network_client,
     rxcpp::observable<BlockRoundEventType> events,
+    std::shared_ptr<cache::OgCache> cache,
     std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     transport::Round initial_round)
     : ordering_service_(std::move(ordering_service)),
@@ -70,13 +70,14 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                             .value);
                     return batches;
                   });
-              cache_.remove(batches);
+              cache_->remove(batches);
             },
             [this](const EmptyEvent &empty) {
               // no blocks committed, increment reject round
               current_round_ = {current_round_.block_round,
                                 current_round_.reject_round + 1};
             });
+        cache_->up();
 
         // notify our ordering service about new round
         ordering_service_->onCollaborationOutcome(current_round_);
@@ -91,6 +92,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                   current_round_.block_round, current_round_.reject_round, {});
             }));
       })),
+      cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),
       current_round_(initial_round) {}
 
@@ -98,8 +100,10 @@ void OnDemandOrderingGate::propagateBatch(
     std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
-  auto batches = cache_.dequeue();
+  auto batches = cache_->clearFrontAndGet();
   batches.insert(batch);
+
+  cache_->addToBack(batches);
 
   auto transactions = std::accumulate(
       batches.begin(),

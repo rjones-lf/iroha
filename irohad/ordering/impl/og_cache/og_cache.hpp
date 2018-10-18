@@ -17,11 +17,19 @@ namespace iroha {
         using BatchesListType = std::set<
             std::shared_ptr<shared_model::interface::TransactionBatch>>;
 
-        virtual void addToBack(
-            std::shared_ptr<shared_model::interface::TransactionBatch>
-                batch) = 0;
-        virtual BatchesListType dequeue() = 0;
+        virtual void addToBack(const BatchesListType &batches) = 0;
+
+        virtual void up() = 0;
+
+        virtual BatchesListType clearFrontAndGet() = 0;
+
         virtual void remove(const BatchesListType &batches) = 0;
+
+        virtual const BatchesListType &front() const = 0;
+
+        virtual const BatchesListType &back() const = 0;
+
+        virtual ~OgCache() = default;
       };
 
     }  // namespace cache

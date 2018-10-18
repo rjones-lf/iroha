@@ -15,7 +15,7 @@
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
-#include "ordering/impl/og_cache/on_demand_cache.hpp"
+#include "ordering/impl/og_cache/og_cache.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
 
 namespace iroha {
@@ -43,6 +43,7 @@ namespace iroha {
           std::shared_ptr<OnDemandOrderingService> ordering_service,
           std::shared_ptr<transport::OdOsNotification> network_client,
           rxcpp::observable<BlockRoundEventType> events,
+          std::shared_ptr<cache::OgCache> cache,
           std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
           transport::Round initial_round);
@@ -61,6 +62,7 @@ namespace iroha {
       std::shared_ptr<OnDemandOrderingService> ordering_service_;
       std::shared_ptr<transport::OdOsNotification> network_client_;
       rxcpp::composite_subscription events_subscription_;
+      std::shared_ptr<cache::OgCache> cache_;
       std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
 
@@ -68,8 +70,6 @@ namespace iroha {
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::Proposal>>
           proposal_notifier_;
-
-      cache::OnDemandCache cache_;
 
       mutable std::shared_timed_mutex mutex_;
     };

@@ -6,10 +6,12 @@
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 
 #include <gtest/gtest.h>
+#include "framework/batch_helper.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
+#include "ordering/impl/og_cache/on_demand_cache.hpp"
 
 using namespace iroha::ordering;
 using namespace iroha::ordering::transport;
@@ -25,14 +27,22 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
   void SetUp() override {
     ordering_service = std::make_shared<MockOnDemandOrderingService>();
     notification = std::make_shared<MockOdOsNotification>();
+    cache = std::make_shared<cache::OnDemandCache>();
     auto ufactory = std::make_unique<MockUnsafeProposalFactory>();
     factory = ufactory.get();
     ordering_gate =
         std::make_shared<OnDemandOrderingGate>(ordering_service,
                                                notification,
                                                rounds.get_observable(),
+                                               cache,
                                                std::move(ufactory),
                                                initial_round);
+  }
+
+  std::shared_ptr<shared_model::interface::Block> createBlockWithHeight(size_t height) {
+    auto block = std::make_shared<MockBlock>();
+    EXPECT_CALL(*block, height()).WillOnce(Return(height));
+    return block;
   }
 
   rxcpp::subjects::subject<OnDemandOrderingGate::BlockRoundEventType> rounds;
@@ -40,6 +50,8 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
   std::shared_ptr<MockOdOsNotification> notification;
   MockUnsafeProposalFactory *factory;
   std::shared_ptr<OnDemandOrderingGate> ordering_gate;
+
+  std::shared_ptr<cache::OnDemandCache> cache;
 
   const Round initial_round = {2, 1};
 };
@@ -177,4 +189,71 @@ TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
   rounds.get_subscriber().on_next(OnDemandOrderingGate::EmptyEvent{});
 
   ASSERT_TRUE(gate_wrapper.validate());
+}
+
+TEST_F(OnDemandOrderingGateTest, SendTransactions) {
+  auto now = iroha::time::now();
+  auto batch1 = std::shared_ptr<shared_model::interface::TransactionBatch>(
+      framework::batch::createValidBatch(1, now + 1));
+  auto batch2 = std::shared_ptr<shared_model::interface::TransactionBatch>(
+      framework::batch::createValidBatch(1, now + 2));
+  auto batch3 = std::shared_ptr<shared_model::interface::TransactionBatch>(
+      framework::batch::createValidBatch(1, now + 3));
+
+  //-------------------------------------------------------------------
+  ordering_gate->propagateBatch(batch1);
+  /**
+   * 1. {}
+   * 2. {}
+   * 3. {batch1}
+   */
+  ASSERT_EQ(cache->front().size(), 0);
+  ASSERT_EQ(cache->back().size(), 1);
+
+  rounds.get_subscriber().on_next(createBlockWithHeight(1));
+  /**
+   * 1. {}
+   * 2. {batch1}
+   * 3. {}
+   */
+  ASSERT_EQ(cache->front().size(), 0);
+  ASSERT_EQ(cache->back().size(), 0);
+
+  //-------------------------------------------------------------------
+  ordering_gate->propagateBatch(batch2);
+  /**
+   * 1. {}
+   * 2. {batch1}
+   * 3. {batch2}
+   */
+  ASSERT_EQ(cache->front().size(), 0);
+  ASSERT_EQ(cache->back().size(), 1);
+
+  rounds.get_subscriber().on_next(createBlockWithHeight(2));
+  /**
+   * 1. {batch1}
+   * 2. {batch2}
+   * 3. {}
+   */
+  ASSERT_EQ(cache->front().size(), 1);
+  ASSERT_EQ(cache->back().size(), 0);
+
+  //-------------------------------------------------------------------
+  ordering_gate->propagateBatch(batch3);
+  /**
+   * 1. {}
+   * 2. {batch2}
+   * 3. {batch1, batch3}
+   */
+  ASSERT_EQ(cache->front().size(), 0);
+  ASSERT_EQ(cache->back().size(), 2);
+
+  rounds.get_subscriber().on_next(createBlockWithHeight(3));
+  /**
+   * 1. {batch2}
+   * 2. {batch1, batch3}
+   * 3. {}
+   */
+  ASSERT_EQ(cache->front().size(), 1);
+  ASSERT_EQ(cache->back().size(), 0);
 }

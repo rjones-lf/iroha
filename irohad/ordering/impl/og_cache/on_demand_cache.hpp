@@ -17,11 +17,17 @@ namespace iroha {
 
       class OnDemandCache : public OgCache {
        public:
-        void addToBack(
-            std::shared_ptr<shared_model::interface::TransactionBatch> batch)
-            override;
-        BatchesListType dequeue() override;
+        void addToBack(const BatchesListType &batches) override;
+
+        BatchesListType clearFrontAndGet() override;
+
+        void up() override;
+
         void remove(const BatchesListType &batches) override;
+
+        virtual const BatchesListType &front() const override;
+
+        virtual const BatchesListType &back() const override;
 
        private:
         using BatchesQueueType =
