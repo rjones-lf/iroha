@@ -91,11 +91,12 @@ DEFINE_validator(keypair_name, &validate_keypair_name);
  * Creating enum flag for overwriting already existing block storage
  */
 DEFINE_string(
-    blockstore_strategy,
+    storage,
     "abort",
-    "Strategy for applying genesis block when block store is not empty. Can be "
-    "'overwrite' to rewrite blockstore with genesis, 'continue' to ignore "
-    "genesis block  or 'abort' to abort");
+    "behaviour in case of non-empty storage and passed genesis block, "
+    "'overwrite' to clear storage and apply new genesis block, "
+    "'continue' to continue with old storage and ignore new genesis block"
+    "or 'abort' to terminate with conflict error");
 /**
  * Registering validator for the blockstore strategy.
  */
