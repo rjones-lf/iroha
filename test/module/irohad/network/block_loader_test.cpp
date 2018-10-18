@@ -311,8 +311,8 @@ TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
 }
 
 /**
- * @given block loader @and empty consensus cache
- * @when retrieveBlock is called with some hash
+ * @given block loader @and empty consensus cache @and two blocks in storage
+ * @when retrieveBlock is called with first block's hash
  * @then consensus cache is missed @and block loader tries to fetch block from
  * the storage
  */
@@ -335,4 +335,21 @@ TEST_F(BlockLoaderTest, ValidWithEmptyCache) {
   auto block = loader->retrieveBlock(peer_key, prev_block->hash());
   ASSERT_TRUE(block);
   ASSERT_EQ(block.value()->hash(), prev_block->hash());
+}
+
+/**
+ * @given block loader @and empty consensus cache @and no blocks in storage
+ * @when retrieveBlock is called with some block hash
+ * @then consensus cache is missed @and block storage is missed @and block
+ * loader returns nothing
+ */
+TEST_F(BlockLoaderTest, NoBlocksInStorage) {
+  EXPECT_CALL(*peer_query, getLedgerPeers())
+      .WillOnce(Return(std::vector<wPeer>{peer}));
+  EXPECT_CALL(*storage, getBlocksFrom(1))
+      .WillOnce(Return(
+          std::vector<std::shared_ptr<shared_model::interface::Block>>{}));
+
+  auto block = loader->retrieveBlock(peer_key, kPrevHash);
+  ASSERT_FALSE(block);
 }

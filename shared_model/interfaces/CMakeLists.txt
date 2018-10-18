@@ -75,6 +75,7 @@ if (IROHA_ROOT_PROJECT)
 endif ()
 
 target_link_libraries(shared_model_interfaces
+    shared_model_utils
     shared_model_cryptography
     ${Boost_LIBRARIES}
     )

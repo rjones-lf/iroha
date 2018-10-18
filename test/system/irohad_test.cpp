@@ -107,7 +107,7 @@ class IrohadTest : public AcceptanceFixture {
       iroha_process_->terminate();
     }
 
-    iroha::remove_dir_contents(blockstore_path_);
+    boost::filesystem::remove_all(blockstore_path_);
     dropPostgres();
     boost::filesystem::remove(config_copy_);
   }

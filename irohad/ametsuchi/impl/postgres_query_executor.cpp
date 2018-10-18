@@ -16,7 +16,9 @@
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/range/irange.hpp>
 #include "ametsuchi/impl/soci_utils.hpp"
+#include "backend/protobuf/permissions.hpp"
 #include "common/types.hpp"
+#include "cryptography/public_key.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 
 using namespace shared_model::interface::permissions;
@@ -24,20 +26,6 @@ using namespace shared_model::interface::permissions;
 namespace {
 
   using namespace iroha;
-
-  /**
-   * A query response that contains an error response
-   * @tparam T error type
-   */
-  template <typename T>
-  auto error_response = shared_model::proto::TemplateQueryResponseBuilder<>()
-                            .errorQueryResponse<T>();
-
-  /**
-   * A query response that contains StatefulFailed error
-   */
-  auto stateful_failed =
-      error_response<shared_model::interface::StatefulFailedErrorResponse>;
 
   shared_model::interface::types::DomainIdType getDomainFromName(
       const shared_model::interface::types::AccountIdType &account_id) {
@@ -122,15 +110,37 @@ namespace {
   template <typename... Value>
   using QueryType = boost::tuple<boost::optional<Value>...>;
 
+  /**
+   * Create an error response in case user does not have permissions to perform
+   * a query
+   * @tparam Roles - type of roles
+   * @param roles, which user lacks
+   * @return lambda returning the error response itself
+   */
+  template <typename... Roles>
+  auto notEnoughPermissionsResponse(Roles... roles) {
+    return [roles...] {
+      std::string error = "user must have at least one of the permissions: ";
+      for (auto role : {roles...}) {
+        // TODO [IR-1758] Akvinikym 12.10.18: get rid of this protobuf
+        // dependency and convert role to string in another way
+        error += shared_model::proto::permissions::toString(role) + ", ";
+      }
+      return error;
+    };
+  }
+
 }  // namespace
 
 namespace iroha {
   namespace ametsuchi {
 
     template <typename RangeGen, typename Pred>
-    auto PostgresQueryExecutorVisitor::getTransactionsFromBlock(
-        uint64_t block_id, RangeGen &&range_gen, Pred &&pred) {
-      std::vector<shared_model::proto::Transaction> result;
+    std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+    PostgresQueryExecutorVisitor::getTransactionsFromBlock(uint64_t block_id,
+                                                           RangeGen &&range_gen,
+                                                           Pred &&pred) {
+      std::vector<std::unique_ptr<shared_model::interface::Transaction>> result;
       auto serialized_block = block_store_.get(block_id);
       if (not serialized_block) {
         log_->error("Failed to retrieve block with id {}", block_id);
@@ -151,64 +161,68 @@ namespace iroha {
               deserialized_block)
               .value;
 
-      boost::transform(
-          range_gen(boost::size(block->transactions()))
-              | boost::adaptors::transformed(
-                    [&block](auto i) -> decltype(auto) {
-                      return block->transactions()[i];
-                    })
-              | boost::adaptors::filtered(pred),
-          std::back_inserter(result),
-          [&](const auto &tx) {
-            // TODO 03.10.18 andrei: IR-1729 Integrate query response factory
-            return *static_cast<shared_model::proto::Transaction *>(
-                clone(tx).get());
-          });
+      boost::transform(range_gen(boost::size(block->transactions()))
+                           | boost::adaptors::transformed(
+                                 [&block](auto i) -> decltype(auto) {
+                                   return block->transactions()[i];
+                                 })
+                           | boost::adaptors::filtered(pred),
+                       std::back_inserter(result),
+                       [&](const auto &tx) { return clone(tx); });
 
       return result;
     }
 
-    template <typename Q, typename P, typename F, typename B>
-    QueryResponseBuilderDone PostgresQueryExecutorVisitor::executeQuery(F &&f,
-                                                                        B &&b) {
-      using T = concat<Q, P>;
+    template <typename QueryTuple,
+              typename PermissionTuple,
+              typename QueryExecutor,
+              typename ResponseCreator,
+              typename ErrResponse>
+    QueryExecutorResult PostgresQueryExecutorVisitor::executeQuery(
+        QueryExecutor &&query_executor,
+        ResponseCreator &&response_creator,
+        ErrResponse &&err_response) {
+      using T = concat<QueryTuple, PermissionTuple>;
       try {
-        soci::rowset<T> st = std::forward<F>(f)();
+        soci::rowset<T> st = std::forward<QueryExecutor>(query_executor)();
         auto range = boost::make_iterator_range(st.begin(), st.end());
 
         return apply(
-            viewPermissions<P>(range.front()), [range, &b](auto... perms) {
+            viewPermissions<PermissionTuple>(range.front()),
+            [this, range, &response_creator, &err_response](auto... perms) {
               bool temp[] = {not perms...};
               if (std::all_of(std::begin(temp), std::end(temp), [](auto b) {
                     return b;
                   })) {
-                return stateful_failed;
+                return this->logAndReturnErrorResponse(
+                    QueryErrorType::kStatefulFailed,
+                    std::forward<ErrResponse>(err_response)());
               }
               auto query_range = range
                   | boost::adaptors::transformed([](auto &t) {
-                                   return rebind(viewQuery<Q>(t));
+                                   return rebind(viewQuery<QueryTuple>(t));
                                  })
                   | boost::adaptors::filtered([](const auto &t) {
                                    return static_cast<bool>(t);
                                  })
                   | boost::adaptors::transformed([](auto t) { return *t; });
-              return std::forward<B>(b)(query_range, perms...);
+              return std::forward<ResponseCreator>(response_creator)(
+                  query_range, perms...);
             });
       } catch (const std::exception &e) {
-        log_->error("Failed to execute query: {}", e.what());
-        return stateful_failed;
+        return logAndReturnErrorResponse(QueryErrorType::kStatefulFailed,
+                                         e.what());
       }
     }
-
-    using QueryResponseBuilder =
-        shared_model::proto::TemplateQueryResponseBuilder<>;
 
     PostgresQueryExecutor::PostgresQueryExecutor(
         std::unique_ptr<soci::session> sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         KeyValueStorage &block_store,
         std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
-        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter)
+        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
+        std::shared_ptr<shared_model::interface::QueryResponseFactory>
+            response_factory)
         : sql_(std::move(sql)),
           block_store_(block_store),
           factory_(std::move(factory)),
@@ -217,15 +231,16 @@ namespace iroha {
                    factory_,
                    block_store_,
                    pending_txs_storage_,
-                   std::move(converter)),
+                   std::move(converter),
+                   response_factory),
+          query_response_factory_{std::move(response_factory)},
           log_(logger::log("PostgresQueryExecutor")) {}
 
     QueryExecutorResult PostgresQueryExecutor::validateAndExecute(
         const shared_model::interface::Query &query) {
       visitor_.setCreatorId(query.creatorAccountId());
-      auto result = boost::apply_visitor(visitor_, query.get());
-      // TODO 03.10.18 andrei: IR-1729 Integrate query response factory
-      return clone(result.queryHash(query.hash()).build());
+      visitor_.setQueryHash(query.hash());
+      return boost::apply_visitor(visitor_, query.get());
     }
 
     bool PostgresQueryExecutor::validate(
@@ -250,12 +265,15 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         KeyValueStorage &block_store,
         std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
-        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter)
+        std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
+        std::shared_ptr<shared_model::interface::QueryResponseFactory>
+            response_factory)
         : sql_(sql),
           block_store_(block_store),
-          factory_(std::move(factory)),
+          common_objects_factory_(std::move(factory)),
           pending_txs_storage_(std::move(pending_txs_storage)),
           converter_(std::move(converter)),
+          query_response_factory_{std::move(response_factory)},
           log_(logger::log("PostgresQueryExecutorVisitor")) {}
 
     void PostgresQueryExecutorVisitor::setCreatorId(
@@ -263,14 +281,61 @@ namespace iroha {
       creator_id_ = creator_id;
     }
 
-    QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
+    void PostgresQueryExecutorVisitor::setQueryHash(
+        const shared_model::interface::types::HashType &query_hash) {
+      query_hash_ = query_hash;
+    }
+
+    std::unique_ptr<shared_model::interface::QueryResponse>
+    PostgresQueryExecutorVisitor::logAndReturnErrorResponse(
+        iroha::ametsuchi::QueryErrorType error_type,
+        std::string error_body) const {
+      using QueryErrorType = iroha::ametsuchi::QueryErrorType;
+
+      auto make_error_response = [this, error_type](std::string error) {
+        return query_response_factory_->createErrorQueryResponse(
+            error_type, error, query_hash_);
+      };
+
+      std::string error;
+      switch (error_type) {
+        case QueryErrorType::kNoAccount:
+          error = "could find account with such id: " + error_body;
+          break;
+        case QueryErrorType::kNoSignatories:
+          error = "no signatories found in account with such id: " + error_body;
+          break;
+        case QueryErrorType::kNoAccountDetail:
+          error = "no details in account with such id: " + error_body;
+          break;
+        case QueryErrorType::kNoRoles:
+          error =
+              "no role with such name in account with such id: " + error_body;
+          break;
+        case QueryErrorType::kNoAsset:
+          error =
+              "no asset with such name in account with such id: " + error_body;
+          break;
+          // other error are either handled by generic response or do not appear
+          // yet
+        default:
+          error = "failed to execute query: " + error_body;
+          break;
+      }
+
+      log_->error(error);
+      return make_error_response(error);
+    }
+
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccount &q) {
-      using Q = QueryType<shared_model::interface::types::AccountIdType,
-                          shared_model::interface::types::DomainIdType,
-                          shared_model::interface::types::QuorumType,
-                          shared_model::interface::types::DetailType,
-                          std::string>;
-      using P = boost::tuple<int>;
+      using QueryTuple =
+          QueryType<shared_model::interface::types::AccountIdType,
+                    shared_model::interface::types::DomainIdType,
+                    shared_model::interface::types::QuorumType,
+                    shared_model::interface::types::DetailType,
+                    std::string>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
       t AS (
@@ -295,45 +360,49 @@ namespace iroha {
                                 auto &quorum,
                                 auto &data,
                                 auto &roles_str) {
-        return factory_->createAccount(account_id, domain_id, quorum, data)
+        // TODO [IR-1750] Akvinikym 10.10.18: Make QueryResponseFactory accept
+        // parameters for objects creation
+        return common_objects_factory_
+            ->createAccount(account_id, domain_id, quorum, data)
             .match(
-                [roles_str =
-                     roles_str.substr(1, roles_str.size() - 2)](auto &v) {
+                [this, roles_str = roles_str.substr(1, roles_str.size() - 2)](
+                    auto &v) {
                   std::vector<shared_model::interface::types::RoleIdType> roles;
 
                   boost::split(
                       roles, roles_str, [](char c) { return c == ','; });
 
-                  return QueryResponseBuilder().accountResponse(
-                      *static_cast<shared_model::proto::Account *>(
-                          v.value.get()),
-                      roles);
+                  return query_response_factory_->createAccountResponse(
+                      std::move(v.value), std::move(roles), query_hash_);
                 },
                 [this](expected::Error<std::string> &e) {
-                  log_->error(e.error);
-                  return stateful_failed;
+                  return this->logAndReturnErrorResponse(
+                      QueryErrorType::kStatefulFailed, std::move(e.error));
                 });
       };
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd,
                     soci::use(q.accountId(), "target_account_id"));
           },
-          [&](auto range, auto &) {
+          [this, &q, &query_apply](auto range, auto &) {
             if (range.empty()) {
-              return error_response<
-                  shared_model::interface::NoAccountErrorResponse>;
+              return this->logAndReturnErrorResponse(QueryErrorType::kNoAccount,
+                                                     q.accountId());
             }
 
             return apply(range.front(), query_apply);
-          });
+          },
+          notEnoughPermissionsResponse(Role::kGetMyAccount,
+                                       Role::kGetAllAccounts,
+                                       Role::kGetDomainAccounts));
     }
 
-    QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetSignatories &q) {
-      using Q = QueryType<std::string>;
-      using P = boost::tuple<int>;
+      using QueryTuple = QueryType<std::string>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
       t AS (
@@ -350,12 +419,12 @@ namespace iroha {
                                        Role::kGetDomainSignatories))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] { return (sql_.prepare << cmd, soci::use(q.accountId())); },
-          [&](auto range, auto &) {
+          [this, &q](auto range, auto &) {
             if (range.empty()) {
-              return error_response<
-                  shared_model::interface::NoSignatoriesErrorResponse>;
+              return this->logAndReturnErrorResponse(
+                  QueryErrorType::kNoSignatories, q.accountId());
             }
 
             auto pubkeys = boost::copy_range<
@@ -367,14 +436,19 @@ namespace iroha {
                   });
                 }));
 
-            return QueryResponseBuilder().signatoriesResponse(pubkeys);
-          });
+            return query_response_factory_->createSignatoriesResponse(
+                pubkeys, query_hash_);
+          },
+          notEnoughPermissionsResponse(Role::kGetMySignatories,
+                                       Role::kGetAllSignatories,
+                                       Role::kGetDomainSignatories));
     }
 
-    QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountTransactions &q) {
-      using Q = QueryType<shared_model::interface::types::HeightType, uint64_t>;
-      using P = boost::tuple<int>;
+      using QueryTuple =
+          QueryType<shared_model::interface::types::HeightType, uint64_t>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
       t AS (
@@ -395,7 +469,7 @@ namespace iroha {
                                        Role::kGetDomainAccTxs))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] { return (sql_.prepare << cmd, soci::use(q.accountId())); },
           [&](auto range, auto &) {
             std::map<uint64_t, std::vector<uint64_t>> index;
@@ -405,20 +479,25 @@ namespace iroha {
               });
             });
 
-            std::vector<shared_model::proto::Transaction> proto;
+            std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+                response_txs;
             for (auto &block : index) {
               auto txs = this->getTransactionsFromBlock(
                   block.first,
                   [&block](auto) { return block.second; },
                   [](auto &) { return true; });
-              std::move(txs.begin(), txs.end(), std::back_inserter(proto));
+              std::move(
+                  txs.begin(), txs.end(), std::back_inserter(response_txs));
             }
 
-            return QueryResponseBuilder().transactionsResponse(proto);
-          });
+            return query_response_factory_->createTransactionsResponse(
+                std::move(response_txs), query_hash_);
+          },
+          notEnoughPermissionsResponse(
+              Role::kGetMyAccTxs, Role::kGetAllAccTxs, Role::kGetDomainAccTxs));
     }
 
-    QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetTransactions &q) {
       auto escape = [](auto &hash) { return "'" + hash.hex() + "'"; };
       std::string hash_str = std::accumulate(
@@ -427,9 +506,9 @@ namespace iroha {
           escape(q.transactionHashes().front()),
           [&escape](auto &acc, auto &val) { return acc + "," + escape(val); });
 
-      using Q =
+      using QueryTuple =
           QueryType<shared_model::interface::types::HeightType, std::string>;
-      using P = boost::tuple<int, int>;
+      using PermissionTuple = boost::tuple<int, int>;
 
       auto cmd = (boost::format(R"(WITH has_my_perm AS (%s),
       has_all_perm AS (%s),
@@ -444,7 +523,7 @@ namespace iroha {
                   % hash_str)
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd, soci::use(creator_id_, "account_id"));
           },
@@ -456,7 +535,8 @@ namespace iroha {
               });
             });
 
-            std::vector<shared_model::proto::Transaction> proto;
+            std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+                response_txs;
             for (auto &block : index) {
               auto txs = this->getTransactionsFromBlock(
                   block.first,
@@ -469,17 +549,21 @@ namespace iroha {
                              or (my_perm
                                  and tx.creatorAccountId() == creator_id_));
                   });
-              std::move(txs.begin(), txs.end(), std::back_inserter(proto));
+              std::move(
+                  txs.begin(), txs.end(), std::back_inserter(response_txs));
             }
 
-            return QueryResponseBuilder().transactionsResponse(proto);
-          });
+            return query_response_factory_->createTransactionsResponse(
+                std::move(response_txs), query_hash_);
+          },
+          notEnoughPermissionsResponse(Role::kGetMyTxs, Role::kGetAllTxs));
     }
 
-    QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountAssetTransactions &q) {
-      using Q = QueryType<shared_model::interface::types::HeightType, uint64_t>;
-      using P = boost::tuple<int>;
+      using QueryTuple =
+          QueryType<shared_model::interface::types::HeightType, uint64_t>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
       t AS (
@@ -501,7 +585,7 @@ namespace iroha {
                                        Role::kGetDomainAccAstTxs))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd,
                     soci::use(q.accountId(), "account_id"),
@@ -515,25 +599,32 @@ namespace iroha {
               });
             });
 
-            std::vector<shared_model::proto::Transaction> proto;
+            std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+                response_txs;
             for (auto &block : index) {
               auto txs = this->getTransactionsFromBlock(
                   block.first,
                   [&block](auto) { return block.second; },
                   [](auto &) { return true; });
-              std::move(txs.begin(), txs.end(), std::back_inserter(proto));
+              std::move(
+                  txs.begin(), txs.end(), std::back_inserter(response_txs));
             }
 
-            return QueryResponseBuilder().transactionsResponse(proto);
-          });
+            return query_response_factory_->createTransactionsResponse(
+                std::move(response_txs), query_hash_);
+          },
+          notEnoughPermissionsResponse(Role::kGetMyAccAstTxs,
+                                       Role::kGetAllAccAstTxs,
+                                       Role::kGetDomainAccAstTxs));
     }
 
-    QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountAssets &q) {
-      using Q = QueryType<shared_model::interface::types::AccountIdType,
-                          shared_model::interface::types::AssetIdType,
-                          std::string>;
-      using P = boost::tuple<int>;
+      using QueryTuple =
+          QueryType<shared_model::interface::types::AccountIdType,
+                    shared_model::interface::types::AssetIdType,
+                    std::string>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
       t AS (
@@ -550,40 +641,43 @@ namespace iroha {
                                        Role::kGetDomainAccAst))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] { return (sql_.prepare << cmd, soci::use(q.accountId())); },
           [&](auto range, auto &) {
-            std::vector<shared_model::proto::AccountAsset> account_assets;
+            std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
+                account_assets;
             boost::for_each(range, [this, &account_assets](auto t) {
               apply(t,
                     [this, &account_assets](
                         auto &account_id, auto &asset_id, auto &amount) {
-                      factory_
+                      common_objects_factory_
                           ->createAccountAsset(
                               account_id,
                               asset_id,
                               shared_model::interface::Amount(amount))
                           .match(
                               [&account_assets](auto &v) {
-                                auto proto = *static_cast<
-                                    shared_model::proto::AccountAsset *>(
-                                    v.value.get());
-                                account_assets.push_back(proto);
+                                account_assets.push_back(std::move(v.value));
                               },
                               [this](expected::Error<std::string> &e) {
-                                log_->error(e.error);
+                                log_->error(
+                                    "could not create account asset object: {}",
+                                    e.error);
                               });
                     });
             });
 
-            return QueryResponseBuilder().accountAssetResponse(account_assets);
-          });
+            return query_response_factory_->createAccountAssetResponse(
+                std::move(account_assets), query_hash_);
+          },
+          notEnoughPermissionsResponse(
+              Role::kGetMyAccAst, Role::kGetAllAccAst, Role::kGetDomainAccAst));
     }
 
-    QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountDetail &q) {
-      using Q = QueryType<shared_model::interface::types::DetailType>;
-      using P = boost::tuple<int>;
+      using QueryTuple = QueryType<shared_model::interface::types::DetailType>;
+      using PermissionTuple = boost::tuple<int>;
 
       std::string query_detail;
       if (q.key() and q.writer()) {
@@ -628,27 +722,31 @@ namespace iroha {
                   % query_detail)
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd,
                     soci::use(q.accountId(), "account_id"));
           },
-          [&](auto range, auto &) {
+          [this, &q](auto range, auto &) {
             if (range.empty()) {
-              return error_response<
-                  shared_model::interface::NoAccountDetailErrorResponse>;
+              return this->logAndReturnErrorResponse(
+                  QueryErrorType::kNoAccountDetail, q.accountId());
             }
 
-            return apply(range.front(), [](auto &json) {
-              return QueryResponseBuilder().accountDetailResponse(json);
+            return apply(range.front(), [this](auto &json) {
+              return query_response_factory_->createAccountDetailResponse(
+                  json, query_hash_);
             });
-          });
+          },
+          notEnoughPermissionsResponse(Role::kGetMyAccDetail,
+                                       Role::kGetAllAccDetail,
+                                       Role::kGetDomainAccDetail));
     }
 
-    QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetRoles &q) {
-      using Q = QueryType<shared_model::interface::types::RoleIdType>;
-      using P = boost::tuple<int>;
+      using QueryTuple = QueryType<shared_model::interface::types::RoleIdType>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(
                       R"(WITH has_perms AS (%s)
@@ -657,7 +755,7 @@ namespace iroha {
       )") % checkAccountRolePermission(Role::kGetRoles))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd,
                     soci::use(creator_id_, "role_account_id"));
@@ -669,14 +767,16 @@ namespace iroha {
                   return apply(t, [](auto &role_id) { return role_id; });
                 }));
 
-            return QueryResponseBuilder().rolesResponse(roles);
-          });
+            return query_response_factory_->createRolesResponse(roles,
+                                                                query_hash_);
+          },
+          notEnoughPermissionsResponse(Role::kGetRoles));
     }
 
-    QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetRolePermissions &q) {
-      using Q = QueryType<std::string>;
-      using P = boost::tuple<int>;
+      using QueryTuple = QueryType<std::string>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(
                       R"(WITH has_perms AS (%s),
@@ -687,30 +787,33 @@ namespace iroha {
       )") % checkAccountRolePermission(Role::kGetRoles))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd,
                     soci::use(creator_id_, "role_account_id"),
                     soci::use(q.roleId(), "role_name"));
           },
-          [&](auto range, auto &) {
+          [this, &q](auto range, auto &) {
             if (range.empty()) {
-              return error_response<
-                  shared_model::interface::NoRolesErrorResponse>;
+              return this->logAndReturnErrorResponse(
+                  QueryErrorType::kNoRoles,
+                  "{" + q.roleId() + ", " + creator_id_ + "}");
             }
 
-            return apply(range.front(), [](auto &permission) {
-              return QueryResponseBuilder().rolePermissionsResponse(
-                  shared_model::interface::RolePermissionSet(permission));
+            return apply(range.front(), [this](auto &permission) {
+              return query_response_factory_->createRolePermissionsResponse(
+                  shared_model::interface::RolePermissionSet(permission),
+                  query_hash_);
             });
-          });
+          },
+          notEnoughPermissionsResponse(Role::kGetRoles));
     }
 
-    QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAssetInfo &q) {
-      using Q =
+      using QueryTuple =
           QueryType<shared_model::interface::types::DomainIdType, uint32_t>;
-      using P = boost::tuple<int>;
+      using PermissionTuple = boost::tuple<int>;
 
       auto cmd = (boost::format(
                       R"(WITH has_perms AS (%s),
@@ -721,45 +824,52 @@ namespace iroha {
       )") % checkAccountRolePermission(Role::kReadAssets))
                      .str();
 
-      return executeQuery<Q, P>(
+      return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             return (sql_.prepare << cmd,
                     soci::use(creator_id_, "role_account_id"),
                     soci::use(q.assetId(), "asset_id"));
           },
-          [&](auto range, auto &) {
+          [this, &q](auto range, auto &) {
             if (range.empty()) {
-              return error_response<
-                  shared_model::interface::NoAssetErrorResponse>;
+              return this->logAndReturnErrorResponse(
+                  QueryErrorType::kNoAsset,
+                  "{" + q.assetId() + ", " + creator_id_ + "}");
             }
 
-            return apply(range.front(), [&q](auto &domain_id, auto &precision) {
-              return QueryResponseBuilder().assetResponse(
-                  q.assetId(), domain_id, precision);
-            });
-          });
+            return apply(
+                range.front(), [this, &q](auto &domain_id, auto &precision) {
+                  auto asset = common_objects_factory_->createAsset(
+                      q.assetId(), domain_id, precision);
+                  return asset.match(
+                      [this](expected::Value<std::unique_ptr<
+                                 shared_model::interface::Asset>> &asset) {
+                        return query_response_factory_->createAssetResponse(
+                            std::move(asset.value), query_hash_);
+                      },
+                      [this](const expected::Error<std::string> &err) {
+                        return this->logAndReturnErrorResponse(
+                            QueryErrorType::kStatefulFailed, err.error);
+                      });
+                });
+          },
+          notEnoughPermissionsResponse(Role::kReadAssets));
     }
 
-    QueryResponseBuilderDone PostgresQueryExecutorVisitor::operator()(
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetPendingTransactions &q) {
-      std::vector<shared_model::proto::Transaction> txs;
+      std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+          response_txs;
       auto interface_txs =
           pending_txs_storage_->getPendingTransactions(creator_id_);
-      txs.reserve(interface_txs.size());
+      response_txs.reserve(interface_txs.size());
 
-      std::transform(
-          interface_txs.begin(),
-          interface_txs.end(),
-          std::back_inserter(txs),
-          [](auto &tx) {
-            return *(
-                std::static_pointer_cast<shared_model::proto::Transaction>(tx));
-          });
-
-      // TODO 2018-08-07, rework response builder - it should take
-      // interface::Transaction, igor-egorov, IR-1041
-      auto response = QueryResponseBuilder().transactionsResponse(txs);
-      return response;
+      std::transform(interface_txs.begin(),
+                     interface_txs.end(),
+                     std::back_inserter(response_txs),
+                     [](auto &tx) { return clone(*tx); });
+      return query_response_factory_->createTransactionsResponse(
+          std::move(response_txs), query_hash_);
     }
 
   }  // namespace ametsuchi

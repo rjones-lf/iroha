@@ -25,9 +25,9 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         std::lock_guard<std::shared_timed_mutex> lock(mutex_);
 
         visit_in_place(event,
-                       [this](const BlockEvent &block) {
+                       [this](const BlockEvent &block_event) {
                          // block committed, increment block round
-                         current_round_ = {block.height, 1};
+                         current_round_ = {block_event->height(), 1};
                        },
                        [this](const EmptyEvent &empty) {
                          // no blocks committed, increment reject round
