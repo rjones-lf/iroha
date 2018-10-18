@@ -13,7 +13,6 @@
 using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
-using namespace std::literals::chrono_literals;
 
 class MstPipelineTest : public AcceptanceFixture {
  public:
@@ -74,22 +73,19 @@ class MstPipelineTest : public AcceptanceFixture {
    * Makes a ready-to-send query to get pending transactions
    * @param creator - account, which asks for pending transactions
    * @param key - that account's keypair
-   * @param time_offset - the offset of query creation time from now
-   * (in milliseconds)
    * @return built and signed transaction
    */
-  auto makeGetPendingTxsQuery(
-      const std::string &creator,
-      const crypto::Keypair &key,
-      const std::chrono::milliseconds &time_offset = 0ms) {
+  auto makeGetPendingTxsQuery(const std::string &creator,
+                              const crypto::Keypair &key) {
     return shared_model::proto::QueryBuilder()
-        .createdTime(iroha::time::now(time_offset))
+        .createdTime(getUniqueTime())
         .creatorAccountId(creator)
         .queryCounter(1)
         .getPendingTransactions()
         .build()
         .signAndAddSignature(key)
         .finish();
+  }
 
   /**
    * Query validation lambda - check that empty transactions response returned
@@ -212,7 +208,7 @@ TEST_F(MstPipelineTest, GetPendingTxsLatestSignatures) {
 
   // make the same queries have different hashes with help of timestamps
   const auto q1 = makeGetPendingTxsQuery(kUserId, kUserKeypair);
-  const auto q2 = makeGetPendingTxsQuery(kUserId, kUserKeypair, 1ms);
+  const auto q2 = makeGetPendingTxsQuery(kUserId, kUserKeypair);
   auto &mst_itf = prepareMstItf();
   mst_itf.sendTx(complete(pending_tx, signatories[0]))
       .sendQuery(q1, signatoryCheck(1))
