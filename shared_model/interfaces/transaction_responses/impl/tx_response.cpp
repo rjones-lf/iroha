@@ -5,8 +5,6 @@
 
 #include "interfaces/transaction_responses/tx_response_variant.hpp"
 
-#include <boost/variant.hpp>
-
 #include "interfaces/transaction.hpp"
 #include "interfaces/transaction_responses/committed_tx_response.hpp"
 #include "interfaces/transaction_responses/enough_signatures_collected_response.hpp"
