@@ -29,11 +29,12 @@ namespace integration_framework {
   IrohaInstance::IrohaInstance(bool mst_support,
                                const std::string &block_store_path,
                                size_t torii_port,
+                               size_t internal_port,
                                const boost::optional<std::string> &dbname)
       : block_store_dir_(block_store_path),
         pg_conn_(getPostgreCredsOrDefault(dbname)),
         torii_port_(torii_port),
-        internal_port_(50541),
+        internal_port_(internal_port),
         // proposal_timeout results in non-deterministic behavior due
         // to thread scheduling and network
         proposal_delay_(1h),

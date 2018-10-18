@@ -49,6 +49,7 @@ namespace integration_framework {
     IrohaInstance(bool mst_support,
                   const std::string &block_store_path,
                   size_t torii_port,
+                  size_t internal_port,
                   const boost::optional<std::string> &dbname = boost::none);
 
     void makeGenesis(const shared_model::interface::Block &block);

@@ -317,9 +317,11 @@ namespace integration_framework {
     tbb::concurrent_queue<ProposalType> proposal_queue_;
     tbb::concurrent_queue<ProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
-
     std::map<std::string, tbb::concurrent_queue<TxResponseType>>
         responses_queues_;
+
+    size_t torii_port_;
+    size_t internal_port_;
     std::shared_ptr<IrohaInstance> iroha_instance_;
     torii::CommandSyncClient command_client_;
     torii_utils::QuerySyncClient query_client_;

@@ -51,7 +51,14 @@ using AlwaysValidTransactionValidator =
         shared_model::interface::Transaction>;
 
 static std::string kLocalHost = "127.0.0.1";
-static size_t kToriiPort = 11501;
+static constexpr size_t kDefaultToriiPort = 11501;
+static constexpr size_t kDefaultInternalPort = 50541;
+
+template <size_t default_port>
+static size_t getNextPort() {
+  static size_t increment = 0;
+  return default_port + (++increment);
+}
 
 namespace integration_framework {
 
@@ -71,10 +78,12 @@ namespace integration_framework {
       milliseconds proposal_waiting,
       milliseconds block_waiting,
       milliseconds tx_response_waiting)
-      : iroha_instance_(std::make_shared<IrohaInstance>(
-            mst_support, block_store_path, kToriiPort, dbname)),
-        command_client_("127.0.0.1", kToriiPort),
-        query_client_("127.0.0.1", kToriiPort),
+      : torii_port_(getNextPort<kDefaultToriiPort>()),
+        internal_port_(getNextPort<kDefaultInternalPort>()),
+        iroha_instance_(std::make_shared<IrohaInstance>(
+            mst_support, block_store_path, torii_port_, internal_port_, dbname)),
+        command_client_("127.0.0.1", torii_port_),
+        query_client_("127.0.0.1", torii_port_),
         proposal_waiting(proposal_waiting),
         block_waiting(block_waiting),
         tx_response_waiting(tx_response_waiting),
