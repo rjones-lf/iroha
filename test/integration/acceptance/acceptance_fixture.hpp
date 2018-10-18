@@ -19,47 +19,29 @@
 
 namespace {
   template <typename Type>
-  void __checkFunction(
+  void checkTransactionResponse(
       const shared_model::interface::TransactionResponse &resp) {
     ASSERT_NO_THROW(boost::get<const Type &>(resp.get()));
   }
 
-#define CHECK_ENOUGH_SIGNATURES                                            \
-  [](const shared_model::interface::TransactionResponse &resp) {           \
-    SCOPED_TRACE("CHECK_ENOUGH_SIGNATURES");                               \
-    __checkFunction<                                                       \
-        shared_model::interface::EnoughSignaturesCollectedResponse>(resp); \
+#define BASE_CHECK_RESPONSE(type)                                  \
+  [](const shared_model::interface::TransactionResponse &resp) {   \
+    SCOPED_TRACE(#type);                                           \
+    checkTransactionResponse<shared_model::interface::type>(resp); \
   }
 
-#define CHECK_STATELESS_INVALID                                                \
-  [](const shared_model::interface::TransactionResponse &resp) {               \
-    SCOPED_TRACE("CHECK_STATELESS_INVALID");                                   \
-    __checkFunction<shared_model::interface::StatelessFailedTxResponse>(resp); \
-  }
+#define CHECK_ENOUGH_SIGNATURES \
+  BASE_CHECK_RESPONSE(EnoughSignaturesCollectedResponse)
 
-#define CHECK_STATELESS_VALID                                                 \
-  [](const shared_model::interface::TransactionResponse &resp) {              \
-    SCOPED_TRACE("CHECK_STATELESS_VALID");                                    \
-    __checkFunction<shared_model::interface::StatelessValidTxResponse>(resp); \
-  }
+#define CHECK_STATELESS_INVALID BASE_CHECK_RESPONSE(StatelessFailedTxResponse)
 
-#define CHECK_STATEFUL_INVALID                                                \
-  [](const shared_model::interface::TransactionResponse &resp) {              \
-    SCOPED_TRACE("CHECK_STATEFUL_INVALID");                                   \
-    __checkFunction<shared_model::interface::StatefulFailedTxResponse>(resp); \
-  }
+#define CHECK_STATELESS_VALID BASE_CHECK_RESPONSE(StatelessValidTxResponse)
 
-#define CHECK_STATEFUL_VALID                                                 \
-  [](const shared_model::interface::TransactionResponse &resp) {             \
-    SCOPED_TRACE("CHECK_STATEFUL_VALID");                                    \
-    __checkFunction<shared_model::interface::StatefulValidTxResponse>(resp); \
-  }
+#define CHECK_STATEFUL_INVALID BASE_CHECK_RESPONSE(StatefulFailedTxResponse)
 
-#define CHECK_COMMITTED                                                  \
-  [](const shared_model::interface::TransactionResponse &resp) {         \
-    SCOPED_TRACE("CHECK_COMMITTED");                                     \
-    __checkFunction<shared_model::interface::CommittedTxResponse>(resp); \
-  }
+#define CHECK_STATEFUL_VALID BASE_CHECK_RESPONSE(StatefulValidTxResponse)
+
+#define CHECK_COMMITTED BASE_CHECK_RESPONSE(CommittedTxResponse)
 }  // namespace
 
 /**
