@@ -145,6 +145,7 @@ RUN set -e; \
 # install rxcpp
 RUN set -e; \
     git clone https://github.com/Reactive-Extensions/RxCpp /tmp/RxCpp; \
+    # this version is chosen, because it fixes 100% node overload [IR-1736] bug
     (cd /tmp/RxCpp ; git checkout a7d5856385f126e874db6010d9dbfd37290c61de); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
