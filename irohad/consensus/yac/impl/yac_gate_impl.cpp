@@ -81,10 +81,13 @@ namespace iroha {
 
       rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::onOutcome() {
         return hash_gate_->onOutcome().flat_map([this](auto message) {
-          return visit_in_place(
-              message,
-              [this](const CommitMessage &msg) { return handleCommit(msg); },
-              [this](const RejectMessage &msg) { return handleReject(msg); });
+          return visit_in_place(message,
+                                [this](const CommitMessage &msg) {
+                                  return this->handleCommit(msg);
+                                },
+                                [this](const RejectMessage &msg) {
+                                  return this->handleReject(msg);
+                                });
         });
       }
 
