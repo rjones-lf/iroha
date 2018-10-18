@@ -6,6 +6,7 @@
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 
 #include "common/visitor.hpp"
+#include "utils/variant_deserializer.hpp"
 
 using Variant =
     shared_model::proto::TransactionResponse::ProtoResponseVariantType;

@@ -7,7 +7,6 @@
 
 #include <boost/variant.hpp>
 
-#include "interfaces/base/model_primitive.hpp"
 #include "interfaces/transaction.hpp"
 #include "interfaces/transaction_responses/committed_tx_response.hpp"
 #include "interfaces/transaction_responses/enough_signatures_collected_response.hpp"

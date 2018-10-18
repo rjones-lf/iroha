@@ -8,7 +8,7 @@
 
 #include "interfaces/transaction_responses/tx_response.hpp"
 
-#include <boost/variant/variant_fwd.hpp>
+#include <boost/variant.hpp>
 
 namespace boost {
     extern template class variant<

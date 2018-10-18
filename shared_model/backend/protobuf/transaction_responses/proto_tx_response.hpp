@@ -11,7 +11,6 @@
 #include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
 #include "cryptography/hash.hpp"
 #include "utils/lazy_initializer.hpp"
-#include "utils/variant_deserializer.hpp"
 
 namespace shared_model {
   namespace proto {
