@@ -17,6 +17,8 @@
 
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 
+#include <thread>
+
 #include <gtest/gtest.h>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
@@ -45,4 +47,33 @@ TEST(ProtoTxResponse, TxResponseLoad) {
     ASSERT_EQ(model_response.transactionHash(),
               shared_model::crypto::Hash(hash));
   });
+}
+
+/**
+ * @given TransactionResponse that previously had lazy fields
+ * @when those lazy fields are simultaneously accessed
+ * @then there is no race condition and segfaults
+ */
+TEST(TxResponse, SafeToReadFromMultipleThreads) {
+  iroha::protocol::ToriiResponse response;
+  const std::string hash = "123";
+  response.set_tx_hash(hash);
+  response.set_tx_status(iroha::protocol::TxStatus::COMMITTED);
+  auto model_response = shared_model::proto::TransactionResponse(response);
+
+  const auto num_threads = 20;
+
+  auto multiple_access = [&model_response] {
+    // old good way to cause race condition on lazy fields
+    ASSERT_TRUE(model_response == model_response);
+  };
+
+  std::vector<std::thread> threads;
+  for (int i = 0; i < num_threads; ++i) {
+    threads.emplace_back(multiple_access);
+  }
+
+  for (auto &thread : threads) {
+    thread.join();
+  }
 }

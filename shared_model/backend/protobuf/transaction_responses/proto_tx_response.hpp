@@ -41,7 +41,26 @@ namespace shared_model {
 
       template <typename TxResponse>
       explicit TransactionResponse(TxResponse &&ref)
-          : CopyableProto(std::forward<TxResponse>(ref)) {}
+          : CopyableProto(std::forward<TxResponse>(ref)),
+            variant_([this] {
+              auto &&ar = *proto_;
+
+              unsigned which = ar.GetDescriptor()
+                                   ->FindFieldByName("tx_status")
+                                   ->enum_type()
+                                   ->FindValueByNumber(ar.tx_status())
+                                   ->index();
+              constexpr unsigned last =
+                  boost::mpl::size<ProtoResponseListType>::type::value - 1;
+
+              return shared_model::detail::variant_impl<ProtoResponseListType>::
+                  template load<shared_model::proto::TransactionResponse::
+                                    ProtoResponseVariantType>(
+                      std::forward<decltype(ar)>(ar),
+                      which > last ? last : which);
+            }()),
+            ivariant_(variant_),
+            hash_(proto_->tx_hash()) {}
 
       TransactionResponse(const TransactionResponse &r)
           : TransactionResponse(r.proto_) {}
@@ -50,14 +69,14 @@ namespace shared_model {
           : TransactionResponse(std::move(r.proto_)) {}
 
       const interface::types::HashType &transactionHash() const override {
-        return *hash_;
+        return hash_;
       }
 
       /**
        * @return attached interface tx response
        */
       const ResponseVariantType &get() const override {
-        return *ivariant_;
+        return ivariant_;
       }
 
       const ErrorMessageType &errorMessage() const override {
@@ -65,41 +84,17 @@ namespace shared_model {
       }
 
      private:
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
+      const ProtoResponseVariantType variant_;
 
-      /// lazy variant shortcut
-      using LazyVariantType = Lazy<ProtoResponseVariantType>;
-
-      // lazy
-      const LazyVariantType variant_{detail::makeLazyInitializer([this] {
-        auto &&ar = *proto_;
-
-        unsigned which = ar.GetDescriptor()
-                             ->FindFieldByName("tx_status")
-                             ->enum_type()
-                             ->FindValueByNumber(ar.tx_status())
-                             ->index();
-        constexpr unsigned last =
-            boost::mpl::size<ProtoResponseListType>::type::value - 1;
-
-        return shared_model::detail::variant_impl<ProtoResponseListType>::
-            template load<shared_model::proto::TransactionResponse::
-                              ProtoResponseVariantType>(
-                std::forward<decltype(ar)>(ar), which > last ? last : which);
-      })};
-
-      const Lazy<ResponseVariantType> ivariant_{detail::makeLazyInitializer(
-          [this] { return ResponseVariantType(*variant_); })};
+      const ResponseVariantType ivariant_;
 
       // stub hash
-      const Lazy<crypto::Hash> hash_{
-          [this] { return crypto::Hash(this->proto_->tx_hash()); }};
+      const crypto::Hash hash_;
 
       static constexpr int max_priority = std::numeric_limits<int>::max();
       int priority() const noexcept override {
         return iroha::visit_in_place(
-            *variant_,
+            variant_,
             // not received can be changed to any response
             [](const NotReceivedTxResponse &) { return 0; },
             // following types are sequential in pipeline
