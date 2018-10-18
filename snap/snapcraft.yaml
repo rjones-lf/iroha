@@ -97,7 +97,7 @@ parts:
     after: [cmake]
   rxcpp:
     source: https://github.com/Reactive-Extensions/RxCpp.git
-    source-commit: 1b2e0589f19cb34d8cd58803677701dcf2161876
+    source-commit: a7d5856385f126e874db6010d9dbfd37290c61de
     plugin: cmake
     after: [cmake]
   rapidjson:

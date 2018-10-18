@@ -5,7 +5,7 @@
 
 #include <memory>
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include "consensus/consensus_block_cache.hpp"
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
