@@ -119,7 +119,7 @@ TEST_F(SubtractAssetQuantity, NegativeAmount) {
       .skipBlock()
       .sendTxAwait(replenish(), [](auto &) {})
       .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, "-1.0")),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -136,7 +136,7 @@ TEST_F(SubtractAssetQuantity, ZeroAmount) {
       .skipBlock()
       .sendTxAwait(replenish(), [](auto &) {})
       .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, "0.0")),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**

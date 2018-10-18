@@ -9,6 +9,7 @@
 #include "module/irohad/torii/torii_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 
+#include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "module/shared_model/builders/protobuf/common_objects/proto_account_asset_builder.hpp"
@@ -50,17 +51,19 @@ class ToriiQueriesTest : public testing::Test {
     storage = std::make_shared<MockStorage>();
     pending_txs_storage =
         std::make_shared<iroha::MockPendingTransactionStorage>();
+    query_response_factory =
+        std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
 
     //----------- Query Service ----------
 
     EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
-    EXPECT_CALL(*storage, createQueryExecutor(_))
+    EXPECT_CALL(*storage, createQueryExecutor(_, _))
         .WillRepeatedly(Return(boost::make_optional(
             std::shared_ptr<QueryExecutor>(query_executor))));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage, storage, pending_txs_storage);
+        storage, storage, pending_txs_storage, query_response_factory);
 
     //----------- Server run ----------------
     runner->append(std::make_unique<torii::QueryService>(qpi))
@@ -87,6 +90,8 @@ class ToriiQueriesTest : public testing::Test {
   std::shared_ptr<MockQueryExecutor> query_executor;
   std::shared_ptr<MockStorage> storage;
   std::shared_ptr<iroha::MockPendingTransactionStorage> pending_txs_storage;
+  std::shared_ptr<shared_model::interface::QueryResponseFactory>
+      query_response_factory;
 
   const std::string ip = "127.0.0.1";
   int port;

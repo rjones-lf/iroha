@@ -135,7 +135,7 @@ TEST_F(CreateAccount, TooLongName) {
       .skipBlock()
       .sendTx(complete(baseTx().createAccount(
                   std::string(33, 'a'), kDomain, kNewUserKeypair.publicKey())),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -153,5 +153,5 @@ TEST_F(CreateAccount, EmptyName) {
       .skipBlock()
       .sendTx(complete(baseTx().createAccount(
                   empty_name, kDomain, kNewUserKeypair.publicKey())),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
