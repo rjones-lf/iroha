@@ -78,21 +78,25 @@ namespace iroha {
 
       const auto &block = commit_message.block;
 
+      auto commit = rxcpp::observable<>::just(block);
+      SynchronizationEvent result;
+
       if (commit_message.type == network::CommitType::kVoted) {
         log_->info("Applying prepared commit {}", block->hash().hex());
         // TODO: add mutable storage call and early return
+        storage->applyPrepared(*block);
+        mutable_factory_->commit(std::move(storage));
+        notifier_.get_subscriber().on_next(
+            SynchronizationEvent{commit, SynchronizationOutcomeType::kCommit});
+        return;
       }
-
-      auto commit = rxcpp::observable<>::just(block);
-      SynchronizationEvent result;
 
       if (validator_->validateChain(commit, *storage)) {
         mutable_factory_->commit(std::move(storage));
 
         result = {commit, SynchronizationOutcomeType::kCommit};
       } else {
-        result = downloadMissingBlocks(std::move(block),
-                                       std::move(storage));
+        result = downloadMissingBlocks(std::move(block), std::move(storage));
       }
 
       notifier_.get_subscriber().on_next(result);

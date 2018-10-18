@@ -221,6 +221,7 @@ namespace iroha {
                         PeerQuery &,
                         const shared_model::interface::types::HashType &)>));
       MOCK_METHOD1(apply, bool(const shared_model::interface::Block &));
+      MOCK_METHOD1(applyPrepared, bool(const shared_model::interface::Block &));
     };
 
     /**

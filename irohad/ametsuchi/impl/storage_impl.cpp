@@ -56,7 +56,7 @@ namespace iroha {
           converter_(std::move(converter)),
           log_(logger::log("StorageImpl")),
           pool_size_(pool_size),
-          prepared_blocks_enabled_(enable_prepared_blocks){
+          prepared_blocks_enabled_(enable_prepared_blocks) {
       soci::session sql(*connection_);
       sql << init_;
       prepareStatements(*connection_, pool_size_);
@@ -71,8 +71,7 @@ namespace iroha {
       auto sql = std::make_unique<soci::session>(*connection_);
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
-          std::make_unique<TemporaryWsvImpl>(
-              std::move(sql), factory_));
+          std::make_unique<TemporaryWsvImpl>(std::move(sql), factory_));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
@@ -97,7 +96,8 @@ namespace iroha {
                     return shared_model::interface::types::HashType("");
                   }),
               std::move(sql),
-              factory_));
+              factory_,
+              prepared_blocks_enabled_));
     }
 
     boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery()
@@ -204,8 +204,7 @@ namespace iroha {
         log_->info("Prepared block {}", block_id);
         return true;
       } catch (const std::exception &e) {
-        log_->error(
-            "Failed to prepare block {}: {}", block_id, e.what());
+        log_->error("Failed to prepare block {}: {}", block_id, e.what());
         return false;
       }
     }

@@ -27,13 +27,16 @@ namespace iroha {
           shared_model::interface::types::HashType top_hash,
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory);
+              factory,
+          bool enable_prepared_blocks);
 
       bool apply(const shared_model::interface::Block &block) override;
 
       bool apply(rxcpp::observable<
                      std::shared_ptr<shared_model::interface::Block>> blocks,
                  MutableStoragePredicate predicate) override;
+
+      bool applyPrepared(const shared_model::interface::Block &block) override;
 
       ~MutableStorageImpl() override;
 
@@ -67,6 +70,8 @@ namespace iroha {
       bool committed;
 
       logger::Logger log_;
+
+      bool prepared_blocks_enabled_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha
