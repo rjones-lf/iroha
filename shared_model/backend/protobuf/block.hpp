@@ -20,26 +20,20 @@
 
 #include "interfaces/iroha_internal/block.hpp"
 
-#include "backend/protobuf/block_impl.hpp"
-#include "backend/protobuf/common_objects/signature.hpp"
-#include "backend/protobuf/transaction.hpp"
-#include "backend/protobuf/util.hpp"
 #include "block.pb.h"
-#include "common_objects/abstract_noncopyable_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
-    class Block final : public AbstractNonCopyableProto<interface::Block,
-                                                        iroha::protocol::Block,
-                                                        Block,
-                                                        BlockImpl> {
+    class Block final : public interface::Block {
      public:
-      using AbstractNonCopyableProto::AbstractNonCopyableProto;
+      using TransportType = iroha::protocol::Block;
 
       Block(Block &&o) noexcept;
       Block &operator=(Block &&o) noexcept;
+      Block(iroha::protocol::Block ref);
+      Block(const Block &o) = delete;
+      Block &operator=(const Block &o) = delete;
 
       interface::types::TransactionsCollectionType transactions()
           const override;
@@ -60,6 +54,16 @@ namespace shared_model {
       interface::types::TransactionsNumberType txsNumber() const override;
 
       const interface::types::BlobType &payload() const override;
+
+      typename interface::Block::ModelType *clone() const override;
+
+      const iroha::protocol::Block &getTransport() const;
+
+      ~Block();
+
+     private:
+      struct Impl;
+      std::unique_ptr<Impl> impl;
     };
   }  // namespace proto
 }  // namespace shared_model
