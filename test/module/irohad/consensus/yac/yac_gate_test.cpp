@@ -316,7 +316,7 @@ TEST_F(YacGateTest, ProperCommitTypeWhenSameCommit) {
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
   gate_wrapper.subscribe([this](auto commit) {
     EXPECT_EQ(commit.block, expected_block);
-    ASSERT_EQ(commit.type, CommitType::kVoted);
+    ASSERT_EQ(commit.type, PeerVotedFor::kThisBlock);
   });
 
   ASSERT_TRUE(gate_wrapper.validate());
@@ -381,7 +381,7 @@ TEST_F(YacGateTest, ProperCommitTypeWhenDifferentBlock) {
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
   gate_wrapper.subscribe([actual_block, &yac_emitted_block](auto commit) {
     EXPECT_EQ(commit.block, actual_block);
-    ASSERT_EQ(commit.type, CommitType::kOther);
+    ASSERT_EQ(commit.type, PeerVotedFor::kOtherBlock);
     // memorize the block came from the consensus for future
     yac_emitted_block = commit.block;
   });
