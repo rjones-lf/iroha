@@ -30,7 +30,9 @@ namespace iroha {
       /**
        * Represents storage modification. Proposal round increment
        */
-      using BlockEvent = std::shared_ptr<shared_model::interface::Block>;
+      struct BlockEvent {
+        shared_model::interface::types::HeightType height;
+      };
 
       /**
        * Represents no storage modification. Reject round increment

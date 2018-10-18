@@ -35,9 +35,9 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         visit_in_place(
             event,
             [this, &batch_parser, &batch_factory](
-                const BlockEvent &block_event) {
+                const BlockEvent &block) {
               // block committed, increment block round
-              current_round_ = {block_event->height(), 1};
+              current_round_ = {block.height, 1};
 
               auto batch_transactions =
                   batch_parser.parseBatches(block_event->transactions());
