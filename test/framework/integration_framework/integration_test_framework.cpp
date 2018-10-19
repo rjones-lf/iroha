@@ -63,6 +63,10 @@ namespace integration_framework {
     if (deleter_) {
       deleter_(*this);
     }
+    // the code below should be executed anyway in order to prevent app hang
+    if (iroha_instance_ and iroha_instance_->getIrohaInstance()) {
+      iroha_instance_->getIrohaInstance()->terminate();
+    }
   }
 
   shared_model::proto::Block IntegrationTestFramework::defaultBlock(

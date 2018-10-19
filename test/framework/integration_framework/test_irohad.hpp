@@ -70,6 +70,12 @@ namespace integration_framework {
     auto getStatusBus() {
       return status_bus_;
     }
+
+    void terminate() {
+      if (internal_server) {
+        internal_server->shutdown();
+      }
+    }
   };
 }  // namespace integration_framework
 
