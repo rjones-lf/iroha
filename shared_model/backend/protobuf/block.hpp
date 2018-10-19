@@ -31,7 +31,7 @@ namespace shared_model {
 
       Block(Block &&o) noexcept;
       Block &operator=(Block &&o) noexcept;
-      Block(iroha::protocol::Block ref);
+      Block(TransportType ref);
       Block(const Block &o) = delete;
       Block &operator=(const Block &o) = delete;
 
@@ -63,7 +63,7 @@ namespace shared_model {
 
      private:
       struct Impl;
-      std::unique_ptr<Impl> impl;
+      std::unique_ptr<Impl> impl_;
     };
   }  // namespace proto
 }  // namespace shared_model

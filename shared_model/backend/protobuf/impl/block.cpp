@@ -16,81 +16,12 @@
 namespace shared_model {
   namespace proto {
 
-    struct Block::Impl : public NonCopyableProto<interface::Block,
-                                                 iroha::protocol::Block,
-                                                 Block::Impl> {
-     public:
-      using NonCopyableProto::NonCopyableProto;
+    struct Block::Impl {
+      Impl(TransportType ref) : proto_(std::move(ref)) {}
+      Impl(Impl &&o) noexcept = delete;
+      Impl &operator=(Impl &&o) noexcept = delete;
 
-      Impl(Impl &&o) noexcept : NonCopyableProto(std::move(o.proto_)) {}
-      Impl &operator=(Impl &&o) noexcept {
-        proto_ = std::move(o.proto_);
-        payload_ = *proto_.mutable_payload();
-        return *this;
-      }
-
-      interface::types::TransactionsCollectionType transactions()
-          const override {
-        return transactions_;
-      }
-
-      interface::types::HeightType height() const override {
-        return payload_.height();
-      }
-
-      const interface::types::HashType &prevHash() const override {
-        return prev_hash_;
-      }
-
-      const interface::types::BlobType &blob() const override {
-        return blob_;
-      }
-
-      interface::types::SignatureRangeType signatures() const override {
-        return signatures_;
-      }
-
-      bool addSignature(const crypto::Signed &signed_blob,
-                        const crypto::PublicKey &public_key) override {
-        // if already has such signature
-        if (std::find_if(signatures_.begin(),
-                         signatures_.end(),
-                         [&public_key](const auto &signature) {
-                           return signature.publicKey() == public_key;
-                         })
-            != signatures_.end()) {
-          return false;
-        }
-
-        auto sig = proto_.add_signatures();
-        sig->set_signature(crypto::toBinaryString(signed_blob));
-        sig->set_public_key(crypto::toBinaryString(public_key));
-
-        signatures_ = [this] {
-          auto signatures = proto_.signatures()
-              | boost::adaptors::transformed([](const auto &x) {
-                              return proto::Signature(x);
-                            });
-          return SignatureSetType<proto::Signature>(signatures.begin(),
-                                                    signatures.end());
-        }();
-
-        return true;
-      }
-
-      interface::types::TimestampType createdTime() const override {
-        return payload_.created_time();
-      }
-
-      interface::types::TransactionsNumberType txsNumber() const override {
-        return payload_.tx_number();
-      }
-
-      const interface::types::BlobType &payload() const override {
-        return payload_blob_;
-      }
-
-     private:
+      TransportType proto_;
       iroha::protocol::Block::Payload &payload_{*proto_.mutable_payload()};
 
       std::vector<proto::Transaction> transactions_{[this] {
@@ -118,61 +49,79 @@ namespace shared_model {
           [this] { return makeBlob(payload_); }()};
     };
 
-    Block::Block(Block &&o) noexcept
-        : Block(std::move(o.impl->getTransport())) {}
+    Block::Block(Block &&o) noexcept = default;
 
-    Block &Block::operator=(Block &&o) noexcept {
-      impl = std::move(o.impl);
-      return *this;
-    }
+    Block &Block::operator=(Block &&o) noexcept = default;
 
-    Block::Block(iroha::protocol::Block ref) {
-      impl = std::make_unique<Block::Impl>(std::move(ref));
+    Block::Block(TransportType ref) {
+        impl_ = std::make_unique<Block::Impl>(std::move(ref));
     }
 
     interface::types::TransactionsCollectionType Block::transactions() const {
-      return impl->transactions();
+      return impl_->transactions_;
     }
 
     interface::types::HeightType Block::height() const {
-      return impl->height();
+      return impl_->payload_.height();
     }
 
     const interface::types::HashType &Block::prevHash() const {
-      return impl->prevHash();
+      return impl_->prev_hash_;
     }
 
     const interface::types::BlobType &Block::blob() const {
-      return impl->blob();
+      return impl_->blob_;
     }
 
     interface::types::SignatureRangeType Block::signatures() const {
-      return impl->signatures();
+      return impl_->signatures_;
     }
 
     bool Block::addSignature(const crypto::Signed &signed_blob,
                              const crypto::PublicKey &public_key) {
-      return impl->addSignature(signed_blob, public_key);
+      // if already has such signature
+      if (std::find_if(impl_->signatures_.begin(),
+                       impl_->signatures_.end(),
+                       [&public_key](const auto &signature) {
+                         return signature.publicKey() == public_key;
+                       })
+          != impl_->signatures_.end()) {
+        return false;
+      }
+
+      auto sig = impl_->proto_.add_signatures();
+      sig->set_signature(crypto::toBinaryString(signed_blob));
+      sig->set_public_key(crypto::toBinaryString(public_key));
+
+      impl_->signatures_ = [this] {
+        auto signatures = impl_->proto_.signatures()
+            | boost::adaptors::transformed([](const auto &x) {
+                            return proto::Signature(x);
+                          });
+        return SignatureSetType<proto::Signature>(signatures.begin(),
+                                                  signatures.end());
+      }();
+      return true;
     }
 
     interface::types::TimestampType Block::createdTime() const {
-      return impl->createdTime();
+      return impl_->payload_.created_time();
     }
 
     interface::types::TransactionsNumberType Block::txsNumber() const {
-      return impl->txsNumber();
+        return impl_->payload_.tx_number();
     }
 
     const interface::types::BlobType &Block::payload() const {
-      return impl->payload();
+      return impl_->payload_blob_;
     }
 
     const iroha::protocol::Block &Block::getTransport() const {
-      return impl->getTransport();
+      return impl_->proto_;
     }
 
     Block::ModelType *Block::clone() const {
-      return new Block(std::move(impl->getTransport()));
+      return new Block(impl_->proto_);
     }
 
     Block::~Block() = default;
