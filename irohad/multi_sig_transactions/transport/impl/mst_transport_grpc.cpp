@@ -129,13 +129,7 @@ void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
     }
   }
 
-  // TODO: 15.09.2018 @x3medima17: IR-1709 replace synchronous SendState with
-  // AsycnSendState,
-  ::grpc::ClientContext context;
-  ::google::protobuf::Empty empty;
-  client->SendState(&context, protoState, &empty);
-
-  //  async_call_->Call([&](auto context, auto cq) {
-  //    return client->AsyncSendState(context, protoState, cq);
-  //  });
+  async_call_->Call([&](auto context, auto cq) {
+    return client->AsyncSendState(context, protoState, cq);
+  });
 }

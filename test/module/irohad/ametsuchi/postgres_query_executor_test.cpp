@@ -8,6 +8,7 @@
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "backend/protobuf/proto_query_response_factory.hpp"
 #include "framework/result_fixture.hpp"
 #include "framework/specified_visitor.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
@@ -55,6 +56,8 @@ namespace iroha {
                       .quorum(1)
                       .jsonData(R"({"id@andomain": {"key": "value"}})")
                       .build());
+        query_response_factory =
+            std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
       }
 
       void SetUp() override {
@@ -98,10 +101,11 @@ namespace iroha {
       }
 
       auto executeQuery(shared_model::interface::Query &query) {
-        return query_executor->createQueryExecutor(pending_txs_storage) |
-            [&query](const auto &executor) {
-              return executor->validateAndExecute(query);
-            };
+        return query_executor->createQueryExecutor(pending_txs_storage,
+                                                   query_response_factory)
+            | [&query](const auto &executor) {
+                return executor->validateAndExecute(query);
+              };
       }
 
       CommandResult execute(
@@ -174,6 +178,9 @@ namespace iroha {
       std::shared_ptr<MockPendingTransactionStorage> pending_txs_storage;
 
       std::unique_ptr<KeyValueStorage> block_store;
+
+      std::shared_ptr<shared_model::interface::QueryResponseFactory>
+          query_response_factory;
     };
 
     class BlocksQueryExecutorTest : public QueryExecutorTest {};
@@ -183,20 +190,22 @@ namespace iroha {
       auto blocks_query = TestBlocksQueryBuilder()
                               .creatorAccountId(account->accountId())
                               .build();
-      ASSERT_TRUE(query_executor->createQueryExecutor(pending_txs_storage) |
-                  [&blocks_query](const auto &executor) {
-                    return executor->validate(blocks_query);
-                  });
+      ASSERT_TRUE(query_executor->createQueryExecutor(pending_txs_storage,
+                                                      query_response_factory)
+                  | [&blocks_query](const auto &executor) {
+                      return executor->validate(blocks_query);
+                    });
     }
 
     TEST_F(BlocksQueryExecutorTest, BlocksQueryExecutorTestInvalid) {
       auto blocks_query = TestBlocksQueryBuilder()
                               .creatorAccountId(account->accountId())
                               .build();
-      ASSERT_FALSE(query_executor->createQueryExecutor(pending_txs_storage) |
-                   [&blocks_query](const auto &executor) {
-                     return executor->validate(blocks_query);
-                   });
+      ASSERT_FALSE(query_executor->createQueryExecutor(pending_txs_storage,
+                                                       query_response_factory)
+                   | [&blocks_query](const auto &executor) {
+                       return executor->validate(blocks_query);
+                     });
     }
 
     class GetAccountExecutorTest : public QueryExecutorTest {
@@ -837,8 +846,7 @@ namespace iroha {
                 shared_model::interface::AccountDetailResponse>(),
             result->get());
 
-        ASSERT_EQ(cast_resp.detail(),
-                  R"({"id@domain" : {"key" : "value"}})");
+        ASSERT_EQ(cast_resp.detail(), R"({"id@domain" : {"key" : "value"}})");
       });
     }
 
@@ -1137,7 +1145,6 @@ namespace iroha {
                          .creatorAccountId(account->accountId())
                          .createRole("user3", {})
                          .build()
-
                     }))
                 .height(2)
                 .prevHash(block1.hash())

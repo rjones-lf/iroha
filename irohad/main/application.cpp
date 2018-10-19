@@ -10,6 +10,7 @@
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
+#include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
@@ -189,6 +190,10 @@ void Irohad::initFactories() {
       std::make_shared<shared_model::proto::ProtoTransportFactory<
           shared_model::interface::Transaction,
           shared_model::proto::Transaction>>(std::move(transaction_validator));
+
+  query_response_factory_ =
+      std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
+
   log_->info("[Init] => factories");
 }
 
@@ -363,7 +368,7 @@ void Irohad::initTransactionCommandService() {
  */
 void Irohad::initQueryService() {
   auto query_processor = std::make_shared<QueryProcessorImpl>(
-      storage, storage, pending_txs_storage_);
+      storage, storage, pending_txs_storage_, query_response_factory_);
 
   query_service = std::make_shared<::torii::QueryService>(query_processor);
 

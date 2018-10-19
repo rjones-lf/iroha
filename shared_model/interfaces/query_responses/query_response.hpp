@@ -18,21 +18,23 @@
 #ifndef IROHA_SHARED_MODEL_QUERY_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_QUERY_RESPONSE_HPP
 
-#include <boost/variant.hpp>
+#include <boost/variant/variant_fwd.hpp>
 
 #include "interfaces/base/model_primitive.hpp"
-#include "interfaces/query_responses/account_asset_response.hpp"
-#include "interfaces/query_responses/account_detail_response.hpp"
-#include "interfaces/query_responses/account_response.hpp"
-#include "interfaces/query_responses/asset_response.hpp"
-#include "interfaces/query_responses/error_query_response.hpp"
-#include "interfaces/query_responses/role_permissions.hpp"
-#include "interfaces/query_responses/roles_response.hpp"
-#include "interfaces/query_responses/signatories_response.hpp"
-#include "interfaces/query_responses/transactions_response.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
+
+    class AccountAssetResponse;
+    class AccountDetailResponse;
+    class AccountResponse;
+    class ErrorQueryResponse;
+    class SignatoriesResponse;
+    class TransactionsResponse;
+    class AssetResponse;
+    class RolesResponse;
+    class RolePermissionsResponse;
     /**
      * Class QueryResponse(qr) provides container with concrete query responses
      * available in the system.
@@ -55,9 +57,6 @@ namespace shared_model {
                                          AssetResponse,
                                          RolesResponse,
                                          RolePermissionsResponse>;
-
-      /// Type of all available query responses
-      using QueryResponseListType = QueryResponseVariantType::types;
 
       /**
        * @return reference to const variant with concrete qr

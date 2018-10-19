@@ -201,7 +201,7 @@ TEST_F(SetAccountDetail, EmptyKey) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx(kUserId, kEmptyKey, kValue)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -237,5 +237,5 @@ TEST_F(SetAccountDetail, HugeKeyValue) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx(kUserId, kHugeKey, kHugeValue)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }

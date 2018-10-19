@@ -18,7 +18,7 @@
 #ifndef IROHA_BLOCK_CREATOR_HPP
 #define IROHA_BLOCK_CREATOR_HPP
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 
 namespace shared_model {
   namespace interface {
