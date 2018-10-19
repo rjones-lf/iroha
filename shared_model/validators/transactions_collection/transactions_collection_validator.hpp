@@ -17,7 +17,7 @@ namespace shared_model {
      * Validator of transaction's collection, this is not fair implementation
      * now, it always returns empty answer
      */
-    template <typename TransactionValidator>
+    template <typename TransactionValidator, bool CollectionCanBeEmpty = false>
     class TransactionsCollectionValidator {
      protected:
       TransactionValidator transaction_validator_;

@@ -8,7 +8,7 @@
 
 #include <functional>
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
