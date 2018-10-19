@@ -47,7 +47,7 @@ target_link_libraries(container_validator_test
     shared_model_stateless_validation
     )
 
-add_test(block_validator_test
+addtest(block_validator_test
     block_validator_test.cpp
     )
 target_link_libraries(block_validator_test

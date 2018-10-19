@@ -7,31 +7,62 @@
 
 #include <gtest/gtest.h>
 
-#include "validators/default_validator.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "validators/default_validator.hpp"
 
-class BlockValidatorTest : public ValidatorTest {
-  auto getBaseBlockBuilder() const {
-    auto tx = TestUnsignedTransactionBuilder()
-        .creatorAccountId("account@domain")
+using namespace shared_model::crypto;
+using namespace shared_model::validation;
+
+class BlockValidatorTest : public ValidatorsTest {
+ public:
+  /**
+   * Create a simple transaction
+   * @param valid - transaction will be valid, if this flag is set to true,
+   * invalid otherwise
+   * @return created transaction
+   */
+  auto generateTx(bool valid) {
+    std::string creator;
+    if (valid) {
+      creator = "account@domain";
+    } else {
+      creator = "account_sobaka_domain";
+    }
+    return TestUnsignedTransactionBuilder()
+        .creatorAccountId(creator)
         .setAccountQuorum("account@domain", 1)
         .createdTime(iroha::time::now())
         .quorum(1)
         .build()
-        .signAndAddSignature(key)
+        .signAndAddSignature(kDefaultKey)
         .finish();
+  }
+
+  /**
+   * Create a block
+   * @param txs to be placed inside
+   * @return created block
+   */
+  auto generateBlock(const std::vector<shared_model::proto::Transaction> &txs) {
     return shared_model::proto::TemplateBlockBuilder<
-        (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
-        shared_model::validation::AlwaysValidValidator,
-        shared_model::proto::UnsignedWrapper<
-            shared_model::proto::Block>>()
+               (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
+               shared_model::validation::AlwaysValidValidator,
+               shared_model::proto::UnsignedWrapper<
+                   shared_model::proto::Block>>()
         .height(1)
         .prevHash(kPrevHash)
         .createdTime(iroha::time::now())
-        .transactions(std::vector<decltype(tx)>{tx});
+        .transactions(txs)
+        .build()
+        .signAndAddSignature(kDefaultKey)
+        .finish();
+  }
 
-  shared_model::validation::DefaultUnsignedBlockValidator validator_;
+  DefaultUnsignedBlockValidator validator_;
+  const Hash kPrevHash =
+      Hash(std::string(DefaultCryptoAlgorithmType::kHashLength, '0'));
+  const Keypair kDefaultKey = DefaultCryptoAlgorithmType::generateKeypair();
 };
 
 /**
@@ -40,7 +71,12 @@ class BlockValidatorTest : public ValidatorTest {
  * @then result is OK
  */
 TEST_F(BlockValidatorTest, ValidBlock) {
+  auto valid_tx = generateTx(true);
+  auto valid_block =
+      generateBlock(std::vector<decltype(valid_tx)>{std::move(valid_tx)});
 
+  auto validation_result = validator_.validate(valid_block);
+  ASSERT_FALSE(validation_result.hasErrors());
 }
 
 /**
@@ -49,7 +85,11 @@ TEST_F(BlockValidatorTest, ValidBlock) {
  * @then result is OK
  */
 TEST_F(BlockValidatorTest, EmptyBlock) {
+  auto empty_block =
+      generateBlock(std::vector<shared_model::proto::Transaction>{});
 
+  auto validation_result = validator_.validate(empty_block);
+  ASSERT_FALSE(validation_result.hasErrors());
 }
 
 /**
@@ -58,5 +98,10 @@ TEST_F(BlockValidatorTest, EmptyBlock) {
  * @then error appears after validation
  */
 TEST_F(BlockValidatorTest, InvalidBlock) {
+  auto invalid_tx = generateTx(false);
+  auto invalid_block =
+      generateBlock(std::vector<decltype(invalid_tx)>{invalid_tx});
 
+  auto validation_result = validator_.validate(invalid_block);
+  ASSERT_TRUE(validation_result.hasErrors());
 }
