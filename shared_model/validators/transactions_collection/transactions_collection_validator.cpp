@@ -37,10 +37,11 @@ namespace shared_model {
       ReasonsGroupType reason;
       reason.first = "Transaction list";
 
-      if (boost::empty(transactions)) {
-        if (CollectionCanBeEmpty) {
-          return res;
-        }
+      auto tx_collection_empty = boost::empty(transactions);
+      if (tx_collection_empty and CollectionCanBeEmpty) {
+        return res;
+      }
+      if (tx_collection_empty) {
         reason.second.emplace_back("Transaction sequence can not be empty");
         res.addReason(std::move(reason));
         return res;
