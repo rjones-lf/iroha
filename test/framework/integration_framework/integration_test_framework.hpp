@@ -91,8 +91,8 @@ namespace integration_framework {
      * @param key - signing key
      * @return signed genesis block
      */
-    static shared_model::proto::Block defaultBlock(
-        const shared_model::crypto::Keypair &key);
+    shared_model::proto::Block defaultBlock(
+        const shared_model::crypto::Keypair &key) const;
 
     /**
      * Initialize Iroha instance with default genesis block and provided signing

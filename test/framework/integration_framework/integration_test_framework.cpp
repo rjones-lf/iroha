@@ -102,7 +102,7 @@ namespace integration_framework {
   }
 
   shared_model::proto::Block IntegrationTestFramework::defaultBlock(
-      const shared_model::crypto::Keypair &key) {
+      const shared_model::crypto::Keypair &key) const {
     shared_model::interface::RolePermissionSet all_perms{};
     for (size_t i = 0; i < all_perms.size(); ++i) {
       auto perm = static_cast<shared_model::interface::permissions::Role>(i);
@@ -112,7 +112,8 @@ namespace integration_framework {
         shared_model::proto::TransactionBuilder()
             .creatorAccountId(kAdminId)
             .createdTime(iroha::time::now())
-            .addPeer("0.0.0.0:50541", key.publicKey())
+            .addPeer(kLocalHost + ":" + std::to_string(internal_port_),
+                     key.publicKey())
             .createRole(kDefaultRole, all_perms)
             .createDomain(kDefaultDomain, kDefaultRole)
             .createAccount(kAdminName, kDefaultDomain, key.publicKey())
