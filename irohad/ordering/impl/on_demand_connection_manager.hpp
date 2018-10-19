@@ -53,8 +53,7 @@ namespace iroha {
           CurrentPeers initial_peers,
           rxcpp::observable<CurrentPeers> peers);
 
-      void onBatches(consensus::Round round,
-                     CollectionType transactions) override;
+      void onBatches(consensus::Round round, CollectionType batches) override;
 
       boost::optional<ProposalType> onRequestProposal(
           consensus::Round round) override;

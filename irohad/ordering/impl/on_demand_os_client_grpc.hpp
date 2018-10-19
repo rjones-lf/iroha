@@ -34,8 +34,7 @@ namespace iroha {
             std::function<TimepointType()> time_provider,
             std::chrono::milliseconds proposal_request_timeout);
 
-        void onBatches(consensus::Round round,
-                       CollectionType transactions) override;
+        void onBatches(consensus::Round round, CollectionType batches) override;
 
         boost::optional<ProposalType> onRequestProposal(
             consensus::Round round) override;

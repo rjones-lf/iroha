@@ -26,7 +26,7 @@ OnDemandConnectionManager::OnDemandConnectionManager(
 }
 
 void OnDemandConnectionManager::onBatches(consensus::Round round,
-                                          CollectionType transactions) {
+                                          CollectionType batches) {
   // shared lock
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
