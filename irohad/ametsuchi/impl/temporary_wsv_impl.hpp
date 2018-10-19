@@ -46,6 +46,10 @@ namespace iroha {
       ~TemporaryWsvImpl() override;
 
      private:
+      /**
+       * Verifies whether transaction has at least quorum signatures and they
+       * are a subset of creator account signatories
+       */
       expected::Result<void, validation::CommandError> validateSignatures(
           const shared_model::interface::Transaction &transaction);
 

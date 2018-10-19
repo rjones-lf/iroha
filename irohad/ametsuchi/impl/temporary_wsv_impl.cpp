@@ -34,7 +34,7 @@ namespace iroha {
           keys_range.front(),
           [](auto acc, const auto &val) { return acc + "'), ('" + val; });
       // not using bool since it is not supported by SOCI
-      boost::optional<uint32_t> signatories_valid;
+      boost::optional<uint8_t> signatories_valid;
 
       boost::format query(R"(SELECT sum(count) = :signatures_count
                           AND sum(quorum) <= :signatures_count
@@ -55,6 +55,10 @@ namespace iroha {
             soci::use(transaction.creatorAccountId(), "account_id");
       } catch (const std::exception &e) {
         log_->error(e.what());
+        return expected::makeError(validation::CommandError{
+            "signatures validation",
+            (boost::format("database error: %s") % e.what()).str(),
+            false});
       }
 
       if (signatories_valid and *signatories_valid) {
@@ -62,9 +66,9 @@ namespace iroha {
       } else {
         return expected::makeError(validation::CommandError{
             "signatures validation",
-            "possible reasons: database error, no account, number of "
-            "signatures is less than account quorum, signatures are not a "
-            "subset of account signatories",
+            "possible reasons: no account, number of signatures is less than "
+            "account quorum, signatures are not a subset of account "
+            "signatories",
             false});
       }
     }
