@@ -52,7 +52,7 @@ void OnDemandConnectionManager::onBatches(consensus::Round round,
 
   for (auto &&pair : boost::combine(types, rounds)) {
     connections_.peers[boost::get<0>(pair)]->onBatches(boost::get<1>(pair),
-                                                       transactions);
+                                                       batches);
   }
 }
 
