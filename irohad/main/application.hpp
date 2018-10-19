@@ -68,7 +68,7 @@ class Irohad {
    * Constructor that initializes common iroha pipeline
    * @param block_store_dir - folder where blocks will be stored
    * @param pg_conn - initialization string for postgre
-   * @param listen_ip - ip address for opening ports
+   * @param listen_ip - ip address for opening ports (internal & torii)
    * @param torii_port - port for torii binding
    * @param internal_port - port for internal communication - ordering service,
    * consensus, and block loader

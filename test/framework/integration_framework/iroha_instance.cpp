@@ -28,11 +28,13 @@ namespace integration_framework {
 
   IrohaInstance::IrohaInstance(bool mst_support,
                                const std::string &block_store_path,
+                               const std::string &listen_ip,
                                size_t torii_port,
                                size_t internal_port,
                                const boost::optional<std::string> &dbname)
       : block_store_dir_(block_store_path),
         pg_conn_(getPostgreCredsOrDefault(dbname)),
+        listen_ip_(listen_ip),
         torii_port_(torii_port),
         internal_port_(internal_port),
         // proposal_timeout results in non-deterministic behavior due
@@ -67,6 +69,7 @@ namespace integration_framework {
       const shared_model::crypto::Keypair &key_pair, size_t max_proposal_size) {
     instance_ = std::make_shared<TestIrohad>(block_store_dir_,
                                              pg_conn_,
+                                             listen_ip_,
                                              torii_port_,
                                              internal_port_,
                                              max_proposal_size,

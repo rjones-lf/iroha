@@ -30,6 +30,7 @@ namespace integration_framework {
     TestIrohad(
         const std::string &block_store_dir,
         const std::string &pg_conn,
+        const std::string &listen_ip,
         size_t torii_port,
         size_t internal_port,
         size_t max_proposal_size,
@@ -41,7 +42,7 @@ namespace integration_framework {
         boost::optional<uint32_t> mst_gossip_amount_per_once)
         : Irohad(block_store_dir,
                  pg_conn,
-                 "127.0.0.1",
+                 listen_ip,
                  torii_port,
                  internal_port,
                  max_proposal_size,

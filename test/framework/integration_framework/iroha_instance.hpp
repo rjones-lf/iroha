@@ -43,11 +43,14 @@ namespace integration_framework {
     /**
      * @param mst_support enables multisignature tx support
      * @param block_store_path
+     * @param listen_ip - ip address for opening ports (internal & torii)
      * @param torii_port - port to bind Torii service to
+     * @param internal_port - port for internal irohad communication
      * @param dbname is a name of postgres database
      */
     IrohaInstance(bool mst_support,
                   const std::string &block_store_path,
+                  const std::string &listen_ip,
                   size_t torii_port,
                   size_t internal_port,
                   const boost::optional<std::string> &dbname = boost::none);
@@ -73,6 +76,7 @@ namespace integration_framework {
     // config area
     const std::string block_store_dir_;
     const std::string pg_conn_;
+    const std::string listen_ip_;
     const size_t torii_port_;
     const size_t internal_port_;
     const std::chrono::milliseconds proposal_delay_;

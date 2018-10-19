@@ -80,8 +80,12 @@ namespace integration_framework {
       milliseconds tx_response_waiting)
       : torii_port_(getNextPort<kDefaultToriiPort>()),
         internal_port_(getNextPort<kDefaultInternalPort>()),
-        iroha_instance_(std::make_shared<IrohaInstance>(
-            mst_support, block_store_path, torii_port_, internal_port_, dbname)),
+        iroha_instance_(std::make_shared<IrohaInstance>(mst_support,
+                                                        block_store_path,
+                                                        kLocalHost,
+                                                        torii_port_,
+                                                        internal_port_,
+                                                        dbname)),
         command_client_("127.0.0.1", torii_port_),
         query_client_("127.0.0.1", torii_port_),
         proposal_waiting(proposal_waiting),
