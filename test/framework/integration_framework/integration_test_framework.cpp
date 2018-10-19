@@ -47,11 +47,13 @@ namespace integration_framework {
       bool mst_support,
       const std::string &block_store_path,
       milliseconds proposal_waiting,
-      milliseconds block_waiting)
+      milliseconds block_waiting,
+      milliseconds tx_response_waiting)
       : iroha_instance_(std::make_shared<IrohaInstance>(
             mst_support, block_store_path, dbname)),
         proposal_waiting(proposal_waiting),
         block_waiting(block_waiting),
+        tx_response_waiting(tx_response_waiting),
         maximum_proposal_size_(maximum_proposal_size),
         deleter_(deleter) {}
 
@@ -161,6 +163,12 @@ namespace integration_framework {
             queue_cond.notify_all();
           });
           log_->info("commit");
+          queue_cond.notify_all();
+        });
+    iroha_instance_->getIrohaInstance()->getStatusBus()->statuses().subscribe(
+        [this](auto response) {
+          responses_queues_[response->transactionHash().hex()].push(response);
+          log_->info("response");
           queue_cond.notify_all();
         });
 
@@ -372,6 +380,21 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::skipBlock() {
     checkBlock([](const auto &) {});
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::checkStatus(
+      const shared_model::interface::types::HashType &tx_hash,
+      std::function<void(const shared_model::proto::TransactionResponse &)>
+          validation) {
+    // fetch first response associated with the tx from related queue
+    TxResponseType response;
+    fetchFromQueue(responses_queues_[tx_hash.hex()],
+                   response,
+                   tx_response_waiting,
+                   "missed status");
+    validation(static_cast<const shared_model::proto::TransactionResponse &>(
+        *response));
     return *this;
   }
 

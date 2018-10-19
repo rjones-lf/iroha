@@ -18,7 +18,7 @@
 #ifndef IROHA_YAC_GATE_HPP
 #define IROHA_YAC_GATE_HPP
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include "consensus/yac/storage/storage_result.hpp"
 #include "network/consensus_gate.hpp"
 

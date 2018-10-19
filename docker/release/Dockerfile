@@ -10,6 +10,7 @@ RUN apt-get install -y /tmp/iroha.deb; \
 
 WORKDIR /opt/iroha_data
 
-COPY entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh wait-for-it.sh /
+RUN chmod +x /entrypoint.sh /wait-for-it.sh
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/sbin/init"]

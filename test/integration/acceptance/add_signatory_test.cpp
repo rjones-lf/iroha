@@ -167,7 +167,7 @@ TEST_F(AddSignatory, InvalidKey) {
                                              shared_model::crypto::PublicKey(
                                                  std::string(1337, 'a'))),
                        kUser2Keypair),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**

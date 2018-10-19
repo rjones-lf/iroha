@@ -13,14 +13,36 @@
 #include "cryptography/keypair.hpp"
 #include "interfaces/permissions.hpp"
 #include "interfaces/query_responses/query_response.hpp"
+#include "interfaces/transaction_responses/tx_response.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
-namespace shared_model {
-  namespace proto {
-    class TransactionResponse;
-  }  // namespace proto
-}  // namespace shared_model
+namespace {
+  template <typename Type>
+  void checkTransactionResponse(
+      const shared_model::interface::TransactionResponse &resp) {
+    ASSERT_NO_THROW(boost::get<const Type &>(resp.get()));
+  }
+
+#define BASE_CHECK_RESPONSE(type)                                  \
+  [](const shared_model::interface::TransactionResponse &resp) {   \
+    SCOPED_TRACE(#type);                                           \
+    checkTransactionResponse<shared_model::interface::type>(resp); \
+  }
+
+#define CHECK_ENOUGH_SIGNATURES \
+  BASE_CHECK_RESPONSE(EnoughSignaturesCollectedResponse)
+
+#define CHECK_STATELESS_INVALID BASE_CHECK_RESPONSE(StatelessFailedTxResponse)
+
+#define CHECK_STATELESS_VALID BASE_CHECK_RESPONSE(StatelessValidTxResponse)
+
+#define CHECK_STATEFUL_INVALID BASE_CHECK_RESPONSE(StatefulFailedTxResponse)
+
+#define CHECK_STATEFUL_VALID BASE_CHECK_RESPONSE(StatefulValidTxResponse)
+
+#define CHECK_COMMITTED BASE_CHECK_RESPONSE(CommittedTxResponse)
+}  // namespace
 
 /**
  * Common values (user, domain, asset)
@@ -161,9 +183,6 @@ class AcceptanceFixture : public ::testing::Test {
   const shared_model::interface::types::AccountIdType kAdminId;
   const shared_model::crypto::Keypair kAdminKeypair;
   const shared_model::crypto::Keypair kUserKeypair;
-
-  const std::function<void(const shared_model::proto::TransactionResponse &)>
-      checkStatelessInvalid;
 
   const std::vector<shared_model::interface::types::AssetNameType>
       kIllegalAssetNames = {"",

@@ -70,7 +70,7 @@ TEST_F(AddAssetQuantity, NegativeAmount) {
       .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, "-1.0")),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -87,7 +87,7 @@ TEST_F(AddAssetQuantity, ZeroAmount) {
       .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, "0.0")),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**

@@ -177,7 +177,7 @@ TEST_F(TransferAsset, NegativeAmount) {
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
-      .sendTx(makeTransfer("-1.0"), checkStatelessInvalid);
+      .sendTx(makeTransfer("-1.0"), CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -192,7 +192,7 @@ TEST_F(TransferAsset, ZeroAmount) {
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
-      .sendTx(makeTransfer("0.0"), checkStatelessInvalid);
+      .sendTx(makeTransfer("0.0"), CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -226,7 +226,7 @@ TEST_F(TransferAsset, LongDesc) {
       .sendTx(
           complete(baseTx().transferAsset(
               kUserId, kUser2Id, kAssetId, std::string(100000, 'a'), kAmount)),
-          checkStatelessInvalid);
+          CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -290,7 +290,7 @@ TEST_F(TransferAsset, SourceIsDest) {
       .sendTxAwait(addAssets(), check(1))
       .sendTx(complete(baseTx().transferAsset(
                   kUserId, kUserId, kAssetId, kDesc, kAmount)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**

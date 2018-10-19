@@ -45,6 +45,8 @@ namespace integration_framework {
    private:
     using ProposalType = std::shared_ptr<shared_model::interface::Proposal>;
     using BlockType = std::shared_ptr<shared_model::interface::Block>;
+    using TxResponseType =
+        std::shared_ptr<shared_model::interface::TransactionResponse>;
 
    public:
     /**
@@ -71,7 +73,8 @@ namespace integration_framework {
              / boost::filesystem::unique_path())
                 .string(),
         milliseconds proposal_waiting = milliseconds(20000),
-        milliseconds block_waiting = milliseconds(20000));
+        milliseconds block_waiting = milliseconds(20000),
+        milliseconds tx_response_waiting = milliseconds(10000));
 
     ~IntegrationTestFramework();
 
@@ -246,6 +249,16 @@ namespace integration_framework {
     IntegrationTestFramework &skipBlock();
 
     /**
+     * Request next status of the transaction
+     * @param tx_hash is hash for filtering responses
+     * @return this
+     */
+    IntegrationTestFramework &checkStatus(
+        const shared_model::interface::types::HashType &tx_hash,
+        std::function<void(const shared_model::proto::TransactionResponse &)>
+            validation);
+
+    /**
      * Shutdown ITF instance
      */
     void done();
@@ -277,6 +290,9 @@ namespace integration_framework {
     tbb::concurrent_queue<ProposalType> proposal_queue_;
     tbb::concurrent_queue<ProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
+
+    std::map<std::string, tbb::concurrent_queue<TxResponseType>>
+        responses_queues_;
     std::shared_ptr<IrohaInstance> iroha_instance_;
 
     void initPipeline(const shared_model::crypto::Keypair &keypair);
@@ -290,6 +306,9 @@ namespace integration_framework {
 
     /// maximum time of waiting before appearing next committed block
     milliseconds block_waiting;
+
+    /// maximum time of waiting before appearing next transaction response
+    milliseconds tx_response_waiting;
 
     size_t maximum_proposal_size_;
 
