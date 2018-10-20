@@ -81,7 +81,7 @@ namespace iroha {
       auto commit = rxcpp::observable<>::just(block);
       SynchronizationEvent result;
 
-      if (commit_message.type == network::CommitType::kVoted) {
+      if (commit_message.type == network::PeerVotedFor::kThisBlock) {
         log_->info("Applying prepared commit {}", block->hash().hex());
         // TODO: add mutable storage call and early return
         storage->applyPrepared(*block);

@@ -71,7 +71,7 @@ class SynchronizerTest : public ::testing::Test {
                              generateKeypair())
                      .finish();
     return {std::make_shared<shared_model::proto::Block>(std::move(block)),
-            CommitType::kOther};
+            PeerVotedFor::kOtherBlock};
   }
 
   std::shared_ptr<MockChainValidator> chain_validator;
@@ -130,7 +130,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
     ASSERT_TRUE(block_wrapper.validate());
   });
 
-  synchronizer->process_commit(Commit{test_block, CommitType::kOther});
+  synchronizer->process_commit(Commit{test_block, PeerVotedFor::kOtherBlock});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -164,7 +164,7 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 0);
   wrapper.subscribe();
 
-  synchronizer->process_commit(Commit{test_block, CommitType::kOther});
+  synchronizer->process_commit(Commit{test_block, PeerVotedFor::kOtherBlock});
 
   ASSERT_TRUE(wrapper.validate());
 }
