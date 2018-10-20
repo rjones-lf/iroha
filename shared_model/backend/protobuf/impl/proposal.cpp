@@ -26,14 +26,6 @@ namespace shared_model {
       interface::types::BlobType blob_{[this] { return makeBlob(proto_); }()};
     };
 
-    //    Proposal::Proposal(TransportType &&ref) {
-    //      impl_ = std::make_unique<Proposal::Impl>(std::move(ref));
-    //    }
-    //
-    //    Proposal::Proposal(const TransportType &ref) {
-    //      impl_ = std::make_unique<Proposal::Impl>(ref);
-    //    }
-
     Proposal::Proposal(Proposal &&o) noexcept : Proposal(o.getTransport()) {}
 
     Proposal::Proposal(TransportType ref) {
