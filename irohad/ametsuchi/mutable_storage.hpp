@@ -60,16 +60,6 @@ namespace iroha {
               blocks,
           MutableStoragePredicate predicate) = 0;
 
-      /**
-       * Tries to apply block with an assumption that it was already validated
-       * before, and its state is already available.
-       * If that assumption fails just applies block
-       * in the same way as apply does
-       * @see apply(block)
-       */
-      virtual bool applyPrepared(
-          const shared_model::interface::Block &block) = 0;
-
       virtual ~MutableStorage() = default;
     };
 

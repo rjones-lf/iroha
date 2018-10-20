@@ -44,6 +44,14 @@ namespace iroha {
        */
       virtual void commit(std::unique_ptr<MutableStorage> mutableStorage) = 0;
 
+      /**
+       * Try to apply prepared block to Ametsuchi.
+       * @return true if commit is succesful, false if prepared block failed
+       * to apply. WSV is not changed if it returns false.
+       *
+       */
+      virtual bool commitPrepared() = 0;
+
       virtual ~MutableFactory() = default;
     };
 

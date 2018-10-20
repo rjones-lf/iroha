@@ -113,23 +113,6 @@ namespace iroha {
       });
     }
 
-    bool MutableStorageImpl::applyPrepared(
-        const shared_model::interface::Block &block) {
-      std::string block_id = block.hash().hex();
-      if (prepared_blocks_enabled_) {
-        try {
-          *sql_ << "COMMIT PREPARED '" + block_id + "';";
-          committed = true;
-          return committed;
-        } catch (const std::exception &e) {
-          log_->warn(
-              "failed to apply prepared block {}: {}", block_id, e.what());
-          *sql_ << "BEGIN;";
-        }
-      }
-      return apply(block);
-    }
-
     MutableStorageImpl::~MutableStorageImpl() {
       if (not committed) {
         *sql_ << "ROLLBACK";

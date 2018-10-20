@@ -63,6 +63,19 @@ namespace iroha {
     void SynchronizerImpl::process_commit(network::Commit commit_message) {
       log_->info("processing commit");
 
+      const auto &block = commit_message.block;
+
+      auto commit = rxcpp::observable<>::just(block);
+
+      if (commit_message.type == network::PeerVotedFor::kThisBlock) {
+        bool block_applied = mutable_factory_->commitPrepared();
+        if (block_applied) {
+          notifier_.get_subscriber().on_next(
+              SynchronizationEvent{commit, SynchronizationOutcomeType::kCommit});
+          return;
+        }
+      }
+
       auto mutable_storage_var = mutable_factory_->createMutableStorage();
       if (auto e =
               boost::get<expected::Error<std::string>>(&mutable_storage_var)) {
@@ -76,20 +89,7 @@ namespace iroha {
                   mutable_storage_var))
               .value;
 
-      const auto &block = commit_message.block;
-
-      auto commit = rxcpp::observable<>::just(block);
       SynchronizationEvent result;
-
-      if (commit_message.type == network::PeerVotedFor::kThisBlock) {
-        log_->info("Applying prepared commit {}", block->hash().hex());
-        // TODO: add mutable storage call and early return
-        storage->applyPrepared(*block);
-        mutable_factory_->commit(std::move(storage));
-        notifier_.get_subscriber().on_next(
-            SynchronizationEvent{commit, SynchronizationOutcomeType::kCommit});
-        return;
-      }
 
       if (validator_->validateChain(commit, *storage)) {
         mutable_factory_->commit(std::move(storage));
