@@ -51,8 +51,6 @@ namespace shared_model {
 
     Block::Block(Block &&o) noexcept = default;
 
-    Block &Block::operator=(Block &&o) noexcept = default;
-
     Block::Block(TransportType ref) {
         impl_ = std::make_unique<Block::Impl>(std::move(ref));
     }
