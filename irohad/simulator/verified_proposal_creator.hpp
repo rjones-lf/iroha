@@ -18,7 +18,7 @@
 #ifndef IROHA_VERIFIED_PROPOSAL_CREATOR_HPP
 #define IROHA_VERIFIED_PROPOSAL_CREATOR_HPP
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include "validation/stateful_validator_common.hpp"
 
 namespace shared_model {

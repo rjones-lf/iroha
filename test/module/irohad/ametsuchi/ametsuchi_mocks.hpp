@@ -31,6 +31,7 @@
 #include "ametsuchi/storage.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
+#include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
 #include "common/result.hpp"
 #include "interfaces/common_objects/peer.hpp"
@@ -194,12 +195,9 @@ namespace iroha {
 
     class MockTemporaryWsv : public TemporaryWsv {
      public:
-      MOCK_METHOD2(
-          apply,
-          expected::Result<void, validation::CommandError>(
-              const shared_model::interface::Transaction &,
-              std::function<expected::Result<void, validation::CommandError>(
-                  const shared_model::interface::Transaction &, WsvQuery &)>));
+      MOCK_METHOD1(apply,
+                   expected::Result<void, validation::CommandError>(
+                       const shared_model::interface::Transaction &));
       MOCK_METHOD1(
           createSavepoint,
           std::unique_ptr<TemporaryWsv::SavepointWrapper>(const std::string &));

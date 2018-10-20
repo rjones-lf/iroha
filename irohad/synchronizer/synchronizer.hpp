@@ -18,7 +18,7 @@
 #ifndef IROHA_SYNCHRONIZER_HPP
 #define IROHA_SYNCHRONIZER_HPP
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 
 #include "network/peer_communication_service.hpp"
 #include "synchronizer/synchronizer_common.hpp"

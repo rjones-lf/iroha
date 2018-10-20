@@ -18,103 +18,6 @@
 
 namespace iroha {
   namespace validation {
-    /**
-     * Forms a readable error string from transaction signatures and account
-     * signatories
-     * @param signatures of the transaction
-     * @param signatories of the transaction creator
-     * @return well-formed error string
-     */
-    static std::string formSignaturesErrorMsg(
-        const shared_model::interface::types::SignatureRangeType &signatures,
-        const std::vector<shared_model::interface::types::PubkeyType>
-            &signatories) {
-      std::string signatures_string, signatories_string;
-      for (const auto &signature : signatures) {
-        signatures_string.append(signature.publicKey().toString().append("\n"));
-      }
-      for (const auto &signatory : signatories) {
-        signatories_string.append(signatory.toString().append("\n"));
-      }
-      return (boost::format(
-                  "stateful validator error: signatures in transaction are not "
-                  "account signatories:\n"
-                  "signatures' public keys: %s\n"
-                  "signatories: %s")
-              % signatures_string % signatories_string)
-          .str();
-    }
-
-    /**
-     * Initially checks the transaction: its creator, signatures etc
-     * @param tx to be checked
-     * @param queries to get data from
-     * @return result with void, if check is succesfull, command error otherwise
-     */
-    static expected::Result<void, validation::CommandError>
-    initiallyCheckTransaction(const shared_model::interface::Transaction &tx,
-                              ametsuchi::WsvQuery &queries) {
-      return expected::Result<void, validation::CommandError>(
-          [&]() -> expected::Result<
-                       std::shared_ptr<shared_model::interface::Account>,
-                       validation::CommandError> {
-            // Check if tx creator has account
-            auto account = queries.getAccount(tx.creatorAccountId());
-            if (account) {
-              return expected::makeValue(*account);
-            }
-            return expected::makeError(
-                validation::CommandError{"looking up tx creator's account",
-                                         (boost::format("could not fetch "
-                                                        "account with id %s")
-                                          % tx.creatorAccountId())
-                                             .str(),
-                                         false});
-          }() |
-              [&](const auto &account)
-                    -> expected::Result<
-                           std::vector<
-                               shared_model::interface::types::PubkeyType>,
-                           validation::CommandError> {
-            // Check if account has signatories and quorum to execute
-            // transaction
-            if (boost::size(tx.signatures()) >= account->quorum()) {
-              auto signatories = queries.getSignatories(tx.creatorAccountId());
-              if (signatories) {
-                return expected::makeValue(*signatories);
-              }
-              return expected::makeError(validation::CommandError{
-                  "looking up tx creator's signatories",
-                  (boost::format("could not fetch "
-                                 "signatories of "
-                                 "account %s")
-                   % tx.creatorAccountId())
-                      .str(),
-                  false});
-            }
-            return expected::makeError(validation::CommandError{
-                "comparing number of tx signatures to account's quorum",
-                (boost::format(
-                     "not enough "
-                     "signatures in transaction; account's quorum %d, "
-                     "transaction's "
-                     "signatures amount %d")
-                 % account->quorum() % boost::size(tx.signatures()))
-                    .str(),
-                false});
-          } | [&tx](const auto &signatories)
-                        -> expected::Result<void, validation::CommandError> {
-            // Check if signatures in transaction are in account
-            // signatory
-            if (signaturesSubset(tx.signatures(), signatories)) {
-              return {};
-            }
-            return expected::makeError(validation::CommandError{
-                "signatures are a subset of signatories",
-                formSignaturesErrorMsg(tx.signatures(), signatories),
-                false});
-          });
-    }
 
     /**
      * Complements initial transaction check with command-by-command check
@@ -127,14 +30,14 @@ namespace iroha {
         ametsuchi::TemporaryWsv &temporary_wsv,
         validation::TransactionsErrors &transactions_errors_log,
         const shared_model::interface::Transaction &tx) {
-      return temporary_wsv.apply(tx, initiallyCheckTransaction)
-          .match([](expected::Value<void> &) { return true; },
-                 [&tx, &transactions_errors_log](
-                     expected::Error<validation::CommandError> &error) {
-                   transactions_errors_log.push_back(
-                       std::make_pair(error.error, tx.hash()));
-                   return false;
-                 });
+      return temporary_wsv.apply(tx).match(
+          [](expected::Value<void> &) { return true; },
+          [&tx, &transactions_errors_log](
+              expected::Error<validation::CommandError> &error) {
+            transactions_errors_log.push_back(
+                std::make_pair(error.error, tx.hash()));
+            return false;
+          });
     };
 
     /**

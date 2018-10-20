@@ -6,7 +6,7 @@
 #ifndef TORII_COMMAND_SERVICE_HPP
 #define TORII_COMMAND_SERVICE_HPP
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {

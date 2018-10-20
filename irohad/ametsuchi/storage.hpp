@@ -6,7 +6,7 @@
 #ifndef IROHA_AMETSUCHI_H
 #define IROHA_AMETSUCHI_H
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include <vector>
 
 #include "ametsuchi/block_query_factory.hpp"

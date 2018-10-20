@@ -77,8 +77,9 @@ namespace iroha {
                   log_->info("consensus: commit top block: height {}, hash {}",
                              current_block_.second->height(),
                              current_block_.second->hash().hex());
-                  subscriber.on_next(network::Commit{
-                      current_block_.second, network::CommitType::kVoted});
+                  subscriber.on_next(
+                      network::Commit{current_block_.second,
+                                      network::PeerVotedFor::kThisBlock});
                   subscriber.on_completed();
                   return;
                 }
@@ -102,7 +103,7 @@ namespace iroha {
                               // update the cache with block consensus voted for
                               consensus_result_cache_->insert(*block);
                               subscriber.on_next(network::Commit{
-                                  *block, network::CommitType::kOther});
+                                  *block, network::PeerVotedFor::kOtherBlock});
                             } else {
                               log_->error(
                                   "Could not get block from block loader");

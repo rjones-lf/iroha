@@ -16,11 +16,11 @@
 #include "backend/protobuf/queries/proto_get_account_detail.hpp"
 #include "backend/protobuf/queries/proto_get_account_transactions.hpp"
 #include "backend/protobuf/queries/proto_get_asset_info.hpp"
+#include "backend/protobuf/queries/proto_get_pending_transactions.hpp"
 #include "backend/protobuf/queries/proto_get_role_permissions.hpp"
 #include "backend/protobuf/queries/proto_get_roles.hpp"
 #include "backend/protobuf/queries/proto_get_signatories.hpp"
 #include "backend/protobuf/queries/proto_get_transactions.hpp"
-#include "backend/protobuf/queries/proto_get_pending_transactions.hpp"
 #include "queries.pb.h"
 #include "utils/lazy_initializer.hpp"
 
@@ -91,5 +91,20 @@ namespace shared_model {
     };
   }  // namespace proto
 }  // namespace shared_model
+
+namespace boost {
+  extern template class variant<
+      shared_model::proto::GetAccount,
+      shared_model::proto::GetSignatories,
+      shared_model::proto::GetAccountTransactions,
+      shared_model::proto::GetAccountAssetTransactions,
+      shared_model::proto::GetTransactions,
+      shared_model::proto::GetAccountAssets,
+      shared_model::proto::GetAccountDetail,
+      shared_model::proto::GetRoles,
+      shared_model::proto::GetRolePermissions,
+      shared_model::proto::GetAssetInfo,
+      shared_model::proto::GetPendingTransactions>;
+}
 
 #endif  // IROHA_SHARED_MODEL_PROTO_QUERY_HPP

@@ -28,10 +28,10 @@ namespace shared_model {
 
 namespace iroha {
   namespace network {
-
-    enum class CommitType {
-      kVoted,  // peer voted for the same block
-      kOther   // peer has not voted for this block
+    /// Shows whether the peer has voted for the block in the commit
+    enum class PeerVotedFor {
+      kThisBlock,
+      kOtherBlock
     };
 
     /**
@@ -40,7 +40,7 @@ namespace iroha {
      */
     struct Commit {
       std::shared_ptr<shared_model::interface::Block> block;
-      CommitType type;
+      PeerVotedFor type;
     };
 
     /**
