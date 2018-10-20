@@ -6,6 +6,7 @@
 #include "ordering/impl/on_demand_os_client_grpc.hpp"
 
 #include "backend/protobuf/proposal.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 
 using namespace iroha::ordering::transport;

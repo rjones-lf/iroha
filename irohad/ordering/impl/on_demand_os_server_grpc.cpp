@@ -6,6 +6,7 @@
 #include "ordering/impl/on_demand_os_server_grpc.hpp"
 
 #include "backend/protobuf/proposal.hpp"
+#include "backend/protobuf/transaction.hpp"
 
 using namespace iroha::ordering::transport;
 
