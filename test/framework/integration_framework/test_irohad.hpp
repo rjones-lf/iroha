@@ -64,6 +64,10 @@ namespace integration_framework {
       return query_service;
     }
 
+    auto &getMstProcessor() {
+      return mst_processor;
+    }
+
     auto &getPeerCommunicationService() {
       return pcs;
     }

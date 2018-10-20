@@ -242,6 +242,27 @@ namespace integration_framework {
     log_->info("run iroha");
   }
 
+  rxcpp::observable<std::shared_ptr<iroha::MstState>>
+  IntegrationTestFramework::getMstStateUpdateObserver() {
+    return iroha_instance_->getIrohaInstance()
+        ->getMstProcessor()
+        ->onStateUpdate();
+  }
+
+  rxcpp::observable<iroha::BatchPtr>
+  IntegrationTestFramework::getMstPreparedBatchesObserver() {
+    return iroha_instance_->getIrohaInstance()
+        ->getMstProcessor()
+        ->onPreparedBatches();
+  }
+
+  rxcpp::observable<iroha::BatchPtr>
+  IntegrationTestFramework::getMstExpiredBatchesObserver() {
+    return iroha_instance_->getIrohaInstance()
+        ->getMstProcessor()
+        ->onExpiredBatches();
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::getTxStatus(
       const shared_model::crypto::Hash &hash,
       std::function<void(const shared_model::proto::TransactionResponse &)>

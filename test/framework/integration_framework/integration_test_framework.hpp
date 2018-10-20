@@ -268,6 +268,13 @@ namespace integration_framework {
      */
     IntegrationTestFramework &skipBlock();
 
+    rxcpp::observable<std::shared_ptr<iroha::MstState>>
+    getMstStateUpdateObserver();
+
+    rxcpp::observable<iroha::BatchPtr> getMstPreparedBatchesObserver();
+
+    rxcpp::observable<iroha::BatchPtr> getMstExpiredBatchesObserver();
+
     /**
      * Request next status of the transaction
      * @param tx_hash is hash for filtering responses
