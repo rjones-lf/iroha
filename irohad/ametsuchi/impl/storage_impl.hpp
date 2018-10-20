@@ -101,7 +101,7 @@ namespace iroha {
 
       void commit(std::unique_ptr<MutableStorage> mutableStorage) override;
 
-      bool commitPrepared() override { return false; };
+      bool commitPrepared(const shared_model::interface::Block& block) override;
 
       std::shared_ptr<WsvQuery> getWsvQuery() const override;
 

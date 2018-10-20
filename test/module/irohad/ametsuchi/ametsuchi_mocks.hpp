@@ -244,7 +244,8 @@ namespace iroha {
         commit_(mutableStorage);
       }
 
-      MOCK_METHOD0(commitPrepared, bool(void));
+      MOCK_METHOD1(commitPrepared,
+                   bool(const shared_model::interface::Block &));
       MOCK_METHOD1(commit_, void(std::unique_ptr<MutableStorage> &));
     };
 
@@ -278,7 +279,8 @@ namespace iroha {
               std::shared_ptr<PendingTransactionStorage>,
               std::shared_ptr<shared_model::interface::QueryResponseFactory>));
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
-      MOCK_METHOD0(commitPrepared, bool(void));
+      MOCK_METHOD1(commitPrepared,
+                   bool(const shared_model::interface::Block &));
       MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block &));
       MOCK_METHOD1(insertBlocks,
                    bool(const std::vector<

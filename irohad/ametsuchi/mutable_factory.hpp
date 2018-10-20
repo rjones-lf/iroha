@@ -21,6 +21,12 @@
 #include <memory>
 #include "common/result.hpp"
 
+namespace shared_model {
+  namespace interface {
+    class Block;
+  }
+}
+
 namespace iroha {
   namespace ametsuchi {
 
@@ -50,7 +56,7 @@ namespace iroha {
        * to apply. WSV is not changed if it returns false.
        *
        */
-      virtual bool commitPrepared() = 0;
+      virtual bool commitPrepared(const shared_model::interface::Block& block) = 0;
 
       virtual ~MutableFactory() = default;
     };

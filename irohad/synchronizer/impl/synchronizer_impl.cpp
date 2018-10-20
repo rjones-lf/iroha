@@ -67,11 +67,13 @@ namespace iroha {
 
       auto commit = rxcpp::observable<>::just(block);
 
+      // if already voted for commit, try to apply prepared block
       if (commit_message.type == network::PeerVotedFor::kThisBlock) {
-        bool block_applied = mutable_factory_->commitPrepared();
+        bool block_applied =
+            mutable_factory_->commitPrepared(*block);
         if (block_applied) {
-          notifier_.get_subscriber().on_next(
-              SynchronizationEvent{commit, SynchronizationOutcomeType::kCommit});
+          notifier_.get_subscriber().on_next(SynchronizationEvent{
+              commit, SynchronizationOutcomeType::kCommit});
           return;
         }
       }

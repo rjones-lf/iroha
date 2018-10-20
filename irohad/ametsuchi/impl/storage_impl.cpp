@@ -393,6 +393,38 @@ namespace iroha {
       storage->committed = true;
     }
 
+    bool StorageImpl::commitPrepared(
+        const shared_model::interface::Block &block) {
+      if (not prepared_blocks_enabled_) {
+        log_->warn("prepared blocks are not enabled");
+        return false;
+      }
+      log_->info("applying prepared block");
+      soci::session sql(*connection_);
+
+      try {
+        sql << "COMMIT PREPARED 'prepared_block';";
+        log_->info("commited prepared block");
+      } catch (const std::exception &e) {
+        log_->warn("failed to apply prepared block {}: {}",
+                    block.hash().hex(),
+                    e.what());
+        return false;
+      }
+
+      auto json_result = converter_->serialize(block);
+      return json_result.match(
+          [this, &block](const expected::Value<std::string> &v) {
+            block_store_->add(block.height(), stringToBytes(v.value));
+            notifier_.get_subscriber().on_next(clone(block));
+            return true;
+          },
+          [this, &sql](const expected::Error<std::string> &e) {
+            log_->error(e.error);
+            return false;
+          });
+    }
+
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
       std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
       if (not connection_) {
