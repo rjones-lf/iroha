@@ -89,6 +89,9 @@ DEFINE_validator(keypair_name, &validate_keypair_name);
 
 /**
  * Creating enum flag for overwriting already existing block storage
+ * when genesis block is passed and flag is not set (default is abort). It
+ * terminates with an error to specify behaviour, just like it was before, when
+ * you run irohad second time on non-empty blockstore with passed genesis block
  */
 DEFINE_string(
     blockstore_strategy,
