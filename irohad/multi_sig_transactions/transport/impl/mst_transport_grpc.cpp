@@ -19,14 +19,12 @@ using namespace iroha::network;
 MstTransportGrpc::MstTransportGrpc(
     std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
         async_call,
-    std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
     std::shared_ptr<TransportFactoryType> transaction_factory,
     std::shared_ptr<shared_model::interface::TransactionBatchParser>
         batch_parser,
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         transaction_batch_factory)
     : async_call_(std::move(async_call)),
-      factory_(std::move(factory)),
       transaction_factory_(std::move(transaction_factory)),
       batch_parser_(std::move(batch_parser)),
       batch_factory_(std::move(transaction_batch_factory)) {}

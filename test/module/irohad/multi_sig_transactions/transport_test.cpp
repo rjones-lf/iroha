@@ -36,9 +36,6 @@ using ::testing::InvokeWithoutArgs;
 TEST(TransportTest, SendAndReceive) {
   auto async_call_ = std::make_shared<
       iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
-  auto factory =
-      std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
-          shared_model::validation::FieldValidator>>();
   auto tx_validator = std::make_unique<shared_model::validation::MockValidator<
       shared_model::interface::Transaction>>();
   auto tx_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
@@ -49,7 +46,6 @@ TEST(TransportTest, SendAndReceive) {
   auto batch_factory =
       std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
   auto transport = std::make_shared<MstTransportGrpc>(async_call_,
-                                                      factory,
                                                       std::move(tx_factory),
                                                       std::move(parser),
                                                       std::move(batch_factory));

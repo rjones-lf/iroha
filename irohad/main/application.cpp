@@ -308,7 +308,6 @@ void Irohad::initMstProcessor() {
   if (is_mst_supported_) {
     mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
         async_call_,
-        common_objects_factory_,
         transaction_factory,
         batch_parser,
         transaction_batch_factory_);
