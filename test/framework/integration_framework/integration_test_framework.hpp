@@ -63,17 +63,14 @@ namespace integration_framework {
      * @param proposal_waiting - maximum time of waiting before next proposal
      * @param block_waiting - maximum time of waiting before appearing next
      * committed block
-     * @param destructor_lambda - (default nullptr) Pointer to function which
-     * receives pointer to constructed instance of Integration Test Framework.
-     * If specified, then will be called instead of default destructor's code
+     * @param cleanup_on_exit - whether to clean resources on exit
      * @param mst_support enables multisignature tx support
      * @param block_store_path specifies path where blocks will be stored
      */
     explicit IntegrationTestFramework(
         size_t maximum_proposal_size,
         const boost::optional<std::string> &dbname = boost::none,
-        std::function<void(IntegrationTestFramework &)> deleter =
-            [](IntegrationTestFramework &itf) { itf.done(); },
+        bool cleanup_on_exit = true,
         bool mst_support = false,
         const std::string &block_store_path =
             (boost::filesystem::temp_directory_path()
@@ -331,6 +328,9 @@ namespace integration_framework {
                         const WaitTime &wait,
                         const std::string &error_reason);
 
+    /// Cleanup the resources
+    void cleanup();
+
     tbb::concurrent_queue<ProposalType> proposal_queue_;
     tbb::concurrent_queue<ProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
@@ -378,7 +378,7 @@ namespace integration_framework {
     logger::Logger log_ = logger::log("IntegrationTestFramework");
     std::mutex queue_mu;
     std::condition_variable queue_cond;
-    std::function<void(IntegrationTestFramework &)> deleter_;
+    bool cleanup_on_exit_;
     std::vector<std::shared_ptr<FakePeer>> fake_peers_;
   };
 

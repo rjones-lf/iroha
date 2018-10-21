@@ -72,8 +72,7 @@ namespace integration_framework {
   IntegrationTestFramework::IntegrationTestFramework(
       size_t maximum_proposal_size,
       const boost::optional<std::string> &dbname,
-      std::function<void(integration_framework::IntegrationTestFramework &)>
-          deleter,
+      bool cleanup_on_exit,
       bool mst_support,
       const std::string &block_store_path,
       milliseconds proposal_waiting,
@@ -103,11 +102,11 @@ namespace integration_framework {
         transaction_batch_factory_(
             std::make_shared<
                 shared_model::interface::TransactionBatchFactoryImpl>()),
-        deleter_(deleter) {}
+        cleanup_on_exit_(cleanup_on_exit) {}
 
   IntegrationTestFramework::~IntegrationTestFramework() {
-    if (deleter_) {
-      deleter_(*this);
+    if (cleanup_on_exit_) {
+      cleanup();
     }
     // the code below should be executed anyway in order to prevent app hang
     if (iroha_instance_ and iroha_instance_->getIrohaInstance()) {
@@ -550,6 +549,11 @@ namespace integration_framework {
 
   void IntegrationTestFramework::done() {
     log_->info("done");
+    cleanup();
+  }
+
+  void IntegrationTestFramework::cleanup() {
+    log_->info("removing storage");
     if (iroha_instance_->getIrohaInstance()
         and iroha_instance_->getIrohaInstance()->storage) {
       iroha_instance_->getIrohaInstance()->storage->dropStorage();

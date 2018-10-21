@@ -16,7 +16,7 @@ using namespace shared_model;
 
 class MstPipelineTest : public AcceptanceFixture {
  public:
-  MstPipelineTest() : mst_itf_{1, {}, [](auto &i) { i.done(); }, true} {}
+  MstPipelineTest() : mst_itf_{1, {}, true, true} {}
 
   /**
    * Creates a mst user

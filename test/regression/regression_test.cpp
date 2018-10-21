@@ -63,7 +63,7 @@ TEST(RegressionTest, SequentialInitialization) {
             .substr(0, 8);
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &) {}, false, path)
+        1, dbname, false, false, path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx, check_enough_signatures_collected_status)
         .skipProposal()
@@ -75,7 +75,7 @@ TEST(RegressionTest, SequentialInitialization) {
   }
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &itf) { itf.done(); }, false, path)
+        1, dbname, true, false, path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx, check_enough_signatures_collected_status)
         .checkProposal(checkProposal)
@@ -143,7 +143,7 @@ TEST(RegressionTest, StateRecovery) {
 
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &) {}, false, path)
+        1, dbname, false, false, path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx)
         .checkProposal(checkOne)
@@ -153,7 +153,7 @@ TEST(RegressionTest, StateRecovery) {
   }
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &itf) { itf.done(); }, false, path)
+        1, dbname, true, false, path)
         .recoverState(kAdminKeypair)
         .sendQuery(makeQuery(2, kAdminKeypair), checkQuery);
   }
@@ -177,5 +177,5 @@ TEST(RegressionTest, DoubleCallOfDone) {
  */
 TEST(RegressionTest, DestructionOfNonInitializedItf) {
   integration_framework::IntegrationTestFramework itf(
-      1, {}, [](auto &itf) { itf.done(); });
+      1, {}, true);
 }
