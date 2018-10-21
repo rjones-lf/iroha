@@ -4,7 +4,6 @@
  */
 
 #include "backend/protobuf/block.hpp"
-#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/query_responses/proto_error_query_response.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
@@ -41,7 +40,6 @@ class QueryProcessorTest : public ::testing::Test {
     storage = std::make_shared<MockStorage>();
     query_response_factory =
         std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
-
     qpi = std::make_shared<torii::QueryProcessorImpl>(
         storage, storage, nullptr, query_response_factory);
     wsv_queries = std::make_shared<MockWsvQuery>();

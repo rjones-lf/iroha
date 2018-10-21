@@ -9,7 +9,6 @@
 #include "module/irohad/torii/torii_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 
-#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/queries.hpp"

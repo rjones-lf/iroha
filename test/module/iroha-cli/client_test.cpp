@@ -31,7 +31,6 @@
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 
-#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
