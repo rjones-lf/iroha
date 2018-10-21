@@ -304,6 +304,17 @@ namespace integration_framework {
         ->onExpiredBatches();
   }
 
+  IntegrationTestFramework &
+  IntegrationTestFramework::subscribeForAllMstNotifications(
+      std::shared_ptr<iroha::network::MstTransportNotification> notification) {
+    std::for_each(fake_peers_.cbegin(),
+                  fake_peers_.cend(),
+                  [&notification](const auto &fake_peer) {
+                    fake_peer->subscribeForMstNotifications(notification);
+                  });
+    return *this;
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::getTxStatus(
       const shared_model::crypto::Hash &hash,
       std::function<void(const shared_model::proto::TransactionResponse &)>

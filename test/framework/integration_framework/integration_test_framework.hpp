@@ -25,6 +25,7 @@
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "logger/logger.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
+#include "network/mst_transport.hpp"
 #include "torii/command_client.hpp"
 #include "torii/query_client.hpp"
 
@@ -287,6 +288,9 @@ namespace integration_framework {
     rxcpp::observable<iroha::BatchPtr> getMstPreparedBatchesObserver();
 
     rxcpp::observable<iroha::BatchPtr> getMstExpiredBatchesObserver();
+
+    IntegrationTestFramework &subscribeForAllMstNotifications(
+        std::shared_ptr<iroha::network::MstTransportNotification> notification);
 
     /**
      * Request next status of the transaction
