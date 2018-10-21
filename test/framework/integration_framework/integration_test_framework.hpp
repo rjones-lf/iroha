@@ -45,6 +45,8 @@ namespace integration_framework {
 
   using std::chrono::milliseconds;
 
+  class FakePeer;
+
   class IntegrationTestFramework {
    private:
     using ProposalType = std::shared_ptr<shared_model::interface::Proposal>;
@@ -81,6 +83,9 @@ namespace integration_framework {
         milliseconds tx_response_waiting = milliseconds(10000));
 
     ~IntegrationTestFramework();
+
+    std::shared_ptr<FakePeer> addInitailPeer(
+        const boost::optional<shared_model::crypto::Keypair> &key);
 
     /**
      * Construct default genesis block.
@@ -362,6 +367,7 @@ namespace integration_framework {
     std::mutex queue_mu;
     std::condition_variable queue_cond;
     std::function<void(IntegrationTestFramework &)> deleter_;
+    std::vector<std::shared_ptr<FakePeer>> fake_peers_;
   };
 
   template <typename Queue, typename ObjectType, typename WaitTime>

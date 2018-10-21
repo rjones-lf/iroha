@@ -22,6 +22,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "datetime/time.hpp"
+#include "framework/integration_framework/fake_peer/fake_peer.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "framework/result_fixture.hpp"
@@ -114,6 +115,19 @@ namespace integration_framework {
     }
   }
 
+  std::shared_ptr<FakePeer> IntegrationTestFramework::addInitailPeer(
+      const boost::optional<Keypair> &key) {
+    auto fake_peer = std::make_shared<FakePeer>(
+        kLocalHost,
+        getNextPort<kDefaultInternalPort>(),
+        key,
+        transaction_factory_,
+        batch_parser_,
+        transaction_batch_factory_);
+    fake_peers_.emplace_back(fake_peer);
+    return fake_peer;
+  }
+
   shared_model::proto::Block IntegrationTestFramework::defaultBlock(
       const shared_model::crypto::Keypair &key) const {
     shared_model::interface::RolePermissionSet all_perms{};
@@ -121,7 +135,7 @@ namespace integration_framework {
       auto perm = static_cast<shared_model::interface::permissions::Role>(i);
       all_perms.set(perm);
     }
-    auto genesis_tx =
+    auto genesis_tx_builder =
         shared_model::proto::TransactionBuilder()
             .creatorAccountId(kAdminId)
             .createdTime(iroha::time::now())
@@ -131,10 +145,14 @@ namespace integration_framework {
             .createDomain(kDefaultDomain, kDefaultRole)
             .createAccount(kAdminName, kDefaultDomain, key.publicKey())
             .createAsset(kAssetName, kDefaultDomain, 1)
-            .quorum(1)
-            .build()
-            .signAndAddSignature(key)
-            .finish();
+            .quorum(1);
+    // add fake peers
+    for (const auto &fake_peer : fake_peers_) {
+      genesis_tx_builder = genesis_tx_builder.addPeer(
+          fake_peer->getAddress(), fake_peer->getKeypair().publicKey());
+    };
+    auto genesis_tx =
+        genesis_tx_builder.build().signAndAddSignature(key).finish();
     auto genesis_block =
         shared_model::proto::BlockBuilder()
             .transactions(
@@ -183,7 +201,9 @@ namespace integration_framework {
       const shared_model::crypto::Keypair &keypair) {
     log_->info("init state");
     // peer initialization
-    common_objects_factory_->createPeer(kLocalHost, keypair.publicKey())
+    common_objects_factory_
+        ->createPeer(kLocalHost + ":" + std::to_string(internal_port_),
+                     keypair.publicKey())
         .match(
             [this](iroha::expected::Result<
                    std::unique_ptr<shared_model::interface::Peer>,
@@ -251,9 +271,16 @@ namespace integration_framework {
           queue_cond.notify_all();
         });
 
+
+    if (fake_peers_.size() > 0) {
+      log_->info("starting fake iroha peers");
+      for (auto &fake_peer : fake_peers_) {
+        fake_peer->run();
+      }
+    }
     // start instance
+    log_->info("starting main iroha instance");
     iroha_instance_->run();
-    log_->info("run iroha");
   }
 
   rxcpp::observable<std::shared_ptr<iroha::MstState>>
