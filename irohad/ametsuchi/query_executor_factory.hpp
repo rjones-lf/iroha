@@ -24,9 +24,7 @@ namespace iroha {
       createQueryExecutor(
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
-              response_factory,
-          std::shared_ptr<shared_model::interface::PermissionToString>
-              perm_converter) const = 0;
+              response_factory) const = 0;
 
       virtual ~QueryExecutorFactory() = default;
     };

@@ -99,7 +99,7 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*mst, onExpiredBatchesImpl())
         .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
-    EXPECT_CALL(*storage, createQueryExecutor(_, _, _))
+    EXPECT_CALL(*storage, createQueryExecutor(_, _))
         .WillRepeatedly(Return(boost::make_optional(
             std::shared_ptr<QueryExecutor>(query_executor))));
 
@@ -122,11 +122,7 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage,
-        storage,
-        pending_txs_storage,
-        query_response_factory,
-        std::make_shared<shared_model::proto::ProtoPermissionToString>());
+        storage, storage, pending_txs_storage, query_response_factory);
 
     //----------- Server run ----------------
     auto status_factory =

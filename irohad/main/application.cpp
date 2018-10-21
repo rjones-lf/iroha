@@ -110,12 +110,15 @@ void Irohad::initStorage() {
   common_objects_factory_ =
       std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
           shared_model::validation::FieldValidator>>();
+  perm_converter_ =
+      std::make_shared<shared_model::proto::ProtoPermissionToString>();
   auto block_converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
   auto storageResult = StorageImpl::create(block_store_dir_,
                                            pg_conn_,
                                            common_objects_factory_,
-                                           std::move(block_converter));
+                                           std::move(block_converter),
+                                           perm_converter_);
   storageResult.match(
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
         storage = _storage.value;
@@ -368,14 +371,8 @@ void Irohad::initTransactionCommandService() {
  * Initializing query command service
  */
 void Irohad::initQueryService() {
-  auto perm_converter =
-      std::make_shared<shared_model::proto::ProtoPermissionToString>();
-  auto query_processor =
-      std::make_shared<QueryProcessorImpl>(storage,
-                                           storage,
-                                           pending_txs_storage_,
-                                           query_response_factory_,
-                                           perm_converter);
+  auto query_processor = std::make_shared<QueryProcessorImpl>(
+      storage, storage, pending_txs_storage_, query_response_factory_);
 
   query_service = std::make_shared<::torii::QueryService>(query_processor);
 

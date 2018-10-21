@@ -25,9 +25,7 @@ namespace iroha {
           std::shared_ptr<iroha::PendingTransactionStorage>
               pending_transactions,
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
-              response_factory,
-          std::shared_ptr<shared_model::interface::PermissionToString>
-              perm_converter);
+              response_factory);
 
       /**
        * Checks if query has needed signatures

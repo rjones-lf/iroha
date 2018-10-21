@@ -22,14 +22,11 @@ namespace iroha {
         std::shared_ptr<ametsuchi::QueryExecutorFactory> qry_exec,
         std::shared_ptr<iroha::PendingTransactionStorage> pending_transactions,
         std::shared_ptr<shared_model::interface::QueryResponseFactory>
-            response_factory,
-        std::shared_ptr<shared_model::interface::PermissionToString>
-            perm_converter)
+            response_factory)
         : storage_{std::move(storage)},
           qry_exec_{std::move(qry_exec)},
           pending_transactions_{std::move(pending_transactions)},
           response_factory_{std::move(response_factory)},
-          perm_converter_(std::move(perm_converter)),
           log_{logger::log("QueryProcessorImpl")} {
       storage_->on_commit().subscribe(
           [this](std::shared_ptr<shared_model::interface::Block> block) {
@@ -69,8 +66,8 @@ namespace iroha {
             qry.hash());
       }
 
-      auto executor = qry_exec_->createQueryExecutor(
-          pending_transactions_, response_factory_, perm_converter_);
+      auto executor = qry_exec_->createQueryExecutor(pending_transactions_,
+                                                     response_factory_);
       if (not executor) {
         log_->error("Cannot create query executor");
         return nullptr;
@@ -90,8 +87,8 @@ namespace iroha {
         return rxcpp::observable<>::just(std::move(response));
       }
 
-      auto exec = qry_exec_->createQueryExecutor(
-          pending_transactions_, response_factory_, perm_converter_);
+      auto exec = qry_exec_->createQueryExecutor(pending_transactions_,
+                                                 response_factory_);
       if (not exec or not(exec | [&qry](const auto &executor) {
             return executor->validate(qry);
           })) {

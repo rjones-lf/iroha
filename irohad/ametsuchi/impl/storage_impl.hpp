@@ -18,6 +18,7 @@
 #include "ametsuchi/key_value_storage.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/block_json_converter.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -52,6 +53,8 @@ namespace iroha {
               factory,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
               converter,
+          std::shared_ptr<shared_model::interface::PermissionToString>
+              perm_converter,
           size_t pool_size = 10);
 
       expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
@@ -72,9 +75,7 @@ namespace iroha {
       boost::optional<std::shared_ptr<QueryExecutor>> createQueryExecutor(
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
-              response_factory,
-          std::shared_ptr<shared_model::interface::PermissionToString>
-              perm_converter) const override;
+              response_factory) const override;
 
       /**
        * Insert block without validation
@@ -118,6 +119,8 @@ namespace iroha {
                       factory,
                   std::shared_ptr<shared_model::interface::BlockJsonConverter>
                       converter,
+                  std::shared_ptr<shared_model::interface::PermissionToString>
+                      perm_converter,
                   size_t pool_size);
 
       /**
@@ -139,6 +142,9 @@ namespace iroha {
           notifier_;
 
       std::shared_ptr<shared_model::interface::BlockJsonConverter> converter_;
+
+      std::shared_ptr<shared_model::interface::PermissionToString>
+          perm_converter_;
 
       logger::Logger log_;
 
