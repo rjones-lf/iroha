@@ -132,6 +132,14 @@ namespace integration_framework {
         const shared_model::crypto::Keypair &keypair);
 
     /**
+     * Send transaction to Iroha without wating for proposal and validating its
+     * status
+     * @param tx - transaction to send
+     */
+    IntegrationTestFramework &sendTxWithoutValidation(
+        const shared_model::proto::Transaction &tx);
+
+    /**
      * Send transaction to Iroha and validate its status
      * @param tx - transaction for sending
      * @param validation - callback for transaction status validation that

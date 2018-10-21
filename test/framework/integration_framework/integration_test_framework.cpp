@@ -316,13 +316,19 @@ namespace integration_framework {
     return *this;
   }
 
+  IntegrationTestFramework &IntegrationTestFramework::sendTxWithoutValidation(
+      const shared_model::proto::Transaction &tx) {
+    log_->info("sending transaction");
+    log_->debug(tx.toString());
+
+    command_client_.Torii(tx.getTransport());
+    return *this;
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
       const shared_model::proto::Transaction &tx,
       std::function<void(const shared_model::proto::TransactionResponse &)>
           validation) {
-    log_->info("sending transaction");
-    log_->debug(tx.toString());
-
     // Required for StatusBus synchronization
     boost::barrier bar1(2);
     auto bar2 = std::make_shared<boost::barrier>(2);
@@ -338,7 +344,7 @@ namespace integration_framework {
           }
         });
 
-    command_client_.Torii(tx.getTransport());
+    sendTxWithoutValidation(tx);
     // make sure that the first (stateless) status has come
     bar1.wait();
     // fetch status of transaction
