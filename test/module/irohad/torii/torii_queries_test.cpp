@@ -9,6 +9,7 @@
 #include "module/irohad/torii/torii_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 
+#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/queries.hpp"
@@ -58,12 +59,18 @@ class ToriiQueriesTest : public testing::Test {
 
     EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
-    EXPECT_CALL(*storage, createQueryExecutor(_, _))
+    EXPECT_CALL(*storage, createQueryExecutor(_, _, _))
         .WillRepeatedly(Return(boost::make_optional(
             std::shared_ptr<QueryExecutor>(query_executor))));
 
+    auto perm_converter =
+        std::make_shared<shared_model::proto::ProtoPermissionToString>();
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage, storage, pending_txs_storage, query_response_factory);
+        storage,
+        storage,
+        pending_txs_storage,
+        query_response_factory,
+        perm_converter);
 
     //----------- Server run ----------------
     runner->append(std::make_unique<torii::QueryService>(qpi))

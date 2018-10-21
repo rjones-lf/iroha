@@ -4,6 +4,7 @@
  */
 
 #include "backend/protobuf/block.hpp"
+#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/query_responses/proto_error_query_response.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
@@ -40,13 +41,16 @@ class QueryProcessorTest : public ::testing::Test {
     storage = std::make_shared<MockStorage>();
     query_response_factory =
         std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
+
+    auto perm_converter =
+        std::make_shared<shared_model::proto::ProtoPermissionToString>();
     qpi = std::make_shared<torii::QueryProcessorImpl>(
-        storage, storage, nullptr, query_response_factory);
+        storage, storage, nullptr, query_response_factory, perm_converter);
     wsv_queries = std::make_shared<MockWsvQuery>();
     EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
     EXPECT_CALL(*storage, getBlockQuery())
         .WillRepeatedly(Return(block_queries));
-    EXPECT_CALL(*storage, createQueryExecutor(_, _))
+    EXPECT_CALL(*storage, createQueryExecutor(_, _, _))
         .WillRepeatedly(Return(
             boost::make_optional(std::shared_ptr<QueryExecutor>(qry_exec))));
   }

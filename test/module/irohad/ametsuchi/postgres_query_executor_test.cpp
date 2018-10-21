@@ -8,6 +8,7 @@
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "framework/result_fixture.hpp"
 #include "framework/specified_visitor.hpp"
@@ -66,6 +67,9 @@ namespace iroha {
                       .build());
         query_response_factory =
             std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
+
+        perm_converter =
+            std::make_shared<shared_model::proto::ProtoPermissionToString>();
       }
 
       void SetUp() override {
@@ -109,8 +113,8 @@ namespace iroha {
       }
 
       auto executeQuery(shared_model::interface::Query &query) {
-        return query_executor->createQueryExecutor(pending_txs_storage,
-                                                   query_response_factory)
+        return query_executor->createQueryExecutor(
+                   pending_txs_storage, query_response_factory, perm_converter)
             | [&query](const auto &executor) {
                 return executor->validateAndExecute(query);
               };
@@ -189,6 +193,8 @@ namespace iroha {
 
       std::shared_ptr<shared_model::interface::QueryResponseFactory>
           query_response_factory;
+      std::shared_ptr<shared_model::interface::PermissionToString>
+          perm_converter;
     };
 
     class BlocksQueryExecutorTest : public QueryExecutorTest {};
@@ -199,7 +205,8 @@ namespace iroha {
                               .creatorAccountId(account->accountId())
                               .build();
       ASSERT_TRUE(query_executor->createQueryExecutor(pending_txs_storage,
-                                                      query_response_factory)
+                                                      query_response_factory,
+                                                      perm_converter)
                   | [&blocks_query](const auto &executor) {
                       return executor->validate(blocks_query);
                     });
@@ -210,7 +217,8 @@ namespace iroha {
                               .creatorAccountId(account->accountId())
                               .build();
       ASSERT_FALSE(query_executor->createQueryExecutor(pending_txs_storage,
-                                                       query_response_factory)
+                                                       query_response_factory,
+                                                       perm_converter)
                    | [&blocks_query](const auto &executor) {
                        return executor->validate(blocks_query);
                      });

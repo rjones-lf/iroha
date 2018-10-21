@@ -10,6 +10,7 @@
 
 #include "ametsuchi/query_executor.hpp"
 #include "interfaces/iroha_internal/query_response_factory.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "pending_txs_storage/pending_txs_storage.hpp"
 
 namespace iroha {
@@ -23,7 +24,9 @@ namespace iroha {
       createQueryExecutor(
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
-              response_factory) const = 0;
+              response_factory,
+          std::shared_ptr<shared_model::interface::PermissionToString>
+              perm_converter) const = 0;
 
       virtual ~QueryExecutorFactory() = default;
     };

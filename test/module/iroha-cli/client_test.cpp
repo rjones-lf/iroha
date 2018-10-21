@@ -31,6 +31,7 @@
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 
+#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
@@ -98,7 +99,7 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*mst, onExpiredBatchesImpl())
         .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
-    EXPECT_CALL(*storage, createQueryExecutor(_, _))
+    EXPECT_CALL(*storage, createQueryExecutor(_, _, _))
         .WillRepeatedly(Return(boost::make_optional(
             std::shared_ptr<QueryExecutor>(query_executor))));
 
@@ -121,7 +122,11 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage, storage, pending_txs_storage, query_response_factory);
+        storage,
+        storage,
+        pending_txs_storage,
+        query_response_factory,
+        std::make_shared<shared_model::proto::ProtoPermissionToString>());
 
     //----------- Server run ----------------
     auto status_factory =
