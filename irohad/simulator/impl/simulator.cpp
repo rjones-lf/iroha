@@ -98,6 +98,7 @@ namespace iroha {
       auto validated_proposal_and_errors =
           std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
               validator_->validate(proposal, *storage));
+      ametsuchi_factory_->prepareBlock();
       storage.reset();
 
       notifier_.get_subscriber().on_next(

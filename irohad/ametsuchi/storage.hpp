@@ -62,14 +62,6 @@ namespace iroha {
               &blocks) = 0;
 
       /**
-       * Prepare block for insertion
-       * @param block - block to be inserted later
-       * @return true if preparation is successful
-       */
-      virtual bool prepareBlock(
-          const shared_model::interface::Block &block) = 0;
-
-      /**
        * method called when block is written to the storage
        * @return observable with the Block committed
        */

@@ -91,8 +91,6 @@ namespace iroha {
           const std::vector<std::shared_ptr<shared_model::interface::Block>>
               &blocks) override;
 
-      bool prepareBlock(const shared_model::interface::Block &block) override;
-
       void reset() override;
 
       void dropStorage() override;
@@ -109,6 +107,8 @@ namespace iroha {
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override;
+
+      void prepareBlock() override;
 
       ~StorageImpl() override;
 

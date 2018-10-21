@@ -194,24 +194,6 @@ namespace iroha {
       return inserted;
     }
 
-    bool StorageImpl::prepareBlock(
-        const shared_model::interface::Block &block) {
-      if (not prepared_blocks_enabled_) {
-        log_->error("Prepared blocks are not enabled in storage");
-        return false;
-      }
-      const std::string block_id = block.hash().hex();
-      try {
-        soci::session sql(*connection_);
-        sql << "PREPARE TRANSACTION '" + block_id + "';";
-        log_->info("Prepared block {}", block_id);
-        return true;
-      } catch (const std::exception &e) {
-        log_->error("Failed to prepare block {}: {}", block_id, e.what());
-        return false;
-      }
-    }
-
     void StorageImpl::reset() {
       log_->info("drop wsv records from db tables");
       soci::session sql(*connection_);
@@ -400,11 +382,10 @@ namespace iroha {
         return false;
       }
       log_->info("applying prepared block");
-      soci::session sql(*connection_);
 
       try {
+        soci::session sql(*connection_);
         sql << "COMMIT PREPARED 'prepared_block';";
-        log_->info("commited prepared block");
       } catch (const std::exception &e) {
         log_->warn("failed to apply prepared block {}: {}",
                     block.hash().hex(),
@@ -419,7 +400,7 @@ namespace iroha {
             notifier_.get_subscriber().on_next(clone(block));
             return true;
           },
-          [this, &sql](const expected::Error<std::string> &e) {
+          [this](const expected::Error<std::string> &e) {
             log_->error(e.error);
             return false;
           });
@@ -450,6 +431,13 @@ namespace iroha {
     rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
     StorageImpl::on_commit() {
       return notifier_.get_observable();
+    }
+
+    void StorageImpl::prepareBlock() {
+      if (prepared_blocks_enabled_) {
+        soci::session sql(*connection_);
+        sql << "PREPARE TRANSACTION 'prepared_block';";
+      }
     }
 
     StorageImpl::~StorageImpl() {

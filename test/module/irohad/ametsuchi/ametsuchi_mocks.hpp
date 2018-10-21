@@ -191,6 +191,7 @@ namespace iroha {
       MOCK_METHOD0(
           createTemporaryWsv,
           expected::Result<std::unique_ptr<TemporaryWsv>, std::string>(void));
+      MOCK_METHOD0(prepareBlock, void(void));
     };
 
     class MockTemporaryWsv : public TemporaryWsv {
@@ -285,10 +286,10 @@ namespace iroha {
       MOCK_METHOD1(insertBlocks,
                    bool(const std::vector<
                         std::shared_ptr<shared_model::interface::Block>> &));
-      MOCK_METHOD1(prepareBlock, bool(const shared_model::interface::Block &));
       MOCK_METHOD0(reset, void(void));
       MOCK_METHOD0(dropStorage, void(void));
       MOCK_METHOD0(freeConnections, void(void));
+      MOCK_METHOD0(prepareBlock, void(void));
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override {
