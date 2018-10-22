@@ -31,15 +31,19 @@ namespace iroha {
     };
 
     /// Reject on proposal
-    struct ProposalReject {};
+    struct ProposalReject {
+      shared_model::interface::types::HeightType height;
+    };
 
     /// Reject on block
     struct BlockReject {
-      std::shared_ptr<shared_model::interface::Block> block;
+      shared_model::interface::types::HeightType height;
     };
 
     /// Agreement on <None, None>
-    struct AgreementOnNone {};
+    struct AgreementOnNone {
+      shared_model::interface::types::HeightType height;
+    };
 
     /**
      * Public api of consensus module

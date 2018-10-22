@@ -27,7 +27,7 @@ namespace iroha {
      * Outcome, which was decided by synchronizer based on consensus result and
      * current local ledger state
      */
-    enum class SynchronizationOutcomeType { kCommit, kReject };
+    enum class SynchronizationOutcomeType { kCommit, kReject, kNothing };
 
     /**
      * Event, which is emitted by synchronizer, when it receives and processes
@@ -36,6 +36,7 @@ namespace iroha {
     struct SynchronizationEvent {
       Chain synced_blocks;
       SynchronizationOutcomeType sync_outcome;
+      shared_model::interface::types::HeightType height;
     };
 
   }  // namespace synchronizer

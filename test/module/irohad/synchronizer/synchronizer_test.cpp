@@ -79,13 +79,16 @@ class SynchronizerTest : public ::testing::Test {
   std::shared_ptr<MockBlockLoader> block_loader;
   std::shared_ptr<MockConsensusGate> consensus_gate;
 
+  rxcpp::subjects::subject<ConsensusGate::GateObject> gate_outcome;
+
   std::shared_ptr<SynchronizerImpl> synchronizer;
 };
 
 TEST_F(SynchronizerTest, ValidWhenInitialized) {
   // synchronizer constructor => on_commit subscription called
-  EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
+  EXPECT_CALL(*consensus_gate, onOutcome())
+      .WillOnce(
+          Return(rxcpp::observable<>::empty<ConsensusGate::GateObject>()));
 
   init();
 }
@@ -99,21 +102,14 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
   std::shared_ptr<shared_model::interface::Block> test_block =
       std::make_shared<shared_model::proto::Block>(
           TestBlockBuilder().height(5).build());
-  rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-      test_blocks = rxcpp::observable<>::just(test_block);
 
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
-
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
-
-  EXPECT_CALL(*chain_validator, validateChain(_, _)).WillOnce(Return(true));
-
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
-
-  EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
+  EXPECT_CALL(*consensus_gate, onOutcome())
+      .WillOnce(Return(gate_outcome.get_observable()));
 
   init();
 
@@ -130,7 +126,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
     ASSERT_TRUE(block_wrapper.validate());
   });
 
-  synchronizer->process_commit(test_block);
+  gate_outcome.get_subscriber().on_next(PairValid{test_block});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -148,15 +144,10 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
       expected::Result<std::unique_ptr<MutableStorage>, std::string>>::Clear();
   EXPECT_CALL(*mutable_factory, createMutableStorage())
       .WillOnce(Return(ByMove(expected::makeError("Connection was closed"))));
-
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(0);
-
-  EXPECT_CALL(*chain_validator, validateChain(_, _)).Times(0);
-
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
-
-  EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
+  EXPECT_CALL(*consensus_gate, onOutcome())
+      .WillOnce(Return(gate_outcome.get_observable()));
 
   init();
 
@@ -164,14 +155,14 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 0);
   wrapper.subscribe();
 
-  synchronizer->process_commit(test_block);
+  gate_outcome.get_subscriber().on_next(PairValid{test_block});
 
   ASSERT_TRUE(wrapper.validate());
 }
 
 /**
  * @given A commit from consensus and initialized components
- * @when A valid chain with expected ending
+ * @when gate have voted for other block
  * @then Successful commit
  */
 TEST_F(SynchronizerTest, ValidWhenValidChain) {
@@ -184,16 +175,11 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
-
-  EXPECT_CALL(*chain_validator, validateChain(_, _))
-      .WillOnce(Return(false))
-      .WillOnce(Return(true));
-
   EXPECT_CALL(*block_loader, retrieveBlocks(_))
       .WillOnce(Return(commit_message_blocks));
-
-  EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
+  EXPECT_CALL(*chain_validator, validateChain(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*consensus_gate, onOutcome())
+      .WillOnce(Return(gate_outcome.get_observable()));
 
   init();
 
@@ -210,64 +196,17 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
     ASSERT_TRUE(block_wrapper.validate());
   });
 
-  synchronizer->process_commit(commit_message);
+  gate_outcome.get_subscriber().on_next(VoteOther{commit_message});
 
   ASSERT_TRUE(wrapper.validate());
 }
 
 /**
- * @given A valid block that cannot be applied directly
- * @when process_commit is called
- * @then observable of retrieveBlocks must be evaluated four times:
- *   - to validate whole chain
- *   - to validate last block of chain (x2)
- *   - to create a vector
+ * @given A commit from consensus and initialized components
+ * @when gate have voted for other block
+ * @then retrieveBlocks called again after unsuccessful download attempt
  */
 TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
-  auto commit_message = makeCommit();
-
-  DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
-      SetFactory(&createMockMutableStorage);
-  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
-  EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
-  EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
-  EXPECT_CALL(*chain_validator, validateChain(_, _))
-      .WillOnce(Return(false))
-      .WillOnce(testing::Invoke([](auto chain, auto &) {
-        // emulate chain check
-        chain.as_blocking().subscribe([](auto) {});
-        return true;
-      }));
-  EXPECT_CALL(*block_loader, retrieveBlocks(_))
-      .WillOnce(Return(rxcpp::observable<>::create<std::shared_ptr<
-                           shared_model::interface::Block>>([commit_message](
-                                                                auto s) {
-        static int times = 0;
-        if (times++ > 4) {
-          FAIL() << "Observable of retrieveBlocks must be evaluated four times";
-        }
-        s.on_next(commit_message);
-        s.on_completed();
-      })));
-
-  init();
-
-  auto wrapper =
-      make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
-  wrapper.subscribe();
-
-  synchronizer->process_commit(commit_message);
-
-  ASSERT_TRUE(wrapper.validate());
-}
-
-/**
- * @given commit from the consensus and initialized components
- * @when synchronizer fails to download block from some peer
- * @then it will try until success
- */
-TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
   auto commit_message = makeCommit();
   rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       commit_message_blocks = rxcpp::observable<>::just(commit_message);
@@ -275,38 +214,78 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
-
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
-
+  EXPECT_CALL(*consensus_gate, onOutcome())
+      .WillOnce(Return(gate_outcome.get_observable()));
+  EXPECT_CALL(*chain_validator, validateChain(_, _)).WillOnce(Return(true));
   EXPECT_CALL(*block_loader, retrieveBlocks(_))
-      .WillRepeatedly(Return(commit_message_blocks));
-
-  // fail the chain validation two times so that synchronizer will try more
-  EXPECT_CALL(*chain_validator, validateChain(_, _))
-      .WillOnce(Return(false))
-      .WillOnce(Return(false))
-      .WillOnce(Return(false))
-      .WillOnce(Return(true));
-
-  EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Block>>()))
+      .WillOnce(Return(commit_message_blocks));
 
   init();
 
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
-  wrapper.subscribe([commit_message](auto commit_event) {
+  wrapper.subscribe();
+
+  gate_outcome.get_subscriber().on_next(VoteOther{commit_message});
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given initialized components
+ * @when gate have got reject on block
+ * @then synchronizer output is also reject with related block height
+ */
+TEST_F(SynchronizerTest, RejectOutcome) {
+  constexpr int height = 1337;
+  EXPECT_CALL(*consensus_gate, onOutcome())
+      .WillOnce(Return(gate_outcome.get_observable()));
+
+  init();
+
+  auto wrapper =
+      make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
+  wrapper.subscribe([height](auto commit_event) {
     auto block_wrapper =
-        make_test_subscriber<CallExact>(commit_event.synced_blocks, 1);
-    block_wrapper.subscribe([commit_message](auto block) {
-      // Check commit block
-      ASSERT_EQ(block->height(), commit_message->height());
-    });
-    ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kCommit);
+        make_test_subscriber<CallExact>(commit_event.synced_blocks, 0);
+    block_wrapper.subscribe();
     ASSERT_TRUE(block_wrapper.validate());
+    ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kReject);
+    ASSERT_EQ(commit_event.height, height);
   });
 
-  synchronizer->process_commit(commit_message);
+  gate_outcome.get_subscriber().on_next(BlockReject{height});
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given initialized components
+ * @when gate have got agreement on none
+ * @then synchronizer output is also none with related block height
+ */
+TEST_F(SynchronizerTest, NoneOutcome) {
+  constexpr int height = 1337;
+  EXPECT_CALL(*consensus_gate, onOutcome())
+      .WillOnce(Return(gate_outcome.get_observable()));
+
+  init();
+
+  auto wrapper =
+      make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
+  wrapper.subscribe([height](auto commit_event) {
+    auto block_wrapper =
+        make_test_subscriber<CallExact>(commit_event.synced_blocks, 0);
+    block_wrapper.subscribe();
+    ASSERT_TRUE(block_wrapper.validate());
+    ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kNothing);
+    ASSERT_EQ(commit_event.height, height);
+  });
+
+  gate_outcome.get_subscriber().on_next(AgreementOnNone{height});
 
   ASSERT_TRUE(wrapper.validate());
 }

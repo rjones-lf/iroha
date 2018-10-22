@@ -26,8 +26,11 @@ namespace iroha {
 
       ~SynchronizerImpl() override;
 
-      void process_commit(std::shared_ptr<shared_model::interface::Block>
-                              commit_message) override;
+      std::unique_ptr<ametsuchi::MutableStorage> getStorage();
+      void processNext(
+          std::shared_ptr<shared_model::interface::Block> commit_message);
+      void processDifferent(
+          std::shared_ptr<shared_model::interface::Block> commit_message);
 
       rxcpp::observable<SynchronizationEvent> on_commit_chain() override;
 

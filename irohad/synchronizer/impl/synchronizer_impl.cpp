@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "ametsuchi/mutable_storage.hpp"
+#include "common/visitor.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
@@ -24,18 +25,37 @@ namespace iroha {
           log_(logger::log("synchronizer")) {
       consensus_gate->onOutcome().subscribe(
           subscription_,
-          // TODO(@l4l) 11/10/18  rework at IR-1754
-          [&](const network::ConsensusGate::GateObject &gate_object) {
-            visit_in_place(gate_object,
-                           [this](const network::PairValid &pv) {
-                             this->process_commit(pv.block);
-                           },
-                           [this](const network::VoteOther &vo) {
-                             this->process_commit(vo.block);
-                           },
-                           [](const auto &obj) {
-                             throw std::runtime_error("Unhandled object");
-                           });
+          [this](const network::ConsensusGate::GateObject &object) {
+            this->log_->info("processing consensus outcome");
+            visit_in_place(
+                object,
+                [this](const network::PairValid &msg) {
+                  this->processNext(msg.block);
+                },
+                [this](const network::VoteOther &msg) {
+                  this->processDifferent(msg.block);
+                },
+                [this](const network::ProposalReject &msg) {
+                  notifier_.get_subscriber().on_next(SynchronizationEvent{
+                      rxcpp::observable<>::empty<
+                          std::shared_ptr<shared_model::interface::Block>>(),
+                      SynchronizationOutcomeType::kReject,
+                      msg.height});
+                },
+                [this](const network::BlockReject &msg) {
+                  notifier_.get_subscriber().on_next(SynchronizationEvent{
+                      rxcpp::observable<>::empty<
+                          std::shared_ptr<shared_model::interface::Block>>(),
+                      SynchronizationOutcomeType::kReject,
+                      msg.height});
+                },
+                [this](const network::AgreementOnNone &msg) {
+                  notifier_.get_subscriber().on_next(SynchronizationEvent{
+                      rxcpp::observable<>::empty<
+                          std::shared_ptr<shared_model::interface::Block>>(),
+                      SynchronizationOutcomeType::kNothing,
+                      msg.height});
+                });
           });
     }
 
@@ -66,41 +86,52 @@ namespace iroha {
               and validator_->validateChain(chain, *storage)) {
             mutable_factory_->commit(std::move(storage));
 
-            return {chain, SynchronizationOutcomeType::kCommit};
+            return {chain,
+                    SynchronizationOutcomeType::kCommit,
+                    commit_message->height()};
           }
         }
       }
     }
 
-    void SynchronizerImpl::process_commit(
-        std::shared_ptr<shared_model::interface::Block> commit_message) {
-      log_->info("processing commit");
-
+    std::unique_ptr<ametsuchi::MutableStorage> SynchronizerImpl::getStorage() {
       auto mutable_storage_var = mutable_factory_->createMutableStorage();
       if (auto e =
               boost::get<expected::Error<std::string>>(&mutable_storage_var)) {
         log_->error("could not create mutable storage: {}", e->error);
+        return {};
+      }
+      return std::move(
+          boost::get<
+              expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>>(
+              &mutable_storage_var)
+              ->value);
+    }
+
+    void SynchronizerImpl::processNext(
+        std::shared_ptr<shared_model::interface::Block> commit_message) {
+      log_->info("at handleNext");
+      std::unique_ptr<ametsuchi::MutableStorage> storage = getStorage();
+      if (storage == nullptr) {
         return;
       }
-      auto storage =
-          std::move(
-              boost::get<
-                  expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>>(
-                  mutable_storage_var))
-              .value;
+      storage->apply(*commit_message);
+      mutable_factory_->commit(std::move(storage));
+      notifier_.get_subscriber().on_next(
+          SynchronizationEvent{rxcpp::observable<>::just(commit_message),
+                               SynchronizationOutcomeType::kCommit,
+                               commit_message->height()});
+    }
 
-      auto commit = rxcpp::observable<>::just(commit_message);
-      SynchronizationEvent result;
-
-      if (validator_->validateChain(commit, *storage)) {
-        mutable_factory_->commit(std::move(storage));
-
-        result = {commit, SynchronizationOutcomeType::kCommit};
-      } else {
-        result = downloadMissingBlocks(std::move(commit_message),
-                                       std::move(storage));
+    void SynchronizerImpl::processDifferent(
+        std::shared_ptr<shared_model::interface::Block> commit_message) {
+      log_->info("at handleDifferent");
+      std::unique_ptr<ametsuchi::MutableStorage> storage = getStorage();
+      if (storage == nullptr) {
+        return;
       }
-
+      SynchronizationEvent result =
+          downloadMissingBlocks(commit_message, std::move(storage));
       notifier_.get_subscriber().on_next(result);
     }
 
