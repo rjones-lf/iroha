@@ -372,7 +372,7 @@ namespace integration_framework {
         transaction_batch_factory_;
     std::shared_ptr<iroha::network::MstTransportGrpc> mst_transport_;
 
-    std::unique_ptr<shared_model::interface::Peer> this_peer_;
+    std::shared_ptr<shared_model::interface::Peer> this_peer_;
 
    private:
     logger::Logger log_ = logger::log("IntegrationTestFramework");

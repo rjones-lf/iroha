@@ -25,12 +25,17 @@ add_library(integration_framework
     integration_framework/integration_test_framework.cpp
     integration_framework/iroha_instance.cpp
     integration_framework/fake_peer/fake_peer.cpp
+    integration_framework/fake_peer/yac_network_notifier.cpp
     )
 target_link_libraries(integration_framework
     application
     integration_framework_config_helper
     command_client
     query_client
+    yac_transport
+    shared_model_cryptography_model
+    server_runner
+    mst_transport
     )
 
 target_include_directories(integration_framework PUBLIC ${PROJECT_SOURCE_DIR}/test PRIVATE "${gmock_INCLUDE_DIR};${gtest_INCLUDE_DIR}")

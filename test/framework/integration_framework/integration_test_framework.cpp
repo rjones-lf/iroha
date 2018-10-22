@@ -120,6 +120,8 @@ namespace integration_framework {
         kLocalHost,
         getNextPort<kDefaultInternalPort>(),
         key,
+        this_peer_,
+        common_objects_factory_,
         transaction_factory_,
         batch_parser_,
         transaction_batch_factory_);
