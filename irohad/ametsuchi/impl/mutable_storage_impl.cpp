@@ -19,8 +19,7 @@ namespace iroha {
     MutableStorageImpl::MutableStorageImpl(
         shared_model::interface::types::HashType top_hash,
         std::unique_ptr<soci::session> sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
-        bool enable_prepared_blocks)
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
         : top_hash_(top_hash),
           sql_(std::move(sql)),
           peer_query_(std::make_unique<PeerQueryWsv>(
@@ -28,16 +27,12 @@ namespace iroha {
           block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
           command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
           committed(false),
-          log_(logger::log("MutableStorage")),
-          prepared_blocks_enabled_(enable_prepared_blocks) {
-      if (not enable_prepared_blocks) {
-        *sql_ << "BEGIN";
-      }
+          log_(logger::log("MutableStorage")) {
+      *sql_ << "BEGIN";
     }
 
     bool MutableStorageImpl::apply(const shared_model::interface::Block &block,
                                    MutableStoragePredicate predicate) {
-      *sql_ << "BEGIN;";
       auto execute_transaction = [this](auto &transaction) {
         command_executor_->setCreatorAccountId(transaction.creatorAccountId());
         command_executor_->doValidation(false);
@@ -79,7 +74,6 @@ namespace iroha {
 
     template <typename Function>
     bool MutableStorageImpl::withSavepoint(Function &&function) {
-      *sql_ << "BEGIN;";
       *sql_ << "SAVEPOINT savepoint_";
 
       auto function_executed = std::forward<Function>(function)();

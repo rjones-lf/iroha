@@ -27,8 +27,7 @@ namespace iroha {
           shared_model::interface::types::HashType top_hash,
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory,
-          bool enable_prepared_blocks);
+              factory);
 
       bool apply(const shared_model::interface::Block &block) override;
 
@@ -68,8 +67,6 @@ namespace iroha {
       bool committed;
 
       logger::Logger log_;
-
-      bool prepared_blocks_enabled_;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

@@ -96,8 +96,7 @@ namespace iroha {
                     return shared_model::interface::types::HashType("");
                   }),
               std::move(sql),
-              factory_,
-              prepared_blocks_enabled_));
+              factory_));
     }
 
     boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery()
