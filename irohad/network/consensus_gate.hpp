@@ -10,6 +10,7 @@
 #include <rxcpp/rx.hpp>
 
 #include "consensus/round.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
