@@ -384,6 +384,11 @@ namespace iroha {
       log_->info("applying prepared block");
 
       try {
+        std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+        if (not connection_) {
+          log_->info("connection to database is not initialised");
+          return false;
+        }
         soci::session sql(*connection_);
         sql << "COMMIT PREPARED 'prepared_block';";
       } catch (const std::exception &e) {
@@ -435,8 +440,16 @@ namespace iroha {
 
     void StorageImpl::prepareBlock() {
       if (prepared_blocks_enabled_) {
+        std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+        if (not connection_) {
+          log_->info("connection to database is not initialised");
+          return;
+        }
         soci::session sql(*connection_);
         sql << "PREPARE TRANSACTION 'prepared_block';";
+        log_->info("prepared block");
+      } else {
+        log_->warn("prepared block are not enabled");
       }
     }
 
