@@ -16,7 +16,6 @@
 #include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "network/ordering_gate.hpp"
 #include "torii/processor/query_processor_impl.hpp"
@@ -91,7 +90,7 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
                  .signAndAddSignature(keypair)
                  .finish();
   auto *qry_resp =
-      clone(TestQueryResponseBuilder().accountDetailResponse("").build())
+      query_response_factory->createAccountDetailResponse("", qry.hash())
           .release();
 
   EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
@@ -120,8 +119,6 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
                        shared_model::crypto::DefaultCryptoAlgorithmType::
                            generateKeypair())
                    .finish();
-  auto qry_resp =
-      clone(TestQueryResponseBuilder().accountDetailResponse("").build());
 
   EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
       .WillRepeatedly(Return(signatories));

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <interfaces/iroha_internal/query_response_factory.hpp>
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
@@ -13,7 +14,6 @@
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 #include "client.hpp"
@@ -372,12 +372,6 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));
 
-  auto *resp =
-      clone(TestQueryResponseBuilder().accountDetailResponse("value").build())
-          .release();
-
-  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
-
   auto query = QueryBuilder()
                    .createdTime(iroha::time::now())
                    .creatorAccountId("admin@test")
@@ -386,6 +380,12 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
                    .build()
                    .signAndAddSignature(pair)
                    .finish();
+
+  auto *resp =
+      query_response_factory->createAccountDetailResponse("value", query.hash())
+          .release();
+
+  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
 
   auto res = client.sendQuery(query);
   ASSERT_EQ(res.answer.account_detail_response().detail(), "value");
@@ -397,15 +397,6 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));
 
-  auto *resp =
-      clone(TestQueryResponseBuilder()
-                .errorQueryResponse<
-                    shared_model::interface::StatefulFailedErrorResponse>()
-                .build())
-          .release();
-
-  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
-
   auto query = QueryBuilder()
                    .createdTime(iroha::time::now())
                    .creatorAccountId("admin@test")
@@ -414,6 +405,16 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
                    .build()
                    .signAndAddSignature(pair)
                    .finish();
+
+  auto *resp = query_response_factory
+                   ->createErrorQueryResponse(
+                       shared_model::interface::QueryResponseFactory::
+                           ErrorQueryType::kStatefulFailed,
+                       "",
+                       query.hash())
+                   .release();
+
+  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
 
   auto res = client.sendQuery(query);
   ASSERT_EQ(res.answer.error_response().reason(),
