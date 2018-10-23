@@ -16,6 +16,7 @@
 
 namespace shared_model {
   namespace proto {
+
     /**
      * Template blocks query builder for creating new types of builders by
      * means of replacing template parameters
@@ -31,19 +32,24 @@ namespace shared_model {
      private:
       template <int, typename, typename>
       friend class TemplateBlocksQueryBuilder;
+
       enum RequiredFields {
         CreatedTime,
         CreatorAccountId,
         QueryCounter,
         TOTAL
       };
+
       template <int s>
       using NextBuilder = TemplateBlocksQueryBuilder<S | (1 << s), SV, BT>;
+
       using ProtoBlocksQuery = iroha::protocol::BlocksQuery;
+
       template <int Sp>
       TemplateBlocksQueryBuilder(
           const TemplateBlocksQueryBuilder<Sp, SV, BT> &o)
           : query_(o.query_), stateless_validator_(o.stateless_validator_) {}
+
       /**
        * Make transformation on copied content
        * @tparam Transformation - callable type for changing the copy
@@ -60,12 +66,14 @@ namespace shared_model {
      public:
       TemplateBlocksQueryBuilder(const SV &validator = SV())
           : stateless_validator_(validator) {}
+
       auto createdTime(interface::types::TimestampType created_time) const {
         return transform<CreatedTime>([&](auto &qry) {
           auto *meta = qry.mutable_meta();
           meta->set_created_time(created_time);
         });
       }
+
       auto creatorAccountId(
           const interface::types::AccountIdType &creator_account_id) const {
         return transform<CreatorAccountId>([&](auto &qry) {
@@ -73,12 +81,14 @@ namespace shared_model {
           meta->set_creator_account_id(creator_account_id);
         });
       }
+
       auto queryCounter(interface::types::CounterType query_counter) const {
         return transform<QueryCounter>([&](auto &qry) {
           auto *meta = qry.mutable_meta();
           meta->set_query_counter(query_counter);
         });
       }
+
       auto build() const {
         static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
         auto result = BlocksQuery(iroha::protocol::BlocksQuery(query_));
@@ -88,6 +98,7 @@ namespace shared_model {
         }
         return BT(std::move(result));
       }
+
       static const int total = RequiredFields::TOTAL;
 
      private:
@@ -96,4 +107,5 @@ namespace shared_model {
     };
   }  // namespace proto
 }  // namespace shared_model
+
 #endif  // IROHA_PROTO_BLOCKS_QUERY_BUILDER_TEMPLATE_HPP
