@@ -94,27 +94,31 @@ namespace iroha {
       }
     }
 
-    std::unique_ptr<ametsuchi::MutableStorage> SynchronizerImpl::getStorage() {
-      auto mutable_storage_var = mutable_factory_->createMutableStorage();
+    boost::optional<std::unique_ptr<ametsuchi::MutableStorage>> getStorage(
+        logger::Logger &log,
+        std::shared_ptr<ametsuchi::MutableFactory> mutable_factory) {
+      auto mutable_storage_var = mutable_factory->createMutableStorage();
       if (auto e =
               boost::get<expected::Error<std::string>>(&mutable_storage_var)) {
-        log_->error("could not create mutable storage: {}", e->error);
+        log->error("could not create mutable storage: {}", e->error);
         return {};
       }
-      return std::move(
+      return {std::move(
           boost::get<
               expected::Value<std::unique_ptr<ametsuchi::MutableStorage>>>(
               &mutable_storage_var)
-              ->value);
+              ->value)};
     }
 
     void SynchronizerImpl::processNext(
         std::shared_ptr<shared_model::interface::Block> commit_message) {
       log_->info("at handleNext");
-      std::unique_ptr<ametsuchi::MutableStorage> storage = getStorage();
-      if (storage == nullptr) {
+      auto opt_storage = getStorage(log_, mutable_factory_);
+      if (opt_storage == boost::none) {
         return;
       }
+      std::unique_ptr<ametsuchi::MutableStorage> storage =
+          std::move(opt_storage.value());
       storage->apply(*commit_message);
       mutable_factory_->commit(std::move(storage));
       notifier_.get_subscriber().on_next(
@@ -126,10 +130,12 @@ namespace iroha {
     void SynchronizerImpl::processDifferent(
         std::shared_ptr<shared_model::interface::Block> commit_message) {
       log_->info("at handleDifferent");
-      std::unique_ptr<ametsuchi::MutableStorage> storage = getStorage();
-      if (storage == nullptr) {
+      auto opt_storage = getStorage(log_, mutable_factory_);
+      if (opt_storage == boost::none) {
         return;
       }
+      std::unique_ptr<ametsuchi::MutableStorage> storage =
+          std::move(opt_storage.value());
       SynchronizationEvent result =
           downloadMissingBlocks(commit_message, std::move(storage));
       notifier_.get_subscriber().on_next(result);
