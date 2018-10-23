@@ -92,7 +92,15 @@ namespace integration_framework {
     // start instance
     log_->info("starting listening server");
     internal_server_ = std::make_unique<ServerRunner>(getAddress());
-    internal_server_->append(yac_transport_).append(mst_transport_).run();
+    internal_server_->append(yac_transport_)
+        .append(mst_transport_)
+        .run()
+        .match(
+            [this](const iroha::expected::Result<int, std::string>::ValueType
+                       &val) {
+              log_->debug("started server on port {}", val.value);
+            },
+            [this](const auto &err) { log_->error("coul not start server!"); });
   }
 
   void FakePeer::subscribeForMstNotifications(
