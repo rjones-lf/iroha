@@ -22,12 +22,28 @@
 
 namespace shared_model {
   namespace interface {
-    class BlockVariant;
-  }  // namespace interface
+    class Block;
+  }
 }  // namespace shared_model
 
 namespace iroha {
   namespace network {
+
+    /// Shows whether the peer has voted for the block in the commit
+    enum class PeerVotedFor {
+      kThisBlock,
+      kOtherBlock
+    };
+
+    /**
+     * Commit message which contains commited block and information about
+     * whether or not the peer has voted for this block
+     */
+    struct Commit {
+      std::shared_ptr<shared_model::interface::Block> block;
+      PeerVotedFor type;
+    };
+
     /**
      * Public api of consensus module
      */
@@ -35,16 +51,17 @@ namespace iroha {
      public:
       /**
        * Providing data for consensus for voting
+       * @param block is the block for which current node is voting
        */
-      virtual void vote(const shared_model::interface::BlockVariant &) = 0;
+      virtual void vote(
+          std::shared_ptr<shared_model::interface::Block> block) = 0;
 
       /**
        * Emit committed blocks
        * Note: committed block may be not satisfy for top block in ledger
        * because synchronization reasons
        */
-      virtual rxcpp::observable<shared_model::interface::BlockVariant>
-      on_commit() = 0;
+      virtual rxcpp::observable<Commit> on_commit() = 0;
 
       virtual ~ConsensusGate() = default;
     };

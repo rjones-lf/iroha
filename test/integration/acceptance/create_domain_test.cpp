@@ -31,11 +31,9 @@ TEST_F(CreateDomain, Basic) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().createDomain(kNewDomain, kRole)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(
+          complete(baseTx().createDomain(kNewDomain, kRole)),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
@@ -54,7 +52,8 @@ TEST_F(CreateDomain, NoPermissions) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -74,7 +73,8 @@ TEST_F(CreateDomain, NoRole) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -94,7 +94,8 @@ TEST_F(CreateDomain, ExistingName) {
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
-      .done();
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -114,11 +115,9 @@ TEST_F(CreateDomain, MaxLenName) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().createDomain(maxLongDomain, kRole)))
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .done();
+      .sendTxAwait(
+          complete(baseTx().createDomain(maxLongDomain, kRole)),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
 }
 
 /**
@@ -134,7 +133,7 @@ TEST_F(CreateDomain, TooLongName) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(std::string(257, 'a'), kRole)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -151,7 +150,7 @@ TEST_F(CreateDomain, EmptyName) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(empty_name, kRole)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -168,5 +167,5 @@ TEST_F(CreateDomain, DISABLED_EmptyRoleName) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(kNewDomain, empty_name)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }

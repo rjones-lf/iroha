@@ -1,16 +1,5 @@
-# Copyright 2017 Soramitsu Co., Ltd.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 AddTest(state_test state_test.cpp)
 target_link_libraries(state_test
@@ -18,6 +7,7 @@ target_link_libraries(state_test
     logger
     shared_model_proto_builders
     shared_model_stateless_validation
+    shared_model_interfaces_factories
     )
 
 AddTest(storage_test storage_test.cpp)
@@ -26,11 +16,13 @@ target_link_libraries(storage_test
     logger
     shared_model_proto_builders
     shared_model_stateless_validation
+    shared_model_interfaces_factories
     )
 
 AddTest(transport_test transport_test.cpp)
 target_link_libraries(transport_test
     mst_transport
+    mst_processor
     logger
     shared_model_cryptography
     shared_model_stateless_validation
@@ -53,4 +45,5 @@ target_link_libraries(gossip_propagation_strategy_test
     logger
     shared_model_cryptography
     shared_model_stateless_validation
+    shared_model_proto_backend
     )

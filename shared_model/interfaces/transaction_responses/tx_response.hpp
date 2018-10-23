@@ -6,21 +6,25 @@
 #ifndef IROHA_TX_RESPONSE_HPP
 #define IROHA_TX_RESPONSE_HPP
 
-#include <boost/variant.hpp>
+#include <boost/variant/variant_fwd.hpp>
 
 #include "interfaces/base/model_primitive.hpp"
-#include "interfaces/transaction.hpp"
-#include "interfaces/transaction_responses/committed_tx_response.hpp"
-#include "interfaces/transaction_responses/mst_expired_response.hpp"
-#include "interfaces/transaction_responses/not_received_tx_response.hpp"
-#include "interfaces/transaction_responses/stateful_failed_tx_response.hpp"
-#include "interfaces/transaction_responses/stateful_valid_tx_response.hpp"
-#include "interfaces/transaction_responses/stateless_failed_tx_response.hpp"
-#include "interfaces/transaction_responses/stateless_valid_tx_response.hpp"
-#include "utils/visitor_apply_for_all.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
+
+    class StatelessFailedTxResponse;
+    class StatelessValidTxResponse;
+    class StatefulFailedTxResponse;
+    class StatefulValidTxResponse;
+    class RejectTxResponse;
+    class CommittedTxResponse;
+    class MstExpiredResponse;
+    class NotReceivedTxResponse;
+    class MstPendingResponse;
+    class EnoughSignaturesCollectedResponse;
+
     /**
      * TransactionResponse is a status of transaction in system
      */
@@ -30,23 +34,33 @@ namespace shared_model {
       template <typename... Value>
       using wrap = boost::variant<const Value &...>;
 
+     protected:
+      /**
+       * @return priority of this transaction response; transaction response can
+       * only be replaced with one with higher priority
+       */
+      virtual int priority() const noexcept = 0;
+
      public:
       /// Type of variant, that handle all concrete tx responses in the system
       using ResponseVariantType = wrap<StatelessFailedTxResponse,
                                        StatelessValidTxResponse,
                                        StatefulFailedTxResponse,
                                        StatefulValidTxResponse,
+                                       RejectTxResponse,
                                        CommittedTxResponse,
                                        MstExpiredResponse,
-                                       NotReceivedTxResponse>;
+                                       NotReceivedTxResponse,
+                                       MstPendingResponse,
+                                       EnoughSignaturesCollectedResponse>;
 
-      /// Type with list of types in ResponseVariantType
-      using ResponseListType = ResponseVariantType::types;
+      /// Type of transaction hash
+      using TransactionHashType = interface::types::HashType;
 
       /**
        * @return hash of corresponding transaction
        */
-      virtual const interface::types::HashType &transactionHash() const = 0;
+      virtual const TransactionHashType &transactionHash() const = 0;
 
       /**
        * @return attached concrete tx response
@@ -61,21 +75,23 @@ namespace shared_model {
        */
       virtual const ErrorMessageType &errorMessage() const = 0;
 
+      /**
+       * Enumeration for holding result of priorities comparison
+       */
+      enum class PrioritiesComparisonResult { kLess, kEqual, kGreater };
+      /**
+       * Compare priorities of two transaction responses
+       * @param other response
+       * @return enumeration result of that comparison
+       */
+      PrioritiesComparisonResult comparePriorities(const ModelType &other) const
+          noexcept;
+
       // ------------------------| Primitive override |-------------------------
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("TransactionResponse")
-            .append("transactionHash", transactionHash().hex())
-            .append(boost::apply_visitor(detail::ToStringVisitor(), get()))
-            .append("errorMessage", errorMessage())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return transactionHash() == rhs.transactionHash()
-            and get() == rhs.get();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

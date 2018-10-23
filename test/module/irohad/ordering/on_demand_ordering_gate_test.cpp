@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 #include "framework/test_subscriber.hpp"
-#include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
@@ -51,7 +51,9 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
  */
 TEST_F(OnDemandOrderingGateTest, propagateBatch) {
   OdOsNotification::CollectionType collection;
-  shared_model::interface::TransactionBatch batch(collection);
+  std::shared_ptr<shared_model::interface::TransactionBatch> batch =
+      std::make_shared<shared_model::interface::TransactionBatchImpl>(
+          collection);
 
   EXPECT_CALL(*notification, onTransactions(initial_round, collection))
       .Times(1);
@@ -66,8 +68,10 @@ TEST_F(OnDemandOrderingGateTest, propagateBatch) {
  * @then new proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, BlockEvent) {
-  OnDemandOrderingGate::BlockEvent event{3};
-  Round round{event.height, 1};
+  auto block = std::make_shared<MockBlock>();
+  EXPECT_CALL(*block, height()).WillRepeatedly(Return(3));
+  OnDemandOrderingGate::BlockEvent event = {block};
+  Round round{event->height(), 1};
 
   boost::optional<OdOsNotification::ProposalType> oproposal(nullptr);
   auto proposal = oproposal.value().get();
@@ -119,8 +123,10 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
  * @then new empty proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
-  OnDemandOrderingGate::BlockEvent event{3};
-  Round round{event.height, 1};
+  auto block = std::make_shared<MockBlock>();
+  EXPECT_CALL(*block, height()).WillRepeatedly(Return(3));
+  OnDemandOrderingGate::BlockEvent event = {block};
+  Round round{event->height(), 1};
 
   boost::optional<OdOsNotification::ProposalType> oproposal;
 

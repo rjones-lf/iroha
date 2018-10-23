@@ -23,6 +23,8 @@
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
+#include "interfaces/iroha_internal/query_response_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
@@ -30,6 +32,7 @@
 #include "main/server_runner.hpp"
 #include "mst.grpc.pb.h"
 #include "multi_sig_transactions/mst_processor.hpp"
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/impl/peer_communication_service_impl.hpp"
@@ -41,6 +44,7 @@
 #include "synchronizer/impl/synchronizer_impl.hpp"
 #include "synchronizer/synchronizer.hpp"
 #include "torii/command_service.hpp"
+#include "torii/impl/command_service_transport_grpc.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
 #include "torii/query_service.hpp"
@@ -57,10 +61,14 @@ namespace iroha {
 
 class Irohad {
  public:
+
+  using RunResult = iroha::expected::Result<void, std::string>;
+
   /**
    * Constructor that initializes common iroha pipeline
    * @param block_store_dir - folder where blocks will be stored
    * @param pg_conn - initialization string for postgre
+   * @param listen_ip - ip address for opening ports
    * @param torii_port - port for torii binding
    * @param internal_port - port for internal communication - ordering service,
    * consensus, and block loader
@@ -73,6 +81,7 @@ class Irohad {
    */
   Irohad(const std::string &block_store_dir,
          const std::string &pg_conn,
+         const std::string &listen_ip,
          size_t torii_port,
          size_t internal_port,
          size_t max_proposal_size,
@@ -99,8 +108,9 @@ class Irohad {
 
   /**
    * Run worker threads for start performing
+   * @return void value on success, error message otherwise
    */
-  virtual void run();
+  RunResult run();
 
   virtual ~Irohad();
 
@@ -111,9 +121,13 @@ class Irohad {
 
   virtual void initCryptoProvider();
 
+  virtual void initBatchParser();
+
   virtual void initValidators();
 
   virtual void initNetworkClient();
+
+  virtual void initFactories();
 
   virtual void initOrderingGate();
 
@@ -147,6 +161,7 @@ class Irohad {
   // constructor dependencies
   std::string block_store_dir_;
   std::string pg_conn_;
+  const std::string listen_ip_;
   size_t torii_port_;
   size_t internal_port_;
   size_t max_proposal_size_;
@@ -158,6 +173,9 @@ class Irohad {
 
   // crypto provider
   std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer_;
+
+  // batch parser
+  std::shared_ptr<shared_model::interface::TransactionBatchParser> batch_parser;
 
   // validators
   std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;
@@ -173,6 +191,10 @@ class Irohad {
   // common objects factory
   std::shared_ptr<shared_model::interface::CommonObjectsFactory>
       common_objects_factory_;
+
+  // transaction batch factory
+  std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+      transaction_batch_factory_;
 
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;
@@ -196,6 +218,16 @@ class Irohad {
   // pcs
   std::shared_ptr<iroha::network::PeerCommunicationService> pcs;
 
+  // transaction factory
+  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::Transaction,
+      iroha::protocol::Transaction>>
+      transaction_factory;
+
+  // query response factory
+  std::shared_ptr<shared_model::interface::QueryResponseFactory>
+      query_response_factory_;
+
   // mst
   std::shared_ptr<iroha::MstProcessor> mst_processor;
 
@@ -207,6 +239,7 @@ class Irohad {
 
   // transaction service
   std::shared_ptr<torii::CommandService> command_service;
+  std::shared_ptr<torii::CommandServiceTransportGrpc> command_service_transport;
 
   // query service
   std::shared_ptr<torii::QueryService> query_service;
@@ -218,6 +251,8 @@ class Irohad {
   iroha::network::OnDemandOrderingInit ordering_init;
   iroha::consensus::yac::YacInit yac_init;
   iroha::network::BlockLoaderInit loader_init;
+
+  std::shared_ptr<iroha::network::MstTransportGrpc> mst_transport;
 
   logger::Logger log_;
 

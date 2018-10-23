@@ -30,7 +30,7 @@ namespace iroha {
       explicit BlockLoaderService(
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<iroha::consensus::ConsensusResultCache>
-          consensus_result_cache);
+              consensus_result_cache);
 
       grpc::Status retrieveBlocks(
           ::grpc::ServerContext *context,

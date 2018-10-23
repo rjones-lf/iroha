@@ -80,7 +80,7 @@ TEST_F(CreateAssetFixture, IllegalCharactersInName) {
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
   for (const auto &name : kIllegalAssetNames) {
     itf.sendTx(complete(baseTx().createAsset(name, kDomain, kPrecision)),
-               checkStatelessInvalid);
+               CHECK_STATELESS_INVALID);
   }
 }
 
@@ -105,7 +105,9 @@ TEST_F(CreateAssetFixture, ExistingName) {
           // reason
           [](auto &vproposal) {
             ASSERT_EQ(vproposal->transactions().size(), 0);
-          });
+          })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -130,7 +132,9 @@ TEST_F(CreateAssetFixture, ExistingNameDifferentPrecision) {
           // reason
           [](auto &vproposal) {
             ASSERT_EQ(vproposal->transactions().size(), 0);
-          });
+          })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -153,7 +157,9 @@ TEST_F(CreateAssetFixture, WithoutPermission) {
           // reason
           [](auto &vproposal) {
             ASSERT_EQ(vproposal->transactions().size(), 0);
-          });
+          })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -176,7 +182,9 @@ TEST_F(CreateAssetFixture, ValidNonExistingDomain) {
           // reason
           [](auto &vproposal) {
             ASSERT_EQ(vproposal->transactions().size(), 0);
-          });
+          })
+      .checkBlock(
+          [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
 }
 
 /**
@@ -187,12 +195,11 @@ TEST_F(CreateAssetFixture, ValidNonExistingDomain) {
 TEST_F(CreateAssetFixture, InvalidDomain) {
   IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair)
-      .sendTx(makeUserWithPerms())
-      .skipProposal()
-      .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
+      .sendTxAwait(makeUserWithPerms(), [](auto &block) {
+        ASSERT_EQ(block->transactions().size(), 1);
+      });
   for (const auto &domain : kIllegalDomainNames) {
     itf.sendTx(complete(baseTx().createAsset(kAssetName, domain, kPrecision)),
-               checkStatelessInvalid);
+               CHECK_STATELESS_INVALID);
   }
 }

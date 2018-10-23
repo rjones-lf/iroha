@@ -1,4 +1,5 @@
-#!/bin/sh -x
+#!/usr/bin/env bash
+set -x
 
 if [ -z "$1" ] || [ "$1" -le "0" ]; then
     echo "Usage: $0 <number_of_peers>"

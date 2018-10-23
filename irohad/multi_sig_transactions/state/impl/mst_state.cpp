@@ -5,14 +5,33 @@
 
 #include "multi_sig_transactions/state/mst_state.hpp"
 
-#include <boost/range/algorithm/find.hpp>
-#include <boost/range/combine.hpp>
 #include <utility>
 
-#include "backend/protobuf/transaction.hpp"
+#include <boost/range/algorithm/find.hpp>
+#include <boost/range/combine.hpp>
 #include "common/set.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/transaction.hpp"
 
 namespace iroha {
+
+  bool BatchHashEquality::operator()(const DataType &left_tx,
+                                     const DataType &right_tx) const {
+    return left_tx->reducedHash() == right_tx->reducedHash();
+  }
+
+  bool DefaultCompleter::operator()(const DataType &batch) const {
+    return std::all_of(batch->transactions().begin(),
+                       batch->transactions().end(),
+                       [](const auto &tx) {
+                         return boost::size(tx->signatures()) >= tx->quorum();
+                       });
+  }
+
+  bool DefaultCompleter::operator()(const DataType &tx,
+                                    const TimeType &time) const {
+    return false;
+  }
 
   // ------------------------------| public api |-------------------------------
 
@@ -20,18 +39,22 @@ namespace iroha {
     return MstState(completer);
   }
 
-  MstState MstState::operator+=(const DataType &rhs) {
-    auto result = MstState::empty(completer_);
-    insertOne(result, rhs);
-    return result;
+  StateUpdateResult MstState::operator+=(const DataType &rhs) {
+    auto state_update = StateUpdateResult{
+        std::make_shared<MstState>(MstState::empty(completer_)),
+        std::make_shared<MstState>(MstState::empty(completer_))};
+    insertOne(state_update, rhs);
+    return state_update;
   }
 
-  MstState MstState::operator+=(const MstState &rhs) {
-    auto result = MstState::empty(completer_);
+  StateUpdateResult MstState::operator+=(const MstState &rhs) {
+    auto state_update = StateUpdateResult{
+        std::make_shared<MstState>(MstState::empty(completer_)),
+        std::make_shared<MstState>(MstState::empty(completer_))};
     for (auto &&rhs_tx : rhs.internal_state_) {
-      insertOne(result, rhs_tx);
+      insertOne(state_update, rhs_tx);
     }
-    return result;
+    return state_update;
   }
 
   MstState MstState::operator-(const MstState &rhs) const {
@@ -40,30 +63,21 @@ namespace iroha {
   }
 
   bool MstState::operator==(const MstState &rhs) const {
-    const auto &lhs_batches = getBatches();
-    const auto &rhs_batches = rhs.getBatches();
-
-    return std::equal(lhs_batches.begin(),
-                      lhs_batches.end(),
-                      rhs_batches.begin(),
-                      rhs_batches.end(),
-                      [](const auto &l, const auto &r) { return *l == *r; });
+    return std::all_of(
+        internal_state_.begin(), internal_state_.end(), [&rhs](auto &i) {
+          return rhs.internal_state_.find(i) != rhs.internal_state_.end();
+        });
   }
 
   bool MstState::isEmpty() const {
     return internal_state_.empty();
   }
 
-  std::vector<DataType> MstState::getBatches() const {
-    std::vector<DataType> result(internal_state_.begin(),
-                                 internal_state_.end());
-    // sorting is provided for clear comparison of states
-    // TODO: 15/08/2018 @muratovv Rework return type with set IR-1621
-    std::sort(
-        result.begin(), result.end(), [](const auto &left, const auto &right) {
-          return left->reducedHash().hex() < right->reducedHash().hex();
-        });
-    return result;
+  std::unordered_set<DataType,
+                     iroha::model::PointerBatchHasher,
+                     BatchHashEquality>
+  MstState::getBatches() const {
+    return {internal_state_.begin(), internal_state_.end()};
   }
 
   MstState MstState::eraseByTime(const TimeType &time) {
@@ -80,30 +94,35 @@ namespace iroha {
 
   // ------------------------------| private api |------------------------------
 
+  bool MstState::Less::operator()(const DataType &left,
+                                  const DataType &right) const {
+    return left->transactions().at(0)->createdTime()
+        < right->transactions().at(0)->createdTime();
+  }
+
   /**
    * Merge signatures in batches
    * @param target - batch for inserting
    * @param donor - batch with transactions to copy signatures from
-   * @return return false when sequences of transactions inside input batches
-   * are different
+   * @return return if at least one new signature was inserted
    */
   bool mergeSignaturesInBatch(DataType &target, const DataType &donor) {
-    if (not(*target == *donor)) {
-      return false;
-    }
-
+    auto inserted_new_signatures = false;
     for (auto zip :
          boost::combine(target->transactions(), donor->transactions())) {
       const auto &target_tx = zip.get<0>();
       const auto &donor_tx = zip.get<1>();
-      std::for_each(donor_tx->signatures().begin(),
-                    donor_tx->signatures().end(),
-                    [&target_tx](const auto &signature) {
-                      target_tx->addSignature(signature.signedData(),
-                                              signature.publicKey());
-                    });
+      inserted_new_signatures = std::accumulate(
+          std::begin(donor_tx->signatures()),
+          std::end(donor_tx->signatures()),
+          inserted_new_signatures,
+          [&target_tx](bool accumulator, const auto &signature) {
+            return target_tx->addSignature(signature.signedData(),
+                                           signature.publicKey())
+                or accumulator;
+          });
     }
-    return true;
+    return inserted_new_signatures;
   }
 
   MstState::MstState(const CompleterType &completer)
@@ -117,24 +136,33 @@ namespace iroha {
     log_ = logger::log("MstState");
   }
 
-  void MstState::insertOne(MstState &out_state, const DataType &rhs_batch) {
+  void MstState::insertOne(StateUpdateResult &state_update,
+                           const DataType &rhs_batch) {
     log_->info("batch: {}", rhs_batch->toString());
     auto corresponding = internal_state_.find(rhs_batch);
     if (corresponding == internal_state_.end()) {
-      // when state not contains transaction
+      // when state does not contain transaction
       rawInsert(rhs_batch);
+      state_update.updated_state_->rawInsert(rhs_batch);
       return;
     }
 
     DataType found = *corresponding;
     // Append new signatures to the existing state
-    mergeSignaturesInBatch(found, rhs_batch);
+    auto inserted_new_signatures = mergeSignaturesInBatch(found, rhs_batch);
 
     if ((*completer_)(found)) {
       // state already has completed transaction,
       // remove from state and return it
-      out_state += found;
       internal_state_.erase(internal_state_.find(found));
+      state_update.completed_state_->rawInsert(found);
+      return;
+    }
+
+    // if batch still isn't completed, return it, if new signatures were
+    // inserted
+    if (inserted_new_signatures) {
+      state_update.updated_state_->rawInsert(found);
     }
   }
 

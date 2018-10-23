@@ -35,7 +35,7 @@ namespace iroha {
        * @param batch object, in which transaction(s) are packed
        */
       virtual void onBatch(
-          shared_model::interface::TransactionBatch &&batch) = 0;
+          std::unique_ptr<shared_model::interface::TransactionBatch> batch) = 0;
 
       virtual ~OrderingServiceNotification() = default;
     };

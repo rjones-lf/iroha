@@ -58,7 +58,7 @@ auto addSignatures(Batch &&batch, int tx_number, Signatures... signatures) {
   mst_helpers_log_->info(
       "Number of signatures was inserted {}",
       boost::size(batch->transactions().at(tx_number)->signatures()));
-  return batch;
+  return std::forward<Batch>(batch);
 }
 
 template <typename Batch, typename... KeyPairs>
@@ -79,7 +79,7 @@ auto addSignaturesFromKeyPairs(Batch &&batch,
   // use unused variable
   (void)temp;
 
-  return batch;
+  return std::forward<Batch>(batch);
 }
 
 inline auto makeSignature(const std::string &sign,

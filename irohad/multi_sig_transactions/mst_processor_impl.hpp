@@ -76,6 +76,26 @@ namespace iroha {
      */
     void onPropagate(const PropagationStrategy::PropagationData &data);
 
+    /**
+     * Notify subscribers when some of the batches received all necessary
+     * signatures and ready to move forward
+     * @param state with those batches
+     */
+    void completedBatchesNotify(ConstRefState state) const;
+
+    /**
+     * Notify subscribers when some of the batches received new signatures, but
+     * still are not completed
+     * @param state with those batches
+     */
+    void updatedBatchesNotify(ConstRefState state) const;
+
+    /**
+     * Notify subscribers when some of the bathes get expired
+     * @param state with those batches
+     */
+    void expiredBatchesNotify(ConstRefState state) const;
+
     // -------------------------------| fields |--------------------------------
     std::shared_ptr<iroha::network::MstTransport> transport_;
     std::shared_ptr<MstStorage> storage_;

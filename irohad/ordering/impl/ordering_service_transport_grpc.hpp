@@ -19,6 +19,7 @@
 
 #include <google/protobuf/empty.pb.h>
 
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "network/ordering_service_transport.hpp"
@@ -32,7 +33,9 @@ namespace iroha {
         : public iroha::network::OrderingServiceTransport,
           public proto::OrderingServiceTransportGrpc::Service {
      public:
-      explicit OrderingServiceTransportGrpc(
+      OrderingServiceTransportGrpc(
+          std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+              transaction_batch_factory,
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call);
       void subscribe(
@@ -42,10 +45,6 @@ namespace iroha {
       void publishProposal(
           std::unique_ptr<shared_model::interface::Proposal> proposal,
           const std::vector<std::string> &peers) override;
-
-      grpc::Status onTransaction(::grpc::ServerContext *context,
-                                 const protocol::Transaction *request,
-                                 ::google::protobuf::Empty *response) override;
 
       grpc::Status onBatch(::grpc::ServerContext *context,
                            const protocol::TxList *request,
@@ -57,6 +56,8 @@ namespace iroha {
       std::weak_ptr<iroha::network::OrderingServiceNotification> subscriber_;
       std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
           async_call_;
+      std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+          batch_factory_;
     };
 
   }  // namespace ordering

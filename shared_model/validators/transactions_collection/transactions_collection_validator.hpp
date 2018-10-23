@@ -7,6 +7,7 @@
 #define IROHA_TRANSACTIONS_COLLECTION_VALIDATOR_HPP
 
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
+#include "interfaces/common_objects/types.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -16,7 +17,7 @@ namespace shared_model {
      * Validator of transaction's collection, this is not fair implementation
      * now, it always returns empty answer
      */
-    template <typename TransactionValidator>
+    template <typename TransactionValidator, bool CollectionCanBeEmpty = false>
     class TransactionsCollectionValidator {
      protected:
       TransactionValidator transaction_validator_;

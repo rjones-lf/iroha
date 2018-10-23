@@ -18,11 +18,11 @@
 #ifndef IROHA_BLOCK_CREATOR_HPP
 #define IROHA_BLOCK_CREATOR_HPP
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 
 namespace shared_model {
   namespace interface {
-    class BlockVariant;
+    class Block;
     class Proposal;
   }  // namespace interface
 }  // namespace shared_model
@@ -46,7 +46,7 @@ namespace iroha {
        * Emit blocks made from proposals
        * @return
        */
-      virtual rxcpp::observable<shared_model::interface::BlockVariant>
+      virtual rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_block() = 0;
 
       virtual ~BlockCreator() = default;

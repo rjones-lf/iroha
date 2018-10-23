@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gmock/gmock.h>
@@ -49,8 +37,8 @@ TEST_F(YacTest, InvalidCaseWhenNotReceiveSupermajority) {
 
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
-  YacHash hash1("proposal_hash", "block_hash");
-  YacHash hash2("proposal_hash", "block_hash2");
+  YacHash hash1(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
+  YacHash hash2(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash2");
   yac->vote(hash1, my_order.value());
 
   for (auto i = 0; i < 2; ++i) {
@@ -83,8 +71,8 @@ TEST_F(YacTest, InvalidCaseWhenDoesNotVerify) {
 
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(false));
 
-  YacHash hash1("proposal_hash", "block_hash");
-  YacHash hash2("proposal_hash", "block_hash2");
+  YacHash hash1(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
+  YacHash hash2(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash2");
 
   for (auto i = 0; i < 2; ++i) {
     yac->onState({create_vote(hash1, std::to_string(i))});
@@ -122,8 +110,8 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
 
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
 
-  YacHash hash1("proposal_hash", "block_hash");
-  YacHash hash2("proposal_hash", "block_hash2");
+  YacHash hash1(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
+  YacHash hash2(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash2");
 
   std::vector<VoteMessage> votes;
   for (size_t i = 0; i < peers_number / 2; ++i) {

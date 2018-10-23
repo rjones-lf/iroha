@@ -1,4 +1,4 @@
-#!/bin/bash
-rm -rf external
+#!/usr/bin/env bash
+
 rm -rf build
 rm -rf cmake-build-debug

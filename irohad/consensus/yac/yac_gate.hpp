@@ -18,7 +18,7 @@
 #ifndef IROHA_YAC_GATE_HPP
 #define IROHA_YAC_GATE_HPP
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include "consensus/yac/storage/storage_result.hpp"
 #include "network/consensus_gate.hpp"
 
@@ -39,6 +39,7 @@ namespace iroha {
         /**
          * Proposal new hash in network
          * @param hash - hash for voting
+         * @param order - peer ordering
          */
         virtual void vote(YacHash hash, ClusterOrdering order) = 0;
 

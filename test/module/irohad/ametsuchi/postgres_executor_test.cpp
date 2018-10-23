@@ -4,9 +4,11 @@
  */
 
 #include "ametsuchi/impl/postgres_command_executor.hpp"
+#include "ametsuchi/impl/postgres_query_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_account_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_asset_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_domain_builder.hpp"
@@ -46,6 +48,7 @@ namespace iroha {
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
                 shared_model::validation::FieldValidator>>();
         query = std::make_unique<PostgresWsvQuery>(*sql, factory);
+        PostgresCommandExecutor::prepareStatements(*sql);
         executor = std::make_unique<PostgresCommandExecutor>(*sql);
 
         *sql << init_;
@@ -102,7 +105,6 @@ namespace iroha {
       std::unique_ptr<shared_model::interface::Account> account;
       std::unique_ptr<shared_model::interface::Domain> domain;
       std::unique_ptr<shared_model::interface::types::PubkeyType> pubkey;
-
       std::unique_ptr<soci::session> sql;
 
       std::unique_ptr<shared_model::interface::Command> command;
@@ -453,15 +455,15 @@ namespace iroha {
 
     TEST_F(AppendRole, ValidAppendRoleTestWhenEmptyPerms) {
       addAllPerms();
-      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
-          another_role, {})),
-                              true)));
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder().createRole(another_role, {})),
+          true)));
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().appendRole(
           account->accountId(), another_role)))));
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
       ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
-                      != roles->end());
+                  != roles->end());
     }
 
     class CreateAccount : public CommandExecutorTest {
@@ -703,8 +705,8 @@ namespace iroha {
      */
     TEST_F(CreateRole, ValidCreateRoleTest) {
       addAllPerms();
-      ASSERT_TRUE(val(execute(buildCommand(
-          TestTransactionBuilder().createRole(another_role, role_permissions)))));
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
+          another_role, role_permissions)))));
       auto rl = query->getRolePermissions(role);
       ASSERT_TRUE(rl);
       ASSERT_EQ(rl.get(), role_permissions);
@@ -718,8 +720,8 @@ namespace iroha {
     TEST_F(CreateRole, CreateRoleTestInvalidWhenHasNoPerms) {
       role_permissions2.set(
           shared_model::interface::permissions::Role::kRemoveMySignatory);
-      ASSERT_TRUE(err(execute(buildCommand(
-          TestTransactionBuilder().createRole(another_role, role_permissions2)))));
+      ASSERT_TRUE(err(execute(buildCommand(TestTransactionBuilder().createRole(
+          another_role, role_permissions2)))));
       auto rl = query->getRolePermissions(another_role);
       ASSERT_TRUE(rl);
       ASSERT_TRUE(rl->none());
@@ -959,6 +961,23 @@ namespace iroha {
               account->accountId(), pk)))));
     }
 
+    /**
+     * @given  command
+     * @when trying to remove signatory from a non existing account
+     * @then signatory is not removed
+     */
+    TEST_F(RemoveSignatory, RemoveSignatoryTestNonExistingAccount) {
+      addAllPerms();
+      shared_model::interface::types::PubkeyType pk(std::string('5', 32));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+                          account->accountId(), pk)),
+                      true)));
+
+      ASSERT_TRUE(err(execute(buildCommand(
+          TestTransactionBuilder().removeSignatory("hello", *pubkey)))));
+    }
+
     class RevokePermission : public CommandExecutorTest {
      public:
       void SetUp() override {
@@ -1006,6 +1025,10 @@ namespace iroha {
           account->accountId(), account->accountId(), perm));
 
       ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder()
+              .revokePermission(account->accountId(), grantable_permission)
+              .creatorAccountId(account->accountId())))));
+      ASSERT_TRUE(err(execute(buildCommand(
           TestTransactionBuilder()
               .revokePermission(account->accountId(), grantable_permission)
               .creatorAccountId(account->accountId())))));
@@ -1164,7 +1187,7 @@ namespace iroha {
       shared_model::interface::types::PubkeyType pk(std::string('5', 32));
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().addSignatory(
-              account->accountId(), pk)),
+                          account->accountId(), pk)),
                       true)));
       ASSERT_TRUE(
           err(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(
@@ -1570,6 +1593,5 @@ namespace iroha {
                                                  "desc",
                                                  "2.0")))));
     }
-
   }  // namespace ametsuchi
 }  // namespace iroha

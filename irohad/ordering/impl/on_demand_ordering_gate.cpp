@@ -26,10 +26,11 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         std::lock_guard<std::shared_timed_mutex> lock(mutex_);
 
         visit_in_place(event,
-                       [this](const BlockEvent &block) {
+                       [this](const BlockEvent &block_event) {
                          // block committed, increment block round
-                         log_->debug("BlockEvent. height {}", block.height);
-                         current_round_ = {block.height + 1, 1};
+                         log_->debug("BlockEvent. height {}",
+                                     block_event->height());
+                         current_round_ = {block_event->height(), 1};
                        },
                        [this](const EmptyEvent &empty) {
                          // no blocks committed, increment reject round
@@ -68,17 +69,11 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                            std::move(factory),
                            {2, 1}) {}
 
-void OnDemandOrderingGate::propagateTransaction(
-    std::shared_ptr<const shared_model::interface::Transaction> transaction)
-    const {
-  throw std::logic_error("Method is deprecated. Use propagateBatch instead");
-}
-
 void OnDemandOrderingGate::propagateBatch(
-    const shared_model::interface::TransactionBatch &batch) const {
+    std::shared_ptr<shared_model::interface::TransactionBatch> batch) const {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
-  network_client_->onTransactions(current_round_, batch.transactions());
+  network_client_->onTransactions(current_round_, batch->transactions());
 }
 
 rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>

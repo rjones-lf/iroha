@@ -5,6 +5,8 @@
 
 #include "integration/acceptance/acceptance_fixture.hpp"
 
+#include <utility>
+
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
@@ -25,12 +27,6 @@ AcceptanceFixture::AcceptanceFixture()
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()),
       kUserKeypair(
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()),
-      checkStatelessInvalid([](auto &status) {
-        ASSERT_NO_THROW(boost::apply_visitor(
-            framework::SpecifiedVisitor<
-                shared_model::interface::StatelessFailedTxResponse>(),
-            status.get()));
-      }),
       initial_time(iroha::time::now()),
       nonce_counter(1) {}
 

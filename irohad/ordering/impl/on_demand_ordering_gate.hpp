@@ -11,7 +11,7 @@
 #include <shared_mutex>
 
 #include <boost/variant.hpp>
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
@@ -30,9 +30,7 @@ namespace iroha {
       /**
        * Represents storage modification. Proposal round increment
        */
-      struct BlockEvent {
-        shared_model::interface::types::HeightType height;
-      };
+      using BlockEvent = std::shared_ptr<shared_model::interface::Block>;
 
       /**
        * Represents no storage modification. Reject round increment
@@ -56,12 +54,9 @@ namespace iroha {
           std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
               factory);
 
-      [[deprecated("Use propagateBatch")]] void propagateTransaction(
-          std::shared_ptr<const shared_model::interface::Transaction>
-              transaction) const override;
-
-      void propagateBatch(const shared_model::interface::TransactionBatch
-                              &batch) const override;
+      void propagateBatch(
+          std::shared_ptr<shared_model::interface::TransactionBatch> batch)
+          const override;
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
       on_proposal() override;

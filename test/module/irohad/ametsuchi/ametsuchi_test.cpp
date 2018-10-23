@@ -122,7 +122,7 @@ void apply(S &&storage, const shared_model::interface::Block &block) {
       [](iroha::expected::Error<std::string> &error) {
         FAIL() << "MutableStorage: " << error.error;
       });
-  ms->apply(block, [](const auto &, auto &, const auto &) { return true; });
+  ms->apply(block);
   storage->commit(std::move(ms));
 }
 
@@ -607,8 +607,7 @@ TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
       [](const auto &) { FAIL() << "Mutable storage cannot be created"; });
 
   mutable_storage->apply(
-      expected_block,
-      [](const auto &, const auto &, const auto &) { return true; });
+      expected_block);
 
   storage->commit(std::move(mutable_storage));
 

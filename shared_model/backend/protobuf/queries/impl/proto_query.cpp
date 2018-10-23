@@ -7,6 +7,14 @@
 #include "backend/protobuf/util.hpp"
 #include "utils/variant_deserializer.hpp"
 
+using Variant = shared_model::proto::Query::ProtoQueryVariantType;
+template Variant::~variant();
+template Variant::variant(Variant &&);
+template void Variant::destroy_content();
+template int Variant::which() const;
+template void Variant::indicate_which(int);
+template bool Variant::using_backup() const;
+
 namespace shared_model {
   namespace proto {
 

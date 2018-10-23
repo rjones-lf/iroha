@@ -26,6 +26,8 @@
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_loader.hpp"
 
+static const std::string kListenIp = "0.0.0.0";
+
 /**
  * Gflag validator.
  * Validator for the configuration file path input argument.
@@ -78,9 +80,24 @@ DEFINE_validator(keypair_name, &validate_keypair_name);
  */
 DEFINE_bool(overwrite_ledger, false, "Overwrite ledger data if existing");
 
+static bool validateVerbosity(const char *flagname, int32_t val) {
+  if (val >= 0 && val <= 6)
+    return true;
+
+  std::cout << "Invalid value for " << flagname << ": should be in range [0, 6]"
+            << std::endl;
+  return false;
+}
+
+/// Verbosity flag for spdlog configuration
+DEFINE_int32(verbosity, spdlog::level::info, "Log verbosity");
+DEFINE_validator(verbosity, validateVerbosity);
+
 std::promise<void> exit_requested;
 
 int main(int argc, char *argv[]) {
+  spdlog::set_level(spdlog::level::level_enum(FLAGS_verbosity));
+
   auto log = logger::log("MAIN");
   log->info("start");
 
@@ -115,6 +132,8 @@ int main(int argc, char *argv[]) {
   // Configuring iroha daemon
   Irohad irohad(config[mbr::BlockStorePath].GetString(),
                 config[mbr::PgOpt].GetString(),
+                kListenIp,  // TODO(mboldyrev) 17/10/2018: add a parameter in
+                            // config file and/or command-line arguments?
                 config[mbr::ToriiPort].GetUint(),
                 config[mbr::InternalPort].GetUint(),
                 config[mbr::MaxProposalSize].GetUint(),

@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "interactive/interactive_transaction_cli.hpp"
@@ -54,7 +42,7 @@ namespace iroha_cli {
           {CREATE_ASSET, "Create Asset"},
           {REMOVE_SIGN, "Remove Signatory"},
           {SET_QUO, "Set Account Quorum"},
-          {SUB_ASSET_QTY, "Subtract Assets Quantity from Account"},
+          {SUB_ASSET_QTY, "Subtract Assets Quantity"},
           {TRAN_ASSET, "Transfer Assets"},
           {CREATE_ROLE, "Create new role"},
           {APPEND_ROLE, "Add new role to account"},
@@ -68,7 +56,9 @@ namespace iroha_cli {
       const auto acc_id = "Account Id";
       const auto ast_id = "Asset Id";
       const auto dom_id = "Domain Id";
-      const auto amount_str = "Amount to to add, e.g 123.456";
+      const auto add_amount_str = "Amount to add, e.g 123.456";
+      const auto sub_amount_str = "Amount to subtract, e.g 123.456";
+      const auto transfer_amount_str = "Amount to transfer, e.g 123.456";
       const auto peer_id = "Full address of a peer";
       const auto pub_key = "Public Key";
       const auto acc_name = "Account Name";
@@ -86,7 +76,7 @@ namespace iroha_cli {
       const auto can_roles = "Can create/append roles";
 
       command_params_map_ = {
-          {ADD_ASSET_QTY, makeParamsDescription({acc_id, ast_id, amount_str})},
+          {ADD_ASSET_QTY, makeParamsDescription({ast_id, add_amount_str})},
           {ADD_PEER, makeParamsDescription({peer_id, pub_key})},
           {ADD_SIGN, makeParamsDescription({acc_id, pub_key})},
           {CREATE_ACC, makeParamsDescription({acc_name, dom_id, pub_key})},
@@ -96,12 +86,12 @@ namespace iroha_cli {
            makeParamsDescription({ast_name, dom_id, ast_precision})},
           {REMOVE_SIGN, makeParamsDescription({acc_id, pub_key})},
           {SET_QUO, makeParamsDescription({acc_id, quorum})},
-          {SUB_ASSET_QTY, makeParamsDescription({})},
+          {SUB_ASSET_QTY, makeParamsDescription({ast_id, sub_amount_str})},
           {TRAN_ASSET,
            makeParamsDescription({std::string("Src") + acc_id,
                                   std::string("Dest") + acc_id,
                                   ast_id,
-                                  amount_str})},
+                                  transfer_amount_str})},
           {CREATE_ROLE,
            makeParamsDescription({role,
                                   can_read_self,
@@ -406,9 +396,9 @@ namespace iroha_cli {
     std::shared_ptr<iroha::model::Command>
     InteractiveTransactionCli::parseSubtractAssetQuantity(
         std::vector<std::string> params) {
-      // TODO 13/09/17 grimadas: implement command IR-498
-      std::cout << "Not implemented" << std::endl;
-      return nullptr;
+      auto asset_id = params[0];
+      auto amount = params[1];
+      return generator_.generateSubtractAssetQuantity(asset_id, amount);
     }
 
     std::shared_ptr<iroha::model::Command>

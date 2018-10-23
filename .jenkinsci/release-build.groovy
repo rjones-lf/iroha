@@ -53,14 +53,16 @@ def doReleaseBuild() {
 
   sh "curl -L -o /tmp/${env.GIT_COMMIT}/Dockerfile --create-dirs ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/release/Dockerfile"
   sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/release/entrypoint.sh"
+  sh "curl -L -o /tmp/${env.GIT_COMMIT}/wait-for-it.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/release/wait-for-it.sh"
   sh "mv /tmp/${GIT_COMMIT}-${BUILD_NUMBER}/iroha.deb /tmp/${env.GIT_COMMIT}"
-  sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
   iCRelease = docker.build("${DOCKER_REGISTRY_BASENAME}:${GIT_COMMIT}-${BUILD_NUMBER}-release", "--no-cache -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
 
   // push Docker image in case the current branch is develop,
   // or it is a commit into PR which base branch is develop (usually develop -> master)
   if (GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop' || GIT_LOCAL_BRANCH == 'dev' || CHANGE_BRANCH_LOCAL == 'dev') {
-    iCRelease.push("${platform}-develop")
+    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+      iCRelease.push("${platform}-develop")
+    }
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop",
         ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop",
@@ -81,7 +83,9 @@ def doReleaseBuild() {
     }
   }
   else if (GIT_LOCAL_BRANCH == 'master') {
-    iCRelease.push("${platform}-latest")
+    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+      iCRelease.push("${platform}-latest")
+    }
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:latest",
         ["${DOCKER_REGISTRY_BASENAME}:x86_64-latest",

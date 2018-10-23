@@ -31,7 +31,8 @@ class GetAccountAssets : public AcceptanceFixture {
 
   /// Create command for adding assets
   auto addAssets() {
-    return complete(AcceptanceFixture::baseTx().addAssetQuantity(kAssetId, "1"));
+    return complete(
+        AcceptanceFixture::baseTx().addAssetQuantity(kAssetId, "1"));
   }
 
   /// Create command for removing assets
@@ -58,7 +59,7 @@ class GetAccountAssets : public AcceptanceFixture {
                 query_response.get());
 
             ASSERT_EQ(resp.accountAssets().size(), quantity);
-          });
+          }) << query_response.toString();
         };
   }
 
@@ -78,11 +79,10 @@ TEST_F(GetAccountAssets, AddedAssets) {
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipBlock()
-      .sendTx(addAssets())
-      .checkBlock(
+      .sendTxAwait(
+          addAssets(),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(makeQuery(), check_single_asset)
-      .done();
+      .sendQuery(makeQuery(), check_single_asset);
 }
 
 /**
@@ -101,11 +101,10 @@ TEST_F(GetAccountAssets, RemovedAssets) {
       .sendTx(addAssets())
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(removeAssets())
-      .checkBlock(
+      .sendTxAwait(
+          removeAssets(),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(makeQuery(), check_single_asset)
-      .done();
+      .sendQuery(makeQuery(), check_single_asset);
 }
 
 /**
@@ -120,7 +119,7 @@ TEST_F(GetAccountAssets, NonAddedAssets) {
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
+      .skipVerifiedProposal()
       .skipBlock()
-      .sendQuery(makeQuery(), check_zero_assets)
-      .done();
+      .sendQuery(makeQuery(), check_zero_assets);
 }

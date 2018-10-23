@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 CURDIR="$(cd "$(dirname "$0")"; pwd)"
 IROHA_HOME="$(dirname "${CURDIR}")"

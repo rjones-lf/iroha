@@ -5,6 +5,7 @@
 
 #include <gmock/gmock.h>
 
+#include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/query_responses/proto_block_query_response.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/default_builders.hpp"
@@ -12,7 +13,6 @@
 #include "main/server_runner.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"
 
@@ -80,12 +80,10 @@ TEST_F(ToriiQueryServiceTest, FetchBlocksWhenValidQuery) {
 
   iroha::protocol::Block block;
   block.mutable_payload()->set_height(123);
-  auto proto_block = std::make_shared<shared_model::proto::Block>(block);
-
-  auto block_response =
-      shared_model::builder::DefaultBlockQueryResponseBuilder()
-          .blockResponse(*proto_block)
-          .build();
+  auto proto_block = std::make_unique<shared_model::proto::Block>(block);
+  std::shared_ptr<shared_model::interface::BlockQueryResponse> block_response =
+      shared_model::proto::ProtoQueryResponseFactory().createBlockQueryResponse(
+          std::move(proto_block));
 
   EXPECT_CALL(*query_processor,
               blocksQueryHandle(Truly([&blocks_query](auto &query) {

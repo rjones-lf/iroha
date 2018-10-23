@@ -79,6 +79,7 @@ addtest(proto_batch_test
 target_link_libraries(proto_batch_test
     shared_model_proto_backend
     shared_model_stateless_validation
+    shared_model_interfaces_factories
     )
 
 addtest(proto_transaction_sequence_test
@@ -87,6 +88,7 @@ addtest(proto_transaction_sequence_test
 target_link_libraries(proto_transaction_sequence_test
     shared_model_proto_backend
     shared_model_stateless_validation
+    shared_model_interfaces_factories
     )
 
 addtest(proto_common_objects_factory_test
@@ -100,7 +102,6 @@ target_link_libraries(proto_common_objects_factory_test
 addtest(proto_proposal_factory_test
     proto_proposal_factory_test.cpp
     )
-
 target_link_libraries(proto_proposal_factory_test
     shared_model_stateless_validation
     shared_model_proto_backend
@@ -113,3 +114,13 @@ target_link_libraries(proto_block_factory_test
     shared_model_proto_backend
     shared_model_stateless_validation
     )
+
+if (IROHA_ROOT_PROJECT)
+  addtest(proto_query_response_factory_test
+      proto_query_response_factory_test.cpp
+      )
+  target_link_libraries(proto_query_response_factory_test
+      shared_model_proto_backend
+      shared_model_stateless_validation
+      )
+endif()

@@ -1,7 +1,7 @@
 find_package(PackageHandleStandardArgs)
 
 include(ExternalProject)
-set(EP_PREFIX "${PROJECT_SOURCE_DIR}/external")
+set(EP_PREFIX "${PROJECT_BINARY_DIR}/external")
 set_directory_properties(PROPERTIES
     EP_PREFIX ${EP_PREFIX}
     )

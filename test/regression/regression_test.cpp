@@ -45,35 +45,45 @@ TEST(RegressionTest, SequentialInitialization) {
                         generateKeypair())
                 .finish();
 
-  auto checkStatelessValid = [](auto &status) {
+  auto check_enough_signatures_collected_status = [](auto &status) {
     ASSERT_NO_THROW(boost::apply_visitor(
         framework::SpecifiedVisitor<
-            shared_model::interface::StatelessValidTxResponse>(),
+            shared_model::interface::EnoughSignaturesCollectedResponse>(),
         status.get()));
   };
   auto checkProposal = [](auto &proposal) {
     ASSERT_EQ(proposal->transactions().size(), 1);
   };
 
-  const std::string dbname = "dbseqinit";
+  auto path = (boost::filesystem::temp_directory_path()
+               / boost::filesystem::unique_path())
+                  .string();
+  const std::string dbname = "d"
+      + boost::uuids::to_string(boost::uuids::random_generator()())
+            .substr(0, 8);
   {
-    integration_framework::IntegrationTestFramework(1, dbname, [](auto &) {})
+    integration_framework::IntegrationTestFramework(
+        1, dbname, [](auto &) {}, false, path)
         .setInitialState(kAdminKeypair)
-        .sendTx(tx, checkStatelessValid)
+        .sendTx(tx, check_enough_signatures_collected_status)
         .skipProposal()
         .checkVerifiedProposal([](auto &proposal) {
           ASSERT_EQ(proposal->transactions().size(), 0);
-        });
+        })
+        .checkBlock(
+            [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
   }
   {
-    integration_framework::IntegrationTestFramework(1, dbname)
+    integration_framework::IntegrationTestFramework(
+        1, dbname, [](auto &itf) { itf.done(); }, false, path)
         .setInitialState(kAdminKeypair)
-        .sendTx(tx, checkStatelessValid)
+        .sendTx(tx, check_enough_signatures_collected_status)
         .checkProposal(checkProposal)
         .checkVerifiedProposal([](auto &proposal) {
           ASSERT_EQ(proposal->transactions().size(), 0);
         })
-        .done();
+        .checkBlock(
+            [](auto block) { ASSERT_EQ(block->transactions().size(), 0); });
   }
 }
 
@@ -118,10 +128,12 @@ TEST(RegressionTest, StateRecovery) {
       ASSERT_EQ(resp.transactions().front(), tx);
     });
   };
-  auto path =
-      (boost::filesystem::temp_directory_path() / "iroha-state-recovery-test")
-          .string();
-  const std::string dbname = "dbstatereq";
+  auto path = (boost::filesystem::temp_directory_path()
+               / boost::filesystem::unique_path())
+                  .string();
+  const std::string dbname = "d"
+      + boost::uuids::to_string(boost::uuids::random_generator()())
+            .substr(0, 8);
 
   // Cleanup blockstore directory, because it may contain blocks from previous
   // test launch if ITF was failed for some reason. If there are some blocks,
@@ -131,27 +143,19 @@ TEST(RegressionTest, StateRecovery) {
 
   {
     integration_framework::IntegrationTestFramework(
-        1,
-        dbname,
-        [](auto &) {},
-        false,
-        path)
+        1, dbname, [](auto &) {}, false, path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx)
         .checkProposal(checkOne)
+        .checkVerifiedProposal(checkOne)
         .checkBlock(checkOne)
         .sendQuery(makeQuery(1, kAdminKeypair), checkQuery);
   }
   {
     integration_framework::IntegrationTestFramework(
-        1,
-        dbname,
-        [](auto &itf) { itf.done(); },
-        false,
-        path)
+        1, dbname, [](auto &itf) { itf.done(); }, false, path)
         .recoverState(kAdminKeypair)
-        .sendQuery(makeQuery(2, kAdminKeypair), checkQuery)
-        .done();
+        .sendQuery(makeQuery(2, kAdminKeypair), checkQuery);
   }
 }
 
