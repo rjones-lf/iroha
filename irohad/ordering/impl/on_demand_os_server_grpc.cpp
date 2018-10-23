@@ -71,7 +71,7 @@ grpc::Status OnDemandOsServerGrpc::SendBatches(
       std::begin(batch_candidates),
       std::end(batch_candidates),
       OdOsNotification::CollectionType{},
-      [this](auto acc, const auto &cand) {
+      [this](auto &acc, const auto &cand) {
         batch_factory_->createTransactionBatch(cand).match(
             [&](iroha::expected::Value<
                 std::unique_ptr<shared_model::interface::TransactionBatch>>

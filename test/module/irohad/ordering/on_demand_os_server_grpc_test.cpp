@@ -40,8 +40,11 @@ struct OnDemandOsServerGrpcTest : public ::testing::Test {
     auto batch_parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     batch_factory = std::make_shared<MockTransactionBatchFactory>();
-    server = std::make_shared<OnDemandOsServerGrpc>(
-        notification, transaction_factory, batch_parser, batch_factory);
+    server =
+        std::make_shared<OnDemandOsServerGrpc>(notification,
+                                               std::move(transaction_factory),
+                                               std::move(batch_parser),
+                                               batch_factory);
   }
 
   std::shared_ptr<MockOdOsNotification> notification;
