@@ -49,7 +49,7 @@ OnDemandOsServerGrpc::deserializeTransactions(
                 return false;
               });
         })
-      | boost::adaptors::transformed([&](auto result) {
+      | boost::adaptors::transformed([](auto result) {
           return std::move(
                      boost::get<iroha::expected::ValueOf<decltype(result)>>(
                          result))

@@ -15,7 +15,6 @@
 
 namespace shared_model {
   namespace interface {
-    class Transaction;
     class TransactionBatch;
     class Proposal;
     class Peer;
@@ -35,12 +34,6 @@ namespace iroha {
          * Type of stored proposals
          */
         using ProposalType = std::unique_ptr<shared_model::interface::Proposal>;
-
-        /**
-         * Type of stored transactions
-         */
-        using TransactionType =
-            std::shared_ptr<shared_model::interface::Transaction>;
 
         /**
          * Type of stored transaction batches

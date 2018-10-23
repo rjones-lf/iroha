@@ -159,7 +159,7 @@ OnDemandOrderingServiceImpl::emitProposal(const consensus::Round &round) {
 
   TransactionBatchType batch;
   using ProtoTxType = shared_model::proto::Transaction;
-  std::vector<TransactionType> collection;
+  std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
   std::unordered_set<std::string> inserted;
 
   // outer method should guarantee availability of at least one transaction in
