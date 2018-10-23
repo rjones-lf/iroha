@@ -421,7 +421,7 @@ Irohad::RunResult Irohad::run() {
           },
           [&](const expected::Error<std::string> &e) -> RunResult {
             log_->error(e.error);
-            return expected::makeError<std::string>(std::string(e.error));
+            return e;
           });
 }
 
