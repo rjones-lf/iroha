@@ -152,7 +152,7 @@ class QueueBehaviorTest : public ::testing::Test {
                 std::make_shared<shared_model::proto::Block>(
                     TestBlockBuilder().height(height).build()))),
         SynchronizationOutcomeType::kCommit,
-        0});
+        {}});
   }
 
   void pushProposal(HeightType height) {
@@ -212,7 +212,7 @@ TEST_F(QueueBehaviorTest, SendManyProposals) {
   commit_subject.get_subscriber().on_next(
       SynchronizationEvent{rxcpp::observable<>::just(block),
                            SynchronizationOutcomeType::kCommit,
-                           0});
+                           {}});
 
   ASSERT_TRUE(wrapper_after.validate());
 }

@@ -272,7 +272,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   commit_notifier.get_subscriber().on_next(
       SynchronizationEvent{blocks_notifier.get_observable(),
                            SynchronizationOutcomeType::kCommit,
-                           0});
+                           {}});
 
   blocks_notifier.get_subscriber().on_next(
       std::shared_ptr<shared_model::interface::Block>(clone(block)));
@@ -327,7 +327,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
       rxcpp::observable<>::just(
           std::shared_ptr<shared_model::interface::Block>(clone(block))),
       SynchronizationOutcomeType::kCommit,
-      0};
+      {}};
   commit_notifier.get_subscriber().on_next(commit_event);
 
   SCOPED_TRACE("Committed status verification");
@@ -399,7 +399,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
       rxcpp::observable<>::just(
           std::shared_ptr<shared_model::interface::Block>(clone(block))),
       SynchronizationOutcomeType::kCommit,
-      0};
+      {}};
   commit_notifier.get_subscriber().on_next(commit_event);
 
   {

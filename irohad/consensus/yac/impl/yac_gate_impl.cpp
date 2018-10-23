@@ -106,7 +106,7 @@ namespace iroha {
           // if consensus agreed on nothing for commit
           log_->debug("Consensus skipped round, voted for nothing");
           return rxcpp::observable<>::just<GateObject>(
-              network::AgreementOnNone{current_block_.value()->height()});
+              network::AgreementOnNone{current_hash_.vote_round});
         } else if (hash == current_hash_) {
           // if node has voted for the committed block
           // append signatures of other nodes
@@ -129,11 +129,11 @@ namespace iroha {
         if (not hash) {
           log_->info("Proposal reject since all hashes are different");
           return rxcpp::observable<>::just<GateObject>(
-              network::ProposalReject{current_block_.value()->height()});
+              network::ProposalReject{current_hash_.vote_round});
         }
         log_->info("Block reject since proposal hashes match");
         return rxcpp::observable<>::just<GateObject>(
-            network::BlockReject{current_block_.value()->height()});
+            network::BlockReject{current_hash_.vote_round});
       }
     }  // namespace yac
   }    // namespace consensus

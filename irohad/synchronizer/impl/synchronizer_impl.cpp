@@ -40,21 +40,21 @@ namespace iroha {
                       rxcpp::observable<>::empty<
                           std::shared_ptr<shared_model::interface::Block>>(),
                       SynchronizationOutcomeType::kReject,
-                      msg.height});
+                      msg.round});
                 },
                 [this](const network::BlockReject &msg) {
                   notifier_.get_subscriber().on_next(SynchronizationEvent{
                       rxcpp::observable<>::empty<
                           std::shared_ptr<shared_model::interface::Block>>(),
                       SynchronizationOutcomeType::kReject,
-                      msg.height});
+                      msg.round});
                 },
                 [this](const network::AgreementOnNone &msg) {
                   notifier_.get_subscriber().on_next(SynchronizationEvent{
                       rxcpp::observable<>::empty<
                           std::shared_ptr<shared_model::interface::Block>>(),
                       SynchronizationOutcomeType::kNothing,
-                      msg.height});
+                      msg.round});
                 });
           });
     }
@@ -86,9 +86,7 @@ namespace iroha {
               and validator_->validateChain(chain, *storage)) {
             mutable_factory_->commit(std::move(storage));
 
-            return {chain,
-                    SynchronizationOutcomeType::kCommit,
-                    commit_message->height()};
+            return {chain, SynchronizationOutcomeType::kCommit, {}};
           }
         }
       }
@@ -124,7 +122,7 @@ namespace iroha {
       notifier_.get_subscriber().on_next(
           SynchronizationEvent{rxcpp::observable<>::just(commit_message),
                                SynchronizationOutcomeType::kCommit,
-                               commit_message->height()});
+                               {}});
     }
 
     void SynchronizerImpl::processDifferent(

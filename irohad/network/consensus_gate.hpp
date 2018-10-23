@@ -33,17 +33,17 @@ namespace iroha {
 
     /// Reject on proposal
     struct ProposalReject {
-      shared_model::interface::types::HeightType height;
+      consensus::Round round;
     };
 
     /// Reject on block
     struct BlockReject {
-      shared_model::interface::types::HeightType height;
+      consensus::Round round;
     };
 
     /// Agreement on <None, None>
     struct AgreementOnNone {
-      shared_model::interface::types::HeightType height;
+      consensus::Round round;
     };
 
     /**
@@ -51,7 +51,7 @@ namespace iroha {
      */
     class ConsensusGate {
      public:
-      using Round = iroha::consensus::Round;
+      using Round = consensus::Round;
       /**
        * Providing data for consensus for voting
        * @param block is the block for which current node is voting

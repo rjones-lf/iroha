@@ -10,6 +10,7 @@
 
 #include <rxcpp/rx.hpp>
 
+#include "consensus/round.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
@@ -36,7 +37,7 @@ namespace iroha {
     struct SynchronizationEvent {
       Chain synced_blocks;
       SynchronizationOutcomeType sync_outcome;
-      shared_model::interface::types::HeightType height;
+      consensus::Round round;
     };
 
   }  // namespace synchronizer

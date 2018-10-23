@@ -237,10 +237,9 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
 /**
  * @given initialized components
  * @when gate have got reject on block
- * @then synchronizer output is also reject with related block height
+ * @then synchronizer output is also reject
  */
 TEST_F(SynchronizerTest, RejectOutcome) {
-  constexpr int height = 1337;
   EXPECT_CALL(*consensus_gate, onOutcome())
       .WillOnce(Return(gate_outcome.get_observable()));
 
@@ -248,16 +247,15 @@ TEST_F(SynchronizerTest, RejectOutcome) {
 
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
-  wrapper.subscribe([height](auto commit_event) {
+  wrapper.subscribe([](auto commit_event) {
     auto block_wrapper =
         make_test_subscriber<CallExact>(commit_event.synced_blocks, 0);
     block_wrapper.subscribe();
     ASSERT_TRUE(block_wrapper.validate());
     ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kReject);
-    ASSERT_EQ(commit_event.height, height);
   });
 
-  gate_outcome.get_subscriber().on_next(BlockReject{height});
+  gate_outcome.get_subscriber().on_next(BlockReject{consensus::Round{}});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -265,10 +263,9 @@ TEST_F(SynchronizerTest, RejectOutcome) {
 /**
  * @given initialized components
  * @when gate have got agreement on none
- * @then synchronizer output is also none with related block height
+ * @then synchronizer output is also none
  */
 TEST_F(SynchronizerTest, NoneOutcome) {
-  constexpr int height = 1337;
   EXPECT_CALL(*consensus_gate, onOutcome())
       .WillOnce(Return(gate_outcome.get_observable()));
 
@@ -276,16 +273,15 @@ TEST_F(SynchronizerTest, NoneOutcome) {
 
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
-  wrapper.subscribe([height](auto commit_event) {
+  wrapper.subscribe([](auto commit_event) {
     auto block_wrapper =
         make_test_subscriber<CallExact>(commit_event.synced_blocks, 0);
     block_wrapper.subscribe();
     ASSERT_TRUE(block_wrapper.validate());
     ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kNothing);
-    ASSERT_EQ(commit_event.height, height);
   });
 
-  gate_outcome.get_subscriber().on_next(AgreementOnNone{height});
+  gate_outcome.get_subscriber().on_next(AgreementOnNone{consensus::Round{}});
 
   ASSERT_TRUE(wrapper.validate());
 }
