@@ -11,7 +11,7 @@
 #include <shared_mutex>
 
 #include <boost/variant.hpp>
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
@@ -29,9 +29,7 @@ namespace iroha {
       /**
        * Represents storage modification. Proposal round increment
        */
-      struct BlockEvent {
-        shared_model::interface::types::HeightType height;
-      };
+      using BlockEvent = std::shared_ptr<shared_model::interface::Block>;
 
       /**
        * Represents no storage modification. Reject round increment

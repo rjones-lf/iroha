@@ -9,6 +9,7 @@
 #include <boost/optional.hpp>
 
 #include "ametsuchi/query_executor.hpp"
+#include "interfaces/iroha_internal/query_response_factory.hpp"
 #include "pending_txs_storage/pending_txs_storage.hpp"
 
 namespace iroha {
@@ -19,8 +20,10 @@ namespace iroha {
        * Creates a query executor from the current state
        */
       virtual boost::optional<std::shared_ptr<QueryExecutor>>
-      createQueryExecutor(std::shared_ptr<PendingTransactionStorage>
-                              pending_txs_storage) const = 0;
+      createQueryExecutor(
+          std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
+          std::shared_ptr<shared_model::interface::QueryResponseFactory>
+              response_factory) const = 0;
 
       virtual ~QueryExecutorFactory() = default;
     };

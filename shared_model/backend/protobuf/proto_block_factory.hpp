@@ -30,11 +30,11 @@ namespace shared_model {
           const interface::types::TransactionsCollectionType &txs) override;
 
       /**
-       * Create block variant with nonempty block
+       * Create block variant
        *
        * @param block - proto block from which block variant is created
        * @return BlockVariant with block.
-       *         Error if block is empty, or if it is invalid
+       *         Error if block is invalid
        */
       iroha::expected::Result<std::unique_ptr<interface::Block>, std::string>
       createBlock(iroha::protocol::Block block);

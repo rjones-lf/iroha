@@ -8,7 +8,7 @@
 
 #include <utility>
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 
 #include "interfaces/iroha_internal/block.hpp"
 

@@ -31,6 +31,7 @@
 #include "ametsuchi/storage.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
+#include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
 #include "common/result.hpp"
 #include "interfaces/common_objects/peer.hpp"
@@ -194,12 +195,9 @@ namespace iroha {
 
     class MockTemporaryWsv : public TemporaryWsv {
      public:
-      MOCK_METHOD2(
-          apply,
-          expected::Result<void, validation::CommandError>(
-              const shared_model::interface::Transaction &,
-              std::function<expected::Result<void, validation::CommandError>(
-                  const shared_model::interface::Transaction &, WsvQuery &)>));
+      MOCK_METHOD1(apply,
+                   expected::Result<void, validation::CommandError>(
+                       const shared_model::interface::Transaction &));
       MOCK_METHOD1(
           createSavepoint,
           std::unique_ptr<TemporaryWsv::SavepointWrapper>(const std::string &));
@@ -213,15 +211,14 @@ namespace iroha {
     class MockMutableStorage : public MutableStorage {
      public:
       MOCK_METHOD2(
-          check,
-          bool(const shared_model::interface::Block &,
+          apply,
+          bool(rxcpp::observable<
+                   std::shared_ptr<shared_model::interface::Block>>,
                std::function<
                    bool(const shared_model::interface::Block &,
                         PeerQuery &,
                         const shared_model::interface::types::HashType &)>));
-      MOCK_METHOD1(
-          apply,
-          bool(const shared_model::interface::Block &));
+      MOCK_METHOD1(apply, bool(const shared_model::interface::Block &));
     };
 
     /**
@@ -273,10 +270,11 @@ namespace iroha {
       MOCK_CONST_METHOD0(
           createOsPersistentState,
           boost::optional<std::shared_ptr<OrderingServicePersistentState>>());
-      MOCK_CONST_METHOD1(
+      MOCK_CONST_METHOD2(
           createQueryExecutor,
           boost::optional<std::shared_ptr<QueryExecutor>>(
-              std::shared_ptr<PendingTransactionStorage> pending_txs_storage));
+              std::shared_ptr<PendingTransactionStorage>,
+              std::shared_ptr<shared_model::interface::QueryResponseFactory>));
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
       MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block &));
       MOCK_METHOD1(insertBlocks,

@@ -81,4 +81,16 @@ namespace shared_model {
   }  // namespace proto
 }  // namespace shared_model
 
+namespace boost {
+  extern template class variant<shared_model::proto::AccountAssetResponse,
+                                shared_model::proto::AccountDetailResponse,
+                                shared_model::proto::AccountResponse,
+                                shared_model::proto::ErrorQueryResponse,
+                                shared_model::proto::SignatoriesResponse,
+                                shared_model::proto::TransactionsResponse,
+                                shared_model::proto::AssetResponse,
+                                shared_model::proto::RolesResponse,
+                                shared_model::proto::RolePermissionsResponse>;
+}
+
 #endif  // IROHA_SHARED_MODEL_PROTO_QUERY_RESPONSE_HPP
