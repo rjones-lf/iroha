@@ -20,9 +20,10 @@ As Hyperledger Iroha is an open-source project, we will also cover contribution 
 
     overview.rst
     getting_started/index.rst
-    use_cases/index.rst
     core_concepts/index.rst
     guides/index.rst
     api/index.rst
+    use_cases/index.rst
     maintenance/index.rst
     contribution/index.rst
+    faq/index.rst
