@@ -114,19 +114,33 @@ namespace integration_framework {
     }
   }
 
-  std::shared_ptr<FakePeer> IntegrationTestFramework::addInitailPeer(
+  std::future<std::shared_ptr<FakePeer>> IntegrationTestFramework::addInitailPeer(
       const boost::optional<Keypair> &key) {
-    auto fake_peer = std::make_shared<FakePeer>(
-        kLocalHost,
-        getNextPort<kDefaultInternalPort>(),
-        key,
-        this_peer_,
-        common_objects_factory_,
-        transaction_factory_,
-        batch_parser_,
-        transaction_batch_factory_);
-    fake_peers_.emplace_back(fake_peer);
-    return fake_peer;
+    fake_peers_promises_.emplace_back(std::promise<std::shared_ptr<FakePeer>>(),
+                                      key);
+    return fake_peers_promises_.back().first.get_future();
+  }
+
+  void IntegrationTestFramework::makeFakePeers() {
+    if (fake_peers_promises_.size() == 0) {
+      return;
+    }
+    log_->info("creating fake iroha peers");
+    assert(this_peer_ && "this_peer_ is needed for fake peers initialization, "
+        "but not set");
+    for (auto &promise_and_key : fake_peers_promises_) {
+      auto fake_peer =
+          std::make_shared<FakePeer>(kLocalHost,
+                                     getNextPort<kDefaultInternalPort>(),
+                                     promise_and_key.second,
+                                     this_peer_,
+                                     common_objects_factory_,
+                                     transaction_factory_,
+                                     batch_parser_,
+                                     transaction_batch_factory_);
+      fake_peers_.emplace_back(fake_peer);
+      promise_and_key.first.set_value(fake_peer);
+    }
   }
 
   shared_model::proto::Block IntegrationTestFramework::defaultBlock(
@@ -169,8 +183,11 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::setInitialState(
       const Keypair &keypair) {
-    return setInitialState(keypair,
-                           IntegrationTestFramework::defaultBlock(keypair));
+    initPipeline(keypair);
+    iroha_instance_->makeGenesis(IntegrationTestFramework::defaultBlock(keypair));
+    log_->info("added genesis block");
+    subscribeQueuesAndRun();
+    return *this;
   }
 
   IntegrationTestFramework &IntegrationTestFramework::setMstGossipParams(
@@ -230,6 +247,8 @@ namespace integration_framework {
     iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
     iroha_instance_->getIrohaInstance()->resetOrderingService();
+
+    makeFakePeers();
   }
 
   void IntegrationTestFramework::subscribeQueuesAndRun() {

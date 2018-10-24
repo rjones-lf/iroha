@@ -31,13 +31,27 @@ class BasicMstPropagationFixture : public AcceptanceFixture {
    * @return reference to ITF
    */
   IntegrationTestFramework &prepareState(size_t num_fake_peers) {
-    std::generate_n(std::back_inserter(fake_peers_), num_fake_peers, [this]() {
-      return itf_->addInitailPeer({});
-    });
+    // request the fake peers construction
+    std::vector<std::future<std::shared_ptr<integration_framework::FakePeer>>>
+        fake_peers_futures;
+    std::generate_n(std::back_inserter(fake_peers_futures),
+                    num_fake_peers,
+                    [this]() { return itf_->addInitailPeer({}); });
+
     itf_->setInitialState(kAdminKeypair);
 
     auto permissions =
         interface::RolePermissionSet({Role::kReceive, Role::kTransfer});
+
+    // get the constructed fake peers
+    std::transform(
+        fake_peers_futures.begin(),
+        fake_peers_futures.end(),
+        std::back_inserter(fake_peers_),
+        [this](auto &fake_peer_future) {
+          assert(fake_peer_future.valid() && "fake peer must be ready");
+          return fake_peer_future.get();
+        });
 
     // inside prepareState we can use lambda for such assert, since prepare
     // transactions are not going to fail
