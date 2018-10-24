@@ -6,10 +6,10 @@
 #ifndef IROHA_ON_DEMAND_CACHE_HPP
 #define IROHA_ON_DEMAND_CACHE_HPP
 
+#include "ordering/impl/og_cache/og_cache.hpp"
+
 #include <boost/circular_buffer.hpp>
 #include <queue>
-
-#include "ordering/impl/og_cache/og_cache.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -17,24 +17,23 @@ namespace iroha {
 
       class OnDemandCache : public OgCache {
        public:
-        void addToBack(const BatchesListType &batches) override;
+        void addToBack(const BatchesSetType &batches) override;
 
-        BatchesListType clearFrontAndGet() override;
+        BatchesSetType clearFrontAndGet() override;
 
         void up() override;
 
-        void remove(const BatchesListType &batches) override;
+        void remove(const BatchesSetType &batches) override;
 
-        virtual const BatchesListType &front() const override;
+        virtual const BatchesSetType &head() const override;
 
-        virtual const BatchesListType &back() const override;
+        virtual const BatchesSetType &tail() const override;
 
        private:
         using BatchesQueueType =
-            std::queue<BatchesListType,
-                       boost::circular_buffer<BatchesListType>>;
+            std::queue<BatchesSetType, boost::circular_buffer<BatchesSetType>>;
         BatchesQueueType queue_{
-            boost::circular_buffer<BatchesListType>(3, BatchesListType{})};
+            boost::circular_buffer<BatchesSetType>(3, BatchesSetType{})};
       };
 
     }  // namespace cache

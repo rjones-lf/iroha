@@ -50,7 +50,6 @@ target_link_libraries(on_demand_connection_manager_test
 addtest(on_demand_ordering_gate_test on_demand_ordering_gate_test.cpp)
 target_link_libraries(on_demand_ordering_gate_test
     on_demand_ordering_gate
-    schema
     shared_model_interfaces_factories
     shared_model_proto_backend
     )
@@ -58,7 +57,6 @@ target_link_libraries(on_demand_ordering_gate_test
 addtest(on_demand_cache_test on_demand_cache_test.cpp)
 target_link_libraries(on_demand_cache_test
     on_demand_ordering_gate
-    schema
     shared_model_interfaces_factories
     shared_model_proto_backend
     )
