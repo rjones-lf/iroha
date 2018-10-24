@@ -5,6 +5,8 @@
 
 #include "main/impl/on_demand_ordering_init.hpp"
 
+#include <random>
+
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/peer.hpp"
