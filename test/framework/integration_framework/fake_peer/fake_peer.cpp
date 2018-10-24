@@ -135,6 +135,14 @@ namespace integration_framework {
 
   void FakePeer::voteForTheSame(const YacStateMessage &incoming_votes) {
     using iroha::consensus::yac::VoteMessage;
+    log_->debug("Got a YAC state message with {} votes.",
+                incoming_votes->size());
+    if (incoming_votes->size() > 1) {
+      // TODO mboldyrev 24/10/2018: rework ignoring states for accepted commits
+      log_->debug("Ignoring state with multiple votes, "
+          "because it probably refers to an accepted commit.");
+      return;
+    }
     std::vector<VoteMessage> my_votes;
     my_votes.reserve(incoming_votes->size());
     std::transform(
