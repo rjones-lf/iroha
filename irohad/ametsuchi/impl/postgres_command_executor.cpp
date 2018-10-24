@@ -76,10 +76,10 @@ namespace {
   }
 
   iroha::expected::Error<iroha::ametsuchi::CommandError> makeCommandError(
-      const std::string &error_message,
-      const std::string &command_name) noexcept {
+      const std::string &command_name,
+      const iroha::ametsuchi::CommandError::ErrorCodeType code) noexcept {
     return iroha::expected::makeError(
-        iroha::ametsuchi::CommandError{command_name, error_message});
+        iroha::ametsuchi::CommandError{command_name, code});
   }
 
   /**
@@ -89,25 +89,54 @@ namespace {
    * @param sql - connection on which to execute statement
    * @param cmd - sql query to be executed
    * @param command_name - which command executes a query
-   * @param error_generator functions which must generate error message
-   * Functions are passed instead of string to avoid overhead of string
-   * construction in successful case.
    * @return CommandResult with command name and error message
    */
   iroha::ametsuchi::CommandResult executeQuery(
       soci::session &sql,
       const std::string &cmd,
-      const std::string &command_name,
-      std::vector<std::function<std::string()>> &error_generator) noexcept {
+      const std::string &command_name) noexcept {
     uint32_t result;
     try {
       sql << cmd, soci::into(result);
       if (result != 0) {
-        return makeCommandError(error_generator[result - 1](), command_name);
+        return makeCommandError(command_name, result);
       }
       return {};
     } catch (std::exception &e) {
-      return makeCommandError(e.what(), command_name);
+      // try to parse the SQL error to get an actual one
+      std::string exc_body = e.what();
+
+      if (exc_body.find("DETAIL: Key (account_id)=") != std::string::npos
+          and exc_body.find("is not present in table") != std::string::npos) {
+        return makeCommandError(command_name, 2);
+      }
+
+      if (exc_body.find("DETAIL: Key (role_id)=") != std::string::npos
+          and exc_body.find("is not present in table") != std::string::npos) {
+        return makeCommandError(command_name, 6);
+      }
+
+      if (exc_body.find("DETAIL: Key (domain_id)=") != std::string::npos
+          and exc_body.find("is not present in table") != std::string::npos) {
+        return makeCommandError(command_name, 7);
+      }
+
+      if (exc_body.find("DETAIL: Key (asset_id)=") != std::string::npos
+          and exc_body.find("already exists") != std::string::npos) {
+        return makeCommandError(command_name, 9);
+      }
+
+      if (exc_body.find("DETAIL: Key (domain_id)=") != std::string::npos
+          and exc_body.find("already exists") != std::string::npos) {
+        return makeCommandError(command_name, 10);
+      }
+
+      if (exc_body.find("DETAIL: Key (role_id)=") != std::string::npos
+          and exc_body.find("already exists") != std::string::npos) {
+        return makeCommandError(command_name, 11);
+      }
+
+      return makeCommandError(command_name, 1);
     }
   }
 
@@ -260,7 +289,7 @@ namespace iroha {
               WHEN NOT EXISTS (SELECT value FROM new_value
                                WHERE value < 2::decimal ^ (256 - $3)
                                LIMIT 1) THEN 4
-              ELSE 5
+              ELSE 1
           END AS result;)";
 
     const std::string PostgresCommandExecutor::addPeerBase = R"(
@@ -276,7 +305,7 @@ namespace iroha {
           )
           SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
               %s
-              ELSE 2 END AS result)";
+              ELSE 1 END AS result)";
 
     const std::string PostgresCommandExecutor::addSignatoryBase = R"(
           PREPARE %s (text, text, text) AS
@@ -301,8 +330,8 @@ namespace iroha {
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_account_signatory) THEN 0
               %s
-              WHEN EXISTS (SELECT * FROM insert_signatory) THEN 2
-              ELSE 3
+              WHEN EXISTS (SELECT * FROM insert_signatory) THEN 3
+              ELSE 1
           END AS RESULT;)";
 
     const std::string PostgresCommandExecutor::appendRoleBase = R"(
@@ -316,7 +345,7 @@ namespace iroha {
             SELECT CASE
                 WHEN EXISTS (SELECT * FROM inserted) THEN 0
                 %s
-                ELSE 4
+                ELSE 1
             END AS result)";
 
     const std::string PostgresCommandExecutor::createAccountBase = R"(
@@ -366,15 +395,15 @@ namespace iroha {
               WHEN EXISTS (SELECT * FROM insert_account_role) THEN 0
               %s
               WHEN NOT EXISTS (SELECT * FROM account
-                               WHERE account_id = $2) THEN 2
+                               WHERE account_id = $2) THEN 3
               WHEN NOT EXISTS (SELECT * FROM account_has_signatory
                                WHERE account_id = $2
-                               AND public_key = $4) THEN 3
+                               AND public_key = $4) THEN 4
               WHEN NOT EXISTS (SELECT * FROM account_has_roles
                                WHERE account_id = account_id AND role_id = (
                                SELECT default_role FROM get_domain_default_role)
-                               ) THEN 4
-              ELSE 5
+                               ) THEN 8
+              ELSE 1
               END AS result)";
 
     const std::string PostgresCommandExecutor::createAssetBase = R"(
@@ -390,7 +419,7 @@ namespace iroha {
               )
               SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
               %s
-              ELSE 2 END AS result)";
+              ELSE 1 END AS result)";
 
     const std::string PostgresCommandExecutor::createDomainBase = R"(
               PREPARE %s (text, text, text) AS
@@ -424,8 +453,8 @@ namespace iroha {
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_role_permissions) THEN 0
               %s
-              WHEN EXISTS (SELECT * FROM role WHERE role_id = $2) THEN 1
-              ELSE 4
+              WHEN EXISTS (SELECT * FROM role WHERE role_id = $2) THEN 5
+              ELSE 1
               END AS result)";
 
     const std::string PostgresCommandExecutor::detachRoleBase = R"(
@@ -440,8 +469,14 @@ namespace iroha {
               RETURNING (1)
             )
             SELECT CASE WHEN EXISTS (SELECT * FROM deleted) THEN 0
+            WHEN NOT EXISTS (SELECT * FROM account
+                             WHERE account_id = $2) THEN 2
+            WHEN NOT EXISTS (SELECT * FROM role
+                             WHERE role_id = $3) THEN 6
+            WHEN NOT EXISTS (SELECT * FROM account_has_roles
+                             WHERE account_id=$2 AND role_id=$3) THEN 3
             %s
-            ELSE 2 END AS result)";
+            ELSE 1 END AS result)";
 
     const std::string PostgresCommandExecutor::grantPermissionBase = R"(
           PREPARE %s (text, text, bit, bit) AS
@@ -457,7 +492,7 @@ namespace iroha {
             )
             SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
               %s
-              ELSE 2 END AS result)";
+              ELSE 1 END AS result)";
 
     const std::string PostgresCommandExecutor::removeSignatoryBase = R"(
           PREPARE %s (text, text, text) AS
@@ -484,7 +519,7 @@ namespace iroha {
                                WHERE public_key = $3) THEN 0
                   WHEN EXISTS (SELECT 1 FROM peer
                                WHERE public_key = $3) THEN 0
-                  ELSE 2
+                  ELSE 1
               END
               %s
               ELSE 1
@@ -505,7 +540,7 @@ namespace iroha {
               )
               SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
                   %s
-                  ELSE 2 END AS result)";
+                  ELSE 1 END AS result)";
 
     const std::string PostgresCommandExecutor::setAccountDetailBase = R"(
           PREPARE %s (text, text, text[], text[], text, text) AS
@@ -520,7 +555,7 @@ namespace iroha {
               )
               SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
                   %s
-                  ELSE 2 END AS result)";
+                  ELSE 1 END AS result)";
 
     const std::string PostgresCommandExecutor::setQuorumBase = R"(
           PREPARE %s (text, text, int) AS
@@ -535,7 +570,7 @@ namespace iroha {
           )
           SELECT CASE WHEN EXISTS (SELECT * FROM updated) THEN 0
               %s
-              ELSE 4
+              ELSE 1
           END AS result)";
 
     const std::string PostgresCommandExecutor::subtractAssetQuantityBase = R"(
@@ -578,7 +613,7 @@ namespace iroha {
               WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 3
               WHEN NOT EXISTS
                   (SELECT value FROM new_value WHERE value >= 0 LIMIT 1) THEN 4
-              ELSE 5
+              ELSE 1
           END AS result)";
 
     const std::string PostgresCommandExecutor::transferAssetBase = R"(
@@ -654,19 +689,19 @@ namespace iroha {
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_dest LIMIT 1) THEN 0
               %s
-              WHEN NOT EXISTS (SELECT * FROM has_dest_account LIMIT 1) THEN 2
-              WHEN NOT EXISTS (SELECT * FROM has_src_account LIMIT 1) THEN 3
+              WHEN NOT EXISTS (SELECT * FROM has_dest_account LIMIT 1) THEN 3
+              WHEN NOT EXISTS (SELECT * FROM has_src_account LIMIT 1) THEN 2
               WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 4
               WHEN NOT EXISTS (SELECT value FROM new_src_value
-                               WHERE value >= 0 LIMIT 1) THEN 5
+                               WHERE value >= 0 LIMIT 1) THEN 8
               WHEN NOT EXISTS (SELECT value FROM new_dest_value
                                WHERE value < 2::decimal ^ (256 - $5)
-                               LIMIT 1) THEN 6
-              ELSE 7
+                               LIMIT 1) THEN 11
+              ELSE 1
           END AS result)";
 
     std::string CommandError::toString() const {
-      return (boost::format("%s: %s") % command_name % error_message).str();
+      return (boost::format("%s: %d") % command_name % error_code).str();
     }
 
     PostgresCommandExecutor::PostgresCommandExecutor(soci::session &sql)
@@ -696,19 +731,7 @@ namespace iroha {
 
       cmd = (cmd % account_id % asset_id % precision % amount);
 
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return missRolePerm(
-                creator_account_id_,
-                shared_model::interface::permissions::Role::kAddAssetQty);
-          },
-          [] { return std::string("Account does not exist"); },
-          [] {
-            return std::string("Asset with given precision does not exist");
-          },
-          [] { return std::string("Summation overflows uint256"); },
-      };
-      return executeQuery(sql_, cmd.str(), "AddAssetQuantity", message_gen);
+      return executeQuery(sql_, cmd.str(), "AddAssetQuantity");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -721,20 +744,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % peer.pubkey().hex() % peer.address());
 
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return missRolePerm(
-                creator_account_id_,
-                shared_model::interface::permissions::Role::kAddPeer);
-          },
-          [&] {
-            return (boost::format("failed to insert peer, public key: '%s', "
-                                  "address: '%s'")
-                    % peer.pubkey().hex() % peer.address())
-                .str();
-          },
-      };
-      return executeQuery(sql_, cmd.str(), "AddPeer", message_gen);
+      return executeQuery(sql_, cmd.str(), "AddPeer");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -747,30 +757,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
 
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return missRoleOrGrantablePerm(
-                creator_account_id_,
-                account_id,
-                shared_model::interface::permissions::Role::kAddSignatory,
-                shared_model::interface::permissions::Grantable::
-                    kAddMySignatory);
-          },
-          [&] {
-            return (boost::format(
-                        "failed to insert account signatory, account id: "
-                        "'%s', signatory hex string: '%s")
-                    % account_id % pubkey)
-                .str();
-          },
-          [&] {
-            return (boost::format("failed to insert signatory, "
-                                  "signatory hex string: '%s'")
-                    % pubkey)
-                .str();
-          },
-      };
-      return executeQuery(sql_, cmd.str(), "AddSignatory", message_gen);
+      return executeQuery(sql_, cmd.str(), "AddSignatory");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -781,35 +768,7 @@ namespace iroha {
 
       appendCommandName("appendRole", cmd, do_validation_);
 
-      cmd = (cmd % creator_account_id_ % account_id % role_name);
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return (boost::format("is valid command validation failed: no "
-                                  "roles in account %s")
-                    % creator_account_id_)
-                .str();
-          },
-          [&] {
-            return (boost::format(
-                        "is valid command validation failed: account %s"
-                        " does not have some of the permissions in a role %s")
-                    % creator_account_id_ % command.roleName())
-                .str();
-          },
-          [&] {
-            return missRolePerm(
-                creator_account_id_,
-                shared_model::interface::permissions::Role::kAppendRole);
-          },
-          [&] {
-            return (boost::format(
-                        "failed to insert account role, account: '%s', "
-                        "role name: '%s'")
-                    % account_id % role_name)
-                .str();
-          },
-      };
-      return executeQuery(sql_, cmd.str(), "AppendRole", message_gen);
+      return executeQuery(sql_, cmd.str(), "AppendRole");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -826,38 +785,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % domain_id % pubkey);
 
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return missRolePerm(
-                creator_account_id_,
-                shared_model::interface::permissions::Role::kCreateAccount);
-          },
-          [&] {
-            return (boost::format("failed to insert account, "
-                                  "account id: '%s', "
-                                  "domain id: '%s', "
-                                  "quorum: '1', "
-                                  "json_data: {}")
-                    % account_id % domain_id)
-                .str();
-          },
-          [&] {
-            return (boost::format("failed to insert account signatory, "
-                                  "account id: "
-                                  "'%s', signatory hex string: '%s")
-                    % account_id % pubkey)
-                .str();
-          },
-          [&] {
-            return (boost::format(
-                        "failed to insert account role, account: '%s' "
-                        "with default domain role name for domain: "
-                        "'%s'")
-                    % account_id % domain_id)
-                .str();
-          },
-      };
-      return executeQuery(sql_, cmd.str(), "CreateAccount", message_gen);
+      return executeQuery(sql_, cmd.str(), "CreateAccount");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -871,19 +799,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % asset_id % domain_id % precision);
 
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return missRolePerm(
-                creator_account_id_,
-                shared_model::interface::permissions::Role::kCreateDomain);
-          },
-          [&] {
-            return (boost::format("failed to insert asset, asset id: '%s', "
-                                  "domain id: '%s', precision: %d")
-                    % asset_id % domain_id % precision)
-                .str();
-          }};
-      return executeQuery(sql_, cmd.str(), "CreateAsset", message_gen);
+      return executeQuery(sql_, cmd.str(), "CreateAsset");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -895,19 +811,8 @@ namespace iroha {
       appendCommandName("createDomain", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % domain_id % default_role);
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return missRolePerm(
-                creator_account_id_,
-                shared_model::interface::permissions::Role::kCreateDomain);
-          },
-          [&] {
-            return (boost::format("failed to insert domain, domain id: '%s', "
-                                  "default role: '%s'")
-                    % domain_id % default_role)
-                .str();
-          }};
-      return executeQuery(sql_, cmd.str(), "CreateDomain", message_gen);
+
+      return executeQuery(sql_, cmd.str(), "CreateDomain");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -920,36 +825,8 @@ namespace iroha {
       appendCommandName("createRole", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % role_id % perm_str);
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
-            const auto &str =
-                shared_model::proto::permissions::toString(permissions);
-            const auto perm_debug_str =
-                std::accumulate(str.begin(), str.end(), std::string());
-            return (boost::format("failed to insert role permissions, role "
-                                  "id: '%s', permissions: [%s]")
-                    % role_id % perm_debug_str)
-                .str();
-          },
-          [&] {
-            return (boost::format(
-                        "is valid command validation failed: account %s"
-                        " does not have some of the permissions from a role %s")
-                    % creator_account_id_ % command.roleName())
-                .str();
-          },
-          [&] {
-            return missRolePerm(
-                creator_account_id_,
-                shared_model::interface::permissions::Role::kCreateRole);
-          },
-          [&] {
-            return (boost::format("failed to insert role: '%s'") % role_id)
-                .str();
-          },
-      };
-      return executeQuery(sql_, cmd.str(), "CreateRole", message_gen);
+
+      return executeQuery(sql_, cmd.str(), "CreateRole");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -961,20 +838,8 @@ namespace iroha {
       appendCommandName("detachRole", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % account_id % role_name);
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return missRolePerm(
-                creator_account_id_,
-                shared_model::interface::permissions::Role::kDetachRole);
-          },
-          [&] {
-            return (boost::format(
-                        "failed to delete account role, account id: '%s', "
-                        "role name: '%s'")
-                    % account_id % role_name)
-                .str();
-          }};
-      return executeQuery(sql_, cmd.str(), "DetachRole", message_gen);
+
+      return executeQuery(sql_, cmd.str(), "DetachRole");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -994,26 +859,8 @@ namespace iroha {
 
       cmd =
           (cmd % creator_account_id_ % permittee_account_id % perm_str % perm);
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return missGrantablePerm(creator_account_id_,
-                                     permittee_account_id,
-                                     command.permissionName());
-          },
-          [&] {
-            return (boost::format(
-                        "failed to insert account grantable permission, "
-                        "permittee account id: '%s', "
-                        "account id: '%s', "
-                        "permission: '%s'")
-                    % permittee_account_id
-                    % creator_account_id_
-                    // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
-                    % shared_model::proto::permissions::toString(permission))
-                .str();
-          }};
 
-      return executeQuery(sql_, cmd.str(), "GrantPermission", message_gen);
+      return executeQuery(sql_, cmd.str(), "GrantPermission");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -1025,48 +872,8 @@ namespace iroha {
       appendCommandName("removeSignatory", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return (boost::format(
-                        "failed to delete account signatory, account id: "
-                        "'%s', signatory hex string: '%s'")
-                    % account_id % pubkey)
-                .str();
-          },
-          [&] {
-            return (boost::format("failed to delete signatory, "
-                                  "signatory hex string: '%s'")
-                    % pubkey)
-                .str();
-          },
-          [&] {
-            return (boost::format(
-                        "command validation failed: no account %s found")
-                    % command.accountId())
-                .str();
-          },
-          [&] {
-            return (boost::format(
-                        "command validation failed: no signatories in "
-                        "account %s found")
-                    % command.accountId())
-                .str();
-          },
-          [&] {
-            return "command validation failed: size of rest "
-                   "signatories "
-                   "becomes less than the quorum";
-          },
-          [&] {
-            return missRoleOrGrantablePerm(
-                creator_account_id_,
-                command.accountId(),
-                shared_model::interface::permissions::Role::kRemoveSignatory,
-                shared_model::interface::permissions::Grantable::
-                    kRemoveMySignatory);
-          },
-      };
-      return executeQuery(sql_, cmd.str(), "RemoveSignatory", message_gen);
+
+      return executeQuery(sql_, cmd.str(), "RemoveSignatory");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -1090,25 +897,7 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % permittee_account_id % perms
              % without_perm_str);
 
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return missGrantablePerm(creator_account_id_,
-                                     command.accountId(),
-                                     command.permissionName());
-          },
-          [&] {
-            return (boost::format(
-                        "failed to delete account grantable permission, "
-                        "permittee account id: '%s', "
-                        "account id: '%s', "
-                        "permission id: '%s'")
-                    % permittee_account_id
-                    % account_id
-                    // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
-                    % shared_model::proto::permissions::toString(permission))
-                .str();
-          }};
-      return executeQuery(sql_, cmd.str(), "RevokePermission", message_gen);
+      return executeQuery(sql_, cmd.str(), "RevokePermission");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -1132,23 +921,8 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % json % filled_json % val
              % empty_json);
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return missRoleOrGrantablePerm(
-                creator_account_id_,
-                command.accountId(),
-                shared_model::interface::permissions::Role::kSetDetail,
-                shared_model::interface::permissions::Grantable::
-                    kSetMyAccountDetail);
-          },
-          [&] {
-            return (boost::format(
-                        "failed to set account key-value, account id: '%s', "
-                        "creator account id: '%s',\n key: '%s', value: '%s'")
-                    % account_id % creator_account_id_ % key % value)
-                .str();
-          }};
-      return executeQuery(sql_, cmd.str(), "SetAccountDetail", message_gen);
+
+      return executeQuery(sql_, cmd.str(), "SetAccountDetail");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -1160,38 +934,8 @@ namespace iroha {
       appendCommandName("setQuorum", cmd, do_validation_);
 
       cmd = (cmd % creator_account_id_ % account_id % quorum);
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return (boost::format("is valid command validation failed: no "
-                                  "signatories of an "
-                                  "account %s found")
-                    % account_id)
-                .str();
-          },
-          [&] {
-            return (boost::format(
-                        "is valid command validation failed: account's %s"
-                        " new quorum size is "
-                        "out of bounds; "
-                        "value is %s")
-                    % account_id % std::to_string(quorum))
-                .str();
-          },
-          [&] {
-            return missRoleOrGrantablePerm(
-                creator_account_id_,
-                account_id,
-                shared_model::interface::permissions::Role::kSetQuorum,
-                shared_model::interface::permissions::Grantable::kSetMyQuorum);
-          },
-          [&] {
-            return (boost::format("failed to update account, account id: '%s', "
-                                  "quorum: '%s'")
-                    % account_id % quorum)
-                .str();
-          },
-      };
-      return executeQuery(sql_, cmd.str(), "SetQuorum", message_gen);
+
+      return executeQuery(sql_, cmd.str(), "SetQuorum");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -1205,18 +949,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % asset_id % precision % amount);
 
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return missRolePerm(
-                creator_account_id_,
-                shared_model::interface::permissions::Role::kSubtractAssetQty);
-          },
-          [&] { return "Account does not exist with given precision"; },
-          [&] { return "Asset with given precision does not exist"; },
-          [&] { return "Subtracts overdrafts account asset"; },
-      };
-      return executeQuery(
-          sql_, cmd.str(), "SubtractAssetQuantity", message_gen);
+      return executeQuery(sql_, cmd.str(), "SubtractAssetQuantity");
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -1233,32 +966,8 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % src_account_id % dest_account_id
              % asset_id % precision % amount);
-      std::vector<std::function<std::string()>> message_gen = {
-          [&] {
-            return (boost::format(
-                        "has permission command validation failed: account %s"
-                        " does not have permission %s"
-                        " for account or does not have %s"
-                        " for his own account or destination account %s"
-                        " does not have %s")
-                    % creator_account_id_
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Grantable::
-                              kTransferMyAssets)
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::kTransfer)
-                    % command.destAccountId()
-                    % shared_model::proto::permissions::toString(
-                          shared_model::interface::permissions::Role::kReceive))
-                .str();
-          },
-          [&] { return "Destination account does not exist"; },
-          [&] { return "Source account does not exist"; },
-          [&] { return "Asset with given precision does not exist"; },
-          [&] { return "Transfer overdrafts source account asset"; },
-          [&] { return "Transfer overflows destanation account asset"; },
-      };
-      return executeQuery(sql_, cmd.str(), "TransferAsset", message_gen);
+
+      return executeQuery(sql_, cmd.str(), "TransferAsset");
     }
 
     void PostgresCommandExecutor::prepareStatements(soci::session &sql) {
@@ -1273,7 +982,7 @@ namespace iroha {
                    "$1"))
                 .str(),
             "AND (SELECT * from has_perm)",
-            "WHEN NOT (SELECT * from has_perm) THEN 1"}});
+            "WHEN NOT (SELECT * from has_perm) THEN 5"}});
 
       statements.push_back(
           {"addPeer",
@@ -1283,7 +992,7 @@ namespace iroha {
                    shared_model::interface::permissions::Role::kAddPeer, "$1"))
                 .str(),
             "WHERE (SELECT * FROM has_perm)",
-            "WHEN NOT (SELECT * from has_perm) THEN 1"}});
+            "WHEN NOT (SELECT * from has_perm) THEN 5"}});
 
       statements.push_back(
           {"addSignatory",
@@ -1299,7 +1008,7 @@ namespace iroha {
                 .str(),
             " WHERE (SELECT * FROM has_perm)",
             " AND (SELECT * FROM has_perm)",
-            "WHEN NOT (SELECT * from has_perm) THEN 1"}});
+            "WHEN NOT (SELECT * from has_perm) THEN 5"}});
 
       const auto bits = shared_model::interface::RolePermissionSet::size();
       const auto grantable_bits =
@@ -1335,9 +1044,9 @@ namespace iroha {
                     (SELECT * FROM account_has_role_permissions)
                     AND (SELECT * FROM has_perm))",
             R"(
-                WHEN NOT EXISTS (SELECT * FROM account_roles) THEN 1
-                WHEN NOT (SELECT * FROM account_has_role_permissions) THEN 2
-                WHEN NOT (SELECT * FROM has_perm) THEN 3)"}});
+                WHEN NOT EXISTS (SELECT * FROM account_roles) THEN 5
+                WHEN NOT (SELECT * FROM account_has_role_permissions) THEN 5
+                WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
 
       statements.push_back(
           {"createAccount",
@@ -1349,7 +1058,7 @@ namespace iroha {
                    "$1"))
                 .str(),
             R"(AND (SELECT * FROM has_perm))",
-            R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}});
+            R"(WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
 
       statements.push_back(
           {"createAsset",
@@ -1361,7 +1070,7 @@ namespace iroha {
                    "$1"))
                 .str(),
             R"(WHERE (SELECT * FROM has_perm))",
-            R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}});
+            R"(WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
 
       statements.push_back(
           {"createDomain",
@@ -1373,7 +1082,7 @@ namespace iroha {
                    "$1"))
                 .str(),
             R"(WHERE (SELECT * FROM has_perm))",
-            R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}});
+            R"(WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
 
       statements.push_back(
           {"createRole",
@@ -1394,8 +1103,8 @@ namespace iroha {
             R"(WHERE (SELECT * FROM account_has_role_permissions)
                           AND (SELECT * FROM has_perm))",
             R"(WHEN NOT (SELECT * FROM
-                               account_has_role_permissions) THEN 2
-                        WHEN NOT (SELECT * FROM has_perm) THEN 3)"}});
+                               account_has_role_permissions) THEN 5
+                        WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
 
       statements.push_back(
           {"detachRole",
@@ -1407,7 +1116,7 @@ namespace iroha {
                    "$1"))
                 .str(),
             R"(AND (SELECT * FROM has_perm))",
-            R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}});
+            R"(WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
 
       statements.push_back({"grantPermission",
                             grantPermissionBase,
@@ -1419,7 +1128,7 @@ namespace iroha {
                               % bits)
                                  .str(),
                              R"( WHERE (SELECT * FROM has_perm))",
-                             R"(WHEN NOT (SELECT * FROM has_perm) THEN 1)"}});
+                             R"(WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
 
       statements.push_back(
           {"removeSignatory",
@@ -1432,6 +1141,10 @@ namespace iroha {
           get_signatories AS (
               SELECT public_key FROM account_has_signatory
               WHERE account_id = $2
+          ),
+          get_signatory AS (
+              SELECT * FROM get_signatories
+              WHERE public_key = $3
           ),
           check_account_signatories AS (
               SELECT quorum FROM get_account
@@ -1452,10 +1165,11 @@ namespace iroha {
               AND EXISTS (SELECT * FROM check_account_signatories)
           )",
             R"(
-              WHEN NOT EXISTS (SELECT * FROM get_account) THEN 3
-              WHEN NOT (SELECT * FROM has_perm) THEN 6
+              WHEN NOT EXISTS (SELECT * FROM get_account) THEN 2
+              WHEN NOT (SELECT * FROM has_perm) THEN 5
               WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 4
-              WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 5
+              WHEN NOT EXISTS (SELECT * FROM get_signatory) THEN 3
+              WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 8
           )"}});
 
       statements.push_back({"revokePermission",
@@ -1468,7 +1182,7 @@ namespace iroha {
                               % grantable_bits)
                                  .str(),
                              R"( AND (SELECT * FROM has_perm))",
-                             R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )"}});
+                             R"( WHEN NOT (SELECT * FROM has_perm) THEN 5 )"}});
 
       statements.push_back(
           {"setAccountDetail",
@@ -1492,7 +1206,7 @@ namespace iroha {
                    "$2"))
                 .str(),
             R"( AND (SELECT * FROM has_perm))",
-            R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )"}});
+            R"( WHEN NOT (SELECT * FROM has_perm) THEN 5 )"}});
 
       statements.push_back(
           {"setQuorum",
@@ -1520,9 +1234,9 @@ namespace iroha {
               AND EXISTS (SELECT * FROM check_account_signatories)
               AND (SELECT * FROM has_perm))",
             R"(
-              WHEN NOT (SELECT * FROM has_perm) THEN 3
-              WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 1
-              WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 2
+              WHEN NOT (SELECT * FROM has_perm) THEN 5
+              WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 3
+              WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 4
               )"}});
 
       statements.push_back(
@@ -1535,7 +1249,7 @@ namespace iroha {
                                           "$1"))
                 .str(),
             R"( AND (SELECT * FROM has_perm))",
-            R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )"}});
+            R"( WHEN NOT (SELECT * FROM has_perm) THEN 5 )"}});
 
       statements.push_back(
           {"transferAsset",
@@ -1570,7 +1284,7 @@ namespace iroha {
                 .str(),
             R"( AND (SELECT * FROM has_perm))",
             R"( AND (SELECT * FROM has_perm))",
-            R"( WHEN NOT (SELECT * FROM has_perm) THEN 1 )"}});
+            R"( WHEN NOT (SELECT * FROM has_perm) THEN 5 )"}});
 
       for (const auto &st : statements) {
         prepareStatement(sql, st);

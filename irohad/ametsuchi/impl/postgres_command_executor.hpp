@@ -71,8 +71,7 @@ namespace iroha {
       CommandResult operator()(
           const shared_model::interface::TransferAsset &command) override;
 
-      static void
-      prepareStatements(soci::session &sql);
+      static void prepareStatements(soci::session &sql);
 
      private:
       soci::session &sql_;

@@ -357,6 +357,16 @@ namespace iroha {
                   != signatories->end());
     }
 
+    TEST_F(AddSignatory, InvalidAddSignatoryTestWheNoAccount) {
+      auto perm =
+          shared_model::interface::permissions::Grantable::kAddMySignatory;
+      auto foo = *err(execute(buildCommand(TestTransactionBuilder().grantPermission(
+        account->accountId(), perm)),
+                         true,
+                         "id2@domain"));
+      ASSERT_TRUE(true);
+    }
+
     /**
      * @given  command
      * @when trying to add signatory without permissions
