@@ -42,6 +42,7 @@ namespace iroha {
 
       std::string command_name;
       ErrorCodeType error_code;
+      std::string error_extra;
 
       std::string toString() const;
     };

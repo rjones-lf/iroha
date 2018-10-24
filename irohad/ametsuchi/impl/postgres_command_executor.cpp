@@ -77,9 +77,10 @@ namespace {
 
   iroha::expected::Error<iroha::ametsuchi::CommandError> makeCommandError(
       const std::string &command_name,
-      const iroha::ametsuchi::CommandError::ErrorCodeType code) noexcept {
+      const iroha::ametsuchi::CommandError::ErrorCodeType code,
+      const std::string &error_extra = "") noexcept {
     return iroha::expected::makeError(
-        iroha::ametsuchi::CommandError{command_name, code});
+        iroha::ametsuchi::CommandError{command_name, code, error_extra});
   }
 
   /**
@@ -136,7 +137,8 @@ namespace {
         return makeCommandError(command_name, 11);
       }
 
-      return makeCommandError(command_name, 1);
+      // parsing is not successful, return the general error
+      return makeCommandError(command_name, 1, e.what());
     }
   }
 
@@ -195,41 +197,6 @@ namespace {
             % checkAccountRolePermission(role, creator_id)
             % checkAccountGrantablePermission(grantable, creator_id, account_id)
             % creator_id % account_id)
-        .str();
-  }
-
-  std::string missRolePerm(
-      shared_model::interface::types::AccountIdType account,
-      shared_model::interface::permissions::Role perm) {
-    return (boost::format("command validation failed: account %s"
-                          " does not have permission %s (role)")
-            % account % shared_model::proto::permissions::toString(perm))
-        .str();
-  }
-
-  std::string missGrantablePerm(
-      shared_model::interface::types::AccountIdType account,
-      shared_model::interface::types::AccountIdType permittee,
-      shared_model::interface::permissions::Grantable perm) {
-    return (boost::format(
-                "command validation failed: account %s"
-                " does not have permission %s (grantable) for account %s")
-            % account % shared_model::proto::permissions::toString(perm)
-            % permittee)
-        .str();
-  }
-
-  std::string missRoleOrGrantablePerm(
-      shared_model::interface::types::AccountIdType account,
-      shared_model::interface::types::AccountIdType permittee,
-      shared_model::interface::permissions::Role role_perm,
-      shared_model::interface::permissions::Grantable grantable_perm) {
-    return (boost::format("command validation failed: account %s"
-                          " does not have permission %s (role)"
-                          " and permission %s (grantable) for account %s")
-            % account % shared_model::proto::permissions::toString(role_perm)
-            % shared_model::proto::permissions::toString(grantable_perm)
-            % permittee)
         .str();
   }
 
@@ -701,7 +668,9 @@ namespace iroha {
           END AS result)";
 
     std::string CommandError::toString() const {
-      return (boost::format("%s: %d") % command_name % error_code).str();
+      return (boost::format("%s: %d with extra info '%s'") % command_name
+              % error_code % error_extra)
+          .str();
     }
 
     PostgresCommandExecutor::PostgresCommandExecutor(soci::session &sql)
@@ -765,6 +734,8 @@ namespace iroha {
       auto &account_id = command.accountId();
       auto &role_name = command.roleName();
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%')");
+
+      cmd = (cmd % creator_account_id_ % account_id % role_name);
 
       appendCommandName("appendRole", cmd, do_validation_);
 
