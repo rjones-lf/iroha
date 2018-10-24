@@ -6,8 +6,6 @@
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 
 #include "common/visitor.hpp"
-#include "interfaces/iroha_internal/proposal.hpp"
-#include "interfaces/iroha_internal/transaction_batch.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -27,19 +25,17 @@ OnDemandOrderingGate::OnDemandOrderingGate(
 
         cache_->up();
 
-        visit_in_place(
-            event,
-            [this](
-                const BlockEvent &block_event) {
-              // block committed, increment block round
-              current_round_ = {block_event.height, 1};
-              cache_->remove(block_event.batches);
-            },
-            [this](const EmptyEvent &empty) {
-              // no blocks committed, increment reject round
-              current_round_ = {current_round_.block_round,
-                                current_round_.reject_round + 1};
-            });
+        visit_in_place(event,
+                       [this](const BlockEvent &block_event) {
+                         // block committed, increment block round
+                         current_round_ = {block_event.height, 1};
+                         cache_->remove(block_event.batches);
+                       },
+                       [this](const EmptyEvent &empty) {
+                         // no blocks committed, increment reject round
+                         current_round_ = {current_round_.block_round,
+                                           current_round_.reject_round + 1};
+                       });
 
         // notify our ordering service about new round
         ordering_service_->onCollaborationOutcome(current_round_);
@@ -67,7 +63,9 @@ void OnDemandOrderingGate::propagateBatch(
 
   cache_->addToBack(batches);
 
-  network_client_->onBatches(current_round_, batches);
+  network_client_->onBatches(current_round_,
+                             transport::OdOsNotification::CollectionType{
+                                 batches.begin(), batches.end()});
 }
 
 rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>

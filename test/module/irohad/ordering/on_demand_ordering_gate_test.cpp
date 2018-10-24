@@ -63,7 +63,8 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
  * @then it is passed to the ordering service
  */
 TEST_F(OnDemandOrderingGateTest, propagateBatch) {
-  std::shared_ptr<shared_model::interface::TransactionBatch> batch;
+  auto batch = std::shared_ptr<shared_model::interface::TransactionBatch>(
+      framework::batch::createValidBatch(2));
   OdOsNotification::CollectionType collection{batch};
 
   EXPECT_CALL(*notification, onBatches(initial_round, collection)).Times(1);
@@ -197,20 +198,13 @@ TEST_F(OnDemandOrderingGateTest, SendBatchWithBatchesFromTheCache) {
 
   auto batch1 = std::shared_ptr<shared_model::interface::TransactionBatch>(
       framework::batch::createValidBatch(2, now));
-  auto batch1Transactions = batch1->transactions();
 
   auto batch2 = std::shared_ptr<shared_model::interface::TransactionBatch>(
       framework::batch::createValidBatch(3, now + 1));
-  auto batch2Transactions = batch2->transactions();
 
-  OdOsNotification::CollectionType collection;
-  collection.insert(
-      collection.end(), batch1Transactions.begin(), batch1Transactions.end());
-  collection.insert(
-      collection.end(), batch2Transactions.begin(), batch2Transactions.end());
+  OdOsNotification::CollectionType collection{batch1, batch2};
 
-  EXPECT_CALL(*notification, onTransactions(initial_round, collection))
-      .Times(1);
+  EXPECT_CALL(*notification, onBatches(initial_round, collection)).Times(1);
 
   EXPECT_CALL(*cache,
               addToBack(cache::OgCache::BatchesListType{batch1, batch2}))
@@ -231,17 +225,9 @@ TEST_F(OnDemandOrderingGateTest, BatchesRemoveFromCache) {
 
   auto batch1 = std::shared_ptr<shared_model::interface::TransactionBatch>(
       framework::batch::createValidBatch(2, now));
-  auto batch1Transactions = batch1->transactions();
 
   auto batch2 = std::shared_ptr<shared_model::interface::TransactionBatch>(
       framework::batch::createValidBatch(3, now + 1));
-  auto batch2Transactions = batch2->transactions();
-
-  OdOsNotification::CollectionType collection;
-  collection.insert(
-      collection.end(), batch1Transactions.begin(), batch1Transactions.end());
-  collection.insert(
-      collection.end(), batch2Transactions.begin(), batch2Transactions.end());
 
   EXPECT_CALL(*cache, up()).Times(1);
   EXPECT_CALL(*cache, remove(cache::OgCache::BatchesListType{batch1, batch2}))
