@@ -59,6 +59,7 @@ if (IROHA_ROOT_PROJECT)
       query_responses/impl/proto_block_query_response.cpp
       query_responses/impl/proto_block_response.cpp
       query_responses/impl/proto_block_error_response.cpp
+      transaction_responses/impl/proto_tx_response.cpp
       )
 endif ()
 

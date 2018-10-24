@@ -5,11 +5,9 @@
 
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 
-#include <numeric>
-
 #include "common/visitor.hpp"
-#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
-#include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
+#include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -20,7 +18,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     rxcpp::observable<BlockRoundEventType> events,
     std::shared_ptr<cache::OgCache> cache,
     std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
-    transport::Round initial_round)
+    consensus::Round initial_round)
     : ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {
@@ -69,18 +67,7 @@ void OnDemandOrderingGate::propagateBatch(
 
   cache_->addToBack(batches);
 
-  auto transactions = std::accumulate(
-      batches.begin(),
-      batches.end(),
-      std::vector<std::shared_ptr<shared_model::interface::Transaction>>{},
-      [](auto &transactions, auto batch) {
-        transactions.insert(transactions.end(),
-                            batch->transactions().begin(),
-                            batch->transactions().end());
-        return transactions;
-      });
-
-  network_client_->onTransactions(current_round_, transactions);
+  network_client_->onBatches(current_round_, batches);
 }
 
 rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>

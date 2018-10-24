@@ -16,11 +16,11 @@
  */
 
 #include "torii/query_service.hpp"
+#include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
 #include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 using namespace torii;
@@ -57,16 +57,16 @@ class QueryServiceTest : public ::testing::Test {
     query_service = std::make_shared<QueryService>(query_processor);
   }
 
-  std::unique_ptr<shared_model::proto::QueryResponse> getResponse() {
-    static auto account = shared_model::proto::AccountBuilder()
-                              .accountId("a")
-                              .domainId("ru")
-                              .quorum(2)
-                              .build();
-    return clone(TestQueryResponseBuilder()
-                     .accountResponse(account, {"user"})
-                     .queryHash(query->hash())
-                     .build());
+  std::unique_ptr<shared_model::interface::QueryResponse> getResponse() {
+    std::unique_ptr<shared_model::interface::Account> account =
+        std::make_unique<shared_model::proto::Account>(
+            shared_model::proto::AccountBuilder()
+                .accountId("a")
+                .domainId("ru")
+                .quorum(2)
+                .build());
+    return shared_model::proto::ProtoQueryResponseFactory()
+        .createAccountResponse(std::move(account), {"user"}, query->hash());
   }
 
   std::shared_ptr<shared_model::proto::Query> query;

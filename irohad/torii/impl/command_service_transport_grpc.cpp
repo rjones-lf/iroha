@@ -15,6 +15,7 @@
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "common/timeout.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/transaction.hpp"
 
 namespace torii {
 

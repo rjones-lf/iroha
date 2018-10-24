@@ -10,6 +10,7 @@
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
+#include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
@@ -40,6 +41,7 @@ using namespace std::chrono_literals;
  */
 Irohad::Irohad(const std::string &block_store_dir,
                const std::string &pg_conn,
+               const std::string &listen_ip,
                size_t torii_port,
                size_t internal_port,
                size_t max_proposal_size,
@@ -49,6 +51,7 @@ Irohad::Irohad(const std::string &block_store_dir,
                bool is_mst_supported)
     : block_store_dir_(block_store_dir),
       pg_conn_(pg_conn),
+      listen_ip_(listen_ip),
       torii_port_(torii_port),
       internal_port_(internal_port),
       max_proposal_size_(max_proposal_size),
@@ -189,6 +192,10 @@ void Irohad::initFactories() {
       std::make_shared<shared_model::proto::ProtoTransportFactory<
           shared_model::interface::Transaction,
           shared_model::proto::Transaction>>(std::move(transaction_validator));
+
+  query_response_factory_ =
+      std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
+
   log_->info("[Init] => factories");
 }
 
@@ -363,7 +370,7 @@ void Irohad::initTransactionCommandService() {
  */
 void Irohad::initQueryService() {
   auto query_processor = std::make_shared<QueryProcessorImpl>(
-      storage, storage, pending_txs_storage_);
+      storage, storage, pending_txs_storage_, query_response_factory_);
 
   query_service = std::make_shared<::torii::QueryService>(query_processor);
 
@@ -377,38 +384,45 @@ void Irohad::initWsvRestorer() {
 /**
  * Run iroha daemon
  */
-void Irohad::run() {
+Irohad::RunResult Irohad::run() {
   using iroha::expected::operator|;
 
   // Initializing torii server
-  std::string ip = "0.0.0.0";
-  torii_server =
-      std::make_unique<ServerRunner>(ip + ":" + std::to_string(torii_port_));
+  torii_server = std::make_unique<ServerRunner>(listen_ip_ + ":"
+                                                + std::to_string(torii_port_));
 
   // Initializing internal server
-  internal_server =
-      std::make_unique<ServerRunner>(ip + ":" + std::to_string(internal_port_));
+  internal_server = std::make_unique<ServerRunner>(
+      listen_ip_ + ":" + std::to_string(internal_port_));
 
   // Run torii server
-  (torii_server->append(command_service_transport).append(query_service).run() |
-   [&](const auto &port) {
-     log_->info("Torii server bound on port {}", port);
-     if (is_mst_supported_) {
-       internal_server->append(mst_transport);
-     }
-     // Run internal server
-     return internal_server->append(ordering_init.ordering_gate_transport)
-         .append(ordering_init.ordering_service_transport)
-         .append(yac_init.consensus_network)
-         .append(loader_init.service)
-         .run();
-   })
-      .match(
+  return (torii_server->append(command_service_transport)
+              .append(query_service)
+              .run()
+          |
           [&](const auto &port) {
+            log_->info("Torii server bound on port {}", port);
+            if (is_mst_supported_) {
+              internal_server->append(mst_transport);
+            }
+            // Run internal server
+            return internal_server
+                ->append(ordering_init.ordering_gate_transport)
+                .append(ordering_init.ordering_service_transport)
+                .append(yac_init.consensus_network)
+                .append(loader_init.service)
+                .run();
+          })
+      .match(
+          [&](const auto &port) -> RunResult {
             log_->info("Internal server bound on port {}", port.value);
             log_->info("===> iroha initialized");
+            return {};
           },
-          [&](const expected::Error<std::string> &e) { log_->error(e.error); });
+          [&](const expected::Error<std::string> &e) -> RunResult {
+            log_->error(e.error);
+            return e;
+          });
 }
 
 Irohad::~Irohad() {

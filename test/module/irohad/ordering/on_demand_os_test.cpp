@@ -11,6 +11,7 @@
 #include <gtest/gtest.h>
 #include "builders/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -21,8 +22,8 @@ class OnDemandOsTest : public ::testing::Test {
   std::shared_ptr<OnDemandOrderingService> os;
   const uint64_t transaction_limit = 20;
   const uint32_t proposal_limit = 5;
-  const Round initial_round = {2, 1}, target_round = {4, 1},
-              commit_round = {3, 1}, reject_round = {2, 2};
+  const consensus::Round initial_round = {2, 1}, target_round = {4, 1},
+                         commit_round = {3, 1}, reject_round = {2, 2};
 
   void SetUp() override {
     os = std::make_shared<OnDemandOrderingServiceImpl>(
@@ -34,24 +35,27 @@ class OnDemandOsTest : public ::testing::Test {
    * @param os - ordering service for insertion
    * @param range - pair of [from, to)
    */
-  void generateTransactionsAndInsert(Round round,
+  void generateTransactionsAndInsert(consensus::Round round,
                                      std::pair<uint64_t, uint64_t> range) {
     auto now = iroha::time::now();
     OnDemandOrderingService::CollectionType collection;
     for (auto i = range.first; i < range.second; ++i) {
-      collection.push_back(std::make_unique<shared_model::proto::Transaction>(
-          shared_model::proto::TransactionBuilder()
-              .createdTime(now + i)
-              .creatorAccountId("foo@bar")
-              .createAsset("asset", "domain", 1)
-              .quorum(1)
-              .build()
-              .signAndAddSignature(
-                  shared_model::crypto::DefaultCryptoAlgorithmType::
-                      generateKeypair())
-              .finish()));
+      collection.push_back(
+          std::make_unique<shared_model::interface::TransactionBatchImpl>(
+              shared_model::interface::types::SharedTxsCollectionType{
+                  std::make_unique<shared_model::proto::Transaction>(
+                      shared_model::proto::TransactionBuilder()
+                          .createdTime(now + i)
+                          .creatorAccountId("foo@bar")
+                          .createAsset("asset", "domain", 1)
+                          .quorum(1)
+                          .build()
+                          .signAndAddSignature(
+                              shared_model::crypto::DefaultCryptoAlgorithmType::
+                                  generateKeypair())
+                          .finish())}));
     }
-    os->onTransactions(round, std::move(collection));
+    os->onBatches(round, std::move(collection));
   }
 };
 
@@ -140,7 +144,7 @@ TEST_F(OnDemandOsTest, Erase) {
     ASSERT_TRUE(os->onRequestProposal({i + 1, commit_round.reject_round}));
   }
 
-  for (BlockRoundType i = commit_round.block_round + proposal_limit;
+  for (consensus::BlockRoundType i = commit_round.block_round + proposal_limit;
        i < commit_round.block_round + 2 * proposal_limit;
        ++i) {
     generateTransactionsAndInsert({i + 1, commit_round.reject_round}, {1, 2});
@@ -165,7 +169,8 @@ TEST_F(OnDemandOsTest, EraseReject) {
     ASSERT_TRUE(os->onRequestProposal({reject_round.block_round, i + 1}));
   }
 
-  for (RejectRoundType i = reject_round.reject_round + proposal_limit;
+  for (consensus::RejectRoundType i =
+           reject_round.reject_round + proposal_limit;
        i < reject_round.reject_round + 2 * proposal_limit;
        ++i) {
     generateTransactionsAndInsert({reject_round.block_round, i + 1}, {1, 2});

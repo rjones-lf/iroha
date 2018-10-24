@@ -23,6 +23,7 @@
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
+#include "interfaces/iroha_internal/query_response_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
@@ -60,10 +61,14 @@ namespace iroha {
 
 class Irohad {
  public:
+
+  using RunResult = iroha::expected::Result<void, std::string>;
+
   /**
    * Constructor that initializes common iroha pipeline
    * @param block_store_dir - folder where blocks will be stored
    * @param pg_conn - initialization string for postgre
+   * @param listen_ip - ip address for opening ports
    * @param torii_port - port for torii binding
    * @param internal_port - port for internal communication - ordering service,
    * consensus, and block loader
@@ -76,6 +81,7 @@ class Irohad {
    */
   Irohad(const std::string &block_store_dir,
          const std::string &pg_conn,
+         const std::string &listen_ip,
          size_t torii_port,
          size_t internal_port,
          size_t max_proposal_size,
@@ -107,8 +113,9 @@ class Irohad {
 
   /**
    * Run worker threads for start performing
+   * @return void value on success, error message otherwise
    */
-  virtual void run();
+  RunResult run();
 
   virtual ~Irohad();
 
@@ -159,6 +166,7 @@ class Irohad {
   // constructor dependencies
   std::string block_store_dir_;
   std::string pg_conn_;
+  const std::string listen_ip_;
   size_t torii_port_;
   size_t internal_port_;
   size_t max_proposal_size_;
@@ -220,6 +228,10 @@ class Irohad {
       shared_model::interface::Transaction,
       iroha::protocol::Transaction>>
       transaction_factory;
+
+  // query response factory
+  std::shared_ptr<shared_model::interface::QueryResponseFactory>
+      query_response_factory_;
 
   // mst
   std::shared_ptr<iroha::MstProcessor> mst_processor;
