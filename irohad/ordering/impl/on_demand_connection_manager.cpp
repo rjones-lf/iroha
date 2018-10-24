@@ -31,8 +31,8 @@ OnDemandConnectionManager::OnDemandConnectionManager(
   initializeConnections(initial_peers);
 }
 
-void OnDemandConnectionManager::onTransactions(transport::Round round,
-                                               CollectionType transactions) {
+void OnDemandConnectionManager::onBatches(consensus::Round round,
+                                          CollectionType batches) {
   // shared lock
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
@@ -51,7 +51,7 @@ void OnDemandConnectionManager::onTransactions(transport::Round round,
    * 1 x v .
    * 2 v . .
    */
-  const transport::Round rounds[] = {
+  const consensus::Round rounds[] = {
       {round.block_round, round.reject_round + 2},
       {round.block_round + 1, 2},
       {round.block_round + 2, 1}};
@@ -62,13 +62,12 @@ void OnDemandConnectionManager::onTransactions(transport::Round round,
     log_->debug(
         "onTransactions, round[{}, {}]", round.block_round, round.reject_round);
 
-    connections_.peers[boost::get<0>(pair)]->onTransactions(round,
-                                                            transactions);
+    connections_.peers[boost::get<0>(pair)]->onBatches(round, transactions);
   }
 }
 
 boost::optional<OnDemandConnectionManager::ProposalType>
-OnDemandConnectionManager::onRequestProposal(transport::Round round) {
+OnDemandConnectionManager::onRequestProposal(consensus::Round round) {
   // shared lock
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 

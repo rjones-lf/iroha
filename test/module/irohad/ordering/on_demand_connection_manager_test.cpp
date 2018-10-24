@@ -11,6 +11,7 @@
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
+using namespace iroha;
 using namespace iroha::ordering;
 using namespace iroha::ordering::transport;
 
@@ -68,27 +69,27 @@ TEST_F(OnDemandConnectionManagerTest, FactoryUsed) {
 
 /**
  * @given initialized OnDemandConnectionManager
- * @when onTransactions is called
+ * @when onBatches is called
  * @then peers get data for propagation
  */
-TEST_F(OnDemandConnectionManagerTest, onTransactions) {
+TEST_F(OnDemandConnectionManagerTest, onBatches) {
   OdOsNotification::CollectionType collection;
-  Round round{1, 2};
+  consensus::Round round{1, 2};
   const OnDemandConnectionManager::PeerType types[] = {
       OnDemandConnectionManager::kCurrentRoundRejectConsumer,
       OnDemandConnectionManager::kNextRoundRejectConsumer,
       OnDemandConnectionManager::kNextRoundCommitConsumer};
-  const transport::Round rounds[] = {
+  const consensus::Round rounds[] = {
       {round.block_round, round.reject_round + 2},
       {round.block_round + 1, 2},
       {round.block_round + 2, 1}};
   for (auto &&pair : boost::combine(types, rounds)) {
     EXPECT_CALL(*connections[boost::get<0>(pair)],
-                onTransactions(boost::get<1>(pair), collection))
+                onBatches(boost::get<1>(pair), collection))
         .Times(1);
   }
 
-  manager->onTransactions(round, collection);
+  manager->onBatches(round, collection);
 }
 
 /**
@@ -99,7 +100,7 @@ TEST_F(OnDemandConnectionManagerTest, onTransactions) {
  * AND return data is forwarded
  */
 TEST_F(OnDemandConnectionManagerTest, onRequestProposal) {
-  Round round;
+  consensus::Round round;
   boost::optional<OnDemandConnectionManager::ProposalType> oproposal =
       OnDemandConnectionManager::ProposalType{};
   auto proposal = oproposal.value().get();
@@ -121,7 +122,7 @@ TEST_F(OnDemandConnectionManagerTest, onRequestProposal) {
  * AND return data is forwarded
  */
 TEST_F(OnDemandConnectionManagerTest, onRequestProposalNone) {
-  Round round;
+  consensus::Round round;
   boost::optional<OnDemandConnectionManager::ProposalType> oproposal;
   EXPECT_CALL(*connections[OnDemandConnectionManager::kIssuer],
               onRequestProposal(round))
