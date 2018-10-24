@@ -71,6 +71,11 @@ namespace iroha {
      */
     std::vector<size_t> non_visited;
 
+    /**
+     * Worker that performs internal loop handling
+     */
+    rxcpp::observe_on_one_worker emit_worker;
+
     /*
      * Observable for the emitting propagated data
      */
