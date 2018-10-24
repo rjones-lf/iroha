@@ -30,7 +30,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                          // block committed, increment block round
                          log_->debug("BlockEvent. height {}",
                                      block_event->height());
-                         current_round_ = {block_event->height(), 1};
+                         current_round_ = {block_event->height() + 1, 1};
                        },
                        [this](const EmptyEvent &empty) {
                          // no blocks committed, increment reject round
