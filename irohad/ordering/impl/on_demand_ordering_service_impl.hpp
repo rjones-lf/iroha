@@ -30,13 +30,12 @@ namespace iroha {
        * @param initial_round - first round of agreement.
        * Default value is {2, 1} since genesis block height is 1
        */
-      explicit OnDemandOrderingServiceImpl(
+      OnDemandOrderingServiceImpl(
           size_t transaction_limit,
-          size_t number_of_proposals,
-          const consensus::Round &initial_round);
-
-      explicit OnDemandOrderingServiceImpl(size_t transaction_limit)
-          : OnDemandOrderingServiceImpl(transaction_limit, 3, {2, 1}) {}
+          std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+              proposal_factory,
+          size_t number_of_proposals = 3,
+          const consensus::Round &initial_round = {2, 1});
 
       // --------------------- | OnDemandOrderingService |_---------------------
 
@@ -105,13 +104,13 @@ namespace iroha {
        */
       std::shared_timed_mutex lock_;
 
+      std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+          proposal_factory_;
+
       /**
        * Logger instance
        */
       logger::Logger log_;
-
-      std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
-          proposal_factory_;
     };
   }  // namespace ordering
 }  // namespace iroha

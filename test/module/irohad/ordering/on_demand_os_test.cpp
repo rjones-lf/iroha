@@ -9,9 +9,11 @@
 #include <thread>
 
 #include <gtest/gtest.h>
+#include "backend/protobuf/proto_proposal_factory.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
+#include "validators/default_validator.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -26,8 +28,10 @@ class OnDemandOsTest : public ::testing::Test {
                          commit_round = {3, 1}, reject_round = {2, 2};
 
   void SetUp() override {
+    auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
+        shared_model::validation::DefaultProposalValidator>>();
     os = std::make_shared<OnDemandOrderingServiceImpl>(
-        transaction_limit, proposal_limit, initial_round);
+        transaction_limit, std::move(factory), proposal_limit, initial_round);
   }
 
   /**
@@ -112,8 +116,10 @@ TEST_F(OnDemandOsTest, OverflowRound) {
  */
 TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
   auto large_tx_limit = 10000u;
+  auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
+      shared_model::validation::DefaultProposalValidator>>();
   os = std::make_shared<OnDemandOrderingServiceImpl>(
-      large_tx_limit, proposal_limit, initial_round);
+      large_tx_limit, std::move(factory), proposal_limit, initial_round);
 
   auto call = [this](auto bounds) {
     for (auto i = bounds.first; i < bounds.second; ++i) {
