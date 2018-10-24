@@ -39,13 +39,6 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
                                                initial_round);
   }
 
-  std::shared_ptr<shared_model::interface::Block> createBlockWithHeight(
-      size_t height) {
-    auto block = std::make_shared<MockBlock>();
-    EXPECT_CALL(*block, height()).WillOnce(Return(height));
-    return block;
-  }
-
   rxcpp::subjects::subject<OnDemandOrderingGate::BlockRoundEventType> rounds;
   std::shared_ptr<MockOnDemandOrderingService> ordering_service;
   std::shared_ptr<MockOdOsNotification> notification;
@@ -206,8 +199,7 @@ TEST_F(OnDemandOrderingGateTest, SendBatchWithBatchesFromTheCache) {
 
   EXPECT_CALL(*notification, onBatches(initial_round, collection)).Times(1);
 
-  EXPECT_CALL(*cache,
-              addToBack(cache::OgCache::BatchesSetType{batch1, batch2}))
+  EXPECT_CALL(*cache, addToBack(cache::OgCache::BatchesSetType{batch1, batch2}))
       .Times(1);
   EXPECT_CALL(*cache, clearFrontAndGet())
       .WillOnce(Return(cache::OgCache::BatchesSetType{batch2}));

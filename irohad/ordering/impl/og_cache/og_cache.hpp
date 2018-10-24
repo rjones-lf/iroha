@@ -7,6 +7,7 @@
 #define IROHA_OG_CACHE_HPP
 
 #include <unordered_set>
+
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 
 namespace iroha {
