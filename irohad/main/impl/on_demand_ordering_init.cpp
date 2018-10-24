@@ -7,6 +7,7 @@
 
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
+#include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "ordering/impl/on_demand_connection_manager.hpp"
 #include "ordering/impl/on_demand_ordering_gate.hpp"
@@ -118,8 +119,7 @@ namespace iroha {
                 if (obs.count() == 0) {
                   return ordering::OnDemandOrderingGate::EmptyEvent{};
                 } else {
-                  return ordering::OnDemandOrderingGate::BlockEvent{
-                      obs.last()->height()};
+                  return obs.last();
                 }
               }),
           std::move(factory));
@@ -134,13 +134,23 @@ namespace iroha {
         size_t max_size,
         std::chrono::milliseconds delay,
         std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
+        std::shared_ptr<
+            ordering::transport::OnDemandOsServerGrpc::TransportFactoryType>
+            transaction_factory,
+        std::shared_ptr<shared_model::interface::TransactionBatchParser>
+            batch_parser,
+        std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+            transaction_batch_factory,
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call,
         std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
             factory) {
       auto ordering_service = createService(max_size);
       service = std::make_shared<ordering::transport::OnDemandOsServerGrpc>(
-          ordering_service);
+          ordering_service,
+          std::move(transaction_factory),
+          std::move(batch_parser),
+          std::move(transaction_batch_factory));
       return createGate(
           ordering_service,
           createConnectionManager(

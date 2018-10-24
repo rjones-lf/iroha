@@ -62,7 +62,7 @@ void OnDemandConnectionManager::onBatches(consensus::Round round,
     log_->debug(
         "onTransactions, round[{}, {}]", round.block_round, round.reject_round);
 
-    connections_.peers[boost::get<0>(pair)]->onBatches(round, transactions);
+    connections_.peers[boost::get<0>(pair)]->onBatches(round, batches);
   }
 }
 

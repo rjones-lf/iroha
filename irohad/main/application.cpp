@@ -23,6 +23,7 @@
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
+#include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace iroha;
@@ -200,6 +201,8 @@ void Irohad::initOrderingGate() {
   ordering_gate = ordering_init.initOrderingGate(max_proposal_size_,
                                                  proposal_delay_,
                                                  storage,
+                                                 transaction_factory,
+                                                 batch_parser,
                                                  transaction_batch_factory_,
                                                  async_call_,
                                                  std::move(factory));

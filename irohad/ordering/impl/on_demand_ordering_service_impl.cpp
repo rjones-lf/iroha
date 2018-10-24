@@ -107,7 +107,7 @@ void OnDemandOrderingServiceImpl::packNextProposals(
     }
   };
 
-  auto open_round = [this](transport::Round round) {
+  auto open_round = [this](consensus::Round round) {
     log_->debug("open round[{}, {}]", round.block_round, round.reject_round);
     current_proposals_[round];
   };
