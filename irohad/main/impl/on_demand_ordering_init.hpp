@@ -31,7 +31,8 @@ namespace iroha {
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call,
-          std::chrono::milliseconds delay);
+          std::chrono::milliseconds delay,
+          std::vector<shared_model::interface::types::HashType> hashes);
 
       auto createGate(
           std::shared_ptr<ordering::OnDemandOrderingService> ordering_service,
@@ -45,6 +46,7 @@ namespace iroha {
       std::shared_ptr<network::OrderingGate> initOrderingGate(
           size_t max_size,
           std::chrono::milliseconds delay,
+          std::vector<shared_model::interface::types::HashType> hashes,
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           std::shared_ptr<
               ordering::transport::OnDemandOsServerGrpc::TransportFactoryType>
@@ -71,13 +73,13 @@ namespace iroha {
       std::vector<std::shared_ptr<shared_model::interface::Peer>>
           current_peers_;
 
+      /// indexes to permutations for corresponding rounds
       enum RoundType { kCurrentRound, kNextRound, kRoundAfterNext, kCount };
 
-      template <RoundType Round>
-      struct RoundTypeEnum {
-        static constexpr auto round = Round;
-      };
+      template <RoundType V>
+      using RoundTypeConstant = std::integral_constant<RoundType, V>;
 
+      /// permutations for peers lists
       std::array<std::vector<size_t>, kCount> permutations_;
     };
   }  // namespace network

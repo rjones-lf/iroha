@@ -57,7 +57,7 @@ void OnDemandConnectionManager::onBatches(consensus::Round round,
       {round.block_round + 2, 1}};
 
   for (auto &&pair : boost::combine(types, rounds)) {
-    auto &&round = boost::get<1>(pair);
+    auto &round = boost::get<1>(pair);
 
     log_->debug(
         "onTransactions, round[{}, {}]", round.block_round, round.reject_round);

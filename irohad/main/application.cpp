@@ -196,10 +196,40 @@ void Irohad::initFactories() {
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
+  auto block_query = storage->createBlockQuery();
+  if (not block_query) {
+    log_->error("Failed to create block query");
+    return;
+  }
+  auto height = (*block_query)->getTopBlockHeight();
+  // since delay is 2, it is required to get two more hashes from block store,
+  // in addition to top block
+  size_t required_num_blocks = 0;
+  if (height > 2) {
+    required_num_blocks = 2;
+  } else if (height == 2) {
+    required_num_blocks = 1;
+  }
+  auto blocks = (*block_query)->getBlocks(height - 2, required_num_blocks);
+  auto hash_stub = shared_model::interface::types::HashType{std::string(
+      shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength, '0')};
+  auto hashes = std::accumulate(
+      blocks.begin(),
+      blocks.end(),
+      // add hash stubs if there are not enough blocks in storage
+      std::vector<shared_model::interface::types::HashType>{
+          2 - required_num_blocks, hash_stub},
+      [](auto &acc, const auto &val) {
+        acc.push_back(val->hash());
+        return acc;
+      });
+
   auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
       shared_model::validation::DefaultProposalValidator>>();
+
   ordering_gate = ordering_init.initOrderingGate(max_proposal_size_,
                                                  proposal_delay_,
+                                                 std::move(hashes),
                                                  storage,
                                                  transaction_factory,
                                                  batch_parser,
@@ -409,23 +439,25 @@ Irohad::RunResult Irohad::run() {
           [&](const auto &port) -> RunResult {
             log_->info("Internal server bound on port {}", port.value);
             log_->info("===> iroha initialized");
+            // initiate first round
+            auto block_query = storage->createBlockQuery();
+            if (not block_query) {
+              return expected::makeError("Failed to create block query");
+            }
+            auto block_var = (*block_query)->getTopBlock();
+            if (auto e = boost::get<expected::Error<std::string>>(&block_var)) {
+              return expected::makeError("Failed to get the top block: "
+                                         + e->error);
+            }
+
+            auto block = boost::get<expected::Value<
+                std::shared_ptr<shared_model::interface::Block>>>(&block_var)
+                             ->value;
+
             pcs->on_commit()
-                .start_with(
-                    storage->createBlockQuery() |
-                    [](const auto &block_query) {
-                      return block_query->getTopBlock().match(
-                          [](expected::Value<
-                              std::shared_ptr<shared_model::interface::Block>>
-                                 &block) -> synchronizer::SynchronizationEvent {
-                            return {rxcpp::observable<>::just(block.value),
-                                    SynchronizationOutcomeType::kCommit};
-                          },
-                          [](expected::Error<std::string> &error)
-                              -> synchronizer::SynchronizationEvent {
-                            throw std::runtime_error(
-                                "Failed to get the top block: " + error.error);
-                          });
-                    })
+                .start_with(synchronizer::SynchronizationEvent{
+                    rxcpp::observable<>::just(block),
+                    SynchronizationOutcomeType::kCommit})
                 .subscribe(ordering_init.notifier.get_subscriber());
             return {};
           },
