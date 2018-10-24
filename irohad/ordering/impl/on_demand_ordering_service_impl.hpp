@@ -14,6 +14,7 @@
 
 #include <tbb/concurrent_queue.h>
 
+#include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -108,6 +109,9 @@ namespace iroha {
        * Logger instance
        */
       logger::Logger log_;
+
+      std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+          proposal_factory_;
     };
   }  // namespace ordering
 }  // namespace iroha
