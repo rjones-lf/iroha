@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <shared_mutex>
+#include <atomic>
 
 #include <soci/soci.h>
 #include <boost/optional.hpp>
@@ -108,7 +109,7 @@ namespace iroha {
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override;
 
-      void prepareBlock() override;
+      void prepareBlock(TemporaryWsv &wsv) override;
 
       ~StorageImpl() override;
 
@@ -151,6 +152,8 @@ namespace iroha {
       size_t pool_size_;
 
       bool prepared_blocks_enabled_;
+
+      std::atomic<bool> block_is_prepared;
 
      protected:
       static const std::string &drop_;

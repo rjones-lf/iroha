@@ -38,7 +38,7 @@ namespace iroha {
       virtual expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
       createTemporaryWsv() = 0;
 
-      virtual void prepareBlock() = 0;
+      virtual void prepareBlock(TemporaryWsv &wsv) = 0;
 
       virtual ~TemporaryFactory() = default;
     };

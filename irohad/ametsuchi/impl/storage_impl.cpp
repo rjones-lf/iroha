@@ -56,7 +56,8 @@ namespace iroha {
           converter_(std::move(converter)),
           log_(logger::log("StorageImpl")),
           pool_size_(pool_size),
-          prepared_blocks_enabled_(enable_prepared_blocks) {
+          prepared_blocks_enabled_(enable_prepared_blocks),
+          block_is_prepared(false) {
       soci::session sql(*connection_);
       sql << init_;
       prepareStatements(*connection_, pool_size_);
@@ -235,6 +236,9 @@ namespace iroha {
       std::vector<std::shared_ptr<soci::session>> connections;
       for (size_t i = 0; i < pool_size_; i++) {
         connections.push_back(std::make_shared<soci::session>(*connection_));
+        try {
+          *connections[i] << "ROLLBACK PREPARED 'prepared_block2';";
+        } catch (...) {}
         connections[i]->close();
         log_->debug("Closed connection {}", i);
       }
@@ -389,11 +393,12 @@ namespace iroha {
           return false;
         }
         soci::session sql(*connection_);
-        sql << "COMMIT PREPARED 'prepared_block';";
+        sql << "COMMIT PREPARED 'prepared_block1';";
+        block_is_prepared = false;
       } catch (const std::exception &e) {
         log_->warn("failed to apply prepared block {}: {}",
-                    block.hash().hex(),
-                    e.what());
+                   block.hash().hex(),
+                   e.what());
         return false;
       }
 
@@ -437,18 +442,22 @@ namespace iroha {
       return notifier_.get_observable();
     }
 
-    void StorageImpl::prepareBlock() {
-      if (prepared_blocks_enabled_) {
-        std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
-        if (not connection_) {
-          log_->info("connection to database is not initialised");
-          return;
-        }
-        soci::session sql(*connection_);
-        sql << "PREPARE TRANSACTION 'prepared_block';";
-        log_->info("prepared block");
-      } else {
+    void StorageImpl::prepareBlock(TemporaryWsv &wsv) {
+      auto &wsv_impl = static_cast<TemporaryWsvImpl &>(wsv);
+      if (not prepared_blocks_enabled_) {
         log_->warn("prepared block are not enabled");
+        return;
+      }
+      if (not block_is_prepared) {
+        soci::session &sql = *wsv_impl.sql_;
+        try {
+          sql << "PREPARE TRANSACTION 'prepared_block2';";
+          block_is_prepared = true;
+        } catch (const std::exception &e) {
+          sql << "ROLLBACK PREPARED 'prepared_block2';";
+        }
+
+        log_->info("prepared block");
       }
     }
 
