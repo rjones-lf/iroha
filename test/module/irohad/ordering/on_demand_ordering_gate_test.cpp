@@ -69,7 +69,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
   auto block = std::make_shared<MockBlock>();
   EXPECT_CALL(*block, height()).WillRepeatedly(Return(3));
   OnDemandOrderingGate::BlockEvent event = {block};
-  consensus::Round round{event->height(), 1};
+  consensus::Round round{event->height() + 1, 1};
 
   boost::optional<OdOsNotification::ProposalType> oproposal(nullptr);
   auto proposal = oproposal.value().get();
@@ -125,7 +125,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
   auto block = std::make_shared<MockBlock>();
   EXPECT_CALL(*block, height()).WillRepeatedly(Return(3));
   OnDemandOrderingGate::BlockEvent event = {block};
-  consensus::Round round{event->height(), 1};
+  consensus::Round round{event->height() + 1, 1};
 
   boost::optional<OdOsNotification::ProposalType> oproposal;
 
