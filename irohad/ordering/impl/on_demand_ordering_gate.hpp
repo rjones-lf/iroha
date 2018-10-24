@@ -32,6 +32,7 @@ namespace iroha {
        */
       struct BlockEvent {
         shared_model::interface::types::HeightType height;
+        cache::OgCache::BatchesListType batches;
       };
 
       /**

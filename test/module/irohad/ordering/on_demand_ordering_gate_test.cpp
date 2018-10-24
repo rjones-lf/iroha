@@ -27,7 +27,7 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
   void SetUp() override {
     ordering_service = std::make_shared<MockOnDemandOrderingService>();
     notification = std::make_shared<MockOdOsNotification>();
-    cache = std::make_shared<cache::OnDemandCache>();
+    cache = std::make_shared<cache::MockOgCache>();
     auto ufactory = std::make_unique<MockUnsafeProposalFactory>();
     factory = ufactory.get();
     ordering_gate =
@@ -39,7 +39,8 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
                                                initial_round);
   }
 
-  std::shared_ptr<shared_model::interface::Block> createBlockWithHeight(size_t height) {
+  std::shared_ptr<shared_model::interface::Block> createBlockWithHeight(
+      size_t height) {
     auto block = std::make_shared<MockBlock>();
     EXPECT_CALL(*block, height()).WillOnce(Return(height));
     return block;
@@ -51,7 +52,7 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
   MockUnsafeProposalFactory *factory;
   std::shared_ptr<OnDemandOrderingGate> ordering_gate;
 
-  std::shared_ptr<cache::OnDemandCache> cache;
+  std::shared_ptr<cache::MockOgCache> cache;
 
   const Round initial_round = {2, 1};
 };
@@ -80,7 +81,7 @@ TEST_F(OnDemandOrderingGateTest, propagateBatch) {
  * @then new proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, BlockEvent) {
-  OnDemandOrderingGate::BlockEvent event{3};
+  OnDemandOrderingGate::BlockEvent event{3, {}};
   Round round{event.height, 1};
 
   boost::optional<OdOsNotification::ProposalType> oproposal(nullptr);
@@ -133,7 +134,7 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
  * @then new empty proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
-  OnDemandOrderingGate::BlockEvent event{3};
+  OnDemandOrderingGate::BlockEvent event{3, {}};
   Round round{event.height, 1};
 
   boost::optional<OdOsNotification::ProposalType> oproposal;
@@ -187,69 +188,66 @@ TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
   ASSERT_TRUE(gate_wrapper.validate());
 }
 
-TEST_F(OnDemandOrderingGateTest, SendTransactions) {
+/**
+ * @given initialized ordering gate
+ * @when batch1 is propagated to ordering gate while cache contains batch2
+ * @then all transactions from batch1 and batch2 are propagated to network
+ */
+TEST_F(OnDemandOrderingGateTest, SendBatchWithBatchesFromTheCache) {
   auto now = iroha::time::now();
+
   auto batch1 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(1, now + 1));
+      framework::batch::createValidBatch(2, now));
+  auto batch1Transactions = batch1->transactions();
+
   auto batch2 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(1, now + 2));
-  auto batch3 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(1, now + 3));
+      framework::batch::createValidBatch(3, now + 1));
+  auto batch2Transactions = batch2->transactions();
 
-  //-------------------------------------------------------------------
+  OdOsNotification::CollectionType collection;
+  collection.insert(
+      collection.end(), batch1Transactions.begin(), batch1Transactions.end());
+  collection.insert(
+      collection.end(), batch2Transactions.begin(), batch2Transactions.end());
+
+  EXPECT_CALL(*notification, onTransactions(initial_round, collection))
+      .Times(1);
+
+  EXPECT_CALL(*cache,
+              addToBack(cache::OgCache::BatchesListType{batch1, batch2}))
+      .Times(1);
+  EXPECT_CALL(*cache, clearFrontAndGet())
+      .WillOnce(Return(cache::OgCache::BatchesListType{batch2}));
+
   ordering_gate->propagateBatch(batch1);
-  /**
-   * 1. {}
-   * 2. {}
-   * 3. {batch1}
-   */
-  ASSERT_EQ(cache->front().size(), 0);
-  ASSERT_EQ(cache->back().size(), 1);
+}
 
-  rounds.get_subscriber().on_next(createBlockWithHeight(1));
-  /**
-   * 1. {}
-   * 2. {batch1}
-   * 3. {}
-   */
-  ASSERT_EQ(cache->front().size(), 0);
-  ASSERT_EQ(cache->back().size(), 0);
+/**
+ * @given initialized ordering gate
+ * @when an block round event is received from the PCS
+ * @then all batches from that event are removed from the cache
+ */
+TEST_F(OnDemandOrderingGateTest, BatchesRemoveFromCache) {
+  auto now = iroha::time::now();
 
-  //-------------------------------------------------------------------
-  ordering_gate->propagateBatch(batch2);
-  /**
-   * 1. {}
-   * 2. {batch1}
-   * 3. {batch2}
-   */
-  ASSERT_EQ(cache->front().size(), 0);
-  ASSERT_EQ(cache->back().size(), 1);
+  auto batch1 = std::shared_ptr<shared_model::interface::TransactionBatch>(
+      framework::batch::createValidBatch(2, now));
+  auto batch1Transactions = batch1->transactions();
 
-  rounds.get_subscriber().on_next(createBlockWithHeight(2));
-  /**
-   * 1. {batch1}
-   * 2. {batch2}
-   * 3. {}
-   */
-  ASSERT_EQ(cache->front().size(), 1);
-  ASSERT_EQ(cache->back().size(), 0);
+  auto batch2 = std::shared_ptr<shared_model::interface::TransactionBatch>(
+      framework::batch::createValidBatch(3, now + 1));
+  auto batch2Transactions = batch2->transactions();
 
-  //-------------------------------------------------------------------
-  ordering_gate->propagateBatch(batch3);
-  /**
-   * 1. {}
-   * 2. {batch2}
-   * 3. {batch1, batch3}
-   */
-  ASSERT_EQ(cache->front().size(), 0);
-  ASSERT_EQ(cache->back().size(), 2);
+  OdOsNotification::CollectionType collection;
+  collection.insert(
+      collection.end(), batch1Transactions.begin(), batch1Transactions.end());
+  collection.insert(
+      collection.end(), batch2Transactions.begin(), batch2Transactions.end());
 
-  rounds.get_subscriber().on_next(createBlockWithHeight(3));
-  /**
-   * 1. {batch2}
-   * 2. {batch1, batch3}
-   * 3. {}
-   */
-  ASSERT_EQ(cache->front().size(), 1);
-  ASSERT_EQ(cache->back().size(), 0);
+  EXPECT_CALL(*cache, up()).Times(1);
+  EXPECT_CALL(*cache, remove(cache::OgCache::BatchesListType{batch1, batch2}))
+      .Times(1);
+
+  rounds.get_subscriber().on_next(
+      OnDemandOrderingGate::BlockEvent{1, {batch1, batch2}});
 }

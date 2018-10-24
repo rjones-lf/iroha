@@ -6,6 +6,7 @@
 #ifndef IROHA_OG_CACHE_HPP
 #define IROHA_OG_CACHE_HPP
 
+#include <unordered_set>
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 
 namespace iroha {
@@ -13,9 +14,20 @@ namespace iroha {
     namespace cache {
 
       class OgCache {
+       private:
+        struct comp {
+          shared_model::crypto::Hash::Hasher hasher_;
+          size_t operator()(
+              const std::shared_ptr<shared_model::interface::TransactionBatch>
+                  &a) const {
+            return hasher_(a->reducedHash());
+          }
+        };
+
        public:
-        using BatchesListType = std::set<
-            std::shared_ptr<shared_model::interface::TransactionBatch>>;
+        using BatchesListType = std::unordered_set<
+            std::shared_ptr<shared_model::interface::TransactionBatch>,
+            comp>;
 
         virtual void addToBack(const BatchesListType &batches) = 0;
 

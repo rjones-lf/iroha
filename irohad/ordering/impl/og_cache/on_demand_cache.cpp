@@ -11,10 +11,6 @@ using namespace iroha::ordering::cache;
 
 void OnDemandCache::addToBack(const OgCache::BatchesListType &batches) {
   queue_.back().insert(batches.begin(), batches.end());
-  for (const auto &batch : queue_.back()) {
-    std::cout << batch->toString();
-  }
-  std::cout << std::endl;
 }
 
 OgCache::BatchesListType OnDemandCache::clearFrontAndGet() {
@@ -24,7 +20,11 @@ OgCache::BatchesListType OnDemandCache::clearFrontAndGet() {
 }
 
 void OnDemandCache::remove(const OgCache::BatchesListType &remove_batches) {
-  queue_.front().erase(remove_batches.begin(), remove_batches.end());
+  auto &front = queue_.front();
+
+  for (auto batch : remove_batches) {
+    front.erase(batch);
+  }
 }
 void OnDemandCache::up() {
   auto popped = queue_.front();

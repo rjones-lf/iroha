@@ -27,57 +27,21 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         // exclusive lock
         std::lock_guard<std::shared_timed_mutex> lock(mutex_);
 
-        // TODO: remove parsers and factory and get batches directly from the
-        // block
-        shared_model::interface::TransactionBatchParserImpl batch_parser;
-        shared_model::interface::TransactionBatchFactoryImpl batch_factory;
+        cache_->up();
 
         visit_in_place(
             event,
-            [this, &batch_parser, &batch_factory](
-                const BlockEvent &block) {
+            [this](
+                const BlockEvent &block_event) {
               // block committed, increment block round
-              current_round_ = {block.height, 1};
-
-              auto batch_transactions =
-                  batch_parser.parseBatches(block_event->transactions());
-
-              auto batches = std::accumulate(
-                  batch_transactions.begin(),
-                  batch_transactions.end(),
-                  std::set<std::shared_ptr<
-                      shared_model::interface::TransactionBatch>>(),
-                  [&batch_factory](auto &batches,
-                                   const auto &batch_transactions) {
-                    std::vector<
-                        std::shared_ptr<shared_model::interface::Transaction>>
-                        vector_transaction;
-
-                    std::transform(batch_transactions.begin(),
-                                   batch_transactions.end(),
-                                   std::back_inserter(vector_transaction),
-                                   [](const auto &transaction) {
-                                     return std::shared_ptr<
-                                         std::decay_t<decltype(transaction)>>(
-                                         clone(transaction));
-                                   });
-
-                    batches.insert(
-                        boost::get<expected::Value<std::unique_ptr<
-                            shared_model::interface::TransactionBatch>>>(
-                            batch_factory.createTransactionBatch(
-                                vector_transaction))
-                            .value);
-                    return batches;
-                  });
-              cache_->remove(batches);
+              current_round_ = {block_event.height, 1};
+              cache_->remove(block_event.batches);
             },
             [this](const EmptyEvent &empty) {
               // no blocks committed, increment reject round
               current_round_ = {current_round_.block_round,
                                 current_round_.reject_round + 1};
             });
-        cache_->up();
 
         // notify our ordering service about new round
         ordering_service_->onCollaborationOutcome(current_round_);

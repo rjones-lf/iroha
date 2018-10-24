@@ -78,7 +78,7 @@ namespace iroha {
           void(std::shared_ptr<const shared_model::interface::Transaction>
                    transaction));
 
-      MOCK_CONST_METHOD1(
+      MOCK_METHOD1(
           propagateBatch,
           void(std::shared_ptr<shared_model::interface::TransactionBatch>));
 
