@@ -43,10 +43,12 @@ namespace integration_framework {
     /**
      * @param mst_support enables multisignature tx support
      * @param block_store_path
+     * @param torii_port - port to bind Torii service to
      * @param dbname is a name of postgres database
      */
     IrohaInstance(bool mst_support,
                   const std::string &block_store_path,
+                  size_t torii_port,
                   const boost::optional<std::string> &dbname = boost::none);
 
     void makeGenesis(const shared_model::interface::Block &block);
@@ -59,10 +61,8 @@ namespace integration_framework {
 
     std::shared_ptr<TestIrohad> &getIrohaInstance();
 
-    std::string getPostgreCredsOrDefault(
+    static std::string getPostgreCredsOrDefault(
         const boost::optional<std::string> &dbname);
-
-    std::shared_ptr<TestIrohad> instance_;
 
     // config area
     const std::string block_store_dir_;
@@ -72,6 +72,9 @@ namespace integration_framework {
     const std::chrono::milliseconds proposal_delay_;
     const std::chrono::milliseconds vote_delay_;
     const bool is_mst_supported_;
+
+   private:
+    std::shared_ptr<TestIrohad> instance_;
   };
 }  // namespace integration_framework
 #endif  // IROHA_IROHA_INSTANCE_HPP

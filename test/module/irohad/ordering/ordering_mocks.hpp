@@ -16,9 +16,10 @@ namespace iroha {
     namespace transport {
 
       struct MockOdOsNotification : public OdOsNotification {
-        MOCK_METHOD2(onTransactions, void(Round, CollectionType));
+        MOCK_METHOD2(onBatches, void(consensus::Round, CollectionType));
 
-        MOCK_METHOD1(onRequestProposal, boost::optional<ProposalType>(Round));
+        MOCK_METHOD1(onRequestProposal,
+                     boost::optional<ProposalType>(consensus::Round));
       };
 
       struct MockOdOsNotificationFactory : public OdOsNotificationFactory {
@@ -30,12 +31,12 @@ namespace iroha {
     }  // namespace transport
 
     struct MockOnDemandOrderingService : public OnDemandOrderingService {
-      MOCK_METHOD2(onTransactions, void(transport::Round, CollectionType));
+      MOCK_METHOD2(onBatches, void(consensus::Round, CollectionType));
 
       MOCK_METHOD1(onRequestProposal,
-                   boost::optional<ProposalType>(transport::Round));
+                   boost::optional<ProposalType>(consensus::Round));
 
-      MOCK_METHOD1(onCollaborationOutcome, void(transport::Round));
+      MOCK_METHOD1(onCollaborationOutcome, void(consensus::Round));
     };
 
   }  // namespace ordering
