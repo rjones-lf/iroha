@@ -45,6 +45,7 @@ namespace iroha {
      * @param amount of peers emitted per once
      */
     GossipPropagationStrategy(PeerProviderFactory peer_factory,
+                              rxcpp::observe_on_one_worker emit_worker,
                               std::chrono::milliseconds period,
                               uint32_t amount);
 

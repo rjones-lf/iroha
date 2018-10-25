@@ -320,6 +320,7 @@ void Irohad::initMstProcessor() {
     // cli parameters
     auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
         storage,
+        rxcpp::observe_on_new_thread(),
         std::chrono::seconds(5) /*emitting period*/,
         2 /*amount per once*/);
     auto mst_time = std::make_shared<MstTimeProviderImpl>();
