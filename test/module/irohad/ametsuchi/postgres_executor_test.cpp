@@ -98,6 +98,18 @@ namespace iroha {
                         true)));
       }
 
+      /**
+       * Check that command result contains specific error code
+       * @param result to be checked
+       * @param expected_code to be in the result
+       */
+      void checkErrorCode(const CommandResult &result,
+                          CommandError::ErrorCodeType expected_code) {
+        auto error = err(result);
+        ASSERT_TRUE(error);
+        ASSERT_EQ(error->error.error_code, expected_code);
+      }
+
       const std::string role = "role";
       const std::string another_role = "role2";
       shared_model::interface::RolePermissionSet role_permissions;
@@ -177,25 +189,19 @@ namespace iroha {
     }
 
     /**
-     * @given  command
-     * @when trying to add account asset without permission
-     * @then account asset not added
+     * @given command
+     * @when trying to add account asset with non-existing account
+     * @then account asset fails to added
      */
-    TEST_F(AddAccountAssetTest, InvalidAddAccountAssetTestNoPerms) {
+    TEST_F(AddAccountAssetTest, AddAccountAssetTestInvalidAccount) {
       addAsset();
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, "1.0")
-                                       .creatorAccountId(account->accountId())),
-                      true)));
-      auto account_asset =
-          query->getAccountAsset(account->accountId(), asset_id);
-      ASSERT_TRUE(account_asset);
-      ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
-      ASSERT_TRUE(err(
+      auto cmd_result =
           execute(buildCommand(TestTransactionBuilder()
                                    .addAssetQuantity(asset_id, "1.0")
-                                   .creatorAccountId(account->accountId())))));
+                                   .creatorAccountId("some@domain")),
+                  true,
+                  "some@domain");
+      checkErrorCode(cmd_result, 2);
     }
 
     /**
@@ -204,26 +210,12 @@ namespace iroha {
      * @then account asset fails to be added
      */
     TEST_F(AddAccountAssetTest, AddAccountAssetTestInvalidAsset) {
-      ASSERT_TRUE(
-          err(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, "1.0")
-                                       .creatorAccountId(account->accountId())),
-                      true)));
-    }
-
-    /**
-     * @given  command
-     * @when trying to add account asset with non-existing account
-     * @then account asset fails to added
-     */
-    TEST_F(AddAccountAssetTest, AddAccountAssetTestInvalidAccount) {
-      addAsset();
-      ASSERT_TRUE(
-          err(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, "1.0")
-                                       .creatorAccountId("some@domain")),
-                      true,
-                      "some@domain")));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())),
+                  true);
+      checkErrorCode(cmd_result, 3);
     }
 
     /**
@@ -242,11 +234,36 @@ namespace iroha {
                                    .addAssetQuantity(asset_id, uint256_halfmax)
                                    .creatorAccountId(account->accountId())),
                   true)));
-      ASSERT_TRUE(err(
+      auto cmd_result =
           execute(buildCommand(TestTransactionBuilder()
                                    .addAssetQuantity(asset_id, uint256_halfmax)
                                    .creatorAccountId(account->accountId())),
-                  true)));
+                  true);
+      checkErrorCode(cmd_result, 4);
+    }
+
+    /**
+     * @given  command
+     * @when trying to add account asset without permission
+     * @then account asset not added
+     */
+    TEST_F(AddAccountAssetTest, AddAccountAssetTestNoPerms) {
+      addAsset();
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder()
+                                       .addAssetQuantity(asset_id, "1.0")
+                                       .creatorAccountId(account->accountId())),
+                      true)));
+      auto account_asset =
+          query->getAccountAsset(account->accountId(), asset_id);
+      ASSERT_TRUE(account_asset);
+      ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
+
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())));
+      checkErrorCode(cmd_result, 5);
     }
 
     class AddPeer : public CommandExecutorTest {
@@ -287,8 +304,9 @@ namespace iroha {
      * @then peer is not added
      */
     TEST_F(AddPeer, InvalidAddPeerTestWhenNoPerms) {
-      ASSERT_TRUE(err(execute(buildCommand(
-          TestTransactionBuilder().addPeer(peer->address(), peer->pubkey())))));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().addPeer(peer->address(), peer->pubkey())));
+      checkErrorCode(cmd_result, 5);
     }
 
     class AddSignatory : public CommandExecutorTest {
@@ -357,14 +375,20 @@ namespace iroha {
                   != signatories->end());
     }
 
-    TEST_F(AddSignatory, InvalidAddSignatoryTestWheNoAccount) {
+    /**
+     * @given command
+     * @when trying to add signatory to non-existing account
+     * @then signatory is not added
+     */
+    TEST_F(AddSignatory, InvalidAddSignatoryTestNoAccount) {
       auto perm =
           shared_model::interface::permissions::Grantable::kAddMySignatory;
-      auto foo = *err(execute(buildCommand(TestTransactionBuilder().grantPermission(
-        account->accountId(), perm)),
-                         true,
-                         "id2@domain"));
-      ASSERT_TRUE(true);
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().grantPermission(
+                      account->accountId(), perm)),
+                  true,
+                  "id2@domain");
+      checkErrorCode(cmd_result, 2);
     }
 
     /**
@@ -373,13 +397,33 @@ namespace iroha {
      * @then signatory is not added
      */
     TEST_F(AddSignatory, InvalidAddSignatoryTestWhenNoPerms) {
-      ASSERT_TRUE(
-          err(execute(buildCommand(TestTransactionBuilder().addSignatory(
-              account->accountId(), *pubkey)))));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().addSignatory(
+              account->accountId(), *pubkey)));
+      checkErrorCode(cmd_result, 5);
+
       auto signatories = query->getSignatories(account->accountId());
       ASSERT_TRUE(signatories);
       ASSERT_TRUE(std::find(signatories->begin(), signatories->end(), *pubkey)
                   == signatories->end());
+    }
+
+    /**
+     * @given command
+     * @when successfully adding signatory to the account @and trying to add the
+     * same signatory again
+     * @then signatory is not added
+     */
+    TEST_F(AddSignatory, InvalidAddSignatoryExistingPubKey) {
+      addAllPerms();
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+              account->accountId(), *pubkey)))));
+
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().addSignatory(
+              account->accountId(), *pubkey)));
+      checkErrorCode(cmd_result, 12);
     }
 
     class AppendRole : public CommandExecutorTest {
@@ -401,54 +445,6 @@ namespace iroha {
       }
       shared_model::interface::RolePermissionSet role_permissions2;
     };
-
-    /**
-     * @given  command
-     * @when trying to append role with perms that creator does not have
-     * @then role is not appended
-     */
-    TEST_F(AppendRole, AppendRoleTestInvalidWhenAccountDoesNotHavePerms) {
-      role_permissions2.set(
-          shared_model::interface::permissions::Role::kRemoveMySignatory);
-      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
-                                  another_role, role_permissions2)),
-                              true)));
-      ASSERT_TRUE(err(execute(buildCommand(TestTransactionBuilder().appendRole(
-          account->accountId(), another_role)))));
-    }
-
-    /**
-     * @given  command
-     * @when trying to append role with perms that creator does not have
-     *      but in genesis block
-     * @then role is appended
-     */
-    TEST_F(AppendRole, AppendRoleTestValidWhenAccountDoesNotHavePermsGenesis) {
-      role_permissions2.set(
-          shared_model::interface::permissions::Role::kRemoveMySignatory);
-      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
-                                  another_role, role_permissions2)),
-                              true)));
-      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().appendRole(
-                                  account->accountId(), another_role)),
-                              true)));
-      auto roles = query->getAccountRoles(account->accountId());
-      ASSERT_TRUE(roles);
-      ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
-                  != roles->end());
-    }
-
-    TEST_F(AppendRole, InvalidAppendRoleTestWhenNoPerms) {
-      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
-                                  another_role, role_permissions)),
-                              true)));
-      ASSERT_TRUE(err(execute(buildCommand(TestTransactionBuilder().appendRole(
-          account->accountId(), another_role)))));
-      auto roles = query->getAccountRoles(account->accountId());
-      ASSERT_TRUE(roles);
-      ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
-                  == roles->end());
-    }
 
     TEST_F(AppendRole, ValidAppendRoleTest) {
       addAllPerms();
@@ -474,6 +470,77 @@ namespace iroha {
       ASSERT_TRUE(roles);
       ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
                   != roles->end());
+    }
+
+    /**
+     * @given  command
+     * @when trying to append role with perms that creator does not have
+     *      but in genesis block
+     * @then role is appended
+     */
+    TEST_F(AppendRole, AppendRoleTestValidWhenAccountDoesNotHavePermsGenesis) {
+      role_permissions2.set(
+          shared_model::interface::permissions::Role::kRemoveMySignatory);
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
+                                  another_role, role_permissions2)),
+                              true)));
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().appendRole(
+                                  account->accountId(), another_role)),
+                              true)));
+      auto roles = query->getAccountRoles(account->accountId());
+      ASSERT_TRUE(roles);
+      ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
+                  != roles->end());
+    }
+
+    TEST_F(AppendRole, AppendRoleTestInvalidNoAccount) {
+      addAllPerms();
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder().createRole(another_role, {})),
+          true)));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().appendRole("doge@noaccount", another_role)));
+      checkErrorCode(cmd_result, 2);
+    }
+
+    TEST_F(AppendRole, InvalidAppendRoleTestWhenNoPerms) {
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
+                                  another_role, role_permissions)),
+                              true)));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().appendRole(
+              account->accountId(), another_role)));
+      checkErrorCode(cmd_result, 5);
+
+      auto roles = query->getAccountRoles(account->accountId());
+      ASSERT_TRUE(roles);
+      ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
+                  == roles->end());
+    }
+
+    /**
+     * @given  command
+     * @when trying to append role with perms that creator does not have
+     * @then role is not appended
+     */
+    TEST_F(AppendRole, AppendRoleTestInvalidWhenAccountDoesNotHavePerms) {
+      role_permissions2.set(
+          shared_model::interface::permissions::Role::kRemoveMySignatory);
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
+                                  another_role, role_permissions2)),
+                              true)));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().appendRole(
+              account->accountId(), another_role)));
+      checkErrorCode(cmd_result, 5);
+    }
+
+    TEST_F(AppendRole, AppendRoleTestInvalidNoSuchRole) {
+      addAllPerms();
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().appendRole(
+              account->accountId(), another_role)));
+      checkErrorCode(cmd_result, 6);
     }
 
     class CreateAccount : public CommandExecutorTest {

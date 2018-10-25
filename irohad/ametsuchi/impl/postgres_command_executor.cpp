@@ -107,34 +107,39 @@ namespace {
       // try to parse the SQL error to get an actual one
       std::string exc_body = e.what();
 
-      if (exc_body.find("DETAIL: Key (account_id)=") != std::string::npos
+      if (exc_body.find("Key (account_id)=") != std::string::npos
           and exc_body.find("is not present in table") != std::string::npos) {
         return makeCommandError(command_name, 2);
       }
 
-      if (exc_body.find("DETAIL: Key (role_id)=") != std::string::npos
+      if (exc_body.find("Key (role_id)=") != std::string::npos
           and exc_body.find("is not present in table") != std::string::npos) {
         return makeCommandError(command_name, 6);
       }
 
-      if (exc_body.find("DETAIL: Key (domain_id)=") != std::string::npos
+      if (exc_body.find("Key (domain_id)=") != std::string::npos
           and exc_body.find("is not present in table") != std::string::npos) {
         return makeCommandError(command_name, 7);
       }
 
-      if (exc_body.find("DETAIL: Key (asset_id)=") != std::string::npos
+      if (exc_body.find("Key (asset_id)=") != std::string::npos
           and exc_body.find("already exists") != std::string::npos) {
         return makeCommandError(command_name, 9);
       }
 
-      if (exc_body.find("DETAIL: Key (domain_id)=") != std::string::npos
+      if (exc_body.find("Key (domain_id)=") != std::string::npos
           and exc_body.find("already exists") != std::string::npos) {
         return makeCommandError(command_name, 10);
       }
 
-      if (exc_body.find("DETAIL: Key (role_id)=") != std::string::npos
+      if (exc_body.find("Key (role_id)=") != std::string::npos
           and exc_body.find("already exists") != std::string::npos) {
         return makeCommandError(command_name, 11);
+      }
+
+      if (exc_body.find("Key (account_id, public_key)") != std::string::npos
+          and exc_body.find("already exists") != std::string::npos) {
+        return makeCommandError(command_name, 12);
       }
 
       // parsing is not successful, return the general error
@@ -297,13 +302,13 @@ namespace iroha {
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_account_signatory) THEN 0
               %s
-              WHEN EXISTS (SELECT * FROM insert_signatory) THEN 3
               ELSE 1
           END AS RESULT;)";
 
     const std::string PostgresCommandExecutor::appendRoleBase = R"(
             PREPARE %s (text, text, text) AS
             WITH %s
+            role_exists AS (SELECT * FROM role WHERE role_id = $3),
             inserted AS (
                 INSERT INTO account_has_roles(account_id, role_id)
                 (
@@ -311,6 +316,7 @@ namespace iroha {
             )
             SELECT CASE
                 WHEN EXISTS (SELECT * FROM inserted) THEN 0
+                WHEN NOT EXISTS (SELECT * FROM role_exists) THEN 6
                 %s
                 ELSE 1
             END AS result)";
@@ -735,9 +741,9 @@ namespace iroha {
       auto &role_name = command.roleName();
       auto cmd = boost::format("EXECUTE %1% ('%2%', '%3%', '%4%')");
 
-      cmd = (cmd % creator_account_id_ % account_id % role_name);
-
       appendCommandName("appendRole", cmd, do_validation_);
+
+      cmd = (cmd % creator_account_id_ % account_id % role_name);
 
       return executeQuery(sql_, cmd.str(), "AppendRole");
     }
