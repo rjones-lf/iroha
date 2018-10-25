@@ -188,7 +188,7 @@ TEST(GossipPropagationStrategyTest, MultipleSubsEmission) {
           std::shared_ptr<iroha::ametsuchi::PeerQuery>(query))));
   EXPECT_CALL(*query, getLedgerPeers()).WillRepeatedly(testing::Return(peers));
   GossipPropagationStrategy strategy(
-      pbfactory, rxcpp::observe_on_event_loop(), 1ms, amount);
+      pbfactory, rxcpp::observe_on_new_thread(), 1ms, amount);
 
   // Create separate subscriber for every thread
   // Use result[i] as storage for emitent for i-th one
