@@ -8,7 +8,7 @@
 
 #include <rxcpp/rx.hpp>
 
-#include "network/peer_communication_service.hpp"
+#include "network/consensus_gate.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 
 namespace iroha {
@@ -19,6 +19,12 @@ namespace iroha {
      */
     class Synchronizer {
      public:
+      /**
+       * Processing entry point for consensus outcome
+       */
+      virtual void processOutcome(
+          network::ConsensusGate::GateObject object) = 0;
+
       /**
        * After synchronization this observable emits zero or more blocks plus
        * outcome of synchronization

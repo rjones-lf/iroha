@@ -24,38 +24,42 @@ namespace iroha {
           block_loader_(std::move(blockLoader)),
           log_(logger::log("synchronizer")) {
       consensus_gate->onOutcome().subscribe(
-          subscription_,
-          [this](const network::ConsensusGate::GateObject &object) {
-            this->log_->info("processing consensus outcome");
-            visit_in_place(
-                object,
-                [this](const network::PairValid &msg) {
-                  this->processNext(msg.block);
-                },
-                [this](const network::VoteOther &msg) {
-                  this->processDifferent(msg.block);
-                },
-                [this](const network::ProposalReject &msg) {
-                  notifier_.get_subscriber().on_next(SynchronizationEvent{
-                      rxcpp::observable<>::empty<
-                          std::shared_ptr<shared_model::interface::Block>>(),
-                      SynchronizationOutcomeType::kReject,
-                      msg.round});
-                },
-                [this](const network::BlockReject &msg) {
-                  notifier_.get_subscriber().on_next(SynchronizationEvent{
-                      rxcpp::observable<>::empty<
-                          std::shared_ptr<shared_model::interface::Block>>(),
-                      SynchronizationOutcomeType::kReject,
-                      msg.round});
-                },
-                [this](const network::AgreementOnNone &msg) {
-                  notifier_.get_subscriber().on_next(SynchronizationEvent{
-                      rxcpp::observable<>::empty<
-                          std::shared_ptr<shared_model::interface::Block>>(),
-                      SynchronizationOutcomeType::kNothing,
-                      msg.round});
-                });
+          subscription_, [this](network::ConsensusGate::GateObject object) {
+            return this->processOutcome(object);
+          });
+    }
+
+    void SynchronizerImpl::processOutcome(
+        network::ConsensusGate::GateObject object) {
+      log_->info("processing consensus outcome");
+      visit_in_place(
+          object,
+          [this](const network::PairValid &msg) {
+            this->processNext(msg.block);
+          },
+          [this](const network::VoteOther &msg) {
+            this->processDifferent(msg.block);
+          },
+          [this](const network::ProposalReject &msg) {
+            notifier_.get_subscriber().on_next(SynchronizationEvent{
+                rxcpp::observable<>::empty<
+                    std::shared_ptr<shared_model::interface::Block>>(),
+                SynchronizationOutcomeType::kReject,
+                msg.round});
+          },
+          [this](const network::BlockReject &msg) {
+            notifier_.get_subscriber().on_next(SynchronizationEvent{
+                rxcpp::observable<>::empty<
+                    std::shared_ptr<shared_model::interface::Block>>(),
+                SynchronizationOutcomeType::kReject,
+                msg.round});
+          },
+          [this](const network::AgreementOnNone &msg) {
+            notifier_.get_subscriber().on_next(SynchronizationEvent{
+                rxcpp::observable<>::empty<
+                    std::shared_ptr<shared_model::interface::Block>>(),
+                SynchronizationOutcomeType::kNothing,
+                msg.round});
           });
     }
 

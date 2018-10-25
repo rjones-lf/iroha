@@ -26,11 +26,7 @@ namespace iroha {
 
       ~SynchronizerImpl() override;
 
-      void processNext(
-          std::shared_ptr<shared_model::interface::Block> commit_message);
-      void processDifferent(
-          std::shared_ptr<shared_model::interface::Block> commit_message);
-
+      void processOutcome(network::ConsensusGate::GateObject object) override;
       rxcpp::observable<SynchronizationEvent> on_commit_chain() override;
 
      private:
@@ -41,6 +37,11 @@ namespace iroha {
       SynchronizationEvent downloadMissingBlocks(
           std::shared_ptr<shared_model::interface::Block> commit_message,
           std::unique_ptr<ametsuchi::MutableStorage> storage);
+
+      void processNext(
+          std::shared_ptr<shared_model::interface::Block> commit_message);
+      void processDifferent(
+          std::shared_ptr<shared_model::interface::Block> commit_message);
 
       std::shared_ptr<validation::ChainValidator> validator_;
       std::shared_ptr<ametsuchi::MutableFactory> mutable_factory_;

@@ -7,6 +7,7 @@
 #define IROHA_CONSENSUS_GATE_HPP
 
 #include <boost/optional.hpp>
+#include <boost/variant.hpp>
 #include <rxcpp/rx.hpp>
 
 #include "consensus/round.hpp"
