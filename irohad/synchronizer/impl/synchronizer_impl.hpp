@@ -26,7 +26,7 @@ namespace iroha {
 
       ~SynchronizerImpl() override;
 
-      void processOutcome(network::ConsensusGate::GateObject object) override;
+      void processOutcome(consensus::GateObject object) override;
       rxcpp::observable<SynchronizationEvent> on_commit_chain() override;
 
      private:

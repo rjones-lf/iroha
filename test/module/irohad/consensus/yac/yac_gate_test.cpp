@@ -137,7 +137,7 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->onOutcome(), 1);
   gate_wrapper.subscribe([this](auto outcome) {
-    auto block = boost::get<PairValid>(outcome).block;
+    auto block = boost::get<iroha::consensus::PairValid>(outcome).block;
     ASSERT_EQ(block, expected_block);
 
     // verify that gate has put to cache block received from consensus

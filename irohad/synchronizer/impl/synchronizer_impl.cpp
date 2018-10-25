@@ -24,37 +24,36 @@ namespace iroha {
           block_loader_(std::move(blockLoader)),
           log_(logger::log("synchronizer")) {
       consensus_gate->onOutcome().subscribe(
-          subscription_, [this](network::ConsensusGate::GateObject object) {
+          subscription_, [this](consensus::GateObject object) {
             return this->processOutcome(object);
           });
     }
 
-    void SynchronizerImpl::processOutcome(
-        network::ConsensusGate::GateObject object) {
+    void SynchronizerImpl::processOutcome(consensus::GateObject object) {
       log_->info("processing consensus outcome");
       visit_in_place(
           object,
-          [this](const network::PairValid &msg) {
+          [this](const consensus::PairValid &msg) {
             this->processNext(msg.block);
           },
-          [this](const network::VoteOther &msg) {
+          [this](const consensus::VoteOther &msg) {
             this->processDifferent(msg.block);
           },
-          [this](const network::ProposalReject &msg) {
+          [this](const consensus::ProposalReject &msg) {
             notifier_.get_subscriber().on_next(SynchronizationEvent{
                 rxcpp::observable<>::empty<
                     std::shared_ptr<shared_model::interface::Block>>(),
                 SynchronizationOutcomeType::kReject,
                 msg.round});
           },
-          [this](const network::BlockReject &msg) {
+          [this](const consensus::BlockReject &msg) {
             notifier_.get_subscriber().on_next(SynchronizationEvent{
                 rxcpp::observable<>::empty<
                     std::shared_ptr<shared_model::interface::Block>>(),
                 SynchronizationOutcomeType::kReject,
                 msg.round});
           },
-          [this](const network::AgreementOnNone &msg) {
+          [this](const consensus::AgreementOnNone &msg) {
             notifier_.get_subscriber().on_next(SynchronizationEvent{
                 rxcpp::observable<>::empty<
                     std::shared_ptr<shared_model::interface::Block>>(),

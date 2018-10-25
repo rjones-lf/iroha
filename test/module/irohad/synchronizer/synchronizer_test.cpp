@@ -117,7 +117,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
     ASSERT_TRUE(block_wrapper.validate());
   });
 
-  gate_outcome.get_subscriber().on_next(PairValid{commit_message});
+  gate_outcome.get_subscriber().on_next(consensus::PairValid{commit_message});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -140,7 +140,7 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 0);
   wrapper.subscribe();
 
-  gate_outcome.get_subscriber().on_next(PairValid{commit_message});
+  gate_outcome.get_subscriber().on_next(consensus::PairValid{commit_message});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -173,7 +173,7 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
     ASSERT_TRUE(block_wrapper.validate());
   });
 
-  gate_outcome.get_subscriber().on_next(VoteOther{commit_message});
+  gate_outcome.get_subscriber().on_next(consensus::VoteOther{commit_message});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -198,7 +198,7 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
   wrapper.subscribe();
 
-  gate_outcome.get_subscriber().on_next(VoteOther{commit_message});
+  gate_outcome.get_subscriber().on_next(consensus::VoteOther{commit_message});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -236,7 +236,7 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
     ASSERT_TRUE(block_wrapper.validate());
   });
 
-  gate_outcome.get_subscriber().on_next(VoteOther{commit_message});
+  gate_outcome.get_subscriber().on_next(consensus::VoteOther{commit_message});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -257,7 +257,8 @@ TEST_F(SynchronizerTest, RejectOutcome) {
     ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kReject);
   });
 
-  gate_outcome.get_subscriber().on_next(BlockReject{consensus::Round{}});
+  gate_outcome.get_subscriber().on_next(
+      consensus::BlockReject{consensus::Round{}});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -278,7 +279,8 @@ TEST_F(SynchronizerTest, NoneOutcome) {
     ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kNothing);
   });
 
-  gate_outcome.get_subscriber().on_next(AgreementOnNone{consensus::Round{}});
+  gate_outcome.get_subscriber().on_next(
+      consensus::AgreementOnNone{consensus::Round{}});
 
   ASSERT_TRUE(wrapper.validate());
 }
