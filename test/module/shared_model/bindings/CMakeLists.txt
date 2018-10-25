@@ -28,64 +28,8 @@ target_link_libraries(model_crypto_test
     bindings
     )
 
-if (SWIG_PYTHON OR SWIG_JAVA)
-  get_property(SWIG_BUILD_DIR GLOBAL PROPERTY SWIG_BUILD_DIR)
-endif()
-
-if (SWIG_PYTHON)
-  if(SUPPORT_PYTHON2)
-    find_package(PythonInterp 2.7 REQUIRED)
-  else()
-    find_package(PythonInterp 3.5 REQUIRED)
-  endif()
-
-  file(TO_NATIVE_PATH ${SWIG_BUILD_DIR} SWIG_LIB_DIR)
-  if(CMAKE_GENERATOR MATCHES "Visual Studio")
-    set(SWIG_LIB_DIR "${SWIG_LIB_DIR}\\$<CONFIG>")
-  endif()
-
-  if (MSVC)
-    set(SEPARATOR $<SEMICOLON>)
-  else ()
-    set(SEPARATOR :)
-  endif()
-
-  add_test(NAME python_transaction_test
-    COMMAND ${CMAKE_COMMAND} -E
-      env "PYTHONPATH=${SWIG_LIB_DIR}${SEPARATOR}$ENV{PYTHONPATH}"
-      ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/builder-test.py
-    WORKING_DIRECTORY ${SWIG_BUILD_DIR})
-  add_test(NAME python_query_test
-    COMMAND ${CMAKE_COMMAND} -E
-      env "PYTHONPATH=${SWIG_LIB_DIR}${SEPARATOR}$ENV{PYTHONPATH}"
-      ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/query-test.py
-    WORKING_DIRECTORY ${SWIG_BUILD_DIR})
-  add_test(NAME python_blocks_query_test
-      COMMAND ${CMAKE_COMMAND} -E
-      env "PYTHONPATH=${SWIG_LIB_DIR}${SEPARATOR}$ENV{PYTHONPATH}"
-      ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/blocks-query-test.py
-      WORKING_DIRECTORY ${SWIG_BUILD_DIR})
-  add_test(NAME python_client_test
-      COMMAND ${CMAKE_COMMAND} -E
-      env "PYTHONPATH=${SWIG_LIB_DIR}${SEPARATOR}$ENV{PYTHONPATH}"
-      ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/client-test.py
-      WORKING_DIRECTORY ${SWIG_BUILD_DIR})
-
-  foreach(item "block" "transaction" "commands" "primitive" "queries")
-    compile_proto_to_python("${item}.proto")
-    list(APPEND PROTO_SWIG_DEPS "${SWIG_BUILD_DIR}/${item}_pb2.py")
-  endforeach(item)
-
-  add_custom_target(python_tests ALL
-    DEPENDS "${PROTO_SWIG_DEPS}")
-  foreach(test "python_transaction_test" "python_query_test" "python_blocks_query_test" "python_client_test")
-    set_tests_properties(${test}
-      PROPERTIES REQUIRED_FILES "${PROTO_SWIG_DEPS}"
-                 DEPENDS python_tests)
-  endforeach(test)
-endif()
-
 if (SWIG_JAVA)
+  get_property(SWIG_BUILD_DIR GLOBAL PROPERTY SWIG_BUILD_DIR)
   find_package(Java REQUIRED)
 
   get_target_property(PROTOC_EXEC_CMAKE protoc IMPORTED_LOCATION)

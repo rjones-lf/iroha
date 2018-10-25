@@ -30,7 +30,7 @@ target_link_libraries(bindings
 
 
 
-if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
+if (SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
     find_package(swig REQUIRED)
     include(${SWIG_USE_FILE})
 
@@ -52,31 +52,6 @@ if (SWIG_PYTHON OR SWIG_JAVA OR SWIG_CSHARP OR SWIG_NODE)
             endforeach()
         endif()
     endmacro()
-endif()
-
-if (SWIG_PYTHON)
-    if(SUPPORT_PYTHON2)
-        set(PYTHON_VER 2.7)
-    else()
-        set(PYTHON_VER 3.5)
-    endif()
-
-    if(CMAKE_GENERATOR MATCHES "Visual Studio")
-        find_package(PythonInterp ${PYTHON_VER} REQUIRED)
-    endif()
-    find_package(PythonLibs ${PYTHON_VER} REQUIRED)
-
-    if (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
-        set(MAC_OPTS "-flat_namespace -undefined suppress")
-    endif()
-
-    myswig_add_library(iroha LANGUAGE python SOURCES bindings.i)
-    swig_link_libraries(iroha ${PYTHON_LIBRARIES} bindings ${MAC_OPTS})
-    add_custom_target(irohapy DEPENDS ${SWIG_MODULE_iroha_REAL_NAME})
-    # path to where Python.h is found
-    target_include_directories(${SWIG_MODULE_iroha_REAL_NAME} PUBLIC
-        ${PYTHON_INCLUDE_DIRS}
-        )
 endif()
 
 if (SWIG_JAVA)
@@ -123,8 +98,8 @@ if (SWIG_NODE)
 
     # Build SWIG library always statically for the subsequent assembly by GYP
     myswig_add_library(irohanode
-        TYPE STATIC 
-        LANGUAGE javascript 
+        TYPE STATIC
+        LANGUAGE javascript
         SOURCES bindings.i
         )
     set_target_properties(irohanode PROPERTIES PREFIX ${CMAKE_STATIC_LIBRARY_PREFIX})
