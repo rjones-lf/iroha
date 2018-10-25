@@ -22,6 +22,7 @@
 
 #include "consensus/yac/yac_hash_provider.hpp"  // for YacHash
 #include "interfaces/common_objects/signature.hpp"
+#include "utils/string_builder.hpp"
 
 namespace iroha {
   namespace consensus {
@@ -41,6 +42,15 @@ namespace iroha {
         bool operator!=(const VoteMessage &rhs) const {
           return not(*this == rhs);
         }
+
+        std::string toString() const {
+          return shared_model::detail::PrettyStringBuilder()
+              .init("VoteMessage")
+              .append("yac hash", hash.toString())
+              .append("signature",
+                      signature ? signature->toString() : "not set")
+              .finalize();
+        }
       };
 
       /**
@@ -56,6 +66,14 @@ namespace iroha {
         bool operator==(const CommitMessage &rhs) const {
           return votes == rhs.votes;
         }
+
+        std::string toString() const {
+          return shared_model::detail::PrettyStringBuilder()
+              .init("CommitMessage")
+              .appendAll(
+                  "votes", votes, [](auto vote) { return vote.toString(); })
+              .finalize();
+        }
       };
 
       /**
@@ -70,6 +88,14 @@ namespace iroha {
 
         bool operator==(const RejectMessage &rhs) const {
           return votes == rhs.votes;
+        }
+
+        std::string toString() const {
+          return shared_model::detail::PrettyStringBuilder()
+              .init("RejectMessage")
+              .appendAll(
+                  "votes", votes, [](auto vote) { return vote.toString(); })
+              .finalize();
         }
       };
     }  // namespace yac
