@@ -31,9 +31,8 @@ namespace shared_model {
 
       Block(Block &&o) noexcept;
       Block &operator=(Block &&o) noexcept = default;
-      Block(TransportType ref);
-      Block(const Block &o) = delete;
-      Block &operator=(const Block &o) = delete;
+      Block(const TransportType &ref);
+      Block(TransportType &&ref);
 
       interface::types::TransactionsCollectionType transactions()
           const override;
@@ -59,7 +58,7 @@ namespace shared_model {
 
       const iroha::protocol::Block &getTransport() const;
 
-      ~Block();
+      ~Block() override;
 
      private:
       struct Impl;

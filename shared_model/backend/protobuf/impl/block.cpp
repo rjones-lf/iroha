@@ -17,7 +17,8 @@ namespace shared_model {
   namespace proto {
 
     struct Block::Impl {
-      Impl(TransportType ref) : proto_(std::move(ref)) {}
+      Impl(TransportType &&ref) : proto_(std::move(ref)) {}
+      Impl(const TransportType &ref) : proto_(ref) {}
       Impl(Impl &&o) noexcept = delete;
       Impl &operator=(Impl &&o) noexcept = delete;
 
@@ -51,8 +52,12 @@ namespace shared_model {
 
     Block::Block(Block &&o) noexcept = default;
 
-    Block::Block(TransportType ref) {
-        impl_ = std::make_unique<Block::Impl>(std::move(ref));
+    Block::Block(const TransportType &ref) {
+      impl_ = std::make_unique<Block::Impl>(ref);
+    }
+
+    Block::Block(TransportType &&ref) {
+      impl_ = std::make_unique<Block::Impl>(std::move(ref));
     }
 
     interface::types::TransactionsCollectionType Block::transactions() const {
@@ -107,7 +112,7 @@ namespace shared_model {
     }
 
     interface::types::TransactionsNumberType Block::txsNumber() const {
-        return impl_->payload_.tx_number();
+      return impl_->payload_.tx_number();
     }
 
     const interface::types::BlobType &Block::payload() const {
