@@ -12,7 +12,6 @@ namespace iroha {
   class PropagationStrategyStub : public PropagationStrategy {
     rxcpp::observable<PropagationStrategy::PropagationData> emitter() override;
   };
-
 }  // namespace iroha
 
 #endif  // IROHA_PROPAGATION_STRATEGY_STUB_HPP

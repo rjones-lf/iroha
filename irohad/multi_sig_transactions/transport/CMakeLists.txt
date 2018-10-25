@@ -3,6 +3,7 @@
 
 add_library(mst_transport
         impl/mst_transport_grpc.cpp
+        impl/mst_transport_stub.cpp
         )
 
 target_link_libraries(mst_transport

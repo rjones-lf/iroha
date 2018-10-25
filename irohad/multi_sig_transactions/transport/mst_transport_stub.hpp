@@ -6,25 +6,16 @@
 #ifndef IROHA_MST_TRANSPORT_STUB_HPP
 #define IROHA_MST_TRANSPORT_STUB_HPP
 
-#include "mst.grpc.pb.h"
 #include "network/mst_transport.hpp"
-
-#include <google/protobuf/empty.pb.h>
-#include "interfaces/common_objects/common_objects_factory.hpp"
-#include "interfaces/iroha_internal/abstract_transport_factory.hpp"
-#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
-#include "interfaces/iroha_internal/transaction_batch_parser.hpp"
-#include "logger/logger.hpp"
-#include "network/impl/async_grpc_client.hpp"
 
 namespace iroha {
   namespace network {
-    class MstTransportStub : public MstTransportGrpc {
+    class MstTransportStub : public MstTransport {
      public:
-      using MstTransportGrpc::MstTransportGrpc;
+      void subscribe(std::shared_ptr<MstTransportNotification>) override;
 
-      void sendState(const shared_model::interface::Peer &to,
-                     ConstRefState providing_state) override {}
+      void sendState(const shared_model::interface::Peer &,
+                     ConstRefState) override;
     };
   }  // namespace network
 }  // namespace iroha

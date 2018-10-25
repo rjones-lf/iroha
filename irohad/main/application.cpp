@@ -301,6 +301,9 @@ void Irohad::initStatusBus() {
 }
 
 void Irohad::initMstProcessor() {
+  auto mst_completer = std::make_shared<DefaultCompleter>();
+  auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
+  std::shared_ptr<iroha::PropagationStrategy> mst_propagation;
   if (is_mst_supported_) {
     mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
         async_call_,
@@ -308,26 +311,15 @@ void Irohad::initMstProcessor() {
         transaction_factory,
         batch_parser,
         transaction_batch_factory_);
-  } else {
-    mst_transport = std::make_shared<iroha::network::MstTransportStub>(
-        async_call_,
-        common_objects_factory_,
-        transaction_factory,
-        batch_parser,
-        transaction_batch_factory_);
-  }
-  auto mst_completer = std::make_shared<DefaultCompleter>();
-  auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
-  // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
-  // cli parameters
-  std::shared_ptr<iroha::PropagationStrategy> mst_propagation;
-  if (is_mst_supported_) {
+    // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
+    // cli parameters
     mst_propagation = std::make_shared<GossipPropagationStrategy>(
         storage,
         std::chrono::seconds(5) /*emitting period*/,
         2 /*amount per once*/);
   } else {
     mst_propagation = std::make_shared<iroha::PropagationStrategyStub>();
+    mst_transport = std::make_shared<iroha::network::MstTransportStub>();
   }
 
   auto mst_time = std::make_shared<MstTimeProviderImpl>();
@@ -406,7 +398,8 @@ void Irohad::run() {
    [&](const auto &port) {
      log_->info("Torii server bound on port {}", port);
      if (is_mst_supported_) {
-       internal_server->append(mst_transport);
+       internal_server->append(
+           std::static_pointer_cast<MstTransportGrpc>(mst_transport));
      }
      // Run internal server
      return internal_server->append(ordering_init.ordering_gate_transport)

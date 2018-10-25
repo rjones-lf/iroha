@@ -245,7 +245,7 @@ class Irohad {
   iroha::consensus::yac::YacInit yac_init;
   iroha::network::BlockLoaderInit loader_init;
 
-  std::shared_ptr<iroha::network::MstTransportGrpc> mst_transport;
+  std::shared_ptr<iroha::network::MstTransport> mst_transport;
 
   logger::Logger log_;
 
