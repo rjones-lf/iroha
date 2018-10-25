@@ -103,7 +103,7 @@ TEST_F(AcceptanceTest, TransactionMore24HourOld) {
       .sendTx(complete(baseTx<>().createdTime(iroha::time::now(
                            std::chrono::hours(24) + std::chrono::minutes(1))),
                        kAdminKeypair),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -135,7 +135,7 @@ TEST_F(AcceptanceTest, Transaction10MinutesFromFuture) {
       .sendTx(complete(baseTx<>().createdTime(
                            iroha::time::now(std::chrono::minutes(10))),
                        kAdminKeypair),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -152,7 +152,7 @@ TEST_F(AcceptanceTest, TransactionEmptyPubKey) {
   tx.addSignature(signedBlob, shared_model::crypto::PublicKey(""));
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid);
+      .sendTx(tx, CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -166,7 +166,7 @@ TEST_F(AcceptanceTest, TransactionEmptySignedblob) {
   tx.addSignature(shared_model::crypto::Signed(""), kAdminKeypair.publicKey());
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid);
+      .sendTx(tx, CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -186,7 +186,7 @@ TEST_F(AcceptanceTest, TransactionInvalidPublicKey) {
           'a')));
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid);
+      .sendTx(tx, CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -208,7 +208,7 @@ TEST_F(AcceptanceTest, TransactionInvalidSignedBlob) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid);
+      .sendTx(tx, CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -239,5 +239,5 @@ TEST_F(AcceptanceTest, EmptySignatures) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTx(tx, checkStatelessInvalid);
+      .sendTx(tx, CHECK_STATELESS_INVALID);
 }

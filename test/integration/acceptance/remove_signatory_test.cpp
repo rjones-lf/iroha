@@ -168,7 +168,7 @@ TEST_F(RemoveSignatory, InvalidKey) {
       .sendTx(complete(baseTx().removeSignatory(
                   kUserId,
                   shared_model::crypto::PublicKey(std::string(1337, 'a')))),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**

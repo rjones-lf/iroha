@@ -53,8 +53,8 @@ def doReleaseBuild() {
 
   sh "curl -L -o /tmp/${env.GIT_COMMIT}/Dockerfile --create-dirs ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/release/Dockerfile"
   sh "curl -L -o /tmp/${env.GIT_COMMIT}/entrypoint.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/release/entrypoint.sh"
+  sh "curl -L -o /tmp/${env.GIT_COMMIT}/wait-for-it.sh ${env.GIT_RAW_BASE_URL}/${env.GIT_COMMIT}/docker/release/wait-for-it.sh"
   sh "mv /tmp/${GIT_COMMIT}-${BUILD_NUMBER}/iroha.deb /tmp/${env.GIT_COMMIT}"
-  sh "chmod +x /tmp/${env.GIT_COMMIT}/entrypoint.sh"
   iCRelease = docker.build("${DOCKER_REGISTRY_BASENAME}:${GIT_COMMIT}-${BUILD_NUMBER}-release", "--no-cache -f /tmp/${env.GIT_COMMIT}/Dockerfile /tmp/${env.GIT_COMMIT}")
 
   // push Docker image in case the current branch is develop,

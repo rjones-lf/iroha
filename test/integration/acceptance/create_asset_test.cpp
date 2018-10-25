@@ -80,7 +80,7 @@ TEST_F(CreateAssetFixture, IllegalCharactersInName) {
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
   for (const auto &name : kIllegalAssetNames) {
     itf.sendTx(complete(baseTx().createAsset(name, kDomain, kPrecision)),
-               checkStatelessInvalid);
+               CHECK_STATELESS_INVALID);
   }
 }
 
@@ -200,6 +200,6 @@ TEST_F(CreateAssetFixture, InvalidDomain) {
       });
   for (const auto &domain : kIllegalDomainNames) {
     itf.sendTx(complete(baseTx().createAsset(kAssetName, domain, kPrecision)),
-               checkStatelessInvalid);
+               CHECK_STATELESS_INVALID);
   }
 }

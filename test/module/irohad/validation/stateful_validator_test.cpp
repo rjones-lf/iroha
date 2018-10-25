@@ -161,7 +161,7 @@ TEST_F(Validator, AllTxsValid) {
               std::vector<shared_model::proto::Transaction>{tx, tx, tx})
           .build();
 
-  EXPECT_CALL(*temp_wsv_mock, apply(_, _))
+  EXPECT_CALL(*temp_wsv_mock, apply(_))
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
@@ -196,9 +196,9 @@ TEST_F(Validator, SomeTxsFail) {
               valid_tx, invalid_tx, valid_tx})
           .build();
 
-  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(invalid_tx)), _))
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(invalid_tx))))
       .WillOnce(Return(iroha::expected::Error<CommandError>({})));
-  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(valid_tx)), _))
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(valid_tx))))
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
@@ -260,17 +260,17 @@ TEST_F(Validator, Batches) {
   // calls to validate transactions, one per each transaction except those,
   // which are in failed atomic batch - there only calls before the failed
   // transaction are needed
-  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[0])), _))
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[0]))))
       .WillOnce(Return(iroha::expected::Value<void>({})));
-  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[1])), _))
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[1]))))
       .WillOnce(Return(iroha::expected::Value<void>({})));
-  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[2])), _))
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[2]))))
       .WillOnce(Return(iroha::expected::Value<void>({})));
-  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[3])), _))
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[3]))))
       .WillOnce(Return(iroha::expected::Error<CommandError>({})));
-  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[5])), _))
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[5]))))
       .WillOnce(Return(iroha::expected::Value<void>({})));
-  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[6])), _))
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[6]))))
       .WillOnce(Return(iroha::expected::Value<void>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);

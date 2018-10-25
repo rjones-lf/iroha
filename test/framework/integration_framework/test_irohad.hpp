@@ -38,6 +38,7 @@ namespace integration_framework {
                bool is_mst_supported)
         : Irohad(block_store_dir,
                  pg_conn,
+                 "127.0.0.1",
                  torii_port,
                  internal_port,
                  max_proposal_size,
@@ -68,21 +69,6 @@ namespace integration_framework {
 
     auto getStatusBus() {
       return status_bus_;
-    }
-
-    void run() override {
-      internal_server = std::make_unique<ServerRunner>(
-          "127.0.0.1:" + std::to_string(internal_port_));
-      internal_server->append(ordering_init.ordering_gate_transport)
-          .append(ordering_init.ordering_service_transport)
-          .append(yac_init.consensus_network)
-          .append(loader_init.service)
-          .run()
-          .match([](iroha::expected::Value<int>) {},
-                 [](iroha::expected::Error<std::string> e) {
-                   BOOST_ASSERT_MSG(false, e.error.c_str());
-                 });
-      log_->info("===> iroha initialized");
     }
 
     void terminate() {

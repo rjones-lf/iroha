@@ -17,7 +17,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<transport::OdOsNotification> network_client,
     rxcpp::observable<BlockRoundEventType> events,
     std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
-    transport::Round initial_round)
+    consensus::Round initial_round)
     : ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {
@@ -55,7 +55,7 @@ void OnDemandOrderingGate::propagateBatch(
     std::shared_ptr<shared_model::interface::TransactionBatch> batch) const {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
-  network_client_->onTransactions(current_round_, batch->transactions());
+  network_client_->onBatches(current_round_, {batch});
 }
 
 rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>

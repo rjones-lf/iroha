@@ -2,6 +2,10 @@
 *
 !.gitignore
 !tx-example.py
+!batch-example.py
+!ed25519.py
+!irohalib.py
+!irohalib.md
 !blocks-query.py
 !permissions/
 !permissions/*

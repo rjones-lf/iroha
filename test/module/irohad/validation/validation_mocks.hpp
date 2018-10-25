@@ -42,10 +42,6 @@ namespace iroha {
           bool(rxcpp::observable<
                    std::shared_ptr<shared_model::interface::Block>>,
                ametsuchi::MutableStorage &));
-
-      MOCK_CONST_METHOD2(validateBlock,
-                         bool(std::shared_ptr<shared_model::interface::Block>,
-                              ametsuchi::MutableStorage &));
     };
   }  // namespace validation
 }  // namespace iroha

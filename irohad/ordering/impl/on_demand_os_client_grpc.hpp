@@ -34,11 +34,10 @@ namespace iroha {
             std::function<TimepointType()> time_provider,
             std::chrono::milliseconds proposal_request_timeout);
 
-        void onTransactions(transport::Round round,
-                            CollectionType transactions) override;
+        void onBatches(consensus::Round round, CollectionType batches) override;
 
         boost::optional<ProposalType> onRequestProposal(
-            transport::Round round) override;
+            consensus::Round round) override;
 
        private:
         logger::Logger log_;

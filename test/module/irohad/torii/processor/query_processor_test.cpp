@@ -4,6 +4,7 @@
  */
 
 #include "backend/protobuf/block.hpp"
+#include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/query_responses/proto_error_query_response.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/keypair.hpp"
@@ -15,7 +16,6 @@
 #include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "network/ordering_gate.hpp"
 #include "torii/processor/query_processor_impl.hpp"
@@ -37,14 +37,17 @@ class QueryProcessorTest : public ::testing::Test {
   void SetUp() override {
     qry_exec = std::make_shared<MockQueryExecutor>();
     storage = std::make_shared<MockStorage>();
-    qpi = std::make_shared<torii::QueryProcessorImpl>(storage, storage, nullptr);
+    query_response_factory =
+        std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
+    qpi = std::make_shared<torii::QueryProcessorImpl>(
+        storage, storage, nullptr, query_response_factory);
     wsv_queries = std::make_shared<MockWsvQuery>();
     EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
     EXPECT_CALL(*storage, getBlockQuery())
         .WillRepeatedly(Return(block_queries));
-    EXPECT_CALL(*storage, createQueryExecutor(_))
-        .WillRepeatedly(Return(boost::make_optional(
-            std::shared_ptr<QueryExecutor>(qry_exec))));
+    EXPECT_CALL(*storage, createQueryExecutor(_, _))
+        .WillRepeatedly(Return(
+            boost::make_optional(std::shared_ptr<QueryExecutor>(qry_exec))));
   }
 
   auto getBlocksQuery(const std::string &creator_account_id) {
@@ -69,6 +72,8 @@ class QueryProcessorTest : public ::testing::Test {
   std::shared_ptr<MockWsvQuery> wsv_queries;
   std::shared_ptr<MockBlockQuery> block_queries;
   std::shared_ptr<MockStorage> storage;
+  std::shared_ptr<shared_model::interface::QueryResponseFactory>
+      query_response_factory;
   std::shared_ptr<torii::QueryProcessorImpl> qpi;
 };
 
@@ -85,7 +90,7 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
                  .signAndAddSignature(keypair)
                  .finish();
   auto *qry_resp =
-      clone(TestQueryResponseBuilder().accountDetailResponse("").build())
+      query_response_factory->createAccountDetailResponse("", qry.hash())
           .release();
 
   EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
@@ -114,8 +119,6 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
                        shared_model::crypto::DefaultCryptoAlgorithmType::
                            generateKeypair())
                    .finish();
-  auto qry_resp =
-      clone(TestQueryResponseBuilder().accountDetailResponse("").build());
 
   EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
       .WillRepeatedly(Return(signatories));

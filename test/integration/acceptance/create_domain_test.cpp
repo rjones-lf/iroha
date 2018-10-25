@@ -133,7 +133,7 @@ TEST_F(CreateDomain, TooLongName) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(std::string(257, 'a'), kRole)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -150,7 +150,7 @@ TEST_F(CreateDomain, EmptyName) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(empty_name, kRole)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -167,5 +167,5 @@ TEST_F(CreateDomain, DISABLED_EmptyRoleName) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(kNewDomain, empty_name)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
