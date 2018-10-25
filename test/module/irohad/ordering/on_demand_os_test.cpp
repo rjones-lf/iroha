@@ -206,7 +206,7 @@ TEST_F(OnDemandOsTest, EraseReject) {
 }
 
 /**
- * @given initialized on-demand OS @and some transactions are sent to is
+ * @given initialized on-demand OS @and some transactions are sent to it
  * @when proposal is requested after calling onCollaborationOutcome
  * @then check that proposal factory is called and returns a proposal
  */
