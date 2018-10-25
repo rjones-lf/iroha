@@ -16,10 +16,11 @@ namespace shared_model {
      public:
       using TransportType = iroha::protocol::Proposal;
 
-      Proposal(Proposal &&o) noexcept;
+      Proposal(Proposal &&o);
       Proposal &operator=(Proposal &&o) noexcept = default;
 
-      Proposal(TransportType ref);
+      Proposal(const TransportType &ref);
+      Proposal(TransportType &&ref);
 
       interface::types::TransactionsCollectionType transactions()
           const override;
@@ -32,7 +33,9 @@ namespace shared_model {
 
       const TransportType &getTransport() const;
 
-      ~Proposal();
+      const interface::types::HashType &hash() const override;
+
+      ~Proposal() override;
 
      protected:
       Proposal::ModelType *clone() const override;

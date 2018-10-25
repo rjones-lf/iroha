@@ -14,8 +14,6 @@ namespace shared_model {
     struct Proposal::Impl {
       Impl(TransportType &&ref) : proto_(std::move(ref)) {}
       Impl(const TransportType &ref) : proto_(ref) {}
-      Impl(Impl &&o) noexcept = delete;
-      Impl &operator=(Impl &&o) noexcept = delete;
       TransportType proto_;
       const std::vector<proto::Transaction> transactions_{[this] {
         return std::vector<proto::Transaction>(
@@ -24,11 +22,18 @@ namespace shared_model {
       }()};
 
       interface::types::BlobType blob_{[this] { return makeBlob(proto_); }()};
+
+      const interface::types::HashType hash_{
+          [this] { return crypto::DefaultHashProvider::makeHash(blob_); }()};
     };
 
-    Proposal::Proposal(Proposal &&o) noexcept : Proposal(o.getTransport()) {}
+    Proposal::Proposal(Proposal &&o) = default;
 
-    Proposal::Proposal(TransportType ref) {
+    Proposal::Proposal(const TransportType &ref) {
+      impl_ = std::make_unique<Proposal::Impl>(std::move(ref));
+    }
+
+    Proposal::Proposal(TransportType &&ref) {
       impl_ = std::make_unique<Proposal::Impl>(ref);
     }
 
@@ -54,6 +59,10 @@ namespace shared_model {
 
     Proposal::ModelType *Proposal::clone() const {
       return new Proposal(impl_->proto_);
+    }
+
+    const interface::types::HashType &Proposal::hash() const {
+      return impl_->hash_;
     }
 
     Proposal::~Proposal() = default;
