@@ -41,6 +41,7 @@ namespace iroha {
     /**
      * Initialize strategy with
      * @param peer_factory is a provider of peer list
+     * @param emit_worker is the coordinator for the data emitting
      * @param period of emitting data in ms
      * @param amount of peers emitted per once
      */
