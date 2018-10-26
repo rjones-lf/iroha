@@ -20,6 +20,8 @@
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "postgres_ordering_service_persistent_state.hpp"
 
+const std::string prepared_block_name = "prepared_block4";
+
 namespace {
   void prepareStatements(soci::connection_pool &connections, size_t pool_size) {
     for (size_t i = 0; i != pool_size; i++) {
@@ -237,7 +239,7 @@ namespace iroha {
       for (size_t i = 0; i < pool_size_; i++) {
         connections.push_back(std::make_shared<soci::session>(*connection_));
         try {
-          *connections[i] << "ROLLBACK PREPARED 'prepared_block2';";
+          *connections[i] << "ROLLBACK PREPARED '" + prepared_block_name + "';";
         } catch (...) {}
         connections[i]->close();
         log_->debug("Closed connection {}", i);
@@ -393,7 +395,7 @@ namespace iroha {
           return false;
         }
         soci::session sql(*connection_);
-        sql << "COMMIT PREPARED 'prepared_block1';";
+        sql << "COMMIT PREPARED '" + prepared_block_name + "';";
         block_is_prepared = false;
       } catch (const std::exception &e) {
         log_->warn("failed to apply prepared block {}: {}",
@@ -451,10 +453,10 @@ namespace iroha {
       if (not block_is_prepared) {
         soci::session &sql = *wsv_impl.sql_;
         try {
-          sql << "PREPARE TRANSACTION 'prepared_block2';";
+          sql << "PREPARE TRANSACTION '" + prepared_block_name + "';";
           block_is_prepared = true;
         } catch (const std::exception &e) {
-          sql << "ROLLBACK PREPARED 'prepared_block2';";
+          sql << "ROLLBACK PREPARED '" + prepared_block_name + "';";
         }
 
         log_->info("prepared block");
