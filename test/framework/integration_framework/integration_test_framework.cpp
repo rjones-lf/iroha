@@ -326,6 +326,11 @@ namespace integration_framework {
         ->onExpiredBatches();
   }
 
+  rxcpp::observable<iroha::network::Commit>
+  IntegrationTestFramework::getYacOnCommitObservable() {
+    return iroha_instance_->getIrohaInstance()->getConsensusGate()->on_commit();
+  }
+
   IntegrationTestFramework &
   IntegrationTestFramework::subscribeForAllMstNotifications(
       std::shared_ptr<iroha::network::MstTransportNotification> notification) {

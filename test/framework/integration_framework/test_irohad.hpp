@@ -69,6 +69,10 @@ namespace integration_framework {
       return mst_processor;
     }
 
+    auto &getConsensusGate() {
+      return consensus_gate;
+    }
+
     auto &getPeerCommunicationService() {
       return pcs;
     }
