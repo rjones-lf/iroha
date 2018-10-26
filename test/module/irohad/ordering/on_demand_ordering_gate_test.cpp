@@ -72,8 +72,7 @@ TEST_F(OnDemandOrderingGateTest, propagateBatch) {
  * @then new proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, BlockEvent) {
-  OnDemandOrderingGate::BlockEvent event{3, {}};
-  consensus::Round round{event.height, 1};
+  consensus::Round round{3, 1};
 
   boost::optional<OdOsNotification::ProposalType> oproposal(nullptr);
   auto proposal = oproposal.value().get();
@@ -87,7 +86,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
       make_test_subscriber<CallExact>(ordering_gate->on_proposal(), 1);
   gate_wrapper.subscribe([&](auto val) { ASSERT_EQ(val.get(), proposal); });
 
-  rounds.get_subscriber().on_next(event);
+  rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{round, {}});
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -126,8 +125,7 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
  * @then new empty proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
-  OnDemandOrderingGate::BlockEvent event{3, {}};
-  consensus::Round round{event.height, 1};
+  consensus::Round round{3, 1};
 
   boost::optional<OdOsNotification::ProposalType> oproposal;
 
@@ -145,7 +143,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
       make_test_subscriber<CallExact>(ordering_gate->on_proposal(), 1);
   gate_wrapper.subscribe([&](auto val) { ASSERT_EQ(val.get(), proposal); });
 
-  rounds.get_subscriber().on_next(event);
+  rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{round, {}});
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -225,6 +223,6 @@ TEST_F(OnDemandOrderingGateTest, BatchesRemoveFromCache) {
   EXPECT_CALL(*cache, remove(cache::OgCache::BatchesSetType{batch1, batch2}))
       .Times(1);
 
-  rounds.get_subscriber().on_next(
-      OnDemandOrderingGate::BlockEvent{1, {batch1, batch2}});
+  rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{
+      initial_round, {batch1, batch2}});
 }

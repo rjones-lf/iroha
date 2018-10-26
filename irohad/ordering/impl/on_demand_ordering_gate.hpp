@@ -31,7 +31,7 @@ namespace iroha {
        * Represents storage modification. Proposal round increment
        */
       struct BlockEvent {
-        shared_model::interface::types::HeightType height;
+        consensus::Round round;
         cache::OgCache::BatchesSetType batches;
       };
 

@@ -28,7 +28,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         visit_in_place(event,
                        [this](const BlockEvent &block_event) {
                          // block committed, increment block round
-                         current_round_ = {block_event.height, 1};
+                         current_round_ = block_event.round;
                          cache_->remove(block_event.batches);
                        },
                        [this](const EmptyEvent &empty) {
