@@ -107,7 +107,8 @@ namespace {
       // try to parse the SQL error to get an actual one
       std::string exc_body = e.what();
 
-      if (exc_body.find("Key (account_id)=") != std::string::npos
+      if ((exc_body.find("Key (account_id)=") != std::string::npos
+           or exc_body.find("Key (permittee_account_id)") != std::string::npos)
           and exc_body.find("is not present in table") != std::string::npos) {
         return makeCommandError(command_name, 2);
       }
@@ -140,6 +141,16 @@ namespace {
       if (exc_body.find("Key (account_id, public_key)") != std::string::npos
           and exc_body.find("already exists") != std::string::npos) {
         return makeCommandError(command_name, 12);
+      }
+
+      if (exc_body.find("Key (account_id)") != std::string::npos
+          and exc_body.find("already exists") != std::string::npos) {
+        return makeCommandError(command_name, 13);
+      }
+
+      if (exc_body.find("Key (default_role)") != std::string::npos
+          and exc_body.find("is not present in table") != std::string::npos) {
+        return makeCommandError(command_name, 14);
       }
 
       // parsing is not successful, return the general error
@@ -323,8 +334,9 @@ namespace iroha {
 
     const std::string PostgresCommandExecutor::createAccountBase = R"(
           PREPARE %s (text, text, text, text) AS
-          WITH get_domain_default_role AS (SELECT default_role FROM domain
-                                           WHERE domain_id = $3),
+          WITH has_domain AS (SELECT * FROM domain WHERE domain_id = $3),
+          get_domain_default_role AS (SELECT default_role FROM domain
+                                      WHERE domain_id = $3),
           %s
           insert_signatory AS
           (
@@ -367,15 +379,7 @@ namespace iroha {
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_account_role) THEN 0
               %s
-              WHEN NOT EXISTS (SELECT * FROM account
-                               WHERE account_id = $2) THEN 3
-              WHEN NOT EXISTS (SELECT * FROM account_has_signatory
-                               WHERE account_id = $2
-                               AND public_key = $4) THEN 4
-              WHEN NOT EXISTS (SELECT * FROM account_has_roles
-                               WHERE account_id = account_id AND role_id = (
-                               SELECT default_role FROM get_domain_default_role)
-                               ) THEN 8
+              WHEN NOT EXISTS (SELECT * FROM has_domain) THEN 7
               ELSE 1
               END AS result)";
 
@@ -407,7 +411,7 @@ namespace iroha {
               )
               SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
               %s
-              ELSE 2 END AS result)";
+              ELSE 1 END AS result)";
 
     const std::string PostgresCommandExecutor::createRoleBase = R"(
           PREPARE %s (text, text, bit) AS
@@ -528,6 +532,8 @@ namespace iroha {
               )
               SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
                   %s
+                  WHEN NOT EXISTS
+                      (SELECT * FROM account WHERE account_id=$2) THEN 2
                   ELSE 1 END AS result)";
 
     const std::string PostgresCommandExecutor::setQuorumBase = R"(
@@ -1144,7 +1150,6 @@ namespace iroha {
             R"(
               WHEN NOT EXISTS (SELECT * FROM get_account) THEN 2
               WHEN NOT (SELECT * FROM has_perm) THEN 5
-              WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 4
               WHEN NOT EXISTS (SELECT * FROM get_signatory) THEN 3
               WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 8
           )"}});

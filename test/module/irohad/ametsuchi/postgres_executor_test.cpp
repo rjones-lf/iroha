@@ -577,17 +577,6 @@ namespace iroha {
     };
 
     /**
-     * @given  command and no target domain in ledger
-     * @when trying to create account
-     * @then account is not created
-     */
-    TEST_F(CreateAccount, InvalidCreateAccountNoDomainTest) {
-      addAllPerms();
-      ASSERT_TRUE(err(execute(buildCommand(
-          TestTransactionBuilder().createAccount("id2", "domain2", *pubkey)))));
-    }
-
-    /**
      * @given  command
      * @when trying to create account
      * @then account is created
@@ -608,11 +597,32 @@ namespace iroha {
      * @then account is created
      */
     TEST_F(CreateAccount, InvalidCreateAccountWithoutPermsTest) {
-      ASSERT_TRUE(
-          err(execute(buildCommand(TestTransactionBuilder().createAccount(
-              "id2", domain->domainId(), *pubkey)))));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().createAccount(
+              "id2", domain->domainId(), *pubkey)));
+      checkErrorCode(cmd_result, 5);
       auto acc = query->getAccount(account2->accountId());
       ASSERT_FALSE(acc);
+    }
+
+    /**
+     * @given  command and no target domain in ledger
+     * @when trying to create account
+     * @then account is not created
+     */
+    TEST_F(CreateAccount, InvalidCreateAccountNoDomainTest) {
+      addAllPerms();
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().createAccount("doge", "domain6", *pubkey)));
+      checkErrorCode(cmd_result, 7);
+    }
+
+    TEST_F(CreateAccount, InvalidCreateAccountNameExists) {
+      addAllPerms();
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().createAccount(
+              "id", domain->domainId(), *pubkey)));
+      checkErrorCode(cmd_result, 13);
     }
 
     class CreateAsset : public CommandExecutorTest {
@@ -624,16 +634,6 @@ namespace iroha {
       shared_model::interface::types::AssetIdType asset_id =
           "coin#" + domain->domainId();
     };
-
-    /**
-     * @given  command and no target domain in ledger
-     * @when trying to create asset
-     * @then asset is not created
-     */
-    TEST_F(CreateAsset, InvalidCreateAssetNoDomainTest) {
-      ASSERT_TRUE(err(execute(buildCommand(TestTransactionBuilder().createAsset(
-          asset_name, domain->domainId(), 1)))));
-    }
 
     /**
      * @given  command
@@ -671,7 +671,7 @@ namespace iroha {
      * @when trying to create asset without permission
      * @then asset is not created
      */
-    TEST_F(CreateAsset, InvalidCreateAssetWithDomainTest) {
+    TEST_F(CreateAsset, InvalidCreateAssetWithNoPermission) {
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
                                   role, role_permissions)),
                               true)));
@@ -688,10 +688,66 @@ namespace iroha {
           val(execute(buildCommand(TestTransactionBuilder().createAccount(
                           "id", domain->domainId(), *pubkey)),
                       true)));
-      ASSERT_TRUE(err(execute(buildCommand(TestTransactionBuilder().createAsset(
-          "coin", domain->domainId(), 1)))));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().createAsset("coin", domain->domainId(), 1)));
+      checkErrorCode(cmd_result, 5);
       auto ass = query->getAsset(asset->assetId());
       ASSERT_FALSE(ass);
+    }
+
+    /**
+     * @given  command and no target domain in ledger
+     * @when trying to create asset
+     * @then asset is not created
+     */
+    TEST_F(CreateAsset, InvalidCreateAssetNoDomain) {
+      role_permissions.set(
+          shared_model::interface::permissions::Role::kCreateAsset);
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
+                                  role, role_permissions)),
+                              true)));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().createDomain(
+                          domain->domainId(), role)),
+                      true)));
+      auto asset = clone(TestAccountAssetBuilder()
+                             .domainId(domain->domainId())
+                             .assetId(asset_id)
+                             .precision(1)
+                             .build());
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                          "id", domain->domainId(), *pubkey)),
+                      true)));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().createAsset(asset_name, "no_domain", 1)));
+      checkErrorCode(cmd_result, 7);
+    }
+
+    TEST_F(CreateAsset, InvalidCreateAssetNameNotUnique) {
+      role_permissions.set(
+          shared_model::interface::permissions::Role::kCreateAsset);
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
+                                  role, role_permissions)),
+                              true)));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().createDomain(
+                          domain->domainId(), role)),
+                      true)));
+      auto asset = clone(TestAccountAssetBuilder()
+                             .domainId(domain->domainId())
+                             .assetId(asset_id)
+                             .precision(1)
+                             .build());
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().createAccount(
+                          "id", domain->domainId(), *pubkey)),
+                      true)));
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createAsset(
+          "coin", domain->domainId(), 1)))));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().createAsset("coin", domain->domainId(), 1)));
+      checkErrorCode(cmd_result, 9);
     }
 
     class CreateDomain : public CommandExecutorTest {
@@ -718,18 +774,6 @@ namespace iroha {
     };
 
     /**
-     * @given  command when there is no role
-     * @when trying to create domain
-     * @then domain is not created
-     */
-    TEST_F(CreateDomain, InvalidCreateDomainWhenNoRoleTest) {
-      addAllPerms();
-      ASSERT_TRUE(
-          err(execute(buildCommand(TestTransactionBuilder().createDomain(
-              domain2->domainId(), another_role)))));
-    }
-
-    /**
      * @given  command
      * @when trying to create domain
      * @then domain is created
@@ -749,10 +793,33 @@ namespace iroha {
      * @then domain is not created
      */
     TEST_F(CreateDomain, InvalidCreateDomainTestWhenNoPerms) {
-      ASSERT_TRUE(err(execute(buildCommand(
-          TestTransactionBuilder().createDomain(domain2->domainId(), role)))));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().createDomain(domain2->domainId(), role)));
+      checkErrorCode(cmd_result, 5);
       auto dom = query->getDomain(domain2->domainId());
       ASSERT_FALSE(dom);
+    }
+
+    TEST_F(CreateDomain, InvalidCreateDomainWhenNameNotUnique) {
+      addAllPerms();
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder().createDomain(domain2->domainId(), role)))));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().createDomain(domain2->domainId(), role)));
+      checkErrorCode(cmd_result, 10);
+    }
+
+    /**
+     * @given  command when there is no role
+     * @when trying to create domain
+     * @then domain is not created
+     */
+    TEST_F(CreateDomain, InvalidCreateDomainWhenNoRoleTest) {
+      addAllPerms();
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().createDomain(
+              domain2->domainId(), another_role)));
+      checkErrorCode(cmd_result, 14);
     }
 
     class CreateRole : public CommandExecutorTest {
@@ -797,11 +864,22 @@ namespace iroha {
     TEST_F(CreateRole, CreateRoleTestInvalidWhenHasNoPerms) {
       role_permissions2.set(
           shared_model::interface::permissions::Role::kRemoveMySignatory);
-      ASSERT_TRUE(err(execute(buildCommand(TestTransactionBuilder().createRole(
-          another_role, role_permissions2)))));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().createRole(
+              another_role, role_permissions2)));
+      checkErrorCode(cmd_result, 5);
       auto rl = query->getRolePermissions(another_role);
       ASSERT_TRUE(rl);
       ASSERT_TRUE(rl->none());
+    }
+
+    TEST_F(CreateRole, CreateRoleTestInvalidNameNotUnique) {
+      addAllPerms();
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
+          another_role, role_permissions)))));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().createRole(another_role, role_permissions)));
+      checkErrorCode(cmd_result, 11);
     }
 
     class DetachRole : public CommandExecutorTest {
@@ -847,17 +925,59 @@ namespace iroha {
     }
 
     /**
+     * @given command
+     * @when trying to detach role from non-existing account
+     * @then correspondent error code is returned
+     */
+    TEST_F(DetachRole, InvalidDetachRoleTestNoAccount) {
+      addAllPerms();
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().detachRole("doge@noaccount", another_role)));
+      checkErrorCode(cmd_result, 2);
+    }
+
+    /**
+     * @given command
+     * @when trying to detach role, which the account does not have
+     * @then correspondent error code is returned
+     */
+    TEST_F(DetachRole, InvalidDetachRoleTestNoRoleInAccountRoles) {
+      addAllPerms();
+      ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().detachRole(
+          account->accountId(), another_role)))));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().detachRole(
+              account->accountId(), another_role)));
+      checkErrorCode(cmd_result, 3);
+    }
+
+    /**
      * @given  command
      * @when trying to detach role without permission
      * @then role is detached
      */
     TEST_F(DetachRole, InvalidDetachRoleTestWhenNoPerms) {
-      ASSERT_TRUE(err(execute(buildCommand(TestTransactionBuilder().detachRole(
-          account->accountId(), another_role)))));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().detachRole(
+              account->accountId(), another_role)));
+      checkErrorCode(cmd_result, 5);
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
       ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
                   != roles->end());
+    }
+
+    /**
+     * @given command
+     * @when trying to detach a non-existing role
+     * @then correspondent error code is returned
+     */
+    TEST_F(DetachRole, InvalidDetachRoleTestNoRole) {
+      addAllPerms();
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().detachRole(
+              account->accountId(), "not_existing_role")));
+      checkErrorCode(cmd_result, 6);
     }
 
     class GrantPermission : public CommandExecutorTest {
@@ -901,16 +1021,33 @@ namespace iroha {
     }
 
     /**
+     * @given command
+     * @when trying to grant permission to non-existent account
+     * @then corresponding error code is returned
+     */
+    TEST_F(GrantPermission, InvalidGrantPermissionTestNoAccount) {
+      addAllPerms();
+      auto perm = shared_model::interface::permissions::Grantable::kSetMyQuorum;
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder()
+                                   .grantPermission("doge@noaccount", perm)
+                                   .creatorAccountId(account->accountId())));
+      checkErrorCode(cmd_result, 2);
+    }
+
+    /**
      * @given  command
      * @when trying to grant permission without permission
      * @then permission is not granted
      */
     TEST_F(GrantPermission, InvalidGrantPermissionTestWhenNoPerm) {
       auto perm = shared_model::interface::permissions::Grantable::kSetMyQuorum;
-      ASSERT_TRUE(err(
+      auto cmd_result =
+
           execute(buildCommand(TestTransactionBuilder()
                                    .grantPermission(account->accountId(), perm)
-                                   .creatorAccountId(account->accountId())))));
+                                   .creatorAccountId(account->accountId())));
+      checkErrorCode(cmd_result, 5);
       auto has_perm = query->hasAccountGrantablePermission(
           account->accountId(), account->accountId(), perm);
       ASSERT_FALSE(has_perm);
@@ -922,6 +1059,9 @@ namespace iroha {
         CommandExecutorTest::SetUp();
         pubkey = std::make_unique<shared_model::interface::types::PubkeyType>(
             std::string('1', 32));
+        another_pubkey =
+            std::make_unique<shared_model::interface::types::PubkeyType>(
+                std::string('7', 32));
         ASSERT_TRUE(
             val(execute(buildCommand(TestTransactionBuilder().createRole(
                             role, role_permissions)),
@@ -936,6 +1076,8 @@ namespace iroha {
                         true)));
       }
       std::unique_ptr<shared_model::interface::types::PubkeyType> pubkey;
+      std::unique_ptr<shared_model::interface::types::PubkeyType>
+          another_pubkey;
     };
 
     /**
@@ -998,6 +1140,51 @@ namespace iroha {
 
     /**
      * @given  command
+     * @when trying to remove signatory from a non existing account
+     * @then corresponding error code is returned
+     */
+    TEST_F(RemoveSignatory, RemoveSignatoryTestNonExistingAccount) {
+      addAllPerms();
+      shared_model::interface::types::PubkeyType pk(std::string('5', 32));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+                          account->accountId(), pk)),
+                      true)));
+
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().removeSignatory("hello", *pubkey)));
+      checkErrorCode(cmd_result, 2);
+    }
+
+    /**
+     * @given command
+     * @when trying to remove signatory, which is not attached to this account
+     * @then corresponding error code is returned
+     */
+    TEST_F(RemoveSignatory, RemoveSignatoryTestNoSuchSignatory) {
+      addAllPerms();
+      shared_model::interface::types::PubkeyType pk(std::string('5', 32));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+                          account->accountId(), pk)),
+                      true)));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+                          account->accountId(), *another_pubkey)),
+                      true)));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().removeSignatory(
+                          account->accountId(), *another_pubkey)),
+                      true)));
+
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().removeSignatory(
+              account->accountId(), *another_pubkey)));
+      checkErrorCode(cmd_result, 3);
+    }
+
+    /**
+     * @given  command
      * @when trying to remove signatory without permission
      * @then signatory is not removed
      */
@@ -1007,9 +1194,11 @@ namespace iroha {
           val(execute(buildCommand(TestTransactionBuilder().addSignatory(
                           account->accountId(), pk)),
                       true)));
-      ASSERT_TRUE(
-          err(execute(buildCommand(TestTransactionBuilder().removeSignatory(
-              account->accountId(), *pubkey)))));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().removeSignatory(
+              account->accountId(), *pubkey)));
+      checkErrorCode(cmd_result, 5);
+
       auto signatories = query->getSignatories(account->accountId());
       ASSERT_TRUE(signatories);
       ASSERT_TRUE(std::find(signatories->begin(), signatories->end(), *pubkey)
@@ -1033,26 +1222,9 @@ namespace iroha {
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().removeSignatory(
               account->accountId(), *pubkey)))));
-      ASSERT_TRUE(
-          err(execute(buildCommand(TestTransactionBuilder().removeSignatory(
-              account->accountId(), pk)))));
-    }
-
-    /**
-     * @given  command
-     * @when trying to remove signatory from a non existing account
-     * @then signatory is not removed
-     */
-    TEST_F(RemoveSignatory, RemoveSignatoryTestNonExistingAccount) {
-      addAllPerms();
-      shared_model::interface::types::PubkeyType pk(std::string('5', 32));
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
-                          account->accountId(), pk)),
-                      true)));
-
-      ASSERT_TRUE(err(execute(buildCommand(
-          TestTransactionBuilder().removeSignatory("hello", *pubkey)))));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().removeSignatory(account->accountId(), pk)));
+      checkErrorCode(cmd_result, 8);
     }
 
     class RevokePermission : public CommandExecutorTest {
@@ -1123,10 +1295,11 @@ namespace iroha {
     TEST_F(RevokePermission, InvalidRevokePermissionTestWithNoPermission) {
       auto perm =
           shared_model::interface::permissions::Grantable::kRemoveMySignatory;
-      ASSERT_TRUE(err(
+      auto cmd_result =
           execute(buildCommand(TestTransactionBuilder()
                                    .revokePermission(account->accountId(), perm)
-                                   .creatorAccountId(account->accountId())))));
+                                   .creatorAccountId(account->accountId())));
+      checkErrorCode(cmd_result, 5);
     }
 
     class SetAccountDetail : public CommandExecutorTest {
@@ -1218,15 +1391,31 @@ namespace iroha {
 
     /**
      * @given  command
-     * @when trying to set kv
-     * @then kv is set
+     * @when trying to set kv to non-existing account
+     * @then corresponding error code is returned
      */
-    TEST_F(SetAccountDetail, InvalidSetAccountDetailTest) {
-      ASSERT_TRUE(
-          err(execute(buildCommand(TestTransactionBuilder().setAccountDetail(
-                          account2->accountId(), "key", "value")),
-                      false,
-                      account->accountId())));
+    TEST_F(SetAccountDetail, InvalidSetAccountDetailTestNoAccount) {
+      addAllPerms();
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().setAccountDetail(
+                      "doge@noaccount", "key", "value")),
+                  false,
+                  account->accountId());
+      checkErrorCode(cmd_result, 2);
+    }
+
+    /**
+     * @given  command
+     * @when trying to set kv while having no permissions
+     * @then corresponding error code is returned
+     */
+    TEST_F(SetAccountDetail, InvalidSetAccountDetailTestNoPerms) {
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().setAccountDetail(
+                      account2->accountId(), "key", "value")),
+                  false,
+                  account->accountId());
+      checkErrorCode(cmd_result, 5);
       auto kv = query->getAccountDetail(account2->accountId());
       ASSERT_TRUE(kv);
       ASSERT_EQ(kv.get(), "{}");
