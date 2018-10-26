@@ -269,11 +269,11 @@ namespace integration_framework {
     IntegrationTestFramework &skipBlock();
 
     rxcpp::observable<std::shared_ptr<iroha::MstState>>
-    getMstStateUpdateObserver();
+    getMstStateUpdateObservable();
 
-    rxcpp::observable<iroha::BatchPtr> getMstPreparedBatchesObserver();
+    rxcpp::observable<iroha::BatchPtr> getMstPreparedBatchesObservable();
 
-    rxcpp::observable<iroha::BatchPtr> getMstExpiredBatchesObserver();
+    rxcpp::observable<iroha::BatchPtr> getMstExpiredBatchesObservable();
 
     /**
      * Request next status of the transaction

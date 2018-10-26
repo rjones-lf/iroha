@@ -257,21 +257,21 @@ namespace integration_framework {
   }
 
   rxcpp::observable<std::shared_ptr<iroha::MstState>>
-  IntegrationTestFramework::getMstStateUpdateObserver() {
+  IntegrationTestFramework::getMstStateUpdateObservable() {
     return iroha_instance_->getIrohaInstance()
         ->getMstProcessor()
         ->onStateUpdate();
   }
 
   rxcpp::observable<iroha::BatchPtr>
-  IntegrationTestFramework::getMstPreparedBatchesObserver() {
+  IntegrationTestFramework::getMstPreparedBatchesObservable() {
     return iroha_instance_->getIrohaInstance()
         ->getMstProcessor()
         ->onPreparedBatches();
   }
 
   rxcpp::observable<iroha::BatchPtr>
-  IntegrationTestFramework::getMstExpiredBatchesObserver() {
+  IntegrationTestFramework::getMstExpiredBatchesObservable() {
     return iroha_instance_->getIrohaInstance()
         ->getMstProcessor()
         ->onExpiredBatches();
