@@ -133,13 +133,45 @@ namespace integration_framework {
     };
   }
 
+  std::shared_ptr<shared_model::interface::Signature> FakePeer::makeSignature(
+      const shared_model::crypto::Blob &hash) const {
+    auto bare_signature =
+        shared_model::crypto::DefaultCryptoAlgorithmType::sign(hash, *keypair_);
+    std::shared_ptr<shared_model::interface::Signature> signature_with_pubkey;
+    common_objects_factory_
+        ->createSignature(keypair_->publicKey(), bare_signature)
+        .match(
+            [&signature_with_pubkey](
+                iroha::expected::Value<
+                    std::unique_ptr<shared_model::interface::Signature>> &sig) {
+              signature_with_pubkey = std::move(sig.value);
+            },
+            [this](iroha::expected::Error<std::string> &reason) {
+              log_->error("Cannot build signature: {}", reason.error);
+            });
+    return signature_with_pubkey;
+  }
+
+  iroha::consensus::yac::VoteMessage FakePeer::makeVote(
+      const iroha::consensus::yac::YacHash &yac_hash) {
+    iroha::consensus::yac::YacHash my_yac_hash = yac_hash;
+    my_yac_hash.block_signature = makeSignature(
+        shared_model::crypto::Blob(yac_hash.vote_hashes.block_hash));
+    return yac_crypto_->getVote(my_yac_hash);
+  }
+
+  void FakePeer::sendYacState(const std::vector<iroha::consensus::yac::VoteMessage> &state) {
+    yac_transport_->sendState(*real_peer_, state);
+  }
+
   void FakePeer::voteForTheSame(const YacStateMessage &incoming_votes) {
     using iroha::consensus::yac::VoteMessage;
     log_->debug("Got a YAC state message with {} votes.",
                 incoming_votes->size());
     if (incoming_votes->size() > 1) {
       // TODO mboldyrev 24/10/2018: rework ignoring states for accepted commits
-      log_->debug("Ignoring state with multiple votes, "
+      log_->debug(
+          "Ignoring state with multiple votes, "
           "because it probably refers to an accepted commit.");
       return;
     }
@@ -156,28 +188,9 @@ namespace integration_framework {
               incoming_vote.hash.vote_round.reject_round,
               incoming_vote.hash.vote_hashes.proposal_hash,
               incoming_vote.hash.vote_hashes.block_hash);
-          iroha::consensus::yac::YacHash my_yac_hash = incoming_vote.hash;
-          // make block signature by its hash
-          auto my_block_signature =
-              shared_model::crypto::DefaultCryptoAlgorithmType::sign(
-                  shared_model::crypto::Blob(
-                      my_yac_hash.vote_hashes.block_hash),
-                  *keypair_);
-          common_objects_factory_
-              ->createSignature(keypair_->publicKey(), my_block_signature)
-              .match(
-                  [&my_yac_hash](
-                      iroha::expected::Value<std::unique_ptr<
-                          shared_model::interface::Signature>> &sig) {
-                    my_yac_hash.block_signature = std::move(sig.value);
-                  },
-                  [this](iroha::expected::Error<std::string> &reason) {
-                    log_->error("Cannot build vote signature: {}",
-                                reason.error);
-                  });
-          return yac_crypto_->getVote(my_yac_hash);
+          return makeVote(incoming_vote.hash);
         });
-    yac_transport_->sendState(*real_peer_, my_votes);
+    sendYacState(my_votes);
   }
 
 }  // namespace integration_framework

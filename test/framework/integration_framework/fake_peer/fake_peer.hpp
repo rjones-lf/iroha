@@ -39,6 +39,7 @@ namespace iroha {
     namespace yac {
       class NetworkImpl;
       class YacCryptoProvider;
+      class YacHash;
     }
   }
 }  // namespace iroha
@@ -86,6 +87,15 @@ namespace integration_framework {
     void voteForTheSame(
         const integration_framework::YacNetworkNotifier::StateMessagePtr
             &incoming_votes);
+
+    std::shared_ptr<shared_model::interface::Signature> makeSignature(
+        const shared_model::crypto::Blob &hash) const;
+
+    iroha::consensus::yac::VoteMessage makeVote(
+        const iroha::consensus::yac::YacHash &yac_hash);
+
+    void sendYacState(
+        const std::vector<iroha::consensus::yac::VoteMessage> &state);
 
    private:
     using MstTransport = iroha::network::MstTransportGrpc;
