@@ -17,8 +17,8 @@ namespace shared_model {
   namespace proto {
 
     struct Block::Impl {
-      Impl(TransportType &&ref) : proto_(std::move(ref)) {}
-      Impl(const TransportType &ref) : proto_(ref) {}
+      explicit Impl(TransportType &&ref) : proto_(std::move(ref)) {}
+      explicit Impl(const TransportType &ref) : proto_(ref) {}
       Impl(Impl &&o) noexcept = delete;
       Impl &operator=(Impl &&o) noexcept = delete;
 

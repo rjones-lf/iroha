@@ -31,8 +31,8 @@ namespace shared_model {
 
       Block(Block &&o) noexcept;
       Block &operator=(Block &&o) noexcept = default;
-      Block(const TransportType &ref);
-      Block(TransportType &&ref);
+      explicit Block(const TransportType &ref);
+      explicit Block(TransportType &&ref);
 
       interface::types::TransactionsCollectionType transactions()
           const override;
