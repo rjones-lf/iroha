@@ -6,7 +6,7 @@
 #ifndef IROHA_ON_DEMAND_CACHE_HPP
 #define IROHA_ON_DEMAND_CACHE_HPP
 
-#include "ordering/impl/og_cache/og_cache.hpp"
+#include "ordering_gate_cache.hpp"
 
 #include <boost/circular_buffer.hpp>
 #include <queue>

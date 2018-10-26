@@ -8,7 +8,7 @@
 
 #include <gmock/gmock.h>
 
-#include "ordering/impl/og_cache/og_cache.hpp"
+#include "ordering/impl/ordering_gate_cache/ordering_gate_cache.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
 #include "ordering/on_demand_os_transport.hpp"
 
