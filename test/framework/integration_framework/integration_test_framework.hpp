@@ -46,7 +46,7 @@ namespace iroha {
   namespace consensus {
     namespace yac {
       class YacNetwork;
-      class VoteMessage;
+      struct VoteMessage;
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
