@@ -25,6 +25,7 @@
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "logger/logger.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
+#include "network/impl/async_grpc_client.hpp"
 #include "network/mst_transport.hpp"
 #include "torii/command_client.hpp"
 #include "torii/query_client.hpp"
@@ -41,6 +42,14 @@ namespace shared_model {
     class Block;
   }
 }  // namespace shared_model
+namespace iroha {
+  namespace consensus {
+    namespace yac {
+      class YacNetwork;
+      class VoteMessage;
+    }  // namespace yac
+  }    // namespace consensus
+}  // namespace iroha
 
 namespace integration_framework {
 
@@ -234,6 +243,16 @@ namespace integration_framework {
         const iroha::MstState &mst_state);
 
     /**
+     * Send MST state message to this peer.
+     * @param src_key - the key of the peer which the message appears to come
+     * from
+     * @param mst_state - the MST state to send
+     * @return this
+     */
+    IntegrationTestFramework &sendYacState(
+        const std::vector<iroha::consensus::yac::VoteMessage> &yac_state);
+
+    /**
      * Request next proposal from queue and serve it with custom handler
      * @param validation - callback that receives object of type \relates
      * std::shared_ptr<shared_model::interface::Proposal> by reference
@@ -312,6 +331,8 @@ namespace integration_framework {
     static const std::string kAssetName;
 
    protected:
+    using AsyncCall = iroha::network::AsyncGrpcClient<google::protobuf::Empty>;
+
     /**
      * general way to fetch object from concurrent queue
      * @tparam Queue - Type of queue
@@ -343,6 +364,8 @@ namespace integration_framework {
     torii::CommandSyncClient command_client_;
     torii_utils::QuerySyncClient query_client_;
 
+    std::shared_ptr<AsyncCall> async_call_;
+
     void initPipeline(const shared_model::crypto::Keypair &keypair);
     void subscribeQueuesAndRun();
 
@@ -371,6 +394,7 @@ namespace integration_framework {
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         transaction_batch_factory_;
     std::shared_ptr<iroha::network::MstTransportGrpc> mst_transport_;
+    std::shared_ptr<iroha::consensus::yac::YacNetwork> yac_transport_;
 
     std::shared_ptr<shared_model::interface::Peer> this_peer_;
 

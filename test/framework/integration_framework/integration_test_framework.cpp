@@ -19,6 +19,7 @@
 #include "builders/protobuf/transaction.hpp"
 #include "builders/protobuf/transaction_sequence_builder.hpp"
 #include "common/files.hpp"
+#include "consensus/yac/transport/impl/network_impl.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "datetime/time.hpp"
@@ -32,7 +33,6 @@
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/validators/validators.hpp"
-#include "network/impl/async_grpc_client.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 
 using namespace shared_model::crypto;
@@ -88,6 +88,7 @@ namespace integration_framework {
                                                         dbname)),
         command_client_("127.0.0.1", torii_port_),
         query_client_("127.0.0.1", torii_port_),
+        async_call_(std::make_shared<AsyncCall>()),
         proposal_waiting(proposal_waiting),
         block_waiting(block_waiting),
         tx_response_waiting(tx_response_waiting),
@@ -102,6 +103,8 @@ namespace integration_framework {
         transaction_batch_factory_(
             std::make_shared<
                 shared_model::interface::TransactionBatchFactoryImpl>()),
+        yac_transport_(
+            std::make_shared<iroha::consensus::yac::NetworkImpl>(async_call_)),
         cleanup_on_exit_(cleanup_on_exit) {}
 
   IntegrationTestFramework::~IntegrationTestFramework() {
@@ -237,8 +240,7 @@ namespace integration_framework {
             });
 
     mst_transport_ = std::make_shared<iroha::network::MstTransportGrpc>(
-        std::make_shared<
-            iroha::network::AsyncGrpcClient<google::protobuf::Empty>>(),
+        async_call_,
         transaction_factory_,
         batch_parser_,
         transaction_batch_factory_,
@@ -501,6 +503,12 @@ namespace integration_framework {
       const shared_model::crypto::PublicKey &src_key,
       const iroha::MstState &mst_state) {
     mst_transport_->sendState(*this_peer_, mst_state);
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::sendYacState(
+      const std::vector<iroha::consensus::yac::VoteMessage> &yac_state) {
+    yac_transport_->sendState(*this_peer_, yac_state);
     return *this;
   }
 
