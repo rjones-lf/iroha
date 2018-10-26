@@ -60,7 +60,6 @@ namespace iroha {
          * TAIL:    {f,g}                       {f,g}
          * result == {a,b,c}
          *
-         * @return batches from the head
          */
         virtual BatchesSetType clearFrontAndGet() = 0;
 
@@ -73,13 +72,11 @@ namespace iroha {
 
         /**
          * Return the head batches
-         * @return front
          */
         virtual const BatchesSetType &head() const = 0;
 
         /**
          * Return the tail batches
-         * @return back
          */
         virtual const BatchesSetType &tail() const = 0;
 
