@@ -588,7 +588,6 @@ namespace iroha {
           SELECT CASE
               WHEN EXISTS (SELECT * FROM inserted LIMIT 1) THEN 0
               %s
-              WHEN NOT EXISTS (SELECT * FROM has_account LIMIT 1) THEN 2
               WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 3
               WHEN NOT EXISTS
                   (SELECT value FROM new_value WHERE value >= 0 LIMIT 1) THEN 4

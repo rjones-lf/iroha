@@ -1442,26 +1442,6 @@ namespace iroha {
 
     /**
      * @given  command
-     * @when trying to set quorum more than amount of signatories
-     * @then quorum is not set
-     */
-    TEST_F(SetQuorum, SetQuorumTestInvalidSignatories) {
-      addAllPerms();
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(
-              account->accountId(), 3)))));
-      shared_model::interface::types::PubkeyType pk(std::string('5', 32));
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
-                          account->accountId(), pk)),
-                      true)));
-      ASSERT_TRUE(
-          err(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(
-              account->accountId(), 1)))));
-    }
-
-    /**
-     * @given  command
      * @when trying to set quorum
      * @then quorum is set
      */
@@ -1495,13 +1475,33 @@ namespace iroha {
 
     /**
      * @given  command
+     * @when trying to set quorum more than amount of signatories
+     * @then quorum is not set
+     */
+    TEST_F(SetQuorum, SetQuorumTestInvalidSignatoriesAmount) {
+      addAllPerms();
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(
+              account->accountId(), 3)))));
+      shared_model::interface::types::PubkeyType pk(std::string('5', 32));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+                          account->accountId(), pk)),
+                      true)));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().setAccountQuorum(account->accountId(), 1)));
+      checkErrorCode(cmd_result, 4);
+    }
+
+    /**
+     * @given  command
      * @when trying to set quorum without perms
      * @then quorum is not set
      */
     TEST_F(SetQuorum, InvalidSetQuorumTestWithNoPerms) {
-      ASSERT_TRUE(
-          err(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(
-              account->accountId(), 3)))));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().setAccountQuorum(account->accountId(), 3)));
+      checkErrorCode(cmd_result, 5);
     }
 
     class SubtractAccountAssetTest : public CommandExecutorTest {
@@ -1578,8 +1578,57 @@ namespace iroha {
 
     /**
      * @given  command
-     * @when trying to subtract account asset
-     * @then account asset is successfully subtracted
+     * @when trying to subtract account asset with non-existing asset
+     * @then account asset fails to be subtracted
+     */
+    TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestInvalidAsset) {
+      addAllPerms();
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder()
+                                   .subtractAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())));
+      checkErrorCode(cmd_result, 3);
+    }
+
+    /**
+     * @given  command
+     * @when trying to add account asset with wrong precision
+     * @then account asset fails to added
+     */
+    TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestInvalidPrecision) {
+      addAllPerms();
+      addAsset();
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder()
+                                   .subtractAssetQuantity(asset_id, "1.0000")
+                                   .creatorAccountId(account->accountId())));
+      checkErrorCode(cmd_result, 3);
+    }
+
+    /**
+     * @given  command
+     * @when trying to subtract more account asset than account has
+     * @then account asset fails to be subtracted
+     */
+    TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestNotEnoughAsset) {
+      addAllPerms();
+      addAsset();
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder()
+                                       .addAssetQuantity(asset_id, "1.0")
+                                       .creatorAccountId(account->accountId())),
+                      true)));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder()
+                                   .subtractAssetQuantity(asset_id, "2.0")
+                                   .creatorAccountId(account->accountId())));
+      checkErrorCode(cmd_result, 4);
+    }
+
+    /**
+     * @given  command
+     * @when trying to subtract account asset without permissions
+     * @then corresponding error code is returned
      */
     TEST_F(SubtractAccountAssetTest,
            InvalidSubtractAccountAssetTestWhenNoPerms) {
@@ -1600,66 +1649,6 @@ namespace iroha {
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
-    }
-
-    /**
-     * @given  command
-     * @when trying to subtract account asset with non-existing asset
-     * @then account asset fails to be subtracted
-     */
-    TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestInvalidAsset) {
-      addAllPerms();
-      ASSERT_TRUE(err(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .subtractAssetQuantity(asset_id, "1.0")
-                                   .creatorAccountId(account->accountId())))));
-    }
-
-    /**
-     * @given  command
-     * @when trying to add account subtract with non-existing account
-     * @then account asset fails to subtracted
-     */
-    TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestInvalidAccount) {
-      addAllPerms();
-      addAsset();
-      ASSERT_TRUE(
-          err(execute(buildCommand(TestTransactionBuilder()
-                                       .subtractAssetQuantity(asset_id, "1.0")
-                                       .creatorAccountId("some@domain")))));
-    }
-
-    /**
-     * @given  command
-     * @when trying to add account asset with wrong precision
-     * @then account asset fails to added
-     */
-    TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestInvalidPrecision) {
-      addAllPerms();
-      addAsset();
-      ASSERT_TRUE(err(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .subtractAssetQuantity(asset_id, "1.0000")
-                                   .creatorAccountId(account->accountId())))));
-    }
-
-    /**
-     * @given  command
-     * @when trying to add account asset that overflows
-     * @then account asset fails to added
-     */
-    TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestUint256Overflow) {
-      addAllPerms();
-      addAsset();
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, "1.0")
-                                       .creatorAccountId(account->accountId())),
-                      true)));
-      ASSERT_TRUE(err(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .subtractAssetQuantity(asset_id, "2.0")
-                                   .creatorAccountId(account->accountId())))));
     }
 
     class TransferAccountAssetTest : public CommandExecutorTest {
@@ -1799,24 +1788,8 @@ namespace iroha {
 
     /**
      * @given  command
-     * @when trying to transfer account asset with non-existing asset
+     * @when trying to transfer asset back and forth with non-existing account
      * @then account asset fails to be transfered
-     */
-    TEST_F(TransferAccountAssetTest, TransferAccountAssetTestInvalidAsset) {
-      addAllPerms();
-      addAllPerms(account2->accountId(), "all2");
-      ASSERT_TRUE(err(execute(buildCommand(
-          TestTransactionBuilder().transferAsset(account->accountId(),
-                                                 account2->accountId(),
-                                                 asset_id,
-                                                 "desc",
-                                                 "1.0")))));
-    }
-
-    /**
-     * @given  command
-     * @when trying to transfer account asset with non-existing account
-     * @then account asset fails to transfered
      */
     TEST_F(TransferAccountAssetTest, TransferAccountAssetTestInvalidAccount) {
       addAllPerms();
@@ -1827,20 +1800,54 @@ namespace iroha {
                                        .addAssetQuantity(asset_id, "1.0")
                                        .creatorAccountId(account->accountId())),
                       true)));
-      ASSERT_TRUE(
-          err(execute(buildCommand(TestTransactionBuilder().transferAsset(
-              account->accountId(), "some@domain", asset_id, "desc", "1.0")))));
-      ASSERT_TRUE(err(execute(buildCommand(
-          TestTransactionBuilder().transferAsset("some@domain",
-                                                 account2->accountId(),
-                                                 asset_id,
-                                                 "desc",
-                                                 "1.0")))));
+      auto cmd_result = execute(
+          buildCommand(TestTransactionBuilder().transferAsset(
+              "some@domain", account2->accountId(), asset_id, "desc", "1.0")),
+          true);
+      checkErrorCode(cmd_result, 2);
+      cmd_result = execute(
+          buildCommand(TestTransactionBuilder().transferAsset(
+              account->accountId(), "some@domain", asset_id, "desc", "1.0")),
+          true);
+      checkErrorCode(cmd_result, 3);
     }
 
     /**
      * @given  command
-     * @when trying to transfer account asset that overflows
+     * @when trying to transfer account asset with non-existing asset
+     * @then account asset fails to be transfered
+     */
+    TEST_F(TransferAccountAssetTest, TransferAccountAssetTestInvalidAsset) {
+      addAllPerms();
+      addAllPerms(account2->accountId(), "all2");
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().transferAsset(account->accountId(),
+                                                 account2->accountId(),
+                                                 asset_id,
+                                                 "desc",
+                                                 "1.0")));
+      checkErrorCode(cmd_result, 4);
+    }
+
+    /**
+     * @given  command
+     * @when trying to transfer account asset with no permissions
+     * @then account asset fails to be transfered
+     */
+    TEST_F(TransferAccountAssetTest,
+           TransferAccountAssetTestInvalidNoPermission) {
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().transferAsset(account->accountId(),
+                                                 account2->accountId(),
+                                                 asset_id,
+                                                 "desc",
+                                                 "1.0")));
+      checkErrorCode(cmd_result, 5);
+    }
+
+    /**
+     * @given  command
+     * @when trying to transfer account asset, but has insufficient amount of it
      * @then account asset fails to transfered
      */
     TEST_F(TransferAccountAssetTest, TransferAccountAssetOwerdraftTest) {
@@ -1852,12 +1859,43 @@ namespace iroha {
                                        .addAssetQuantity(asset_id, "1.0")
                                        .creatorAccountId(account->accountId())),
                       true)));
-      ASSERT_TRUE(err(execute(buildCommand(
+      auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().transferAsset(account->accountId(),
                                                  account2->accountId(),
                                                  asset_id,
                                                  "desc",
-                                                 "2.0")))));
+                                                 "2.0")));
+      checkErrorCode(cmd_result, 8);
+    }
+
+    TEST_F(TransferAccountAssetTest,
+           TransferAccountAssetInvalidOverflowDestination) {
+      addAllPerms();
+      addAllPerms(account2->accountId(), "all2");
+      addAsset();
+      std::string uint256_halfmax =
+          "57896044618658097711785492504343953926634992332820282019728792003956"
+          "5648"
+          "19966.0";
+      ASSERT_TRUE(val(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, uint256_halfmax)
+                                   .creatorAccountId(account->accountId())),
+                  true)));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().addAssetQuantity(
+                          asset_id, uint256_halfmax)),
+                      false,
+                      account2->accountId())));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().transferAsset(
+                      account->accountId(),
+                      account2->accountId(),
+                      asset_id,
+                      "desc",
+                      uint256_halfmax)),
+                  true);
+      checkErrorCode(cmd_result, 11);
     }
   }  // namespace ametsuchi
 }  // namespace iroha
