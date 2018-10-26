@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_OG_CACHE_HPP
-#define IROHA_OG_CACHE_HPP
+#ifndef IROHA_ON_DEMAND_ORDERING_CACHE_HPP
+#define IROHA_ON_DEMAND_ORDERING_CACHE_HPP
 
 #include <unordered_set>
 
@@ -17,7 +17,7 @@ namespace iroha {
       /**
        * Cache for transactions sent to ordering gate
        */
-      class OgCache {
+      class OrderingGateCache {
        private:
         /**
          * Hasher for the shared pointer on the batch. Uses batch's reduced hash
@@ -83,7 +83,7 @@ namespace iroha {
          */
         virtual const BatchesSetType &tail() const = 0;
 
-        virtual ~OgCache() = default;
+        virtual ~OrderingGateCache() = default;
       };
 
     }  // namespace cache
@@ -91,4 +91,4 @@ namespace iroha {
   }  // namespace ordering
 }  // namespace iroha
 
-#endif  // IROHA_OG_CACHE_HPP
+#endif  // IROHA_ON_DEMAND_ORDERING_CACHE_HPP

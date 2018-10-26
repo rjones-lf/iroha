@@ -32,7 +32,7 @@ namespace iroha {
        */
       struct BlockEvent {
         consensus::Round round;
-        cache::OgCache::BatchesSetType batches;
+        cache::OrderingGateCache::BatchesSetType batches;
       };
 
       /**
@@ -46,7 +46,7 @@ namespace iroha {
           std::shared_ptr<OnDemandOrderingService> ordering_service,
           std::shared_ptr<transport::OdOsNotification> network_client,
           rxcpp::observable<BlockRoundEventType> events,
-          std::shared_ptr<cache::OgCache> cache,
+          std::shared_ptr<cache::OrderingGateCache> cache,
           std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
           consensus::Round initial_round);
@@ -65,7 +65,7 @@ namespace iroha {
       std::shared_ptr<OnDemandOrderingService> ordering_service_;
       std::shared_ptr<transport::OdOsNotification> network_client_;
       rxcpp::composite_subscription events_subscription_;
-      std::shared_ptr<cache::OgCache> cache_;
+      std::shared_ptr<cache::OrderingGateCache> cache_;
       std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
 

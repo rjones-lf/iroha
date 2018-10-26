@@ -15,7 +15,7 @@ namespace iroha {
   namespace ordering {
     namespace cache {
 
-      class OnDemandCache : public OgCache {
+      class OnDemandCache : public OrderingGateCache {
        public:
         void addToBack(const BatchesSetType &batches) override;
 

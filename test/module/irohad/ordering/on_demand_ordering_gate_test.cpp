@@ -27,7 +27,7 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
   void SetUp() override {
     ordering_service = std::make_shared<MockOnDemandOrderingService>();
     notification = std::make_shared<MockOdOsNotification>();
-    cache = std::make_shared<cache::MockOgCache>();
+    cache = std::make_shared<cache::MockOrderingGateCache>();
     auto ufactory = std::make_unique<MockUnsafeProposalFactory>();
     factory = ufactory.get();
     ordering_gate =
@@ -45,7 +45,7 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
   MockUnsafeProposalFactory *factory;
   std::shared_ptr<OnDemandOrderingGate> ordering_gate;
 
-  std::shared_ptr<cache::MockOgCache> cache;
+  std::shared_ptr<cache::MockOrderingGateCache> cache;
 
   const consensus::Round initial_round = {2, 1};
 };
@@ -197,10 +197,12 @@ TEST_F(OnDemandOrderingGateTest, SendBatchWithBatchesFromTheCache) {
 
   EXPECT_CALL(*notification, onBatches(initial_round, collection)).Times(1);
 
-  EXPECT_CALL(*cache, addToBack(cache::OgCache::BatchesSetType{batch1, batch2}))
+  EXPECT_CALL(
+      *cache,
+      addToBack(cache::OrderingGateCache::BatchesSetType{batch1, batch2}))
       .Times(1);
   EXPECT_CALL(*cache, clearFrontAndGet())
-      .WillOnce(Return(cache::OgCache::BatchesSetType{batch2}));
+      .WillOnce(Return(cache::OrderingGateCache::BatchesSetType{batch2}));
 
   ordering_gate->propagateBatch(batch1);
 }
@@ -220,9 +222,10 @@ TEST_F(OnDemandOrderingGateTest, BatchesRemoveFromCache) {
       framework::batch::createValidBatch(3, now + 1));
 
   EXPECT_CALL(*cache, up()).Times(1);
-  EXPECT_CALL(*cache, remove(cache::OgCache::BatchesSetType{batch1, batch2}))
+  EXPECT_CALL(*cache,
+              remove(cache::OrderingGateCache::BatchesSetType{batch1, batch2}))
       .Times(1);
 
-  rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{
-      initial_round, {batch1, batch2}});
+  rounds.get_subscriber().on_next(
+      OnDemandOrderingGate::BlockEvent{initial_round, {batch1, batch2}});
 }
