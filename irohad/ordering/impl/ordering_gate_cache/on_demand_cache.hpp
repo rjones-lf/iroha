@@ -10,6 +10,7 @@
 
 #include <boost/circular_buffer.hpp>
 #include <queue>
+#include <shared_mutex>
 
 namespace iroha {
   namespace ordering {
@@ -30,6 +31,7 @@ namespace iroha {
         virtual const BatchesSetType &tail() const override;
 
        private:
+        mutable std::shared_timed_mutex mutex_;
         using BatchesQueueType =
             std::queue<BatchesSetType, boost::circular_buffer<BatchesSetType>>;
         BatchesQueueType queue_{

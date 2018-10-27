@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "ordering/impl/og_cache/on_demand_cache.hpp"
+#include "ordering/impl/ordering_gate_cache/on_demand_cache.hpp"
 
 #include <gtest/gtest.h>
 

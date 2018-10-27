@@ -8,7 +8,14 @@
 
 #include <unordered_set>
 
-#include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "cryptography/hash.hpp"
+
+namespace shared_model {
+  namespace interface {
+
+    class TransactionBatch;
+  }
+}  // namespace shared_model
 
 namespace iroha {
   namespace ordering {

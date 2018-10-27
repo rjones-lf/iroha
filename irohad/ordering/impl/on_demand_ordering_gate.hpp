@@ -46,7 +46,7 @@ namespace iroha {
           std::shared_ptr<OnDemandOrderingService> ordering_service,
           std::shared_ptr<transport::OdOsNotification> network_client,
           rxcpp::observable<BlockRoundEventType> events,
-          std::shared_ptr<cache::OrderingGateCache> cache,
+          std::unique_ptr<cache::OrderingGateCache> cache,
           std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
           consensus::Round initial_round);
