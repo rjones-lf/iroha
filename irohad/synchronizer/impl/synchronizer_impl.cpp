@@ -34,10 +34,10 @@ namespace iroha {
       visit_in_place(
           object,
           [this](const consensus::PairValid &msg) {
-            this->processNext(msg.block);
+            this->processNext(msg.block, msg.round);
           },
           [this](const consensus::VoteOther &msg) {
-            this->processDifferent(msg.block);
+            this->processDifferent(msg.block, msg.round);
           },
           [this](const consensus::ProposalReject &msg) {
             notifier_.get_subscriber().on_next(SynchronizationEvent{
@@ -64,6 +64,7 @@ namespace iroha {
 
     SynchronizationEvent SynchronizerImpl::downloadMissingBlocks(
         std::shared_ptr<shared_model::interface::Block> commit_message,
+        const consensus::Round &round,
         std::unique_ptr<ametsuchi::MutableStorage> storage) {
       auto hash = commit_message->hash();
 
@@ -89,19 +90,18 @@ namespace iroha {
               and validator_->validateChain(chain, *storage)) {
             mutable_factory_->commit(std::move(storage));
 
-            return {chain, SynchronizationOutcomeType::kCommit, {}};
+            return {chain, SynchronizationOutcomeType::kCommit, round};
           }
         }
       }
     }
 
-    boost::optional<std::unique_ptr<ametsuchi::MutableStorage>> getStorage(
-        logger::Logger &log,
-        std::shared_ptr<ametsuchi::MutableFactory> mutable_factory) {
-      auto mutable_storage_var = mutable_factory->createMutableStorage();
+    boost::optional<std::unique_ptr<ametsuchi::MutableStorage>>
+    SynchronizerImpl::getStorage() {
+      auto mutable_storage_var = mutable_factory_->createMutableStorage();
       if (auto e =
               boost::get<expected::Error<std::string>>(&mutable_storage_var)) {
-        log->error("could not create mutable storage: {}", e->error);
+        log_->error("could not create mutable storage: {}", e->error);
         return {};
       }
       return {std::move(
@@ -112,9 +112,10 @@ namespace iroha {
     }
 
     void SynchronizerImpl::processNext(
-        std::shared_ptr<shared_model::interface::Block> commit_message) {
+        std::shared_ptr<shared_model::interface::Block> commit_message,
+        const consensus::Round &round) {
       log_->info("at handleNext");
-      auto opt_storage = getStorage(log_, mutable_factory_);
+      auto opt_storage = getStorage();
       if (opt_storage == boost::none) {
         return;
       }
@@ -125,20 +126,21 @@ namespace iroha {
       notifier_.get_subscriber().on_next(
           SynchronizationEvent{rxcpp::observable<>::just(commit_message),
                                SynchronizationOutcomeType::kCommit,
-                               {}});
+                               round});
     }
 
     void SynchronizerImpl::processDifferent(
-        std::shared_ptr<shared_model::interface::Block> commit_message) {
+        std::shared_ptr<shared_model::interface::Block> commit_message,
+        const consensus::Round &round) {
       log_->info("at handleDifferent");
-      auto opt_storage = getStorage(log_, mutable_factory_);
+      auto opt_storage = getStorage();
       if (opt_storage == boost::none) {
         return;
       }
       std::unique_ptr<ametsuchi::MutableStorage> storage =
           std::move(opt_storage.value());
       SynchronizationEvent result =
-          downloadMissingBlocks(commit_message, std::move(storage));
+          downloadMissingBlocks(commit_message, round, std::move(storage));
       notifier_.get_subscriber().on_next(result);
     }
 

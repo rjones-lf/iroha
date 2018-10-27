@@ -36,12 +36,17 @@ namespace iroha {
        */
       SynchronizationEvent downloadMissingBlocks(
           std::shared_ptr<shared_model::interface::Block> commit_message,
+          const consensus::Round &round,
           std::unique_ptr<ametsuchi::MutableStorage> storage);
 
       void processNext(
-          std::shared_ptr<shared_model::interface::Block> commit_message);
+          std::shared_ptr<shared_model::interface::Block> commit_message,
+          const consensus::Round &round);
       void processDifferent(
-          std::shared_ptr<shared_model::interface::Block> commit_message);
+          std::shared_ptr<shared_model::interface::Block> commit_message,
+          const consensus::Round &round);
+
+      boost::optional<std::unique_ptr<ametsuchi::MutableStorage>> getStorage();
 
       std::shared_ptr<validation::ChainValidator> validator_;
       std::shared_ptr<ametsuchi::MutableFactory> mutable_factory_;

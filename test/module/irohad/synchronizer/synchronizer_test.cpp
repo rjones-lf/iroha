@@ -67,7 +67,7 @@ class SynchronizerTest : public ::testing::Test {
   std::shared_ptr<shared_model::interface::Block> makeCommit(
       size_t time = iroha::time::now()) const {
     auto block = TestUnsignedBlockBuilder()
-                     .height(5)
+                     .height(kHeight)
                      .createdTime(time)
                      .build()
                      .signAndAddSignature(
@@ -76,6 +76,8 @@ class SynchronizerTest : public ::testing::Test {
                      .finish();
     return std::make_shared<shared_model::proto::Block>(std::move(block));
   }
+
+  const size_t kHeight = 5;
 
   std::shared_ptr<MockChainValidator> chain_validator;
   std::shared_ptr<MockMutableFactory> mutable_factory;
@@ -88,8 +90,6 @@ class SynchronizerTest : public ::testing::Test {
 
   std::shared_ptr<SynchronizerImpl> synchronizer;
 };
-
-TEST_F(SynchronizerTest, ValidWhenInitialized) {}
 
 /**
  * @given A commit from consensus and initialized components
@@ -117,7 +117,8 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
     ASSERT_TRUE(block_wrapper.validate());
   });
 
-  gate_outcome.get_subscriber().on_next(consensus::PairValid{commit_message});
+  gate_outcome.get_subscriber().on_next(
+      consensus::PairValid{commit_message, consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -140,7 +141,8 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 0);
   wrapper.subscribe();
 
-  gate_outcome.get_subscriber().on_next(consensus::PairValid{commit_message});
+  gate_outcome.get_subscriber().on_next(
+      consensus::PairValid{commit_message, consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -173,7 +175,8 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
     ASSERT_TRUE(block_wrapper.validate());
   });
 
-  gate_outcome.get_subscriber().on_next(consensus::VoteOther{commit_message});
+  gate_outcome.get_subscriber().on_next(
+      consensus::VoteOther{commit_message, consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -198,7 +201,8 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
   wrapper.subscribe();
 
-  gate_outcome.get_subscriber().on_next(consensus::VoteOther{commit_message});
+  gate_outcome.get_subscriber().on_next(
+      consensus::VoteOther{commit_message, consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -236,17 +240,18 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
     ASSERT_TRUE(block_wrapper.validate());
   });
 
-  gate_outcome.get_subscriber().on_next(consensus::VoteOther{commit_message});
+  gate_outcome.get_subscriber().on_next(
+      consensus::VoteOther{commit_message, consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }
 
 /**
  * @given initialized components
- * @when gate have got reject on block
+ * @when gate have got reject on proposal
  * @then synchronizer output is also reject
  */
-TEST_F(SynchronizerTest, RejectOutcome) {
+TEST_F(SynchronizerTest, ProposalRejectOutcome) {
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
   wrapper.subscribe([](auto commit_event) {
@@ -258,7 +263,29 @@ TEST_F(SynchronizerTest, RejectOutcome) {
   });
 
   gate_outcome.get_subscriber().on_next(
-      consensus::BlockReject{consensus::Round{}});
+      consensus::ProposalReject{consensus::Round{kHeight, 1}});
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+/**
+ * @given initialized components
+ * @when gate have got reject on block
+ * @then synchronizer output is also reject
+ */
+TEST_F(SynchronizerTest, BlockRejectOutcome) {
+  auto wrapper =
+      make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
+  wrapper.subscribe([](auto commit_event) {
+    auto block_wrapper =
+        make_test_subscriber<CallExact>(commit_event.synced_blocks, 0);
+    block_wrapper.subscribe();
+    ASSERT_TRUE(block_wrapper.validate());
+    ASSERT_EQ(commit_event.sync_outcome, SynchronizationOutcomeType::kReject);
+  });
+
+  gate_outcome.get_subscriber().on_next(
+      consensus::BlockReject{consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -280,7 +307,7 @@ TEST_F(SynchronizerTest, NoneOutcome) {
   });
 
   gate_outcome.get_subscriber().on_next(
-      consensus::AgreementOnNone{consensus::Round{}});
+      consensus::AgreementOnNone{consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }

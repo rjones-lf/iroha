@@ -115,11 +115,12 @@ namespace iroha {
           log_->info("consensus: commit top block: height {}, hash {}",
                      block->height(),
                      block->hash().hex());
-          return rxcpp::observable<>::just<GateObject>(PairValid{block});
+          return rxcpp::observable<>::just<GateObject>(
+              PairValid{block, current_hash_.vote_round});
         }
         log_->info("Voted for another block, waiting for sync");
         return rxcpp::observable<>::just<GateObject>(
-            VoteOther{current_block_.value()});
+            VoteOther{current_block_.value(), current_hash_.vote_round});
       }
 
       rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::handleReject(

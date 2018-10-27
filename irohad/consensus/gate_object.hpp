@@ -22,11 +22,13 @@ namespace iroha {
     /// Current pair is valid
     struct PairValid {
       std::shared_ptr<shared_model::interface::Block> block;
+      consensus::Round round;
     };
 
     /// Network votes for another pair and round
     struct VoteOther {
       std::shared_ptr<shared_model::interface::Block> block;
+      consensus::Round round;
     };
 
     /// Reject on proposal
