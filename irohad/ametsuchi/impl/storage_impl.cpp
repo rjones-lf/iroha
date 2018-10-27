@@ -143,7 +143,6 @@ namespace iroha {
       return boost::make_optional<std::shared_ptr<QueryExecutor>>(
           std::make_shared<PostgresQueryExecutor>(
               std::make_unique<soci::session>(*connection_),
-              factory_,
               *block_store_,
               pending_txs_storage,
               converter_,

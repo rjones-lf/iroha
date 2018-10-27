@@ -18,12 +18,26 @@ namespace shared_model {
               assets,
           const crypto::Hash &query_hash) const override;
 
+      std::unique_ptr<interface::QueryResponse> createAccountAssetResponse(
+          const std::vector<interface::types::AccountIdType> &account_ids,
+          const std::vector<interface::types::AssetIdType> &asset_ids,
+          const std::vector<shared_model::interface::Amount> &balances,
+          const crypto::Hash &query_hash) const override;
+
       std::unique_ptr<interface::QueryResponse> createAccountDetailResponse(
           interface::types::DetailType account_detail,
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createAccountResponse(
           std::unique_ptr<interface::Account> account,
+          std::vector<std::string> roles,
+          const crypto::Hash &query_hash) const override;
+
+      std::unique_ptr<interface::QueryResponse> createAccountResponse(
+          const interface::types::AccountIdType &account_id,
+          const interface::types::DomainIdType &domain_id,
+          interface::types::QuorumType quorum,
+          const interface::types::JsonType &jsonData,
           std::vector<std::string> roles,
           const crypto::Hash &query_hash) const override;
 
@@ -43,6 +57,12 @@ namespace shared_model {
 
       std::unique_ptr<interface::QueryResponse> createAssetResponse(
           std::unique_ptr<shared_model::interface::Asset> asset,
+          const crypto::Hash &query_hash) const override;
+
+      std::unique_ptr<interface::QueryResponse> createAssetResponse(
+          const interface::types::AssetIdType &asset_id,
+          const interface::types::DomainIdType &domain_id,
+          const interface::types::PrecisionType precision,
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createRolesResponse(

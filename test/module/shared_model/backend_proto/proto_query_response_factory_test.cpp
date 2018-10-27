@@ -68,8 +68,13 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
   const std::string kAccountId = "doge@meme";
   const std::string kAssetId = "dogecoin#iroha";
 
+  std::vector<std::unique_ptr<shared_model::interface::QueryResponse>>
+      query_responses;
   std::vector<std::unique_ptr<shared_model::interface::AccountAsset>> assets,
       assets_test_copy;
+  std::vector<std::string> account_ids;
+  std::vector<std::string> asset_ids;
+  std::vector<shared_model::interface::Amount> balances;
   for (auto i = 1; i < kAccountAssetsNumber; ++i) {
     ASSERT_NO_THROW({
       auto asset = unwrapResult(objects_factory->createAccountAsset(
@@ -83,23 +88,31 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
       assets.push_back(std::move(asset));
       assets_test_copy.push_back(std::move(asset_copy));
     });
+    account_ids.push_back(kAccountId);
+    asset_ids.push_back(kAssetId);
+    balances.push_back(shared_model::interface::Amount(std::to_string(i)));
   }
-  auto query_response = response_factory->createAccountAssetResponse(
-      std::move(assets), kQueryHash);
 
-  ASSERT_TRUE(query_response);
-  ASSERT_EQ(query_response->queryHash(), kQueryHash);
-  ASSERT_NO_THROW({
-    const auto &response =
-        boost::get<const shared_model::interface::AccountAssetResponse &>(
-            query_response->get());
-    ASSERT_EQ(response.accountAssets().front().accountId(), kAccountId);
-    ASSERT_EQ(response.accountAssets().front().assetId(), kAssetId);
-    for (auto i = 1; i < kAccountAssetsNumber; i++) {
-      ASSERT_EQ(response.accountAssets()[i - 1].balance(),
-                assets_test_copy[i - 1]->balance());
-    }
-  });
+  query_responses.push_back(response_factory->createAccountAssetResponse(
+      std::move(assets), kQueryHash));
+  query_responses.push_back(response_factory->createAccountAssetResponse(
+      account_ids, asset_ids, balances, kQueryHash));
+
+  for (auto &query_response : query_responses) {
+    ASSERT_TRUE(query_response);
+    ASSERT_EQ(query_response->queryHash(), kQueryHash);
+    ASSERT_NO_THROW({
+      const auto &response =
+          boost::get<const shared_model::interface::AccountAssetResponse &>(
+              query_response->get());
+      ASSERT_EQ(response.accountAssets().front().accountId(), kAccountId);
+      ASSERT_EQ(response.accountAssets().front().assetId(), kAssetId);
+      for (auto i = 1; i < kAccountAssetsNumber; i++) {
+        ASSERT_EQ(response.accountAssets()[i - 1].balance(),
+                  assets_test_copy[i - 1]->balance());
+      }
+    });
+  }
 }
 
 /**
@@ -141,27 +154,33 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
   const std::vector<RoleIdType> kRoles{"admin", "user"};
 
   std::unique_ptr<shared_model::interface::Account> account;
-  std::unique_ptr<shared_model::interface::QueryResponse> query_response;
+  std::vector<std::unique_ptr<shared_model::interface::QueryResponse>>
+      query_responses;
   ASSERT_NO_THROW({
     account = unwrapResult(
         objects_factory->createAccount(kAccountId, kDomainId, kQuorum, kJson));
-    query_response = response_factory->createAccountResponse(
-        std::move(account), kRoles, kQueryHash);
+    query_responses.push_back(response_factory->createAccountResponse(
+        std::move(account), kRoles, kQueryHash));
   });
 
-  ASSERT_TRUE(query_response);
-  ASSERT_EQ(query_response->queryHash(), kQueryHash);
-  ASSERT_NO_THROW({
-    const auto &response =
-        boost::get<const shared_model::interface::AccountResponse &>(
-            query_response->get());
+  query_responses.push_back(response_factory->createAccountResponse(
+      kAccountId, kDomainId, kQuorum, kJson, kRoles, kQueryHash));
 
-    ASSERT_EQ(response.account().accountId(), kAccountId);
-    ASSERT_EQ(response.account().domainId(), kDomainId);
-    ASSERT_EQ(response.account().quorum(), kQuorum);
-    ASSERT_EQ(response.account().jsonData(), kJson);
-    ASSERT_EQ(response.roles(), kRoles);
-  });
+  for (auto &query_response : query_responses) {
+    ASSERT_TRUE(query_response);
+    ASSERT_EQ(query_response->queryHash(), kQueryHash);
+    ASSERT_NO_THROW({
+      const auto &response =
+          boost::get<const shared_model::interface::AccountResponse &>(
+              query_response->get());
+
+      ASSERT_EQ(response.account().accountId(), kAccountId);
+      ASSERT_EQ(response.account().domainId(), kDomainId);
+      ASSERT_EQ(response.account().quorum(), 1);
+      ASSERT_EQ(response.account().jsonData(), kJson);
+      ASSERT_EQ(response.roles(), kRoles);
+    });
+  }
 }
 
 /**
@@ -288,25 +307,30 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
   const PrecisionType kPrecision = 2;
 
   std::unique_ptr<shared_model::interface::Asset> asset;
-  std::unique_ptr<shared_model::interface::QueryResponse> query_response;
+  std::vector<std::unique_ptr<shared_model::interface::QueryResponse>>
+      query_responses;
   ASSERT_NO_THROW({
     asset = unwrapResult(
         objects_factory->createAsset(kAssetId, kDomainId, kPrecision));
-    query_response =
-        response_factory->createAssetResponse(std::move(asset), kQueryHash);
+    query_responses.push_back(
+        response_factory->createAssetResponse(std::move(asset), kQueryHash));
   });
+  query_responses.push_back(response_factory->createAssetResponse(
+      kAssetId, kDomainId, kPrecision, kQueryHash));
 
-  ASSERT_TRUE(query_response);
-  ASSERT_EQ(query_response->queryHash(), kQueryHash);
-  ASSERT_NO_THROW({
-    const auto &response =
-        boost::get<const shared_model::interface::AssetResponse &>(
-            query_response->get());
+  for (auto &query_response : query_responses) {
+    ASSERT_TRUE(query_response);
+    ASSERT_EQ(query_response->queryHash(), kQueryHash);
+    ASSERT_NO_THROW({
+      const auto &response =
+          boost::get<const shared_model::interface::AssetResponse &>(
+              query_response->get());
 
-    ASSERT_EQ(response.asset().assetId(), kAssetId);
-    ASSERT_EQ(response.asset().domainId(), kDomainId);
-    ASSERT_EQ(response.asset().precision(), kPrecision);
-  });
+      ASSERT_EQ(response.asset().assetId(), kAssetId);
+      ASSERT_EQ(response.asset().domainId(), kDomainId);
+      ASSERT_EQ(response.asset().precision(), kPrecision);
+    });
+  }
 }
 
 /**
