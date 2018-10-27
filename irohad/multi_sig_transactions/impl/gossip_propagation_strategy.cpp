@@ -21,10 +21,12 @@ namespace iroha {
 
   GossipPropagationStrategy::GossipPropagationStrategy(
       PeerProviderFactory peer_factory,
+      rxcpp::observe_on_one_worker emit_worker,
       std::chrono::milliseconds period,
       uint32_t amount)
       : peer_factory(peer_factory),
         non_visited({}),
+        emit_worker(emit_worker),
         emitent(rxcpp::observable<>::interval(steady_clock::now(), period)
                     .map([this, amount](int) {
                       PropagationData vec;
@@ -38,10 +40,11 @@ namespace iroha {
                             };
                           });
                       return vec;
-                    })) {}
+                    })
+                    .subscribe_on(emit_worker)) {}
 
   rxcpp::observable<PropagationData> GossipPropagationStrategy::emitter() {
-    return emitent.subscribe_on(rxcpp::observe_on_new_thread());
+    return emitent;
   }
 
   GossipPropagationStrategy::~GossipPropagationStrategy() {

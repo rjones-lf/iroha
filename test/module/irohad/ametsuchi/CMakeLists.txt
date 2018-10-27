@@ -42,13 +42,6 @@ target_link_libraries(kv_storage_test
     ametsuchi_fixture
     )
 
-addtest(mutable_storage_test mutable_storage_test.cpp)
-target_link_libraries(mutable_storage_test
-    ametsuchi
-    libs_common
-    ametsuchi_fixture
-    )
-
 addtest(storage_init_test storage_init_test.cpp)
 target_link_libraries(storage_init_test
     ametsuchi

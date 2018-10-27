@@ -3,17 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "common/default_constructible_unary_fn.hpp"  // non-copyable value workaround
+
 #include "torii/impl/command_service_transport_grpc.hpp"
 
 #include <iterator>
 
-#include "backend/protobuf/transaction.hpp"
+#include <boost/format.hpp>
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
-#include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
-#include "builders/protobuf/transaction_sequence_builder.hpp"
 #include "common/timeout.hpp"
-#include "cryptography/default_hash_provider.hpp"
-#include "validators/default_validator.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/transaction.hpp"
 
 namespace torii {
 
@@ -22,12 +24,20 @@ namespace torii {
       std::shared_ptr<iroha::torii::StatusBus> status_bus,
       std::chrono::milliseconds initial_timeout,
       std::chrono::milliseconds nonfinal_timeout,
-      std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory)
+      std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory,
+      std::shared_ptr<TransportFactoryType> transaction_factory,
+      std::shared_ptr<shared_model::interface::TransactionBatchParser>
+          batch_parser,
+      std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+          transaction_batch_factory)
       : command_service_(std::move(command_service)),
         status_bus_(std::move(status_bus)),
         initial_timeout_(initial_timeout),
         nonfinal_timeout_(nonfinal_timeout),
         status_factory_(std::move(status_factory)),
+        transaction_factory_(std::move(transaction_factory)),
+        batch_parser_(std::move(batch_parser)),
+        batch_factory_(std::move(transaction_batch_factory)),
         log_(logger::log("CommandServiceTransportGrpc")) {}
 
   grpc::Status CommandServiceTransportGrpc::Torii(
@@ -72,46 +82,68 @@ namespace torii {
     }
   }  // namespace
 
+  shared_model::interface::types::SharedTxsCollectionType
+  CommandServiceTransportGrpc::deserializeTransactions(
+      const iroha::protocol::TxList *request) {
+    return boost::copy_range<
+        shared_model::interface::types::SharedTxsCollectionType>(
+        request->transactions()
+        | boost::adaptors::transformed(
+              [&](const auto &tx) { return transaction_factory_->build(tx); })
+        | boost::adaptors::filtered([&](const auto &result) {
+            return result.match(
+                [](const iroha::expected::Value<
+                    std::unique_ptr<shared_model::interface::Transaction>> &) {
+                  return true;
+                },
+                [&](const iroha::expected::Error<TransportFactoryType::Error>
+                        &error) {
+                  status_bus_->publish(status_factory_->makeStatelessFail(
+                      error.error.hash, error.error.error));
+                  return false;
+                });
+          })
+        | boost::adaptors::transformed([&](auto result) {
+            return std::move(
+                       boost::get<iroha::expected::ValueOf<decltype(result)>>(
+                           result))
+                .value;
+          }));
+  }
+
   grpc::Status CommandServiceTransportGrpc::ListTorii(
       grpc::ServerContext *context,
       const iroha::protocol::TxList *request,
       google::protobuf::Empty *response) {
-    auto tx_list_builder = shared_model::proto::TransportBuilder<
-        shared_model::interface::TransactionSequence,
-        shared_model::validation::DefaultUnsignedTransactionsValidator>();
+    auto transactions = deserializeTransactions(request);
 
-    tx_list_builder.build(*request).match(
-        [this](
-            iroha::expected::Value<shared_model::interface::TransactionSequence>
-                &tx_sequence) {
-          this->command_service_->handleTransactionList(tx_sequence.value);
-        },
-        [this, request](auto &error) {
-          auto &txs = request->transactions();
-          if (txs.empty()) {
-            log_->warn("Received no transactions. Skipping");
-            return;
-          }
-          using HashType = shared_model::crypto::Hash;
+    auto batches = batch_parser_->parseBatches(transactions);
 
-          std::vector<HashType> hashes;
-          std::transform(
-              txs.begin(),
-              txs.end(),
-              std::back_inserter(hashes),
-              [](const auto &tx) {
-                return shared_model::crypto::DefaultHashProvider::makeHash(
-                    shared_model::proto::makeBlob(tx.payload()));
-              });
+    for (auto &batch : batches) {
+      batch_factory_->createTransactionBatch(batch).match(
+          [&](iroha::expected::Value<std::unique_ptr<
+                  shared_model::interface::TransactionBatch>> &value) {
+            this->command_service_->handleTransactionBatch(
+                std::move(value).value);
+          },
+          [&](iroha::expected::Error<std::string> &error) {
+            std::vector<shared_model::crypto::Hash> hashes;
 
-          auto error_msg = formErrorMessage(hashes, error.error);
-          // set error response for each transaction in a sequence
-          std::for_each(
-              hashes.begin(), hashes.end(), [this, &error_msg](auto &hash) {
-                status_bus_->publish(
-                    status_factory_->makeStatelessFail(hash, error_msg));
-              });
-        });
+            std::transform(batch.begin(),
+                           batch.end(),
+                           std::back_inserter(hashes),
+                           [](const auto &tx) { return tx->hash(); });
+
+            auto error_msg = formErrorMessage(hashes, error.error);
+            // set error response for each transaction in a batch candidate
+            std::for_each(
+                hashes.begin(), hashes.end(), [this, &error_msg](auto &hash) {
+                  status_bus_->publish(
+                      status_factory_->makeStatelessFail(hash, error_msg));
+                });
+          });
+    }
+
     return grpc::Status::OK;
   }
 
@@ -119,8 +151,6 @@ namespace torii {
       grpc::ServerContext *context,
       const iroha::protocol::TxStatusRequest *request,
       iroha::protocol::ToriiResponse *response) {
-    auto status = command_service_->getStatus(
-        shared_model::crypto::Hash(request->tx_hash()));
     *response =
         std::static_pointer_cast<shared_model::proto::TransactionResponse>(
             command_service_->getStatus(

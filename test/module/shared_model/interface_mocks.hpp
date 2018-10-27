@@ -98,8 +98,7 @@ struct MockUnsafeProposalFactory
                std::unique_ptr<shared_model::interface::Proposal>(
                    shared_model::interface::types::HeightType,
                    shared_model::interface::types::TimestampType,
-                   boost::any_range<shared_model::interface::Transaction,
-                                    boost::forward_traversal_tag>));
+                   TransactionsCollectionType));
 };
 
 struct MockCommonObjectsFactory

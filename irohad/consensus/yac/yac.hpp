@@ -21,7 +21,7 @@
 #include <boost/optional.hpp>
 #include <memory>
 #include <mutex>
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 
 #include "consensus/yac/cluster_order.hpp"  //  for ClusterOrdering
 #include "consensus/yac/messages.hpp"       // because messages passed by value

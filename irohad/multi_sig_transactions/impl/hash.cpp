@@ -8,6 +8,8 @@
 #include <functional>
 #include <string>
 
+#include <boost/functional/hash.hpp>
+#include "cryptography/blob.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
@@ -19,9 +21,9 @@ namespace iroha {
       return std::hash<std::string>{}(batch->reducedHash().hex());
     }
 
-    std::size_t PeerHasher::operator()(
-        const std::shared_ptr<shared_model::interface::Peer> &obj) const {
-      return std::hash<std::string>{}(obj->address() + obj->pubkey().hex());
+    std::size_t BlobHasher::operator()(
+        const shared_model::crypto::Blob &blob) const {
+      return boost::hash_value(blob.blob());
     }
 
   }  // namespace model

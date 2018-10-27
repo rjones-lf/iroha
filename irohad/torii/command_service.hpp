@@ -6,29 +6,32 @@
 #ifndef TORII_COMMAND_SERVICE_HPP
 #define TORII_COMMAND_SERVICE_HPP
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
-    class TransactionSequence;
+    class TransactionBatch;
     class TransactionResponse;
   }  // namespace interface
+
   namespace crypto {
     class Hash;
   }  // namespace crypto
 }  // namespace shared_model
+
 namespace torii {
+
   class CommandService {
    public:
     virtual ~CommandService() = default;
 
     /**
      * Actual implementation of sync Torii in CommandService
-     * @param tx_list - transactions we've received
+     * @param batch - transactions we've received
      */
-    virtual void handleTransactionList(
-        const shared_model::interface::TransactionSequence &tx_list) = 0;
+    virtual void handleTransactionBatch(
+        std::shared_ptr<shared_model::interface::TransactionBatch> batch) = 0;
 
     /**
      * Request to retrieve a status of any particular transaction
@@ -51,6 +54,7 @@ namespace torii {
         std::shared_ptr<shared_model::interface::TransactionResponse>>
     getStatusStream(const shared_model::crypto::Hash &hash) = 0;
   };
+
 }  // namespace torii
 
 #endif  // TORII_COMMAND_SERVICE_HPP

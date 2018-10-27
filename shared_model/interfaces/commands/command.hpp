@@ -6,7 +6,7 @@
 #ifndef IROHA_SHARED_MODEL_COMMAND_HPP
 #define IROHA_SHARED_MODEL_COMMAND_HPP
 
-#include <boost/variant.hpp>
+#include <boost/variant/variant_fwd.hpp>
 #include "interfaces/base/model_primitive.hpp"
 
 namespace shared_model {
@@ -58,9 +58,6 @@ namespace shared_model {
                                       SubtractAssetQuantity,
                                       TransferAsset>;
 
-      /// Types of concrete commands, in attached variant
-      using CommandListType = CommandVariantType::types;
-
       /**
        * @return reference to const variant with concrete command
        */
@@ -75,25 +72,5 @@ namespace shared_model {
 
   }  // namespace interface
 }  // namespace shared_model
-
-namespace boost {
-  extern template class variant<
-      const shared_model::interface::AddAssetQuantity &,
-      const shared_model::interface::AddPeer &,
-      const shared_model::interface::AddSignatory &,
-      const shared_model::interface::AppendRole &,
-      const shared_model::interface::CreateAccount &,
-      const shared_model::interface::CreateAsset &,
-      const shared_model::interface::CreateDomain &,
-      const shared_model::interface::CreateRole &,
-      const shared_model::interface::DetachRole &,
-      const shared_model::interface::GrantPermission &,
-      const shared_model::interface::RemoveSignatory &,
-      const shared_model::interface::RevokePermission &,
-      const shared_model::interface::SetAccountDetail &,
-      const shared_model::interface::SetQuorum &,
-      const shared_model::interface::SubtractAssetQuantity &,
-      const shared_model::interface::TransferAsset &>;
-}  // namespace boost
 
 #endif  // IROHA_SHARED_MODEL_COMMAND_HPP

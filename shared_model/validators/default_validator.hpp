@@ -50,6 +50,16 @@ namespace shared_model {
                                const interface::Transaction &,
                                FieldValidator>;
 
+    /**
+     * Same as DefaultSignedTransactionValidator, but checks signatures only if
+     * they are present
+     */
+    using DefaultOptionalSignedTransactionValidator =
+        SignableModelValidator<DefaultUnsignedTransactionValidator,
+                               const interface::Transaction &,
+                               FieldValidator,
+                               false>;
+
     // --------------------------| Query validation |---------------------------
 
     /**
@@ -91,6 +101,15 @@ namespace shared_model {
         TransactionsCollectionValidator<DefaultUnsignedTransactionValidator>;
 
     /**
+     * Transactions collection validator that checks stateless validness of
+     * transactions WITHOUT signatures and allows transaction collection to be
+     * empty
+     */
+    using DefaultUnsignedOptionalTransactionsValidator =
+        TransactionsCollectionValidator<DefaultUnsignedTransactionValidator,
+                                        true>;
+
+    /**
      * Transactions collection validator that checks signatures and stateless
      * validness of transactions
      */
@@ -108,7 +127,8 @@ namespace shared_model {
      * not check transactions' signatures as well
      */
     using DefaultUnsignedBlockValidator =
-        BlockValidator<FieldValidator, DefaultUnsignedTransactionsValidator>;
+        BlockValidator<FieldValidator,
+                       DefaultUnsignedOptionalTransactionsValidator>;
 
     /**
      * Block validator which checks blocks including signatures
@@ -117,6 +137,7 @@ namespace shared_model {
         SignableModelValidator<DefaultUnsignedBlockValidator,
                                const interface::Block &,
                                FieldValidator>;
+
   }  // namespace validation
 }  // namespace shared_model
 

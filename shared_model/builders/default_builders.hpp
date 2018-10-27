@@ -18,9 +18,7 @@
 #ifndef IROHA_DEFAULT_BUILDERS_HPP
 #define IROHA_DEFAULT_BUILDERS_HPP
 
-#include "builders/protobuf/query_responses/proto_block_query_response_builder.hpp"
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
-#include "builders/query_responses/block_query_response_builder.hpp"
 #include "builders/transaction_responses/transaction_status_builder.hpp"
 #include "validators/amount_true_validator.hpp"
 #include "validators/field_validator.hpp"
@@ -31,10 +29,6 @@ namespace shared_model {
     using DefaultTransactionStatusBuilder =
         shared_model::builder::TransactionStatusBuilder<
             shared_model::proto::TransactionStatusBuilder>;
-
-    using DefaultBlockQueryResponseBuilder =
-        shared_model::builder::BlockQueryResponseBuilder<
-            shared_model::proto::BlockQueryResponseBuilder>;
 
   }  // namespace builder
 }  // namespace shared_model

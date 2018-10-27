@@ -19,7 +19,7 @@ message ProposalRound {
   uint32 reject_round = 2;
 }
 
-message TransactionsRequest {
+message BatchesRequest {
   ProposalRound round = 1;
   repeated protocol.Transaction transactions = 2;
 }
@@ -35,6 +35,6 @@ message ProposalResponse {
 }
 
 service OnDemandOrdering {
-  rpc SendTransactions(TransactionsRequest) returns (google.protobuf.Empty);
+  rpc SendBatches(BatchesRequest) returns (google.protobuf.Empty);
   rpc RequestProposal(ProposalRequest) returns (ProposalResponse);
 }

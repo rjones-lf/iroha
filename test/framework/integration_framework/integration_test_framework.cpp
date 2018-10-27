@@ -31,6 +31,8 @@
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
 
+static size_t kToriiPort = 11501;
+
 namespace integration_framework {
 
   const std::string IntegrationTestFramework::kDefaultDomain = "test";
@@ -47,11 +49,15 @@ namespace integration_framework {
       bool mst_support,
       const std::string &block_store_path,
       milliseconds proposal_waiting,
-      milliseconds block_waiting)
+      milliseconds block_waiting,
+      milliseconds tx_response_waiting)
       : iroha_instance_(std::make_shared<IrohaInstance>(
-            mst_support, block_store_path, dbname)),
+            mst_support, block_store_path, kToriiPort, dbname)),
+        command_client_("127.0.0.1", kToriiPort),
+        query_client_("127.0.0.1", kToriiPort),
         proposal_waiting(proposal_waiting),
         block_waiting(block_waiting),
+        tx_response_waiting(tx_response_waiting),
         maximum_proposal_size_(maximum_proposal_size),
         deleter_(deleter) {}
 
@@ -60,8 +66,8 @@ namespace integration_framework {
       deleter_(*this);
     }
     // the code below should be executed anyway in order to prevent app hang
-    if (iroha_instance_ and iroha_instance_->instance_) {
-      iroha_instance_->instance_->terminate();
+    if (iroha_instance_ and iroha_instance_->getIrohaInstance()) {
+      iroha_instance_->getIrohaInstance()->terminate();
     }
   }
 
@@ -116,7 +122,7 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::recoverState(
       const Keypair &keypair) {
     initPipeline(keypair);
-    iroha_instance_->instance_->init();
+    iroha_instance_->getIrohaInstance()->init();
     subscribeQueuesAndRun();
     return *this;
   }
@@ -127,7 +133,7 @@ namespace integration_framework {
     // peer initialization
     iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
-    iroha_instance_->instance_->resetOrderingService();
+    iroha_instance_->getIrohaInstance()->resetOrderingService();
   }
 
   void IntegrationTestFramework::subscribeQueuesAndRun() {
@@ -163,6 +169,12 @@ namespace integration_framework {
           log_->info("commit");
           queue_cond.notify_all();
         });
+    iroha_instance_->getIrohaInstance()->getStatusBus()->statuses().subscribe(
+        [this](auto response) {
+          responses_queues_[response->transactionHash().hex()].push(response);
+          log_->info("response");
+          queue_cond.notify_all();
+        });
 
     // start instance
     iroha_instance_->run();
@@ -176,8 +188,7 @@ namespace integration_framework {
     iroha::protocol::TxStatusRequest request;
     request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
     iroha::protocol::ToriiResponse response;
-    iroha_instance_->getIrohaInstance()->getCommandServiceTransport()->Status(
-        nullptr, &request, &response);
+    command_client_.Status(request, response);
     validation(shared_model::proto::TransactionResponse(std::move(response)));
     return *this;
   }
@@ -186,12 +197,14 @@ namespace integration_framework {
       const shared_model::proto::Transaction &tx,
       std::function<void(const shared_model::proto::TransactionResponse &)>
           validation) {
-    log_->info("send transaction");
+    log_->info("sending transaction");
+    log_->debug(tx.toString());
 
     // Required for StatusBus synchronization
     boost::barrier bar1(2);
     auto bar2 = std::make_shared<boost::barrier>(2);
-    iroha_instance_->instance_->getStatusBus()
+    iroha_instance_->getIrohaInstance()
+        ->getStatusBus()
         ->statuses()
         .filter([&](auto s) { return s->transactionHash() == tx.hash(); })
         .take(1)
@@ -202,9 +215,8 @@ namespace integration_framework {
           }
         });
 
-    iroha_instance_->getIrohaInstance()->getCommandServiceTransport()->Torii(
-        nullptr, &tx.getTransport(), nullptr);
-    // make sure that the first (stateless) status is come
+    command_client_.Torii(tx.getTransport());
+    // make sure that the first (stateless) status has come
     bar1.wait();
     // fetch status of transaction
     getTxStatus(tx.hash(), [&validation, &bar2](auto &status) {
@@ -244,7 +256,8 @@ namespace integration_framework {
 
     // subscribe on status bus and save all stateless statuses into a vector
     std::vector<shared_model::proto::TransactionResponse> statuses;
-    iroha_instance_->instance_->getStatusBus()
+    iroha_instance_->getIrohaInstance()
+        ->getStatusBus()
         ->statuses()
         .filter([&transactions](auto s) {
           // filter statuses for transactions from sequence
@@ -283,9 +296,7 @@ namespace integration_framework {
               ->getTransport();
       *tx_list.add_transactions() = proto_tx;
     }
-    iroha_instance_->getIrohaInstance()
-        ->getCommandServiceTransport()
-        ->ListTorii(nullptr, &tx_list, nullptr);
+    command_client_.ListTorii(tx_list);
 
     std::unique_lock<std::mutex> lk(m);
     cv.wait(lk, [&] { return processed; });
@@ -309,10 +320,10 @@ namespace integration_framework {
       std::function<void(const shared_model::proto::QueryResponse &)>
           validation) {
     log_->info("send query");
+    log_->debug(qry.toString());
 
     iroha::protocol::QueryResponse response;
-    iroha_instance_->getIrohaInstance()->getQueryService()->Find(
-        qry.getTransport(), response);
+    query_client_.Find(qry.getTransport(), response);
     auto query_response =
         shared_model::proto::QueryResponse(std::move(response));
 
@@ -375,10 +386,27 @@ namespace integration_framework {
     return *this;
   }
 
+  IntegrationTestFramework &IntegrationTestFramework::checkStatus(
+      const shared_model::interface::types::HashType &tx_hash,
+      std::function<void(const shared_model::proto::TransactionResponse &)>
+          validation) {
+    // fetch first response associated with the tx from related queue
+    TxResponseType response;
+    fetchFromQueue(responses_queues_[tx_hash.hex()],
+                   response,
+                   tx_response_waiting,
+                   "missed status");
+    validation(static_cast<const shared_model::proto::TransactionResponse &>(
+        *response));
+    return *this;
+  }
+
   void IntegrationTestFramework::done() {
     log_->info("done");
-    if (iroha_instance_->instance_ and iroha_instance_->instance_->storage) {
-      iroha_instance_->instance_->storage->dropStorage();
+    if (iroha_instance_->getIrohaInstance()
+        and iroha_instance_->getIrohaInstance()->storage) {
+      iroha_instance_->getIrohaInstance()->storage->dropStorage();
+      boost::filesystem::remove_all(iroha_instance_->block_store_dir_);
     }
   }
 }  // namespace integration_framework
