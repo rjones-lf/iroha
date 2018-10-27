@@ -31,6 +31,7 @@ using ::testing::_;
 using ::testing::A;
 using ::testing::Return;
 using ::testing::ReturnArg;
+using ::testing::ReturnRef;
 
 using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
@@ -129,12 +130,16 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
                         generateKeypair())
                 .finish();
   std::vector<shared_model::proto::Transaction> txs = {tx, tx};
-  auto proposal = std::make_shared<shared_model::proto::Proposal>(
-      shared_model::proto::ProposalBuilder()
-          .height(2)
-          .createdTime(iroha::time::now())
-          .transactions(txs)
-          .build());
+
+  auto validation_result = new iroha::validation::VerifiedProposalAndErrors();
+  validation_result->verified_proposal =
+      std::make_unique<shared_model::proto::Proposal>(
+          shared_model::proto::ProposalBuilder()
+              .height(2)
+              .createdTime(iroha::time::now())
+              .transactions(txs)
+              .build());
+  const auto &proposal = validation_result->verified_proposal;
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
@@ -142,10 +147,8 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
       .WillOnce(Return(expected::makeValue(wBlock(clone(block)))));
 
   EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(block.height()));
-
-  EXPECT_CALL(*validator, validate(_, _))
-      .WillOnce(Return(
-          std::make_pair(proposal, iroha::validation::TransactionsErrors{})));
+  EXPECT_CALL(*validator, validateProxy(_, _))
+      .WillOnce(Return(validation_result));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
@@ -160,10 +163,10 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   auto proposal_wrapper =
       make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
   proposal_wrapper.subscribe([&proposal](auto verified_proposal) {
-    ASSERT_EQ(verified_proposal->first->height(), proposal->height());
-    ASSERT_EQ(verified_proposal->first->transactions(),
+    ASSERT_EQ(verified_proposal->verified_proposal->height(), proposal->height());
+    ASSERT_EQ(verified_proposal->verified_proposal->transactions(),
               proposal->transactions());
-    ASSERT_TRUE(verified_proposal->second.empty());
+    ASSERT_TRUE(verified_proposal->rejected_transactions.empty());
   });
 
   auto block_wrapper =
@@ -187,7 +190,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   EXPECT_CALL(*query, getTopBlock())
       .WillOnce(Return(expected::makeError("no block")));
 
-  EXPECT_CALL(*validator, validate(_, _)).Times(0);
+  EXPECT_CALL(*validator, validateProxy(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
@@ -224,7 +227,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   EXPECT_CALL(*query, getTopBlock())
       .WillOnce(Return(expected::makeValue(wBlock(clone(block)))));
 
-  EXPECT_CALL(*validator, validate(_, _)).Times(0);
+  EXPECT_CALL(*validator, validateProxy(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
@@ -261,35 +264,42 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
 TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
   // create a 3-height proposal, but validator returns only a 2-height verified
   // proposal
-  auto tx = shared_model::proto::TransactionBuilder()
-                .createdTime(iroha::time::now())
-                .creatorAccountId("admin@ru")
-                .addAssetQuantity("coin#coin", "1.0")
-                .quorum(1)
-                .build()
-                .signAndAddSignature(
-                    shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair())
-                .finish();
-
-  std::vector<shared_model::proto::Transaction> txs = {tx, tx, tx};
+  const int kNumTransactions = 3;
+  std::vector<shared_model::proto::Transaction> txs;
+  for (int i = 0; i < kNumTransactions; ++i) {
+    txs.emplace_back(shared_model::proto::TransactionBuilder()
+                         .createdTime(iroha::time::now() + i)
+                         .creatorAccountId("admin@ru")
+                         .addAssetQuantity("coin#coin", "1.0")
+                         .quorum(1)
+                         .build()
+                         .signAndAddSignature(
+                             shared_model::crypto::DefaultCryptoAlgorithmType::
+                                 generateKeypair())
+                         .finish());
+  }
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
       shared_model::proto::ProposalBuilder()
           .height(3)
           .createdTime(iroha::time::now())
           .transactions(txs)
           .build());
-  auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
-      shared_model::proto::ProposalBuilder()
-          .height(2)
-          .createdTime(iroha::time::now())
-          .transactions(std::vector<shared_model::proto::Transaction>{tx})
-          .build());
-  auto tx_errors = iroha::validation::TransactionsErrors{
-      std::make_pair(validation::CommandError{"SomeCommand", "SomeError", true},
-                     shared_model::crypto::Hash(std::string(32, '0'))),
-      std::make_pair(validation::CommandError{"SomeCommand", "SomeError", true},
-                     shared_model::crypto::Hash(std::string(32, '0')))};
+  auto verified_proposal_and_errors = new VerifiedProposalAndErrors();
+  verified_proposal_and_errors->verified_proposal =
+      std::make_unique<shared_model::proto::Proposal>(
+          shared_model::proto::ProposalBuilder()
+              .height(2)
+              .createdTime(iroha::time::now())
+              .transactions(
+                  std::vector<shared_model::proto::Transaction>{txs[0]})
+              .build());
+  for (int i = 0; i < kNumTransactions - 1; ++i) {
+    std::string hash_num = std::to_string(i);
+    verified_proposal_and_errors->rejected_transactions.emplace(
+        shared_model::crypto::Hash(std::string(32 - hash_num.size(), '0')
+                                   + hash_num),
+        validation::CommandError{"SomeCommand", "SomeError", true});
+  }
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
@@ -298,8 +308,8 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
 
   EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(2));
 
-  EXPECT_CALL(*validator, validate(_, _))
-      .WillOnce(Return(std::make_pair(verified_proposal, tx_errors)));
+  EXPECT_CALL(*validator, validateProxy(_, _))
+      .WillOnce(Return(verified_proposal_and_errors));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
@@ -313,14 +323,18 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
 
   auto proposal_wrapper =
       make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
-  proposal_wrapper.subscribe([&verified_proposal,
-                              &tx_errors](auto verified_proposal_) {
-    // assure that txs in verified proposal do not include failed ones
-    ASSERT_EQ(verified_proposal_->first->height(), verified_proposal->height());
-    ASSERT_EQ(verified_proposal_->first->transactions(),
-              verified_proposal->transactions());
-    ASSERT_TRUE(verified_proposal_->second.size() == tx_errors.size());
-  });
+  proposal_wrapper.subscribe(
+      [verified_proposal_and_errors](auto verified_proposal_) {
+        // assure that txs in verified proposal do not include failed ones
+        ASSERT_EQ(verified_proposal_->verified_proposal->height(),
+                  verified_proposal_and_errors->verified_proposal->height());
+        ASSERT_EQ(
+            verified_proposal_->verified_proposal->transactions(),
+            verified_proposal_and_errors->verified_proposal->transactions());
+        ASSERT_TRUE(
+            verified_proposal_->rejected_transactions.size()
+            == verified_proposal_and_errors->rejected_transactions.size());
+      });
 
   simulator->process_proposal(*proposal);
 

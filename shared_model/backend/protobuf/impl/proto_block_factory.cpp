@@ -19,7 +19,8 @@ ProtoBlockFactory::unsafeCreateBlock(
     interface::types::HeightType height,
     const interface::types::HashType &prev_hash,
     interface::types::TimestampType created_time,
-    const interface::types::TransactionsCollectionType &txs) {
+    const interface::types::TransactionsCollectionType &txs,
+    const interface::types::HashCollectionType &rejected_hashes) {
   iroha::protocol::Block block;
   auto *block_payload = block.mutable_payload();
   block_payload->set_height(height);

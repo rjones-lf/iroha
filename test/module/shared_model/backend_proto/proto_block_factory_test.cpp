@@ -40,7 +40,11 @@ TEST_F(ProtoBlockFactoryTest, UnsafeBlockCreation) {
   std::vector<shared_model::proto::Transaction> txs;
   txs.emplace_back(iroha::protocol::Transaction{});
 
-  auto block = factory->unsafeCreateBlock(height, prev_hash, created_time, txs);
+  std::vector<shared_model::crypto::Hash> rejected_txs{
+      shared_model::crypto::Hash::fromHexString("rubble_devaluation")};
+
+  auto block = factory->unsafeCreateBlock(
+      height, prev_hash, created_time, txs, rejected_txs);
 
   ASSERT_EQ(block->height(), height);
   ASSERT_EQ(block->createdTime(), created_time);
