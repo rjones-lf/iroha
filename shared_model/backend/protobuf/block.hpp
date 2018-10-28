@@ -52,6 +52,9 @@ namespace shared_model {
 
       interface::types::TransactionsNumberType txsNumber() const override;
 
+      interface::types::HashCollectionType rejected_transactions_hashes()
+          const override;
+
       const interface::types::BlobType &payload() const override;
 
       typename interface::Block::ModelType *clone() const override;

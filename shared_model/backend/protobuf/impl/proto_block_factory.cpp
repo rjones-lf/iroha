@@ -27,11 +27,22 @@ ProtoBlockFactory::unsafeCreateBlock(
   block_payload->set_prev_block_hash(crypto::toBinaryString(prev_hash));
   block_payload->set_created_time(created_time);
 
+  // set accepted transactions
   std::for_each(
       std::begin(txs), std::end(txs), [block_payload](const auto &tx) {
         auto *transaction = block_payload->add_transactions();
         (*transaction) = static_cast<const Transaction &>(tx).getTransport();
       });
+
+  // set rejected transactions
+  std::for_each(std::begin(rejected_hashes),
+                std::end(rejected_hashes),
+                [block_payload](const auto &hash) {
+                  auto *next_hash =
+                      block_payload->add_rejected_transactions_hashes();
+                  (*next_hash) = crypto::toBinaryString(hash);
+                });
+
   return std::make_unique<shared_model::proto::Block>(std::move(block));
 }
 
