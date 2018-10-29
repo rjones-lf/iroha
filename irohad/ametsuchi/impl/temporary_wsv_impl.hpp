@@ -33,7 +33,7 @@ namespace iroha {
         bool is_released_;
       };
 
-      explicit TemporaryWsvImpl(
+      TemporaryWsvImpl(
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory,

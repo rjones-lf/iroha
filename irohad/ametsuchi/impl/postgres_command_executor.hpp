@@ -15,7 +15,7 @@ namespace iroha {
 
     class PostgresCommandExecutor : public CommandExecutor {
      public:
-      explicit PostgresCommandExecutor(
+      PostgresCommandExecutor(
           soci::session &transaction,
           std::shared_ptr<shared_model::interface::PermissionToString>
               perm_converter);

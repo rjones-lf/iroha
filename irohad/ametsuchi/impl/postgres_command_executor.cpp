@@ -892,7 +892,7 @@ namespace iroha {
       std::vector<std::function<std::string()>> message_gen = {
           [&] {
             // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
-            const auto &str = perm_converter_->toString(permissions);
+            const auto str = perm_converter_->toString(permissions);
             const auto perm_debug_str =
                 std::accumulate(str.begin(), str.end(), std::string());
             return (boost::format("failed to insert role permissions, role "

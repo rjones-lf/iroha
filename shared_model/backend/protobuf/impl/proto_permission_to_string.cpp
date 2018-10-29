@@ -46,5 +46,6 @@ namespace shared_model {
       }
       return v;
     }
+
   }  // namespace proto
 }  // namespace shared_model
