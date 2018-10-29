@@ -96,6 +96,14 @@ DEFINE_validator(verbosity, validateVerbosity);
 std::promise<void> exit_requested;
 
 int main(int argc, char *argv[]) {
+  if (std::string(IROHA_COMMIT_HASH) == "") {
+    gflags::SetVersionString("Unknown");
+  } else {
+    std::stringstream version;
+    version << IROHA_COMMIT_HASH << " (branch: " << IROHA_BRANCH
+            << ", origin: " << IROHA_ORIGIN << ")";
+    gflags::SetVersionString(version.str());
+  }
   spdlog::set_level(spdlog::level::level_enum(FLAGS_verbosity));
 
   auto log = logger::log("MAIN");

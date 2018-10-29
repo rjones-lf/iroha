@@ -69,3 +69,33 @@ target_link_libraries(irohad
     )
 
 add_install_step_for_bin(irohad)
+
+set(IROHA_ORIGIN "")
+set(IROHA_BRANCH "")
+set(IROHA_COMMIT_HASH "")
+
+execute_process(
+        COMMAND git config --get remote.origin.url
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE IROHA_ORIGIN
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+execute_process(
+        COMMAND git rev-parse --abbrev-ref HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE IROHA_BRANCH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+execute_process(
+        COMMAND git log -1 --format=%h
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE IROHA_COMMIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+
+add_compile_definitions(IROHA_ORIGIN="${IROHA_ORIGIN}")
+add_compile_definitions(IROHA_COMMIT_HASH="${IROHA_COMMIT_HASH}")
+add_compile_definitions(IROHA_BRANCH="${IROHA_BRANCH}")
