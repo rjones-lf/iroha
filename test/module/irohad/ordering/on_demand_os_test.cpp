@@ -9,13 +9,25 @@
 #include <thread>
 
 #include <gtest/gtest.h>
+#include "backend/protobuf/proto_proposal_factory.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
+#include "module/shared_model/interface_mocks.hpp"
+#include "module/shared_model/validators/validators.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
 using namespace iroha::ordering::transport;
+
+using testing::_;
+using testing::ByMove;
+using testing::NiceMock;
+using testing::Return;
+
+using shared_model::interface::Proposal;
+using shared_model::validation::MockValidator;
+using MockProposalValidator = MockValidator<Proposal>;
 
 class OnDemandOsTest : public ::testing::Test {
  public:
@@ -26,8 +38,11 @@ class OnDemandOsTest : public ::testing::Test {
                          commit_round = {3, 1}, reject_round = {2, 2};
 
   void SetUp() override {
+    // TODO: nickaleks IR-1811 use mock factory
+    auto factory = std::make_unique<
+        shared_model::proto::ProtoProposalFactory<MockProposalValidator>>();
     os = std::make_shared<OnDemandOrderingServiceImpl>(
-        transaction_limit, proposal_limit, initial_round);
+        transaction_limit, std::move(factory), proposal_limit, initial_round);
   }
 
   /**
@@ -56,6 +71,14 @@ class OnDemandOsTest : public ::testing::Test {
                           .finish())}));
     }
     os->onBatches(round, std::move(collection));
+  }
+
+  std::unique_ptr<Proposal> makeMockProposal() {
+    auto proposal = std::make_unique<NiceMock<MockProposal>>();
+    // TODO: nickaleks IR-1811 clone should return initialized mock
+    ON_CALL(*proposal, clone()).WillByDefault(Return(new MockProposal()));
+
+    return proposal;
   }
 };
 
@@ -112,8 +135,10 @@ TEST_F(OnDemandOsTest, OverflowRound) {
  */
 TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
   auto large_tx_limit = 10000u;
+  auto factory = std::make_unique<
+      shared_model::proto::ProtoProposalFactory<MockProposalValidator>>();
   os = std::make_shared<OnDemandOrderingServiceImpl>(
-      large_tx_limit, proposal_limit, initial_round);
+      large_tx_limit, std::move(factory), proposal_limit, initial_round);
 
   auto call = [this](auto bounds) {
     for (auto i = bounds.first; i < bounds.second; ++i) {
@@ -178,4 +203,25 @@ TEST_F(OnDemandOsTest, EraseReject) {
     ASSERT_FALSE(os->onRequestProposal(
         {reject_round.block_round, i + 1 - proposal_limit}));
   }
+}
+
+/**
+ * @given initialized on-demand OS @and some transactions are sent to it
+ * @when proposal is requested after calling onCollaborationOutcome
+ * @then check that proposal factory is called and returns a proposal
+ */
+TEST_F(OnDemandOsTest, UseFactoryForProposal) {
+  auto factory = std::make_unique<MockUnsafeProposalFactory>();
+  auto mock_factory = factory.get();
+  os = std::make_shared<OnDemandOrderingServiceImpl>(
+      transaction_limit, std::move(factory), proposal_limit, initial_round);
+
+  EXPECT_CALL(*mock_factory, unsafeCreateProposal(_, _, _))
+      .WillOnce(Return(ByMove(makeMockProposal())));
+
+  generateTransactionsAndInsert(target_round, {1, 2});
+
+  os->onCollaborationOutcome(commit_round);
+
+  ASSERT_TRUE(os->onRequestProposal(target_round));
 }
