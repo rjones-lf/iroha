@@ -323,8 +323,7 @@ void Irohad::initMstProcessor() {
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
     // cli parameters
     mst_propagation = std::make_shared<GossipPropagationStrategy>(
-        storage,
-        *opt_mst_gossip_params_);
+        storage, rxcpp::observe_on_new_thread(), *opt_mst_gossip_params_);
   } else {
     mst_propagation = std::make_shared<iroha::PropagationStrategyStub>();
     mst_transport = std::make_shared<iroha::network::MstTransportStub>();

@@ -82,7 +82,8 @@ PropagationData subscribeAndEmit(boost::optional<PropagationData> data,
   iroha::GossipPropagationStrategyParams gossip_params;
   gossip_params.period = period;
   gossip_params.amount = amount;
-  GossipPropagationStrategy strategy(pbfactory, gossip_params);
+  GossipPropagationStrategy strategy(
+      pbfactory, rxcpp::observe_on_event_loop(), gossip_params);
   return subscribeAndEmit(strategy, take);
 }
 
@@ -193,7 +194,8 @@ TEST(GossipPropagationStrategyTest, MultipleSubsEmission) {
   iroha::GossipPropagationStrategyParams gossip_params;
   gossip_params.period = 1ms;
   gossip_params.amount = amount;
-  GossipPropagationStrategy strategy(pbfactory, gossip_params);
+  GossipPropagationStrategy strategy(
+      pbfactory, rxcpp::observe_on_new_thread(), , gossip_params);
 
   // Create separate subscriber for every thread
   // Use result[i] as storage for emitent for i-th one

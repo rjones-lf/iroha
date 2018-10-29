@@ -43,9 +43,11 @@ namespace iroha {
     /**
      * Initialize strategy with
      * @param peer_factory is a provider of peer list
+     * @param emit_worker is the coordinator for the data emitting
      * @param params configuration parameters
      */
     GossipPropagationStrategy(PeerProviderFactory peer_factory,
+                              rxcpp::observe_on_one_worker emit_worker,
                               const GossipPropagationStrategyParams &params);
 
     ~GossipPropagationStrategy();
@@ -70,6 +72,11 @@ namespace iroha {
      * Queue that contains non-emitted indexes of peers
      */
     std::vector<size_t> non_visited;
+
+    /**
+     * Worker that performs internal loop handling
+     */
+    rxcpp::observe_on_one_worker emit_worker;
 
     /*
      * Observable for the emitting propagated data
