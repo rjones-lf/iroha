@@ -95,6 +95,12 @@ namespace shared_model {
       return copy;
     }
 
+    TransactionStatusBuilder TransactionStatusBuilder::rejectedBefore() {
+      TransactionStatusBuilder copy(*this);
+      copy.tx_response_.set_tx_status(iroha::protocol::TxStatus::REJECTED_BEFORE);
+      return copy;
+    }
+
     TransactionStatusBuilder TransactionStatusBuilder::txHash(
         const crypto::Hash &hash) {
       TransactionStatusBuilder copy(*this);

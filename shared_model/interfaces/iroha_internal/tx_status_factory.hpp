@@ -60,6 +60,10 @@ namespace shared_model {
       virtual FactoryReturnType makeRejected(TransactionHashType,
                                              ErrorMessageType) = 0;
 
+      /// Creates rejected before transaction status
+      virtual FactoryReturnType makeRejectedBefore(TransactionHashType,
+                                                   ErrorMessageType) = 0;
+
       // --------------------------| Rest statuses |----------------------------
 
       /// Creates transaction expired status

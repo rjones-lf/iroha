@@ -179,6 +179,10 @@ namespace iroha {
           builder = builder.enoughSignaturesCollected();
           break;
         };
+        case TxStatusType::kRejectedBefore: {
+          builder = builder.rejectedBefore();
+          break;
+        };
       }
       status_bus_->publish(builder.build());
     }

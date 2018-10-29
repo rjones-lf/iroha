@@ -24,6 +24,7 @@ namespace shared_model {
     class NotReceivedTxResponse;
     class MstPendingResponse;
     class EnoughSignaturesCollectedResponse;
+    class RejectedBeforeTxResponse;
 
     /**
      * TransactionResponse is a status of transaction in system
@@ -52,7 +53,8 @@ namespace shared_model {
                                        MstExpiredResponse,
                                        NotReceivedTxResponse,
                                        MstPendingResponse,
-                                       EnoughSignaturesCollectedResponse>;
+                                       EnoughSignaturesCollectedResponse,
+                                       RejectedBeforeTxResponse>;
 
       /// Type of transaction hash
       using TransactionHashType = interface::types::HashType;

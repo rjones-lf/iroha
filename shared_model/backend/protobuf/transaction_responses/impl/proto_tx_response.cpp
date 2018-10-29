@@ -89,7 +89,8 @@ namespace shared_model {
           [](const MstExpiredResponse &) { return 5; },
           // following types are the final ones
           [](const CommittedTxResponse &) { return max_priority; },
-          [](const RejectedTxResponse &) { return max_priority; });
+          [](const RejectedTxResponse &) { return max_priority; },
+          [](const RejectedBeforeTxResponse &) { return max_priority; });
     }
   };  // namespace proto
 }  // namespace shared_model

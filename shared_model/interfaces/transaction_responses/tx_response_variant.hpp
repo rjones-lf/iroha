@@ -11,17 +11,18 @@
 #include <boost/variant.hpp>
 
 namespace boost {
-    extern template class variant<
-            const shared_model::interface::StatelessFailedTxResponse &,
-            const shared_model::interface::StatelessValidTxResponse &,
-            const shared_model::interface::StatefulFailedTxResponse &,
-            const shared_model::interface::StatefulValidTxResponse &,
-            const shared_model::interface::RejectTxResponse &,
-            const shared_model::interface::CommittedTxResponse &,
-            const shared_model::interface::MstExpiredResponse &,
-            const shared_model::interface::NotReceivedTxResponse &,
-            const shared_model::interface::MstPendingResponse &,
-            const shared_model::interface::EnoughSignaturesCollectedResponse &>;
+  extern template class variant<
+      const shared_model::interface::StatelessFailedTxResponse &,
+      const shared_model::interface::StatelessValidTxResponse &,
+      const shared_model::interface::StatefulFailedTxResponse &,
+      const shared_model::interface::StatefulValidTxResponse &,
+      const shared_model::interface::RejectTxResponse &,
+      const shared_model::interface::CommittedTxResponse &,
+      const shared_model::interface::MstExpiredResponse &,
+      const shared_model::interface::NotReceivedTxResponse &,
+      const shared_model::interface::MstPendingResponse &,
+      const shared_model::interface::EnoughSignaturesCollectedResponse &,
+      const shared_model::interface::RejectedBeforeTxResponse &>;
 }
 
 #endif  // IROHA_SHARED_MODEL_TX_RESPONSE_VARIANT_HPP

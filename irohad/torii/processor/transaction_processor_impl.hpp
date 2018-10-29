@@ -72,7 +72,10 @@ namespace iroha {
         kMstExpired,
         kNotReceived,
         kMstPending,
-        kEnoughSignaturesCollected
+        kEnoughSignaturesCollected,
+        kRejectedBefore, ///< This transaction has already been submitted, but
+                         ///< failed stateful validation. It can not be applied
+                         ///< for execution any more (see IR-1769).
       };
       /**
        * Publish status of transaction

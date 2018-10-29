@@ -38,6 +38,9 @@ namespace shared_model {
       FactoryReturnType makeRejected(TransactionHashType,
                                      ErrorMessageType) override;
 
+      FactoryReturnType makeRejectedBefore(TransactionHashType,
+                                           ErrorMessageType) override;
+
       // --------------------------| Rest statuses |----------------------------
 
       FactoryReturnType makeMstExpired(TransactionHashType,

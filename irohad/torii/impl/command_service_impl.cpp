@@ -78,7 +78,8 @@ namespace torii {
                     shared_model::interface::StatelessFailedTxResponse,
                     shared_model::interface::StatefulFailedTxResponse,
                     shared_model::interface::CommittedTxResponse,
-                    shared_model::interface::MstExpiredResponse>::value;
+                    shared_model::interface::MstExpiredResponse,
+                    shared_model::interface::RejectedBeforeTxResponse>::value;
 
   rxcpp::observable<
       std::shared_ptr<shared_model::interface::TransactionResponse>>

@@ -33,7 +33,8 @@ namespace shared_model {
                          MstExpiredResponse,
                          NotReceivedTxResponse,
                          MstPendingResponse,
-                         EnoughSignaturesCollectedResponse>;
+                         EnoughSignaturesCollectedResponse,
+                         RejectedBeforeTxResponse>;
 
       /// Type with list of types in ResponseVariantType
       using ProtoResponseListType = ProtoResponseVariantType::types;
@@ -85,7 +86,8 @@ namespace boost {
             shared_model::proto::MstExpiredResponse,
             shared_model::proto::NotReceivedTxResponse,
             shared_model::proto::MstPendingResponse,
-            shared_model::proto::EnoughSignaturesCollectedResponse>;
+            shared_model::proto::EnoughSignaturesCollectedResponse,
+            shared_model::proto::RejectedBeforeTxResponse>;
 }
 
 #endif  // IROHA_PROTO_TX_RESPONSE_HPP

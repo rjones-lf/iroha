@@ -23,6 +23,7 @@ enum TxStatus {
   NOT_RECEIVED = 7;
   MST_PENDING = 8;
   ENOUGH_SIGNATURES_COLLECTED = 9;
+  REJECTED_BEFORE = 10;
 }
 
 message ToriiResponse {

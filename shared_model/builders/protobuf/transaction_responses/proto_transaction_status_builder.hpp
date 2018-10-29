@@ -46,6 +46,8 @@ namespace shared_model {
 
       TransactionStatusBuilder mstExpired();
 
+      TransactionStatusBuilder rejectedBefore();
+
       TransactionStatusBuilder txHash(const crypto::Hash &hash);
 
       TransactionStatusBuilder errorMsg(const std::string &msg);

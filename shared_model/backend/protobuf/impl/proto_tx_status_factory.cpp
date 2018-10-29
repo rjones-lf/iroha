@@ -76,6 +76,13 @@ ProtoTxStatusFactory::FactoryReturnType ProtoTxStatusFactory::makeRejected(
   return wrap(fillCommon(hash, error, iroha::protocol::TxStatus::REJECTED));
 }
 
+ProtoTxStatusFactory::FactoryReturnType
+ProtoTxStatusFactory::makeRejectedBefore(TransactionHashType hash,
+                                         ErrorMessageType error) {
+  return wrap(
+      fillCommon(hash, error, iroha::protocol::TxStatus::REJECTED_BEFORE));
+}
+
 // -----------------------------| Rest statuses |-------------------------------
 
 ProtoTxStatusFactory::FactoryReturnType ProtoTxStatusFactory::makeMstExpired(

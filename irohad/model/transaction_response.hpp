@@ -36,6 +36,8 @@ namespace iroha {
         MST_EXPIRED,
         /// transaction is not in handler map
         NOT_RECEIVED,
+        /// transaction was rejected in some of previous rounds
+        REJECTED_BEFORE,
       };
 
       Status current_status{};

@@ -91,6 +91,12 @@ namespace shared_model {
         return copy;
       }
 
+      TransactionStatusBuilder rejectedBefore() {
+        TransactionStatusBuilder copy(*this);
+        copy.builder_ = this->builder_.rejectedBefore();
+        return copy;
+      }
+
       TransactionStatusBuilder txHash(const crypto::Hash &hash) {
         TransactionStatusBuilder copy(*this);
         copy.builder_ = this->builder_.txHash(hash);

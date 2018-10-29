@@ -55,7 +55,10 @@ using TransactionResponsTypes =
                          &BuilderType::mstExpired>,
                      TransactionResponseBuilderTestCase<
                          shared_model::interface::NotReceivedTxResponse,
-                         &BuilderType::notReceived> >;
+                         &BuilderType::notReceived>,
+                     TransactionResponseBuilderTestCase<
+                         shared_model::interface::RejectedBeforeTxResponse,
+                         &BuilderType::rejectedBefore> >;
 TYPED_TEST_CASE(TransactionResponseBuilderTest, TransactionResponsTypes);
 
 /**
