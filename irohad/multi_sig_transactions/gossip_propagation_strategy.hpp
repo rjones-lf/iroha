@@ -25,6 +25,8 @@
 #include <mutex>
 
 #include "ametsuchi/peer_query_factory.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy_prams.hpp"
+#include "multi_sig_transactions/mst_propagation_strategy.hpp"
 
 namespace iroha {
 
@@ -41,12 +43,10 @@ namespace iroha {
     /**
      * Initialize strategy with
      * @param peer_factory is a provider of peer list
-     * @param period of emitting data in ms
-     * @param amount of peers emitted per once
+     * @param params configuration parameters
      */
     GossipPropagationStrategy(PeerProviderFactory peer_factory,
-                              std::chrono::milliseconds period,
-                              uint32_t amount);
+                              const GossipPropagationStrategyParams &params);
 
     ~GossipPropagationStrategy();
 

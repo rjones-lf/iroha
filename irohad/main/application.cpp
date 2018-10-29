@@ -27,10 +27,6 @@
 #include "torii/impl/status_bus_impl.hpp"
 #include "validators/field_validator.hpp"
 
-constexpr std::chrono::milliseconds kDefGossipEmittingPeriod =
-    std::chrono::seconds(5);
-constexpr uint32_t kDefGossipAmountPerOnce = 2;
-
 using namespace iroha;
 using namespace iroha::ametsuchi;
 using namespace iroha::simulator;
@@ -45,19 +41,16 @@ using namespace std::chrono_literals;
 /**
  * Configuring iroha daemon
  */
-Irohad::Irohad(
-    const std::string &block_store_dir,
-    const std::string &pg_conn,
-    const std::string &listen_ip,
-    size_t torii_port,
-    size_t internal_port,
-    size_t max_proposal_size,
-    std::chrono::milliseconds proposal_delay,
-    std::chrono::milliseconds vote_delay,
-    const shared_model::crypto::Keypair &keypair,
-    bool is_mst_supported,
-    boost::optional<std::chrono::milliseconds> mst_gossip_emitting_period,
-    boost::optional<uint32_t> mst_gossip_amount_per_once)
+Irohad::Irohad(const std::string &block_store_dir,
+               const std::string &pg_conn,
+               const std::string &listen_ip,
+               size_t torii_port,
+               size_t internal_port,
+               size_t max_proposal_size,
+               std::chrono::milliseconds proposal_delay,
+               std::chrono::milliseconds vote_delay,
+               const shared_model::crypto::Keypair &keypair,
+               const OptGossipPropagationStrategyParams &opt_mst_gossip_params)
     : block_store_dir_(block_store_dir),
       pg_conn_(pg_conn),
       listen_ip_(listen_ip),
@@ -66,11 +59,8 @@ Irohad::Irohad(
       max_proposal_size_(max_proposal_size),
       proposal_delay_(proposal_delay),
       vote_delay_(vote_delay),
-      is_mst_supported_(is_mst_supported),
-      mst_gossip_emitting_period_(
-          mst_gossip_emitting_period.value_or(kDefGossipEmittingPeriod)),
-      mst_gossip_amount_per_once_(
-          mst_gossip_amount_per_once.value_or(kDefGossipAmountPerOnce)),
+      is_mst_supported_(opt_mst_gossip_params),
+      opt_mst_gossip_params_(opt_mst_gossip_params),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
   log_->info("created");
@@ -334,7 +324,7 @@ void Irohad::initMstProcessor() {
     // cli parameters
     mst_propagation = std::make_shared<GossipPropagationStrategy>(
         storage,
-        mst_gossip_emitting_period_, mst_gossip_amount_per_once_);
+        *opt_mst_gossip_params_);
   } else {
     mst_propagation = std::make_shared<iroha::PropagationStrategyStub>();
     mst_transport = std::make_shared<iroha::network::MstTransportStub>();

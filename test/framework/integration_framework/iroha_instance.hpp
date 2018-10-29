@@ -25,6 +25,7 @@
 #include <memory>
 #include <string>
 #include "ametsuchi/impl/postgres_options.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy_prams.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -81,7 +82,7 @@ namespace integration_framework {
     const size_t internal_port_;
     const std::chrono::milliseconds proposal_delay_;
     const std::chrono::milliseconds vote_delay_;
-    const bool is_mst_supported_;
+    iroha::OptGossipPropagationStrategyParams opt_mst_gossip_params_;
 
    private:
     std::shared_ptr<TestIrohad> instance_;

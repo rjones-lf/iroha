@@ -31,6 +31,7 @@
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/validators/validators.hpp"
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 

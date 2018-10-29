@@ -18,6 +18,7 @@
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy_prams.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
@@ -64,11 +65,8 @@ class Irohad {
    * @param proposal_delay - maximum waiting time util emitting new proposal
    * @param vote_delay - waiting time before sending vote to next peer
    * @param keypair - public and private keys for crypto signer
-   * @param is_mst_supported - enable or disable mst processing support
-   * @param mst_gossip_emitting_period - period of peers emitting for Gossip
-   * MST propagation (optional)
-   * @param mst_gossip_amount_per_once - amount of peers emitted per once for
-   * Gossip MST propagation (optional)
+   * @param opt_mst_gossip_params - parameters for Gossip MST propagation (optional).
+   * If not provided, disables mst processing support
    */
   Irohad(const std::string &block_store_dir,
          const std::string &pg_conn,
@@ -79,10 +77,8 @@ class Irohad {
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
          const shared_model::crypto::Keypair &keypair,
-         bool is_mst_supported,
-         boost::optional<std::chrono::milliseconds> mst_gossip_emitting_period =
-             boost::none,
-         boost::optional<uint32_t> mst_gossip_amount_per_once = boost::none);
+         const iroha::OptGossipPropagationStrategyParams
+             &opt_mst_gossip_params = boost::none);
 
   /**
    * Initialization of whole objects in system
@@ -167,8 +163,7 @@ class Irohad {
   std::chrono::milliseconds proposal_delay_;
   std::chrono::milliseconds vote_delay_;
   bool is_mst_supported_;
-  std::chrono::milliseconds mst_gossip_emitting_period_;
-  uint32_t mst_gossip_amount_per_once_;
+  iroha::OptGossipPropagationStrategyParams opt_mst_gossip_params_;
 
   // ------------------------| internal dependencies |-------------------------
 
