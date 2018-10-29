@@ -299,12 +299,12 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
           std::make_pair(verified_proposal,
                          iroha::validation::TransactionsErrors{std::make_pair(
                              iroha::validation::CommandError{
-                                 "CommandName", "CommandError", true, 2},
+                                 "CommandName", 2, true, 2},
                              tx.hash())})));
   auto stringified_error = "Stateful validation error in transaction "
                            + tx.hash().hex() + ": command 'CommandName' with "
                                                "index '2' did not pass verification with "
-                                               "error 'CommandError'";
+                                               "error code '2'";
 
   auto getAnswer = [&]() {
     return client.getTxStatus(shared_model::crypto::toBinaryString(tx.hash()))

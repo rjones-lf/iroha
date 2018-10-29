@@ -25,16 +25,16 @@ namespace iroha {
         if (not tx_error.first.tx_passed_initial_validation) {
           return (boost::format("Stateful validation error: transaction %s "
                                 "did not pass initial verification: "
-                                "checking '%s', error message '%s'")
+                                "checking '%s', error code '%d'")
                   % tx_error.second.hex() % tx_error.first.name
-                  % tx_error.first.error)
+                  % tx_error.first.error_code)
               .str();
         }
         return (boost::format("Stateful validation error in transaction %s: "
                               "command '%s' with index '%d' did not pass "
-                              "verification with error '%s'")
+                              "verification with error code '%d'")
                 % tx_error.second.hex() % tx_error.first.name
-                % tx_error.first.index % tx_error.first.error)
+                % tx_error.first.index % tx_error.first.error_code)
             .str();
       }
     }  // namespace
