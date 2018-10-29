@@ -20,7 +20,8 @@ namespace iroha {
     using network::PeerCommunicationService;
 
     namespace {
-      std::string composeErrorMessage(const auto &tx_hash_and_error) {
+      std::string composeErrorMessage(
+          const validation::TransactionError &tx_hash_and_error) {
         const auto tx_hash = tx_hash_and_error.first.hex();
         const auto &cmd_error = tx_hash_and_error.second;
         if (not cmd_error.tx_passed_initial_validation) {

@@ -48,6 +48,7 @@ namespace iroha {
     using TransactionsErrors = std::unordered_map<TransactionHash,
                                                   CommandError,
                                                   TransactionHash::Hasher>;
+    using TransactionError = TransactionsErrors::value_type;
 
     /// Type of verified proposal and errors appeared in the process; first
     /// dimension of errors vector is transaction, second is error itself with
