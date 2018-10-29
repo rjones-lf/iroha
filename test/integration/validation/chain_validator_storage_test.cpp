@@ -102,7 +102,7 @@ namespace iroha {
     auto createAndValidateChain(
         std::vector<std::shared_ptr<shared_model::interface::Block>> chain) {
       auto ms = createMutableStorage();
-      return validator->validateChain(rxcpp::observable<>::iterate(chain), *ms);
+      return validator->validateAndApply(rxcpp::observable<>::iterate(chain), *ms);
     }
 
     std::shared_ptr<validation::ChainValidatorImpl> validator;
