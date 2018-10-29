@@ -96,6 +96,6 @@ execute_process(
 )
 
 
-add_compile_definitions(IROHA_ORIGIN="${IROHA_ORIGIN}")
-add_compile_definitions(IROHA_COMMIT_HASH="${IROHA_COMMIT_HASH}")
-add_compile_definitions(IROHA_BRANCH="${IROHA_BRANCH}")
+add_definitions(-DIROHA_ORIGIN="${IROHA_ORIGIN}")
+add_definitions(-DIROHA_COMMIT_HASH="${IROHA_COMMIT_HASH}")
+add_definitions(-DIROHA_BRANCH="${IROHA_BRANCH}")
