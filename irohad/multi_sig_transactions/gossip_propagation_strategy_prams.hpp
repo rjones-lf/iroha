@@ -10,18 +10,17 @@
 
 #include <boost/optional.hpp>
 
-namespace iroha {
+// TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
+// cli parameters
+static const std::chrono::milliseconds kDefaultPeriod =
+std::chrono::seconds(5);
+static constexpr uint32_t kDefaultAmount = 2;
 
+namespace iroha {
   /**
    * This structure provides configuration parameters for propagation strategy
    */
   struct GossipPropagationStrategyParams {
-    // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
-    // cli parameters
-    static constexpr std::chrono::milliseconds kDefaultPeriod =
-        std::chrono::seconds(5);
-    static constexpr uint32_t kDefaultAmount = 2;
-
     /// period of emitting data in ms
     std::chrono::milliseconds period{kDefaultPeriod};
 
