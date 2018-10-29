@@ -168,7 +168,7 @@ namespace iroha {
      * @when trying to add account asset
      * @then account asset is successfully added
      */
-    TEST_F(AddAccountAssetTest, ValidAddAccountAssetTest) {
+    TEST_F(AddAccountAssetTest, Valid) {
       addAsset();
       addAllPerms();
       ASSERT_TRUE(val(
@@ -191,9 +191,9 @@ namespace iroha {
     /**
      * @given command
      * @when trying to add account asset with non-existing account
-     * @then account asset fails to added
+     * @then account asset fails to be added
      */
-    TEST_F(AddAccountAssetTest, AddAccountAssetTestInvalidAccount) {
+    TEST_F(AddAccountAssetTest, InvalidAccount) {
       addAsset();
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder()
@@ -209,7 +209,7 @@ namespace iroha {
      * @when trying to add account asset with non-existing asset
      * @then account asset fails to be added
      */
-    TEST_F(AddAccountAssetTest, AddAccountAssetTestInvalidAsset) {
+    TEST_F(AddAccountAssetTest, InvalidAsset) {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder()
                                    .addAssetQuantity(asset_id, "1.0")
@@ -223,7 +223,7 @@ namespace iroha {
      * @when trying to add account asset that overflows
      * @then account asset fails to added
      */
-    TEST_F(AddAccountAssetTest, AddAccountAssetTestUint256Overflow) {
+    TEST_F(AddAccountAssetTest, Uint256Overflow) {
       std::string uint256_halfmax =
           "57896044618658097711785492504343953926634992332820282019728792003956"
           "5648"
@@ -247,7 +247,7 @@ namespace iroha {
      * @when trying to add account asset without permission
      * @then account asset not added
      */
-    TEST_F(AddAccountAssetTest, AddAccountAssetTestNoPerms) {
+    TEST_F(AddAccountAssetTest, NoPerms) {
       addAsset();
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder()
@@ -292,7 +292,7 @@ namespace iroha {
      * @when trying to add peer
      * @then peer is successfully added
      */
-    TEST_F(AddPeer, ValidAddPeerTest) {
+    TEST_F(AddPeer, Valid) {
       addAllPerms();
       ASSERT_TRUE(val(execute(buildCommand(
           TestTransactionBuilder().addPeer(peer->address(), peer->pubkey())))));
@@ -303,7 +303,7 @@ namespace iroha {
      * @when trying to add peer without perms
      * @then peer is not added
      */
-    TEST_F(AddPeer, InvalidAddPeerTestWhenNoPerms) {
+    TEST_F(AddPeer, NoPerms) {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().addPeer(peer->address(), peer->pubkey())));
       checkErrorCode(cmd_result, 5);
@@ -336,7 +336,7 @@ namespace iroha {
      * @when trying to add signatory with role permission
      * @then signatory is successfully added
      */
-    TEST_F(AddSignatory, ValidAddSignatoryTestRolePerms) {
+    TEST_F(AddSignatory, Valid) {
       addAllPerms();
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().addSignatory(
@@ -352,7 +352,7 @@ namespace iroha {
      * @when trying to add signatory with grantable permission
      * @then signatory is successfully added
      */
-    TEST_F(AddSignatory, ValidAddSignatoryTestGrantablePerms) {
+    TEST_F(AddSignatory, ValidGrantablePerms) {
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().createAccount(
                           "id2",
@@ -380,7 +380,7 @@ namespace iroha {
      * @when trying to add signatory to non-existing account
      * @then signatory is not added
      */
-    TEST_F(AddSignatory, InvalidAddSignatoryTestNoAccount) {
+    TEST_F(AddSignatory, NoAccount) {
       auto perm =
           shared_model::interface::permissions::Grantable::kAddMySignatory;
       auto cmd_result =
@@ -396,7 +396,7 @@ namespace iroha {
      * @when trying to add signatory without permissions
      * @then signatory is not added
      */
-    TEST_F(AddSignatory, InvalidAddSignatoryTestWhenNoPerms) {
+    TEST_F(AddSignatory, NoPerms) {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().addSignatory(
               account->accountId(), *pubkey)));
@@ -414,7 +414,7 @@ namespace iroha {
      * same signatory again
      * @then signatory is not added
      */
-    TEST_F(AddSignatory, InvalidAddSignatoryExistingPubKey) {
+    TEST_F(AddSignatory, ExistingPubKey) {
       addAllPerms();
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().addSignatory(
@@ -446,7 +446,12 @@ namespace iroha {
       shared_model::interface::RolePermissionSet role_permissions2;
     };
 
-    TEST_F(AppendRole, ValidAppendRoleTest) {
+    /**
+     * @given command
+     * @when trying to append role
+     * @then role is appended
+     */
+    TEST_F(AppendRole, Valid) {
       addAllPerms();
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
                                   another_role, role_permissions)),
@@ -459,7 +464,12 @@ namespace iroha {
                   != roles->end());
     }
 
-    TEST_F(AppendRole, ValidAppendRoleTestWhenEmptyPerms) {
+    /**
+     * @given command
+     * @when trying append role, which does not have any permissions
+     * @then role is appended
+     */
+    TEST_F(AppendRole, ValidEmptyPerms) {
       addAllPerms();
       ASSERT_TRUE(val(execute(
           buildCommand(TestTransactionBuilder().createRole(another_role, {})),
@@ -473,12 +483,12 @@ namespace iroha {
     }
 
     /**
-     * @given  command
-     * @when trying to append role with perms that creator does not have
-     *      but in genesis block
+     * @given command
+     * @when trying to append role with perms that creator does not have but in
+     * genesis block
      * @then role is appended
      */
-    TEST_F(AppendRole, AppendRoleTestValidWhenAccountDoesNotHavePermsGenesis) {
+    TEST_F(AppendRole, AccountDoesNotHavePermsGenesis) {
       role_permissions2.set(
           shared_model::interface::permissions::Role::kRemoveMySignatory);
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
@@ -493,7 +503,12 @@ namespace iroha {
                   != roles->end());
     }
 
-    TEST_F(AppendRole, AppendRoleTestInvalidNoAccount) {
+    /**
+     * @given command
+     * @when trying to append role to non-existing account
+     * @then role is not appended
+     */
+    TEST_F(AppendRole, NoAccount) {
       addAllPerms();
       ASSERT_TRUE(val(execute(
           buildCommand(TestTransactionBuilder().createRole(another_role, {})),
@@ -503,7 +518,12 @@ namespace iroha {
       checkErrorCode(cmd_result, 2);
     }
 
-    TEST_F(AppendRole, InvalidAppendRoleTestWhenNoPerms) {
+    /**
+     * @given command
+     * @when trying to append role having no permission to do so
+     * @then role is not appended
+     */
+    TEST_F(AppendRole, NoPerms) {
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
                                   another_role, role_permissions)),
                               true)));
@@ -523,7 +543,7 @@ namespace iroha {
      * @when trying to append role with perms that creator does not have
      * @then role is not appended
      */
-    TEST_F(AppendRole, AppendRoleTestInvalidWhenAccountDoesNotHavePerms) {
+    TEST_F(AppendRole, NoRolePermsInAccount) {
       role_permissions2.set(
           shared_model::interface::permissions::Role::kRemoveMySignatory);
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
@@ -535,7 +555,12 @@ namespace iroha {
       checkErrorCode(cmd_result, 5);
     }
 
-    TEST_F(AppendRole, AppendRoleTestInvalidNoSuchRole) {
+    /**
+     * @given command
+     * @when trying to append non-existing role
+     * @then role is not appended
+     */
+    TEST_F(AppendRole, NoRole) {
       addAllPerms();
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().appendRole(
@@ -581,7 +606,7 @@ namespace iroha {
      * @when trying to create account
      * @then account is created
      */
-    TEST_F(CreateAccount, ValidCreateAccountWithDomainTest) {
+    TEST_F(CreateAccount, Valid) {
       addAllPerms();
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().createAccount(
@@ -593,10 +618,10 @@ namespace iroha {
 
     /**
      * @given  command
-     * @when trying to create account
-     * @then account is created
+     * @when trying to create account without permission to do so
+     * @then account is not created
      */
-    TEST_F(CreateAccount, InvalidCreateAccountWithoutPermsTest) {
+    TEST_F(CreateAccount, NoPerms) {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().createAccount(
               "id2", domain->domainId(), *pubkey)));
@@ -606,18 +631,23 @@ namespace iroha {
     }
 
     /**
-     * @given  command and no target domain in ledger
+     * @given  command @and no target domain in ledger
      * @when trying to create account
      * @then account is not created
      */
-    TEST_F(CreateAccount, InvalidCreateAccountNoDomainTest) {
+    TEST_F(CreateAccount, NoDomain) {
       addAllPerms();
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createAccount("doge", "domain6", *pubkey)));
       checkErrorCode(cmd_result, 7);
     }
 
-    TEST_F(CreateAccount, InvalidCreateAccountNameExists) {
+    /**
+     * @given command
+     * @when trying to create with an occupied name
+     * @then account is not created
+     */
+    TEST_F(CreateAccount, NameExists) {
       addAllPerms();
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().createAccount(
@@ -640,7 +670,7 @@ namespace iroha {
      * @when trying to create asset
      * @then asset is created
      */
-    TEST_F(CreateAsset, ValidCreateAssetWithDomainTest) {
+    TEST_F(CreateAsset, Valid) {
       role_permissions.set(
           shared_model::interface::permissions::Role::kCreateAsset);
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
@@ -671,7 +701,7 @@ namespace iroha {
      * @when trying to create asset without permission
      * @then asset is not created
      */
-    TEST_F(CreateAsset, InvalidCreateAssetWithNoPermission) {
+    TEST_F(CreateAsset, NoPerms) {
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
                                   role, role_permissions)),
                               true)));
@@ -700,7 +730,7 @@ namespace iroha {
      * @when trying to create asset
      * @then asset is not created
      */
-    TEST_F(CreateAsset, InvalidCreateAssetNoDomain) {
+    TEST_F(CreateAsset, NoDomain) {
       role_permissions.set(
           shared_model::interface::permissions::Role::kCreateAsset);
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
@@ -724,7 +754,12 @@ namespace iroha {
       checkErrorCode(cmd_result, 7);
     }
 
-    TEST_F(CreateAsset, InvalidCreateAssetNameNotUnique) {
+    /**
+     * @given command
+     * @when trying to create asset with an occupied name
+     * @then asset is not created
+     */
+    TEST_F(CreateAsset, NameNotUnique) {
       role_permissions.set(
           shared_model::interface::permissions::Role::kCreateAsset);
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
@@ -778,7 +813,7 @@ namespace iroha {
      * @when trying to create domain
      * @then domain is created
      */
-    TEST_F(CreateDomain, ValidCreateDomainTest) {
+    TEST_F(CreateDomain, Valid) {
       addAllPerms();
       ASSERT_TRUE(val(execute(buildCommand(
           TestTransactionBuilder().createDomain(domain2->domainId(), role)))));
@@ -792,7 +827,7 @@ namespace iroha {
      * @when trying to create domain
      * @then domain is not created
      */
-    TEST_F(CreateDomain, InvalidCreateDomainTestWhenNoPerms) {
+    TEST_F(CreateDomain, NoPerms) {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createDomain(domain2->domainId(), role)));
       checkErrorCode(cmd_result, 5);
@@ -800,7 +835,12 @@ namespace iroha {
       ASSERT_FALSE(dom);
     }
 
-    TEST_F(CreateDomain, InvalidCreateDomainWhenNameNotUnique) {
+    /**
+     * @given command
+     * @when trying to create domain with an occupied name
+     * @then domain is not created
+     */
+    TEST_F(CreateDomain, NameNotUnique) {
       addAllPerms();
       ASSERT_TRUE(val(execute(buildCommand(
           TestTransactionBuilder().createDomain(domain2->domainId(), role)))));
@@ -810,11 +850,11 @@ namespace iroha {
     }
 
     /**
-     * @given  command when there is no role
+     * @given  command when there is no default role
      * @when trying to create domain
      * @then domain is not created
      */
-    TEST_F(CreateDomain, InvalidCreateDomainWhenNoRoleTest) {
+    TEST_F(CreateDomain, NoDefaultRole) {
       addAllPerms();
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().createDomain(
@@ -847,7 +887,7 @@ namespace iroha {
      * @when trying to create role
      * @then role is created
      */
-    TEST_F(CreateRole, ValidCreateRoleTest) {
+    TEST_F(CreateRole, Valid) {
       addAllPerms();
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
           another_role, role_permissions)))));
@@ -861,7 +901,7 @@ namespace iroha {
      * @when trying to create role when creator doesn't have all permissions
      * @then role is not created
      */
-    TEST_F(CreateRole, CreateRoleTestInvalidWhenHasNoPerms) {
+    TEST_F(CreateRole, NoPerms) {
       role_permissions2.set(
           shared_model::interface::permissions::Role::kRemoveMySignatory);
       auto cmd_result =
@@ -873,7 +913,12 @@ namespace iroha {
       ASSERT_TRUE(rl->none());
     }
 
-    TEST_F(CreateRole, CreateRoleTestInvalidNameNotUnique) {
+    /**
+     * @given command
+     * @when trying to create role with an occupied name
+     * @then role is not created
+     */
+    TEST_F(CreateRole, NameNotUnique) {
       addAllPerms();
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().createRole(
           another_role, role_permissions)))));
@@ -914,7 +959,7 @@ namespace iroha {
      * @when trying to detach role
      * @then role is detached
      */
-    TEST_F(DetachRole, ValidDetachRoleTest) {
+    TEST_F(DetachRole, Valid) {
       addAllPerms();
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().detachRole(
           account->accountId(), another_role)))));
@@ -929,7 +974,7 @@ namespace iroha {
      * @when trying to detach role from non-existing account
      * @then correspondent error code is returned
      */
-    TEST_F(DetachRole, InvalidDetachRoleTestNoAccount) {
+    TEST_F(DetachRole, NoAccount) {
       addAllPerms();
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().detachRole("doge@noaccount", another_role)));
@@ -941,7 +986,7 @@ namespace iroha {
      * @when trying to detach role, which the account does not have
      * @then correspondent error code is returned
      */
-    TEST_F(DetachRole, InvalidDetachRoleTestNoRoleInAccountRoles) {
+    TEST_F(DetachRole, NoSuchRoleInAccount) {
       addAllPerms();
       ASSERT_TRUE(val(execute(buildCommand(TestTransactionBuilder().detachRole(
           account->accountId(), another_role)))));
@@ -956,7 +1001,7 @@ namespace iroha {
      * @when trying to detach role without permission
      * @then role is detached
      */
-    TEST_F(DetachRole, InvalidDetachRoleTestWhenNoPerms) {
+    TEST_F(DetachRole, NoPerms) {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().detachRole(
               account->accountId(), another_role)));
@@ -972,7 +1017,7 @@ namespace iroha {
      * @when trying to detach a non-existing role
      * @then correspondent error code is returned
      */
-    TEST_F(DetachRole, InvalidDetachRoleTestNoRole) {
+    TEST_F(DetachRole, NoRole) {
       addAllPerms();
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().detachRole(
@@ -1008,7 +1053,7 @@ namespace iroha {
      * @when trying to grant permission
      * @then permission is granted
      */
-    TEST_F(GrantPermission, ValidGrantPermissionTest) {
+    TEST_F(GrantPermission, Valid) {
       addAllPerms();
       auto perm = shared_model::interface::permissions::Grantable::kSetMyQuorum;
       ASSERT_TRUE(val(
@@ -1025,7 +1070,7 @@ namespace iroha {
      * @when trying to grant permission to non-existent account
      * @then corresponding error code is returned
      */
-    TEST_F(GrantPermission, InvalidGrantPermissionTestNoAccount) {
+    TEST_F(GrantPermission, NoAccount) {
       addAllPerms();
       auto perm = shared_model::interface::permissions::Grantable::kSetMyQuorum;
       auto cmd_result =
@@ -1040,7 +1085,7 @@ namespace iroha {
      * @when trying to grant permission without permission
      * @then permission is not granted
      */
-    TEST_F(GrantPermission, InvalidGrantPermissionTestWhenNoPerm) {
+    TEST_F(GrantPermission, NoPerms) {
       auto perm = shared_model::interface::permissions::Grantable::kSetMyQuorum;
       auto cmd_result =
 
@@ -1085,7 +1130,7 @@ namespace iroha {
      * @when trying to remove signatory
      * @then signatory is successfully removed
      */
-    TEST_F(RemoveSignatory, ValidRemoveSignatoryTest) {
+    TEST_F(RemoveSignatory, Valid) {
       addAllPerms();
       shared_model::interface::types::PubkeyType pk(std::string('5', 32));
       ASSERT_TRUE(
@@ -1108,7 +1153,7 @@ namespace iroha {
      * @when trying to remove signatory
      * @then signatory is successfully removed
      */
-    TEST_F(RemoveSignatory, ValidRemoveSignatoryTestWhenHasGrantablePerm) {
+    TEST_F(RemoveSignatory, ValidGrantablePerm) {
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().createAccount(
                           "id2", domain->domainId(), *pubkey)),
@@ -1143,7 +1188,7 @@ namespace iroha {
      * @when trying to remove signatory from a non existing account
      * @then corresponding error code is returned
      */
-    TEST_F(RemoveSignatory, RemoveSignatoryTestNonExistingAccount) {
+    TEST_F(RemoveSignatory, NoAccount) {
       addAllPerms();
       shared_model::interface::types::PubkeyType pk(std::string('5', 32));
       ASSERT_TRUE(
@@ -1161,7 +1206,7 @@ namespace iroha {
      * @when trying to remove signatory, which is not attached to this account
      * @then corresponding error code is returned
      */
-    TEST_F(RemoveSignatory, RemoveSignatoryTestNoSuchSignatory) {
+    TEST_F(RemoveSignatory, NoSuchSignatory) {
       addAllPerms();
       shared_model::interface::types::PubkeyType pk(std::string('5', 32));
       ASSERT_TRUE(
@@ -1188,7 +1233,7 @@ namespace iroha {
      * @when trying to remove signatory without permission
      * @then signatory is not removed
      */
-    TEST_F(RemoveSignatory, InvalidRemoveSignatoryTestWhenNoPerms) {
+    TEST_F(RemoveSignatory, NoPerms) {
       shared_model::interface::types::PubkeyType pk(std::string('5', 32));
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().addSignatory(
@@ -1209,10 +1254,11 @@ namespace iroha {
 
     /**
      * @given  command
-     * @when trying to remove signatory from account so it has less than quorum
+     * @when trying to remove signatory from an account, after which it will
+     * have signatories less, than its quorum
      * @then signatory is not removed
      */
-    TEST_F(RemoveSignatory, RemoveSignatoryTestInvalidWhenQuorum) {
+    TEST_F(RemoveSignatory, SignatoriesLessThanQuorum) {
       addAllPerms();
       shared_model::interface::types::PubkeyType pk(std::string('5', 32));
       ASSERT_TRUE(
@@ -1257,7 +1303,7 @@ namespace iroha {
      * @when trying to revoke permission
      * @then permission is revoked
      */
-    TEST_F(RevokePermission, ValidRevokePermissionTest) {
+    TEST_F(RevokePermission, Valid) {
       auto perm =
           shared_model::interface::permissions::Grantable::kRemoveMySignatory;
       ASSERT_TRUE(query->hasAccountGrantablePermission(
@@ -1292,7 +1338,7 @@ namespace iroha {
      * @when trying to revoke permission without permission
      * @then permission is revoked
      */
-    TEST_F(RevokePermission, InvalidRevokePermissionTestWithNoPermission) {
+    TEST_F(RevokePermission, NoPerms) {
       auto perm =
           shared_model::interface::permissions::Grantable::kRemoveMySignatory;
       auto cmd_result =
@@ -1340,7 +1386,7 @@ namespace iroha {
      * @when trying to set kv
      * @then kv is set
      */
-    TEST_F(SetAccountDetail, ValidSetAccountDetailTest) {
+    TEST_F(SetAccountDetail, Valid) {
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().setAccountDetail(
               account->accountId(), "key", "value")))));
@@ -1354,7 +1400,7 @@ namespace iroha {
      * @when trying to set kv when has grantable permission
      * @then kv is set
      */
-    TEST_F(SetAccountDetail, ValidSetAccountDetailTestWhenGrantablePerm) {
+    TEST_F(SetAccountDetail, ValidGrantablePerm) {
       auto perm =
           shared_model::interface::permissions::Grantable::kSetMyAccountDetail;
       ASSERT_TRUE(
@@ -1377,7 +1423,7 @@ namespace iroha {
      * @when trying to set kv when has role permission
      * @then kv is set
      */
-    TEST_F(SetAccountDetail, ValidSetAccountDetailTestWhenPerm) {
+    TEST_F(SetAccountDetail, ValidRolePerm) {
       addAllPerms();
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().setAccountDetail(
@@ -1394,7 +1440,7 @@ namespace iroha {
      * @when trying to set kv to non-existing account
      * @then corresponding error code is returned
      */
-    TEST_F(SetAccountDetail, InvalidSetAccountDetailTestNoAccount) {
+    TEST_F(SetAccountDetail, NoAccount) {
       addAllPerms();
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().setAccountDetail(
@@ -1409,7 +1455,7 @@ namespace iroha {
      * @when trying to set kv while having no permissions
      * @then corresponding error code is returned
      */
-    TEST_F(SetAccountDetail, InvalidSetAccountDetailTestNoPerms) {
+    TEST_F(SetAccountDetail, NoPerms) {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().setAccountDetail(
                       account2->accountId(), "key", "value")),
@@ -1445,7 +1491,7 @@ namespace iroha {
      * @when trying to set quorum
      * @then quorum is set
      */
-    TEST_F(SetQuorum, ValidSetQuorumTestWithRolePerms) {
+    TEST_F(SetQuorum, Valid) {
       addAllPerms();
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(
@@ -1457,7 +1503,7 @@ namespace iroha {
      * @when trying to set quorum
      * @then quorum is set
      */
-    TEST_F(SetQuorum, ValidSetQuorumTestWithGrantablePerms) {
+    TEST_F(SetQuorum, ValidGrantablePerms) {
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().createAccount(
                           "id2", domain->domainId(), *pubkey)),
@@ -1478,7 +1524,7 @@ namespace iroha {
      * @when trying to set quorum more than amount of signatories
      * @then quorum is not set
      */
-    TEST_F(SetQuorum, SetQuorumTestInvalidSignatoriesAmount) {
+    TEST_F(SetQuorum, LessSignatoriesThanNewQuorum) {
       addAllPerms();
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(
@@ -1498,7 +1544,7 @@ namespace iroha {
      * @when trying to set quorum without perms
      * @then quorum is not set
      */
-    TEST_F(SetQuorum, InvalidSetQuorumTestWithNoPerms) {
+    TEST_F(SetQuorum, NoPerms) {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().setAccountQuorum(account->accountId(), 3)));
       checkErrorCode(cmd_result, 5);
@@ -1547,7 +1593,7 @@ namespace iroha {
      * @when trying to subtract account asset
      * @then account asset is successfully subtracted
      */
-    TEST_F(SubtractAccountAssetTest, ValidSubtractAccountAssetTest) {
+    TEST_F(SubtractAccountAssetTest, Valid) {
       addAllPerms();
       addAsset();
       ASSERT_TRUE(
@@ -1581,7 +1627,7 @@ namespace iroha {
      * @when trying to subtract account asset with non-existing asset
      * @then account asset fails to be subtracted
      */
-    TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestInvalidAsset) {
+    TEST_F(SubtractAccountAssetTest, NoAsset) {
       addAllPerms();
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder()
@@ -1593,9 +1639,9 @@ namespace iroha {
     /**
      * @given  command
      * @when trying to add account asset with wrong precision
-     * @then account asset fails to added
+     * @then account asset fails to be added
      */
-    TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestInvalidPrecision) {
+    TEST_F(SubtractAccountAssetTest, InvalidPrecision) {
       addAllPerms();
       addAsset();
       auto cmd_result =
@@ -1610,7 +1656,7 @@ namespace iroha {
      * @when trying to subtract more account asset than account has
      * @then account asset fails to be subtracted
      */
-    TEST_F(SubtractAccountAssetTest, SubtractAccountAssetTestNotEnoughAsset) {
+    TEST_F(SubtractAccountAssetTest, NotEnoughAsset) {
       addAllPerms();
       addAsset();
       ASSERT_TRUE(
@@ -1630,8 +1676,7 @@ namespace iroha {
      * @when trying to subtract account asset without permissions
      * @then corresponding error code is returned
      */
-    TEST_F(SubtractAccountAssetTest,
-           InvalidSubtractAccountAssetTestWhenNoPerms) {
+    TEST_F(SubtractAccountAssetTest, NoPerms) {
       addAsset();
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder()
@@ -1705,10 +1750,9 @@ namespace iroha {
     /**
      * @given  command
      * @when trying to add transfer asset
-     * @then account asset is successfully transfered
+     * @then account asset is successfully transferred
      */
-    TEST_F(TransferAccountAssetTest,
-           ValidTransferAccountAssetTestWhenRolePerms) {
+    TEST_F(TransferAccountAssetTest, Valid) {
       addAllPerms();
       addAllPerms(account2->accountId(), "all2");
       addAsset();
@@ -1746,10 +1790,9 @@ namespace iroha {
     /**
      * @given  command
      * @when trying to add transfer asset
-     * @then account asset is successfully transfered
+     * @then account asset is successfully transferred
      */
-    TEST_F(TransferAccountAssetTest,
-           ValidTransferAccountAssetTestWhenGrantablePerms) {
+    TEST_F(TransferAccountAssetTest, ValidGrantablePerms) {
       addAllPerms(account2->accountId(), "all2");
       addAsset();
       auto perm =
@@ -1789,9 +1832,9 @@ namespace iroha {
     /**
      * @given  command
      * @when trying to transfer asset back and forth with non-existing account
-     * @then account asset fails to be transfered
+     * @then account asset fails to be transferred
      */
-    TEST_F(TransferAccountAssetTest, TransferAccountAssetTestInvalidAccount) {
+    TEST_F(TransferAccountAssetTest, NoAccount) {
       addAllPerms();
       addAllPerms(account2->accountId(), "all2");
       addAsset();
@@ -1815,9 +1858,9 @@ namespace iroha {
     /**
      * @given  command
      * @when trying to transfer account asset with non-existing asset
-     * @then account asset fails to be transfered
+     * @then account asset fails to be transferred
      */
-    TEST_F(TransferAccountAssetTest, TransferAccountAssetTestInvalidAsset) {
+    TEST_F(TransferAccountAssetTest, NoAsset) {
       addAllPerms();
       addAllPerms(account2->accountId(), "all2");
       auto cmd_result = execute(buildCommand(
@@ -1832,10 +1875,9 @@ namespace iroha {
     /**
      * @given  command
      * @when trying to transfer account asset with no permissions
-     * @then account asset fails to be transfered
+     * @then account asset fails to be transferred
      */
-    TEST_F(TransferAccountAssetTest,
-           TransferAccountAssetTestInvalidNoPermission) {
+    TEST_F(TransferAccountAssetTest, NoPerms) {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().transferAsset(account->accountId(),
                                                  account2->accountId(),
@@ -1848,9 +1890,9 @@ namespace iroha {
     /**
      * @given  command
      * @when trying to transfer account asset, but has insufficient amount of it
-     * @then account asset fails to transfered
+     * @then account asset fails to be transferred
      */
-    TEST_F(TransferAccountAssetTest, TransferAccountAssetOwerdraftTest) {
+    TEST_F(TransferAccountAssetTest, Owerdraft) {
       addAllPerms();
       addAllPerms(account2->accountId(), "all2");
       addAsset();
@@ -1868,8 +1910,13 @@ namespace iroha {
       checkErrorCode(cmd_result, 8);
     }
 
-    TEST_F(TransferAccountAssetTest,
-           TransferAccountAssetInvalidOverflowDestination) {
+    /**
+     * @given command
+     * @when trying to transfer account asset, but final value overflows the
+     * destination's asset value
+     * @then account asset fails to be transferred
+     */
+    TEST_F(TransferAccountAssetTest, OverflowDestination) {
       addAllPerms();
       addAllPerms(account2->accountId(), "all2");
       addAsset();

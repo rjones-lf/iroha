@@ -76,11 +76,82 @@ namespace {
   }
 
   iroha::expected::Error<iroha::ametsuchi::CommandError> makeCommandError(
-      const std::string &command_name,
+      std::string command_name,
       const iroha::ametsuchi::CommandError::ErrorCodeType code,
       const std::string &error_extra = "") noexcept {
-    return iroha::expected::makeError(
-        iroha::ametsuchi::CommandError{command_name, code, error_extra});
+    return iroha::expected::makeError(iroha::ametsuchi::CommandError{
+        std::move(command_name), code, error_extra});
+  }
+
+  /**
+   * Parse the SQL error to turn it into an error code
+   * @param command_name of the failed command
+   * @param error - string error, which SQL gave out
+   * @return command_error structure
+   */
+  iroha::ametsuchi::CommandResult parseSqlError(
+      std::string command_name, const std::string &error) noexcept {
+    if ((error.find("Key (account_id)=") != std::string::npos
+         or error.find("Key (permittee_account_id)") != std::string::npos)
+        and error.find("is not present in table") != std::string::npos) {
+      // account, which is specified in query, is not found
+      return makeCommandError(std::move(command_name), 2);
+    }
+
+    if (error.find("Key (role_id)=") != std::string::npos
+        and error.find("is not present in table") != std::string::npos) {
+      // role, which is specified in query, is not found
+      return makeCommandError(std::move(command_name), 6);
+    }
+
+    if (error.find("Key (domain_id)=") != std::string::npos
+        and error.find("is not present in table") != std::string::npos) {
+      // domain, which is specified in query, is not found
+      return makeCommandError(std::move(command_name), 7);
+    }
+
+    if (error.find("Key (asset_id)=") != std::string::npos
+        and error.find("already exists") != std::string::npos) {
+      // asset, which is specified in query, already exists and thus cannot be
+      // created
+      return makeCommandError(std::move(command_name), 9);
+    }
+
+    if (error.find("Key (domain_id)=") != std::string::npos
+        and error.find("already exists") != std::string::npos) {
+      // domain, which is specified in query, already exists and thus cannot be
+      // created
+      return makeCommandError(std::move(command_name), 10);
+    }
+
+    if (error.find("Key (role_id)=") != std::string::npos
+        and error.find("already exists") != std::string::npos) {
+      // role, which is specified in query, already exists and thus cannot be
+      // created
+      return makeCommandError(std::move(command_name), 11);
+    }
+
+    if (error.find("Key (account_id, public_key)") != std::string::npos
+        and error.find("already exists") != std::string::npos) {
+      // account already has such signatory attached
+      return makeCommandError(std::move(command_name), 12);
+    }
+
+    if (error.find("Key (account_id)") != std::string::npos
+        and error.find("already exists") != std::string::npos) {
+      // account, which is specified in query, already exists and thus cannot be
+      // created
+      return makeCommandError(std::move(command_name), 13);
+    }
+
+    if (error.find("Key (default_role)") != std::string::npos
+        and error.find("is not present in table") != std::string::npos) {
+      // default role for the domain is not found
+      return makeCommandError(std::move(command_name), 14);
+    }
+
+    // parsing is not successful, return the general error
+    return makeCommandError(std::move(command_name), 1, error);
   }
 
   /**
@@ -95,66 +166,16 @@ namespace {
   iroha::ametsuchi::CommandResult executeQuery(
       soci::session &sql,
       const std::string &cmd,
-      const std::string &command_name) noexcept {
+      std::string command_name) noexcept {
     uint32_t result;
     try {
       sql << cmd, soci::into(result);
       if (result != 0) {
-        return makeCommandError(command_name, result);
+        return makeCommandError(std::move(command_name), result);
       }
       return {};
-    } catch (std::exception &e) {
-      // try to parse the SQL error to get an actual one
-      std::string exc_body = e.what();
-
-      if ((exc_body.find("Key (account_id)=") != std::string::npos
-           or exc_body.find("Key (permittee_account_id)") != std::string::npos)
-          and exc_body.find("is not present in table") != std::string::npos) {
-        return makeCommandError(command_name, 2);
-      }
-
-      if (exc_body.find("Key (role_id)=") != std::string::npos
-          and exc_body.find("is not present in table") != std::string::npos) {
-        return makeCommandError(command_name, 6);
-      }
-
-      if (exc_body.find("Key (domain_id)=") != std::string::npos
-          and exc_body.find("is not present in table") != std::string::npos) {
-        return makeCommandError(command_name, 7);
-      }
-
-      if (exc_body.find("Key (asset_id)=") != std::string::npos
-          and exc_body.find("already exists") != std::string::npos) {
-        return makeCommandError(command_name, 9);
-      }
-
-      if (exc_body.find("Key (domain_id)=") != std::string::npos
-          and exc_body.find("already exists") != std::string::npos) {
-        return makeCommandError(command_name, 10);
-      }
-
-      if (exc_body.find("Key (role_id)=") != std::string::npos
-          and exc_body.find("already exists") != std::string::npos) {
-        return makeCommandError(command_name, 11);
-      }
-
-      if (exc_body.find("Key (account_id, public_key)") != std::string::npos
-          and exc_body.find("already exists") != std::string::npos) {
-        return makeCommandError(command_name, 12);
-      }
-
-      if (exc_body.find("Key (account_id)") != std::string::npos
-          and exc_body.find("already exists") != std::string::npos) {
-        return makeCommandError(command_name, 13);
-      }
-
-      if (exc_body.find("Key (default_role)") != std::string::npos
-          and exc_body.find("is not present in table") != std::string::npos) {
-        return makeCommandError(command_name, 14);
-      }
-
-      // parsing is not successful, return the general error
-      return makeCommandError(command_name, 1, e.what());
+    } catch (const std::exception &e) {
+      return parseSqlError(std::move(command_name), e.what());
     }
   }
 
@@ -674,7 +695,7 @@ namespace iroha {
                                WHERE value >= 0 LIMIT 1) THEN 8
               WHEN NOT EXISTS (SELECT value FROM new_dest_value
                                WHERE value < 2::decimal ^ (256 - $5)
-                               LIMIT 1) THEN 11
+                               LIMIT 1) THEN 15
               ELSE 1
           END AS result)";
 
