@@ -195,8 +195,6 @@ class Irohad {
   std::shared_ptr<shared_model::interface::TransactionBatchFactory>
       transaction_batch_factory_;
 
-  std::shared_ptr<shared_model::interface::PermissionToString> perm_converter_;
-
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;
 

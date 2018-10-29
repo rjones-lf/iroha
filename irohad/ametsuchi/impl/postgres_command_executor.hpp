@@ -85,6 +85,19 @@ namespace iroha {
       std::shared_ptr<shared_model::interface::PermissionToString>
           perm_converter_;
 
+      std::string missRolePerm(
+          shared_model::interface::types::AccountIdType account,
+          shared_model::interface::permissions::Role perm);
+      std::string missGrantablePerm(
+          shared_model::interface::types::AccountIdType account,
+          shared_model::interface::types::AccountIdType permittee,
+          shared_model::interface::permissions::Grantable perm);
+      std::string missRoleOrGrantablePerm(
+          shared_model::interface::types::AccountIdType account,
+          shared_model::interface::types::AccountIdType permittee,
+          shared_model::interface::permissions::Role role_perm,
+          shared_model::interface::permissions::Grantable grantable_perm);
+
       // 14.09.18 nickaleks: IR-1708 Load SQL from separate files
       static const std::string addAssetQuantityBase;
       static const std::string addPeerBase;

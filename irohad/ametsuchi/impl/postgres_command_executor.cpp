@@ -168,45 +168,6 @@ namespace {
         .str();
   }
 
-  std::string missRolePerm(
-      shared_model::interface::types::AccountIdType account,
-      shared_model::interface::permissions::Role perm,
-      std::shared_ptr<shared_model::interface::PermissionToString>
-          perm_converter) {
-    return (boost::format("command validation failed: account %s"
-                          " does not have permission %s (role)")
-            % account % perm_converter->toString(perm))
-        .str();
-  }
-
-  std::string missGrantablePerm(
-      shared_model::interface::types::AccountIdType account,
-      shared_model::interface::types::AccountIdType permittee,
-      shared_model::interface::permissions::Grantable perm,
-      std::shared_ptr<shared_model::interface::PermissionToString>
-          perm_converter) {
-    return (boost::format(
-                "command validation failed: account %s"
-                " does not have permission %s (grantable) for account %s")
-            % account % perm_converter->toString(perm) % permittee)
-        .str();
-  }
-
-  std::string missRoleOrGrantablePerm(
-      shared_model::interface::types::AccountIdType account,
-      shared_model::interface::types::AccountIdType permittee,
-      shared_model::interface::permissions::Role role_perm,
-      shared_model::interface::permissions::Grantable grantable_perm,
-      std::shared_ptr<shared_model::interface::PermissionToString>
-          perm_converter) {
-    return (boost::format("command validation failed: account %s"
-                          " does not have permission %s (role)"
-                          " and permission %s (grantable) for account %s")
-            % account % perm_converter->toString(role_perm)
-            % perm_converter->toString(grantable_perm) % permittee)
-        .str();
-  }
-
   template <typename Format>
   void appendCommandName(const std::string &name,
                          Format &cmd,
@@ -708,8 +669,7 @@ namespace iroha {
           [&] {
             return missRolePerm(
                 creator_account_id_,
-                shared_model::interface::permissions::Role::kAddAssetQty,
-                perm_converter_);
+                shared_model::interface::permissions::Role::kAddAssetQty);
           },
           [] { return std::string("Account does not exist"); },
           [] {
@@ -734,8 +694,7 @@ namespace iroha {
           [&] {
             return missRolePerm(
                 creator_account_id_,
-                shared_model::interface::permissions::Role::kAddPeer,
-                perm_converter_);
+                shared_model::interface::permissions::Role::kAddPeer);
           },
           [&] {
             return (boost::format("failed to insert peer, public key: '%s', "
@@ -764,8 +723,7 @@ namespace iroha {
                 account_id,
                 shared_model::interface::permissions::Role::kAddSignatory,
                 shared_model::interface::permissions::Grantable::
-                    kAddMySignatory,
-                perm_converter_);
+                    kAddMySignatory);
           },
           [&] {
             return (boost::format(
@@ -810,8 +768,7 @@ namespace iroha {
           [&] {
             return missRolePerm(
                 creator_account_id_,
-                shared_model::interface::permissions::Role::kAppendRole,
-                perm_converter_);
+                shared_model::interface::permissions::Role::kAppendRole);
           },
           [&] {
             return (boost::format(
@@ -842,8 +799,7 @@ namespace iroha {
           [&] {
             return missRolePerm(
                 creator_account_id_,
-                shared_model::interface::permissions::Role::kCreateAccount,
-                perm_converter_);
+                shared_model::interface::permissions::Role::kCreateAccount);
           },
           [&] {
             return (boost::format("failed to insert account, "
@@ -888,8 +844,7 @@ namespace iroha {
           [&] {
             return missRolePerm(
                 creator_account_id_,
-                shared_model::interface::permissions::Role::kCreateDomain,
-                perm_converter_);
+                shared_model::interface::permissions::Role::kCreateDomain);
           },
           [&] {
             return (boost::format("failed to insert asset, asset id: '%s', "
@@ -913,8 +868,7 @@ namespace iroha {
           [&] {
             return missRolePerm(
                 creator_account_id_,
-                shared_model::interface::permissions::Role::kCreateDomain,
-                perm_converter_);
+                shared_model::interface::permissions::Role::kCreateDomain);
           },
           [&] {
             return (boost::format("failed to insert domain, domain id: '%s', "
@@ -956,8 +910,7 @@ namespace iroha {
           [&] {
             return missRolePerm(
                 creator_account_id_,
-                shared_model::interface::permissions::Role::kCreateRole,
-                perm_converter_);
+                shared_model::interface::permissions::Role::kCreateRole);
           },
           [&] {
             return (boost::format("failed to insert role: '%s'") % role_id)
@@ -980,8 +933,7 @@ namespace iroha {
           [&] {
             return missRolePerm(
                 creator_account_id_,
-                shared_model::interface::permissions::Role::kDetachRole,
-                perm_converter_);
+                shared_model::interface::permissions::Role::kDetachRole);
           },
           [&] {
             return (boost::format(
@@ -1014,8 +966,7 @@ namespace iroha {
           [&] {
             return missGrantablePerm(creator_account_id_,
                                      permittee_account_id,
-                                     command.permissionName(),
-                                     perm_converter_);
+                                     command.permissionName());
           },
           [&] {
             return (boost::format(
@@ -1080,8 +1031,7 @@ namespace iroha {
                 command.accountId(),
                 shared_model::interface::permissions::Role::kRemoveSignatory,
                 shared_model::interface::permissions::Grantable::
-                    kRemoveMySignatory,
-                perm_converter_);
+                    kRemoveMySignatory);
           },
       };
       return executeQuery(sql_, cmd.str(), "RemoveSignatory", message_gen);
@@ -1112,8 +1062,7 @@ namespace iroha {
           [&] {
             return missGrantablePerm(creator_account_id_,
                                      command.accountId(),
-                                     command.permissionName(),
-                                     perm_converter_);
+                                     command.permissionName());
           },
           [&] {
             return (boost::format(
@@ -1158,8 +1107,7 @@ namespace iroha {
                 command.accountId(),
                 shared_model::interface::permissions::Role::kSetDetail,
                 shared_model::interface::permissions::Grantable::
-                    kSetMyAccountDetail,
-                perm_converter_);
+                    kSetMyAccountDetail);
           },
           [&] {
             return (boost::format(
@@ -1202,8 +1150,7 @@ namespace iroha {
                 creator_account_id_,
                 account_id,
                 shared_model::interface::permissions::Role::kSetQuorum,
-                shared_model::interface::permissions::Grantable::kSetMyQuorum,
-                perm_converter_);
+                shared_model::interface::permissions::Grantable::kSetMyQuorum);
           },
           [&] {
             return (boost::format("failed to update account, account id: '%s', "
@@ -1230,8 +1177,7 @@ namespace iroha {
           [&] {
             return missRolePerm(
                 creator_account_id_,
-                shared_model::interface::permissions::Role::kSubtractAssetQty,
-                perm_converter_);
+                shared_model::interface::permissions::Role::kSubtractAssetQty);
           },
           [&] { return "Account does not exist with given precision"; },
           [&] { return "Asset with given precision does not exist"; },
@@ -1598,5 +1544,38 @@ namespace iroha {
         prepareStatement(sql, st);
       }
     };
+
+    std::string PostgresCommandExecutor::missRolePerm(
+        shared_model::interface::types::AccountIdType account,
+        shared_model::interface::permissions::Role perm) {
+      return (boost::format("command validation failed: account %s"
+                            " does not have permission %s (role)")
+              % account % perm_converter_->toString(perm))
+          .str();
+    }
+
+    std::string PostgresCommandExecutor::missGrantablePerm(
+        shared_model::interface::types::AccountIdType account,
+        shared_model::interface::types::AccountIdType permittee,
+        shared_model::interface::permissions::Grantable perm) {
+      return (boost::format(
+                  "command validation failed: account %s"
+                  " does not have permission %s (grantable) for account %s")
+              % account % perm_converter_->toString(perm) % permittee)
+          .str();
+    }
+
+    std::string PostgresCommandExecutor::missRoleOrGrantablePerm(
+        shared_model::interface::types::AccountIdType account,
+        shared_model::interface::types::AccountIdType permittee,
+        shared_model::interface::permissions::Role role_perm,
+        shared_model::interface::permissions::Grantable grantable_perm) {
+      return (boost::format("command validation failed: account %s"
+                            " does not have permission %s (role)"
+                            " and permission %s (grantable) for account %s")
+              % account % perm_converter_->toString(role_perm)
+              % perm_converter_->toString(grantable_perm) % permittee)
+          .str();
+    }
   }  // namespace ametsuchi
 }  // namespace iroha
