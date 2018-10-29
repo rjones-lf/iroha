@@ -8,11 +8,23 @@
 #include <gtest/gtest.h>
 
 #include "framework/batch_helper.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha::ordering::cache;
+using ::testing::ByMove;
 using ::testing::ElementsAre;
 using ::testing::IsEmpty;
+using ::testing::NiceMock;
+using ::testing::Return;
+using ::testing::ReturnRef;
 using ::testing::UnorderedElementsAre;
+
+auto createBatchWithHash(const shared_model::interface::types::HashType &hash) {
+  auto res = std::make_shared<NiceMock<MockTransactionBatch>>();
+
+  ON_CALL(*res, reducedHash()).WillByDefault(ReturnRef(hash));
+  return res;
+}
 
 /**
  * @given empty og cache
@@ -22,12 +34,11 @@ using ::testing::UnorderedElementsAre;
 TEST(OnDemandCacheTest, TestAddToBack) {
   OnDemandCache cache;
 
-  auto now = iroha::time::now();
+  shared_model::interface::types::HashType hash1("hash1");
+  auto batch1 = createBatchWithHash(hash1);
 
-  auto batch1 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(1, now));
-  auto batch2 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(1, now + 1));
+  shared_model::interface::types::HashType hash2("hash2");
+  auto batch2 = createBatchWithHash(hash2);
 
   cache.addToBack({batch1, batch2});
 
@@ -42,14 +53,13 @@ TEST(OnDemandCacheTest, TestAddToBack) {
 TEST(OnDemandCacheTest, TestUp) {
   OnDemandCache cache;
 
-  auto now = iroha::time::now();
+  shared_model::interface::types::HashType hash1("hash1");
+  shared_model::interface::types::HashType hash2("hash2");
+  shared_model::interface::types::HashType hash3("hash3");
 
-  auto batch1 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(1, now));
-  auto batch2 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(1, now + 1));
-  auto batch3 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(1, now + 2));
+  auto batch1 = createBatchWithHash(hash1);
+  auto batch2 = createBatchWithHash(hash2);
+  auto batch3 = createBatchWithHash(hash3);
 
   cache.addToBack({batch1});
   cache.up();
@@ -99,8 +109,8 @@ TEST(OnDemandCacheTest, TestUp) {
 TEST(OnDemandCache, TestClearFrontAndGet) {
   OnDemandCache cache;
 
-  auto batch1 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(1));
+  shared_model::interface::types::HashType hash("hash");
+  auto batch1 = createBatchWithHash(hash);
 
   cache.addToBack({batch1});
   ASSERT_THAT(cache.tail(), ElementsAre(batch1));
@@ -141,12 +151,13 @@ TEST(OnDemandCache, TestClearFrontAndGet) {
 TEST(OnDemandCache, Remove) {
   OnDemandCache cache;
 
-  auto batch1 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(1));
-  auto batch2 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(1));
-  auto batch3 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(1));
+  shared_model::interface::types::HashType hash1("hash1");
+  shared_model::interface::types::HashType hash2("hash2");
+  shared_model::interface::types::HashType hash3("hash3");
+
+  auto batch1 = createBatchWithHash(hash1);
+  auto batch2 = createBatchWithHash(hash2);
+  auto batch3 = createBatchWithHash(hash3);
 
   cache.addToBack({batch1, batch2, batch3});
   cache.up();

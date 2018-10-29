@@ -44,8 +44,6 @@ struct MockTransaction : public shared_model::interface::Transaction {
                      const shared_model::interface::types::AccountIdType &());
   MOCK_CONST_METHOD0(quorum, shared_model::interface::types::QuorumType());
   MOCK_CONST_METHOD0(commands, CommandsType());
-  MOCK_CONST_METHOD0(reduced_payload,
-                     const shared_model::interface::types::BlobType &());
   MOCK_CONST_METHOD0(
       batch_meta,
       boost::optional<std::shared_ptr<shared_model::interface::BatchMeta>>());
@@ -65,6 +63,28 @@ struct MockTransaction : public shared_model::interface::Transaction {
   MOCK_CONST_METHOD0(
       batchMeta,
       boost::optional<std::shared_ptr<shared_model::interface::BatchMeta>>());
+};
+
+struct MockTransactionBatch : public shared_model::interface::TransactionBatch {
+  MOCK_CONST_METHOD0(
+      transactions,
+      const shared_model::interface::types::SharedTxsCollectionType &());
+  MOCK_CONST_METHOD0(reducedHash,
+                     const shared_model::interface::types::HashType &());
+  MOCK_CONST_METHOD0(hasAllSignatures, bool());
+  MOCK_METHOD3(addSignature,
+               bool(size_t,
+                    const shared_model::crypto::Signed &,
+                    const shared_model::crypto::PublicKey &));
+  MOCK_CONST_METHOD1(Equals,
+                     bool(const shared_model::interface::TransactionBatch &));
+  virtual bool operator==(
+      const shared_model::interface::TransactionBatch &rhs) const override {
+    return Equals(rhs);
+  }
+  MOCK_CONST_METHOD1(NotEquals,
+                     bool(const shared_model::interface::TransactionBatch &));
+  MOCK_CONST_METHOD0(clone, MockTransactionBatch *());
 };
 
 struct MockSignature : public shared_model::interface::Signature {
