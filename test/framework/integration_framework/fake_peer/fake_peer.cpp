@@ -78,7 +78,7 @@ namespace integration_framework {
         yac_network_notifier_(std::make_shared<YacNetworkNotifier>()),
         yac_crypto_(std::make_shared<iroha::consensus::yac::CryptoProviderImpl>(
             *keypair_, common_objects_factory)) {
-    yac_network_notifier_->subscribe(yac_transport_);
+    yac_transport_->subscribe(yac_network_notifier_);
     log_ = logger::log(
         "IntegrationTestFramework "
         "(fake peer at "

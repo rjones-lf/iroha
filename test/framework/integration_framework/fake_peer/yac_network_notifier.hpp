@@ -13,7 +13,6 @@
 namespace iroha {
   namespace consensus {
     namespace yac {
-      class NetworkImpl;
       struct VoteMessage;
     }  // namespace yac
   }  // namespace consensus
@@ -27,9 +26,6 @@ namespace integration_framework {
    public:
     using StateMessage = std::vector<iroha::consensus::yac::VoteMessage>;
     using StateMessagePtr = std::shared_ptr<const StateMessage>;
-
-    void subscribe(const std::shared_ptr<iroha::consensus::yac::NetworkImpl>
-                       &yac_transport);
 
     void onState(StateMessage state) override;
 
