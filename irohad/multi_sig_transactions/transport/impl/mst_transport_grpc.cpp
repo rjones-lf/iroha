@@ -16,9 +16,16 @@
 
 using namespace iroha::network;
 
+using iroha::ConstRefState;
+
+void sendStateAsyncImpl(
+    const shared_model::interface::Peer &to,
+    ConstRefState state,
+    const std::string &sender_key,
+    AsyncGrpcClient<google::protobuf::Empty> &async_call);
+
 MstTransportGrpc::MstTransportGrpc(
-    std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
-        async_call,
+    std::shared_ptr<AsyncGrpcClient<google::protobuf::Empty>> async_call,
     std::shared_ptr<TransportFactoryType> transaction_factory,
     std::shared_ptr<shared_model::interface::TransactionBatchParser>
         batch_parser,
@@ -112,13 +119,29 @@ void MstTransportGrpc::subscribe(
 void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
                                  ConstRefState providing_state) {
   async_call_->log_->info("Propagate MstState to peer {}", to.address());
+  sendStateAsyncImpl(to, providing_state, my_key_, *async_call_);
+}
+
+void iroha::network::sendStateAsync(
+    const shared_model::interface::Peer &to,
+    ConstRefState state,
+    const shared_model::crypto::PublicKey &sender_key,
+    AsyncGrpcClient<google::protobuf::Empty> &async_call) {
+  sendStateAsyncImpl(
+      to, state, shared_model::crypto::toBinaryString(sender_key), async_call);
+}
+
+void sendStateAsyncImpl(const shared_model::interface::Peer &to,
+                        ConstRefState state,
+                        const std::string &sender_key,
+                        AsyncGrpcClient<google::protobuf::Empty> &async_call) {
   std::unique_ptr<transport::MstTransportGrpc::StubInterface> client =
       transport::MstTransportGrpc::NewStub(grpc::CreateChannel(
           to.address(), grpc::InsecureChannelCredentials()));
 
   transport::MstState protoState;
-  protoState.set_source_peer_key(my_key_);
-  for (auto &batch : providing_state.getBatches()) {
+  protoState.set_source_peer_key(sender_key);
+  for (auto &batch : state.getBatches()) {
     for (auto &tx : batch->transactions()) {
       // TODO (@l4l) 04/03/18 simplify with IR-1040
       *protoState.add_transactions() =
@@ -127,7 +150,7 @@ void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
     }
   }
 
-  async_call_->Call([&](auto context, auto cq) {
+  async_call.Call([&](auto context, auto cq) {
     return client->AsyncSendState(context, protoState, cq);
   });
 }

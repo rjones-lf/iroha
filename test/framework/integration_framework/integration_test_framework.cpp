@@ -33,7 +33,6 @@
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/validators/always_valid_validators.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
-#include "network/impl/async_grpc_client.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 
 using namespace shared_model::crypto;
@@ -94,6 +93,7 @@ namespace integration_framework {
                                                         dbname)),
         command_client_("127.0.0.1", torii_port_),
         query_client_("127.0.0.1", torii_port_),
+        async_call_(std::make_shared<AsyncCall>()),
         proposal_waiting(proposal_waiting),
         block_waiting(block_waiting),
         tx_response_waiting(tx_response_waiting),
@@ -202,14 +202,6 @@ namespace integration_framework {
                   "Failed to create peer object for current irohad instance. "
                   + error.error));
             });
-
-    mst_transport_ = std::make_shared<iroha::network::MstTransportGrpc>(
-        std::make_shared<
-            iroha::network::AsyncGrpcClient<google::protobuf::Empty>>(),
-        transaction_factory_,
-        batch_parser_,
-        transaction_batch_factory_,
-        keypair.publicKey());
 
     iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
@@ -441,7 +433,8 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::sendMstState(
       const shared_model::crypto::PublicKey &src_key,
       const iroha::MstState &mst_state) {
-    mst_transport_->sendState(*this_peer_, mst_state);
+    iroha::network::sendStateAsync(
+        *this_peer_, mst_state, src_key, *async_call_);
     return *this;
   }
 
