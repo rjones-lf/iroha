@@ -9,6 +9,7 @@
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
+#include "ametsuchi/temporary_wsv.hpp"
 #include "ametsuchi/mutable_storage.hpp"
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -85,7 +86,7 @@ void validateAccountAsset(W &&wsv,
   ASSERT_TRUE(account_asset);
   ASSERT_EQ((*account_asset)->accountId(), account);
   ASSERT_EQ((*account_asset)->assetId(), asset);
-  ASSERT_EQ((*account_asset)->balance(), amount);
+  ASSERT_EQ((*account_asset)->balance().toString(), amount.toString());
 }
 
 /**
@@ -606,8 +607,7 @@ TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
       },
       [](const auto &) { FAIL() << "Mutable storage cannot be created"; });
 
-  mutable_storage->apply(
-      expected_block);
+  mutable_storage->apply(expected_block);
 
   storage->commit(std::move(mutable_storage));
 
@@ -808,4 +808,74 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
 
   res = storage->getWsvQuery()->getDomain("test");
   EXPECT_TRUE(res);
+}
+
+/**
+ * @given TemporaryWSV with several transactions
+ * @when block is prepared for two phase commit
+ * @then state of the ledger remains unchanged
+ */
+TEST_F(AmetsuchiTest, PrepareBlockNoStateChanged) {
+  using framework::expected::val;
+  std::string default_domain = "test";
+  std::string default_role = "admin";
+  auto key =
+      shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+  auto genesis_tx = shared_model::proto::TransactionBuilder()
+                        .creatorAccountId("admin@test")
+                        .createdTime(iroha::time::now())
+                        .quorum(1)
+                        .createRole(default_role,
+                                    {Role::kCreateDomain,
+                                     Role::kCreateAccount,
+                                     Role::kAddAssetQty,
+                                     Role::kAddPeer,
+                                     Role::kReceive,
+                                     Role::kTransfer})
+                        .createDomain(default_domain, default_role)
+                        .createAccount("admin", "test", key.publicKey())
+                        .createAsset("coin", default_domain, 2)
+                        .addAssetQuantity("coin#test", "5.00")
+                        .build()
+                        .signAndAddSignature(key)
+                        .finish();
+
+  auto genesis_block =
+      TestBlockBuilder()
+          .transactions(
+              std::vector<shared_model::proto::Transaction>{genesis_tx})
+          .height(1)
+          .prevHash(shared_model::crypto::Sha3_256::makeHash(
+              shared_model::crypto::Blob("")))
+          .createdTime(iroha::time::now())
+          .build();
+
+  apply(storage, genesis_block);
+
+  validateAccountAsset(storage->getWsvQuery(),
+                       "admin@test",
+                       "coin#test",
+                       shared_model::interface::Amount("5.00"));
+
+  auto temp_wsv =
+      std::move(framework::expected::val(storage->createTemporaryWsv())->value);
+
+  auto tx = shared_model::proto::TransactionBuilder()
+                .creatorAccountId("admin@test")
+                .createdTime(iroha::time::now())
+                .quorum(1)
+                .addAssetQuantity("coin#test", "5.00")
+                .build()
+                .signAndAddSignature(key)
+                .finish();
+
+  auto result = temp_wsv->apply(tx);
+  ASSERT_FALSE(framework::expected::err(result));
+  storage->prepareBlock(*temp_wsv);
+  temp_wsv.reset();
+
+  validateAccountAsset(storage->getWsvQuery(),
+                       "admin@test",
+                       "coin#test",
+                       shared_model::interface::Amount("5.00"));
 }
