@@ -48,7 +48,7 @@ class BasicMstPropagationFixture : public AcceptanceFixture {
         fake_peers_futures.begin(),
         fake_peers_futures.end(),
         std::back_inserter(fake_peers_),
-        [this](auto &fake_peer_future) {
+        [](auto &fake_peer_future) {
           assert(fake_peer_future.valid() && "fake peer must be ready");
           return fake_peer_future.get();
         });
