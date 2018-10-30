@@ -78,11 +78,12 @@ namespace iroha {
        * Publish status of transaction
        * @param tx_status to be published
        * @param hash of that transaction
-       * @param error, which can appear during validation
+       * @param cmd_error, which can appear during validation
        */
       void publishStatus(TxStatusType tx_status,
                          const shared_model::crypto::Hash &hash,
-                         const std::string &error = "") const;
+                         const validation::CommandError &cmd_error =
+                             validation::CommandError{}) const;
 
       /**
        * Publish kEnoughSignaturesCollected status for each transaction in

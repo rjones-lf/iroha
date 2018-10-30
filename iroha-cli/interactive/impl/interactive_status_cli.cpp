@@ -151,8 +151,8 @@ namespace iroha_cli {
       std::string message;
       try {
         message = userMessageMap.at(status);
-        if (not answer.error_message().empty()) {
-          message += " " + answer.error_message();
+        if (not answer.err_or_cmd_name().empty()) {
+          message += " error '" + answer.err_or_cmd_name() + "'";
         }
       } catch (const std::out_of_range &e) {
         message =

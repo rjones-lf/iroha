@@ -25,8 +25,19 @@ namespace shared_model {
       using TransactionHashType =
           const TransactionResponse::TransactionHashType &;
 
-      /// type of error attached to \class TransactionResponse instance
-      using ErrorMessageType = const TransactionResponse::ErrorMessageType &;
+      /// type of failed command name attached to \class TransactionResponse
+      /// instance
+      using StatelessErrorOrFailedCommandNameType =
+          const TransactionResponse::StatelessErrorOrFailedCommandNameType &;
+
+      /// type of failed command index attached to \class TransactionResponse
+      /// instance
+      using FailedCommandIndexType =
+          TransactionResponse::FailedCommandIndexType;
+
+      /// type of error code, with which command failed, attached to \class
+      /// TransactionResponse instance
+      using ErrorCodeType = TransactionResponse::ErrorCodeType;
 
       // ------------------------| Stateless statuses |-------------------------
 
@@ -34,45 +45,72 @@ namespace shared_model {
        * Creates stateless failed transaction status
        * @param
        */
-      virtual FactoryReturnType makeStatelessFail(TransactionHashType,
-                                                  ErrorMessageType) = 0;
+      virtual FactoryReturnType makeStatelessFail(
+          TransactionHashType,
+          StatelessErrorOrFailedCommandNameType,
+          FailedCommandIndexType,
+          ErrorCodeType) = 0;
 
       /// Creates stateless valid transaction status
-      virtual FactoryReturnType makeStatelessValid(TransactionHashType,
-                                                   ErrorMessageType) = 0;
+      virtual FactoryReturnType makeStatelessValid(
+          TransactionHashType,
+          StatelessErrorOrFailedCommandNameType,
+          FailedCommandIndexType,
+          ErrorCodeType) = 0;
 
       // ------------------------| Stateful statuses |--------------------------
 
       /// Creates stateful failed transaction status
-      virtual FactoryReturnType makeStatefulFail(TransactionHashType,
-                                                 ErrorMessageType) = 0;
+      virtual FactoryReturnType makeStatefulFail(
+          TransactionHashType,
+          StatelessErrorOrFailedCommandNameType,
+          FailedCommandIndexType,
+          ErrorCodeType) = 0;
       /// Creates stateful valid transaction status
-      virtual FactoryReturnType makeStatefulValid(TransactionHashType,
-                                                  ErrorMessageType) = 0;
+      virtual FactoryReturnType makeStatefulValid(
+          TransactionHashType,
+          StatelessErrorOrFailedCommandNameType,
+          FailedCommandIndexType,
+          ErrorCodeType) = 0;
 
       // --------------------------| Final statuses |---------------------------
 
       /// Creates committed transaction status
-      virtual FactoryReturnType makeCommitted(TransactionHashType,
-                                              ErrorMessageType) = 0;
+      virtual FactoryReturnType makeCommitted(
+          TransactionHashType,
+          StatelessErrorOrFailedCommandNameType,
+          FailedCommandIndexType,
+          ErrorCodeType) = 0;
 
       /// Creates rejected transaction status
-      virtual FactoryReturnType makeRejected(TransactionHashType,
-                                             ErrorMessageType) = 0;
+      virtual FactoryReturnType makeRejected(
+          TransactionHashType,
+          StatelessErrorOrFailedCommandNameType,
+          FailedCommandIndexType,
+          ErrorCodeType) = 0;
 
       // --------------------------| Rest statuses |----------------------------
 
       /// Creates transaction expired status
-      virtual FactoryReturnType makeMstExpired(TransactionHashType,
-                                               ErrorMessageType) = 0;
+      virtual FactoryReturnType makeMstExpired(
+          TransactionHashType,
+          StatelessErrorOrFailedCommandNameType,
+          FailedCommandIndexType,
+          ErrorCodeType) = 0;
 
       /// Creates transaction is not received status
-      virtual FactoryReturnType makeNotReceived(TransactionHashType,
-                                                ErrorMessageType) = 0;
+      virtual FactoryReturnType makeNotReceived(
+          TransactionHashType,
+          StatelessErrorOrFailedCommandNameType,
+          FailedCommandIndexType,
+          ErrorCodeType) = 0;
 
       /// Creates status which shows that enough signatures were collected
       virtual FactoryReturnType makeEnoughSignaturesCollected(
-          TransactionHashType, ErrorMessageType) = 0;
+          TransactionHashType,
+          StatelessErrorOrFailedCommandNameType,
+          FailedCommandIndexType,
+          ErrorCodeType) = 0;
 
       virtual ~TxStatusFactory() = default;
     };

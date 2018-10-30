@@ -18,36 +18,56 @@ namespace shared_model {
       // ------------------------| Stateless statuses |-------------------------
 
       FactoryReturnType makeStatelessFail(TransactionHashType,
-                                          ErrorMessageType) override;
+                                          StatelessErrorOrFailedCommandNameType,
+                                          FailedCommandIndexType,
+                                          ErrorCodeType) override;
 
-      FactoryReturnType makeStatelessValid(TransactionHashType,
-                                           ErrorMessageType) override;
+      FactoryReturnType makeStatelessValid(
+          TransactionHashType,
+          StatelessErrorOrFailedCommandNameType,
+          FailedCommandIndexType,
+          ErrorCodeType) override;
 
       // ------------------------| Stateful statuses |--------------------------
 
       FactoryReturnType makeStatefulFail(TransactionHashType,
-                                         ErrorMessageType) override;
+                                         StatelessErrorOrFailedCommandNameType,
+                                         FailedCommandIndexType,
+                                         ErrorCodeType) override;
       FactoryReturnType makeStatefulValid(TransactionHashType,
-                                          ErrorMessageType) override;
+                                          StatelessErrorOrFailedCommandNameType,
+                                          FailedCommandIndexType,
+                                          ErrorCodeType) override;
 
       // --------------------------| Final statuses |---------------------------
 
       FactoryReturnType makeCommitted(TransactionHashType,
-                                      ErrorMessageType) override;
+                                      StatelessErrorOrFailedCommandNameType,
+                                      FailedCommandIndexType,
+                                      ErrorCodeType) override;
 
       FactoryReturnType makeRejected(TransactionHashType,
-                                     ErrorMessageType) override;
+                                     StatelessErrorOrFailedCommandNameType,
+                                     FailedCommandIndexType,
+                                     ErrorCodeType) override;
 
       // --------------------------| Rest statuses |----------------------------
 
       FactoryReturnType makeMstExpired(TransactionHashType,
-                                       ErrorMessageType) override;
+                                       StatelessErrorOrFailedCommandNameType,
+                                       FailedCommandIndexType,
+                                       ErrorCodeType) override;
 
       FactoryReturnType makeNotReceived(TransactionHashType,
-                                        ErrorMessageType) override;
+                                        StatelessErrorOrFailedCommandNameType,
+                                        FailedCommandIndexType,
+                                        ErrorCodeType) override;
 
       FactoryReturnType makeEnoughSignaturesCollected(
-          TransactionHashType, ErrorMessageType) override;
+          TransactionHashType,
+          StatelessErrorOrFailedCommandNameType,
+          FailedCommandIndexType,
+          ErrorCodeType) override;
     };
   }  // namespace proto
 }  // namespace shared_model

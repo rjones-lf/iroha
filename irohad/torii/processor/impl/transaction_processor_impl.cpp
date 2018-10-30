@@ -55,10 +55,10 @@ namespace iroha {
             const auto &errors = proposal_and_errors->second;
             std::lock_guard<std::mutex> lock(notifier_mutex_);
             for (const auto &tx_error : errors) {
-              auto error_msg = composeErrorMessage(tx_error);
-              log_->info(error_msg);
-              this->publishStatus(
-                  TxStatusType::kStatefulFailed, tx_error.second, error_msg);
+              log_->info(composeErrorMessage(tx_error));
+              this->publishStatus(TxStatusType::kStatefulFailed,
+                                  tx_error.second,
+                                  tx_error.first);
             }
             // notify about success txs
             for (const auto &successful_tx :
@@ -136,11 +136,13 @@ namespace iroha {
     void TransactionProcessorImpl::publishStatus(
         TxStatusType tx_status,
         const shared_model::crypto::Hash &hash,
-        const std::string &error) const {
+        const validation::CommandError &cmd_error) const {
       auto builder =
           shared_model::builder::DefaultTransactionStatusBuilder().txHash(hash);
-      if (not error.empty()) {
-        builder = builder.errorMsg(error);
+      if (not cmd_error.name.empty()) {
+        builder = builder.statelessErrorOrCmdName(cmd_error.name)
+                      .failedCmdIndex(cmd_error.index)
+                      .errorCode(cmd_error.error_code);
       }
       switch (tx_status) {
         case TxStatusType::kStatelessFailed: {
