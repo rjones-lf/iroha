@@ -61,7 +61,7 @@ namespace integration_framework {
       uint32_t mst_gossip_amount_per_once) {
     BOOST_ASSERT_MSG(
         !instance_,
-        "Gossip propafation params must be set before Irohad is started!");
+        "Gossip propagation params must be set before Irohad is started!");
     opt_mst_gossip_params_ = iroha::GossipPropagationStrategyParams{
         .period = mst_gossip_emitting_period,
         .amount = mst_gossip_amount_per_once};
