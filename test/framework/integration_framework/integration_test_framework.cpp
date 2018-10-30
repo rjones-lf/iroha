@@ -101,8 +101,7 @@ namespace integration_framework {
         common_objects_factory_(
             std::make_shared<AlwaysValidProtoCommonObjectsFactory>()),
         transaction_factory_(std::make_shared<ProtoTransactionFactory>(
-            std::unique_ptr<AbstractTransactionValidator>(
-                new AlwaysValidTransactionValidator()))),
+            std::make_unique<AlwaysValidTransactionValidator>())),
         batch_parser_(std::make_shared<
                       shared_model::interface::TransactionBatchParserImpl>()),
         transaction_batch_factory_(
