@@ -15,7 +15,7 @@ using namespace shared_model::interface::permissions;
 using ::testing::_;
 using ::testing::Invoke;
 
-static constexpr std::chrono::milliseconds kMstStateWaitingTime(10000);
+static constexpr std::chrono::seconds kMstStateWaitingTime(10);
 
 class BasicMstPropagationFixture : public AcceptanceFixture {
  public:
