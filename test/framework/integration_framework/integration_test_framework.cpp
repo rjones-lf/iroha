@@ -51,15 +51,17 @@ using AlwaysValidTransactionValidator =
     shared_model::validation::AlwaysValidModelValidator<
         shared_model::interface::Transaction>;
 
-static std::string kLocalHost = "127.0.0.1";
-static constexpr size_t kDefaultToriiPort = 11501;
-static constexpr size_t kDefaultInternalPort = 50541;
+namespace {
+  std::string kLocalHost = "127.0.0.1";
+  constexpr size_t kDefaultToriiPort = 11501;
+  constexpr size_t kDefaultInternalPort = 50541;
 
-template <size_t default_port>
-static size_t getNextPort() {
-  static size_t increment = 0;
-  return default_port + (++increment);
-}
+  template <size_t default_port>
+  size_t getNextPort() {
+    static size_t increment = 0;
+    return default_port + (++increment);
+  }
+}  // namespace
 
 namespace integration_framework {
 
