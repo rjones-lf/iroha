@@ -21,7 +21,7 @@
 #include "postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/postgres_block_index.hpp"
 
-const std::string prepared_block_name = "prepared_block4";
+const std::string prepared_block_name = "prepared_block6";
 
 namespace {
   void prepareStatements(soci::connection_pool &connections, size_t pool_size) {
@@ -88,6 +88,10 @@ namespace iroha {
       }
 
       auto sql = std::make_unique<soci::session>(*connection_);
+      if (block_is_prepared) {
+        *sql << "ROLLBACK PREPARED '" + prepared_block_name + "';";
+        block_is_prepared = false;
+      }
       auto block_result = getBlockQuery()->getTopBlock();
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
           std::make_unique<MutableStorageImpl>(
