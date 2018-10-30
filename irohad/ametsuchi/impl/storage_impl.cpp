@@ -21,7 +21,7 @@
 #include "postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/postgres_block_index.hpp"
 
-const std::string prepared_block_name = "prepared_block6";
+const std::string prepared_block_name = "prepared_block7";
 
 namespace {
   void prepareStatements(soci::connection_pool &connections, size_t pool_size) {
