@@ -147,7 +147,8 @@ namespace integration_framework {
               signature_with_pubkey = std::move(sig.value);
             },
             [this](iroha::expected::Error<std::string> &reason) {
-              log_->error("Cannot build signature: {}", reason.error);
+              BOOST_THROW_EXCEPTION(std::runtime_error(
+                  "Cannot build signature: " + reason.error));
             });
     return signature_with_pubkey;
   }
