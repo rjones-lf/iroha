@@ -29,9 +29,8 @@ using namespace framework::test_subscriber;
 
 using ::testing::_;
 using ::testing::A;
+using ::testing::Invoke;
 using ::testing::Return;
-using ::testing::ReturnArg;
-using ::testing::ReturnRef;
 
 using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
@@ -131,7 +130,8 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
                 .finish();
   std::vector<shared_model::proto::Transaction> txs = {tx, tx};
 
-  auto validation_result = new iroha::validation::VerifiedProposalAndErrors();
+  auto validation_result =
+      std::make_unique<iroha::validation::VerifiedProposalAndErrors>();
   validation_result->verified_proposal =
       std::make_unique<shared_model::proto::Proposal>(
           shared_model::proto::ProposalBuilder()
@@ -147,8 +147,10 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
       .WillOnce(Return(expected::makeValue(wBlock(clone(block)))));
 
   EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(block.height()));
-  EXPECT_CALL(*validator, validateProxy(_, _))
-      .WillOnce(Return(validation_result));
+  EXPECT_CALL(*validator, validate(_, _))
+      .WillOnce(Invoke([&validation_result](const auto &p, auto &v) {
+        return std::move(validation_result);
+      }));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
@@ -190,7 +192,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   EXPECT_CALL(*query, getTopBlock())
       .WillOnce(Return(expected::makeError("no block")));
 
-  EXPECT_CALL(*validator, validateProxy(_, _)).Times(0);
+  EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
@@ -227,7 +229,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   EXPECT_CALL(*query, getTopBlock())
       .WillOnce(Return(expected::makeValue(wBlock(clone(block)))));
 
-  EXPECT_CALL(*validator, validateProxy(_, _)).Times(0);
+  EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
@@ -284,14 +286,17 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
           .createdTime(iroha::time::now())
           .transactions(txs)
           .build());
-  auto verified_proposal_and_errors = new VerifiedProposalAndErrors();
+  auto verified_proposal_and_errors =
+      std::make_unique<VerifiedProposalAndErrors>();
+  const shared_model::interface::types::HeightType verified_proposal_height = 2;
+  const std::vector<shared_model::proto::Transaction>
+      verified_proposal_transactions{txs[0]};
   verified_proposal_and_errors->verified_proposal =
       std::make_unique<shared_model::proto::Proposal>(
           shared_model::proto::ProposalBuilder()
-              .height(2)
+              .height(verified_proposal_height)
               .createdTime(iroha::time::now())
-              .transactions(
-                  std::vector<shared_model::proto::Transaction>{txs[0]})
+              .transactions(verified_proposal_transactions)
               .build());
   for (int i = 0; i < kNumTransactions - 1; ++i) {
     std::string hash_num = std::to_string(i);
@@ -308,8 +313,10 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
 
   EXPECT_CALL(*query, getTopBlockHeight()).WillOnce(Return(2));
 
-  EXPECT_CALL(*validator, validateProxy(_, _))
-      .WillOnce(Return(verified_proposal_and_errors));
+  EXPECT_CALL(*validator, validate(_, _))
+      .WillOnce(Invoke([&verified_proposal_and_errors](const auto &p, auto &v) {
+        return std::move(verified_proposal_and_errors);
+      }));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
       .WillOnce(Return(rxcpp::observable<>::empty<
@@ -324,16 +331,14 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
   auto proposal_wrapper =
       make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
   proposal_wrapper.subscribe(
-      [verified_proposal_and_errors](auto verified_proposal_) {
+      [&](auto verified_proposal_) {
         // assure that txs in verified proposal do not include failed ones
         ASSERT_EQ(verified_proposal_->verified_proposal->height(),
-                  verified_proposal_and_errors->verified_proposal->height());
-        ASSERT_EQ(
-            verified_proposal_->verified_proposal->transactions(),
-            verified_proposal_and_errors->verified_proposal->transactions());
-        ASSERT_TRUE(
-            verified_proposal_->rejected_transactions.size()
-            == verified_proposal_and_errors->rejected_transactions.size());
+                  verified_proposal_height);
+        ASSERT_EQ(verified_proposal_->verified_proposal->transactions(),
+                  verified_proposal_transactions);
+        ASSERT_TRUE(verified_proposal_->rejected_transactions.size()
+                    == kNumTransactions - 1);
       });
 
   simulator->process_proposal(*proposal);

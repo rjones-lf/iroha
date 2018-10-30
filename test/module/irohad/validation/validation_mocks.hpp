@@ -29,18 +29,10 @@ namespace iroha {
   namespace validation {
     class MockStatefulValidator : public validation::StatefulValidator {
      public:
-      virtual std::unique_ptr<VerifiedProposalAndErrors> validate(
-          const shared_model::interface::Proposal &proposal,
-          ametsuchi::TemporaryWsv &temporaryWsv) {
-        return std::unique_ptr<VerifiedProposalAndErrors>(
-            validateProxy(proposal, temporaryWsv));
-      }
-
-      MOCK_METHOD2(
-          validateProxy,
-          VerifiedProposalAndErrors *(const shared_model::interface::Proposal &,
-                                      ametsuchi::TemporaryWsv &));
-    };
+      MOCK_METHOD2(validate,
+                   std::unique_ptr<VerifiedProposalAndErrors>(
+                       const shared_model::interface::Proposal &,
+                       ametsuchi::TemporaryWsv &));
 
     class MockChainValidator : public ChainValidator {
      public:
