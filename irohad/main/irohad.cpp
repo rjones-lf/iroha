@@ -23,6 +23,7 @@
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
+#include "main/port_check.hpp"
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_loader.hpp"
 
@@ -210,6 +211,19 @@ int main(int argc, char *argv[]) {
   std::signal(SIGINT, handler);
   std::signal(SIGTERM, handler);
   std::signal(SIGQUIT, handler);
+
+  // Check that torii and internal ports are not in use
+  if (checkTcpPortInUse(kListenIp, config[mbr::ToriiPort].GetUint())) {
+    log->error("Torii port {} is in use",
+               config[mbr::ToriiPort].GetUint());
+    return EXIT_FAILURE;
+  }
+
+  if (checkTcpPortInUse(kListenIp, config[mbr::InternalPort].GetUint())) {
+    log->error("Internal port {} is in use",
+               config[mbr::InternalPort].GetUint());
+    return EXIT_FAILURE;
+  }
 
   // runs iroha
   log->info("Running iroha");
