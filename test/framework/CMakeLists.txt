@@ -32,7 +32,7 @@ target_link_libraries(integration_framework
     query_client
     )
 
-target_include_directories(integration_framework PUBLIC ${PROJECT_SOURCE_DIR}/test PRIVATE "${gmock_INCLUDE_DIR};${gtest_INCLUDE_DIR}")
+target_include_directories(integration_framework PUBLIC ${PROJECT_SOURCE_DIR}/test)
 
 add_library(integration_framework_config_helper config_helper.cpp)
 target_include_directories(integration_framework_config_helper PUBLIC ${PROJECT_SOURCE_DIR}/test)
