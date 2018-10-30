@@ -19,6 +19,7 @@
 #include "backend/protobuf/permissions.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "postgres_ordering_service_persistent_state.hpp"
+#include "ametsuchi/impl/postgres_block_index.hpp"
 
 const std::string prepared_block_name = "prepared_block4";
 
@@ -396,6 +397,8 @@ namespace iroha {
         }
         soci::session sql(*connection_);
         sql << "COMMIT PREPARED '" + prepared_block_name + "';";
+        PostgresBlockIndex block_index(sql);
+        block_index.index(block);
         block_is_prepared = false;
       } catch (const std::exception &e) {
         log_->warn("failed to apply prepared block {}: {}",
