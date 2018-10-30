@@ -6,6 +6,7 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 
 #include <memory>
+#include <limits>
 
 #include <boost/thread/barrier.hpp>
 
@@ -55,10 +56,12 @@ namespace {
   std::string kLocalHost = "127.0.0.1";
   constexpr size_t kDefaultToriiPort = 11501;
   constexpr size_t kDefaultInternalPort = 50541;
+  constexpr size_t kMaxPort = 65535;
 
   template <size_t default_port>
   size_t getNextPort() {
     static size_t increment = 0;
+    assert(increment <= kMaxPort && "The maximum port value reached");
     return default_port + (++increment);
   }
 }  // namespace
