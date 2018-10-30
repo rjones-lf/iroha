@@ -84,16 +84,17 @@ class BasicMstPropagationFixture : public AcceptanceFixture {
  */
 TEST_F(BasicMstPropagationFixture,
        MstStateOfTransactionWithoutAllSignaturesPropagtesToOtherPeer) {
-  auto notifications_getter = std::make_shared<iroha::MockMstTransportNotification>();
+  auto notifications_getter =
+      std::make_shared<iroha::MockMstTransportNotification>();
   std::mutex mst_mutex;
-  std::unique_lock<std::mutex> mst_lock(mst_mutex);
   std::condition_variable mst_cv;
+  std::atomic_bool got_state_notification(false);
   EXPECT_CALL(*notifications_getter, onNewState(_, _))
-      .WillOnce(Invoke(
-          [&mst_lock, &mst_cv](const auto &from_key, auto const &target_state) {
-            mst_lock.unlock();
-            mst_cv.notify_one();
-          }));
+      .WillOnce(Invoke([&mst_cv, &got_state_notification](
+                           const auto &from_key, auto const &target_state) {
+        got_state_notification.store(true);
+        mst_cv.notify_one();
+      }));
   prepareState(1)
       .subscribeForAllMstNotifications(notifications_getter)
       .sendTxWithoutValidation(complete(
@@ -101,7 +102,10 @@ TEST_F(BasicMstPropagationFixture,
               .transferAsset(kAdminId, kUserId, kAssetId, "income", "500.0")
               .quorum(2),
           kAdminKeypair));
-  EXPECT_FALSE(mst_cv.wait_for(mst_lock, kMstStateWaitingTime)
-               == std::cv_status::timeout)
+  std::unique_lock<std::mutex> mst_lock(mst_mutex);
+  mst_cv.wait_for(mst_lock, kMstStateWaitingTime, [&got_state_notification] {
+    return got_state_notification.load();
+  });
+  EXPECT_TRUE(got_state_notification.load())
       << "Reached timeout waiting for MST State.";
 }
