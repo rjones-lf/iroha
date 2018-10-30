@@ -36,7 +36,7 @@ namespace integration_framework {
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
                const shared_model::crypto::Keypair &keypair,
-               const iroha::OptGossipPropagationStrategyParams
+               const boost::optional<iroha::GossipPropagationStrategyParams>
                    &opt_mst_gossip_params = boost::none)
         : Irohad(block_store_dir,
                  pg_conn,

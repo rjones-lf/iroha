@@ -77,7 +77,7 @@ class Irohad {
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
          const shared_model::crypto::Keypair &keypair,
-         const iroha::OptGossipPropagationStrategyParams
+         const boost::optional<iroha::GossipPropagationStrategyParams>
              &opt_mst_gossip_params = boost::none);
 
   /**
@@ -163,7 +163,8 @@ class Irohad {
   std::chrono::milliseconds proposal_delay_;
   std::chrono::milliseconds vote_delay_;
   bool is_mst_supported_;
-  iroha::OptGossipPropagationStrategyParams opt_mst_gossip_params_;
+  boost::optional<iroha::GossipPropagationStrategyParams>
+      opt_mst_gossip_params_;
 
   // ------------------------| internal dependencies |-------------------------
 

@@ -28,8 +28,6 @@ namespace iroha {
     uint32_t amount{kDefaultAmount};
   };
 
-  using OptGossipPropagationStrategyParams = boost::optional<GossipPropagationStrategyParams>;
-
 }  // namespace iroha
 
 #endif  // IROHA_GOSSIP_PROPAGATION_STRATEGY_PARAMS_HPP

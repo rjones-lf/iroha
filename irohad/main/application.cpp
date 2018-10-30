@@ -50,7 +50,8 @@ Irohad::Irohad(const std::string &block_store_dir,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
                const shared_model::crypto::Keypair &keypair,
-               const OptGossipPropagationStrategyParams &opt_mst_gossip_params)
+               const boost::optional<GossipPropagationStrategyParams>
+                   &opt_mst_gossip_params)
     : block_store_dir_(block_store_dir),
       pg_conn_(pg_conn),
       listen_ip_(listen_ip),

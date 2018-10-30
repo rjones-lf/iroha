@@ -82,7 +82,8 @@ namespace integration_framework {
     const size_t internal_port_;
     const std::chrono::milliseconds proposal_delay_;
     const std::chrono::milliseconds vote_delay_;
-    iroha::OptGossipPropagationStrategyParams opt_mst_gossip_params_;
+    boost::optional<iroha::GossipPropagationStrategyParams>
+        opt_mst_gossip_params_;
 
    private:
     std::shared_ptr<TestIrohad> instance_;
