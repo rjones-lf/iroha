@@ -15,22 +15,21 @@ using namespace iroha::ordering;
 using namespace testing;
 
 struct OrderingGateFixture {
-  std::shared_ptr<OnDemandOrderingGate> ordering_gate_;
-
+  std::shared_ptr<shared_model::proto::ProtoBlockFactory> block_factory_;
   std::shared_ptr<MockOnDemandOrderingService> ordering_service_;
   std::shared_ptr<transport::MockOdOsNotification> network_client_;
+
   rxcpp::subjects::subject<OnDemandOrderingGate::BlockRoundEventType> rounds_;
   MockUnsafeProposalFactory *proposal_factory_;
+  std::shared_ptr<OnDemandOrderingGate> ordering_gate_;
   iroha::consensus::Round initial_round_ = {2, 1};
 
-  std::shared_ptr<shared_model::proto::ProtoBlockFactory> block_factory_;
+  OrderingGateFixture() :
+          block_factory_(std::make_shared<shared_model::proto::ProtoBlockFactory>(std::make_unique<
+                  shared_model::validation::DefaultUnsignedBlockValidator>())),
+          ordering_service_(std::make_shared<MockOnDemandOrderingService>()),
+          network_client_(std::make_shared<transport::MockOdOsNotification>()) {
 
-  OrderingGateFixture() {
-    block_factory_ = std::make_shared<shared_model::proto::ProtoBlockFactory>(std::make_unique<
-            shared_model::validation::DefaultUnsignedBlockValidator>());
-
-    ordering_service_ = std::make_shared<MockOnDemandOrderingService>();
-    network_client_ = std::make_shared<transport::MockOdOsNotification>();
     auto proposal_factory = std::make_unique<MockUnsafeProposalFactory>();
     proposal_factory_ = proposal_factory.get();
     ordering_gate_ = std::make_shared<OnDemandOrderingGate>(ordering_service_, network_client_,
