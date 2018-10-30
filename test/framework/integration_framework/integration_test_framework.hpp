@@ -233,7 +233,7 @@ namespace integration_framework {
      * std::shared_ptr<shared_model::interface::Proposal> by reference
      * @return this
      * TODO mboldyrev 27.10.2018: make validation function accept
-     *                            VerifiedProposalType argument
+     *                IR-1822     VerifiedProposalType argument
      */
     IntegrationTestFramework &checkVerifiedProposal(
         std::function<void(const ProposalType &)> validation);
