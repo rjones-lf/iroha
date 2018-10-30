@@ -879,3 +879,80 @@ TEST_F(AmetsuchiTest, PrepareBlockNoStateChanged) {
                        "coin#test",
                        shared_model::interface::Amount("5.00"));
 }
+
+/**
+ * @given Storage with prepared state
+ * @when prepared state is applied
+ * @then state of the ledger remains is changed
+ */
+TEST_F(AmetsuchiTest, ApplyPreparedStateChanged) {
+  using framework::expected::val;
+  std::string default_domain = "test";
+  std::string default_role = "admin";
+  auto key =
+      shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+  auto genesis_tx = shared_model::proto::TransactionBuilder()
+                        .creatorAccountId("admin@test")
+                        .createdTime(iroha::time::now())
+                        .quorum(1)
+                        .createRole(default_role,
+                                    {Role::kCreateDomain,
+                                     Role::kCreateAccount,
+                                     Role::kAddAssetQty,
+                                     Role::kAddPeer,
+                                     Role::kReceive,
+                                     Role::kTransfer})
+                        .createDomain(default_domain, default_role)
+                        .createAccount("admin", "test", key.publicKey())
+                        .createAsset("coin", default_domain, 2)
+                        .build()
+                        .signAndAddSignature(key)
+                        .finish();
+
+  auto genesis_block =
+      TestBlockBuilder()
+          .transactions(
+              std::vector<shared_model::proto::Transaction>{genesis_tx})
+          .height(1)
+          .prevHash(shared_model::crypto::Sha3_256::makeHash(
+              shared_model::crypto::Blob("")))
+          .createdTime(iroha::time::now())
+          .build();
+
+  apply(storage, genesis_block);
+
+  auto temp_wsv =
+      std::move(framework::expected::val(storage->createTemporaryWsv())->value);
+
+  auto tx = shared_model::proto::TransactionBuilder()
+                .creatorAccountId("admin@test")
+                .createdTime(iroha::time::now())
+                .quorum(1)
+                .addAssetQuantity("coin#test", "5.00")
+                .build()
+                .signAndAddSignature(key)
+                .finish();
+
+  auto block =
+      TestBlockBuilder()
+          .transactions(
+              std::vector<shared_model::proto::Transaction>{tx})
+          .height(2)
+          .prevHash(genesis_block.hash())
+          .createdTime(iroha::time::now())
+          .build();
+
+  auto result = temp_wsv->apply(tx);
+  ASSERT_FALSE(framework::expected::err(result));
+  storage->prepareBlock(*temp_wsv);
+  temp_wsv.reset();
+
+  auto commited = storage->commitPrepared(block);
+
+  EXPECT_TRUE(commited);
+
+  validateAccountAsset(storage->getWsvQuery(),
+                       "admin@test",
+                       "coin#test",
+                       shared_model::interface::Amount("5.00"));
+}
