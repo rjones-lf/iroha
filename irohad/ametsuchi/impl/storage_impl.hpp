@@ -154,6 +154,8 @@ namespace iroha {
 
       std::atomic<bool> block_is_prepared;
 
+      std::string prepared_block_name_;
+
      protected:
       static const std::string &drop_;
       static const std::string &reset_;

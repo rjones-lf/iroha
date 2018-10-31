@@ -21,8 +21,6 @@
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "postgres_ordering_service_persistent_state.hpp"
 
-const std::string prepared_block_name = "prepared_block8";
-
 namespace {
   void prepareStatements(soci::connection_pool &connections, size_t pool_size) {
     for (size_t i = 0; i != pool_size; i++) {
@@ -61,7 +59,16 @@ namespace iroha {
           pool_size_(pool_size),
           prepared_blocks_enabled_(enable_prepared_blocks),
           block_is_prepared(false) {
+      prepared_block_name_ =
+          "prepared_block" + postgres_options_.dbname().value_or("");
       soci::session sql(*connection_);
+      // rollback current prepared transaction
+      // if there exists any since last session
+      try {
+        sql << "ROLLBACK PREPARED '" + prepared_block_name_ + "';";
+      } catch (const std::exception &e) {
+        log_->info(e.what());
+      }
       sql << init_;
       prepareStatements(*connection_, pool_size_);
     }
@@ -89,7 +96,7 @@ namespace iroha {
 
       auto sql = std::make_unique<soci::session>(*connection_);
       if (block_is_prepared) {
-        *sql << "ROLLBACK PREPARED '" + prepared_block_name + "';";
+        *sql << "ROLLBACK PREPARED '" + prepared_block_name_ + "';";
         block_is_prepared = false;
       }
       auto block_result = getBlockQuery()->getTopBlock();
@@ -240,13 +247,18 @@ namespace iroha {
         log_->warn("Tried to free connections without active connection");
         return;
       }
+      // rollback possible prepared transaction
+      try {
+        soci::session sql(*connection_);
+        sql << "ROLLBACK PREPARED '" + prepared_block_name_ + "';";
+      } catch (const std::exception &e) {
+        log_->info("failed to rollback prepared during database drop: {}",
+                   e.what());
+      }
+
       std::vector<std::shared_ptr<soci::session>> connections;
       for (size_t i = 0; i < pool_size_; i++) {
         connections.push_back(std::make_shared<soci::session>(*connection_));
-        try {
-          *connections[i] << "ROLLBACK PREPARED '" + prepared_block_name + "';";
-        } catch (...) {
-        }
         connections[i]->close();
         log_->debug("Closed connection {}", i);
       }
@@ -396,7 +408,7 @@ namespace iroha {
           return false;
         }
         soci::session sql(*connection_);
-        sql << "COMMIT PREPARED '" + prepared_block_name + "';";
+        sql << "COMMIT PREPARED '" + prepared_block_name_ + "';";
         PostgresBlockIndex block_index(sql);
         block_index.index(block);
         block_is_prepared = false;
@@ -456,10 +468,10 @@ namespace iroha {
       if (not block_is_prepared) {
         soci::session &sql = *wsv_impl.sql_;
         try {
-          sql << "PREPARE TRANSACTION '" + prepared_block_name + "';";
+          sql << "PREPARE TRANSACTION '" + prepared_block_name_ + "';";
           block_is_prepared = true;
         } catch (const std::exception &e) {
-          sql << "ROLLBACK PREPARED '" + prepared_block_name + "';";
+          sql << "ROLLBACK PREPARED '" + prepared_block_name_ + "';";
         }
 
         log_->info("prepared block");
