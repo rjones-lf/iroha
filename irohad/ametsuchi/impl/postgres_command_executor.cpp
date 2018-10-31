@@ -974,9 +974,7 @@ namespace iroha {
                         "permittee account id: '%s', "
                         "account id: '%s', "
                         "permission: '%s'")
-                    % permittee_account_id
-                    % creator_account_id_
-                    // TODO(@l4l) 26/06/18 need to be simplified at IR-1479
+                    % permittee_account_id % creator_account_id_
                     % perm_converter_->toString(permission))
                 .str();
           }};

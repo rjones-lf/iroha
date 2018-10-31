@@ -10,7 +10,6 @@
 
 #include "ametsuchi/query_executor.hpp"
 #include "interfaces/iroha_internal/query_response_factory.hpp"
-#include "interfaces/permission_to_string.hpp"
 #include "pending_txs_storage/pending_txs_storage.hpp"
 
 namespace iroha {

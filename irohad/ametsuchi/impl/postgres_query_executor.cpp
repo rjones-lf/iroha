@@ -136,8 +136,6 @@ namespace {
     return [perm_converter, roles...] {
       std::string error = "user must have at least one of the permissions: ";
       for (auto role : {roles...}) {
-        // TODO [IR-1758] Akvinikym 12.10.18: get rid of this protobuf
-        // dependency and convert role to string in another way
         error += perm_converter->toString(role) + ", ";
       }
       return error;
