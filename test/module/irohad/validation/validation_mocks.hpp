@@ -33,6 +33,7 @@ namespace iroha {
                    std::unique_ptr<VerifiedProposalAndErrors>(
                        const shared_model::interface::Proposal &,
                        ametsuchi::TemporaryWsv &));
+    };
 
     class MockChainValidator : public ChainValidator {
      public:
