@@ -13,7 +13,7 @@
 #include <unordered_map>
 
 #include <tbb/concurrent_queue.h>
-
+#include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -24,16 +24,18 @@ namespace iroha {
        * Create on_demand ordering service with following options:
        * @param transaction_limit - number of maximum transactions in one
        * proposal
+       * @param proposal_factory - used to generate proposals
        * @param number_of_proposals - number of stored proposals, older will be
        * removed. Default value is 3
        * @param initial_round - first round of agreement.
        * Default value is {2, 1} since genesis block height is 1
        */
-      OnDemandOrderingServiceImpl(size_t transaction_limit,
-                                  size_t number_of_proposals,
-                                  const consensus::Round &initial_round);
-
-      OnDemandOrderingServiceImpl(size_t transaction_limit);
+      OnDemandOrderingServiceImpl(
+          size_t transaction_limit,
+          std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+              proposal_factory,
+          size_t number_of_proposals = 3,
+          const consensus::Round &initial_round = {2, 1});
 
       // --------------------- | OnDemandOrderingService |_---------------------
 
@@ -101,6 +103,9 @@ namespace iroha {
        * Read write mutex for public methods
        */
       std::shared_timed_mutex lock_;
+
+      std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+          proposal_factory_;
 
       /**
        * Logger instance

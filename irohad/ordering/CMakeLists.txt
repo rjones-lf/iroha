@@ -26,7 +26,6 @@ add_library(on_demand_ordering_service
 target_link_libraries(on_demand_ordering_service
     tbb
     shared_model_interfaces
-    shared_model_proto_backend
     consensus_round
     logger
     )
