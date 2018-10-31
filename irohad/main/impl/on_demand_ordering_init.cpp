@@ -7,6 +7,7 @@
 
 #include <random>
 
+#include "common/timeout.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/peer.hpp"
@@ -117,9 +118,23 @@ namespace iroha {
       return std::make_shared<ordering::OnDemandOrderingGate>(
           std::move(ordering_service),
           std::move(network_client),
-          notifier.get_observable().map(
-              [](auto commit)
-                  -> ordering::OnDemandOrderingGate::BlockRoundEventType {
+          notifier.get_observable()
+              .lift<iroha::synchronizer::SynchronizationEvent>(
+                  iroha::makeTimeout<iroha::synchronizer::SynchronizationEvent>(
+                      [reject_counter = -1](const auto &commit) mutable {
+                        using namespace std::chrono;
+                        using namespace iroha::synchronizer;
+                        if (commit.sync_outcome
+                            == SynchronizationOutcomeType::kReject) {
+                          return seconds(std::min(reject_counter++, 0));
+                        } else {
+                          reject_counter = -1;
+                          return seconds(0);
+                        }
+                      },
+                      rxcpp::identity_current_thread()))
+              .map([](auto commit)
+                       -> ordering::OnDemandOrderingGate::BlockRoundEventType {
                 auto obs = commit.synced_blocks.as_blocking();
                 // if no blocks were commited
                 if (obs.count() == 0) {
