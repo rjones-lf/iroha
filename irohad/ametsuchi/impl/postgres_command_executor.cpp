@@ -83,6 +83,8 @@ namespace {
         std::move(command_name), code, error_extra});
   }
 
+  // TODO [IR-1830] Akvinikym 31.10.18: make benchmarks to compare exception
+  // parsing vs nested queries
   /**
    * Match the given substring against given SQL error and form a command error,
    * if match was successful
@@ -99,8 +101,6 @@ namespace {
       iroha::ametsuchi::CommandError::ErrorCodeType error_code,
       const std::string &key,
       const std::string &to_be_presented) {
-    // TODO [IR-1830] Akvinikym 31.10.18: make benchmarks to compare exception
-    // parsing vs nested queries
     auto errors_matched = error.find(key) != std::string::npos
         and error.find(to_be_presented) != std::string::npos;
     if (errors_matched) {
@@ -251,8 +251,8 @@ namespace {
 
 namespace iroha {
   namespace ametsuchi {
-  // TODO [IR-1830] Akvinikym 31.10.18: make benchmarks to compare exception
-  // parsing vs nested queries
+    // TODO [IR-1830] Akvinikym 31.10.18: make benchmarks to compare exception
+    // parsing vs nested queries
     const std::string PostgresCommandExecutor::addAssetQuantityBase = R"(
           PREPARE %s (text, text, int, text) AS
           WITH has_account AS (SELECT account_id FROM account
