@@ -37,10 +37,13 @@ namespace iroha {
       auto createGate(
           std::shared_ptr<ordering::OnDemandOrderingService> ordering_service,
           std::shared_ptr<ordering::transport::OdOsNotification> network_client,
-          std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+          std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               factory);
 
-      auto createService(size_t max_size);
+      auto createService(
+          size_t max_size,
+          std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
+              factory);
 
      public:
       std::shared_ptr<network::OrderingGate> initOrderingGate(
@@ -57,7 +60,7 @@ namespace iroha {
               transaction_batch_factory,
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call,
-          std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+          std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               factory);
 
       std::shared_ptr<ordering::proto::OnDemandOrdering::Service> service;

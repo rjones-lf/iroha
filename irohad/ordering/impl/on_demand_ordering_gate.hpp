@@ -43,7 +43,7 @@ namespace iroha {
           std::shared_ptr<OnDemandOrderingService> ordering_service,
           std::shared_ptr<transport::OdOsNotification> network_client,
           rxcpp::observable<BlockRoundEventType> events,
-          std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+          std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
           consensus::Round initial_round);
 
@@ -51,7 +51,7 @@ namespace iroha {
           std::shared_ptr<OnDemandOrderingService> ordering_service,
           std::shared_ptr<transport::OdOsNotification> network_client,
           rxcpp::observable<BlockRoundEventType> events,
-          std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+          std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               factory);
 
       void propagateBatch(
@@ -69,7 +69,7 @@ namespace iroha {
       std::shared_ptr<OnDemandOrderingService> ordering_service_;
       std::shared_ptr<transport::OdOsNotification> network_client_;
       rxcpp::composite_subscription events_subscription_;
-      std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+      std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
 
       consensus::Round current_round_;

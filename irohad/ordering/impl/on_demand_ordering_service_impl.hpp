@@ -32,7 +32,7 @@ namespace iroha {
        */
       OnDemandOrderingServiceImpl(
           size_t transaction_limit,
-          std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+          std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
           size_t number_of_proposals = 3,
           const consensus::Round &initial_round = {2, 1});
@@ -104,7 +104,7 @@ namespace iroha {
        */
       std::shared_timed_mutex lock_;
 
-      std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+      std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
 
       /**

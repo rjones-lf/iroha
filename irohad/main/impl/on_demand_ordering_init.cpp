@@ -110,7 +110,7 @@ namespace iroha {
     auto OnDemandOrderingInit::createGate(
         std::shared_ptr<ordering::OnDemandOrderingService> ordering_service,
         std::shared_ptr<ordering::transport::OdOsNotification> network_client,
-        std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+        std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
             factory) {
       return std::make_shared<ordering::OnDemandOrderingGate>(
           std::move(ordering_service),
@@ -129,8 +129,12 @@ namespace iroha {
           std::move(factory));
     }
 
-    auto OnDemandOrderingInit::createService(size_t max_size) {
-      return std::make_shared<ordering::OnDemandOrderingServiceImpl>(max_size);
+    auto OnDemandOrderingInit::createService(
+        size_t max_size,
+        std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
+            factory) {
+      return std::make_shared<ordering::OnDemandOrderingServiceImpl>(
+          max_size, std::move(factory));
     }
 
     std::shared_ptr<iroha::network::OrderingGate>
@@ -148,9 +152,9 @@ namespace iroha {
             transaction_batch_factory,
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call,
-        std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+        std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
             factory) {
-      auto ordering_service = createService(max_size);
+      auto ordering_service = createService(max_size, factory);
       service = std::make_shared<ordering::transport::OnDemandOsServerGrpc>(
           ordering_service,
           std::move(transaction_factory),

@@ -16,7 +16,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<OnDemandOrderingService> ordering_service,
     std::shared_ptr<transport::OdOsNotification> network_client,
     rxcpp::observable<BlockRoundEventType> events,
-    std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
+    std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     consensus::Round initial_round)
     : log_(logger::log("OnDemandOrderingGate")),
       ordering_service_(std::move(ordering_service)),
@@ -62,7 +62,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<OnDemandOrderingService> ordering_service,
     std::shared_ptr<transport::OdOsNotification> network_client,
     rxcpp::observable<BlockRoundEventType> events,
-    std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory)
+    std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory)
     : OnDemandOrderingGate(std::move(ordering_service),
                            std::move(network_client),
                            events,

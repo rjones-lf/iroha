@@ -24,7 +24,7 @@ const iroha::consensus::RejectRoundType kFirstRound = 1;
 
 OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
     size_t transaction_limit,
-    std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+    std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
         proposal_factory,
     size_t number_of_proposals,
     const consensus::Round &initial_round)
