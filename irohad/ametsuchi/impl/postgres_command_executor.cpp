@@ -99,6 +99,8 @@ namespace {
       iroha::ametsuchi::CommandError::ErrorCodeType error_code,
       const std::string &key,
       const std::string &to_be_presented) {
+    // TODO [IR-1830] Akvinikym 31.10.18: make benchmarks to compare exception
+    // parsing vs nested queries
     auto errors_matched = error.find(key) != std::string::npos
         and error.find(to_be_presented) != std::string::npos;
     if (errors_matched) {
@@ -249,6 +251,8 @@ namespace {
 
 namespace iroha {
   namespace ametsuchi {
+  // TODO [IR-1830] Akvinikym 31.10.18: make benchmarks to compare exception
+  // parsing vs nested queries
     const std::string PostgresCommandExecutor::addAssetQuantityBase = R"(
           PREPARE %s (text, text, int, text) AS
           WITH has_account AS (SELECT account_id FROM account
@@ -354,9 +358,8 @@ namespace iroha {
 
     const std::string PostgresCommandExecutor::createAccountBase = R"(
           PREPARE %s (text, text, text, text) AS
-          WITH has_domain AS (SELECT * FROM domain WHERE domain_id = $3),
-          get_domain_default_role AS (SELECT default_role FROM domain
-                                      WHERE domain_id = $3),
+          WITH get_domain_default_role AS (SELECT default_role FROM domain
+                                           WHERE domain_id = $3),
           %s
           insert_signatory AS
           (
@@ -399,7 +402,7 @@ namespace iroha {
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_account_role) THEN 0
               %s
-              WHEN NOT EXISTS (SELECT * FROM has_domain) THEN 7
+              WHEN NOT EXISTS (SELECT * FROM get_domain_default_role) THEN 7
               ELSE 1
               END AS result)";
 
@@ -881,7 +884,6 @@ namespace iroha {
     CommandResult PostgresCommandExecutor::operator()(
         const shared_model::interface::RevokePermission &command) {
       auto &permittee_account_id = command.accountId();
-      auto &account_id = creator_account_id_;
       auto permission = command.permissionName();
       const auto without_perm_str =
           shared_model::interface::GrantablePermissionSet()

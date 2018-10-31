@@ -21,6 +21,7 @@ namespace iroha {
     using namespace framework::expected;
 
     class CommandExecutorTest : public AmetsuchiTest {
+      // TODO [IR-1831] Akvinikym 31.10.18: rework the CommandExecutorTest
      public:
       CommandExecutorTest() {
         domain = clone(
@@ -120,6 +121,11 @@ namespace iroha {
 
       std::unique_ptr<WsvQuery> query;
       std::unique_ptr<CommandExecutor> executor;
+
+      std::string uint256_halfmax =
+          "57896044618658097711785492504343953926634992332820282019728792003956"
+          "5648"
+          "19966.0";  // 2**255 - 2tra
     };
 
     class AddAccountAssetTest : public CommandExecutorTest {
@@ -161,7 +167,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add account asset
      * @then account asset is successfully added
      */
@@ -204,7 +210,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add account asset with non-existing asset
      * @then account asset fails to be added
      */
@@ -218,15 +224,11 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add account asset that overflows
      * @then account asset fails to added
      */
     TEST_F(AddAccountAssetTest, Uint256Overflow) {
-      std::string uint256_halfmax =
-          "57896044618658097711785492504343953926634992332820282019728792003956"
-          "5648"
-          "19966.0";  // 2**255 - 2tra
       addAsset();
       ASSERT_TRUE(val(
           execute(buildCommand(TestTransactionBuilder()
@@ -242,7 +244,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add account asset without permission
      * @then account asset not added
      */
@@ -287,7 +289,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add peer
      * @then peer is successfully added
      */
@@ -298,7 +300,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add peer without perms
      * @then peer is not added
      */
@@ -331,7 +333,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add signatory with role permission
      * @then signatory is successfully added
      */
@@ -347,7 +349,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add signatory with grantable permission
      * @then signatory is successfully added
      */
@@ -391,7 +393,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add signatory without permissions
      * @then signatory is not added
      */
@@ -538,7 +540,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to append role with perms that creator does not have
      * @then role is not appended
      */
@@ -601,7 +603,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create account
      * @then account is created
      */
@@ -616,7 +618,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create account without permission to do so
      * @then account is not created
      */
@@ -630,7 +632,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command @and no target domain in ledger
+     * @given command @and no target domain in ledger
      * @when trying to create account
      * @then account is not created
      */
@@ -665,7 +667,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create asset
      * @then asset is created
      */
@@ -696,7 +698,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create asset without permission
      * @then asset is not created
      */
@@ -725,7 +727,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command and no target domain in ledger
+     * @given command and no target domain in ledger
      * @when trying to create asset
      * @then asset is not created
      */
@@ -808,7 +810,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create domain
      * @then domain is created
      */
@@ -822,7 +824,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command when there is no perms
+     * @given command when there is no perms
      * @when trying to create domain
      * @then domain is not created
      */
@@ -849,7 +851,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command when there is no default role
+     * @given command when there is no default role
      * @when trying to create domain
      * @then domain is not created
      */
@@ -882,7 +884,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create role
      * @then role is created
      */
@@ -896,7 +898,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create role when creator doesn't have all permissions
      * @then role is not created
      */
@@ -954,7 +956,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to detach role
      * @then role is detached
      */
@@ -996,7 +998,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to detach role without permission
      * @then role is detached
      */
@@ -1048,7 +1050,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to grant permission
      * @then permission is granted
      */
@@ -1080,7 +1082,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to grant permission without permission
      * @then permission is not granted
      */
@@ -1125,7 +1127,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to remove signatory
      * @then signatory is successfully removed
      */
@@ -1148,7 +1150,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to remove signatory
      * @then signatory is successfully removed
      */
@@ -1183,7 +1185,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to remove signatory from a non existing account
      * @then corresponding error code is returned
      */
@@ -1228,7 +1230,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to remove signatory without permission
      * @then signatory is not removed
      */
@@ -1252,7 +1254,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to remove signatory from an account, after which it will
      * have signatories less, than its quorum
      * @then signatory is not removed
@@ -1298,7 +1300,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to revoke permission
      * @then permission is revoked
      */
@@ -1333,7 +1335,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to revoke permission without permission
      * @then permission is revoked
      */
@@ -1381,7 +1383,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set kv
      * @then kv is set
      */
@@ -1395,7 +1397,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set kv when has grantable permission
      * @then kv is set
      */
@@ -1418,7 +1420,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set kv when has role permission
      * @then kv is set
      */
@@ -1435,7 +1437,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set kv to non-existing account
      * @then corresponding error code is returned
      */
@@ -1450,7 +1452,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set kv while having no permissions
      * @then corresponding error code is returned
      */
@@ -1486,7 +1488,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set quorum
      * @then quorum is set
      */
@@ -1498,7 +1500,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set quorum
      * @then quorum is set
      */
@@ -1519,7 +1521,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set quorum more than amount of signatories
      * @then quorum is not set
      */
@@ -1539,7 +1541,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set quorum without perms
      * @then quorum is not set
      */
@@ -1588,7 +1590,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to subtract account asset
      * @then account asset is successfully subtracted
      */
@@ -1622,7 +1624,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to subtract account asset with non-existing asset
      * @then account asset fails to be subtracted
      */
@@ -1636,7 +1638,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add account asset with wrong precision
      * @then account asset fails to be added
      */
@@ -1651,7 +1653,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to subtract more account asset than account has
      * @then account asset fails to be subtracted
      */
@@ -1671,7 +1673,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to subtract account asset without permissions
      * @then corresponding error code is returned
      */
@@ -1747,7 +1749,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add transfer asset
      * @then account asset is successfully transferred
      */
@@ -1787,7 +1789,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add transfer asset
      * @then account asset is successfully transferred
      */
@@ -1829,7 +1831,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to transfer asset back and forth with non-existing account
      * @then account asset fails to be transferred
      */
@@ -1855,7 +1857,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to transfer account asset with non-existing asset
      * @then account asset fails to be transferred
      */
@@ -1872,7 +1874,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to transfer account asset with no permissions
      * @then account asset fails to be transferred
      */
@@ -1887,7 +1889,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to transfer account asset, but has insufficient amount of it
      * @then account asset fails to be transferred
      */
@@ -1919,10 +1921,6 @@ namespace iroha {
       addAllPerms();
       addAllPerms(account2->accountId(), "all2");
       addAsset();
-      std::string uint256_halfmax =
-          "57896044618658097711785492504343953926634992332820282019728792003956"
-          "5648"
-          "19966.0";
       ASSERT_TRUE(val(
           execute(buildCommand(TestTransactionBuilder()
                                    .addAssetQuantity(asset_id, uint256_halfmax)
@@ -1941,7 +1939,7 @@ namespace iroha {
                       "desc",
                       uint256_halfmax)),
                   true);
-      CHECK_ERROR_CODE(cmd_result, 11);
+      CHECK_ERROR_CODE(cmd_result, 15);
     }
   }  // namespace ametsuchi
 }  // namespace iroha
