@@ -13,8 +13,11 @@ namespace shared_model {
 
     struct Proposal::Impl {
       Impl(TransportType &&ref) : proto_(std::move(ref)) {}
+
       Impl(const TransportType &ref) : proto_(ref) {}
+
       TransportType proto_;
+
       const std::vector<proto::Transaction> transactions_{[this] {
         return std::vector<proto::Transaction>(
             proto_.mutable_transactions()->begin(),
@@ -30,11 +33,11 @@ namespace shared_model {
     Proposal::Proposal(Proposal &&o) = default;
 
     Proposal::Proposal(const TransportType &ref) {
-      impl_ = std::make_unique<Proposal::Impl>(std::move(ref));
+      impl_ = std::make_unique<Proposal::Impl>(ref);
     }
 
     Proposal::Proposal(TransportType &&ref) {
-      impl_ = std::make_unique<Proposal::Impl>(ref);
+      impl_ = std::make_unique<Proposal::Impl>(std::move(ref));
     }
 
     TransactionsCollectionType Proposal::transactions() const {
