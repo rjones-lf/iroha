@@ -22,11 +22,19 @@ namespace iroha {
 
     class OnDemandOrderingInit {
      private:
+      /**
+       * Creates notification factory for individual connections to peers with
+       * gRPC backend. \see initOrderingGate for parameters
+       */
       auto createNotificationFactory(
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call,
           std::chrono::milliseconds delay);
 
+      /**
+       * Creates connection manager which redirects requests to appropriate
+       * ordering services in the current round. \see initOrderingGate for parameters
+       */
       auto createConnectionManager(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
@@ -34,18 +42,47 @@ namespace iroha {
           std::chrono::milliseconds delay,
           std::vector<shared_model::interface::types::HashType> hashes);
 
+      /**
+       * Creates on-demand ordering gate. \see initOrderingGate for parameters
+       * TODO andrei 31.10.18 IR-1825 Refactor ordering gate observable
+       */
       auto createGate(
           std::shared_ptr<ordering::OnDemandOrderingService> ordering_service,
           std::shared_ptr<ordering::transport::OdOsNotification> network_client,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               factory);
 
+      /**
+       * Creates on-demand ordering service. \see initOrderingGate for
+       * parameters
+       */
       auto createService(
           size_t max_size,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               factory);
 
      public:
+      /**
+       * Initializes on-demand ordering gate and ordering sevice components
+       *
+       * @param max_size maximum number of transaction in a proposal
+       * @param delay timeout for ordering service response on proposal request
+       * @param hashes seeds for peer list permutations for first k rounds
+       * they are required since hash of block i defines round i + k
+       * @param peer_query_factory factory for getLedgerPeers query required by
+       * connection manager
+       * @param transaction_factory transport factory for transactions required
+       * by ordering service network endpoint
+       * @param batch_parser transaction batch parser required by ordering
+       * service network endpoint
+       * @param transaction_batch_factory transport factory for transaction
+       * batch candidates produced by parser
+       * @param async_call asynchronous gRPC client required for sending batches
+       * requests to ordering service and processing responses
+       * @param factory proposal factory required by ordering service to produce
+       * proposals
+       * @return initialized ordering gate
+       */
       std::shared_ptr<network::OrderingGate> initOrderingGate(
           size_t max_size,
           std::chrono::milliseconds delay,
@@ -63,8 +100,10 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               factory);
 
+      /// gRPC service for ordering service
       std::shared_ptr<ordering::proto::OnDemandOrdering::Service> service;
 
+      /// commit notifier from peer communication service
       rxcpp::subjects::subject<decltype(
           std::declval<PeerCommunicationService>().on_commit())::value_type>
           notifier;
@@ -72,6 +111,7 @@ namespace iroha {
      private:
       logger::Logger log_ = logger::log("OnDemandOrderingInit");
 
+      /// reject round set from latest commit chain size
       consensus::RejectRoundType current_reject_round_ = 1;
       std::vector<std::shared_ptr<shared_model::interface::Peer>>
           current_peers_;

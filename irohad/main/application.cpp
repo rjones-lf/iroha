@@ -206,13 +206,15 @@ void Irohad::initOrderingGate() {
   auto height = (*block_query)->getTopBlockHeight();
   // since delay is 2, it is required to get two more hashes from block store,
   // in addition to top block
+  size_t start_height = 1;
   size_t required_num_blocks = 0;
   if (height > 2) {
+    start_height = height - 2;
     required_num_blocks = 2;
   } else if (height == 2) {
     required_num_blocks = 1;
   }
-  auto blocks = (*block_query)->getBlocks(height - 2, required_num_blocks);
+  auto blocks = (*block_query)->getBlocks(start_height, required_num_blocks);
   auto hash_stub = shared_model::interface::types::HashType{std::string(
       shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength, '0')};
   auto hashes = std::accumulate(

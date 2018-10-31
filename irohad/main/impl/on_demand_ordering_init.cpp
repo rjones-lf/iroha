@@ -36,6 +36,7 @@ namespace iroha {
             async_call,
         std::chrono::milliseconds delay,
         std::vector<shared_model::interface::types::HashType> hashes) {
+      // flat map hashes from committed blocks
       auto all_hashes = notifier.get_observable()
                             .flat_map([](auto commit) {
                               return commit.synced_blocks.map(
@@ -43,6 +44,7 @@ namespace iroha {
                             })
                             .start_with(hashes.at(0), hashes.at(1));
 
+      // emit last 3 hashes
       auto latest_hashes =
           all_hashes.zip(all_hashes.skip(1), all_hashes.skip(2));
 
