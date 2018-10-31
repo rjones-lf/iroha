@@ -100,15 +100,12 @@ namespace iroha {
 
       /**
        * Check that command result contains specific error code
-       * @param result to be checked
+       * @param cmd_result to be checked
        * @param expected_code to be in the result
        */
-      void checkErrorCode(const CommandResult &result,
-                          CommandError::ErrorCodeType expected_code) {
-        auto error = err(result);
-        ASSERT_TRUE(error);
-        ASSERT_EQ(error->error.error_code, expected_code);
-      }
+#define CHECK_ERROR_CODE(cmd_result, expected_code) \
+  ASSERT_TRUE(err(cmd_result));                     \
+  ASSERT_EQ(err(cmd_result)->error.error_code, expected_code);
 
       const std::string role = "role";
       const std::string another_role = "role2";
@@ -201,7 +198,9 @@ namespace iroha {
                                    .creatorAccountId("some@domain")),
                   true,
                   "some@domain");
-      checkErrorCode(cmd_result, 2);
+      // TODO [IR-1816] Akvinikym 29.10.18: replace magic numbers with named
+      // constants
+      CHECK_ERROR_CODE(cmd_result, 2);
     }
 
     /**
@@ -215,7 +214,7 @@ namespace iroha {
                                    .addAssetQuantity(asset_id, "1.0")
                                    .creatorAccountId(account->accountId())),
                   true);
-      checkErrorCode(cmd_result, 3);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
@@ -239,7 +238,7 @@ namespace iroha {
                                    .addAssetQuantity(asset_id, uint256_halfmax)
                                    .creatorAccountId(account->accountId())),
                   true);
-      checkErrorCode(cmd_result, 4);
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     /**
@@ -263,7 +262,7 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .addAssetQuantity(asset_id, "1.0")
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
     }
 
     class AddPeer : public CommandExecutorTest {
@@ -306,7 +305,7 @@ namespace iroha {
     TEST_F(AddPeer, NoPerms) {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().addPeer(peer->address(), peer->pubkey())));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
     }
 
     class AddSignatory : public CommandExecutorTest {
@@ -388,7 +387,7 @@ namespace iroha {
                       account->accountId(), perm)),
                   true,
                   "id2@domain");
-      checkErrorCode(cmd_result, 2);
+      CHECK_ERROR_CODE(cmd_result, 2);
     }
 
     /**
@@ -400,7 +399,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().addSignatory(
               account->accountId(), *pubkey)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
 
       auto signatories = query->getSignatories(account->accountId());
       ASSERT_TRUE(signatories);
@@ -423,7 +422,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().addSignatory(
               account->accountId(), *pubkey)));
-      checkErrorCode(cmd_result, 12);
+      CHECK_ERROR_CODE(cmd_result, 12);
     }
 
     class AppendRole : public CommandExecutorTest {
@@ -515,7 +514,7 @@ namespace iroha {
           true)));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().appendRole("doge@noaccount", another_role)));
-      checkErrorCode(cmd_result, 2);
+      CHECK_ERROR_CODE(cmd_result, 2);
     }
 
     /**
@@ -530,7 +529,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().appendRole(
               account->accountId(), another_role)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
 
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
@@ -552,7 +551,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().appendRole(
               account->accountId(), another_role)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
     }
 
     /**
@@ -565,7 +564,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().appendRole(
               account->accountId(), another_role)));
-      checkErrorCode(cmd_result, 6);
+      CHECK_ERROR_CODE(cmd_result, 6);
     }
 
     class CreateAccount : public CommandExecutorTest {
@@ -625,7 +624,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().createAccount(
               "id2", domain->domainId(), *pubkey)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
       auto acc = query->getAccount(account2->accountId());
       ASSERT_FALSE(acc);
     }
@@ -639,7 +638,7 @@ namespace iroha {
       addAllPerms();
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createAccount("doge", "domain6", *pubkey)));
-      checkErrorCode(cmd_result, 7);
+      CHECK_ERROR_CODE(cmd_result, 7);
     }
 
     /**
@@ -652,7 +651,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().createAccount(
               "id", domain->domainId(), *pubkey)));
-      checkErrorCode(cmd_result, 13);
+      CHECK_ERROR_CODE(cmd_result, 13);
     }
 
     class CreateAsset : public CommandExecutorTest {
@@ -720,7 +719,7 @@ namespace iroha {
                       true)));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createAsset("coin", domain->domainId(), 1)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
       auto ass = query->getAsset(asset->assetId());
       ASSERT_FALSE(ass);
     }
@@ -751,7 +750,7 @@ namespace iroha {
                       true)));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createAsset(asset_name, "no_domain", 1)));
-      checkErrorCode(cmd_result, 7);
+      CHECK_ERROR_CODE(cmd_result, 7);
     }
 
     /**
@@ -782,7 +781,7 @@ namespace iroha {
           "coin", domain->domainId(), 1)))));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createAsset("coin", domain->domainId(), 1)));
-      checkErrorCode(cmd_result, 9);
+      CHECK_ERROR_CODE(cmd_result, 9);
     }
 
     class CreateDomain : public CommandExecutorTest {
@@ -830,7 +829,7 @@ namespace iroha {
     TEST_F(CreateDomain, NoPerms) {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createDomain(domain2->domainId(), role)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
       auto dom = query->getDomain(domain2->domainId());
       ASSERT_FALSE(dom);
     }
@@ -846,7 +845,7 @@ namespace iroha {
           TestTransactionBuilder().createDomain(domain2->domainId(), role)))));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createDomain(domain2->domainId(), role)));
-      checkErrorCode(cmd_result, 10);
+      CHECK_ERROR_CODE(cmd_result, 10);
     }
 
     /**
@@ -859,7 +858,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().createDomain(
               domain2->domainId(), another_role)));
-      checkErrorCode(cmd_result, 14);
+      CHECK_ERROR_CODE(cmd_result, 14);
     }
 
     class CreateRole : public CommandExecutorTest {
@@ -907,7 +906,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().createRole(
               another_role, role_permissions2)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
       auto rl = query->getRolePermissions(another_role);
       ASSERT_TRUE(rl);
       ASSERT_TRUE(rl->none());
@@ -924,7 +923,7 @@ namespace iroha {
           another_role, role_permissions)))));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createRole(another_role, role_permissions)));
-      checkErrorCode(cmd_result, 11);
+      CHECK_ERROR_CODE(cmd_result, 11);
     }
 
     class DetachRole : public CommandExecutorTest {
@@ -978,7 +977,7 @@ namespace iroha {
       addAllPerms();
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().detachRole("doge@noaccount", another_role)));
-      checkErrorCode(cmd_result, 2);
+      CHECK_ERROR_CODE(cmd_result, 2);
     }
 
     /**
@@ -993,7 +992,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().detachRole(
               account->accountId(), another_role)));
-      checkErrorCode(cmd_result, 3);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
@@ -1005,7 +1004,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().detachRole(
               account->accountId(), another_role)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
       ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
@@ -1022,7 +1021,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().detachRole(
               account->accountId(), "not_existing_role")));
-      checkErrorCode(cmd_result, 6);
+      CHECK_ERROR_CODE(cmd_result, 6);
     }
 
     class GrantPermission : public CommandExecutorTest {
@@ -1077,7 +1076,7 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .grantPermission("doge@noaccount", perm)
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 2);
+      CHECK_ERROR_CODE(cmd_result, 2);
     }
 
     /**
@@ -1092,7 +1091,7 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .grantPermission(account->accountId(), perm)
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
       auto has_perm = query->hasAccountGrantablePermission(
           account->accountId(), account->accountId(), perm);
       ASSERT_FALSE(has_perm);
@@ -1198,7 +1197,7 @@ namespace iroha {
 
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().removeSignatory("hello", *pubkey)));
-      checkErrorCode(cmd_result, 2);
+      CHECK_ERROR_CODE(cmd_result, 2);
     }
 
     /**
@@ -1225,7 +1224,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().removeSignatory(
               account->accountId(), *another_pubkey)));
-      checkErrorCode(cmd_result, 3);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
@@ -1242,7 +1241,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().removeSignatory(
               account->accountId(), *pubkey)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
 
       auto signatories = query->getSignatories(account->accountId());
       ASSERT_TRUE(signatories);
@@ -1270,7 +1269,7 @@ namespace iroha {
               account->accountId(), *pubkey)))));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().removeSignatory(account->accountId(), pk)));
-      checkErrorCode(cmd_result, 8);
+      CHECK_ERROR_CODE(cmd_result, 8);
     }
 
     class RevokePermission : public CommandExecutorTest {
@@ -1345,7 +1344,7 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .revokePermission(account->accountId(), perm)
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
     }
 
     class SetAccountDetail : public CommandExecutorTest {
@@ -1447,7 +1446,7 @@ namespace iroha {
                       "doge@noaccount", "key", "value")),
                   false,
                   account->accountId());
-      checkErrorCode(cmd_result, 2);
+      CHECK_ERROR_CODE(cmd_result, 2);
     }
 
     /**
@@ -1461,7 +1460,7 @@ namespace iroha {
                       account2->accountId(), "key", "value")),
                   false,
                   account->accountId());
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
       auto kv = query->getAccountDetail(account2->accountId());
       ASSERT_TRUE(kv);
       ASSERT_EQ(kv.get(), "{}");
@@ -1536,7 +1535,7 @@ namespace iroha {
                       true)));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().setAccountQuorum(account->accountId(), 1)));
-      checkErrorCode(cmd_result, 4);
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     /**
@@ -1547,7 +1546,7 @@ namespace iroha {
     TEST_F(SetQuorum, NoPerms) {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().setAccountQuorum(account->accountId(), 3)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
     }
 
     class SubtractAccountAssetTest : public CommandExecutorTest {
@@ -1633,7 +1632,7 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .subtractAssetQuantity(asset_id, "1.0")
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 3);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
@@ -1648,7 +1647,7 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .subtractAssetQuantity(asset_id, "1.0000")
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 3);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
@@ -1668,7 +1667,7 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .subtractAssetQuantity(asset_id, "2.0")
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 4);
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     /**
@@ -1847,12 +1846,12 @@ namespace iroha {
           buildCommand(TestTransactionBuilder().transferAsset(
               "some@domain", account2->accountId(), asset_id, "desc", "1.0")),
           true);
-      checkErrorCode(cmd_result, 2);
+      CHECK_ERROR_CODE(cmd_result, 2);
       cmd_result = execute(
           buildCommand(TestTransactionBuilder().transferAsset(
               account->accountId(), "some@domain", asset_id, "desc", "1.0")),
           true);
-      checkErrorCode(cmd_result, 3);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
@@ -1869,7 +1868,7 @@ namespace iroha {
                                                  asset_id,
                                                  "desc",
                                                  "1.0")));
-      checkErrorCode(cmd_result, 4);
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     /**
@@ -1884,7 +1883,7 @@ namespace iroha {
                                                  asset_id,
                                                  "desc",
                                                  "1.0")));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
     }
 
     /**
@@ -1892,7 +1891,7 @@ namespace iroha {
      * @when trying to transfer account asset, but has insufficient amount of it
      * @then account asset fails to be transferred
      */
-    TEST_F(TransferAccountAssetTest, Owerdraft) {
+    TEST_F(TransferAccountAssetTest, Overdraft) {
       addAllPerms();
       addAllPerms(account2->accountId(), "all2");
       addAsset();
@@ -1907,7 +1906,7 @@ namespace iroha {
                                                  asset_id,
                                                  "desc",
                                                  "2.0")));
-      checkErrorCode(cmd_result, 8);
+      CHECK_ERROR_CODE(cmd_result, 8);
     }
 
     /**
@@ -1942,7 +1941,7 @@ namespace iroha {
                       "desc",
                       uint256_halfmax)),
                   true);
-      checkErrorCode(cmd_result, 11);
+      CHECK_ERROR_CODE(cmd_result, 11);
     }
   }  // namespace ametsuchi
 }  // namespace iroha

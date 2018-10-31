@@ -76,7 +76,7 @@ namespace {
   }
 
   iroha::expected::Error<iroha::ametsuchi::CommandError> makeCommandError(
-      std::string command_name,
+      std::string &&command_name,
       const iroha::ametsuchi::CommandError::ErrorCodeType code,
       const std::string &error_extra = "") noexcept {
     return iroha::expected::makeError(iroha::ametsuchi::CommandError{
@@ -84,70 +84,69 @@ namespace {
   }
 
   /**
-   * Parse the SQL error to turn it into an error code
-   * @param command_name of the failed command
+   * Match the given substring against given SQL error and form a command error,
+   * if match was successful
+   * @param command_name - name of the failed command
+   * @param error to be matched against
+   * @param error_code to be inserted into a command error
+   * @param key - first element to be in an error
+   * @param to_be_presented - second element to be in an error
+   * @return optional with command error
+   */
+  boost::optional<iroha::ametsuchi::CommandResult> parseSqlError(
+      std::string command_name,
+      const std::string &error,
+      iroha::ametsuchi::CommandError::ErrorCodeType error_code,
+      const std::string &key,
+      const std::string &to_be_presented) {
+    auto errors_matched = error.find(key) != std::string::npos
+        and error.find(to_be_presented) != std::string::npos;
+    if (errors_matched) {
+      return boost::make_optional<iroha::ametsuchi::CommandResult>(
+          makeCommandError(std::move(command_name), error_code));
+    }
+    return {};
+  }
+
+  /// mapping between pairs of SQL error substrings and related error codes
+  std::vector<std::tuple<iroha::ametsuchi::CommandError::ErrorCodeType,
+                         std::string,
+                         std::string>>
+      sql_to_error_code = {
+          std::make_tuple(2, "Key (account_id)=", "is not present in table"),
+          std::make_tuple(
+              2, "Key (permittee_account_id)", "is not present in table"),
+          std::make_tuple(6, "Key (role_id)=", "is not present in table"),
+          std::make_tuple(7, "Key (domain_id)=", "is not present in table"),
+          std::make_tuple(9, "Key (asset_id)=", "already exists"),
+          std::make_tuple(10, "Key (domain_id)=", "already exists"),
+          std::make_tuple(11, "Key (role_id)=", "already exists"),
+          std::make_tuple(
+              12, "Key (account_id, public_key)=", "already exists"),
+          std::make_tuple(13, "Key (account_id)=", "already exists"),
+          std::make_tuple(
+              14, "Key (default_role)=", "is not present in table")};
+
+  /**
+   * Get an error code from the text SQL error
+   * @param command_name - name of the failed command
    * @param error - string error, which SQL gave out
    * @return command_error structure
    */
-  iroha::ametsuchi::CommandResult parseSqlError(
-      std::string command_name, const std::string &error) noexcept {
-    if ((error.find("Key (account_id)=") != std::string::npos
-         or error.find("Key (permittee_account_id)") != std::string::npos)
-        and error.find("is not present in table") != std::string::npos) {
-      // account, which is specified in query, is not found
-      return makeCommandError(std::move(command_name), 2);
-    }
+  iroha::ametsuchi::CommandResult getCommandError(
+      std::string &&command_name, const std::string &error) noexcept {
+    boost::optional<iroha::ametsuchi::CommandResult> result_opt;
 
-    if (error.find("Key (role_id)=") != std::string::npos
-        and error.find("is not present in table") != std::string::npos) {
-      // role, which is specified in query, is not found
-      return makeCommandError(std::move(command_name), 6);
-    }
+    iroha::ametsuchi::CommandError::ErrorCodeType err_code;
+    std::string key, to_be_presented;
 
-    if (error.find("Key (domain_id)=") != std::string::npos
-        and error.find("is not present in table") != std::string::npos) {
-      // domain, which is specified in query, is not found
-      return makeCommandError(std::move(command_name), 7);
-    }
-
-    if (error.find("Key (asset_id)=") != std::string::npos
-        and error.find("already exists") != std::string::npos) {
-      // asset, which is specified in query, already exists and thus cannot be
-      // created
-      return makeCommandError(std::move(command_name), 9);
-    }
-
-    if (error.find("Key (domain_id)=") != std::string::npos
-        and error.find("already exists") != std::string::npos) {
-      // domain, which is specified in query, already exists and thus cannot be
-      // created
-      return makeCommandError(std::move(command_name), 10);
-    }
-
-    if (error.find("Key (role_id)=") != std::string::npos
-        and error.find("already exists") != std::string::npos) {
-      // role, which is specified in query, already exists and thus cannot be
-      // created
-      return makeCommandError(std::move(command_name), 11);
-    }
-
-    if (error.find("Key (account_id, public_key)") != std::string::npos
-        and error.find("already exists") != std::string::npos) {
-      // account already has such signatory attached
-      return makeCommandError(std::move(command_name), 12);
-    }
-
-    if (error.find("Key (account_id)") != std::string::npos
-        and error.find("already exists") != std::string::npos) {
-      // account, which is specified in query, already exists and thus cannot be
-      // created
-      return makeCommandError(std::move(command_name), 13);
-    }
-
-    if (error.find("Key (default_role)") != std::string::npos
-        and error.find("is not present in table") != std::string::npos) {
-      // default role for the domain is not found
-      return makeCommandError(std::move(command_name), 14);
+    for (auto error_tuple : sql_to_error_code) {
+      std::tie(err_code, key, to_be_presented) = error_tuple;
+      result_opt =
+          parseSqlError(command_name, error, err_code, key, to_be_presented);
+      if (result_opt) {
+        return *result_opt;
+      }
     }
 
     // parsing is not successful, return the general error
@@ -175,7 +174,7 @@ namespace {
       }
       return {};
     } catch (const std::exception &e) {
-      return parseSqlError(std::move(command_name), e.what());
+      return getCommandError(std::move(command_name), e.what());
     }
   }
 
