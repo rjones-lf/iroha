@@ -20,6 +20,9 @@
 namespace iroha {
   namespace network {
 
+    /**
+     * Encapsulates initialization logic for on-demand ordering gate and service
+     */
     class OnDemandOrderingInit {
      private:
       /**
@@ -33,7 +36,8 @@ namespace iroha {
 
       /**
        * Creates connection manager which redirects requests to appropriate
-       * ordering services in the current round. \see initOrderingGate for parameters
+       * ordering services in the current round. \see initOrderingGate for
+       * parameters
        */
       auto createConnectionManager(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
