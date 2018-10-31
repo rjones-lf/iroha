@@ -471,10 +471,10 @@ namespace iroha {
           sql << "PREPARE TRANSACTION '" + prepared_block_name_ + "';";
           block_is_prepared = true;
         } catch (const std::exception &e) {
-          sql << "ROLLBACK PREPARED '" + prepared_block_name_ + "';";
+          log_->warn("failed to prepare state: {}", e.what());
         }
 
-        log_->info("prepared block");
+        log_->info("state prepared successfully");
       }
     }
 
