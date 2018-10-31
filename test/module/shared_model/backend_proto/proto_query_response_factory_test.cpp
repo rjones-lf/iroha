@@ -72,8 +72,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
       query_responses;
   std::vector<std::unique_ptr<shared_model::interface::AccountAsset>> assets,
       assets_test_copy;
-  std::vector<std::string> account_ids;
-  std::vector<std::string> asset_ids;
+  std::vector<shared_model::interface::types::AccountIdType> account_ids;
+  std::vector<shared_model::interface::types::AssetIdType> asset_ids;
   std::vector<shared_model::interface::Amount> balances;
   for (auto i = 1; i < kAccountAssetsNumber; ++i) {
     ASSERT_NO_THROW({
@@ -90,7 +90,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
     });
     account_ids.push_back(kAccountId);
     asset_ids.push_back(kAssetId);
-    balances.push_back(shared_model::interface::Amount(std::to_string(i)));
+    balances.emplace_back(shared_model::interface::Amount(std::to_string(i)));
   }
 
   query_responses.push_back(response_factory->createAccountAssetResponse(

@@ -70,9 +70,9 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
-    const std::vector<interface::types::AccountIdType> &account_ids,
-    const std::vector<interface::types::AssetIdType> &asset_ids,
-    const std::vector<shared_model::interface::Amount> &balances,
+    const std::vector<interface::types::AccountIdType> account_ids,
+    const std::vector<interface::types::AssetIdType> asset_ids,
+    const std::vector<shared_model::interface::Amount> balances,
     const crypto::Hash &query_hash) const {
   return createQueryResponse(
       [account_ids = std::move(account_ids),
@@ -81,10 +81,10 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
           iroha::protocol::QueryResponse &protocol_query_response) {
         iroha::protocol::AccountAssetResponse *protocol_specific_response =
             protocol_query_response.mutable_account_assets_response();
-        for (decltype(account_ids.size()) i = 0; i < account_ids.size(); i++) {
+        for (size_t i = 0; i < account_ids.size(); i++) {
           auto *asset = protocol_specific_response->add_account_assets();
-          asset->set_account_id(account_ids.at(i));
-          asset->set_asset_id(asset_ids.at(i));
+          asset->set_account_id(std::move(account_ids.at(i)));
+          asset->set_asset_id(std::move(asset_ids.at(i)));
           asset->set_balance(balances.at(i).toStringRepr());
         }
       },
@@ -127,11 +127,11 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
-    const shared_model::interface::types::AccountIdType &account_id,
-    const shared_model::interface::types::DomainIdType &domain_id,
+    const shared_model::interface::types::AccountIdType account_id,
+    const shared_model::interface::types::DomainIdType domain_id,
     shared_model::interface::types::QuorumType quorum,
-    const shared_model::interface::types::JsonType &jsonData,
-    std::vector<std::string> roles,
+    const shared_model::interface::types::JsonType jsonData,
+    std::vector<shared_model::interface::types::RoleIdType> roles,
     const crypto::Hash &query_hash) const {
   return createQueryResponse(
       [account_id = std::move(account_id),
@@ -143,12 +143,12 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
         iroha::protocol::AccountResponse *protocol_specific_response =
             protocol_query_response.mutable_account_response();
         auto *account = protocol_specific_response->mutable_account();
-        account->set_account_id(account_id);
-        account->set_domain_id(domain_id);
+        account->set_account_id(std::move(account_id));
+        account->set_domain_id(std::move(domain_id));
         account->set_quorum(quorum);
-        account->set_json_data(jsonData);
+        account->set_json_data(std::move(jsonData));
         for (const auto &role : roles) {
-          protocol_specific_response->add_account_roles(role);
+          protocol_specific_response->add_account_roles(std::move(role));
         }
       },
       query_hash);
@@ -254,8 +254,8 @@ shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
-    const interface::types::AssetIdType &asset_id,
-    const interface::types::DomainIdType &domain_id,
+    const interface::types::AssetIdType asset_id,
+    const interface::types::DomainIdType domain_id,
     const interface::types::PrecisionType precision,
     const crypto::Hash &query_hash) const {
   return createQueryResponse(
@@ -265,8 +265,8 @@ shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
         iroha::protocol::AssetResponse *protocol_specific_response =
             protocol_query_response.mutable_asset_response();
         auto *asset = protocol_specific_response->mutable_asset();
-        asset->set_asset_id(asset_id);
-        asset->set_domain_id(domain_id);
+        asset->set_asset_id(std::move(asset_id));
+        asset->set_domain_id(std::move(domain_id));
         asset->set_precision(precision);
       },
       query_hash);

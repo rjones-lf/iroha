@@ -54,9 +54,9 @@ namespace shared_model {
        * @return account asset response
        */
       virtual std::unique_ptr<QueryResponse> createAccountAssetResponse(
-          const std::vector<types::AccountIdType> &account_ids,
-          const std::vector<types::AssetIdType> &asset_ids,
-          const std::vector<shared_model::interface::Amount> &balances,
+          const std::vector<types::AccountIdType> account_ids,
+          const std::vector<types::AssetIdType> asset_ids,
+          const std::vector<shared_model::interface::Amount> balances,
           const crypto::Hash &query_hash) const = 0;
 
       /**
@@ -92,10 +92,10 @@ namespace shared_model {
        * @return account response
        */
       virtual std::unique_ptr<QueryResponse> createAccountResponse(
-          const interface::types::AccountIdType &account_id,
-          const interface::types::DomainIdType &domain_id,
+          const interface::types::AccountIdType account_id,
+          const interface::types::DomainIdType domain_id,
           interface::types::QuorumType quorum,
-          const interface::types::JsonType &jsonData,
+          const interface::types::JsonType jsonData,
           std::vector<std::string> roles,
           const crypto::Hash &query_hash) const = 0;
 
@@ -165,8 +165,8 @@ namespace shared_model {
        * @return asset response
        */
       virtual std::unique_ptr<QueryResponse> createAssetResponse(
-          const types::AssetIdType &asset_id,
-          const types::DomainIdType &domain_id,
+          const types::AssetIdType asset_id,
+          const types::DomainIdType domain_id,
           const types::PrecisionType precision,
           const crypto::Hash &query_hash) const = 0;
 
