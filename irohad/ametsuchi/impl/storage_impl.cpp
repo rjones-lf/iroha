@@ -11,6 +11,7 @@
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 #include "ametsuchi/impl/peer_query_wsv.hpp"
+#include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_query_executor.hpp"
@@ -19,9 +20,8 @@
 #include "backend/protobuf/permissions.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "postgres_ordering_service_persistent_state.hpp"
-#include "ametsuchi/impl/postgres_block_index.hpp"
 
-const std::string prepared_block_name = "prepared_block7";
+const std::string prepared_block_name = "prepared_block8";
 
 namespace {
   void prepareStatements(soci::connection_pool &connections, size_t pool_size) {
@@ -245,7 +245,8 @@ namespace iroha {
         connections.push_back(std::make_shared<soci::session>(*connection_));
         try {
           *connections[i] << "ROLLBACK PREPARED '" + prepared_block_name + "';";
-        } catch (...) {}
+        } catch (...) {
+        }
         connections[i]->close();
         log_->debug("Closed connection {}", i);
       }
@@ -313,8 +314,7 @@ namespace iroha {
         std::string postgres_options,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
-        size_t pool_size,
-        bool enable_prepared_transactions) {
+        size_t pool_size) {
       boost::optional<std::string> string_res = boost::none;
 
       PostgresOptions options(postgres_options);
@@ -335,22 +335,18 @@ namespace iroha {
       auto ctx_result = initConnections(block_store_dir);
       auto db_result = initPostgresConnection(postgres_options, pool_size);
       expected::Result<std::shared_ptr<StorageImpl>, std::string> storage;
+      bool enable_prepared_transactions = false;
       ctx_result.match(
           [&](expected::Value<ConnectionContext> &ctx) {
             db_result.match(
                 [&](expected::Value<std::shared_ptr<soci::connection_pool>>
                         &connection) {
-                  if (enable_prepared_transactions) {
-                    int prepared_txs_count;
-                    soci::session sql(*connection.value);
-                    sql << "SHOW max_prepared_transactions;",
-                        soci::into(prepared_txs_count);
-                    if (!prepared_txs_count) {
-                      storage = expected::makeError(
-                          "prepared transactions are not enabled");
-                      return;
-                    }
-                  }
+                  int prepared_txs_count = 0;
+                  soci::session sql(*connection.value);
+                  sql << "SHOW max_prepared_transactions;",
+                      soci::into(prepared_txs_count);
+                  enable_prepared_transactions = prepared_txs_count != 0;
+                  std::cout << "prepared transactions checked\n";
                   storage = expected::makeValue(std::shared_ptr<StorageImpl>(
                       new StorageImpl(block_store_dir,
                                       options,

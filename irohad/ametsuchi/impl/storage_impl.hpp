@@ -53,8 +53,7 @@ namespace iroha {
               factory,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
               converter,
-          size_t pool_size = 10,
-          bool enable_prepared_blocks = true);
+          size_t pool_size = 10);
 
       expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
       createTemporaryWsv() override;
