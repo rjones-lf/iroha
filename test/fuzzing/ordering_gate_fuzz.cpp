@@ -58,7 +58,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, std::size_t size) {
                         ordering_gate_fixture.rounds_.get_subscriber().on_next(std::move(result.value));
                       },
                       [](const iroha::expected::Error<std::string> &error) {
-                        ordering_gate_fixture.rounds_.get_subscriber().on_next(OnDemandOrderingGate::EmptyEvent());
+                        // just ignore a bad case
                       });
   }
 
