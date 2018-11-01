@@ -133,6 +133,11 @@ namespace iroha {
       const PostgresOptions postgres_options_;
 
      private:
+      /**
+       * revert prepared transaction
+       */
+      void rollbackPrepared(soci::session &sql);
+
       std::unique_ptr<KeyValueStorage> block_store_;
 
       std::shared_ptr<soci::connection_pool> connection_;

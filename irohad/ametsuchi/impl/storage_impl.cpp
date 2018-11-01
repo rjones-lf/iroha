@@ -27,7 +27,17 @@ namespace {
       soci::session &session = connections.at(i);
       iroha::ametsuchi::PostgresCommandExecutor::prepareStatements(session);
     }
-  };
+  }
+
+  /**
+   * Verify whether postgres supports prepared transactions
+   */
+  bool preparedTransactionsAvailable(soci::session &sql) {
+    int prepared_txs_count = 0;
+    sql << "SHOW max_prepared_transactions;", soci::into(prepared_txs_count);
+    return prepared_txs_count != 0;
+  }
+
 }  // namespace
 
 namespace iroha {
@@ -64,11 +74,7 @@ namespace iroha {
       soci::session sql(*connection_);
       // rollback current prepared transaction
       // if there exists any since last session
-      try {
-        sql << "ROLLBACK PREPARED '" + prepared_block_name_ + "';";
-      } catch (const std::exception &e) {
-        log_->info(e.what());
-      }
+      rollbackPrepared(sql);
       sql << init_;
       prepareStatements(*connection_, pool_size_);
     }
@@ -96,8 +102,7 @@ namespace iroha {
 
       auto sql = std::make_unique<soci::session>(*connection_);
       if (block_is_prepared) {
-        *sql << "ROLLBACK PREPARED '" + prepared_block_name_ + "';";
-        block_is_prepared = false;
+        rollbackPrepared(*sql);
       }
       auto block_result = getBlockQuery()->getTopBlock();
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
@@ -248,14 +253,10 @@ namespace iroha {
         return;
       }
       // rollback possible prepared transaction
-      try {
+      if (block_is_prepared) {
         soci::session sql(*connection_);
-        sql << "ROLLBACK PREPARED '" + prepared_block_name_ + "';";
-      } catch (const std::exception &e) {
-        log_->info("failed to rollback prepared during database drop: {}",
-                   e.what());
+        rollbackPrepared(sql);
       }
-
       std::vector<std::shared_ptr<soci::session>> connections;
       for (size_t i = 0; i < pool_size_; i++) {
         connections.push_back(std::make_shared<soci::session>(*connection_));
@@ -353,12 +354,9 @@ namespace iroha {
             db_result.match(
                 [&](expected::Value<std::shared_ptr<soci::connection_pool>>
                         &connection) {
-                  int prepared_txs_count = 0;
                   soci::session sql(*connection.value);
-                  sql << "SHOW max_prepared_transactions;",
-                      soci::into(prepared_txs_count);
-                  enable_prepared_transactions = prepared_txs_count != 0;
-                  std::cout << "prepared transactions checked\n";
+                  enable_prepared_transactions =
+                      preparedTransactionsAvailable(sql);
                   storage = expected::makeValue(std::shared_ptr<StorageImpl>(
                       new StorageImpl(block_store_dir,
                                       options,
@@ -397,6 +395,11 @@ namespace iroha {
         const shared_model::interface::Block &block) {
       if (not prepared_blocks_enabled_) {
         log_->warn("prepared blocks are not enabled");
+        return false;
+      }
+
+      if (not block_is_prepared) {
+        log_->info("there are no prepared blocks");
         return false;
       }
       log_->info("applying prepared block");
@@ -480,6 +483,15 @@ namespace iroha {
 
     StorageImpl::~StorageImpl() {
       freeConnections();
+    }
+
+    void StorageImpl::rollbackPrepared(soci::session &sql) {
+      try {
+        sql << "ROLLBACK PREPARED '" + prepared_block_name_ + "';";
+        block_is_prepared = false;
+      } catch (const std::exception &e) {
+        log_->info(e.what());
+      }
     }
 
     const std::string &StorageImpl::drop_ = R"(
