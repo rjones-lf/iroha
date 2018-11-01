@@ -4,7 +4,7 @@
  */
 
 #include <memory>
-#include "libfuzzer/libfuzzer_macro.h"
+#include <libfuzzer/libfuzzer_macro.h>
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
@@ -52,14 +52,11 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, std::size_t size) {
 
   iroha::protocol::Block block;
   if (protobuf_mutator::libfuzzer::LoadProtoInput(true, data, size, &block)) {
-    auto iroha_block =
-            ordering_gate_fixture.block_factory_->createBlock(std::move(block));
-    iroha_block.match([](iroha::expected::Value<std::unique_ptr<shared_model::interface::Block>> &result) {
-                        ordering_gate_fixture.rounds_.get_subscriber().on_next(std::move(result.value));
-                      },
-                      [](const iroha::expected::Error<std::string> &error) {
-                        // just ignore a bad case
-                      });
+    auto iroha_block = ordering_gate_fixture.block_factory_->createBlock(std::move(block));
+    if (auto result = boost::get<iroha::expected::Value<std::unique_ptr<shared_model::interface::Block>>>(
+            &iroha_block)) {
+      ordering_gate_fixture.rounds_.get_subscriber().on_next(std::move(result->value));
+    }
   }
 
   return 0;
