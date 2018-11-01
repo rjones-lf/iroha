@@ -46,6 +46,8 @@ namespace iroha {
         std::shared_ptr<soci::connection_pool> connection,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
+        std::shared_ptr<shared_model::interface::PermissionToString>
+            perm_converter,
         size_t pool_size)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
@@ -53,6 +55,7 @@ namespace iroha {
           connection_(std::move(connection)),
           factory_(std::move(factory)),
           converter_(std::move(converter)),
+          perm_converter_(std::move(perm_converter)),
           log_(logger::log("StorageImpl")),
           pool_size_(pool_size) {
       soci::session sql(*connection_);
@@ -69,7 +72,8 @@ namespace iroha {
       auto sql = std::make_unique<soci::session>(*connection_);
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
-          std::make_unique<TemporaryWsvImpl>(std::move(sql), factory_));
+          std::make_unique<TemporaryWsvImpl>(
+              std::move(sql), factory_, perm_converter_));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
@@ -94,7 +98,8 @@ namespace iroha {
                     return shared_model::interface::types::HashType("");
                   }),
               std::move(sql),
-              factory_));
+              factory_,
+              perm_converter_));
     }
 
     boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery()
@@ -145,9 +150,10 @@ namespace iroha {
               std::make_unique<soci::session>(*connection_),
               factory_,
               *block_store_,
-              pending_txs_storage,
+              std::move(pending_txs_storage),
               converter_,
-              std::move(response_factory)));
+              std::move(response_factory),
+              perm_converter_));
     }
 
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
@@ -300,6 +306,8 @@ namespace iroha {
         std::string postgres_options,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
+        std::shared_ptr<shared_model::interface::PermissionToString>
+            perm_converter,
         size_t pool_size) {
       boost::optional<std::string> string_res = boost::none;
 
@@ -333,6 +341,7 @@ namespace iroha {
                                       connection.value,
                                       factory,
                                       converter,
+                                      perm_converter,
                                       pool_size)));
                 },
                 [&](expected::Error<std::string> &error) { storage = error; });

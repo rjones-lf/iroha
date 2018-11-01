@@ -110,12 +110,9 @@ namespace shared_model {
     void FieldValidator::validatePubkey(
         ReasonsGroupType &reason,
         const interface::types::PubkeyType &pubkey) const {
-      if (pubkey.blob().size() != public_key_size) {
-        auto message = (boost::format("Public key has wrong size, passed size: "
-                                      "%d. Expected size: %d")
-                        % pubkey.blob().size() % public_key_size)
-                           .str();
-        reason.second.push_back(std::move(message));
+      auto opt_reason = shared_model::validation::validatePubkey(pubkey);
+      if (opt_reason) {
+        reason.second.push_back(std::move(*opt_reason));
       }
     }
 
@@ -372,6 +369,17 @@ namespace shared_model {
         reason.second.push_back(
             (boost::format("Hash has invalid size: %d") % hash.size()).str());
       }
+    }
+
+    boost::optional<ConcreteReasonType> validatePubkey(
+        const interface::types::PubkeyType &pubkey) {
+      if (pubkey.blob().size() != FieldValidator::public_key_size) {
+        return (boost::format("Public key has wrong size, passed size: "
+                              "%d. Expected size: %d")
+                % pubkey.blob().size() % FieldValidator::public_key_size)
+            .str();
+      }
+      return boost::none;
     }
 
   }  // namespace validation

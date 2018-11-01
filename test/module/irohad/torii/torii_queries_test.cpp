@@ -16,7 +16,6 @@
 #include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "module/shared_model/builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 #include "framework/specified_visitor.hpp"
@@ -38,6 +37,8 @@ using namespace iroha::torii;
 using namespace shared_model::interface::permissions;
 
 using wTransaction = std::shared_ptr<shared_model::interface::Transaction>;
+using ErrorQueryType =
+    shared_model::interface::QueryResponseFactory::ErrorQueryType;
 
 // TODO kamilsa 22.06.18 IR-1472 rework this test so that query service is
 // mocked
@@ -173,13 +174,10 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
                          .signAndAddSignature(pair)
                          .finish();
 
-  auto *r =
-      clone(TestQueryResponseBuilder()
-                .errorQueryResponse<
-                    shared_model::interface::StatefulFailedErrorResponse>()
-                .queryHash(model_query.hash())
-                .build())
-          .release();
+  auto *r = query_response_factory
+                ->createErrorQueryResponse(
+                    ErrorQueryType::kStatefulFailed, "", model_query.hash())
+                .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
       .WillRepeatedly(Return(r));
@@ -222,13 +220,8 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
                          .finish();
 
   auto *r =
-      clone(TestQueryResponseBuilder()
-                .accountResponse(
-                    *std::static_pointer_cast<shared_model::proto::Account>(
-                        accountB),
-                    roles)
-                .queryHash(model_query.hash())
-                .build())
+      query_response_factory
+          ->createAccountResponse(clone(*accountB), roles, model_query.hash())
           .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
@@ -274,13 +267,8 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
                          .finish();
 
   auto *r =
-      clone(TestQueryResponseBuilder()
-                .accountResponse(
-                    *std::static_pointer_cast<shared_model::proto::Account>(
-                        account),
-                    roles)
-                .queryHash(model_query.hash())
-                .build())
+      query_response_factory
+          ->createAccountResponse(clone(*account), roles, model_query.hash())
           .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
@@ -326,13 +314,10 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
                          .signAndAddSignature(pair)
                          .finish();
 
-  auto *r =
-      clone(TestQueryResponseBuilder()
-                .errorQueryResponse<
-                    shared_model::interface::StatefulFailedErrorResponse>()
-                .queryHash(model_query.hash())
-                .build())
-          .release();
+  auto *r = query_response_factory
+                ->createErrorQueryResponse(
+                    ErrorQueryType::kStatefulFailed, "", model_query.hash())
+                .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
       .WillRepeatedly(Return(r));
@@ -383,15 +368,13 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
                          .signAndAddSignature(pair)
                          .finish();
 
-  std::vector<shared_model::proto::AccountAsset> assets = {
-      *std::static_pointer_cast<shared_model::proto::AccountAsset>(
-          account_asset)};
+  std::vector<std::unique_ptr<shared_model::interface::AccountAsset>> assets;
+  assets.push_back(clone(*account_asset));
 
-  auto *r = clone(TestQueryResponseBuilder()
-                      .accountAssetResponse(assets)
-                      .queryHash(model_query.hash())
-                      .build())
-                .release();
+  auto *r =
+      query_response_factory
+          ->createAccountAssetResponse(std::move(assets), model_query.hash())
+          .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
       .WillRepeatedly(Return(r));
@@ -448,13 +431,10 @@ TEST_F(ToriiQueriesTest, FindSignatoriesWhenNoGrantPermissions) {
                          .signAndAddSignature(pair)
                          .finish();
 
-  auto *r =
-      clone(TestQueryResponseBuilder()
-                .errorQueryResponse<
-                    shared_model::interface::StatefulFailedErrorResponse>()
-                .queryHash(model_query.hash())
-                .build())
-          .release();
+  auto *r = query_response_factory
+                ->createErrorQueryResponse(
+                    ErrorQueryType::kStatefulFailed, "", model_query.hash())
+                .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
       .WillRepeatedly(Return(r));
@@ -495,10 +475,8 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
                          .signAndAddSignature(pair)
                          .finish();
 
-  auto *r = clone(TestQueryResponseBuilder()
-                      .signatoriesResponse(signatories)
-                      .queryHash(model_query.hash())
-                      .build())
+  auto *r = query_response_factory
+                ->createSignatoriesResponse(signatories, model_query.hash())
                 .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
@@ -557,10 +535,16 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
                          .signAndAddSignature(pair)
                          .finish();
 
-  auto *r = clone(TestQueryResponseBuilder()
-                      .transactionsResponse(proto_txs)
-                      .queryHash(model_query.hash())
-                      .build())
+  std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+      response_txs;
+  std::transform(std::begin(proto_txs),
+                 std::end(proto_txs),
+                 std::back_inserter(response_txs),
+                 [](const auto &proto_tx) { return clone(proto_tx); });
+
+  auto *r = query_response_factory
+                ->createTransactionsResponse(std::move(response_txs),
+                                             model_query.hash())
                 .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))

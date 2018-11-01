@@ -10,6 +10,7 @@
 #include "network/mst_transport.hpp"
 
 #include <google/protobuf/empty.pb.h>
+#include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
@@ -30,13 +31,12 @@ namespace iroha {
       MstTransportGrpc(
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory,
           std::shared_ptr<TransportFactoryType> transaction_factory,
           std::shared_ptr<shared_model::interface::TransactionBatchParser>
               batch_parser,
           std::shared_ptr<shared_model::interface::TransactionBatchFactory>
-              transaction_batch_factory);
+              transaction_batch_factory,
+          shared_model::crypto::PublicKey my_key);
 
       /**
        * Server part of grpc SendState method call
@@ -66,12 +66,13 @@ namespace iroha {
       std::weak_ptr<MstTransportNotification> subscriber_;
       std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
           async_call_;
-      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
       std::shared_ptr<TransportFactoryType> transaction_factory_;
       std::shared_ptr<shared_model::interface::TransactionBatchParser>
           batch_parser_;
       std::shared_ptr<shared_model::interface::TransactionBatchFactory>
           batch_factory_;
+      /// source peer key for MST propogation messages
+      const std::string my_key_;
     };
   }  // namespace network
 }  // namespace iroha

@@ -85,8 +85,7 @@ class SynchronizerTest : public ::testing::Test {
 TEST_F(SynchronizerTest, ValidWhenInitialized) {
   // synchronizer constructor => on_commit subscription called
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Block>>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
 
   init();
 }
@@ -114,8 +113,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
 
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Block>>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
 
   init();
 
@@ -158,8 +156,7 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
 
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Block>>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
 
   init();
 
@@ -196,8 +193,7 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
       .WillOnce(Return(commit_message_blocks));
 
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Block>>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
 
   init();
 
@@ -235,8 +231,7 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Block>>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
   EXPECT_CALL(*chain_validator, validateChain(_, _))
       .WillOnce(Return(false))
       .WillOnce(testing::Invoke([](auto chain, auto &) {
@@ -294,8 +289,7 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
       .WillOnce(Return(true));
 
   EXPECT_CALL(*consensus_gate, on_commit())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Block>>()));
+      .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
 
   init();
 

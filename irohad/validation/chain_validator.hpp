@@ -6,7 +6,7 @@
 #ifndef IROHA_CHAIN_VALIDATOR_HPP
 #define IROHA_CHAIN_VALIDATOR_HPP
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 
 namespace shared_model {
   namespace interface {

@@ -11,6 +11,14 @@
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "framework/result_fixture.hpp"
 #include "framework/specified_visitor.hpp"
+#include "interfaces/query_responses/account_asset_response.hpp"
+#include "interfaces/query_responses/account_detail_response.hpp"
+#include "interfaces/query_responses/account_response.hpp"
+#include "interfaces/query_responses/asset_response.hpp"
+#include "interfaces/query_responses/role_permissions.hpp"
+#include "interfaces/query_responses/roles_response.hpp"
+#include "interfaces/query_responses/signatories_response.hpp"
+#include "interfaces/query_responses/transactions_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
@@ -69,7 +77,8 @@ namespace iroha {
                 shared_model::validation::FieldValidator>>();
         query_executor = storage;
         PostgresCommandExecutor::prepareStatements(*sql);
-        executor = std::make_unique<PostgresCommandExecutor>(*sql);
+        executor =
+            std::make_unique<PostgresCommandExecutor>(*sql, perm_converter_);
         pending_txs_storage = std::make_shared<MockPendingTransactionStorage>();
 
         auto result = execute(buildCommand(TestTransactionBuilder().createRole(
@@ -1144,8 +1153,7 @@ namespace iroha {
                      TestTransactionBuilder()
                          .creatorAccountId(account->accountId())
                          .createRole("user3", {})
-                         .build()
-                    }))
+                         .build()}))
                 .height(2)
                 .prevHash(block1.hash())
                 .build();

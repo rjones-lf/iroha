@@ -11,7 +11,7 @@
 #include <shared_mutex>
 
 #include <boost/variant.hpp>
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
@@ -44,7 +44,7 @@ namespace iroha {
           rxcpp::observable<BlockRoundEventType> events,
           std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
-          transport::Round initial_round);
+          consensus::Round initial_round);
 
       void propagateBatch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)
@@ -63,7 +63,7 @@ namespace iroha {
       std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
 
-      transport::Round current_round_;
+      consensus::Round current_round_;
       rxcpp::subjects::subject<
           std::shared_ptr<shared_model::interface::Proposal>>
           proposal_notifier_;

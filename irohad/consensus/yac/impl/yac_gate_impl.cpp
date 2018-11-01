@@ -57,14 +57,12 @@ namespace iroha {
         consensus_result_cache_->insert(block);
       }
 
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-      YacGateImpl::on_commit() {
+      rxcpp::observable<network::Commit> YacGateImpl::on_commit() {
         return hash_gate_->onOutcome().flat_map([this](auto message) {
           // TODO 10.06.2018 andrei: IR-497 Work on reject case
           auto commit_message = boost::get<CommitMessage>(message);
           // map commit to block if it is present or loaded from other peer
-          return rxcpp::observable<>::create<
-              std::shared_ptr<shared_model::interface::Block>>(
+          return rxcpp::observable<>::create<network::Commit>(
               [this, commit_message](auto subscriber) {
                 const auto hash = getHash(commit_message.votes);
                 if (not hash) {
@@ -79,7 +77,9 @@ namespace iroha {
                   log_->info("consensus: commit top block: height {}, hash {}",
                              current_block_.second->height(),
                              current_block_.second->hash().hex());
-                  subscriber.on_next(current_block_.second);
+                  subscriber.on_next(
+                      network::Commit{current_block_.second,
+                                      network::PeerVotedFor::kThisBlock});
                   subscriber.on_completed();
                   return;
                 }
@@ -93,8 +93,7 @@ namespace iroha {
                     // allow other peers to apply commit
                     .flat_map([this, model_hash](auto vote) {
                       // map vote to block if it can be loaded
-                      return rxcpp::observable<>::create<
-                          std::shared_ptr<shared_model::interface::Block>>(
+                      return rxcpp::observable<>::create<network::Commit>(
                           [this, model_hash, vote](auto subscriber) {
                             auto block = block_loader_->retrieveBlock(
                                 vote.signature->publicKey(),
@@ -103,7 +102,8 @@ namespace iroha {
                             if (block) {
                               // update the cache with block consensus voted for
                               consensus_result_cache_->insert(*block);
-                              subscriber.on_next(*block);
+                              subscriber.on_next(network::Commit{
+                                  *block, network::PeerVotedFor::kOtherBlock});
                             } else {
                               log_->error(
                                   "Could not get block from block loader");

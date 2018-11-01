@@ -9,9 +9,7 @@
 #include <limits>
 
 #include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
-#include "common/visitor.hpp"
-#include "utils/lazy_initializer.hpp"
-#include "utils/variant_deserializer.hpp"
+#include "cryptography/hash.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -40,48 +38,20 @@ namespace shared_model {
       using ProtoResponseListType = ProtoResponseVariantType::types;
 
       template <typename TxResponse>
-      explicit TransactionResponse(TxResponse &&ref)
-          : CopyableProto(std::forward<TxResponse>(ref)),
-            variant_([this] {
-              auto &&ar = *proto_;
+      explicit TransactionResponse(TxResponse &&ref);
 
-              unsigned which = ar.GetDescriptor()
-                                   ->FindFieldByName("tx_status")
-                                   ->enum_type()
-                                   ->FindValueByNumber(ar.tx_status())
-                                   ->index();
-              constexpr unsigned last =
-                  boost::mpl::size<ProtoResponseListType>::type::value - 1;
+      TransactionResponse(const TransactionResponse &r);
 
-              return shared_model::detail::variant_impl<ProtoResponseListType>::
-                  template load<shared_model::proto::TransactionResponse::
-                                    ProtoResponseVariantType>(
-                      std::forward<decltype(ar)>(ar),
-                      which > last ? last : which);
-            }()),
-            ivariant_(variant_),
-            hash_(proto_->tx_hash()) {}
+      TransactionResponse(TransactionResponse &&r) noexcept;
 
-      TransactionResponse(const TransactionResponse &r)
-          : TransactionResponse(r.proto_) {}
-
-      TransactionResponse(TransactionResponse &&r) noexcept
-          : TransactionResponse(std::move(r.proto_)) {}
-
-      const interface::types::HashType &transactionHash() const override {
-        return hash_;
-      }
+      const interface::types::HashType &transactionHash() const override;
 
       /**
        * @return attached interface tx response
        */
-      const ResponseVariantType &get() const override {
-        return ivariant_;
-      }
+      const ResponseVariantType &get() const override;
 
-      const ErrorMessageType &errorMessage() const override {
-        return proto_->error_message();
-      }
+      const ErrorMessageType &errorMessage() const override;
 
      private:
       const ProtoResponseVariantType variant_;
@@ -92,26 +62,22 @@ namespace shared_model {
       const crypto::Hash hash_;
 
       static constexpr int max_priority = std::numeric_limits<int>::max();
-      int priority() const noexcept override {
-        return iroha::visit_in_place(
-            variant_,
-            // not received can be changed to any response
-            [](const NotReceivedTxResponse &) { return 0; },
-            // following types are sequential in pipeline
-            [](const StatelessValidTxResponse &) { return 1; },
-            [](const MstPendingResponse &) { return 2; },
-            [](const EnoughSignaturesCollectedResponse &) { return 3; },
-            [](const StatefulValidTxResponse &) { return 4; },
-            // following types are local on this peer and can be substituted by
-            // final ones, if consensus decides so
-            [](const StatelessFailedTxResponse &) { return 5; },
-            [](const StatefulFailedTxResponse &) { return 5; },
-            [](const MstExpiredResponse &) { return 5; },
-            // following types are the final ones
-            [](const CommittedTxResponse &) { return max_priority; },
-            [](const RejectedTxResponse &) { return max_priority; });
-      }
+      int priority() const noexcept override;
     };
   }  // namespace  proto
 }  // namespace shared_model
+
+namespace boost {
+    extern template class variant<shared_model::proto::StatelessFailedTxResponse,
+            shared_model::proto::StatelessValidTxResponse,
+            shared_model::proto::StatefulFailedTxResponse,
+            shared_model::proto::StatefulValidTxResponse,
+            shared_model::proto::RejectedTxResponse,
+            shared_model::proto::CommittedTxResponse,
+            shared_model::proto::MstExpiredResponse,
+            shared_model::proto::NotReceivedTxResponse,
+            shared_model::proto::MstPendingResponse,
+            shared_model::proto::EnoughSignaturesCollectedResponse>;
+}
+
 #endif  // IROHA_PROTO_TX_RESPONSE_HPP

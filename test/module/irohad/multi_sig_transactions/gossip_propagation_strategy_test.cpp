@@ -79,7 +79,8 @@ PropagationData subscribeAndEmit(boost::optional<PropagationData> data,
   EXPECT_CALL(*pbfactory, createPeerQuery())
       .WillRepeatedly(testing::Return(boost::make_optional(
           std::shared_ptr<iroha::ametsuchi::PeerQuery>(query))));
-  GossipPropagationStrategy strategy(pbfactory, period, amount);
+  GossipPropagationStrategy strategy(
+      pbfactory, rxcpp::observe_on_event_loop(), period, amount);
   return subscribeAndEmit(strategy, take);
 }
 
@@ -186,7 +187,8 @@ TEST(GossipPropagationStrategyTest, MultipleSubsEmission) {
       .WillRepeatedly(testing::Return(boost::make_optional(
           std::shared_ptr<iroha::ametsuchi::PeerQuery>(query))));
   EXPECT_CALL(*query, getLedgerPeers()).WillRepeatedly(testing::Return(peers));
-  GossipPropagationStrategy strategy(pbfactory, 1ms, amount);
+  GossipPropagationStrategy strategy(
+      pbfactory, rxcpp::observe_on_new_thread(), 1ms, amount);
 
   // Create separate subscriber for every thread
   // Use result[i] as storage for emitent for i-th one

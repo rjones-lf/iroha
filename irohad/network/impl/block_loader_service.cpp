@@ -88,7 +88,7 @@ grpc::Status BlockLoaderService::retrieveBlock(
     log_->error("Could not create block query to retrieve block from storage");
     return grpc::Status(grpc::StatusCode::INTERNAL, "internal error happened");
   }
-  
+
   auto found_block = std::find_if(
       std::begin(*blocks), std::end(*blocks), [&hash](const auto &block) {
         return block->hash() == hash;

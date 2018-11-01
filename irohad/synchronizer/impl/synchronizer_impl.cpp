@@ -24,8 +24,8 @@ namespace iroha {
           log_(logger::log("synchronizer")) {
       consensus_gate->on_commit().subscribe(
           subscription_,
-          [&](std::shared_ptr<shared_model::interface::Block> block) {
-            this->process_commit(block);
+          [&](network::Commit commit) {
+            this->process_commit(commit.block);
           });
     }
 

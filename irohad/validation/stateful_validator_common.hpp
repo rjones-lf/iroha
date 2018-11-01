@@ -6,6 +6,8 @@
 #ifndef IROHA_STATEFUL_VALIDATOR_COMMON_HPP
 #define IROHA_STATEFUL_VALIDATOR_COMMON_HPP
 
+#include <memory>
+#include <utility>
 #include <vector>
 
 #include "interfaces/common_objects/types.hpp"
