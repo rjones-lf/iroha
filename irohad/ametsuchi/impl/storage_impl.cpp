@@ -377,15 +377,7 @@ namespace iroha {
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
-        auto json_result = converter_->serialize(*block.second);
-        json_result.match(
-            [this, &block](const expected::Value<std::string> &v) {
-              block_store_->add(block.first, stringToBytes(v.value));
-              notifier_.get_subscriber().on_next(block.second);
-            },
-            [this](const expected::Error<std::string> &e) {
-              log_->error(e.error);
-            });
+        storeBlock(block);
       }
       *(storage->sql_) << "COMMIT";
       storage->committed = true;
@@ -422,17 +414,7 @@ namespace iroha {
         return false;
       }
 
-      auto json_result = converter_->serialize(block);
-      return json_result.match(
-          [this, &block](const expected::Value<std::string> &v) {
-            block_store_->add(block.height(), stringToBytes(v.value));
-            notifier_.get_subscriber().on_next(clone(block));
-            return true;
-          },
-          [this](const expected::Error<std::string> &e) {
-            log_->error(e.error);
-            return false;
-          });
+      return storeBlock(block);
     }
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
@@ -492,6 +474,20 @@ namespace iroha {
       } catch (const std::exception &e) {
         log_->info(e.what());
       }
+    }
+
+    bool StorageImpl::storeBlock(const shared_model::interface::Block &block) {
+      auto json_result = converter_->serialize(block);
+      return json_result.match(
+          [this, &block](const expected::Value<std::string> &v) {
+            block_store_->add(block.height(), stringToBytes(v.value));
+            notifier_.get_subscriber().on_next(clone(block));
+            return true;
+          },
+          [this](const expected::Error<std::string> &e) {
+            log_->error(e.error);
+            return false;
+          });
     }
 
     const std::string &StorageImpl::drop_ = R"(

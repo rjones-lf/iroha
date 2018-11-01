@@ -138,6 +138,11 @@ namespace iroha {
        */
       void rollbackPrepared(soci::session &sql);
 
+      /**
+       * add block to block storage
+       */
+      bool storeBlock(const shared_model::interface::Block &block);
+
       std::unique_ptr<KeyValueStorage> block_store_;
 
       std::shared_ptr<soci::connection_pool> connection_;
