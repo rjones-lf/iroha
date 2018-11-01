@@ -9,7 +9,6 @@
 #include <boost/optional.hpp>
 #include <string>
 #include <vector>
-#include "common/types.hpp"
 
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/account_asset.hpp"

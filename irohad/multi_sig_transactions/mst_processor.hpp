@@ -22,7 +22,6 @@
 #include <mutex>
 #include <rxcpp/rx.hpp>
 #include "logger/logger.hpp"
-#include "model/transaction.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 

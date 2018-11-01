@@ -11,7 +11,6 @@ target_link_libraries(torii_fuzzing
   gtest::gtest
   gmock::gmock
   ametsuchi
-  libs_common
   torii_service
   protobuf-mutator
   )
@@ -22,7 +21,6 @@ target_link_libraries(status_fuzzing
   gtest::gtest
   gmock::gmock
   ametsuchi
-  libs_common
   torii_service
   protobuf-mutator
   )
@@ -33,7 +31,6 @@ target_link_libraries(find_fuzzing
   gtest::gtest
   gmock::gmock
   ametsuchi
-  libs_common
   torii_service
   protobuf-mutator
   )

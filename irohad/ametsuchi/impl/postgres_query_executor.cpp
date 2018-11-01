@@ -15,8 +15,9 @@
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/range/irange.hpp>
+
 #include "ametsuchi/impl/soci_utils.hpp"
-#include "common/types.hpp"
+#include "common/byteutils.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/get_account.hpp"

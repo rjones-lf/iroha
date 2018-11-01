@@ -23,11 +23,12 @@ add_library(torii_service
     )
 target_link_libraries(torii_service
     endpoint
-    shared_model_proto_backend
     logger
-    shared_model_stateless_validation
     processors
     shared_model_interfaces_factories
+    shared_model_stateless_validation
+    shared_model_proto_backend
+    libs_timeout
     )
 
 add_library(status_bus

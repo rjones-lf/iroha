@@ -19,8 +19,8 @@
 #include <gtest/gtest.h>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include "common/byteutils.hpp"
 #include "common/files.hpp"
-#include "common/types.hpp"
 
 #include "logger/logger.hpp"
 

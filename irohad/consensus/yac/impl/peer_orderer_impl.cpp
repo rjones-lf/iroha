@@ -19,7 +19,7 @@
 
 #include <random>
 
-#include "common/types.hpp"
+#include "common/bind.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 #include "interfaces/common_objects/peer.hpp"
