@@ -29,8 +29,6 @@ namespace iroha {
      public:
       virtual ~ChainValidator() = default;
 
-      // TODO andrei 16.10.18 IR-1761 Rename methods in validators
-
       /**
        * Try to apply the blocks from observable to the storage.
        *
