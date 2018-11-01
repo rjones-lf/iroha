@@ -8,7 +8,7 @@
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, std::size_t size) {
   static fuzzing::OrderingServiceFixture fixture;
 
-  if (size < 1) {
+  if (size < 4) {
     return 0;
   }
 
@@ -21,11 +21,11 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, std::size_t size) {
                                                    fixture.batch_parser_,
                                                    fixture.transaction_batch_factory_);
 
-  proto::BatchesRequest request;
-  if (protobuf_mutator::libfuzzer::LoadProtoInput(true, data, size, &request)) {
+  proto::ProposalRequest request;
+  if (protobuf_mutator::libfuzzer::LoadProtoInput(true, data + 1, size - 1, &request)) {
     grpc::ServerContext context;
-    google::protobuf::Empty response;
-    server_->SendBatches(&context, &request, &response);
+    proto::ProposalResponse response;
+    server_->RequestProposal(&context, &request, &response);
   }
 
   return 0;
