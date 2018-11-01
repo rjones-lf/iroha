@@ -62,12 +62,21 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
              round.reject_round);
 
   auto it = current_proposals_.find(round);
-  if (it != current_proposals_.end()) {
-    std::for_each(batches.begin(), batches.end(), [&it](auto &obj) {
-      it->second.push(std::move(obj));
-    });
-    log_->debug("onTransactions => collection is inserted");
+  if (it == current_proposals_.end()) {
+    it =
+        std::find_if(current_proposals_.begin(),
+                     current_proposals_.end(),
+                     [&round](const auto &p) {
+                       auto request_reject_round = round.reject_round;
+                       auto reject_round = p.first.reject_round;
+                       return request_reject_round == reject_round
+                           or (request_reject_round >= 2 and reject_round >= 2);
+                     });
   }
+  std::for_each(batches.begin(), batches.end(), [&it](auto &obj) {
+    it->second.push(std::move(obj));
+  });
+  log_->debug("onBatches => collection is inserted");
 }
 
 boost::optional<OnDemandOrderingServiceImpl::ProposalType>

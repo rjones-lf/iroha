@@ -67,7 +67,8 @@ namespace integration_framework {
     }
     // the code below should be executed anyway in order to prevent app hang
     if (iroha_instance_ and iroha_instance_->getIrohaInstance()) {
-      iroha_instance_->getIrohaInstance()->terminate();
+      iroha_instance_->getIrohaInstance()->terminate(
+          std::chrono::system_clock::now());
     }
   }
 

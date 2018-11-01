@@ -77,6 +77,12 @@ namespace integration_framework {
         internal_server->shutdown();
       }
     }
+
+    void terminate(const std::chrono::system_clock::time_point &deadline) {
+      if (internal_server) {
+        internal_server->shutdown(deadline);
+      }
+    }
   };
 }  // namespace integration_framework
 

@@ -70,6 +70,7 @@ namespace iroha {
         log_->warn("Could not fetch last block: " + e->error);
         return;
       }
+      block_query_opt = boost::none;
 
       last_block =
           boost::get<
