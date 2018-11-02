@@ -9,6 +9,7 @@
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
+#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
@@ -16,11 +17,14 @@
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
-#include "multi_sig_transactions/mst_processor_stub.hpp"
+#include "multi_sig_transactions/mst_propagation_strategy_stub.hpp"
 #include "multi_sig_transactions/mst_time_provider_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
+#include "multi_sig_transactions/transport/mst_transport_stub.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "validators/field_validator.hpp"
@@ -41,6 +45,7 @@ using namespace std::chrono_literals;
  */
 Irohad::Irohad(const std::string &block_store_dir,
                const std::string &pg_conn,
+               const std::string &listen_ip,
                size_t torii_port,
                size_t internal_port,
                size_t max_proposal_size,
@@ -50,6 +55,7 @@ Irohad::Irohad(const std::string &block_store_dir,
                bool is_mst_supported)
     : block_store_dir_(block_store_dir),
       pg_conn_(pg_conn),
+      listen_ip_(listen_ip),
       torii_port_(torii_port),
       internal_port_(internal_port),
       max_proposal_size_(max_proposal_size),
@@ -109,12 +115,15 @@ void Irohad::initStorage() {
   common_objects_factory_ =
       std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
           shared_model::validation::FieldValidator>>();
+  auto perm_converter =
+      std::make_shared<shared_model::proto::ProtoPermissionToString>();
   auto block_converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
   auto storageResult = StorageImpl::create(block_store_dir_,
                                            pg_conn_,
                                            common_objects_factory_,
-                                           std::move(block_converter));
+                                           std::move(block_converter),
+                                           perm_converter);
   storageResult.match(
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
         storage = _storage.value;
@@ -305,29 +314,33 @@ void Irohad::initStatusBus() {
 }
 
 void Irohad::initMstProcessor() {
+  auto mst_completer = std::make_shared<DefaultCompleter>();
+  auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
+  std::shared_ptr<iroha::PropagationStrategy> mst_propagation;
   if (is_mst_supported_) {
     mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
         async_call_,
-        common_objects_factory_,
         transaction_factory,
         batch_parser,
-        transaction_batch_factory_);
-    auto mst_completer = std::make_shared<DefaultCompleter>();
-    auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
+        transaction_batch_factory_,
+        keypair.publicKey());
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
     // cli parameters
-    auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
+    mst_propagation = std::make_shared<GossipPropagationStrategy>(
         storage,
+        rxcpp::observe_on_new_thread(),
         std::chrono::seconds(5) /*emitting period*/,
         2 /*amount per once*/);
-    auto mst_time = std::make_shared<MstTimeProviderImpl>();
-    auto fair_mst_processor = std::make_shared<FairMstProcessor>(
-        mst_transport, mst_storage, mst_propagation, mst_time);
-    mst_processor = fair_mst_processor;
-    mst_transport->subscribe(fair_mst_processor);
   } else {
-    mst_processor = std::make_shared<MstProcessorStub>();
+    mst_propagation = std::make_shared<iroha::PropagationStrategyStub>();
+    mst_transport = std::make_shared<iroha::network::MstTransportStub>();
   }
+
+  auto mst_time = std::make_shared<MstTimeProviderImpl>();
+  auto fair_mst_processor = std::make_shared<FairMstProcessor>(
+      mst_transport, mst_storage, mst_propagation, mst_time);
+  mst_processor = fair_mst_processor;
+  mst_transport->subscribe(fair_mst_processor);
   log_->info("[Init] => MST processor");
 }
 
@@ -382,38 +395,46 @@ void Irohad::initWsvRestorer() {
 /**
  * Run iroha daemon
  */
-void Irohad::run() {
+Irohad::RunResult Irohad::run() {
   using iroha::expected::operator|;
 
   // Initializing torii server
-  std::string ip = "0.0.0.0";
-  torii_server =
-      std::make_unique<ServerRunner>(ip + ":" + std::to_string(torii_port_));
+  torii_server = std::make_unique<ServerRunner>(listen_ip_ + ":"
+                                                + std::to_string(torii_port_));
 
   // Initializing internal server
-  internal_server =
-      std::make_unique<ServerRunner>(ip + ":" + std::to_string(internal_port_));
+  internal_server = std::make_unique<ServerRunner>(
+      listen_ip_ + ":" + std::to_string(internal_port_));
 
   // Run torii server
-  (torii_server->append(command_service_transport).append(query_service).run() |
-   [&](const auto &port) {
-     log_->info("Torii server bound on port {}", port);
-     if (is_mst_supported_) {
-       internal_server->append(mst_transport);
-     }
-     // Run internal server
-     return internal_server->append(ordering_init.ordering_gate_transport)
-         .append(ordering_init.ordering_service_transport)
-         .append(yac_init.consensus_network)
-         .append(loader_init.service)
-         .run();
-   })
-      .match(
+  return (torii_server->append(command_service_transport)
+              .append(query_service)
+              .run()
+          |
           [&](const auto &port) {
+            log_->info("Torii server bound on port {}", port);
+            if (is_mst_supported_) {
+              internal_server->append(
+                  std::static_pointer_cast<MstTransportGrpc>(mst_transport));
+            }
+            // Run internal server
+            return internal_server
+                ->append(ordering_init.ordering_gate_transport)
+                .append(ordering_init.ordering_service_transport)
+                .append(yac_init.consensus_network)
+                .append(loader_init.service)
+                .run();
+          })
+      .match(
+          [&](const auto &port) -> RunResult {
             log_->info("Internal server bound on port {}", port.value);
             log_->info("===> iroha initialized");
+            return {};
           },
-          [&](const expected::Error<std::string> &e) { log_->error(e.error); });
+          [&](const expected::Error<std::string> &e) -> RunResult {
+            log_->error(e.error);
+            return e;
+          });
 }
 
 Irohad::~Irohad() {

@@ -11,6 +11,7 @@ add_library(shared_model_proto_backend
     impl/proto_block_json_converter.cpp
     impl/proto_query_response_factory.cpp
     impl/proto_tx_status_factory.cpp
+    impl/proto_permission_to_string.cpp
     commands/impl/proto_add_asset_quantity.cpp
     commands/impl/proto_add_peer.cpp
     commands/impl/proto_add_signatory.cpp

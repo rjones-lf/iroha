@@ -9,10 +9,10 @@
 
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
-#include "backend/protobuf/proposal.hpp"
-#include "backend/protobuf/transaction.hpp"
+#include <boost/range/adaptor/indirected.hpp>
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
 
 using namespace iroha::ordering;
@@ -20,14 +20,17 @@ using namespace iroha::ordering;
 /**
  * First round after successful committing block
  */
-const iroha::ordering::transport::RejectRoundType kFirstRound = 1;
+const iroha::consensus::RejectRoundType kFirstRound = 1;
 
 OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
     size_t transaction_limit,
+    std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+              proposal_factory,
     size_t number_of_proposals,
-    const transport::Round &initial_round)
+    const consensus::Round &initial_round)
     : transaction_limit_(transaction_limit),
       number_of_proposals_(number_of_proposals),
+      proposal_factory_(std::move(proposal_factory)),
       log_(logger::log("OnDemandOrderingServiceImpl")) {
   onCollaborationOutcome(initial_round);
 }
@@ -35,7 +38,7 @@ OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
 // -------------------------| OnDemandOrderingService |-------------------------
 
 void OnDemandOrderingServiceImpl::onCollaborationOutcome(
-    transport::Round round) {
+    consensus::Round round) {
   log_->info("onCollaborationOutcome => round[{}, {}]",
              round.block_round,
              round.reject_round);
@@ -49,18 +52,18 @@ void OnDemandOrderingServiceImpl::onCollaborationOutcome(
 
 // ----------------------------| OdOsNotification |-----------------------------
 
-void OnDemandOrderingServiceImpl::onTransactions(transport::Round round,
-                                                 CollectionType transactions) {
+void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
+                                            CollectionType batches) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
-  log_->info("onTransactions => collections size = {}, round[{}, {}]",
-             transactions.size(),
+  log_->info("onBatches => collection size = {}, round[{}, {}]",
+             batches.size(),
              round.block_round,
              round.reject_round);
 
   auto it = current_proposals_.find(round);
   if (it != current_proposals_.end()) {
-    std::for_each(transactions.begin(), transactions.end(), [&it](auto &obj) {
+    std::for_each(batches.begin(), batches.end(), [&it](auto &obj) {
       it->second.push(std::move(obj));
     });
     log_->info("onTransactions => collection is inserted");
@@ -68,7 +71,7 @@ void OnDemandOrderingServiceImpl::onTransactions(transport::Round round,
 }
 
 boost::optional<OnDemandOrderingServiceImpl::ProposalType>
-OnDemandOrderingServiceImpl::onRequestProposal(transport::Round round) {
+OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
   auto proposal = proposal_map_.find(round);
@@ -82,8 +85,8 @@ OnDemandOrderingServiceImpl::onRequestProposal(transport::Round round) {
 // ---------------------------------| Private |---------------------------------
 
 void OnDemandOrderingServiceImpl::packNextProposals(
-    const transport::Round &round) {
-  auto close_round = [this](transport::Round round) {
+    const consensus::Round &round) {
+  auto close_round = [this](consensus::Round round) {
     auto it = current_proposals_.find(round);
     if (it != current_proposals_.end()) {
       if (not it->second.empty()) {
@@ -148,38 +151,32 @@ void OnDemandOrderingServiceImpl::packNextProposals(
 }
 
 OnDemandOrderingServiceImpl::ProposalType
-OnDemandOrderingServiceImpl::emitProposal(const transport::Round &round) {
-  iroha::protocol::Proposal proto_proposal;
-  proto_proposal.set_height(round.block_round);
-  proto_proposal.set_created_time(iroha::time::now());
+OnDemandOrderingServiceImpl::emitProposal(const consensus::Round &round) {
   log_->info("Mutable proposal generation, round[{}, {}]",
              round.block_round,
              round.reject_round);
 
-  TransactionType current_tx;
-  using ProtoTxType = shared_model::proto::Transaction;
-  std::vector<TransactionType> collection;
+  TransactionBatchType batch;
+  std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
   std::unordered_set<std::string> inserted;
 
   // outer method should guarantee availability of at least one transaction in
   // queue, also, code shouldn't fetch all transactions from queue. The rest
   // will be lost.
   auto &current_proposal = current_proposals_[round];
-  while (current_proposal.try_pop(current_tx)
+  while (current_proposal.try_pop(batch)
          and collection.size() < transaction_limit_
-         and inserted.insert(current_tx->hash().hex()).second) {
-    collection.push_back(std::move(current_tx));
+         and inserted.insert(batch->reducedHash().hex()).second) {
+    collection.insert(
+        std::end(collection),
+        std::make_move_iterator(std::begin(batch->transactions())),
+        std::make_move_iterator(std::end(batch->transactions())));
   }
   log_->info("Number of transactions in proposal = {}", collection.size());
-  auto proto_txes = collection | boost::adaptors::transformed([](auto &tx) {
-                      return static_cast<const ProtoTxType &>(*tx);
-                    });
-  boost::for_each(proto_txes, [&proto_proposal](auto &&proto_tx) {
-    *(proto_proposal.add_transactions()) = std::move(proto_tx.getTransport());
-  });
 
-  return std::make_unique<shared_model::proto::Proposal>(
-      std::move(proto_proposal));
+  auto txs = collection | boost::adaptors::indirected;
+  return proposal_factory_->unsafeCreateProposal(
+      round.block_round, iroha::time::now(), txs);
 }
 
 void OnDemandOrderingServiceImpl::tryErase() {

@@ -37,3 +37,14 @@ target_link_libraries(find_fuzzing
   torii_service
   protobuf-mutator
   )
+
+add_executable(ordering_gate_fuzz ordering_gate_fuzz.cpp)
+target_link_libraries(ordering_gate_fuzz
+  rxcpp
+  gtest::gtest
+  gmock::gmock
+  on_demand_ordering_gate
+  shared_model_default_builders
+  shared_model_stateless_validation
+  protobuf-mutator
+)

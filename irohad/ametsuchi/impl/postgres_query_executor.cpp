@@ -16,11 +16,9 @@
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/range/irange.hpp>
 #include "ametsuchi/impl/soci_utils.hpp"
-#include "backend/protobuf/permissions.hpp"
 #include "common/types.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/queries/blocks_query.hpp"
-#include "interfaces/queries/query.hpp"
 #include "interfaces/queries/get_account.hpp"
 #include "interfaces/queries/get_account_asset_transactions.hpp"
 #include "interfaces/queries/get_account_assets.hpp"
@@ -32,6 +30,7 @@
 #include "interfaces/queries/get_roles.hpp"
 #include "interfaces/queries/get_signatories.hpp"
 #include "interfaces/queries/get_transactions.hpp"
+#include "interfaces/queries/query.hpp"
 
 using namespace shared_model::interface::permissions;
 
@@ -130,13 +129,14 @@ namespace {
    * @return lambda returning the error response itself
    */
   template <typename... Roles>
-  auto notEnoughPermissionsResponse(Roles... roles) {
-    return [roles...] {
+  auto notEnoughPermissionsResponse(
+      std::shared_ptr<shared_model::interface::PermissionToString>
+          perm_converter,
+      Roles... roles) {
+    return [perm_converter, roles...] {
       std::string error = "user must have at least one of the permissions: ";
       for (auto role : {roles...}) {
-        // TODO [IR-1758] Akvinikym 12.10.18: get rid of this protobuf
-        // dependency and convert role to string in another way
-        error += shared_model::proto::permissions::toString(role) + ", ";
+        error += perm_converter->toString(role) + ", ";
       }
       return error;
     };
@@ -234,7 +234,9 @@ namespace iroha {
         std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
         std::shared_ptr<shared_model::interface::QueryResponseFactory>
-            response_factory)
+            response_factory,
+        std::shared_ptr<shared_model::interface::PermissionToString>
+            perm_converter)
         : sql_(std::move(sql)),
           block_store_(block_store),
           factory_(std::move(factory)),
@@ -244,7 +246,8 @@ namespace iroha {
                    block_store_,
                    pending_txs_storage_,
                    std::move(converter),
-                   response_factory),
+                   response_factory,
+                   perm_converter),
           query_response_factory_{std::move(response_factory)},
           log_(logger::log("PostgresQueryExecutor")) {}
 
@@ -279,13 +282,16 @@ namespace iroha {
         std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
         std::shared_ptr<shared_model::interface::QueryResponseFactory>
-            response_factory)
+            response_factory,
+        std::shared_ptr<shared_model::interface::PermissionToString>
+            perm_converter)
         : sql_(sql),
           block_store_(block_store),
           common_objects_factory_(std::move(factory)),
           pending_txs_storage_(std::move(pending_txs_storage)),
           converter_(std::move(converter)),
           query_response_factory_{std::move(response_factory)},
+          perm_converter_(std::move(perm_converter)),
           log_(logger::log("PostgresQueryExecutorVisitor")) {}
 
     void PostgresQueryExecutorVisitor::setCreatorId(
@@ -406,7 +412,8 @@ namespace iroha {
 
             return apply(range.front(), query_apply);
           },
-          notEnoughPermissionsResponse(Role::kGetMyAccount,
+          notEnoughPermissionsResponse(perm_converter_,
+                                       Role::kGetMyAccount,
                                        Role::kGetAllAccounts,
                                        Role::kGetDomainAccounts));
     }
@@ -451,7 +458,8 @@ namespace iroha {
             return query_response_factory_->createSignatoriesResponse(
                 pubkeys, query_hash_);
           },
-          notEnoughPermissionsResponse(Role::kGetMySignatories,
+          notEnoughPermissionsResponse(perm_converter_,
+                                       Role::kGetMySignatories,
                                        Role::kGetAllSignatories,
                                        Role::kGetDomainSignatories));
     }
@@ -505,8 +513,10 @@ namespace iroha {
             return query_response_factory_->createTransactionsResponse(
                 std::move(response_txs), query_hash_);
           },
-          notEnoughPermissionsResponse(
-              Role::kGetMyAccTxs, Role::kGetAllAccTxs, Role::kGetDomainAccTxs));
+          notEnoughPermissionsResponse(perm_converter_,
+                                       Role::kGetMyAccTxs,
+                                       Role::kGetAllAccTxs,
+                                       Role::kGetDomainAccTxs));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -568,7 +578,8 @@ namespace iroha {
             return query_response_factory_->createTransactionsResponse(
                 std::move(response_txs), query_hash_);
           },
-          notEnoughPermissionsResponse(Role::kGetMyTxs, Role::kGetAllTxs));
+          notEnoughPermissionsResponse(
+              perm_converter_, Role::kGetMyTxs, Role::kGetAllTxs));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -625,7 +636,8 @@ namespace iroha {
             return query_response_factory_->createTransactionsResponse(
                 std::move(response_txs), query_hash_);
           },
-          notEnoughPermissionsResponse(Role::kGetMyAccAstTxs,
+          notEnoughPermissionsResponse(perm_converter_,
+                                       Role::kGetMyAccAstTxs,
                                        Role::kGetAllAccAstTxs,
                                        Role::kGetDomainAccAstTxs));
     }
@@ -682,8 +694,10 @@ namespace iroha {
             return query_response_factory_->createAccountAssetResponse(
                 std::move(account_assets), query_hash_);
           },
-          notEnoughPermissionsResponse(
-              Role::kGetMyAccAst, Role::kGetAllAccAst, Role::kGetDomainAccAst));
+          notEnoughPermissionsResponse(perm_converter_,
+                                       Role::kGetMyAccAst,
+                                       Role::kGetAllAccAst,
+                                       Role::kGetDomainAccAst));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -750,7 +764,8 @@ namespace iroha {
                   json, query_hash_);
             });
           },
-          notEnoughPermissionsResponse(Role::kGetMyAccDetail,
+          notEnoughPermissionsResponse(perm_converter_,
+                                       Role::kGetMyAccDetail,
                                        Role::kGetAllAccDetail,
                                        Role::kGetDomainAccDetail));
     }
@@ -782,7 +797,7 @@ namespace iroha {
             return query_response_factory_->createRolesResponse(roles,
                                                                 query_hash_);
           },
-          notEnoughPermissionsResponse(Role::kGetRoles));
+          notEnoughPermissionsResponse(perm_converter_, Role::kGetRoles));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -818,7 +833,7 @@ namespace iroha {
                   query_hash_);
             });
           },
-          notEnoughPermissionsResponse(Role::kGetRoles));
+          notEnoughPermissionsResponse(perm_converter_, Role::kGetRoles));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -865,7 +880,7 @@ namespace iroha {
                       });
                 });
           },
-          notEnoughPermissionsResponse(Role::kReadAssets));
+          notEnoughPermissionsResponse(perm_converter_, Role::kReadAssets));
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
