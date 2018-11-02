@@ -7,12 +7,10 @@
 #define IROHA_CONSENSUS_GATE_HPP
 
 #include <boost/optional.hpp>
-#include <boost/variant.hpp>
 #include <rxcpp/rx.hpp>
 
 #include "consensus/gate_object.hpp"
 #include "consensus/round.hpp"
-#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
