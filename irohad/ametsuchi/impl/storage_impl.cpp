@@ -377,7 +377,7 @@ namespace iroha {
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
-        storeBlock(block);
+        storeBlock(*block.second);
       }
       *(storage->sql_) << "COMMIT";
       storage->committed = true;
