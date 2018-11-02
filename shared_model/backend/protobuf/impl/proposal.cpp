@@ -12,9 +12,9 @@ namespace shared_model {
     using namespace interface::types;
 
     struct Proposal::Impl {
-      Impl(TransportType &&ref) : proto_(std::move(ref)) {}
+      explicit Impl(TransportType &&ref) : proto_(std::move(ref)) {}
 
-      Impl(const TransportType &ref) : proto_(ref) {}
+      explicit Impl(const TransportType &ref) : proto_(ref) {}
 
       TransportType proto_;
 
@@ -30,7 +30,7 @@ namespace shared_model {
           [this] { return crypto::DefaultHashProvider::makeHash(blob_); }()};
     };
 
-    Proposal::Proposal(Proposal &&o) = default;
+    Proposal::Proposal(Proposal &&o) noexcept = default;
 
     Proposal::Proposal(const TransportType &ref) {
       impl_ = std::make_unique<Proposal::Impl>(ref);
