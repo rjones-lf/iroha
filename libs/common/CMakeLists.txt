@@ -9,7 +9,7 @@ target_link_libraries(common INTERFACE
 add_library(libs_files
   files.cpp
   )
-target_link_libraries(libs_files INTERFACE
+target_link_libraries(libs_files
   logger
   common
   )
