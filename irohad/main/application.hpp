@@ -67,6 +67,8 @@ class Irohad {
    * @param keypair - public and private keys for crypto signer
    * @param opt_mst_gossip_params - parameters for Gossip MST propagation (optional).
    * If not provided, disables mst processing support
+   *
+   * TODO mboldyrev 03.11.2018 IR-1844 Refactor the constructor.
    */
   Irohad(const std::string &block_store_dir,
          const std::string &pg_conn,
