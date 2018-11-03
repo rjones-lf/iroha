@@ -8,6 +8,11 @@
 
 #include "validators/abstract_validator.hpp"
 
+/* These classes are supposed to be used in testing cases, where we need to
+ * create objects bypassing any validation, so purportedly invalid data can be
+ * made.
+ */
+
 namespace shared_model {
   namespace validation {
 
