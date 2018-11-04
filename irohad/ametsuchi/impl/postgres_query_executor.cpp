@@ -647,8 +647,8 @@ namespace iroha {
                   apply(t,
                         [&account_ids, &asset_ids, &balances](
                             auto &account_id, auto &asset_id, auto &amount) {
-                          account_ids.push_back(account_id);
-                          asset_ids.push_back(asset_id);
+                          account_ids.push_back(std::move(account_id));
+                          asset_ids.push_back(std::move(asset_id));
                           balances.push_back(
                               shared_model::interface::Amount(amount));
                         });

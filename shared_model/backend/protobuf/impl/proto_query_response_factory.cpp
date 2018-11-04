@@ -52,24 +52,6 @@ namespace {
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
-    std::vector<std::unique_ptr<shared_model::interface::AccountAsset>> assets,
-    const crypto::Hash &query_hash) const {
-  return createQueryResponse(
-      [assets = std::move(assets)](
-          iroha::protocol::QueryResponse &protocol_query_response) {
-        iroha::protocol::AccountAssetResponse *protocol_specific_response =
-            protocol_query_response.mutable_account_assets_response();
-        for (const auto &asset : assets) {
-          *protocol_specific_response->add_account_assets() =
-              static_cast<shared_model::proto::AccountAsset *>(asset.get())
-                  ->getTransport();
-        }
-      },
-      query_hash);
-}
-
-std::unique_ptr<shared_model::interface::QueryResponse>
-shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
     const std::vector<interface::types::AccountIdType> account_ids,
     const std::vector<interface::types::AssetIdType> asset_ids,
     const std::vector<shared_model::interface::Amount> balances,
@@ -101,26 +83,6 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountDetailResponse(
         iroha::protocol::AccountDetailResponse *protocol_specific_response =
             protocol_query_response.mutable_account_detail_response();
         protocol_specific_response->set_detail(account_detail);
-      },
-      query_hash);
-}
-
-std::unique_ptr<shared_model::interface::QueryResponse>
-shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
-    std::unique_ptr<shared_model::interface::Account> account,
-    std::vector<std::string> roles,
-    const crypto::Hash &query_hash) const {
-  return createQueryResponse(
-      [account = std::move(account), roles = std::move(roles)](
-          iroha::protocol::QueryResponse &protocol_query_response) {
-        iroha::protocol::AccountResponse *protocol_specific_response =
-            protocol_query_response.mutable_account_response();
-        *protocol_specific_response->mutable_account() =
-            static_cast<shared_model::proto::Account *>(account.get())
-                ->getTransport();
-        for (const auto &role : roles) {
-          protocol_specific_response->add_account_roles(role);
-        }
       },
       query_hash);
 }
@@ -232,22 +194,6 @@ shared_model::proto::ProtoQueryResponseFactory::createTransactionsResponse(
               static_cast<shared_model::proto::Transaction *>(tx.get())
                   ->getTransport();
         }
-      },
-      query_hash);
-}
-
-std::unique_ptr<shared_model::interface::QueryResponse>
-shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
-    std::unique_ptr<shared_model::interface::Asset> asset,
-    const crypto::Hash &query_hash) const {
-  return createQueryResponse(
-      [asset = std::move(asset)](
-          iroha::protocol::QueryResponse &protocol_query_response) {
-        iroha::protocol::AssetResponse *protocol_specific_response =
-            protocol_query_response.mutable_asset_response();
-        *protocol_specific_response->mutable_asset() =
-            static_cast<shared_model::proto::Asset *>(asset.get())
-                ->getTransport();
       },
       query_hash);
 }

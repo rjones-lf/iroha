@@ -36,17 +36,6 @@ namespace shared_model {
 
       /**
        * Create response for account asset query
-       * @param assets to be inserted into the response
-       * @param query_hash - hash of the query, for which response is created
-       * @return account asset response
-       */
-      virtual std::unique_ptr<QueryResponse> createAccountAssetResponse(
-          std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
-              assets,
-          const crypto::Hash &query_hash) const = 0;
-
-      /**
-       * Create response for account asset query
        * @param account_ids of assets to be inserted into the response
        * @param asset_ids of assets to be inserted into the response
        * @param balances of assets to be inserted into the response
@@ -67,18 +56,6 @@ namespace shared_model {
        */
       virtual std::unique_ptr<QueryResponse> createAccountDetailResponse(
           types::DetailType account_detail,
-          const crypto::Hash &query_hash) const = 0;
-
-      /**
-       * Create response for account query
-       * @param account to be inserted into the response
-       * @param roles to be inserted into the response
-       * @param query_hash - hash of the query, for which response is created
-       * @return account response
-       */
-      virtual std::unique_ptr<QueryResponse> createAccountResponse(
-          std::unique_ptr<Account> account,
-          std::vector<std::string> roles,
           const crypto::Hash &query_hash) const = 0;
 
       /**
@@ -144,16 +121,6 @@ namespace shared_model {
       virtual std::unique_ptr<QueryResponse> createTransactionsResponse(
           std::vector<std::unique_ptr<shared_model::interface::Transaction>>
               transactions,
-          const crypto::Hash &query_hash) const = 0;
-
-      /**
-       * Create response for asset query
-       * @param asset to be inserted into the response
-       * @param query_hash - hash of the query, for which response is created
-       * @return asset response
-       */
-      virtual std::unique_ptr<QueryResponse> createAssetResponse(
-          std::unique_ptr<Asset> asset,
           const crypto::Hash &query_hash) const = 0;
 
       /**

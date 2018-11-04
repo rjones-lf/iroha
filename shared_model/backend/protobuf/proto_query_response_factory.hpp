@@ -14,11 +14,6 @@ namespace shared_model {
     class ProtoQueryResponseFactory : public interface::QueryResponseFactory {
      public:
       std::unique_ptr<interface::QueryResponse> createAccountAssetResponse(
-          std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
-              assets,
-          const crypto::Hash &query_hash) const override;
-
-      std::unique_ptr<interface::QueryResponse> createAccountAssetResponse(
           const std::vector<interface::types::AccountIdType> account_ids,
           const std::vector<interface::types::AssetIdType> asset_ids,
           const std::vector<shared_model::interface::Amount> balances,
@@ -26,11 +21,6 @@ namespace shared_model {
 
       std::unique_ptr<interface::QueryResponse> createAccountDetailResponse(
           interface::types::DetailType account_detail,
-          const crypto::Hash &query_hash) const override;
-
-      std::unique_ptr<interface::QueryResponse> createAccountResponse(
-          std::unique_ptr<interface::Account> account,
-          std::vector<std::string> roles,
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createAccountResponse(
@@ -53,10 +43,6 @@ namespace shared_model {
       std::unique_ptr<interface::QueryResponse> createTransactionsResponse(
           std::vector<std::unique_ptr<shared_model::interface::Transaction>>
               transactions,
-          const crypto::Hash &query_hash) const override;
-
-      std::unique_ptr<interface::QueryResponse> createAssetResponse(
-          std::unique_ptr<shared_model::interface::Asset> asset,
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createAssetResponse(

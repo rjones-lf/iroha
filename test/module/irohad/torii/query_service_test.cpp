@@ -20,7 +20,6 @@
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 using namespace torii;
@@ -58,15 +57,8 @@ class QueryServiceTest : public ::testing::Test {
   }
 
   std::unique_ptr<shared_model::interface::QueryResponse> getResponse() {
-    std::unique_ptr<shared_model::interface::Account> account =
-        std::make_unique<shared_model::proto::Account>(
-            shared_model::proto::AccountBuilder()
-                .accountId("a")
-                .domainId("ru")
-                .quorum(2)
-                .build());
     return shared_model::proto::ProtoQueryResponseFactory()
-        .createAccountResponse(std::move(account), {"user"}, query->hash());
+        .createAccountResponse("a", "ru", 2, "", {"user"}, query->hash());
   }
 
   std::shared_ptr<shared_model::proto::Query> query;

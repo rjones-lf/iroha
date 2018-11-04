@@ -70,22 +70,17 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
 
   std::vector<std::unique_ptr<shared_model::interface::QueryResponse>>
       query_responses;
-  std::vector<std::unique_ptr<shared_model::interface::AccountAsset>> assets,
+  std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
       assets_test_copy;
   std::vector<shared_model::interface::types::AccountIdType> account_ids;
   std::vector<shared_model::interface::types::AssetIdType> asset_ids;
   std::vector<shared_model::interface::Amount> balances;
   for (auto i = 1; i < kAccountAssetsNumber; ++i) {
     ASSERT_NO_THROW({
-      auto asset = unwrapResult(objects_factory->createAccountAsset(
-          kAccountId,
-          kAssetId,
-          shared_model::interface::Amount(std::to_string(i))));
       auto asset_copy = unwrapResult(objects_factory->createAccountAsset(
           kAccountId,
           kAssetId,
           shared_model::interface::Amount(std::to_string(i))));
-      assets.push_back(std::move(asset));
       assets_test_copy.push_back(std::move(asset_copy));
     });
     account_ids.push_back(kAccountId);
@@ -93,8 +88,6 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
     balances.emplace_back(shared_model::interface::Amount(std::to_string(i)));
   }
 
-  query_responses.push_back(response_factory->createAccountAssetResponse(
-      std::move(assets), kQueryHash));
   query_responses.push_back(response_factory->createAccountAssetResponse(
       account_ids, asset_ids, balances, kQueryHash));
 
@@ -156,12 +149,6 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
   std::unique_ptr<shared_model::interface::Account> account;
   std::vector<std::unique_ptr<shared_model::interface::QueryResponse>>
       query_responses;
-  ASSERT_NO_THROW({
-    account = unwrapResult(
-        objects_factory->createAccount(kAccountId, kDomainId, kQuorum, kJson));
-    query_responses.push_back(response_factory->createAccountResponse(
-        std::move(account), kRoles, kQueryHash));
-  });
 
   query_responses.push_back(response_factory->createAccountResponse(
       kAccountId, kDomainId, kQuorum, kJson, kRoles, kQueryHash));
@@ -306,15 +293,8 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
   const DomainIdType kDomainId = "coin";
   const PrecisionType kPrecision = 2;
 
-  std::unique_ptr<shared_model::interface::Asset> asset;
   std::vector<std::unique_ptr<shared_model::interface::QueryResponse>>
       query_responses;
-  ASSERT_NO_THROW({
-    asset = unwrapResult(
-        objects_factory->createAsset(kAssetId, kDomainId, kPrecision));
-    query_responses.push_back(
-        response_factory->createAssetResponse(std::move(asset), kQueryHash));
-  });
   query_responses.push_back(response_factory->createAssetResponse(
       kAssetId, kDomainId, kPrecision, kQueryHash));
 

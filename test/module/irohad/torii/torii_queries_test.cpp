@@ -12,9 +12,6 @@
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/queries.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_account_asset_builder.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_asset_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
@@ -156,8 +153,7 @@ TEST_F(ToriiQueriesTest, FindWhenResponseInvalid) {
  */
 
 TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
-  auto account =
-      shared_model::proto::AccountBuilder().accountId("b@domain").build();
+  std::string account_id = "b@domain";
   auto creator = "a@domain";
 
   EXPECT_CALL(*wsv_query, getSignatories(creator))
@@ -169,7 +165,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
                          .creatorAccountId(creator)
                          .queryCounter(1)
                          .createdTime(iroha::time::now())
-                         .getAccount(account.accountId())
+                         .getAccount(account_id)
                          .build()
                          .signAndAddSignature(pair)
                          .finish();
@@ -200,8 +196,8 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
 TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
   auto creator = "a@domain";
 
-  std::shared_ptr<shared_model::interface::Account> accountB = clone(
-      shared_model::proto::AccountBuilder().accountId("b@domain").build());
+  std::string accountB_id = "b@domain";
+  std::string domainB_id = "domain";
 
   EXPECT_CALL(*wsv_query, getSignatories(creator))
       .WillRepeatedly(Return(signatories));
@@ -214,15 +210,19 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
                          .creatorAccountId(creator)
                          .queryCounter(1)
                          .createdTime(iroha::time::now())
-                         .getAccount(accountB->accountId())
+                         .getAccount(accountB_id)
                          .build()
                          .signAndAddSignature(pair)
                          .finish();
 
-  auto *r =
-      query_response_factory
-          ->createAccountResponse(clone(*accountB), roles, model_query.hash())
-          .release();
+  auto *r = query_response_factory
+                ->createAccountResponse(accountB_id,
+                                        domainB_id,
+                                        1,
+                                        {},
+                                        roles,
+                                        model_query.hash())
+                .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
       .WillRepeatedly(Return(r));
@@ -240,16 +240,15 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
         framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
         resp.get());
 
-    ASSERT_EQ(account_resp.account().accountId(), accountB->accountId());
+    ASSERT_EQ(account_resp.account().accountId(), accountB_id);
     ASSERT_EQ(account_resp.roles().size(), 1);
     ASSERT_EQ(model_query.hash(), resp.queryHash());
   });
 }
 
 TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
-  std::shared_ptr<shared_model::interface::Account> account = clone(
-      shared_model::proto::AccountBuilder().accountId("accountA").build());
-
+  std::string account_id = "accountA";
+  std::string domain_id = "domain";
   auto creator = "a@domain";
   EXPECT_CALL(*wsv_query, getSignatories(creator))
       .WillRepeatedly(Return(signatories));
@@ -266,10 +265,14 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
                          .signAndAddSignature(pair)
                          .finish();
 
-  auto *r =
-      query_response_factory
-          ->createAccountResponse(clone(*account), roles, model_query.hash())
-          .release();
+  auto *r = query_response_factory
+                ->createAccountResponse(account_id,
+                                        domain_id,
+                                        1,
+                                        "{}",
+                                        roles,
+                                        model_query.hash())
+                .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
       .WillRepeatedly(Return(r));
@@ -286,8 +289,8 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
         framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
         resp.get());
 
-    ASSERT_EQ(detail_resp.account().accountId(), account->accountId());
-    ASSERT_EQ(detail_resp.account().domainId(), account->domainId());
+    ASSERT_EQ(detail_resp.account().accountId(), account_id);
+    ASSERT_EQ(detail_resp.account().domainId(), domain_id);
     ASSERT_EQ(model_query.hash(), resp.queryHash());
   });
 }
@@ -337,21 +340,9 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
 }
 
 TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
-  auto account =
-      shared_model::proto::AccountBuilder().accountId("accountA").build();
-
-  std::shared_ptr<shared_model::interface::AccountAsset> account_asset =
-      clone(shared_model::proto::AccountAssetBuilder()
-                .accountId("accountA")
-                .assetId("usd")
-                .balance(shared_model::interface::Amount("1.00"))
-                .build());
-
-  auto asset = shared_model::proto::AssetBuilder()
-                   .assetId("usd")
-                   .domainId("USA")
-                   .precision(2)
-                   .build();
+  std::string account_id = "accountA";
+  std::string asset_id = "usd";
+  auto amount = shared_model::interface::Amount("1.00");
 
   auto creator = "a@domain";
   EXPECT_CALL(*wsv_query, getSignatories(creator))
@@ -368,13 +359,19 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
                          .signAndAddSignature(pair)
                          .finish();
 
-  std::vector<std::unique_ptr<shared_model::interface::AccountAsset>> assets;
-  assets.push_back(clone(*account_asset));
+  std::vector<shared_model::interface::types::AccountIdType> account_ids;
+  account_ids.push_back(account_id);
+  std::vector<shared_model::interface::types::AssetIdType> asset_ids;
+  asset_ids.push_back(asset_id);
+  std::vector<shared_model::interface::Amount> amounts;
+  amounts.push_back(amount);
 
-  auto *r =
-      query_response_factory
-          ->createAccountAssetResponse(std::move(assets), model_query.hash())
-          .release();
+  auto *r = query_response_factory
+                ->createAccountAssetResponse(std::move(account_ids),
+                                             std::move(asset_ids),
+                                             std::move(amounts),
+                                             model_query.hash())
+                .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
       .WillRepeatedly(Return(r));
@@ -396,11 +393,11 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
         resp.get());
     // Check if the fields in account asset response are correct
     ASSERT_EQ(asset_resp.accountAssets()[0].assetId(),
-              account_asset->assetId());
+              asset_id);
     ASSERT_EQ(asset_resp.accountAssets()[0].accountId(),
-              account_asset->accountId());
+              account_id);
     ASSERT_EQ(asset_resp.accountAssets()[0].balance(),
-              account_asset->balance());
+              amount);
     ASSERT_EQ(model_query.hash(), resp.queryHash());
   });
 }
@@ -508,14 +505,13 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
  */
 
 TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
-  auto account =
-      shared_model::proto::AccountBuilder().accountId("accountA").build();
+  std::string account_id = "accountA";
   auto creator = "a@domain";
   std::vector<wTransaction> txs;
   std::vector<shared_model::proto::Transaction> proto_txs;
   for (size_t i = 0; i < 3; ++i) {
     std::shared_ptr<shared_model::interface::Transaction> current = clone(
-        TestTransactionBuilder().creatorAccountId(account.accountId()).build());
+        TestTransactionBuilder().creatorAccountId(account_id).build());
     txs.push_back(current);
     proto_txs.push_back(
         *std::static_pointer_cast<shared_model::proto::Transaction>(current));
@@ -564,7 +560,7 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
 
     const auto &txs = tx_resp.transactions();
     for (const auto &tx : txs) {
-      ASSERT_EQ(tx.creatorAccountId(), account.accountId());
+      ASSERT_EQ(tx.creatorAccountId(), account_id);
     }
     ASSERT_EQ(model_query.hash(), resp.queryHash());
   });
