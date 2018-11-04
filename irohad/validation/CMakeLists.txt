@@ -19,8 +19,10 @@ add_library(stateful_validator
     impl/stateful_validator_impl.cpp
     )
 target_link_libraries(stateful_validator
-    rxcpp
+    ametsuchi
     shared_model_interfaces
+    boost
+    common
     logger
     )
 

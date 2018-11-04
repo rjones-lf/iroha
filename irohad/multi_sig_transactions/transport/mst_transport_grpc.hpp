@@ -9,7 +9,6 @@
 #include "mst.grpc.pb.h"
 #include "network/mst_transport.hpp"
 
-#include <google/protobuf/empty.pb.h>
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
