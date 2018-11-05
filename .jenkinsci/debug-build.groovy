@@ -55,6 +55,7 @@ def doDebugBuild(coverageEnabled=false) {
       + " -e IROHA_POSTGRES_PORT=${env.IROHA_POSTGRES_PORT}"
       + " -e IROHA_POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
       + " -e IROHA_POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
+      + " -c 'max_prepared_transactions=100'"
       + " --network=${env.IROHA_NETWORK}"
       + " -v /var/jenkins/ccache:${CCACHE_DIR}"
       + " -v /tmp/${GIT_COMMIT}-${BUILD_NUMBER}:/tmp/${GIT_COMMIT}") {
