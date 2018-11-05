@@ -6,6 +6,7 @@ import sys
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 
+# TODO: IR-1848 nickaleks 06.11.18 rework packaging with native library
 IROHA_REPO = "https://github.com/hyperledger/iroha"
 IROHA_BRANCH = "develop"
 
