@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gmock/gmock.h>
+#include "synchronizer/impl/synchronizer_impl.hpp"
 
+#include <gmock/gmock.h>
 #include "backend/protobuf/block.hpp"
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
@@ -13,7 +14,6 @@
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
-#include "synchronizer/impl/synchronizer_impl.hpp"
 #include "validation/chain_validator.hpp"
 #include "validators/answer.hpp"
 
@@ -28,24 +28,6 @@ using ::testing::_;
 using ::testing::ByMove;
 using ::testing::DefaultValue;
 using ::testing::Return;
-
-class MockBlockValidator {
- public:
-  MOCK_CONST_METHOD1(
-      validate,
-      shared_model::validation::Answer(const shared_model::interface::Block &));
-};
-
-template <typename T = MockBlockValidator>
-class TemplateMockBlockValidator {
- public:
-  std::shared_ptr<T> validator;
-  TemplateMockBlockValidator() : validator(std::make_shared<T>()) {}
-  shared_model::validation::Answer validate(
-      const shared_model::interface::Block &block) const {
-    return validator->validate(block);
-  }
-};
 
 class SynchronizerTest : public ::testing::Test {
  public:

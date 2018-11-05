@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "consensus/yac/impl/yac_gate_impl.hpp"
+
 #include <memory>
 
 #include <rxcpp/rx.hpp>
 #include "consensus/consensus_block_cache.hpp"
-#include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/specified_visitor.hpp"
@@ -68,18 +69,21 @@ class YacGateTest : public ::testing::Test {
     message.hash = expected_hash;
     message.signature = signature;
     commit_message = CommitMessage({message});
-    expected_commit = rxcpp::observable<>::just(Answer(commit_message));
+    expected_commit = commit_message;
 
-    hash_gate = make_unique<MockHashGate>();
-    peer_orderer = make_unique<MockYacPeerOrderer>();
+    auto hash_gate_ptr = make_unique<MockHashGate>();
+    hash_gate = hash_gate_ptr.get();
+    auto peer_orderer_ptr = make_unique<MockYacPeerOrderer>();
+    peer_orderer = peer_orderer_ptr.get();
     hash_provider = make_shared<MockYacHashProvider>();
     block_creator = make_shared<MockBlockCreator>();
     block_cache = make_shared<ConsensusResultCache>();
-  }
 
-  void init() {
-    gate = std::make_shared<YacGateImpl>(std::move(hash_gate),
-                                         std::move(peer_orderer),
+    EXPECT_CALL(*block_creator, on_block())
+        .WillOnce(Return(block_notifier.get_observable()));
+
+    gate = std::make_shared<YacGateImpl>(std::move(hash_gate_ptr),
+                                         std::move(peer_orderer_ptr),
                                          hash_provider,
                                          block_creator,
                                          block_cache);
@@ -92,10 +96,13 @@ class YacGateTest : public ::testing::Test {
   std::shared_ptr<shared_model::interface::Block> expected_block;
   VoteMessage message;
   CommitMessage commit_message;
-  rxcpp::observable<Answer> expected_commit;
+  Answer expected_commit{commit_message};
+  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
+      block_notifier;
+  rxcpp::subjects::subject<Answer> outcome_notifier;
 
-  unique_ptr<MockHashGate> hash_gate;
-  unique_ptr<MockYacPeerOrderer> peer_orderer;
+  MockHashGate *hash_gate;
+  MockYacPeerOrderer *peer_orderer;
   shared_ptr<MockYacHashProvider> hash_provider;
   shared_ptr<MockBlockCreator> block_creator;
   shared_ptr<ConsensusResultCache> block_cache;
@@ -115,7 +122,8 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
   // yac consensus
   EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
 
-  EXPECT_CALL(*hash_gate, onOutcome()).WillOnce(Return(expected_commit));
+  EXPECT_CALL(*hash_gate, onOutcome())
+      .WillOnce(Return(outcome_notifier.get_observable()));
 
   // generate order of peers
   EXPECT_CALL(*peer_orderer, getOrdering(_))
@@ -124,11 +132,7 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
   // make hash from block
   EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
 
-  // make blocks
-  EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
-
-  init();
+  block_notifier.get_subscriber().on_next(expected_block);
 
   // verify that block we voted for is in the cache
   auto cache_block = block_cache->get();
@@ -144,6 +148,8 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
     auto cache_block = block_cache->get();
     ASSERT_EQ(block, cache_block);
   });
+
+  outcome_notifier.get_subscriber().on_next(expected_commit);
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -165,11 +171,7 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
   // make hash from block
   EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
 
-  // make blocks
-  EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
-
-  init();
+  block_notifier.get_subscriber().on_next(expected_block);
 }
 
 /**
@@ -179,15 +181,13 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
  */
 TEST_F(YacGateTest, AgreementOnNone) {
   EXPECT_CALL(*hash_gate, vote(_, _)).Times(1);
-  EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Block>>()));
+
   EXPECT_CALL(*peer_orderer, getOrdering(_))
       .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
 
-  init();
-
   ASSERT_EQ(block_cache->get(), nullptr);
+
   gate->vote(boost::none, boost::none, {});
+
   ASSERT_EQ(block_cache->get(), nullptr);
 }
