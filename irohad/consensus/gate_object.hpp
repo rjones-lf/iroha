@@ -7,8 +7,10 @@
 #define CONSENSUS_GATE_OBJECT_HPP
 
 #include <boost/variant.hpp>
-
 #include "consensus/round.hpp"
+#include "cryptography/hash.hpp"
+#include "cryptography/public_key.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -27,7 +29,8 @@ namespace iroha {
 
     /// Network votes for another pair and round
     struct VoteOther {
-      std::shared_ptr<shared_model::interface::Block> block;
+      shared_model::interface::types::PublicKeyCollectionType public_keys;
+      shared_model::interface::types::HashType hash;
       consensus::Round round;
     };
 

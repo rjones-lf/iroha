@@ -37,7 +37,7 @@ namespace iroha {
             this->processNext(msg.block, msg.round);
           },
           [this](const consensus::VoteOther &msg) {
-            this->processDifferent(msg.block, msg.round);
+            this->processDifferent(msg.public_keys, msg.hash, msg.round);
           },
           [this](const consensus::ProposalReject &msg) {
             notifier_.get_subscriber().on_next(SynchronizationEvent{
@@ -63,17 +63,16 @@ namespace iroha {
     }
 
     SynchronizationEvent SynchronizerImpl::downloadMissingBlocks(
-        std::shared_ptr<shared_model::interface::Block> commit_message,
+        const shared_model::interface::types::PublicKeyCollectionType
+            &public_keys,
+        const shared_model::interface::types::HashType &hash,
         const consensus::Round &round,
         std::unique_ptr<ametsuchi::MutableStorage> storage) {
-      auto hash = commit_message->hash();
-
       // while blocks are not loaded and not committed
       while (true) {
         // TODO andrei 17.10.18 IR-1763 Add delay strategy for loading blocks
-        for (const auto &peer_signature : commit_message->signatures()) {
-          auto network_chain = block_loader_->retrieveBlocks(
-              shared_model::crypto::PublicKey(peer_signature.publicKey()));
+        for (const auto &public_key : public_keys) {
+          auto network_chain = block_loader_->retrieveBlocks(public_key);
 
           std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
           network_chain.as_blocking().subscribe(
@@ -130,7 +129,9 @@ namespace iroha {
     }
 
     void SynchronizerImpl::processDifferent(
-        std::shared_ptr<shared_model::interface::Block> commit_message,
+        const shared_model::interface::types::PublicKeyCollectionType
+            &public_keys,
+        const shared_model::interface::types::HashType &hash,
         const consensus::Round &round) {
       log_->info("at handleDifferent");
       auto opt_storage = getStorage();
@@ -140,7 +141,7 @@ namespace iroha {
       std::unique_ptr<ametsuchi::MutableStorage> storage =
           std::move(opt_storage.value());
       SynchronizationEvent result =
-          downloadMissingBlocks(commit_message, round, std::move(storage));
+          downloadMissingBlocks(public_keys, hash, round, std::move(storage));
       notifier_.get_subscriber().on_next(result);
     }
 

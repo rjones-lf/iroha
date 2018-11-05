@@ -119,8 +119,19 @@ namespace iroha {
               PairValid{block, current_hash_.vote_round});
         }
         log_->info("Voted for another block, waiting for sync");
+        auto public_keys = std::accumulate(
+            msg.votes.begin(),
+            msg.votes.end(),
+            shared_model::interface::types::PublicKeyCollectionType{},
+            [](auto &acc, const auto &vote) {
+              acc.push_back(vote.signature->publicKey());
+              return acc;
+            });
+        auto model_hash = hash_provider_->toModelHash(hash);
         return rxcpp::observable<>::just<GateObject>(
-            VoteOther{current_block_.value(), current_hash_.vote_round});
+            VoteOther{std::move(public_keys),
+                      std::move(model_hash),
+                      current_hash_.vote_round});
       }
 
       rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::handleReject(

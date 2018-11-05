@@ -195,7 +195,7 @@ TEST_F(YacGateTest, AgreementOnNone) {
 /**
  * @given yac gate
  * @when voting for one block @and receiving another
- * @then yac gate will emit the block, for which consensus voted
+ * @then yac gate will emit the data of block, for which consensus voted
  */
 TEST_F(YacGateTest, DifferentCommit) {
   // make hash from block
@@ -237,21 +237,18 @@ TEST_F(YacGateTest, DifferentCommit) {
   ASSERT_EQ(cache_block, expected_block);
 
   // verify that yac gate emit expected block
-  std::shared_ptr<shared_model::interface::Block> yac_emitted_block;
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->onOutcome(), 1);
-  gate_wrapper.subscribe([actual_block, &yac_emitted_block](auto outcome) {
-    auto block = boost::get<iroha::consensus::VoteOther>(outcome).block;
-    ASSERT_EQ(block, actual_block);
+  gate_wrapper.subscribe([actual_hash, actual_pubkey](auto outcome) {
+    auto concete_outcome = boost::get<iroha::consensus::VoteOther>(outcome);
+    auto public_keys = concete_outcome.public_keys;
+    auto hash = concete_outcome.hash;
 
-    // memorize the block came from the consensus for future
-    yac_emitted_block = block;
+    ASSERT_EQ(1, public_keys.size());
+    ASSERT_EQ(actual_pubkey, public_keys.front());
+    ASSERT_EQ(hash, actual_hash);
   });
 
   outcome_notifier.get_subscriber().on_next(expected_commit);
-
-  // verify that block, which was received from consensus, is now in the
-  // cache
-  ASSERT_EQ(block_cache->get(), yac_emitted_block);
 
   ASSERT_TRUE(gate_wrapper.validate());
 }

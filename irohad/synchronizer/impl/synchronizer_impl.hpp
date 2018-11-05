@@ -6,11 +6,12 @@
 #ifndef IROHA_SYNCHRONIZER_IMPL_HPP
 #define IROHA_SYNCHRONIZER_IMPL_HPP
 
+#include "synchronizer/synchronizer.hpp"
+
 #include "ametsuchi/mutable_factory.hpp"
 #include "logger/logger.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
-#include "synchronizer/synchronizer.hpp"
 #include "validation/chain_validator.hpp"
 
 namespace iroha {
@@ -35,7 +36,9 @@ namespace iroha {
        * apply the missing blocks
        */
       SynchronizationEvent downloadMissingBlocks(
-          std::shared_ptr<shared_model::interface::Block> commit_message,
+          const shared_model::interface::types::PublicKeyCollectionType
+              &public_keys,
+          const shared_model::interface::types::HashType &hash,
           const consensus::Round &round,
           std::unique_ptr<ametsuchi::MutableStorage> storage);
 
@@ -43,7 +46,9 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::Block> commit_message,
           const consensus::Round &round);
       void processDifferent(
-          std::shared_ptr<shared_model::interface::Block> commit_message,
+          const shared_model::interface::types::PublicKeyCollectionType
+              &public_keys,
+          const shared_model::interface::types::HashType &hash,
           const consensus::Round &round);
 
       boost::optional<std::unique_ptr<ametsuchi::MutableStorage>> getStorage();
