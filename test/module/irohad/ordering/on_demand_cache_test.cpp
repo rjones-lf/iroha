@@ -40,11 +40,41 @@ TEST(OnDemandCacheTest, TestAddToBack) {
 }
 
 /**
+ * @given og cache with single batch in the tail
+ * @when up is invoked twice
+ * @then that batch is moved to the head of the cache
+ */
+TEST(OnDemandCacheTest, TestUp) {
+  OnDemandCache cache;
+
+  shared_model::interface::types::HashType hash1("hash1");
+  auto batch1 = createMockBatchWithHash(hash1);
+
+  cache.addToBack({batch1});
+  /**
+   * 1.
+   * 2.
+   * 3. {batch1}
+   */
+  ASSERT_THAT(cache.tail(), ElementsAre(batch1));
+
+  cache.up();
+  cache.up();
+  /**
+   * 1. {batch1}
+   * 2.
+   * 3.
+   */
+  ASSERT_THAT(cache.tail(), IsEmpty());
+  ASSERT_THAT(cache.head(), ElementsAre(batch1));
+}
+
+/**
  * @given og cache with single batch in each cell
  * @when up is invoked three times
  * @then all batches appear on the head of the queue
  */
-TEST(OnDemandCacheTest, TestUp) {
+TEST(OnDemandCacheTest, TestUpAndMerge) {
   OnDemandCache cache;
 
   shared_model::interface::types::HashType hash1("hash1");
