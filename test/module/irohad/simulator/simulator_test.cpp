@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#include <boost/range/adaptor/map.hpp>
+#include <boost/range/algorithm/find.hpp>
 #include "backend/protobuf/proto_block_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -261,9 +263,10 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
  *
  * @given proposal consisting of several transactions
  * @when failing some of the transactions in that proposal
- * @then verified proposal consists of txs we did not fail
+ * @then verified proposal consists of txs we did not fail, and the failed
+ * transactions are provided as well
  */
-TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
+TEST_F(SimulatorTest, SomeFailingTxs) {
   // create a 3-height proposal, but validator returns only a 2-height verified
   // proposal
   const int kNumTransactions = 3;
@@ -298,11 +301,10 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
               .createdTime(iroha::time::now())
               .transactions(verified_proposal_transactions)
               .build());
-  for (int i = 0; i < kNumTransactions - 1; ++i) {
-    std::string hash_num = std::to_string(i);
+  for (auto rejected_tx = txs.begin() + 1; rejected_tx != txs.end();
+       ++rejected_tx) {
     verified_proposal_and_errors->rejected_transactions.emplace(
-        shared_model::crypto::Hash(std::string(32 - hash_num.size(), '0')
-                                   + hash_num),
+        rejected_tx->hash(),
         validation::CommandError{"SomeCommand", "SomeError", true});
   }
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
@@ -330,16 +332,24 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
 
   auto proposal_wrapper =
       make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
-  proposal_wrapper.subscribe(
-      [&](auto verified_proposal_) {
-        // assure that txs in verified proposal do not include failed ones
-        ASSERT_EQ(verified_proposal_->verified_proposal->height(),
-                  verified_proposal_height);
-        ASSERT_EQ(verified_proposal_->verified_proposal->transactions(),
-                  verified_proposal_transactions);
-        ASSERT_TRUE(verified_proposal_->rejected_transactions.size()
-                    == kNumTransactions - 1);
-      });
+  proposal_wrapper.subscribe([&](auto verified_proposal_) {
+    // ensure that txs in verified proposal do not include failed ones
+    ASSERT_EQ(verified_proposal_->verified_proposal->height(),
+              verified_proposal_height);
+    ASSERT_EQ(verified_proposal_->verified_proposal->transactions(),
+              verified_proposal_transactions);
+    ASSERT_TRUE(verified_proposal_->rejected_transactions.size()
+                == kNumTransactions - 1);
+    const auto verified_proposal_rejected_tx_hashes =
+        verified_proposal_->rejected_transactions | boost::adaptors::map_keys;
+    for (auto rejected_tx = txs.begin() + 1; rejected_tx != txs.end();
+         ++rejected_tx) {
+      ASSERT_NE(boost::range::find(verified_proposal_rejected_tx_hashes,
+                                   rejected_tx->hash()),
+                boost::end(verified_proposal_rejected_tx_hashes))
+          << rejected_tx->toString() << " missing in rejected transactions.";
+    }
+  });
 
   simulator->process_proposal(*proposal);
 
