@@ -14,6 +14,7 @@
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "interfaces/transaction.hpp"
 
