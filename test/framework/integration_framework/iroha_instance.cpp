@@ -62,9 +62,10 @@ namespace integration_framework {
     BOOST_ASSERT_MSG(
         !instance_,
         "Gossip propagation params must be set before Irohad is started!");
-    opt_mst_gossip_params_ = iroha::GossipPropagationStrategyParams{
-        .period = mst_gossip_emitting_period,
-        .amount = mst_gossip_amount_per_once};
+    iroha::GossipPropagationStrategyParams gossip_params;
+    gossip_params.period = mst_gossip_emitting_period;
+    gossip_params.amount = mst_gossip_amount_per_once;
+    opt_mst_gossip_params_ = gossip_params;
   }
 
   void IrohaInstance::initPipeline(
