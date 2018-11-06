@@ -6,6 +6,7 @@
 #include "ordering/impl/on_demand_os_client_grpc.hpp"
 
 #include "backend/protobuf/proposal.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 

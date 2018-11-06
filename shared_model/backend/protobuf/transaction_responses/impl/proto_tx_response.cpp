@@ -23,7 +23,7 @@ namespace shared_model {
     template <typename TxResponse>
     TransactionResponse::TransactionResponse(TxResponse &&ref)
         : CopyableProto(std::forward<TxResponse>(ref)),
-          variant_{detail::makeLazyInitializer([this] {
+          variant_([this] {
             auto &&ar = *proto_;
 
             unsigned which = ar.GetDescriptor()
@@ -39,10 +39,9 @@ namespace shared_model {
                                   ProtoResponseVariantType>(
                     std::forward<decltype(ar)>(ar),
                     which > last ? last : which);
-          })},
-          ivariant_{detail::makeLazyInitializer(
-              [this] { return ResponseVariantType(*variant_); })},
-          hash_{[this] { return crypto::Hash(this->proto_->tx_hash()); }} {}
+          }()),
+          ivariant_(variant_),
+          hash_(proto_->tx_hash()) {}
 
     template TransactionResponse::TransactionResponse(
         TransactionResponse::TransportType &);
@@ -59,12 +58,12 @@ namespace shared_model {
 
     const interface::types::HashType &TransactionResponse::transactionHash()
         const {
-      return *hash_;
+      return hash_;
     }
 
     const TransactionResponse::ResponseVariantType &TransactionResponse::get()
         const {
-      return *ivariant_;
+      return ivariant_;
     }
 
     const TransactionResponse::ErrorMessageType &
@@ -74,7 +73,7 @@ namespace shared_model {
 
     int TransactionResponse::priority() const noexcept {
       return iroha::visit_in_place(
-          *variant_,
+          variant_,
           // not received can be changed to any response
           [](const NotReceivedTxResponse &) { return 0; },
           // following types are sequential in pipeline

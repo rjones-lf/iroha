@@ -17,11 +17,9 @@
 
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 
+#include <soci/postgresql/soci-postgresql.h>
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
-#include <soci/postgresql/soci-postgresql.h>
-
-#include "common/types.hpp"
 
 namespace iroha {
   namespace ametsuchi {

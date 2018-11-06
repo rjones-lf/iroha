@@ -22,7 +22,6 @@
 #include <string>
 
 #include "common/result.hpp"
-#include "common/types.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/permissions.hpp"
 
@@ -232,7 +231,6 @@ namespace iroha {
        */
       virtual WsvCommandResult insertDomain(
           const shared_model::interface::Domain &domain) = 0;
-
     };
 
   }  // namespace ametsuchi
