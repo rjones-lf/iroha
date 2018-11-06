@@ -16,9 +16,11 @@
  */
 
 #include <boost/optional.hpp>
+
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
+#include "common/byteutils.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"

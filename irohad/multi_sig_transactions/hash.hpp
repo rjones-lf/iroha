@@ -19,12 +19,11 @@ namespace iroha {
     };
 
     /**
-     * Hasing of peer object
+     * Hashing of Blob object
      */
-    class PeerHasher {
+    class BlobHasher {
      public:
-      std::size_t operator()(
-          const std::shared_ptr<shared_model::interface::Peer> &obj) const;
+      std::size_t operator()(const shared_model::crypto::Blob &blob) const;
     };
   }  // namespace model
 }  // namespace iroha

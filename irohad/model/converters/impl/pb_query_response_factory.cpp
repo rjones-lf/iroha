@@ -16,6 +16,7 @@
  */
 
 #include "model/converters/pb_query_response_factory.hpp"
+#include "common/instanceof.hpp"
 #include "model/converters/pb_common.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 

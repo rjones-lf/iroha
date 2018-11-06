@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_APPLICATION_HPP
@@ -30,12 +18,11 @@
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
-#include "mst.grpc.pb.h"
 #include "multi_sig_transactions/mst_processor.hpp"
-#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/impl/peer_communication_service_impl.hpp"
+#include "network/mst_transport.hpp"
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
 #include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
@@ -257,7 +244,7 @@ class Irohad {
   iroha::consensus::yac::YacInit yac_init;
   iroha::network::BlockLoaderInit loader_init;
 
-  std::shared_ptr<iroha::network::MstTransportGrpc> mst_transport;
+  std::shared_ptr<iroha::network::MstTransport> mst_transport;
 
   logger::Logger log_;
 
