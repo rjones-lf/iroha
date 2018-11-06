@@ -8,8 +8,8 @@
 #include <memory>
 #include <limits>
 
+#include <boost/assert.hpp>
 #include <boost/thread/barrier.hpp>
-
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
@@ -60,7 +60,7 @@ namespace {
   template <size_t default_port>
   size_t getNextPort() {
     static size_t increment = 0;
-    assert(increment <= kMaxPort && "The maximum port value reached");
+    BOOST_VERIFY_MSG(increment <= kMaxPort, "The maximum port value reached");
     return default_port + (++increment);
   }
 }  // namespace
