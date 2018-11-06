@@ -12,6 +12,7 @@
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 namespace framework {
   namespace batch {
@@ -372,6 +373,26 @@ namespace framework {
       return std::make_shared<shared_model::interface::TransactionBatchImpl>(
           transactions);
     }
+
+    /**
+     * Creates mock batch with provided hash
+     * @param hash -- const ref to hash to be returned by the batch
+     * @return shared_ptr for batch
+     */
+    auto createMockBatchWithHash(
+        const shared_model::interface::types::HashType &hash) {
+      using ::testing::NiceMock;
+      using ::testing::ReturnRef;
+
+      auto res = std::make_shared<NiceMock<MockTransactionBatch>>();
+
+      ON_CALL(*res, reducedHash()).WillByDefault(ReturnRef(hash));
+
+      return res;
+    }
+
+    auto createMockBatchWithHash(
+        shared_model::interface::types::HashType &&hash) = delete;
 
   }  // namespace batch
 }  // namespace framework

@@ -18,13 +18,7 @@ using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::UnorderedElementsAre;
-
-auto createBatchWithHash(const shared_model::interface::types::HashType &hash) {
-  auto res = std::make_shared<NiceMock<MockTransactionBatch>>();
-
-  ON_CALL(*res, reducedHash()).WillByDefault(ReturnRef(hash));
-  return res;
-}
+using namespace framework::batch;
 
 /**
  * @given empty og cache
@@ -35,10 +29,10 @@ TEST(OnDemandCacheTest, TestAddToBack) {
   OnDemandCache cache;
 
   shared_model::interface::types::HashType hash1("hash1");
-  auto batch1 = createBatchWithHash(hash1);
+  auto batch1 = createMockBatchWithHash(hash1);
 
   shared_model::interface::types::HashType hash2("hash2");
-  auto batch2 = createBatchWithHash(hash2);
+  auto batch2 = createMockBatchWithHash(hash2);
 
   cache.addToBack({batch1, batch2});
 
@@ -57,9 +51,9 @@ TEST(OnDemandCacheTest, TestUp) {
   shared_model::interface::types::HashType hash2("hash2");
   shared_model::interface::types::HashType hash3("hash3");
 
-  auto batch1 = createBatchWithHash(hash1);
-  auto batch2 = createBatchWithHash(hash2);
-  auto batch3 = createBatchWithHash(hash3);
+  auto batch1 = createMockBatchWithHash(hash1);
+  auto batch2 = createMockBatchWithHash(hash2);
+  auto batch3 = createMockBatchWithHash(hash3);
 
   cache.addToBack({batch1});
   cache.up();
@@ -110,7 +104,7 @@ TEST(OnDemandCache, TestClearFrontAndGet) {
   OnDemandCache cache;
 
   shared_model::interface::types::HashType hash("hash");
-  auto batch1 = createBatchWithHash(hash);
+  auto batch1 = createMockBatchWithHash(hash);
 
   cache.addToBack({batch1});
   ASSERT_THAT(cache.tail(), ElementsAre(batch1));
@@ -155,9 +149,9 @@ TEST(OnDemandCache, Remove) {
   shared_model::interface::types::HashType hash2("hash2");
   shared_model::interface::types::HashType hash3("hash3");
 
-  auto batch1 = createBatchWithHash(hash1);
-  auto batch2 = createBatchWithHash(hash2);
-  auto batch3 = createBatchWithHash(hash3);
+  auto batch1 = createMockBatchWithHash(hash1);
+  auto batch2 = createMockBatchWithHash(hash2);
+  auto batch3 = createMockBatchWithHash(hash3);
 
   cache.addToBack({batch1, batch2, batch3});
   cache.up();

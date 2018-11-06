@@ -22,8 +22,11 @@ using ::testing::_;
 using ::testing::ByMove;
 using ::testing::Return;
 using ::testing::Truly;
+using ::testing::UnorderedElementsAre;
+using namespace framework::batch;
 
-struct OnDemandOrderingGateTest : public ::testing::Test {
+class OnDemandOrderingGateTest : public ::testing::Test {
+ public:
   void SetUp() override {
     ordering_service = std::make_shared<MockOnDemandOrderingService>();
     notification = std::make_shared<MockOdOsNotification>();
@@ -56,8 +59,8 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
  * @then it is passed to the ordering service
  */
 TEST_F(OnDemandOrderingGateTest, propagateBatch) {
-  auto batch = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(2));
+  auto hash1 = shared_model::interface::types::HashType("");
+  auto batch = createMockBatchWithHash(hash1);
   OdOsNotification::CollectionType collection{batch};
 
   EXPECT_CALL(*notification, onBatches(initial_round, collection)).Times(1);
@@ -185,22 +188,19 @@ TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
  * @then all transactions from batch1 and batch2 are propagated to network
  */
 TEST_F(OnDemandOrderingGateTest, SendBatchWithBatchesFromTheCache) {
-  auto now = iroha::time::now();
+  // prepare hashes for mock batches
+  shared_model::interface::types::HashType hash1("hash1");
+  shared_model::interface::types::HashType hash2("hash2");
 
-  auto batch1 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(2, now));
-
-  auto batch2 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(3, now + 1));
+  // prepare batches
+  auto batch1 = createMockBatchWithHash(hash1);
+  auto batch2 = createMockBatchWithHash(hash2);
 
   OdOsNotification::CollectionType collection{batch1, batch2};
 
   EXPECT_CALL(*notification, onBatches(initial_round, collection)).Times(1);
 
-  EXPECT_CALL(
-      *cache,
-      addToBack(cache::OrderingGateCache::BatchesSetType{batch1, batch2}))
-      .Times(1);
+  EXPECT_CALL(*cache, addToBack(UnorderedElementsAre(batch1, batch2))).Times(1);
   EXPECT_CALL(*cache, clearFrontAndGet())
       .WillOnce(Return(cache::OrderingGateCache::BatchesSetType{batch2}));
 
@@ -213,18 +213,16 @@ TEST_F(OnDemandOrderingGateTest, SendBatchWithBatchesFromTheCache) {
  * @then all batches from that event are removed from the cache
  */
 TEST_F(OnDemandOrderingGateTest, BatchesRemoveFromCache) {
-  auto now = iroha::time::now();
+  // prepare hashes for mock batches
+  shared_model::interface::types::HashType hash1("hash1");
+  shared_model::interface::types::HashType hash2("hash2");
 
-  auto batch1 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(2, now));
-
-  auto batch2 = std::shared_ptr<shared_model::interface::TransactionBatch>(
-      framework::batch::createValidBatch(3, now + 1));
+  // prepare batches
+  auto batch1 = createMockBatchWithHash(hash1);
+  auto batch2 = createMockBatchWithHash(hash2);
 
   EXPECT_CALL(*cache, up()).Times(1);
-  EXPECT_CALL(*cache,
-              remove(cache::OrderingGateCache::BatchesSetType{batch1, batch2}))
-      .Times(1);
+  EXPECT_CALL(*cache, remove(UnorderedElementsAre(batch1, batch2))).Times(1);
 
   rounds.get_subscriber().on_next(
       OnDemandOrderingGate::BlockEvent{initial_round, {batch1, batch2}});

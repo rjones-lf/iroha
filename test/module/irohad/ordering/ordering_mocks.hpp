@@ -32,7 +32,7 @@ namespace iroha {
     }  // namespace transport
 
     namespace cache {
-      struct MockOrderingGateCache : public cache::OrderingGateCache {
+      struct MockOrderingGateCache : public OrderingGateCache {
         MOCK_METHOD1(addToBack, void(const BatchesSetType &batches));
         MOCK_METHOD0(up, void());
         MOCK_METHOD0(clearFrontAndGet, BatchesSetType());
