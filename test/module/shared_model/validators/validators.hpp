@@ -6,7 +6,6 @@
 #ifndef IROHA_VALIDATOR_MOCKS_HPP
 #define IROHA_VALIDATOR_MOCKS_HPP
 
-#include "module/shared_model/validators/always_valid_validators.hpp"
 #include "validators/abstract_validator.hpp"
 
 #include <gmock/gmock.h>
