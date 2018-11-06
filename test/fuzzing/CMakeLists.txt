@@ -42,9 +42,6 @@ add_executable(send_batches_fuzz send_batches_fuzz.cpp)
 target_link_libraries(send_batches_fuzz
   gtest::gtest
   gmock::gmock
-  tbb
-  logger
-  ordering_grpc
   on_demand_ordering_service
   on_demand_ordering_service_transport_grpc
   protobuf-mutator
@@ -54,9 +51,6 @@ add_executable(request_proposal_fuzz request_proposal_fuzz.cpp)
 target_link_libraries(request_proposal_fuzz
   gtest::gtest
   gmock::gmock
-  tbb
-  logger
-  ordering_grpc
   on_demand_ordering_service
   on_demand_ordering_service_transport_grpc
   protobuf-mutator
