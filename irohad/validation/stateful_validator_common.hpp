@@ -54,7 +54,7 @@ namespace iroha {
     /// dimension of errors vector is transaction, second is error itself with
     /// number of transaction, where it happened
     // TODO mboldyrev 27.10.2018: create a special class for VerifiedProposal
-    //                            which will include the rejected tx hashes
+    //      IR-1849               which will include the rejected tx hashes
     struct VerifiedProposalAndErrors {
       std::unique_ptr<shared_model::interface::Proposal> verified_proposal;
       TransactionsErrors rejected_transactions;
