@@ -149,3 +149,10 @@ addtest(get_role_permissions_test
 target_link_libraries(get_role_permissions_test
     acceptance_fixture
     )
+
+addtest(replay_test
+    replay_test.cpp
+    )
+target_link_libraries(replay_test
+    acceptance_fixture
+    )
