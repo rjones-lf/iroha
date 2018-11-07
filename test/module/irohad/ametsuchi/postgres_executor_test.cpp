@@ -125,7 +125,7 @@ namespace iroha {
       std::string uint256_halfmax =
           "57896044618658097711785492504343953926634992332820282019728792003956"
           "5648"
-          "19966.0";  // 2**255 - 2tra
+          "19966.0";  // 2**255
     };
 
     class AddAccountAssetTest : public CommandExecutorTest {
@@ -723,11 +723,6 @@ namespace iroha {
           val(execute(buildCommand(TestTransactionBuilder().createDomain(
                           domain->domainId(), role)),
                       true)));
-      auto asset = clone(TestAccountAssetBuilder()
-                             .domainId(domain->domainId())
-                             .assetId(asset_id)
-                             .precision(1)
-                             .build());
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().createAccount(
                           "id", domain->domainId(), *pubkey)),
@@ -752,11 +747,6 @@ namespace iroha {
           val(execute(buildCommand(TestTransactionBuilder().createDomain(
                           domain->domainId(), role)),
                       true)));
-      auto asset = clone(TestAccountAssetBuilder()
-                             .domainId(domain->domainId())
-                             .assetId(asset_id)
-                             .precision(1)
-                             .build());
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().createAccount(
                           "id", domain->domainId(), *pubkey)),

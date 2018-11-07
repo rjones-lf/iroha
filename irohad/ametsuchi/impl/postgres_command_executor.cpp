@@ -146,10 +146,10 @@ namespace {
   }
 
   /// mapping between pairs of SQL error substrings and related error codes
-  std::vector<std::tuple<iroha::ametsuchi::CommandError::ErrorCodeType,
-                         std::string,
-                         std::string>>
-      sql_to_error_code = {
+  const std::vector<std::tuple<iroha::ametsuchi::CommandError::ErrorCodeType,
+                               std::string,
+                               std::string>>
+      kSqlToErrorCode = {
           std::make_tuple(0, "Key (account_id)=", "is not present in table"),
           std::make_tuple(
               1, "Key (permittee_account_id)", "is not present in table"),
@@ -177,7 +177,7 @@ namespace {
     bool errors_matched;
 
     // go through mapping of SQL errors and related error codes
-    for (auto error_tuple : sql_to_error_code) {
+    for (auto error_tuple : kSqlToErrorCode) {
       std::tie(err_code, key, to_be_presented) = error_tuple;
       errors_matched = error.find(key) != std::string::npos
           and error.find(to_be_presented) != std::string::npos;
