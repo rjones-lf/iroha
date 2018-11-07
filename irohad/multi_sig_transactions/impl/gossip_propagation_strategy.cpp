@@ -27,10 +27,10 @@ namespace iroha {
         non_visited({}),
         emit_worker(emit_worker),
         emitent(rxcpp::observable<>::interval(steady_clock::now(),
-                                              params.period)
+                                              params.emission_period)
                     .map([this, params](int) {
                       PropagationData vec;
-                      auto range = boost::irange(0u, params.amount);
+                      auto range = boost::irange(0u, params.amount_per_once);
                       // push until find empty element
                       std::find_if_not(
                           range.begin(), range.end(), [this, &vec](int) {

@@ -63,8 +63,8 @@ namespace integration_framework {
         !instance_,
         "Gossip propagation params must be set before Irohad is started!");
     iroha::GossipPropagationStrategyParams gossip_params;
-    gossip_params.period = mst_gossip_emitting_period;
-    gossip_params.amount = mst_gossip_amount_per_once;
+    gossip_params.emission_period = mst_gossip_emitting_period;
+    gossip_params.amount_per_once = mst_gossip_amount_per_once;
     opt_mst_gossip_params_ = gossip_params;
   }
 

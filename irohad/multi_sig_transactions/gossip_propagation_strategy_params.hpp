@@ -22,10 +22,10 @@ namespace iroha {
    */
   struct GossipPropagationStrategyParams {
     /// period of emitting data in ms
-    std::chrono::milliseconds period{kDefaultPeriod};
+    std::chrono::milliseconds emission_period{kDefaultPeriod};
 
     /// amount of data (peers) emitted per once
-    uint32_t amount{kDefaultAmount};
+    uint32_t amount_per_once{kDefaultAmount};
   };
 
 }  // namespace iroha

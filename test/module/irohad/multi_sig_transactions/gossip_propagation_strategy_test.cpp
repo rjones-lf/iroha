@@ -80,8 +80,8 @@ PropagationData subscribeAndEmit(boost::optional<PropagationData> data,
       .WillRepeatedly(testing::Return(boost::make_optional(
           std::shared_ptr<iroha::ametsuchi::PeerQuery>(query))));
   iroha::GossipPropagationStrategyParams gossip_params;
-  gossip_params.period = period;
-  gossip_params.amount = amount;
+  gossip_params.emission_period = period;
+  gossip_params.amount_per_once = amount;
   GossipPropagationStrategy strategy(
       pbfactory, rxcpp::observe_on_event_loop(), gossip_params);
   return subscribeAndEmit(strategy, take);
@@ -192,8 +192,8 @@ TEST(GossipPropagationStrategyTest, MultipleSubsEmission) {
           std::shared_ptr<iroha::ametsuchi::PeerQuery>(query))));
   EXPECT_CALL(*query, getLedgerPeers()).WillRepeatedly(testing::Return(peers));
   iroha::GossipPropagationStrategyParams gossip_params;
-  gossip_params.period = 1ms;
-  gossip_params.amount = amount;
+  gossip_params.emission_period = 1ms;
+  gossip_params.amount_per_once = amount;
   GossipPropagationStrategy strategy(
       pbfactory, rxcpp::observe_on_new_thread(), gossip_params);
 
