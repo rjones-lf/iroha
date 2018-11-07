@@ -321,8 +321,6 @@ void Irohad::initMstProcessor() {
         batch_parser,
         transaction_batch_factory_,
         keypair.publicKey());
-    // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
-    // cli parameters
     mst_propagation = std::make_shared<GossipPropagationStrategy>(
         storage, rxcpp::observe_on_new_thread(), *opt_mst_gossip_params_);
   } else {
