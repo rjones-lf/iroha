@@ -83,31 +83,67 @@ namespace {
         std::move(command_name), code, error_extra});
   }
 
-  // TODO [IR-1830] Akvinikym 31.10.18: make benchmarks to compare exception
-  // parsing vs nested queries
   /**
-   * Match the given substring against given SQL error and form a command error,
-   * if match was successful
-   * @param command_name - name of the failed command
-   * @param error to be matched against
-   * @param error_code to be inserted into a command error
-   * @param key - first element to be in an error
-   * @param to_be_presented - second element to be in an error
-   * @return optional with command error
+   * Get a real error code based on the fake one and a command name
+   * @param fake_error_code - inner error code to be translated into the user's
+   * one
+   * @param command_name of the failed command
+   * @return real error code
    */
-  boost::optional<iroha::ametsuchi::CommandResult> parseSqlError(
-      std::string &command_name,
-      const std::string &error,
-      iroha::ametsuchi::CommandError::ErrorCodeType error_code,
-      const std::string &key,
-      const std::string &to_be_presented) {
-    auto errors_matched = error.find(key) != std::string::npos
-        and error.find(to_be_presented) != std::string::npos;
-    if (errors_matched) {
-      return boost::make_optional<iroha::ametsuchi::CommandResult>(
-          makeCommandError(std::move(command_name), error_code));
+  size_t getRealErrorCode(size_t fake_error_code,
+                          const std::string &command_name) {
+    switch (fake_error_code) {
+      case 0:
+        // we need inner if-s to prevent incorrect behaviour of the system;
+        // for example, if we are under 0, but command name does not match
+        // any of those below, it is an internal error
+        if (command_name == "AddSignatory" or command_name == "AppendRole"
+            or command_name == "DetachRole" or command_name == "RemoveSignatory"
+            or command_name == "SetAccountDetail"
+            or command_name == "SetQuorum") {
+          return 3;
+        }
+      case 1:
+        if (command_name == "GrantPermission"
+            or command_name == "RevokePermission") {
+          return 3;
+        }
+      case 2:
+        if (command_name == "AppendRole") {
+          return 4;
+        } else if (command_name == "DetachRole") {
+          return 5;
+        }
+      case 3:
+        if (command_name == "CreateAccount" or command_name == "CreateAsset") {
+          return 3;
+        }
+      case 4:
+        if (command_name == "CreateAsset") {
+          return 4;
+        }
+      case 5:
+        if (command_name == "CreateDomain") {
+          return 3;
+        }
+      case 6:
+        if (command_name == "CreateRole") {
+          return 3;
+        }
+      case 7:
+        if (command_name == "AddSignatory") {
+          return 4;
+        }
+      case 8:
+        if (command_name == "CreateAccount") {
+          return 4;
+        }
+      case 9:
+        if (command_name == "CreateDomain") {
+          return 4;
+        }
     }
-    return {};
+    return 1;
   }
 
   /// mapping between pairs of SQL error substrings and related error codes
@@ -115,20 +151,20 @@ namespace {
                          std::string,
                          std::string>>
       sql_to_error_code = {
-          std::make_tuple(2, "Key (account_id)=", "is not present in table"),
+          std::make_tuple(0, "Key (account_id)=", "is not present in table"),
           std::make_tuple(
-              2, "Key (permittee_account_id)", "is not present in table"),
-          std::make_tuple(6, "Key (role_id)=", "is not present in table"),
-          std::make_tuple(7, "Key (domain_id)=", "is not present in table"),
-          std::make_tuple(9, "Key (asset_id)=", "already exists"),
-          std::make_tuple(10, "Key (domain_id)=", "already exists"),
-          std::make_tuple(11, "Key (role_id)=", "already exists"),
-          std::make_tuple(
-              12, "Key (account_id, public_key)=", "already exists"),
-          std::make_tuple(13, "Key (account_id)=", "already exists"),
-          std::make_tuple(
-              14, "Key (default_role)=", "is not present in table")};
+              1, "Key (permittee_account_id)", "is not present in table"),
+          std::make_tuple(2, "Key (role_id)=", "is not present in table"),
+          std::make_tuple(3, "Key (domain_id)=", "is not present in table"),
+          std::make_tuple(4, "Key (asset_id)=", "already exists"),
+          std::make_tuple(5, "Key (domain_id)=", "already exists"),
+          std::make_tuple(6, "Key (role_id)=", "already exists"),
+          std::make_tuple(7, "Key (account_id, public_key)=", "already exists"),
+          std::make_tuple(8, "Key (account_id)=", "already exists"),
+          std::make_tuple(9, "Key (default_role)=", "is not present in table")};
 
+  // TODO [IR-1830] Akvinikym 31.10.18: make benchmarks to compare exception
+  // parsing vs nested queries
   /**
    * Get an error code from the text SQL error
    * @param command_name - name of the failed command
@@ -137,20 +173,21 @@ namespace {
    */
   iroha::ametsuchi::CommandResult getCommandError(
       std::string &&command_name, const std::string &error) noexcept {
-    boost::optional<iroha::ametsuchi::CommandResult> result_opt;
-
     iroha::ametsuchi::CommandError::ErrorCodeType err_code;
     std::string key, to_be_presented;
+    bool errors_matched;
 
+    // go through mapping of SQL errors and related error codes
     for (auto error_tuple : sql_to_error_code) {
       std::tie(err_code, key, to_be_presented) = error_tuple;
-      result_opt =
-          parseSqlError(command_name, error, err_code, key, to_be_presented);
-      if (result_opt) {
-        return *result_opt;
+      errors_matched = error.find(key) != std::string::npos
+          and error.find(to_be_presented) != std::string::npos;
+      if (errors_matched) {
+        return makeCommandError(std::move(command_name),
+                                getRealErrorCode(err_code, command_name),
+                                error);
       }
     }
-
     // parsing is not successful, return the general error
     return makeCommandError(std::move(command_name), 1, error);
   }
@@ -350,7 +387,7 @@ namespace iroha {
             )
             SELECT CASE
                 WHEN EXISTS (SELECT * FROM inserted) THEN 0
-                WHEN NOT EXISTS (SELECT * FROM role_exists) THEN 6
+                WHEN NOT EXISTS (SELECT * FROM role_exists) THEN 4
                 %s
                 ELSE 1
             END AS result)";
@@ -401,7 +438,7 @@ namespace iroha {
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_account_role) THEN 0
               %s
-              WHEN NOT EXISTS (SELECT * FROM get_domain_default_role) THEN 7
+              WHEN NOT EXISTS (SELECT * FROM get_domain_default_role) THEN 3
               ELSE 1
               END AS result)";
 
@@ -452,7 +489,7 @@ namespace iroha {
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_role_permissions) THEN 0
               %s
-              WHEN EXISTS (SELECT * FROM role WHERE role_id = $2) THEN 5
+              WHEN EXISTS (SELECT * FROM role WHERE role_id = $2) THEN 2
               ELSE 1
               END AS result)";
 
@@ -469,11 +506,11 @@ namespace iroha {
             )
             SELECT CASE WHEN EXISTS (SELECT * FROM deleted) THEN 0
             WHEN NOT EXISTS (SELECT * FROM account
-                             WHERE account_id = $2) THEN 2
+                             WHERE account_id = $2) THEN 3
             WHEN NOT EXISTS (SELECT * FROM role
-                             WHERE role_id = $3) THEN 6
+                             WHERE role_id = $3) THEN 5
             WHEN NOT EXISTS (SELECT * FROM account_has_roles
-                             WHERE account_id=$2 AND role_id=$3) THEN 3
+                             WHERE account_id=$2 AND role_id=$3) THEN 4
             %s
             ELSE 1 END AS result)";
 
@@ -555,7 +592,7 @@ namespace iroha {
               SELECT CASE WHEN EXISTS (SELECT * FROM inserted) THEN 0
                   %s
                   WHEN NOT EXISTS
-                      (SELECT * FROM account WHERE account_id=$2) THEN 2
+                      (SELECT * FROM account WHERE account_id=$2) THEN 3
                   ELSE 1 END AS result)";
 
     const std::string PostgresCommandExecutor::setQuorumBase = R"(
@@ -689,14 +726,14 @@ namespace iroha {
           SELECT CASE
               WHEN EXISTS (SELECT * FROM insert_dest LIMIT 1) THEN 0
               %s
-              WHEN NOT EXISTS (SELECT * FROM has_dest_account LIMIT 1) THEN 3
-              WHEN NOT EXISTS (SELECT * FROM has_src_account LIMIT 1) THEN 2
-              WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 4
+              WHEN NOT EXISTS (SELECT * FROM has_dest_account LIMIT 1) THEN 4
+              WHEN NOT EXISTS (SELECT * FROM has_src_account LIMIT 1) THEN 3
+              WHEN NOT EXISTS (SELECT * FROM has_asset LIMIT 1) THEN 5
               WHEN NOT EXISTS (SELECT value FROM new_src_value
-                               WHERE value >= 0 LIMIT 1) THEN 8
+                               WHERE value >= 0 LIMIT 1) THEN 6
               WHEN NOT EXISTS (SELECT value FROM new_dest_value
                                WHERE value < 2::decimal ^ (256 - $5)
-                               LIMIT 1) THEN 15
+                               LIMIT 1) THEN 7
               ELSE 1
           END AS result)";
 
@@ -985,7 +1022,7 @@ namespace iroha {
                    "$1"))
                 .str(),
             "AND (SELECT * from has_perm)",
-            "WHEN NOT (SELECT * from has_perm) THEN 5"}});
+            "WHEN NOT (SELECT * from has_perm) THEN 2"}});
 
       statements.push_back(
           {"addPeer",
@@ -995,7 +1032,7 @@ namespace iroha {
                    shared_model::interface::permissions::Role::kAddPeer, "$1"))
                 .str(),
             "WHERE (SELECT * FROM has_perm)",
-            "WHEN NOT (SELECT * from has_perm) THEN 5"}});
+            "WHEN NOT (SELECT * from has_perm) THEN 2"}});
 
       statements.push_back(
           {"addSignatory",
@@ -1011,7 +1048,7 @@ namespace iroha {
                 .str(),
             " WHERE (SELECT * FROM has_perm)",
             " AND (SELECT * FROM has_perm)",
-            "WHEN NOT (SELECT * from has_perm) THEN 5"}});
+            "WHEN NOT (SELECT * from has_perm) THEN 2"}});
 
       const auto bits = shared_model::interface::RolePermissionSet::size();
       const auto grantable_bits =
@@ -1047,9 +1084,9 @@ namespace iroha {
                     (SELECT * FROM account_has_role_permissions)
                     AND (SELECT * FROM has_perm))",
             R"(
-                WHEN NOT EXISTS (SELECT * FROM account_roles) THEN 5
-                WHEN NOT (SELECT * FROM account_has_role_permissions) THEN 5
-                WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
+                WHEN NOT EXISTS (SELECT * FROM account_roles) THEN 2
+                WHEN NOT (SELECT * FROM account_has_role_permissions) THEN 2
+                WHEN NOT (SELECT * FROM has_perm) THEN 2)"}});
 
       statements.push_back(
           {"createAccount",
@@ -1061,7 +1098,7 @@ namespace iroha {
                    "$1"))
                 .str(),
             R"(AND (SELECT * FROM has_perm))",
-            R"(WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
+            R"(WHEN NOT (SELECT * FROM has_perm) THEN 2)"}});
 
       statements.push_back(
           {"createAsset",
@@ -1073,7 +1110,7 @@ namespace iroha {
                    "$1"))
                 .str(),
             R"(WHERE (SELECT * FROM has_perm))",
-            R"(WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
+            R"(WHEN NOT (SELECT * FROM has_perm) THEN 2)"}});
 
       statements.push_back(
           {"createDomain",
@@ -1085,7 +1122,7 @@ namespace iroha {
                    "$1"))
                 .str(),
             R"(WHERE (SELECT * FROM has_perm))",
-            R"(WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
+            R"(WHEN NOT (SELECT * FROM has_perm) THEN 2)"}});
 
       statements.push_back(
           {"createRole",
@@ -1106,8 +1143,8 @@ namespace iroha {
             R"(WHERE (SELECT * FROM account_has_role_permissions)
                           AND (SELECT * FROM has_perm))",
             R"(WHEN NOT (SELECT * FROM
-                               account_has_role_permissions) THEN 5
-                        WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
+                               account_has_role_permissions) THEN 2
+                        WHEN NOT (SELECT * FROM has_perm) THEN 2)"}});
 
       statements.push_back(
           {"detachRole",
@@ -1119,7 +1156,7 @@ namespace iroha {
                    "$1"))
                 .str(),
             R"(AND (SELECT * FROM has_perm))",
-            R"(WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
+            R"(WHEN NOT (SELECT * FROM has_perm) THEN 2)"}});
 
       statements.push_back({"grantPermission",
                             grantPermissionBase,
@@ -1131,7 +1168,7 @@ namespace iroha {
                               % bits)
                                  .str(),
                              R"( WHERE (SELECT * FROM has_perm))",
-                             R"(WHEN NOT (SELECT * FROM has_perm) THEN 5)"}});
+                             R"(WHEN NOT (SELECT * FROM has_perm) THEN 2)"}});
 
       statements.push_back(
           {"removeSignatory",
@@ -1168,10 +1205,10 @@ namespace iroha {
               AND EXISTS (SELECT * FROM check_account_signatories)
           )",
             R"(
-              WHEN NOT EXISTS (SELECT * FROM get_account) THEN 2
-              WHEN NOT (SELECT * FROM has_perm) THEN 5
-              WHEN NOT EXISTS (SELECT * FROM get_signatory) THEN 3
-              WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 8
+              WHEN NOT EXISTS (SELECT * FROM get_account) THEN 3
+              WHEN NOT (SELECT * FROM has_perm) THEN 2
+              WHEN NOT EXISTS (SELECT * FROM get_signatory) THEN 4
+              WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 5
           )"}});
 
       statements.push_back({"revokePermission",
@@ -1184,7 +1221,7 @@ namespace iroha {
                               % grantable_bits)
                                  .str(),
                              R"( AND (SELECT * FROM has_perm))",
-                             R"( WHEN NOT (SELECT * FROM has_perm) THEN 5 )"}});
+                             R"( WHEN NOT (SELECT * FROM has_perm) THEN 2 )"}});
 
       statements.push_back(
           {"setAccountDetail",
@@ -1208,7 +1245,7 @@ namespace iroha {
                    "$2"))
                 .str(),
             R"( AND (SELECT * FROM has_perm))",
-            R"( WHEN NOT (SELECT * FROM has_perm) THEN 5 )"}});
+            R"( WHEN NOT (SELECT * FROM has_perm) THEN 2 )"}});
 
       statements.push_back(
           {"setQuorum",
@@ -1236,9 +1273,9 @@ namespace iroha {
               AND EXISTS (SELECT * FROM check_account_signatories)
               AND (SELECT * FROM has_perm))",
             R"(
-              WHEN NOT (SELECT * FROM has_perm) THEN 5
-              WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 3
-              WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 4
+              WHEN NOT (SELECT * FROM has_perm) THEN 2
+              WHEN NOT EXISTS (SELECT * FROM get_signatories) THEN 4
+              WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 5
               )"}});
 
       statements.push_back(
@@ -1251,7 +1288,7 @@ namespace iroha {
                                           "$1"))
                 .str(),
             R"( AND (SELECT * FROM has_perm))",
-            R"( WHEN NOT (SELECT * FROM has_perm) THEN 5 )"}});
+            R"( WHEN NOT (SELECT * FROM has_perm) THEN 2 )"}});
 
       statements.push_back(
           {"transferAsset",
@@ -1286,7 +1323,7 @@ namespace iroha {
                 .str(),
             R"( AND (SELECT * FROM has_perm))",
             R"( AND (SELECT * FROM has_perm))",
-            R"( WHEN NOT (SELECT * FROM has_perm) THEN 5 )"}});
+            R"( WHEN NOT (SELECT * FROM has_perm) THEN 2 )"}});
 
       for (const auto &st : statements) {
         prepareStatement(sql, st);
