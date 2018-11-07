@@ -19,6 +19,7 @@
 #define IROHA_COMMAND_GENERATOR_HPP
 
 #include <memory>
+#include "crypto/keypair.hpp"
 #include "generator/generator.hpp"
 
 namespace iroha {

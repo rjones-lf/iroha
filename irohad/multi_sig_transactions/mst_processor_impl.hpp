@@ -19,6 +19,7 @@
 #define IROHA_MST_PROCESSOR_IMPL_HPP
 
 #include <memory>
+#include "cryptography/public_key.hpp"
 #include "logger/logger.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy.hpp"
@@ -62,7 +63,7 @@ namespace iroha {
 
     // ------------------| MstTransportNotification override |------------------
 
-    void onNewState(const std::shared_ptr<shared_model::interface::Peer> &from,
+    void onNewState(const shared_model::crypto::PublicKey &from,
                     ConstRefState new_state) override;
 
     // ----------------------------| end override |-----------------------------
@@ -114,6 +115,7 @@ namespace iroha {
     rxcpp::subjects::subject<DataType> expired_subject_;
 
     /// use for tracking the propagation subscription
+
     rxcpp::composite_subscription propagation_subscriber_;
   };
 }  // namespace iroha

@@ -18,9 +18,10 @@
 #ifndef IROHA_SIGNATURES_RESPONSE_HPP
 #define IROHA_SIGNATURES_RESPONSE_HPP
 
-#include <common/types.hpp>
-#include <model/query_response.hpp>
 #include <vector>
+
+#include "crypto/keypair.hpp"
+#include "model/query_response.hpp"
 
 namespace iroha {
   namespace model {

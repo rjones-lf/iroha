@@ -17,7 +17,7 @@
 
 #include <gtest/gtest.h>
 #include <iostream>
-#include "common/types.hpp"
+#include "common/byteutils.hpp"
 
 using namespace iroha;
 using namespace std;

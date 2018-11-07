@@ -20,6 +20,7 @@
 #include <google/protobuf/empty.pb.h>
 
 #include "backend/protobuf/proto_proposal_factory.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"

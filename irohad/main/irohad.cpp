@@ -26,6 +26,8 @@
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_loader.hpp"
 
+static const std::string kListenIp = "0.0.0.0";
+
 /**
  * Gflag validator.
  * Validator for the configuration file path input argument.
@@ -130,6 +132,8 @@ int main(int argc, char *argv[]) {
   // Configuring iroha daemon
   Irohad irohad(config[mbr::BlockStorePath].GetString(),
                 config[mbr::PgOpt].GetString(),
+                kListenIp,  // TODO(mboldyrev) 17/10/2018: add a parameter in
+                            // config file and/or command-line arguments?
                 config[mbr::ToriiPort].GetUint(),
                 config[mbr::InternalPort].GetUint(),
                 config[mbr::MaxProposalSize].GetUint(),

@@ -8,7 +8,6 @@
 #include <soci/postgresql/soci-postgresql.h>
 #include <boost/format.hpp>
 #include "ametsuchi/impl/soci_utils.hpp"
-#include "backend/protobuf/permissions.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/commands/add_asset_quantity.hpp"
 #include "interfaces/commands/add_peer.hpp"
@@ -743,8 +742,13 @@ namespace iroha {
           .str();
     }
 
-    PostgresCommandExecutor::PostgresCommandExecutor(soci::session &sql)
-        : sql_(sql), do_validation_(true) {}
+    PostgresCommandExecutor::PostgresCommandExecutor(
+        soci::session &sql,
+        std::shared_ptr<shared_model::interface::PermissionToString>
+            perm_converter)
+        : sql_(sql),
+          do_validation_(true),
+          perm_converter_(std::move(perm_converter)) {}
 
     void PostgresCommandExecutor::setCreatorAccountId(
         const shared_model::interface::types::AccountIdType
@@ -1329,5 +1333,38 @@ namespace iroha {
         prepareStatement(sql, st);
       }
     };
+
+    std::string PostgresCommandExecutor::missRolePerm(
+        shared_model::interface::types::AccountIdType account,
+        shared_model::interface::permissions::Role perm) {
+      return (boost::format("command validation failed: account %s"
+                            " does not have permission %s (role)")
+              % account % perm_converter_->toString(perm))
+          .str();
+    }
+
+    std::string PostgresCommandExecutor::missGrantablePerm(
+        shared_model::interface::types::AccountIdType account,
+        shared_model::interface::types::AccountIdType permittee,
+        shared_model::interface::permissions::Grantable perm) {
+      return (boost::format(
+                  "command validation failed: account %s"
+                  " does not have permission %s (grantable) for account %s")
+              % account % perm_converter_->toString(perm) % permittee)
+          .str();
+    }
+
+    std::string PostgresCommandExecutor::missRoleOrGrantablePerm(
+        shared_model::interface::types::AccountIdType account,
+        shared_model::interface::types::AccountIdType permittee,
+        shared_model::interface::permissions::Role role_perm,
+        shared_model::interface::permissions::Grantable grantable_perm) {
+      return (boost::format("command validation failed: account %s"
+                            " does not have permission %s (role)"
+                            " and permission %s (grantable) for account %s")
+              % account % perm_converter_->toString(role_perm)
+              % perm_converter_->toString(grantable_perm) % permittee)
+          .str();
+    }
   }  // namespace ametsuchi
 }  // namespace iroha
