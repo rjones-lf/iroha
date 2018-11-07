@@ -50,8 +50,7 @@ namespace iroha {
                 shared_model::validation::FieldValidator>>();
         query = std::make_unique<PostgresWsvQuery>(*sql, factory);
         PostgresCommandExecutor::prepareStatements(*sql);
-        executor =
-            std::make_unique<PostgresCommandExecutor>(*sql, perm_converter_);
+        executor = std::make_unique<PostgresCommandExecutor>(*sql);
 
         *sql << init_;
       }

@@ -742,13 +742,8 @@ namespace iroha {
           .str();
     }
 
-    PostgresCommandExecutor::PostgresCommandExecutor(
-        soci::session &sql,
-        std::shared_ptr<shared_model::interface::PermissionToString>
-            perm_converter)
-        : sql_(sql),
-          do_validation_(true),
-          perm_converter_(std::move(perm_converter)) {}
+    PostgresCommandExecutor::PostgresCommandExecutor(soci::session &sql)
+        : sql_(sql), do_validation_(true) {}
 
     void PostgresCommandExecutor::setCreatorAccountId(
         const shared_model::interface::types::AccountIdType
@@ -1334,37 +1329,5 @@ namespace iroha {
       }
     };
 
-    std::string PostgresCommandExecutor::missRolePerm(
-        shared_model::interface::types::AccountIdType account,
-        shared_model::interface::permissions::Role perm) {
-      return (boost::format("command validation failed: account %s"
-                            " does not have permission %s (role)")
-              % account % perm_converter_->toString(perm))
-          .str();
-    }
-
-    std::string PostgresCommandExecutor::missGrantablePerm(
-        shared_model::interface::types::AccountIdType account,
-        shared_model::interface::types::AccountIdType permittee,
-        shared_model::interface::permissions::Grantable perm) {
-      return (boost::format(
-                  "command validation failed: account %s"
-                  " does not have permission %s (grantable) for account %s")
-              % account % perm_converter_->toString(perm) % permittee)
-          .str();
-    }
-
-    std::string PostgresCommandExecutor::missRoleOrGrantablePerm(
-        shared_model::interface::types::AccountIdType account,
-        shared_model::interface::types::AccountIdType permittee,
-        shared_model::interface::permissions::Role role_perm,
-        shared_model::interface::permissions::Grantable grantable_perm) {
-      return (boost::format("command validation failed: account %s"
-                            " does not have permission %s (role)"
-                            " and permission %s (grantable) for account %s")
-              % account % perm_converter_->toString(role_perm)
-              % perm_converter_->toString(grantable_perm) % permittee)
-          .str();
-    }
   }  // namespace ametsuchi
 }  // namespace iroha
