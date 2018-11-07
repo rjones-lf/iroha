@@ -60,7 +60,7 @@ namespace integration_framework {
       std::chrono::milliseconds mst_gossip_emitting_period,
       uint32_t mst_gossip_amount_per_once) {
     BOOST_ASSERT_MSG(
-        !instance_,
+        not instance_,
         "Gossip propagation params must be set before Irohad is started!");
     iroha::GossipPropagationStrategyParams gossip_params;
     gossip_params.emission_period = mst_gossip_emitting_period;
