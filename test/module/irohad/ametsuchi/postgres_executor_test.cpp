@@ -193,24 +193,6 @@ namespace iroha {
 
     /**
      * @given command
-     * @when trying to add account asset with non-existing account
-     * @then account asset fails to be added
-     */
-    TEST_F(AddAccountAssetTest, InvalidAccount) {
-      addAsset();
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder()
-                                   .addAssetQuantity(asset_id, "1.0")
-                                   .creatorAccountId("some@domain")),
-                  true,
-                  "some@domain");
-      // TODO [IR-1816] Akvinikym 29.10.18: replace magic numbers with named
-      // constants
-      CHECK_ERROR_CODE(cmd_result, 2);
-    }
-
-    /**
-     * @given command
      * @when trying to add account asset with non-existing asset
      * @then account asset fails to be added
      */
