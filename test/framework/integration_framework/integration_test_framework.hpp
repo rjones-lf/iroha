@@ -41,11 +41,6 @@ namespace shared_model {
     class Block;
   }
 }  // namespace shared_model
-namespace iroha {
-  namespace network {
-    class MstTransportGrpc;
-  }
-}  // namespace iroha
 
 namespace integration_framework {
 
