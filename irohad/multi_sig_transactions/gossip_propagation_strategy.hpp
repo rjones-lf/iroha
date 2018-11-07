@@ -18,8 +18,6 @@
 #ifndef IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
 #define IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
 
-#include "multi_sig_transactions/mst_propagation_strategy.hpp"
-
 #include <boost/optional.hpp>
 #include <chrono>
 #include <mutex>
