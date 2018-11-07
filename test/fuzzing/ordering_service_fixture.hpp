@@ -6,9 +6,10 @@
 #ifndef IROHA_ORDERING_SERVICE_FIXTURE_HPP
 #define IROHA_ORDERING_SERVICE_FIXTURE_HPP
 
+#include <memory>
+
 #include <gtest/gtest.h>
 #include <libfuzzer/libfuzzer_macro.h>
-#include <memory>
 
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
