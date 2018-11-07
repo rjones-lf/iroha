@@ -25,7 +25,7 @@
 #include <memory>
 #include <string>
 #include "ametsuchi/impl/postgres_options.hpp"
-#include "multi_sig_transactions/gossip_propagation_strategy_prams.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy_params.hpp"
 
 namespace shared_model {
   namespace interface {

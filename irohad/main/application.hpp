@@ -18,7 +18,7 @@
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
-#include "multi_sig_transactions/gossip_propagation_strategy_prams.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy_params.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
