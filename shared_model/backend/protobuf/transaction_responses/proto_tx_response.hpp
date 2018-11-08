@@ -10,7 +10,6 @@
 
 #include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
 #include "cryptography/hash.hpp"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -60,19 +59,12 @@ namespace shared_model {
       virtual ErrorCodeType errorCode() const override;
 
      private:
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
+      const ProtoResponseVariantType variant_;
 
-      /// lazy variant shortcut
-      using LazyVariantType = Lazy<ProtoResponseVariantType>;
-
-      // lazy
-      const LazyVariantType variant_;
-
-      const Lazy<ResponseVariantType> ivariant_;
+      const ResponseVariantType ivariant_;
 
       // stub hash
-      const Lazy<crypto::Hash> hash_;
+      const crypto::Hash hash_;
 
       static constexpr int max_priority = std::numeric_limits<int>::max();
       int priority() const noexcept override;

@@ -5,6 +5,7 @@
 
 #include <gtest/gtest.h>
 #include <tuple>
+#include "cryptography/keypair.hpp"
 #include "datetime/time.hpp"
 #include "framework/test_subscriber.hpp"
 #include "logger/logger.hpp"
@@ -261,11 +262,11 @@ TEST_F(MstProcessorTest, onUpdateFromTransportUsecase) {
   auto observers = initObservers(mst_processor, 0, 1, 0);
 
   // ---------------------------------| when |----------------------------------
-  auto another_peer = makePeer("another", "another_pubkey");
+  shared_model::crypto::PublicKey another_peer_key("another_pubkey");
   auto transported_state = MstState::empty(std::make_shared<TestCompleter>());
   transported_state += addSignaturesFromKeyPairs(
       makeTestBatch(txBuilder(1, time_now, quorum)), 0, makeKey());
-  mst_processor->onNewState(another_peer, transported_state);
+  mst_processor->onNewState(another_peer_key, transported_state);
 
   // ---------------------------------| then |----------------------------------
   check(observers);
@@ -313,8 +314,9 @@ TEST_F(MstProcessorTest, emptyStatePropagation) {
   auto another_peer_state = MstState::empty();
   another_peer_state += makeTestBatch(txBuilder(1));
 
-  storage->apply(another_peer, another_peer_state);
-  ASSERT_TRUE(storage->getDiffState(another_peer, time_now).isEmpty());
+  storage->apply(another_peer->pubkey(), another_peer_state);
+  ASSERT_TRUE(
+      storage->getDiffState(another_peer->pubkey(), time_now).isEmpty());
 
   // ---------------------------------| when |----------------------------------
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers{

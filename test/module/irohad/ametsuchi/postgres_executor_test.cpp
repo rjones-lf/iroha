@@ -21,6 +21,7 @@ namespace iroha {
     using namespace framework::expected;
 
     class CommandExecutorTest : public AmetsuchiTest {
+      // TODO [IR-1831] Akvinikym 31.10.18: rework the CommandExecutorTest
      public:
       CommandExecutorTest() {
         domain = clone(
@@ -100,15 +101,12 @@ namespace iroha {
 
       /**
        * Check that command result contains specific error code
-       * @param result to be checked
+       * @param cmd_result to be checked
        * @param expected_code to be in the result
        */
-      void checkErrorCode(const CommandResult &result,
-                          CommandError::ErrorCodeType expected_code) {
-        auto error = err(result);
-        ASSERT_TRUE(error);
-        ASSERT_EQ(error->error.error_code, expected_code);
-      }
+#define CHECK_ERROR_CODE(cmd_result, expected_code) \
+  ASSERT_TRUE(err(cmd_result));                     \
+  ASSERT_EQ(err(cmd_result)->error.error_code, expected_code);
 
       const std::string role = "role";
       const std::string another_role = "role2";
@@ -123,6 +121,11 @@ namespace iroha {
 
       std::unique_ptr<WsvQuery> query;
       std::unique_ptr<CommandExecutor> executor;
+
+      std::string uint256_halfmax =
+          "57896044618658097711785492504343953926634992332820282019728792003956"
+          "5648"
+          "19966.0";  // 2**255
     };
 
     class AddAccountAssetTest : public CommandExecutorTest {
@@ -164,7 +167,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add account asset
      * @then account asset is successfully added
      */
@@ -190,60 +193,6 @@ namespace iroha {
 
     /**
      * @given command
-     * @when trying to add account asset with non-existing account
-     * @then account asset fails to be added
-     */
-    TEST_F(AddAccountAssetTest, InvalidAccount) {
-      addAsset();
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder()
-                                   .addAssetQuantity(asset_id, "1.0")
-                                   .creatorAccountId("some@domain")),
-                  true,
-                  "some@domain");
-      checkErrorCode(cmd_result, 2);
-    }
-
-    /**
-     * @given  command
-     * @when trying to add account asset with non-existing asset
-     * @then account asset fails to be added
-     */
-    TEST_F(AddAccountAssetTest, InvalidAsset) {
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder()
-                                   .addAssetQuantity(asset_id, "1.0")
-                                   .creatorAccountId(account->accountId())),
-                  true);
-      checkErrorCode(cmd_result, 3);
-    }
-
-    /**
-     * @given  command
-     * @when trying to add account asset that overflows
-     * @then account asset fails to added
-     */
-    TEST_F(AddAccountAssetTest, Uint256Overflow) {
-      std::string uint256_halfmax =
-          "57896044618658097711785492504343953926634992332820282019728792003956"
-          "5648"
-          "19966.0";  // 2**255 - 2tra
-      addAsset();
-      ASSERT_TRUE(val(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .addAssetQuantity(asset_id, uint256_halfmax)
-                                   .creatorAccountId(account->accountId())),
-                  true)));
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder()
-                                   .addAssetQuantity(asset_id, uint256_halfmax)
-                                   .creatorAccountId(account->accountId())),
-                  true);
-      checkErrorCode(cmd_result, 4);
-    }
-
-    /**
-     * @given  command
      * @when trying to add account asset without permission
      * @then account asset not added
      */
@@ -263,7 +212,41 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .addAssetQuantity(asset_id, "1.0")
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 2);
+    }
+
+    /**
+     * @given command
+     * @when trying to add account asset with non-existing asset
+     * @then account asset fails to be added
+     */
+    TEST_F(AddAccountAssetTest, InvalidAsset) {
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())),
+                  true);
+      CHECK_ERROR_CODE(cmd_result, 3);
+    }
+
+    /**
+     * @given command
+     * @when trying to add account asset that overflows
+     * @then account asset fails to added
+     */
+    TEST_F(AddAccountAssetTest, Uint256Overflow) {
+      addAsset();
+      ASSERT_TRUE(val(
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, uint256_halfmax)
+                                   .creatorAccountId(account->accountId())),
+                  true)));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder()
+                                   .addAssetQuantity(asset_id, uint256_halfmax)
+                                   .creatorAccountId(account->accountId())),
+                  true);
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     class AddPeer : public CommandExecutorTest {
@@ -288,7 +271,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add peer
      * @then peer is successfully added
      */
@@ -299,14 +282,14 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add peer without perms
      * @then peer is not added
      */
     TEST_F(AddPeer, NoPerms) {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().addPeer(peer->address(), peer->pubkey())));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 2);
     }
 
     class AddSignatory : public CommandExecutorTest {
@@ -332,7 +315,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add signatory with role permission
      * @then signatory is successfully added
      */
@@ -348,7 +331,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add signatory with grantable permission
      * @then signatory is successfully added
      */
@@ -377,22 +360,6 @@ namespace iroha {
 
     /**
      * @given command
-     * @when trying to add signatory to non-existing account
-     * @then signatory is not added
-     */
-    TEST_F(AddSignatory, NoAccount) {
-      auto perm =
-          shared_model::interface::permissions::Grantable::kAddMySignatory;
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder().grantPermission(
-                      account->accountId(), perm)),
-                  true,
-                  "id2@domain");
-      checkErrorCode(cmd_result, 2);
-    }
-
-    /**
-     * @given  command
      * @when trying to add signatory without permissions
      * @then signatory is not added
      */
@@ -400,7 +367,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().addSignatory(
               account->accountId(), *pubkey)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 2);
 
       auto signatories = query->getSignatories(account->accountId());
       ASSERT_TRUE(signatories);
@@ -423,7 +390,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().addSignatory(
               account->accountId(), *pubkey)));
-      checkErrorCode(cmd_result, 12);
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     class AppendRole : public CommandExecutorTest {
@@ -505,21 +472,6 @@ namespace iroha {
 
     /**
      * @given command
-     * @when trying to append role to non-existing account
-     * @then role is not appended
-     */
-    TEST_F(AppendRole, NoAccount) {
-      addAllPerms();
-      ASSERT_TRUE(val(execute(
-          buildCommand(TestTransactionBuilder().createRole(another_role, {})),
-          true)));
-      auto cmd_result = execute(buildCommand(
-          TestTransactionBuilder().appendRole("doge@noaccount", another_role)));
-      checkErrorCode(cmd_result, 2);
-    }
-
-    /**
-     * @given command
      * @when trying to append role having no permission to do so
      * @then role is not appended
      */
@@ -530,7 +482,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().appendRole(
               account->accountId(), another_role)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 2);
 
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
@@ -539,7 +491,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to append role with perms that creator does not have
      * @then role is not appended
      */
@@ -552,7 +504,22 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().appendRole(
               account->accountId(), another_role)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 2);
+    }
+
+    /**
+     * @given command
+     * @when trying to append role to non-existing account
+     * @then role is not appended
+     */
+    TEST_F(AppendRole, NoAccount) {
+      addAllPerms();
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder().createRole(another_role, {})),
+          true)));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().appendRole("doge@noaccount", another_role)));
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
@@ -565,7 +532,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().appendRole(
               account->accountId(), another_role)));
-      checkErrorCode(cmd_result, 6);
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     class CreateAccount : public CommandExecutorTest {
@@ -602,7 +569,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create account
      * @then account is created
      */
@@ -617,7 +584,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create account without permission to do so
      * @then account is not created
      */
@@ -625,13 +592,13 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().createAccount(
               "id2", domain->domainId(), *pubkey)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 2);
       auto acc = query->getAccount(account2->accountId());
       ASSERT_FALSE(acc);
     }
 
     /**
-     * @given  command @and no target domain in ledger
+     * @given command @and no target domain in ledger
      * @when trying to create account
      * @then account is not created
      */
@@ -639,7 +606,7 @@ namespace iroha {
       addAllPerms();
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createAccount("doge", "domain6", *pubkey)));
-      checkErrorCode(cmd_result, 7);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
@@ -652,7 +619,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().createAccount(
               "id", domain->domainId(), *pubkey)));
-      checkErrorCode(cmd_result, 13);
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     class CreateAsset : public CommandExecutorTest {
@@ -666,7 +633,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create asset
      * @then asset is created
      */
@@ -697,7 +664,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create asset without permission
      * @then asset is not created
      */
@@ -720,13 +687,13 @@ namespace iroha {
                       true)));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createAsset("coin", domain->domainId(), 1)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 2);
       auto ass = query->getAsset(asset->assetId());
       ASSERT_FALSE(ass);
     }
 
     /**
-     * @given  command and no target domain in ledger
+     * @given command and no target domain in ledger
      * @when trying to create asset
      * @then asset is not created
      */
@@ -740,18 +707,13 @@ namespace iroha {
           val(execute(buildCommand(TestTransactionBuilder().createDomain(
                           domain->domainId(), role)),
                       true)));
-      auto asset = clone(TestAccountAssetBuilder()
-                             .domainId(domain->domainId())
-                             .assetId(asset_id)
-                             .precision(1)
-                             .build());
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().createAccount(
                           "id", domain->domainId(), *pubkey)),
                       true)));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createAsset(asset_name, "no_domain", 1)));
-      checkErrorCode(cmd_result, 7);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
@@ -769,11 +731,6 @@ namespace iroha {
           val(execute(buildCommand(TestTransactionBuilder().createDomain(
                           domain->domainId(), role)),
                       true)));
-      auto asset = clone(TestAccountAssetBuilder()
-                             .domainId(domain->domainId())
-                             .assetId(asset_id)
-                             .precision(1)
-                             .build());
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().createAccount(
                           "id", domain->domainId(), *pubkey)),
@@ -782,7 +739,7 @@ namespace iroha {
           "coin", domain->domainId(), 1)))));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createAsset("coin", domain->domainId(), 1)));
-      checkErrorCode(cmd_result, 9);
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     class CreateDomain : public CommandExecutorTest {
@@ -809,7 +766,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create domain
      * @then domain is created
      */
@@ -823,14 +780,14 @@ namespace iroha {
     }
 
     /**
-     * @given  command when there is no perms
+     * @given command when there is no perms
      * @when trying to create domain
      * @then domain is not created
      */
     TEST_F(CreateDomain, NoPerms) {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createDomain(domain2->domainId(), role)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 2);
       auto dom = query->getDomain(domain2->domainId());
       ASSERT_FALSE(dom);
     }
@@ -846,11 +803,11 @@ namespace iroha {
           TestTransactionBuilder().createDomain(domain2->domainId(), role)))));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createDomain(domain2->domainId(), role)));
-      checkErrorCode(cmd_result, 10);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
-     * @given  command when there is no default role
+     * @given command when there is no default role
      * @when trying to create domain
      * @then domain is not created
      */
@@ -859,7 +816,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().createDomain(
               domain2->domainId(), another_role)));
-      checkErrorCode(cmd_result, 14);
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     class CreateRole : public CommandExecutorTest {
@@ -883,7 +840,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create role
      * @then role is created
      */
@@ -897,7 +854,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to create role when creator doesn't have all permissions
      * @then role is not created
      */
@@ -907,7 +864,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().createRole(
               another_role, role_permissions2)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 2);
       auto rl = query->getRolePermissions(another_role);
       ASSERT_TRUE(rl);
       ASSERT_TRUE(rl->none());
@@ -924,7 +881,7 @@ namespace iroha {
           another_role, role_permissions)))));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createRole(another_role, role_permissions)));
-      checkErrorCode(cmd_result, 11);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     class DetachRole : public CommandExecutorTest {
@@ -955,7 +912,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to detach role
      * @then role is detached
      */
@@ -971,6 +928,22 @@ namespace iroha {
 
     /**
      * @given command
+     * @when trying to detach role without permission
+     * @then role is detached
+     */
+    TEST_F(DetachRole, NoPerms) {
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().detachRole(
+              account->accountId(), another_role)));
+      CHECK_ERROR_CODE(cmd_result, 2);
+      auto roles = query->getAccountRoles(account->accountId());
+      ASSERT_TRUE(roles);
+      ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
+                  != roles->end());
+    }
+
+    /**
+     * @given command
      * @when trying to detach role from non-existing account
      * @then correspondent error code is returned
      */
@@ -978,7 +951,7 @@ namespace iroha {
       addAllPerms();
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().detachRole("doge@noaccount", another_role)));
-      checkErrorCode(cmd_result, 2);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
@@ -993,23 +966,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().detachRole(
               account->accountId(), another_role)));
-      checkErrorCode(cmd_result, 3);
-    }
-
-    /**
-     * @given  command
-     * @when trying to detach role without permission
-     * @then role is detached
-     */
-    TEST_F(DetachRole, NoPerms) {
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder().detachRole(
-              account->accountId(), another_role)));
-      checkErrorCode(cmd_result, 5);
-      auto roles = query->getAccountRoles(account->accountId());
-      ASSERT_TRUE(roles);
-      ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
-                  != roles->end());
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     /**
@@ -1022,7 +979,7 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().detachRole(
               account->accountId(), "not_existing_role")));
-      checkErrorCode(cmd_result, 6);
+      CHECK_ERROR_CODE(cmd_result, 5);
     }
 
     class GrantPermission : public CommandExecutorTest {
@@ -1049,7 +1006,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to grant permission
      * @then permission is granted
      */
@@ -1067,21 +1024,6 @@ namespace iroha {
 
     /**
      * @given command
-     * @when trying to grant permission to non-existent account
-     * @then corresponding error code is returned
-     */
-    TEST_F(GrantPermission, NoAccount) {
-      addAllPerms();
-      auto perm = shared_model::interface::permissions::Grantable::kSetMyQuorum;
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder()
-                                   .grantPermission("doge@noaccount", perm)
-                                   .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 2);
-    }
-
-    /**
-     * @given  command
      * @when trying to grant permission without permission
      * @then permission is not granted
      */
@@ -1092,10 +1034,25 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .grantPermission(account->accountId(), perm)
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 2);
       auto has_perm = query->hasAccountGrantablePermission(
           account->accountId(), account->accountId(), perm);
       ASSERT_FALSE(has_perm);
+    }
+
+    /**
+     * @given command
+     * @when trying to grant permission to non-existent account
+     * @then corresponding error code is returned
+     */
+    TEST_F(GrantPermission, NoAccount) {
+      addAllPerms();
+      auto perm = shared_model::interface::permissions::Grantable::kSetMyQuorum;
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder()
+                                   .grantPermission("doge@noaccount", perm)
+                                   .creatorAccountId(account->accountId())));
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     class RemoveSignatory : public CommandExecutorTest {
@@ -1126,7 +1083,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to remove signatory
      * @then signatory is successfully removed
      */
@@ -1149,7 +1106,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to remove signatory
      * @then signatory is successfully removed
      */
@@ -1184,7 +1141,31 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
+     * @when trying to remove signatory without permission
+     * @then signatory is not removed
+     */
+    TEST_F(RemoveSignatory, NoPerms) {
+      shared_model::interface::types::PubkeyType pk(std::string('5', 32));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+                          account->accountId(), pk)),
+                      true)));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().removeSignatory(
+              account->accountId(), *pubkey)));
+      CHECK_ERROR_CODE(cmd_result, 2);
+
+      auto signatories = query->getSignatories(account->accountId());
+      ASSERT_TRUE(signatories);
+      ASSERT_TRUE(std::find(signatories->begin(), signatories->end(), *pubkey)
+                  != signatories->end());
+      ASSERT_TRUE(std::find(signatories->begin(), signatories->end(), pk)
+                  != signatories->end());
+    }
+
+    /**
+     * @given command
      * @when trying to remove signatory from a non existing account
      * @then corresponding error code is returned
      */
@@ -1198,7 +1179,7 @@ namespace iroha {
 
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().removeSignatory("hello", *pubkey)));
-      checkErrorCode(cmd_result, 2);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
@@ -1225,35 +1206,11 @@ namespace iroha {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().removeSignatory(
               account->accountId(), *another_pubkey)));
-      checkErrorCode(cmd_result, 3);
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     /**
-     * @given  command
-     * @when trying to remove signatory without permission
-     * @then signatory is not removed
-     */
-    TEST_F(RemoveSignatory, NoPerms) {
-      shared_model::interface::types::PubkeyType pk(std::string('5', 32));
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
-                          account->accountId(), pk)),
-                      true)));
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder().removeSignatory(
-              account->accountId(), *pubkey)));
-      checkErrorCode(cmd_result, 5);
-
-      auto signatories = query->getSignatories(account->accountId());
-      ASSERT_TRUE(signatories);
-      ASSERT_TRUE(std::find(signatories->begin(), signatories->end(), *pubkey)
-                  != signatories->end());
-      ASSERT_TRUE(std::find(signatories->begin(), signatories->end(), pk)
-                  != signatories->end());
-    }
-
-    /**
-     * @given  command
+     * @given command
      * @when trying to remove signatory from an account, after which it will
      * have signatories less, than its quorum
      * @then signatory is not removed
@@ -1270,7 +1227,7 @@ namespace iroha {
               account->accountId(), *pubkey)))));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().removeSignatory(account->accountId(), pk)));
-      checkErrorCode(cmd_result, 8);
+      CHECK_ERROR_CODE(cmd_result, 5);
     }
 
     class RevokePermission : public CommandExecutorTest {
@@ -1299,7 +1256,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to revoke permission
      * @then permission is revoked
      */
@@ -1334,7 +1291,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to revoke permission without permission
      * @then permission is revoked
      */
@@ -1345,7 +1302,7 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .revokePermission(account->accountId(), perm)
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 2);
     }
 
     class SetAccountDetail : public CommandExecutorTest {
@@ -1382,7 +1339,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set kv
      * @then kv is set
      */
@@ -1396,7 +1353,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set kv when has grantable permission
      * @then kv is set
      */
@@ -1419,7 +1376,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set kv when has role permission
      * @then kv is set
      */
@@ -1436,7 +1393,24 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
+     * @when trying to set kv while having no permissions
+     * @then corresponding error code is returned
+     */
+    TEST_F(SetAccountDetail, NoPerms) {
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().setAccountDetail(
+                      account2->accountId(), "key", "value")),
+                  false,
+                  account->accountId());
+      CHECK_ERROR_CODE(cmd_result, 2);
+      auto kv = query->getAccountDetail(account2->accountId());
+      ASSERT_TRUE(kv);
+      ASSERT_EQ(kv.get(), "{}");
+    }
+
+    /**
+     * @given command
      * @when trying to set kv to non-existing account
      * @then corresponding error code is returned
      */
@@ -1447,24 +1421,7 @@ namespace iroha {
                       "doge@noaccount", "key", "value")),
                   false,
                   account->accountId());
-      checkErrorCode(cmd_result, 2);
-    }
-
-    /**
-     * @given  command
-     * @when trying to set kv while having no permissions
-     * @then corresponding error code is returned
-     */
-    TEST_F(SetAccountDetail, NoPerms) {
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder().setAccountDetail(
-                      account2->accountId(), "key", "value")),
-                  false,
-                  account->accountId());
-      checkErrorCode(cmd_result, 5);
-      auto kv = query->getAccountDetail(account2->accountId());
-      ASSERT_TRUE(kv);
-      ASSERT_EQ(kv.get(), "{}");
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     class SetQuorum : public CommandExecutorTest {
@@ -1487,7 +1444,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set quorum
      * @then quorum is set
      */
@@ -1499,7 +1456,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to set quorum
      * @then quorum is set
      */
@@ -1520,7 +1477,18 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
+     * @when trying to set quorum without perms
+     * @then quorum is not set
+     */
+    TEST_F(SetQuorum, NoPerms) {
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().setAccountQuorum(account->accountId(), 3)));
+      CHECK_ERROR_CODE(cmd_result, 2);
+    }
+
+    /**
+     * @given command
      * @when trying to set quorum more than amount of signatories
      * @then quorum is not set
      */
@@ -1536,18 +1504,7 @@ namespace iroha {
                       true)));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().setAccountQuorum(account->accountId(), 1)));
-      checkErrorCode(cmd_result, 4);
-    }
-
-    /**
-     * @given  command
-     * @when trying to set quorum without perms
-     * @then quorum is not set
-     */
-    TEST_F(SetQuorum, NoPerms) {
-      auto cmd_result = execute(buildCommand(
-          TestTransactionBuilder().setAccountQuorum(account->accountId(), 3)));
-      checkErrorCode(cmd_result, 5);
+      CHECK_ERROR_CODE(cmd_result, 5);
     }
 
     class SubtractAccountAssetTest : public CommandExecutorTest {
@@ -1589,7 +1546,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to subtract account asset
      * @then account asset is successfully subtracted
      */
@@ -1623,7 +1580,35 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
+     * @when trying to subtract account asset without permissions
+     * @then corresponding error code is returned
+     */
+    TEST_F(SubtractAccountAssetTest, NoPerms) {
+      addAsset();
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder()
+                                       .addAssetQuantity(asset_id, "1.0")
+                                       .creatorAccountId(account->accountId())),
+                      true)));
+      auto account_asset =
+          query->getAccountAsset(account->accountId(), asset_id);
+      ASSERT_TRUE(account_asset);
+      ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
+
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder()
+                                   .subtractAssetQuantity(asset_id, "1.0")
+                                   .creatorAccountId(account->accountId())));
+      CHECK_ERROR_CODE(cmd_result, 2);
+
+      account_asset = query->getAccountAsset(account->accountId(), asset_id);
+      ASSERT_TRUE(account_asset);
+      ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
+    }
+
+    /**
+     * @given command
      * @when trying to subtract account asset with non-existing asset
      * @then account asset fails to be subtracted
      */
@@ -1633,11 +1618,11 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .subtractAssetQuantity(asset_id, "1.0")
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 3);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add account asset with wrong precision
      * @then account asset fails to be added
      */
@@ -1648,11 +1633,11 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .subtractAssetQuantity(asset_id, "1.0000")
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 3);
+      CHECK_ERROR_CODE(cmd_result, 3);
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to subtract more account asset than account has
      * @then account asset fails to be subtracted
      */
@@ -1668,32 +1653,7 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder()
                                    .subtractAssetQuantity(asset_id, "2.0")
                                    .creatorAccountId(account->accountId())));
-      checkErrorCode(cmd_result, 4);
-    }
-
-    /**
-     * @given  command
-     * @when trying to subtract account asset without permissions
-     * @then corresponding error code is returned
-     */
-    TEST_F(SubtractAccountAssetTest, NoPerms) {
-      addAsset();
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, "1.0")
-                                       .creatorAccountId(account->accountId())),
-                      true)));
-      auto account_asset =
-          query->getAccountAsset(account->accountId(), asset_id);
-      ASSERT_TRUE(account_asset);
-      ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
-      ASSERT_TRUE(err(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .subtractAssetQuantity(asset_id, "1.0")
-                                   .creatorAccountId(account->accountId())))));
-      account_asset = query->getAccountAsset(account->accountId(), asset_id);
-      ASSERT_TRUE(account_asset);
-      ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     class TransferAccountAssetTest : public CommandExecutorTest {
@@ -1748,7 +1708,7 @@ namespace iroha {
     };
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add transfer asset
      * @then account asset is successfully transferred
      */
@@ -1788,7 +1748,7 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to add transfer asset
      * @then account asset is successfully transferred
      */
@@ -1830,7 +1790,22 @@ namespace iroha {
     }
 
     /**
-     * @given  command
+     * @given command
+     * @when trying to transfer account asset with no permissions
+     * @then account asset fails to be transferred
+     */
+    TEST_F(TransferAccountAssetTest, NoPerms) {
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder().transferAsset(account->accountId(),
+                                                 account2->accountId(),
+                                                 asset_id,
+                                                 "desc",
+                                                 "1.0")));
+      CHECK_ERROR_CODE(cmd_result, 2);
+    }
+
+    /**
+     * @given command
      * @when trying to transfer asset back and forth with non-existing account
      * @then account asset fails to be transferred
      */
@@ -1847,16 +1822,16 @@ namespace iroha {
           buildCommand(TestTransactionBuilder().transferAsset(
               "some@domain", account2->accountId(), asset_id, "desc", "1.0")),
           true);
-      checkErrorCode(cmd_result, 2);
+      CHECK_ERROR_CODE(cmd_result, 3);
       cmd_result = execute(
           buildCommand(TestTransactionBuilder().transferAsset(
               account->accountId(), "some@domain", asset_id, "desc", "1.0")),
           true);
-      checkErrorCode(cmd_result, 3);
+      CHECK_ERROR_CODE(cmd_result, 4);
     }
 
     /**
-     * @given  command
+     * @given command
      * @when trying to transfer account asset with non-existing asset
      * @then account asset fails to be transferred
      */
@@ -1869,30 +1844,15 @@ namespace iroha {
                                                  asset_id,
                                                  "desc",
                                                  "1.0")));
-      checkErrorCode(cmd_result, 4);
+      CHECK_ERROR_CODE(cmd_result, 5);
     }
 
     /**
-     * @given  command
-     * @when trying to transfer account asset with no permissions
-     * @then account asset fails to be transferred
-     */
-    TEST_F(TransferAccountAssetTest, NoPerms) {
-      auto cmd_result = execute(buildCommand(
-          TestTransactionBuilder().transferAsset(account->accountId(),
-                                                 account2->accountId(),
-                                                 asset_id,
-                                                 "desc",
-                                                 "1.0")));
-      checkErrorCode(cmd_result, 5);
-    }
-
-    /**
-     * @given  command
+     * @given command
      * @when trying to transfer account asset, but has insufficient amount of it
      * @then account asset fails to be transferred
      */
-    TEST_F(TransferAccountAssetTest, Owerdraft) {
+    TEST_F(TransferAccountAssetTest, Overdraft) {
       addAllPerms();
       addAllPerms(account2->accountId(), "all2");
       addAsset();
@@ -1907,7 +1867,7 @@ namespace iroha {
                                                  asset_id,
                                                  "desc",
                                                  "2.0")));
-      checkErrorCode(cmd_result, 8);
+      CHECK_ERROR_CODE(cmd_result, 6);
     }
 
     /**
@@ -1920,10 +1880,6 @@ namespace iroha {
       addAllPerms();
       addAllPerms(account2->accountId(), "all2");
       addAsset();
-      std::string uint256_halfmax =
-          "57896044618658097711785492504343953926634992332820282019728792003956"
-          "5648"
-          "19966.0";
       ASSERT_TRUE(val(
           execute(buildCommand(TestTransactionBuilder()
                                    .addAssetQuantity(asset_id, uint256_halfmax)
@@ -1942,7 +1898,7 @@ namespace iroha {
                       "desc",
                       uint256_halfmax)),
                   true);
-      checkErrorCode(cmd_result, 11);
+      CHECK_ERROR_CODE(cmd_result, 7);
     }
   }  // namespace ametsuchi
 }  // namespace iroha

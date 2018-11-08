@@ -14,7 +14,7 @@ namespace iroha {
 
     class PostgresCommandExecutor : public CommandExecutor {
      public:
-      explicit PostgresCommandExecutor(soci::session &transaction);
+      PostgresCommandExecutor(soci::session &transaction);
 
       void setCreatorAccountId(
           const shared_model::interface::types::AccountIdType

@@ -13,10 +13,10 @@ namespace iroha {
   }
 
   StateUpdateResult MstStorage::apply(
-      const std::shared_ptr<shared_model::interface::Peer> &target_peer,
+      const shared_model::crypto::PublicKey &target_peer_key,
       const MstState &new_state) {
     std::lock_guard<std::mutex> lock{this->mutex_};
-    return applyImpl(target_peer, new_state);
+    return applyImpl(target_peer_key, new_state);
   }
 
   StateUpdateResult MstStorage::updateOwnState(const DataType &tx) {
@@ -30,10 +30,10 @@ namespace iroha {
   }
 
   MstState MstStorage::getDiffState(
-      const std::shared_ptr<shared_model::interface::Peer> &target_peer,
+      const shared_model::crypto::PublicKey &target_peer_key,
       const TimeType &current_time) {
     std::lock_guard<std::mutex> lock{this->mutex_};
-    return getDiffStateImpl(target_peer, current_time);
+    return getDiffStateImpl(target_peer_key, current_time);
   }
 
   MstState MstStorage::whatsNew(ConstRefState new_state) const {

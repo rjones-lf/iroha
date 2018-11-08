@@ -9,6 +9,7 @@
 #include "backend/protobuf/transaction.hpp"
 #include "framework/mock_stream.h"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "ordering_mock.grpc.pb.h"
 
 using namespace iroha;
@@ -37,19 +38,19 @@ struct OnDemandOsClientGrpcTest : public ::testing::Test {
   OnDemandOsClientGrpc::TimepointType timepoint;
   std::chrono::milliseconds timeout{1};
   std::shared_ptr<OnDemandOsClientGrpc> client;
-  Round round{1, 2};
+  consensus::Round round{1, 2};
 };
 
 /**
  * @given client
- * @when onTransactions is called
+ * @when onBatches is called
  * @then data is correctly serialized and sent
  */
-TEST_F(OnDemandOsClientGrpcTest, onTransactions) {
-  proto::TransactionsRequest request;
+TEST_F(OnDemandOsClientGrpcTest, onBatches) {
+  proto::BatchesRequest request;
   auto r = std::make_unique<
       MockClientAsyncResponseReader<google::protobuf::Empty>>();
-  EXPECT_CALL(*stub, AsyncSendTransactionsRaw(_, _, _))
+  EXPECT_CALL(*stub, AsyncSendBatchesRaw(_, _, _))
       .WillOnce(DoAll(SaveArg<1>(&request), Return(r.get())));
 
   OdOsNotification::CollectionType collection;
@@ -57,8 +58,11 @@ TEST_F(OnDemandOsClientGrpcTest, onTransactions) {
   protocol::Transaction tx;
   tx.mutable_payload()->mutable_reduced_payload()->set_creator_account_id(
       creator);
-  collection.push_back(std::make_unique<shared_model::proto::Transaction>(tx));
-  client->onTransactions(round, std::move(collection));
+  collection.push_back(
+      std::make_unique<shared_model::interface::TransactionBatchImpl>(
+          shared_model::interface::types::SharedTxsCollectionType{
+              std::make_unique<shared_model::proto::Transaction>(tx)}));
+  client->onBatches(round, std::move(collection));
 
   ASSERT_EQ(request.round().block_round(), round.block_round);
   ASSERT_EQ(request.round().reject_round(), round.reject_round);
