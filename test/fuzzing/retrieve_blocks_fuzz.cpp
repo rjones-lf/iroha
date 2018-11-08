@@ -5,14 +5,6 @@
 
 #include "block_loader_fixture.hpp"
 
-class MockServerWriter
-    : public grpc::ServerWriterInterface<iroha::protocol::Block> {
- public:
-  MOCK_METHOD0(SendInitialMetadata, void(void));
-  MOCK_METHOD2(Write,
-               bool(const iroha::protocol::Block &msg, grpc::WriteOptions));
-};
-
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, std::size_t size) {
   static fuzzing::BlockLoaderFixture fixture;
 
