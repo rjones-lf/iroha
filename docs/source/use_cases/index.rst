@@ -4,12 +4,12 @@ Use Case Scenarios
 We list a number of use cases and specific advantages that Hyperledger Iroha can introduce to these applications. We hope that the applications and use cases will inspire developers and creators to further innovation with Hyperledger Iroha.  
 
 
-Certificates in Education, Healthcare 
-------------------------------------- 
+Certificates in Education, Healthcare, and Legal 
+------------------------------------------------ 
 
-Hyperledger Iroha incorporates into the system multiple certifying authorities such as universities, schools, and medical institutions. Flexible permission model used in Hyperledger Iroha allows building certifying identities, and grant certificates. The storage of explicit and implicit information in users' account allows building various reputation and identity systems. 
+Hyperledger Iroha incorporates into the system multiple certifying authorities such as universities, schools, medical institutions and legal bodies. Flexible permission model used in Hyperledger Iroha allows building certifying identities, and grant certificates. The storage of explicit and implicit information in users' account allows building various reputation and identity systems. 
 
-By using Hyperledger Iroha each education or medical certificate can be verified that it was issued by certain certifying authorities. Immutability and clear validation rules provide transparency to health and education significantly reducing the usage of fake certificates.  
+By using Hyperledger Iroha each education, medical or certificate can be verified that it was issued by certain certifying authorities. Immutability and clear validation rules provide transparency to health and education significantly reducing the usage of fake certificates.  
 
 Example
 ^^^^^^^
