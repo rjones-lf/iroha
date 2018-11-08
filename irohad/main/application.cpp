@@ -471,7 +471,8 @@ Irohad::RunResult Irohad::run() {
             pcs->on_commit()
                 .start_with(synchronizer::SynchronizationEvent{
                     rxcpp::observable<>::just(block),
-                    SynchronizationOutcomeType::kCommit})
+                    SynchronizationOutcomeType::kCommit,
+                    {block->height(), 1}})
                 .subscribe(ordering_init.notifier.get_subscriber());
             return {};
           },
