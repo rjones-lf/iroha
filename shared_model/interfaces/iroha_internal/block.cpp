@@ -23,6 +23,9 @@ namespace shared_model {
           .appendAll(transactions(), [](auto &tx) { return tx.toString(); })
           .append("signatures")
           .appendAll(signatures(), [](auto &sig) { return sig.toString(); })
+          .appendAll("rejected transactions",
+                     rejected_transactions_hashes(),
+                     [](auto &hash) { return hash.hex(); })
           .finalize();
     }
 
