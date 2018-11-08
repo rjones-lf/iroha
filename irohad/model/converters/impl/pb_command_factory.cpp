@@ -7,6 +7,7 @@
 
 #include <boost/assign/list_inserter.hpp>
 
+#include "common/instanceof.hpp"
 #include "model/converters/pb_common.hpp"
 
 using namespace shared_model::permissions;
@@ -246,7 +247,7 @@ namespace iroha {
         pb_create_account.set_account_name(create_account.account_name);
         pb_create_account.set_domain_id(create_account.domain_id);
         pb_create_account.set_public_key(create_account.pubkey.data(),
-                                     create_account.pubkey.size());
+                                         create_account.pubkey.size());
         return pb_create_account;
       }
       model::CreateAccount PbCommandFactory::deserializeCreateAccount(

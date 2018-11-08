@@ -43,6 +43,19 @@ class YacGateTest : public ::testing::Test {
     EXPECT_CALL(*block, payload())
         .WillRepeatedly(ReturnRefOfCopy(Blob(std::string())));
     EXPECT_CALL(*block, addSignature(_, _)).WillRepeatedly(Return(true));
+    EXPECT_CALL(*block, height()).WillRepeatedly(Return(1));
+    EXPECT_CALL(*block, txsNumber()).WillRepeatedly(Return(0));
+    EXPECT_CALL(*block, createdTime()).WillRepeatedly(Return(1));
+    EXPECT_CALL(*block, transactions())
+        .WillRepeatedly(
+            Return<shared_model::interface::types::TransactionsCollectionType>(
+                {}));
+    EXPECT_CALL(*block, signatures())
+        .WillRepeatedly(
+            Return<shared_model::interface::types::SignatureRangeType>({}));
+    auto prev_hash = Hash("prev hash");
+    EXPECT_CALL(*block, prevHash())
+        .WillRepeatedly(testing::ReturnRefOfCopy(prev_hash));
     expected_block = block;
 
     auto signature = std::make_shared<MockSignature>();
@@ -61,7 +74,6 @@ class YacGateTest : public ::testing::Test {
     peer_orderer = make_unique<MockYacPeerOrderer>();
     hash_provider = make_shared<MockYacHashProvider>();
     block_creator = make_shared<MockBlockCreator>();
-    block_loader = make_shared<MockBlockLoader>();
     block_cache = make_shared<ConsensusResultCache>();
   }
 
@@ -70,12 +82,12 @@ class YacGateTest : public ::testing::Test {
                                          std::move(peer_orderer),
                                          hash_provider,
                                          block_creator,
-                                         block_loader,
                                          block_cache);
   }
 
   PublicKey expected_pubkey{"expected_pubkey"};
   Signed expected_signed{"expected_signed"};
+  Hash prev_hash{"prev hash"};
   YacHash expected_hash;
   std::shared_ptr<shared_model::interface::Block> expected_block;
   VoteMessage message;
@@ -86,7 +98,6 @@ class YacGateTest : public ::testing::Test {
   unique_ptr<MockYacPeerOrderer> peer_orderer;
   shared_ptr<MockYacHashProvider> hash_provider;
   shared_ptr<MockBlockCreator> block_creator;
-  shared_ptr<MockBlockLoader> block_loader;
   shared_ptr<ConsensusResultCache> block_cache;
 
   shared_ptr<YacGateImpl> gate;
@@ -124,13 +135,14 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
   ASSERT_EQ(cache_block, expected_block);
 
   // verify that yac gate emit expected block
-  auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe([this](auto commit) {
-    ASSERT_EQ(commit.block, expected_block);
+  auto gate_wrapper = make_test_subscriber<CallExact>(gate->onOutcome(), 1);
+  gate_wrapper.subscribe([this](auto outcome) {
+    auto block = boost::get<iroha::consensus::PairValid>(outcome).block;
+    ASSERT_EQ(block, expected_block);
 
     // verify that gate has put to cache block received from consensus
     auto cache_block = block_cache->get();
-    ASSERT_EQ(commit.block, cache_block);
+    ASSERT_EQ(block, cache_block);
   });
 
   ASSERT_TRUE(gate_wrapper.validate());
@@ -162,227 +174,20 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
 
 /**
  * @given yac gate
- * @when voting for one block @and receiving another
- * @then yac gate will load the block, for which consensus voted, @and emit it
+ * @when voted on nothing
+ * @then cache isn't changed
  */
-TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
-  // make blocks
+TEST_F(YacGateTest, AgreementOnNone) {
+  EXPECT_CALL(*hash_gate, vote(_, _)).Times(1);
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
-
-  // make hash from block
-  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
-
-  // generate order of peers
+      .WillOnce(Return(rxcpp::observable<>::empty<
+                       std::shared_ptr<shared_model::interface::Block>>()));
   EXPECT_CALL(*peer_orderer, getOrdering(_))
       .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
 
-  EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
-
-  // create another block, which will be "received", and generate a commit
-  // message with it
-  auto keypair =
-      shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
-  decltype(expected_block) actual_block = std::make_shared<MockBlock>();
-  Hash actual_hash("actual_hash");
-  PublicKey actual_pubkey("actual_pubkey");
-  auto signature = std::make_shared<MockSignature>();
-  EXPECT_CALL(*signature, publicKey())
-      .WillRepeatedly(ReturnRefOfCopy(actual_pubkey));
-
-  message.hash = YacHash(
-      iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
-  message.signature = signature;
-  commit_message = CommitMessage({message});
-  expected_commit = rxcpp::observable<>::just(Answer(commit_message));
-
-  // yac consensus
-  EXPECT_CALL(*hash_gate, onOutcome()).WillOnce(Return(expected_commit));
-
-  // convert yac hash to model hash
-  EXPECT_CALL(*hash_provider, toModelHash(message.hash))
-      .WillOnce(Return(actual_hash));
-
-  // load different block
-  EXPECT_CALL(*block_loader, retrieveBlock(actual_pubkey, actual_hash))
-      .WillOnce(Return(actual_block));
-
   init();
 
-  // verify that block we voted for is in the cache
-  auto cache_block = block_cache->get();
-  ASSERT_EQ(cache_block, expected_block);
-
-  // verify that yac gate emit expected block
-  std::shared_ptr<shared_model::interface::Block> yac_emitted_block;
-  auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe([actual_block, &yac_emitted_block](auto commit) {
-    ASSERT_EQ(commit.block, actual_block);
-
-    // memorize the block came from the consensus for future
-    yac_emitted_block = commit.block;
-  });
-
-  // verify that block, which was received from consensus, is now in the
-  // cache
-  ASSERT_EQ(block_cache->get(), yac_emitted_block);
-
-  ASSERT_TRUE(gate_wrapper.validate());
-}
-
-/**
- * @given yac gate
- * @when receives new commit different to the one it voted for
- * @then polls nodes for the block with corresponding hash until it succeed,
- * (receiving none on the first poll)
- */
-TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
-  // Vote for block => receive different block => load committed block
-
-  // make blocks
-  EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
-
-  // make hash from block
-  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
-
-  // generate order of peers
-  EXPECT_CALL(*peer_orderer, getOrdering(_))
-      .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
-
-  EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
-
-  // expected values
-  expected_hash =
-      YacHash(iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
-
-  Hash actual_hash("actual_hash");
-  message.hash = expected_hash;
-
-  commit_message = CommitMessage({message});
-  expected_commit = rxcpp::observable<>::just(Answer(commit_message));
-
-  // yac consensus
-  EXPECT_CALL(*hash_gate, onOutcome()).WillOnce(Return(expected_commit));
-
-  // convert yac hash to model hash
-  EXPECT_CALL(*hash_provider, toModelHash(expected_hash))
-      .WillOnce(Return(actual_hash));
-
-  // load block
-  EXPECT_CALL(*block_loader, retrieveBlock(expected_pubkey, actual_hash))
-      .WillOnce(Return(boost::none))
-      .WillOnce(Return(expected_block));
-
-  init();
-
-  // verify that yac gate emit expected block
-  auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe(
-      [this](auto commit) { ASSERT_EQ(commit.block, expected_block); });
-
-  ASSERT_TRUE(gate_wrapper.validate());
-}
-
-/**
- * @given yac gate
- * @when voting for the block @and receiving it on commit
- * @then yac gate will emit this block with the indication that it is the same
- */
-TEST_F(YacGateTest, ProperCommitTypeWhenSameCommit) {
-  // yac consensus
-  EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
-
-  EXPECT_CALL(*hash_gate, onOutcome()).WillOnce(Return(expected_commit));
-
-  // generate order of peers
-  EXPECT_CALL(*peer_orderer, getOrdering(_))
-      .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
-
-  // make hash from block
-  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
-
-  // make blocks
-  EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
-
-  init();
-
-  // verify that block we voted for is in the cache
-  auto cache_block = block_cache->get();
-  ASSERT_EQ(cache_block, expected_block);
-
-  // verify that yac gate emit expected block
-  auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe([this](auto commit) {
-    EXPECT_EQ(commit.block, expected_block);
-    ASSERT_EQ(commit.type, PeerVotedFor::kThisBlock);
-  });
-
-  ASSERT_TRUE(gate_wrapper.validate());
-}
-
-/**
- * @given yac gate
- * @when voting for one block @and receiving another
- * @then emited commit will have indication that the block is different from
- * the one we voted for
- */
-TEST_F(YacGateTest, ProperCommitTypeWhenDifferentBlock) {
-  // make blocks
-  EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
-
-  // make hash from block
-  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
-
-  // generate order of peers
-  EXPECT_CALL(*peer_orderer, getOrdering(_))
-      .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
-
-  EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
-
-  // create another block, which will be "received", and generate a commit
-  // message with it
-  auto keypair =
-      shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
-  decltype(expected_block) actual_block = std::make_shared<MockBlock>();
-  Hash actual_hash("actual_hash");
-  PublicKey actual_pubkey("actual_pubkey");
-  auto signature = std::make_shared<MockSignature>();
-  EXPECT_CALL(*signature, publicKey())
-      .WillRepeatedly(ReturnRefOfCopy(actual_pubkey));
-
-  message.hash = YacHash(
-      iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
-  message.signature = signature;
-  commit_message = CommitMessage({message});
-  expected_commit = rxcpp::observable<>::just(Answer(commit_message));
-
-  // yac consensus
-  EXPECT_CALL(*hash_gate, onOutcome()).WillOnce(Return(expected_commit));
-
-  // convert yac hash to model hash
-  EXPECT_CALL(*hash_provider, toModelHash(message.hash))
-      .WillOnce(Return(actual_hash));
-
-  // load different block
-  EXPECT_CALL(*block_loader, retrieveBlock(actual_pubkey, actual_hash))
-      .WillOnce(Return(actual_block));
-
-  init();
-
-  // verify that block we voted for is in the cache
-  auto cache_block = block_cache->get();
-  ASSERT_EQ(cache_block, expected_block);
-
-  // verify that yac gate emit expected block
-  std::shared_ptr<shared_model::interface::Block> yac_emitted_block;
-  auto gate_wrapper = make_test_subscriber<CallExact>(gate->on_commit(), 1);
-  gate_wrapper.subscribe([actual_block, &yac_emitted_block](auto commit) {
-    EXPECT_EQ(commit.block, actual_block);
-    ASSERT_EQ(commit.type, PeerVotedFor::kOtherBlock);
-    // memorize the block came from the consensus for future
-    yac_emitted_block = commit.block;
-  });
+  ASSERT_EQ(block_cache->get(), nullptr);
+  gate->vote(boost::none, boost::none, {});
+  ASSERT_EQ(block_cache->get(), nullptr);
 }

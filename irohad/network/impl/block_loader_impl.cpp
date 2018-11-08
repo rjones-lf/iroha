@@ -21,6 +21,7 @@
 
 #include "backend/protobuf/block.hpp"
 #include "builders/protobuf/transport_builder.hpp"
+#include "common/bind.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 
@@ -56,7 +57,7 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
                   [&top_block](expected::Value<
                                std::shared_ptr<shared_model::interface::Block>>
                                    block) { top_block = block.value; },
-                  [this](const expected::Error<std::string>& error) {
+                  [this](const expected::Error<std::string> &error) {
                     log_->error("{}: {}", kTopBlockRetrieveFail, error.error);
                   });
             };

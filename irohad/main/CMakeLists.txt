@@ -19,9 +19,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 add_library(server_runner server_runner.cpp)
 target_link_libraries(server_runner
-    logger
     grpc++
-    boost # iroha::expected::Result
+    boost
+    common
     )
 
 add_library(raw_block_loader impl/raw_block_loader.cpp)
@@ -50,7 +50,6 @@ target_link_libraries(application
     on_demand_connection_manager
     on_demand_ordering_gate
     chain_validator
-    hash
     stateful_validator
     processors
     ed25519_crypto
@@ -60,6 +59,7 @@ target_link_libraries(application
     mst_processor
     torii_service
     pending_txs_storage
+    common
     )
 
 add_executable(irohad irohad.cpp)
@@ -69,6 +69,7 @@ target_link_libraries(irohad
     gflags
     rapidjson
     keys_manager
+    common
     )
 
 add_install_step_for_bin(irohad)

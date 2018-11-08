@@ -10,6 +10,7 @@
 
 #include <rxcpp/rx.hpp>
 
+#include "consensus/round.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
 namespace iroha {
@@ -27,7 +28,7 @@ namespace iroha {
      * Outcome, which was decided by synchronizer based on consensus result and
      * current local ledger state
      */
-    enum class SynchronizationOutcomeType { kCommit, kReject };
+    enum class SynchronizationOutcomeType { kCommit, kReject, kNothing };
 
     /**
      * Event, which is emitted by synchronizer, when it receives and processes
@@ -36,6 +37,7 @@ namespace iroha {
     struct SynchronizationEvent {
       Chain synced_blocks;
       SynchronizationOutcomeType sync_outcome;
+      consensus::Round round;
     };
 
   }  // namespace synchronizer

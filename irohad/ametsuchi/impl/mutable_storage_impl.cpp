@@ -19,13 +19,16 @@ namespace iroha {
     MutableStorageImpl::MutableStorageImpl(
         shared_model::interface::types::HashType top_hash,
         std::unique_ptr<soci::session> sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        std::shared_ptr<shared_model::interface::PermissionToString>
+            perm_converter)
         : top_hash_(top_hash),
           sql_(std::move(sql)),
           peer_query_(std::make_unique<PeerQueryWsv>(
               std::make_shared<PostgresWsvQuery>(*sql_, std::move(factory)))),
           block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
-          command_executor_(std::make_shared<PostgresCommandExecutor>(*sql_)),
+          command_executor_(std::make_shared<PostgresCommandExecutor>(
+              *sql_, std::move(perm_converter))),
           committed(false),
           log_(logger::log("MutableStorage")) {
       *sql_ << "BEGIN";
