@@ -35,6 +35,8 @@ namespace iroha {
      * commit
      */
     struct SynchronizationEvent {
+      // TODO andrei 08.11.2018 IR-1852 Rework blocks collection from
+      // synchronizer with iterable
       Chain synced_blocks;
       SynchronizationOutcomeType sync_outcome;
       consensus::Round round;

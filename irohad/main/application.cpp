@@ -25,6 +25,7 @@
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "multi_sig_transactions/transport/mst_transport_stub.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "validators/default_validator.hpp"
@@ -210,8 +211,8 @@ void Irohad::initOrderingGate() {
   }
   // since delay is 2, it is required to get two more hashes from block store,
   // in addition to top block
-  const size_t num_blocks = 3;
-  auto blocks = (*block_query)->getTopBlocks(num_blocks);
+  const size_t kNumBlocks = 3;
+  auto blocks = (*block_query)->getTopBlocks(kNumBlocks);
   auto hash_stub = shared_model::interface::types::HashType{std::string(
       shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength, '0')};
   auto hashes = std::accumulate(
@@ -219,7 +220,7 @@ void Irohad::initOrderingGate() {
       std::prev(blocks.end()),
       // add hash stubs if there are not enough blocks in storage
       std::vector<shared_model::interface::types::HashType>{
-          num_blocks - blocks.size(), hash_stub},
+          kNumBlocks - blocks.size(), hash_stub},
       [](auto &acc, const auto &val) {
         acc.push_back(val->hash());
         return acc;
@@ -465,7 +466,7 @@ Irohad::RunResult Irohad::run() {
                 .start_with(synchronizer::SynchronizationEvent{
                     rxcpp::observable<>::just(block),
                     SynchronizationOutcomeType::kCommit,
-                    {block->height(), 1}})
+                    {block->height(), ordering::kFirstRejectRound}})
                 .subscribe(ordering_init.notifier.get_subscriber());
             return {};
           },

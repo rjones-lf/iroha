@@ -8,6 +8,7 @@
 #include "common/visitor.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -25,19 +26,19 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         // exclusive lock
         std::lock_guard<std::shared_timed_mutex> lock(mutex_);
 
-        visit_in_place(event,
-                       [this](const BlockEvent &block_event) {
-                         // block committed, increment block round
-                         log_->debug("BlockEvent. height {}",
-                                     block_event->height());
-                         current_round_ = {block_event->height() + 1, 1};
-                       },
-                       [this](const EmptyEvent &empty) {
-                         // no blocks committed, increment reject round
-                         log_->debug("EmptyEvent");
-                         current_round_ = {current_round_.block_round,
-                                           current_round_.reject_round + 1};
-                       });
+        visit_in_place(
+            event,
+            [this](const BlockEvent &block_event) {
+              // block committed, increment block round
+              log_->debug("BlockEvent. height {}", block_event->height());
+              current_round_ = {block_event->height() + 1, kFirstRejectRound};
+            },
+            [this](const EmptyEvent &empty) {
+              // no blocks committed, increment reject round
+              log_->debug("EmptyEvent");
+              current_round_ = {current_round_.block_round,
+                                current_round_.reject_round + 1};
+            });
         log_->debug("Current round: [{}, {}]",
                     current_round_.block_round,
                     current_round_.reject_round);
