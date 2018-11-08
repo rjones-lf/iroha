@@ -54,22 +54,25 @@ namespace iroha {
             soci::use(boost::size(keys_range), "signatures_count"),
             soci::use(transaction.creatorAccountId(), "account_id");
       } catch (const std::exception &e) {
-        log_->error(e.what());
-        return expected::makeError(validation::CommandError{
-            "signatures validation",
-            (boost::format("database error: %s") % e.what()).str(),
-            false});
+        log_->error(
+            "Transaction %s failed signatures validation with db error: %s",
+            transaction.toString(),
+            e.what());
+        // TODO [IR-1816] Akvinikym 29.10.18: substitute error code magic number
+        // with named constant
+        return expected::makeError(
+            validation::CommandError{"signatures validation", 1, false});
       }
 
       if (signatories_valid and *signatories_valid) {
         return {};
       } else {
-        return expected::makeError(validation::CommandError{
-            "signatures validation",
-            "possible reasons: no account, number of signatures is less than "
-            "account quorum, signatures are not a subset of account "
-            "signatories",
-            false});
+        log_->error("Transaction %s failed signatures validation",
+                    transaction.toString());
+        // TODO [IR-1816] Akvinikym 29.10.18: substitute error code magic number
+        // with named constant
+        return expected::makeError(
+            validation::CommandError{"signatures validation", 2, false});
       }
     }
 
@@ -101,7 +104,7 @@ namespace iroha {
                   .match([](expected::Value<void> &) { return true; },
                          [i, &cmd_error](expected::Error<CommandError> &error) {
                            cmd_error = {error.error.command_name,
-                                        error.error.toString(),
+                                        error.error.error_code,
                                         true,
                                         i};
                            return false;

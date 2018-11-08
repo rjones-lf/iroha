@@ -286,9 +286,9 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
           .transactions(std::vector<shared_model::proto::Transaction>{tx})
           .build());
   auto tx_errors = iroha::validation::TransactionsErrors{
-      std::make_pair(validation::CommandError{"SomeCommand", "SomeError", true},
+      std::make_pair(validation::CommandError{"SomeCommand", 1, true},
                      shared_model::crypto::Hash(std::string(32, '0'))),
-      std::make_pair(validation::CommandError{"SomeCommand", "SomeError", true},
+      std::make_pair(validation::CommandError{"SomeCommand", 1, true},
                      shared_model::crypto::Hash(std::string(32, '0')))};
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
 

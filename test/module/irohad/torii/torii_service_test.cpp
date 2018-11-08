@@ -327,13 +327,12 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
           .build());
   auto errors = iroha::validation::TransactionsErrors{std::make_pair(
       iroha::validation::CommandError{
-          "FailedCommand", "stateful validation failed", true, 2},
+          "FailedCommand", 2, true, 2},
       failed_tx_hash)};
   auto stringified_error = "Stateful validation error in transaction "
                            + failed_tx_hash.hex() + ": "
                            "command 'FailedCommand' with index '2' "
-                           "did not pass verification with error 'stateful "
-                           "validation failed'";
+                           "did not pass verification with error code '2'";
   verified_prop_notifier_.get_subscriber().on_next(
       std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
           std::make_pair(verified_proposal, errors)));
