@@ -18,8 +18,8 @@
 #ifndef IROHA_PROPOSAL_HPP
 #define IROHA_PROPOSAL_HPP
 
-#include <model/transaction.hpp>
 #include <vector>
+#include "model/transaction.hpp"
 
 namespace iroha {
   namespace model {

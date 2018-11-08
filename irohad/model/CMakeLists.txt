@@ -39,6 +39,7 @@ target_link_libraries(model
     schema
     ed25519_crypto
     rapidjson
+    common
     )
 
 add_library(model_registrations INTERFACE)

@@ -9,13 +9,16 @@
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
+#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
+#include "common/bind.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy_stub.hpp"
@@ -113,12 +116,15 @@ void Irohad::initStorage() {
   common_objects_factory_ =
       std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
           shared_model::validation::FieldValidator>>();
+  auto perm_converter =
+      std::make_shared<shared_model::proto::ProtoPermissionToString>();
   auto block_converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
   auto storageResult = StorageImpl::create(block_store_dir_,
                                            pg_conn_,
                                            common_objects_factory_,
-                                           std::move(block_converter));
+                                           std::move(block_converter),
+                                           perm_converter);
   storageResult.match(
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
         storage = _storage.value;

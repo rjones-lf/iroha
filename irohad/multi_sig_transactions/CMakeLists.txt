@@ -17,6 +17,8 @@ target_link_libraries(mst_processor
     mst_storage
     mst_transport
     rxcpp
+    logger
+    common
     )
 
 add_library(mst_hash

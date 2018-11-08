@@ -12,6 +12,7 @@
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
+#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "framework/config_helper.hpp"
 #include "validators/field_validator.hpp"
 
@@ -46,6 +47,8 @@ class StorageInitTest : public ::testing::Test {
   std::shared_ptr<shared_model::proto::ProtoBlockJsonConverter> converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
 
+  std::shared_ptr<shared_model::interface::PermissionToString> perm_converter_ =
+      std::make_shared<shared_model::proto::ProtoPermissionToString>();
   void SetUp() override {
     ASSERT_FALSE(boost::filesystem::exists(block_store_path))
         << "Temporary block store " << block_store_path
@@ -67,7 +70,8 @@ class StorageInitTest : public ::testing::Test {
  */
 TEST_F(StorageInitTest, CreateStorageWithDatabase) {
   std::shared_ptr<StorageImpl> storage;
-  StorageImpl::create(block_store_path, pgopt_, factory, converter)
+  StorageImpl::create(
+      block_store_path, pgopt_, factory, converter, perm_converter_)
       .match(
           [&storage](const Value<std::shared_ptr<StorageImpl>> &value) {
             storage = value.value;
@@ -91,7 +95,8 @@ TEST_F(StorageInitTest, CreateStorageWithDatabase) {
 TEST_F(StorageInitTest, CreateStorageWithInvalidPgOpt) {
   std::string pg_opt =
       "host=localhost port=5432 users=nonexistinguser dbname=test";
-  StorageImpl::create(block_store_path, pg_opt, factory, converter)
+  StorageImpl::create(
+      block_store_path, pg_opt, factory, converter, perm_converter_)
       .match(
           [](const Value<std::shared_ptr<StorageImpl>> &) {
             FAIL() << "storage created, but should not";

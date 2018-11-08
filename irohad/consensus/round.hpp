@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 namespace iroha {
   namespace consensus {
@@ -38,6 +39,8 @@ namespace iroha {
       bool operator==(const Round &rhs) const;
 
       bool operator!=(const Round &rhs) const;
+
+      std::string toString() const;
     };
 
     /**

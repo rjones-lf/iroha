@@ -16,7 +16,7 @@
  */
 
 #include "cryptography/ed25519_sha3_impl/signer.hpp"
-#include "common/types.hpp"
+#include "crypto/hash_types.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 

@@ -10,6 +10,7 @@
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 
 #include "backend/protobuf/proposal.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "proposal.pb.h"
 
 namespace shared_model {
