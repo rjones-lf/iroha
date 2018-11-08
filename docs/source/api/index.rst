@@ -22,7 +22,7 @@ To try out a basic API functionality, do the following:
 .. toctree::
     :maxdepth: 2
     :caption: Table of contents
-    
+
     commands.rst
     queries.rst
     cpp_library.rst
