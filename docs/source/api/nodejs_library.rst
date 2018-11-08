@@ -33,8 +33,7 @@ Launch it:
 
 node index.js
 
-
-.. WARNING:: Docs are constantly updated and this section is going to be improved..
+.. WARNING:: Docs are constantly updated and this section is going to be improved.
 
 
 
