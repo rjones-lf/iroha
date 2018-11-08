@@ -19,6 +19,7 @@ Schema
 .. code-block:: proto
 
     message AddAssetQuantity {
+        string account_id = 1;
         string asset_id = 1;
         Amount amount = 2;
     }
@@ -39,6 +40,24 @@ Schema
     Please note that due to a known issue you would not get any exception if you pass invalid precision value.
     Valid range is: 0 <= precision <= 255
 
+JSON FORMAT
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "AddAssetQuantity",
+                "account_id": "test@test",
+                "asset_id": "coin#test",
+                "amount": {
+                    "value": string,
+                    "precision": int
+                }
+            }
+        ], …
+    }
 
 Structure
 ^^^^^^^^^
@@ -47,6 +66,7 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
+    "Account ID",	"account id in which to add asset",	"account_name@domain", "test@test"
     "Asset ID", "id of the asset", "<asset_name>#<domain_id>", "usd#morgan"
     "Amount", "positive amount of the asset to add", "> 0", "200.02"
 
@@ -78,6 +98,23 @@ Schema
     message Peer {
         string address = 1;
         bytes peer_key = 2;
+    }
+    
+JSON FORMAT
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "AddPeer",
+                "peer": {
+                    "address": "192.168.1.1:50001",
+                    "peer_key": string(64)
+                }
+            }
+        ], …
     }
 
 Structure
@@ -114,6 +151,7 @@ Schema
         string account_id = 1;
         bytes public_key = 2;
     }
+
 
 Structure
 ^^^^^^^^^
