@@ -40,7 +40,7 @@ Schema
     Please note that due to a known issue you would not get any exception if you pass invalid precision value.
     Valid range is: 0 <= precision <= 255
 
-JSON FORMAT
+JSON Format
 ^^^^^^^^^^^
 
 .. code-block:: json
@@ -100,7 +100,7 @@ Schema
         bytes peer_key = 2;
     }
     
-JSON FORMAT
+JSON Format
 ^^^^^^^^^^^
 
 .. code-block:: json
@@ -153,6 +153,22 @@ Schema
     }
 
 
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "AddSignatory",
+                "account_id": "test@test",
+                "public_key": string(64)
+            }
+        ], …
+    }
+
+
 Structure
 ^^^^^^^^^
 
@@ -168,9 +184,9 @@ Validation
 
 Two cases:
 
-    Case 1. Transaction creator wants to add a signatory to his or her account, having permission CanAddSignatory
+    * **Case 1**. Transaction creator wants to add a signatory to his or her account, having permission CanAddSignatory
 
-    Case 2. CanAddSignatory was granted to transaction creator
+    * **Case 2**. CanAddSignatory was granted to transaction creator
 
 Append role
 -----------
@@ -189,6 +205,22 @@ Schema
        string account_id = 1;
        string role_name = 2;
     }
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "AppendRole",
+                "account_id": "test@test",
+                "role_name": Administrator
+            }
+        ],
+    }
+
 
 Structure
 ^^^^^^^^^
@@ -225,6 +257,24 @@ Schema
         string domain_id = 2;
         bytes main_pubkey = 3;
     }
+
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "CreateAccount",
+                "account_name": "makoto.takemiya",
+                "domain_id": "test",
+                "main_pubkey": string
+            }
+        ],
+    }
+
 
 Structure
 ^^^^^^^^^
@@ -267,6 +317,24 @@ Schema
 .. note::
     Please note that due to a known issue you would not get any exception if you pass invalid precision value.
     Valid range is: 0 <= precision <= 255
+
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "CreateAsset",
+                "asset_name": "usd",
+                "domain_id": "test",
+                "precision": "2"
+            }
+        ],
+    }
+
 
 Structure
 ^^^^^^^^^
