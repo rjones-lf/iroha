@@ -47,6 +47,10 @@ class ServerRunner;
 
 namespace integration_framework {
 
+  /**
+   * A lightweight implementation of iroha peer network interface for inter-peer
+   * communications testing.
+   */
   class FakePeer final : public boost::noncopyable {
    public:
     using TransportFactoryType =
@@ -54,6 +58,19 @@ namespace integration_framework {
             shared_model::interface::Transaction,
             iroha::protocol::Transaction>;
 
+    /**
+     * Constructor.
+     *
+     * @param listen_ip - IP on which this fake peer should listen
+     * @param internal_port - the port for internal commulications
+     * @param key - the keypair of this peer
+     * @param real_peer - the main tested peer managed by ITF
+     * @param common_objects_factory - common_objects_factory
+     * @param transaction_factory - transaction_factory
+     * @param batch_parser - batch_parser
+     * @param transaction_batch_factory - transaction_batch_factory
+     * @param gree_all_proposals - whether this peer should agree all proposals
+     */
     FakePeer(
         const std::string &listen_ip,
         size_t internal_port,
@@ -68,32 +85,55 @@ namespace integration_framework {
             transaction_batch_factory,
         bool agree_all_proposals = true);
 
+    /// Start the fake peer.
     void run();
 
+    /**
+     * Subscribe for mst notifications.
+     *
+     * @param notification - the object to subscribe
+     */
     void subscribeForMstNotifications(
         std::shared_ptr<iroha::network::MstTransportNotification> notification);
 
+    /// Get the address:port string of this peer.
     std::string getAddress() const;
 
+    /// Get the keypair of this peer.
     const shared_model::crypto::Keypair &getKeypair() const;
 
+    /// Make this peer agree all proposals.
     void enableAgreeAllProposals();
 
+    /// Stop this peer from agreeing all proposals.
     void disableAgreeAllProposals();
 
+    /// Get the observable of YAC states received by this peer.
     rxcpp::observable<YacNetworkNotifier::StateMessagePtr>
     get_yac_states_observable();
 
+    /**
+     * Send the real peer votes from this peer analogous to the provided ones.
+     *
+     * @param incoming_votes - the votes to take as the base.
+     */
     void voteForTheSame(
         const integration_framework::YacNetworkNotifier::StateMessagePtr
             &incoming_votes);
 
+    /**
+     * Make a signature of the provided hash.
+     *
+     * @param hash - the hash to sign
+     */
     std::shared_ptr<shared_model::interface::Signature> makeSignature(
         const shared_model::crypto::Blob &hash) const;
 
+    /// Make a vote from this peer for the provided YAC hash.
     iroha::consensus::yac::VoteMessage makeVote(
         const iroha::consensus::yac::YacHash &yac_hash);
 
+    /// Send the main peer the given YAC state.
     void sendYacState(
         const std::vector<iroha::consensus::yac::VoteMessage> &state);
 
@@ -110,9 +150,9 @@ namespace integration_framework {
     std::unique_ptr<shared_model::crypto::Keypair> keypair_;
 
     std::shared_ptr<shared_model::interface::Peer>
-        this_peer_;  //< this fake instance
+        this_peer_;  ///< this fake instance
     std::shared_ptr<shared_model::interface::Peer>
-        real_peer_;  //< the real instance
+        real_peer_;  ///< the real instance
 
     std::shared_ptr<AsyncCall> async_call_;
 
