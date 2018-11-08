@@ -371,6 +371,23 @@ Schema
         string default_role = 2;
     }
 
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "CreateDomain",
+                "domain_id": "test",
+                "default_role": "User"
+            }
+        ],
+    }
+
+
 Structure
 ^^^^^^^^^
 
@@ -384,7 +401,7 @@ Structure
 Validation
 ^^^^^^^^^^
 
-1. Domain ID is unique
+1. Domain ID is *unique*
 2. Account, who sends this command in transaction, has role with permission to create domain
 3. Role, which will be assigned to created user by default, exists in the system
 
@@ -406,6 +423,25 @@ Schema
        string role_name = 1;
        repeated string permissions = 2;
     }
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "CreateRole",
+                "role_name": "MoneyCreator",
+                "permissions": [
+                "CanAddAssetQuantity",
+                …
+            ]
+            }
+        ],
+    }
+
 
 Structure
 ^^^^^^^^^
@@ -442,6 +478,22 @@ Schema
         string role_name = 2;
     }
 
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "DetachRole",
+                "account_id": "test@test",
+                "role_name": "user"
+            }
+        ],
+    }
+
 Structure
 ^^^^^^^^^
 
@@ -475,6 +527,23 @@ Schema
        string account_id = 1;
        string permission_name = 2;
     }
+
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "GrantPermission",
+                "account_id": "test@test",
+                "permission_name": "CanAddAssetQuantity"
+            }
+        ],
+    }
+
 
 Structure
 ^^^^^^^^^
@@ -511,6 +580,22 @@ Schema
         bytes public_key = 2;
     }
 
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "RemoveSignatory",
+                "account_id": "test@test",
+                "public_key": string(64)
+            }
+        ],
+    }
+
 Structure
 ^^^^^^^^^
 
@@ -529,9 +614,9 @@ Validation
 
 Two cases:
 
-    Case 1. When transaction creator wants to remove signatory from their account and he or she has permission CanRemoveSignatory
+    * Case 1. When transaction creator wants to remove signatory from their account and he or she has permission CanRemoveSignatory
 
-    Case 2. CanRemoveSignatory was granted to transaction creator
+    * Case 2. CanRemoveSignatory was granted to transaction creator
 
 Revoke permission
 -----------------
@@ -549,6 +634,22 @@ Schema
     message RevokePermission {
        string account_id = 1;
        string permission_name = 2;
+    }
+
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "RevokePermission",
+                "account_id": "test@test",
+                "permission_name": "CanAddAssetQuantity"
+            }
+        ],
     }
 
 Structure
@@ -587,6 +688,24 @@ Schema
         string value = 3;
     }
 
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "SetAccountDetail",
+                "account_id": "test@test",
+                "key": "position",
+                "value": "Co-CEO"
+            }
+        ],
+    }
+
+
 Structure
 ^^^^^^^^^
 
@@ -603,9 +722,9 @@ Validation
 
 Two cases:
 
-    Case 1. When transaction creator wants to set account detail to his/her account and he or she has permission CanSetAccountInfo
+    * Case 1. When transaction creator wants to set account detail to his/her account and he or she has permission CanSetAccountInfo
 
-    Case 2. CanSetAccountInfo was granted to transaction creator
+    * Case 2. CanSetAccountInfo was granted to transaction creator
 
 Set account quorum
 ------------------
@@ -626,6 +745,22 @@ Schema
         uint32 quorum = 2;
     }
 
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "SetAccountQuorum",
+                "account_id": "test@test",
+                "quorum": 5
+            }
+        ],
+    }
+
 Structure
 ^^^^^^^^^
 
@@ -643,9 +778,9 @@ When quorum is set, it is checked if invariant of **size(signatories) >= quorum*
 
 Two cases:
 
-    Case 1. When transaction creator wants to set quorum for his/her account and he or she has permission CanRemoveSignatory
+    * Case 1. When transaction creator wants to set quorum for his/her account and he or she has permission CanRemoveSignatory
 
-    Case 2. CanRemoveSignatory was granted to transaction creator
+    * Case 2. CanRemoveSignatory was granted to transaction creator
 
 Subtract asset quantity
 -----------------------
@@ -677,9 +812,31 @@ Schema
        uint32 precision = 2;
     }
 
+
 .. note::
     Please note that due to a known issue you would not get any exception if you pass invalid precision value.
     Valid range is: 0 <= precision <= 255
+
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "SubtractAssetQuantity",
+                "account_id": "test@test",
+                "asset_id": "coin#test",
+                "amount": {
+                "value": string,
+                "precision": int
+                }
+            }
+        ],
+    }
+
 
 Structure
 ^^^^^^^^^
@@ -718,6 +875,29 @@ Schema
         string description = 4;
         Amount amount = 5;
     }
+
+
+JSON Format
+^^^^^^^^^^^
+
+.. code-block:: json
+
+    {
+        "commands": [
+            {
+                "command_type": "TransferAsset",
+                "src_account_id": "takemiya@test",
+                "dest_account_id": "nikolai@test",
+                "asset_id": "coin#test",
+                "description": "Salary payment",
+                "amount": {
+                    "int_part": 20,
+                    "precision": 0
+                }
+            }
+        ],
+    }
+
 
 Structure
 ^^^^^^^^^

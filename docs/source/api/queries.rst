@@ -5,6 +5,23 @@ A query is a request related to certain part of World State View — the latest 
 Query cannot modify the contents of the chain and a response is returned
 to any client immediately after receiving peer has processed a query.
 
+Query Structure
+^^^^^^^^^^^^^^^
+
+Each query consists of the following fields:
+
+    * Payload, which contains created time, id of account creator, query counter and a query object
+    * Signature, which signs payload
+
+**Payload** stores everything except signatures:
+
+    * Time of creation (unix time, in milliseconds)
+    * Creator account_id stores account id in form username@domain
+    * Query counter is used to prevent replay attack and it is formed on client side
+    * Query object might be of any type, described below
+
+**Signatures** contain one or many signatures (ed25519 pubkey + signature).
+
 Validation
 ^^^^^^^^^^
 
