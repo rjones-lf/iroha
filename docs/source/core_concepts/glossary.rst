@@ -346,3 +346,86 @@ that an `account <#account>`__ has at the moment but does not contain any info
 history of `transaction <#transaction>`__ flow.
 
 .. [#f1] https://en.bitcoin.it/wiki/Block
+
+Command Line Interface
+======================
+
+Iroha Command Line Interface (CLI) is a tool for creation of transaction containing commands from the command line, or sending queries to Iroha. It is intended to simplify interaction between the client side and Iroha peer. CLI could be also used for keypair generation.
+
+Interactive mode of cli in a nutshell represents number of steps, where at each step user must interact with the system.  To choose one of the options can type short name of the command specified in parentheses, or number of the command in the menu.
+
+Keypair Generation
+------------------
+
+To generate files containing private and public keys ``--new_account`` flag should be used.
+
+Example: ``bash iroha-cli --new_account --account_name alice@ru --pass_phrase mysupersecretpassword --key_path ./``
+
+After that ``alice@ru.priv`` and ``alice@ru.pub`` files will be generated in the ``key_path`` folder. By default ``key_path`` if not specified is the folder where ``iroha-cli`` has been launched.
+
+Interactive mode 
+----------------
+
+Run:  ``iroha-cli --interactive --account_name your_account_id --key_path /path/to/keys``
+
+Your ``account_id`` is used as the creator of the queries and transactions for signing up messages with accounts keys and fill up counters.  You can specify the location of the keypairs associated with the ``account_id`` using ``key_path`` flag. By default, current folder is used.
+
+Starting menu 
+-------------
+
+At the start of cli user has two possible modes:
+
+    * Start a transaction
+    * Start a query
+    * Get status of a transaction
+
+.. image:: ./../../image_assets/start_menu.png
+
+Transaction CLI
+---------------
+
+Start up of transaction cli will trigger the creation of a new transaction. Each transaction consists of commands, being equal or less than 65000. User is offered to add commands to the new transaction. 
+All meta data of the transaction will be filled automatically (signature, tx_counter, creator account, timestamp). Currently, following Iroha commands are supported in Interactive CLI:
+
+
+.. image:: ./../../image_assets/transaction_cli.png
+
+Back option will switch back to main menu.  To add command to the transaction there are two options:
+
+ 
+1. Type number of the command in the menu, or command name without parameters:  This will iterate through the parameters of the command and ask user to type the parameter value.  For example typing "9" will create ``set account quorum`` command, and ask to type ``account id`` and quorum:
+
+.. image:: ./../../image_assets/transaction_cli_1.png
+
+2. Type command name with all needed parameters .  This option can be used to quickly add command to transaction. For example typing:  ``set_qrm test@test 2`` - will create Set_Account_Quorum command for account: ``test@test`` and quorum: 2.
+ 
+After adding the command, result menu will be printed:
+
+.. image:: ./../../image_assets/transaction_cli_2.png
+
+- User can add more commands to the same transaction
+- User can send to Iroha peer 
+- Go back and create new transaction (this will delete previous transaction)
+- Save transaction as json file locally 
+
+
+Query CLI
+---------
+
+Interactive query cli is build similarly as Transaction CLI. Query meta data will be assigned automatically (query_counter, time_stamp,  creator_account, signature) Currently, interactive cli supports the following queries:
+
+
+.. image:: ./../../image_assets/query_cli.png
+
+For each query there two possible modes to run: 
+
+    * By typing appropriate number of query, either the corresponding abbreviation specified in parentheses.
+    * Typing the command abbreviation with appropriated parameters.
+ 
+After query is formed there are following options:
+
+    * Save query as json    
+    * Send to Iroha Peer and receive QueryResponse 
+    * Back option, will return to query choice menu and remove current query. 
+
+.. image:: ./../../image_assets/query_cli_1.png
