@@ -9,7 +9,8 @@ Prerequisites
 
 Make sure you have running iroha on your machine. You can follow this guide to launch iroha daemon. Please use keys for iroha from iroha/example folder, since this example uses keys from there.
 
-If you are a lucky owner of a processor with the x64 architecture, you can install iroha-lib from the NPM repository with a simple command:
+If you are a lucky owner of a processor with the x64 architecture, 
+you can install ``iroha-lib`` from the NPM repository with a simple command:
 
 ``npm install iroha-lib``
 
