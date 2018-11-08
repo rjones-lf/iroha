@@ -313,9 +313,9 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
 }
 
 /**
- * @given synchronizer receives a commit with the block peer voted for
+ * @given commit with the block peer voted for
  * @when synchronizer processes the commit
- * @then commitPrepared will be called @and if successful, commit is not called
+ * @then commitPrepared is called @and commit is not called
  */
 TEST_F(SynchronizerTest, VotedForBlockCommitPrepared) {
   auto commit_message =
@@ -349,10 +349,9 @@ TEST_F(SynchronizerTest, VotedForBlockCommitPrepared) {
 }
 
 /**
- * @given synchronizer receives a commit with block,
- * which is different than the peer has voted for
+ * @given commit with the block which is different than the peer has voted for
  * @when synchronizer processes the commit
- * @then commitPrepared will not be called @and commit is called
+ * @then commitPrepared is not called @and commit is called
  */
 TEST_F(SynchronizerTest, VotedForOtherCommitPrepared) {
   auto commit_message = makeCommit();
@@ -392,7 +391,7 @@ TEST_F(SynchronizerTest, VotedForOtherCommitPrepared) {
 }
 
 /**
- * @given synchronizer receives a commit with the block peer voted for
+ * @given commit with the block peer voted for
  * @when synchronizer processes the commit @and commit prepared is unsuccessful
  * @then commit is called and synchronizer works as expected
  */

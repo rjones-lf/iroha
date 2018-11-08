@@ -108,7 +108,7 @@ namespace iroha {
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override;
 
-      void prepareBlock(TemporaryWsv &wsv) override;
+      void prepareBlock(std::unique_ptr<TemporaryWsv> wsv) override;
 
       ~StorageImpl() override;
 

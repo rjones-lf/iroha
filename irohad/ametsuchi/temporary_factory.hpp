@@ -38,7 +38,13 @@ namespace iroha {
       virtual expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
       createTemporaryWsv() = 0;
 
-      virtual void prepareBlock(TemporaryWsv &wsv) = 0;
+      /**
+       * Prepare state which was accumulated in temporary WSV.
+       * After preparation, this state is not visible until commited.
+       *
+       * @param wsv - state which will be prepared.
+       */
+      virtual void prepareBlock(std::unique_ptr<TemporaryWsv> wsv) = 0;
 
       virtual ~TemporaryFactory() = default;
     };

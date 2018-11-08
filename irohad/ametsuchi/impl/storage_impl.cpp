@@ -74,7 +74,9 @@ namespace iroha {
       soci::session sql(*connection_);
       // rollback current prepared transaction
       // if there exists any since last session
-      rollbackPrepared(sql);
+      if (prepared_blocks_enabled_) {
+        rollbackPrepared(sql);
+      }
       sql << init_;
       prepareStatements(*connection_, pool_size_);
     }
@@ -101,6 +103,9 @@ namespace iroha {
       }
 
       auto sql = std::make_unique<soci::session>(*connection_);
+      // if we create mutable storage, then we intend to mutate wsv
+      // this means that any state prepared before that moment is not needed
+      // and must be removed to preventy locking
       if (block_is_prepared) {
         rollbackPrepared(*sql);
       }
@@ -348,14 +353,13 @@ namespace iroha {
       auto ctx_result = initConnections(block_store_dir);
       auto db_result = initPostgresConnection(postgres_options, pool_size);
       expected::Result<std::shared_ptr<StorageImpl>, std::string> storage;
-      bool enable_prepared_transactions = false;
       ctx_result.match(
           [&](expected::Value<ConnectionContext> &ctx) {
             db_result.match(
                 [&](expected::Value<std::shared_ptr<soci::connection_pool>>
                         &connection) {
                   soci::session sql(*connection.value);
-                  enable_prepared_transactions =
+                  bool enable_prepared_transactions =
                       preparedTransactionsAvailable(sql);
                   storage = expected::makeValue(std::shared_ptr<StorageImpl>(
                       new StorageImpl(block_store_dir,
@@ -444,8 +448,8 @@ namespace iroha {
       return notifier_.get_observable();
     }
 
-    void StorageImpl::prepareBlock(TemporaryWsv &wsv) {
-      auto &wsv_impl = static_cast<TemporaryWsvImpl &>(wsv);
+    void StorageImpl::prepareBlock(std::unique_ptr<TemporaryWsv> wsv) {
+      auto &wsv_impl = static_cast<TemporaryWsvImpl &>(*wsv);
       if (not prepared_blocks_enabled_) {
         log_->warn("prepared block are not enabled");
         return;

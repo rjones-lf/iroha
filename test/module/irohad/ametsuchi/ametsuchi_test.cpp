@@ -27,6 +27,15 @@ auto zero_string = std::string(32, '0');
 auto fake_hash = shared_model::crypto::Hash(zero_string);
 auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
 
+// Allows to print amount string in case of test failure
+namespace shared_model {
+    namespace interface {
+        void PrintTo(const Amount& amount, std::ostream* os) {
+            *os << amount.toString();
+        }
+    }
+}
+
 /**
  * Validate getAccountTransaction with given parameters
  * @tparam B block query type
@@ -86,7 +95,7 @@ void validateAccountAsset(W &&wsv,
   ASSERT_TRUE(account_asset);
   ASSERT_EQ((*account_asset)->accountId(), account);
   ASSERT_EQ((*account_asset)->assetId(), asset);
-  ASSERT_EQ((*account_asset)->balance().toString(), amount.toString());
+  ASSERT_EQ((*account_asset)->balance(), amount);
 }
 
 /**
@@ -882,8 +891,7 @@ TEST_F(PreparedBlockTest, PrepareBlockNoStateChanged) {
 
   auto result = temp_wsv->apply(tx);
   ASSERT_FALSE(framework::expected::err(result));
-  storage->prepareBlock(*temp_wsv);
-  temp_wsv.reset();
+  storage->prepareBlock(std::move(temp_wsv));
 
   // balance remains unchanged
   validateAccountAsset(
@@ -916,8 +924,7 @@ TEST_F(PreparedBlockTest, CommitPreparedStateChanged) {
 
   auto result = temp_wsv->apply(tx);
   ASSERT_FALSE(framework::expected::err(result));
-  storage->prepareBlock(*temp_wsv);
-  temp_wsv.reset();
+  storage->prepareBlock(std::move(temp_wsv));
 
   auto commited = storage->commitPrepared(block);
 
@@ -966,8 +973,7 @@ TEST_F(PreparedBlockTest, PrepareBlockCommitDifferentBlock) {
 
   auto result = temp_wsv->apply(tx);
   ASSERT_TRUE(framework::expected::val(result));
-  storage->prepareBlock(*temp_wsv);
-  temp_wsv.reset();
+  storage->prepareBlock(std::move(temp_wsv));
 
   apply(storage, block);
 
@@ -1012,8 +1018,7 @@ TEST_F(PreparedBlockTest, CommitPreparedFailsAfterCommit) {
 
   auto result = temp_wsv->apply(tx);
   ASSERT_FALSE(framework::expected::err(result));
-  storage->prepareBlock(*temp_wsv);
-  temp_wsv.reset();
+  storage->prepareBlock(std::move(temp_wsv));
 
   apply(storage, block);
 

@@ -123,7 +123,6 @@ namespace iroha {
     }
 
     TemporaryWsvImpl::~TemporaryWsvImpl() {
-      log_->info("rolling back");
       *sql_ << "ROLLBACK";
     }
 

@@ -191,7 +191,12 @@ namespace iroha {
       MOCK_METHOD0(
           createTemporaryWsv,
           expected::Result<std::unique_ptr<TemporaryWsv>, std::string>(void));
-      MOCK_METHOD1(prepareBlock, void(TemporaryWsv &wsv));
+      MOCK_METHOD1(prepareBlock_, void(std::unique_ptr<TemporaryWsv> &));
+
+      void prepareBlock(std::unique_ptr<TemporaryWsv> wsv) override {
+        // gmock workaround for non-copyable parameters
+        prepareBlock_(wsv);
+      }
     };
 
     class MockTemporaryWsv : public TemporaryWsv {
@@ -289,7 +294,12 @@ namespace iroha {
       MOCK_METHOD0(reset, void(void));
       MOCK_METHOD0(dropStorage, void(void));
       MOCK_METHOD0(freeConnections, void(void));
-      MOCK_METHOD1(prepareBlock, void(TemporaryWsv &));
+      MOCK_METHOD1(prepareBlock_, void(std::unique_ptr<TemporaryWsv> &));
+
+      void prepareBlock(std::unique_ptr<TemporaryWsv> wsv) override {
+        // gmock workaround for non-copyable parameters
+        prepareBlock_(wsv);
+      }
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override {
