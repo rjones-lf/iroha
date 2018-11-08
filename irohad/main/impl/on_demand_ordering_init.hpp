@@ -54,7 +54,8 @@ namespace iroha {
           std::shared_ptr<ordering::OnDemandOrderingService> ordering_service,
           std::shared_ptr<ordering::transport::OdOsNotification> network_client,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
-              factory);
+              factory,
+          consensus::Round initial_round);
 
       /**
        * Creates on-demand ordering service. \see initOrderingGate for
@@ -85,6 +86,8 @@ namespace iroha {
        * requests to ordering service and processing responses
        * @param factory proposal factory required by ordering service to produce
        * proposals
+       * @param initial_round initial value for current round used in
+       * OnDemandOrderingGate
        * @return initialized ordering gate
        */
       std::shared_ptr<network::OrderingGate> initOrderingGate(
@@ -102,7 +105,8 @@ namespace iroha {
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
-              factory);
+              factory,
+          consensus::Round initial_round);
 
       /// gRPC service for ordering service
       std::shared_ptr<ordering::proto::OnDemandOrdering::Service> service;
@@ -128,6 +132,11 @@ namespace iroha {
 
       /// permutations for peers lists
       std::array<std::vector<size_t>, kCount> permutations_;
+
+      /// random generator for peer list permutations
+      // TODO andrei 08.11.2018 IR-1850 Refactor default_random_engine usages
+      // with platform-independent class
+      std::default_random_engine gen_;
     };
   }  // namespace network
 }  // namespace iroha

@@ -43,6 +43,7 @@ namespace iroha {
                               return commit.synced_blocks.map(
                                   [](auto block) { return block->hash(); });
                             })
+                            // prepend hashes for the first two rounds
                             .start_with(hashes.at(0), hashes.at(1));
 
       // emit last 3 hashes
@@ -74,12 +75,12 @@ namespace iroha {
             auto &permutation = permutations_[round()];
 
             std::seed_seq seed(hash.blob().begin(), hash.blob().end());
-            std::default_random_engine gen(seed);
+            gen_.seed(seed);
 
             permutation.resize(current_peers_.size());
             std::iota(permutation.begin(), permutation.end(), 0);
 
-            std::shuffle(permutation.begin(), permutation.end(), gen);
+            std::shuffle(permutation.begin(), permutation.end(), gen_);
           };
 
           generate_permutation(RoundTypeConstant<kCurrentRound>{});
@@ -96,10 +97,33 @@ namespace iroha {
           return peer;
         };
 
-        return {{peer(kCurrentRound, current_reject_round_ + 2),
-                 peer(kNextRound, 2),
-                 peer(kRoundAfterNext, 1),
-                 peer(kCurrentRound, current_reject_round_)}};
+        ordering::OnDemandConnectionManager::CurrentPeers peers;
+        /*
+         * See detailed description in
+         * irohad/ordering/impl/on_demand_connection_manager.cpp
+         *
+         *   0 1 2
+         * 0 o x v
+         * 1 x v .
+         * 2 v . .
+         *
+         * v, round 0 - kCurrentRoundRejectConsumer
+         * v, round 1 - kNextRoundRejectConsumer
+         * v, round 2 - kNextRoundCommitConsumer
+         * o, round 0 - kIssuer
+         */
+        peers.peers.at(
+            ordering::OnDemandConnectionManager::kCurrentRoundRejectConsumer) =
+            peer(kCurrentRound, current_reject_round_ + 2);
+        peers.peers.at(
+            ordering::OnDemandConnectionManager::kNextRoundRejectConsumer) =
+            peer(kNextRound, 2);
+        peers.peers.at(
+            ordering::OnDemandConnectionManager::kNextRoundCommitConsumer) =
+            peer(kRoundAfterNext, 1);
+        peers.peers.at(ordering::OnDemandConnectionManager::kIssuer) =
+            peer(kCurrentRound, current_reject_round_);
+        return peers;
       };
 
       auto peers = notifier.get_observable()
@@ -113,8 +137,8 @@ namespace iroha {
     auto OnDemandOrderingInit::createGate(
         std::shared_ptr<ordering::OnDemandOrderingService> ordering_service,
         std::shared_ptr<ordering::transport::OdOsNotification> network_client,
-        std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
-            factory) {
+        std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
+        consensus::Round initial_round) {
       return std::make_shared<ordering::OnDemandOrderingGate>(
           std::move(ordering_service),
           std::move(network_client),
@@ -129,7 +153,8 @@ namespace iroha {
                   return obs.last();
                 }
               }),
-          std::move(factory));
+          std::move(factory),
+          initial_round);
     }
 
     auto OnDemandOrderingInit::createService(
@@ -155,8 +180,8 @@ namespace iroha {
             transaction_batch_factory,
         std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
             async_call,
-        std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
-            factory) {
+        std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
+        consensus::Round initial_round) {
       auto ordering_service = createService(max_size, factory);
       service = std::make_shared<ordering::transport::OnDemandOsServerGrpc>(
           ordering_service,
@@ -168,7 +193,8 @@ namespace iroha {
                                                 std::move(async_call),
                                                 delay,
                                                 std::move(hashes)),
-                        std::move(factory));
+                        std::move(factory),
+                        initial_round);
     }
 
   }  // namespace network

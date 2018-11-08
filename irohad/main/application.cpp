@@ -208,26 +208,18 @@ void Irohad::initOrderingGate() {
     log_->error("Failed to create block query");
     return;
   }
-  auto height = (*block_query)->getTopBlockHeight();
   // since delay is 2, it is required to get two more hashes from block store,
   // in addition to top block
-  size_t start_height = 1;
-  size_t required_num_blocks = 0;
-  if (height > 2) {
-    start_height = height - 2;
-    required_num_blocks = 2;
-  } else if (height == 2) {
-    required_num_blocks = 1;
-  }
-  auto blocks = (*block_query)->getBlocks(start_height, required_num_blocks);
+  const size_t num_blocks = 3;
+  auto blocks = (*block_query)->getTopBlocks(num_blocks);
   auto hash_stub = shared_model::interface::types::HashType{std::string(
       shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength, '0')};
   auto hashes = std::accumulate(
       blocks.begin(),
-      blocks.end(),
+      std::prev(blocks.end()),
       // add hash stubs if there are not enough blocks in storage
       std::vector<shared_model::interface::types::HashType>{
-          2 - required_num_blocks, hash_stub},
+          num_blocks - blocks.size(), hash_stub},
       [](auto &acc, const auto &val) {
         acc.push_back(val->hash());
         return acc;
@@ -244,7 +236,8 @@ void Irohad::initOrderingGate() {
                                                  batch_parser,
                                                  transaction_batch_factory_,
                                                  async_call_,
-                                                 std::move(factory));
+                                                 std::move(factory),
+                                                 {blocks.back()->height(), 1});
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
