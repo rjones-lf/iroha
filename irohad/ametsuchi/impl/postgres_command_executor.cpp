@@ -82,6 +82,52 @@ namespace {
         std::move(command_name), code, error_extra});
   }
 
+  /// mapping between pairs of SQL error substrings and related fake error
+  /// codes, which are indices in this collection
+  const std::vector<std::tuple<std::string, std::string>> kSqlToFakeErrorCode =
+      {std::make_tuple("Key (account_id)=", "is not present in table"),
+       std::make_tuple("Key (permittee_account_id)", "is not present in table"),
+       std::make_tuple("Key (role_id)=", "is not present in table"),
+       std::make_tuple("Key (domain_id)=", "is not present in table"),
+       std::make_tuple("Key (asset_id)=", "already exists"),
+       std::make_tuple("Key (domain_id)=", "already exists"),
+       std::make_tuple("Key (role_id)=", "already exists"),
+       std::make_tuple("Key (account_id, public_key)=", "already exists"),
+       std::make_tuple("Key (account_id)=", "already exists"),
+       std::make_tuple("Key (default_role)=", "is not present in table")};
+
+  /// mapping between command name, fake error code and related real error code
+  const std::map<std::string, std::map<int, int>> kCmdNameToErrorCode{
+      std::make_pair(
+          "AddSignatory",
+          std::map<int, int>{std::make_pair(0, 3), std::make_pair(7, 4)}),
+      std::make_pair(
+          "AppendRole",
+          std::map<int, int>{std::make_pair(0, 3), std::make_pair(2, 4)}),
+      std::make_pair(
+          "DetachRole",
+          std::map<int, int>{std::make_pair(0, 3), std::make_pair(2, 5)}),
+      std::make_pair("RemoveSignatory",
+                     std::map<int, int>{std::make_pair(0, 3)}),
+      std::make_pair("SetAccountDetail",
+                     std::map<int, int>{std::make_pair(0, 3)}),
+      std::make_pair("SetQuorum", std::map<int, int>{std::make_pair(0, 3)}),
+      std::make_pair("GrantPermission",
+                     std::map<int, int>{std::make_pair(1, 3)}),
+      std::make_pair("RevokePermission",
+                     std::map<int, int>{std::make_pair(1, 3)}),
+      std::make_pair(
+          "CreateAccount",
+          std::map<int, int>{std::make_pair(3, 3), std::make_pair(8, 4)}),
+      std::make_pair(
+          "CreateAsset",
+          std::map<int, int>{std::make_pair(3, 3), std::make_pair(4, 4)}),
+      std::make_pair(
+          "CreateDomain",
+          std::map<int, int>{std::make_pair(5, 3), std::make_pair(9, 4)}),
+      std::make_pair("CreateRole", std::map<int, int>{std::make_pair(6, 3)}),
+      std::make_pair("AddSignatory", std::map<int, int>{std::make_pair(7, 4)})};
+
   /**
    * Get a real error code based on the fake one and a command name
    * @param fake_error_code - inner error code to be translated into the user's
@@ -89,78 +135,20 @@ namespace {
    * @param command_name of the failed command
    * @return real error code
    */
-  size_t getRealErrorCode(size_t fake_error_code,
-                          const std::string &command_name) {
-    switch (fake_error_code) {
-      case 0:
-        // we need inner if-s to prevent incorrect behaviour of the system;
-        // for example, if we are under 0, but command name does not match
-        // any of those below, it is an internal error
-        if (command_name == "AddSignatory" or command_name == "AppendRole"
-            or command_name == "DetachRole" or command_name == "RemoveSignatory"
-            or command_name == "SetAccountDetail"
-            or command_name == "SetQuorum") {
-          return 3;
-        }
-      case 1:
-        if (command_name == "GrantPermission"
-            or command_name == "RevokePermission") {
-          return 3;
-        }
-      case 2:
-        if (command_name == "AppendRole") {
-          return 4;
-        } else if (command_name == "DetachRole") {
-          return 5;
-        }
-      case 3:
-        if (command_name == "CreateAccount" or command_name == "CreateAsset") {
-          return 3;
-        }
-      case 4:
-        if (command_name == "CreateAsset") {
-          return 4;
-        }
-      case 5:
-        if (command_name == "CreateDomain") {
-          return 3;
-        }
-      case 6:
-        if (command_name == "CreateRole") {
-          return 3;
-        }
-      case 7:
-        if (command_name == "AddSignatory") {
-          return 4;
-        }
-      case 8:
-        if (command_name == "CreateAccount") {
-          return 4;
-        }
-      case 9:
-        if (command_name == "CreateDomain") {
-          return 4;
-        }
+  boost::optional<iroha::ametsuchi::CommandError::ErrorCodeType>
+  getRealErrorCode(size_t fake_error_code, const std::string &command_name) {
+    auto fake_to_real_code = kCmdNameToErrorCode.find(command_name);
+    if (fake_to_real_code == kCmdNameToErrorCode.end()) {
+      return {};
     }
-    return 1;
-  }
 
-  /// mapping between pairs of SQL error substrings and related error codes
-  const std::vector<std::tuple<iroha::ametsuchi::CommandError::ErrorCodeType,
-                               std::string,
-                               std::string>>
-      kSqlToErrorCode = {
-          std::make_tuple(0, "Key (account_id)=", "is not present in table"),
-          std::make_tuple(
-              1, "Key (permittee_account_id)", "is not present in table"),
-          std::make_tuple(2, "Key (role_id)=", "is not present in table"),
-          std::make_tuple(3, "Key (domain_id)=", "is not present in table"),
-          std::make_tuple(4, "Key (asset_id)=", "already exists"),
-          std::make_tuple(5, "Key (domain_id)=", "already exists"),
-          std::make_tuple(6, "Key (role_id)=", "already exists"),
-          std::make_tuple(7, "Key (account_id, public_key)=", "already exists"),
-          std::make_tuple(8, "Key (account_id)=", "already exists"),
-          std::make_tuple(9, "Key (default_role)=", "is not present in table")};
+    auto real_code = fake_to_real_code->second.find(fake_error_code);
+    if (real_code == fake_to_real_code->second.end()) {
+      return {};
+    }
+
+    return real_code->second;
+  }
 
   // TODO [IR-1830] Akvinikym 31.10.18: make benchmarks to compare exception
   // parsing vs nested queries
@@ -172,19 +160,23 @@ namespace {
    */
   iroha::ametsuchi::CommandResult getCommandError(
       std::string &&command_name, const std::string &error) noexcept {
-    iroha::ametsuchi::CommandError::ErrorCodeType err_code;
     std::string key, to_be_presented;
     bool errors_matched;
 
-    // go through mapping of SQL errors and related error codes
-    for (auto error_tuple : kSqlToErrorCode) {
-      std::tie(err_code, key, to_be_presented) = error_tuple;
+    // go through mapping of SQL errors and get index of the current error - it
+    // is "fake" error code
+    for (size_t fakeErrorCode = 0; fakeErrorCode < kSqlToFakeErrorCode.size();
+         ++fakeErrorCode) {
+      std::tie(key, to_be_presented) = kSqlToFakeErrorCode[fakeErrorCode];
       errors_matched = error.find(key) != std::string::npos
           and error.find(to_be_presented) != std::string::npos;
       if (errors_matched) {
-        return makeCommandError(std::move(command_name),
-                                getRealErrorCode(err_code, command_name),
-                                error);
+        if (auto real_error_code =
+                getRealErrorCode(fakeErrorCode, command_name)) {
+          return makeCommandError(
+              std::move(command_name), *real_error_code, error);
+        }
+        break;
       }
     }
     // parsing is not successful, return the general error

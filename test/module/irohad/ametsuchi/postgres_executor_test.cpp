@@ -377,22 +377,6 @@ namespace iroha {
 
     /**
      * @given command
-     * @when trying to add signatory to non-existing account
-     * @then signatory is not added
-     */
-    TEST_F(AddSignatory, NoAccount) {
-      auto perm =
-          shared_model::interface::permissions::Grantable::kAddMySignatory;
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder().grantPermission(
-                      account->accountId(), perm)),
-                  true,
-                  "id2@domain");
-      CHECK_ERROR_CODE(cmd_result, 3);
-    }
-
-    /**
-     * @given command
      * @when successfully adding signatory to the account @and trying to add the
      * same signatory again
      * @then signatory is not added
