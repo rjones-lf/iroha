@@ -28,7 +28,10 @@ Python client library example
 Prerequisites
 *************
 
-In order to execute script demonstrating execution of python client library you need to have python 2.7 installed. After that please follow next steps:
+In order to execute script demonstrating execution of python client library you need to have python 2.7 or python 3 installed. 
+**Note**: The example uses Python 2.7 but the library is compactible with Python 3 as well.
+
+After that please follow next steps:
 
 * To compile ``grpc proto`` files it is needed to have ``grpc-io`` installed:
 
@@ -47,6 +50,7 @@ In order to execute script demonstrating execution of python client library you 
 Launch example
 **************
 
+This example gives a basic idea of working with Python Library in Hyperledger Iroha. The script provides a simple transaction example. 
 Script **tx-example.py** does the following:
 
 * Assemble transaction from several commands using **tx_builder**
