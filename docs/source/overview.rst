@@ -9,6 +9,7 @@ What are the key features of Iroha?
 - Role-based access control
 - Modular design, driven by command–query separation principle
 - Assets and identity management
+- Easily integrated into Mobile, Desktop or Web Frontend Applications
 
 In our quality model, we focus on and continuously improve:
 
