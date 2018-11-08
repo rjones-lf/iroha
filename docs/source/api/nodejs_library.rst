@@ -16,6 +16,9 @@ you can install ``iroha-lib`` from the NPM repository with a simple command:
 
 In other cases, you need to download the complete Iroha repository (in which you are now), go to the ``shared_model/packages/javascript`` folder and build the package on your system manually using the instructions from README.md. In such case, you need to change the import paths in this example to ``shared_model/packages/javascript``.
 
+**Node Version**: v8.9.4
+**NPM Version**: 5.6.0
+
 Launch example
 **************
 
