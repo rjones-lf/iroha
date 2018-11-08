@@ -10,7 +10,7 @@
 #include "builders/protobuf/transaction.hpp"
 #include "builders/protobuf/transaction_sequence_builder.hpp"
 #include "builders/protobuf/transport_builder.hpp"
-#include "common/types.hpp"
+#include "common/bind.hpp"
 #include "endpoint.pb.h"
 #include "framework/batch_helper.hpp"
 #include "framework/result_fixture.hpp"

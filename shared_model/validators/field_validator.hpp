@@ -201,6 +201,10 @@ namespace shared_model {
       static const size_t value_size;
       static const size_t description_size;
     };
+
+    boost::optional<ConcreteReasonType> validatePubkey(
+        const interface::types::PubkeyType &pubkey);
+
   }  // namespace validation
 }  // namespace shared_model
 

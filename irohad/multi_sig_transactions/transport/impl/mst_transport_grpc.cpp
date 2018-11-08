@@ -10,26 +10,26 @@
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/transaction.hpp"
-#include "cryptography/public_key.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
+#include "validators/field_validator.hpp"
 
 using namespace iroha::network;
 
 MstTransportGrpc::MstTransportGrpc(
     std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
         async_call,
-    std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
     std::shared_ptr<TransportFactoryType> transaction_factory,
     std::shared_ptr<shared_model::interface::TransactionBatchParser>
         batch_parser,
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
-        transaction_batch_factory)
+        transaction_batch_factory,
+    shared_model::crypto::PublicKey my_key)
     : async_call_(std::move(async_call)),
-      factory_(std::move(factory)),
       transaction_factory_(std::move(transaction_factory)),
       batch_parser_(std::move(batch_parser)),
-      batch_factory_(std::move(transaction_batch_factory)) {}
+      batch_factory_(std::move(transaction_batch_factory)),
+      my_key_(shared_model::crypto::toBinaryString(my_key)) {}
 
 shared_model::interface::types::SharedTxsCollectionType
 MstTransportGrpc::deserializeTransactions(const transport::MstState *request) {
@@ -87,19 +87,19 @@ grpc::Status MstTransportGrpc::SendState(
   async_call_->log_->info("batches in MstState: {}",
                           new_state.getBatches().size());
 
-  auto &peer = request->peer();
-  factory_
-      ->createPeer(peer.address(),
-                   shared_model::crypto::PublicKey(peer.peer_key()))
-      .match(
-          [&](expected::Value<std::unique_ptr<shared_model::interface::Peer>>
-                  &v) {
-            subscriber_.lock()->onNewState(std::move(v.value),
-                                           std::move(new_state));
-          },
-          [&](expected::Error<std::string> &e) {
-            async_call_->log_->info(e.error);
-          });
+  shared_model::crypto::PublicKey source_key(request->source_peer_key());
+  auto key_invalid_reason =
+      shared_model::validation::validatePubkey(source_key);
+  if (key_invalid_reason) {
+    async_call_->log_->info(
+        "Dropping received MST State due to invalid public key: {}",
+        *key_invalid_reason);
+    return grpc::Status::OK;
+  }
+
+  subscriber_.lock()->onNewState(
+      source_key,
+      std::move(new_state));
 
   return grpc::Status::OK;
 }
@@ -117,9 +117,7 @@ void MstTransportGrpc::sendState(const shared_model::interface::Peer &to,
           to.address(), grpc::InsecureChannelCredentials()));
 
   transport::MstState protoState;
-  auto peer = protoState.mutable_peer();
-  peer->set_peer_key(shared_model::crypto::toBinaryString(to.pubkey()));
-  peer->set_address(to.address());
+  protoState.set_source_peer_key(my_key_);
   for (auto &batch : providing_state.getBatches()) {
     for (auto &tx : batch->transactions()) {
       // TODO (@l4l) 04/03/18 simplify with IR-1040

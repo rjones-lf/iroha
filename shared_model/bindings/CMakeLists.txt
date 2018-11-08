@@ -14,19 +14,20 @@
 
 
 add_library(bindings
-        model_transaction_builder.cpp
-        model_query_builder.cpp
-        model_blocks_query_builder.cpp
-        model_crypto.cpp
-        client_api.cpp
-        )
+    model_transaction_builder.cpp
+    model_query_builder.cpp
+    model_blocks_query_builder.cpp
+    model_crypto.cpp
+    client_api.cpp
+    )
 
 target_link_libraries(bindings
-        shared_model_proto_backend
-        shared_model_cryptography
-        generator
-        shared_model_stateless_validation
-        )
+    shared_model_proto_backend
+    shared_model_cryptography
+    shared_model_stateless_validation
+    generator
+    common
+    )
 
 
 

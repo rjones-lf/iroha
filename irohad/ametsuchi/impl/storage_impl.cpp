@@ -17,6 +17,8 @@
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
 #include "backend/protobuf/permissions.hpp"
+#include "common/bind.hpp"
+#include "common/byteutils.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "postgres_ordering_service_persistent_state.hpp"
 
@@ -46,6 +48,8 @@ namespace iroha {
         std::shared_ptr<soci::connection_pool> connection,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
+        std::shared_ptr<shared_model::interface::PermissionToString>
+            perm_converter,
         size_t pool_size)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
@@ -53,6 +57,7 @@ namespace iroha {
           connection_(std::move(connection)),
           factory_(std::move(factory)),
           converter_(std::move(converter)),
+          perm_converter_(std::move(perm_converter)),
           log_(logger::log("StorageImpl")),
           pool_size_(pool_size) {
       soci::session sql(*connection_);
@@ -145,9 +150,10 @@ namespace iroha {
               std::make_unique<soci::session>(*connection_),
               factory_,
               *block_store_,
-              pending_txs_storage,
+              std::move(pending_txs_storage),
               converter_,
-              std::move(response_factory)));
+              std::move(response_factory),
+              perm_converter_));
     }
 
     bool StorageImpl::insertBlock(const shared_model::interface::Block &block) {
@@ -300,6 +306,8 @@ namespace iroha {
         std::string postgres_options,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
+        std::shared_ptr<shared_model::interface::PermissionToString>
+            perm_converter,
         size_t pool_size) {
       boost::optional<std::string> string_res = boost::none;
 
@@ -333,6 +341,7 @@ namespace iroha {
                                       connection.value,
                                       factory,
                                       converter,
+                                      perm_converter,
                                       pool_size)));
                 },
                 [&](expected::Error<std::string> &error) { storage = error; });

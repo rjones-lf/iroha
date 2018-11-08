@@ -17,7 +17,6 @@
 #ifndef IROHA_DOMAIN_HPP
 #define IROHA_DOMAIN_HPP
 
-#include <common/types.hpp>
 #include <string>
 
 namespace iroha {

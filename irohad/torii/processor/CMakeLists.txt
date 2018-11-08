@@ -10,4 +10,5 @@ target_link_libraries(processors PUBLIC
     mst_processor
     shared_model_proto_builders
     status_bus
+    common
     )
