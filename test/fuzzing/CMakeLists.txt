@@ -61,3 +61,11 @@ target_link_libraries(request_proposal_fuzz
   on_demand_ordering_service_transport_grpc
   protobuf-mutator
   )
+
+add_executable(consensus_fuzz consensus_fuzz.cpp)
+target_link_libraries(consensus_fuzz
+  gtest::gtest
+  gmock::gmock
+  yac_transport
+  protobuf-mutator
+  )
