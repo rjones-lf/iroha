@@ -17,6 +17,7 @@
 
 #include "network/impl/block_loader_service.hpp"
 #include "backend/protobuf/block.hpp"
+#include "common/bind.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;

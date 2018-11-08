@@ -5,7 +5,7 @@ target_link_libraries(irohad_test
         SOCI::postgresql
         rapidjson
         integration_framework_config_helper
-        libs_common
+        libs_files
         shared_model_proto_backend
         acceptance_fixture
         command_client

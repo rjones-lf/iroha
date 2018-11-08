@@ -28,7 +28,9 @@
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 
+#include "common/bind.hpp"
 #include "common/byteutils.hpp"
+#include "common/obj_utils.hpp"
 #include "model/block.hpp"
 #include "model/common.hpp"
 #include "model/queries/get_transactions.hpp"

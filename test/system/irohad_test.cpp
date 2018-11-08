@@ -14,8 +14,8 @@
 #include <boost/process.hpp>
 
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "common/bind.hpp"
 #include "common/files.hpp"
-#include "common/types.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
