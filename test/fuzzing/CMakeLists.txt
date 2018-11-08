@@ -70,3 +70,12 @@ target_link_libraries(retrieve_block_fuzz
   shared_model_default_builders
   protobuf-mutator
   )
+
+add_executable(retrieve_blocks_fuzz retrieve_blocks_fuzz.cpp)
+target_link_libraries(retrieve_blocks_fuzz
+  gtest::gtest
+  gmock::gmock
+  block_loader_service
+  shared_model_default_builders
+  protobuf-mutator
+  )
