@@ -60,24 +60,20 @@ namespace iroha {
       log_->info("process proposal");
 
       // Get last block from local ledger
-      auto block_query_opt = block_query_factory_->createBlockQuery();
-      if (not block_query_opt) {
+      if (auto block_query_opt = block_query_factory_->createBlockQuery()) {
+        auto block_var = block_query_opt.value()->getTopBlock();
+        if (auto e = boost::get<expected::Error<std::string>>(&block_var)) {
+          log_->warn("Could not fetch last block: " + e->error);
+          return;
+        }
+
+        last_block = boost::get<expected::Value<
+            std::shared_ptr<shared_model::interface::Block>>>(&block_var)
+                         ->value;
+      } else {
         log_->error("could not create block query");
         return;
       }
-
-      auto block_var = block_query_opt.value()->getTopBlock();
-      if (auto e = boost::get<expected::Error<std::string>>(&block_var)) {
-        log_->warn("Could not fetch last block: " + e->error);
-        return;
-      }
-      block_query_opt = boost::none;
-
-      last_block =
-          boost::get<
-              expected::Value<std::shared_ptr<shared_model::interface::Block>>>(
-              &block_var)
-              ->value;
 
       if (last_block->height() + 1 != proposal.height()) {
         log_->warn("Last block height: {}, proposal height: {}",

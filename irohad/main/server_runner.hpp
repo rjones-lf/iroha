@@ -8,8 +8,8 @@
 
 #include <grpc++/grpc++.h>
 #include <grpc++/impl/codegen/service_type.h>
-
 #include "common/result.hpp"
+#include "logger/logger.hpp"
 
 /**
  * Class runs Torii server for handling queries and commands.
@@ -52,6 +52,8 @@ class ServerRunner {
   void shutdown(const std::chrono::system_clock::time_point &deadline);
 
  private:
+  logger::Logger log_;
+
   std::unique_ptr<grpc::Server> serverInstance_;
   std::mutex waitForServer_;
   std::condition_variable serverInstanceCV_;

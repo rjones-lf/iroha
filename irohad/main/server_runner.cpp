@@ -10,7 +10,9 @@
 const auto kPortBindError = "Cannot bind server to address %s";
 
 ServerRunner::ServerRunner(const std::string &address, bool reuse)
-    : serverAddress_(address), reuse_(reuse) {}
+    : log_(logger::log("ServerRunner")),
+      serverAddress_(address),
+      reuse_(reuse) {}
 
 ServerRunner &ServerRunner::append(std::shared_ptr<grpc::Service> service) {
   services_.push_back(service);
@@ -57,6 +59,8 @@ void ServerRunner::waitForServersReady() {
 void ServerRunner::shutdown() {
   if (serverInstance_) {
     serverInstance_->Shutdown();
+  } else {
+    log_->warn("Tried to shutdown without a server instance");
   }
 }
 
@@ -64,5 +68,7 @@ void ServerRunner::shutdown(
     const std::chrono::system_clock::time_point &deadline) {
   if (serverInstance_) {
     serverInstance_->Shutdown(deadline);
+  } else {
+    log_->warn("Tried to shutdown without a server instance");
   }
 }

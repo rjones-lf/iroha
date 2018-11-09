@@ -19,6 +19,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 
 add_library(server_runner server_runner.cpp)
 target_link_libraries(server_runner
+    logger
     grpc++
     boost
     common
