@@ -638,26 +638,22 @@ namespace iroha {
       return executeQuery<QueryTuple, PermissionTuple>(
           [&] { return (sql_.prepare << cmd, soci::use(q.accountId())); },
           [&](auto range, auto &) {
-            std::vector<shared_model::interface::types::AccountIdType>
-                account_ids;
-            std::vector<shared_model::interface::types::AssetIdType> asset_ids;
-            std::vector<shared_model::interface::Amount> balances;
-            boost::for_each(
-                range, [&account_ids, &asset_ids, &balances](auto t) {
-                  apply(t,
-                        [&account_ids, &asset_ids, &balances](
-                            auto &account_id, auto &asset_id, auto &amount) {
-                          account_ids.push_back(std::move(account_id));
-                          asset_ids.push_back(std::move(asset_id));
-                          balances.push_back(
-                              shared_model::interface::Amount(amount));
-                        });
-                });
+            std::vector<
+                std::tuple<shared_model::interface::types::AccountIdType,
+                           shared_model::interface::types::AssetIdType,
+                           shared_model::interface::Amount>>
+                assets;
+            boost::for_each(range, [&assets](auto t) {
+              apply(t,
+                    [&assets](auto &account_id, auto &asset_id, auto &amount) {
+                      assets.push_back(std::make_tuple(
+                          std::move(account_id),
+                          std::move(asset_id),
+                          shared_model::interface::Amount(amount)));
+                    });
+            });
             return query_response_factory_->createAccountAssetResponse(
-                std::move(account_ids),
-                std::move(asset_ids),
-                std::move(balances),
-                query_hash_);
+                assets, query_hash_);
           },
           notEnoughPermissionsResponse(
               Role::kGetMyAccAst, Role::kGetAllAccAst, Role::kGetDomainAccAst));

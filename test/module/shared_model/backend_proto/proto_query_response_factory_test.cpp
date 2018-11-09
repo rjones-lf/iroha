@@ -72,9 +72,10 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
       query_responses;
   std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
       assets_test_copy;
-  std::vector<shared_model::interface::types::AccountIdType> account_ids;
-  std::vector<shared_model::interface::types::AssetIdType> asset_ids;
-  std::vector<shared_model::interface::Amount> balances;
+  std::vector<std::tuple<shared_model::interface::types::AccountIdType,
+                         shared_model::interface::types::AssetIdType,
+                         shared_model::interface::Amount>>
+      assets;
   for (auto i = 1; i < kAccountAssetsNumber; ++i) {
     ASSERT_NO_THROW({
       auto asset_copy = unwrapResult(objects_factory->createAccountAsset(
@@ -83,13 +84,14 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
           shared_model::interface::Amount(std::to_string(i))));
       assets_test_copy.push_back(std::move(asset_copy));
     });
-    account_ids.push_back(kAccountId);
-    asset_ids.push_back(kAssetId);
-    balances.emplace_back(shared_model::interface::Amount(std::to_string(i)));
+    assets.push_back(
+        std::make_tuple(kAccountId,
+                        kAssetId,
+                        shared_model::interface::Amount(std::to_string(i))));
   }
 
-  query_responses.push_back(response_factory->createAccountAssetResponse(
-      account_ids, asset_ids, balances, kQueryHash));
+  query_responses.push_back(
+      response_factory->createAccountAssetResponse(assets, kQueryHash));
 
   for (auto &query_response : query_responses) {
     ASSERT_TRUE(query_response);

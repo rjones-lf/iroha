@@ -14,9 +14,9 @@ namespace shared_model {
     class ProtoQueryResponseFactory : public interface::QueryResponseFactory {
      public:
       std::unique_ptr<interface::QueryResponse> createAccountAssetResponse(
-          const std::vector<interface::types::AccountIdType> account_ids,
-          const std::vector<interface::types::AssetIdType> asset_ids,
-          const std::vector<shared_model::interface::Amount> balances,
+          std::vector<std::tuple<interface::types::AccountIdType,
+                                 interface::types::AssetIdType,
+                                 shared_model::interface::Amount>> assets,
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createAccountDetailResponse(
@@ -24,10 +24,10 @@ namespace shared_model {
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createAccountResponse(
-          const interface::types::AccountIdType account_id,
-          const interface::types::DomainIdType domain_id,
+          interface::types::AccountIdType account_id,
+          interface::types::DomainIdType domain_id,
           interface::types::QuorumType quorum,
-          const interface::types::JsonType jsonData,
+          interface::types::JsonType jsonData,
           std::vector<std::string> roles,
           const crypto::Hash &query_hash) const override;
 
@@ -46,9 +46,9 @@ namespace shared_model {
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createAssetResponse(
-          const interface::types::AssetIdType asset_id,
-          const interface::types::DomainIdType domain_id,
-          const interface::types::PrecisionType precision,
+          interface::types::AssetIdType asset_id,
+          interface::types::DomainIdType domain_id,
+          interface::types::PrecisionType precision,
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createRolesResponse(

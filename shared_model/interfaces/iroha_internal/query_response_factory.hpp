@@ -36,16 +36,14 @@ namespace shared_model {
 
       /**
        * Create response for account asset query
-       * @param account_ids of assets to be inserted into the response
-       * @param asset_ids of assets to be inserted into the response
-       * @param balances of assets to be inserted into the response
+       * @param assets to be inserted into the response
        * @param query_hash - hash of the query, for which response is created
        * @return account asset response
        */
       virtual std::unique_ptr<QueryResponse> createAccountAssetResponse(
-          const std::vector<types::AccountIdType> account_ids,
-          const std::vector<types::AssetIdType> asset_ids,
-          const std::vector<shared_model::interface::Amount> balances,
+          std::vector<std::tuple<types::AccountIdType,
+                                 types::AssetIdType,
+                                 shared_model::interface::Amount>> assets,
           const crypto::Hash &query_hash) const = 0;
 
       /**
@@ -69,10 +67,10 @@ namespace shared_model {
        * @return account response
        */
       virtual std::unique_ptr<QueryResponse> createAccountResponse(
-          const interface::types::AccountIdType account_id,
-          const interface::types::DomainIdType domain_id,
+          interface::types::AccountIdType account_id,
+          interface::types::DomainIdType domain_id,
           interface::types::QuorumType quorum,
-          const interface::types::JsonType jsonData,
+          interface::types::JsonType jsonData,
           std::vector<std::string> roles,
           const crypto::Hash &query_hash) const = 0;
 
@@ -132,9 +130,9 @@ namespace shared_model {
        * @return asset response
        */
       virtual std::unique_ptr<QueryResponse> createAssetResponse(
-          const types::AssetIdType asset_id,
-          const types::DomainIdType domain_id,
-          const types::PrecisionType precision,
+          types::AssetIdType asset_id,
+          types::DomainIdType domain_id,
+          types::PrecisionType precision,
           const crypto::Hash &query_hash) const = 0;
 
       /**

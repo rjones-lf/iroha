@@ -52,22 +52,20 @@ namespace {
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
-    const std::vector<interface::types::AccountIdType> account_ids,
-    const std::vector<interface::types::AssetIdType> asset_ids,
-    const std::vector<shared_model::interface::Amount> balances,
+    std::vector<std::tuple<interface::types::AccountIdType,
+                           interface::types::AssetIdType,
+                           shared_model::interface::Amount>> assets,
     const crypto::Hash &query_hash) const {
   return createQueryResponse(
-      [account_ids = std::move(account_ids),
-       asset_ids = std::move(asset_ids),
-       balances = std::move(balances)](
+      [assets = std::move(assets)](
           iroha::protocol::QueryResponse &protocol_query_response) {
         iroha::protocol::AccountAssetResponse *protocol_specific_response =
             protocol_query_response.mutable_account_assets_response();
-        for (size_t i = 0; i < account_ids.size(); i++) {
+        for (size_t i = 0; i < assets.size(); i++) {
           auto *asset = protocol_specific_response->add_account_assets();
-          asset->set_account_id(std::move(account_ids.at(i)));
-          asset->set_asset_id(std::move(asset_ids.at(i)));
-          asset->set_balance(balances.at(i).toStringRepr());
+          asset->set_account_id(std::move(std::get<0>(assets.at(i))));
+          asset->set_asset_id(std::move(std::get<1>(assets.at(i))));
+          asset->set_balance(std::get<2>(assets.at(i)).toStringRepr());
         }
       },
       query_hash);

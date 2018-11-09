@@ -216,12 +216,8 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
                          .finish();
 
   auto *r = query_response_factory
-                ->createAccountResponse(accountB_id,
-                                        domainB_id,
-                                        1,
-                                        {},
-                                        roles,
-                                        model_query.hash())
+                ->createAccountResponse(
+                    accountB_id, domainB_id, 1, {}, roles, model_query.hash())
                 .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
@@ -266,12 +262,8 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
                          .finish();
 
   auto *r = query_response_factory
-                ->createAccountResponse(account_id,
-                                        domain_id,
-                                        1,
-                                        "{}",
-                                        roles,
-                                        model_query.hash())
+                ->createAccountResponse(
+                    account_id, domain_id, 1, "{}", roles, model_query.hash())
                 .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
@@ -359,18 +351,13 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
                          .signAndAddSignature(pair)
                          .finish();
 
-  std::vector<shared_model::interface::types::AccountIdType> account_ids;
-  account_ids.push_back(account_id);
-  std::vector<shared_model::interface::types::AssetIdType> asset_ids;
-  asset_ids.push_back(asset_id);
-  std::vector<shared_model::interface::Amount> amounts;
-  amounts.push_back(amount);
-
+  std::vector<std::tuple<shared_model::interface::types::AccountIdType,
+                         shared_model::interface::types::AssetIdType,
+                         shared_model::interface::Amount>>
+      assets;
+  assets.push_back(std::make_tuple(account_id, asset_id, amount));
   auto *r = query_response_factory
-                ->createAccountAssetResponse(std::move(account_ids),
-                                             std::move(asset_ids),
-                                             std::move(amounts),
-                                             model_query.hash())
+                ->createAccountAssetResponse(assets, model_query.hash())
                 .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
@@ -392,12 +379,9 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
             shared_model::interface::AccountAssetResponse>(),
         resp.get());
     // Check if the fields in account asset response are correct
-    ASSERT_EQ(asset_resp.accountAssets()[0].assetId(),
-              asset_id);
-    ASSERT_EQ(asset_resp.accountAssets()[0].accountId(),
-              account_id);
-    ASSERT_EQ(asset_resp.accountAssets()[0].balance(),
-              amount);
+    ASSERT_EQ(asset_resp.accountAssets()[0].assetId(), asset_id);
+    ASSERT_EQ(asset_resp.accountAssets()[0].accountId(), account_id);
+    ASSERT_EQ(asset_resp.accountAssets()[0].balance(), amount);
     ASSERT_EQ(model_query.hash(), resp.queryHash());
   });
 }
@@ -510,8 +494,8 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   std::vector<wTransaction> txs;
   std::vector<shared_model::proto::Transaction> proto_txs;
   for (size_t i = 0; i < 3; ++i) {
-    std::shared_ptr<shared_model::interface::Transaction> current = clone(
-        TestTransactionBuilder().creatorAccountId(account_id).build());
+    std::shared_ptr<shared_model::interface::Transaction> current =
+        clone(TestTransactionBuilder().creatorAccountId(account_id).build());
     txs.push_back(current);
     proto_txs.push_back(
         *std::static_pointer_cast<shared_model::proto::Transaction>(current));
