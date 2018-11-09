@@ -36,20 +36,11 @@ namespace iroha {
        * apply the missing blocks
        */
       SynchronizationEvent downloadMissingBlocks(
-          const shared_model::interface::types::PublicKeyCollectionType
-              &public_keys,
-          const shared_model::interface::types::HashType &hash,
-          const consensus::Round &round,
+          const consensus::VoteOther &msg,
           std::unique_ptr<ametsuchi::MutableStorage> storage);
 
-      void processNext(
-          std::shared_ptr<shared_model::interface::Block> commit_message,
-          const consensus::Round &round);
-      void processDifferent(
-          const shared_model::interface::types::PublicKeyCollectionType
-              &public_keys,
-          const shared_model::interface::types::HashType &hash,
-          const consensus::Round &round);
+      void processNext(const consensus::PairValid &msg);
+      void processDifferent(const consensus::VoteOther &msg);
 
       boost::optional<std::unique_ptr<ametsuchi::MutableStorage>> getStorage();
 

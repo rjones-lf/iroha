@@ -23,7 +23,6 @@ using namespace iroha::network;
 using namespace iroha::simulator;
 using namespace framework::test_subscriber;
 using namespace shared_model::crypto;
-using namespace std;
 using iroha::consensus::ConsensusResultCache;
 
 using ::testing::_;
@@ -71,16 +70,16 @@ class YacGateTest : public ::testing::Test {
     commit_message = CommitMessage({message});
     expected_commit = commit_message;
 
-    auto hash_gate_ptr = make_unique<MockHashGate>();
+    auto hash_gate_ptr = std::make_unique<MockHashGate>();
     hash_gate = hash_gate_ptr.get();
-    auto peer_orderer_ptr = make_unique<MockYacPeerOrderer>();
+    auto peer_orderer_ptr = std::make_unique<MockYacPeerOrderer>();
     peer_orderer = peer_orderer_ptr.get();
-    hash_provider = make_shared<MockYacHashProvider>();
-    block_creator = make_shared<MockBlockCreator>();
-    block_cache = make_shared<ConsensusResultCache>();
+    hash_provider = std::make_shared<MockYacHashProvider>();
+    block_creator = std::make_shared<MockBlockCreator>();
+    block_cache = std::make_shared<ConsensusResultCache>();
 
-    EXPECT_CALL(*block_creator, on_block())
-        .WillOnce(Return(block_notifier.get_observable()));
+    ON_CALL(*block_creator, on_block())
+        .WillByDefault(Return(block_notifier.get_observable()));
 
     gate = std::make_shared<YacGateImpl>(std::move(hash_gate_ptr),
                                          std::move(peer_orderer_ptr),
@@ -103,11 +102,11 @@ class YacGateTest : public ::testing::Test {
 
   MockHashGate *hash_gate;
   MockYacPeerOrderer *peer_orderer;
-  shared_ptr<MockYacHashProvider> hash_provider;
-  shared_ptr<MockBlockCreator> block_creator;
-  shared_ptr<ConsensusResultCache> block_cache;
+  std::shared_ptr<MockYacHashProvider> hash_provider;
+  std::shared_ptr<MockBlockCreator> block_creator;
+  std::shared_ptr<ConsensusResultCache> block_cache;
 
-  shared_ptr<YacGateImpl> gate;
+  std::shared_ptr<YacGateImpl> gate;
 
  protected:
   YacGateTest() : commit_message(std::vector<VoteMessage>{}) {}
@@ -239,9 +238,9 @@ TEST_F(YacGateTest, DifferentCommit) {
   // verify that yac gate emit expected block
   auto gate_wrapper = make_test_subscriber<CallExact>(gate->onOutcome(), 1);
   gate_wrapper.subscribe([actual_hash, actual_pubkey](auto outcome) {
-    auto concete_outcome = boost::get<iroha::consensus::VoteOther>(outcome);
-    auto public_keys = concete_outcome.public_keys;
-    auto hash = concete_outcome.hash;
+    auto concrete_outcome = boost::get<iroha::consensus::VoteOther>(outcome);
+    auto public_keys = concrete_outcome.public_keys;
+    auto hash = concrete_outcome.hash;
 
     ASSERT_EQ(1, public_keys.size());
     ASSERT_EQ(actual_pubkey, public_keys.front());
