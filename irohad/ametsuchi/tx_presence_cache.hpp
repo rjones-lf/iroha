@@ -8,7 +8,7 @@
 
 #include <vector>
 
-#include "ametsuchi/tx_cache_outcome.hpp"
+#include "ametsuchi/tx_cache_response.hpp"
 
 namespace shared_model {
   namespace crypto {
@@ -32,15 +32,18 @@ namespace iroha {
        * Check transaction status by hash
        * @param hash - corresponding hash of the interested transaction
        */
-      virtual TxCacheOutcome check(
+      virtual TxCacheStatusType check(
           const shared_model::crypto::Hash &hash) const = 0;
+
+      /// response type which reflects status of each transaction in a batch
+      using BatchStatusCollectionType = std::vector<TxCacheStatusType>;
 
       /**
        * Check batch status
        * @param batch - interested batch of transactions
        * @return a collection with answers about each transaction in the batch
        */
-      virtual std::vector<TxCacheOutcome> check(
+      virtual BatchStatusCollectionType check(
           const shared_model::interface::TransactionBatch &batch) const = 0;
 
       // TODO: 09/11/2018 @muratovv add method for processing collection of
