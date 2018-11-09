@@ -29,3 +29,12 @@ target_link_libraries(ametsuchi
 target_compile_definitions(ametsuchi
     PRIVATE SOCI_USE_BOOST HAVE_BOOST
     )
+
+add_library(tx_cache
+    impl/tx_cache_outcome.cpp
+    )
+
+target_link_libraries(tx_cache
+    shared_model_cryptography_model
+    boost
+    )
