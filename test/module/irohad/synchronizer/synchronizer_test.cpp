@@ -3,8 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gmock/gmock.h>
+#include "synchronizer/impl/synchronizer_impl.hpp"
 
+#include <gmock/gmock.h>
+#include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/block.hpp"
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
@@ -13,9 +15,7 @@
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
-#include "synchronizer/impl/synchronizer_impl.hpp"
 #include "validation/chain_validator.hpp"
-#include "validators/answer.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -29,24 +29,6 @@ using ::testing::ByMove;
 using ::testing::DefaultValue;
 using ::testing::Return;
 
-class MockBlockValidator {
- public:
-  MOCK_CONST_METHOD1(
-      validate,
-      shared_model::validation::Answer(const shared_model::interface::Block &));
-};
-
-template <typename T = MockBlockValidator>
-class TemplateMockBlockValidator {
- public:
-  std::shared_ptr<T> validator;
-  TemplateMockBlockValidator() : validator(std::make_shared<T>()) {}
-  shared_model::validation::Answer validate(
-      const shared_model::interface::Block &block) const {
-    return validator->validate(block);
-  }
-};
-
 class SynchronizerTest : public ::testing::Test {
  public:
   void SetUp() override {
@@ -56,6 +38,12 @@ class SynchronizerTest : public ::testing::Test {
     consensus_gate = std::make_shared<MockConsensusGate>();
 
     commit_message = makeCommit();
+    public_keys = boost::copy_range<
+        shared_model::interface::types::PublicKeyCollectionType>(
+        commit_message->signatures()
+        | boost::adaptors::transformed(
+              [](auto &signature) { return signature.publicKey(); }));
+    hash = commit_message->hash();
 
     EXPECT_CALL(*consensus_gate, onOutcome())
         .WillOnce(Return(gate_outcome.get_observable()));
@@ -85,6 +73,8 @@ class SynchronizerTest : public ::testing::Test {
   std::shared_ptr<MockConsensusGate> consensus_gate;
 
   std::shared_ptr<shared_model::interface::Block> commit_message;
+  shared_model::interface::types::PublicKeyCollectionType public_keys;
+  shared_model::interface::types::HashType hash;
 
   rxcpp::subjects::subject<ConsensusGate::GateObject> gate_outcome;
 
@@ -158,12 +148,9 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
-  EXPECT_CALL(*chain_validator, validateAndApply(_, _))
-      .WillOnce(Return(false))
-      .WillOnce(Return(true));
+  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).WillOnce(Return(true));
   EXPECT_CALL(*block_loader, retrieveBlocks(_))
-      .Times(2)
-      .WillRepeatedly(Return(rxcpp::observable<>::just(commit_message)));
+      .WillOnce(Return(rxcpp::observable<>::just(commit_message)));
 
   auto wrapper =
       make_test_subscriber<CallExact>(synchronizer->on_commit_chain(), 1);
@@ -179,7 +166,7 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
   });
 
   gate_outcome.get_subscriber().on_next(
-      consensus::VoteOther{commit_message, consensus::Round{kHeight, 1}});
+      consensus::VoteOther{public_keys, hash, consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -212,7 +199,7 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
   wrapper.subscribe();
 
   gate_outcome.get_subscriber().on_next(
-      consensus::VoteOther{commit_message, consensus::Round{kHeight, 1}});
+      consensus::VoteOther{public_keys, hash, consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }
@@ -251,7 +238,7 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
   });
 
   gate_outcome.get_subscriber().on_next(
-      consensus::VoteOther{commit_message, consensus::Round{kHeight, 1}});
+      consensus::VoteOther{public_keys, hash, consensus::Round{kHeight, 1}});
 
   ASSERT_TRUE(wrapper.validate());
 }

@@ -23,6 +23,7 @@ target_link_libraries(test_subscriber_testing
 add_library(integration_framework
     integration_framework/integration_test_framework.cpp
     integration_framework/iroha_instance.cpp
+    common_constants.cpp
     )
 target_link_libraries(integration_framework
     application

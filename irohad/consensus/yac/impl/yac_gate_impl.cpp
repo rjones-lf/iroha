@@ -5,6 +5,7 @@
 
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 
+#include <boost/range/adaptor/transformed.hpp>
 #include "common/visitor.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/messages.hpp"
@@ -119,8 +120,16 @@ namespace iroha {
               PairValid{block, current_hash_.vote_round});
         }
         log_->info("Voted for another block, waiting for sync");
+        auto public_keys = boost::copy_range<
+            shared_model::interface::types::PublicKeyCollectionType>(
+            msg.votes | boost::adaptors::transformed([](auto &vote) {
+              return vote.signature->publicKey();
+            }));
+        auto model_hash = hash_provider_->toModelHash(hash);
         return rxcpp::observable<>::just<GateObject>(
-            VoteOther{current_block_.value(), current_hash_.vote_round});
+            VoteOther{std::move(public_keys),
+                      std::move(model_hash),
+                      current_hash_.vote_round});
       }
 
       rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::handleReject(

@@ -33,11 +33,9 @@ namespace iroha {
       log_->info("processing consensus outcome");
       visit_in_place(
           object,
-          [this](const consensus::PairValid &msg) {
-            this->processNext(msg.block, msg.round);
-          },
+          [this](const consensus::PairValid &msg) { this->processNext(msg); },
           [this](const consensus::VoteOther &msg) {
-            this->processDifferent(msg.block, msg.round);
+            this->processDifferent(msg);
           },
           [this](const consensus::ProposalReject &msg) {
             notifier_.get_subscriber().on_next(SynchronizationEvent{
@@ -63,17 +61,13 @@ namespace iroha {
     }
 
     SynchronizationEvent SynchronizerImpl::downloadMissingBlocks(
-        std::shared_ptr<shared_model::interface::Block> commit_message,
-        const consensus::Round &round,
+        const consensus::VoteOther &msg,
         std::unique_ptr<ametsuchi::MutableStorage> storage) {
-      auto hash = commit_message->hash();
-
       // while blocks are not loaded and not committed
       while (true) {
         // TODO andrei 17.10.18 IR-1763 Add delay strategy for loading blocks
-        for (const auto &peer_signature : commit_message->signatures()) {
-          auto network_chain = block_loader_->retrieveBlocks(
-              shared_model::crypto::PublicKey(peer_signature.publicKey()));
+        for (const auto &public_key : msg.public_keys) {
+          auto network_chain = block_loader_->retrieveBlocks(public_key);
 
           std::vector<std::shared_ptr<shared_model::interface::Block>> blocks;
           network_chain.as_blocking().subscribe(
@@ -86,11 +80,11 @@ namespace iroha {
           auto chain =
               rxcpp::observable<>::iterate(blocks, rxcpp::identity_immediate());
 
-          if (blocks.back()->hash() == hash
+          if (blocks.back()->hash() == msg.hash
               and validator_->validateAndApply(chain, *storage)) {
             mutable_factory_->commit(std::move(storage));
 
-            return {chain, SynchronizationOutcomeType::kCommit, round};
+            return {chain, SynchronizationOutcomeType::kCommit, msg.round};
           }
         }
       }
@@ -111,9 +105,7 @@ namespace iroha {
               ->value)};
     }
 
-    void SynchronizerImpl::processNext(
-        std::shared_ptr<shared_model::interface::Block> commit_message,
-        const consensus::Round &round) {
+    void SynchronizerImpl::processNext(const consensus::PairValid &msg) {
       log_->info("at handleNext");
       auto opt_storage = getStorage();
       if (opt_storage == boost::none) {
@@ -121,17 +113,15 @@ namespace iroha {
       }
       std::unique_ptr<ametsuchi::MutableStorage> storage =
           std::move(opt_storage.value());
-      storage->apply(*commit_message);
+      storage->apply(*msg.block);
       mutable_factory_->commit(std::move(storage));
       notifier_.get_subscriber().on_next(
-          SynchronizationEvent{rxcpp::observable<>::just(commit_message),
+          SynchronizationEvent{rxcpp::observable<>::just(msg.block),
                                SynchronizationOutcomeType::kCommit,
-                               round});
+                               msg.round});
     }
 
-    void SynchronizerImpl::processDifferent(
-        std::shared_ptr<shared_model::interface::Block> commit_message,
-        const consensus::Round &round) {
+    void SynchronizerImpl::processDifferent(const consensus::VoteOther &msg) {
       log_->info("at handleDifferent");
       auto opt_storage = getStorage();
       if (opt_storage == boost::none) {
@@ -140,7 +130,7 @@ namespace iroha {
       std::unique_ptr<ametsuchi::MutableStorage> storage =
           std::move(opt_storage.value());
       SynchronizationEvent result =
-          downloadMissingBlocks(commit_message, round, std::move(storage));
+          downloadMissingBlocks(msg, std::move(storage));
       notifier_.get_subscriber().on_next(result);
     }
 

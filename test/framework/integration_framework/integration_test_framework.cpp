@@ -20,6 +20,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "datetime/time.hpp"
+#include "framework/common_constants.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "framework/result_fixture.hpp"
@@ -30,16 +31,11 @@
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
+using namespace common_constants;
 
 static size_t kToriiPort = 11501;
 
 namespace integration_framework {
-
-  const std::string IntegrationTestFramework::kDefaultDomain = "test";
-  const std::string IntegrationTestFramework::kDefaultRole = "user";
-  const std::string IntegrationTestFramework::kAdminName = "admin";
-  const std::string IntegrationTestFramework::kAdminId = "admin@test";
-  const std::string IntegrationTestFramework::kAssetName = "coin";
 
   IntegrationTestFramework::IntegrationTestFramework(
       size_t maximum_proposal_size,
@@ -79,19 +75,21 @@ namespace integration_framework {
       auto perm = static_cast<shared_model::interface::permissions::Role>(i);
       all_perms.set(perm);
     }
-    auto genesis_tx =
-        shared_model::proto::TransactionBuilder()
-            .creatorAccountId(kAdminId)
-            .createdTime(iroha::time::now())
-            .addPeer("0.0.0.0:50541", key.publicKey())
-            .createRole(kDefaultRole, all_perms)
-            .createDomain(kDefaultDomain, kDefaultRole)
-            .createAccount(kAdminName, kDefaultDomain, key.publicKey())
-            .createAsset(kAssetName, kDefaultDomain, 1)
-            .quorum(1)
-            .build()
-            .signAndAddSignature(key)
-            .finish();
+    auto genesis_tx = shared_model::proto::TransactionBuilder()
+                          .creatorAccountId(kAdminId)
+                          .createdTime(iroha::time::now())
+                          .addPeer("0.0.0.0:50541", key.publicKey())
+                          .createRole(kAdminRole, all_perms)
+                          .createRole(kDefaultRole, {})
+                          .createDomain(kDomain, kDefaultRole)
+                          .createAccount(kAdminName, kDomain, key.publicKey())
+                          .detachRole(kAdminId, kDefaultRole)
+                          .appendRole(kAdminId, kAdminRole)
+                          .createAsset(kAssetName, kDomain, 1)
+                          .quorum(1)
+                          .build()
+                          .signAndAddSignature(key)
+                          .finish();
     auto genesis_block =
         shared_model::proto::BlockBuilder()
             .transactions(
@@ -238,7 +236,7 @@ namespace integration_framework {
     // fetch status of transaction
     getTxStatus(tx.hash(), [&validation, &bar2](auto &status) {
       // make sure that the following statuses (stateful/committed)
-      // isn't reached the bus yet
+      // haven't reached the bus yet
       bar2->wait();
 
       // check validation function
@@ -249,8 +247,18 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
       const shared_model::proto::Transaction &tx) {
-    sendTx(tx, [](const auto &) {});
+    sendTx(tx, [this](const auto &status) {
+            if (!status.errorMessage().empty()) {
+                 log_->debug("Got error while sending transaction: "
+                                + status.errorMessage());
+            }
+    });
     return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::sendTxAwait(
+      const shared_model::proto::Transaction &tx) {
+    return sendTxAwait(tx, [](const auto &) {});
   }
 
   IntegrationTestFramework &IntegrationTestFramework::sendTxAwait(
