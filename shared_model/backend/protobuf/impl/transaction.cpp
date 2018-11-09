@@ -1,0 +1,142 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include "backend/protobuf/transaction.hpp"
+
+#include <boost/range/adaptor/transformed.hpp>
+
+#include "backend/protobuf/batch_meta.hpp"
+#include "backend/protobuf/util.hpp"
+
+namespace shared_model {
+  namespace proto {
+
+    struct Transaction::Impl {
+      explicit Impl(TransportType &&ref) : proto_{std::move(ref)} {}
+
+      explicit Impl(const TransportType &ref) : proto_{ref} {}
+
+      TransportType proto_;
+
+      const iroha::protocol::Transaction::Payload &payload_{proto_->payload()};
+
+      const iroha::protocol::Transaction::Payload::ReducedPayload
+          reduced_payload_{proto_->payload().reduced_payload()};
+
+      interface::types::HashType reduced_hash_ =
+          shared_model::crypto::Sha3_256::makeHash(reduced_payload_);
+
+      const std::vector<proto::Command> commands_{[this] {
+        return std::vector<proto::Command>(reduced_payload_.commands().begin(),
+                                           reduced_payload_.commands().end());
+      }()};
+
+      const interface::types::BlobType blob_{
+          [this] { return makeBlob(*proto_); }()};
+
+      const interface::types::BlobType blob_type_payload_{
+          [this] { return makeBlob(payload_); }()};
+
+      const interface::types::BlobType blob_type_reduced_payload_{
+          [this] { return makeBlob(reduced_payload_); }()};
+
+      const boost::optional<std::shared_ptr<interface::BatchMeta>> meta_{
+          [this]() -> boost::optional<std::shared_ptr<interface::BatchMeta>> {
+            if (payload_.has_batch()) {
+              std::shared_ptr<interface::BatchMeta> b =
+                  std::make_shared<proto::BatchMeta>(payload_.batch());
+              return b;
+            }
+            return boost::none;
+          }()};
+
+      const SignatureSetType<proto::Signature> signatures_{[this] {
+        auto signatures = proto_->signatures()
+            | boost::adaptors::transformed([](const auto &x) {
+                            return proto::Signature(x);
+                          });
+        return SignatureSetType<proto::Signature>(signatures.begin(),
+                                                  signatures.end());
+      }()};
+    };
+
+    explicit Transaction::Transaction(TransportType &&transaction) {
+      impl_ = std::make_unique<Transaction::Impl>(transaction);
+    }
+
+    Transaction::Transaction(const Transaction &transaction) noexcept = default;
+
+    Transaction::Transaction(Transaction &&transaction) noexcept = default;
+
+    Transaction::~Transaction() = default;
+
+    const interface::types::AccountIdType &Transaction::creatorAccountId()
+        const {
+      return impl_->reduced_payload_.creator_account_id();
+    }
+
+    Transaction::CommandsType Transaction::commands() const {
+      return impl_->commands_;
+    }
+
+    const interface::types::BlobType &Transaction::blob() const {
+      return impl_->blob_;
+    }
+
+    const interface::types::BlobType &Transaction::payload() const {
+      return impl_->blobTypePayload_;
+    }
+
+    const interface::types::BlobType &Transaction::reducedPayload() const {
+      return impl_->blobTypeReducedPayload_;
+    }
+
+    interface::types::SignatureRangeType Transaction::signatures() const {
+      return impl_->signatures_;
+    }
+
+    const interface::types::HashType &Transaction::reducedHash() const {
+      return impl_->reduced_hash_;
+    }
+
+    bool Transaction::addSignature(const crypto::Signed &signed_blob,
+                                   const crypto::PublicKey &public_key) {
+      // if already has such signature
+      if (std::find_if(impl_->signatures_->begin(),
+                       impl_->signatures_->end(),
+                       [&public_key](const auto &signature) {
+                         return signature.publicKey() == public_key;
+                       })
+          != impl_->signatures_->end()) {
+        return false;
+      }
+
+      auto sig = impl_->proto_->add_signatures();
+      sig->set_signature(crypto::toBinaryString(signed_blob));
+      sig->set_public_key(crypto::toBinaryString(public_key));
+
+      impl_->signatures_.invalidate();
+      return true;
+    }
+
+    interface::types::TimestampType Transaction::createdTime() const {
+      return impl_->reduced_payload_.created_time();
+    }
+
+    interface::types::QuorumType Transaction::quorum() const {
+      return impl_->reduced_payload_.quorum();
+    }
+
+    boost::optional<std::shared_ptr<interface::BatchMeta>>
+    Transaction::batchMeta() const {
+      return impl_->meta_;
+    }
+
+    Transaction::ModelType *clone() const {
+      return new Transaction(impl_->proto_);
+    }
+
+  }  // namespace proto
+}  // namespace shared_model

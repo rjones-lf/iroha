@@ -7,6 +7,8 @@
 
 #include "backend/protobuf/transaction.hpp"
 
+#include "backend/protobuf/util.hpp"
+
 namespace shared_model {
   namespace proto {
     using namespace interface::types;
