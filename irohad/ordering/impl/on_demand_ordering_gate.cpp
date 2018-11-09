@@ -23,6 +23,18 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         // exclusive lock
         std::lock_guard<std::shared_timed_mutex> lock(mutex_);
 
+        visit_in_place(event,
+                       [this](const BlockEvent &block_event) {
+                         cache_->remove(block_event.batches);
+                       },
+                       [](auto &) {});
+
+        auto batches = cache_->clearFrontAndGet();
+
+        network_client_->onBatches(current_round_,
+                                   transport::OdOsNotification::CollectionType{
+                                       batches.begin(), batches.end()});
+
         cache_->up();
 
         visit_in_place(event,
@@ -58,14 +70,10 @@ void OnDemandOrderingGate::propagateBatch(
     std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
-  auto batches = cache_->clearFrontAndGet();
-  batches.insert(std::move(batch));
+  cache_->addToBack({batch});
 
-  cache_->addToBack(batches);
-
-  network_client_->onBatches(current_round_,
-                             transport::OdOsNotification::CollectionType{
-                                 batches.begin(), batches.end()});
+  network_client_->onBatches(
+      current_round_, transport::OdOsNotification::CollectionType{batch});
 }
 
 rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
