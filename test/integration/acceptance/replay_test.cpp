@@ -9,6 +9,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 #define check(i) [](auto &block) { ASSERT_EQ(block->transactions().size(), i); }
 
