@@ -44,7 +44,7 @@ namespace iroha {
        * @param proposal - object for validation
        */
       virtual void process_verified_proposal(
-          const std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>
+          const std::shared_ptr<validation::VerifiedProposalAndErrors>
               &verified_proposal_and_errors) = 0;
 
       /**
