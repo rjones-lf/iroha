@@ -80,8 +80,7 @@ class ClientServerTest : public testing::Test {
     query_executor = std::make_shared<MockQueryExecutor>();
     storage = std::make_shared<MockStorage>();
 
-    rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
-        prop_notifier;
+    rxcpp::subjects::subject<OrderingEvent> prop_notifier;
     rxcpp::subjects::subject<iroha::synchronizer::SynchronizationEvent>
         commit_notifier;
     EXPECT_CALL(*pcsMock, on_proposal())

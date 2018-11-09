@@ -3,6 +3,7 @@ add_library(simulator
     )
 
 target_link_libraries(simulator
+    consensus_round
     shared_model_interfaces
     rxcpp
     logger

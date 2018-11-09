@@ -30,9 +30,8 @@ namespace iroha {
           block_factory_(std::move(block_factory)),
           log_(logger::log("Simulator")) {
       ordering_gate->on_proposal().subscribe(
-          proposal_subscription_,
-          [this](std::shared_ptr<shared_model::interface::Proposal> proposal) {
-            this->process_proposal(*proposal);
+          proposal_subscription_, [this](const network::OrderingEvent &event) {
+            this->process_proposal(event);
           });
 
       notifier_.get_observable().subscribe(
@@ -55,8 +54,8 @@ namespace iroha {
       return notifier_.get_observable();
     }
 
-    void Simulator::process_proposal(
-        const shared_model::interface::Proposal &proposal) {
+    void Simulator::process_proposal(const network::OrderingEvent &event) {
+      const auto &proposal = **event.proposal;
       log_->info("process proposal");
 
       // Get last block from local ledger

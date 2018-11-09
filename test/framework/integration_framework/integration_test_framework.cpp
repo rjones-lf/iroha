@@ -142,18 +142,18 @@ namespace integration_framework {
                          ->on_proposal();
 
     proposals
-        .filter([](auto proposal) {
-          return boost::size(proposal->transactions()) != 0;
+        .filter([](auto event) {
+          return boost::size(event.proposal->get()->transactions()) != 0;
         })
-        .subscribe([this](auto proposal) {
-          proposal_queue_.push(proposal);
+        .subscribe([this](auto event) {
+          proposal_queue_.push(*event.proposal);
           log_->info("proposal");
           queue_cond.notify_all();
         });
 
     auto proposal_flat_map =
         [](auto t) -> rxcpp::observable<std::tuple_element_t<0, decltype(t)>> {
-      if (boost::size(std::get<1>(t)->transactions()) != 0) {
+      if (boost::size(std::get<1>(t).proposal->get()->transactions()) != 0) {
         return rxcpp::observable<>::just(std::get<0>(t));
       }
       return rxcpp::observable<>::empty<std::tuple_element_t<0, decltype(t)>>();
@@ -248,10 +248,10 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
       const shared_model::proto::Transaction &tx) {
     sendTx(tx, [this](const auto &status) {
-            if (!status.errorMessage().empty()) {
-                 log_->debug("Got error while sending transaction: "
-                                + status.errorMessage());
-            }
+      if (!status.errorMessage().empty()) {
+        log_->debug("Got error while sending transaction: "
+                    + status.errorMessage());
+      }
     });
     return *this;
   }

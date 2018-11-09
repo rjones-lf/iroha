@@ -47,14 +47,18 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         ordering_service_->onCollaborationOutcome(current_round_);
 
         // request proposal for the current round
-        auto proposal = network_client_->onRequestProposal(current_round_);
+        std::shared_ptr<shared_model::interface::Proposal> proposal =
+            network_client_->onRequestProposal(current_round_)
+                .value_or_eval([&] {
+                  return proposal_factory_->unsafeCreateProposal(
+                      current_round_.block_round,
+                      current_round_.reject_round,
+                      {});
+                });
 
         // vote for the object received from the network
         proposal_notifier_.get_subscriber().on_next(
-            std::move(proposal).value_or_eval([&] {
-              return proposal_factory_->unsafeCreateProposal(
-                  current_round_.block_round, current_round_.reject_round, {});
-            }));
+            network::OrderingEvent{proposal, current_round_});
       })),
       proposal_factory_(std::move(factory)),
       current_round_(initial_round) {}
@@ -66,8 +70,7 @@ void OnDemandOrderingGate::propagateBatch(
   network_client_->onBatches(current_round_, {batch});
 }
 
-rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
-OnDemandOrderingGate::on_proposal() {
+rxcpp::observable<network::OrderingEvent> OnDemandOrderingGate::on_proposal() {
   return proposal_notifier_.get_observable();
 }
 

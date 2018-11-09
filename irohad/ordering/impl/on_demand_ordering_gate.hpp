@@ -51,8 +51,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)
           const override;
 
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
-      on_proposal() override;
+      rxcpp::observable<network::OrderingEvent> on_proposal() override;
 
       [[deprecated("Use ctor")]] void setPcs(
           const iroha::network::PeerCommunicationService &pcs) override;
@@ -66,9 +65,7 @@ namespace iroha {
           proposal_factory_;
 
       consensus::Round current_round_;
-      rxcpp::subjects::subject<
-          std::shared_ptr<shared_model::interface::Proposal>>
-          proposal_notifier_;
+      rxcpp::subjects::subject<network::OrderingEvent> proposal_notifier_;
       mutable std::shared_timed_mutex mutex_;
     };
 

@@ -234,9 +234,9 @@ TEST_F(QueueBehaviorTest, ReceiveUnordered) {
   pushCommit(3);
 
   ASSERT_EQ(3, messages.size());
-  ASSERT_EQ(2, messages.at(0)->height());
-  ASSERT_EQ(3, messages.at(1)->height());
-  ASSERT_EQ(4, messages.at(2)->height());
+  ASSERT_EQ(2, messages.at(0).proposal->get()->height());
+  ASSERT_EQ(3, messages.at(1).proposal->get()->height());
+  ASSERT_EQ(4, messages.at(2).proposal->get()->height());
 }
 
 /**
@@ -256,8 +256,8 @@ TEST_F(QueueBehaviorTest, DiscardOldProposals) {
 
   // proposals 2 and 3 must not be forwarded down the pipeline.
   EXPECT_EQ(2, messages.size());
-  ASSERT_EQ(2, messages.at(0)->height());
-  ASSERT_EQ(5, messages.at(1)->height());
+  ASSERT_EQ(2, messages.at(0).proposal->get()->height());
+  ASSERT_EQ(5, messages.at(1).proposal->get()->height());
 }
 
 /**
@@ -275,13 +275,13 @@ TEST_F(QueueBehaviorTest, KeepNewerProposals) {
 
   // proposal 3 must  be forwarded down the pipeline, 4 kept in queue.
   EXPECT_EQ(2, messages.size());
-  EXPECT_EQ(2, messages.at(0)->height());
-  EXPECT_EQ(3, messages.at(1)->height());
+  EXPECT_EQ(2, messages.at(0).proposal->get()->height());
+  EXPECT_EQ(3, messages.at(1).proposal->get()->height());
 
   pushCommit(3);
   // Now proposal 4 is forwarded to the pipeline
   EXPECT_EQ(3, messages.size());
-  EXPECT_EQ(4, messages.at(2)->height());
+  EXPECT_EQ(4, messages.at(2).proposal->get()->height());
 }
 
 /**
@@ -307,7 +307,7 @@ TEST_F(QueueBehaviorTest, CommitBeforeProposal) {
   pushProposal(6);
 
   EXPECT_EQ(1, messages.size());
-  EXPECT_EQ(5, messages.at(0)->height());
+  EXPECT_EQ(5, messages.at(0).proposal->get()->height());
 }
 
 /**
@@ -324,5 +324,5 @@ TEST_F(QueueBehaviorTest, CommitNewerThanAllProposals) {
 
   pushCommit(4);
   EXPECT_EQ(1, messages.size());
-  EXPECT_EQ(2, messages.at(0)->height());
+  EXPECT_EQ(2, messages.at(0).proposal->get()->height());
 }
