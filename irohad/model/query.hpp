@@ -19,7 +19,8 @@
 #define IROHA_QUERY_HPP
 
 #include <string>
-#include "common/types.hpp"
+
+#include "datetime/time.hpp"
 #include "model/signature.hpp"
 
 namespace iroha {

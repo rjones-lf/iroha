@@ -18,7 +18,7 @@ add_library(ametsuchi
 target_link_libraries(ametsuchi
     logger
     rxcpp
-    libs_common
+    libs_files
     common
     shared_model_interfaces
     shared_model_stateless_validation

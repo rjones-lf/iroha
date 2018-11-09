@@ -37,6 +37,7 @@ add_library(yac
     )
 target_link_libraries(yac
     supermajority_check
+    common
     rxcpp
     logger
     hash

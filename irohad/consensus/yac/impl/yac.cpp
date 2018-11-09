@@ -19,7 +19,7 @@
 
 #include <utility>
 
-#include "common/types.hpp"
+#include "common/bind.hpp"
 #include "common/visitor.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"

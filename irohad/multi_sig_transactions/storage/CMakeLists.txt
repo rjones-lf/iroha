@@ -8,4 +8,5 @@ add_library(mst_storage
 
 target_link_libraries(mst_storage
     mst_state
+    logger
     )
