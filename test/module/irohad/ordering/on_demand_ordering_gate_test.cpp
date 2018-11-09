@@ -10,6 +10,7 @@
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -42,7 +43,7 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
   MockUnsafeProposalFactory *factory;
   std::shared_ptr<OnDemandOrderingGate> ordering_gate;
 
-  const consensus::Round initial_round = {2, 1};
+  const consensus::Round initial_round = {2, kFirstRejectRound};
 };
 
 /**
@@ -69,7 +70,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
   auto block = std::make_shared<MockBlock>();
   EXPECT_CALL(*block, height()).WillRepeatedly(Return(3));
   OnDemandOrderingGate::BlockEvent event = {block};
-  consensus::Round round{event->height() + 1, 1};
+  consensus::Round round{event->height() + 1, kFirstRejectRound};
 
   boost::optional<OdOsNotification::ProposalType> oproposal(nullptr);
   auto proposal = oproposal.value().get();
@@ -125,7 +126,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
   auto block = std::make_shared<MockBlock>();
   EXPECT_CALL(*block, height()).WillRepeatedly(Return(3));
   OnDemandOrderingGate::BlockEvent event = {block};
-  consensus::Round round{event->height() + 1, 1};
+  consensus::Round round{event->height() + 1, kFirstRejectRound};
 
   boost::optional<OdOsNotification::ProposalType> oproposal;
 

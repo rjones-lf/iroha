@@ -14,13 +14,9 @@
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 
 using namespace iroha::ordering;
-
-/**
- * First round after successful committing block
- */
-const iroha::consensus::RejectRoundType kFirstRound = 1;
 
 OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
     size_t transaction_limit,
@@ -151,20 +147,20 @@ void OnDemandOrderingServiceImpl::packNextProposals(
   // close next reject round
   close_round({round.block_round, round.reject_round + 1});
 
-  if (round.reject_round == kFirstRound) {
+  if (round.reject_round == kFirstRejectRound) {
     // new block round
     close_round({round.block_round + 1, round.reject_round});
 
     // remove current queues
     current_proposals_.clear();
     // initialize the 3 diagonal rounds from the commit case diagram
-    for (uint32_t i = 0; i <= 2; ++i) {
-      open_round({round.block_round + i, round.reject_round + 2 - i});
-    }
-  } else {
-    // new reject round
-    open_round({round.block_round, round.reject_round + 2});
+    open_round({round.block_round + 1, kNextRejectRoundConsumer});
+    open_round({round.block_round + 2, kNextCommitRoundConsumer});
   }
+
+  // new reject round
+  open_round(
+      {round.block_round, currentRejectRoundConsumer(round.reject_round)});
 }
 
 OnDemandOrderingServiceImpl::ProposalType

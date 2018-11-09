@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 #include "backend/protobuf/proposal.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"

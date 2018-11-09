@@ -20,7 +20,7 @@ namespace iroha {
         : supermajority_checker_(supermajority_checker),
           log_(logger::log("ChainValidator")) {}
 
-    bool ChainValidatorImpl::validateChain(
+    bool ChainValidatorImpl::validateAndApply(
         rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
             blocks,
         ametsuchi::MutableStorage &storage) const {

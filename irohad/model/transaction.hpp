@@ -18,12 +18,14 @@
 #ifndef IROHA_TRANSACTION_HPP
 #define IROHA_TRANSACTION_HPP
 
-#include <common/types.hpp>
 #include <memory>
-#include <model/command.hpp>
-#include <model/signature.hpp>
 #include <string>
 #include <vector>
+
+#include "crypto/hash_types.hpp"
+#include "datetime/time.hpp"
+#include "model/command.hpp"
+#include "model/signature.hpp"
 
 namespace iroha {
   namespace model {

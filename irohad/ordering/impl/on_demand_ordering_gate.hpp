@@ -47,13 +47,6 @@ namespace iroha {
               factory,
           consensus::Round initial_round);
 
-      OnDemandOrderingGate(
-          std::shared_ptr<OnDemandOrderingService> ordering_service,
-          std::shared_ptr<transport::OdOsNotification> network_client,
-          rxcpp::observable<BlockRoundEventType> events,
-          std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
-              factory);
-
       void propagateBatch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)
           const override;
