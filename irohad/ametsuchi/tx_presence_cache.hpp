@@ -30,7 +30,6 @@ namespace iroha {
      public:
       /**
        * Check transaction status by hash
-       * @param hash - corresponding hash of the interested transaction
        */
       virtual TxCacheStatusType check(
           const shared_model::crypto::Hash &hash) const = 0;
@@ -40,7 +39,6 @@ namespace iroha {
 
       /**
        * Check batch status
-       * @param batch - interested batch of transactions
        * @return a collection with answers about each transaction in the batch
        */
       virtual BatchStatusCollectionType check(

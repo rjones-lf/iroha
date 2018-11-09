@@ -27,7 +27,7 @@ namespace iroha {
       };
     }  // namespace TxCacheResponseDetails
 
-    /// namespace contains
+    /// The namespace contains concrete result types of transaction cache
     namespace TxCacheStatusResponses {
       /**
        * The class means that corresponding transaction was successfully
