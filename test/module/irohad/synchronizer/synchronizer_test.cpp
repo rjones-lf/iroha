@@ -6,6 +6,7 @@
 #include "synchronizer/impl/synchronizer_impl.hpp"
 
 #include <gmock/gmock.h>
+#include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/block.hpp"
 #include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
@@ -37,14 +38,11 @@ class SynchronizerTest : public ::testing::Test {
     consensus_gate = std::make_shared<MockConsensusGate>();
 
     commit_message = makeCommit();
-    public_keys = std::accumulate(
-        std::begin(commit_message->signatures()),
-        std::end(commit_message->signatures()),
-        shared_model::interface::types::PublicKeyCollectionType{},
-        [](auto &acc, const auto &signature) {
-          acc.push_back(signature.publicKey());
-          return acc;
-        });
+    public_keys = boost::copy_range<
+        shared_model::interface::types::PublicKeyCollectionType>(
+        commit_message->signatures()
+        | boost::adaptors::transformed(
+              [](auto &signature) { return signature.publicKey(); }));
     hash = commit_message->hash();
 
     EXPECT_CALL(*consensus_gate, onOutcome())
