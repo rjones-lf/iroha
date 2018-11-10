@@ -23,6 +23,7 @@ using ::testing::ByMove;
 using ::testing::Return;
 using ::testing::Truly;
 using ::testing::UnorderedElementsAre;
+using ::testing::UnorderedElementsAreArray;
 using namespace framework::batch;
 
 class OnDemandOrderingGateTest : public ::testing::Test {
@@ -63,6 +64,7 @@ TEST_F(OnDemandOrderingGateTest, propagateBatch) {
   auto batch = createMockBatchWithHash(hash1);
   OdOsNotification::CollectionType collection{batch};
 
+  EXPECT_CALL(*cache, addToBack(UnorderedElementsAre(batch))).Times(1);
   EXPECT_CALL(*notification, onBatches(initial_round, collection)).Times(1);
 
   ordering_gate->propagateBatch(batch);
@@ -184,10 +186,11 @@ TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
 
 /**
  * @given initialized ordering gate
- * @when batch1 is propagated to ordering gate while cache contains batch2
- * @then all transactions from batch1 and batch2 are propagated to network
+ * @when block event with no batches is emitted @and cache contains batch1 and
+ * batch2 on the head
+ * @then batch1 and batch2 are propagated to network
  */
-TEST_F(OnDemandOrderingGateTest, SendBatchWithBatchesFromTheCache) {
+TEST_F(OnDemandOrderingGateTest, SendBatchesFromTheCache) {
   // prepare hashes for mock batches
   shared_model::interface::types::HashType hash1("hash1");
   shared_model::interface::types::HashType hash2("hash2");
@@ -196,15 +199,18 @@ TEST_F(OnDemandOrderingGateTest, SendBatchWithBatchesFromTheCache) {
   auto batch1 = createMockBatchWithHash(hash1);
   auto batch2 = createMockBatchWithHash(hash2);
 
-  OdOsNotification::CollectionType collection{batch1, batch2};
+  cache::OrderingGateCache::BatchesSetType collection{batch1, batch2};
 
-  EXPECT_CALL(*notification, onBatches(initial_round, collection)).Times(1);
+  EXPECT_CALL(*cache, pop()).WillOnce(Return(collection));
 
-  EXPECT_CALL(*cache, addToBack(UnorderedElementsAre(batch1, batch2))).Times(1);
-  EXPECT_CALL(*cache, clearFrontAndGet())
-      .WillOnce(Return(cache::OrderingGateCache::BatchesSetType{batch2}));
+  EXPECT_CALL(*cache, addToBack(UnorderedElementsAreArray(collection)))
+      .Times(1);
+  EXPECT_CALL(*notification,
+              onBatches(initial_round, UnorderedElementsAreArray(collection)))
+      .Times(1);
 
-  ordering_gate->propagateBatch(batch1);
+  rounds.get_subscriber().on_next(
+      OnDemandOrderingGate::BlockEvent{initial_round, {}});
 }
 
 /**
@@ -221,7 +227,7 @@ TEST_F(OnDemandOrderingGateTest, BatchesRemoveFromCache) {
   auto batch1 = createMockBatchWithHash(hash1);
   auto batch2 = createMockBatchWithHash(hash2);
 
-  EXPECT_CALL(*cache, up()).Times(1);
+  EXPECT_CALL(*cache, pop()).Times(1);
   EXPECT_CALL(*cache, remove(UnorderedElementsAre(batch1, batch2))).Times(1);
 
   rounds.get_subscriber().on_next(

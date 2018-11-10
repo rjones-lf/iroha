@@ -25,20 +25,6 @@ OnDemandOrderingGate::OnDemandOrderingGate(
 
         visit_in_place(event,
                        [this](const BlockEvent &block_event) {
-                         cache_->remove(block_event.batches);
-                       },
-                       [](auto &) {});
-
-        auto batches = cache_->clearFrontAndGet();
-
-        network_client_->onBatches(current_round_,
-                                   transport::OdOsNotification::CollectionType{
-                                       batches.begin(), batches.end()});
-
-        cache_->up();
-
-        visit_in_place(event,
-                       [this](const BlockEvent &block_event) {
                          // block committed, increment block round
                          current_round_ = block_event.round;
                          cache_->remove(block_event.batches);
@@ -48,6 +34,13 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                          current_round_ = {current_round_.block_round,
                                            current_round_.reject_round + 1};
                        });
+
+        auto batches = cache_->pop();
+
+        cache_->addToBack(batches);
+        network_client_->onBatches(current_round_,
+                                   transport::OdOsNotification::CollectionType{
+                                       batches.begin(), batches.end()});
 
         // notify our ordering service about new round
         ordering_service_->onCollaborationOutcome(current_round_);
@@ -71,7 +64,6 @@ void OnDemandOrderingGate::propagateBatch(
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
   cache_->addToBack({batch});
-
   network_client_->onBatches(
       current_round_, transport::OdOsNotification::CollectionType{batch});
 }

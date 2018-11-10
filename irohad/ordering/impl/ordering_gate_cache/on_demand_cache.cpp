@@ -13,27 +13,20 @@ void OnDemandCache::addToBack(
   queue_.back().insert(batches.begin(), batches.end());
 }
 
-OrderingGateCache::BatchesSetType OnDemandCache::clearFrontAndGet() {
-  std::unique_lock<std::shared_timed_mutex> lock(mutex_);
-  auto front = queue_.front();
-  queue_.front().clear();
-  return front;
-}
-
 void OnDemandCache::remove(
     const OrderingGateCache::BatchesSetType &remove_batches) {
   std::unique_lock<std::shared_timed_mutex> lock(mutex_);
-  auto &front = queue_.front();
-
-  for (auto batch : remove_batches) {
-    front.erase(batch);
+  for (auto &batches : queue_) {
+    for (const auto &removed_batch : remove_batches) {
+      batches.erase(removed_batch);
+    };
   }
 }
-void OnDemandCache::up() {
-  std::unique_lock<std::shared_timed_mutex> lock(mutex_);
-  auto popped = queue_.front();
-  queue_.push(OrderingGateCache::BatchesSetType{});
-  queue_.front().insert(popped.begin(), popped.end());
+
+OrderingGateCache::BatchesSetType OnDemandCache::pop() {
+  auto res = queue_.front();
+  queue_.push_back(BatchesSetType{});
+  return res;
 }
 
 const OrderingGateCache::BatchesSetType &OnDemandCache::head() const {

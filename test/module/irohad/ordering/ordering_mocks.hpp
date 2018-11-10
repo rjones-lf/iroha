@@ -34,8 +34,7 @@ namespace iroha {
     namespace cache {
       struct MockOrderingGateCache : public OrderingGateCache {
         MOCK_METHOD1(addToBack, void(const BatchesSetType &batches));
-        MOCK_METHOD0(up, void());
-        MOCK_METHOD0(clearFrontAndGet, BatchesSetType());
+        MOCK_METHOD0(pop, BatchesSetType());
         MOCK_METHOD1(remove, void(const BatchesSetType &batches));
         MOCK_CONST_METHOD0(head, const BatchesSetType &());
         MOCK_CONST_METHOD0(tail, const BatchesSetType &());

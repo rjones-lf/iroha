@@ -49,25 +49,10 @@ namespace iroha {
         virtual void addToBack(const BatchesSetType &batches) = 0;
 
         /**
-         * Shifts all batches from the queue towards the head. Batches from the
-         * middle of the queue are concatenated with the head batches. Example:
-         *
-         * HEAD:    {a,b,c}      {a,b,c,d,e}
-         * MIDDLE:  {d,e}  up=>  {f,g}
-         * TAIL:    {f,g}        {}
+         * Pops the head batches
+         * @return batches from the head
          */
-        virtual void up() = 0;
-
-        /**
-         * Return all batches from the head and clean the head. Example:
-         *
-         * HEAD:    {a,b,c}                     {}
-         * MIDDLE:  {d,e}   clearFrontAndGet => {d,e}
-         * TAIL:    {f,g}                       {f,g}
-         * result == {a,b,c}
-         *
-         */
-        virtual BatchesSetType clearFrontAndGet() = 0;
+        virtual BatchesSetType pop() = 0;
 
         /**
          * Remove provided batches from the head of the queue

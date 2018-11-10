@@ -8,7 +8,6 @@
 #include <gtest/gtest.h>
 
 #include "framework/batch_helper.hpp"
-#include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha::ordering::cache;
 using ::testing::ByMove;
@@ -21,7 +20,7 @@ using ::testing::UnorderedElementsAre;
 using namespace framework::batch;
 
 /**
- * @given empty og cache
+ * @given empty cache
  * @when add to back is invoked with batch1 and batch2
  * @then back of the cache consists has batch1 and batch2
  */
@@ -40,41 +39,13 @@ TEST(OnDemandCacheTest, TestAddToBack) {
 }
 
 /**
- * @given og cache with single batch in the tail
- * @when up is invoked twice
- * @then that batch is moved to the head of the cache
+ * @given cache with batch1 in the head, batch2 in the middle and batch3 in the
+ * tail
+ * @when pop is invoked 4 times
+ * @then first three times batch1, batch2 and batch3 will be returned
+ * correspondingly and no batch will be returned 4th time
  */
-TEST(OnDemandCacheTest, TestUp) {
-  OnDemandCache cache;
-
-  shared_model::interface::types::HashType hash1("hash1");
-  auto batch1 = createMockBatchWithHash(hash1);
-
-  cache.addToBack({batch1});
-  /**
-   * 1.
-   * 2.
-   * 3. {batch1}
-   */
-  ASSERT_THAT(cache.tail(), ElementsAre(batch1));
-
-  cache.up();
-  cache.up();
-  /**
-   * 1. {batch1}
-   * 2.
-   * 3.
-   */
-  ASSERT_THAT(cache.tail(), IsEmpty());
-  ASSERT_THAT(cache.head(), ElementsAre(batch1));
-}
-
-/**
- * @given og cache with single batch in each cell
- * @when up is invoked three times
- * @then all batches appear on the head of the queue
- */
-TEST(OnDemandCacheTest, TestUpAndMerge) {
+TEST(OnDemandCache, Pop) {
   OnDemandCache cache;
 
   shared_model::interface::types::HashType hash1("hash1");
@@ -86,85 +57,50 @@ TEST(OnDemandCacheTest, TestUpAndMerge) {
   auto batch3 = createMockBatchWithHash(hash3);
 
   cache.addToBack({batch1});
-  cache.up();
   /**
-   * 1.
-   * 2. {batch1}
-   * 3.
-   */
-  ASSERT_THAT(cache.head(), IsEmpty());
-  ASSERT_THAT(cache.tail(), IsEmpty());
-
-  cache.addToBack({batch2});
-  cache.up();
-  /**
-   * 1. {batch1}
-   * 2. {batch2}
-   * 3.
-   */
-  ASSERT_THAT(cache.head(), ElementsAre(batch1));
-  ASSERT_THAT(cache.tail(), IsEmpty());
-
-  cache.addToBack({batch3});
-  cache.up();
-  /**
-   * 1. {batch1, batch2}
-   * 2. {batch3}
-   * 3.
-   */
-  ASSERT_THAT(cache.head(), UnorderedElementsAre(batch1, batch2));
-  ASSERT_THAT(cache.tail(), IsEmpty());
-
-  cache.up();
-  /**
-   * 1. {batch1, batch2, batch3}
-   * 2.
-   * 3.
-   */
-  ASSERT_THAT(cache.head(), UnorderedElementsAre(batch1, batch2, batch3));
-  ASSERT_THAT(cache.tail(), IsEmpty());
-}
-
-/**
- * @given og cache with batch on the top
- * @when clearFrontAndGet is invoked on that cache
- * @then result contains that batch AND batch is removed from the front
- */
-TEST(OnDemandCache, TestClearFrontAndGet) {
-  OnDemandCache cache;
-
-  shared_model::interface::types::HashType hash("hash");
-  auto batch1 = createMockBatchWithHash(hash);
-
-  cache.addToBack({batch1});
-  ASSERT_THAT(cache.tail(), ElementsAre(batch1));
-  /**
-   * 1.
-   * 2.
+   * 1. {} <- will be popped
+   * 2. {}
    * 3. {batch1}
    */
+  ASSERT_THAT(cache.pop(), IsEmpty());
 
-  // put {batch1} on the top
-  cache.up();
-  cache.up();
+  cache.addToBack({batch2});
   /**
-   * 1. {batch1}
-   * 2.
-   * 3.
+   * 1. {} <- will be popped
+   * 2. {batch1}
+   * 3. {batch2}
    */
+  ASSERT_THAT(cache.pop(), IsEmpty());
 
-  // check that we have {batch1} on the top
-  ASSERT_EQ(cache.head().size(), 1);
-  ASSERT_THAT(cache.head(), ElementsAre(batch1));
+  cache.addToBack({batch3});
 
-  auto batchFromTop = cache.clearFrontAndGet();
   /**
-   * 1.
-   * 2.
-   * 3.
+   * 1. {batch1} <- will be popped
+   * 2. {batch2}
+   * 3. {batch3}
    */
-  ASSERT_THAT(batchFromTop, ElementsAre(batch1));
-  ASSERT_THAT(cache.head(), IsEmpty());
+  ASSERT_THAT(cache.pop(), ElementsAre(batch1));
+
+  /**
+   * 1. {batch2} <- will be popped
+   * 2. {batch3}
+   * 3. {}
+   */
+  ASSERT_THAT(cache.pop(), ElementsAre(batch2));
+
+  /**
+   * 1. {batch3} <- will be popped
+   * 2. {}
+   * 3. {}
+   */
+  ASSERT_THAT(cache.pop(), ElementsAre(batch3));
+
+  /**
+   * 1. {} <- will be popped
+   * 2. {}
+   * 3. {}
+   */
+  ASSERT_THAT(cache.pop(), IsEmpty());
 }
 
 /**
@@ -184,8 +120,8 @@ TEST(OnDemandCache, Remove) {
   auto batch3 = createMockBatchWithHash(hash3);
 
   cache.addToBack({batch1, batch2, batch3});
-  cache.up();
-  cache.up();
+  cache.pop();
+  cache.pop();
   /**
    * 1. {batch1, batch2, batch3}
    * 2.

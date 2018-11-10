@@ -20,9 +20,7 @@ namespace iroha {
        public:
         void addToBack(const BatchesSetType &batches) override;
 
-        BatchesSetType clearFrontAndGet() override;
-
-        void up() override;
+        BatchesSetType pop() override;
 
         void remove(const BatchesSetType &batches) override;
 
@@ -32,10 +30,8 @@ namespace iroha {
 
        private:
         mutable std::shared_timed_mutex mutex_;
-        using BatchesQueueType =
-            std::queue<BatchesSetType, boost::circular_buffer<BatchesSetType>>;
-        BatchesQueueType queue_{
-            boost::circular_buffer<BatchesSetType>(3, BatchesSetType{})};
+        using BatchesQueueType = boost::circular_buffer<BatchesSetType>;
+        BatchesQueueType queue_{3, BatchesSetType{}};
       };
 
     }  // namespace cache
