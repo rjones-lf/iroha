@@ -33,8 +33,12 @@ namespace iroha {
                    + integration_framework::getPostgresCredsOrDefault()) {}
 
      protected:
+      bool initialised = false;
+
       virtual void disconnect() {
         sql->close();
+        storage->dropStorage();
+        boost::filesystem::remove_all(block_store_path);
       }
 
       virtual void connect() {
@@ -54,16 +58,16 @@ namespace iroha {
       }
 
       void SetUp() override {
-        ASSERT_FALSE(boost::filesystem::exists(block_store_path))
-            << "Temporary block store " << block_store_path
-            << " directory already exists";
-        connect();
+        if (not initialised) {
+          ASSERT_FALSE(boost::filesystem::exists(block_store_path))
+              << "Temporary block store " << block_store_path
+              << " directory already exists";
+          connect();
+        }
       }
 
       void TearDown() override {
-        sql->close();
-        storage->dropStorage();
-        boost::filesystem::remove_all(block_store_path);
+        storage->reset();
       }
 
       std::shared_ptr<soci::session> sql;
