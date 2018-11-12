@@ -115,7 +115,10 @@ class ToriiServiceTest : public testing::Test {
     auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
     auto tx_processor =
         std::make_shared<iroha::torii::TransactionProcessorImpl>(
-            pcsMock, mst, status_bus);
+            pcsMock,
+            mst,
+            status_bus,
+            std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
 
     EXPECT_CALL(*block_query, getTxByHashSync(_))
         .WillRepeatedly(Return(boost::none));

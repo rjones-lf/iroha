@@ -67,7 +67,7 @@ namespace shared_model {
        */
       virtual const ResponseVariantType &get() const = 0;
 
-      /// Type of stateless validation error or of command name, which failed
+      /// Type of stateless validation error or command name, which failed
       /// validation
       using StatelessErrorOrFailedCommandNameType = std::string;
       /**

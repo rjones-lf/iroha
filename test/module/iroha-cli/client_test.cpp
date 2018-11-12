@@ -105,7 +105,10 @@ class ClientServerTest : public testing::Test {
     auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
     auto tx_processor =
         std::make_shared<iroha::torii::TransactionProcessorImpl>(
-            pcsMock, mst, status_bus);
+            pcsMock,
+            mst,
+            status_bus,
+            std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
 
     auto pb_tx_factory =
         std::make_shared<iroha::model::converters::PbTransactionFactory>();

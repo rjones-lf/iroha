@@ -99,7 +99,9 @@ namespace torii {
                 [&](const iroha::expected::Error<TransportFactoryType::Error>
                         &error) {
                   status_bus_->publish(status_factory_->makeStatelessFail(
-                      error.error.hash, error.error.error, 0, 0));
+                      error.error.hash,
+                      shared_model::interface::TxStatusFactory::
+                          TransactionError{error.error.error, 0, 0}));
                   return false;
                 });
           })
@@ -139,7 +141,9 @@ namespace torii {
             std::for_each(
                 hashes.begin(), hashes.end(), [this, &error_msg](auto &hash) {
                   status_bus_->publish(status_factory_->makeStatelessFail(
-                      hash, error_msg, 0, 0));
+                      hash,
+                      shared_model::interface::TxStatusFactory::
+                          TransactionError{error_msg, 0, 0}));
                 });
           });
     }

@@ -39,78 +39,77 @@ namespace shared_model {
       /// TransactionResponse instance
       using ErrorCodeType = TransactionResponse::ErrorCodeType;
 
+      /// represents transaction error, empty or not
+      struct TransactionError {
+        std::decay_t<StatelessErrorOrFailedCommandNameType> cmd_name_;
+        FailedCommandIndexType cmd_index_;
+        ErrorCodeType error_code_;
+
+        TransactionError() : cmd_name_{""}, cmd_index_{0}, error_code_{0} {}
+        TransactionError(StatelessErrorOrFailedCommandNameType cmd_name,
+                         FailedCommandIndexType cmd_index,
+                         ErrorCodeType error_code)
+            : cmd_name_{cmd_name},
+              cmd_index_{cmd_index},
+              error_code_{error_code} {}
+      };
+
       // ------------------------| Stateless statuses |-------------------------
 
-      /**
-       * Creates stateless failed transaction status
-       * @param
-       */
+      /// Creates stateless failed transaction status
       virtual FactoryReturnType makeStatelessFail(
           TransactionHashType,
-          StatelessErrorOrFailedCommandNameType,
-          FailedCommandIndexType,
-          ErrorCodeType) = 0;
+          TransactionError tx_error = TransactionError()) = 0;
 
       /// Creates stateless valid transaction status
       virtual FactoryReturnType makeStatelessValid(
           TransactionHashType,
-          StatelessErrorOrFailedCommandNameType,
-          FailedCommandIndexType,
-          ErrorCodeType) = 0;
+          TransactionError tx_error = TransactionError()) = 0;
 
       // ------------------------| Stateful statuses |--------------------------
 
       /// Creates stateful failed transaction status
       virtual FactoryReturnType makeStatefulFail(
           TransactionHashType,
-          StatelessErrorOrFailedCommandNameType,
-          FailedCommandIndexType,
-          ErrorCodeType) = 0;
+          TransactionError tx_error = TransactionError()) = 0;
       /// Creates stateful valid transaction status
       virtual FactoryReturnType makeStatefulValid(
           TransactionHashType,
-          StatelessErrorOrFailedCommandNameType,
-          FailedCommandIndexType,
-          ErrorCodeType) = 0;
+          TransactionError tx_error = TransactionError()) = 0;
 
       // --------------------------| Final statuses |---------------------------
 
       /// Creates committed transaction status
       virtual FactoryReturnType makeCommitted(
           TransactionHashType,
-          StatelessErrorOrFailedCommandNameType,
-          FailedCommandIndexType,
-          ErrorCodeType) = 0;
+          TransactionError tx_error = TransactionError()) = 0;
 
       /// Creates rejected transaction status
       virtual FactoryReturnType makeRejected(
           TransactionHashType,
-          StatelessErrorOrFailedCommandNameType,
-          FailedCommandIndexType,
-          ErrorCodeType) = 0;
+          TransactionError tx_error = TransactionError()) = 0;
 
       // --------------------------| Rest statuses |----------------------------
 
       /// Creates transaction expired status
       virtual FactoryReturnType makeMstExpired(
           TransactionHashType,
-          StatelessErrorOrFailedCommandNameType,
-          FailedCommandIndexType,
-          ErrorCodeType) = 0;
+          TransactionError tx_error = TransactionError()) = 0;
+
+      /// Creates transaction pending status
+      virtual FactoryReturnType makeMstPending(
+          TransactionHashType ,
+          TransactionError tx_error = TransactionError()) = 0;
 
       /// Creates transaction is not received status
       virtual FactoryReturnType makeNotReceived(
           TransactionHashType,
-          StatelessErrorOrFailedCommandNameType,
-          FailedCommandIndexType,
-          ErrorCodeType) = 0;
+          TransactionError tx_error = TransactionError()) = 0;
 
       /// Creates status which shows that enough signatures were collected
       virtual FactoryReturnType makeEnoughSignaturesCollected(
           TransactionHashType,
-          StatelessErrorOrFailedCommandNameType,
-          FailedCommandIndexType,
-          ErrorCodeType) = 0;
+          TransactionError tx_error = TransactionError()) = 0;
 
       virtual ~TxStatusFactory() = default;
     };
