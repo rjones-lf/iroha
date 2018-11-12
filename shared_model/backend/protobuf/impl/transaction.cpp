@@ -8,7 +8,10 @@
 #include <boost/range/adaptor/transformed.hpp>
 
 #include "backend/protobuf/batch_meta.hpp"
+#include "backend/protobuf/commands/proto_command.hpp"
+#include "backend/protobuf/common_objects/signature.hpp"
 #include "backend/protobuf/util.hpp"
+#include "utils/reference_holder.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -18,20 +21,12 @@ namespace shared_model {
 
       explicit Impl(const TransportType &ref) : proto_{ref} {}
 
-      TransportType proto_;
+      detail::ReferenceHolder<TransportType> proto_;
 
       const iroha::protocol::Transaction::Payload &payload_{proto_->payload()};
 
       const iroha::protocol::Transaction::Payload::ReducedPayload
           reduced_payload_{proto_->payload().reduced_payload()};
-
-      interface::types::HashType reduced_hash_ =
-          shared_model::crypto::Sha3_256::makeHash(reduced_payload_);
-
-      const std::vector<proto::Command> commands_{[this] {
-        return std::vector<proto::Command>(reduced_payload_.commands().begin(),
-                                           reduced_payload_.commands().end());
-      }()};
 
       const interface::types::BlobType blob_{
           [this] { return makeBlob(*proto_); }()};
@@ -41,6 +36,14 @@ namespace shared_model {
 
       const interface::types::BlobType blob_type_reduced_payload_{
           [this] { return makeBlob(reduced_payload_); }()};
+
+      interface::types::HashType reduced_hash_ =
+          shared_model::crypto::Sha3_256::makeHash(blob_type_reduced_payload_);
+
+      const std::vector<proto::Command> commands_{[this] {
+        return std::vector<proto::Command>(reduced_payload_.commands().begin(),
+                                           reduced_payload_.commands().end());
+      }()};
 
       const boost::optional<std::shared_ptr<interface::BatchMeta>> meta_{
           [this]() -> boost::optional<std::shared_ptr<interface::BatchMeta>> {
@@ -62,11 +65,13 @@ namespace shared_model {
       }()};
     };
 
-    explicit Transaction::Transaction(TransportType &&transaction) {
+    Transaction::Transaction(const TransportType &transaction) {
       impl_ = std::make_unique<Transaction::Impl>(transaction);
     }
 
-    Transaction::Transaction(const Transaction &transaction) noexcept = default;
+    Transaction::Transaction(TransportType &&transaction) {
+      impl_ = std::make_unique<Transaction::Impl>(transaction);
+    }
 
     Transaction::Transaction(Transaction &&transaction) noexcept = default;
 
@@ -86,11 +91,11 @@ namespace shared_model {
     }
 
     const interface::types::BlobType &Transaction::payload() const {
-      return impl_->blobTypePayload_;
+      return impl_->blob_type_payload_;
     }
 
     const interface::types::BlobType &Transaction::reducedPayload() const {
-      return impl_->blobTypeReducedPayload_;
+      return impl_->blob_type_reduced_payload_;
     }
 
     interface::types::SignatureRangeType Transaction::signatures() const {
@@ -104,12 +109,12 @@ namespace shared_model {
     bool Transaction::addSignature(const crypto::Signed &signed_blob,
                                    const crypto::PublicKey &public_key) {
       // if already has such signature
-      if (std::find_if(impl_->signatures_->begin(),
-                       impl_->signatures_->end(),
+      if (std::find_if(impl_->signatures_.begin(),
+                       impl_->signatures_.end(),
                        [&public_key](const auto &signature) {
                          return signature.publicKey() == public_key;
                        })
-          != impl_->signatures_->end()) {
+          != impl_->signatures_.end()) {
         return false;
       }
 
@@ -117,8 +122,11 @@ namespace shared_model {
       sig->set_signature(crypto::toBinaryString(signed_blob));
       sig->set_public_key(crypto::toBinaryString(public_key));
 
-      impl_->signatures_.invalidate();
       return true;
+    }
+
+    const Transaction::TransportType &Transaction::getTransport() const {
+      return *impl_->proto_;
     }
 
     interface::types::TimestampType Transaction::createdTime() const {
@@ -134,8 +142,8 @@ namespace shared_model {
       return impl_->meta_;
     }
 
-    Transaction::ModelType *clone() const {
-      return new Transaction(impl_->proto_);
+    Transaction::ModelType *Transaction::clone() const {
+      return new Transaction(*impl_->proto_);
     }
 
   }  // namespace proto

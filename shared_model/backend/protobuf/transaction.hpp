@@ -7,21 +7,18 @@
 #define IROHA_SHARED_MODEL_PROTO_TRANSACTION_HPP
 
 #include "interfaces/transaction.hpp"
-#include "utils/reference_holder.hpp"
 #include "transaction.pb.h"
 
 namespace shared_model {
   namespace proto {
-  class BatchMeta;
 
     class Transaction FINAL : public interface::Transaction {
      public:
-      using TransportType =
-          detail::ReferenceHolder<iroha::protocol::Transaction>;
+      using TransportType = iroha::protocol::Transaction;
+
+      explicit Transaction(const TransportType &transaction);
 
       explicit Transaction(TransportType &&transaction);
-
-      Transaction(const Transaction &o) noexcept;
 
       Transaction(Transaction &&o) noexcept;
 
@@ -43,6 +40,8 @@ namespace shared_model {
 
       bool addSignature(const crypto::Signed &signed_blob,
                         const crypto::PublicKey &public_key) override;
+
+      const TransportType &getTransport() const;
 
       interface::types::TimestampType createdTime() const override;
 

@@ -107,10 +107,9 @@ class TransportBuilderTest : public ::testing::Test {
   //-------------------------------------Block-------------------------------------
   template <typename BlockBuilder>
   auto getBaseBlockBuilder() {
-    return BlockBuilder()
-        .transactions(std::vector<Transaction>({createTransaction()}))
-        .height(1)
-        .createdTime(created_time);
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(createTransaction());
+    return BlockBuilder().transactions(txs).height(1).createdTime(created_time);
   }
 
   auto createBlock() {

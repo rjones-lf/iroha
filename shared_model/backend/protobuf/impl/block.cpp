@@ -5,6 +5,8 @@
 
 #include "backend/protobuf/block.hpp"
 
+#include <boost/range/adaptors.hpp>
+
 #include "backend/protobuf/common_objects/noncopyable_proto.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "backend/protobuf/transaction.hpp"
