@@ -10,6 +10,11 @@ PLEASE ENSURE THAT MST IS ENABLED IN IROHA CONFIG
 
 """)
 
+import sys
+
+if sys.version_info[0] < 3:
+    raise Exception('Python 3 or a more recent version is required.')
+
 from irohalib import Iroha, IrohaGrpc
 from irohalib import IrohaCrypto as ic
 
