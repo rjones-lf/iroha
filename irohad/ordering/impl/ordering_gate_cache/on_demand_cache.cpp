@@ -24,6 +24,7 @@ void OnDemandCache::remove(
 }
 
 OrderingGateCache::BatchesSetType OnDemandCache::pop() {
+  std::unique_lock<std::shared_timed_mutex> lock(mutex_);
   auto res = queue_.front();
   // push empty set to remove front element
   queue_.push_back(BatchesSetType{});
