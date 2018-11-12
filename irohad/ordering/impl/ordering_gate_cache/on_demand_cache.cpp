@@ -25,6 +25,7 @@ void OnDemandCache::remove(
 
 OrderingGateCache::BatchesSetType OnDemandCache::pop() {
   auto res = queue_.front();
+  // push empty set to remove front element
   queue_.push_back(BatchesSetType{});
   return res;
 }

@@ -38,6 +38,9 @@ namespace iroha {
         };
 
        public:
+        /// type of the element in cache container. Set is used as it allows to
+        /// remove batch from BatchSet with O(1) complexity, which is the case
+        /// in remove method
         using BatchesSetType = std::unordered_set<
             std::shared_ptr<shared_model::interface::TransactionBatch>,
             BatchPointerHasher>;

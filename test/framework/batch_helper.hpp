@@ -391,6 +391,11 @@ namespace framework {
       return res;
     }
 
+    /**
+     * createMockBatchWithHash should not take rvalues as parameteres as it uses
+     * hash param as reference to the value returned by reducedHash method.
+     * Using it with rvalue will end up with dangling pointer
+     */
     auto createMockBatchWithHash(
         shared_model::interface::types::HashType &&hash) = delete;
 
