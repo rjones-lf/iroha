@@ -38,21 +38,24 @@ class IrohaCrypto(object):
         return hex_public_key
 
     @staticmethod
-    def hash(proto_with_payload, blocks_query=False):
+    def hash(proto_with_payload):
         """
         Calculates hash of payload of proto message
         :proto_with_payload: proto transaction or query
         :return: bytes representation of hash
         """
-        if blocks_query:
-            bytes = proto_with_payload.meta.SerializeToString()
-        else:
-            bytes = proto_with_payload.payload.SerializeToString()
+        obj = None
+        if hasattr(proto_with_payload, 'payload'):
+            obj = getattr(proto_with_payload, 'payload')
+        elif hasattr(proto_with_payload, 'meta'):
+            obj = getattr(proto_with_payload, 'meta')
+
+        bytes = obj.SerializeToString()
         hash = hashlib.sha3_256(bytes).digest()
         return hash
 
     @staticmethod
-    def _signature(message, private_key, blocks_query=False):
+    def _signature(message, private_key):
         """
         Calculate signature for given message and private key
         :param message: proto that has payload message inside
@@ -62,7 +65,7 @@ class IrohaCrypto(object):
         public_key = IrohaCrypto.derive_public_key(private_key)
         sk = binascii.unhexlify(private_key)
         pk = binascii.unhexlify(public_key)
-        message_hash = IrohaCrypto.hash(message, blocks_query=blocks_query)
+        message_hash = IrohaCrypto.hash(message)
         signature_bytes = ed25519.signature_unsafe(message_hash, sk, pk)
         signature = primitive_pb2.Signature()
         signature.public_key = pk
@@ -94,12 +97,6 @@ class IrohaCrypto(object):
         :return: the modified query
         """
         signature = IrohaCrypto._signature(query, private_key)
-        query.signature.CopyFrom(signature)
-        return query
-
-    @staticmethod
-    def sign_blocks_query(query, private_key):
-        signature = IrohaCrypto._signature(query, private_key, blocks_query=True)
         query.signature.CopyFrom(signature)
         return query
 

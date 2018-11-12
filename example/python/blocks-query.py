@@ -37,7 +37,7 @@ def get_blocks():
     :return:
     """
     query = iroha.blocks_query()
-    IrohaCrypto.sign_blocks_query(query, admin_private_key)
+    IrohaCrypto.sign_query(query, admin_private_key)
     for block in net.send_blocks_stream_query(query):
         print('The next block arrived:', block)
 
