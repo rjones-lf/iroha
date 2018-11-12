@@ -38,18 +38,21 @@ class IrohaCrypto(object):
         return hex_public_key
 
     @staticmethod
-    def hash(proto_with_payload):
+    def hash(proto_with_payload, blocks_query=False):
         """
         Calculates hash of payload of proto message
         :proto_with_payload: proto transaction or query
         :return: bytes representation of hash
         """
-        bytes = proto_with_payload.payload.SerializeToString()
+        if blocks_query:
+            bytes = proto_with_payload.meta.SerializeToString()
+        else:
+            bytes = proto_with_payload.payload.SerializeToString()
         hash = hashlib.sha3_256(bytes).digest()
         return hash
 
     @staticmethod
-    def _signature(message, private_key):
+    def _signature(message, private_key, blocks_query=False):
         """
         Calculate signature for given message and private key
         :param message: proto that has payload message inside
@@ -59,7 +62,7 @@ class IrohaCrypto(object):
         public_key = IrohaCrypto.derive_public_key(private_key)
         sk = binascii.unhexlify(private_key)
         pk = binascii.unhexlify(public_key)
-        message_hash = IrohaCrypto.hash(message)
+        message_hash = IrohaCrypto.hash(message, blocks_query=blocks_query)
         signature_bytes = ed25519.signature_unsafe(message_hash, sk, pk)
         signature = primitive_pb2.Signature()
         signature.public_key = pk
@@ -91,6 +94,12 @@ class IrohaCrypto(object):
         :return: the modified query
         """
         signature = IrohaCrypto._signature(query, private_key)
+        query.signature.CopyFrom(signature)
+        return query
+
+    @staticmethod
+    def sign_blocks_query(query, private_key):
+        signature = IrohaCrypto._signature(query, private_key, blocks_query=True)
         query.signature.CopyFrom(signature)
         return query
 
@@ -211,6 +220,28 @@ class Iroha(object):
             internal_query.CopyFrom(message)
         return query_wrapper
 
+    def blocks_query(self, counter=1, creator_account=None, created_time=None):
+        """
+        Creates a protobuf query for a blocks stream
+        :param counter: query counter, should be incremented for each new query
+        :param creator_account: account id of query creator
+        :param created_time: query creation timestamp in milliseconds
+        :return: a proto blocks query
+        """
+        if not created_time:
+            created_time = self.now()
+        if not creator_account:
+            creator_account = self.creator_account
+
+        meta = queries_pb2.QueryPayloadMeta()
+        meta.created_time = created_time
+        meta.creator_account_id = creator_account
+        meta.query_counter = counter
+
+        query_wrapper = queries_pb2.BlocksQuery()
+        query_wrapper.meta.CopyFrom(meta)
+        return query_wrapper
+
     @staticmethod
     def batch(*transactions, atomic=True):
         """
@@ -283,6 +314,17 @@ class IrohaGrpc(object):
         """
         response = self._query_service_stub.Find(query)
         return response
+
+    def send_blocks_stream_query(self, query):
+        """
+        Send a query for blocks stream to Iroha
+        :param query: protobuf BlocksQuery
+        :return: an iterable over a stream of blocks
+        :raise: grpc.RpcError with .code() available in case of any error
+        """
+        response = self._query_service_stub.FetchCommits(query)
+        for block in response:
+            yield block
 
     def tx_status(self, transaction):
         """
