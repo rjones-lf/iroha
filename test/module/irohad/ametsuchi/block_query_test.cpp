@@ -67,8 +67,8 @@ class BlockQueryTest : public AmetsuchiTest {
             .transactions(
                 std::vector<shared_model::proto::Transaction>({txn1_1, txn1_2}))
             .prevHash(shared_model::crypto::Hash(zero_string))
-            .rejectedTransactions(std::vector<shared_model::crypto::Hash>{
-                rejected_hash, rejected_hash2})
+            .rejectedTransactions(
+                std::vector<shared_model::crypto::Hash>{rejected_hash})
             .build();
 
     // First tx in block 1
