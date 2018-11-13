@@ -7,6 +7,7 @@
 
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_permission_to_string.hpp"
@@ -40,6 +41,42 @@ using namespace iroha::torii;
 using namespace iroha::consensus::yac;
 
 using namespace std::chrono_literals;
+
+// TODO: @muratovv 12.11.2018 remove the mock after effective implementation
+// will be finished IR-1840
+#include <gmock/gmock.h>
+class MockTxPresenceCahce : public iroha::ametsuchi::TxPresenceCache {
+ public:
+  MOCK_CONST_METHOD1(check,
+                     iroha::ametsuchi::TxCacheStatusType(
+                         const shared_model::crypto::Hash &hash));
+
+  MOCK_CONST_METHOD1(
+      check,
+      iroha::ametsuchi::TxPresenceCache::BatchStatusCollectionType(
+          const shared_model::interface::TransactionBatch &));
+};
+
+namespace std {
+  ostream &operator<<(
+      ostream &stream,
+      const iroha::ametsuchi::tx_cache_status_responses::Committed &) {
+    return stream;
+  }
+
+  ostream &operator<<(
+      ostream &stream,
+      const iroha::ametsuchi::tx_cache_status_responses::Rejected &) {
+    return stream;
+  }
+
+  ostream &operator<<(
+      ostream &stream,
+      const iroha::ametsuchi::tx_cache_status_responses::Missing &) {
+    return stream;
+  }
+
+}  // namespace std
 
 /**
  * Configuring iroha daemon
