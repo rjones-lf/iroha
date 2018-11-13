@@ -39,6 +39,15 @@ namespace {
     return (base % hash.hex() % height).str();
   }
 
+  std::string makeRejectedTxHashIndex(
+      const shared_model::interface::types::HashType &rejected_tx_hash,
+      shared_model::interface::types::HeightType height) {
+    boost::format base(
+        "INSERT INTO height_by_rejected_hash(hash, height) VALUES ('%s', "
+        "'%s');");
+    return (base % rejected_tx_hash.hex() % height).str();
+  }
+
   // make index account_id:height -> list of tx indexes
   // (where tx is placed in the block)
   std::string makeCreatorHeightIndex(
@@ -110,7 +119,8 @@ namespace iroha {
         const shared_model::interface::Block &block) {
       auto height = block.height();
       auto indexed_txs = block.transactions() | boost::adaptors::indexed(0);
-      std::string index_query = std::accumulate(
+      auto rejected_txs_hashes = block.rejected_transactions_hashes();
+      std::string tx_index_query = std::accumulate(
           indexed_txs.begin(),
           indexed_txs.end(),
           std::string{},
@@ -125,6 +135,17 @@ namespace iroha {
             query += makeCreatorHeightIndex(creator_id, height, index);
             return query;
           });
+
+      std::string rejected_tx_index_query = std::accumulate(
+          rejected_txs_hashes.begin(),
+          rejected_txs_hashes.end(),
+          std::string{},
+          [height](auto query, const auto &rejected_tx_hash) {
+            query += makeRejectedTxHashIndex(rejected_tx_hash, height);
+            return query;
+          });
+
+      auto index_query = tx_index_query + rejected_tx_index_query;
       try {
         sql_ << index_query;
       } catch (const std::exception &e) {

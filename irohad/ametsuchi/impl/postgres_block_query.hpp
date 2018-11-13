@@ -63,6 +63,8 @@ namespace iroha {
 
       bool hasTxWithHash(const shared_model::crypto::Hash &hash) override;
 
+      bool hasRejectedTxWithHash(const shared_model::crypto::Hash &hash);
+
       expected::Result<wBlock, std::string> getTopBlock() override;
 
      private:

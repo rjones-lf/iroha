@@ -508,6 +508,12 @@ CREATE TABLE IF NOT EXISTS height_by_hash (
     hash varchar,
     height text
 );
+
+CREATE TABLE IF NOT EXISTS height_by_rejected_hash (
+  hash varchar,
+  height text
+);
+
 CREATE TABLE IF NOT EXISTS height_by_account_set (
     account_id text,
     height text

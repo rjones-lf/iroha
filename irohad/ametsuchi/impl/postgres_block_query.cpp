@@ -247,6 +247,22 @@ namespace iroha {
       return getBlockId(hash) != boost::none;
     }
 
+    bool PostgresBlockQuery::hasRejectedTxWithHash(
+        const shared_model::crypto::Hash &hash) {
+      boost::optional<uint64_t> blockId = boost::none;
+      boost::optional<std::string> block_str;
+      const auto &hash_str = hash.hex();
+
+      sql_ << "SELECT height FROM height_by_rejected_hash WHERE hash = :hash",
+          soci::into(block_str), soci::use(hash_str);
+      if (block_str) {
+        blockId = std::stoull(block_str.get());
+      } else {
+        log_->info("No block with rejected transaction {}", hash.toString());
+      }
+      return (bool)blockId;
+    }
+
     uint32_t PostgresBlockQuery::getTopBlockHeight() {
       return block_store_.last_id();
     }
