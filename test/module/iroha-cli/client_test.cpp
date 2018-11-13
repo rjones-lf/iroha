@@ -297,7 +297,7 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
   // fail the tx
   auto cmd_name = "CommandName";
   size_t cmd_index = 2;
-  uint32_t error_code = 2;
+  uint32_t error_code = 3;
   auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
       TestProposalBuilder().height(0).createdTime(iroha::time::now()).build());
   verified_prop_notifier.get_subscriber().on_next(
