@@ -20,6 +20,7 @@
 
 #include <gmock/gmock.h>
 #include <boost/optional.hpp>
+
 #include "ametsuchi/block_query.hpp"
 #include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/key_value_storage.hpp"
@@ -31,6 +32,7 @@
 #include "ametsuchi/storage.hpp"
 #include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/temporary_wsv.hpp"
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "ametsuchi/wsv_command.hpp"
 #include "ametsuchi/wsv_query.hpp"
 #include "common/result.hpp"
@@ -335,6 +337,29 @@ namespace iroha {
       MOCK_METHOD1(validate,
                    bool(const shared_model::interface::BlocksQuery &));
     };
+
+    class MockTxPresenceCache : public iroha::ametsuchi::TxPresenceCache {
+      MOCK_CONST_METHOD1(check,
+                         iroha::ametsuchi::TxCacheStatusType(
+                             const shared_model::crypto::Hash &hash));
+
+      MOCK_CONST_METHOD1(
+          check,
+          iroha::ametsuchi::TxPresenceCache::BatchStatusCollectionType(
+              const shared_model::interface::TransactionBatch &));
+    };
+
+    namespace tx_cache_status_responses {
+      std::ostream &operator<<(std::ostream &os, const Committed &resp) {
+        return os << resp.hash.toString();
+      }
+      std::ostream &operator<<(std::ostream &os, const Rejected &resp) {
+        return os << resp.hash.toString();
+      }
+      std::ostream &operator<<(std::ostream &os, const Missing &resp) {
+        return os << resp.hash.toString();
+      }
+    }  // namespace tx_cache_status_responses
 
   }  // namespace ametsuchi
 }  // namespace iroha
