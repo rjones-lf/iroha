@@ -67,6 +67,8 @@ class BlockQueryTest : public AmetsuchiTest {
             .transactions(
                 std::vector<shared_model::proto::Transaction>({txn1_1, txn1_2}))
             .prevHash(shared_model::crypto::Hash(zero_string))
+            .rejectedTransactions(std::vector<shared_model::crypto::Hash>{
+                rejected_hash1, rejected_hash2})
             .build();
 
     // First tx in block 1
@@ -110,6 +112,8 @@ class BlockQueryTest : public AmetsuchiTest {
   std::string creator2 = "user2@test";
   std::size_t blocks_total{0};
   std::string zero_string = std::string(32, '0');
+  shared_model::crypto::Hash rejected_hash1{"rejected_tx_hash1"};
+  shared_model::crypto::Hash rejected_hash2{"rejected_tx_hash2"};
 };
 
 /**
@@ -365,6 +369,27 @@ TEST_F(BlockQueryTest, HasTxWithExistingHash) {
 TEST_F(BlockQueryTest, HasTxWithInvalidHash) {
   shared_model::crypto::Hash invalid_tx_hash(zero_string);
   EXPECT_FALSE(blocks->hasTxWithHash(invalid_tx_hash));
+}
+
+/**
+ * @given block store with preinserted blocks containing rejected_hash1 in one
+ * of the block
+ * @when hasRejectedTxWithHash is invoked on existing rejected hash
+ * @then True is returned
+ */
+TEST_F(BlockQueryTest, HasTxWithRejectedHash) {
+  EXPECT_TRUE(blocks->hasRejectedTxWithHash(rejected_hash1));
+}
+
+/**
+ * @given block store with preinserted blocks containing rejected_hash1 in one
+ * of the block
+ * @when hasRejectedTxWithHash is invoked on non-existing rejected hash
+ * @then False is returned
+ */
+TEST_F(BlockQueryTest, HasTxWithNonExistingRejectedHash) {
+  shared_model::crypto::Hash invalid_tx_hash(zero_string);
+  EXPECT_FALSE(blocks->hasRejectedTxWithHash(invalid_tx_hash));
 }
 
 /**

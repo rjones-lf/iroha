@@ -114,6 +114,15 @@ namespace iroha {
       virtual bool hasTxWithHash(const shared_model::crypto::Hash &hash) = 0;
 
       /**
+       * Synchronously checks whether rejected transaction's hash is present in
+       * any block
+       * @param hash - rejected transaction's hash
+       * @return true if rejected transaction's hash exists, false otherwise
+       */
+      virtual bool hasRejectedTxWithHash(
+          const shared_model::crypto::Hash &hash) = 0;
+
+      /**
        * Get the top-most block
        * @return result of Model Block or error message
        */
