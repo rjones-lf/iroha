@@ -115,7 +115,10 @@ class ToriiServiceTest : public testing::Test {
     auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
     auto tx_processor =
         std::make_shared<iroha::torii::TransactionProcessorImpl>(
-            pcsMock, mst, status_bus);
+            pcsMock,
+            mst,
+            status_bus,
+            std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
 
     EXPECT_CALL(*block_query, getTxByHashSync(_))
         .WillRepeatedly(Return(boost::none));
@@ -325,14 +328,14 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
           .createdTime(iroha::time::now())
           .transactions(txs)
           .build());
+
+  auto cmd_name = "FailedCommand";
+  size_t cmd_index = 2;
+  uint32_t error_code = 3;
   auto errors = iroha::validation::TransactionsErrors{std::make_pair(
-      iroha::validation::CommandError{
-          "FailedCommand", 2, true, 2},
+      iroha::validation::CommandError{cmd_name, error_code, true, cmd_index},
       failed_tx_hash)};
-  auto stringified_error = "Stateful validation error in transaction "
-                           + failed_tx_hash.hex() + ": "
-                           "command 'FailedCommand' with index '2' "
-                           "did not pass verification with error code '2'";
+
   verified_prop_notifier_.get_subscriber().on_next(
       std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
           std::make_pair(verified_proposal, errors)));
@@ -390,7 +393,9 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   client5.Status(last_tx_request, stful_invalid_response);
   ASSERT_EQ(stful_invalid_response.tx_status(),
             iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED);
-  ASSERT_EQ(stful_invalid_response.error_message(), stringified_error);
+  ASSERT_EQ(stful_invalid_response.err_or_cmd_name(), cmd_name);
+  ASSERT_EQ(stful_invalid_response.failed_cmd_index(), cmd_index);
+  ASSERT_EQ(stful_invalid_response.error_code(), error_code);
 }
 
 /**
@@ -630,7 +635,7 @@ TEST_F(ToriiServiceTest, FailedListOfTxs) {
 
         ASSERT_EQ(toriiResponse.tx_status(),
                   iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
-        auto msg = toriiResponse.error_message();
+        auto msg = toriiResponse.err_or_cmd_name();
         ASSERT_THAT(msg, HasSubstr("bad timestamp: sent from future"));
       });
 }

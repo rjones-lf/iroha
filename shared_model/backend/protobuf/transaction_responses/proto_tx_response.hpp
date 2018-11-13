@@ -51,7 +51,12 @@ namespace shared_model {
        */
       const ResponseVariantType &get() const override;
 
-      const ErrorMessageType &errorMessage() const override;
+      virtual const StatelessErrorOrFailedCommandNameType &
+      statelessErrorOrCommandName() const override;
+
+      virtual FailedCommandIndexType failedCommandIndex() const override;
+
+      virtual ErrorCodeType errorCode() const override;
 
      private:
       const ProtoResponseVariantType variant_;
@@ -68,16 +73,17 @@ namespace shared_model {
 }  // namespace shared_model
 
 namespace boost {
-    extern template class variant<shared_model::proto::StatelessFailedTxResponse,
-            shared_model::proto::StatelessValidTxResponse,
-            shared_model::proto::StatefulFailedTxResponse,
-            shared_model::proto::StatefulValidTxResponse,
-            shared_model::proto::RejectedTxResponse,
-            shared_model::proto::CommittedTxResponse,
-            shared_model::proto::MstExpiredResponse,
-            shared_model::proto::NotReceivedTxResponse,
-            shared_model::proto::MstPendingResponse,
-            shared_model::proto::EnoughSignaturesCollectedResponse>;
+  extern template class variant<
+      shared_model::proto::StatelessFailedTxResponse,
+      shared_model::proto::StatelessValidTxResponse,
+      shared_model::proto::StatefulFailedTxResponse,
+      shared_model::proto::StatefulValidTxResponse,
+      shared_model::proto::RejectedTxResponse,
+      shared_model::proto::CommittedTxResponse,
+      shared_model::proto::MstExpiredResponse,
+      shared_model::proto::NotReceivedTxResponse,
+      shared_model::proto::MstPendingResponse,
+      shared_model::proto::EnoughSignaturesCollectedResponse>;
 }
 
 #endif  // IROHA_PROTO_TX_RESPONSE_HPP

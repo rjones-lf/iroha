@@ -47,13 +47,17 @@ namespace shared_model {
           .init("TransactionResponse")
           .append("transactionHash", transactionHash().hex())
           .append(boost::apply_visitor(detail::ToStringVisitor(), get()))
-          .append("errorMessage", errorMessage())
+          .append("statelessErrorOrCmdName", statelessErrorOrCommandName())
+          .append("failedCmdIndex", std::to_string(failedCommandIndex()))
+          .append("errorCode", std::to_string(errorCode()))
           .finalize();
     }
 
     bool TransactionResponse::operator==(const ModelType &rhs) const {
       return transactionHash() == rhs.transactionHash()
-          and errorMessage() == rhs.errorMessage() and get() == rhs.get();
+          and statelessErrorOrCommandName() == rhs.statelessErrorOrCommandName()
+          and failedCommandIndex() == rhs.failedCommandIndex()
+          and errorCode() == rhs.errorCode() and get() == rhs.get();
     }
   }  // namespace interface
 }  // namespace shared_model
