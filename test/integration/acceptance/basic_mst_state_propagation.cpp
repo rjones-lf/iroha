@@ -4,7 +4,6 @@
  */
 
 #include "framework/integration_framework/integration_test_framework.hpp"
-//#include "framework/integration_framework/fake_peer.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 
