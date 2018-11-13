@@ -7,7 +7,7 @@
 
 #include <gtest/gtest.h>
 
-#include "framework/batch_helper.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha::ordering::cache;
 using ::testing::ByMove;
@@ -17,7 +17,6 @@ using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::UnorderedElementsAre;
-using namespace framework::batch;
 
 /**
  * @given empty cache

@@ -374,31 +374,6 @@ namespace framework {
           transactions);
     }
 
-    /**
-     * Creates mock batch with provided hash
-     * @param hash -- const ref to hash to be returned by the batch
-     * @return shared_ptr for batch
-     */
-    auto createMockBatchWithHash(
-        const shared_model::interface::types::HashType &hash) {
-      using ::testing::NiceMock;
-      using ::testing::ReturnRef;
-
-      auto res = std::make_shared<NiceMock<MockTransactionBatch>>();
-
-      ON_CALL(*res, reducedHash()).WillByDefault(ReturnRef(hash));
-
-      return res;
-    }
-
-    /**
-     * createMockBatchWithHash should not take rvalues as parameteres as it uses
-     * hash param as reference to the value returned by reducedHash method.
-     * Using it with rvalue will end up with dangling pointer
-     */
-    auto createMockBatchWithHash(
-        shared_model::interface::types::HashType &&hash) = delete;
-
   }  // namespace batch
 }  // namespace framework
 

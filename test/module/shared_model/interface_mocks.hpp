@@ -88,6 +88,23 @@ struct MockTransactionBatch : public shared_model::interface::TransactionBatch {
   MOCK_CONST_METHOD0(clone, MockTransactionBatch *());
 };
 
+/**
+ * Creates mock batch with provided hash
+ * @param hash -- const ref to hash to be returned by the batch
+ * @return shared_ptr for batch
+ */
+auto createMockBatchWithHash(
+    const shared_model::interface::types::HashType &hash) {
+  using ::testing::NiceMock;
+  using ::testing::ReturnRefOfCopy;
+
+  auto res = std::make_shared<NiceMock<MockTransactionBatch>>();
+
+  ON_CALL(*res, reducedHash()).WillByDefault(ReturnRefOfCopy(hash));
+
+  return res;
+}
+
 struct MockSignature : public shared_model::interface::Signature {
   MOCK_CONST_METHOD0(publicKey, const PublicKeyType &());
   MOCK_CONST_METHOD0(signedData, const SignedType &());

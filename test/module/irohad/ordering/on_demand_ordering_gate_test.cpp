@@ -6,7 +6,6 @@
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 
 #include <gtest/gtest.h>
-#include "framework/batch_helper.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
@@ -24,7 +23,6 @@ using ::testing::Return;
 using ::testing::Truly;
 using ::testing::UnorderedElementsAre;
 using ::testing::UnorderedElementsAreArray;
-using namespace framework::batch;
 
 class OnDemandOrderingGateTest : public ::testing::Test {
  public:

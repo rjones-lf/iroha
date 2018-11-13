@@ -51,12 +51,10 @@ addtest(on_demand_ordering_gate_test on_demand_ordering_gate_test.cpp)
 target_link_libraries(on_demand_ordering_gate_test
     on_demand_ordering_gate
     shared_model_interfaces_factories
-    shared_model_proto_backend
     )
 
 addtest(on_demand_cache_test on_demand_cache_test.cpp)
 target_link_libraries(on_demand_cache_test
     on_demand_ordering_gate
     shared_model_interfaces_factories
-    shared_model_proto_backend
     )
