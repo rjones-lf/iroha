@@ -54,7 +54,7 @@ namespace torii {
       return cached.value();
     }
 
-    const bool is_present = storage_->getBlockQuery()->hasTxWithHash(request);
+    const bool is_present = storage_->getBlockQuery()->hasCommittedTxWithHash(request);
 
     if (is_present) {
       std::shared_ptr<shared_model::interface::TransactionResponse> response =

@@ -61,9 +61,11 @@ namespace iroha {
 
       uint32_t getTopBlockHeight() override;
 
-      bool hasTxWithHash(const shared_model::crypto::Hash &hash) override;
+      bool hasCommittedTxWithHash(
+          const shared_model::crypto::Hash &hash) override;
 
-      bool hasRejectedTxWithHash(const shared_model::crypto::Hash &hash) override;
+      bool hasRejectedTxWithHash(
+          const shared_model::crypto::Hash &hash) override;
 
       expected::Result<wBlock, std::string> getTopBlock() override;
 

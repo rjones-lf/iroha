@@ -242,7 +242,7 @@ namespace iroha {
         };
     }
 
-    bool PostgresBlockQuery::hasTxWithHash(
+    bool PostgresBlockQuery::hasCommittedTxWithHash(
         const shared_model::crypto::Hash &hash) {
       return getBlockId(hash) != boost::none;
     }

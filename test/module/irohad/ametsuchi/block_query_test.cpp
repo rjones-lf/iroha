@@ -68,7 +68,7 @@ class BlockQueryTest : public AmetsuchiTest {
                 std::vector<shared_model::proto::Transaction>({txn1_1, txn1_2}))
             .prevHash(shared_model::crypto::Hash(zero_string))
             .rejectedTransactions(std::vector<shared_model::crypto::Hash>{
-                rejected_hash1, rejected_hash2})
+                rejected_hash, rejected_hash2})
             .build();
 
     // First tx in block 1
@@ -112,8 +112,7 @@ class BlockQueryTest : public AmetsuchiTest {
   std::string creator2 = "user2@test";
   std::size_t blocks_total{0};
   std::string zero_string = std::string(32, '0');
-  shared_model::crypto::Hash rejected_hash1{"rejected_tx_hash1"};
-  shared_model::crypto::Hash rejected_hash2{"rejected_tx_hash2"};
+  shared_model::crypto::Hash rejected_hash{"rejected_tx_hash"};
 };
 
 /**
@@ -356,7 +355,7 @@ TEST_F(BlockQueryTest, GetTop2Blocks) {
  */
 TEST_F(BlockQueryTest, HasTxWithExistingHash) {
   for (const auto &hash : tx_hashes) {
-    EXPECT_TRUE(blocks->hasTxWithHash(hash));
+    EXPECT_TRUE(blocks->hasCommittedTxWithHash(hash));
   }
 }
 
@@ -368,7 +367,7 @@ TEST_F(BlockQueryTest, HasTxWithExistingHash) {
  */
 TEST_F(BlockQueryTest, HasTxWithInvalidHash) {
   shared_model::crypto::Hash invalid_tx_hash(zero_string);
-  EXPECT_FALSE(blocks->hasTxWithHash(invalid_tx_hash));
+  EXPECT_FALSE(blocks->hasCommittedTxWithHash(invalid_tx_hash));
 }
 
 /**
@@ -378,7 +377,7 @@ TEST_F(BlockQueryTest, HasTxWithInvalidHash) {
  * @then True is returned
  */
 TEST_F(BlockQueryTest, HasTxWithRejectedHash) {
-  EXPECT_TRUE(blocks->hasRejectedTxWithHash(rejected_hash1));
+  EXPECT_TRUE(blocks->hasRejectedTxWithHash(rejected_hash));
 }
 
 /**

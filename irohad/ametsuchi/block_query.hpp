@@ -111,7 +111,8 @@ namespace iroha {
        * @param hash - transaction hash
        * @return true if transaction exists, false otherwise
        */
-      virtual bool hasTxWithHash(const shared_model::crypto::Hash &hash) = 0;
+      virtual bool hasCommittedTxWithHash(
+          const shared_model::crypto::Hash &hash) = 0;
 
       /**
        * Synchronously checks whether rejected transaction's hash is present in
