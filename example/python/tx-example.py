@@ -114,7 +114,7 @@ def userone_grants_to_admin_set_account_detail_permission():
 @trace
 def set_age_to_userone():
     """
-    Set age to userone@somain by admin@test
+    Set age to userone@domain by admin@test
     """
     tx = iroha.transaction([
         iroha.command('SetAccountDetail', account_id='userone@domain', key='age', value='18')
