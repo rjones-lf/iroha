@@ -73,6 +73,8 @@ namespace shared_model {
       impl_ = std::make_unique<Transaction::Impl>(std::move(transaction));
     }
 
+    // TODO [IR-1866] Akvinikym 13.11.18: remove the copy ctor and fix fallen
+    // tests
     Transaction::Transaction(const Transaction &transaction) {
       this->impl_ =
           std::make_unique<Transaction::Impl>(*transaction.impl_->proto_);
