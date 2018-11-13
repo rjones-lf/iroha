@@ -140,7 +140,8 @@ int main(int argc, char *argv[]) {
                 std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()),
                 std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()),
                 *keypair,
-                config[mbr::MstSupport].GetBool());
+                boost::make_optional(config[mbr::MstSupport].GetBool(),
+                                     iroha::GossipPropagationStrategyParams{}));
 
   // Check if iroha daemon storage was successfully initialized
   if (not irohad.storage) {

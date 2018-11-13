@@ -18,7 +18,6 @@
 #ifndef IROHA_SIGNATURE_GENERATOR_HPP
 #define IROHA_SIGNATURE_GENERATOR_HPP
 
-#include "common/types.hpp"
 #include "generator/generator.hpp"
 #include "model/signature.hpp"
 

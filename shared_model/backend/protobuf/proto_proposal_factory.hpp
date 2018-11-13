@@ -10,6 +10,7 @@
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 
 #include "backend/protobuf/proposal.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "proposal.pb.h"
 
 namespace shared_model {
@@ -34,7 +35,7 @@ namespace shared_model {
       std::unique_ptr<interface::Proposal> unsafeCreateProposal(
           interface::types::HeightType height,
           interface::types::TimestampType created_time,
-          UnsafeTransactionsCollectionType transactions) override {
+          const UnsafeTransactionsCollectionType &transactions) override {
         return std::make_unique<Proposal>(
             createProtoProposal(height, created_time, transactions));
       }
@@ -51,7 +52,7 @@ namespace shared_model {
       iroha::protocol::Proposal createProtoProposal(
           interface::types::HeightType height,
           interface::types::TimestampType created_time,
-          UnsafeTransactionsCollectionType transactions) {
+          const UnsafeTransactionsCollectionType &transactions) {
         iroha::protocol::Proposal proposal;
 
         proposal.set_height(height);

@@ -7,6 +7,7 @@
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 
+using namespace common_constants;
 using namespace shared_model;
 using namespace integration_framework;
 using namespace shared_model::interface::permissions;

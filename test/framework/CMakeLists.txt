@@ -26,6 +26,7 @@ add_library(integration_framework
     integration_framework/iroha_instance.cpp
     integration_framework/fake_peer/fake_peer.cpp
     integration_framework/fake_peer/yac_network_notifier.cpp
+    common_constants.cpp
     )
 target_link_libraries(integration_framework
     application
@@ -38,7 +39,7 @@ target_link_libraries(integration_framework
     mst_transport
     )
 
-target_include_directories(integration_framework PUBLIC ${PROJECT_SOURCE_DIR}/test PRIVATE "${gmock_INCLUDE_DIR};${gtest_INCLUDE_DIR}")
+target_include_directories(integration_framework PUBLIC ${PROJECT_SOURCE_DIR}/test)
 
 add_library(integration_framework_config_helper config_helper.cpp)
 target_include_directories(integration_framework_config_helper PUBLIC ${PROJECT_SOURCE_DIR}/test)

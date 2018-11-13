@@ -10,7 +10,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/range/irange.hpp>
-#include "common/types.hpp"
+#include "common/bind.hpp"
 
 namespace iroha {
 
@@ -21,14 +21,16 @@ namespace iroha {
 
   GossipPropagationStrategy::GossipPropagationStrategy(
       PeerProviderFactory peer_factory,
-      std::chrono::milliseconds period,
-      uint32_t amount)
+      rxcpp::observe_on_one_worker emit_worker,
+      const GossipPropagationStrategyParams &params)
       : peer_factory(peer_factory),
         non_visited({}),
-        emitent(rxcpp::observable<>::interval(steady_clock::now(), period)
-                    .map([this, amount](int) {
+        emit_worker(emit_worker),
+        emitent(rxcpp::observable<>::interval(steady_clock::now(),
+                                              params.emission_period)
+                    .map([this, params](int) {
                       PropagationData vec;
-                      auto range = boost::irange(0u, amount);
+                      auto range = boost::irange(0u, params.amount_per_once);
                       // push until find empty element
                       std::find_if_not(
                           range.begin(), range.end(), [this, &vec](int) {
@@ -38,10 +40,11 @@ namespace iroha {
                             };
                           });
                       return vec;
-                    })) {}
+                    })
+                    .subscribe_on(emit_worker)) {}
 
   rxcpp::observable<PropagationData> GossipPropagationStrategy::emitter() {
-    return emitent.subscribe_on(rxcpp::observe_on_new_thread());
+    return emitent;
   }
 
   GossipPropagationStrategy::~GossipPropagationStrategy() {

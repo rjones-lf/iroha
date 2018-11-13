@@ -5,8 +5,10 @@
 
 #include "simulator/impl/simulator.hpp"
 
+#include <boost/range/adaptor/map.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 
+#include "common/bind.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 
@@ -38,8 +40,7 @@ namespace iroha {
           verified_proposal_subscription_,
           [this](std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>
                      verified_proposal_and_errors) {
-            this->process_verified_proposal(
-                *verified_proposal_and_errors->first);
+            this->process_verified_proposal(verified_proposal_and_errors);
           });
     }
 
@@ -95,9 +96,9 @@ namespace iroha {
           boost::get<expected::Value<std::unique_ptr<ametsuchi::TemporaryWsv>>>(
               &temporary_wsv_var)
               ->value);
-      auto validated_proposal_and_errors =
-          std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
-              validator_->validate(proposal, *storage));
+      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>
+          validated_proposal_and_errors =
+              validator_->validate(proposal, *storage);
       storage.reset();
 
       notifier_.get_subscriber().on_next(
@@ -105,7 +106,8 @@ namespace iroha {
     }
 
     void Simulator::process_verified_proposal(
-        const shared_model::interface::Proposal &proposal) {
+        const std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>
+            &verified_proposal_and_errors) {
       log_->info("process verified proposal");
 
       auto height = block_query_factory_->createBlockQuery() |
@@ -116,11 +118,16 @@ namespace iroha {
         log_->error("Unable to query top block height");
         return;
       }
+      const auto &proposal = verified_proposal_and_errors->verified_proposal;
+      const auto &rejected_tx_hashes =
+          verified_proposal_and_errors->rejected_transactions
+          | boost::adaptors::map_keys;
       std::shared_ptr<shared_model::interface::Block> block =
           block_factory_->unsafeCreateBlock(height,
                                             last_block->hash(),
-                                            proposal.createdTime(),
-                                            proposal.transactions());
+                                            proposal->createdTime(),
+                                            proposal->transactions(),
+                                            rejected_tx_hashes);
       crypto_signer_->sign(*block);
       block_notifier_.get_subscriber().on_next(block);
     }

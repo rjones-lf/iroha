@@ -27,19 +27,17 @@ namespace integration_framework {
    */
   class TestIrohad : public Irohad {
    public:
-    TestIrohad(
-        const std::string &block_store_dir,
-        const std::string &pg_conn,
-        const std::string &listen_ip,
-        size_t torii_port,
-        size_t internal_port,
-        size_t max_proposal_size,
-        std::chrono::milliseconds proposal_delay,
-        std::chrono::milliseconds vote_delay,
-        const shared_model::crypto::Keypair &keypair,
-        bool is_mst_supported,
-        boost::optional<std::chrono::milliseconds> mst_gossip_emitting_period,
-        boost::optional<uint32_t> mst_gossip_amount_per_once)
+    TestIrohad(const std::string &block_store_dir,
+               const std::string &pg_conn,
+               const std::string &listen_ip,
+               size_t torii_port,
+               size_t internal_port,
+               size_t max_proposal_size,
+               std::chrono::milliseconds proposal_delay,
+               std::chrono::milliseconds vote_delay,
+               const shared_model::crypto::Keypair &keypair,
+               const boost::optional<iroha::GossipPropagationStrategyParams>
+                   &opt_mst_gossip_params = boost::none)
         : Irohad(block_store_dir,
                  pg_conn,
                  listen_ip,
@@ -49,9 +47,7 @@ namespace integration_framework {
                  proposal_delay,
                  vote_delay,
                  keypair,
-                 is_mst_supported,
-                 mst_gossip_emitting_period,
-                 mst_gossip_amount_per_once) {}
+                 opt_mst_gossip_params) {}
 
     auto &getCommandService() {
       return command_service;

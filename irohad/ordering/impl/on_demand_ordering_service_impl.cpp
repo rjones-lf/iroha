@@ -9,8 +9,7 @@
 
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
-#include "backend/protobuf/proposal.hpp"
-#include "backend/protobuf/transaction.hpp"
+#include <boost/range/adaptor/indirected.hpp>
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
@@ -25,10 +24,13 @@ const iroha::consensus::RejectRoundType kFirstRound = 1;
 
 OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
     size_t transaction_limit,
+    std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+              proposal_factory,
     size_t number_of_proposals,
     const consensus::Round &initial_round)
     : transaction_limit_(transaction_limit),
       number_of_proposals_(number_of_proposals),
+      proposal_factory_(std::move(proposal_factory)),
       log_(logger::log("OnDemandOrderingServiceImpl")) {
   onCollaborationOutcome(initial_round);
 }
@@ -150,15 +152,11 @@ void OnDemandOrderingServiceImpl::packNextProposals(
 
 OnDemandOrderingServiceImpl::ProposalType
 OnDemandOrderingServiceImpl::emitProposal(const consensus::Round &round) {
-  iroha::protocol::Proposal proto_proposal;
-  proto_proposal.set_height(round.block_round);
-  proto_proposal.set_created_time(iroha::time::now());
   log_->info("Mutable proposal generation, round[{}, {}]",
              round.block_round,
              round.reject_round);
 
   TransactionBatchType batch;
-  using ProtoTxType = shared_model::proto::Transaction;
   std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
   std::unordered_set<std::string> inserted;
 
@@ -175,15 +173,10 @@ OnDemandOrderingServiceImpl::emitProposal(const consensus::Round &round) {
         std::make_move_iterator(std::end(batch->transactions())));
   }
   log_->info("Number of transactions in proposal = {}", collection.size());
-  auto proto_txes = collection | boost::adaptors::transformed([](auto &tx) {
-                      return static_cast<const ProtoTxType &>(*tx);
-                    });
-  boost::for_each(proto_txes, [&proto_proposal](auto &&proto_tx) {
-    *(proto_proposal.add_transactions()) = std::move(proto_tx.getTransport());
-  });
 
-  return std::make_unique<shared_model::proto::Proposal>(
-      std::move(proto_proposal));
+  auto txs = collection | boost::adaptors::indirected;
+  return proposal_factory_->unsafeCreateProposal(
+      round.block_round, iroha::time::now(), txs);
 }
 
 void OnDemandOrderingServiceImpl::tryErase() {

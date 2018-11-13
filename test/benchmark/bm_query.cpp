@@ -13,13 +13,7 @@
 #include "utils/query_error_response_visitor.hpp"
 
 using namespace benchmark::utils;
-
-const std::string kUser = "user";
-const std::string kUserId = kUser + "@test";
-const shared_model::crypto::Keypair kAdminKeypair =
-    shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
-const shared_model::crypto::Keypair kUserKeypair =
-    shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+using namespace common_constants;
 
 /**
  * This benchmark executes get account query in order to measure query execution
@@ -31,7 +25,7 @@ static void BM_QueryAccount(benchmark::State &state) {
   itf.sendTx(createUserWithPerms(
                  kUser,
                  kUserKeypair.publicKey(),
-                 "role",
+                 kRole,
                  {shared_model::interface::permissions::Role::kGetAllAccounts})
                  .build()
                  .signAndAddSignature(kAdminKeypair)

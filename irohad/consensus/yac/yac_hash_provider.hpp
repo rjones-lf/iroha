@@ -24,6 +24,7 @@
 #include "consensus/round.hpp"
 #include "consensus/yac/storage/yac_common.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "utils/string_builder.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -62,6 +63,14 @@ namespace iroha {
            * Hash computed from block;
            */
           BlockHash block_hash;
+
+          std::string toString() const {
+            return shared_model::detail::PrettyStringBuilder()
+                .init("VoteHashes")
+                .append("proposal", proposal_hash)
+                .append("block", block_hash)
+                .finalize();
+          }
         };
         VoteHashes vote_hashes;
 
@@ -79,6 +88,14 @@ namespace iroha {
         bool operator!=(const YacHash &obj) const {
           return not(*this == obj);
         };
+
+        std::string toString() const {
+          return shared_model::detail::PrettyStringBuilder()
+              .init("YacHash")
+              .append("round", vote_round.toString())
+              .append("hashes", vote_hashes.toString())
+              .finalize();
+        }
       };
 
       /**

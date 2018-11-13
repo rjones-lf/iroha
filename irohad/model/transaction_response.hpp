@@ -6,8 +6,8 @@
 #ifndef IROHA_TRANSACTION_RESPONSE_HPP
 #define IROHA_TRANSACTION_RESPONSE_HPP
 
-#include <model/client.hpp>
-#include <model/transaction.hpp>
+#include "model/client.hpp"
+#include "model/transaction.hpp"
 
 namespace iroha {
   namespace model {

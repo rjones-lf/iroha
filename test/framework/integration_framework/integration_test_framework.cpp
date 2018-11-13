@@ -6,9 +6,10 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 
 #include <memory>
+#include <limits>
 
+#include <boost/assert.hpp>
 #include <boost/thread/barrier.hpp>
-
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
@@ -22,6 +23,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "datetime/time.hpp"
+#include "framework/common_constants.hpp"
 #include "framework/integration_framework/fake_peer/fake_peer.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
@@ -31,12 +33,13 @@
 #include "interfaces/permissions.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
-#include "module/shared_model/validators/validators.hpp"
-#include "network/impl/async_grpc_client.hpp"
+#include "module/shared_model/validators/always_valid_validators.hpp"
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
+using namespace common_constants;
 
 using AlwaysValidProtoCommonObjectsFactory =
     shared_model::proto::ProtoCommonObjectsFactory<
@@ -51,23 +54,21 @@ using AlwaysValidTransactionValidator =
     shared_model::validation::AlwaysValidModelValidator<
         shared_model::interface::Transaction>;
 
-static std::string kLocalHost = "127.0.0.1";
-static constexpr size_t kDefaultToriiPort = 11501;
-static constexpr size_t kDefaultInternalPort = 50541;
+namespace {
+  std::string kLocalHost = "127.0.0.1";
+  constexpr size_t kDefaultToriiPort = 11501;
+  constexpr size_t kDefaultInternalPort = 50541;
+  constexpr size_t kMaxPort = 65535;
 
-template <size_t default_port>
-static size_t getNextPort() {
-  static size_t increment = 0;
-  return default_port + (++increment);
-}
+  template <size_t default_port>
+  size_t getNextPort() {
+    static size_t increment = 0;
+    BOOST_VERIFY_MSG(increment <= kMaxPort, "The maximum port value reached");
+    return default_port + (++increment);
+  }
+}  // namespace
 
 namespace integration_framework {
-
-  const std::string IntegrationTestFramework::kDefaultDomain = "test";
-  const std::string IntegrationTestFramework::kDefaultRole = "user";
-  const std::string IntegrationTestFramework::kAdminName = "admin";
-  const std::string IntegrationTestFramework::kAdminId = "admin@test";
-  const std::string IntegrationTestFramework::kAssetName = "coin";
 
   IntegrationTestFramework::IntegrationTestFramework(
       size_t maximum_proposal_size,
@@ -86,8 +87,9 @@ namespace integration_framework {
                                                         torii_port_,
                                                         internal_port_,
                                                         dbname)),
-        command_client_("127.0.0.1", torii_port_),
-        query_client_("127.0.0.1", torii_port_),
+        command_client_(kLocalHost, torii_port_),
+        query_client_(kLocalHost, torii_port_),
+        async_call_(std::make_shared<AsyncCall>()),
         proposal_waiting(proposal_waiting),
         block_waiting(block_waiting),
         tx_response_waiting(tx_response_waiting),
@@ -95,8 +97,7 @@ namespace integration_framework {
         common_objects_factory_(
             std::make_shared<AlwaysValidProtoCommonObjectsFactory>()),
         transaction_factory_(std::make_shared<ProtoTransactionFactory>(
-            std::unique_ptr<AbstractTransactionValidator>(
-                new AlwaysValidTransactionValidator()))),
+            std::make_unique<AlwaysValidTransactionValidator>())),
         batch_parser_(std::make_shared<
                       shared_model::interface::TransactionBatchParserImpl>()),
         transaction_batch_factory_(
@@ -156,10 +157,13 @@ namespace integration_framework {
             .createdTime(iroha::time::now())
             .addPeer(kLocalHost + ":" + std::to_string(internal_port_),
                      key.publicKey())
-            .createRole(kDefaultRole, all_perms)
-            .createDomain(kDefaultDomain, kDefaultRole)
-            .createAccount(kAdminName, kDefaultDomain, key.publicKey())
-            .createAsset(kAssetName, kDefaultDomain, 1)
+            .createRole(kAdminRole, all_perms)
+            .createRole(kDefaultRole, {})
+            .createDomain(kDomain, kDefaultRole)
+            .createAccount(kAdminName, kDomain, key.publicKey())
+            .detachRole(kAdminId, kDefaultRole)
+            .appendRole(kAdminId, kAdminRole)
+            .createAsset(kAssetName, kDomain, 1)
             .quorum(1);
     // add fake peers
     for (const auto &fake_peer : fake_peers_) {
@@ -236,14 +240,6 @@ namespace integration_framework {
                   + error.error));
             });
 
-    mst_transport_ = std::make_shared<iroha::network::MstTransportGrpc>(
-        std::make_shared<
-            iroha::network::AsyncGrpcClient<google::protobuf::Empty>>(),
-        transaction_factory_,
-        batch_parser_,
-        transaction_batch_factory_,
-        keypair.publicKey());
-
     iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
     iroha_instance_->getIrohaInstance()->resetOrderingService();
@@ -267,7 +263,8 @@ namespace integration_framework {
         ->getPeerCommunicationService()
         ->on_verified_proposal()
         .subscribe([this](auto verified_proposal_and_errors) {
-          verified_proposal_queue_.push(verified_proposal_and_errors->first);
+          verified_proposal_queue_.push(
+              verified_proposal_and_errors);
           log_->info("verified proposal");
           queue_cond.notify_all();
         });
@@ -304,21 +301,21 @@ namespace integration_framework {
   }
 
   rxcpp::observable<std::shared_ptr<iroha::MstState>>
-  IntegrationTestFramework::getMstStateUpdateObserver() {
+  IntegrationTestFramework::getMstStateUpdateObservable() {
     return iroha_instance_->getIrohaInstance()
         ->getMstProcessor()
         ->onStateUpdate();
   }
 
   rxcpp::observable<iroha::BatchPtr>
-  IntegrationTestFramework::getMstPreparedBatchesObserver() {
+  IntegrationTestFramework::getMstPreparedBatchesObservable() {
     return iroha_instance_->getIrohaInstance()
         ->getMstProcessor()
         ->onPreparedBatches();
   }
 
   rxcpp::observable<iroha::BatchPtr>
-  IntegrationTestFramework::getMstExpiredBatchesObserver() {
+  IntegrationTestFramework::getMstExpiredBatchesObservable() {
     return iroha_instance_->getIrohaInstance()
         ->getMstProcessor()
         ->onExpiredBatches();
@@ -381,7 +378,7 @@ namespace integration_framework {
     // fetch status of transaction
     getTxStatus(tx.hash(), [&validation, &bar2](auto &status) {
       // make sure that the following statuses (stateful/committed)
-      // isn't reached the bus yet
+      // haven't reached the bus yet
       bar2->wait();
 
       // check validation function
@@ -392,8 +389,18 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
       const shared_model::proto::Transaction &tx) {
-    sendTx(tx, [](const auto &) {});
+    sendTx(tx, [this](const auto &status) {
+            if (!status.errorMessage().empty()) {
+                 log_->debug("Got error while sending transaction: "
+                                + status.errorMessage());
+            }
+    });
     return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::sendTxAwait(
+      const shared_model::proto::Transaction &tx) {
+    return sendTxAwait(tx, [](const auto &) {});
   }
 
   IntegrationTestFramework &IntegrationTestFramework::sendTxAwait(
@@ -500,7 +507,8 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::sendMstState(
       const shared_model::crypto::PublicKey &src_key,
       const iroha::MstState &mst_state) {
-    mst_transport_->sendState(*this_peer_, mst_state);
+    iroha::network::sendStateAsync(
+        *this_peer_, mst_state, src_key, *async_call_);
     return *this;
   }
 
@@ -524,11 +532,13 @@ namespace integration_framework {
       std::function<void(const ProposalType &)> validation) {
     log_->info("check verified proposal");
     // fetch first proposal from proposal queue
-    ProposalType verified_proposal;
+    VerifiedProposalType verified_proposal_and_errors;
     fetchFromQueue(verified_proposal_queue_,
-                   verified_proposal,
+                   verified_proposal_and_errors,
                    proposal_waiting,
                    "missed verified proposal");
+    ProposalType verified_proposal =
+        std::move(verified_proposal_and_errors->verified_proposal);
     validation(verified_proposal);
     return *this;
   }

@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include <boost/assert.hpp>
 #include "model/converters/pb_block_factory.hpp"
 #include "model/converters/pb_common.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
@@ -42,6 +43,11 @@ namespace iroha {
         for (const auto &tx : block.transactions) {
           auto pb_tx = pl->add_transactions();
           pb_tx->CopyFrom(PbTransactionFactory::serialize(tx));
+        }
+
+        for (const auto &hash : block.rejected_transactions_hashes) {
+          auto pb_hash = pl->add_rejected_transactions_hashes();
+          *pb_hash = hash.to_string();
         }
 
         return pb_block;
@@ -73,6 +79,16 @@ namespace iroha {
         for (const auto &pb_tx : pl.transactions()) {
           block.transactions.push_back(
               *PbTransactionFactory::deserialize(pb_tx));
+        }
+
+        for (const auto &pb_hash : pl.rejected_transactions_hashes()) {
+          BOOST_VERIFY_MSG(
+              pb_hash.size() == model::Block::HashType::size(),
+              ("Wrong rejected transaction hash: " + pb_hash).c_str());
+          block.rejected_transactions_hashes.emplace_back();
+          std::copy(pb_hash.begin(),
+                    pb_hash.end(),
+                    block.rejected_transactions_hashes.back().begin());
         }
 
         block.hash = iroha::hash(pb_block);

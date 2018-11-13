@@ -32,7 +32,7 @@ namespace iroha {
        * @return proposal with valid transactions and errors, which appeared in
        * a process of validating
        */
-      virtual VerifiedProposalAndErrors validate(
+      virtual std::unique_ptr<VerifiedProposalAndErrors> validate(
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) = 0;
     };

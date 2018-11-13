@@ -16,8 +16,7 @@
  */
 
 #include "model/generators/block_generator.hpp"
-#include <chrono>
-#include <utility>
+
 #include "model/sha3_hash.hpp"
 
 namespace iroha {

@@ -18,8 +18,9 @@
 #ifndef IROHA_GET_SIGNATURES_HPP
 #define IROHA_GET_SIGNATURES_HPP
 
-#include <model/query.hpp>
 #include <string>
+
+#include "model/query.hpp"
 
 namespace iroha {
   namespace model {

@@ -20,7 +20,7 @@
 
 #include <algorithm>
 
-#include "common/types.hpp"
+#include "common/blob.hpp"
 
 namespace generator {
 

@@ -9,25 +9,26 @@
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
+#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
+#include "common/bind.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
-#include "multi_sig_transactions/mst_processor_stub.hpp"
+#include "multi_sig_transactions/mst_propagation_strategy_stub.hpp"
 #include "multi_sig_transactions/mst_time_provider_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
+#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
+#include "multi_sig_transactions/transport/mst_transport_stub.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "validators/field_validator.hpp"
-
-constexpr std::chrono::milliseconds kDefGossipEmittingPeriod =
-    std::chrono::seconds(5);
-constexpr uint32_t kDefGossipAmountPerOnce = 2;
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -43,19 +44,17 @@ using namespace std::chrono_literals;
 /**
  * Configuring iroha daemon
  */
-Irohad::Irohad(
-    const std::string &block_store_dir,
-    const std::string &pg_conn,
-    const std::string &listen_ip,
-    size_t torii_port,
-    size_t internal_port,
-    size_t max_proposal_size,
-    std::chrono::milliseconds proposal_delay,
-    std::chrono::milliseconds vote_delay,
-    const shared_model::crypto::Keypair &keypair,
-    bool is_mst_supported,
-    boost::optional<std::chrono::milliseconds> mst_gossip_emitting_period,
-    boost::optional<uint32_t> mst_gossip_amount_per_once)
+Irohad::Irohad(const std::string &block_store_dir,
+               const std::string &pg_conn,
+               const std::string &listen_ip,
+               size_t torii_port,
+               size_t internal_port,
+               size_t max_proposal_size,
+               std::chrono::milliseconds proposal_delay,
+               std::chrono::milliseconds vote_delay,
+               const shared_model::crypto::Keypair &keypair,
+               const boost::optional<GossipPropagationStrategyParams>
+                   &opt_mst_gossip_params)
     : block_store_dir_(block_store_dir),
       pg_conn_(pg_conn),
       listen_ip_(listen_ip),
@@ -64,11 +63,8 @@ Irohad::Irohad(
       max_proposal_size_(max_proposal_size),
       proposal_delay_(proposal_delay),
       vote_delay_(vote_delay),
-      is_mst_supported_(is_mst_supported),
-      mst_gossip_emitting_period_(
-          mst_gossip_emitting_period.value_or(kDefGossipEmittingPeriod)),
-      mst_gossip_amount_per_once_(
-          mst_gossip_amount_per_once.value_or(kDefGossipAmountPerOnce)),
+      is_mst_supported_(opt_mst_gossip_params),
+      opt_mst_gossip_params_(opt_mst_gossip_params),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
   log_->info("created");
@@ -122,12 +118,15 @@ void Irohad::initStorage() {
   common_objects_factory_ =
       std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
           shared_model::validation::FieldValidator>>();
+  auto perm_converter =
+      std::make_shared<shared_model::proto::ProtoPermissionToString>();
   auto block_converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
   auto storageResult = StorageImpl::create(block_store_dir_,
                                            pg_conn_,
                                            common_objects_factory_,
-                                           std::move(block_converter));
+                                           std::move(block_converter),
+                                           perm_converter);
   storageResult.match(
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
         storage = _storage.value;
@@ -318,6 +317,9 @@ void Irohad::initStatusBus() {
 }
 
 void Irohad::initMstProcessor() {
+  auto mst_completer = std::make_shared<DefaultCompleter>();
+  auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
+  std::shared_ptr<iroha::PropagationStrategy> mst_propagation;
   if (is_mst_supported_) {
     mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
         async_call_,
@@ -325,20 +327,18 @@ void Irohad::initMstProcessor() {
         batch_parser,
         transaction_batch_factory_,
         keypair.publicKey());
-    auto mst_completer = std::make_shared<DefaultCompleter>();
-    auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
-    // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
-    // cli parameters
-    auto mst_propagation = std::make_shared<GossipPropagationStrategy>(
-        storage, mst_gossip_emitting_period_, mst_gossip_amount_per_once_);
-    auto mst_time = std::make_shared<MstTimeProviderImpl>();
-    auto fair_mst_processor = std::make_shared<FairMstProcessor>(
-        mst_transport, mst_storage, mst_propagation, mst_time);
-    mst_processor = fair_mst_processor;
-    mst_transport->subscribe(fair_mst_processor);
+    mst_propagation = std::make_shared<GossipPropagationStrategy>(
+        storage, rxcpp::observe_on_new_thread(), *opt_mst_gossip_params_);
   } else {
-    mst_processor = std::make_shared<MstProcessorStub>();
+    mst_propagation = std::make_shared<iroha::PropagationStrategyStub>();
+    mst_transport = std::make_shared<iroha::network::MstTransportStub>();
   }
+
+  auto mst_time = std::make_shared<MstTimeProviderImpl>();
+  auto fair_mst_processor = std::make_shared<FairMstProcessor>(
+      mst_transport, mst_storage, mst_propagation, mst_time);
+  mst_processor = fair_mst_processor;
+  mst_transport->subscribe(fair_mst_processor);
   log_->info("[Init] => MST processor");
 }
 
@@ -412,7 +412,8 @@ Irohad::RunResult Irohad::run() {
           [&](const auto &port) {
             log_->info("Torii server bound on port {}", port);
             if (is_mst_supported_) {
-              internal_server->append(mst_transport);
+              internal_server->append(
+                  std::static_pointer_cast<MstTransportGrpc>(mst_transport));
             }
             // Run internal server
             return internal_server

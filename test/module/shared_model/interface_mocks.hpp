@@ -23,6 +23,8 @@ struct MockBlock : public shared_model::interface::Block {
   MOCK_CONST_METHOD0(
       transactions,
       shared_model::interface::types::TransactionsCollectionType());
+  MOCK_CONST_METHOD0(rejected_transactions_hashes,
+                     shared_model::interface::types::HashCollectionType());
   MOCK_CONST_METHOD0(height, shared_model::interface::types::HeightType());
   MOCK_CONST_METHOD0(prevHash,
                      const shared_model::interface::types::HashType &());
@@ -81,6 +83,7 @@ struct MockProposal : public shared_model::interface::Proposal {
   MOCK_CONST_METHOD0(createdTime,
                      shared_model::interface::types::TimestampType());
   MOCK_CONST_METHOD0(blob, const shared_model::interface::types::BlobType &());
+  MOCK_CONST_METHOD0(hash, const shared_model::interface::types::HashType &());
   MOCK_CONST_METHOD0(clone, MockProposal *());
 };
 
@@ -98,7 +101,7 @@ struct MockUnsafeProposalFactory
                std::unique_ptr<shared_model::interface::Proposal>(
                    shared_model::interface::types::HeightType,
                    shared_model::interface::types::TimestampType,
-                   TransactionsCollectionType));
+                   const TransactionsCollectionType &));
 };
 
 struct MockCommonObjectsFactory
