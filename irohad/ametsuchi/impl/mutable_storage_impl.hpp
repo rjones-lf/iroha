@@ -13,6 +13,7 @@
 #include <soci/soci.h>
 #include "ametsuchi/command_executor.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -27,7 +28,9 @@ namespace iroha {
           shared_model::interface::types::HashType top_hash,
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory);
+              factory,
+          std::shared_ptr<shared_model::interface::PermissionToString>
+              perm_converter);
 
       bool apply(const shared_model::interface::Block &block) override;
 

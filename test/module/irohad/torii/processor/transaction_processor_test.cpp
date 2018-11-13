@@ -255,13 +255,14 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   }
 
   // 1. Create proposal and notify transaction processor about it
-  auto proposal = std::make_shared<shared_model::proto::Proposal>(
-      TestProposalBuilder().transactions(txs).build());
+  auto validation_result =
+      std::make_shared<iroha::validation::VerifiedProposalAndErrors>();
+  validation_result->verified_proposal =
+      std::make_unique<shared_model::proto::Proposal>(
+          TestProposalBuilder().transactions(txs).build());
 
   // empty transactions errors - all txs are valid
-  verified_prop_notifier.get_subscriber().on_next(
-      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
-          std::make_pair(proposal, iroha::validation::TransactionsErrors{})));
+  verified_prop_notifier.get_subscriber().on_next(validation_result);
 
   auto block = TestBlockBuilder().transactions(txs).build();
 
@@ -310,13 +311,14 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   }
 
   // 1. Create proposal and notify transaction processor about it
-  auto proposal = std::make_shared<shared_model::proto::Proposal>(
-      TestProposalBuilder().transactions(txs).build());
+  auto validation_result =
+      std::make_shared<iroha::validation::VerifiedProposalAndErrors>();
+  validation_result->verified_proposal =
+      std::make_unique<shared_model::proto::Proposal>(
+          TestProposalBuilder().transactions(txs).build());
 
   // empty transactions errors - all txs are valid
-  verified_prop_notifier.get_subscriber().on_next(
-      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
-          std::make_pair(proposal, iroha::validation::TransactionsErrors{})));
+  verified_prop_notifier.get_subscriber().on_next(validation_result);
 
   auto block = TestBlockBuilder().transactions(txs).build();
 
@@ -377,18 +379,18 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
           .build());
 
   // trigger the verified event with txs, which we want to fail, as errors
-  auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
-      TestProposalBuilder().transactions(block_txs).build());
-  auto txs_errors = iroha::validation::TransactionsErrors{};
+  auto validation_result =
+      std::make_shared<iroha::validation::VerifiedProposalAndErrors>();
+  validation_result->verified_proposal =
+      std::make_unique<shared_model::proto::Proposal>(
+          TestProposalBuilder().transactions(block_txs).build());
   for (size_t i = 0; i < invalid_txs.size(); ++i) {
-    txs_errors.push_back(std::make_pair(
+    validation_result->rejected_transactions.emplace(
+        invalid_txs[i].hash(),
         iroha::validation::CommandError{
-            "SomeCommandName", "SomeCommandError", true, i},
-        invalid_txs[i].hash()));
+            "SomeCommandName", "SomeCommandError", true, i});
   }
-  verified_prop_notifier.get_subscriber().on_next(
-      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
-          std::make_pair(verified_proposal, txs_errors)));
+  verified_prop_notifier.get_subscriber().on_next(validation_result);
 
   auto block = TestBlockBuilder().transactions(block_txs).build();
 

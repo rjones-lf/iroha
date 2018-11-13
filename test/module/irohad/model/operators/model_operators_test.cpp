@@ -355,6 +355,9 @@ Block createBlock() {
   std::fill(block.prev_hash.begin(), block.prev_hash.end(), 0x23);
   block.sigs.push_back(createSignature());
   block.transactions.push_back(createTransaction());
+  Block::HashType rejected_tx_hash;
+  std::fill(rejected_tx_hash.begin(), rejected_tx_hash.end(), 0x24);
+  block.rejected_transactions_hashes.emplace_back(std::move(rejected_tx_hash));
   block.height = 123;
 
   block.hash = iroha::hash(block);

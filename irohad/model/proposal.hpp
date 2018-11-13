@@ -18,17 +18,16 @@
 #ifndef IROHA_PROPOSAL_HPP
 #define IROHA_PROPOSAL_HPP
 
-#include <model/transaction.hpp>
 #include <vector>
+#include "model/transaction.hpp"
 
 namespace iroha {
   namespace model {
 
     /**
-     * Proposal is a Model-structure that provide bunch of transactions emitted
-     * by
-     * ordering service.
-     * Proposal has no signatures and other meta information.
+     * Proposal is a Model-structure that provides a bunch of transactions
+     * emitted by ordering service. Proposal has no signatures and other meta
+     * information.
      */
     struct Proposal {
       explicit Proposal(std::vector<Transaction> txs)

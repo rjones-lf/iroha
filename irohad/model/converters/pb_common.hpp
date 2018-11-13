@@ -19,7 +19,6 @@
 #define IROHA_PB_COMMON_HPP
 
 #include "commands.pb.h"
-#include "common/types.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "model/account.hpp"
 #include "model/account_asset.hpp"

@@ -8,6 +8,7 @@
 #include <boost/range/size.hpp>
 
 #include "ametsuchi/wsv_query.hpp"
+#include "common/bind.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"

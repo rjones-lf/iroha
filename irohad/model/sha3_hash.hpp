@@ -17,13 +17,17 @@
 #ifndef IROHA_SHA3_HASH_HPP
 #define IROHA_SHA3_HASH_HPP
 
-#include "model/block.hpp"
-#include "model/query.hpp"
-#include "model/transaction.hpp"
+#include "crypto/hash_types.hpp"
 
 namespace iroha {
-    hash256_t hash(const model::Transaction &tx);
-    hash256_t hash(const model::Block &block);
-    hash256_t hash(const model::Query &query);
-}
-#endif //IROHA_SHA3_HASH_HPP
+  namespace model {
+    struct Transaction;
+    struct Block;
+    struct Query;
+  }  // namespace model
+
+  hash256_t hash(const model::Transaction &tx);
+  hash256_t hash(const model::Block &block);
+  hash256_t hash(const model::Query &query);
+}  // namespace iroha
+#endif  // IROHA_SHA3_HASH_HPP

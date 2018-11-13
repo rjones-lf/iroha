@@ -27,7 +27,8 @@ namespace shared_model {
           interface::types::HeightType height,
           const interface::types::HashType &prev_hash,
           interface::types::TimestampType created_time,
-          const interface::types::TransactionsCollectionType &txs) override;
+          const interface::types::TransactionsCollectionType &txs,
+          const interface::types::HashCollectionType &rejected_hashes) override;
 
       /**
        * Create block variant

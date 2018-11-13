@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "common/instanceof.hpp"
 #include "model/block.hpp"
 #include "model/commands/add_asset_quantity.hpp"
 #include "model/commands/add_peer.hpp"
@@ -223,7 +224,8 @@ namespace iroha {
       return rhs.hash == hash && rhs.height == height
           && rhs.prev_hash == prev_hash && rhs.txs_number == txs_number
           && rhs.sigs == sigs && rhs.transactions == transactions
-          && rhs.created_ts == created_ts && rhs.hash == hash;
+          && rhs.created_ts == created_ts && rhs.hash == hash
+          && rhs.rejected_transactions_hashes == rejected_transactions_hashes;
     }
 
   }  // namespace model

@@ -41,6 +41,11 @@ namespace shared_model {
     class Block;
   }
 }  // namespace shared_model
+namespace iroha {
+  namespace validation {
+    struct VerifiedProposalAndErrors;
+  }
+}  // namespace iroha
 
 namespace integration_framework {
 
@@ -49,6 +54,8 @@ namespace integration_framework {
   class IntegrationTestFramework {
    private:
     using ProposalType = std::shared_ptr<shared_model::interface::Proposal>;
+    using VerifiedProposalType =
+        std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>;
     using BlockType = std::shared_ptr<shared_model::interface::Block>;
     using TxResponseType =
         std::shared_ptr<shared_model::interface::TransactionResponse>;
@@ -58,14 +65,16 @@ namespace integration_framework {
      * Construct test framework instance
      * @param maximum_proposal_size - Maximum number of transactions per
      * proposal
+     * @param dbname - override database name to use (optional)
+     * @param deleter - (default nullptr) Pointer to function which
+     * receives pointer to constructed instance of Integration Test Framework.
+     * If specified and is not nullptr, then it will be called instead of
+     * default destructor's code
+     * @param mst_support enables multisignature tx support
+     * @param block_store_path specifies path where blocks will be stored
      * @param proposal_waiting - maximum time of waiting before next proposal
      * @param block_waiting - maximum time of waiting before appearing next
      * committed block
-     * @param destructor_lambda - (default nullptr) Pointer to function which
-     * receives pointer to constructed instance of Integration Test Framework.
-     * If specified, then will be called instead of default destructor's code
-     * @param mst_support enables multisignature tx support
-     * @param block_store_path specifies path where blocks will be stored
      */
     explicit IntegrationTestFramework(
         size_t maximum_proposal_size,
@@ -87,8 +96,9 @@ namespace integration_framework {
      * Construct default genesis block.
      *
      * Genesis block contains single transaction that
-     * creates a single role (kDefaultRole), domain (kDefaultDomain),
-     * account (kAdminName) and asset (kAssetName).
+     * creates an admin account (kAdminName) with its role (kAdminRole), a
+     * domain (kDomain) with its default role (kDefaultRole), and an asset
+     * (kAssetName).
      * @param key - signing key
      * @return signed genesis block
      */
@@ -151,6 +161,15 @@ namespace integration_framework {
     /**
      * Send transaction to Iroha with awaiting proposal
      * and without status validation
+     * @param tx - transaction for sending
+     * @return this
+     */
+    IntegrationTestFramework &sendTxAwait(
+        const shared_model::proto::Transaction &tx);
+
+    /**
+     * Send transaction to Iroha with awaiting proposal and without status
+     * validation. Issue callback on the result.
      * @param tx - transaction for sending
      * @param check - callback for checking committed block
      * @return this
@@ -244,6 +263,8 @@ namespace integration_framework {
      * @param validation - callback that receives object of type \relates
      * std::shared_ptr<shared_model::interface::Proposal> by reference
      * @return this
+     * TODO mboldyrev 27.10.2018: make validation function accept
+     *                IR-1822     VerifiedProposalType argument
      */
     IntegrationTestFramework &checkVerifiedProposal(
         std::function<void(const ProposalType &)> validation);
@@ -291,13 +312,6 @@ namespace integration_framework {
      */
     void done();
 
-    static const std::string kDefaultDomain;
-    static const std::string kDefaultRole;
-
-    static const std::string kAdminName;
-    static const std::string kAdminId;
-    static const std::string kAssetName;
-
    protected:
     using AsyncCall = iroha::network::AsyncGrpcClient<google::protobuf::Empty>;
 
@@ -318,7 +332,7 @@ namespace integration_framework {
                         const std::string &error_reason);
 
     tbb::concurrent_queue<ProposalType> proposal_queue_;
-    tbb::concurrent_queue<ProposalType> verified_proposal_queue_;
+    tbb::concurrent_queue<VerifiedProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
     std::map<std::string, tbb::concurrent_queue<TxResponseType>>
         responses_queues_;

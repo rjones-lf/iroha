@@ -23,6 +23,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "datetime/time.hpp"
+#include "framework/common_constants.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "framework/result_fixture.hpp"
@@ -37,6 +38,7 @@
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
+using namespace common_constants;
 
 using AlwaysValidProtoCommonObjectsFactory =
     shared_model::proto::ProtoCommonObjectsFactory<
@@ -66,12 +68,6 @@ namespace {
 }  // namespace
 
 namespace integration_framework {
-
-  const std::string IntegrationTestFramework::kDefaultDomain = "test";
-  const std::string IntegrationTestFramework::kDefaultRole = "user";
-  const std::string IntegrationTestFramework::kAdminName = "admin";
-  const std::string IntegrationTestFramework::kAdminId = "admin@test";
-  const std::string IntegrationTestFramework::kAssetName = "coin";
 
   IntegrationTestFramework::IntegrationTestFramework(
       size_t maximum_proposal_size,
@@ -132,10 +128,13 @@ namespace integration_framework {
             .createdTime(iroha::time::now())
             .addPeer(kLocalHost + ":" + std::to_string(internal_port_),
                      key.publicKey())
-            .createRole(kDefaultRole, all_perms)
-            .createDomain(kDefaultDomain, kDefaultRole)
-            .createAccount(kAdminName, kDefaultDomain, key.publicKey())
-            .createAsset(kAssetName, kDefaultDomain, 1)
+            .createRole(kAdminRole, all_perms)
+            .createRole(kDefaultRole, {})
+            .createDomain(kDomain, kDefaultRole)
+            .createAccount(kAdminName, kDomain, key.publicKey())
+            .detachRole(kAdminId, kDefaultRole)
+            .appendRole(kAdminId, kAdminRole)
+            .createAsset(kAssetName, kDomain, 1)
             .quorum(1)
             .build()
             .signAndAddSignature(key)
@@ -224,7 +223,8 @@ namespace integration_framework {
         ->getPeerCommunicationService()
         ->on_verified_proposal()
         .subscribe([this](auto verified_proposal_and_errors) {
-          verified_proposal_queue_.push(verified_proposal_and_errors->first);
+          verified_proposal_queue_.push(
+              verified_proposal_and_errors);
           log_->info("verified proposal");
           queue_cond.notify_all();
         });
@@ -314,7 +314,7 @@ namespace integration_framework {
     // fetch status of transaction
     getTxStatus(tx.hash(), [&validation, &bar2](auto &status) {
       // make sure that the following statuses (stateful/committed)
-      // isn't reached the bus yet
+      // haven't reached the bus yet
       bar2->wait();
 
       // check validation function
@@ -325,8 +325,18 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
       const shared_model::proto::Transaction &tx) {
-    sendTx(tx, [](const auto &) {});
+    sendTx(tx, [this](const auto &status) {
+            if (!status.errorMessage().empty()) {
+                 log_->debug("Got error while sending transaction: "
+                                + status.errorMessage());
+            }
+    });
     return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::sendTxAwait(
+      const shared_model::proto::Transaction &tx) {
+    return sendTxAwait(tx, [](const auto &) {});
   }
 
   IntegrationTestFramework &IntegrationTestFramework::sendTxAwait(
@@ -458,11 +468,13 @@ namespace integration_framework {
       std::function<void(const ProposalType &)> validation) {
     log_->info("check verified proposal");
     // fetch first proposal from proposal queue
-    ProposalType verified_proposal;
+    VerifiedProposalType verified_proposal_and_errors;
     fetchFromQueue(verified_proposal_queue_,
-                   verified_proposal,
+                   verified_proposal_and_errors,
                    proposal_waiting,
                    "missed verified proposal");
+    ProposalType verified_proposal =
+        std::move(verified_proposal_and_errors->verified_proposal);
     validation(verified_proposal);
     return *this;
   }

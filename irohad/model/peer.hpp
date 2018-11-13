@@ -18,7 +18,7 @@
 #ifndef IROHA_PEER_HPP
 #define IROHA_PEER_HPP
 
-#include "common/types.hpp"
+#include "crypto/keypair.hpp"
 
 namespace iroha {
   namespace model {
