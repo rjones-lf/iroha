@@ -175,3 +175,10 @@ addtest(replay_test
 target_link_libraries(replay_test
     acceptance_fixture
     )
+
+addtest(basic_mst_state_propagation_test
+    basic_mst_state_propagation.cpp
+    )
+target_link_libraries(basic_mst_state_propagation_test
+    acceptance_fixture
+    )

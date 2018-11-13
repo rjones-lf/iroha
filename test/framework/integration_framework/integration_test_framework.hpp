@@ -26,6 +26,7 @@
 #include "logger/logger.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 #include "network/impl/async_grpc_client.hpp"
+#include "network/mst_transport.hpp"
 #include "torii/command_client.hpp"
 #include "torii/query_client.hpp"
 
@@ -51,6 +52,8 @@ namespace integration_framework {
 
   using std::chrono::milliseconds;
 
+  class FakePeer;
+
   class IntegrationTestFramework {
    private:
     using ProposalType = std::shared_ptr<shared_model::interface::Proposal>;
@@ -66,21 +69,16 @@ namespace integration_framework {
      * @param maximum_proposal_size - Maximum number of transactions per
      * proposal
      * @param dbname - override database name to use (optional)
-     * @param deleter - (default nullptr) Pointer to function which
-     * receives pointer to constructed instance of Integration Test Framework.
-     * If specified and is not nullptr, then it will be called instead of
-     * default destructor's code
-     * @param mst_support enables multisignature tx support
-     * @param block_store_path specifies path where blocks will be stored
-     * @param proposal_waiting - maximum time of waiting before next proposal
-     * @param block_waiting - maximum time of waiting before appearing next
-     * committed block
+     * @param cleanup_on_exit - whether to clean resources on exit
+     * @param mst_support - enables multisignature tx support
+     * @param block_store_path - specifies path where blocks will be stored
+     * @param proposal_waiting - timeout for next proposal appearing
+     * @param block_waiting - timeout for next committed block appearing
      */
     explicit IntegrationTestFramework(
         size_t maximum_proposal_size,
         const boost::optional<std::string> &dbname = boost::none,
-        std::function<void(IntegrationTestFramework &)> deleter =
-            [](IntegrationTestFramework &itf) { itf.done(); },
+        bool cleanup_on_exit = true,
         bool mst_support = false,
         const std::string &block_store_path =
             (boost::filesystem::temp_directory_path()
@@ -91,6 +89,9 @@ namespace integration_framework {
         milliseconds tx_response_waiting = milliseconds(10000));
 
     ~IntegrationTestFramework();
+
+    std::future<std::shared_ptr<FakePeer>> addInitailPeer(
+        const boost::optional<shared_model::crypto::Keypair> &key);
 
     /**
      * Construct default genesis block.
@@ -136,6 +137,14 @@ namespace integration_framework {
      */
     IntegrationTestFramework &recoverState(
         const shared_model::crypto::Keypair &keypair);
+
+    /**
+     * Send transaction to Iroha without wating for proposal and validating its
+     * status
+     * @param tx - transaction to send
+     */
+    IntegrationTestFramework &sendTxWithoutValidation(
+        const shared_model::proto::Transaction &tx);
 
     /**
      * Send transaction to Iroha and validate its status
@@ -297,6 +306,9 @@ namespace integration_framework {
 
     rxcpp::observable<iroha::BatchPtr> getMstExpiredBatchesObservable();
 
+    IntegrationTestFramework &subscribeForAllMstNotifications(
+        std::shared_ptr<iroha::network::MstTransportNotification> notification);
+
     /**
      * Request next status of the transaction
      * @param tx_hash is hash for filtering responses
@@ -330,6 +342,9 @@ namespace integration_framework {
                         ObjectType &ref_for_insertion,
                         const WaitTime &wait,
                         const std::string &error_reason);
+
+    /// Cleanup the resources
+    void cleanup();
 
     tbb::concurrent_queue<ProposalType> proposal_queue_;
     tbb::concurrent_queue<VerifiedProposalType> verified_proposal_queue_;
@@ -373,13 +388,19 @@ namespace integration_framework {
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         transaction_batch_factory_;
 
-    std::unique_ptr<shared_model::interface::Peer> this_peer_;
+    std::shared_ptr<shared_model::interface::Peer> this_peer_;
 
    private:
+    void makeFakePeers();
+
     logger::Logger log_ = logger::log("IntegrationTestFramework");
     std::mutex queue_mu;
     std::condition_variable queue_cond;
-    std::function<void(IntegrationTestFramework &)> deleter_;
+    bool cleanup_on_exit_;
+    std::vector<std::pair<std::promise<std::shared_ptr<FakePeer>>,
+                          boost::optional<shared_model::crypto::Keypair>>>
+        fake_peers_promises_;
+    std::vector<std::shared_ptr<FakePeer>> fake_peers_;
   };
 
   template <typename Queue, typename ObjectType, typename WaitTime>

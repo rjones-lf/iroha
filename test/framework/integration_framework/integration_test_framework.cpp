@@ -24,6 +24,7 @@
 #include "cryptography/default_hash_provider.hpp"
 #include "datetime/time.hpp"
 #include "framework/common_constants.hpp"
+#include "framework/integration_framework/fake_peer/fake_peer.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "framework/result_fixture.hpp"
@@ -72,8 +73,7 @@ namespace integration_framework {
   IntegrationTestFramework::IntegrationTestFramework(
       size_t maximum_proposal_size,
       const boost::optional<std::string> &dbname,
-      std::function<void(integration_framework::IntegrationTestFramework &)>
-          deleter,
+      bool cleanup_on_exit,
       bool mst_support,
       const std::string &block_store_path,
       milliseconds proposal_waiting,
@@ -103,15 +103,44 @@ namespace integration_framework {
         transaction_batch_factory_(
             std::make_shared<
                 shared_model::interface::TransactionBatchFactoryImpl>()),
-        deleter_(deleter) {}
+        cleanup_on_exit_(cleanup_on_exit) {}
 
   IntegrationTestFramework::~IntegrationTestFramework() {
-    if (deleter_) {
-      deleter_(*this);
+    if (cleanup_on_exit_) {
+      cleanup();
     }
     // the code below should be executed anyway in order to prevent app hang
     if (iroha_instance_ and iroha_instance_->getIrohaInstance()) {
       iroha_instance_->getIrohaInstance()->terminate();
+    }
+  }
+
+  std::future<std::shared_ptr<FakePeer>> IntegrationTestFramework::addInitailPeer(
+      const boost::optional<Keypair> &key) {
+    fake_peers_promises_.emplace_back(std::promise<std::shared_ptr<FakePeer>>(),
+                                      key);
+    return fake_peers_promises_.back().first.get_future();
+  }
+
+  void IntegrationTestFramework::makeFakePeers() {
+    if (fake_peers_promises_.size() == 0) {
+      return;
+    }
+    log_->info("creating fake iroha peers");
+    assert(this_peer_ && "this_peer_ is needed for fake peers initialization, "
+        "but not set");
+    for (auto &promise_and_key : fake_peers_promises_) {
+      auto fake_peer =
+          std::make_shared<FakePeer>(kLocalHost,
+                                     getNextPort<kDefaultInternalPort>(),
+                                     promise_and_key.second,
+                                     this_peer_,
+                                     common_objects_factory_,
+                                     transaction_factory_,
+                                     batch_parser_,
+                                     transaction_batch_factory_);
+      fake_peers_.emplace_back(fake_peer);
+      promise_and_key.first.set_value(fake_peer);
     }
   }
 
@@ -122,7 +151,7 @@ namespace integration_framework {
       auto perm = static_cast<shared_model::interface::permissions::Role>(i);
       all_perms.set(perm);
     }
-    auto genesis_tx =
+    auto genesis_tx_builder =
         shared_model::proto::TransactionBuilder()
             .creatorAccountId(kAdminId)
             .createdTime(iroha::time::now())
@@ -135,10 +164,14 @@ namespace integration_framework {
             .detachRole(kAdminId, kDefaultRole)
             .appendRole(kAdminId, kAdminRole)
             .createAsset(kAssetName, kDomain, 1)
-            .quorum(1)
-            .build()
-            .signAndAddSignature(key)
-            .finish();
+            .quorum(1);
+    // add fake peers
+    for (const auto &fake_peer : fake_peers_) {
+      genesis_tx_builder = genesis_tx_builder.addPeer(
+          fake_peer->getAddress(), fake_peer->getKeypair().publicKey());
+    };
+    auto genesis_tx =
+        genesis_tx_builder.build().signAndAddSignature(key).finish();
     auto genesis_block =
         shared_model::proto::BlockBuilder()
             .transactions(
@@ -154,8 +187,11 @@ namespace integration_framework {
 
   IntegrationTestFramework &IntegrationTestFramework::setInitialState(
       const Keypair &keypair) {
-    return setInitialState(keypair,
-                           IntegrationTestFramework::defaultBlock(keypair));
+    initPipeline(keypair);
+    iroha_instance_->makeGenesis(IntegrationTestFramework::defaultBlock(keypair));
+    log_->info("added genesis block");
+    subscribeQueuesAndRun();
+    return *this;
   }
 
   IntegrationTestFramework &IntegrationTestFramework::setMstGossipParams(
@@ -187,7 +223,9 @@ namespace integration_framework {
       const shared_model::crypto::Keypair &keypair) {
     log_->info("init state");
     // peer initialization
-    common_objects_factory_->createPeer(kLocalHost, keypair.publicKey())
+    common_objects_factory_
+        ->createPeer(kLocalHost + ":" + std::to_string(internal_port_),
+                     keypair.publicKey())
         .match(
             [this](iroha::expected::Result<
                    std::unique_ptr<shared_model::interface::Peer>,
@@ -205,6 +243,8 @@ namespace integration_framework {
     iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
     iroha_instance_->getIrohaInstance()->resetOrderingService();
+
+    makeFakePeers();
   }
 
   void IntegrationTestFramework::subscribeQueuesAndRun() {
@@ -248,9 +288,16 @@ namespace integration_framework {
           queue_cond.notify_all();
         });
 
+
+    if (fake_peers_.size() > 0) {
+      log_->info("starting fake iroha peers");
+      for (auto &fake_peer : fake_peers_) {
+        fake_peer->run();
+      }
+    }
     // start instance
+    log_->info("starting main iroha instance");
     iroha_instance_->run();
-    log_->info("run iroha");
   }
 
   rxcpp::observable<std::shared_ptr<iroha::MstState>>
@@ -274,6 +321,17 @@ namespace integration_framework {
         ->onExpiredBatches();
   }
 
+  IntegrationTestFramework &
+  IntegrationTestFramework::subscribeForAllMstNotifications(
+      std::shared_ptr<iroha::network::MstTransportNotification> notification) {
+    std::for_each(fake_peers_.cbegin(),
+                  fake_peers_.cend(),
+                  [&notification](const auto &fake_peer) {
+                    fake_peer->subscribeForMstNotifications(notification);
+                  });
+    return *this;
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::getTxStatus(
       const shared_model::crypto::Hash &hash,
       std::function<void(const shared_model::proto::TransactionResponse &)>
@@ -286,13 +344,19 @@ namespace integration_framework {
     return *this;
   }
 
+  IntegrationTestFramework &IntegrationTestFramework::sendTxWithoutValidation(
+      const shared_model::proto::Transaction &tx) {
+    log_->info("sending transaction");
+    log_->debug(tx.toString());
+
+    command_client_.Torii(tx.getTransport());
+    return *this;
+  }
+
   IntegrationTestFramework &IntegrationTestFramework::sendTx(
       const shared_model::proto::Transaction &tx,
       std::function<void(const shared_model::proto::TransactionResponse &)>
           validation) {
-    log_->info("sending transaction");
-    log_->debug(tx.toString());
-
     // Required for StatusBus synchronization
     boost::barrier bar1(2);
     auto bar2 = std::make_shared<boost::barrier>(2);
@@ -308,7 +372,7 @@ namespace integration_framework {
           }
         });
 
-    command_client_.Torii(tx.getTransport());
+    sendTxWithoutValidation(tx);
     // make sure that the first (stateless) status has come
     bar1.wait();
     // fetch status of transaction
@@ -516,6 +580,11 @@ namespace integration_framework {
 
   void IntegrationTestFramework::done() {
     log_->info("done");
+    cleanup();
+  }
+
+  void IntegrationTestFramework::cleanup() {
+    log_->info("removing storage");
     if (iroha_instance_->getIrohaInstance()
         and iroha_instance_->getIrohaInstance()->storage) {
       iroha_instance_->getIrohaInstance()->storage->dropStorage();
