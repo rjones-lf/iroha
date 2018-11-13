@@ -45,7 +45,7 @@ namespace shared_model {
         FailedCommandIndexType cmd_index_;
         ErrorCodeType error_code_;
 
-        TransactionError() : cmd_name_{""}, cmd_index_{0}, error_code_{0} {}
+        TransactionError() : cmd_name_{}, cmd_index_{}, error_code_{} {}
         TransactionError(StatelessErrorOrFailedCommandNameType cmd_name,
                          FailedCommandIndexType cmd_index,
                          ErrorCodeType error_code)
@@ -98,7 +98,7 @@ namespace shared_model {
 
       /// Creates transaction pending status
       virtual FactoryReturnType makeMstPending(
-          TransactionHashType ,
+          TransactionHashType,
           TransactionError tx_error = TransactionError()) = 0;
 
       /// Creates transaction is not received status
