@@ -18,8 +18,11 @@
 #ifndef IROHA_GET_TRANSACTIONS_HPP
 #define IROHA_GET_TRANSACTIONS_HPP
 
-#include <model/query.hpp>
 #include <string>
+#include <vector>
+
+#include "crypto/hash_types.hpp"
+#include "model/query.hpp"
 
 namespace iroha {
   namespace model {

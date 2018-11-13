@@ -63,6 +63,25 @@ namespace shared_model {
       }
 
       /**
+       * Appends a new named collection to string
+       * @tparam Collection - type of collection
+       * @tparam Transform - type of transformation function
+       * @param name - field name to append
+       * @param c - collection to append
+       * @param t - transformation function
+       */
+      template <typename Collection, typename Transform>
+      PrettyStringBuilder &appendAll(
+          const std::string &name, Collection &&c, Transform &&t) {
+        result_.append(name);
+        result_.append(keyValueSeparator);
+        appendAll(c, t);
+        result_.append(singleFieldsSeparator);
+        result_.append(spaceSeparator);
+        return *this;
+      }
+
+      /**
        * Finalizes appending and returns constructed string.
        * @return resulted string
        */

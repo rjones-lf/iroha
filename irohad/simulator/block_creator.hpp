@@ -28,6 +28,10 @@ namespace shared_model {
 }  // namespace shared_model
 
 namespace iroha {
+  namespace validation {
+    struct VerifiedProposalAndErrors;
+  }
+
   namespace simulator {
 
     /**
@@ -40,7 +44,8 @@ namespace iroha {
        * @param proposal - object for validation
        */
       virtual void process_verified_proposal(
-          const shared_model::interface::Proposal &) = 0;
+          const std::shared_ptr<validation::VerifiedProposalAndErrors>
+              &verified_proposal_and_errors) = 0;
 
       /**
        * Emit blocks made from proposals

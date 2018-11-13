@@ -9,6 +9,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class RemoveSignatory : public AcceptanceFixture {
  public:
@@ -29,7 +30,7 @@ class RemoveSignatory : public AcceptanceFixture {
 
   const std::string kRole2 = "roletwo";
   const std::string kUser2 = "usertwo";
-  const std::string kUser2Id = kUser2 + "@test";
+  const std::string kUser2Id = kUser2 + "@" + kDomain;
   const crypto::Keypair kUser2Keypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };

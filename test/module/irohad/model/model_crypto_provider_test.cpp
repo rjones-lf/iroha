@@ -17,6 +17,7 @@
 
 #include <gtest/gtest.h>
 
+#include "common/blob.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/ed25519_impl.hpp"
 #include "model/generators/query_generator.hpp"
 #include "model/generators/transaction_generator.hpp"

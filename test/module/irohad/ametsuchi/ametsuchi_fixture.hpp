@@ -15,6 +15,7 @@
 #include "ametsuchi/impl/storage_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
+#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "common/files.hpp"
 #include "framework/config_helper.hpp"
 #include "logger/logger.hpp"
@@ -37,9 +38,12 @@ namespace iroha {
       }
 
       virtual void connect() {
+        perm_converter_ =
+            std::make_shared<shared_model::proto::ProtoPermissionToString>();
         auto converter =
             std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
-        StorageImpl::create(block_store_path, pgopt_, factory, converter)
+        StorageImpl::create(
+            block_store_path, pgopt_, factory, converter, perm_converter_)
             .match([&](iroha::expected::Value<std::shared_ptr<StorageImpl>>
                            &_storage) { storage = _storage.value; },
                    [](iroha::expected::Error<std::string> &error) {
@@ -71,6 +75,9 @@ namespace iroha {
                   shared_model::validation::FieldValidator>>();
 
       std::shared_ptr<StorageImpl> storage;
+
+      std::shared_ptr<shared_model::interface::PermissionToString>
+          perm_converter_;
 
       // generate random valid dbname
       std::string dbname_ = "d"

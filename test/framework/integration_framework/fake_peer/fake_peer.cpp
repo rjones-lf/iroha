@@ -5,6 +5,7 @@
 
 #include "framework/integration_framework/fake_peer/fake_peer.hpp"
 
+#include <boost/assert.hpp>
 #include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "consensus/yac/yac_crypto_provider.hpp"
@@ -98,7 +99,13 @@ namespace integration_framework {
         .match(
             [this](const iroha::expected::Result<int, std::string>::ValueType
                        &val) {
-              log_->debug("started server on port {}", val.value);
+              const size_t bound_port = val.value;
+              BOOST_VERIFY_MSG(
+                  bound_port == internal_port_,
+                  ("Server started on port " + std::to_string(bound_port)
+                   + " instead of requested " + std::to_string(internal_port_)
+                   + "!")
+                      .c_str());
             },
             [this](const auto &err) { log_->error("coul not start server!"); });
   }
@@ -113,7 +120,7 @@ namespace integration_framework {
   }
 
   const Keypair &FakePeer::getKeypair() const {
-    return *keypair_.get();
+    return *keypair_;
   }
 
   rxcpp::observable<YacStateMessage> FakePeer::get_yac_states_observable() {
@@ -147,7 +154,8 @@ namespace integration_framework {
               signature_with_pubkey = std::move(sig.value);
             },
             [this](iroha::expected::Error<std::string> &reason) {
-              log_->error("Cannot build signature: {}", reason.error);
+              BOOST_THROW_EXCEPTION(std::runtime_error(
+                  "Cannot build signature: " + reason.error));
             });
     return signature_with_pubkey;
   }
@@ -169,7 +177,8 @@ namespace integration_framework {
     log_->debug("Got a YAC state message with {} votes.",
                 incoming_votes->size());
     if (incoming_votes->size() > 1) {
-      // TODO mboldyrev 24/10/2018: rework ignoring states for accepted commits
+      // TODO mboldyrev 24/10/2018 IR-1821: rework ignoring states for accepted
+      //                                    commits
       log_->debug(
           "Ignoring state with multiple votes, "
           "because it probably refers to an accepted commit.");

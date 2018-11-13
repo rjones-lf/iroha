@@ -74,9 +74,3 @@ target_link_libraries(pb_query_factory_test
     model_generators
     pb_model_converters
     )
-
-addtest(static_map static_map.cpp)
-target_link_libraries(static_map
-    model_registrations
-    logger
-    )

@@ -18,7 +18,7 @@
 #define IROHA_REMOVE_SIGNATORY_HPP
 
 #include <string>
-#include "common/types.hpp"
+#include "crypto/keypair.hpp"
 #include "model/command.hpp"
 
 namespace iroha {

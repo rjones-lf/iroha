@@ -11,6 +11,7 @@
 #include <soci/soci.h>
 #include "ametsuchi/command_executor.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -32,10 +33,12 @@ namespace iroha {
         bool is_released_;
       };
 
-      explicit TemporaryWsvImpl(
+      TemporaryWsvImpl(
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory);
+              factory,
+          std::shared_ptr<shared_model::interface::PermissionToString>
+              perm_converter);
 
       expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &transaction) override;

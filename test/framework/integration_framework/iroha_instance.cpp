@@ -42,7 +42,8 @@ namespace integration_framework {
         proposal_delay_(1h),
         // not required due to solo consensus
         vote_delay_(0ms),
-        is_mst_supported_(mst_support) {}
+        opt_mst_gossip_params_(boost::make_optional(
+            mst_support, iroha::GossipPropagationStrategyParams{})) {}
 
   void IrohaInstance::makeGenesis(const shared_model::interface::Block &block) {
     instance_->storage->reset();
@@ -59,10 +60,12 @@ namespace integration_framework {
       std::chrono::milliseconds mst_gossip_emitting_period,
       uint32_t mst_gossip_amount_per_once) {
     BOOST_ASSERT_MSG(
-        !instance_,
-        "Gossip propafation params must be set before Irohad is started!");
-    mst_gossip_emitting_period_ = mst_gossip_emitting_period;
-    mst_gossip_amount_per_once_ = mst_gossip_amount_per_once;
+        not instance_,
+        "Gossip propagation params must be set before Irohad is started!");
+    iroha::GossipPropagationStrategyParams gossip_params;
+    gossip_params.emission_period = mst_gossip_emitting_period;
+    gossip_params.amount_per_once = mst_gossip_amount_per_once;
+    opt_mst_gossip_params_ = gossip_params;
   }
 
   void IrohaInstance::initPipeline(
@@ -76,9 +79,7 @@ namespace integration_framework {
                                              proposal_delay_,
                                              vote_delay_,
                                              key_pair,
-                                             is_mst_supported_,
-                                             mst_gossip_emitting_period_,
-                                             mst_gossip_amount_per_once_);
+                                             opt_mst_gossip_params_);
   }
 
   void IrohaInstance::run() {

@@ -15,6 +15,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class TransferAsset : public AcceptanceFixture {
  public:
@@ -27,8 +28,7 @@ class TransferAsset : public AcceptanceFixture {
                          interface::permissions::Role::kTransfer}) {
     auto new_perms = perms;
     new_perms.set(interface::permissions::Role::kAddAssetQty);
-    const std::string kRole1 = "roleone";
-    return AcceptanceFixture::makeUserWithPerms(kRole1, new_perms);
+    return AcceptanceFixture::makeUserWithPerms(new_perms);
   }
 
   /**
@@ -65,7 +65,7 @@ class TransferAsset : public AcceptanceFixture {
   const std::string kDesc = "description";
   const std::string kRole2 = "roletwo";
   const std::string kUser2 = "usertwo";
-  const std::string kUser2Id = kUser2 + "@test";
+  const std::string kUser2Id = kUser2 + "@" + kDomain;
   const crypto::Keypair kUser2Keypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
@@ -302,16 +302,15 @@ TEST_F(TransferAsset, SourceIsDest) {
 TEST_F(TransferAsset, InterDomain) {
   const std::string kNewDomain = "newdom";
   const std::string kUser2Id = kUser2 + "@" + kNewDomain;
-  const std::string kNewAssetId =
-      IntegrationTestFramework::kAssetName + "#" + kNewDomain;
+  const std::string kNewAssetId = kAssetName + "#" + kNewDomain;
 
   auto make_second_user =
       baseTx()
-          .creatorAccountId(IntegrationTestFramework::kAdminId)
+          .creatorAccountId(kAdminId)
           .createRole(kRole2, {interface::permissions::Role::kReceive})
           .createDomain(kNewDomain, kRole2)
           .createAccount(kUser2, kNewDomain, kUser2Keypair.publicKey())
-          .createAsset(IntegrationTestFramework::kAssetName, kNewDomain, 1)
+          .createAsset(kAssetName, kNewDomain, 1)
           .build()
           .signAndAddSignature(kAdminKeypair)
           .finish();
@@ -334,23 +333,19 @@ TEST_F(TransferAsset, InterDomain) {
  * @then txes passed commit and the state as intented
  */
 TEST_F(TransferAsset, BigPrecision) {
-  const std::string kNewAsset = IntegrationTestFramework::kAssetName + "a";
-  const std::string kNewAssetId =
-      kNewAsset + "#" + IntegrationTestFramework::kDefaultDomain;
+  const std::string kNewAsset = kAssetName + "a";
+  const std::string kNewAssetId = kNewAsset + "#" + kDomain;
   const auto kPrecision = 5;
   const std::string kInitial = "500";
   const std::string kForTransfer = "1";
   const std::string kLeft = "499";
 
-  auto create_asset =
-      baseTx()
-          .creatorAccountId(
-              integration_framework::IntegrationTestFramework::kAdminId)
-          .createAsset(
-              kNewAsset, IntegrationTestFramework::kDefaultDomain, kPrecision)
-          .build()
-          .signAndAddSignature(kAdminKeypair)
-          .finish();
+  auto create_asset = baseTx()
+                          .creatorAccountId(kAdminId)
+                          .createAsset(kNewAsset, kDomain, kPrecision)
+                          .build()
+                          .signAndAddSignature(kAdminKeypair)
+                          .finish();
   auto add_assets = complete(baseTx().addAssetQuantity(kNewAssetId, kInitial));
   auto make_transfer = complete(baseTx().transferAsset(
       kUserId, kUser2Id, kNewAssetId, kDesc, kForTransfer));
@@ -370,7 +365,7 @@ TEST_F(TransferAsset, BigPrecision) {
 
   auto make_query = [this](std::string account_id) {
     return baseQry()
-        .creatorAccountId(IntegrationTestFramework::kAdminId)
+        .creatorAccountId(kAdminId)
         .getAccountAssets(account_id)
         .build()
         .signAndAddSignature(kAdminKeypair)

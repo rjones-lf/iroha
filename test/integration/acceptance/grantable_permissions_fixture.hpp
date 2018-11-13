@@ -36,7 +36,7 @@ class GrantablePermissionsFixture : public AcceptanceFixture {
 
   /**
    * Creates two accounts with corresponding permission sets.
-   * Accounts are created in GrantablePermissionsFixture::kDomain,
+   * Accounts are created in integration_framework::kDomain,
    * their names will be kAccount1 and kAccount2 and
    * the names of their roles will be kRole1 and kRole2.
    * @param itf - initialized instance of test framework
