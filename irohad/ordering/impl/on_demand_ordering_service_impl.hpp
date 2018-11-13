@@ -13,7 +13,7 @@
 #include <unordered_map>
 
 #include <tbb/concurrent_queue.h>
-
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "logger/logger.hpp"
 
@@ -34,6 +34,7 @@ namespace iroha {
           size_t transaction_limit,
           std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
+          std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           size_t number_of_proposals = 3,
           const consensus::Round &initial_round = {2, 1});
 
@@ -67,6 +68,10 @@ namespace iroha {
        * Note: method is not thread-safe
        */
       ProposalType emitProposal(const consensus::Round &round);
+
+      bool batchAlreadyProcessed(const TransactionBatchType &batch) {
+        return false;
+      }
 
       /**
        * Max number of transaction in one proposal
@@ -106,6 +111,11 @@ namespace iroha {
 
       std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
+
+      /**
+       * Processed transactions cache used for replay prevention
+       */
+      std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache_;
 
       /**
        * Logger instance

@@ -9,6 +9,7 @@
 #include <thread>
 
 #include <gtest/gtest.h>
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
@@ -29,6 +30,19 @@ using shared_model::interface::Proposal;
 using shared_model::validation::MockValidator;
 using MockProposalValidator = MockValidator<Proposal>;
 
+class StubTxCache : public iroha::ametsuchi::TxPresenceCache {
+  iroha::ametsuchi::TxCacheStatusType check(
+      const shared_model::crypto::Hash &hash) const override {
+    return iroha::ametsuchi::tx_cache_status_responses::Missing();
+  }
+
+  BatchStatusCollectionType check(
+      const shared_model::interface::TransactionBatch &batch) const override {
+    return BatchStatusCollectionType{
+        iroha::ametsuchi::tx_cache_status_responses::Missing()};
+  }
+};
+
 class OnDemandOsTest : public ::testing::Test {
  public:
   std::shared_ptr<OnDemandOrderingService> os;
@@ -41,8 +55,12 @@ class OnDemandOsTest : public ::testing::Test {
     // TODO: nickaleks IR-1811 use mock factory
     auto factory = std::make_unique<
         shared_model::proto::ProtoProposalFactory<MockProposalValidator>>();
-    os = std::make_shared<OnDemandOrderingServiceImpl>(
-        transaction_limit, std::move(factory), proposal_limit, initial_round);
+    auto tx_cache = std::make_unique<StubTxCache>();
+    os = std::make_shared<OnDemandOrderingServiceImpl>(transaction_limit,
+                                                       std::move(factory),
+                                                       std::move(tx_cache),
+                                                       proposal_limit,
+                                                       initial_round);
   }
 
   /**
@@ -131,14 +149,18 @@ TEST_F(OnDemandOsTest, OverflowRound) {
  * @given initialized on-demand OS
  * @when  send transactions from different threads
  * AND initiate next round
- * @then  check that all transactions are appeared in proposal
+ * @then  check that all transactions appear in proposal
  */
 TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
   auto large_tx_limit = 10000u;
   auto factory = std::make_unique<
       shared_model::proto::ProtoProposalFactory<MockProposalValidator>>();
-  os = std::make_shared<OnDemandOrderingServiceImpl>(
-      large_tx_limit, std::move(factory), proposal_limit, initial_round);
+  auto tx_cache = std::make_unique<StubTxCache>();
+  os = std::make_shared<OnDemandOrderingServiceImpl>(large_tx_limit,
+                                                     std::move(factory),
+                                                     std::move(tx_cache),
+                                                     proposal_limit,
+                                                     initial_round);
 
   auto call = [this](auto bounds) {
     for (auto i = bounds.first; i < bounds.second; ++i) {
@@ -213,8 +235,12 @@ TEST_F(OnDemandOsTest, EraseReject) {
 TEST_F(OnDemandOsTest, UseFactoryForProposal) {
   auto factory = std::make_unique<MockUnsafeProposalFactory>();
   auto mock_factory = factory.get();
-  os = std::make_shared<OnDemandOrderingServiceImpl>(
-      transaction_limit, std::move(factory), proposal_limit, initial_round);
+  auto tx_cache = std::make_unique<StubTxCache>();
+  os = std::make_shared<OnDemandOrderingServiceImpl>(transaction_limit,
+                                                     std::move(factory),
+                                                     std::move(tx_cache),
+                                                     proposal_limit,
+                                                     initial_round);
 
   EXPECT_CALL(*mock_factory, unsafeCreateProposal(_, _, _))
       .WillOnce(Return(ByMove(makeMockProposal())));

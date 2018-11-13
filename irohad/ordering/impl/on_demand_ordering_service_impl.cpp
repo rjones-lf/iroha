@@ -10,6 +10,7 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/adaptor/indirected.hpp>
+#include <boost/range/adaptor/filtered.hpp>
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
@@ -26,11 +27,13 @@ OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
     size_t transaction_limit,
     std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
+    std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
     size_t number_of_proposals,
     const consensus::Round &initial_round)
     : transaction_limit_(transaction_limit),
       number_of_proposals_(number_of_proposals),
       proposal_factory_(std::move(proposal_factory)),
+      tx_cache_(std::move(tx_cache)),
       log_(logger::log("OnDemandOrderingServiceImpl")) {
   onCollaborationOutcome(initial_round);
 }
@@ -61,6 +64,10 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
              round.block_round,
              round.reject_round);
 
+  // if all missing, then valid, else invalid
+  auto unprocessed_batches = boost::adaptors::filter(batches, [this](const auto &batch) {
+    return not this->batchAlreadyProcessed(batch);
+  });
   auto it = current_proposals_.find(round);
   if (it != current_proposals_.end()) {
     std::for_each(batches.begin(), batches.end(), [&it](auto &obj) {
