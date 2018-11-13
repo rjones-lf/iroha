@@ -113,7 +113,7 @@ namespace integration_framework {
   }
 
   const Keypair &FakePeer::getKeypair() const {
-    return *keypair_.get();
+    return *keypair_;
   }
 
   rxcpp::observable<YacStateMessage> FakePeer::get_yac_states_observable() {
