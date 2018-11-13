@@ -20,6 +20,7 @@
 #include "builders/protobuf/transaction.hpp"
 #include "builders/protobuf/transaction_sequence_builder.hpp"
 #include "common/files.hpp"
+#include "consensus/yac/transport/impl/network_impl.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "datetime/time.hpp"
@@ -34,7 +35,9 @@
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/validators/always_valid_validators.hpp"
+#include "module/shared_model/validators/validators.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
+#include "network/impl/async_grpc_client.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 
 using namespace shared_model::crypto;
@@ -103,6 +106,8 @@ namespace integration_framework {
         transaction_batch_factory_(
             std::make_shared<
                 shared_model::interface::TransactionBatchFactoryImpl>()),
+        yac_transport_(
+            std::make_shared<iroha::consensus::yac::NetworkImpl>(async_call_)),
         cleanup_on_exit_(cleanup_on_exit) {}
 
   IntegrationTestFramework::~IntegrationTestFramework() {
@@ -321,6 +326,11 @@ namespace integration_framework {
         ->onExpiredBatches();
   }
 
+  rxcpp::observable<iroha::network::Commit>
+  IntegrationTestFramework::getYacOnCommitObservable() {
+    return iroha_instance_->getIrohaInstance()->getConsensusGate()->on_commit();
+  }
+
   IntegrationTestFramework &
   IntegrationTestFramework::subscribeForAllMstNotifications(
       std::shared_ptr<iroha::network::MstTransportNotification> notification) {
@@ -509,6 +519,12 @@ namespace integration_framework {
       const iroha::MstState &mst_state) {
     iroha::network::sendStateAsync(
         *this_peer_, mst_state, src_key, *async_call_);
+    return *this;
+  }
+
+  IntegrationTestFramework &IntegrationTestFramework::sendYacState(
+      const std::vector<iroha::consensus::yac::VoteMessage> &yac_state) {
+    yac_transport_->sendState(*this_peer_, yac_state);
     return *this;
   }
 

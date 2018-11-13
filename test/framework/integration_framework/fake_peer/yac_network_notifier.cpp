@@ -11,12 +11,6 @@
 
 namespace integration_framework {
 
-  void YacNetworkNotifier::subscribe(
-      const std::shared_ptr<iroha::consensus::yac::NetworkImpl>
-          &yac_transport) {
-    yac_transport->subscribe(shared_from_this());
-  }
-
   void YacNetworkNotifier::onState(YacNetworkNotifier::StateMessage state) {
     auto state_ptr = std::make_shared<const StateMessage>(std::move(state));
     votes_subject_.get_subscriber().on_next(state_ptr);
