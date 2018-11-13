@@ -5,6 +5,7 @@
 
 #include "framework/integration_framework/fake_peer/fake_peer.hpp"
 
+#include <boost/assert.hpp>
 #include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "consensus/yac/yac_crypto_provider.hpp"
@@ -98,7 +99,13 @@ namespace integration_framework {
         .match(
             [this](const iroha::expected::Result<int, std::string>::ValueType
                        &val) {
-              log_->debug("started server on port {}", val.value);
+              const size_t bound_port = val.value;
+              BOOST_VERIFY_MSG(
+                  bound_port == internal_port_,
+                  ("Server started on port " + std::to_string(bound_port)
+                   + " instead of requested " + std::to_string(internal_port_)
+                   + "!")
+                      .c_str());
             },
             [this](const auto &err) { log_->error("coul not start server!"); });
   }
