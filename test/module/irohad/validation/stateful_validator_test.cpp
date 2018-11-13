@@ -176,8 +176,10 @@ TEST_F(Validator, AllTxsValid) {
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
-  ASSERT_EQ(verified_proposal_and_errors.first->transactions().size(), 3);
-  ASSERT_TRUE(verified_proposal_and_errors.second.empty());
+  ASSERT_EQ(
+      verified_proposal_and_errors->verified_proposal->transactions().size(),
+      3);
+  ASSERT_TRUE(verified_proposal_and_errors->rejected_transactions.empty());
 }
 
 /**
@@ -223,8 +225,10 @@ TEST_F(Validator, SomeTxsFail) {
       .WillOnce(Return(iroha::expected::Error<CommandError>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
-  ASSERT_EQ(verified_proposal_and_errors.first->transactions().size(), 2);
-  ASSERT_EQ(verified_proposal_and_errors.second.size(), 1);
+  ASSERT_EQ(
+      verified_proposal_and_errors->verified_proposal->transactions().size(),
+      2);
+  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 1);
 }
 
 /**
@@ -296,6 +300,8 @@ TEST_F(Validator, Batches) {
       .WillOnce(Return(iroha::expected::Value<void>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
-  ASSERT_EQ(verified_proposal_and_errors.first->transactions().size(), 5);
-  ASSERT_EQ(verified_proposal_and_errors.second.size(), 1);
+  ASSERT_EQ(
+      verified_proposal_and_errors->verified_proposal->transactions().size(),
+      5);
+  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 1);
 }

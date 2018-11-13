@@ -292,15 +292,15 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
   ASSERT_EQ(client.sendTx(tx).answer, iroha_cli::CliClient::OK);
 
   // fail the tx
-  auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
+  auto verified_proposal_and_errors =
+      std::make_shared<VerifiedProposalAndErrors>();
+  verified_proposal_and_errors
+      ->verified_proposal = std::make_unique<shared_model::proto::Proposal>(
       TestProposalBuilder().height(0).createdTime(iroha::time::now()).build());
-  verified_prop_notifier.get_subscriber().on_next(
-      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
-          std::make_pair(verified_proposal,
-                         iroha::validation::TransactionsErrors{std::make_pair(
-                             iroha::validation::CommandError{
-                                 "CommandName", "CommandError", true, 2},
-                             tx.hash())})));
+  verified_proposal_and_errors->rejected_transactions.emplace(std::make_pair(
+      tx.hash(),
+      iroha::validation::CommandError{"CommandName", "CommandError", true, 2}));
+  verified_prop_notifier.get_subscriber().on_next(verified_proposal_and_errors);
   auto stringified_error = "Stateful validation error in transaction "
                            + tx.hash().hex() + ": command 'CommandName' with "
                                                "index '2' did not pass verification with "

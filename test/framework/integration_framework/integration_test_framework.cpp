@@ -150,7 +150,8 @@ namespace integration_framework {
         ->getPeerCommunicationService()
         ->on_verified_proposal()
         .subscribe([this](auto verified_proposal_and_errors) {
-          verified_proposal_queue_.push(verified_proposal_and_errors->first);
+          verified_proposal_queue_.push(
+              verified_proposal_and_errors);
           log_->info("verified proposal");
           queue_cond.notify_all();
         });
@@ -365,11 +366,13 @@ namespace integration_framework {
       std::function<void(const ProposalType &)> validation) {
     log_->info("check verified proposal");
     // fetch first proposal from proposal queue
-    ProposalType verified_proposal;
+    VerifiedProposalType verified_proposal_and_errors;
     fetchFromQueue(verified_proposal_queue_,
-                   verified_proposal,
+                   verified_proposal_and_errors,
                    proposal_waiting,
                    "missed verified proposal");
+    ProposalType verified_proposal =
+        std::move(verified_proposal_and_errors->verified_proposal);
     validation(verified_proposal);
     return *this;
   }
