@@ -45,7 +45,7 @@ using namespace std::chrono_literals;
 // TODO: @muratovv 12.11.2018 remove the mock after effective implementation
 // will be finished IR-1840
 #include <gmock/gmock.h>
-class MockTxPresenceCahce : public iroha::ametsuchi::TxPresenceCache {
+class MockTxPresenceCache : public iroha::ametsuchi::TxPresenceCache {
  public:
   MOCK_CONST_METHOD1(check,
                      iroha::ametsuchi::TxCacheStatusType(
@@ -57,26 +57,21 @@ class MockTxPresenceCahce : public iroha::ametsuchi::TxPresenceCache {
           const shared_model::interface::TransactionBatch &));
 };
 
-namespace std {
-  ostream &operator<<(
-      ostream &stream,
-      const iroha::ametsuchi::tx_cache_status_responses::Committed &) {
-    return stream;
-  }
-
-  ostream &operator<<(
-      ostream &stream,
-      const iroha::ametsuchi::tx_cache_status_responses::Rejected &) {
-    return stream;
-  }
-
-  ostream &operator<<(
-      ostream &stream,
-      const iroha::ametsuchi::tx_cache_status_responses::Missing &) {
-    return stream;
-  }
-
-}  // namespace std
+namespace iroha {
+  namespace ametsuchi {
+    namespace tx_cache_status_responses {
+      std::ostream &operator<<(std::ostream &os, const Committed &resp) {
+        return os << resp.hash.toString();
+      }
+      std::ostream &operator<<(std::ostream &os, const Rejected &resp) {
+        return os << resp.hash.toString();
+      }
+      std::ostream &operator<<(std::ostream &os, const Missing &resp) {
+        return os << resp.hash.toString();
+      }
+    }  // namespace tx_cache_status_responses
+  }    // namespace ametsuchi
+}  // namespace iroha
 
 /**
  * Configuring iroha daemon

@@ -338,7 +338,7 @@ namespace iroha {
                    bool(const shared_model::interface::BlocksQuery &));
     };
 
-    class MockTxPresenceCahce : public iroha::ametsuchi::TxPresenceCache {
+    class MockTxPresenceCache : public iroha::ametsuchi::TxPresenceCache {
       MOCK_CONST_METHOD1(check,
                          iroha::ametsuchi::TxCacheStatusType(
                              const shared_model::crypto::Hash &hash));
@@ -349,28 +349,19 @@ namespace iroha {
               const shared_model::interface::TransactionBatch &));
     };
 
+    namespace tx_cache_status_responses {
+      std::ostream &operator<<(std::ostream &os, const Committed &resp) {
+        return os << resp.hash.toString();
+      }
+      std::ostream &operator<<(std::ostream &os, const Rejected &resp) {
+        return os << resp.hash.toString();
+      }
+      std::ostream &operator<<(std::ostream &os, const Missing &resp) {
+        return os << resp.hash.toString();
+      }
+    }  // namespace tx_cache_status_responses
+
   }  // namespace ametsuchi
 }  // namespace iroha
-
-namespace std {
-  std::ostream &operator<<(
-      ::std::ostream &stream,
-      const iroha::ametsuchi::tx_cache_status_responses::Committed &) {
-    return stream;
-  }
-
-  std::ostream &operator<<(
-      ::std::ostream &stream,
-      const iroha::ametsuchi::tx_cache_status_responses::Rejected &) {
-    return stream;
-  }
-
-  std::ostream &operator<<(
-      ::std::ostream &stream,
-      const iroha::ametsuchi::tx_cache_status_responses::Missing &) {
-    return stream;
-  }
-
-}  // namespace std
 
 #endif  // IROHA_AMETSUCHI_MOCKS_HPP
