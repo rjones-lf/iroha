@@ -133,14 +133,18 @@ class TransportBuilderTest : public ::testing::Test {
   }
 
   auto createProposal() {
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(createTransaction());
     return getBaseProposalBuilder<shared_model::proto::ProposalBuilder>()
-        .transactions(std::vector<Transaction>({createTransaction()}))
+        .transactions(txs)
         .build();
   }
 
   auto createInvalidProposal() {
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(createInvalidTransaction());
     return getBaseProposalBuilder<TestProposalBuilder>()
-        .transactions(std::vector<Transaction>({createInvalidTransaction()}))
+        .transactions(txs)
         .build();
   }
 
@@ -219,7 +223,7 @@ TEST_F(TransportBuilderTest, InvalidTransactionCreationTest) {
   auto orig_model = createInvalidTransaction();
   testTransport<validation::DefaultSignedTransactionValidator>(
       orig_model,
-      [](const Value<decltype(orig_model)>) { FAIL(); },
+      [](const Value<decltype(orig_model)> &) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
 }
 

@@ -23,29 +23,29 @@ namespace shared_model {
 
       detail::ReferenceHolder<TransportType> proto_;
 
-      const iroha::protocol::Transaction::Payload &payload_{proto_->payload()};
+      iroha::protocol::Transaction::Payload &payload_{
+          *proto_->mutable_payload()};
 
-      const iroha::protocol::Transaction::Payload::ReducedPayload
-          reduced_payload_{proto_->payload().reduced_payload()};
+      iroha::protocol::Transaction::Payload::ReducedPayload &reduced_payload_{
+          *proto_->mutable_payload()->mutable_reduced_payload()};
 
-      const interface::types::BlobType blob_{
-          [this] { return makeBlob(*proto_); }()};
+      interface::types::BlobType blob_{[this] { return makeBlob(*proto_); }()};
 
-      const interface::types::BlobType blob_type_payload_{
+      interface::types::BlobType blob_type_payload_{
           [this] { return makeBlob(payload_); }()};
 
-      const interface::types::BlobType blob_type_reduced_payload_{
+      interface::types::BlobType blob_type_reduced_payload_{
           [this] { return makeBlob(reduced_payload_); }()};
 
       interface::types::HashType reduced_hash_ =
           shared_model::crypto::Sha3_256::makeHash(blob_type_reduced_payload_);
 
-      const std::vector<proto::Command> commands_{[this] {
+      std::vector<proto::Command> commands_{[this] {
         return std::vector<proto::Command>(reduced_payload_.commands().begin(),
                                            reduced_payload_.commands().end());
       }()};
 
-      const boost::optional<std::shared_ptr<interface::BatchMeta>> meta_{
+      boost::optional<std::shared_ptr<interface::BatchMeta>> meta_{
           [this]() -> boost::optional<std::shared_ptr<interface::BatchMeta>> {
             if (payload_.has_batch()) {
               std::shared_ptr<interface::BatchMeta> b =
@@ -55,7 +55,7 @@ namespace shared_model {
             return boost::none;
           }()};
 
-      const SignatureSetType<proto::Signature> signatures_{[this] {
+      SignatureSetType<proto::Signature> signatures_{[this] {
         auto signatures = proto_->signatures()
             | boost::adaptors::transformed([](const auto &x) {
                             return proto::Signature(x);
@@ -70,7 +70,12 @@ namespace shared_model {
     }
 
     Transaction::Transaction(TransportType &&transaction) {
-      impl_ = std::make_unique<Transaction::Impl>(transaction);
+      impl_ = std::make_unique<Transaction::Impl>(std::move(transaction));
+    }
+
+    Transaction::Transaction(const Transaction &transaction) {
+      this->impl_ =
+          std::make_unique<Transaction::Impl>(*transaction.impl_->proto_);
     }
 
     Transaction::Transaction(Transaction &&transaction) noexcept = default;
@@ -121,6 +126,15 @@ namespace shared_model {
       auto sig = impl_->proto_->add_signatures();
       sig->set_signature(crypto::toBinaryString(signed_blob));
       sig->set_public_key(crypto::toBinaryString(public_key));
+
+      impl_->signatures_ = {[this] {
+        auto signatures = impl_->proto_->signatures()
+            | boost::adaptors::transformed([](const auto &x) {
+                            return proto::Signature(x);
+                          });
+        return SignatureSetType<proto::Signature>(signatures.begin(),
+                                                  signatures.end());
+      }()};
 
       return true;
     }
