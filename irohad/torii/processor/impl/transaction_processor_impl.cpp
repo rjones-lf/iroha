@@ -20,20 +20,20 @@ namespace iroha {
 
     namespace {
       std::string composeErrorMessage(
-          const validation::TransactionError &tx_error) {
-        if (not tx_error.first.tx_passed_initial_validation) {
+          const validation::TransactionError &tx_hash_and_error) {
+        const auto tx_hash = tx_hash_and_error.first.hex();
+        const auto &cmd_error = tx_hash_and_error.second;
+        if (not cmd_error.tx_passed_initial_validation) {
           return (boost::format("Stateful validation error: transaction %s "
                                 "did not pass initial verification: "
                                 "checking '%s', error code '%d'")
-                  % tx_error.second.hex() % tx_error.first.name
-                  % tx_error.first.error_code)
+                  % tx_hash % cmd_error.name % cmd_error.error_code)
               .str();
         }
         return (boost::format("Stateful validation error in transaction %s: "
                               "command '%s' with index '%d' did not pass "
-                              "verification with error code '%d'")
-                % tx_error.second.hex() % tx_error.first.name
-                % tx_error.first.index % tx_error.first.error_code)
+                              "verification with code '%d'")
+                % tx_hash % cmd_error.name % cmd_error.index % cmd_error.error_code)
             .str();
       }
     }  // namespace
@@ -54,17 +54,16 @@ namespace iroha {
           [this](std::shared_ptr<validation::VerifiedProposalAndErrors>
                      proposal_and_errors) {
             // notify about failed txs
-            const auto &errors = proposal_and_errors->second;
+            const auto &errors = proposal_and_errors->rejected_transactions;
             std::lock_guard<std::mutex> lock(notifier_mutex_);
             for (const auto &tx_error : errors) {
               log_->info(composeErrorMessage(tx_error));
-              this->publishStatus(TxStatusType::kStatefulFailed,
-                                  tx_error.second,
-                                  tx_error.first);
+              this->publishStatus(
+                  TxStatusType::kStatefulFailed, tx_error.first, tx_error.second);
             }
             // notify about success txs
             for (const auto &successful_tx :
-                 proposal_and_errors->first->transactions()) {
+                 proposal_and_errors->verified_proposal->transactions()) {
               log_->info("on stateful validation success: {}",
                          successful_tx.hash().hex());
               this->publishStatus(TxStatusType::kStatefulValid,

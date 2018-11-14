@@ -29,10 +29,10 @@ namespace iroha {
   namespace validation {
     class MockStatefulValidator : public validation::StatefulValidator {
      public:
-      MOCK_METHOD2(
-          validate,
-          VerifiedProposalAndErrors(const shared_model::interface::Proposal &,
-                                    ametsuchi::TemporaryWsv &));
+      MOCK_METHOD2(validate,
+                   std::unique_ptr<VerifiedProposalAndErrors>(
+                       const shared_model::interface::Proposal &,
+                       ametsuchi::TemporaryWsv &));
     };
 
     class MockChainValidator : public ChainValidator {

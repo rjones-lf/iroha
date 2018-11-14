@@ -26,7 +26,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::TransactionBatchParser>
               batch_parser);
 
-      VerifiedProposalAndErrors validate(
+      std::unique_ptr<validation::VerifiedProposalAndErrors> validate(
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) override;
 

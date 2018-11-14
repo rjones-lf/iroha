@@ -85,6 +85,14 @@ namespace iroha {
 
       using TransactionsType = decltype(transactions);
 
+      /**
+       * Attached rejected transactions' hashes
+       * part of PAYLOAD
+       */
+      std::vector<HashType> rejected_transactions_hashes;
+
+      using RejectedTransactionsType = decltype(rejected_transactions_hashes);
+
       bool operator==(const Block &rhs) const;
       bool operator!=(const Block &rhs) const;
     };

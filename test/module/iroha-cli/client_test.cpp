@@ -298,15 +298,16 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
   auto cmd_name = "CommandName";
   size_t cmd_index = 2;
   uint32_t error_code = 3;
-  auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
+  auto verified_proposal_and_errors =
+      std::make_shared<VerifiedProposalAndErrors>();
+  verified_proposal_and_errors
+      ->verified_proposal = std::make_unique<shared_model::proto::Proposal>(
       TestProposalBuilder().height(0).createdTime(iroha::time::now()).build());
-  verified_prop_notifier.get_subscriber().on_next(
-      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
-          std::make_pair(verified_proposal,
-                         iroha::validation::TransactionsErrors{std::make_pair(
-                             iroha::validation::CommandError{
-                                 cmd_name, error_code, true, cmd_index},
-                             tx.hash())})));
+  verified_proposal_and_errors->rejected_transactions.emplace(std::make_pair(
+      tx.hash(),
+      iroha::validation::CommandError{
+          cmd_name, error_code, true, cmd_index}));
+  verified_prop_notifier.get_subscriber().on_next(verified_proposal_and_errors);
 
   auto getAnswer = [&]() {
     return client.getTxStatus(shared_model::crypto::toBinaryString(tx.hash()))

@@ -33,6 +33,12 @@ namespace shared_model {
        */
       virtual types::TransactionsCollectionType transactions() const = 0;
 
+      /**
+       * @return collection of rejected transactions' hashes
+       */
+      virtual interface::types::HashCollectionType
+      rejected_transactions_hashes() const = 0;
+
       std::string toString() const override;
     };
 

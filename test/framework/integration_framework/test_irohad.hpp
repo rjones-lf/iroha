@@ -29,23 +29,25 @@ namespace integration_framework {
    public:
     TestIrohad(const std::string &block_store_dir,
                const std::string &pg_conn,
+               const std::string &listen_ip,
                size_t torii_port,
                size_t internal_port,
                size_t max_proposal_size,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
                const shared_model::crypto::Keypair &keypair,
-               bool is_mst_supported)
+               const boost::optional<iroha::GossipPropagationStrategyParams>
+                   &opt_mst_gossip_params = boost::none)
         : Irohad(block_store_dir,
                  pg_conn,
-                 "127.0.0.1",
+                 listen_ip,
                  torii_port,
                  internal_port,
                  max_proposal_size,
                  proposal_delay,
                  vote_delay,
                  keypair,
-                 is_mst_supported) {}
+                 opt_mst_gossip_params) {}
 
     auto &getCommandService() {
       return command_service;
@@ -57,6 +59,14 @@ namespace integration_framework {
 
     auto &getQueryService() {
       return query_service;
+    }
+
+    auto &getMstProcessor() {
+      return mst_processor;
+    }
+
+    auto &getConsensusGate() {
+      return consensus_gate;
     }
 
     auto &getPeerCommunicationService() {

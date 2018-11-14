@@ -57,6 +57,16 @@ namespace iroha {
         }
         document.AddMember("transactions", commands, allocator);
 
+        Value rejected_transactions;
+        rejected_transactions.SetArray();
+        for (auto &&hash : block.rejected_transactions_hashes) {
+          Value serialized_hash;
+          serialized_hash.SetString(hash.to_hexstring().c_str(), allocator);
+          rejected_transactions.PushBack(serialized_hash, allocator);
+        }
+        document.AddMember(
+            "rejected_transactions", rejected_transactions, allocator);
+
         return document;
       }
 
@@ -86,7 +96,9 @@ namespace iroha {
             | des.String(&Block::hash, "hash")
             | des.String(&Block::prev_hash, "prev_hash")
             | des.Array(&Block::sigs, "signatures")
-            | des.Array(&Block::transactions, "transactions", des_transactions);
+            | des.Array(&Block::transactions, "transactions", des_transactions)
+            | des.Array(&Block::rejected_transactions_hashes,
+                        "rejected_transactions");
       }
 
     }  // namespace converters

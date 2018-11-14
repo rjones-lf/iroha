@@ -7,9 +7,10 @@
 #include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 
+using namespace common_constants;
+
 class AcceptanceTest : public AcceptanceFixture {
  public:
-  const std::string kAdmin = "admin@test";
 
   const std::function<void(const shared_model::proto::TransactionResponse &)>
       checkEnoughSignaturesCollectedStatus = [](auto &status) {
@@ -31,7 +32,7 @@ class AcceptanceTest : public AcceptanceFixture {
   auto baseTx() {
     return Builder()
         .createdTime(getUniqueTime())
-        .creatorAccountId(kAdmin)
+        .creatorAccountId(kAdminId)
         .addAssetQuantity(kAssetId, "1.0")
         .quorum(1);
   }

@@ -18,6 +18,7 @@
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy_params.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
@@ -55,7 +56,7 @@ class Irohad {
    * Constructor that initializes common iroha pipeline
    * @param block_store_dir - folder where blocks will be stored
    * @param pg_conn - initialization string for postgre
-   * @param listen_ip - ip address for opening ports
+   * @param listen_ip - ip address for opening ports (internal & torii)
    * @param torii_port - port for torii binding
    * @param internal_port - port for internal communication - ordering service,
    * consensus, and block loader
@@ -64,7 +65,10 @@ class Irohad {
    * @param proposal_delay - maximum waiting time util emitting new proposal
    * @param vote_delay - waiting time before sending vote to next peer
    * @param keypair - public and private keys for crypto signer
-   * @param is_mst_supported - enable or disable mst processing support
+   * @param opt_mst_gossip_params - parameters for Gossip MST propagation (optional).
+   * If not provided, disables mst processing support
+   *
+   * TODO mboldyrev 03.11.2018 IR-1844 Refactor the constructor.
    */
   Irohad(const std::string &block_store_dir,
          const std::string &pg_conn,
@@ -75,7 +79,8 @@ class Irohad {
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
          const shared_model::crypto::Keypair &keypair,
-         bool is_mst_supported);
+         const boost::optional<iroha::GossipPropagationStrategyParams>
+             &opt_mst_gossip_params = boost::none);
 
   /**
    * Initialization of whole objects in system
@@ -160,6 +165,8 @@ class Irohad {
   std::chrono::milliseconds proposal_delay_;
   std::chrono::milliseconds vote_delay_;
   bool is_mst_supported_;
+  boost::optional<iroha::GossipPropagationStrategyParams>
+      opt_mst_gossip_params_;
 
   // ------------------------| internal dependencies |-------------------------
 

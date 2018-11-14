@@ -35,11 +35,13 @@ namespace shared_model {
       template <int, typename, typename>
       friend class TemplateBlockBuilder;
 
-      enum RequiredFields {
+      enum Fields {
         Transactions,
         Height,
         PrevHash,
         CreatedTime,
+        LAST_REQUIRED = CreatedTime,
+        RejectedTransactions,
         TOTAL
       };
 
@@ -80,6 +82,17 @@ namespace shared_model {
         });
       }
 
+      template <class T>
+      auto rejectedTransactions(const T &rejected_transactions_hashes) const {
+        return transform<RejectedTransactions>([&](auto &block) {
+          for (const auto &hash : rejected_transactions_hashes) {
+            auto *next_hash =
+                block.mutable_payload()->add_rejected_transactions_hashes();
+            (*next_hash) = shared_model::crypto::toBinaryString(hash);
+          }
+        });
+      }
+
       auto height(interface::types::HeightType height) const {
         return transform<Height>(
             [&](auto &block) { block.mutable_payload()->set_height(height); });
@@ -99,7 +112,8 @@ namespace shared_model {
       }
 
       BT build() {
-        static_assert(S == (1 << TOTAL) - 1, "Required fields are not set");
+        static_assert(((~S) & ((2 << LAST_REQUIRED) - 1)) == 0,
+                      "Required fields are not set");
 
         auto tx_number = block_.payload().transactions().size();
         block_.mutable_payload()->set_tx_number(tx_number);
@@ -113,7 +127,7 @@ namespace shared_model {
         return BT(std::move(result));
       }
 
-      static const int total = RequiredFields::TOTAL;
+      static const int total = Fields::TOTAL;
     };
   }  // namespace proto
 }  // namespace shared_model

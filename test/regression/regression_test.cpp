@@ -20,13 +20,12 @@
 #include "builders/protobuf/transaction.hpp"
 #include "common/files.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "framework/common_constants.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 
-constexpr auto kAdmin = "user@test";
-constexpr auto kAsset = "asset#domain";
-const auto kAdminKeypair =
-    shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
+using namespace common_constants;
+using shared_model::interface::permissions::Role;
 
 /**
  * @given ITF instance with Iroha
@@ -36,8 +35,8 @@ const auto kAdminKeypair =
 TEST(RegressionTest, SequentialInitialization) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
-                .creatorAccountId(kAdmin)
-                .addAssetQuantity(kAsset, "1.0")
+                .creatorAccountId(kAdminId)
+                .addAssetQuantity(kAssetId, "1.0")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(
@@ -63,7 +62,7 @@ TEST(RegressionTest, SequentialInitialization) {
             .substr(0, 8);
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &) {}, false, path)
+        1, dbname, false, false, path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx, check_enough_signatures_collected_status)
         .skipProposal()
@@ -75,7 +74,7 @@ TEST(RegressionTest, SequentialInitialization) {
   }
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &itf) { itf.done(); }, false, path)
+        1, dbname, true, false, path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx, check_enough_signatures_collected_status)
         .checkProposal(checkProposal)
@@ -97,11 +96,13 @@ TEST(RegressionTest, StateRecovery) {
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
-                .creatorAccountId("admin@test")
-                .createAccount("user", "test", userKeypair.publicKey())
-                .addAssetQuantity("coin#test", "133.0")
+                .creatorAccountId(kAdminId)
+                .createAccount(kUser, kDomain, userKeypair.publicKey())
+                .createRole(kRole, {Role::kReceive})
+                .appendRole(kUserId, kRole)
+                .addAssetQuantity(kAssetId, "133.0")
                 .transferAsset(
-                    "admin@test", "user@test", "coin#test", "descrs", "97.8")
+                    kAdminId, kUserId, kAssetId, "descrs", "97.8")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(kAdminKeypair)
@@ -110,7 +111,7 @@ TEST(RegressionTest, StateRecovery) {
   auto makeQuery = [&hash](int query_counter, auto kAdminKeypair) {
     return shared_model::proto::QueryBuilder()
         .createdTime(iroha::time::now())
-        .creatorAccountId("admin@test")
+        .creatorAccountId(kAdminId)
         .queryCounter(query_counter)
         .getTransactions(std::vector<shared_model::crypto::Hash>{hash})
         .build()
@@ -143,7 +144,7 @@ TEST(RegressionTest, StateRecovery) {
 
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &) {}, false, path)
+        1, dbname, false, false, path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx)
         .checkProposal(checkOne)
@@ -153,7 +154,7 @@ TEST(RegressionTest, StateRecovery) {
   }
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &itf) { itf.done(); }, false, path)
+        1, dbname, true, false, path)
         .recoverState(kAdminKeypair)
         .sendQuery(makeQuery(2, kAdminKeypair), checkQuery);
   }
@@ -177,5 +178,5 @@ TEST(RegressionTest, DoubleCallOfDone) {
  */
 TEST(RegressionTest, DestructionOfNonInitializedItf) {
   integration_framework::IntegrationTestFramework itf(
-      1, {}, [](auto &itf) { itf.done(); });
+      1, {}, true);
 }

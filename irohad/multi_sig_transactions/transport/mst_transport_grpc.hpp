@@ -73,6 +73,12 @@ namespace iroha {
       /// source peer key for MST propogation messages
       const std::string my_key_;
     };
+
+    void sendStateAsync(const shared_model::interface::Peer &to,
+                        iroha::ConstRefState state,
+                        const shared_model::crypto::PublicKey &sender_key,
+                        AsyncGrpcClient<google::protobuf::Empty> &async_call);
+
   }  // namespace network
 }  // namespace iroha
 

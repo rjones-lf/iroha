@@ -34,8 +34,7 @@ namespace iroha {
           [](expected::Value<void> &) { return true; },
           [&tx, &transactions_errors_log](
               expected::Error<validation::CommandError> &error) {
-            transactions_errors_log.push_back(
-                std::make_pair(error.error, tx.hash()));
+            transactions_errors_log.emplace(tx.hash(), std::move(error.error));
             return false;
           });
     };
@@ -104,29 +103,30 @@ namespace iroha {
           batch_parser_(std::move(batch_parser)),
           log_(logger::log("SFV")) {}
 
-    validation::VerifiedProposalAndErrors StatefulValidatorImpl::validate(
+    std::unique_ptr<validation::VerifiedProposalAndErrors>
+    StatefulValidatorImpl::validate(
         const shared_model::interface::Proposal &proposal,
         ametsuchi::TemporaryWsv &temporaryWsv) {
       log_->info("transactions in proposal: {}",
                  proposal.transactions().size());
 
-      auto transactions_errors_log = validation::TransactionsErrors{};
-      auto valid_txs = validateTransactions(proposal.transactions(),
-                                            temporaryWsv,
-                                            transactions_errors_log,
-                                            log_,
-                                            *batch_parser_);
+      auto validation_result = std::make_unique<VerifiedProposalAndErrors>();
+      auto valid_txs =
+          validateTransactions(proposal.transactions(),
+                               temporaryWsv,
+                               validation_result->rejected_transactions,
+                               log_,
+                               *batch_parser_);
 
       // Since proposal came from ordering gate it was already validated.
       // All transactions has been validated as well
       // This allows for unsafe construction of proposal
-      auto validated_proposal = factory_->unsafeCreateProposal(
+      validation_result->verified_proposal = factory_->unsafeCreateProposal(
           proposal.height(), proposal.createdTime(), valid_txs);
 
       log_->info("transactions in verified proposal: {}",
-                 validated_proposal->transactions().size());
-      return std::make_pair(std::move(validated_proposal),
-                            transactions_errors_log);
+                 validation_result->verified_proposal->transactions().size());
+      return validation_result;
     }
   }  // namespace validation
 }  // namespace iroha

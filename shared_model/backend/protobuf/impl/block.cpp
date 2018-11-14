@@ -46,6 +46,16 @@ namespace shared_model {
                                                   signatures.end());
       }()};
 
+      std::vector<interface::types::HashType> rejected_transactions_hashes_{
+          [this] {
+            std::vector<interface::types::HashType> hashes;
+            for (const auto &hash :
+                 *payload_.mutable_rejected_transactions_hashes()) {
+              hashes.emplace_back(shared_model::crypto::Hash(hash));
+            }
+            return hashes;
+          }()};
+
       interface::types::BlobType payload_blob_{
           [this] { return makeBlob(payload_); }()};
     };
@@ -113,6 +123,11 @@ namespace shared_model {
 
     interface::types::TransactionsNumberType Block::txsNumber() const {
       return impl_->payload_.tx_number();
+    }
+
+    interface::types::HashCollectionType Block::rejected_transactions_hashes()
+        const {
+      return impl_->rejected_transactions_hashes_;
     }
 
     const interface::types::BlobType &Block::payload() const {
