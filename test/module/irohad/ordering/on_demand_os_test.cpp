@@ -270,19 +270,18 @@ TEST_F(OnDemandOsTest, AlreadyProcessedProposalDiscarded) {
   auto batches = generateTransactions({1, 2});
   auto &batch = *batches.at(0);
 
-  auto &tx = *batch.transactions().at(0);
-
-  EXPECT_CALL(*mock_cache, check(_))
+  EXPECT_CALL(
+      *mock_cache,
+      check(testing::Matcher<const shared_model::interface::TransactionBatch &>(
+          testing::Ref(batch))))
       .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
           iroha::ametsuchi::tx_cache_status_responses::Committed()}));
 
-  os->onBatches(target_round, batches);
+  os->onBatches(initial_round, batches);
 
   os->onCollaborationOutcome(commit_round);
 
-  auto proposal = os->onRequestProposal(target_round);
+  auto proposal = os->onRequestProposal(initial_round);
 
-  // implement == for batch
   ASSERT_FALSE(proposal);
-  auto proposal_txs = proposal->get()->transactions();
 }

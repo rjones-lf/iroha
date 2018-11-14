@@ -16,6 +16,7 @@
 #include "ametsuchi/tx_presence_cache.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "logger/logger.hpp"
+#include "common/visitor.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -69,8 +70,19 @@ namespace iroha {
        */
       ProposalType emitProposal(const consensus::Round &round);
 
-      bool batchAlreadyProcessed(const TransactionBatchType &batch) {
-        return false;
+      bool batchAlreadyProcessed(
+          const shared_model::interface::TransactionBatch &batch) {
+        auto result = tx_cache_->check(batch);
+        // if all missing, then valid, else invalid
+        return std::any_of(
+            result.begin(), result.end(), [](const auto &batch_result) {
+              return iroha::visit_in_place(
+                  batch_result,
+                  [](const ametsuchi::tx_cache_status_responses::Missing &) {
+                    return false;
+                  },
+                  [](const auto &) { return true; });
+            });
       }
 
       /**

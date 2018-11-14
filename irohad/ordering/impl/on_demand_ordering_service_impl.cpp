@@ -64,16 +64,15 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
              round.block_round,
              round.reject_round);
 
-  // if all missing, then valid, else invalid
   auto unprocessed_batches =
       boost::adaptors::filter(batches, [this](const auto &batch) {
-        return not this->batchAlreadyProcessed(batch);
+        return not this->batchAlreadyProcessed(*batch);
       });
   auto it = current_proposals_.find(round);
   if (it != current_proposals_.end()) {
-    std::for_each(batches.begin(), batches.end(), [&it](auto &obj) {
-      it->second.push(std::move(obj));
-    });
+    std::for_each(unprocessed_batches.begin(),
+                  unprocessed_batches.end(),
+                  [&it](auto &obj) { it->second.push(std::move(obj)); });
     log_->info("onTransactions => collection is inserted");
   }
 }
@@ -97,6 +96,7 @@ void OnDemandOrderingServiceImpl::packNextProposals(
   auto close_round = [this](consensus::Round round) {
     auto it = current_proposals_.find(round);
     if (it != current_proposals_.end()) {
+      log_->info("hello");
       if (not it->second.empty()) {
         proposal_map_.emplace(round, emitProposal(round));
         log_->info("packNextProposal: data has been fetched for round[{}, {}]",
