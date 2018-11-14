@@ -11,6 +11,7 @@
 #include <boost/range/adaptor/indirected.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
+#include "common/visitor.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
@@ -196,4 +197,24 @@ void OnDemandOrderingServiceImpl::tryErase() {
                round.reject_round);
     round_queue_.pop();
   }
+}
+bool OnDemandOrderingServiceImpl::batchAlreadyProcessed(
+    const shared_model::interface::TransactionBatch &batch) {
+  auto tx_statuses = tx_cache_->check(batch);
+  // if any transaction is commited or rejected, batch was already processed
+  // Note: any_of returns false for empty sequence
+  return std::any_of(
+      tx_statuses.begin(), tx_statuses.end(), [this](const auto &batch_result) {
+        return iroha::visit_in_place(
+            batch_result,
+            [](const ametsuchi::tx_cache_status_responses::Missing &) {
+              return false;
+            },
+            [this](const auto &status) {
+              log_->warn(
+                  "Received already processed batch. Duplicate transaction: {}",
+                  status.hash.hex());
+              return true;
+            });
+      });
 }
