@@ -326,19 +326,18 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
       std::make_shared<iroha::validation::VerifiedProposalAndErrors>();
   validation_result->verified_proposal =
       std::make_unique<shared_model::proto::Proposal>(
-      TestProposalBuilder()
-          .height(1)
-          .createdTime(iroha::time::now())
-          .transactions(txs)
-          .build());
+          TestProposalBuilder()
+              .height(1)
+              .createdTime(iroha::time::now())
+              .transactions(txs)
+              .build());
 
   auto cmd_name = "FailedCommand";
   size_t cmd_index = 2;
   uint32_t error_code = 3;
   validation_result->rejected_transactions.emplace(
       failed_tx_hash,
-      iroha::validation::CommandError{
-          cmd_name, error_code, true, cmd_index});
+      iroha::validation::CommandError{cmd_name, error_code, true, cmd_index});
   verified_prop_notifier_.get_subscriber().on_next(validation_result);
 
   // create commit from block notifier's observable

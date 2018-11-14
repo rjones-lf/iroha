@@ -33,7 +33,8 @@ namespace iroha {
         return (boost::format("Stateful validation error in transaction %s: "
                               "command '%s' with index '%d' did not pass "
                               "verification with code '%d'")
-                % tx_hash % cmd_error.name % cmd_error.index % cmd_error.error_code)
+                % tx_hash % cmd_error.name % cmd_error.index
+                % cmd_error.error_code)
             .str();
       }
     }  // namespace
@@ -58,8 +59,9 @@ namespace iroha {
             std::lock_guard<std::mutex> lock(notifier_mutex_);
             for (const auto &tx_error : errors) {
               log_->info(composeErrorMessage(tx_error));
-              this->publishStatus(
-                  TxStatusType::kStatefulFailed, tx_error.first, tx_error.second);
+              this->publishStatus(TxStatusType::kStatefulFailed,
+                                  tx_error.first,
+                                  tx_error.second);
             }
             // notify about success txs
             for (const auto &successful_tx :

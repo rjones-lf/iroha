@@ -305,8 +305,7 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
       TestProposalBuilder().height(0).createdTime(iroha::time::now()).build());
   verified_proposal_and_errors->rejected_transactions.emplace(std::make_pair(
       tx.hash(),
-      iroha::validation::CommandError{
-          cmd_name, error_code, true, cmd_index}));
+      iroha::validation::CommandError{cmd_name, error_code, true, cmd_index}));
   verified_prop_notifier.get_subscriber().on_next(verified_proposal_and_errors);
 
   auto getAnswer = [&]() {

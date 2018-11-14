@@ -208,7 +208,9 @@ TEST_F(Validator, SomeTxsFail) {
       verified_proposal_and_errors->verified_proposal->transactions().size(),
       2);
   ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 1);
-  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.at(0).first.error_code, 2);
+  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
+                ->second.error_code,
+            2);
 }
 
 /**
@@ -284,5 +286,7 @@ TEST_F(Validator, Batches) {
       verified_proposal_and_errors->verified_proposal->transactions().size(),
       5);
   ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 1);
-  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.at(0).first.error_code, 2);
+  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
+                ->second.error_code,
+            2);
 }
