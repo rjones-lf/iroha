@@ -14,6 +14,7 @@
 #include "builders/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 #include "module/shared_model/validators/validators.hpp"
 
@@ -50,12 +51,14 @@ class OnDemandOsTest : public ::testing::Test {
   const uint32_t proposal_limit = 5;
   const consensus::Round initial_round = {2, 1}, target_round = {4, 1},
                          commit_round = {3, 1}, reject_round = {2, 2};
+  iroha::ametsuchi::MockTxPresenceCache *mock_cache;
 
   void SetUp() override {
     // TODO: nickaleks IR-1811 use mock factory
     auto factory = std::make_unique<
         shared_model::proto::ProtoProposalFactory<MockProposalValidator>>();
-    auto tx_cache = std::make_unique<StubTxCache>();
+    auto tx_cache = std::make_unique<iroha::ametsuchi::MockTxPresenceCache>();
+    mock_cache = tx_cache.get();
     os = std::make_shared<OnDemandOrderingServiceImpl>(transaction_limit,
                                                        std::move(factory),
                                                        std::move(tx_cache),
@@ -70,8 +73,14 @@ class OnDemandOsTest : public ::testing::Test {
    */
   void generateTransactionsAndInsert(consensus::Round round,
                                      std::pair<uint64_t, uint64_t> range) {
+    os->onBatches(round, generateTransactions(range));
+  }
+
+  OnDemandOrderingService::CollectionType generateTransactions(
+      std::pair<uint64_t, uint64_t> range) {
     auto now = iroha::time::now();
     OnDemandOrderingService::CollectionType collection;
+
     for (auto i = range.first; i < range.second; ++i) {
       collection.push_back(
           std::make_unique<shared_model::interface::TransactionBatchImpl>(
@@ -88,7 +97,7 @@ class OnDemandOsTest : public ::testing::Test {
                                   generateKeypair())
                           .finish())}));
     }
-    os->onBatches(round, std::move(collection));
+    return collection;
   }
 
   std::unique_ptr<Proposal> makeMockProposal() {
@@ -250,4 +259,30 @@ TEST_F(OnDemandOsTest, UseFactoryForProposal) {
   os->onCollaborationOutcome(commit_round);
 
   ASSERT_TRUE(os->onRequestProposal(target_round));
+}
+
+/**
+ * @given initialized on-demand OS
+ * @when add a batch which was already processed
+ * @then the already processed batch is not present in a proposal
+ */
+TEST_F(OnDemandOsTest, AlreadyProcessedProposalDiscarded) {
+  auto batches = generateTransactions({1, 2});
+  auto &batch = *batches.at(0);
+
+  auto &tx = *batch.transactions().at(0);
+
+  EXPECT_CALL(*mock_cache, check(_))
+      .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
+          iroha::ametsuchi::tx_cache_status_responses::Committed()}));
+
+  os->onBatches(target_round, batches);
+
+  os->onCollaborationOutcome(commit_round);
+
+  auto proposal = os->onRequestProposal(target_round);
+
+  // implement == for batch
+  ASSERT_FALSE(proposal);
+  auto proposal_txs = proposal->get()->transactions();
 }

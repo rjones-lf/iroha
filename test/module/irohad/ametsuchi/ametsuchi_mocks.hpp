@@ -339,6 +339,7 @@ namespace iroha {
     };
 
     class MockTxPresenceCache : public iroha::ametsuchi::TxPresenceCache {
+     public:
       MOCK_CONST_METHOD1(check,
                          iroha::ametsuchi::TxCacheStatusType(
                              const shared_model::crypto::Hash &hash));
