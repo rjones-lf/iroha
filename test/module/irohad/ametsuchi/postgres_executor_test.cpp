@@ -1426,6 +1426,10 @@ namespace iroha {
 
     class SetQuorum : public CommandExecutorTest {
      public:
+      SetQuorum()
+          : additional_key_(shared_model::crypto::DefaultCryptoAlgorithmType::
+                                generateKeypair()) {}
+
       void SetUp() override {
         CommandExecutorTest::SetUp();
         ASSERT_TRUE(
@@ -1440,7 +1444,13 @@ namespace iroha {
             val(execute(buildCommand(TestTransactionBuilder().createAccount(
                             "id", domain->domainId(), *pubkey)),
                         true)));
+        ASSERT_TRUE(
+            val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+                            account->accountId(), additional_key_.publicKey())),
+                        true)));
       }
+
+      shared_model::crypto::Keypair additional_key_;
     };
 
     /**
@@ -1450,9 +1460,10 @@ namespace iroha {
      */
     TEST_F(SetQuorum, Valid) {
       addAllPerms();
+
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(
-              account->accountId(), 3)))));
+              account->accountId(), 2)))));
     }
 
     /**
@@ -1472,8 +1483,14 @@ namespace iroha {
                       true,
                       "id2@domain")));
 
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().addSignatory(
+                          "id2@domain", additional_key_.publicKey())),
+                      true,
+                      "id2@domain")));
+
       ASSERT_TRUE(val(execute(buildCommand(
-          TestTransactionBuilder().setAccountQuorum("id2@domain", 3)))));
+          TestTransactionBuilder().setAccountQuorum("id2@domain", 2)))));
     }
 
     /**
@@ -1494,16 +1511,17 @@ namespace iroha {
      */
     TEST_F(SetQuorum, LessSignatoriesThanNewQuorum) {
       addAllPerms();
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(
-              account->accountId(), 3)))));
       shared_model::interface::types::PubkeyType pk(std::string('5', 32));
       ASSERT_TRUE(
           val(execute(buildCommand(TestTransactionBuilder().addSignatory(
                           account->accountId(), pk)),
                       true)));
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().setAccountQuorum(
+              account->accountId(), 3)))));
+
       auto cmd_result = execute(buildCommand(
-          TestTransactionBuilder().setAccountQuorum(account->accountId(), 1)));
+          TestTransactionBuilder().setAccountQuorum(account->accountId(), 5)));
       CHECK_ERROR_CODE(cmd_result, 5);
     }
 
