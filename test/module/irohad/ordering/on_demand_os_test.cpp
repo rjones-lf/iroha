@@ -9,7 +9,6 @@
 #include <thread>
 
 #include <gtest/gtest.h>
-#include "ametsuchi/tx_presence_cache.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
@@ -32,23 +31,6 @@ using testing::Return;
 using shared_model::interface::Proposal;
 using shared_model::validation::MockValidator;
 using MockProposalValidator = MockValidator<Proposal>;
-
-// namespace {
-//   auto checkBatchMatcher(const )
-// }
-
-class StubTxCache : public iroha::ametsuchi::TxPresenceCache {
-  iroha::ametsuchi::TxCacheStatusType check(
-      const shared_model::crypto::Hash &hash) const override {
-    return iroha::ametsuchi::tx_cache_status_responses::Missing();
-  }
-
-  BatchStatusCollectionType check(
-      const shared_model::interface::TransactionBatch &batch) const override {
-    return BatchStatusCollectionType{
-        iroha::ametsuchi::tx_cache_status_responses::Missing()};
-  }
-};
 
 class OnDemandOsTest : public ::testing::Test {
  public:
@@ -276,6 +258,8 @@ TEST_F(OnDemandOsTest, UseFactoryForProposal) {
   ASSERT_TRUE(os->onRequestProposal(target_round));
 }
 
+// Return matcher for batch, which passes it by const &
+// used when passing batch as an argument to check() in transaction cache
 auto batchRef(const shared_model::interface::TransactionBatch &batch) {
   return Matcher<const shared_model::interface::TransactionBatch &>(Ref(batch));
 }
@@ -289,9 +273,7 @@ TEST_F(OnDemandOsTest, AlreadyProcessedProposalDiscarded) {
   auto batches = generateTransactions({1, 2});
   auto &batch = *batches.at(0);
 
-  EXPECT_CALL(
-      *mock_cache,
-      check(batchRef(batch)))
+  EXPECT_CALL(*mock_cache, check(batchRef(batch)))
       .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
           iroha::ametsuchi::tx_cache_status_responses::Committed()}));
 
@@ -313,8 +295,7 @@ TEST_F(OnDemandOsTest, PassMissingTransaction) {
   auto batches = generateTransactions({1, 2});
   auto &batch = *batches.at(0);
 
-  EXPECT_CALL(*mock_cache,
-              check(batchRef(batch)))
+  EXPECT_CALL(*mock_cache, check(batchRef(batch)))
       .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
           iroha::ametsuchi::tx_cache_status_responses::Missing()}));
 

@@ -97,7 +97,6 @@ void OnDemandOrderingServiceImpl::packNextProposals(
   auto close_round = [this](consensus::Round round) {
     auto it = current_proposals_.find(round);
     if (it != current_proposals_.end()) {
-      log_->info("hello");
       if (not it->second.empty()) {
         proposal_map_.emplace(round, emitProposal(round));
         log_->info("packNextProposal: data has been fetched for round[{}, {}]",
