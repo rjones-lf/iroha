@@ -145,19 +145,23 @@ namespace iroha {
                 cmd_error.name, cmd_error.index, cmd_error.error_code};
       switch (tx_status) {
         case TxStatusType::kStatelessFailed: {
-          status_bus_->publish(status_factory_->makeStatelessFail(hash, tx_error));
+          status_bus_->publish(
+              status_factory_->makeStatelessFail(hash, tx_error));
           return;
         };
         case TxStatusType::kStatelessValid: {
-          status_bus_->publish(status_factory_->makeStatelessValid(hash, tx_error));
+          status_bus_->publish(
+              status_factory_->makeStatelessValid(hash, tx_error));
           return;
         };
         case TxStatusType::kStatefulFailed: {
-          status_bus_->publish(status_factory_->makeStatefulFail(hash, tx_error));
+          status_bus_->publish(
+              status_factory_->makeStatefulFail(hash, tx_error));
           return;
         };
         case TxStatusType::kStatefulValid: {
-          status_bus_->publish(status_factory_->makeStatefulValid(hash, tx_error));
+          status_bus_->publish(
+              status_factory_->makeStatefulValid(hash, tx_error));
           return;
         };
         case TxStatusType::kCommitted: {
@@ -169,7 +173,8 @@ namespace iroha {
           return;
         };
         case TxStatusType::kNotReceived: {
-          status_bus_->publish(status_factory_->makeNotReceived(hash, tx_error));
+          status_bus_->publish(
+              status_factory_->makeNotReceived(hash, tx_error));
           return;
         };
         case TxStatusType::kMstPending: {
@@ -177,7 +182,8 @@ namespace iroha {
           return;
         };
         case TxStatusType::kEnoughSignaturesCollected: {
-          status_bus_->publish(status_factory_->makeEnoughSignaturesCollected(hash, tx_error));
+          status_bus_->publish(
+              status_factory_->makeEnoughSignaturesCollected(hash, tx_error));
           return;
         };
       }
