@@ -1247,7 +1247,7 @@ namespace iroha {
                 ),
                 check_account_signatories AS (
                     SELECT 1 FROM account
-                    WHERE $3 >= (SELECT COUNT(*) FROM get_signatories)
+                    WHERE $3 <= (SELECT COUNT(*) FROM get_signatories)
                     AND account_id = $2
                 ),)",
             (boost::format(R"(
