@@ -4,14 +4,15 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-from primitive_pb2 import can_set_my_account_detail
-from irohalib import Iroha, IrohaGrpc
-from irohalib import IrohaCrypto
-import binascii
 import sys
 
 if sys.version_info[0] < 3:
     raise Exception('Python 3 or a more recent version is required.')
+
+from primitive_pb2 import can_set_my_account_detail
+from irohalib import Iroha, IrohaGrpc
+from irohalib import IrohaCrypto
+import binascii
 
 
 admin_private_key = open('../admin@test.priv').read()
