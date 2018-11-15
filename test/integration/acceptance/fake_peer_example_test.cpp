@@ -17,6 +17,7 @@ using ::testing::_;
 using ::testing::Invoke;
 
 static constexpr std::chrono::seconds kMstStateWaitingTime(10);
+static constexpr std::chrono::seconds kOrderingMessageWaitingTime(10);
 
 class FakePeerExampleFixture : public AcceptanceFixture {
  public:
@@ -105,4 +106,39 @@ TEST_F(FakePeerExampleFixture,
   });
   EXPECT_TRUE(got_state_notification.load())
       << "Reached timeout waiting for MST State.";
+}
+
+/**
+ * Check that after receiving a valid command the ITF peer sends either a
+ * proposal or a batch to another peer
+ *
+ * \attention this code is nothing more but an example of Fake Peer usage
+ *
+ * @given a network of two iroha peers
+ * @when a valid command is sent to one
+ * @then it must propagate either a proposal or a batch
+ */
+TEST_F(FakePeerExampleFixture,
+       OrderingMessagePropagationAfterValidCommandReceived) {
+  std::mutex m;
+  std::condition_variable cv;
+  std::atomic_bool got_message(false);
+  auto checker = [&cv, &got_message](const auto &message) {
+    got_message.store(true);
+    cv.notify_one();
+  };
+  auto &itf = prepareState(1);
+  fake_peers_.front()->get_os_batches_observable().subscribe(checker);
+  fake_peers_.front()->get_og_proposals_observable().subscribe(checker);
+  itf.sendTxWithoutValidation(complete(
+      baseTx(kAdminId)
+          .transferAsset(kAdminId, kUserId, kAssetId, "income", "500.0")
+          .quorum(1),
+      kAdminKeypair));
+  std::unique_lock<std::mutex> lock(m);
+  cv.wait_for(lock, kOrderingMessageWaitingTime, [&got_message] {
+    return got_message.load();
+  });
+  EXPECT_TRUE(got_message.load())
+      << "Reached timeout waiting for an ordering message.";
 }
