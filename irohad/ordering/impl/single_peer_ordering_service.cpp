@@ -9,7 +9,9 @@
 #include <iterator>
 
 #include <boost/range/adaptor/indirected.hpp>
+
 #include "ametsuchi/ordering_service_persistent_state.hpp"
+#include "common/bind.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"

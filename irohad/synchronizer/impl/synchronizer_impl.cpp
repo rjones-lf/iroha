@@ -51,7 +51,7 @@ namespace iroha {
               rxcpp::observable<>::iterate(blocks, rxcpp::identity_immediate());
 
           if (blocks.back()->hash() == hash
-              and validator_->validateChain(chain, *storage)) {
+              and validator_->validateAndApply(chain, *storage)) {
             mutable_factory_->commit(std::move(storage));
 
             return {chain, SynchronizationOutcomeType::kCommit};
@@ -93,7 +93,7 @@ namespace iroha {
 
       SynchronizationEvent result;
 
-      if (validator_->validateChain(commit, *storage)) {
+      if (validator_->validateAndApply(commit, *storage)) {
         mutable_factory_->commit(std::move(storage));
 
         result = {commit, SynchronizationOutcomeType::kCommit};

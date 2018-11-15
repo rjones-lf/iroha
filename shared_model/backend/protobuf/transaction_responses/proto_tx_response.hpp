@@ -10,7 +10,6 @@
 
 #include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
 #include "cryptography/hash.hpp"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -52,22 +51,20 @@ namespace shared_model {
        */
       const ResponseVariantType &get() const override;
 
-      const ErrorMessageType &errorMessage() const override;
+      virtual const StatelessErrorOrFailedCommandNameType &
+      statelessErrorOrCommandName() const override;
+
+      virtual FailedCommandIndexType failedCommandIndex() const override;
+
+      virtual ErrorCodeType errorCode() const override;
 
      private:
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
+      const ProtoResponseVariantType variant_;
 
-      /// lazy variant shortcut
-      using LazyVariantType = Lazy<ProtoResponseVariantType>;
-
-      // lazy
-      const LazyVariantType variant_;
-
-      const Lazy<ResponseVariantType> ivariant_;
+      const ResponseVariantType ivariant_;
 
       // stub hash
-      const Lazy<crypto::Hash> hash_;
+      const crypto::Hash hash_;
 
       static constexpr int max_priority = std::numeric_limits<int>::max();
       int priority() const noexcept override;
@@ -76,16 +73,17 @@ namespace shared_model {
 }  // namespace shared_model
 
 namespace boost {
-    extern template class variant<shared_model::proto::StatelessFailedTxResponse,
-            shared_model::proto::StatelessValidTxResponse,
-            shared_model::proto::StatefulFailedTxResponse,
-            shared_model::proto::StatefulValidTxResponse,
-            shared_model::proto::RejectedTxResponse,
-            shared_model::proto::CommittedTxResponse,
-            shared_model::proto::MstExpiredResponse,
-            shared_model::proto::NotReceivedTxResponse,
-            shared_model::proto::MstPendingResponse,
-            shared_model::proto::EnoughSignaturesCollectedResponse>;
+  extern template class variant<
+      shared_model::proto::StatelessFailedTxResponse,
+      shared_model::proto::StatelessValidTxResponse,
+      shared_model::proto::StatefulFailedTxResponse,
+      shared_model::proto::StatefulValidTxResponse,
+      shared_model::proto::RejectedTxResponse,
+      shared_model::proto::CommittedTxResponse,
+      shared_model::proto::MstExpiredResponse,
+      shared_model::proto::NotReceivedTxResponse,
+      shared_model::proto::MstPendingResponse,
+      shared_model::proto::EnoughSignaturesCollectedResponse>;
 }
 
 #endif  // IROHA_PROTO_TX_RESPONSE_HPP

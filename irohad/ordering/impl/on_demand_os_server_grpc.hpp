@@ -8,6 +8,10 @@
 
 #include "ordering/on_demand_os_transport.hpp"
 
+#include "interfaces/iroha_internal/abstract_transport_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser.hpp"
+#include "logger/logger.hpp"
 #include "ordering.grpc.pb.h"
 
 namespace iroha {
@@ -19,13 +23,22 @@ namespace iroha {
        */
       class OnDemandOsServerGrpc : public proto::OnDemandOrdering::Service {
        public:
-        explicit OnDemandOsServerGrpc(
-            std::shared_ptr<OdOsNotification> ordering_service);
+        using TransportFactoryType =
+            shared_model::interface::AbstractTransportFactory<
+                shared_model::interface::Transaction,
+                iroha::protocol::Transaction>;
 
-        grpc::Status SendTransactions(
-            ::grpc::ServerContext *context,
-            const proto::TransactionsRequest *request,
-            ::google::protobuf::Empty *response) override;
+        OnDemandOsServerGrpc(
+            std::shared_ptr<OdOsNotification> ordering_service,
+            std::shared_ptr<TransportFactoryType> transaction_factory,
+            std::shared_ptr<shared_model::interface::TransactionBatchParser>
+                batch_parser,
+            std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+                transaction_batch_factory);
+
+        grpc::Status SendBatches(::grpc::ServerContext *context,
+                                 const proto::BatchesRequest *request,
+                                 ::google::protobuf::Empty *response) override;
 
         grpc::Status RequestProposal(
             ::grpc::ServerContext *context,
@@ -33,7 +46,21 @@ namespace iroha {
             proto::ProposalResponse *response) override;
 
        private:
+        /**
+         * Flat map transport transactions to shared model
+         */
+        shared_model::interface::types::SharedTxsCollectionType
+        deserializeTransactions(const proto::BatchesRequest *request);
+
         std::shared_ptr<OdOsNotification> ordering_service_;
+
+        std::shared_ptr<TransportFactoryType> transaction_factory_;
+        std::shared_ptr<shared_model::interface::TransactionBatchParser>
+            batch_parser_;
+        std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+            batch_factory_;
+
+        logger::Logger log_;
       };
 
     }  // namespace transport

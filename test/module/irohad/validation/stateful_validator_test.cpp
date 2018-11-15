@@ -165,8 +165,10 @@ TEST_F(Validator, AllTxsValid) {
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
-  ASSERT_EQ(verified_proposal_and_errors.first->transactions().size(), 3);
-  ASSERT_TRUE(verified_proposal_and_errors.second.empty());
+  ASSERT_EQ(
+      verified_proposal_and_errors->verified_proposal->transactions().size(),
+      3);
+  ASSERT_TRUE(verified_proposal_and_errors->rejected_transactions.empty());
 }
 
 /**
@@ -197,13 +199,18 @@ TEST_F(Validator, SomeTxsFail) {
           .build();
 
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(invalid_tx))))
-      .WillOnce(Return(iroha::expected::Error<CommandError>({})));
+      .WillOnce(Return(iroha::expected::makeError(CommandError{"", 2, false})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(valid_tx))))
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
-  ASSERT_EQ(verified_proposal_and_errors.first->transactions().size(), 2);
-  ASSERT_EQ(verified_proposal_and_errors.second.size(), 1);
+  ASSERT_EQ(
+      verified_proposal_and_errors->verified_proposal->transactions().size(),
+      2);
+  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 1);
+  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
+                ->second.error_code,
+            2);
 }
 
 /**
@@ -267,13 +274,19 @@ TEST_F(Validator, Batches) {
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[2]))))
       .WillOnce(Return(iroha::expected::Value<void>({})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[3]))))
-      .WillOnce(Return(iroha::expected::Error<CommandError>({})));
+      .WillOnce(
+          Return(iroha::expected::makeError(CommandError({"", 2, false}))));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[5]))))
       .WillOnce(Return(iroha::expected::Value<void>({})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[6]))))
       .WillOnce(Return(iroha::expected::Value<void>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
-  ASSERT_EQ(verified_proposal_and_errors.first->transactions().size(), 5);
-  ASSERT_EQ(verified_proposal_and_errors.second.size(), 1);
+  ASSERT_EQ(
+      verified_proposal_and_errors->verified_proposal->transactions().size(),
+      5);
+  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 1);
+  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
+                ->second.error_code,
+            2);
 }

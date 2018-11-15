@@ -18,36 +18,39 @@ namespace shared_model {
       // ------------------------| Stateless statuses |-------------------------
 
       FactoryReturnType makeStatelessFail(TransactionHashType,
-                                          ErrorMessageType) override;
+                                          TransactionError) override;
 
       FactoryReturnType makeStatelessValid(TransactionHashType,
-                                           ErrorMessageType) override;
+                                           TransactionError) override;
 
       // ------------------------| Stateful statuses |--------------------------
 
       FactoryReturnType makeStatefulFail(TransactionHashType,
-                                         ErrorMessageType) override;
+                                         TransactionError) override;
       FactoryReturnType makeStatefulValid(TransactionHashType,
-                                          ErrorMessageType) override;
+                                          TransactionError) override;
 
       // --------------------------| Final statuses |---------------------------
 
       FactoryReturnType makeCommitted(TransactionHashType,
-                                      ErrorMessageType) override;
+                                      TransactionError) override;
 
       FactoryReturnType makeRejected(TransactionHashType,
-                                     ErrorMessageType) override;
+                                     TransactionError) override;
 
       // --------------------------| Rest statuses |----------------------------
 
       FactoryReturnType makeMstExpired(TransactionHashType,
-                                       ErrorMessageType) override;
+                                       TransactionError) override;
+
+      FactoryReturnType makeMstPending(TransactionHashType,
+                                       TransactionError) override;
 
       FactoryReturnType makeNotReceived(TransactionHashType,
-                                        ErrorMessageType) override;
+                                        TransactionError) override;
 
       FactoryReturnType makeEnoughSignaturesCollected(
-          TransactionHashType, ErrorMessageType) override;
+          TransactionHashType, TransactionError) override;
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -13,7 +13,6 @@
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 #include "client.hpp"
@@ -36,6 +35,7 @@
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "interfaces/iroha_internal/query_response_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 
@@ -105,7 +105,10 @@ class ClientServerTest : public testing::Test {
     auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
     auto tx_processor =
         std::make_shared<iroha::torii::TransactionProcessorImpl>(
-            pcsMock, mst, status_bus);
+            pcsMock,
+            mst,
+            status_bus,
+            std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
 
     auto pb_tx_factory =
         std::make_shared<iroha::model::converters::PbTransactionFactory>();
@@ -255,7 +258,7 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
            and --read_attempt_counter);
   ASSERT_EQ(answer.tx_status(),
             iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
-  ASSERT_NE(answer.error_message().size(), 0);
+  ASSERT_NE(answer.err_or_cmd_name().size(), 0);
 }
 
 /**
@@ -292,19 +295,18 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
   ASSERT_EQ(client.sendTx(tx).answer, iroha_cli::CliClient::OK);
 
   // fail the tx
-  auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
+  auto cmd_name = "CommandName";
+  size_t cmd_index = 2;
+  uint32_t error_code = 3;
+  auto verified_proposal_and_errors =
+      std::make_shared<VerifiedProposalAndErrors>();
+  verified_proposal_and_errors
+      ->verified_proposal = std::make_unique<shared_model::proto::Proposal>(
       TestProposalBuilder().height(0).createdTime(iroha::time::now()).build());
-  verified_prop_notifier.get_subscriber().on_next(
-      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
-          std::make_pair(verified_proposal,
-                         iroha::validation::TransactionsErrors{std::make_pair(
-                             iroha::validation::CommandError{
-                                 "CommandName", "CommandError", true, 2},
-                             tx.hash())})));
-  auto stringified_error = "Stateful validation error in transaction "
-                           + tx.hash().hex() + ": command 'CommandName' with "
-                                               "index '2' did not pass verification with "
-                                               "error 'CommandError'";
+  verified_proposal_and_errors->rejected_transactions.emplace(std::make_pair(
+      tx.hash(),
+      iroha::validation::CommandError{cmd_name, error_code, true, cmd_index}));
+  verified_prop_notifier.get_subscriber().on_next(verified_proposal_and_errors);
 
   auto getAnswer = [&]() {
     return client.getTxStatus(shared_model::crypto::toBinaryString(tx.hash()))
@@ -320,7 +322,9 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
            and --read_attempt_counter);
   ASSERT_EQ(answer.tx_status(),
             iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED);
-  ASSERT_EQ(answer.error_message(), stringified_error);
+  ASSERT_EQ(answer.err_or_cmd_name(), cmd_name);
+  ASSERT_EQ(answer.failed_cmd_index(), cmd_index);
+  ASSERT_EQ(answer.error_code(), error_code);
 }
 
 TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {
@@ -372,12 +376,6 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));
 
-  auto *resp =
-      clone(TestQueryResponseBuilder().accountDetailResponse("value").build())
-          .release();
-
-  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
-
   auto query = QueryBuilder()
                    .createdTime(iroha::time::now())
                    .creatorAccountId("admin@test")
@@ -386,6 +384,12 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
                    .build()
                    .signAndAddSignature(pair)
                    .finish();
+
+  auto *resp =
+      query_response_factory->createAccountDetailResponse("value", query.hash())
+          .release();
+
+  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
 
   auto res = client.sendQuery(query);
   ASSERT_EQ(res.answer.account_detail_response().detail(), "value");
@@ -397,15 +401,6 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));
 
-  auto *resp =
-      clone(TestQueryResponseBuilder()
-                .errorQueryResponse<
-                    shared_model::interface::StatefulFailedErrorResponse>()
-                .build())
-          .release();
-
-  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
-
   auto query = QueryBuilder()
                    .createdTime(iroha::time::now())
                    .creatorAccountId("admin@test")
@@ -414,6 +409,16 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
                    .build()
                    .signAndAddSignature(pair)
                    .finish();
+
+  auto *resp = query_response_factory
+                   ->createErrorQueryResponse(
+                       shared_model::interface::QueryResponseFactory::
+                           ErrorQueryType::kStatefulFailed,
+                       "",
+                       query.hash())
+                   .release();
+
+  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
 
   auto res = client.sendQuery(query);
   ASSERT_EQ(res.answer.error_response().reason(),

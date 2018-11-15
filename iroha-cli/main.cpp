@@ -22,6 +22,7 @@
 #include <iostream>
 
 #include "backend/protobuf/queries/proto_query.hpp"
+#include "backend/protobuf/transaction.hpp"
 #include "client.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "crypto/keys_manager_impl.hpp"

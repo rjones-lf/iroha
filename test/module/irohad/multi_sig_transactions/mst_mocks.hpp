@@ -30,10 +30,9 @@ namespace iroha {
   class MockMstTransportNotification
       : public network::MstTransportNotification {
    public:
-    MOCK_METHOD2(
-        onNewState,
-        void(const std::shared_ptr<shared_model::interface::Peer> &peer,
-             const MstState &state));
+    MOCK_METHOD2(onNewState,
+                 void(const shared_model::crypto::PublicKey &from,
+                      const MstState &state));
   };
 
   /**

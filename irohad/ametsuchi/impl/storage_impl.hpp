@@ -8,9 +8,9 @@
 
 #include "ametsuchi/storage.hpp"
 
+#include <atomic>
 #include <cmath>
 #include <shared_mutex>
-#include <atomic>
 
 #include <soci/soci.h>
 #include <boost/optional.hpp>
@@ -19,6 +19,7 @@
 #include "ametsuchi/key_value_storage.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/block_json_converter.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
@@ -53,6 +54,8 @@ namespace iroha {
               factory,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
               converter,
+          std::shared_ptr<shared_model::interface::PermissionToString>
+              perm_converter,
           size_t pool_size = 10);
 
       expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
@@ -99,7 +102,7 @@ namespace iroha {
 
       void commit(std::unique_ptr<MutableStorage> mutableStorage) override;
 
-      bool commitPrepared(const shared_model::interface::Block& block) override;
+      bool commitPrepared(const shared_model::interface::Block &block) override;
 
       std::shared_ptr<WsvQuery> getWsvQuery() const override;
 
@@ -121,6 +124,8 @@ namespace iroha {
                       factory,
                   std::shared_ptr<shared_model::interface::BlockJsonConverter>
                       converter,
+                  std::shared_ptr<shared_model::interface::PermissionToString>
+                      perm_converter,
                   size_t pool_size,
                   bool enable_prepared_blocks);
 
@@ -153,6 +158,9 @@ namespace iroha {
           notifier_;
 
       std::shared_ptr<shared_model::interface::BlockJsonConverter> converter_;
+
+      std::shared_ptr<shared_model::interface::PermissionToString>
+          perm_converter_;
 
       logger::Logger log_;
 

@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include "cryptography/keypair.hpp"
+#include "framework/common_constants.hpp"
 #include "interfaces/permissions.hpp"
 #include "interfaces/query_responses/query_response.hpp"
 #include "interfaces/transaction_responses/tx_response.hpp"
@@ -51,6 +52,8 @@ namespace {
 class AcceptanceFixture : public ::testing::Test {
  public:
   AcceptanceFixture();
+
+  virtual ~AcceptanceFixture() = default;
 
   /**
    * Creates a set of transactions for user creation
@@ -174,15 +177,6 @@ class AcceptanceFixture : public ::testing::Test {
    * @return unique time for this fixture
    */
   iroha::time::time_t getUniqueTime();
-
-  const shared_model::interface::types::AccountNameType kUser;
-  const shared_model::interface::types::RoleIdType kRole;
-  const shared_model::interface::types::DomainIdType kDomain;
-  const shared_model::interface::types::AssetIdType kAssetId;
-  const shared_model::interface::types::AccountIdType kUserId;
-  const shared_model::interface::types::AccountIdType kAdminId;
-  const shared_model::crypto::Keypair kAdminKeypair;
-  const shared_model::crypto::Keypair kUserKeypair;
 
   const std::vector<shared_model::interface::types::AssetNameType>
       kIllegalAssetNames = {"",

@@ -18,11 +18,12 @@
 #ifndef IROHA_BLOCK_HPP
 #define IROHA_BLOCK_HPP
 
-#include <common/types.hpp>
-#include <model/proposal.hpp>
-#include <model/signature.hpp>
-#include <model/transaction.hpp>
 #include <vector>
+
+#include "crypto/hash_types.hpp"
+#include "model/proposal.hpp"
+#include "model/signature.hpp"
+#include "model/transaction.hpp"
 
 namespace iroha {
   namespace model {
@@ -83,6 +84,14 @@ namespace iroha {
       std::vector<Transaction> transactions;
 
       using TransactionsType = decltype(transactions);
+
+      /**
+       * Attached rejected transactions' hashes
+       * part of PAYLOAD
+       */
+      std::vector<HashType> rejected_transactions_hashes;
+
+      using RejectedTransactionsType = decltype(rejected_transactions_hashes);
 
       bool operator==(const Block &rhs) const;
       bool operator!=(const Block &rhs) const;

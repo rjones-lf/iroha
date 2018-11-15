@@ -19,7 +19,7 @@
 #define IROHA_ADD_SIGNATURE_HPP
 
 #include <string>
-#include "common/types.hpp"
+#include "crypto/keypair.hpp"
 #include "model/command.hpp"
 
 namespace iroha {

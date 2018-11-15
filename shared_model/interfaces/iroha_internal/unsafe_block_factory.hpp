@@ -27,7 +27,8 @@ namespace shared_model {
           types::HeightType height,
           const types::HashType &prev_hash,
           types::TimestampType created_time,
-          const types::TransactionsCollectionType &txs) = 0;
+          const types::TransactionsCollectionType &txs,
+          const interface::types::HashCollectionType &rejected_hashes) = 0;
 
       virtual ~UnsafeBlockFactory() = default;
     };

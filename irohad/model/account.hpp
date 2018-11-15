@@ -18,7 +18,6 @@
 #ifndef IROHA_ACCOUNT_HPP
 #define IROHA_ACCOUNT_HPP
 
-#include <common/types.hpp>
 #include <string>
 
 namespace iroha {

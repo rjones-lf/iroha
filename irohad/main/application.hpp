@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_APPLICATION_HPP
@@ -30,12 +18,12 @@
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/ordering_init.hpp"
 #include "main/server_runner.hpp"
-#include "mst.grpc.pb.h"
+#include "multi_sig_transactions/gossip_propagation_strategy_params.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
-#include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
 #include "network/impl/peer_communication_service_impl.hpp"
+#include "network/mst_transport.hpp"
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
 #include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
@@ -61,10 +49,14 @@ namespace iroha {
 
 class Irohad {
  public:
+
+  using RunResult = iroha::expected::Result<void, std::string>;
+
   /**
    * Constructor that initializes common iroha pipeline
    * @param block_store_dir - folder where blocks will be stored
    * @param pg_conn - initialization string for postgre
+   * @param listen_ip - ip address for opening ports (internal & torii)
    * @param torii_port - port for torii binding
    * @param internal_port - port for internal communication - ordering service,
    * consensus, and block loader
@@ -73,17 +65,22 @@ class Irohad {
    * @param proposal_delay - maximum waiting time util emitting new proposal
    * @param vote_delay - waiting time before sending vote to next peer
    * @param keypair - public and private keys for crypto signer
-   * @param is_mst_supported - enable or disable mst processing support
+   * @param opt_mst_gossip_params - parameters for Gossip MST propagation (optional).
+   * If not provided, disables mst processing support
+   *
+   * TODO mboldyrev 03.11.2018 IR-1844 Refactor the constructor.
    */
   Irohad(const std::string &block_store_dir,
          const std::string &pg_conn,
+         const std::string &listen_ip,
          size_t torii_port,
          size_t internal_port,
          size_t max_proposal_size,
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
          const shared_model::crypto::Keypair &keypair,
-         bool is_mst_supported);
+         const boost::optional<iroha::GossipPropagationStrategyParams>
+             &opt_mst_gossip_params = boost::none);
 
   /**
    * Initialization of whole objects in system
@@ -108,8 +105,9 @@ class Irohad {
 
   /**
    * Run worker threads for start performing
+   * @return void value on success, error message otherwise
    */
-  virtual void run();
+  RunResult run();
 
   virtual ~Irohad();
 
@@ -160,12 +158,15 @@ class Irohad {
   // constructor dependencies
   std::string block_store_dir_;
   std::string pg_conn_;
+  const std::string listen_ip_;
   size_t torii_port_;
   size_t internal_port_;
   size_t max_proposal_size_;
   std::chrono::milliseconds proposal_delay_;
   std::chrono::milliseconds vote_delay_;
   bool is_mst_supported_;
+  boost::optional<iroha::GossipPropagationStrategyParams>
+      opt_mst_gossip_params_;
 
   // ------------------------| internal dependencies |-------------------------
 
@@ -250,7 +251,7 @@ class Irohad {
   iroha::consensus::yac::YacInit yac_init;
   iroha::network::BlockLoaderInit loader_init;
 
-  std::shared_ptr<iroha::network::MstTransportGrpc> mst_transport;
+  std::shared_ptr<iroha::network::MstTransport> mst_transport;
 
   logger::Logger log_;
 

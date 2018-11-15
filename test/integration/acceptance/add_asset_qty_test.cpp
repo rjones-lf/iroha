@@ -9,6 +9,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class AddAssetQuantity : public AcceptanceFixture {
  public:

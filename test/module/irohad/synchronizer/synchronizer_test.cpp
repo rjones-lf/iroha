@@ -109,7 +109,7 @@ TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 
-  EXPECT_CALL(*chain_validator, validateChain(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).WillOnce(Return(true));
 
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
 
@@ -152,7 +152,7 @@ TEST_F(SynchronizerTest, ValidWhenBadStorage) {
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(0);
 
-  EXPECT_CALL(*chain_validator, validateChain(_, _)).Times(0);
+  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).Times(0);
 
   EXPECT_CALL(*block_loader, retrieveBlocks(_)).Times(0);
 
@@ -186,7 +186,7 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 
-  EXPECT_CALL(*chain_validator, validateChain(_, _))
+  EXPECT_CALL(*chain_validator, validateAndApply(_, _))
       .WillOnce(Return(false))
       .WillOnce(Return(true));
 
@@ -233,7 +233,7 @@ TEST_F(SynchronizerTest, ExactlyThreeRetrievals) {
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
   EXPECT_CALL(*consensus_gate, on_commit())
       .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
-  EXPECT_CALL(*chain_validator, validateChain(_, _))
+  EXPECT_CALL(*chain_validator, validateAndApply(_, _))
       .WillOnce(Return(false))
       .WillOnce(testing::Invoke([](auto chain, auto &) {
         // emulate chain check
@@ -283,7 +283,7 @@ TEST_F(SynchronizerTest, RetrieveBlockTwoFailures) {
       .WillRepeatedly(Return(commit_message_blocks));
 
   // fail the chain validation two times so that synchronizer will try more
-  EXPECT_CALL(*chain_validator, validateChain(_, _))
+  EXPECT_CALL(*chain_validator, validateAndApply(_, _))
       .WillOnce(Return(false))
       .WillOnce(Return(false))
       .WillOnce(Return(false))
@@ -367,7 +367,7 @@ TEST_F(SynchronizerTest, VotedForOtherCommitPrepared) {
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 
-  EXPECT_CALL(*chain_validator, validateChain(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).WillOnce(Return(true));
 
   EXPECT_CALL(*consensus_gate, on_commit())
       .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));
@@ -410,7 +410,7 @@ TEST_F(SynchronizerTest, VotedForThisCommitPreparedFailure) {
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
 
-  EXPECT_CALL(*chain_validator, validateChain(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*chain_validator, validateAndApply(_, _)).WillOnce(Return(true));
 
   EXPECT_CALL(*consensus_gate, on_commit())
       .WillOnce(Return(rxcpp::observable<>::empty<network::Commit>()));

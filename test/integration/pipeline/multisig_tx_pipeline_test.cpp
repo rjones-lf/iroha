@@ -13,10 +13,11 @@
 using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class MstPipelineTest : public AcceptanceFixture {
  public:
-  MstPipelineTest() : mst_itf_{1, {}, [](auto &i) { i.done(); }, true} {}
+  MstPipelineTest() : mst_itf_{1, {}, true, true} {}
 
   /**
    * Creates a mst user

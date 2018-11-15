@@ -836,14 +836,15 @@ class PreparedBlockTest : public AmetsuchiTest {
         .finish();
   }
 
-  shared_model::proto::Block createBlock(std::initializer_list<shared_model::proto::Transaction> txs) {
+  shared_model::proto::Block createBlock(
+      std::initializer_list<shared_model::proto::Transaction> txs) {
     return TestBlockBuilder()
-                  .transactions(std::vector<shared_model::proto::Transaction>(txs))
-                  .height(1)
-                  .prevHash(shared_model::crypto::Sha3_256::makeHash(
-                      shared_model::crypto::Blob("")))
-                  .createdTime(iroha::time::now())
-                  .build();
+        .transactions(std::vector<shared_model::proto::Transaction>(txs))
+        .height(1)
+        .prevHash(shared_model::crypto::Sha3_256::makeHash(
+            shared_model::crypto::Blob("")))
+        .createdTime(iroha::time::now())
+        .build();
   }
 
   void SetUp() override {

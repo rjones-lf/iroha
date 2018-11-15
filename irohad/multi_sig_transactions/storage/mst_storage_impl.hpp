@@ -28,21 +28,20 @@ namespace iroha {
     // -----------------------------| private API |-----------------------------
 
     /**
-     * Return state of passed peer, if state doesn't exist, create empty
-     * @param target_peer - peer for searching
+     * Return state of a peer by its public key. If state doesn't exist, create
+     * new empty state and return it.
+     * @param target_peer_key - public key of the peer for searching
      * @return valid iterator for state of peer
      */
-    auto getState(
-        const std::shared_ptr<shared_model::interface::Peer> target_peer);
+    auto getState(const shared_model::crypto::PublicKey &target_peer_key);
 
    public:
     // ----------------------------| interface API |----------------------------
     explicit MstStorageStateImpl(const CompleterType &completer);
 
-    auto applyImpl(
-        const std::shared_ptr<shared_model::interface::Peer> target_peer,
-        const MstState &new_state)
-        -> decltype(apply(target_peer, new_state)) override;
+    auto applyImpl(const shared_model::crypto::PublicKey &target_peer_key,
+                   const MstState &new_state)
+        -> decltype(apply(target_peer_key, new_state)) override;
 
     auto updateOwnStateImpl(const DataType &tx)
         -> decltype(updateOwnState(tx)) override;
@@ -51,9 +50,9 @@ namespace iroha {
         -> decltype(getExpiredTransactions(current_time)) override;
 
     auto getDiffStateImpl(
-        const std::shared_ptr<shared_model::interface::Peer> target_peer,
+        const shared_model::crypto::PublicKey &target_peer_key,
         const TimeType &current_time)
-        -> decltype(getDiffState(target_peer, current_time)) override;
+        -> decltype(getDiffState(target_peer_key, current_time)) override;
 
     auto whatsNewImpl(ConstRefState new_state) const
         -> decltype(whatsNew(new_state)) override;
@@ -62,9 +61,9 @@ namespace iroha {
     // ---------------------------| private fields |----------------------------
 
     const CompleterType completer_;
-    std::unordered_map<const std::shared_ptr<shared_model::interface::Peer>,
+    std::unordered_map<shared_model::crypto::PublicKey,
                        MstState,
-                       iroha::model::PeerHasher>
+                       iroha::model::BlobHasher>
         peer_states_;
     MstState own_state_;
   };

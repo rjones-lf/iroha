@@ -1,16 +1,5 @@
-# Copyright 2017 Soramitsu Co., Ltd.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 add_library(ordering_service
     impl/ordering_gate_impl.cpp
@@ -22,6 +11,7 @@ add_library(ordering_service
 
 target_link_libraries(ordering_service
     rxcpp
+    common
     tbb
     shared_model_interfaces
     shared_model_proto_backend
@@ -37,7 +27,7 @@ add_library(on_demand_ordering_service
 target_link_libraries(on_demand_ordering_service
     tbb
     shared_model_interfaces
-    shared_model_proto_backend
+    consensus_round
     logger
     )
 
@@ -48,9 +38,12 @@ add_library(on_demand_ordering_service_transport_grpc
 
 target_link_libraries(on_demand_ordering_service_transport_grpc
     shared_model_interfaces
+    shared_model_interfaces_factories
     shared_model_proto_backend
+    consensus_round
     logger
     ordering_grpc
+    common
     )
 
 add_library(on_demand_connection_manager
@@ -58,15 +51,19 @@ add_library(on_demand_connection_manager
     )
 target_link_libraries(on_demand_connection_manager
     shared_model_interfaces
+    consensus_round
     rxcpp
     boost
     )
 
 add_library(on_demand_ordering_gate
     impl/on_demand_ordering_gate.cpp
+    impl/ordering_gate_cache/ordering_gate_cache.cpp
+    impl/ordering_gate_cache/on_demand_cache.cpp
     )
 target_link_libraries(on_demand_ordering_gate
-    shared_model_interfaces
+    consensus_round
     rxcpp
     boost
+    common
     )

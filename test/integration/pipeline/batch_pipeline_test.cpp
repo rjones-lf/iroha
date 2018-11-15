@@ -10,8 +10,11 @@
 #include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
+#include "interfaces/permissions.hpp"
 
 using namespace shared_model;
+using namespace common_constants;
+using interface::permissions::Role;
 using ::testing::ElementsAre;
 using ::testing::get;
 using ::testing::IsEmpty;
@@ -42,6 +45,34 @@ class BatchPipelineTest
   auto createSecondUser() {
     return AcceptanceFixture::createUser(kSecondUser,
                                          kSecondUserKeypair.publicKey())
+        .build()
+        .signAndAddSignature(kAdminKeypair)
+        .finish();
+  }
+
+  /**
+   * @return transaction to create the role for the two users
+   */
+  auto createRole() {
+    return AcceptanceFixture::baseTx(kAdminId)
+        .createRole(kRole,
+                    {Role::kReceive,
+                     Role::kTransfer,
+                     Role::kAddAssetQty,
+                     Role::kSubtractAssetQty,
+                     Role::kCreateAsset})
+        .build()
+        .signAndAddSignature(kAdminKeypair)
+        .finish();
+  }
+
+  /**
+   * @return transaction to add the role to the two users
+   */
+  auto addRoleToUsers() {
+    return AcceptanceFixture::baseTx(kAdminId)
+        .appendRole(kFirstUserId, kRole)
+        .appendRole(kSecondUserId, kRole)
         .build()
         .signAndAddSignature(kAdminKeypair)
         .finish();
@@ -171,8 +202,10 @@ TEST_P(BatchPipelineTest, ValidBatch) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(createFirstUser(), [](const auto &) {})
-      .sendTxAwait(createSecondUser(), [](const auto &) {})
+      .sendTxAwait(createFirstUser())
+      .sendTxAwait(createSecondUser())
+      .sendTxAwait(createRole())
+      .sendTxAwait(addRoleToUsers())
       .sendTxAwait(
           createAndAddAssets(kFirstUserId, kAssetA, "1.0", kFirstUserKeypair),
           [](const auto &) {})
@@ -212,8 +245,10 @@ TEST_F(BatchPipelineTest, InvalidAtomicBatch) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(createFirstUser(), [](const auto &) {})
-      .sendTxAwait(createSecondUser(), [](const auto &) {})
+      .sendTxAwait(createFirstUser())
+      .sendTxAwait(createSecondUser())
+      .sendTxAwait(createRole())
+      .sendTxAwait(addRoleToUsers())
       .sendTxAwait(
           createAndAddAssets(kFirstUserId, kAssetA, "1.0", kFirstUserKeypair),
           [](const auto &) {})
@@ -272,8 +307,10 @@ TEST_F(BatchPipelineTest, InvalidOrderedBatch) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(createFirstUser(), [](const auto &) {})
-      .sendTxAwait(createSecondUser(), [](const auto &) {})
+      .sendTxAwait(createFirstUser())
+      .sendTxAwait(createSecondUser())
+      .sendTxAwait(createRole())
+      .sendTxAwait(addRoleToUsers())
       .sendTxAwait(
           createAndAddAssets(kFirstUserId, kAssetA, "1.0", kFirstUserKeypair),
           [](const auto &) {})
