@@ -161,7 +161,8 @@ TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
   auto large_tx_limit = 10000u;
   auto factory = std::make_unique<
       shared_model::proto::ProtoProposalFactory<MockProposalValidator>>();
-  auto tx_cache = std::make_unique<StubTxCache>();
+  auto tx_cache =
+      std::make_unique<NiceMock<iroha::ametsuchi::MockTxPresenceCache>>();
   os = std::make_shared<OnDemandOrderingServiceImpl>(large_tx_limit,
                                                      std::move(factory),
                                                      std::move(tx_cache),
@@ -241,7 +242,8 @@ TEST_F(OnDemandOsTest, EraseReject) {
 TEST_F(OnDemandOsTest, UseFactoryForProposal) {
   auto factory = std::make_unique<MockUnsafeProposalFactory>();
   auto mock_factory = factory.get();
-  auto tx_cache = std::make_unique<StubTxCache>();
+  auto tx_cache =
+      std::make_unique<NiceMock<iroha::ametsuchi::MockTxPresenceCache>>();
   os = std::make_shared<OnDemandOrderingServiceImpl>(transaction_limit,
                                                      std::move(factory),
                                                      std::move(tx_cache),
