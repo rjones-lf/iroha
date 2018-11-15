@@ -45,6 +45,8 @@ def doDebugBuild(coverageEnabled=false) {
     }
   }
 
+  // enable prepared transactions so that 2 phase commit works
+  // we set it to 100 as a safe value
   sh "docker run -td -e POSTGRES_USER=${env.IROHA_POSTGRES_USER} \
   -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD} --name ${env.IROHA_POSTGRES_HOST} \
   --network=${env.IROHA_NETWORK} postgres:9.5 -c 'max_prepared_transactions=100'"
