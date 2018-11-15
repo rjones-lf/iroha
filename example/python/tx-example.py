@@ -4,16 +4,15 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+from primitive_pb2 import can_set_my_account_detail
+from irohalib import Iroha, IrohaGrpc
+from irohalib import IrohaCrypto
+import binascii
 import sys
 
 if sys.version_info[0] < 3:
     raise Exception('Python 3 or a more recent version is required.')
 
-import binascii
-from irohalib import IrohaCrypto
-from irohalib import Iroha, IrohaGrpc
-
-from primitive_pb2 import can_set_my_account_detail
 
 admin_private_key = open('../admin@test.priv').read()
 user_private_key = IrohaCrypto.private_key()
@@ -105,7 +104,8 @@ def userone_grants_to_admin_set_account_detail_permission():
     Make admin@test able to set detail to userone@domain
     """
     tx = iroha.transaction([
-        iroha.command('GrantPermission', account_id='admin@test', permission=can_set_my_account_detail)
+        iroha.command('GrantPermission', account_id='admin@test',
+                      permission=can_set_my_account_detail)
     ], creator_account='userone@domain')
     IrohaCrypto.sign_transaction(tx, user_private_key)
     send_transaction_and_print_status(tx)
@@ -117,7 +117,8 @@ def set_age_to_userone():
     Set age to userone@domain by admin@test
     """
     tx = iroha.transaction([
-        iroha.command('SetAccountDetail', account_id='userone@domain', key='age', value='18')
+        iroha.command('SetAccountDetail',
+                      account_id='userone@domain', key='age', value='18')
     ])
     IrohaCrypto.sign_transaction(tx, admin_private_key)
     send_transaction_and_print_status(tx)
@@ -148,7 +149,8 @@ def get_account_assets():
     response = net.send_query(query)
     data = response.account_assets_response.account_assets
     for asset in data:
-        print('Asset id = {}, balance = {}'.format(asset.asset_id, asset.balance))
+        print('Asset id = {}, balance = {}'.format(
+            asset.asset_id, asset.balance))
 
 
 @trace

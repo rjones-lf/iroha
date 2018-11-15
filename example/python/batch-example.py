@@ -4,21 +4,21 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+import binascii
+from irohalib import IrohaCrypto as ic
+from irohalib import Iroha, IrohaGrpc
+import sys
+
 print("""
 
 PLEASE ENSURE THAT MST IS ENABLED IN IROHA CONFIG
 
 """)
 
-import sys
 
 if sys.version_info[0] < 3:
     raise Exception('Python 3 or a more recent version is required.')
 
-from irohalib import Iroha, IrohaGrpc
-from irohalib import IrohaCrypto as ic
-
-import binascii
 
 iroha = Iroha('admin@test')
 net = IrohaGrpc()
@@ -79,10 +79,14 @@ def send_batch_and_print_status(*transactions):
 def create_users():
     global iroha
     init_cmds = [
-        iroha.command('CreateAsset', asset_name='bitcoin', domain_id='test', precision=2),
-        iroha.command('CreateAsset', asset_name='dogecoin', domain_id='test', precision=2),
-        iroha.command('AddAssetQuantity', asset_id='bitcoin#test', amount='100000'),
-        iroha.command('AddAssetQuantity', asset_id='dogecoin#test', amount='20000'),
+        iroha.command('CreateAsset', asset_name='bitcoin',
+                      domain_id='test', precision=2),
+        iroha.command('CreateAsset', asset_name='dogecoin',
+                      domain_id='test', precision=2),
+        iroha.command('AddAssetQuantity',
+                      asset_id='bitcoin#test', amount='100000'),
+        iroha.command('AddAssetQuantity',
+                      asset_id='dogecoin#test', amount='20000'),
         iroha.command('CreateAccount', account_name='alice', domain_id='test',
                       public_key=ic.hex_key_to_bytes(alice_public_keys[0])),
         iroha.command('CreateAccount', account_name='bob', domain_id='test',
@@ -103,7 +107,8 @@ def add_keys_and_set_quorum():
     alice_cmds = [
         alice_iroha.command('AddSignatory', account_id='alice@test',
                             public_key=ic.hex_key_to_bytes(alice_public_keys[1])),
-        alice_iroha.command('SetAccountQuorum', account_id='alice@test', quorum=2)
+        alice_iroha.command('SetAccountQuorum',
+                            account_id='alice@test', quorum=2)
     ]
     alice_tx = alice_iroha.transaction(alice_cmds)
     ic.sign_transaction(alice_tx, alice_private_keys[0])
@@ -111,7 +116,8 @@ def add_keys_and_set_quorum():
 
     bob_iroha = Iroha('bob@test')
     bob_cmds = [
-        bob_iroha.command('AddSignatory', account_id='bob@test', public_key=ic.hex_key_to_bytes(bob_public_keys[1])),
+        bob_iroha.command('AddSignatory', account_id='bob@test',
+                          public_key=ic.hex_key_to_bytes(bob_public_keys[1])),
         bob_iroha.command('SetAccountQuorum', account_id='bob@test', quorum=2)
     ]
     bob_tx = bob_iroha.transaction(bob_cmds)
@@ -155,10 +161,12 @@ def bob_accepts_exchange_request():
     pending_transactions = net.send_query(q)
     for tx in pending_transactions.transactions_response.transactions:
         if tx.payload.reduced_payload.creator_account_id == 'alice@test':
-            del tx.signatures[:]  # we need do this temporarily, otherwise accept will not reach MST engine
+            # we need do this temporarily, otherwise accept will not reach MST engine
+            del tx.signatures[:]
         else:
             ic.sign_transaction(tx, *bob_private_keys)
-    send_batch_and_print_status(*pending_transactions.transactions_response.transactions)
+    send_batch_and_print_status(
+        *pending_transactions.transactions_response.transactions)
 
 
 @trace
@@ -167,7 +175,8 @@ def check_no_pending_txs():
     print(
         net.send_query(
             ic.sign_query(
-                iroha.query('GetPendingTransactions', creator_account='bob@test'),
+                iroha.query('GetPendingTransactions',
+                            creator_account='bob@test'),
                 bob_private_keys[0]
             )
         )
@@ -190,11 +199,14 @@ def bob_declines_exchange_request():
     pending_transactions = net.send_query(q)
     for tx in pending_transactions.transactions_response.transactions:
         if tx.payload.reduced_payload.creator_account_id == 'alice@test':
-            del tx.signatures[:]  # we need do this temporarily, otherwise accept will not reach MST engine
+            # we need do this temporarily, otherwise accept will not reach MST engine
+            del tx.signatures[:]
         else:
-            ic.sign_transaction(tx, *alice_private_keys)  # intentionally alice keys were used to fail bob's txs
+            # intentionally alice keys were used to fail bob's txs
+            ic.sign_transaction(tx, *alice_private_keys)
             # zeroes as private keys are also acceptable
-    send_batch_and_print_status(*pending_transactions.transactions_response.transactions)
+    send_batch_and_print_status(
+        *pending_transactions.transactions_response.transactions)
 
 
 create_users()

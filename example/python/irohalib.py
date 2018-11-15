@@ -268,8 +268,10 @@ class IrohaGrpc(object):
     def __init__(self, address=None):
         self._address = address if address else '127.0.0.1:50051'
         self._channel = grpc.insecure_channel(self._address)
-        self._command_service_stub = endpoint_pb2_grpc.CommandServiceStub(self._channel)
-        self._query_service_stub = endpoint_pb2_grpc.QueryServiceStub(self._channel)
+        self._command_service_stub = endpoint_pb2_grpc.CommandServiceStub(
+            self._channel)
+        self._query_service_stub = endpoint_pb2_grpc.QueryServiceStub(
+            self._channel)
 
     def send_tx(self, transaction):
         """
