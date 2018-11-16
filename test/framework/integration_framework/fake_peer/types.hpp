@@ -70,6 +70,7 @@ namespace integration_framework {
     class OgNetworkNotifier;
     class OsNetworkNotifier;
     class YacNetworkNotifier;
+    struct BatchesForRound;
     struct MstMessage;
 
     using MstMessagePtr = std::shared_ptr<MstMessage>;
