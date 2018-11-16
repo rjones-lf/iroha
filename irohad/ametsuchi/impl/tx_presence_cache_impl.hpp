@@ -6,6 +6,7 @@
 #ifndef IROHA_TX_PRESENCE_CACHE_IMPL_HPP
 #define IROHA_TX_PRESENCE_CACHE_IMPL_HPP
 
+#include "ametsuchi/storage.hpp"
 #include "ametsuchi/tx_presence_cache.hpp"
 #include "cache/cache.hpp"
 
@@ -14,6 +15,7 @@ namespace iroha {
 
     class TxPresenceCacheImpl : public TxPresenceCache {
      public:
+      explicit TxPresenceCacheImpl(std::shared_ptr<Storage> storage);
       TxCacheStatusType check(
           const shared_model::crypto::Hash &hash) const override;
 
@@ -22,6 +24,7 @@ namespace iroha {
           const override;
 
      private:
+      std::shared_ptr<Storage> storage_;
       mutable cache::Cache<shared_model::crypto::Hash,
                            TxCacheStatusType,
                            shared_model::crypto::Hash::Hasher>

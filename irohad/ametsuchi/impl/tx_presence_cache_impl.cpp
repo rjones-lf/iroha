@@ -4,20 +4,40 @@
  */
 
 #include "ametsuchi/impl/tx_presence_cache_impl.hpp"
+#include "common/visitor.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
 
 namespace iroha {
   namespace ametsuchi {
+    TxPresenceCacheImpl::TxPresenceCacheImpl(std::shared_ptr<Storage> storage)
+        : storage_(storage) {}
+
     TxCacheStatusType TxPresenceCacheImpl::check(
         const shared_model::crypto::Hash &hash) const {
       auto res = memory_cache_.findItem(hash);
       if (res != boost::none) {
         return res.get();
       }
-      // TODO: do storage request
-      // if hash is in a storage, put it to the cache
-      return tx_cache_status_responses::Missing();
+
+      TxCacheStatusType cache_status_check;
+      visit_in_place(
+          storage_->getBlockQuery()->checkTxPresence(hash),
+          [&](const tx_cache_status_responses::Committed &status) {
+            memory_cache_.addItem(hash, status);
+            cache_status_check = tx_cache_status_responses::Committed();
+          },
+          [&](const tx_cache_status_responses::Rejected &status) {
+            memory_cache_.addItem(hash, status);
+            cache_status_check = tx_cache_status_responses::Rejected();
+          },
+          [&](const tx_cache_status_responses::Missing &) {
+            // don't put this hash into cache since "Missing" can become
+            // "Committed" or "Rejected" later
+            cache_status_check = tx_cache_status_responses::Missing();
+          });
+
+      return cache_status_check;
     }
 
     TxPresenceCache::BatchStatusCollectionType TxPresenceCacheImpl::check(
