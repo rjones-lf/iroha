@@ -311,3 +311,38 @@ TEST_F(OnDemandOsTest, PassMissingTransaction) {
   // if the proposal is present, there is no need to check for that specific tx
   EXPECT_TRUE(proposal);
 }
+
+/**
+ * @given initialized on-demand OS
+ * @when add 3 batches, with second one being already commited
+ * @then 2 new batches are in a proposal and already commited batch is discarded
+ */
+TEST_F(OnDemandOsTest, SeveralTransactionsOneCommited) {
+  auto batches = generateTransactions({1, 4});
+  auto &batch1 = *batches.at(0);
+  auto &batch2 = *batches.at(1);
+  auto &batch3 = *batches.at(2);
+
+  EXPECT_CALL(*mock_cache, check(batchRef(batch1)))
+      .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
+          iroha::ametsuchi::tx_cache_status_responses::Missing()}));
+  EXPECT_CALL(*mock_cache, check(batchRef(batch2)))
+      .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
+          iroha::ametsuchi::tx_cache_status_responses::Committed()}));
+  EXPECT_CALL(*mock_cache, check(batchRef(batch3)))
+      .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
+          iroha::ametsuchi::tx_cache_status_responses::Missing()}));
+
+  os->onBatches(target_round, batches);
+
+  os->onCollaborationOutcome(commit_round);
+
+  auto proposal = os->onRequestProposal(target_round);
+  const auto &txs = proposal->get()->transactions();
+  auto &batch2_tx = *batch2.transactions().at(0);
+
+  EXPECT_TRUE(proposal);
+  EXPECT_EQ(boost::size(txs), 2);
+  // already processed transaction is no present in the proposal
+  EXPECT_TRUE(std::find(txs.begin(), txs.end(), batch2_tx) == txs.end());
+}

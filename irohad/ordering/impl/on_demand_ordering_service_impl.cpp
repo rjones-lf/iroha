@@ -73,9 +73,6 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
                    batch->reducedHash().hex());
         return not this->batchAlreadyProcessed(*batch);
       });
-  log_->debug("Received batches: {}, unprocessed batches: {}",
-              boost::size(batches),
-              boost::size(unprocessed_batches));
   auto it = current_proposals_.find(round);
   if (it != current_proposals_.end()) {
     std::for_each(unprocessed_batches.begin(),
