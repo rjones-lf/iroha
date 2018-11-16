@@ -14,6 +14,7 @@
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
+#include "validators/default_proto_validator.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace iroha::network;
@@ -114,9 +115,9 @@ TEST(TransportTest, TypelessCommand) {
       iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
   std::unique_ptr<shared_model::validation::AbstractValidator<
       shared_model::interface::Transaction>>
-      tx_validator =
-          std::make_unique<shared_model::validation::
-                               DefaultOptionalSignedTransactionValidator>();
+      tx_validator = std::make_unique<
+          shared_model::validation::
+              DefaultOptionalSignedProtoTransactionValidator>();
   auto tx_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
       shared_model::interface::Transaction,
       shared_model::proto::Transaction>>(std::move(tx_validator));

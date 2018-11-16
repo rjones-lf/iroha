@@ -28,6 +28,7 @@
 #include "multi_sig_transactions/transport/mst_transport_stub.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
+#include "validators/default_proto_validator.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace iroha;
@@ -195,9 +196,9 @@ void Irohad::initFactories() {
       std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
   std::unique_ptr<shared_model::validation::AbstractValidator<
       shared_model::interface::Transaction>>
-      transaction_validator =
-          std::make_unique<shared_model::validation::
-                               DefaultOptionalSignedTransactionValidator>();
+      transaction_validator = std::make_unique<
+          shared_model::validation::
+              DefaultOptionalSignedProtoTransactionValidator>();
   transaction_factory =
       std::make_shared<shared_model::proto::ProtoTransportFactory<
           shared_model::interface::Transaction,
