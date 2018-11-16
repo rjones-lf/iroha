@@ -223,6 +223,8 @@ TEST_F(Validator, SomeTxsFail) {
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(1)))))
       .WillOnce(Return(iroha::expected::makeError(CommandError{"", 2, false})));
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(2)))))
+      .WillRepeatedly(Return(iroha::expected::Value<void>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
   ASSERT_EQ(
