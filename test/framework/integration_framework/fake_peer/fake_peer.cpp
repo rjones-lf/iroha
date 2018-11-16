@@ -20,6 +20,7 @@
 #include "framework/integration_framework/fake_peer/network/ordering_gate_network_notifier.hpp"
 #include "framework/integration_framework/fake_peer/network/ordering_service_network_notifier.hpp"
 #include "framework/integration_framework/fake_peer/network/yac_network_notifier.hpp"
+#include "framework/integration_framework/fake_peer/proposal_storage.hpp"
 #include "framework/result_fixture.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "main/server_runner.hpp"
@@ -155,6 +156,21 @@ namespace integration_framework {
         return *block_storage_;
       }
       return boost::none;
+    }
+
+    FakePeer &FakePeer::setProposalStorage(
+        const std::shared_ptr<ProposalStorage> &proposal_storage) {
+      proposal_storage_ = proposal_storage;
+      return *this;
+    }
+
+    FakePeer &FakePeer::removeProposalStorage() {
+      proposal_storage_.reset();
+      return *this;
+    }
+
+    boost::optional<const ProposalStorage &> FakePeer::getProposalStorage() const {
+      return {proposal_storage_ != nullptr, *proposal_storage_};
     }
 
     void FakePeer::run() {

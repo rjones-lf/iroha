@@ -63,6 +63,7 @@ namespace integration_framework {
   namespace fake_peer {
     class Behaviour;
     class BlockStorage;
+    class ProposalStorage;
     class FakePeer;
     class LoaderGrpc;
     class MstNetworkNotifier;

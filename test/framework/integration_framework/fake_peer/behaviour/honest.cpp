@@ -7,6 +7,7 @@
 
 #include "backend/protobuf/block.hpp"
 #include "framework/integration_framework/fake_peer/block_storage.hpp"
+#include "framework/integration_framework/fake_peer/proposal_storage.hpp"
 
 namespace integration_framework {
   namespace fake_peer {
@@ -53,6 +54,20 @@ namespace integration_framework {
         blocks.emplace_back(*block);
       }
       return blocks;
+    }
+
+    OrderingProposalRequestResult
+    HonestBehaviour::processOrderingProposalRequest(
+        const OrderingProposalRequest &request) {
+      const auto proposal_storage = getFakePeer().getProposalStorage();
+      if (!proposal_storage) {
+        getLogger()->debug(
+            "Got an OnDemandOrderingService.GetProposal call for round {}, "
+            "but have no proposal storage! NOT returning a proposal.",
+            request.toString());
+        return boost::none;
+      }
+      return proposal_storage->getProposal(request);
     }
 
   }  // namespace fake_peer

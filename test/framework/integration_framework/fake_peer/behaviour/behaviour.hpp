@@ -54,6 +54,10 @@ namespace integration_framework {
       virtual LoaderBlocksRequestResult processLoaderBlocksRequest(
           LoaderBlocksRequest request) = 0;
 
+      /// serve the proposal request
+      virtual OrderingProposalRequestResult processOrderingProposalRequest(
+          const OrderingProposalRequest &request) = 0;
+
       virtual std::string getName() = 0;
 
      protected:

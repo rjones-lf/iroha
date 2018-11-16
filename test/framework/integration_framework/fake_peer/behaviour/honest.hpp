@@ -20,6 +20,8 @@ namespace integration_framework {
           LoaderBlockRequest request) override;
       LoaderBlocksRequestResult processLoaderBlocksRequest(
           LoaderBlocksRequest request) override;
+      OrderingProposalRequestResult processOrderingProposalRequest(
+          const OrderingProposalRequest &request) override;
 
       std::string getName() override;
     };
