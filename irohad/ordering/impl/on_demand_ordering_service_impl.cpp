@@ -11,6 +11,8 @@
 #include <boost/range/adaptor/indirected.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
+#include <boost/range/size.hpp>
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "common/visitor.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
@@ -67,8 +69,13 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
 
   auto unprocessed_batches =
       boost::adaptors::filter(batches, [this](const auto &batch) {
+        log_->info("check batch {} for already processed transactions",
+                   batch->reducedHash().hex());
         return not this->batchAlreadyProcessed(*batch);
       });
+  log_->debug("Received batches: {}, unprocessed batches: {}",
+              boost::size(batches),
+              boost::size(unprocessed_batches));
   auto it = current_proposals_.find(round);
   if (it != current_proposals_.end()) {
     std::for_each(unprocessed_batches.begin(),
@@ -210,9 +217,7 @@ bool OnDemandOrderingServiceImpl::batchAlreadyProcessed(
               return false;
             },
             [this](const auto &status) {
-              log_->warn(
-                  "Received already processed batch. Duplicate transaction: {}",
-                  status.hash.hex());
+              log_->warn("Duplicate transaction: {}", status.hash.hex());
               return true;
             });
       });

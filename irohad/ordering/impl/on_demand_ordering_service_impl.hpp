@@ -13,11 +13,13 @@
 #include <unordered_map>
 
 #include <tbb/concurrent_queue.h>
-#include "ametsuchi/tx_presence_cache.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "logger/logger.hpp"
 
 namespace iroha {
+  namespace ametsuchi {
+    class TxPresenceCache;
+  }
   namespace ordering {
     class OnDemandOrderingServiceImpl : public OnDemandOrderingService {
      public:
