@@ -242,6 +242,17 @@ namespace iroha {
         };
     }
 
+    TxCacheStatusType PostgresBlockQuery::checkTxPresence(
+        const shared_model::crypto::Hash &hash) {
+      if (hasCommittedTxWithHash(hash)) {
+        return tx_cache_status_responses::Committed();
+      }
+      if (hasRejectedTxWithHash(hash)) {
+        return tx_cache_status_responses::Rejected();
+      }
+      return tx_cache_status_responses::Missing();
+    }
+
     bool PostgresBlockQuery::hasCommittedTxWithHash(
         const shared_model::crypto::Hash &hash) {
       return getBlockId(hash) != boost::none;

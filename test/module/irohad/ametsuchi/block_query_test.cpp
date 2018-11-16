@@ -17,6 +17,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
+#include <framework/specified_visitor.hpp>
 
 #include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
@@ -350,45 +351,40 @@ TEST_F(BlockQueryTest, GetTop2Blocks) {
 
 /**
  * @given block store with preinserted blocks
- * @when hasTxWithHash is invoked on existing transaction hash
- * @then True is returned
+ * @when checkTxPresence is invoked on existing transaction hash
+ * @then Committed status is returned
  */
 TEST_F(BlockQueryTest, HasTxWithExistingHash) {
   for (const auto &hash : tx_hashes) {
-    EXPECT_TRUE(blocks->hasCommittedTxWithHash(hash));
+    ASSERT_NO_THROW(boost::apply_visitor(
+        framework::SpecifiedVisitor<tx_cache_status_responses::Committed>(),
+        blocks->checkTxPresence(hash)));
   }
 }
 
 /**
  * @given block store with preinserted blocks
  * user1@test AND 1 tx created by user2@test
- * @when hasTxWithHash is invoked on non-existing hash
- * @then False is returned
+ * @when checkTxPresence is invoked on non-existing hash
+ * @then Missing status is returned
  */
-TEST_F(BlockQueryTest, HasTxWithInvalidHash) {
-  shared_model::crypto::Hash invalid_tx_hash(zero_string);
-  EXPECT_FALSE(blocks->hasCommittedTxWithHash(invalid_tx_hash));
+TEST_F(BlockQueryTest, HasTxWithMissingHash) {
+  shared_model::crypto::Hash missing_tx_hash(zero_string);
+  ASSERT_NO_THROW(boost::apply_visitor(
+      framework::SpecifiedVisitor<tx_cache_status_responses::Missing>(),
+      blocks->checkTxPresence(missing_tx_hash)));
 }
 
 /**
  * @given block store with preinserted blocks containing rejected_hash1 in one
  * of the block
- * @when hasRejectedTxWithHash is invoked on existing rejected hash
- * @then True is returned
+ * @when checkTxPresence is invoked on existing rejected hash
+ * @then Rejected is returned
  */
 TEST_F(BlockQueryTest, HasTxWithRejectedHash) {
-  EXPECT_TRUE(blocks->hasRejectedTxWithHash(rejected_hash));
-}
-
-/**
- * @given block store with preinserted blocks containing rejected_hash1 in one
- * of the block
- * @when hasRejectedTxWithHash is invoked on non-existing rejected hash
- * @then False is returned
- */
-TEST_F(BlockQueryTest, HasTxWithNonExistingRejectedHash) {
-  shared_model::crypto::Hash invalid_tx_hash(zero_string);
-  EXPECT_FALSE(blocks->hasRejectedTxWithHash(invalid_tx_hash));
+  ASSERT_NO_THROW(boost::apply_visitor(
+      framework::SpecifiedVisitor<tx_cache_status_responses::Rejected>(),
+      blocks->checkTxPresence(rejected_hash)));
 }
 
 /**
