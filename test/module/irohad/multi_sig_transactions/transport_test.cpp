@@ -101,3 +101,47 @@ TEST(TransportTest, SendAndReceive) {
 
   server->Shutdown();
 }
+
+/**
+ * @given an instance of MstTransportGrpc initialized using NOT mocked validator
+ * and tx factories dependencies
+ * @when it receives protobuffed MstState that contains a transaction with a
+ * command, where command type is not set
+ * @then there should be no SEGFAULT
+ */
+TEST(TransportTest, TypelessCommand) {
+  auto async_call_ = std::make_shared<
+      iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
+  std::unique_ptr<shared_model::validation::AbstractValidator<
+      shared_model::interface::Transaction>>
+      tx_validator =
+          std::make_unique<shared_model::validation::
+                               DefaultOptionalSignedTransactionValidator>();
+  auto tx_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
+      shared_model::interface::Transaction,
+      shared_model::proto::Transaction>>(std::move(tx_validator));
+  auto parser =
+      std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
+  auto batch_factory =
+      std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
+
+  auto my_key = makeKey();
+  auto transport = std::make_shared<MstTransportGrpc>(async_call_,
+                                                      std::move(tx_factory),
+                                                      std::move(parser),
+                                                      std::move(batch_factory),
+                                                      my_key.publicKey());
+
+  auto notifications = std::make_shared<iroha::MockMstTransportNotification>();
+  transport->subscribe(notifications);
+
+  iroha::network::transport::MstState state;
+
+  auto transaction = state.add_transactions();
+  transaction->mutable_payload()->mutable_reduced_payload()->add_commands();
+
+  grpc::ServerContext context;
+  google::protobuf::Empty response;
+
+  transport->SendState(&context, &state, &response);
+}
