@@ -18,13 +18,13 @@
 #ifndef IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
 #define IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
 
-#include "multi_sig_transactions/mst_propagation_strategy.hpp"
-
 #include <boost/optional.hpp>
 #include <chrono>
 #include <mutex>
 
 #include "ametsuchi/peer_query_factory.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy_params.hpp"
+#include "multi_sig_transactions/mst_propagation_strategy.hpp"
 
 namespace iroha {
 
@@ -42,13 +42,11 @@ namespace iroha {
      * Initialize strategy with
      * @param peer_factory is a provider of peer list
      * @param emit_worker is the coordinator for the data emitting
-     * @param period of emitting data in ms
-     * @param amount of peers emitted per once
+     * @param params configuration parameters
      */
     GossipPropagationStrategy(PeerProviderFactory peer_factory,
                               rxcpp::observe_on_one_worker emit_worker,
-                              std::chrono::milliseconds period,
-                              uint32_t amount);
+                              const GossipPropagationStrategyParams &params);
 
     ~GossipPropagationStrategy();
 

@@ -78,7 +78,7 @@ namespace iroha {
         query_executor = storage;
         PostgresCommandExecutor::prepareStatements(*sql);
         executor =
-            std::make_unique<PostgresCommandExecutor>(*sql, perm_converter_);
+            std::make_unique<PostgresCommandExecutor>(*sql);
         pending_txs_storage = std::make_shared<MockPendingTransactionStorage>();
 
         auto result = execute(buildCommand(TestTransactionBuilder().createRole(

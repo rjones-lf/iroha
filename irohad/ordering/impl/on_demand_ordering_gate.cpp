@@ -6,8 +6,6 @@
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 
 #include "common/visitor.hpp"
-#include "interfaces/iroha_internal/proposal.hpp"
-#include "interfaces/iroha_internal/transaction_batch.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -16,6 +14,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<OnDemandOrderingService> ordering_service,
     std::shared_ptr<transport::OdOsNotification> network_client,
     rxcpp::observable<BlockRoundEventType> events,
+    std::shared_ptr<cache::OrderingGateCache> cache,
     std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     consensus::Round initial_round)
     : ordering_service_(std::move(ordering_service)),
@@ -27,13 +26,21 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         visit_in_place(event,
                        [this](const BlockEvent &block_event) {
                          // block committed, increment block round
-                         current_round_ = {block_event->height(), 1};
+                         current_round_ = block_event.round;
+                         cache_->remove(block_event.batches);
                        },
                        [this](const EmptyEvent &empty) {
                          // no blocks committed, increment reject round
                          current_round_ = {current_round_.block_round,
                                            current_round_.reject_round + 1};
                        });
+
+        auto batches = cache_->pop();
+
+        cache_->addToBack(batches);
+        network_client_->onBatches(current_round_,
+                                   transport::OdOsNotification::CollectionType{
+                                       batches.begin(), batches.end()});
 
         // notify our ordering service about new round
         ordering_service_->onCollaborationOutcome(current_round_);
@@ -48,14 +55,17 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                   current_round_.block_round, current_round_.reject_round, {});
             }));
       })),
+      cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),
       current_round_(initial_round) {}
 
 void OnDemandOrderingGate::propagateBatch(
-    std::shared_ptr<shared_model::interface::TransactionBatch> batch) const {
+    std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
-  network_client_->onBatches(current_round_, {batch});
+  cache_->addToBack({batch});
+  network_client_->onBatches(
+      current_round_, transport::OdOsNotification::CollectionType{batch});
 }
 
 rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>

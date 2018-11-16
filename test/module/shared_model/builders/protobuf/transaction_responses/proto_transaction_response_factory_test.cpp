@@ -9,6 +9,8 @@
 
 #include "framework/specified_visitor.hpp"
 
+using shared_model::proto::ProtoTxStatusFactory;
+
 /**
  * @given status and hash
  * @when  model object is built using these status and hash, but with committed
@@ -17,13 +19,19 @@
  */
 TEST(ProtoTransactionStatusFactoryTest, TestStatusType) {
   auto expected_hash = shared_model::crypto::Hash(std::string(32, '1'));
-  auto error_massage = std::string("error");
+  auto error_cmd = std::string("AddAssets");
+  size_t error_cmd_index = 42;
+  uint32_t error_code = 228;
 
-  auto response = shared_model::proto::ProtoTxStatusFactory().makeCommitted(
-      expected_hash, error_massage);
+  auto response = ProtoTxStatusFactory().makeCommitted(
+      expected_hash,
+      ProtoTxStatusFactory::TransactionError{
+          error_cmd, error_cmd_index, error_code});
 
   ASSERT_EQ(response->transactionHash(), expected_hash);
-  ASSERT_EQ(response->errorMessage(), error_massage);
+  ASSERT_EQ(response->statelessErrorOrCommandName(), error_cmd);
+  ASSERT_EQ(response->failedCommandIndex(), error_cmd_index);
+  ASSERT_EQ(response->errorCode(), error_code);
 
   ASSERT_NO_THROW(
       boost::apply_visitor(framework::SpecifiedVisitor<
@@ -39,13 +47,19 @@ TEST(ProtoTransactionStatusFactoryTest, TestStatusType) {
  */
 TEST(ProtoTransactionStatusFactoryTest, SeveralObjectsFromOneBuilder) {
   auto expected_hash = shared_model::crypto::Hash(std::string(32, '1'));
-  auto error_massage = std::string("error");
+  auto error_cmd = std::string("AddAssets");
+  size_t error_cmd_index = 42;
+  uint32_t error_code = 228;
 
-  auto response1 = shared_model::proto::ProtoTxStatusFactory().makeMstExpired(
-      expected_hash, error_massage);
+  auto response1 = ProtoTxStatusFactory().makeMstExpired(
+      expected_hash,
+      ProtoTxStatusFactory::TransactionError{
+          error_cmd, error_cmd_index, error_code});
 
-  auto response2 = shared_model::proto::ProtoTxStatusFactory().makeMstExpired(
-      expected_hash, error_massage);
+  auto response2 = ProtoTxStatusFactory().makeMstExpired(
+      expected_hash,
+      ProtoTxStatusFactory::TransactionError{
+          error_cmd, error_cmd_index, error_code});
 
   ASSERT_EQ(*response1, *response2);
 }

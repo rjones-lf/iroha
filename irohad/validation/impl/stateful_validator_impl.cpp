@@ -24,7 +24,7 @@ namespace iroha {
      * @param temporary_wsv to apply commands on
      * @param transactions_errors_log to write errors to
      * @param tx to be checked
-     * @return empty result, if check is succesfull, command error otherwise
+     * @return empty result, if check is successful, command error otherwise
      */
     static bool checkTransactions(
         ametsuchi::TemporaryWsv &temporary_wsv,

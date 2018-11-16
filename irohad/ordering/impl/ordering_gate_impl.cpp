@@ -43,8 +43,7 @@ namespace iroha {
           run_async_(run_async) {}
 
     void OrderingGateImpl::propagateBatch(
-        std::shared_ptr<shared_model::interface::TransactionBatch> batch)
-        const {
+        std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
       if (batch->transactions().empty()) {
         log_->warn("trying to propagate empty batch");
         return;

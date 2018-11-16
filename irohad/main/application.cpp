@@ -53,7 +53,8 @@ Irohad::Irohad(const std::string &block_store_dir,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
                const shared_model::crypto::Keypair &keypair,
-               bool is_mst_supported)
+               const boost::optional<GossipPropagationStrategyParams>
+                   &opt_mst_gossip_params)
     : block_store_dir_(block_store_dir),
       pg_conn_(pg_conn),
       listen_ip_(listen_ip),
@@ -62,7 +63,8 @@ Irohad::Irohad(const std::string &block_store_dir,
       max_proposal_size_(max_proposal_size),
       proposal_delay_(proposal_delay),
       vote_delay_(vote_delay),
-      is_mst_supported_(is_mst_supported),
+      is_mst_supported_(opt_mst_gossip_params),
+      opt_mst_gossip_params_(opt_mst_gossip_params),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
   log_->info("created");
@@ -325,13 +327,8 @@ void Irohad::initMstProcessor() {
         batch_parser,
         transaction_batch_factory_,
         keypair.publicKey());
-    // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
-    // cli parameters
     mst_propagation = std::make_shared<GossipPropagationStrategy>(
-        storage,
-        rxcpp::observe_on_new_thread(),
-        std::chrono::seconds(5) /*emitting period*/,
-        2 /*amount per once*/);
+        storage, rxcpp::observe_on_new_thread(), *opt_mst_gossip_params_);
   } else {
     mst_propagation = std::make_shared<iroha::PropagationStrategyStub>();
     mst_transport = std::make_shared<iroha::network::MstTransportStub>();
@@ -357,10 +354,10 @@ void Irohad::initPendingTxsStorage() {
  * Initializing transaction command service
  */
 void Irohad::initTransactionCommandService() {
-  auto tx_processor = std::make_shared<TransactionProcessorImpl>(
-      pcs, mst_processor, status_bus_);
   auto status_factory =
       std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
+  auto tx_processor = std::make_shared<TransactionProcessorImpl>(
+      pcs, mst_processor, status_bus_, status_factory);
   command_service = std::make_shared<::torii::CommandServiceImpl>(
       tx_processor, storage, status_bus_, status_factory);
   command_service_transport =
