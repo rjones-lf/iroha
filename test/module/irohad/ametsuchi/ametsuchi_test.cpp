@@ -651,8 +651,8 @@ TEST_F(AmetsuchiTest, FindTxByHashTest) {
 
   // TODO: 31.10.2017 luckychess move tx3hash case into a separate test after
   // ametsuchi_test redesign
-  auto tx1hash = txs[0].hash();
-  auto tx2hash = txs[1].hash();
+  auto tx1hash = txs.at(0).hash();
+  auto tx2hash = txs.at(1).hash();
   auto tx3hash = shared_model::crypto::Hash("some garbage");
 
   auto tx1 = blocks->getTxByHashSync(tx1hash);

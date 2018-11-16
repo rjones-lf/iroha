@@ -219,9 +219,9 @@ TEST_F(Validator, SomeTxsFail) {
                       .transactions(txs)
                       .build();
 
-  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[0]))))
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(0)))))
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
-  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[1]))))
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(1)))))
       .WillOnce(Return(iroha::expected::Error<CommandError>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);

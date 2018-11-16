@@ -6,7 +6,6 @@
 #include "backend/protobuf/transaction.hpp"
 
 #include <boost/range/adaptor/transformed.hpp>
-
 #include "backend/protobuf/batch_meta.hpp"
 #include "backend/protobuf/commands/proto_command.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
@@ -31,14 +30,14 @@ namespace shared_model {
 
       interface::types::BlobType blob_{[this] { return makeBlob(*proto_); }()};
 
-      interface::types::BlobType blob_type_payload_{
+      interface::types::BlobType payload_blob_{
           [this] { return makeBlob(payload_); }()};
 
-      interface::types::BlobType blob_type_reduced_payload_{
+      interface::types::BlobType reduced_payload_blob_{
           [this] { return makeBlob(reduced_payload_); }()};
 
-      interface::types::HashType reduced_hash_ =
-          shared_model::crypto::Sha3_256::makeHash(blob_type_reduced_payload_);
+      interface::types::HashType reduced_hash_{
+          shared_model::crypto::Sha3_256::makeHash(reduced_payload_blob_)};
 
       std::vector<proto::Command> commands_{[this] {
         return std::vector<proto::Command>(reduced_payload_.commands().begin(),
@@ -75,10 +74,8 @@ namespace shared_model {
 
     // TODO [IR-1866] Akvinikym 13.11.18: remove the copy ctor and fix fallen
     // tests
-    Transaction::Transaction(const Transaction &transaction) {
-      this->impl_ =
-          std::make_unique<Transaction::Impl>(*transaction.impl_->proto_);
-    }
+    Transaction::Transaction(const Transaction &transaction)
+        : Transaction(*transaction.impl_->proto_) {}
 
     Transaction::Transaction(Transaction &&transaction) noexcept = default;
 
@@ -98,11 +95,11 @@ namespace shared_model {
     }
 
     const interface::types::BlobType &Transaction::payload() const {
-      return impl_->blob_type_payload_;
+      return impl_->payload_blob_;
     }
 
     const interface::types::BlobType &Transaction::reducedPayload() const {
-      return impl_->blob_type_reduced_payload_;
+      return impl_->reduced_payload_blob_;
     }
 
     interface::types::SignatureRangeType Transaction::signatures() const {
@@ -129,14 +126,14 @@ namespace shared_model {
       sig->set_signature(crypto::toBinaryString(signed_blob));
       sig->set_public_key(crypto::toBinaryString(public_key));
 
-      impl_->signatures_ = {[this] {
+      impl_->signatures_ = [this] {
         auto signatures = impl_->proto_->signatures()
             | boost::adaptors::transformed([](const auto &x) {
                             return proto::Signature(x);
                           });
         return SignatureSetType<proto::Signature>(signatures.begin(),
                                                   signatures.end());
-      }()};
+      }();
 
       return true;
     }

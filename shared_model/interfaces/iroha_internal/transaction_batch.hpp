@@ -27,6 +27,7 @@ namespace shared_model {
        */
       virtual const types::SharedTxsCollectionType &transactions() const = 0;
 
+      // TODO [IR-1874] Akvinikym 16.11.18: rename the field
       /**
        * Get the concatenation of reduced hashes as a single hash
        * @param reduced_hashes collection of reduced hashes

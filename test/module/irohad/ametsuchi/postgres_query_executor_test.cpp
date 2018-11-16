@@ -1155,9 +1155,9 @@ namespace iroha {
 
         apply(storage, block2);
 
-        hash1 = txs1[0].hash();
-        hash2 = txs1[1].hash();
-        hash3 = txs2[0].hash();
+        hash1 = txs1.at(0).hash();
+        hash2 = txs1.at(1).hash();
+        hash3 = txs2.at(0).hash();
       }
 
       const std::string asset_id = "coin#domain";
