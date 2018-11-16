@@ -13,6 +13,7 @@ add_library(integration_framework
     integration_framework/iroha_instance.cpp
     integration_framework/fake_peer/fake_peer.cpp
     integration_framework/fake_peer/block_storage.cpp
+    integration_framework/fake_peer/proposal_storage.cpp
     integration_framework/fake_peer/behaviour/behaviour.cpp
     integration_framework/fake_peer/behaviour/empty.cpp
     integration_framework/fake_peer/behaviour/honest.cpp
