@@ -48,6 +48,7 @@ namespace iroha {
       class YacNetwork;
       struct VoteMessage;
     }  // namespace yac
+    struct Round;
   }    // namespace consensus
   namespace network {
     class MstTransportGrpc;
@@ -73,7 +74,6 @@ namespace integration_framework {
 
   class IntegrationTestFramework {
    private:
-    using ProposalType = std::shared_ptr<shared_model::interface::Proposal>;
     using VerifiedProposalType =
         std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>;
     using BlockType = std::shared_ptr<shared_model::interface::Block>;
@@ -81,6 +81,12 @@ namespace integration_framework {
         std::shared_ptr<shared_model::interface::TransactionResponse>;
 
    public:
+    using ProposalType = shared_model::interface::Proposal;
+    using ProposalSPtr = std::shared_ptr<ProposalType>;
+    using ProposalUPtr = std::unique_ptr<ProposalType>;
+    using TransactionBatchType = shared_model::interface::TransactionBatch;
+    using TransactionBatchSPtr = std::shared_ptr<TransactionBatchType>;
+
     /**
      * Construct test framework instance
      * @param maximum_proposal_size - Maximum number of transactions per
@@ -269,9 +275,26 @@ namespace integration_framework {
         std::unique_ptr<shared_model::interface::Proposal> proposal);
 
     /// Send a batch of transactions to this peer's ordering service.
-    IntegrationTestFramework &sendBatch(
-        const std::shared_ptr<shared_model::interface::TransactionBatch>
-            &batch);
+    IntegrationTestFramework &sendBatch(const TransactionBatchSPtr &batch);
+
+    /**
+     * Send batches of transactions to this peer's on-demand ordering service.
+     * @param round - the round for which the batches are sent
+     * @param batches - the batch to send
+     * @return this
+     */
+    IntegrationTestFramework &sendBatches(
+        const iroha::consensus::Round &round,
+        const std::vector<TransactionBatchSPtr> &batches);
+
+    /**
+     * Request a proposal from this peer's on-demand ordering service.
+     * @param round - the round for which to request a proposal
+     * @param timeout - the timeout for waiting the proposal
+     * @return the proposal if received one, otherwise nullptr
+     */
+    ProposalUPtr requestProposal(const iroha::consensus::Round &round,
+                                 std::chrono::milliseconds timeout);
 
     /**
      * Send MST state message to this peer.
@@ -301,7 +324,7 @@ namespace integration_framework {
      * @return this
      */
     IntegrationTestFramework &checkProposal(
-        std::function<void(const ProposalType &)> validation);
+        std::function<void(const ProposalSPtr &)> validation);
 
     /**
      * Request next proposal from queue and skip it
@@ -319,7 +342,7 @@ namespace integration_framework {
      *                IR-1822     VerifiedProposalType argument
      */
     IntegrationTestFramework &checkVerifiedProposal(
-        std::function<void(const ProposalType &)> validation);
+        std::function<void(const ProposalSPtr &)> validation);
 
     /**
      * Request next verified proposal from queue and skip it
@@ -404,7 +427,7 @@ namespace integration_framework {
     /// Cleanup the resources
     void cleanup();
 
-    tbb::concurrent_queue<ProposalType> proposal_queue_;
+    tbb::concurrent_queue<ProposalSPtr> proposal_queue_;
     tbb::concurrent_queue<VerifiedProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
     std::map<std::string, tbb::concurrent_queue<TxResponseType>>
