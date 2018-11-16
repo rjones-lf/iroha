@@ -25,11 +25,18 @@ namespace integration_framework {
       /// Disable the behaviour
       void absolve();
 
+      /// This method gets subscribed on Fake Peer's MST messages.
       virtual void processMstMessage(
           const FakePeer::MstMessagePtr &message) = 0;
+
+      /// This method gets subscribed on Fake Peer's YAC messages.
       virtual void processYacMessage(
           const FakePeer::YacMessagePtr &message) = 0;
+
+      /// This method gets subscribed on Fake Peer's OS messages.
       virtual void processOsBatch(const FakePeer::OsBatchPtr &batch) = 0;
+
+      /// This method gets subscribed on Fake Peer's OG messages.
       virtual void processOgProposal(
           const FakePeer::OgProposalPtr &proposal) = 0;
 

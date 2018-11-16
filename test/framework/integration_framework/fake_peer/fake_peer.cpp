@@ -203,8 +203,7 @@ namespace integration_framework {
                   incoming_votes->size());
       if (incoming_votes->size() > 1) {
         // TODO mboldyrev 24/10/2018 IR-1821: rework ignoring states for
-        // accepted
-        //                                    commits
+        //                                    accepted commits
         log_->debug(
             "Ignoring state with multiple votes, "
             "because it probably refers to an accepted commit.");
