@@ -5,9 +5,14 @@
 
 #include "framework/integration_framework/fake_peer/behaviour/honest.hpp"
 
-#include "backend/protobuf/block.hpp"
+#include <boost/algorithm/string/join.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+#include "backend/protobuf/transaction.hpp"
 #include "framework/integration_framework/fake_peer/block_storage.hpp"
+#include "framework/integration_framework/fake_peer/network/batches_for_round.hpp"
 #include "framework/integration_framework/fake_peer/proposal_storage.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "module/shared_model/builders/protobuf/proposal.hpp"
 
 namespace integration_framework {
   namespace fake_peer {
@@ -68,6 +73,52 @@ namespace integration_framework {
         return boost::none;
       }
       return proposal_storage->getProposal(request);
+    }
+
+    void HonestBehaviour::processOrderingBatches(
+        const BatchesForRound &batches_for_round) {
+      const auto proposal_storage = getFakePeer().getProposalStorage();
+      if (!proposal_storage) {
+        getLogger()->debug(
+            "Got an OnDemandOrderingService.SendBatches call, but have no "
+            "proposal storage to store the incoming batches!");
+        return;
+      }
+      const auto &round = batches_for_round.round;
+      const auto &batches = batches_for_round.batches;
+      getLogger()->debug(
+          "Got an OnDemandOrderingService.SendBatches call, storing the "
+          "following batches for round {}: {}",
+          round.toString(),
+          boost::algorithm::join(
+              batches | boost::adaptors::transformed([](const auto &batch) {
+                return batch->toString();
+              }),
+              ",\n"));
+      std::vector<shared_model::proto::Transaction> txs;
+      auto opt_proposal = proposal_storage->getProposal(round);
+      if (opt_proposal) {
+        for (const auto &tx : opt_proposal->getTransport().transactions()) {
+          txs.emplace_back(tx);
+        }
+      }
+      for (const auto &batch : batches) {
+        for (const auto &tx : batch->transactions()) {
+          txs.emplace_back(
+              std::static_pointer_cast<shared_model::proto::Transaction>(tx)
+                  ->getTransport());
+        }
+      }
+      auto new_proposal = shared_model::proto::ProposalBuilder()
+                              .height(round.block_round)
+                              .createdTime(iroha::time::now())
+                              .transactions(txs)
+                              .build()
+                              .getTransport();
+      proposal_storage->storeProposal(
+          round,
+          std::make_shared<shared_model::proto::Proposal>(
+              std::move(new_proposal)));
     }
 
   }  // namespace fake_peer

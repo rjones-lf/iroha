@@ -38,12 +38,12 @@ namespace integration_framework {
       }
 
       rxcpp::observable<OnDemandOsNetworkNotifier::Round>
-      OnDemandOsNetworkNotifier::get_proposal_requests_observable() {
+      OnDemandOsNetworkNotifier::getProposalRequestsObservable() {
         return rounds_subject_.get_observable();
       }
 
       rxcpp::observable<std::shared_ptr<BatchesForRound>>
-      OnDemandOsNetworkNotifier::get_batches_observable() {
+      OnDemandOsNetworkNotifier::getBatchesObservable() {
         return batches_subject_.get_observable();
       }
 

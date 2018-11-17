@@ -169,7 +169,7 @@ namespace integration_framework {
       return *this;
     }
 
-    boost::optional<const ProposalStorage &> FakePeer::getProposalStorage() const {
+    boost::optional<ProposalStorage &> FakePeer::getProposalStorage() const {
       return {proposal_storage_ != nullptr, *proposal_storage_};
     }
 

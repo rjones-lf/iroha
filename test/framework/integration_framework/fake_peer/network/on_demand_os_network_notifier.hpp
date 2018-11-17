@@ -27,10 +27,10 @@ namespace integration_framework {
 
       virtual boost::optional<ProposalType> onRequestProposal(Round round);
 
-      rxcpp::observable<Round> get_proposal_requests_observable();
+      rxcpp::observable<Round> getProposalRequestsObservable();
 
       rxcpp::observable<std::shared_ptr<BatchesForRound>>
-      get_batches_observable();
+      getBatchesObservable();
 
      private:
       std::weak_ptr<FakePeer> fake_peer_wptr_;

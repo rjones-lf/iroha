@@ -88,7 +88,7 @@ namespace integration_framework {
 
       FakePeer &removeProposalStorage();
 
-      boost::optional<const ProposalStorage &> getProposalStorage() const;
+      boost::optional<ProposalStorage &> getProposalStorage() const;
 
       /// Start the fake peer.
       void run();
@@ -116,6 +116,15 @@ namespace integration_framework {
 
       /// Get the observable of blocks requests received by this peer.
       rxcpp::observable<LoaderBlocksRequest> getLoaderBlocksRequestObservable();
+
+      /// Get the observable of ODOS proposal requests received by this peer.
+      rxcpp::observable<iroha::consensus::Round>
+      getProposalRequestsObservable();
+
+      /// Get the observable of ODOS batches received by this peer.
+      rxcpp::observable<std::shared_ptr<BatchesForRound> >
+      getBatchesObservable();
+
 
       /**
        * Send the real peer votes from this peer analogous to the provided ones.
