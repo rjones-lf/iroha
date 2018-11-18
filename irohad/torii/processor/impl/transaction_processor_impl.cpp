@@ -7,7 +7,6 @@
 
 #include <boost/format.hpp>
 
-#include "builders/default_builders.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
@@ -27,14 +26,15 @@ namespace iroha {
         if (not cmd_error.tx_passed_initial_validation) {
           return (boost::format("Stateful validation error: transaction %s "
                                 "did not pass initial verification: "
-                                "checking '%s', error message '%s'")
-                  % tx_hash % cmd_error.name % cmd_error.error)
+                                "checking '%s', error code '%d'")
+                  % tx_hash % cmd_error.name % cmd_error.error_code)
               .str();
         }
         return (boost::format("Stateful validation error in transaction %s: "
                               "command '%s' with index '%d' did not pass "
-                              "verification with error '%s'")
-                % tx_hash % cmd_error.name % cmd_error.index % cmd_error.error)
+                              "verification with code '%d'")
+                % tx_hash % cmd_error.name % cmd_error.index
+                % cmd_error.error_code)
             .str();
       }
     }  // namespace
@@ -42,10 +42,13 @@ namespace iroha {
     TransactionProcessorImpl::TransactionProcessorImpl(
         std::shared_ptr<PeerCommunicationService> pcs,
         std::shared_ptr<MstProcessor> mst_processor,
-        std::shared_ptr<iroha::torii::StatusBus> status_bus)
+        std::shared_ptr<iroha::torii::StatusBus> status_bus,
+        std::shared_ptr<shared_model::interface::TxStatusFactory>
+            status_factory)
         : pcs_(std::move(pcs)),
           mst_processor_(std::move(mst_processor)),
           status_bus_(std::move(status_bus)),
+          status_factory_(std::move(status_factory)),
           log_(logger::log("TxProcessor")) {
       // process stateful validation results
       pcs_->on_verified_proposal().subscribe(
@@ -55,10 +58,10 @@ namespace iroha {
             const auto &errors = proposal_and_errors->rejected_transactions;
             std::lock_guard<std::mutex> lock(notifier_mutex_);
             for (const auto &tx_error : errors) {
-              auto error_msg = composeErrorMessage(tx_error);
-              log_->info(error_msg);
-              this->publishStatus(
-                  TxStatusType::kStatefulFailed, tx_error.first, error_msg);
+              log_->info(composeErrorMessage(tx_error));
+              this->publishStatus(TxStatusType::kStatefulFailed,
+                                  tx_error.first,
+                                  tx_error.second);
             }
             // notify about success txs
             for (const auto &successful_tx :
@@ -136,51 +139,55 @@ namespace iroha {
     void TransactionProcessorImpl::publishStatus(
         TxStatusType tx_status,
         const shared_model::crypto::Hash &hash,
-        const std::string &error) const {
-      auto builder =
-          shared_model::builder::DefaultTransactionStatusBuilder().txHash(hash);
-      if (not error.empty()) {
-        builder = builder.errorMsg(error);
-      }
+        const validation::CommandError &cmd_error) const {
+      auto tx_error = cmd_error.name.empty()
+          ? shared_model::interface::TxStatusFactory::TransactionError{}
+          : shared_model::interface::TxStatusFactory::TransactionError{
+                cmd_error.name, cmd_error.index, cmd_error.error_code};
       switch (tx_status) {
         case TxStatusType::kStatelessFailed: {
-          builder = builder.statelessValidationFailed();
-          break;
+          status_bus_->publish(
+              status_factory_->makeStatelessFail(hash, tx_error));
+          return;
         };
         case TxStatusType::kStatelessValid: {
-          builder = builder.statelessValidationSuccess();
-          break;
+          status_bus_->publish(
+              status_factory_->makeStatelessValid(hash, tx_error));
+          return;
         };
         case TxStatusType::kStatefulFailed: {
-          builder = builder.statefulValidationFailed();
-          break;
+          status_bus_->publish(
+              status_factory_->makeStatefulFail(hash, tx_error));
+          return;
         };
         case TxStatusType::kStatefulValid: {
-          builder = builder.statefulValidationSuccess();
-          break;
+          status_bus_->publish(
+              status_factory_->makeStatefulValid(hash, tx_error));
+          return;
         };
         case TxStatusType::kCommitted: {
-          builder = builder.committed();
-          break;
+          status_bus_->publish(status_factory_->makeCommitted(hash, tx_error));
+          return;
         };
         case TxStatusType::kMstExpired: {
-          builder = builder.mstExpired();
-          break;
+          status_bus_->publish(status_factory_->makeMstExpired(hash, tx_error));
+          return;
         };
         case TxStatusType::kNotReceived: {
-          builder = builder.notReceived();
-          break;
+          status_bus_->publish(
+              status_factory_->makeNotReceived(hash, tx_error));
+          return;
         };
         case TxStatusType::kMstPending: {
-          builder = builder.mstPending();
-          break;
+          status_bus_->publish(status_factory_->makeMstPending(hash, tx_error));
+          return;
         };
         case TxStatusType::kEnoughSignaturesCollected: {
-          builder = builder.enoughSignaturesCollected();
-          break;
+          status_bus_->publish(
+              status_factory_->makeEnoughSignaturesCollected(hash, tx_error));
+          return;
         };
       }
-      status_bus_->publish(builder.build());
     }
 
     void TransactionProcessorImpl::publishEnoughSignaturesStatus(

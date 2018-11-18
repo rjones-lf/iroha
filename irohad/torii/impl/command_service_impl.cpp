@@ -58,12 +58,12 @@ namespace torii {
 
     if (is_present) {
       std::shared_ptr<shared_model::interface::TransactionResponse> response =
-          status_factory_->makeCommitted(request, "");
+          status_factory_->makeCommitted(request);
       cache_->addItem(request, response);
       return response;
     } else {
       log_->warn("Asked non-existing tx: {}", request.hex());
-      return status_factory_->makeNotReceived(request, "");
+      return status_factory_->makeNotReceived(request);
     }
   }
 
@@ -87,7 +87,7 @@ namespace torii {
         std::shared_ptr<shared_model::interface::TransactionResponse>;
     auto initial_status = cache_->findItem(hash).value_or([&] {
       log_->debug("tx is not received: {}", hash.toString());
-      return status_factory_->makeNotReceived(hash, "");
+      return status_factory_->makeNotReceived(hash);
     }());
     return status_bus_
         ->statuses()
@@ -144,7 +144,7 @@ namespace torii {
       }
 
       this->pushStatus("ToriiBatchProcessor",
-                       status_factory_->makeStatelessValid(tx_hash, ""));
+                       status_factory_->makeStatelessValid(tx_hash));
     });
   }
 

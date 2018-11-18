@@ -48,7 +48,11 @@ namespace shared_model {
 
       TransactionStatusBuilder txHash(const crypto::Hash &hash);
 
-      TransactionStatusBuilder errorMsg(const std::string &msg);
+      TransactionStatusBuilder statelessErrorOrCmdName(const std::string &name);
+
+      TransactionStatusBuilder failedCmdIndex(uint32_t index);
+
+      TransactionStatusBuilder errorCode(uint32_t code);
 
      private:
       iroha::protocol::ToriiResponse tx_response_;

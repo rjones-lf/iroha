@@ -99,17 +99,18 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
   gate_impl->setPcs(*pcs);
 
   grpc::ServerContext context;
-  auto tx = shared_model::proto::TransactionBuilder()
-                .createdTime(iroha::time::now())
-                .creatorAccountId("admin@ru")
-                .addAssetQuantity("coin#coin", "1.0")
-                .quorum(1)
-                .build()
-                .signAndAddSignature(
-                    shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair())
-                .finish();
-  std::vector<shared_model::proto::Transaction> txs = {tx, tx};
+
+  std::vector<shared_model::proto::Transaction> txs;
+  txs.push_back(shared_model::proto::TransactionBuilder()
+                    .createdTime(iroha::time::now())
+                    .creatorAccountId("admin@ru")
+                    .addAssetQuantity("coin#coin", "1.0")
+                    .quorum(1)
+                    .build()
+                    .signAndAddSignature(
+                        shared_model::crypto::DefaultCryptoAlgorithmType::
+                            generateKeypair())
+                    .finish());
   iroha::protocol::Proposal proposal = shared_model::proto::ProposalBuilder()
                                            .height(2)
                                            .createdTime(iroha::time::now())
@@ -175,17 +176,17 @@ TEST_F(QueueBehaviorTest, SendManyProposals) {
       make_test_subscriber<CallExact>(ordering_gate.on_proposal(), 2);
   wrapper_after.subscribe();
 
-  auto tx = shared_model::proto::TransactionBuilder()
-                .createdTime(iroha::time::now())
-                .creatorAccountId("admin@ru")
-                .addAssetQuantity("coin#coin", "1.0")
-                .quorum(1)
-                .build()
-                .signAndAddSignature(
-                    shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair())
-                .finish();
-  std::vector<shared_model::proto::Transaction> txs = {tx, tx};
+  std::vector<shared_model::proto::Transaction> txs;
+  txs.push_back(shared_model::proto::TransactionBuilder()
+                    .createdTime(iroha::time::now())
+                    .creatorAccountId("admin@ru")
+                    .addAssetQuantity("coin#coin", "1.0")
+                    .quorum(1)
+                    .build()
+                    .signAndAddSignature(
+                        shared_model::crypto::DefaultCryptoAlgorithmType::
+                            generateKeypair())
+                    .finish());
   auto proposal1 = std::make_shared<shared_model::proto::Proposal>(
       shared_model::proto::ProposalBuilder()
           .height(2)

@@ -10,13 +10,11 @@
 #include <grpc++/grpc++.h>
 
 namespace iroha {
-  class MockServerWriter
-      : public grpc::ServerWriterInterface<iroha::protocol::ToriiResponse> {
+  template <typename T>
+  class MockServerWriter : public grpc::ServerWriterInterface<T> {
    public:
-    MOCK_METHOD1(Write, void(iroha::protocol::ToriiResponse));
-    MOCK_METHOD2(Write,
-                 bool(const iroha::protocol::ToriiResponse &,
-                      grpc::WriteOptions));
+    MOCK_METHOD1_T(Write, void(T));
+    MOCK_METHOD2_T(Write, bool(const T &, grpc::WriteOptions));
     MOCK_METHOD0(SendInitialMetadata, void());
     MOCK_METHOD1(NextMessageSize, bool(uint32_t *));
   };

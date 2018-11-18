@@ -40,7 +40,8 @@ class KVTest : public AmetsuchiTest {
     AmetsuchiTest::SetUp();
     std::string empty_key(32, '0');
     // transaction for block 1
-    auto txn =
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(
         TestTransactionBuilder()
             .creatorAccountId("userone@ru")
             .createRole(
@@ -56,13 +57,12 @@ class KVTest : public AmetsuchiTest {
                            domain_id,
                            shared_model::crypto::PublicKey(empty_key))
             .setAccountDetail(account_name2 + "@" + domain_id, "age", "24")
-            .build();
-    auto block1 =
-        TestBlockBuilder()
-            .height(1)
-            .prevHash(shared_model::crypto::Hash(empty_key))
-            .transactions(std::vector<shared_model::proto::Transaction>{txn})
-            .build();
+            .build());
+    auto block1 = TestBlockBuilder()
+                      .height(1)
+                      .prevHash(shared_model::crypto::Hash(empty_key))
+                      .transactions(txs)
+                      .build();
 
     {
       std::unique_ptr<MutableStorage> ms;

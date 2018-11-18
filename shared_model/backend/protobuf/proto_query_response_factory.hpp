@@ -14,8 +14,9 @@ namespace shared_model {
     class ProtoQueryResponseFactory : public interface::QueryResponseFactory {
      public:
       std::unique_ptr<interface::QueryResponse> createAccountAssetResponse(
-          std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
-              assets,
+          std::vector<std::tuple<interface::types::AccountIdType,
+                                 interface::types::AssetIdType,
+                                 shared_model::interface::Amount>> assets,
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createAccountDetailResponse(
@@ -23,7 +24,10 @@ namespace shared_model {
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createAccountResponse(
-          std::unique_ptr<interface::Account> account,
+          interface::types::AccountIdType account_id,
+          interface::types::DomainIdType domain_id,
+          interface::types::QuorumType quorum,
+          interface::types::JsonType jsonData,
           std::vector<std::string> roles,
           const crypto::Hash &query_hash) const override;
 
@@ -42,7 +46,9 @@ namespace shared_model {
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createAssetResponse(
-          std::unique_ptr<shared_model::interface::Asset> asset,
+          interface::types::AssetIdType asset_id,
+          interface::types::DomainIdType domain_id,
+          interface::types::PrecisionType precision,
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createRolesResponse(

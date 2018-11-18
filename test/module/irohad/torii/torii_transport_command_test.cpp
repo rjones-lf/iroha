@@ -107,7 +107,7 @@ TEST_F(ToriiTransportCommandTest, Status) {
 
     iroha::protocol::ToriiResponse toriiResponse;
     std::shared_ptr<shared_model::interface::TransactionResponse> response =
-        status_factory->makeEnoughSignaturesCollected(hash, "");
+        status_factory->makeEnoughSignaturesCollected(hash, {});
 
     EXPECT_CALL(*command_service, getStatus(hash)).WillOnce(Return(response));
 
@@ -207,7 +207,7 @@ TEST_F(ToriiTransportCommandTest, ListToriiPartialInvalid) {
 
   EXPECT_CALL(*command_service, handleTransactionBatch(_)).Times(4);
   EXPECT_CALL(*status_bus, publish(_)).WillOnce(Invoke([](auto status) {
-    EXPECT_FALSE(status->errorMessage().empty());
+    EXPECT_FALSE(status->statelessErrorOrCommandName().empty());
   }));
 
   transport_grpc->ListTorii(&context, &request, &response);
@@ -237,18 +237,18 @@ TEST_F(ToriiTransportCommandTest, StatusStreamEmpty) {
 TEST_F(ToriiTransportCommandTest, StatusStream) {
   grpc::ServerContext context;
   iroha::protocol::TxStatusRequest request;
-  iroha::MockServerWriter response_writer;
+  iroha::MockServerWriter<iroha::protocol::ToriiResponse> response_writer;
 
   std::vector<std::shared_ptr<shared_model::interface::TransactionResponse>>
       responses;
   for (size_t i = 0; i < kTimes; ++i) {
     auto hash = TestTransactionBuilder().build().hash();
-    auto push_response =
-        [this, i, hash = std::move(hash), &responses](auto member_fn) {
-          responses.emplace_back((this->status_factory.get()->*member_fn)(
-                                     hash, "ErrMessage" + std::to_string(i))
-                                     .release());
-        };
+    auto push_response = [this, /*i, */ hash = std::move(hash), &responses](
+                             auto member_fn) {
+      responses.emplace_back((this->status_factory.get()->*member_fn)(
+                                 hash, {} /*"ErrMessage" + std::to_string(i)*/)
+                                 .release());
+    };
 
     using shared_model::interface::TxStatusFactory;
     // cover different type of statuses

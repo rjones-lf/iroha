@@ -41,6 +41,6 @@ TEST_F(ReplayFixture, DISABLED_BasicTxReplay) {
       baseTx(kAdminId).transferAsset(kAdminId, kUserId, kAssetId, "", "1.0"),
       kAdminKeypair);
 
-  itf.sendTxAwait(transfer_tx, check(1)); // should be committed
-  itf.sendTxAwait(transfer_tx, check(0)); // should not
+  itf.sendTxAwait(transfer_tx, check(1));  // should be committed
+  itf.sendTxAwait(transfer_tx, check(0));  // should not
 }

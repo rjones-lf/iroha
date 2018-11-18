@@ -62,6 +62,24 @@ target_link_libraries(request_proposal_fuzz
   protobuf-mutator
   )
 
+add_executable(retrieve_block_fuzz retrieve_block_fuzz.cpp)
+target_link_libraries(retrieve_block_fuzz
+  gtest::gtest
+  gmock::gmock
+  block_loader_service
+  shared_model_default_builders
+  protobuf-mutator
+  )
+
+add_executable(retrieve_blocks_fuzz retrieve_blocks_fuzz.cpp)
+target_link_libraries(retrieve_blocks_fuzz
+  gtest::gtest
+  gmock::gmock
+  block_loader_service
+  shared_model_default_builders
+  protobuf-mutator
+  )
+
 add_executable(consensus_fuzz consensus_fuzz.cpp)
 target_link_libraries(consensus_fuzz
   gtest::gtest

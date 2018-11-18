@@ -31,8 +31,8 @@ namespace iroha {
       /// Name of the failed command
       std::string name;
 
-      /// Error, with which the command failed
-      std::string error;
+      /// Error code, with which the command failed
+      uint32_t error_code;
 
       /// Shows, if transaction has passed initial validation
       bool tx_passed_initial_validation;

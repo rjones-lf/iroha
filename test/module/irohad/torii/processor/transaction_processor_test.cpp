@@ -5,6 +5,7 @@
 
 #include "torii/processor/transaction_processor_impl.hpp"
 
+#include <backend/protobuf/proto_tx_status_factory.hpp>
 #include <boost/range/join.hpp>
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -54,7 +55,11 @@ class TransactionProcessorTest : public ::testing::Test {
         .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
     status_bus = std::make_shared<MockStatusBus>();
-    tp = std::make_shared<TransactionProcessorImpl>(pcs, mst, status_bus);
+    tp = std::make_shared<TransactionProcessorImpl>(
+        pcs,
+        mst,
+        status_bus,
+        std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
   }
 
   auto base_tx() {
@@ -387,8 +392,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
   for (size_t i = 0; i < invalid_txs.size(); ++i) {
     validation_result->rejected_transactions.emplace(
         invalid_txs[i].hash(),
-        iroha::validation::CommandError{
-            "SomeCommandName", "SomeCommandError", true, i});
+        iroha::validation::CommandError{"SomeCommandName", 1, true, i});
   }
   verified_prop_notifier.get_subscriber().on_next(validation_result);
 

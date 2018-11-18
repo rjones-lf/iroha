@@ -98,14 +98,15 @@ class BlockLoaderTest : public testing::Test {
   }
 
   auto getBaseBlockBuilder() const {
-    auto tx = TestUnsignedTransactionBuilder()
-                  .creatorAccountId("account@domain")
-                  .setAccountQuorum("account@domain", 1)
-                  .createdTime(iroha::time::now())
-                  .quorum(1)
-                  .build()
-                  .signAndAddSignature(key)
-                  .finish();
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(TestUnsignedTransactionBuilder()
+                      .creatorAccountId("account@domain")
+                      .setAccountQuorum("account@domain", 1)
+                      .createdTime(iroha::time::now())
+                      .quorum(1)
+                      .build()
+                      .signAndAddSignature(key)
+                      .finish());
     return shared_model::proto::TemplateBlockBuilder<
                (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
                shared_model::validation::AlwaysValidValidator,
@@ -114,18 +115,19 @@ class BlockLoaderTest : public testing::Test {
         .height(1)
         .prevHash(kPrevHash)
         .createdTime(iroha::time::now())
-        .transactions(std::vector<decltype(tx)>{tx});
+        .transactions(txs);
   }
 
   auto getBaseBlockBuilder(const Hash &prev_hash) const {
-    auto tx = TestUnsignedTransactionBuilder()
-                  .creatorAccountId("account@domain")
-                  .setAccountQuorum("account@domain", 1)
-                  .createdTime(iroha::time::now())
-                  .quorum(1)
-                  .build()
-                  .signAndAddSignature(key)
-                  .finish();
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(TestUnsignedTransactionBuilder()
+                      .creatorAccountId("account@domain")
+                      .setAccountQuorum("account@domain", 1)
+                      .createdTime(iroha::time::now())
+                      .quorum(1)
+                      .build()
+                      .signAndAddSignature(key)
+                      .finish());
     return shared_model::proto::TemplateBlockBuilder<
                (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
                shared_model::validation::AlwaysValidValidator,
@@ -134,7 +136,7 @@ class BlockLoaderTest : public testing::Test {
         .height(1)
         .prevHash(prev_hash)
         .createdTime(iroha::time::now())
-        .transactions(std::vector<decltype(tx)>{tx});
+        .transactions(txs);
   }
 
   const Hash kPrevHash =
