@@ -244,10 +244,18 @@ namespace iroha {
 
     TxCacheStatusType PostgresBlockQuery::checkTxPresence(
         const shared_model::crypto::Hash &hash) {
-      if (hasCommittedTxWithHash(hash)) {
+      int res = -1;
+      const auto &hash_str = hash.hex();
+
+      sql_ << "SELECT status FROM tx_status_by_hash WHERE hash = :hash",
+          soci::into(res), soci::use(hash_str);
+
+      // res > 0 => Committed
+      // res == 0 => Rejected
+      // res < 0 => Missing
+      if (res > 0) {
         return tx_cache_status_responses::Committed();
-      }
-      if (hasRejectedTxWithHash(hash)) {
+      } else if (res == 0) {
         return tx_cache_status_responses::Rejected();
       }
       return tx_cache_status_responses::Missing();
