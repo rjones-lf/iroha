@@ -196,6 +196,10 @@ namespace integration_framework {
     return yac_crypto_->getVote(my_yac_hash);
   }
 
+  void FakePeer::sendMstState(const iroha::MstState &state) {
+    mst_transport_->sendState(*real_peer_, state);
+  }
+
   void FakePeer::sendYacState(
       const std::vector<iroha::consensus::yac::VoteMessage> &state) {
     yac_transport_->sendState(*real_peer_, state);
