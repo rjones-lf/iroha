@@ -5,6 +5,7 @@
 
 #include "framework/integration_framework/fake_peer/network/on_demand_os_network_notifier.hpp"
 #include "backend/protobuf/proposal.hpp"
+#include "framework/integration_framework/fake_peer/behaviour/behaviour.hpp"
 #include "framework/integration_framework/fake_peer/fake_peer.hpp"
 #include "framework/integration_framework/fake_peer/proposal_storage.hpp"
 
@@ -25,9 +26,9 @@ namespace integration_framework {
       OnDemandOsNetworkNotifier::onRequestProposal(Round round) {
         auto fake_peer = fake_peer_wptr_.lock();
         BOOST_ASSERT_MSG(fake_peer, "Fake peer shared pointer is not set!");
-        const auto proposal_storage = fake_peer->getProposalStorage();
-        if (proposal_storage) {
-          auto proposal = proposal_storage->getProposal(round);
+        const auto behaviour = fake_peer->getBehaviour();
+        if (behaviour) {
+          auto proposal = behaviour->processOrderingProposalRequest(round);
           if (proposal) {
             return std::unique_ptr<shared_model::interface::Proposal>(
                 std::make_unique<shared_model::proto::Proposal>(
