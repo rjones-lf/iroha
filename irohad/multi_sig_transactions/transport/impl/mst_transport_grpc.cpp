@@ -114,6 +114,13 @@ grpc::Status MstTransportGrpc::SendState(
     return grpc::Status::OK;
   }
 
+  if (new_state.isEmpty()) {
+    async_call_->log_->info(
+        "All transactions from received MST state have been processed already, "
+        "nothing to propagate to MST processor");
+    return grpc::Status::OK;
+  }
+
   if (auto subscriber = subscriber_.lock()) {
     subscriber->onNewState(source_key, std::move(new_state));
   } else {
