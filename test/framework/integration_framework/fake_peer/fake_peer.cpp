@@ -196,6 +196,7 @@ namespace integration_framework {
           .append(mst_transport_)
           .append(os_transport_)
           .append(og_transport_)
+          .append(od_os_transport_)
           .append(synchronizer_transport_)
           .run()
           .match(
