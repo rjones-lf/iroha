@@ -70,9 +70,7 @@ namespace shared_model {
           [this] { return CommandVariantType(variant_); }()};
     };
 
-    Command::Command(const Command &o) {
-      this->impl_ = std::make_unique<Impl>(*o.impl_->proto_);
-    }
+    Command::Command(const Command &o) : Command(*o.impl_->proto_) {}
     Command::Command(Command &&o) noexcept = default;
 
     Command::Command(const TransportType &ref) {
