@@ -110,6 +110,20 @@ namespace iroha {
   ASSERT_TRUE(err(cmd_result));                     \
   ASSERT_EQ(err(cmd_result)->error.error_code, expected_code);
 
+      /**
+       * Check that command result contains all substrings in a passed
+       * collection
+       * @param cmd_result to be checked
+       * @param expected_substrings - collection of strings, which are expected
+       * to be in command error
+       */
+#define CHECK_ERROR_MESSAGE(cmd_result, expected_substrings)                \
+  auto error = err(cmd_result);                                             \
+  ASSERT_TRUE(error);                                                       \
+  for (auto substring : expected_substrings) {                              \
+    ASSERT_NE(error->error.error_extra.find(substring), std::string::npos); \
+  }
+
       const std::string role = "role";
       const std::string another_role = "role2";
       shared_model::interface::RolePermissionSet role_permissions;
@@ -219,6 +233,10 @@ namespace iroha {
                                    .addAssetQuantity(asset_id, "1.0")
                                    .creatorAccountId(account->accountId())));
       CHECK_ERROR_CODE(cmd_result, 2);
+
+      std::vector<std::string> query_args{
+          account->accountId(), "1.0", asset_id, "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -233,6 +251,10 @@ namespace iroha {
                                    .creatorAccountId(account->accountId())),
                   true);
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      std::vector<std::string> query_args{
+          account->accountId(), "1.0", asset_id, "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -253,6 +275,10 @@ namespace iroha {
                                    .creatorAccountId(account->accountId())),
                   true);
       CHECK_ERROR_CODE(cmd_result, 4);
+
+      std::vector<std::string> query_args{
+          account->accountId(), uint256_halfmax, asset_id, "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class AddPeer : public CommandExecutorTest {
@@ -296,6 +322,9 @@ namespace iroha {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().addPeer(peer->address(), peer->pubkey())));
       CHECK_ERROR_CODE(cmd_result, 2);
+
+      std::vector<std::string> query_args{peer->toString()};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class AddSignatory : public CommandExecutorTest {
@@ -375,6 +404,9 @@ namespace iroha {
               account->accountId(), *pubkey)));
       CHECK_ERROR_CODE(cmd_result, 2);
 
+      std::vector<std::string> query_args{account->accountId(), pubkey->hex()};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
+
       auto signatories = query->getSignatories(account->accountId());
       ASSERT_TRUE(signatories);
       ASSERT_TRUE(std::find(signatories->begin(), signatories->end(), *pubkey)
@@ -397,6 +429,9 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder().addSignatory(
               account->accountId(), *pubkey)));
       CHECK_ERROR_CODE(cmd_result, 4);
+
+      std::vector<std::string> query_args{account->accountId(), pubkey->hex()};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class AppendRole : public CommandExecutorTest {
@@ -490,6 +525,9 @@ namespace iroha {
               account->accountId(), another_role)));
       CHECK_ERROR_CODE(cmd_result, 2);
 
+      std::vector<std::string> query_args{account->accountId(), another_role};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
+
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
       ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
@@ -511,6 +549,9 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder().appendRole(
               account->accountId(), another_role)));
       CHECK_ERROR_CODE(cmd_result, 2);
+
+      std::vector<std::string> query_args{account->accountId(), another_role};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -526,6 +567,9 @@ namespace iroha {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().appendRole("doge@noaccount", another_role)));
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      std::vector<std::string> query_args{"doge@noaccount", another_role};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -539,6 +583,9 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder().appendRole(
               account->accountId(), another_role)));
       CHECK_ERROR_CODE(cmd_result, 4);
+
+      std::vector<std::string> query_args{account->accountId(), another_role};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class CreateAccount : public CommandExecutorTest {
@@ -597,10 +644,14 @@ namespace iroha {
     TEST_F(CreateAccount, NoPerms) {
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder().createAccount(
-              "id2", domain->domainId(), *pubkey)));
+              account2->accountId(), domain->domainId(), *pubkey)));
       CHECK_ERROR_CODE(cmd_result, 2);
       auto acc = query->getAccount(account2->accountId());
       ASSERT_FALSE(acc);
+
+      std::vector<std::string> query_args{
+          account2->accountId(), domain->domainId(), pubkey->hex()};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -613,6 +664,9 @@ namespace iroha {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createAccount("doge", "domain6", *pubkey)));
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      std::vector<std::string> query_args{"doge", "domain6", pubkey->hex()};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -626,6 +680,10 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder().createAccount(
               "id", domain->domainId(), *pubkey)));
       CHECK_ERROR_CODE(cmd_result, 4);
+
+      std::vector<std::string> query_args{
+          "id", domain->domainId(), pubkey->hex()};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class CreateAsset : public CommandExecutorTest {
@@ -696,6 +754,9 @@ namespace iroha {
       CHECK_ERROR_CODE(cmd_result, 2);
       auto ass = query->getAsset(asset->assetId());
       ASSERT_FALSE(ass);
+
+      std::vector<std::string> query_args{domain->domainId(), "coin", "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -720,6 +781,9 @@ namespace iroha {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createAsset(asset_name, "no_domain", 1)));
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      std::vector<std::string> query_args{asset_name, "no_domain", "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -746,6 +810,9 @@ namespace iroha {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createAsset("coin", domain->domainId(), 1)));
       CHECK_ERROR_CODE(cmd_result, 4);
+
+      std::vector<std::string> query_args{"coin", domain->domainId(), "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class CreateDomain : public CommandExecutorTest {
@@ -796,6 +863,9 @@ namespace iroha {
       CHECK_ERROR_CODE(cmd_result, 2);
       auto dom = query->getDomain(domain2->domainId());
       ASSERT_FALSE(dom);
+
+      std::vector<std::string> query_args{domain2->domainId(), role};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -810,6 +880,9 @@ namespace iroha {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createDomain(domain2->domainId(), role)));
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      std::vector<std::string> query_args{domain2->domainId(), role};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -823,6 +896,9 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder().createDomain(
               domain2->domainId(), another_role)));
       CHECK_ERROR_CODE(cmd_result, 4);
+
+      std::vector<std::string> query_args{domain2->domainId(), another_role};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class CreateRole : public CommandExecutorTest {
@@ -874,6 +950,10 @@ namespace iroha {
       auto rl = query->getRolePermissions(another_role);
       ASSERT_TRUE(rl);
       ASSERT_TRUE(rl->none());
+
+      std::vector<std::string> query_args{another_role,
+                                          role_permissions2.toBitstring()};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -888,6 +968,10 @@ namespace iroha {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().createRole(another_role, role_permissions)));
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      std::vector<std::string> query_args{another_role,
+                                          role_permissions.toBitstring()};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class DetachRole : public CommandExecutorTest {
@@ -942,6 +1026,10 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder().detachRole(
               account->accountId(), another_role)));
       CHECK_ERROR_CODE(cmd_result, 2);
+
+      std::vector<std::string> query_args{account->accountId(), another_role};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
+
       auto roles = query->getAccountRoles(account->accountId());
       ASSERT_TRUE(roles);
       ASSERT_TRUE(std::find(roles->begin(), roles->end(), another_role)
@@ -958,6 +1046,9 @@ namespace iroha {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().detachRole("doge@noaccount", another_role)));
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      std::vector<std::string> query_args{"doge@noaccount", another_role};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -973,6 +1064,9 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder().detachRole(
               account->accountId(), another_role)));
       CHECK_ERROR_CODE(cmd_result, 4);
+
+      std::vector<std::string> query_args{account->accountId(), another_role};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -986,6 +1080,10 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder().detachRole(
               account->accountId(), "not_existing_role")));
       CHECK_ERROR_CODE(cmd_result, 5);
+
+      std::vector<std::string> query_args{account->accountId(),
+                                          "not_existing_role"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class GrantPermission : public CommandExecutorTest {
@@ -1044,6 +1142,10 @@ namespace iroha {
       auto has_perm = query->hasAccountGrantablePermission(
           account->accountId(), account->accountId(), perm);
       ASSERT_FALSE(has_perm);
+
+      std::vector<std::string> query_args{account->accountId(),
+                                          perm_converter->toString(perm)};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -1059,6 +1161,10 @@ namespace iroha {
                                    .grantPermission("doge@noaccount", perm)
                                    .creatorAccountId(account->accountId())));
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      std::vector<std::string> query_args{"doge@noaccount",
+                                          perm_converter->toString(perm)};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class RemoveSignatory : public CommandExecutorTest {
@@ -1162,6 +1268,9 @@ namespace iroha {
               account->accountId(), *pubkey)));
       CHECK_ERROR_CODE(cmd_result, 2);
 
+      std::vector<std::string> query_args{account->accountId(), pubkey->hex()};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
+
       auto signatories = query->getSignatories(account->accountId());
       ASSERT_TRUE(signatories);
       ASSERT_TRUE(std::find(signatories->begin(), signatories->end(), *pubkey)
@@ -1186,6 +1295,9 @@ namespace iroha {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().removeSignatory("hello", *pubkey)));
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      std::vector<std::string> query_args{"hello", pubkey->hex()};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -1213,6 +1325,10 @@ namespace iroha {
           execute(buildCommand(TestTransactionBuilder().removeSignatory(
               account->accountId(), *another_pubkey)));
       CHECK_ERROR_CODE(cmd_result, 4);
+
+      std::vector<std::string> query_args{account->accountId(),
+                                          another_pubkey->hex()};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -1234,6 +1350,9 @@ namespace iroha {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().removeSignatory(account->accountId(), pk)));
       CHECK_ERROR_CODE(cmd_result, 5);
+
+      std::vector<std::string> query_args{account->accountId(), pk.hex()};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class RevokePermission : public CommandExecutorTest {
@@ -1309,6 +1428,10 @@ namespace iroha {
                                    .revokePermission(account->accountId(), perm)
                                    .creatorAccountId(account->accountId())));
       CHECK_ERROR_CODE(cmd_result, 2);
+
+      std::vector<std::string> query_args{account->accountId(),
+                                          perm_converter->toString(perm)};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class SetAccountDetail : public CommandExecutorTest {
@@ -1410,6 +1533,11 @@ namespace iroha {
                   false,
                   account->accountId());
       CHECK_ERROR_CODE(cmd_result, 2);
+
+      std::vector<std::string> query_args{
+          account2->accountId(), "key", "value"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
+
       auto kv = query->getAccountDetail(account2->accountId());
       ASSERT_TRUE(kv);
       ASSERT_EQ(kv.get(), "{}");
@@ -1428,6 +1556,9 @@ namespace iroha {
                   false,
                   account->accountId());
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      std::vector<std::string> query_args{"doge@noaccount", "key", "value"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class SetQuorum : public CommandExecutorTest {
@@ -1508,6 +1639,9 @@ namespace iroha {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().setAccountQuorum(account->accountId(), 3)));
       CHECK_ERROR_CODE(cmd_result, 2);
+
+      std::vector<std::string> query_args{account->accountId(), "3"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -1529,6 +1663,9 @@ namespace iroha {
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().setAccountQuorum(account->accountId(), 5)));
       CHECK_ERROR_CODE(cmd_result, 5);
+
+      std::vector<std::string> query_args{account->accountId(), "5"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class SubtractAccountAssetTest : public CommandExecutorTest {
@@ -1626,6 +1763,10 @@ namespace iroha {
                                    .creatorAccountId(account->accountId())));
       CHECK_ERROR_CODE(cmd_result, 2);
 
+      std::vector<std::string> query_args{
+          account->accountId(), asset_id, "1.0", "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
+
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ("1.0", account_asset.get()->balance().toStringRepr());
@@ -1643,6 +1784,10 @@ namespace iroha {
                                    .subtractAssetQuantity(asset_id, "1.0")
                                    .creatorAccountId(account->accountId())));
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      std::vector<std::string> query_args{
+          account->accountId(), asset_id, "1.0", "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -1658,6 +1803,10 @@ namespace iroha {
                                    .subtractAssetQuantity(asset_id, "1.0000")
                                    .creatorAccountId(account->accountId())));
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      std::vector<std::string> query_args{
+          account->accountId(), asset_id, "1.0000", "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -1678,6 +1827,10 @@ namespace iroha {
                                    .subtractAssetQuantity(asset_id, "2.0")
                                    .creatorAccountId(account->accountId())));
       CHECK_ERROR_CODE(cmd_result, 4);
+
+      std::vector<std::string> query_args{
+          account->accountId(), asset_id, "2.0", "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     class TransferAccountAssetTest : public CommandExecutorTest {
@@ -1826,6 +1979,10 @@ namespace iroha {
                                                  "desc",
                                                  "1.0")));
       CHECK_ERROR_CODE(cmd_result, 2);
+
+      std::vector<std::string> query_args{
+          account->accountId(), account2->accountId(), asset_id, "1.0", "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -1847,11 +2004,25 @@ namespace iroha {
               "some@domain", account2->accountId(), asset_id, "desc", "1.0")),
           true);
       CHECK_ERROR_CODE(cmd_result, 3);
+
+      {
+        std::vector<std::string> query_args{
+            "some@domain", account2->accountId(), asset_id, "1.0", "1"};
+        auto foo = err(cmd_result)->error.error_extra;
+        CHECK_ERROR_MESSAGE(cmd_result, query_args);
+      }
+
       cmd_result = execute(
           buildCommand(TestTransactionBuilder().transferAsset(
               account->accountId(), "some@domain", asset_id, "desc", "1.0")),
           true);
       CHECK_ERROR_CODE(cmd_result, 4);
+
+      {
+        std::vector<std::string> query_args{
+            account->accountId(), "some@domain", asset_id, "1.0", "1"};
+        CHECK_ERROR_MESSAGE(cmd_result, query_args);
+      }
     }
 
     /**
@@ -1869,6 +2040,10 @@ namespace iroha {
                                                  "desc",
                                                  "1.0")));
       CHECK_ERROR_CODE(cmd_result, 5);
+
+      std::vector<std::string> query_args{
+          account->accountId(), account2->accountId(), asset_id, "1.0", "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -1892,6 +2067,10 @@ namespace iroha {
                                                  "desc",
                                                  "2.0")));
       CHECK_ERROR_CODE(cmd_result, 6);
+
+      std::vector<std::string> query_args{
+          account->accountId(), account2->accountId(), asset_id, "2.0", "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
 
     /**
@@ -1923,6 +2102,14 @@ namespace iroha {
                       uint256_halfmax)),
                   true);
       CHECK_ERROR_CODE(cmd_result, 7);
+
+      std::vector<std::string> query_args{account->accountId(),
+                                          account2->accountId(),
+                                          asset_id,
+                                          uint256_halfmax,
+                                          "1"};
+      CHECK_ERROR_MESSAGE(cmd_result, query_args);
     }
+
   }  // namespace ametsuchi
 }  // namespace iroha
