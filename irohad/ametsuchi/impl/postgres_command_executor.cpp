@@ -74,12 +74,16 @@ namespace {
     sql << queries.second;
   }
 
+  /// returns string of concatenates query arguments to pass them further, if
+  /// error happened
+  using QueryArgsLambda = std::function<std::string()>;
+
   iroha::expected::Error<iroha::ametsuchi::CommandError> makeCommandError(
       std::string &&command_name,
       const iroha::ametsuchi::CommandError::ErrorCodeType code,
-      const std::string &error_extra = "") noexcept {
+      QueryArgsLambda &&query_args) noexcept {
     return iroha::expected::makeError(iroha::ametsuchi::CommandError{
-        std::move(command_name), code, error_extra});
+        std::move(command_name), code, query_args()});
   }
 
   /// mapping between pairs of SQL error substrings and related fake error
@@ -156,10 +160,14 @@ namespace {
    * Get an error code from the text SQL error
    * @param command_name - name of the failed command
    * @param error - string error, which SQL gave out
+   * @param query_args - lambda to get a string representation of query
+   * arguments
    * @return command_error structure
    */
   iroha::ametsuchi::CommandResult getCommandError(
-      std::string &&command_name, const std::string &error) noexcept {
+      std::string &&command_name,
+      const std::string &error,
+      QueryArgsLambda &&query_args) noexcept {
     std::string key, to_be_presented;
     bool errors_matched;
 
@@ -174,13 +182,13 @@ namespace {
         if (auto real_error_code =
                 getRealErrorCode(fakeErrorCode, command_name)) {
           return makeCommandError(
-              std::move(command_name), *real_error_code, error);
+              std::move(command_name), *real_error_code, std::move(query_args));
         }
         break;
       }
     }
     // parsing is not successful, return the general error
-    return makeCommandError(std::move(command_name), 1, error);
+    return makeCommandError(std::move(command_name), 1, std::move(query_args));
   }
 
   /**
@@ -190,21 +198,26 @@ namespace {
    * @param sql - connection on which to execute statement
    * @param cmd - sql query to be executed
    * @param command_name - which command executes a query
+   * @param query_args - lambda to get a string representation of query
+   * arguments
    * @return CommandResult with command name and error message
    */
   iroha::ametsuchi::CommandResult executeQuery(
       soci::session &sql,
       const std::string &cmd,
-      std::string command_name) noexcept {
+      std::string command_name,
+      QueryArgsLambda &&query_args) noexcept {
     uint32_t result;
     try {
       sql << cmd, soci::into(result);
       if (result != 0) {
-        return makeCommandError(std::move(command_name), result);
+        return makeCommandError(
+            std::move(command_name), result, std::move(query_args));
       }
       return {};
     } catch (const std::exception &e) {
-      return getCommandError(std::move(command_name), e.what());
+      return getCommandError(
+          std::move(command_name), e.what(), std::move(query_args));
     }
   }
 
@@ -734,8 +747,13 @@ namespace iroha {
           .str();
     }
 
-    PostgresCommandExecutor::PostgresCommandExecutor(soci::session &sql)
-        : sql_(sql), do_validation_(true) {}
+    PostgresCommandExecutor::PostgresCommandExecutor(
+        soci::session &sql,
+        std::shared_ptr<shared_model::interface::PermissionToString>
+            perm_converter)
+        : sql_(sql),
+          do_validation_(true),
+          perm_converter_{std::move(perm_converter)} {}
 
     void PostgresCommandExecutor::setCreatorAccountId(
         const shared_model::interface::types::AccountIdType
@@ -761,7 +779,15 @@ namespace iroha {
 
       cmd = (cmd % account_id % asset_id % precision % amount);
 
-      return executeQuery(sql_, cmd.str(), "AddAssetQuantity");
+      auto str_args = [&account_id, &asset_id, &amount, precision]() {
+        return (boost::format(
+                    "account_id: %s, asset_id: %s, amount: %s, precision: %d")
+                % account_id % asset_id % amount % precision)
+            .str();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "AddAssetQuantity", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -774,7 +800,11 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % peer.pubkey().hex() % peer.address());
 
-      return executeQuery(sql_, cmd.str(), "AddPeer");
+      auto str_args = [&peer]() {
+        return (boost::format("peer: %s") % peer.toString()).str();
+      };
+
+      return executeQuery(sql_, cmd.str(), "AddPeer", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -787,7 +817,13 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
 
-      return executeQuery(sql_, cmd.str(), "AddSignatory");
+      auto str_args = [&account_id, &pubkey]() {
+        return (boost::format("account_id: %s, pubkey: %s") % account_id
+                % pubkey)
+            .str();
+      };
+
+      return executeQuery(sql_, cmd.str(), "AddSignatory", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -800,7 +836,13 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % role_name);
 
-      return executeQuery(sql_, cmd.str(), "AppendRole");
+      auto str_args = [&account_id, &role_name]() {
+        return (boost::format("account_id: %s, role_name: %s") % account_id
+                % role_name)
+            .str();
+      };
+
+      return executeQuery(sql_, cmd.str(), "AppendRole", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -817,7 +859,14 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % domain_id % pubkey);
 
-      return executeQuery(sql_, cmd.str(), "CreateAccount");
+      auto str_args = [&account_id, &domain_id, &pubkey]() {
+        return (boost::format("account_id: %s, domain_id: %s, pubkey: %s")
+                % account_id % domain_id % pubkey)
+            .str();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "CreateAccount", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -831,7 +880,13 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % asset_id % domain_id % precision);
 
-      return executeQuery(sql_, cmd.str(), "CreateAsset");
+      auto str_args = [&domain_id, &asset_id, precision]() {
+        return (boost::format("domain_id: %s, asset_id: %s, precision: %d")
+                % domain_id % asset_id % precision)
+            .str();
+      };
+
+      return executeQuery(sql_, cmd.str(), "CreateAsset", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -844,7 +899,13 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % domain_id % default_role);
 
-      return executeQuery(sql_, cmd.str(), "CreateDomain");
+      auto str_args = [&domain_id, &default_role]() {
+        return (boost::format("domain_id: %s, default_role: %s") % domain_id
+                % default_role)
+            .str();
+      };
+
+      return executeQuery(sql_, cmd.str(), "CreateDomain", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -858,7 +919,12 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % role_id % perm_str);
 
-      return executeQuery(sql_, cmd.str(), "CreateRole");
+      auto str_args = [&role_id, &perm_str]() {
+        return (boost::format("role_id: %s, perm_str: %s") % role_id % perm_str)
+            .str();
+      };
+
+      return executeQuery(sql_, cmd.str(), "CreateRole", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -871,7 +937,13 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % role_name);
 
-      return executeQuery(sql_, cmd.str(), "DetachRole");
+      auto str_args = [&account_id, &role_name]() {
+        return (boost::format("account_id: %s, role_name: %s") % account_id
+                % role_name)
+            .str();
+      };
+
+      return executeQuery(sql_, cmd.str(), "DetachRole", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -892,7 +964,17 @@ namespace iroha {
       cmd =
           (cmd % creator_account_id_ % permittee_account_id % perm_str % perm);
 
-      return executeQuery(sql_, cmd.str(), "GrantPermission");
+      auto str_args = [&creator_account_id_ = creator_account_id_,
+                       &permittee_account_id,
+                       permission = perm_converter_->toString(permission)]() {
+        return (boost::format("creator_account_id_: %s, permittee_account_id: "
+                              "%s, permission: %s")
+                % creator_account_id_ % permittee_account_id % permission)
+            .str();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "GrantPermission", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -905,7 +987,14 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
 
-      return executeQuery(sql_, cmd.str(), "RemoveSignatory");
+      auto str_args = [&account_id, &pubkey]() {
+        return (boost::format("account_id: %s, pubkey: %s") % account_id
+                % pubkey)
+            .str();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "RemoveSignatory", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -928,7 +1017,17 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % permittee_account_id % perms
              % without_perm_str);
 
-      return executeQuery(sql_, cmd.str(), "RevokePermission");
+      auto str_args = [&creator_account_id_ = creator_account_id_,
+                       &permittee_account_id,
+                       permission = perm_converter_->toString(permission)]() {
+        return (boost::format("creator_account_id_: %s, permittee_account_id: "
+                              "%s, permission: %s")
+                % creator_account_id_ % permittee_account_id % permission)
+            .str();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "RevokePermission", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -953,7 +1052,14 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % json % filled_json % val
              % empty_json);
 
-      return executeQuery(sql_, cmd.str(), "SetAccountDetail");
+      auto str_args = [&account_id, &key, &value]() {
+        return (boost::format("account_id: %s, key: %s, value: %s") % account_id
+                % key % value)
+            .str();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "SetAccountDetail", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -966,7 +1072,13 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % quorum);
 
-      return executeQuery(sql_, cmd.str(), "SetQuorum");
+      auto str_args = [&account_id, quorum]() {
+        return (boost::format("account_id: %s, quorum: %d") % account_id
+                % quorum)
+            .str();
+      };
+
+      return executeQuery(sql_, cmd.str(), "SetQuorum", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -980,7 +1092,18 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % asset_id % precision % amount);
 
-      return executeQuery(sql_, cmd.str(), "SubtractAssetQuantity");
+      auto str_args = [&creator_account_id_ = creator_account_id_,
+                       &asset_id,
+                       &amount,
+                       precision]() {
+        return (boost::format("creator_account_id_: %s, asset_id: %s, amount: "
+                              "%s, precision: %d")
+                % creator_account_id_ % asset_id % amount % precision)
+            .str();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "SubtractAssetQuantity", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -998,7 +1121,17 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % src_account_id % dest_account_id
              % asset_id % precision % amount);
 
-      return executeQuery(sql_, cmd.str(), "TransferAsset");
+      auto str_args =
+          [&src_account_id, &dest_account_id, &asset_id, &amount, precision]() {
+            return (boost::format("src_account_id: %s, dest_account_id: %s, "
+                                  "asset_id: %s, amount: %s, precision: %d")
+                    % src_account_id % dest_account_id % asset_id % amount
+                    % precision)
+                .str();
+          };
+
+      return executeQuery(
+          sql_, cmd.str(), "TransferAsset", std::move(str_args));
     }
 
     void PostgresCommandExecutor::prepareStatements(soci::session &sql) {

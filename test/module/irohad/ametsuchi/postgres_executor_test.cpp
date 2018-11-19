@@ -6,6 +6,7 @@
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_query_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
@@ -50,7 +51,8 @@ namespace iroha {
                 shared_model::validation::FieldValidator>>();
         query = std::make_unique<PostgresWsvQuery>(*sql, factory);
         PostgresCommandExecutor::prepareStatements(*sql);
-        executor = std::make_unique<PostgresCommandExecutor>(*sql);
+        executor =
+            std::make_unique<PostgresCommandExecutor>(*sql, perm_converter);
 
         *sql << init_;
       }
@@ -121,6 +123,10 @@ namespace iroha {
 
       std::unique_ptr<WsvQuery> query;
       std::unique_ptr<CommandExecutor> executor;
+
+      std::shared_ptr<shared_model::interface::PermissionToString>
+          perm_converter =
+              std::make_shared<shared_model::proto::ProtoPermissionToString>();
 
       std::string uint256_halfmax =
           "57896044618658097711785492504343953926634992332820282019728792003956"
