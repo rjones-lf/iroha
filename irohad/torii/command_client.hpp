@@ -72,7 +72,6 @@ namespace torii {
         std::vector<iroha::protocol::ToriiResponse> &response) const;
 
    private:
-    void swap(CommandSyncClient &lhs, CommandSyncClient &rhs);
     std::string ip_;
     size_t port_;
     std::unique_ptr<iroha::protocol::CommandService::Stub> stub_;

@@ -68,11 +68,4 @@ namespace torii {
     reader->Finish();
   }
 
-  void CommandSyncClient::swap(CommandSyncClient &lhs, CommandSyncClient &rhs) {
-    using std::swap;
-    swap(lhs.ip_, rhs.ip_);
-    swap(lhs.port_, rhs.port_);
-    swap(lhs.stub_, rhs.stub_);
-  }
-
 }  // namespace torii
