@@ -155,19 +155,33 @@ namespace integration_framework {
       void sendProposal(
           std::unique_ptr<shared_model::interface::Proposal> proposal);
 
-      void sendBatch(
-          const std::shared_ptr<shared_model::interface::TransactionBatch>
-              &batch);
+      void sendBatch(const OsBatchPtr &batch);
 
       bool sendBlockRequest(const LoaderBlockRequest &request);
 
       size_t sendBlocksRequest(const LoaderBlocksRequest &request);
+
+      /// Send the real peer the provided batches for the provided round.
+      void sendBatchesForRound(iroha::consensus::Round round,
+                               std::vector<OsBatchPtr> batches);
+
+      /**
+       * Request the real peer's on demand ordering service a proposal for the
+       * given round.
+       *
+       * @param round - the round of requested proposal.
+       * @param timeout - time to wait for the reply.
+       * @return The proposal if it was received, or nullptr otherwise.
+       */
+      std::unique_ptr<shared_model::interface::Proposal> sendProposalRequest(
+          iroha::consensus::Round round, std::chrono::milliseconds timeout);
 
      private:
       using MstTransport = iroha::network::MstTransportGrpc;
       using YacTransport = iroha::consensus::yac::NetworkImpl;
       using OsTransport = iroha::ordering::OrderingServiceTransportGrpc;
       using OgTransport = iroha::ordering::OrderingGateTransportGrpc;
+      using OdOsTransport = iroha::ordering::transport::OnDemandOsServerGrpc;
       using AsyncCall =
           iroha::network::AsyncGrpcClient<google::protobuf::Empty>;
 
@@ -178,6 +192,11 @@ namespace integration_framework {
 
       std::shared_ptr<shared_model::interface::CommonObjectsFactory>
           common_objects_factory_;
+      std::shared_ptr<TransportFactoryType> transaction_factory_;
+      std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+          transaction_batch_factory_;
+      std::shared_ptr<shared_model::interface::TransactionBatchParser>
+          batch_parser_;
 
       const std::string listen_ip_;
       size_t internal_port_;
@@ -194,12 +213,14 @@ namespace integration_framework {
       std::shared_ptr<YacTransport> yac_transport_;
       std::shared_ptr<OsTransport> os_transport_;
       std::shared_ptr<OgTransport> og_transport_;
+      std::shared_ptr<OdOsTransport> od_os_transport_;
       std::shared_ptr<LoaderGrpc> synchronizer_transport_;
 
       std::shared_ptr<MstNetworkNotifier> mst_network_notifier_;
       std::shared_ptr<YacNetworkNotifier> yac_network_notifier_;
       std::shared_ptr<OsNetworkNotifier> os_network_notifier_;
       std::shared_ptr<OgNetworkNotifier> og_network_notifier_;
+      std::shared_ptr<OnDemandOsNetworkNotifier> od_os_network_notifier_;
 
       std::unique_ptr<ServerRunner> internal_server_;
 
