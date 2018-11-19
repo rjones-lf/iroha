@@ -77,12 +77,16 @@ namespace integration_framework {
 
     void HonestBehaviour::processOrderingBatches(
         const BatchesForRound &batches_for_round) {
-      const auto proposal_storage = getFakePeer().getProposalStorage();
+      auto &fake_peer = getFakePeer();
+      auto proposal_storage = fake_peer.getProposalStorage();
       if (!proposal_storage) {
         getLogger()->debug(
             "Got an OnDemandOrderingService.SendBatches call, but have no "
-            "proposal storage to store the incoming batches!");
-        return;
+            "proposal storage to store the incoming batches! Creating one.");
+        fake_peer.setProposalStorage(std::make_shared<ProposalStorage>());
+        proposal_storage = fake_peer.getProposalStorage();
+        BOOST_ASSERT_MSG(proposal_storage,
+                         "Failed to create a proposal storage!");
       }
       const auto &round = batches_for_round.round;
       const auto &batches = batches_for_round.batches;
