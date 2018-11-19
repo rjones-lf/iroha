@@ -347,15 +347,12 @@ namespace grantables {
         .skipVerifiedProposal()
         .skipBlock()
         .getTxStatus(last_check_tx.hash(),
-                     [](auto &status) {
-                       auto message = status.errorMessage();
-
-                       ASSERT_NE(message.find("did not pass verification"),
-                                 std::string::npos)
-                           << "Fail reason: " << message
-                           << "\nRaw status:" << status.toString();
-                       // we saw empty message was received once
-                       // that is why we have added the raw print of status
+                     [&last_check_tx](auto &status) {
+                       auto err_cmd_name = status.statelessErrorOrCommandName();
+                       auto cmd_in_tx = last_check_tx.commands()[0].toString();
+                       auto cmd_in_tx_name =
+                           cmd_in_tx.substr(0, cmd_in_tx.find(":"));
+                       ASSERT_EQ(err_cmd_name, cmd_in_tx_name);
                      })
         .done();
   }

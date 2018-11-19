@@ -354,10 +354,10 @@ void Irohad::initPendingTxsStorage() {
  * Initializing transaction command service
  */
 void Irohad::initTransactionCommandService() {
-  auto tx_processor = std::make_shared<TransactionProcessorImpl>(
-      pcs, mst_processor, status_bus_);
   auto status_factory =
       std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
+  auto tx_processor = std::make_shared<TransactionProcessorImpl>(
+      pcs, mst_processor, status_bus_, status_factory);
   command_service = std::make_shared<::torii::CommandServiceImpl>(
       tx_processor, storage, status_bus_, status_factory);
   command_service_transport =
@@ -397,12 +397,12 @@ Irohad::RunResult Irohad::run() {
   using iroha::expected::operator|;
 
   // Initializing torii server
-  torii_server = std::make_unique<ServerRunner>(listen_ip_ + ":"
-                                                + std::to_string(torii_port_));
+  torii_server = std::make_unique<ServerRunner>(
+      listen_ip_ + ":" + std::to_string(torii_port_), false);
 
   // Initializing internal server
   internal_server = std::make_unique<ServerRunner>(
-      listen_ip_ + ":" + std::to_string(internal_port_));
+      listen_ip_ + ":" + std::to_string(internal_port_), false);
 
   // Run torii server
   return (torii_server->append(command_service_transport)

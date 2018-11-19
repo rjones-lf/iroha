@@ -20,7 +20,8 @@ namespace shared_model {
   }
   namespace interface {
     class Block;
-  }
+    class Amount;
+  }  // namespace interface
 }  // namespace shared_model
 
 namespace shared_model {
@@ -40,8 +41,9 @@ namespace shared_model {
        * @return account asset response
        */
       virtual std::unique_ptr<QueryResponse> createAccountAssetResponse(
-          std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
-              assets,
+          std::vector<std::tuple<types::AccountIdType,
+                                 types::AssetIdType,
+                                 shared_model::interface::Amount>> assets,
           const crypto::Hash &query_hash) const = 0;
 
       /**
@@ -51,19 +53,24 @@ namespace shared_model {
        * @return account detail response
        */
       virtual std::unique_ptr<QueryResponse> createAccountDetailResponse(
-          types::DetailType account_detail, const crypto::Hash &query_hash) const = 0;
+          types::DetailType account_detail,
+          const crypto::Hash &query_hash) const = 0;
 
-      // TODO [IR-1750] Akvinikym 10.10.18: Make QueryResponseFactory accept
-      // parameters for objects creation
       /**
        * Create response for account query
-       * @param account to be inserted into the response
+       * @param account_id of account to be inserted into the response
+       * @param domain_id of account to be inserted into the response
+       * @param quorum of account to be inserted into the response
+       * @param jsonData of account to be inserted into the response
        * @param roles to be inserted into the response
        * @param query_hash - hash of the query, for which response is created
        * @return account response
        */
       virtual std::unique_ptr<QueryResponse> createAccountResponse(
-          std::unique_ptr<Account> account,
+          interface::types::AccountIdType account_id,
+          interface::types::DomainIdType domain_id,
+          interface::types::QuorumType quorum,
+          interface::types::JsonType jsonData,
           std::vector<std::string> roles,
           const crypto::Hash &query_hash) const = 0;
 
@@ -116,12 +123,17 @@ namespace shared_model {
 
       /**
        * Create response for asset query
-       * @param asset to be inserted into the response
+       * @param asset_id of asset to be inserted into the response
+       * @param domain_id of asset to be inserted into the response
+       * @param precision of asset to be inserted into the response
        * @param query_hash - hash of the query, for which response is created
        * @return asset response
        */
       virtual std::unique_ptr<QueryResponse> createAssetResponse(
-          std::unique_ptr<Asset> asset, const crypto::Hash &query_hash) const = 0;
+          types::AssetIdType asset_id,
+          types::DomainIdType domain_id,
+          types::PrecisionType precision,
+          const crypto::Hash &query_hash) const = 0;
 
       /**
        * Create response for roles query

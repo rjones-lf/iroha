@@ -147,19 +147,30 @@ class Validator : public testing::Test {
  * @then all of them will appear in verified proposal @and errors will be empty
  */
 TEST_F(Validator, AllTxsValid) {
-  auto tx = TestTransactionBuilder()
-                .creatorAccountId("doge@master")
-                .createdTime(iroha::time::now())
-                .quorum(1)
-                .createAsset("doge", "coin", 1)
-                .build();
-  auto proposal =
-      TestProposalBuilder()
-          .createdTime(iroha::time::now())
-          .height(3)
-          .transactions(
-              std::vector<shared_model::proto::Transaction>{tx, tx, tx})
-          .build();
+  std::vector<shared_model::proto::Transaction> txs;
+  txs.push_back(TestTransactionBuilder()
+                    .creatorAccountId("doge@master")
+                    .createdTime(iroha::time::now())
+                    .quorum(1)
+                    .createAsset("doge", "coin", 1)
+                    .build());
+  txs.push_back(TestTransactionBuilder()
+                    .creatorAccountId("doge@master")
+                    .createdTime(iroha::time::now())
+                    .quorum(1)
+                    .createAsset("doge", "coin", 1)
+                    .build());
+  txs.push_back(TestTransactionBuilder()
+                    .creatorAccountId("doge@master")
+                    .createdTime(iroha::time::now())
+                    .quorum(1)
+                    .createAsset("doge", "coin", 1)
+                    .build());
+  auto proposal = TestProposalBuilder()
+                      .createdTime(iroha::time::now())
+                      .height(3)
+                      .transactions(txs)
+                      .build();
 
   EXPECT_CALL(*temp_wsv_mock, apply(_))
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
@@ -178,29 +189,41 @@ TEST_F(Validator, AllTxsValid) {
  * will appear in errors
  */
 TEST_F(Validator, SomeTxsFail) {
-  auto valid_tx = TestTransactionBuilder()
-                      .creatorAccountId("doge@master")
-                      .createdTime(iroha::time::now())
-                      .quorum(1)
-                      .createAsset("doge", "coin", 1)
-                      .build();
-  auto invalid_tx = TestTransactionBuilder()
-                        .creatorAccountId("doge@master")
-                        .createdTime(iroha::time::now())
-                        .quorum(1)
-                        .createAsset("cate", "coin", 1)
-                        .build();
-  auto proposal =
-      TestProposalBuilder()
-          .createdTime(iroha::time::now())
-          .height(3)
-          .transactions(std::vector<shared_model::proto::Transaction>{
-              valid_tx, invalid_tx, valid_tx})
-          .build();
+  std::vector<shared_model::proto::Transaction> txs;
 
-  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(invalid_tx))))
-      .WillOnce(Return(iroha::expected::Error<CommandError>({})));
-  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(valid_tx))))
+  // valid tx
+  txs.push_back(TestTransactionBuilder()
+                    .creatorAccountId("doge@master")
+                    .createdTime(iroha::time::now())
+                    .quorum(1)
+                    .createAsset("doge", "coin", 1)
+                    .build());
+  // invalid tx
+  txs.push_back(TestTransactionBuilder()
+                    .creatorAccountId("doge@master")
+                    .createdTime(iroha::time::now())
+                    .quorum(1)
+                    .createAsset("cate", "coin", 1)
+                    .build());
+
+  // valid tx
+  txs.push_back(TestTransactionBuilder()
+                    .creatorAccountId("doge@master")
+                    .createdTime(iroha::time::now())
+                    .quorum(1)
+                    .createAsset("doge", "coin", 1)
+                    .build());
+  auto proposal = TestProposalBuilder()
+                      .createdTime(iroha::time::now())
+                      .height(3)
+                      .transactions(txs)
+                      .build();
+
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(0)))))
+      .WillRepeatedly(Return(iroha::expected::Value<void>({})));
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(1)))))
+      .WillOnce(Return(iroha::expected::makeError(CommandError{"", 2, false})));
+  EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(2)))))
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
 
   auto verified_proposal_and_errors = sfv->validate(proposal, *temp_wsv_mock);
@@ -208,6 +231,9 @@ TEST_F(Validator, SomeTxsFail) {
       verified_proposal_and_errors->verified_proposal->transactions().size(),
       2);
   ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 1);
+  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
+                ->second.error_code,
+            2);
 }
 
 /**
@@ -235,13 +261,14 @@ TEST_F(Validator, Batches) {
       createBatch(std::vector<std::string>{"creator@d5", "creator@d6"},
                   shared_model::interface::types::BatchType::ORDERED);
 
-  std::vector<shared_model::proto::Transaction> txs{single_tx,
-                                                    ordered_batch[0],
-                                                    ordered_batch[1],
-                                                    failed_atomic_batch[0],
-                                                    failed_atomic_batch[1],
-                                                    success_atomic_batch[0],
-                                                    success_atomic_batch[1]};
+  std::vector<shared_model::proto::Transaction> txs;
+  txs.push_back(std::move(single_tx));
+  txs.push_back(ordered_batch[0]);
+  txs.push_back(ordered_batch[1]);
+  txs.push_back(failed_atomic_batch[0]);
+  txs.push_back(failed_atomic_batch[1]);
+  txs.push_back(success_atomic_batch[0]);
+  txs.push_back(success_atomic_batch[1]);
 
   auto proposal = TestProposalBuilder()
                       .createdTime(iroha::time::now())
@@ -271,7 +298,8 @@ TEST_F(Validator, Batches) {
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[2]))))
       .WillOnce(Return(iroha::expected::Value<void>({})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[3]))))
-      .WillOnce(Return(iroha::expected::Error<CommandError>({})));
+      .WillOnce(
+          Return(iroha::expected::makeError(CommandError({"", 2, false}))));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[5]))))
       .WillOnce(Return(iroha::expected::Value<void>({})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[6]))))
@@ -282,4 +310,7 @@ TEST_F(Validator, Batches) {
       verified_proposal_and_errors->verified_proposal->transactions().size(),
       5);
   ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 1);
+  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
+                ->second.error_code,
+            2);
 }

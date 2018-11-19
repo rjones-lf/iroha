@@ -89,13 +89,14 @@ namespace iroha {
                                                     std::string creator2,
                                                     std::string asset,
                                                     std::string tx_creator) {
+      std::vector<shared_model::proto::Transaction> txs;
+      txs.push_back(
+          TestTransactionBuilder()
+              .creatorAccountId(tx_creator)
+              .transferAsset(creator1, creator2, asset, "Transfer asset", "0.0")
+              .build());
       return TestBlockBuilder()
-          .transactions(std::vector<shared_model::proto::Transaction>(
-              {TestTransactionBuilder()
-                   .creatorAccountId(tx_creator)
-                   .transferAsset(
-                       creator1, creator2, asset, "Transfer asset", "0.0")
-                   .build()}))
+          .transactions(txs)
           .height(1)
           .prevHash(fake_hash)
           .build();
@@ -115,12 +116,13 @@ namespace iroha {
         std::string asset,
         int height = 1,
         shared_model::crypto::Hash hash = fake_hash) {
+      std::vector<shared_model::proto::Transaction> txs;
+      txs.push_back(
+          TestTransactionBuilder()
+              .transferAsset(creator1, creator2, asset, "Transfer asset", "0.0")
+              .build());
       return TestBlockBuilder()
-          .transactions(std::vector<shared_model::proto::Transaction>(
-              {TestTransactionBuilder()
-                   .transferAsset(
-                       creator1, creator2, asset, "Transfer asset", "0.0")
-                   .build()}))
+          .transactions(txs)
           .height(height)
           .prevHash(hash)
           .build();

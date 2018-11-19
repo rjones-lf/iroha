@@ -167,7 +167,8 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   auto proposal_wrapper =
       make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
   proposal_wrapper.subscribe([&proposal](auto verified_proposal) {
-    ASSERT_EQ(verified_proposal->verified_proposal->height(), proposal->height());
+    ASSERT_EQ(verified_proposal->verified_proposal->height(),
+              proposal->height());
     ASSERT_EQ(verified_proposal->verified_proposal->transactions(),
               proposal->transactions());
     ASSERT_TRUE(verified_proposal->rejected_transactions.empty());
@@ -304,8 +305,7 @@ TEST_F(SimulatorTest, SomeFailingTxs) {
   for (auto rejected_tx = txs.begin() + 1; rejected_tx != txs.end();
        ++rejected_tx) {
     verified_proposal_and_errors->rejected_transactions.emplace(
-        rejected_tx->hash(),
-        validation::CommandError{"SomeCommand", "SomeError", true});
+        rejected_tx->hash(), validation::CommandError{"SomeCommand", 1, true});
   }
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
 

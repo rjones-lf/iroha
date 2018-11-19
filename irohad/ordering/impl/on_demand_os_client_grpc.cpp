@@ -7,7 +7,7 @@
 
 #include "backend/protobuf/proposal.hpp"
 #include "backend/protobuf/transaction.hpp"
-#include "backend/protobuf/common_objects/peer.hpp"
+#include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 

@@ -66,9 +66,18 @@ namespace shared_model {
       return ivariant_;
     }
 
-    const TransactionResponse::ErrorMessageType &
-    TransactionResponse::errorMessage() const {
-      return proto_->error_message();
+    const TransactionResponse::StatelessErrorOrFailedCommandNameType &
+    TransactionResponse::statelessErrorOrCommandName() const {
+      return proto_->err_or_cmd_name();
+    }
+
+    TransactionResponse::FailedCommandIndexType
+    TransactionResponse::failedCommandIndex() const {
+      return proto_->failed_cmd_index();
+    }
+
+    TransactionResponse::ErrorCodeType TransactionResponse::errorCode() const {
+      return proto_->error_code();
     }
 
     int TransactionResponse::priority() const noexcept {

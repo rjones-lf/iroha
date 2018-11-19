@@ -74,8 +74,7 @@ namespace iroha {
       auto sql = std::make_unique<soci::session>(*connection_);
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
-          std::make_unique<TemporaryWsvImpl>(
-              std::move(sql), factory_, perm_converter_));
+          std::make_unique<TemporaryWsvImpl>(std::move(sql), factory_));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
@@ -100,8 +99,7 @@ namespace iroha {
                     return shared_model::interface::types::HashType("");
                   }),
               std::move(sql),
-              factory_,
-              perm_converter_));
+              factory_));
     }
 
     boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery()
@@ -150,7 +148,6 @@ namespace iroha {
       return boost::make_optional<std::shared_ptr<QueryExecutor>>(
           std::make_shared<PostgresQueryExecutor>(
               std::make_unique<soci::session>(*connection_),
-              factory_,
               *block_store_,
               std::move(pending_txs_storage),
               converter_,

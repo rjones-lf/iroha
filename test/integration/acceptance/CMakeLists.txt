@@ -182,3 +182,10 @@ addtest(basic_mst_state_propagation_test
 target_link_libraries(basic_mst_state_propagation_test
     acceptance_fixture
     )
+
+addtest(set_account_quorum_test
+    set_account_quorum_test.cpp
+    )
+target_link_libraries(set_account_quorum_test
+    acceptance_fixture
+    )
