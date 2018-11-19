@@ -149,6 +149,7 @@ namespace integration_framework {
                                      transaction_factory_,
                                      batch_parser_,
                                      transaction_batch_factory_);
+      fake_peer->initialize();
       fake_peers_.emplace_back(fake_peer);
       promise_and_key.first.set_value(fake_peer);
     }

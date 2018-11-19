@@ -61,6 +61,11 @@ namespace integration_framework {
           std::shared_ptr<shared_model::interface::TransactionBatchFactory>
               transaction_batch_factory);
 
+      /// Initialization method.
+      /// \attention Must be called prior to any other instance method (except
+      /// for constructor).
+      FakePeer &initialize();
+
       /// Assign the given behaviour to this fake peer.
       FakePeer &setBehaviour(const std::shared_ptr<Behaviour> &behaviour);
 
@@ -148,6 +153,11 @@ namespace integration_framework {
       using OgTransport = iroha::ordering::OrderingGateTransportGrpc;
       using AsyncCall =
           iroha::network::AsyncGrpcClient<google::protobuf::Empty>;
+
+      /// Ensure the initialize() method was called.
+      void ensureInitialized();
+
+      bool initialized_{false};
 
       std::shared_ptr<shared_model::interface::CommonObjectsFactory>
           common_objects_factory_;

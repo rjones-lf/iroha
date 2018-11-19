@@ -106,8 +106,19 @@ namespace integration_framework {
           + getAddress() + ")");
     }
 
+    FakePeer &FakePeer::initialize() {
+      BOOST_VERIFY_MSG(!initialized_, "Already initialized!");
+      // here comes the initialization of members requiring shared_from_this()
+      synchronizer_transport_ =
+          std::make_shared<LoaderGrpc>(shared_from_this());
+
+      initialized_ = true;
+      return *this;
+    }
+
     FakePeer &FakePeer::setBehaviour(
         const std::shared_ptr<Behaviour> &behaviour) {
+      ensureInitialized();
       behaviour_ = behaviour;
       behaviour_->adopt(shared_from_this());
       return *this;
@@ -119,6 +130,7 @@ namespace integration_framework {
 
     FakePeer &FakePeer::setBlockStorage(
         const std::shared_ptr<BlockStorage> &block_storage) {
+      ensureInitialized();
       if (block_storage_) {
         block_storage_->claimNotUsingPeer(shared_from_this());
       }
@@ -128,6 +140,7 @@ namespace integration_framework {
     }
 
     FakePeer &FakePeer::removeBlockStorage() {
+      ensureInitialized();
       if (block_storage_) {
         block_storage_->claimNotUsingPeer(shared_from_this());
       }
@@ -143,9 +156,8 @@ namespace integration_framework {
     }
 
     void FakePeer::run() {
+      ensureInitialized();
       // start instance
-      synchronizer_transport_ =
-          std::make_shared<LoaderGrpc>(shared_from_this());
       log_->info("starting listening server");
       internal_server_ = std::make_unique<ServerRunner>(getAddress());
       internal_server_->append(yac_transport_)
@@ -280,6 +292,10 @@ namespace integration_framework {
     size_t FakePeer::sendBlocksRequest(const LoaderBlocksRequest &request) {
       return synchronizer_transport_->sendBlocksRequest(real_peer_->address(),
                                                         request);
+    }
+
+    void FakePeer::ensureInitialized() {
+      BOOST_VERIFY_MSG(initialized_, "Instance not initialized!");
     }
 
   }  // namespace fake_peer
