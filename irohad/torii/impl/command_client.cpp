@@ -32,31 +32,14 @@ namespace torii {
             ip + ":" + std::to_string(port))),
         log_(logger::log("CommandSyncClient")) {}
 
-  CommandSyncClient::CommandSyncClient(const CommandSyncClient &rhs)
-      : CommandSyncClient(rhs.ip_, rhs.port_) {}
-
-  CommandSyncClient &CommandSyncClient::operator=(CommandSyncClient rhs) {
-    swap(*this, rhs);
-    return *this;
-  }
-
-  CommandSyncClient::CommandSyncClient(CommandSyncClient &&rhs) noexcept {
-    swap(*this, rhs);
-  }
-
-  CommandSyncClient &CommandSyncClient::operator=(
-      CommandSyncClient &&rhs) noexcept {
-    swap(*this, rhs);
-    return *this;
-  }
-
   grpc::Status CommandSyncClient::Torii(const Transaction &tx) const {
     google::protobuf::Empty a;
     grpc::ClientContext context;
     return stub_->Torii(&context, tx, &a);
   }
 
-  grpc::Status CommandSyncClient::ListTorii(const iroha::protocol::TxList &tx_list) const {
+  grpc::Status CommandSyncClient::ListTorii(
+      const iroha::protocol::TxList &tx_list) const {
     google::protobuf::Empty a;
     grpc::ClientContext context;
     return stub_->ListTorii(&context, tx_list, &a);

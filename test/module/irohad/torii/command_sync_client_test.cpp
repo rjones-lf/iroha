@@ -45,7 +45,7 @@ TEST_F(SyncClient, Status) {
   tx_request.set_tx_hash(std::string(kHashLength, '1'));
   iroha::protocol::ToriiResponse toriiResponse;
 
-  auto client = torii::CommandSyncClient(ip, port);
+  torii::CommandSyncClient client(ip, port);
   EXPECT_CALL(*server, Status(_, _, _)).WillOnce(Return(grpc::Status::OK));
   auto stat = client.Status(tx_request, toriiResponse);
   ASSERT_TRUE(stat.ok());
@@ -59,7 +59,7 @@ TEST_F(SyncClient, Status) {
 TEST_F(SyncClient, Torii) {
   iroha::protocol::Transaction tx;
   EXPECT_CALL(*server, Torii(_, _, _)).WillOnce(Return(grpc::Status()));
-  auto client = torii::CommandSyncClient(ip, port);
+  torii::CommandSyncClient client(ip, port);
   auto stat = client.Torii(tx);
   ASSERT_TRUE(stat.ok());
 }
@@ -72,7 +72,7 @@ TEST_F(SyncClient, Torii) {
 TEST_F(SyncClient, ListTorii) {
   iroha::protocol::TxList tx;
   EXPECT_CALL(*server, ListTorii(_, _, _)).WillOnce(Return(grpc::Status()));
-  auto client = torii::CommandSyncClient(ip, port);
+  torii::CommandSyncClient client(ip, port);
   auto stat = client.ListTorii(tx);
   ASSERT_TRUE(stat.ok());
 }
@@ -95,7 +95,7 @@ TEST_F(SyncClient, StatusStream) {
         response_writer->Write(resp);
         return grpc::Status();
       }));
-  auto client = torii::CommandSyncClient(ip, port);
+  torii::CommandSyncClient client(ip, port);
   client.StatusStream(tx, responses);
   ASSERT_EQ(responses.size(), 1);
   ASSERT_EQ(responses[0].tx_hash(), resp.tx_hash());

@@ -33,11 +33,11 @@ namespace torii {
    public:
     CommandSyncClient(const std::string &ip, size_t port);
 
-    CommandSyncClient(const CommandSyncClient &);
-    CommandSyncClient &operator=(CommandSyncClient);
+    CommandSyncClient(const CommandSyncClient &) = delete;
+    CommandSyncClient &operator=(CommandSyncClient) = delete;
 
-    CommandSyncClient(CommandSyncClient &&) noexcept;
-    CommandSyncClient &operator=(CommandSyncClient &&) noexcept;
+    CommandSyncClient(CommandSyncClient &&) = delete;
+    CommandSyncClient &operator=(CommandSyncClient &&) = delete;
 
     /**
      * requests tx to a torii server and returns response (blocking, sync)
