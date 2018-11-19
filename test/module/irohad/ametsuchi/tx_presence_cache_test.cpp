@@ -1,0 +1,166 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <gtest/gtest.h>
+
+#include "ametsuchi/impl/tx_presence_cache_impl.hpp"
+#include "cryptography/public_key.hpp"
+#include "interfaces/common_objects/transaction_sequence_common.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/shared_model/interface/mock_transaction_batch_factory.hpp"
+#include "module/shared_model/interface_mocks.hpp"
+
+using namespace iroha::ametsuchi;
+using namespace testing;
+
+class TxPresenceCacheTest : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    mock_storage = std::make_shared<MockStorage>();
+    mock_block_query = std::make_shared<MockBlockQuery>();
+    EXPECT_CALL(*mock_storage, getBlockQuery())
+        .WillRepeatedly(Return(mock_block_query));
+  }
+
+ public:
+  std::shared_ptr<MockStorage> mock_storage;
+  std::shared_ptr<MockBlockQuery> mock_block_query;
+};
+
+/**
+ * @given hash which is not in storage
+ * @when cache asked for hash status
+ * @then cache returns Missing status
+ */
+TEST_F(TxPresenceCacheTest, MissingHashTest) {
+  shared_model::crypto::Hash hash("1");
+  EXPECT_CALL(*mock_block_query, checkTxPresence(hash))
+      .WillOnce(Return(tx_cache_status_responses::Missing()));
+  TxPresenceCacheImpl cache(mock_storage);
+  auto check_result =
+      boost::get<tx_cache_status_responses::Missing>(cache.check(hash));
+  ASSERT_TRUE((std::is_same<tx_cache_status_responses::Missing,
+                            decltype(check_result)>::value));
+}
+
+/**
+ * @given hash which has a Rejected status in storage
+ * @when cache asked for hash status
+ * @then cache returns Rejected status
+ */
+TEST_F(TxPresenceCacheTest, RejectedHashTest) {
+  shared_model::crypto::Hash hash("1");
+  EXPECT_CALL(*mock_block_query, checkTxPresence(hash))
+      .WillOnce(Return(tx_cache_status_responses::Rejected()));
+  TxPresenceCacheImpl cache(mock_storage);
+  auto check_result =
+      boost::get<tx_cache_status_responses::Rejected>(cache.check(hash));
+  ASSERT_TRUE((std::is_same<tx_cache_status_responses::Rejected,
+                            decltype(check_result)>::value));
+}
+
+/**
+ * @given hash which has a Committed status in storage
+ * @when cache asked for hash status
+ * @then cache returns Committed status
+ */
+TEST_F(TxPresenceCacheTest, CommittedHashTest) {
+  shared_model::crypto::Hash hash("1");
+  EXPECT_CALL(*mock_block_query, checkTxPresence(hash))
+      .WillOnce(Return(tx_cache_status_responses::Committed()));
+  TxPresenceCacheImpl cache(mock_storage);
+  auto check_result =
+      boost::get<tx_cache_status_responses::Committed>(cache.check(hash));
+  ASSERT_TRUE((std::is_same<tx_cache_status_responses::Committed,
+                            decltype(check_result)>::value));
+}
+
+/**
+ * @given hash which has a Missing and then Committed status in storage
+ * @when cache asked for hash status
+ * @then cache returns Missing and then Committed status
+ */
+TEST_F(TxPresenceCacheTest, MissingThenCommittedHashTest) {
+  shared_model::crypto::Hash hash("1");
+  EXPECT_CALL(*mock_block_query, checkTxPresence(hash))
+      .WillOnce(Return(tx_cache_status_responses::Missing()));
+  TxPresenceCacheImpl cache(mock_storage);
+  auto check_missing_result =
+      boost::get<tx_cache_status_responses::Missing>(cache.check(hash));
+  ASSERT_TRUE((std::is_same<tx_cache_status_responses::Missing,
+                            decltype(check_missing_result)>::value));
+  EXPECT_CALL(*mock_block_query, checkTxPresence(hash))
+      .WillOnce(Return(tx_cache_status_responses::Committed()));
+  auto check_committed_result =
+      boost::get<tx_cache_status_responses::Committed>(cache.check(hash));
+  ASSERT_TRUE((std::is_same<tx_cache_status_responses::Committed,
+                            decltype(check_committed_result)>::value));
+}
+
+/**
+ * @given batch with 3 transactions: Rejected, Committed and Missing
+ * @when cache asked for batch status
+ * @then cache returns BatchStatusCollectionType with Rejected, Committed and
+ * Missing statuses accordingly
+ */
+TEST_F(TxPresenceCacheTest, BatchHashTest) {
+  shared_model::crypto::Hash hash1("1");
+  shared_model::crypto::Hash hash2("2");
+  shared_model::crypto::Hash hash3("3");
+  EXPECT_CALL(*mock_block_query, checkTxPresence(hash1))
+      .WillOnce(Return(tx_cache_status_responses::Rejected()));
+  EXPECT_CALL(*mock_block_query, checkTxPresence(hash2))
+      .WillOnce(Return(tx_cache_status_responses::Committed()));
+  EXPECT_CALL(*mock_block_query, checkTxPresence(hash3))
+      .WillOnce(Return(tx_cache_status_responses::Missing()));
+  auto tx1 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx1, hash()).WillOnce(ReturnRefOfCopy(hash1));
+  auto tx2 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx2, hash()).WillOnce(ReturnRefOfCopy(hash2));
+  auto tx3 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx3, hash()).WillOnce(ReturnRefOfCopy(hash3));
+
+  shared_model::interface::types::SharedTxsCollectionType txs{tx1, tx2, tx3};
+  TxPresenceCacheImpl cache(mock_storage);
+
+  auto batch_factory = std::make_shared<MockTransactionBatchFactory>();
+  EXPECT_CALL(*batch_factory, createTransactionBatch(txs))
+      .WillOnce(Invoke(
+          [&txs](
+              const shared_model::interface::types::SharedTxsCollectionType &)
+              -> shared_model::interface::TransactionBatchFactory::
+                  FactoryResult<std::unique_ptr<
+                      shared_model::interface::TransactionBatch>> {
+                    return iroha::expected::makeValue<std::unique_ptr<
+                        shared_model::interface::TransactionBatch>>(
+                        std::make_unique<
+                            shared_model::interface::TransactionBatchImpl>(
+                            txs));
+                  }));
+
+  batch_factory->createTransactionBatch(txs).match(
+      [&](iroha::expected::Value<
+          std::unique_ptr<shared_model::interface::TransactionBatch>> &batch) {
+        auto batch_status = cache.check(*batch.value);
+        ASSERT_EQ(3, batch_status.size());
+        auto ts1 =
+            boost::get<tx_cache_status_responses::Rejected>(batch_status.at(0));
+        auto ts2 = boost::get<tx_cache_status_responses::Committed>(
+            batch_status.at(1));
+        auto ts3 =
+            boost::get<tx_cache_status_responses::Missing>(batch_status.at(2));
+        ASSERT_TRUE((std::is_same<tx_cache_status_responses::Rejected,
+                                  decltype(ts1)>::value));
+        ASSERT_TRUE((std::is_same<tx_cache_status_responses::Committed,
+                                  decltype(ts2)>::value));
+        ASSERT_TRUE((std::is_same<tx_cache_status_responses::Missing,
+                                  decltype(ts3)>::value));
+      },
+      [&](iroha::expected::Error<std::string> &error) {
+        FAIL() << error.error;
+      });
+}

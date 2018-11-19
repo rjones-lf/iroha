@@ -46,11 +46,9 @@ struct MockTransaction : public shared_model::interface::Transaction {
                      const shared_model::interface::types::AccountIdType &());
   MOCK_CONST_METHOD0(quorum, shared_model::interface::types::QuorumType());
   MOCK_CONST_METHOD0(commands, CommandsType());
-  MOCK_CONST_METHOD0(reduced_payload,
-                     const shared_model::interface::types::BlobType &());
-  MOCK_CONST_METHOD0(
-      batch_meta,
-      boost::optional<std::shared_ptr<shared_model::interface::BatchMeta>>());
+  MOCK_CONST_METHOD0(reducedHash,
+                     const shared_model::interface::types::HashType &());
+  MOCK_CONST_METHOD0(hash, const shared_model::interface::types::HashType &());
   MOCK_CONST_METHOD0(signatures,
                      shared_model::interface::types::SignatureRangeType());
   MOCK_CONST_METHOD0(createdTime,
