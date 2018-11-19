@@ -45,20 +45,20 @@ using namespace std::chrono_literals;
 // TODO: @muratovv 12.11.2018 remove the mock after effective implementation
 // will be finished IR-1840
 #include <gmock/gmock.h>
-class MockTxPresenceCache : public iroha::ametsuchi::TxPresenceCache {
- public:
-  MOCK_CONST_METHOD1(check,
-                     iroha::ametsuchi::TxCacheStatusType(
-                         const shared_model::crypto::Hash &hash));
-
-  MOCK_CONST_METHOD1(
-      check,
-      iroha::ametsuchi::TxPresenceCache::BatchStatusCollectionType(
-          const shared_model::interface::TransactionBatch &));
-};
-
 namespace iroha {
   namespace ametsuchi {
+    class MockTxPresenceCache : public iroha::ametsuchi::TxPresenceCache {
+     public:
+      MOCK_CONST_METHOD1(check,
+                         iroha::ametsuchi::TxCacheStatusType(
+                             const shared_model::crypto::Hash &hash));
+
+      MOCK_CONST_METHOD1(
+          check,
+          iroha::ametsuchi::TxPresenceCache::BatchStatusCollectionType(
+              const shared_model::interface::TransactionBatch &));
+    };
+
     namespace tx_cache_status_responses {
       std::ostream &operator<<(std::ostream &os, const Committed &resp) {
         return os << resp.hash.toString();
@@ -349,6 +349,8 @@ void Irohad::initStatusBus() {
 void Irohad::initMstProcessor() {
   auto mst_completer = std::make_shared<DefaultCompleter>();
   auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
+  auto tx_presence_cache =
+      std::make_shared<iroha::ametsuchi::MockTxPresenceCache>();
   std::shared_ptr<iroha::PropagationStrategy> mst_propagation;
   if (is_mst_supported_) {
     mst_transport = std::make_shared<iroha::network::MstTransportGrpc>(
@@ -356,6 +358,7 @@ void Irohad::initMstProcessor() {
         transaction_factory,
         batch_parser,
         transaction_batch_factory_,
+        tx_presence_cache,
         keypair.publicKey());
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
     // cli parameters

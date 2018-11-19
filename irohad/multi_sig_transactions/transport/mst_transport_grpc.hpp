@@ -9,6 +9,7 @@
 #include "mst.grpc.pb.h"
 #include "network/mst_transport.hpp"
 
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
@@ -35,6 +36,7 @@ namespace iroha {
               batch_parser,
           std::shared_ptr<shared_model::interface::TransactionBatchFactory>
               transaction_batch_factory,
+          std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
           shared_model::crypto::PublicKey my_key);
 
       /**
@@ -70,6 +72,7 @@ namespace iroha {
           batch_parser_;
       std::shared_ptr<shared_model::interface::TransactionBatchFactory>
           batch_factory_;
+      std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache_;
       /// source peer key for MST propogation messages
       const std::string my_key_;
     };
