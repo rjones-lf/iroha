@@ -25,16 +25,16 @@ namespace iroha {
           storage_->getBlockQuery()->checkTxPresence(hash),
           [&](const tx_cache_status_responses::Committed &status) {
             memory_cache_.addItem(hash, status);
-            cache_status_check = tx_cache_status_responses::Committed();
+            cache_status_check = tx_cache_status_responses::Committed(hash);
           },
           [&](const tx_cache_status_responses::Rejected &status) {
             memory_cache_.addItem(hash, status);
-            cache_status_check = tx_cache_status_responses::Rejected();
+            cache_status_check = tx_cache_status_responses::Rejected(hash);
           },
           [&](const tx_cache_status_responses::Missing &) {
             // don't put this hash into cache since "Missing" can become
             // "Committed" or "Rejected" later
-            cache_status_check = tx_cache_status_responses::Missing();
+            cache_status_check = tx_cache_status_responses::Missing(hash);
           });
 
       return cache_status_check;

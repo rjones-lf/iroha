@@ -45,6 +45,7 @@ TEST_F(TxPresenceCacheTest, MissingHashTest) {
       boost::get<tx_cache_status_responses::Missing>(cache.check(hash));
   ASSERT_TRUE((std::is_same<tx_cache_status_responses::Missing,
                             decltype(check_result)>::value));
+  ASSERT_EQ(hash, check_result.hash);
 }
 
 /**
@@ -61,6 +62,7 @@ TEST_F(TxPresenceCacheTest, RejectedHashTest) {
       boost::get<tx_cache_status_responses::Rejected>(cache.check(hash));
   ASSERT_TRUE((std::is_same<tx_cache_status_responses::Rejected,
                             decltype(check_result)>::value));
+  ASSERT_EQ(hash, check_result.hash);
 }
 
 /**
@@ -77,6 +79,7 @@ TEST_F(TxPresenceCacheTest, CommittedHashTest) {
       boost::get<tx_cache_status_responses::Committed>(cache.check(hash));
   ASSERT_TRUE((std::is_same<tx_cache_status_responses::Committed,
                             decltype(check_result)>::value));
+  ASSERT_EQ(hash, check_result.hash);
 }
 
 /**
@@ -93,12 +96,14 @@ TEST_F(TxPresenceCacheTest, MissingThenCommittedHashTest) {
       boost::get<tx_cache_status_responses::Missing>(cache.check(hash));
   ASSERT_TRUE((std::is_same<tx_cache_status_responses::Missing,
                             decltype(check_missing_result)>::value));
+  ASSERT_EQ(hash, check_missing_result.hash);
   EXPECT_CALL(*mock_block_query, checkTxPresence(hash))
       .WillOnce(Return(tx_cache_status_responses::Committed()));
   auto check_committed_result =
       boost::get<tx_cache_status_responses::Committed>(cache.check(hash));
   ASSERT_TRUE((std::is_same<tx_cache_status_responses::Committed,
                             decltype(check_committed_result)>::value));
+  ASSERT_EQ(hash, check_committed_result.hash);
 }
 
 /**
@@ -155,10 +160,13 @@ TEST_F(TxPresenceCacheTest, BatchHashTest) {
             boost::get<tx_cache_status_responses::Missing>(batch_status.at(2));
         ASSERT_TRUE((std::is_same<tx_cache_status_responses::Rejected,
                                   decltype(ts1)>::value));
+        ASSERT_EQ(hash1, ts1.hash);
         ASSERT_TRUE((std::is_same<tx_cache_status_responses::Committed,
                                   decltype(ts2)>::value));
+        ASSERT_EQ(hash2, ts2.hash);
         ASSERT_TRUE((std::is_same<tx_cache_status_responses::Missing,
                                   decltype(ts3)>::value));
+        ASSERT_EQ(hash3, ts3.hash);
       },
       [&](iroha::expected::Error<std::string> &error) {
         FAIL() << error.error;
