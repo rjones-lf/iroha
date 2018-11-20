@@ -254,11 +254,11 @@ namespace iroha {
       // res == 0 => Rejected
       // res < 0 => Missing
       if (res > 0) {
-        return tx_cache_status_responses::Committed();
+        return tx_cache_status_responses::Committed{hash};
       } else if (res == 0) {
-        return tx_cache_status_responses::Rejected();
+        return tx_cache_status_responses::Rejected{hash};
       }
-      return tx_cache_status_responses::Missing();
+      return tx_cache_status_responses::Missing{hash};
     }
 
     uint32_t PostgresBlockQuery::getTopBlockHeight() {
