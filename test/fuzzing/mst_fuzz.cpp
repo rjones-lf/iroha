@@ -26,6 +26,7 @@ namespace fuzzing {
           iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
       std::unique_ptr<shared_model::validation::AbstractValidator<
           shared_model::interface::Transaction>>
+          // TODO luckychess 20.11.2018 Reuse validator from application.cpp IR-1886
           tx_validator =
               std::make_unique<shared_model::validation::
                                    DefaultOptionalSignedTransactionValidator>();
