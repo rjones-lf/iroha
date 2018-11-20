@@ -44,7 +44,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         // request proposal for the current round
         auto proposal = network_client_->onRequestProposal(current_round_);
 
-        auto final_proposal = processProposalRequest(proposal);
+        auto final_proposal = this->processProposalRequest(proposal);
         // vote for the object received from the network
         proposal_notifier_.get_subscriber().on_next(std::move(final_proposal));
       })),
