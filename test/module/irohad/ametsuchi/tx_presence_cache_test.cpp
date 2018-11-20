@@ -21,24 +21,6 @@ using namespace testing;
  * Fixture for non-typed tests (TEST_F)
  */
 class TxPresenceCacheTest : public ::testing::Test {
-protected:
-  void SetUp() override {
-    mock_storage = std::make_shared<MockStorage>();
-    mock_block_query = std::make_shared<MockBlockQuery>();
-    EXPECT_CALL(*mock_storage, getBlockQuery())
-            .WillRepeatedly(Return(mock_block_query));
-  }
-
-public:
-  std::shared_ptr<MockStorage> mock_storage;
-  std::shared_ptr<MockBlockQuery> mock_block_query;
-};
-
-/**
- * Fixture for typed tests (TYPED_TEST)
- */
-template <typename T>
-class TxPresenceCacheTemplateTest : public ::testing::Test {
  protected:
   void SetUp() override {
     mock_storage = std::make_shared<MockStorage>();
@@ -51,6 +33,12 @@ class TxPresenceCacheTemplateTest : public ::testing::Test {
   std::shared_ptr<MockStorage> mock_storage;
   std::shared_ptr<MockBlockQuery> mock_block_query;
 };
+
+/**
+ * Fixture for typed tests (TYPED_TEST)
+ */
+template <typename T>
+class TxPresenceCacheTemplateTest : public TxPresenceCacheTest {};
 
 using CacheStatusTypes = ::testing::Types<tx_cache_status_responses::Missing,
                                           tx_cache_status_responses::Rejected,
@@ -102,7 +90,7 @@ TEST_F(TxPresenceCacheTest, MissingThenCommittedHashTest) {
  * @then cache returns BatchStatusCollectionType with Rejected, Committed and
  * Missing statuses accordingly
  */
- TEST_F(TxPresenceCacheTest, BatchHashTest) {
+TEST_F(TxPresenceCacheTest, BatchHashTest) {
   shared_model::crypto::Hash hash1("1");
   shared_model::crypto::Hash hash2("2");
   shared_model::crypto::Hash hash3("3");
@@ -139,8 +127,7 @@ TEST_F(TxPresenceCacheTest, MissingThenCommittedHashTest) {
 
   batch_factory->createTransactionBatch(txs).match(
       [&](iroha::expected::Value<
-          std::unique_ptr<shared_model::interface::TransactionBatch>> &batch)
-          {
+          std::unique_ptr<shared_model::interface::TransactionBatch>> &batch) {
         auto batch_statuses = cache.check(*batch.value);
         ASSERT_EQ(3, batch_statuses.size());
         tx_cache_status_responses::Rejected ts1;
@@ -148,8 +135,7 @@ TEST_F(TxPresenceCacheTest, MissingThenCommittedHashTest) {
         tx_cache_status_responses::Missing ts3;
         ASSERT_NO_THROW(ts1 = boost::get<tx_cache_status_responses::Rejected>(
                             batch_statuses.at(0)));
-        ASSERT_NO_THROW(ts2 =
-        boost::get<tx_cache_status_responses::Committed>(
+        ASSERT_NO_THROW(ts2 = boost::get<tx_cache_status_responses::Committed>(
                             batch_statuses.at(1)));
         ASSERT_NO_THROW(ts3 = boost::get<tx_cache_status_responses::Missing>(
                             batch_statuses.at(2)));
