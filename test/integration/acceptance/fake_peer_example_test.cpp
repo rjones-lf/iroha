@@ -167,22 +167,28 @@ TEST_F(FakePeerExampleFixture,
     return std::move(block);
   };
 
+  // Function to create a block
+  auto build_block =
+      [](const auto &parent_block,
+         std::initializer_list<shared_model::proto::Transaction> transactions) {
+        return proto::BlockBuilder()
+            .height(parent_block->height() + 1)
+            .prevHash(parent_block->hash())
+            .createdTime(iroha::time::now())
+            .transactions(transactions)
+            .build();
+      };
+
   // Create the malicious fork of the ledger:
   auto bad_block_storage =
       std::make_shared<fake_peer::BlockStorage>(*valid_block_storage);
   bad_block_storage->storeBlock(std::make_shared<shared_model::proto::Block>(
       sign_block_by_peers(
-          proto::BlockBuilder()
-              .height(valid_block_storage->getTopBlock()->height() + 1)
-              .prevHash(valid_block_storage->getTopBlock()->hash())
-              .createdTime(iroha::time::now())
-              .transactions(
-                  std::initializer_list<shared_model::proto::Transaction>{
-                      complete(
-                          baseTx(kAdminId).transferAsset(
-                              kAdminId, kUserId, kAssetId, "bad_tx3", "300.0"),
-                          kAdminKeypair)})
-              .build(),
+          build_block(
+              valid_block_storage->getTopBlock(),
+              {complete(baseTx(kAdminId).transferAsset(
+                            kAdminId, kUserId, kAssetId, "bad_tx3", "300.0"),
+                        kAdminKeypair)}),
           bad_fake_peers)
           .finish()));
   for (auto &bad_fake_peer : bad_fake_peers) {
@@ -192,17 +198,11 @@ TEST_F(FakePeerExampleFixture,
   // Extend the valid ledger:
   valid_block_storage->storeBlock(std::make_shared<shared_model::proto::Block>(
       sign_block_by_peers(
-          proto::BlockBuilder()
-              .height(valid_block_storage->getTopBlock()->height() + 1)
-              .prevHash(valid_block_storage->getTopBlock()->hash())
-              .createdTime(iroha::time::now())
-              .transactions(
-                  std::initializer_list<shared_model::proto::Transaction>{
-                      complete(
-                          baseTx(kAdminId).transferAsset(
-                              kAdminId, kUserId, kAssetId, "valid_tx3", "3.0"),
-                          kAdminKeypair)})
-              .build(),
+          build_block(
+              valid_block_storage->getTopBlock(),
+              {complete(baseTx(kAdminId).transferAsset(
+                            kAdminId, kUserId, kAssetId, "valid_tx3", "3.0"),
+                        kAdminKeypair)}),
           good_fake_peers)
           .finish()));
   for (auto &good_fake_peer : good_fake_peers) {
@@ -212,17 +212,11 @@ TEST_F(FakePeerExampleFixture,
   // Create the new block that the good peers are about to commit now.
   auto new_valid_block = std::make_shared<shared_model::proto::Block>(
       sign_block_by_peers(
-          proto::BlockBuilder()
-              .height(valid_block_storage->getTopBlock()->height() + 1)
-              .prevHash(valid_block_storage->getTopBlock()->hash())
-              .createdTime(iroha::time::now())
-              .transactions(
-                  std::initializer_list<shared_model::proto::Transaction>{
-                      complete(
-                          baseTx(kAdminId).transferAsset(
-                              kAdminId, kUserId, kAssetId, "valid_tx4", "4.0"),
-                          kAdminKeypair)})
-              .build()
+          build_block(
+              valid_block_storage->getTopBlock(),
+              {complete(baseTx(kAdminId).transferAsset(
+                            kAdminId, kUserId, kAssetId, "valid_tx4", "4.0"),
+                        kAdminKeypair)})
               .signAndAddSignature(rantipole_peer->getKeypair()),
           good_fake_peers)
           .finish());
