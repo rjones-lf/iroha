@@ -35,7 +35,8 @@ namespace iroha {
     TxCacheStatusType TxPresenceCacheImpl::checkInStorage(
         const shared_model::crypto::Hash &hash) const {
       TxCacheStatusType cache_status_check;
-      visit_in_place(storage_->getBlockQuery()->checkTxPresence(hash),
+      auto check_status = storage_->getBlockQuery()->checkTxPresence(hash);
+      visit_in_place(check_status,
                      [&](const tx_cache_status_responses::Committed &status) {
                        memory_cache_.addItem(hash, status);
                        cache_status_check = status;
