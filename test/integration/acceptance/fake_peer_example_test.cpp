@@ -120,7 +120,8 @@ TEST_F(FakePeerExampleFixture,
  */
 TEST_F(FakePeerExampleFixture,
        SynchronizeTheRightVersionOfForkedLedger) {
-  static constexpr size_t num_bad_peers = 3;  ///< bad fake peers
+  static constexpr size_t num_bad_peers = 3;  ///< bad fake peers - the ones
+                                              ///< creating a malicious fork
   // the real peer is added to the bad peers as they once are failing together
   static constexpr size_t num_peers = (num_bad_peers + 1) * 3 + 1;  ///< BFT
   static constexpr size_t num_fake_peers = num_peers - 1;  ///< one peer is real
