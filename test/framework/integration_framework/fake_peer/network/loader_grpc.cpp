@@ -28,7 +28,7 @@ namespace integration_framework {
       LoaderBlockRequest hash =
           std::make_shared<shared_model::crypto::Hash>(request->hash());
       auto fake_peer = fake_peer_wptr_.lock();
-      BOOST_VERIFY_MSG(fake_peer, "Fake peer shared pointer is not set!");
+      BOOST_VERIFY_MSG(fake_peer, "Fake Peer is not set!");
       auto behaviour = fake_peer->getBehaviour();
       if (!behaviour) {
         return ::grpc::Status(::grpc::StatusCode::INTERNAL,
@@ -48,7 +48,7 @@ namespace integration_framework {
         ::grpc::ServerWriter<iroha::protocol::Block> *writer) {
       LoaderBlocksRequest height = request->height();
       auto fake_peer = fake_peer_wptr_.lock();
-      BOOST_VERIFY_MSG(fake_peer, "Fake peer shared pointer is not set!");
+      BOOST_VERIFY_MSG(fake_peer, "Fake peer is not set!");
       auto behaviour = fake_peer->getBehaviour();
       if (!behaviour) {
         return ::grpc::Status(::grpc::StatusCode::INTERNAL,
