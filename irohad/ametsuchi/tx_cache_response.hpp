@@ -24,7 +24,7 @@ namespace iroha {
        */
       struct HashContainer {
         HashContainer() = default;
-        HashContainer(HashType h) : hash(h) {}
+        explicit HashContainer(const HashType &h) : hash(h) {}
 
         HashType hash;
       };

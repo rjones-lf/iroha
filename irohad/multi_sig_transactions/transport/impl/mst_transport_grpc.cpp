@@ -9,6 +9,7 @@
 
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
@@ -79,7 +80,7 @@ grpc::Status MstTransportGrpc::SendState(
     batch_factory_->createTransactionBatch(batch).match(
         [&](iroha::expected::Value<std::unique_ptr<
                 shared_model::interface::TransactionBatch>> &value) {
-          auto cache_presence = tx_presence_cache_->check(*(value.value));
+          auto cache_presence = tx_presence_cache_->check(*value.value);
           auto is_replay = std::any_of(
               cache_presence.begin(),
               cache_presence.end(),

@@ -19,10 +19,32 @@
 
 using namespace iroha::network;
 using namespace iroha::model;
+using namespace shared_model::interface;
 
 using ::testing::_;
 using ::testing::Invoke;
-using ::testing::InvokeWithoutArgs;
+
+class TransportTest : public ::testing::Test {
+ public:
+  TransportTest()
+      : async_call_(
+            std::make_shared<AsyncGrpcClient<google::protobuf::Empty>>()),
+        parser_(std::make_shared<TransactionBatchParserImpl>()),
+        batch_factory_(std::make_shared<TransactionBatchFactoryImpl>()),
+        tx_presence_cache_(
+            std::make_shared<iroha::ametsuchi::MockTxPresenceCache>()),
+        my_key_(makeKey()),
+        mst_notification_transport_(
+            std::make_shared<iroha::MockMstTransportNotification>()) {}
+
+  std::shared_ptr<AsyncGrpcClient<google::protobuf::Empty>> async_call_;
+  std::shared_ptr<TransactionBatchParserImpl> parser_;
+  std::shared_ptr<TransactionBatchFactoryImpl> batch_factory_;
+  std::shared_ptr<iroha::ametsuchi::MockTxPresenceCache> tx_presence_cache_;
+  shared_model::crypto::Keypair my_key_;
+  std::shared_ptr<iroha::MockMstTransportNotification>
+      mst_notification_transport_;
+};
 
 /**
  * @brief Sends data over MstTransportGrpc (MstState and Peer objects) and
@@ -34,30 +56,21 @@ using ::testing::InvokeWithoutArgs;
  * @when Send state via transport
  * @then Assume that received state same as sent
  */
-TEST(TransportTest, SendAndReceive) {
-  auto async_call_ = std::make_shared<
-      iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
+TEST_F(TransportTest, SendAndReceive) {
   auto tx_validator = std::make_unique<shared_model::validation::MockValidator<
       shared_model::interface::Transaction>>();
   auto tx_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
       shared_model::interface::Transaction,
       shared_model::proto::Transaction>>(std::move(tx_validator));
-  auto parser =
-      std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
-  auto batch_factory =
-      std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
-  auto tx_presence_cache =
-      std::make_shared<iroha::ametsuchi::MockTxPresenceCache>();
-  auto my_key = makeKey();
+
   auto transport =
-      std::make_shared<MstTransportGrpc>(async_call_,
+      std::make_shared<MstTransportGrpc>(std::move(async_call_),
                                          std::move(tx_factory),
-                                         std::move(parser),
-                                         std::move(batch_factory),
-                                         std::move(tx_presence_cache),
-                                         my_key.publicKey());
-  auto notifications = std::make_shared<iroha::MockMstTransportNotification>();
-  transport->subscribe(notifications);
+                                         std::move(parser_),
+                                         std::move(batch_factory_),
+                                         std::move(tx_presence_cache_),
+                                         my_key_.publicKey());
+  transport->subscribe(mst_notification_transport_);
 
   std::mutex mtx;
   std::condition_variable cv;
@@ -91,14 +104,14 @@ TEST(TransportTest, SendAndReceive) {
       makePeer(addr + std::to_string(port), "abcdabcdabcdabcdabcdabcdabcdabcd");
   // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side
-  EXPECT_CALL(*notifications, onNewState(_, _))
-      .WillOnce(Invoke([&my_key, &cv, &state](const auto &from_key,
-                                              auto const &target_state) {
-        EXPECT_EQ(my_key.publicKey(), from_key);
+  EXPECT_CALL(*mst_notification_transport_, onNewState(_, _))
+      .WillOnce(Invoke(
+          [this, &cv, &state](const auto &from_key, auto const &target_state) {
+            EXPECT_EQ(this->my_key_.publicKey(), from_key);
 
-        EXPECT_EQ(state, target_state);
-        cv.notify_one();
-      }));
+            EXPECT_EQ(state, target_state);
+            cv.notify_one();
+          }));
 
   transport->sendState(*peer, state);
   std::unique_lock<std::mutex> lock(mtx);
@@ -121,40 +134,28 @@ TEST(TransportTest, SendAndReceive) {
  * rejected, so the state propagated via onNewState call would not contain the
  * test batch.
  */
-TEST(TransportTest, ReplayAttack) {
-  auto async_call_ = std::make_shared<
-      iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
-  std::unique_ptr<shared_model::validation::AbstractValidator<
-      shared_model::interface::Transaction>>
-      tx_validator =
-          std::make_unique<shared_model::validation::
-                               DefaultOptionalSignedTransactionValidator>();
+TEST_F(TransportTest, ReplayAttack) {
+  auto tx_validator = std::make_unique<
+      shared_model::validation::DefaultOptionalSignedTransactionValidator>();
   auto tx_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
       shared_model::interface::Transaction,
       shared_model::proto::Transaction>>(std::move(tx_validator));
-  auto parser =
-      std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
-  auto batch_factory =
-      std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
-  auto tx_presence_cache =
-      std::make_shared<iroha::ametsuchi::MockTxPresenceCache>();
-  auto my_key = makeKey();
-  auto transport = std::make_shared<MstTransportGrpc>(async_call_,
-                                                      std::move(tx_factory),
-                                                      std::move(parser),
-                                                      std::move(batch_factory),
-                                                      tx_presence_cache,
-                                                      my_key.publicKey());
 
-  auto notifications = std::make_shared<iroha::MockMstTransportNotification>();
-  transport->subscribe(notifications);
+  auto transport = std::make_shared<MstTransportGrpc>(std::move(async_call_),
+                                                      std::move(tx_factory),
+                                                      std::move(parser_),
+                                                      std::move(batch_factory_),
+                                                      tx_presence_cache_,
+                                                      my_key_.publicKey());
+
+  transport->subscribe(mst_notification_transport_);
 
   auto batch = makeTestBatch(txBuilder(1), txBuilder(2));
   auto state = iroha::MstState::empty();
   state += addSignaturesFromKeyPairs(
       addSignaturesFromKeyPairs(batch, 0, makeKey()), 1, makeKey());
 
-  EXPECT_CALL(*notifications, onNewState(_, _))
+  EXPECT_CALL(*mst_notification_transport_, onNewState(_, _))
       .Times(1)  // an empty state should not be propagated
       .WillOnce(
           Invoke([&batch](::testing::Unused, const iroha::MstState &state) {
@@ -177,7 +178,7 @@ TEST(TransportTest, ReplayAttack) {
 
   transport::MstState proto_state;
   proto_state.set_source_peer_key(
-      shared_model::crypto::toBinaryString(my_key.publicKey()));
+      shared_model::crypto::toBinaryString(my_key_.publicKey()));
 
   for (const auto &batch : state.getBatches()) {
     for (const auto &tx : batch->transactions()) {
@@ -191,7 +192,7 @@ TEST(TransportTest, ReplayAttack) {
   google::protobuf::Empty response;
 
   EXPECT_CALL(
-      *tx_presence_cache,
+      *tx_presence_cache_,
       check(
           ::testing::Matcher<const shared_model::interface::TransactionBatch &>(
               _)))

@@ -51,7 +51,7 @@ namespace iroha {
      public:
       MOCK_CONST_METHOD1(check,
                          iroha::ametsuchi::TxCacheStatusType(
-                             const shared_model::crypto::Hash &hash));
+                             const shared_model::crypto::Hash &));
 
       MOCK_CONST_METHOD1(
           check,
@@ -358,7 +358,7 @@ void Irohad::initMstProcessor() {
         transaction_factory,
         batch_parser,
         transaction_batch_factory_,
-        tx_presence_cache,
+        std::move(tx_presence_cache),
         keypair.publicKey());
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
     // cli parameters
