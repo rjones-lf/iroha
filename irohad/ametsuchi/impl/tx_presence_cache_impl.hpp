@@ -16,6 +16,7 @@ namespace iroha {
     class TxPresenceCacheImpl : public TxPresenceCache {
      public:
       explicit TxPresenceCacheImpl(std::shared_ptr<Storage> storage);
+
       TxCacheStatusType check(
           const shared_model::crypto::Hash &hash) const override;
 
@@ -24,6 +25,9 @@ namespace iroha {
           const override;
 
      private:
+      TxCacheStatusType checkInStorage(
+          const shared_model::crypto::Hash &hash) const;
+
       std::shared_ptr<Storage> storage_;
       mutable cache::Cache<shared_model::crypto::Hash,
                            TxCacheStatusType,

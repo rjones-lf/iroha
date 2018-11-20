@@ -7,6 +7,7 @@
 #include "common/visitor.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
+#include "tx_presence_cache_impl.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -19,7 +20,20 @@ namespace iroha {
       if (res != boost::none) {
         return res.get();
       }
+      return checkInStorage(hash);
+    }
 
+    TxPresenceCache::BatchStatusCollectionType TxPresenceCacheImpl::check(
+        const shared_model::interface::TransactionBatch &batch) const {
+      TxPresenceCache::BatchStatusCollectionType batch_statuses;
+      for (const auto &tx : batch.transactions()) {
+        batch_statuses.emplace_back(check(tx->hash()));
+      }
+      return batch_statuses;
+    }
+
+    TxCacheStatusType TxPresenceCacheImpl::checkInStorage(
+        const shared_model::crypto::Hash &hash) const {
       TxCacheStatusType cache_status_check;
       visit_in_place(
           storage_->getBlockQuery()->checkTxPresence(hash),
@@ -38,15 +52,6 @@ namespace iroha {
           });
 
       return cache_status_check;
-    }
-
-    TxPresenceCache::BatchStatusCollectionType TxPresenceCacheImpl::check(
-        const shared_model::interface::TransactionBatch &batch) const {
-      TxPresenceCache::BatchStatusCollectionType batch_statuses{};
-      for (const auto &tx : batch.transactions()) {
-        batch_statuses.emplace_back(check(tx->hash()));
-      }
-      return batch_statuses;
     }
   }  // namespace ametsuchi
 }  // namespace iroha
