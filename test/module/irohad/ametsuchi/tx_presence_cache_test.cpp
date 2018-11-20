@@ -53,7 +53,7 @@ TYPED_TEST_CASE(TxPresenceCacheTemplateTest, CacheStatusTypes);
 TYPED_TEST(TxPresenceCacheTemplateTest, StatusHashTest) {
   shared_model::crypto::Hash hash("1");
   EXPECT_CALL(*this->mock_block_query, checkTxPresence(hash))
-      .WillOnce(Return(TypeParam()));
+      .WillOnce(Return(TypeParam(hash)));
   TxPresenceCacheImpl cache(this->mock_storage);
   TypeParam check_result;
   ASSERT_NO_THROW(check_result = boost::get<TypeParam>(cache.check(hash)));
@@ -68,7 +68,7 @@ TYPED_TEST(TxPresenceCacheTemplateTest, StatusHashTest) {
 TEST_F(TxPresenceCacheTest, MissingThenCommittedHashTest) {
   shared_model::crypto::Hash hash("1");
   EXPECT_CALL(*mock_block_query, checkTxPresence(hash))
-      .WillOnce(Return(tx_cache_status_responses::Missing()));
+      .WillOnce(Return(tx_cache_status_responses::Missing(hash)));
   TxPresenceCacheImpl cache(mock_storage);
   tx_cache_status_responses::Missing check_missing_result;
   ASSERT_NO_THROW(
@@ -76,7 +76,7 @@ TEST_F(TxPresenceCacheTest, MissingThenCommittedHashTest) {
           boost::get<tx_cache_status_responses::Missing>(cache.check(hash)));
   ASSERT_EQ(hash, check_missing_result.hash);
   EXPECT_CALL(*mock_block_query, checkTxPresence(hash))
-      .WillOnce(Return(tx_cache_status_responses::Committed()));
+      .WillOnce(Return(tx_cache_status_responses::Committed(hash)));
   tx_cache_status_responses::Committed check_committed_result;
   ASSERT_NO_THROW(
       check_committed_result =
@@ -95,11 +95,11 @@ TEST_F(TxPresenceCacheTest, BatchHashTest) {
   shared_model::crypto::Hash hash2("2");
   shared_model::crypto::Hash hash3("3");
   EXPECT_CALL(*mock_block_query, checkTxPresence(hash1))
-      .WillOnce(Return(tx_cache_status_responses::Rejected()));
+      .WillOnce(Return(tx_cache_status_responses::Rejected(hash1)));
   EXPECT_CALL(*mock_block_query, checkTxPresence(hash2))
-      .WillOnce(Return(tx_cache_status_responses::Committed()));
+      .WillOnce(Return(tx_cache_status_responses::Committed(hash2)));
   EXPECT_CALL(*mock_block_query, checkTxPresence(hash3))
-      .WillOnce(Return(tx_cache_status_responses::Missing()));
+      .WillOnce(Return(tx_cache_status_responses::Missing(hash3)));
   auto tx1 = std::make_shared<MockTransaction>();
   EXPECT_CALL(*tx1, hash()).WillOnce(ReturnRefOfCopy(hash1));
   auto tx2 = std::make_shared<MockTransaction>();

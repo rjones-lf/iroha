@@ -35,21 +35,20 @@ namespace iroha {
     TxCacheStatusType TxPresenceCacheImpl::checkInStorage(
         const shared_model::crypto::Hash &hash) const {
       TxCacheStatusType cache_status_check;
-      visit_in_place(
-          storage_->getBlockQuery()->checkTxPresence(hash),
-          [&](const tx_cache_status_responses::Committed &status) {
-            memory_cache_.addItem(hash, status);
-            cache_status_check = tx_cache_status_responses::Committed(hash);
-          },
-          [&](const tx_cache_status_responses::Rejected &status) {
-            memory_cache_.addItem(hash, status);
-            cache_status_check = tx_cache_status_responses::Rejected(hash);
-          },
-          [&](const tx_cache_status_responses::Missing &) {
-            // don't put this hash into cache since "Missing" can become
-            // "Committed" or "Rejected" later
-            cache_status_check = tx_cache_status_responses::Missing(hash);
-          });
+      visit_in_place(storage_->getBlockQuery()->checkTxPresence(hash),
+                     [&](const tx_cache_status_responses::Committed &status) {
+                       memory_cache_.addItem(hash, status);
+                       cache_status_check = status;
+                     },
+                     [&](const tx_cache_status_responses::Rejected &status) {
+                       memory_cache_.addItem(hash, status);
+                       cache_status_check = status;
+                     },
+                     [&](const tx_cache_status_responses::Missing &status) {
+                       // don't put this hash into cache since "Missing" can
+                       // become "Committed" or "Rejected" later
+                       cache_status_check = status;
+                     });
 
       return cache_status_check;
     }
