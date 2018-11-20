@@ -5,14 +5,12 @@
 
 #include "ametsuchi/impl/postgres_block_index.hpp"
 
-#include <numeric>
-
-#include <boost/format.hpp>
 #include <boost/range/adaptor/indexed.hpp>
+
+#include "ametsuchi/tx_cache_response.hpp"
 #include "common/visitor.hpp"
 #include "interfaces/commands/command_variant.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
-#include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 
 namespace {
@@ -37,6 +35,22 @@ namespace {
         "INSERT INTO height_by_hash(hash, height) VALUES ('%s', "
         "'%s');");
     return (base % hash.hex() % height).str();
+  }
+
+  std::string makeCommittedTxHashIndex(
+      const shared_model::interface::types::HashType &rejected_tx_hash) {
+    boost::format base(
+        "INSERT INTO tx_status_by_hash(hash, status) VALUES ('%s', "
+        "TRUE);");
+    return (base % rejected_tx_hash.hex()).str();
+  }
+
+  std::string makeRejectedTxHashIndex(
+      const shared_model::interface::types::HashType &rejected_tx_hash) {
+    boost::format base(
+        "INSERT INTO tx_status_by_hash(hash, status) VALUES ('%s', "
+        "FALSE);");
+    return (base % rejected_tx_hash.hex()).str();
   }
 
   // make index account_id:height -> list of tx indexes
@@ -110,7 +124,8 @@ namespace iroha {
         const shared_model::interface::Block &block) {
       auto height = block.height();
       auto indexed_txs = block.transactions() | boost::adaptors::indexed(0);
-      std::string index_query = std::accumulate(
+      auto rejected_txs_hashes = block.rejected_transactions_hashes();
+      std::string tx_index_query = std::accumulate(
           indexed_txs.begin(),
           indexed_txs.end(),
           std::string{},
@@ -122,9 +137,21 @@ namespace iroha {
             query += makeAccountAssetIndex(
                 creator_id, height, index, tx.value().commands());
             query += makeHashIndex(tx.value().hash(), height);
+            query += makeCommittedTxHashIndex(tx.value().hash());
             query += makeCreatorHeightIndex(creator_id, height, index);
             return query;
           });
+
+      std::string rejected_tx_index_query =
+          std::accumulate(rejected_txs_hashes.begin(),
+                          rejected_txs_hashes.end(),
+                          std::string{},
+                          [](auto query, const auto &rejected_tx_hash) {
+                            query += makeRejectedTxHashIndex(rejected_tx_hash);
+                            return query;
+                          });
+
+      auto index_query = tx_index_query + rejected_tx_index_query;
       try {
         sql_ << index_query;
       } catch (const std::exception &e) {

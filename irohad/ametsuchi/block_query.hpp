@@ -22,6 +22,7 @@
 #include <cmath>
 #include <rxcpp/rx.hpp>
 
+#include "ametsuchi/tx_cache_response.hpp"
 #include "common/result.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/transaction.hpp"
@@ -106,12 +107,14 @@ namespace iroha {
           const shared_model::crypto::Hash &hash) = 0;
 
       /**
-       * Synchronously checks whether transaction
-       * with given hash is present in any block
-       * @param hash - transaction hash
-       * @return true if transaction exists, false otherwise
+       * Synchronously checks whether transaction with given hash is present in
+       * any block
+       * @param hash - rejected transaction's hash
+       * @return TxCacheStatusType which returns status of transaction:
+       * Committed, Rejected or Missing
        */
-      virtual bool hasTxWithHash(const shared_model::crypto::Hash &hash) = 0;
+      virtual TxCacheStatusType checkTxPresence(
+          const shared_model::crypto::Hash &hash) = 0;
 
       /**
        * Get the top-most block

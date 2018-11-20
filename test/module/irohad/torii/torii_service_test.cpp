@@ -216,14 +216,15 @@ TEST_F(ToriiServiceTest, CommandClient) {
  * @then ensure those are not received
  */
 TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
-  std::vector<shared_model::proto::Transaction> txs;
   std::vector<shared_model::interface::types::HashType> tx_hashes;
+
+  ON_CALL(*block_query, checkTxPresence(_))
+      .WillByDefault(
+          Return(iroha::ametsuchi::tx_cache_status_responses::Missing()));
 
   // create transactions, but do not send them
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
-    auto tx = TestTransactionBuilder().creatorAccountId("accountA").build();
-    txs.push_back(tx);
-    tx_hashes.push_back(tx.hash());
+    tx_hashes.push_back(shared_model::crypto::Hash{std::to_string(i)});
   }
 
   // get statuses of unsent transactions
@@ -323,11 +324,11 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
       std::make_shared<iroha::validation::VerifiedProposalAndErrors>();
   validation_result->verified_proposal =
       std::make_unique<shared_model::proto::Proposal>(
-      TestProposalBuilder()
-          .height(1)
-          .createdTime(iroha::time::now())
-          .transactions(txs)
-          .build());
+          TestProposalBuilder()
+              .height(1)
+              .createdTime(iroha::time::now())
+              .transactions(txs)
+              .build());
   validation_result->rejected_transactions.emplace(
       failed_tx_hash,
       iroha::validation::CommandError{
