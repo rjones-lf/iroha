@@ -101,10 +101,6 @@ namespace iroha {
                        std::string>
       getBlock(shared_model::interface::types::HeightType id) const;
 
-      bool hasCommittedTxWithHash(const shared_model::crypto::Hash &hash);
-
-      bool hasRejectedTxWithHash(const shared_model::crypto::Hash &hash);
-
       std::unique_ptr<soci::session> psql_;
       soci::session &sql_;
 

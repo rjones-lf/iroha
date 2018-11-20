@@ -35,7 +35,7 @@ namespace iroha {
        * The class means that corresponding transaction was successfully
        * committed in the ledger
        */
-      class Committed : public tx_cache_response_details::HashContainer {
+      struct Committed : public tx_cache_response_details::HashContainer {
         using HashContainer::HashContainer;
       };
 
@@ -43,7 +43,7 @@ namespace iroha {
        * The class means that corresponding transaction was rejected by the
        * network
        */
-      class Rejected : public tx_cache_response_details::HashContainer {
+      struct Rejected : public tx_cache_response_details::HashContainer {
         using HashContainer::HashContainer;
       };
 
@@ -51,7 +51,7 @@ namespace iroha {
        * The class means that corresponding transaction doesn't appear in the
        * ledger
        */
-      class Missing : public tx_cache_response_details::HashContainer {
+      struct Missing : public tx_cache_response_details::HashContainer {
         using HashContainer::HashContainer;
       };
     }  // namespace tx_cache_status_responses

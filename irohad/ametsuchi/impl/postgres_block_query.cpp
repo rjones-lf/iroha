@@ -244,34 +244,21 @@ namespace iroha {
 
     TxCacheStatusType PostgresBlockQuery::checkTxPresence(
         const shared_model::crypto::Hash &hash) {
-      if (hasCommittedTxWithHash(hash)) {
-        return tx_cache_status_responses::Committed();
-      }
-      if (hasRejectedTxWithHash(hash)) {
-        return tx_cache_status_responses::Rejected();
-      }
-      return tx_cache_status_responses::Missing();
-    }
-
-    bool PostgresBlockQuery::hasCommittedTxWithHash(
-        const shared_model::crypto::Hash &hash) {
-      return getBlockId(hash) != boost::none;
-    }
-
-    bool PostgresBlockQuery::hasRejectedTxWithHash(
-        const shared_model::crypto::Hash &hash) {
-      boost::optional<uint64_t> blockId = boost::none;
-      boost::optional<std::string> block_str;
+      int res = -1;
       const auto &hash_str = hash.hex();
 
-      sql_ << "SELECT height FROM height_by_rejected_hash WHERE hash = :hash",
-          soci::into(block_str), soci::use(hash_str);
-      if (block_str) {
-        blockId = std::stoull(block_str.get());
-      } else {
-        log_->info("No block with rejected transaction {}", hash.toString());
+      sql_ << "SELECT status FROM tx_status_by_hash WHERE hash = :hash",
+          soci::into(res), soci::use(hash_str);
+
+      // res > 0 => Committed
+      // res == 0 => Rejected
+      // res < 0 => Missing
+      if (res > 0) {
+        return tx_cache_status_responses::Committed{hash};
+      } else if (res == 0) {
+        return tx_cache_status_responses::Rejected{hash};
       }
-      return (bool)blockId;
+      return tx_cache_status_responses::Missing{hash};
     }
 
     uint32_t PostgresBlockQuery::getTopBlockHeight() {
