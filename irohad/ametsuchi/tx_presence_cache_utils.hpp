@@ -23,7 +23,7 @@ namespace iroha {
           [](const ametsuchi::tx_cache_status_responses::Missing &) {
             return false;
           },
-          [](const auto &status) { return true; });
+          [](const auto &) { return true; });
     }
 
     /**
