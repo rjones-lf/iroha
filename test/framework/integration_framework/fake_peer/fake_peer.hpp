@@ -50,6 +50,7 @@ namespace iroha {
     class OrderingGateTransportGrpc;
     class OrderingServiceTransportGrpc;
   }  // namespace ordering
+  class MstState;
 }  // namespace iroha
 class ServerRunner;
 
@@ -147,6 +148,9 @@ namespace integration_framework {
       /// Make a vote from this peer for the provided YAC hash.
       iroha::consensus::yac::VoteMessage makeVote(
           iroha::consensus::yac::YacHash yac_hash);
+
+      /// Send the main peer the given MST state.
+      void sendMstState(const iroha::MstState &state);
 
       /// Send the main peer the given YAC state.
       void sendYacState(
