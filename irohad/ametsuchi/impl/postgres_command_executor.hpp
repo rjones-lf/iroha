@@ -8,7 +8,12 @@
 
 #include "ametsuchi/command_executor.hpp"
 #include "ametsuchi/impl/soci_utils.hpp"
-#include "interfaces/permission_to_string.hpp"
+
+namespace shared_model {
+  namespace interface {
+    class PermissionToString;
+  }
+}  // namespace shared_model
 
 namespace iroha {
   namespace ametsuchi {

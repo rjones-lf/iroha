@@ -26,6 +26,7 @@
 #include "interfaces/commands/subtract_asset_quantity.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/permission_to_string.hpp"
 
 namespace {
   struct PreparedStatement {
@@ -160,7 +161,7 @@ namespace {
    * Get an error code from the text SQL error
    * @param command_name - name of the failed command
    * @param error - string error, which SQL gave out
-   * @param query_args - lambda to get a string representation of query
+   * @param query_args - callable to get a string representation of query
    * arguments
    * @return command_error structure
    */
@@ -198,7 +199,7 @@ namespace {
    * @param sql - connection on which to execute statement
    * @param cmd - sql query to be executed
    * @param command_name - which command executes a query
-   * @param query_args - lambda to get a string representation of query
+   * @param query_args - callable to get a string representation of query
    * arguments
    * @return CommandResult with command name and error message
    */
@@ -779,7 +780,7 @@ namespace iroha {
 
       cmd = (cmd % account_id % asset_id % precision % amount);
 
-      auto str_args = [&account_id, &asset_id, &amount, precision]() {
+      auto str_args = [&account_id, &asset_id, &amount, precision] {
         return (boost::format(
                     "account_id: %s, asset_id: %s, amount: %s, precision: %d")
                 % account_id % asset_id % amount % precision)
@@ -800,7 +801,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % peer.pubkey().hex() % peer.address());
 
-      auto str_args = [&peer]() {
+      auto str_args = [&peer] {
         return (boost::format("peer: %s") % peer.toString()).str();
       };
 
@@ -817,7 +818,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
 
-      auto str_args = [&account_id, &pubkey]() {
+      auto str_args = [&account_id, &pubkey] {
         return (boost::format("account_id: %s, pubkey: %s") % account_id
                 % pubkey)
             .str();
@@ -836,7 +837,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % role_name);
 
-      auto str_args = [&account_id, &role_name]() {
+      auto str_args = [&account_id, &role_name] {
         return (boost::format("account_id: %s, role_name: %s") % account_id
                 % role_name)
             .str();
@@ -859,7 +860,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % domain_id % pubkey);
 
-      auto str_args = [&account_id, &domain_id, &pubkey]() {
+      auto str_args = [&account_id, &domain_id, &pubkey] {
         return (boost::format("account_id: %s, domain_id: %s, pubkey: %s")
                 % account_id % domain_id % pubkey)
             .str();
@@ -880,7 +881,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % asset_id % domain_id % precision);
 
-      auto str_args = [&domain_id, &asset_id, precision]() {
+      auto str_args = [&domain_id, &asset_id, precision] {
         return (boost::format("domain_id: %s, asset_id: %s, precision: %d")
                 % domain_id % asset_id % precision)
             .str();
@@ -899,7 +900,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % domain_id % default_role);
 
-      auto str_args = [&domain_id, &default_role]() {
+      auto str_args = [&domain_id, &default_role] {
         return (boost::format("domain_id: %s, default_role: %s") % domain_id
                 % default_role)
             .str();
@@ -919,7 +920,9 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % role_id % perm_str);
 
-      auto str_args = [&role_id, &perm_str]() {
+      auto str_args = [&role_id, &perm_str] {
+        // TODO [IR-1889] Akvinikym 21.11.18: integrate
+        // PermissionSet::toString() instead of bit string, when it is created
         return (boost::format("role_id: %s, perm_str: %s") % role_id % perm_str)
             .str();
       };
@@ -937,7 +940,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % role_name);
 
-      auto str_args = [&account_id, &role_name]() {
+      auto str_args = [&account_id, &role_name] {
         return (boost::format("account_id: %s, role_name: %s") % account_id
                 % role_name)
             .str();
@@ -966,7 +969,7 @@ namespace iroha {
 
       auto str_args = [&creator_account_id_ = creator_account_id_,
                        &permittee_account_id,
-                       permission = perm_converter_->toString(permission)]() {
+                       permission = perm_converter_->toString(permission)] {
         return (boost::format("creator_account_id_: %s, permittee_account_id: "
                               "%s, permission: %s")
                 % creator_account_id_ % permittee_account_id % permission)
@@ -987,7 +990,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
 
-      auto str_args = [&account_id, &pubkey]() {
+      auto str_args = [&account_id, &pubkey] {
         return (boost::format("account_id: %s, pubkey: %s") % account_id
                 % pubkey)
             .str();
@@ -1019,7 +1022,7 @@ namespace iroha {
 
       auto str_args = [&creator_account_id_ = creator_account_id_,
                        &permittee_account_id,
-                       permission = perm_converter_->toString(permission)]() {
+                       permission = perm_converter_->toString(permission)] {
         return (boost::format("creator_account_id_: %s, permittee_account_id: "
                               "%s, permission: %s")
                 % creator_account_id_ % permittee_account_id % permission)
@@ -1052,7 +1055,7 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % json % filled_json % val
              % empty_json);
 
-      auto str_args = [&account_id, &key, &value]() {
+      auto str_args = [&account_id, &key, &value] {
         return (boost::format("account_id: %s, key: %s, value: %s") % account_id
                 % key % value)
             .str();
@@ -1072,7 +1075,7 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % quorum);
 
-      auto str_args = [&account_id, quorum]() {
+      auto str_args = [&account_id, quorum] {
         return (boost::format("account_id: %s, quorum: %d") % account_id
                 % quorum)
             .str();
@@ -1095,7 +1098,7 @@ namespace iroha {
       auto str_args = [&creator_account_id_ = creator_account_id_,
                        &asset_id,
                        &amount,
-                       precision]() {
+                       precision] {
         return (boost::format("creator_account_id_: %s, asset_id: %s, amount: "
                               "%s, precision: %d")
                 % creator_account_id_ % asset_id % amount % precision)
@@ -1122,7 +1125,7 @@ namespace iroha {
              % asset_id % precision % amount);
 
       auto str_args =
-          [&src_account_id, &dest_account_id, &asset_id, &amount, precision]() {
+          [&src_account_id, &dest_account_id, &asset_id, &amount, precision] {
             return (boost::format("src_account_id: %s, dest_account_id: %s, "
                                   "asset_id: %s, amount: %s, precision: %d")
                     % src_account_id % dest_account_id % asset_id % amount

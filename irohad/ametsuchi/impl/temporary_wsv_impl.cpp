@@ -9,6 +9,7 @@
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/commands/command.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "interfaces/transaction.hpp"
 
 namespace iroha {

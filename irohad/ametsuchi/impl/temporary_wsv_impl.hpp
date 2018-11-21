@@ -11,8 +11,13 @@
 #include <soci/soci.h>
 #include "ametsuchi/command_executor.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
-#include "interfaces/permission_to_string.hpp"
 #include "logger/logger.hpp"
+
+namespace shared_model {
+  namespace interface {
+    class PermissionToString;
+  }
+}  // namespace shared_model
 
 namespace iroha {
 
