@@ -17,16 +17,6 @@ namespace integration_framework {
 
       ~BehaviourDecorator() = default;
 
-      void processMstMessage(const FakePeer::MstMessagePtr &message) override =
-          0;
-      void processYacMessage(const FakePeer::YacMessagePtr &message) override =
-          0;
-      void processOsBatch(const FakePeer::OsBatchPtr &batch) override = 0;
-      void processOgProposal(const FakePeer::OgProposalPtr &proposal) override =
-          0;
-
-      std::string getName() override = 0;
-
      protected:
       Behaviour &base_behaviour_;
     };
