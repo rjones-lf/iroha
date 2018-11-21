@@ -13,6 +13,7 @@
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/size.hpp>
 #include "ametsuchi/tx_presence_cache.hpp"
+#include "ametsuchi/tx_presence_cache_utils.hpp"
 #include "common/visitor.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
@@ -207,15 +208,12 @@ bool OnDemandOrderingServiceImpl::batchAlreadyProcessed(
   // if any transaction is commited or rejected, batch was already processed
   // Note: any_of returns false for empty sequence
   return std::any_of(
-      tx_statuses.begin(), tx_statuses.end(), [this](const auto &batch_result) {
-        return iroha::visit_in_place(
-            batch_result,
-            [](const ametsuchi::tx_cache_status_responses::Missing &) {
-              return false;
-            },
-            [this](const auto &status) {
-              log_->warn("Duplicate transaction: {}", status.hash.hex());
-              return true;
-            });
+      tx_statuses.begin(), tx_statuses.end(), [this](const auto &tx_status) {
+        if (iroha::ametsuchi::isAlreadyProcessed(tx_status)) {
+          log_->warn("Duplicate transaction: {}",
+                     iroha::ametsuchi::getHash(tx_status).hex());
+          return true;
+        }
+        return false;
       });
 }
