@@ -15,7 +15,7 @@ namespace integration_framework {
 
     class DelayedBehaviour : public BehaviourDecorator {
      public:
-      DelayedBehaviour(Behaviour &base_behaviour,
+      DelayedBehaviour(std::unique_ptr<Behaviour> &&base_behaviour,
                        std::chrono::milliseconds delay);
 
       virtual ~DelayedBehaviour() = default;

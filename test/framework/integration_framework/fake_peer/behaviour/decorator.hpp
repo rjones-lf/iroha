@@ -13,12 +13,12 @@ namespace integration_framework {
 
     class BehaviourDecorator : public Behaviour {
      public:
-      BehaviourDecorator(Behaviour &base_behaviour);
+      BehaviourDecorator(std::unique_ptr<Behaviour> &&base_behaviour);
 
       virtual ~BehaviourDecorator() = default;
 
      protected:
-      Behaviour &base_behaviour_;
+      std::unique_ptr<Behaviour> base_behaviour_;
     };
 
   }  // namespace fake_peer
