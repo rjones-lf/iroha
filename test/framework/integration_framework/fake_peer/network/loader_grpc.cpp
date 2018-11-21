@@ -55,9 +55,6 @@ namespace integration_framework {
                               "Fake Peer has no behaviour set!");
       }
       auto blocks = behaviour->processLoaderBlocksRequest(height);
-      if (blocks.size() == 0) {
-        return ::grpc::Status(::grpc::StatusCode::NOT_FOUND, "Block not found");
-      }
       for (auto &block : blocks) {
         writer->Write(block.get().getTransport());
       }
