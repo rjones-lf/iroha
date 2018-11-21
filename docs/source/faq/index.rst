@@ -6,6 +6,7 @@ I'm new. Where to start?
 
 Hello, newcomer! You are very welcome :)
 There are 2 ways for you to start with Iroha:
+
 1. You can see what Iroha is an how it works by building a simple example network following our `Getting Started Guide <https://iroha.readthedocs.io/en/latest/getting_started/index.html>`_
 2. You can get acquainted with the `core concepts of Iroha <https://iroha.readthedocs.io/en/latest/core_concepts/index.html>`_ and start building your own `Iroha network <https://iroha.readthedocs.io/en/latest/guides/index.html>`_
 
