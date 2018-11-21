@@ -16,15 +16,14 @@ namespace iroha {
      * @param tx_status - status obtained from transaction cache
      * @return true if transaction was committed or rejected
      */
-    bool isAlreadyProcessed(const TxCacheStatusType &tx_status) {
+    inline bool isAlreadyProcessed(
+        const TxCacheStatusType &tx_status) noexcept {
       return iroha::visit_in_place(
           tx_status,
           [](const ametsuchi::tx_cache_status_responses::Missing &) {
             return false;
           },
-          [](const auto &status) {
-            return true;
-          });
+          [](const auto &status) { return true; });
     }
 
     /**
@@ -32,8 +31,8 @@ namespace iroha {
      * @param status - transaction status obtained from cache
      * @return hash of the transaction
      */
-    tx_cache_response_details::HashType getHash(
-        const TxCacheStatusType &status) {
+    inline tx_cache_response_details::HashType getHash(
+        const TxCacheStatusType &status) noexcept {
       return iroha::visit_in_place(
           status, [](const auto &status) { return status.hash; });
     }
