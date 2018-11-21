@@ -18,7 +18,7 @@ namespace integration_framework {
       DelayedBehaviour(Behaviour &base_behaviour,
                        std::chrono::milliseconds delay);
 
-      ~DelayedBehaviour() = default;
+      virtual ~DelayedBehaviour() = default;
 
       void processMstMessage(const FakePeer::MstMessagePtr &message) override;
       void processYacMessage(const FakePeer::YacMessagePtr &message) override;

@@ -15,7 +15,7 @@ namespace integration_framework {
      public:
       BehaviourDecorator(Behaviour &base_behaviour);
 
-      ~BehaviourDecorator() = default;
+      virtual ~BehaviourDecorator() = default;
 
      protected:
       Behaviour &base_behaviour_;
