@@ -21,7 +21,7 @@ using namespace framework::test_subscriber;
 
 using ::testing::_;
 using ::testing::ByMove;
-using testing::NiceMock;
+using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::Truly;
 

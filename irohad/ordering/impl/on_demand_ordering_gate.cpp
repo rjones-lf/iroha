@@ -95,7 +95,8 @@ OnDemandOrderingGate::removeReplays(
           return true;
         },
         [](const auto &status) {
-          // TODO: log replayed transactions when log is added
+          // TODO nickaleks 21.11.18: IR-1887 log replayed transactions
+          // when log is added
           return false;
         });
   };
