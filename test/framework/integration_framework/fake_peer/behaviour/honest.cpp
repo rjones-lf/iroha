@@ -8,8 +8,7 @@
 namespace integration_framework {
   namespace fake_peer {
 
-    void HonestBehaviour::processYacMessage(
-        const FakePeer::YacMessagePtr &message) {
+    void HonestBehaviour::processYacMessage(FakePeer::YacMessagePtr message) {
       getFakePeer().voteForTheSame(message);
     }
 
