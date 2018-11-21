@@ -68,6 +68,11 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
                        return request_reject_round == reject_round
                            or (request_reject_round >= 2 and reject_round >= 2);
                      });
+    BOOST_ASSERT_MSG(it != current_proposals_.end(),
+                     "No place to store the batches!");
+    log_->debug("onBatches => collection will be inserted to [{}, {}]",
+                it->first.block_round,
+                it->first.reject_round);
   }
   std::for_each(batches.begin(), batches.end(), [&it](auto &obj) {
     it->second.push(std::move(obj));
