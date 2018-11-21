@@ -31,7 +31,7 @@ If we are speaking about default iOS or Android device with untouched factory sh
 In order to run Iroha on ARM device you have to build it on the target platform. Building Iroha requires notable amount of RAM - for 32-bit ARM host you will need 8GB RAM. The build can be performed inside Docker container. To prepare the container you will need to: \
 
 1. Clone Iroha git repo: https://github.com/hyperledger/iroha \
-2. Do docker build -t iroha-build-env . being in iroha/docker/develop \
+2. Do `docker build -t iroha-build-env .` being in `iroha/docker/develop`
 3. Run the newly built container and build there Iroha itself \\
 
 Please do not forget to mount a folder with Iroha git repository to the container
