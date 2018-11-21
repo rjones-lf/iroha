@@ -25,6 +25,11 @@ namespace iroha {
           const override;
 
      private:
+      /**
+       * Performs an actual storage request about hash status
+       * @param hash to check
+       * @return hash status
+       */
       TxCacheStatusType checkInStorage(
           const shared_model::crypto::Hash &hash) const;
 

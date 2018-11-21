@@ -12,7 +12,7 @@
 namespace iroha {
   namespace ametsuchi {
     TxPresenceCacheImpl::TxPresenceCacheImpl(std::shared_ptr<Storage> storage)
-        : storage_(storage) {}
+        : storage_(std::move(storage)) {}
 
     TxCacheStatusType TxPresenceCacheImpl::check(
         const shared_model::crypto::Hash &hash) const {
