@@ -13,23 +13,12 @@ namespace integration_framework {
 
     class BehaviourDecorator : public Behaviour {
      public:
-      BehaviourDecorator(Behaviour &base_behaviour);
+      BehaviourDecorator(std::unique_ptr<Behaviour> &&base_behaviour);
 
-      ~BehaviourDecorator() = default;
-
-      void processMstMessage(const MstMessagePtr &message) override = 0;
-      void processYacMessage(const YacMessagePtr &message) override = 0;
-      void processOsBatch(const OsBatchPtr &batch) override = 0;
-      void processOgProposal(const OgProposalPtr &proposal) override = 0;
-      LoaderBlockRequestResult processLoaderBlockRequest(
-          const LoaderBlockRequest &request) override = 0;
-      LoaderBlocksRequestResult processLoaderBlocksRequest(
-          const LoaderBlocksRequest &request) override = 0;
-
-      std::string getName() override = 0;
+      virtual ~BehaviourDecorator() = default;
 
      protected:
-      Behaviour &base_behaviour_;
+      std::unique_ptr<Behaviour> base_behaviour_;
     };
 
   }  // namespace fake_peer

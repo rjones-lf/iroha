@@ -51,6 +51,7 @@ namespace iroha {
     class OrderingGateTransportGrpc;
     class OrderingServiceTransportGrpc;
   }  // namespace ordering
+  class MstState;
 }  // namespace iroha
 
 namespace integration_framework {

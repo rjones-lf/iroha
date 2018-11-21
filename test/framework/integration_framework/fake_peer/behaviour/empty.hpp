@@ -20,14 +20,14 @@ namespace integration_framework {
      public:
       virtual ~EmptyBehaviour() = default;
 
-      void processMstMessage(const MstMessagePtr &message) override;
-      void processYacMessage(const YacMessagePtr &message) override;
-      void processOsBatch(const OsBatchPtr &batch) override;
-      void processOgProposal(const OgProposalPtr &proposal) override;
+      void processMstMessage(MstMessagePtr message) override;
+      void processYacMessage(YacMessagePtr message) override;
+      void processOsBatch(OsBatchPtr batch) override;
+      void processOgProposal(OgProposalPtr proposal) override;
       LoaderBlockRequestResult processLoaderBlockRequest(
-          const LoaderBlockRequest &request) override;
+          LoaderBlockRequest request) override;
       LoaderBlocksRequestResult processLoaderBlocksRequest(
-          const LoaderBlocksRequest &request) override;
+          LoaderBlocksRequest request) override;
 
       virtual std::string getName();
     };

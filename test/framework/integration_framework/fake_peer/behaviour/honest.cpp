@@ -11,7 +11,7 @@
 namespace integration_framework {
   namespace fake_peer {
 
-    void HonestBehaviour::processYacMessage(const YacMessagePtr &message) {
+    void HonestBehaviour::processYacMessage(YacMessagePtr message) {
       getFakePeer().voteForTheSame(message);
     }
 
@@ -20,7 +20,7 @@ namespace integration_framework {
     }
 
     LoaderBlockRequestResult HonestBehaviour::processLoaderBlockRequest(
-        const LoaderBlockRequest &request) {
+        LoaderBlockRequest request) {
       const auto block_storage = getFakePeer().getBlockStorage();
       if (!block_storage) {
         getLogger()->debug(
@@ -38,7 +38,7 @@ namespace integration_framework {
     }
 
     LoaderBlocksRequestResult HonestBehaviour::processLoaderBlocksRequest(
-        const LoaderBlocksRequest &request) {
+        LoaderBlocksRequest request) {
       const auto block_storage = getFakePeer().getBlockStorage();
       if (!block_storage) {
         getLogger()->debug(

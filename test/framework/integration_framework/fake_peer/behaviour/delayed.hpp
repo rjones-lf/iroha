@@ -15,19 +15,19 @@ namespace integration_framework {
 
     class DelayedBehaviour : public BehaviourDecorator {
      public:
-      DelayedBehaviour(Behaviour &base_behaviour,
+      DelayedBehaviour(std::unique_ptr<Behaviour> &&base_behaviour,
                        std::chrono::milliseconds delay);
 
-      ~DelayedBehaviour() = default;
+      virtual ~DelayedBehaviour() = default;
 
-      void processMstMessage(const MstMessagePtr &message) override;
-      void processYacMessage(const YacMessagePtr &message) override;
-      void processOsBatch(const OsBatchPtr &batch) override;
-      void processOgProposal(const OgProposalPtr &proposal) override;
+      void processMstMessage(MstMessagePtr message) override;
+      void processYacMessage(YacMessagePtr message) override;
+      void processOsBatch(OsBatchPtr batch) override;
+      void processOgProposal(OgProposalPtr proposal) override;
       LoaderBlockRequestResult processLoaderBlockRequest(
-          const LoaderBlockRequest &request) override;
+          LoaderBlockRequest request) override;
       LoaderBlocksRequestResult processLoaderBlocksRequest(
-          const LoaderBlocksRequest &request) override;
+          LoaderBlocksRequest request) override;
 
       std::string getName() override;
 

@@ -3,44 +3,45 @@
 namespace integration_framework {
   namespace fake_peer {
 
-    DelayedBehaviour::DelayedBehaviour(Behaviour &base_behaviour,
-                                       std::chrono::milliseconds delay)
-        : BehaviourDecorator(base_behaviour), delay_(delay) {}
+    DelayedBehaviour::DelayedBehaviour(
+        std::unique_ptr<Behaviour> &&base_behaviour,
+        std::chrono::milliseconds delay)
+        : BehaviourDecorator(std::move(base_behaviour)), delay_(delay) {}
 
-    void DelayedBehaviour::processMstMessage(const MstMessagePtr &message) {
+    void DelayedBehaviour::processMstMessage(MstMessagePtr message) {
       std::this_thread::sleep_for(delay_);
-      base_behaviour_.processMstMessage(message);
+      base_behaviour_->processMstMessage(message);
     }
 
-    void DelayedBehaviour::processYacMessage(const YacMessagePtr &message) {
+    void DelayedBehaviour::processYacMessage(YacMessagePtr message) {
       std::this_thread::sleep_for(delay_);
-      base_behaviour_.processYacMessage(message);
+      base_behaviour_->processYacMessage(message);
     }
 
-    void DelayedBehaviour::processOsBatch(const OsBatchPtr &batch) {
+    void DelayedBehaviour::processOsBatch(OsBatchPtr batch) {
       std::this_thread::sleep_for(delay_);
-      base_behaviour_.processOsBatch(batch);
+      base_behaviour_->processOsBatch(batch);
     }
 
-    void DelayedBehaviour::processOgProposal(const OgProposalPtr &proposal) {
+    void DelayedBehaviour::processOgProposal(OgProposalPtr proposal) {
       std::this_thread::sleep_for(delay_);
-      base_behaviour_.processOgProposal(proposal);
+      base_behaviour_->processOgProposal(proposal);
     }
 
     LoaderBlockRequestResult DelayedBehaviour::processLoaderBlockRequest(
-        const LoaderBlockRequest &request) {
+        LoaderBlockRequest request) {
       std::this_thread::sleep_for(delay_);
-      return base_behaviour_.processLoaderBlockRequest(request);
+      return base_behaviour_->processLoaderBlockRequest(request);
     }
 
     LoaderBlocksRequestResult DelayedBehaviour::processLoaderBlocksRequest(
-        const LoaderBlocksRequest &request) {
+        LoaderBlocksRequest request) {
       std::this_thread::sleep_for(delay_);
-      return base_behaviour_.processLoaderBlocksRequest(request);
+      return base_behaviour_->processLoaderBlocksRequest(request);
     }
 
     std::string DelayedBehaviour::getName() {
-      return "delayed " + base_behaviour_.getName();
+      return "delayed " + base_behaviour_->getName();
     }
 
   }  // namespace fake_peer

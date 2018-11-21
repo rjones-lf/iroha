@@ -3,16 +3,16 @@
 namespace integration_framework {
   namespace fake_peer {
 
-    void EmptyBehaviour::processMstMessage(const MstMessagePtr &message) {}
-    void EmptyBehaviour::processYacMessage(const YacMessagePtr &message) {}
-    void EmptyBehaviour::processOsBatch(const OsBatchPtr &batch) {}
-    void EmptyBehaviour::processOgProposal(const OgProposalPtr &proposal) {}
+    void EmptyBehaviour::processMstMessage(MstMessagePtr message) {}
+    void EmptyBehaviour::processYacMessage(YacMessagePtr message) {}
+    void EmptyBehaviour::processOsBatch(OsBatchPtr batch) {}
+    void EmptyBehaviour::processOgProposal(OgProposalPtr proposal) {}
     LoaderBlockRequestResult EmptyBehaviour::processLoaderBlockRequest(
-        const LoaderBlockRequest &request) {
+        LoaderBlockRequest request) {
       return {};
     }
     LoaderBlocksRequestResult EmptyBehaviour::processLoaderBlocksRequest(
-        const LoaderBlocksRequest &request) {
+        LoaderBlocksRequest request) {
       return {};
     }
 

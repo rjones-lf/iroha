@@ -211,11 +211,15 @@ namespace integration_framework {
     }
 
     iroha::consensus::yac::VoteMessage FakePeer::makeVote(
-        const iroha::consensus::yac::YacHash &yac_hash) {
+        iroha::consensus::yac::YacHash yac_hash) {
       iroha::consensus::yac::YacHash my_yac_hash = yac_hash;
       my_yac_hash.block_signature = makeSignature(
           shared_model::crypto::Blob(yac_hash.vote_hashes.block_hash));
       return yac_crypto_->getVote(my_yac_hash);
+    }
+
+    void FakePeer::sendMstState(const iroha::MstState &state) {
+      mst_transport_->sendState(*real_peer_, state);
     }
 
     void FakePeer::sendYacState(
@@ -229,8 +233,7 @@ namespace integration_framework {
                   incoming_votes->size());
       if (incoming_votes->size() > 1) {
         // TODO mboldyrev 24/10/2018 IR-1821: rework ignoring states for
-        // accepted
-        //                                    commits
+        //                                    accepted commits
         log_->debug(
             "Ignoring state with multiple votes, "
             "because it probably refers to an accepted commit.");

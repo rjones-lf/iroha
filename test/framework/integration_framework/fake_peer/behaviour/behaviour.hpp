@@ -34,14 +34,25 @@ namespace integration_framework {
       /// Disable the behaviour
       void absolve();
 
-      virtual void processMstMessage(const MstMessagePtr &message) = 0;
-      virtual void processYacMessage(const YacMessagePtr &message) = 0;
-      virtual void processOsBatch(const OsBatchPtr &batch) = 0;
-      virtual void processOgProposal(const OgProposalPtr &proposal) = 0;
+      /// This method gets subscribed on Fake Peer's MST messages.
+      virtual void processMstMessage(MstMessagePtr message) = 0;
+
+      /// This method gets subscribed on Fake Peer's YAC messages.
+      virtual void processYacMessage(YacMessagePtr message) = 0;
+
+      /// This method gets subscribed on Fake Peer's OS messages.
+      virtual void processOsBatch(OsBatchPtr batch) = 0;
+
+      /// This method gets subscribed on Fake Peer's OG messages.
+      virtual void processOgProposal(OgProposalPtr proposal) = 0;
+
+      /// This method handles block requests for Fake Peer's.
       virtual LoaderBlockRequestResult processLoaderBlockRequest(
-          const LoaderBlockRequest &request) = 0;
+          LoaderBlockRequest request) = 0;
+
+      /// This method handles blocks requests for Fake Peer's.
       virtual LoaderBlocksRequestResult processLoaderBlocksRequest(
-          const LoaderBlocksRequest &request) = 0;
+          LoaderBlocksRequest request) = 0;
 
       virtual std::string getName() = 0;
 

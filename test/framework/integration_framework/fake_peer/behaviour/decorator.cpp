@@ -3,8 +3,9 @@
 namespace integration_framework {
   namespace fake_peer {
 
-    BehaviourDecorator::BehaviourDecorator(Behaviour &base_behaviour)
-        : base_behaviour_(base_behaviour) {}
+    BehaviourDecorator::BehaviourDecorator(
+        std::unique_ptr<Behaviour> &&base_behaviour)
+        : base_behaviour_(std::move(base_behaviour)) {}
 
   }  // namespace fake_peer
 }  // namespace integration_framework
