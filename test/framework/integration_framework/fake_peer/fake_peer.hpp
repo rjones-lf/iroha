@@ -146,7 +146,7 @@ namespace integration_framework {
 
       /// Make a vote from this peer for the provided YAC hash.
       iroha::consensus::yac::VoteMessage makeVote(
-          const iroha::consensus::yac::YacHash &yac_hash);
+          iroha::consensus::yac::YacHash yac_hash);
 
       /// Send the main peer the given YAC state.
       void sendYacState(

@@ -184,7 +184,7 @@ namespace integration_framework {
     }
 
     iroha::consensus::yac::VoteMessage FakePeer::makeVote(
-        const iroha::consensus::yac::YacHash &yac_hash) {
+        iroha::consensus::yac::YacHash yac_hash) {
       iroha::consensus::yac::YacHash my_yac_hash = yac_hash;
       my_yac_hash.block_signature = makeSignature(
           shared_model::crypto::Blob(yac_hash.vote_hashes.block_hash));
