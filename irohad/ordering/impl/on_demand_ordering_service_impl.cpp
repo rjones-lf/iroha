@@ -80,6 +80,10 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
   auto proposal = proposal_map_.find(round);
+  log_->debug("onRequestProposal, round[{}, {}], {}returning a proposal.",
+              round.block_round,
+              round.reject_round,
+              (proposal == proposal_map_.end()) ? "NOT " : "");
   if (proposal != proposal_map_.end()) {
     return clone(*proposal->second);
   } else {
