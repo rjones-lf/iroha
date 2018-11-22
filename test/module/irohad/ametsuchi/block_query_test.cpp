@@ -357,8 +357,7 @@ TEST_F(BlockQueryTest, GetTop2Blocks) {
 TEST_F(BlockQueryTest, HasTxWithExistingHash) {
   for (const auto &hash : tx_hashes) {
     ASSERT_NO_THROW({
-      auto status = boost::apply_visitor(
-          framework::SpecifiedVisitor<tx_cache_status_responses::Committed>(),
+      auto status = boost::get<tx_cache_status_responses::Committed>(
           blocks->checkTxPresence(hash));
       ASSERT_EQ(status.hash, hash);
     });
@@ -374,8 +373,7 @@ TEST_F(BlockQueryTest, HasTxWithExistingHash) {
 TEST_F(BlockQueryTest, HasTxWithMissingHash) {
   shared_model::crypto::Hash missing_tx_hash(zero_string);
   ASSERT_NO_THROW({
-    auto status = boost::apply_visitor(
-        framework::SpecifiedVisitor<tx_cache_status_responses::Missing>(),
+    auto status = boost::get<tx_cache_status_responses::Missing>(
         blocks->checkTxPresence(missing_tx_hash));
     ASSERT_EQ(status.hash, missing_tx_hash);
   });
@@ -389,8 +387,7 @@ TEST_F(BlockQueryTest, HasTxWithMissingHash) {
  */
 TEST_F(BlockQueryTest, HasTxWithRejectedHash) {
   ASSERT_NO_THROW({
-    auto status = boost::apply_visitor(
-        framework::SpecifiedVisitor<tx_cache_status_responses::Rejected>(),
+    auto status = boost::get<tx_cache_status_responses::Rejected>(
         blocks->checkTxPresence(rejected_hash));
     ASSERT_EQ(status.hash, rejected_hash);
   });
