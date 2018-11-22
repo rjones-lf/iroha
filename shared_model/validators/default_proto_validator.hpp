@@ -2,6 +2,7 @@
  * Copyright Soramitsu Co., Ltd. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
+
 #ifndef IROHA_DEFAULT_PROTO_VALIDATOR_HPP
 #define IROHA_DEFAULT_PROTO_VALIDATOR_HPP
 

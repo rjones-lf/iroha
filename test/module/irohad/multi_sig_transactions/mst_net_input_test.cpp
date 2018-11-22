@@ -24,22 +24,15 @@ TEST(MstNetInteraction, TypelessCommand) {
   itf.setInitialState(kAdminKeypair);
   auto internal_port = itf.internalPort();
 
-  iroha::network::transport::MstState state;
-
-  auto transaction = state.add_transactions();
-  transaction->mutable_payload()->mutable_reduced_payload()->add_commands();
+  std::string peer_address = "127.0.0.1:" + std::to_string(internal_port);
+  auto client = transport::MstTransportGrpc::NewStub(
+      grpc::CreateChannel(peer_address, grpc::InsecureChannelCredentials()));
 
   grpc::ClientContext context;
   google::protobuf::Empty response;
-
-  auto async_call =
-      std::make_shared<AsyncGrpcClient<google::protobuf::Empty>>();
-
-  std::string peer_address = "127.0.0.1:" + std::to_string(internal_port);
-
-  std::unique_ptr<transport::MstTransportGrpc::StubInterface> client =
-      transport::MstTransportGrpc::NewStub(grpc::CreateChannel(
-          peer_address, grpc::InsecureChannelCredentials()));
+  iroha::network::transport::MstState state;
+  auto transaction = state.add_transactions();
+  transaction->mutable_payload()->mutable_reduced_payload()->add_commands();
 
   client->SendState(&context, state, &response);
 }
