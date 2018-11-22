@@ -150,6 +150,24 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  /*
+   * The logic implemented below is reflected in the following truth table.
+   *
+  +------------+--------------+------------------+---------------+---------+
+  | Blockstore | New genesis  | Overwrite ledger | Genesis block | Message |
+  | presence   | block is set | flag is set      | that is used  |         |
+  +------------+--------------+------------------+---------------+---------+
+  | 0          | 1            | 0                | new           |         |
+  | 0          | 1            | 1                | new           | warning |
+  | 1          | 1            | 0                | old           | warning |
+  | 1          | 1            | 1                | new           |         |
+  | 0          | 0            | 0                | none          | error   |
+  | 0          | 0            | 1                | none          | error   |
+  | 1          | 0            | 0                | old           |         |
+  | 1          | 0            | 1                | old           | warning |
+  +------------+--------------+------------------+---------------+---------+
+   */
+
   /// if there are any blocks in blockstore, then true
   bool blockstore = irohad.storage->getBlockQuery()->getTopBlockHeight() != 0;
 
