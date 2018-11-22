@@ -27,7 +27,6 @@
 #include "interfaces/commands/set_quorum.hpp"
 #include "interfaces/commands/subtract_asset_quantity.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
-#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/block_json_converter.hpp"
 #include "interfaces/iroha_internal/query_response_factory.hpp"
 #include "interfaces/permission_to_string.hpp"
@@ -47,8 +46,6 @@ namespace iroha {
      public:
       PostgresQueryExecutorVisitor(
           soci::session &sql,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory,
           KeyValueStorage &block_store,
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
@@ -143,8 +140,6 @@ namespace iroha {
       KeyValueStorage &block_store_;
       shared_model::interface::types::AccountIdType creator_id_;
       shared_model::interface::types::HashType query_hash_;
-      std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-          common_objects_factory_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;
       std::shared_ptr<shared_model::interface::BlockJsonConverter> converter_;
       std::shared_ptr<shared_model::interface::QueryResponseFactory>
@@ -158,8 +153,6 @@ namespace iroha {
      public:
       PostgresQueryExecutor(
           std::unique_ptr<soci::session> sql,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory,
           KeyValueStorage &block_store,
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
@@ -177,7 +170,6 @@ namespace iroha {
      private:
       std::unique_ptr<soci::session> sql_;
       KeyValueStorage &block_store_;
-      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;
       PostgresQueryExecutorVisitor visitor_;
       std::shared_ptr<shared_model::interface::QueryResponseFactory>

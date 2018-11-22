@@ -5,13 +5,13 @@
 
 #include "backend/protobuf/block.hpp"
 
+#include <boost/range/adaptors.hpp>
 #include "backend/protobuf/common_objects/noncopyable_proto.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/util.hpp"
-#include "interfaces/common_objects/types.hpp"
-
 #include "block.pb.h"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace proto {

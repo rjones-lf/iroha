@@ -15,6 +15,7 @@
 #include <boost/range/join.hpp>
 #include "block.pb.h"
 
+#include "backend/protobuf/batch_meta.hpp"
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/queries/proto_query_payload_meta.hpp"

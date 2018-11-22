@@ -1106,63 +1106,58 @@ namespace iroha {
         auto fake_hash = shared_model::crypto::Hash(zero_string);
         auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
 
-        auto tx1 = TestTransactionBuilder()
-                       .creatorAccountId(account->accountId())
-                       .createRole("user", {})
-                       .build();
+        std::vector<shared_model::proto::Transaction> txs1;
+        txs1.push_back(TestTransactionBuilder()
+                           .creatorAccountId(account->accountId())
+                           .createRole("user", {})
+                           .build());
+        txs1.push_back(TestTransactionBuilder()
+                           .creatorAccountId(account->accountId())
+                           .addAssetQuantity(asset_id, "2.0")
+                           .transferAsset(account->accountId(),
+                                          account2->accountId(),
+                                          asset_id,
+                                          "",
+                                          "1.0")
+                           .build());
+        txs1.push_back(TestTransactionBuilder()
+                           .creatorAccountId(account2->accountId())
+                           .createRole("user2", {})
+                           .build());
 
-        auto tx2 = TestTransactionBuilder()
-                       .creatorAccountId(account->accountId())
-                       .addAssetQuantity(asset_id, "2.0")
-                       .transferAsset(account->accountId(),
-                                      account2->accountId(),
-                                      asset_id,
-                                      "",
-                                      "1.0")
-                       .build();
-
-        auto tx3 = TestTransactionBuilder()
-                       .creatorAccountId(account2->accountId())
-                       .transferAsset(account->accountId(),
-                                      account2->accountId(),
-                                      asset_id,
-                                      "",
-                                      "1.0")
-                       .build();
-
-        auto block1 =
-            TestBlockBuilder()
-                .transactions(std::vector<shared_model::proto::Transaction>({
-                    tx1,
-                    tx2,
-                    TestTransactionBuilder()
-                        .creatorAccountId(account2->accountId())
-                        .createRole("user2", {})
-                        .build(),
-                }))
-                .height(1)
-                .prevHash(fake_hash)
-                .build();
+        auto block1 = TestBlockBuilder()
+                          .transactions(txs1)
+                          .height(1)
+                          .prevHash(fake_hash)
+                          .build();
 
         apply(storage, block1);
 
-        auto block2 =
-            TestBlockBuilder()
-                .transactions(std::vector<shared_model::proto::Transaction>(
-                    {tx3,
-                     TestTransactionBuilder()
-                         .creatorAccountId(account->accountId())
-                         .createRole("user3", {})
-                         .build()}))
-                .height(2)
-                .prevHash(block1.hash())
-                .build();
+        std::vector<shared_model::proto::Transaction> txs2;
+        txs2.push_back(TestTransactionBuilder()
+                           .creatorAccountId(account2->accountId())
+                           .transferAsset(account->accountId(),
+                                          account2->accountId(),
+                                          asset_id,
+                                          "",
+                                          "1.0")
+                           .build());
+        txs2.push_back(TestTransactionBuilder()
+                           .creatorAccountId(account->accountId())
+                           .createRole("user3", {})
+                           .build());
+
+        auto block2 = TestBlockBuilder()
+                          .transactions(txs2)
+                          .height(2)
+                          .prevHash(block1.hash())
+                          .build();
 
         apply(storage, block2);
 
-        hash1 = tx1.hash();
-        hash2 = tx2.hash();
-        hash3 = tx3.hash();
+        hash1 = txs1.at(0).hash();
+        hash2 = txs1.at(1).hash();
+        hash3 = txs2.at(0).hash();
       }
 
       const std::string asset_id = "coin#domain";
