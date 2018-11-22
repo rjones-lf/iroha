@@ -18,6 +18,7 @@
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 #include "torii/command_client.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/command_service_transport_grpc.hpp"
@@ -287,8 +288,8 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
               .createdTime(iroha::time::now())
               .transactions(txs)
               .build());
-  prop_notifier_.get_subscriber().on_next(
-      OrderingEvent{proposal, {proposal->height(), 0}});
+  prop_notifier_.get_subscriber().on_next(OrderingEvent{
+      proposal, {proposal->height(), iroha::ordering::kFirstRejectRound}});
 
   torii::CommandSyncClient client2(client1);
 
@@ -472,8 +473,8 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
                                             .transactions(txs)
                                             .height(1)
                                             .build());
-  prop_notifier_.get_subscriber().on_next(
-      OrderingEvent{proposal, {proposal->height(), 0}});
+  prop_notifier_.get_subscriber().on_next(OrderingEvent{
+      proposal, {proposal->height(), iroha::ordering::kFirstRejectRound}});
   verified_prop_notifier_.get_subscriber().on_next(
       std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
           std::make_pair(proposal, iroha::validation::TransactionsErrors{})));

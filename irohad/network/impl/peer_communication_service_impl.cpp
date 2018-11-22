@@ -35,7 +35,7 @@ namespace iroha {
     rxcpp::observable<
         std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
     PeerCommunicationServiceImpl::on_verified_proposal() const {
-      return proposal_creator_->on_verified_proposal();
+      return proposal_creator_->onVerifiedProposal();
     }
 
     rxcpp::observable<synchronizer::SynchronizationEvent>

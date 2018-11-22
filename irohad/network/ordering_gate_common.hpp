@@ -29,6 +29,9 @@ namespace iroha {
       consensus::Round round;
     };
 
+    std::shared_ptr<shared_model::interface::Proposal> getProposalUnsafe(
+        const OrderingEvent &event);
+
   }  // namespace network
 }  // namespace iroha
 

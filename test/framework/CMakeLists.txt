@@ -30,6 +30,7 @@ target_link_libraries(integration_framework
     integration_framework_config_helper
     command_client
     query_client
+    ordering_gate_common
     )
 
 target_include_directories(integration_framework PUBLIC ${PROJECT_SOURCE_DIR}/test)

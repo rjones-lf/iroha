@@ -11,6 +11,7 @@
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 
 namespace iroha {
   namespace ordering {
@@ -118,7 +119,7 @@ namespace iroha {
         log_->info("Pass the proposal to pipeline height {}",
                    next_proposal->height());
         proposals_.get_subscriber().on_next(network::OrderingEvent{
-            next_proposal, {next_proposal->height(), 0}});
+            next_proposal, {next_proposal->height(), kFirstRejectRound}});
       }
     }
 

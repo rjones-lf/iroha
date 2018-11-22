@@ -31,7 +31,7 @@ namespace iroha {
           log_(logger::log("Simulator")) {
       ordering_gate->on_proposal().subscribe(
           proposal_subscription_, [this](const network::OrderingEvent &event) {
-            this->process_proposal(event);
+            this->processProposal(**event.proposal);
           });
 
       notifier_.get_observable().subscribe(
@@ -48,14 +48,13 @@ namespace iroha {
       verified_proposal_subscription_.unsubscribe();
     }
 
-    rxcpp::observable<
-        std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
-    Simulator::on_verified_proposal() {
+    rxcpp::observable<std::shared_ptr<validation::VerifiedProposalAndErrors>>
+    Simulator::onVerifiedProposal() {
       return notifier_.get_observable();
     }
 
-    void Simulator::process_proposal(const network::OrderingEvent &event) {
-      const auto &proposal = **event.proposal;
+    void Simulator::processProposal(
+        const shared_model::interface::Proposal &proposal) {
       log_->info("process proposal");
 
       // Get last block from local ledger

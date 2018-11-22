@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "simulator/impl/simulator.hpp"
+
 #include <vector>
 
 #include "backend/protobuf/proto_block_factory.hpp"
@@ -18,7 +20,6 @@
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/cryptography/crypto_model_signer_mock.hpp"
 #include "module/shared_model/validators/validators.hpp"
-#include "simulator/impl/simulator.hpp"
 
 using namespace iroha;
 using namespace iroha::validation;
@@ -87,7 +88,7 @@ shared_model::proto::Block makeBlock(int height) {
       .build();
 }
 
-shared_model::proto::Proposal makeProposal(int height) {
+auto makeProposal(int height) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
@@ -104,7 +105,7 @@ shared_model::proto::Proposal makeProposal(int height) {
                       .createdTime(iroha::time::now())
                       .transactions(txs)
                       .build();
-  return proposal;
+  return std::make_shared<shared_model::proto::Proposal>(std::move(proposal));
 }
 
 TEST_F(SimulatorTest, ValidWhenInitialized) {
@@ -128,13 +129,12 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
                         generateKeypair())
                 .finish();
   std::vector<shared_model::proto::Transaction> txs = {tx, tx};
-  std::shared_ptr<shared_model::interface::Proposal> proposal =
-      std::make_shared<shared_model::proto::Proposal>(
-          shared_model::proto::ProposalBuilder()
-              .height(2)
-              .createdTime(iroha::time::now())
-              .transactions(txs)
-              .build());
+  auto proposal = std::make_shared<shared_model::proto::Proposal>(
+      shared_model::proto::ProposalBuilder()
+          .height(2)
+          .createdTime(iroha::time::now())
+          .transactions(txs)
+          .build());
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(1);
@@ -157,7 +157,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   init();
 
   auto proposal_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
+      make_test_subscriber<CallExact>(simulator->onVerifiedProposal(), 1);
   proposal_wrapper.subscribe([&proposal](auto verified_proposal) {
     ASSERT_EQ(verified_proposal->first->height(), proposal->height());
     ASSERT_EQ(verified_proposal->first->transactions(),
@@ -172,7 +172,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
     ASSERT_EQ(block->transactions(), proposal->transactions());
   });
 
-  simulator->process_proposal(OrderingEvent{proposal, {proposal->height(), 0}});
+  simulator->processProposal(*proposal);
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
@@ -180,8 +180,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
 
 TEST_F(SimulatorTest, FailWhenNoBlock) {
   // height 2 proposal => height 1 block not present => no validated proposal
-  std::shared_ptr<shared_model::interface::Proposal> proposal =
-      std::make_shared<shared_model::proto::Proposal>(makeProposal(2));
+  auto proposal = makeProposal(2);
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(0);
   EXPECT_CALL(*query, getTopBlock())
@@ -199,14 +198,14 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   init();
 
   auto proposal_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 0);
+      make_test_subscriber<CallExact>(simulator->onVerifiedProposal(), 0);
   proposal_wrapper.subscribe();
 
   auto block_wrapper =
       make_test_subscriber<CallExact>(simulator->on_block(), 0);
   block_wrapper.subscribe();
 
-  simulator->process_proposal(OrderingEvent{proposal, {proposal->height(), 0}});
+  simulator->processProposal(*proposal);
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
@@ -214,8 +213,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
 
 TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   // proposal with height 2 => height 2 block present => no validated proposal
-  std::shared_ptr<shared_model::interface::Proposal> proposal =
-      std::make_shared<shared_model::proto::Proposal>(makeProposal(2));
+  auto proposal = makeProposal(2);
 
   auto block = makeBlock(proposal->height());
 
@@ -236,14 +234,14 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   init();
 
   auto proposal_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 0);
+      make_test_subscriber<CallExact>(simulator->onVerifiedProposal(), 0);
   proposal_wrapper.subscribe();
 
   auto block_wrapper =
       make_test_subscriber<CallExact>(simulator->on_block(), 0);
   block_wrapper.subscribe();
 
-  simulator->process_proposal(OrderingEvent{proposal, {proposal->height(), 0}});
+  simulator->processProposal(*proposal);
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
@@ -272,13 +270,12 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
                 .finish();
 
   std::vector<shared_model::proto::Transaction> txs = {tx, tx, tx};
-  std::shared_ptr<shared_model::interface::Proposal> proposal =
-      std::make_shared<shared_model::proto::Proposal>(
-          shared_model::proto::ProposalBuilder()
-              .height(3)
-              .createdTime(iroha::time::now())
-              .transactions(txs)
-              .build());
+  auto proposal = std::make_shared<shared_model::proto::Proposal>(
+      shared_model::proto::ProposalBuilder()
+          .height(3)
+          .createdTime(iroha::time::now())
+          .transactions(txs)
+          .build());
   auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
       shared_model::proto::ProposalBuilder()
           .height(2)
@@ -311,7 +308,7 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
   init();
 
   auto proposal_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
+      make_test_subscriber<CallExact>(simulator->onVerifiedProposal(), 1);
   proposal_wrapper.subscribe([&verified_proposal,
                               &tx_errors](auto verified_proposal_) {
     // assure that txs in verified proposal do not include failed ones
@@ -321,7 +318,7 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
     ASSERT_TRUE(verified_proposal_->second.size() == tx_errors.size());
   });
 
-  simulator->process_proposal(OrderingEvent{proposal, {proposal->height(), 0}});
+  simulator->processProposal(*proposal);
 
   ASSERT_TRUE(proposal_wrapper.validate());
 }
