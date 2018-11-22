@@ -32,6 +32,14 @@ namespace iroha {
           : pgopt_("dbname=" + dbname_ + " "
                    + integration_framework::getPostgresCredsOrDefault()) {}
 
+      ~AmetsuchiTest() {
+        if (initialised) {
+          sql->close();
+          storage->dropStorage();
+          boost::filesystem::remove_all(block_store_path);
+        }
+      }
+
      protected:
       bool initialised = false;
 
@@ -59,6 +67,7 @@ namespace iroha {
 
       void SetUp() override {
         if (not initialised) {
+          initialised = true;
           ASSERT_FALSE(boost::filesystem::exists(block_store_path))
               << "Temporary block store " << block_store_path
               << " directory already exists";
