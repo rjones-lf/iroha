@@ -225,7 +225,8 @@ TEST_F(Validator, SomeTxsFail) {
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(0)))))
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(1)))))
-      .WillOnce(Return(iroha::expected::makeError(CommandError{"", sample_error_code, sample_error_extra, true})));
+      .WillOnce(Return(iroha::expected::makeError(
+          CommandError{"", sample_error_code, sample_error_extra, true})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(2)))))
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
 
