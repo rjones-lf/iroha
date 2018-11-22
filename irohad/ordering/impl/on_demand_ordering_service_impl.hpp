@@ -41,6 +41,9 @@ namespace iroha {
 
       void onCollaborationOutcome(consensus::Round round) override;
 
+      rxcpp::observable<BatchesForRoundNotification>
+      get_outdated_proposals_observable() const override;
+
       // ----------------------- | OdOsNotification | --------------------------
 
       void onBatches(consensus::Round, CollectionType batches) override;
@@ -106,6 +109,9 @@ namespace iroha {
 
       std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
+
+      rxcpp::subjects::subject<BatchesForRoundNotification>
+          outdated_proposals_subject_;
 
       /**
        * Logger instance

@@ -8,6 +8,8 @@
 
 #include "ordering/on_demand_os_transport.hpp"
 
+#include <rxcpp/rx.hpp>
+
 namespace iroha {
   namespace ordering {
 
@@ -16,11 +18,25 @@ namespace iroha {
      */
     class OnDemandOrderingService : public transport::OdOsNotification {
      public:
+      struct BatchesForRound final {
+        CollectionType batches;
+        consensus::Round round;
+      };
+      using BatchesForRoundNotification =
+          std::shared_ptr<const BatchesForRound>;
+
       /**
        * Method which should be invoked on outcome of collaboration for round
        * @param round - proposal round which has started
        */
       virtual void onCollaborationOutcome(consensus::Round round) = 0;
+
+      /**
+       * Provides an observable for received batches proposed for already closed
+       * rounds.
+       */
+      virtual rxcpp::observable<BatchesForRoundNotification>
+      get_outdated_proposals_observable() const = 0;
     };
 
   }  // namespace ordering

@@ -7,7 +7,9 @@
 
 #include <unordered_set>
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/range/adaptor/indirected.hpp>
+#include <boost/range/adaptor/map.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
 #include "datetime/time.hpp"
@@ -46,6 +48,11 @@ void OnDemandOrderingServiceImpl::onCollaborationOutcome(
   tryErase();
 }
 
+rxcpp::observable<OnDemandOrderingServiceImpl::BatchesForRoundNotification>
+OnDemandOrderingServiceImpl::get_outdated_proposals_observable() const {
+  return outdated_proposals_subject_.get_observable();
+}
+
 // ----------------------------| OdOsNotification |-----------------------------
 
 void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
@@ -59,15 +66,23 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
 
   auto it = current_proposals_.find(round);
   if (it == current_proposals_.end()) {
-    it =
-        std::find_if(current_proposals_.begin(),
-                     current_proposals_.end(),
-                     [&round](const auto &p) {
-                       auto request_reject_round = round.reject_round;
-                       auto reject_round = p.first.reject_round;
-                       return request_reject_round == reject_round
-                           or (request_reject_round >= 2 and reject_round >= 2);
-                     });
+    log_->debug("onBatches => got a collection for [{}, {}], "
+                "but the open rounds are: [{}].",
+                round.block_round,
+                round.reject_round,
+                boost::algorithm::join(
+                    current_proposals_ | boost::adaptors::map_keys
+                        | boost::adaptors::transformed([](const auto &round) {
+                            return std::to_string(round.block_round) + ", "
+                                + std::to_string(round.reject_round);
+                          }),
+                    "], ["));
+    auto outdated_batches = std::make_shared<BatchesForRound>();
+    outdated_batches->batches = std::move(batches);
+    outdated_batches->round = std::move(round);
+    outdated_proposals_subject_.get_subscriber().on_next(
+        std::move(outdated_batches));
+    return;
   }
   std::for_each(batches.begin(), batches.end(), [&it](auto &obj) {
     it->second.push(std::move(obj));
@@ -99,9 +114,18 @@ void OnDemandOrderingServiceImpl::packNextProposals(
       log_->debug("proposal found");
       if (not it->second.empty()) {
         proposal_map_.emplace(round, emitProposal(round));
-        log_->debug("packNextProposal: data has been fetched for round[{}, {}]",
-                    round.block_round,
-                    round.reject_round);
+        log_->debug(
+            "packNextProposal: data has been fetched for round[{}, {}] ",
+            "but the open rounds are: [{}]",
+            round.block_round,
+            round.reject_round,
+            boost::algorithm::join(
+                current_proposals_ | boost::adaptors::map_keys
+                    | boost::adaptors::transformed([](const auto &round) {
+                        return std::to_string(round.block_round) + ", "
+                            + std::to_string(round.reject_round);
+                      }),
+                "], ["));
         round_queue_.push(round);
       }
       current_proposals_.erase(it);

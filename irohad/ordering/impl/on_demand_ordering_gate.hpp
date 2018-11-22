@@ -62,6 +62,7 @@ namespace iroha {
       std::shared_ptr<OnDemandOrderingService> ordering_service_;
       std::shared_ptr<transport::OdOsNotification> network_client_;
       rxcpp::composite_subscription events_subscription_;
+      rxcpp::composite_subscription outdated_batches_subscription_;
       std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
 

@@ -56,6 +56,17 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                   current_round_.block_round, current_round_.reject_round, {});
             }));
       })),
+      outdated_batches_subscription_(
+          ordering_service_->get_outdated_proposals_observable().subscribe(
+              [this](OnDemandOrderingService::BatchesForRoundNotification
+                         batches_for_round) {
+                log_->info("Propagating {} batch(es) intended for round {}.",
+                           batches_for_round->batches.size(),
+                           batches_for_round->round.toString());
+                for (const auto &batch : batches_for_round->batches) {
+                  this->propagateBatch(batch);
+                }
+              })),
       proposal_factory_(std::move(factory)),
       current_round_(initial_round) {}
 
