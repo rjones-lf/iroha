@@ -87,3 +87,11 @@ target_link_libraries(consensus_fuzz
   yac_transport
   protobuf-mutator
   )
+
+add_executable(mst_fuzz mst_fuzz.cpp)
+target_link_libraries(mst_fuzz
+  gtest::gtest
+  gmock::gmock
+  mst_transport
+  protobuf-mutator
+  )

@@ -397,12 +397,12 @@ Irohad::RunResult Irohad::run() {
   using iroha::expected::operator|;
 
   // Initializing torii server
-  torii_server = std::make_unique<ServerRunner>(listen_ip_ + ":"
-                                                + std::to_string(torii_port_));
+  torii_server = std::make_unique<ServerRunner>(
+      listen_ip_ + ":" + std::to_string(torii_port_), false);
 
   // Initializing internal server
   internal_server = std::make_unique<ServerRunner>(
-      listen_ip_ + ":" + std::to_string(internal_port_));
+      listen_ip_ + ":" + std::to_string(internal_port_), false);
 
   // Run torii server
   return (torii_server->append(command_service_transport)

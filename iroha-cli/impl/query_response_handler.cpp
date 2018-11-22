@@ -16,6 +16,7 @@
  */
 
 #include "query_response_handler.hpp"
+#include "backend/protobuf/commands/proto_command.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "interfaces/permissions.hpp"
