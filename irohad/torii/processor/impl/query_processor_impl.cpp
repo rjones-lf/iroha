@@ -59,14 +59,6 @@ namespace iroha {
 
     std::unique_ptr<shared_model::interface::QueryResponse>
     QueryProcessorImpl::queryHandle(const shared_model::interface::Query &qry) {
-      if (not checkSignatories(qry)) {
-        return response_factory_->createErrorQueryResponse(
-            shared_model::interface::QueryResponseFactory::ErrorQueryType::
-                kStatefulFailed,
-            "query signatories did not pass validation",
-            qry.hash());
-      }
-
       auto executor = qry_exec_->createQueryExecutor(pending_transactions_,
                                                      response_factory_);
       if (not executor) {
@@ -74,7 +66,7 @@ namespace iroha {
         return nullptr;
       }
 
-      return executor.value()->validateAndExecute(qry);
+      return executor.value()->validateAndExecute(qry, true);
     }
 
     rxcpp::observable<

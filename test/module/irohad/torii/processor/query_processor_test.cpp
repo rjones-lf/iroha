@@ -120,8 +120,15 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
                            generateKeypair())
                    .finish();
 
-  EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
-      .WillRepeatedly(Return(signatories));
+  auto *qry_resp = query_response_factory
+                       ->createErrorQueryResponse(
+                           shared_model::interface::QueryResponseFactory::
+                               ErrorQueryType::kStatefulFailed,
+                           "",
+                           query.hash())
+                       .release();
+
+  EXPECT_CALL(*qry_exec, validateAndExecute_(_)).WillOnce(Return(qry_resp));
 
   auto response = qpi->queryHandle(query);
   ASSERT_TRUE(response);

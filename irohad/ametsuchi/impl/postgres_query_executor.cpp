@@ -228,6 +228,44 @@ namespace iroha {
       }
     }
 
+    bool PostgresQueryExecutor::validateSignatures(
+        const shared_model::interface::Query &query) {
+      auto keys_range =
+          query.signatures() | boost::adaptors::transformed([](const auto &s) {
+            return s.publicKey().hex();
+          });
+
+      if (boost::size(keys_range) != 1) {
+        return false;
+      }
+      auto keys = std::accumulate(
+          std::next(std::begin(keys_range)),
+          std::end(keys_range),
+          keys_range.front(),
+          [](auto acc, const auto &val) { return acc + "'), ('" + val; });
+      // not using bool since it is not supported by SOCI
+      boost::optional<uint8_t> signatories_valid;
+
+      boost::format qry(R"(
+        SELECT COUNT(public_key) = 1
+        FROM account_has_signatory
+        WHERE account_id = :account_id AND public_key IN ('%s')
+        )");
+
+      try {
+        *sql_ << (qry % keys).str(), soci::into(signatories_valid),
+            soci::use(query.creatorAccountId(), "account_id");
+      } catch (const std::exception &e) {
+        log_->error(e.what());
+        return false;
+      }
+
+      if (signatories_valid and *signatories_valid) {
+        return true;
+      }
+      return false;
+    }
+
     PostgresQueryExecutor::PostgresQueryExecutor(
         std::unique_ptr<soci::session> sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
@@ -253,9 +291,17 @@ namespace iroha {
           log_(logger::log("PostgresQueryExecutor")) {}
 
     QueryExecutorResult PostgresQueryExecutor::validateAndExecute(
-        const shared_model::interface::Query &query) {
+        const shared_model::interface::Query &query,
+        const bool validate_signatories = true) {
       visitor_.setCreatorId(query.creatorAccountId());
       visitor_.setQueryHash(query.hash());
+      if (validate_signatories and not validateSignatures(query)) {
+        return query_response_factory_->createErrorQueryResponse(
+            shared_model::interface::QueryResponseFactory::ErrorQueryType::
+                kStatefulFailed,
+            "query signatories did not pass validation",
+            query.hash());
+      }
       return boost::apply_visitor(visitor_, query.get());
     }
 
@@ -335,8 +381,8 @@ namespace iroha {
           error =
               "no asset with such name in account with such id: " + error_body;
           break;
-          // other error are either handled by generic response or do not appear
-          // yet
+          // other error are either handled by generic response or do not
+          // appear yet
         default:
           error = "failed to execute query: " + error_body;
           break;

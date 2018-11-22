@@ -170,11 +170,14 @@ namespace iroha {
               perm_converter);
 
       QueryExecutorResult validateAndExecute(
-          const shared_model::interface::Query &query) override;
+          const shared_model::interface::Query &query,
+          const bool validate_signatories) override;
 
       bool validate(const shared_model::interface::BlocksQuery &query) override;
 
      private:
+      bool validateSignatures(const shared_model::interface::Query &query);
+
       std::unique_ptr<soci::session> sql_;
       KeyValueStorage &block_store_;
       std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;

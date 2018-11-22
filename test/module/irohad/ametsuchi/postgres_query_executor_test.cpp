@@ -113,7 +113,7 @@ namespace iroha {
         return query_executor->createQueryExecutor(pending_txs_storage,
                                                    query_response_factory)
             | [&query](const auto &executor) {
-                return executor->validateAndExecute(query);
+                return executor->validateAndExecute(query, false);
               };
       }
 

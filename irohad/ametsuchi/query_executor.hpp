@@ -29,7 +29,8 @@ namespace iroha {
        * Execute and validate query.
        */
       virtual QueryExecutorResult validateAndExecute(
-          const shared_model::interface::Query &query) = 0;
+          const shared_model::interface::Query &query,
+          const bool validate_signatories) = 0;
 
       /**
        * Perform BlocksQuery validation
