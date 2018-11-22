@@ -176,7 +176,8 @@ namespace iroha {
       bool validate(const shared_model::interface::BlocksQuery &query) override;
 
      private:
-      bool validateSignatures(const shared_model::interface::Query &query);
+      template <class Q>
+      bool validateSignatures(const  Q &query);
 
       std::unique_ptr<soci::session> sql_;
       KeyValueStorage &block_store_;

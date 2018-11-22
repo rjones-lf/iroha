@@ -228,8 +228,9 @@ namespace iroha {
       }
     }
 
+    template <class Q>
     bool PostgresQueryExecutor::validateSignatures(
-        const shared_model::interface::Query &query) {
+        const Q &query) {
       auto keys_range =
           query.signatures() | boost::adaptors::transformed([](const auto &s) {
             return s.publicKey().hex();
@@ -307,6 +308,9 @@ namespace iroha {
 
     bool PostgresQueryExecutor::validate(
         const shared_model::interface::BlocksQuery &query) {
+      if (not validateSignatures(query)) {
+        log_->error("query signatories did not pass validation");
+      }
       using T = boost::tuple<int>;
       boost::format cmd(R"(%s)");
       try {

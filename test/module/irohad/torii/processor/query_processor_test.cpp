@@ -148,8 +148,6 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
   auto block_number = 5;
   auto block_query = getBlocksQuery(kAccountId);
 
-  EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
-      .WillOnce(Return(signatories));
   EXPECT_CALL(*qry_exec, validate(_)).WillOnce(Return(true));
 
   auto wrapper = make_test_subscriber<CallExact>(

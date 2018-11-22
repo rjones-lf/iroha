@@ -7,7 +7,6 @@
 
 #include <boost/range/size.hpp>
 
-#include "ametsuchi/wsv_query.hpp"
 #include "common/bind.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
@@ -37,26 +36,7 @@ namespace iroha {
                 std::move(block_response));
           });
     }
-
-    template <class Q>
-    bool QueryProcessorImpl::checkSignatories(const Q &qry) {
-      const auto &wsv_query = storage_->getWsvQuery();
-
-      auto signatories = wsv_query->getSignatories(qry.creatorAccountId());
-      const auto &sig = qry.signatures();
-
-      return boost::size(sig) == 1
-          and signatories | [&sig](const auto &signatories) {
-                return validation::signaturesSubset(sig, signatories);
-              };
-    }
-
-    template bool QueryProcessorImpl::checkSignatories<
-        shared_model::interface::Query>(const shared_model::interface::Query &);
-    template bool
-    QueryProcessorImpl::checkSignatories<shared_model::interface::BlocksQuery>(
-        const shared_model::interface::BlocksQuery &);
-
+    
     std::unique_ptr<shared_model::interface::QueryResponse>
     QueryProcessorImpl::queryHandle(const shared_model::interface::Query &qry) {
       auto executor = qry_exec_->createQueryExecutor(pending_transactions_,
@@ -73,13 +53,6 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::BlockQueryResponse>>
     QueryProcessorImpl::blocksQueryHandle(
         const shared_model::interface::BlocksQuery &qry) {
-      if (not checkSignatories(qry)) {
-        std::shared_ptr<shared_model::interface::BlockQueryResponse> response =
-            response_factory_->createBlockQueryResponse(
-                "query signatories did not pass validation");
-        return rxcpp::observable<>::just(std::move(response));
-      }
-
       auto exec = qry_exec_->createQueryExecutor(pending_transactions_,
                                                  response_factory_);
       if (not exec or not(exec | [&qry](const auto &executor) {
