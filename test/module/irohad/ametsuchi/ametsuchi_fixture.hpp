@@ -43,12 +43,6 @@ namespace iroha {
      protected:
       bool initialised = false;
 
-      virtual void disconnect() {
-        sql->close();
-        storage->dropStorage();
-        boost::filesystem::remove_all(block_store_path);
-      }
-
       virtual void connect() {
         perm_converter_ =
             std::make_shared<shared_model::proto::ProtoPermissionToString>();
