@@ -26,6 +26,8 @@ using ::testing::Truly;
 struct OnDemandOrderingGateTest : public ::testing::Test {
   void SetUp() override {
     ordering_service = std::make_shared<MockOnDemandOrderingService>();
+    EXPECT_CALL(*ordering_service, get_outdated_proposals_observable())
+        .Times(testing::AnyNumber());
     notification = std::make_shared<MockOdOsNotification>();
     auto ufactory = std::make_unique<MockUnsafeProposalFactory>();
     factory = ufactory.get();

@@ -31,12 +31,21 @@ namespace iroha {
     }  // namespace transport
 
     struct MockOnDemandOrderingService : public OnDemandOrderingService {
+      MockOnDemandOrderingService() {
+        ON_CALL(*this, get_outdated_proposals_observable())
+            .WillByDefault(testing::Return(
+                rxcpp::observable<>::never<BatchesForRoundNotification>()));
+      }
+
       MOCK_METHOD2(onBatches, void(consensus::Round, CollectionType));
 
       MOCK_METHOD1(onRequestProposal,
                    boost::optional<ProposalType>(consensus::Round));
 
       MOCK_METHOD1(onCollaborationOutcome, void(consensus::Round));
+
+      MOCK_CONST_METHOD0(get_outdated_proposals_observable,
+                         rxcpp::observable<BatchesForRoundNotification>());
     };
 
   }  // namespace ordering
