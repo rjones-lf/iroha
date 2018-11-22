@@ -60,6 +60,12 @@ target_link_libraries(postgres_query_executor_test
     ametsuchi
     )
 
+addtest(tx_presence_cache_test tx_presence_cache_test.cpp)
+target_link_libraries(tx_presence_cache_test
+    ametsuchi
+    shared_model_interfaces_factories
+    )
+
 add_library(ametsuchi_fixture INTERFACE)
 target_link_libraries(ametsuchi_fixture INTERFACE
     integration_framework_config_helper
