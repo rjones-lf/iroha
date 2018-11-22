@@ -27,6 +27,7 @@
 #include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/permission_to_string.hpp"
+#include "utils/string_builder.hpp"
 
 namespace {
   struct PreparedStatement {
@@ -75,14 +76,11 @@ namespace {
     sql << queries.second;
   }
 
-  /// returns string of concatenates query arguments to pass them further, if
-  /// error happened
-  using QueryArgsLambda = std::function<std::string()>;
-
+  template <typename QueryArgsCallable>
   iroha::expected::Error<iroha::ametsuchi::CommandError> makeCommandError(
       std::string &&command_name,
       const iroha::ametsuchi::CommandError::ErrorCodeType code,
-      QueryArgsLambda &&query_args) noexcept {
+      QueryArgsCallable &&query_args) noexcept {
     return iroha::expected::makeError(iroha::ametsuchi::CommandError{
         std::move(command_name), code, query_args()});
   }
@@ -159,16 +157,18 @@ namespace {
   // parsing vs nested queries
   /**
    * Get an error code from the text SQL error
+   * @tparam QueryArgsCallable - type of callable to get query arguments
    * @param command_name - name of the failed command
    * @param error - string error, which SQL gave out
    * @param query_args - callable to get a string representation of query
    * arguments
    * @return command_error structure
    */
+  template <typename QueryArgsCallable>
   iroha::ametsuchi::CommandResult getCommandError(
       std::string &&command_name,
       const std::string &error,
-      QueryArgsLambda &&query_args) noexcept {
+      QueryArgsCallable &&query_args) noexcept {
     std::string key, to_be_presented;
     bool errors_matched;
 
@@ -182,20 +182,24 @@ namespace {
       if (errors_matched) {
         if (auto real_error_code =
                 getRealErrorCode(fakeErrorCode, command_name)) {
-          return makeCommandError(
-              std::move(command_name), *real_error_code, std::move(query_args));
+          return makeCommandError(std::move(command_name),
+                                  *real_error_code,
+                                  std::forward<QueryArgsCallable>(query_args));
         }
         break;
       }
     }
     // parsing is not successful, return the general error
-    return makeCommandError(std::move(command_name), 1, std::move(query_args));
+    return makeCommandError(std::move(command_name),
+                            1,
+                            std::forward<QueryArgsCallable>(query_args));
   }
 
   /**
    * Executes sql query
    * Assumes that statement query returns 0 in case of success
    * or error code in case of failure
+   * @tparam QueryArgsCallable - type of callable to get query arguments
    * @param sql - connection on which to execute statement
    * @param cmd - sql query to be executed
    * @param command_name - which command executes a query
@@ -203,22 +207,25 @@ namespace {
    * arguments
    * @return CommandResult with command name and error message
    */
+  template <typename QueryArgsCallable>
   iroha::ametsuchi::CommandResult executeQuery(
       soci::session &sql,
       const std::string &cmd,
       std::string command_name,
-      QueryArgsLambda &&query_args) noexcept {
+      QueryArgsCallable &&query_args) noexcept {
     uint32_t result;
     try {
       sql << cmd, soci::into(result);
       if (result != 0) {
-        return makeCommandError(
-            std::move(command_name), result, std::move(query_args));
+        return makeCommandError(std::move(command_name),
+                                result,
+                                std::forward<QueryArgsCallable>(query_args));
       }
       return {};
     } catch (const std::exception &e) {
-      return getCommandError(
-          std::move(command_name), e.what(), std::move(query_args));
+      return getCommandError(std::move(command_name),
+                             e.what(),
+                             std::forward<QueryArgsCallable>(query_args));
     }
   }
 
@@ -781,10 +788,13 @@ namespace iroha {
       cmd = (cmd % account_id % asset_id % precision % amount);
 
       auto str_args = [&account_id, &asset_id, &amount, precision] {
-        return (boost::format(
-                    "account_id: %s, asset_id: %s, amount: %s, precision: %d")
-                % account_id % asset_id % amount % precision)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("account_id", account_id)
+            .append("asset_id", asset_id)
+            .append("amount", amount)
+            .append("precision", std::to_string(precision))
+            .finalize();
       };
 
       return executeQuery(
@@ -802,7 +812,10 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % peer.pubkey().hex() % peer.address());
 
       auto str_args = [&peer] {
-        return (boost::format("peer: %s") % peer.toString()).str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("peer", peer.toString())
+            .finalize();
       };
 
       return executeQuery(sql_, cmd.str(), "AddPeer", std::move(str_args));
@@ -819,9 +832,11 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
 
       auto str_args = [&account_id, &pubkey] {
-        return (boost::format("account_id: %s, pubkey: %s") % account_id
-                % pubkey)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("account_id", account_id)
+            .append("pubkey", pubkey)
+            .finalize();
       };
 
       return executeQuery(sql_, cmd.str(), "AddSignatory", std::move(str_args));
@@ -838,9 +853,11 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % role_name);
 
       auto str_args = [&account_id, &role_name] {
-        return (boost::format("account_id: %s, role_name: %s") % account_id
-                % role_name)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("account_id", account_id)
+            .append("role_name", role_name)
+            .finalize();
       };
 
       return executeQuery(sql_, cmd.str(), "AppendRole", std::move(str_args));
@@ -861,9 +878,12 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % domain_id % pubkey);
 
       auto str_args = [&account_id, &domain_id, &pubkey] {
-        return (boost::format("account_id: %s, domain_id: %s, pubkey: %s")
-                % account_id % domain_id % pubkey)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("account_id", account_id)
+            .append("domain_id", domain_id)
+            .append("pubkey", pubkey)
+            .finalize();
       };
 
       return executeQuery(
@@ -882,9 +902,12 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % asset_id % domain_id % precision);
 
       auto str_args = [&domain_id, &asset_id, precision] {
-        return (boost::format("domain_id: %s, asset_id: %s, precision: %d")
-                % domain_id % asset_id % precision)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("domain_id", domain_id)
+            .append("asset_id", asset_id)
+            .append("precision", std::to_string(precision))
+            .finalize();
       };
 
       return executeQuery(sql_, cmd.str(), "CreateAsset", std::move(str_args));
@@ -901,9 +924,11 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % domain_id % default_role);
 
       auto str_args = [&domain_id, &default_role] {
-        return (boost::format("domain_id: %s, default_role: %s") % domain_id
-                % default_role)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("domain_id", domain_id)
+            .append("default_role", default_role)
+            .finalize();
       };
 
       return executeQuery(sql_, cmd.str(), "CreateDomain", std::move(str_args));
@@ -923,8 +948,11 @@ namespace iroha {
       auto str_args = [&role_id, &perm_str] {
         // TODO [IR-1889] Akvinikym 21.11.18: integrate
         // PermissionSet::toString() instead of bit string, when it is created
-        return (boost::format("role_id: %s, perm_str: %s") % role_id % perm_str)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("role_id", role_id)
+            .append("perm_str", perm_str)
+            .finalize();
       };
 
       return executeQuery(sql_, cmd.str(), "CreateRole", std::move(str_args));
@@ -941,9 +969,11 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % role_name);
 
       auto str_args = [&account_id, &role_name] {
-        return (boost::format("account_id: %s, role_name: %s") % account_id
-                % role_name)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("account_id", account_id)
+            .append("role_name", role_name)
+            .finalize();
       };
 
       return executeQuery(sql_, cmd.str(), "DetachRole", std::move(str_args));
@@ -970,10 +1000,12 @@ namespace iroha {
       auto str_args = [&creator_account_id_ = creator_account_id_,
                        &permittee_account_id,
                        permission = perm_converter_->toString(permission)] {
-        return (boost::format("creator_account_id_: %s, permittee_account_id: "
-                              "%s, permission: %s")
-                % creator_account_id_ % permittee_account_id % permission)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("creator_account_id_", creator_account_id_)
+            .append("permittee_account_id", permittee_account_id)
+            .append("permission", permission)
+            .finalize();
       };
 
       return executeQuery(
@@ -991,9 +1023,11 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
 
       auto str_args = [&account_id, &pubkey] {
-        return (boost::format("account_id: %s, pubkey: %s") % account_id
-                % pubkey)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("account_id", account_id)
+            .append("pubkey", pubkey)
+            .finalize();
       };
 
       return executeQuery(
@@ -1023,10 +1057,12 @@ namespace iroha {
       auto str_args = [&creator_account_id_ = creator_account_id_,
                        &permittee_account_id,
                        permission = perm_converter_->toString(permission)] {
-        return (boost::format("creator_account_id_: %s, permittee_account_id: "
-                              "%s, permission: %s")
-                % creator_account_id_ % permittee_account_id % permission)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("creator_account_id_", creator_account_id_)
+            .append("permittee_account_id", permittee_account_id)
+            .append("permission", permission)
+            .finalize();
       };
 
       return executeQuery(
@@ -1056,9 +1092,12 @@ namespace iroha {
              % empty_json);
 
       auto str_args = [&account_id, &key, &value] {
-        return (boost::format("account_id: %s, key: %s, value: %s") % account_id
-                % key % value)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("account_id", account_id)
+            .append("key", key)
+            .append("value", value)
+            .finalize();
       };
 
       return executeQuery(
@@ -1076,9 +1115,11 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % quorum);
 
       auto str_args = [&account_id, quorum] {
-        return (boost::format("account_id: %s, quorum: %d") % account_id
-                % quorum)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("account_id", account_id)
+            .append("quorum", std::to_string(quorum))
+            .finalize();
       };
 
       return executeQuery(sql_, cmd.str(), "SetQuorum", std::move(str_args));
@@ -1099,10 +1140,13 @@ namespace iroha {
                        &asset_id,
                        &amount,
                        precision] {
-        return (boost::format("creator_account_id_: %s, asset_id: %s, amount: "
-                              "%s, precision: %d")
-                % creator_account_id_ % asset_id % amount % precision)
-            .str();
+        return shared_model::detail::PrettyStringBuilder()
+            .init("Query arguments")
+            .append("creator_account_id", creator_account_id_)
+            .append("asset_id", asset_id)
+            .append("amount", amount)
+            .append("precision", std::to_string(precision))
+            .finalize();
       };
 
       return executeQuery(
@@ -1126,11 +1170,14 @@ namespace iroha {
 
       auto str_args =
           [&src_account_id, &dest_account_id, &asset_id, &amount, precision] {
-            return (boost::format("src_account_id: %s, dest_account_id: %s, "
-                                  "asset_id: %s, amount: %s, precision: %d")
-                    % src_account_id % dest_account_id % asset_id % amount
-                    % precision)
-                .str();
+            return shared_model::detail::PrettyStringBuilder()
+                .init("Query arguments")
+                .append("src_account_id", src_account_id)
+                .append("dest_account_id", dest_account_id)
+                .append("asset_id", asset_id)
+                .append("amount", amount)
+                .append("precision", std::to_string(precision))
+                .finalize();
           };
 
       return executeQuery(

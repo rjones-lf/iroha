@@ -192,18 +192,19 @@ namespace iroha {
     TEST_F(AddAccountAssetTest, Valid) {
       addAsset();
       addAllPerms();
-      ASSERT_TRUE(val(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                   .creatorAccountId(account->accountId())))));
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())))));
       auto account_asset =
           query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance().toStringRepr());
-      ASSERT_TRUE(val(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                   .creatorAccountId(account->accountId())))));
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())))));
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ("2.0", account_asset.get()->balance().toStringRepr());
@@ -216,20 +217,21 @@ namespace iroha {
      */
     TEST_F(AddAccountAssetTest, NoPerms) {
       addAsset();
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                       .creatorAccountId(account->accountId())),
-                      true)));
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
       auto account_asset =
           query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
 
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder()
-                                   .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                   .creatorAccountId(account->accountId())));
+      auto cmd_result = execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())));
 
       std::vector<std::string> query_args{
           account->accountId(), asset_amount_one_zero, asset_id, "1"};
@@ -242,11 +244,11 @@ namespace iroha {
      * @then account asset fails to be added
      */
     TEST_F(AddAccountAssetTest, InvalidAsset) {
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder()
-                                   .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                   .creatorAccountId(account->accountId())),
-                  true);
+      auto cmd_result = execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true);
 
       std::vector<std::string> query_args{
           account->accountId(), asset_amount_one_zero, asset_id, "1"};
@@ -1676,30 +1678,32 @@ namespace iroha {
     TEST_F(SubtractAccountAssetTest, Valid) {
       addAllPerms();
       addAsset();
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                       .creatorAccountId(account->accountId())),
-                      true)));
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
       auto account_asset =
           query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance().toStringRepr());
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                       .creatorAccountId(account->accountId())),
-                      true)));
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ("2.0", account_asset.get()->balance().toStringRepr());
-      ASSERT_TRUE(val(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .subtractAssetQuantity(asset_id, asset_amount_one_zero)
-                                   .creatorAccountId(account->accountId())))));
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder()
+              .subtractAssetQuantity(asset_id, asset_amount_one_zero)
+              .creatorAccountId(account->accountId())))));
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
     }
 
     /**
@@ -1709,20 +1713,21 @@ namespace iroha {
      */
     TEST_F(SubtractAccountAssetTest, NoPerms) {
       addAsset();
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                       .creatorAccountId(account->accountId())),
-                      true)));
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
       auto account_asset =
           query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
 
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder()
-                                   .subtractAssetQuantity(asset_id, asset_amount_one_zero)
-                                   .creatorAccountId(account->accountId())));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder()
+              .subtractAssetQuantity(asset_id, asset_amount_one_zero)
+              .creatorAccountId(account->accountId())));
 
       std::vector<std::string> query_args{
           account->accountId(), asset_id, asset_amount_one_zero, "1"};
@@ -1730,7 +1735,8 @@ namespace iroha {
 
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
     }
 
     /**
@@ -1740,10 +1746,10 @@ namespace iroha {
      */
     TEST_F(SubtractAccountAssetTest, NoAsset) {
       addAllPerms();
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder()
-                                   .subtractAssetQuantity(asset_id, asset_amount_one_zero)
-                                   .creatorAccountId(account->accountId())));
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder()
+              .subtractAssetQuantity(asset_id, asset_amount_one_zero)
+              .creatorAccountId(account->accountId())));
 
       std::vector<std::string> query_args{
           account->accountId(), asset_id, asset_amount_one_zero, "1"};
@@ -1776,11 +1782,11 @@ namespace iroha {
     TEST_F(SubtractAccountAssetTest, NotEnoughAsset) {
       addAllPerms();
       addAsset();
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                       .creatorAccountId(account->accountId())),
-                      true)));
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
       auto cmd_result =
           execute(buildCommand(TestTransactionBuilder()
                                    .subtractAssetQuantity(asset_id, "2.0")
@@ -1851,20 +1857,21 @@ namespace iroha {
       addAllPerms();
       addAllPerms(account2->accountId(), "all2");
       addAsset();
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                       .creatorAccountId(account->accountId())),
-                      true)));
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
       auto account_asset =
           query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance().toStringRepr());
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                       .creatorAccountId(account->accountId())),
-                      true)));
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ("2.0", account_asset.get()->balance().toStringRepr());
@@ -1876,10 +1883,12 @@ namespace iroha {
                                                  asset_amount_one_zero)))));
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
       account_asset = query->getAccountAsset(account2->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
     }
 
     /**
@@ -1918,10 +1927,12 @@ namespace iroha {
                       account2->accountId())));
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
       account_asset = query->getAccountAsset(account2->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
-      ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance().toStringRepr());
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
     }
 
     /**
@@ -1937,8 +1948,11 @@ namespace iroha {
                                                  "desc",
                                                  asset_amount_one_zero)));
 
-      std::vector<std::string> query_args{
-          account->accountId(), account2->accountId(), asset_id, asset_amount_one_zero, "1"};
+      std::vector<std::string> query_args{account->accountId(),
+                                          account2->accountId(),
+                                          asset_id,
+                                          asset_amount_one_zero,
+                                          "1"};
       CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 2, query_args);
     }
 
@@ -1951,30 +1965,43 @@ namespace iroha {
       addAllPerms();
       addAllPerms(account2->accountId(), "all2");
       addAsset();
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                       .creatorAccountId(account->accountId())),
-                      true)));
-      auto cmd_result = execute(
-          buildCommand(TestTransactionBuilder().transferAsset(
-              "some@domain", account2->accountId(), asset_id, "desc", asset_amount_one_zero)),
-          true);
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
+      auto cmd_result =
+          execute(buildCommand(TestTransactionBuilder().transferAsset(
+                      "some@domain",
+                      account2->accountId(),
+                      asset_id,
+                      "desc",
+                      asset_amount_one_zero)),
+                  true);
 
       {
-        std::vector<std::string> query_args{
-            "some@domain", account2->accountId(), asset_id, asset_amount_one_zero, "1"};
+        std::vector<std::string> query_args{"some@domain",
+                                            account2->accountId(),
+                                            asset_id,
+                                            asset_amount_one_zero,
+                                            "1"};
         CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 3, query_args);
       }
 
-      cmd_result = execute(
-          buildCommand(TestTransactionBuilder().transferAsset(
-              account->accountId(), "some@domain", asset_id, "desc", asset_amount_one_zero)),
-          true);
+      cmd_result = execute(buildCommand(TestTransactionBuilder().transferAsset(
+                               account->accountId(),
+                               "some@domain",
+                               asset_id,
+                               "desc",
+                               asset_amount_one_zero)),
+                           true);
 
       {
-        std::vector<std::string> query_args{
-            account->accountId(), "some@domain", asset_id, asset_amount_one_zero, "1"};
+        std::vector<std::string> query_args{account->accountId(),
+                                            "some@domain",
+                                            asset_id,
+                                            asset_amount_one_zero,
+                                            "1"};
         CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 4, query_args);
       }
     }
@@ -1994,8 +2021,11 @@ namespace iroha {
                                                  "desc",
                                                  asset_amount_one_zero)));
 
-      std::vector<std::string> query_args{
-          account->accountId(), account2->accountId(), asset_id, asset_amount_one_zero, "1"};
+      std::vector<std::string> query_args{account->accountId(),
+                                          account2->accountId(),
+                                          asset_id,
+                                          asset_amount_one_zero,
+                                          "1"};
       CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 5, query_args);
     }
 
@@ -2008,11 +2038,11 @@ namespace iroha {
       addAllPerms();
       addAllPerms(account2->accountId(), "all2");
       addAsset();
-      ASSERT_TRUE(
-          val(execute(buildCommand(TestTransactionBuilder()
-                                       .addAssetQuantity(asset_id, asset_amount_one_zero)
-                                       .creatorAccountId(account->accountId())),
-                      true)));
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
       auto cmd_result = execute(buildCommand(
           TestTransactionBuilder().transferAsset(account->accountId(),
                                                  account2->accountId(),
