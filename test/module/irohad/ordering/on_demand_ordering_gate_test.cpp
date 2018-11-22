@@ -202,17 +202,17 @@ TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
 
   // initialize mock transaction
   auto tx1 = std::make_shared<NiceMock<MockTransaction>>();
-  auto hash = shared_model::interface::types::BlobType("mock code is readable");
-  ON_CALL(*tx1, payload())
+  auto hash = shared_model::crypto::Hash("mock code is readable");
+  ON_CALL(*tx1, hash())
       .WillByDefault(testing::ReturnRef(testing::Const(hash)));
   std::vector<decltype(tx1)> txs{tx1};
   auto tx_range = txs | boost::adaptors::indirected;
 
   // initialize mock proposal
-  auto proposal = new NiceMock<MockProposal>();
-  boost::optional<OdOsNotification::ProposalType> arriving_proposal =
-      std::unique_ptr<shared_model::interface::Proposal>(proposal);
+  auto proposal = std::make_unique<NiceMock<MockProposal>>();
   ON_CALL(*proposal, transactions()).WillByDefault(Return(tx_range));
+  boost::optional<OdOsNotification::ProposalType> arriving_proposal =
+      std::unique_ptr<shared_model::interface::Proposal>(std::move(proposal));
 
   // set expectations for ordering service
   EXPECT_CALL(*ordering_service, onCollaborationOutcome(initial_round))
