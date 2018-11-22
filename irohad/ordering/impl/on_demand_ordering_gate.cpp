@@ -87,7 +87,7 @@ OnDemandOrderingGate::processProposalRequest(
 std::unique_ptr<shared_model::interface::Proposal>
 OnDemandOrderingGate::removeReplays(
     const shared_model::interface::Proposal &proposal) const {
-  auto not_processed_txs = [this](const auto &tx) {
+  auto tx_is_not_processed = [this](const auto &tx) {
     auto tx_result = tx_cache_->check(tx.hash());
     return iroha::visit_in_place(
         tx_result,
@@ -101,7 +101,7 @@ OnDemandOrderingGate::removeReplays(
         });
   };
   auto unprocessed_txs =
-      boost::adaptors::filter(proposal.transactions(), not_processed_txs);
+      boost::adaptors::filter(proposal.transactions(), tx_is_not_processed);
 
   return proposal_factory_->unsafeCreateProposal(
       proposal.height(), proposal.createdTime(), unprocessed_txs);
