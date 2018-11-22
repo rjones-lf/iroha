@@ -65,8 +65,6 @@ struct MockTransaction : public shared_model::interface::Transaction {
   MOCK_CONST_METHOD0(
       batchMeta,
       boost::optional<std::shared_ptr<shared_model::interface::BatchMeta>>());
-  MOCK_CONST_METHOD0(reducedHash,
-                     const shared_model::interface::types::HashType &());
 };
 
 struct MockSignature : public shared_model::interface::Signature {
