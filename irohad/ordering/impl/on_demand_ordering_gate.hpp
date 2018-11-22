@@ -66,14 +66,14 @@ namespace iroha {
        * Handle an incoming proposal from ordering service
        */
       std::unique_ptr<shared_model::interface::Proposal> processProposalRequest(
-          const boost::optional<OnDemandOrderingService::ProposalType>
-              &proposal) const;
+          boost::optional<OnDemandOrderingService::ProposalType>
+              &&proposal) const;
 
       /**
        * remove already processed transactions from proposal
        */
       std::unique_ptr<shared_model::interface::Proposal> removeReplays(
-          const shared_model::interface::Proposal &proposal) const;
+          shared_model::interface::Proposal &&proposal) const;
 
       std::shared_ptr<OnDemandOrderingService> ordering_service_;
       std::shared_ptr<transport::OdOsNotification> network_client_;

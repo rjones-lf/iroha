@@ -81,7 +81,8 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
   OnDemandOrderingGate::BlockEvent event = {block};
   consensus::Round round{event->height(), 1};
 
-  boost::optional<OdOsNotification::ProposalType> oproposal(nullptr);
+  boost::optional<OdOsNotification::ProposalType> oproposal(
+      std::make_unique<MockProposal>());
   auto proposal = oproposal.value().get();
 
   EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
@@ -108,7 +109,8 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
   consensus::Round round{initial_round.block_round,
                          initial_round.reject_round + 1};
 
-  boost::optional<OdOsNotification::ProposalType> oproposal(nullptr);
+  boost::optional<OdOsNotification::ProposalType> oproposal(
+      std::make_unique<MockProposal>());
   auto proposal = oproposal.value().get();
 
   EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
@@ -203,8 +205,7 @@ TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
   // initialize mock transaction
   auto tx1 = std::make_shared<NiceMock<MockTransaction>>();
   auto hash = shared_model::crypto::Hash("mock code is readable");
-  ON_CALL(*tx1, hash())
-      .WillByDefault(testing::ReturnRef(testing::Const(hash)));
+  ON_CALL(*tx1, hash()).WillByDefault(testing::ReturnRef(testing::Const(hash)));
   std::vector<decltype(tx1)> txs{tx1};
   auto tx_range = txs | boost::adaptors::indirected;
 

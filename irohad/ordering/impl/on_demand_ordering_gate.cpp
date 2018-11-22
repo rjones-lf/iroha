@@ -6,6 +6,7 @@
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 
 #include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/empty.hpp>
 #include "ametsuchi/tx_presence_cache.hpp"
 #include "common/visitor.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
@@ -44,7 +45,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         // request proposal for the current round
         auto proposal = network_client_->onRequestProposal(current_round_);
 
-        auto final_proposal = this->processProposalRequest(proposal);
+        auto final_proposal = this->processProposalRequest(std::move(proposal));
         // vote for the object received from the network
         proposal_notifier_.get_subscriber().on_next(std::move(final_proposal));
       })),
@@ -72,21 +73,21 @@ void OnDemandOrderingGate::setPcs(
 
 std::unique_ptr<shared_model::interface::Proposal>
 OnDemandOrderingGate::processProposalRequest(
-    const boost::optional<OnDemandOrderingService::ProposalType> &proposal)
-    const {
+    boost::optional<OnDemandOrderingService::ProposalType> &&proposal) const {
   if (not proposal) {
     return proposal_factory_->unsafeCreateProposal(
-      current_round_.block_round, current_round_.reject_round, {});
+        current_round_.block_round, current_round_.reject_round, {});
   }
-  if (not *proposal) {
-    return nullptr;
+  // no need to check empty proposal
+  if (boost::empty(proposal.value()->transactions())) {
+    return std::move(proposal.value());
   }
-  return removeReplays(**proposal);
+  return removeReplays(std::move(**std::move(proposal)));
 }
 
 std::unique_ptr<shared_model::interface::Proposal>
 OnDemandOrderingGate::removeReplays(
-    const shared_model::interface::Proposal &proposal) const {
+    shared_model::interface::Proposal &&proposal) const {
   auto tx_is_not_processed = [this](const auto &tx) {
     auto tx_result = tx_cache_->check(tx.hash());
     return iroha::visit_in_place(
