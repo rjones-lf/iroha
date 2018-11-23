@@ -44,7 +44,7 @@ namespace iroha {
       transport_->propagateBatch(batch);
     }
 
-    rxcpp::observable<network::OrderingEvent> OrderingGateImpl::on_proposal() {
+    rxcpp::observable<network::OrderingEvent> OrderingGateImpl::onProposal() {
       return proposals_.get_observable();
     }
 

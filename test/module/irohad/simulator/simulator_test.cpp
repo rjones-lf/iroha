@@ -109,8 +109,8 @@ auto makeProposal(int height) {
 }
 
 TEST_F(SimulatorTest, ValidWhenInitialized) {
-  // simulator constructor => on_proposal subscription called
-  EXPECT_CALL(*ordering_gate, on_proposal())
+  // simulator constructor => onProposal subscription called
+  EXPECT_CALL(*ordering_gate, onProposal())
       .WillOnce(Return(rxcpp::observable<>::empty<OrderingEvent>()));
 
   init();
@@ -147,7 +147,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
       .WillOnce(Return(
           std::make_pair(proposal, iroha::validation::TransactionsErrors{})));
 
-  EXPECT_CALL(*ordering_gate, on_proposal())
+  EXPECT_CALL(*ordering_gate, onProposal())
       .WillOnce(Return(rxcpp::observable<>::empty<OrderingEvent>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
@@ -188,7 +188,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
-  EXPECT_CALL(*ordering_gate, on_proposal())
+  EXPECT_CALL(*ordering_gate, onProposal())
       .WillOnce(Return(rxcpp::observable<>::empty<OrderingEvent>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
@@ -224,7 +224,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
-  EXPECT_CALL(*ordering_gate, on_proposal())
+  EXPECT_CALL(*ordering_gate, onProposal())
       .WillOnce(Return(rxcpp::observable<>::empty<OrderingEvent>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
@@ -298,7 +298,7 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
   EXPECT_CALL(*validator, validate(_, _))
       .WillOnce(Return(std::make_pair(verified_proposal, tx_errors)));
 
-  EXPECT_CALL(*ordering_gate, on_proposal())
+  EXPECT_CALL(*ordering_gate, onProposal())
       .WillOnce(Return(rxcpp::observable<>::empty<OrderingEvent>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,

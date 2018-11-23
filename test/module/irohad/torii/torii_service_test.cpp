@@ -68,7 +68,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
       std::shared_ptr<shared_model::interface::TransactionBatch> batch)
       const override {}
 
-  rxcpp::observable<OrderingEvent> on_proposal() const override {
+  rxcpp::observable<OrderingEvent> onProposal() const override {
     return prop_notifier_.get_observable();
   }
 
@@ -78,7 +78,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
 
   rxcpp::observable<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
-  on_verified_proposal() const override {
+  onVerifiedProposal() const override {
     return verified_prop_notifier_.get_observable();
   }
 

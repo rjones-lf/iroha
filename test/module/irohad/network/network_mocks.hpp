@@ -44,13 +44,13 @@ namespace iroha {
           propagate_batch,
           void(std::shared_ptr<shared_model::interface::TransactionBatch>));
 
-      MOCK_CONST_METHOD0(on_proposal, rxcpp::observable<OrderingEvent>());
+      MOCK_CONST_METHOD0(onProposal, rxcpp::observable<OrderingEvent>());
 
       MOCK_CONST_METHOD0(
           on_commit, rxcpp::observable<synchronizer::SynchronizationEvent>());
 
       MOCK_CONST_METHOD0(
-          on_verified_proposal,
+          onVerifiedProposal,
           rxcpp::observable<
               std::shared_ptr<validation::VerifiedProposalAndErrors>>());
     };
@@ -79,7 +79,7 @@ namespace iroha {
           propagateBatch,
           void(std::shared_ptr<shared_model::interface::TransactionBatch>));
 
-      MOCK_METHOD0(on_proposal, rxcpp::observable<OrderingEvent>());
+      MOCK_METHOD0(onProposal, rxcpp::observable<OrderingEvent>());
 
       MOCK_METHOD1(setPcs, void(const PeerCommunicationService &));
     };

@@ -39,7 +39,7 @@ namespace iroha {
        * Return observable of all proposals in the consensus
        * @return observable with notifications
        */
-      virtual rxcpp::observable<OrderingEvent> on_proposal() = 0;
+      virtual rxcpp::observable<OrderingEvent> onProposal() = 0;
 
       /**
        * Set peer communication service for commit notification

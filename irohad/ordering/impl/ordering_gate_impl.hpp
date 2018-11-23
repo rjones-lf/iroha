@@ -71,7 +71,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)
           const override;
 
-      rxcpp::observable<network::OrderingEvent> on_proposal() override;
+      rxcpp::observable<network::OrderingEvent> onProposal() override;
 
       void setPcs(const iroha::network::PeerCommunicationService &pcs) override;
 

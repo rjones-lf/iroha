@@ -48,7 +48,7 @@ namespace iroha {
           status_bus_(std::move(status_bus)),
           log_(logger::log("TxProcessor")) {
       // process stateful validation results
-      pcs_->on_verified_proposal().subscribe(
+      pcs_->onVerifiedProposal().subscribe(
           [this](std::shared_ptr<validation::VerifiedProposalAndErrors>
                      proposal_and_errors) {
             // notify about failed txs

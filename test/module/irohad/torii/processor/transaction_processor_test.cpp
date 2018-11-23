@@ -43,7 +43,7 @@ class TransactionProcessorTest : public ::testing::Test {
 
     EXPECT_CALL(*pcs, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
-    EXPECT_CALL(*pcs, on_verified_proposal())
+    EXPECT_CALL(*pcs, onVerifiedProposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
     EXPECT_CALL(*mst, onStateUpdateImpl())

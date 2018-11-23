@@ -39,7 +39,7 @@ namespace iroha {
        * @return observable with Proposals.
        * (List of Proposals)
        */
-      virtual rxcpp::observable<OrderingEvent> on_proposal() const = 0;
+      virtual rxcpp::observable<OrderingEvent> onProposal() const = 0;
 
       /**
        * Event is triggered when verified proposal arrives
@@ -47,7 +47,7 @@ namespace iroha {
        */
       virtual rxcpp::observable<
           std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
-      on_verified_proposal() const = 0;
+      onVerifiedProposal() const = 0;
 
       /**
        * Event is triggered when commit block arrives.

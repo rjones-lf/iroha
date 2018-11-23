@@ -27,14 +27,14 @@ namespace iroha {
       ordering_gate_->propagateBatch(batch);
     }
 
-    rxcpp::observable<OrderingEvent> PeerCommunicationServiceImpl::on_proposal()
+    rxcpp::observable<OrderingEvent> PeerCommunicationServiceImpl::onProposal()
         const {
-      return ordering_gate_->on_proposal();
+      return ordering_gate_->onProposal();
     }
 
     rxcpp::observable<
         std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
-    PeerCommunicationServiceImpl::on_verified_proposal() const {
+    PeerCommunicationServiceImpl::onVerifiedProposal() const {
       return proposal_creator_->onVerifiedProposal();
     }
 

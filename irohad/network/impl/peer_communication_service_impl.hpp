@@ -27,11 +27,11 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)
           const override;
 
-      rxcpp::observable<OrderingEvent> on_proposal() const override;
+      rxcpp::observable<OrderingEvent> onProposal() const override;
 
       rxcpp::observable<
           std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
-      on_verified_proposal() const override;
+      onVerifiedProposal() const override;
 
       rxcpp::observable<synchronizer::SynchronizationEvent> on_commit()
           const override;

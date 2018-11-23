@@ -81,7 +81,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
   EXPECT_CALL(*factory, unsafeCreateProposal(_, _, _)).Times(0);
 
   auto gate_wrapper =
-      make_test_subscriber<CallExact>(ordering_gate->on_proposal(), 1);
+      make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
   gate_wrapper.subscribe(
       [&](auto val) { ASSERT_EQ(proposal, getProposalUnsafe(val).get()); });
 
@@ -109,7 +109,7 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
   EXPECT_CALL(*factory, unsafeCreateProposal(_, _, _)).Times(0);
 
   auto gate_wrapper =
-      make_test_subscriber<CallExact>(ordering_gate->on_proposal(), 1);
+      make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
   gate_wrapper.subscribe(
       [&](auto val) { ASSERT_EQ(proposal, getProposalUnsafe(val).get()); });
 
@@ -143,7 +143,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
       .WillOnce(Return(ByMove(std::move(uproposal))));
 
   auto gate_wrapper =
-      make_test_subscriber<CallExact>(ordering_gate->on_proposal(), 1);
+      make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
   gate_wrapper.subscribe(
       [&](auto val) { ASSERT_EQ(proposal, getProposalUnsafe(val).get()); });
 
@@ -175,7 +175,7 @@ TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
       .WillOnce(Return(ByMove(std::move(uproposal))));
 
   auto gate_wrapper =
-      make_test_subscriber<CallExact>(ordering_gate->on_proposal(), 1);
+      make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
   gate_wrapper.subscribe(
       [&](auto val) { ASSERT_EQ(proposal, getProposalUnsafe(val).get()); });
 

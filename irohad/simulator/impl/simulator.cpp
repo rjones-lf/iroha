@@ -29,7 +29,7 @@ namespace iroha {
           crypto_signer_(std::move(crypto_signer)),
           block_factory_(std::move(block_factory)),
           log_(logger::log("Simulator")) {
-      ordering_gate->on_proposal().subscribe(
+      ordering_gate->onProposal().subscribe(
           proposal_subscription_, [this](const network::OrderingEvent &event) {
             this->processProposal(**event.proposal);
           });

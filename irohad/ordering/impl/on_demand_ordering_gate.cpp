@@ -70,7 +70,7 @@ void OnDemandOrderingGate::propagateBatch(
   network_client_->onBatches(current_round_, {batch});
 }
 
-rxcpp::observable<network::OrderingEvent> OnDemandOrderingGate::on_proposal() {
+rxcpp::observable<network::OrderingEvent> OnDemandOrderingGate::onProposal() {
   return proposal_notifier_.get_observable();
 }
 

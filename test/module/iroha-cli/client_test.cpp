@@ -83,11 +83,11 @@ class ClientServerTest : public testing::Test {
     rxcpp::subjects::subject<OrderingEvent> prop_notifier;
     rxcpp::subjects::subject<iroha::synchronizer::SynchronizationEvent>
         commit_notifier;
-    EXPECT_CALL(*pcsMock, on_proposal())
+    EXPECT_CALL(*pcsMock, onProposal())
         .WillRepeatedly(Return(prop_notifier.get_observable()));
     EXPECT_CALL(*pcsMock, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
-    EXPECT_CALL(*pcsMock, on_verified_proposal())
+    EXPECT_CALL(*pcsMock, onVerifiedProposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
     EXPECT_CALL(*mst, onStateUpdateImpl())

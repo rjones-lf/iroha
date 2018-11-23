@@ -139,7 +139,7 @@ namespace integration_framework {
 
     auto proposals = iroha_instance_->getIrohaInstance()
                          ->getPeerCommunicationService()
-                         ->on_proposal();
+                         ->onProposal();
 
     proposals
         .filter([](const auto &event) {
@@ -161,7 +161,7 @@ namespace integration_framework {
 
     iroha_instance_->getIrohaInstance()
         ->getPeerCommunicationService()
-        ->on_verified_proposal()
+        ->onVerifiedProposal()
         .zip(proposals)
         .flat_map(proposal_flat_map)
         .subscribe([this](auto verified_proposal_and_errors) {
