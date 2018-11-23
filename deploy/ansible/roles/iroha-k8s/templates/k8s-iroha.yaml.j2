@@ -32,7 +32,7 @@ spec:
       initContainers:
       - name: copy-data
         image: busybox
-        command: ['sh', '-c', 'cp -v /opt/secrets/$PODNAME/node* /opt/iroha_data && cp -v /opt/iroha_config/* /opt/iroha_data && tail /opt/iroha_data/*']
+        command: ['sh', '-c', 'cp -v /opt/secrets/$PODNAME/node* /opt/iroha_data && cp -v /opt/iroha_config/* /opt/iroha_data']
         env:
           - name: PODNAME
             valueFrom:
@@ -61,29 +61,19 @@ spec:
             value: /var/lib/postgresql/data/pgdata
         livenessProbe:
           exec:
-            command:
-            - pg_isready
-            - -h
-            - localhost
-            - -U
-            - postgres
+            command: ["pg_isready", "-h", "localhost", "-U", "postgres"]
           initialDelaySeconds: 30
           timeoutSeconds: 5
         readinessProbe:
           exec:
-            command:
-            - pg_isready
-            - -h
-            - localhost
-            - -U
-            - postgres
+            command: ["pg_isready", "-h", "localhost", "-U", "postgres"]
           initialDelaySeconds: 5
           timeoutSeconds: 1
         volumeMounts:
         - name: pg-data
           mountPath: /var/lib/postgresql/data
       - name: iroha
-        image: hyperledger/iroha:1.0.0_beta-4
+        image: {{ iroha_image }}
         imagePullPolicy: Always
         ports:
         - containerPort: 10001

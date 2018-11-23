@@ -32,7 +32,7 @@ spec:
       initContainers:
       - name: copy-data
         image: busybox
-        command: ['sh', '-c', 'cp -v /opt/secrets/$PODNAME/node* /opt/iroha_data && cp -v /opt/iroha_config/* /opt/iroha_data && tail /opt/iroha_data/*']
+        command: ['sh', '-c', 'cp -v /opt/secrets/$PODNAME/node* /opt/iroha_data && cp -v /opt/iroha_config/* /opt/iroha_data']
         env:
           - name: PODNAME
             valueFrom:
