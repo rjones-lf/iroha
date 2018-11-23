@@ -78,12 +78,16 @@ namespace iroha {
           all_hashes.zip(all_hashes.skip(1), all_hashes.skip(2));
 
       auto map_peers = [this, peer_query_factory](auto &&latest_data)
-          -> ordering::OnDemandConnectionManager::CurrentPeers {
+          -> ordering::OnDemandConnectionManager::PropagationParams {
         auto &latest_commit = std::get<0>(latest_data);
         auto &current_hashes = std::get<1>(latest_data);
+        consensus::BlockRoundType current_block_round =
+            latest_commit.round.block_round;
 
         auto on_blocks =
-            [this, peer_query_factory, current_hashes](const auto &commit) {
+            [this, peer_query_factory, current_hashes, &current_block_round](
+                const auto &commit) {
+              ++current_block_round;
               current_reject_round_ = ordering::kFirstRejectRound;
 
               // retrieve peer list from database
@@ -127,7 +131,9 @@ namespace iroha {
         };
 
         using ordering::OnDemandConnectionManager;
-        OnDemandConnectionManager::CurrentPeers peers;
+        OnDemandConnectionManager::PropagationParams propagation_params;
+        propagation_params.current_round.block_round = current_block_round;
+        propagation_params.current_round.reject_round = current_reject_round_;
         /*
          * See detailed description in
          * irohad/ordering/impl/on_demand_connection_manager.cpp
@@ -142,16 +148,19 @@ namespace iroha {
          * v, round 2 - kNextRoundCommitConsumer
          * o, round 0 - kIssuer
          */
-        peers.peers.at(OnDemandConnectionManager::kCurrentRoundRejectConsumer) =
+        propagation_params.peers.at(
+            OnDemandConnectionManager::kCurrentRoundRejectConsumer) =
             peer(kCurrentRound,
                  ordering::currentRejectRoundConsumer(current_reject_round_));
-        peers.peers.at(OnDemandConnectionManager::kNextRoundRejectConsumer) =
+        propagation_params.peers.at(
+            OnDemandConnectionManager::kNextRoundRejectConsumer) =
             peer(kNextRound, ordering::kNextRejectRoundConsumer);
-        peers.peers.at(OnDemandConnectionManager::kNextRoundCommitConsumer) =
+        propagation_params.peers.at(
+            OnDemandConnectionManager::kNextRoundCommitConsumer) =
             peer(kRoundAfterNext, ordering::kNextCommitRoundConsumer);
-        peers.peers.at(OnDemandConnectionManager::kIssuer) =
+        propagation_params.peers.at(OnDemandConnectionManager::kIssuer) =
             peer(kCurrentRound, current_reject_round_);
-        return peers;
+        return propagation_params;
       };
 
       auto peers = notifier.get_observable()

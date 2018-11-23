@@ -8,6 +8,7 @@
 
 #include "ordering/on_demand_os_transport.hpp"
 
+#include <condition_variable>
 #include <shared_mutex>
 
 #include <rxcpp/rx.hpp>
@@ -44,19 +45,20 @@ namespace iroha {
        * Current peers to send transactions and request proposals
        * @see PeerType for individual descriptions
        */
-      struct CurrentPeers {
+      struct PropagationParams {
         PeerCollectionType<std::shared_ptr<shared_model::interface::Peer>>
             peers;
+        consensus::Round current_round;
       };
 
       OnDemandConnectionManager(
           std::shared_ptr<transport::OdOsNotificationFactory> factory,
-          rxcpp::observable<CurrentPeers> peers);
+          rxcpp::observable<PropagationParams> propagation_params);
 
       OnDemandConnectionManager(
           std::shared_ptr<transport::OdOsNotificationFactory> factory,
-          rxcpp::observable<CurrentPeers> peers,
-          CurrentPeers initial_peers);
+          rxcpp::observable<PropagationParams> propagation_params,
+          PropagationParams initial_peers);
 
       void onBatches(consensus::Round round, CollectionType batches) override;
 
@@ -76,15 +78,17 @@ namespace iroha {
        * Initialize corresponding peers in connections_ using factory_
        * @param peers to initialize connections with
        */
-      void initializeConnections(const CurrentPeers &peers);
+      void initializeConnections(const PropagationParams &peers);
 
       logger::Logger log_;
       std::shared_ptr<transport::OdOsNotificationFactory> factory_;
       rxcpp::composite_subscription subscription_;
 
       CurrentConnections connections_;
+      consensus::Round current_round_;
 
       std::shared_timed_mutex mutex_;
+      std::condition_variable_any propagation_data_update_cv_;
     };
 
   }  // namespace ordering
