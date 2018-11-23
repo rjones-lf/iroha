@@ -45,6 +45,8 @@ spec:
           mountPath: /opt/secrets/iroha-1
         - name: iroha-secret2
           mountPath: /opt/secrets/iroha-2
+        - name: iroha-secret3
+          mountPath: /opt/secrets/iroha-3
         - name: iroha-config
           mountPath: /opt/iroha_config
         - name: iroha-data
@@ -63,29 +65,19 @@ spec:
             value: /var/lib/postgresql/data/pgdata
         livenessProbe:
           exec:
-            command:
-            - pg_isready
-            - -h
-            - localhost
-            - -U
-            - postgres
+            command: ["pg_isready", "-h", "localhost", "-U", "postgres"]
           initialDelaySeconds: 30
           timeoutSeconds: 5
         readinessProbe:
           exec:
-            command:
-            - pg_isready
-            - -h
-            - localhost
-            - -U
-            - postgres
+            command: ["pg_isready", "-h", "localhost", "-U", "postgres"]
           initialDelaySeconds: 5
           timeoutSeconds: 1
         volumeMounts:
         - name: pg-data
           mountPath: /var/lib/postgresql/data
       - name: iroha
-        image: hyperledger/iroha:1.0.0_beta-4
+        image: hyperledger/iroha@sha256:2b52fdb7d5d1b243ac8d5244ca1c11e146586e11e0582d3ddaa32d6200b78d41
         imagePullPolicy: Always
         ports:
         - containerPort: 10001
@@ -108,6 +100,9 @@ spec:
         - name: iroha-secret2
           secret:
             secretName: iroha-peer-key2
+        - name: iroha-secret3
+          secret:
+            secretName: iroha-peer-key3
         - name: iroha-config
           configMap:
             name: iroha-config
