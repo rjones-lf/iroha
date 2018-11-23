@@ -20,6 +20,8 @@ using ::testing::ByMove;
 using ::testing::Ref;
 using ::testing::Return;
 
+static const consensus::Round kInitialRound{1, 2};
+
 /**
  * Create unique_ptr with MockOdOsNotification, save to var, and return it
  */
@@ -40,19 +42,23 @@ struct OnDemandConnectionManagerTest : public ::testing::Test {
           .WillRepeatedly(CreateAndSave(&ptr));
     };
 
-    for (auto &&pair : boost::combine(cpeers.peers, connections)) {
+    for (auto &&pair : boost::combine(propagation_params.peers, connections)) {
       set(boost::get<0>(pair), boost::get<1>(pair));
     }
+    propagation_params.current_round = kInitialRound;
 
     manager = std::make_shared<OnDemandConnectionManager>(
-        factory, peers.get_observable(), cpeers);
+        factory,
+        propagation_params_subject.get_observable(),
+        propagation_params);
   }
 
-  OnDemandConnectionManager::CurrentPeers cpeers;
+  OnDemandConnectionManager::PropagationParams propagation_params;
   OnDemandConnectionManager::PeerCollectionType<MockOdOsNotification *>
       connections;
 
-  rxcpp::subjects::subject<OnDemandConnectionManager::CurrentPeers> peers;
+  rxcpp::subjects::subject<OnDemandConnectionManager::PropagationParams>
+      propagation_params_subject;
   std::shared_ptr<MockOdOsNotificationFactory> factory;
   std::shared_ptr<OnDemandConnectionManager> manager;
 };
@@ -75,7 +81,7 @@ TEST_F(OnDemandConnectionManagerTest, FactoryUsed) {
  */
 TEST_F(OnDemandConnectionManagerTest, onBatches) {
   OdOsNotification::CollectionType collection;
-  consensus::Round round{1, 2};
+  consensus::Round round{kInitialRound};
 
   auto set_expect = [&](OnDemandConnectionManager::PeerType type,
                         consensus::Round round) {
