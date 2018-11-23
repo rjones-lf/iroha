@@ -66,7 +66,7 @@ def hex_to_b64(hex_string):
     return to_b64(bytearray.fromhex(hex_string))
 
 def print_keys_b64(peers):
-    for i, peer in enumerate(peers):
+    for peer in peers:
         priv_key = peer.priv_key.encode()
         pub_key = peer.pub_key.encode()
         print(to_b64(priv_key) + ',' + to_b64(pub_key))
