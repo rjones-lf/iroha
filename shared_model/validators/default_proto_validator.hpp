@@ -12,12 +12,8 @@
 namespace shared_model {
   namespace validation {
 
-    using DefaultUnsignedProtoTransactionValidator =
-        ProtoTransactionValidator<FieldValidator,
-                                  CommandValidatorVisitor<FieldValidator>>;
-
-    using DefaultOptionalSignedProtoTransactionValidator =
-        SignableModelValidator<DefaultUnsignedProtoTransactionValidator,
+    using DefaultProtoTransactionValidator =
+        SignableModelValidator<ProtoTransactionValidator,
                                const interface::Transaction &,
                                FieldValidator,
                                false>;

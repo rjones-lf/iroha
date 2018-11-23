@@ -192,17 +192,28 @@ void Irohad::initNetworkClient() {
 }
 
 void Irohad::initFactories() {
+  // transactions factories
   transaction_batch_factory_ =
       std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
   std::unique_ptr<shared_model::validation::AbstractValidator<
       shared_model::interface::Transaction>>
-      transaction_validator = std::make_unique<
-          shared_model::validation::
-              DefaultOptionalSignedProtoTransactionValidator>();
+      transaction_validator =
+          std::make_unique<shared_model::validation::
+                               DefaultOptionalSignedTransactionValidator>();
+  std::unique_ptr<
+      shared_model::validation::AbstractValidator<iroha::protocol::Transaction>>
+      proto_transaction_validator = std::make_unique<
+          // make it a direct dependency, without default_proto_validator
+          shared_model::validation::ProtoTransactionValidator>();
   transaction_factory =
       std::make_shared<shared_model::proto::ProtoTransportFactory<
           shared_model::interface::Transaction,
-          shared_model::proto::Transaction>>(std::move(transaction_validator));
+          shared_model::proto::Transaction>>(
+          std::move(transaction_validator),
+          std::move(proto_transaction_validator));
+
+  // query factories
+  // create query factory
 
   query_response_factory_ =
       std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <validators/protobuf/proto_transaction_validator.hpp>
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
@@ -131,13 +132,18 @@ class ClientServerTest : public testing::Test {
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Transaction>>
-        transaction_validator = std::make_unique<
+        interface_transaction_validator = std::make_unique<
             shared_model::validation::DefaultUnsignedTransactionValidator>();
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        iroha::protocol::Transaction>>
+        proto_transaction_validator = std::make_unique<
+            shared_model::validation::ProtoTransactionValidator>();
     auto transaction_factory =
         std::make_shared<shared_model::proto::ProtoTransportFactory<
             shared_model::interface::Transaction,
             shared_model::proto::Transaction>>(
-            std::move(transaction_validator));
+            std::move(interface_transaction_validator),
+            std::move(proto_transaction_validator));
     auto batch_parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     auto batch_factory = std::make_shared<
