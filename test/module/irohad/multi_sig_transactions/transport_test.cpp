@@ -14,8 +14,8 @@
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
-#include "validators/default_proto_validator.hpp"
 #include "validators/field_validator.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 using namespace iroha::network;
 using namespace iroha::model;

@@ -28,8 +28,8 @@
 #include "multi_sig_transactions/transport/mst_transport_stub.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
-#include "validators/default_proto_validator.hpp"
 #include "validators/field_validator.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -203,7 +203,6 @@ void Irohad::initFactories() {
   std::unique_ptr<
       shared_model::validation::AbstractValidator<iroha::protocol::Transaction>>
       proto_transaction_validator = std::make_unique<
-          // make it a direct dependency, without default_proto_validator
           shared_model::validation::ProtoTransactionValidator>();
   transaction_factory =
       std::make_shared<shared_model::proto::ProtoTransportFactory<
