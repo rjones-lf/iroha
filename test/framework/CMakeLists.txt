@@ -28,8 +28,6 @@ add_library(integration_framework
     integration_framework/fake_peer/block_storage.cpp
     integration_framework/fake_peer/behaviour/behaviour.cpp
     integration_framework/fake_peer/behaviour/empty.cpp
-    integration_framework/fake_peer/behaviour/decorator.cpp
-    integration_framework/fake_peer/behaviour/delayed.cpp
     integration_framework/fake_peer/behaviour/honest.cpp
     integration_framework/fake_peer/network/loader_grpc.cpp
     integration_framework/fake_peer/network/mst_network_notifier.cpp
