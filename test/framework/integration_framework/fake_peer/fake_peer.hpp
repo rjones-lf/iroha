@@ -123,13 +123,13 @@ namespace integration_framework {
     void disableAgreeAllProposals();
 
     /// Get the observable of YAC states received by this peer.
-    rxcpp::observable<YacStatePtr> get_yac_states_observable();
+    rxcpp::observable<YacStatePtr> getYacStatesObservable();
 
     /// Get the observable of OS batches received by this peer.
-    rxcpp::observable<OsBatchPtr> get_os_batches_observable();
+    rxcpp::observable<OsBatchPtr> getOsBatchesObservable();
 
     /// Get the observable of OG proposals received by this peer.
-    rxcpp::observable<OgProposalPtr> get_og_proposals_observable();
+    rxcpp::observable<OgProposalPtr> getOgProposalsObservable();
 
     /**
      * Send the real peer votes from this peer analogous to the provided ones.
