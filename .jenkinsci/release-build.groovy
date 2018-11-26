@@ -105,22 +105,22 @@ def doReleaseBuild() {
         manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:latest", login, password)
       }
     }
-  }
-  if (GIT_LOCAL_BRANCH == 'master' && checkTag == 0) {
-    def tag = sh(script: 'git describe --tags --exact-match ${GIT_COMMIT}', returnStdout: true).trim()
-    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-      iCRelease.push("${platform}-${tag}")
-    }
-    if (manifest.manifestSupportEnabled()) {
-      manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:${tag}",
-        ["${DOCKER_REGISTRY_BASENAME}:x86_64-${tag}"])
-      manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:${tag}",
-        [
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-${tag}",
-           arch: 'amd64', os: 'linux', osfeatures: [], variant: '']
-        ])
-      withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
-        manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:${tag}", login, password)
+    if (checkTag == 0) {
+      def tag = sh(script: 'git describe --tags --exact-match ${GIT_COMMIT}', returnStdout: true).trim()
+      docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+        iCRelease.push("${platform}-${tag}")
+      }
+      if (manifest.manifestSupportEnabled()) {
+        manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:${tag}",
+          ["${DOCKER_REGISTRY_BASENAME}:x86_64-${tag}"])
+        manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:${tag}",
+          [
+            [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-${tag}",
+            arch: 'amd64', os: 'linux', osfeatures: [], variant: '']
+          ])
+        withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
+          manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:${tag}", login, password)
+        }
       }
     }
   }
