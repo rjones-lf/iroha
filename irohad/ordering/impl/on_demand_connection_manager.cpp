@@ -45,31 +45,10 @@ void OnDemandConnectionManager::onBatches(const consensus::Round round,
                                           CollectionType batches) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
-  // check if we have appropriate propagation data:
-  if (current_round_ != round) {
-    if (round < current_round_) {
-      log_->debug(
-          "Got a batch to propagate for round {0}, while current round is {1}! "
-          "Will send the batch to round {1}.",
-          round.toString(),
-          current_round_.toString());
-    } else if (current_round_ < round) {
-      log_->debug(
-          "Got a batch to propagate for round {0}, while current round is {1}! "
-          "Will wait till current round updates.",
-          round.toString(),
-          current_round_.toString());
-      if (!propagation_data_update_cv_.wait_for(
-              lock, kPropagationDataWaitTimeout, [this, &round] {
-                return not(this->current_round_ < round);
-              })) {
-        log_->debug(
-            "Reached timeout waiting for the propagation data for at least {} "
-            "round. Will drop the batch.",
-            round.toString());
-        return;
-      }
-    }
+  // check if we have an appropriate propagation data:
+  if (!verifyPropagtionData(round, lock)) {
+    log_->info("Dropping the batches because of outdated propagation data.");
+    return;
   }
 
   /*
@@ -123,4 +102,35 @@ void OnDemandConnectionManager::initializeConnections(
     create_assign(boost::get<0>(pair), boost::get<1>(pair));
   }
   current_round_ = propagation_params.current_round;
+}
+
+template <typename Lock>
+bool OnDemandConnectionManager::verifyPropagtionData(
+    consensus::Round request_round, Lock &lock) {
+  if (current_round_ == request_round) {
+    return true;
+  }
+  if (request_round < current_round_) {
+    log_->debug("Using round {} instead of {}.",
+                current_round_.toString(),
+                request_round.toString());
+    return true;
+  }
+  // if got here, then current_round_ < request_round
+  log_->debug(
+      "Requested operation on round {0}, while current round is {1}! "
+      "Will wait till current round updates.",
+      request_round.toString(),
+      current_round_.toString());
+  if (!propagation_data_update_cv_.wait_for(
+          lock, kPropagationDataWaitTimeout, [this, &request_round] {
+            return not(this->current_round_ < request_round);
+          })) {
+    log_->debug(
+        "Reached timeout waiting for the propagation data for at least {} "
+        "round.",
+        request_round.toString());
+    return false;
+  }
+  return true;
 }

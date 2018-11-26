@@ -80,6 +80,19 @@ namespace iroha {
        */
       void initializeConnections(const PropagationParams &peers);
 
+      /**
+       * Match the requested round and the current propagation data round.
+       * Will warn if the newer round is actually used and wait for the newer
+       * propagation data if the requested round is newer than current.
+       *
+       * @param request_round - the round an operation was requested for.
+       * @param lock - the lock used for this operation. Must be locked.
+       * @return true if we have the appropriate propagation data to proceed
+       *    with the operation, false otherwise.
+       */
+      template <typename Lock>
+      bool verifyPropagtionData(consensus::Round request_round, Lock &lock);
+
       logger::Logger log_;
       std::shared_ptr<transport::OdOsNotificationFactory> factory_;
       rxcpp::composite_subscription subscription_;
