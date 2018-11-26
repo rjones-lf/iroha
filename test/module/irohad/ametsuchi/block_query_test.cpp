@@ -61,13 +61,15 @@ class BlockQueryTest : public AmetsuchiTest {
     auto txn1_2 = TestTransactionBuilder().creatorAccountId(creator1).build();
     tx_hashes.push_back(txn1_2.hash());
 
-    auto block1 =
-        TestBlockBuilder()
-            .height(1)
-            .transactions(
-                std::vector<shared_model::proto::Transaction>({txn1_1, txn1_2}))
-            .prevHash(shared_model::crypto::Hash(zero_string))
-            .build();
+    std::vector<shared_model::proto::Transaction> txs1;
+    txs1.push_back(std::move(txn1_1));
+    txs1.push_back(std::move(txn1_2));
+
+    auto block1 = TestBlockBuilder()
+                      .height(1)
+                      .transactions(txs1)
+                      .prevHash(shared_model::crypto::Hash(zero_string))
+                      .build();
 
     // First tx in block 1
     auto txn2_1 = TestTransactionBuilder().creatorAccountId(creator1).build();
@@ -77,13 +79,15 @@ class BlockQueryTest : public AmetsuchiTest {
     auto txn2_2 = TestTransactionBuilder().creatorAccountId(creator2).build();
     tx_hashes.push_back(txn2_2.hash());
 
-    auto block2 =
-        TestBlockBuilder()
-            .height(2)
-            .transactions(
-                std::vector<shared_model::proto::Transaction>({txn2_1, txn2_2}))
-            .prevHash(block1.hash())
-            .build();
+    std::vector<shared_model::proto::Transaction> txs2;
+    txs2.push_back(std::move(txn2_1));
+    txs2.push_back(std::move(txn2_2));
+
+    auto block2 = TestBlockBuilder()
+                      .height(2)
+                      .transactions(txs2)
+                      .prevHash(block1.hash())
+                      .build();
 
     for (const auto &b : {std::move(block1), std::move(block2)}) {
       file->add(b.height(),

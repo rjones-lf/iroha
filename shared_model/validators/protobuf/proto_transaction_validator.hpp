@@ -70,6 +70,8 @@ namespace shared_model {
       }
 
      public:
+      using TransactionValidator<FieldValidator,
+                                 CommandValidator>::TransactionValidator;
       Answer validate(const interface::Transaction &tx) const override {
         // validate proto-backend of transaction
         auto proto_validation_answer = validateProtoTx(
