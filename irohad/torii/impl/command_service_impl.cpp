@@ -54,8 +54,9 @@ namespace torii {
       return cached.value();
     }
 
+    auto status = storage_->getBlockQuery()->checkTxPresence(request);
     return iroha::visit_in_place(
-        storage_->getBlockQuery()->checkTxPresence(request),
+        status,
         [this,
          &request](const iroha::ametsuchi::tx_cache_status_responses::Missing &)
             -> std::shared_ptr<shared_model::interface::TransactionResponse> {
