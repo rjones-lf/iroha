@@ -33,7 +33,7 @@ namespace torii {
     }
 
     query_factory_->build(request).match(
-        [this, hash = std::move(hash), &response](
+        [this, &hash, &response](
             const iroha::expected::Value<
                 std::unique_ptr<shared_model::interface::Query>> &query) {
           // Send query to iroha
@@ -44,7 +44,7 @@ namespace torii {
           response.CopyFrom(result_response);
           cache_.addItem(hash, response);
         },
-        [hash = std::move(hash), &response](
+        [&hash, &response](
             const iroha::expected::Error<QueryFactoryType::element_type::Error>
                 &error) {
           response.set_query_hash(hash.hex());
