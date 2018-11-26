@@ -84,6 +84,12 @@ message TransactionsResponse {
   repeated Transaction transactions = 1;
 }
 
+message TransactionsPageResponse {
+  repeated Transaction transactions = 1;
+  string next_tx_hash = 2;
+  int32 all_transactions_size = 3;
+}
+
 message QueryResponse {
   oneof response {
     AccountAssetResponse account_assets_response = 1;
@@ -95,6 +101,7 @@ message QueryResponse {
     AssetResponse asset_response = 7;
     RolesResponse roles_response = 8;
     RolePermissionsResponse role_permissions_response = 9;
+    TransactionsPageResponse transactions_page_response = 11;
   }
   string query_hash = 10;
 }

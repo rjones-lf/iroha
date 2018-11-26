@@ -58,6 +58,7 @@ if (IROHA_ROOT_PROJECT)
       query_responses/impl/proto_roles_response.cpp
       query_responses/impl/proto_signatories_response.cpp
       query_responses/impl/proto_transaction_response.cpp
+      query_responses/impl/proto_transaction_page_response.cpp
       query_responses/impl/proto_block_query_response.cpp
       query_responses/impl/proto_block_response.cpp
       query_responses/impl/proto_block_error_response.cpp
