@@ -106,7 +106,7 @@ def doReleaseBuild() {
       }
     }
     if (checkTag == 0) {
-      def tag = sh(script: 'git describe --tags --exact-match ${GIT_COMMIT}', returnStdout: true).trim()
+      def tag = sh(script: 'git describe --tags --exact-match ${GIT_COMMIT}', returnStdout: true).trim().replaceAll('-','_')
       docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
         iCRelease.push("${platform}-${tag}")
       }
