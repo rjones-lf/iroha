@@ -98,7 +98,7 @@ namespace integration_framework {
           const std::string &listen_ip,
           size_t internal_port,
           const boost::optional<shared_model::crypto::Keypair> &key,
-          const std::shared_ptr<shared_model::interface::Peer> &real_peer,
+          std::shared_ptr<shared_model::interface::Peer> real_peer,
           const std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               &common_objects_factory,
           std::shared_ptr<TransportFactoryType> transaction_factory,
