@@ -104,7 +104,7 @@ namespace integration_framework {
 
     ~IntegrationTestFramework();
 
-    std::future<std::shared_ptr<FakePeer>> addInitailPeer(
+    std::future<std::shared_ptr<FakePeer>> addInitialPeer(
         const boost::optional<shared_model::crypto::Keypair> &key);
 
     /**

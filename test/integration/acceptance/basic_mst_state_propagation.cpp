@@ -36,7 +36,7 @@ class BasicMstPropagationFixture : public AcceptanceFixture {
         fake_peers_futures;
     std::generate_n(std::back_inserter(fake_peers_futures),
                     num_fake_peers,
-                    [this] { return itf_->addInitailPeer({}); });
+                    [this] { return itf_->addInitialPeer({}); });
 
     itf_->setInitialState(kAdminKeypair);
 
