@@ -30,6 +30,13 @@ limitations under the License.
 
 #include "logger/logger.hpp"
 
+namespace shared_model {
+  namespace interface {
+    template <typename Interface, typename Transport>
+    class AbstractTransportFactory;
+  }
+}  // namespace shared_model
+
 namespace torii {
   /**
    * Actual implementation of async QueryService.
@@ -38,7 +45,13 @@ namespace torii {
    */
   class QueryService : public iroha::protocol::QueryService::Service {
    public:
-    QueryService(std::shared_ptr<iroha::torii::QueryProcessor> query_processor);
+    using QueryFactoryType =
+        std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+            shared_model::interface::Query,
+            iroha::protocol::Query>>;
+
+    QueryService(std::shared_ptr<iroha::torii::QueryProcessor> query_processor,
+                 QueryFactoryType query_factory);
 
     QueryService(const QueryService &) = delete;
     QueryService &operator=(const QueryService &) = delete;
@@ -63,6 +76,7 @@ namespace torii {
 
    private:
     std::shared_ptr<iroha::torii::QueryProcessor> query_processor_;
+    QueryFactoryType query_factory_;
 
     iroha::cache::Cache<shared_model::crypto::Hash,
                         iroha::protocol::QueryResponse,
