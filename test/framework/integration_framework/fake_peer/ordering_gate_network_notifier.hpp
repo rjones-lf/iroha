@@ -6,10 +6,11 @@
 #ifndef FAKE_PEER_OG_NETWORK_NOTIFIER_HPP_
 #define FAKE_PEER_OG_NETWORK_NOTIFIER_HPP_
 
+#include "network/ordering_gate_transport.hpp"
+
 #include <rxcpp/rx.hpp>
 
 #include "consensus/yac/transport/yac_network_interface.hpp"
-#include "network/ordering_gate_transport.hpp"
 
 namespace shared_model {
   namespace interface {
