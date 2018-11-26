@@ -10,8 +10,6 @@
 
 #include <rxcpp/rx.hpp>
 
-#include "consensus/yac/transport/yac_network_interface.hpp"
-
 namespace shared_model {
   namespace interface {
     class Proposal;
