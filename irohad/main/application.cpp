@@ -6,8 +6,8 @@
 #include "main/application.hpp"
 
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
+#include "ametsuchi/impl/tx_presence_cache_impl.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
-#include "ametsuchi/tx_presence_cache.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/proto_permission_to_string.hpp"
@@ -41,37 +41,6 @@ using namespace iroha::torii;
 using namespace iroha::consensus::yac;
 
 using namespace std::chrono_literals;
-
-// TODO: @muratovv 12.11.2018 remove the mock after effective implementation
-// will be finished IR-1840
-#include <gmock/gmock.h>
-class MockTxPresenceCache : public iroha::ametsuchi::TxPresenceCache {
- public:
-  MOCK_CONST_METHOD1(check,
-                     iroha::ametsuchi::TxCacheStatusType(
-                         const shared_model::crypto::Hash &hash));
-
-  MOCK_CONST_METHOD1(
-      check,
-      iroha::ametsuchi::TxPresenceCache::BatchStatusCollectionType(
-          const shared_model::interface::TransactionBatch &));
-};
-
-namespace iroha {
-  namespace ametsuchi {
-    namespace tx_cache_status_responses {
-      std::ostream &operator<<(std::ostream &os, const Committed &resp) {
-        return os << resp.hash.toString();
-      }
-      std::ostream &operator<<(std::ostream &os, const Rejected &resp) {
-        return os << resp.hash.toString();
-      }
-      std::ostream &operator<<(std::ostream &os, const Missing &resp) {
-        return os << resp.hash.toString();
-      }
-    }  // namespace tx_cache_status_responses
-  }    // namespace ametsuchi
-}  // namespace iroha
 
 /**
  * Configuring iroha daemon
@@ -294,6 +263,15 @@ void Irohad::initBlockLoader() {
       loader_init.initBlockLoader(storage, storage, consensus_result_cache_);
 
   log_->info("[Init] => block loader");
+}
+
+/**
+ * Initializing persistent cache
+ */
+void Irohad::initPersistentCache() {
+  persistent_cache = std::make_shared<TxPresenceCacheImpl>(storage);
+
+  log_->info("[Init] => persistent cache");
 }
 
 /**

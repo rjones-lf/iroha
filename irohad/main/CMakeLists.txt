@@ -57,10 +57,6 @@ target_link_libraries(application
     torii_service
     pending_txs_storage
     common
-# TODO: @muratovv 12.11.2018 remove the mock after effective implementation will
-#       be finished IR-1840
-    gmock::main
-    gtest::main
     )
 
 add_executable(irohad irohad.cpp)
