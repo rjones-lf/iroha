@@ -26,6 +26,7 @@
 #include "backend/protobuf/query_responses/proto_role_permissions_response.hpp"
 #include "backend/protobuf/query_responses/proto_roles_response.hpp"
 #include "backend/protobuf/query_responses/proto_signatories_response.hpp"
+#include "backend/protobuf/query_responses/proto_transaction_page_response.hpp"
 #include "backend/protobuf/query_responses/proto_transaction_response.hpp"
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
@@ -50,7 +51,8 @@ namespace shared_model {
                          TransactionsResponse,
                          AssetResponse,
                          RolesResponse,
-                         RolePermissionsResponse>;
+                         RolePermissionsResponse,
+                         TransactionsPageResponse>;
 
       /// list of types in variant
       using ProtoQueryResponseListType = ProtoQueryResponseVariantType::types;
@@ -90,7 +92,8 @@ namespace boost {
                                 shared_model::proto::TransactionsResponse,
                                 shared_model::proto::AssetResponse,
                                 shared_model::proto::RolesResponse,
-                                shared_model::proto::RolePermissionsResponse>;
+                                shared_model::proto::RolePermissionsResponse,
+                                shared_model::proto::TransactionsPageResponse>;
 }
 
 #endif  // IROHA_SHARED_MODEL_PROTO_QUERY_RESPONSE_HPP

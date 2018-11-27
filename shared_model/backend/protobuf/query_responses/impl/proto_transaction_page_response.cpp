@@ -19,9 +19,7 @@ namespace shared_model {
                 transactionPageResponse_.transactions().begin(),
                 transactionPageResponse_.transactions().end());
           }()},
-          next_hash_(iroha::hexstringToBytestring(
-                         transactionPageResponse_.next_tx_hash())
-                         .get()) {}
+          next_hash_(transactionPageResponse_.next_tx_hash()) {}
 
     template TransactionsPageResponse::TransactionsPageResponse(
         TransactionsPageResponse::TransportType &);
