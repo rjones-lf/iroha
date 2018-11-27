@@ -4,6 +4,7 @@
  */
 
 #include "torii/query_service.hpp"
+
 #include "backend/protobuf/query_responses/proto_block_query_response.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "cryptography/default_hash_provider.hpp"
@@ -14,7 +15,7 @@ namespace torii {
 
   QueryService::QueryService(
       std::shared_ptr<iroha::torii::QueryProcessor> query_processor,
-      QueryFactoryType query_factory)
+      std::shared_ptr<QueryFactoryType> query_factory)
       : query_processor_{std::move(query_processor)},
         query_factory_{std::move(query_factory)},
         log_{logger::log("Query Service")} {}
@@ -37,16 +38,13 @@ namespace torii {
             const iroha::expected::Value<
                 std::unique_ptr<shared_model::interface::Query>> &query) {
           // Send query to iroha
-          auto result_response =
-              static_cast<shared_model::proto::QueryResponse &>(
-                  *query_processor_->queryHandle(*query.value))
-                  .getTransport();
-          response.CopyFrom(result_response);
+          response = static_cast<shared_model::proto::QueryResponse &>(
+                         *query_processor_->queryHandle(*query.value))
+                         .getTransport();
           cache_.addItem(hash, response);
         },
         [&hash, &response](
-            const iroha::expected::Error<QueryFactoryType::element_type::Error>
-                &error) {
+            const iroha::expected::Error<QueryFactoryType::Error> &error) {
           response.set_query_hash(hash.hex());
           response.mutable_error_response()->set_reason(
               iroha::protocol::ErrorResponse::STATELESS_INVALID);

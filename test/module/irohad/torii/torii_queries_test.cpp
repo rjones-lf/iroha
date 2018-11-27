@@ -109,7 +109,7 @@ class ToriiQueriesTest : public testing::Test {
   std::shared_ptr<iroha::MockPendingTransactionStorage> pending_txs_storage;
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
       query_response_factory;
-  torii::QueryService::QueryFactoryType query_factory;
+  std::shared_ptr<torii::QueryService::QueryFactoryType> query_factory;
 
   const std::string ip = "127.0.0.1";
   int port;

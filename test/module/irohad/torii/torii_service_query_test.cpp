@@ -70,7 +70,7 @@ class ToriiQueryServiceTest : public ::testing::Test {
 
   std::unique_ptr<ServerRunner> runner;
   std::shared_ptr<iroha::torii::MockQueryProcessor> query_processor;
-  torii::QueryService::QueryFactoryType query_factory;
+  std::shared_ptr<torii::QueryService::QueryFactoryType> query_factory;
 
   iroha::protocol::Block block;
 

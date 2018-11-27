@@ -193,7 +193,7 @@ void Irohad::initNetworkClient() {
 }
 
 void Irohad::initFactories() {
-  // transactions factories
+  // transaction factories
   transaction_batch_factory_ =
       std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
 

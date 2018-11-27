@@ -4,8 +4,12 @@
  */
 
 #include "validators/protobuf/proto_query_validator.hpp"
+
+#include <gmock/gmock-matchers.h>
 #include "module/shared_model/validators/validators_fixture.hpp"
 #include "queries.pb.h"
+
+using testing::HasSubstr;
 
 class ProtoQueryValidatorTest : public ValidatorsTest {
  public:
@@ -15,7 +19,7 @@ class ProtoQueryValidatorTest : public ValidatorsTest {
 /**
  * @given Protobuf query object with unset query
  * @when validate is called
- * @then there is a error returned
+ * @then there is an error returned
  */
 TEST_F(ProtoQueryValidatorTest, UnsetQuery) {
   iroha::protocol::Query qry;
@@ -25,4 +29,18 @@ TEST_F(ProtoQueryValidatorTest, UnsetQuery) {
 
   auto answer = validator.validate(qry);
   ASSERT_TRUE(answer.hasErrors());
+  ASSERT_THAT(answer.reason(), HasSubstr("undefined"));
+}
+
+/**
+ * @given well-formed protobuf query object
+ * @when validated is called
+ * @then validation is passed
+ */
+TEST_F(ProtoQueryValidatorTest, SetQuery) {
+  iroha::protocol::Query qry;
+  qry.mutable_payload()->mutable_get_account()->set_account_id(account_id);
+
+  auto answer = validator.validate(qry);
+  ASSERT_FALSE(answer.hasErrors());
 }

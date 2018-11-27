@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <validators/protobuf/proto_transaction_validator.hpp>
 #include "model/sha3_hash.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
@@ -40,6 +39,7 @@
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 using ::testing::_;
 using ::testing::A;
@@ -198,7 +198,7 @@ class ClientServerTest : public testing::Test {
   std::unique_ptr<ServerRunner> runner;
   std::shared_ptr<MockPeerCommunicationService> pcsMock;
   std::shared_ptr<iroha::MockMstProcessor> mst;
-  torii::QueryService::QueryFactoryType query_factory;
+  std::shared_ptr<torii::QueryService::QueryFactoryType> query_factory;
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
       query_response_factory;
 
