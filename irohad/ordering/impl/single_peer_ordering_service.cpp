@@ -112,7 +112,7 @@ namespace iroha {
             // In case of restart it reloads state.
             if (persistent_state_->createOsPersistentState() |
                 [this](const auto &state) {
-                  return state->saveProposalHeight(proposal_height_+1);
+                  return state->saveProposalHeight(proposal_height_ + 1);
                 }) {
               publishProposal(std::move(v.value));
               proposal_height_++;
