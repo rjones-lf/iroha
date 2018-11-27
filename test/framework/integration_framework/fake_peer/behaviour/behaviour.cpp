@@ -1,3 +1,8 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "framework/integration_framework/fake_peer/behaviour/behaviour.hpp"
 
 namespace integration_framework {

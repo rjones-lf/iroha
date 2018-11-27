@@ -135,8 +135,8 @@ namespace integration_framework {
       return *this;
     }
 
-    boost::optional<const BlockStorage &> FakePeer::getBlockStorage() const {
-      return {block_storage_ != nullptr, *block_storage_};
+    std::shared_ptr<BlockStorage> FakePeer::getBlockStorage() const {
+      return block_storage_;
     }
 
     void FakePeer::run() {

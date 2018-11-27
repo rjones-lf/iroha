@@ -64,14 +64,18 @@ namespace integration_framework {
       /// Assign the given behaviour to this fake peer.
       FakePeer &setBehaviour(const std::shared_ptr<Behaviour> &behaviour);
 
+      /// Get the behaviour assigned to this peer, if any, otherwise nullptr.
       const std::shared_ptr<Behaviour> &getBehaviour() const;
 
+      /// Assign this peer a block storage. Used by behaviours.
       FakePeer &setBlockStorage(
           const std::shared_ptr<BlockStorage> &block_storage);
 
+      /// Remove any block storage previously assigned to this peer, if any.
       FakePeer &removeBlockStorage();
 
-      boost::optional<const BlockStorage&> getBlockStorage() const;
+      /// Get this peer's block storage, if any, otherwise nullptr.
+      std::shared_ptr<BlockStorage> getBlockStorage() const;
 
       /// Start the fake peer.
       void run();
@@ -92,8 +96,12 @@ namespace integration_framework {
 
       /// Get the observable of OG proposals received by this peer.
       rxcpp::observable<OgProposalPtr> get_og_proposals_observable();
+
+      /// Get the observable of block requests received by this peer.
       rxcpp::observable<LoaderBlockRequest>
       get_loader_block_request_observable();
+
+      /// Get the observable of blocks requests received by this peer.
       rxcpp::observable<LoaderBlocksRequest>
       get_loader_blocks_request_observable();
 
