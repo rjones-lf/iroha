@@ -143,21 +143,22 @@ namespace integration_framework {
     return mst_network_notifier_->get_observable();
   }
 
-  rxcpp::observable<YacStateMessage> FakePeer::get_yac_states_observable() {
+  rxcpp::observable<YacStateMessage> FakePeer::getYacStatesObservable() {
     return yac_network_notifier_->get_observable();
   }
 
-  rxcpp::observable<FakePeer::OsBatchPtr> FakePeer::get_os_batches_observable() {
+  rxcpp::observable<FakePeer::OsBatchPtr> FakePeer::getOsBatchesObservable() {
     return os_network_notifier_->get_observable();
   }
 
-  rxcpp::observable<FakePeer::OgProposalPtr> FakePeer::get_og_proposals_observable() {
+  rxcpp::observable<FakePeer::OgProposalPtr>
+  FakePeer::getOgProposalsObservable() {
     return og_network_notifier_->get_observable();
   }
 
   void FakePeer::enableAgreeAllProposals() {
     if (!proposal_agreer_subscription_.is_subscribed()) {
-      proposal_agreer_subscription_ = get_yac_states_observable().subscribe(
+      proposal_agreer_subscription_ = getYacStatesObservable().subscribe(
           [this](auto &&message) { this->voteForTheSame(message); });
     };
   }

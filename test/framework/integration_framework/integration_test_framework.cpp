@@ -123,7 +123,7 @@ namespace integration_framework {
     }
   }
 
-  std::future<std::shared_ptr<FakePeer>> IntegrationTestFramework::addInitailPeer(
+  std::future<std::shared_ptr<FakePeer>> IntegrationTestFramework::addInitialPeer(
       const boost::optional<Keypair> &key) {
     fake_peers_promises_.emplace_back(std::promise<std::shared_ptr<FakePeer>>(),
                                       key);

@@ -104,7 +104,7 @@ namespace integration_framework {
 
     ~IntegrationTestFramework();
 
-    std::future<std::shared_ptr<FakePeer>> addInitailPeer(
+    std::future<std::shared_ptr<FakePeer>> addInitialPeer(
         const boost::optional<shared_model::crypto::Keypair> &key);
 
     /**
@@ -254,19 +254,11 @@ namespace integration_framework {
      */
     IntegrationTestFramework &sendQuery(const shared_model::proto::Query &qry);
 
-    /**
-     * Send proposal to this peer' s ordering service.
-     * @param proposal - the proposal to send
-     * @return this
-     */
+    /// Send proposal to this peer' s ordering service.
     IntegrationTestFramework &sendProposal(
         std::unique_ptr<shared_model::interface::Proposal> proposal);
 
-    /**
-     * Send a batch of transactions to this peer's ordering service.
-     * @param batch - the batch to send
-     * @return this
-     */
+    /// Send a batch of transactions to this peer's ordering service.
     IntegrationTestFramework &sendBatch(
         const std::shared_ptr<shared_model::interface::TransactionBatch>
             &batch);
