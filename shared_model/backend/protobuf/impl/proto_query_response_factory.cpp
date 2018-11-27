@@ -260,7 +260,7 @@ shared_model::proto::ProtoQueryResponseFactory::createBlockQueryResponse(
                                      &protocol_query_response) {
     iroha::protocol::BlockResponse *protocol_specific_response =
         protocol_query_response.mutable_block_response();
-    *protocol_specific_response->mutable_block() =
+    *protocol_specific_response->mutable_block()->mutable_block_v1() =
         static_cast<shared_model::proto::Block *>(block.get())->getTransport();
   });
 }

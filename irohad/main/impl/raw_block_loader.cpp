@@ -33,7 +33,7 @@ namespace iroha {
 
     boost::optional<std::shared_ptr<Block>> BlockLoader::parseBlock(
         const std::string &data) {
-      return jsonToProto<iroha::protocol::Block>(data) | [](auto &&block) {
+      return jsonToProto<iroha::protocol::Block_v1>(data) | [](auto &&block) {
         return boost::optional<std::shared_ptr<Block>>(
             std::make_shared<shared_model::proto::Block>(std::move(block)));
       };
