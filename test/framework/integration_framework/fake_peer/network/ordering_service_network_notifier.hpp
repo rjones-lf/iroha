@@ -6,11 +6,11 @@
 #ifndef FAKE_PEER_OS_NETWORK_NOTIFIER_HPP_
 #define FAKE_PEER_OS_NETWORK_NOTIFIER_HPP_
 
+#include "network/ordering_service_transport.hpp"
+
 #include <rxcpp/rx.hpp>
 
-#include "consensus/yac/transport/yac_network_interface.hpp"
 #include "framework/integration_framework/fake_peer/types.hpp"
-#include "network/ordering_service_transport.hpp"
 
 namespace integration_framework {
   namespace fake_peer {

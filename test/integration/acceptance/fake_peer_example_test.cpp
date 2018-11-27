@@ -39,11 +39,10 @@ class FakePeerExampleFixture : public AcceptanceFixture {
    */
   IntegrationTestFramework &prepareState(size_t num_fake_peers) {
     // request the fake peers construction
-    std::vector<std::future<FakePeerPtr>>
-        fake_peers_futures;
+    std::vector<std::future<FakePeerPtr>> fake_peers_futures;
     std::generate_n(std::back_inserter(fake_peers_futures),
                     num_fake_peers,
-                    [this] { return itf_->addInitailPeer({}); });
+                    [this] { return itf_->addInitialPeer({}); });
 
     itf_->setInitialState(kAdminKeypair);
 
@@ -73,8 +72,8 @@ class FakePeerExampleFixture : public AcceptanceFixture {
 
  protected:
   void SetUp() override {
-    itf_ = std::make_unique<IntegrationTestFramework>(
-        1, boost::none, true, true);
+    itf_ =
+        std::make_unique<IntegrationTestFramework>(1, boost::none, true, true);
   }
 
   std::vector<FakePeerPtr> fake_peers_;
@@ -93,7 +92,7 @@ TEST_F(FakePeerExampleFixture,
   std::condition_variable mst_cv;
   std::atomic_bool got_state_notification(false);
   auto &itf = prepareState(1);
-  fake_peers_.front()->get_mst_states_observable().subscribe(
+  fake_peers_.front()->getMstStatesObservable().subscribe(
       [&mst_cv, &got_state_notification](const auto &state) {
         got_state_notification.store(true);
         mst_cv.notify_one();

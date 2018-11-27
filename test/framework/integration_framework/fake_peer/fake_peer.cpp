@@ -61,7 +61,7 @@ namespace integration_framework {
         const std::string &listen_ip,
         size_t internal_port,
         const boost::optional<Keypair> &key,
-        const std::shared_ptr<shared_model::interface::Peer> &real_peer,
+        std::shared_ptr<shared_model::interface::Peer> real_peer,
         const std::shared_ptr<shared_model::interface::CommonObjectsFactory>
             &common_objects_factory,
         std::shared_ptr<TransportFactoryType> transaction_factory,
@@ -76,7 +76,7 @@ namespace integration_framework {
               key.value_or(DefaultCryptoAlgorithmType::generateKeypair()))),
           this_peer_(createPeer(
               common_objects_factory, getAddress(), keypair_->publicKey())),
-          real_peer_(real_peer),
+          real_peer_(std::move(real_peer)),
           async_call_(std::make_shared<AsyncCall>()),
           mst_transport_(
               std::make_shared<MstTransport>(async_call_,
@@ -175,19 +175,19 @@ namespace integration_framework {
       return *keypair_;
     }
 
-    rxcpp::observable<MstMessagePtr> FakePeer::get_mst_states_observable() {
+    rxcpp::observable<MstMessagePtr> FakePeer::getMstStatesObservable() {
       return mst_network_notifier_->get_observable();
     }
 
-    rxcpp::observable<YacMessagePtr> FakePeer::get_yac_states_observable() {
+    rxcpp::observable<YacMessagePtr> FakePeer::getYacStatesObservable() {
       return yac_network_notifier_->get_observable();
     }
 
-    rxcpp::observable<OsBatchPtr> FakePeer::get_os_batches_observable() {
+    rxcpp::observable<OsBatchPtr> FakePeer::getOsBatchesObservable() {
       return os_network_notifier_->get_observable();
     }
 
-    rxcpp::observable<OgProposalPtr> FakePeer::get_og_proposals_observable() {
+    rxcpp::observable<OgProposalPtr> FakePeer::getOgProposalsObservable() {
       return og_network_notifier_->get_observable();
     }
 
