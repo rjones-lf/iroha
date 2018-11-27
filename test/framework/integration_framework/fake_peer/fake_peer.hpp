@@ -74,8 +74,8 @@ namespace integration_framework {
       /// Remove any block storage previously assigned to this peer, if any.
       FakePeer &removeBlockStorage();
 
-      /// Get this peer's block storage, if any, otherwise nullptr.
-      std::shared_ptr<BlockStorage> getBlockStorage() const;
+      /// Get the block storage previously assigned to this peer, if any.
+      boost::optional<const BlockStorage &> getBlockStorage() const;
 
       /// Start the fake peer.
       void run();
