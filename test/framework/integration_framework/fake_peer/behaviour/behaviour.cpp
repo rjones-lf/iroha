@@ -16,20 +16,20 @@ namespace integration_framework {
                          + fake_peer->getAddress());
       // subscribe for all messages
       subscriptions_.emplace_back(
-          getFakePeer().get_mst_states_observable().subscribe(
+          getFakePeer().getMstStatesObservable().subscribe(
               [this](const auto &message) {
                 this->processMstMessage(message);
               }));
       subscriptions_.emplace_back(
-          getFakePeer().get_yac_states_observable().subscribe(
+          getFakePeer().getYacStatesObservable().subscribe(
               [this](const auto &message) {
                 this->processYacMessage(message);
               }));
       subscriptions_.emplace_back(
-          getFakePeer().get_os_batches_observable().subscribe(
+          getFakePeer().getOsBatchesObservable().subscribe(
               [this](const auto &batch) { this->processOsBatch(batch); }));
       subscriptions_.emplace_back(
-          getFakePeer().get_og_proposals_observable().subscribe(
+          getFakePeer().getOgProposalsObservable().subscribe(
               [this](const auto &proposal) {
                 this->processOgProposal(proposal);
               }));

@@ -119,16 +119,17 @@ namespace integration_framework {
       /// Get the keypair of this peer.
       const shared_model::crypto::Keypair &getKeypair() const;
 
-      rxcpp::observable<MstMessagePtr> get_mst_states_observable();
+      /// Get the observable of MST states received by this peer.
+      rxcpp::observable<MstMessagePtr> getMstStatesObservable();
 
       /// Get the observable of YAC states received by this peer.
-      rxcpp::observable<YacMessagePtr> get_yac_states_observable();
+      rxcpp::observable<YacMessagePtr> getYacStatesObservable();
 
       /// Get the observable of OS batches received by this peer.
-      rxcpp::observable<OsBatchPtr> get_os_batches_observable();
+      rxcpp::observable<OsBatchPtr> getOsBatchesObservable();
 
       /// Get the observable of OG proposals received by this peer.
-      rxcpp::observable<OgProposalPtr> get_og_proposals_observable();
+      rxcpp::observable<OgProposalPtr> getOgProposalsObservable();
 
       /**
        * Send the real peer votes from this peer analogous to the provided ones.

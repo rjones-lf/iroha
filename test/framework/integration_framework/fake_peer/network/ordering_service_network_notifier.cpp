@@ -11,7 +11,7 @@ namespace integration_framework {
   namespace fake_peer {
 
     void OsNetworkNotifier::onBatch(std::unique_ptr<TransactionBatch> batch) {
-      auto batch_ptr = std::shared_ptr<TransactionBatch>(batch.release());
+      std::shared_ptr<TransactionBatch> batch_ptr = std::move(batch);
       batches_subject_.get_subscriber().on_next(std::move(batch_ptr));
     }
 

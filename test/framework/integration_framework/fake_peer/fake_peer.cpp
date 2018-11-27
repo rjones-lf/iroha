@@ -145,22 +145,21 @@ namespace integration_framework {
     }
 
     rxcpp::observable<FakePeer::MstMessagePtr>
-    FakePeer::get_mst_states_observable() {
+    FakePeer::getMstStatesObservable() {
       return mst_network_notifier_->get_observable();
     }
 
     rxcpp::observable<FakePeer::YacMessagePtr>
-    FakePeer::get_yac_states_observable() {
+    FakePeer::getYacStatesObservable() {
       return yac_network_notifier_->get_observable();
     }
 
-    rxcpp::observable<FakePeer::OsBatchPtr>
-    FakePeer::get_os_batches_observable() {
+    rxcpp::observable<FakePeer::OsBatchPtr> FakePeer::getOsBatchesObservable() {
       return os_network_notifier_->get_observable();
     }
 
     rxcpp::observable<FakePeer::OgProposalPtr>
-    FakePeer::get_og_proposals_observable() {
+    FakePeer::getOgProposalsObservable() {
       return og_network_notifier_->get_observable();
     }
 

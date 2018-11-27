@@ -6,10 +6,10 @@
 #ifndef FAKE_PEER_MST_NETWORK_NOTIFIER_HPP_
 #define FAKE_PEER_MST_NETWORK_NOTIFIER_HPP_
 
-#include <rxcpp/rx.hpp>
-
-#include "framework/integration_framework/fake_peer/network/mst_message.hpp"
 #include "network/mst_transport.hpp"
+
+#include <rxcpp/rx.hpp>
+#include "framework/integration_framework/fake_peer/network/mst_message.hpp"
 
 namespace integration_framework {
   namespace fake_peer {
