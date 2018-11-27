@@ -206,6 +206,18 @@ namespace integration_framework {
       return og_network_notifier_->getObservable();
     }
 
+    rxcpp::observable<LoaderBlockRequest>
+    FakePeer::getLoaderBlockRequestObservable() {
+      ensureInitialized();
+      return synchronizer_transport_->getLoaderBlockRequestObservable();
+    }
+
+    rxcpp::observable<LoaderBlocksRequest>
+    FakePeer::getLoaderBlocksRequestObservable() {
+      ensureInitialized();
+      return synchronizer_transport_->getLoaderBlocksRequestObservable();
+    }
+
     std::shared_ptr<shared_model::interface::Signature> FakePeer::makeSignature(
         const shared_model::crypto::Blob &hash) const {
       auto bare_signature =

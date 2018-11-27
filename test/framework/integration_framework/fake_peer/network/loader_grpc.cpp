@@ -21,6 +21,53 @@ namespace integration_framework {
           + fake_peer->getAddress() + " Loader transport)");
         }
 
+    bool LoaderGrpc::sendBlockRequest(
+        const std::string &dest_address, const LoaderBlockRequest &hash) {
+      iroha::network::proto::BlockRequest request;
+      request.set_hash(hash->hex());
+      grpc::ClientContext context;
+      iroha::protocol::Block block;
+      auto client = iroha::network::createClient<iroha::network::proto::Loader>(
+          dest_address);
+
+      const auto status = client->retrieveBlock(&context, request, &block);
+      if (not status.ok()) {
+        log_->warn("Error retrieving block: " + status.error_message());
+        return false;
+      }
+      return true;
+    }
+
+    size_t LoaderGrpc::sendBlocksRequest(const std::string &dest_address,
+                                         const LoaderBlocksRequest &height) {
+      iroha::network::proto::BlocksRequest request;
+      request.set_height(height);
+      grpc::ClientContext context;
+      iroha::protocol::Block block;
+      auto client = iroha::network::createClient<iroha::network::proto::Loader>(
+          dest_address);
+
+      auto reader = client->retrieveBlocks(&context, request);
+      size_t num_read_blocks = 0;
+      while (reader->Read(&block)) {
+        ++num_read_blocks;
+      }
+
+      return num_read_blocks;
+    }
+
+    rxcpp::observable<LoaderBlockRequest>
+    LoaderGrpc::getLoaderBlockRequestObservable() {
+      return block_requests_subject_.get_observable();
+    }
+
+    rxcpp::observable<LoaderBlocksRequest>
+    LoaderGrpc::getLoaderBlocksRequestObservable() {
+      return blocks_requests_subject_.get_observable();
+    }
+
+    // --------------| iroha::network::proto::Loader::Service |--------------
+
     ::grpc::Status LoaderGrpc::retrieveBlock(
         ::grpc::ServerContext *context,
         const iroha::network::proto::BlockRequest *request,
@@ -59,41 +106,6 @@ namespace integration_framework {
         writer->Write(block.get().getTransport());
       }
       return ::grpc::Status::OK;
-    }
-
-    bool LoaderGrpc::sendBlockRequest(
-        const std::string &dest_address, const LoaderBlockRequest &hash) {
-      iroha::network::proto::BlockRequest request;
-      request.set_hash(hash->hex());
-      grpc::ClientContext context;
-      iroha::protocol::Block block;
-      auto client = iroha::network::createClient<iroha::network::proto::Loader>(
-          dest_address);
-
-      const auto status = client->retrieveBlock(&context, request, &block);
-      if (not status.ok()) {
-        log_->warn("Error retrieving block: " + status.error_message());
-        return false;
-      }
-      return true;
-    }
-
-    size_t LoaderGrpc::sendBlocksRequest(const std::string &dest_address,
-                                         const LoaderBlocksRequest &height) {
-      iroha::network::proto::BlocksRequest request;
-      request.set_height(height);
-      grpc::ClientContext context;
-      iroha::protocol::Block block;
-      auto client = iroha::network::createClient<iroha::network::proto::Loader>(
-          dest_address);
-
-      auto reader = client->retrieveBlocks(&context, request);
-      size_t num_read_blocks = 0;
-      while (reader->Read(&block)) {
-        ++num_read_blocks;
-      }
-
-      return num_read_blocks;
     }
 
   }  // namespace fake_peer
