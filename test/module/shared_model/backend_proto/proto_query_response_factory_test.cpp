@@ -283,6 +283,12 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
   });
 }
 
+/**
+ * Checks createTransactionsPageResponse method of QueryResponseFactory
+ * @given collection of transactions, next tx hash and transactions number
+ * @when creating transactions page response via factory
+ * @then that response is created @and is well-formed
+ */
 TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsPageResponse) {
   const HashType kQueryHash{"my_super_hash"};
   const HashType kNextTxHash{"next_tx_hash"};

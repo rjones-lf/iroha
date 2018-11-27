@@ -121,10 +121,18 @@ namespace shared_model {
               transactions,
           const crypto::Hash &query_hash) const = 0;
 
+      /**
+       * Create response for transactions pagination query
+       * @param transactions to be inserted into the response
+       * @param next_tx_hash to be inserted into the response
+       * @param all_transactions_size to be inserted into the response
+       * @param query_hash - hash of the query, for which response is created
+       * @return transactions response
+       */
       virtual std::unique_ptr<QueryResponse> createTransactionsPageResponse(
           std::vector<std::unique_ptr<shared_model::interface::Transaction>>
-          transactions,
-          const crypto::Hash& next_tx_hash,
+              transactions,
+          const crypto::Hash &next_tx_hash,
           interface::types::TransactionsNumberType all_transactions_size,
           const crypto::Hash &query_hash) const = 0;
 
