@@ -42,10 +42,11 @@ namespace iroha {
           verified_proposal_subscription_,
           [this](const VerifiedProposalCreatorEvent &event) {
             if (event.verified_proposal_result) {
-              this->process_verified_proposal(
-                  *getVerifiedProposalUnsafe(event)->first);
+              this->processVerifiedProposal(
+                  getVerifiedProposalUnsafe(event)->first, event.round);
             } else {
-              // block_notifier_.get_subscriber().on_next(boost::none);
+              block_notifier_.get_subscriber().on_next(
+                  BlockCreatorEvent{boost::none, event.round});
             }
           });
     }
@@ -108,8 +109,9 @@ namespace iroha {
           VerifiedProposalCreatorEvent{validated_proposal_and_errors, round});
     }
 
-    void Simulator::process_verified_proposal(
-        const shared_model::interface::Proposal &proposal) {
+    void Simulator::processVerifiedProposal(
+        const std::shared_ptr<shared_model::interface::Proposal> &proposal,
+        const consensus::Round &round) {
       log_->info("process verified proposal");
 
       auto height = block_query_factory_->createBlockQuery() |
@@ -123,14 +125,14 @@ namespace iroha {
       std::shared_ptr<shared_model::interface::Block> block =
           block_factory_->unsafeCreateBlock(height,
                                             last_block->hash(),
-                                            proposal.createdTime(),
-                                            proposal.transactions());
+                                            proposal->createdTime(),
+                                            proposal->transactions());
       crypto_signer_->sign(*block);
-      block_notifier_.get_subscriber().on_next(block);
+      block_notifier_.get_subscriber().on_next(
+          BlockCreatorEvent{RoundData{proposal, block}, round});
     }
 
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-    Simulator::on_block() {
+    rxcpp::observable<BlockCreatorEvent> Simulator::onBlock() {
       return block_notifier_.get_observable();
     }
 

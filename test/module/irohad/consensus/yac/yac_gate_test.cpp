@@ -37,7 +37,7 @@ class YacGateTest : public ::testing::Test {
     auto keypair =
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
-    expected_hash = YacHash(iroha::consensus::Round{1, 1}, "proposal", "block");
+    expected_hash = YacHash(round, "proposal", "block");
 
     auto block = std::make_shared<MockBlock>();
     EXPECT_CALL(*block, payload())
@@ -78,7 +78,7 @@ class YacGateTest : public ::testing::Test {
     block_creator = std::make_shared<MockBlockCreator>();
     block_cache = std::make_shared<ConsensusResultCache>();
 
-    ON_CALL(*block_creator, on_block())
+    ON_CALL(*block_creator, onBlock())
         .WillByDefault(Return(block_notifier.get_observable()));
 
     gate = std::make_shared<YacGateImpl>(std::move(hash_gate_ptr),
@@ -88,16 +88,17 @@ class YacGateTest : public ::testing::Test {
                                          block_cache);
   }
 
+  iroha::consensus::Round round{1, 1};
   PublicKey expected_pubkey{"expected_pubkey"};
   Signed expected_signed{"expected_signed"};
   Hash prev_hash{"prev hash"};
   YacHash expected_hash;
+  std::shared_ptr<shared_model::interface::Proposal> expected_proposal;
   std::shared_ptr<shared_model::interface::Block> expected_block;
   VoteMessage message;
   CommitMessage commit_message;
   Answer expected_commit{commit_message};
-  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
-      block_notifier;
+  rxcpp::subjects::subject<BlockCreatorEvent> block_notifier;
   rxcpp::subjects::subject<Answer> outcome_notifier;
 
   MockHashGate *hash_gate;
@@ -131,7 +132,8 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
   // make hash from block
   EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
 
-  block_notifier.get_subscriber().on_next(expected_block);
+  block_notifier.get_subscriber().on_next(
+      BlockCreatorEvent{RoundData{expected_proposal, expected_block}, round});
 
   // verify that block we voted for is in the cache
   auto cache_block = block_cache->get();
@@ -170,7 +172,8 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
   // make hash from block
   EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
 
-  block_notifier.get_subscriber().on_next(expected_block);
+  block_notifier.get_subscriber().on_next(
+      BlockCreatorEvent{RoundData{expected_proposal, expected_block}, round});
 }
 
 /**
@@ -186,7 +189,7 @@ TEST_F(YacGateTest, AgreementOnNone) {
 
   ASSERT_EQ(block_cache->get(), nullptr);
 
-  gate->vote(boost::none, boost::none, {});
+  gate->vote({boost::none, {}});
 
   ASSERT_EQ(block_cache->get(), nullptr);
 }
@@ -206,7 +209,8 @@ TEST_F(YacGateTest, DifferentCommit) {
 
   EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
 
-  block_notifier.get_subscriber().on_next(expected_block);
+  block_notifier.get_subscriber().on_next(
+      BlockCreatorEvent{RoundData{expected_proposal, expected_block}, round});
 
   // create another block, which will be "received", and generate a commit
   // message with it
@@ -217,8 +221,7 @@ TEST_F(YacGateTest, DifferentCommit) {
   EXPECT_CALL(*signature, publicKey())
       .WillRepeatedly(ReturnRefOfCopy(actual_pubkey));
 
-  message.hash =
-      YacHash(iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
+  message.hash = YacHash(round, "actual_proposal", "actual_block");
   message.signature = signature;
   commit_message = CommitMessage({message});
   expected_commit = commit_message;

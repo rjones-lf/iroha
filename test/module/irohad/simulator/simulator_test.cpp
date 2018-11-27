@@ -169,9 +169,10 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
     ASSERT_TRUE(verified_proposal->second.empty());
   });
 
-  auto block_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_block(), 1);
-  block_wrapper.subscribe([&proposal](const auto block) {
+  auto block_wrapper = make_test_subscriber<CallExact>(simulator->onBlock(), 1);
+  block_wrapper.subscribe([&proposal](const auto &event) {
+    auto block = getBlockUnsafe(event);
+
     ASSERT_EQ(block->height(), proposal->height());
     ASSERT_EQ(block->transactions(), proposal->transactions());
   });
@@ -205,8 +206,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
       make_test_subscriber<CallExact>(simulator->onVerifiedProposal(), 0);
   proposal_wrapper.subscribe();
 
-  auto block_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_block(), 0);
+  auto block_wrapper = make_test_subscriber<CallExact>(simulator->onBlock(), 0);
   block_wrapper.subscribe();
 
   simulator->processProposal(*proposal, round);
@@ -241,8 +241,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
       make_test_subscriber<CallExact>(simulator->onVerifiedProposal(), 0);
   proposal_wrapper.subscribe();
 
-  auto block_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_block(), 0);
+  auto block_wrapper = make_test_subscriber<CallExact>(simulator->onBlock(), 0);
   block_wrapper.subscribe();
 
   simulator->processProposal(*proposal, round);

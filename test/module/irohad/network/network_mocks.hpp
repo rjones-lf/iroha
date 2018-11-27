@@ -12,6 +12,7 @@
 #include "network/consensus_gate.hpp"
 #include "network/ordering_gate.hpp"
 #include "network/peer_communication_service.hpp"
+#include "simulator/block_creator_common.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 
 namespace shared_model {
@@ -73,13 +74,7 @@ namespace iroha {
 
     class MockConsensusGate : public ConsensusGate {
      public:
-      MOCK_METHOD3(
-          vote,
-          void(boost::optional<
-                   std::shared_ptr<shared_model::interface::Proposal>> proposal,
-               boost::optional<std::shared_ptr<shared_model::interface::Block>>
-                   block,
-               Round round));
+      MOCK_METHOD1(vote, void(const simulator::BlockCreatorEvent &));
 
       MOCK_METHOD0(onOutcome, rxcpp::observable<GateObject>());
     };

@@ -34,21 +34,19 @@ namespace iroha {
             block_creator_(std::move(block_creator)),
             consensus_result_cache_(std::move(consensus_result_cache)),
             log_(logger::log("YacGate")) {
-        block_creator_->on_block().subscribe([this](auto block) {
-          // TODO(@l4l) 24/09/18 IR-1717
-          // update BlockCreator iface according to YacGate
-          this->vote({std::shared_ptr<shared_model::interface::Proposal>()},
-                     {block},
-                     {0, 0});
-        });
+        block_creator_->onBlock().subscribe(
+            [this](const auto &event) { this->vote(event); });
       }
 
-      void YacGateImpl::vote(
-          boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
-              proposal,
-          boost::optional<std::shared_ptr<shared_model::interface::Block>>
-              block,
-          Round round) {
+      void YacGateImpl::vote(const simulator::BlockCreatorEvent &event) {
+        boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+            proposal;
+        boost::optional<std::shared_ptr<shared_model::interface::Block>> block;
+        if (event.round_data) {
+          proposal = event.round_data->proposal;
+          block = event.round_data->block;
+        }
+        Round round = event.round;
         // TODO IR-1717: uncomment
         bool is_none = /*not proposal or */ not block;
         if (is_none) {
