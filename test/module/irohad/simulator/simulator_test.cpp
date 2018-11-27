@@ -69,6 +69,8 @@ class SimulatorTest : public ::testing::Test {
                                             std::move(block_factory));
   }
 
+  consensus::Round round;
+
   std::shared_ptr<MockStatefulValidator> validator;
   std::shared_ptr<MockTemporaryFactory> factory;
   std::shared_ptr<MockBlockQuery> query;
@@ -158,7 +160,9 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
 
   auto proposal_wrapper =
       make_test_subscriber<CallExact>(simulator->onVerifiedProposal(), 1);
-  proposal_wrapper.subscribe([&proposal](auto verified_proposal) {
+  proposal_wrapper.subscribe([&proposal](auto event) {
+    auto verified_proposal = getVerifiedProposalUnsafe(event);
+
     ASSERT_EQ(verified_proposal->first->height(), proposal->height());
     ASSERT_EQ(verified_proposal->first->transactions(),
               proposal->transactions());
@@ -172,7 +176,7 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
     ASSERT_EQ(block->transactions(), proposal->transactions());
   });
 
-  simulator->processProposal(*proposal);
+  simulator->processProposal(*proposal, round);
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
@@ -205,7 +209,7 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
       make_test_subscriber<CallExact>(simulator->on_block(), 0);
   block_wrapper.subscribe();
 
-  simulator->processProposal(*proposal);
+  simulator->processProposal(*proposal, round);
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
@@ -241,7 +245,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
       make_test_subscriber<CallExact>(simulator->on_block(), 0);
   block_wrapper.subscribe();
 
-  simulator->processProposal(*proposal);
+  simulator->processProposal(*proposal, round);
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
@@ -309,8 +313,9 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
 
   auto proposal_wrapper =
       make_test_subscriber<CallExact>(simulator->onVerifiedProposal(), 1);
-  proposal_wrapper.subscribe([&verified_proposal,
-                              &tx_errors](auto verified_proposal_) {
+  proposal_wrapper.subscribe([&verified_proposal, &tx_errors](auto event) {
+    auto verified_proposal_ = getVerifiedProposalUnsafe(event);
+
     // assure that txs in verified proposal do not include failed ones
     ASSERT_EQ(verified_proposal_->first->height(), verified_proposal->height());
     ASSERT_EQ(verified_proposal_->first->transactions(),
@@ -318,7 +323,7 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
     ASSERT_TRUE(verified_proposal_->second.size() == tx_errors.size());
   });
 
-  simulator->processProposal(*proposal);
+  simulator->processProposal(*proposal, round);
 
   ASSERT_TRUE(proposal_wrapper.validate());
 }

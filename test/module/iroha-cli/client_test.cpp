@@ -173,8 +173,7 @@ class ClientServerTest : public testing::Test {
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
       query_response_factory;
 
-  rxcpp::subjects::subject<
-      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+  rxcpp::subjects::subject<iroha::simulator::VerifiedProposalCreatorEvent>
       verified_prop_notifier;
   rxcpp::subjects::subject<std::shared_ptr<iroha::MstState>>
       mst_update_notifier;
@@ -186,6 +185,7 @@ class ClientServerTest : public testing::Test {
   std::shared_ptr<MockQueryExecutor> query_executor;
   std::shared_ptr<MockStorage> storage;
 
+  iroha::consensus::Round round;
   const std::string ip = "127.0.0.1";
   int port;
 };
@@ -294,12 +294,15 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
   auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
       TestProposalBuilder().height(0).createdTime(iroha::time::now()).build());
   verified_prop_notifier.get_subscriber().on_next(
-      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
-          std::make_pair(verified_proposal,
-                         iroha::validation::TransactionsErrors{std::make_pair(
-                             iroha::validation::CommandError{
-                                 "CommandName", "CommandError", true, 2},
-                             tx.hash())})));
+      iroha::simulator::VerifiedProposalCreatorEvent{
+          std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
+              std::make_pair(
+                  verified_proposal,
+                  iroha::validation::TransactionsErrors{std::make_pair(
+                      iroha::validation::CommandError{
+                          "CommandName", "CommandError", true, 2},
+                      tx.hash())})),
+          round});
   auto stringified_error = "Stateful validation error in transaction "
                            + tx.hash().hex() + ": command 'CommandName' with "
                                                "index '2' did not pass verification with "

@@ -8,8 +8,8 @@
 
 #include <rxcpp/rx.hpp>
 #include "network/ordering_gate_common.hpp"
+#include "simulator/verified_proposal_creator_common.hpp"
 #include "synchronizer/synchronizer_common.hpp"
-#include "validation/stateful_validator_common.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -45,8 +45,7 @@ namespace iroha {
        * Event is triggered when verified proposal arrives
        * @return verified proposal and list of stateful validation errors
        */
-      virtual rxcpp::observable<
-          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+      virtual rxcpp::observable<simulator::VerifiedProposalCreatorEvent>
       onVerifiedProposal() const = 0;
 
       /**

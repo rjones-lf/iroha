@@ -11,4 +11,5 @@ target_link_libraries(processors PUBLIC
     shared_model_proto_builders
     status_bus
     common
+    verified_proposal_creator_common
     )

@@ -165,7 +165,8 @@ namespace integration_framework {
         .zip(proposals)
         .flat_map(proposal_flat_map)
         .subscribe([this](auto verified_proposal_and_errors) {
-          verified_proposal_queue_.push(verified_proposal_and_errors->first);
+          verified_proposal_queue_.push(
+              getVerifiedProposalUnsafe(verified_proposal_and_errors)->first);
           log_->info("verified proposal");
           queue_cond.notify_all();
         });

@@ -1,3 +1,6 @@
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 add_library(simulator
     impl/simulator.cpp
     )
@@ -8,4 +11,13 @@ target_link_libraries(simulator
     rxcpp
     logger
     common
+    ordering_gate_common
+    verified_proposal_creator_common
+    )
+
+add_library(verified_proposal_creator_common
+    verified_proposal_creator_common.cpp
+    )
+target_link_libraries(verified_proposal_creator_common
+    boost
     )
