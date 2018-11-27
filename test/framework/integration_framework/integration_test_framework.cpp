@@ -593,6 +593,10 @@ namespace integration_framework {
     return *this;
   }
 
+  size_t IntegrationTestFramework::internalPort() const {
+    return internal_port_;
+  }
+
   void IntegrationTestFramework::done() {
     log_->info("done");
     cleanup();

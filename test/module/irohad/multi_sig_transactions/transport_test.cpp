@@ -14,6 +14,7 @@
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
+#include "validators/default_proto_validator.hpp"
 #include "validators/field_validator.hpp"
 
 using namespace iroha::network;
@@ -87,13 +88,13 @@ TEST(TransportTest, SendAndReceive) {
   // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side
   EXPECT_CALL(*notifications, onNewState(_, _))
-      .WillOnce(Invoke(
-          [&my_key, &cv, &state](const auto &from_key, auto const &target_state) {
-            EXPECT_EQ(my_key.publicKey(), from_key);
+      .WillOnce(Invoke([&my_key, &cv, &state](const auto &from_key,
+                                              auto const &target_state) {
+        EXPECT_EQ(my_key.publicKey(), from_key);
 
-            EXPECT_EQ(state, target_state);
-            cv.notify_one();
-          }));
+        EXPECT_EQ(state, target_state);
+        cv.notify_one();
+      }));
 
   transport->sendState(*peer, state);
   std::unique_lock<std::mutex> lock(mtx);
