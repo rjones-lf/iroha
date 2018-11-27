@@ -56,7 +56,7 @@ namespace torii_utils {
 
     std::string ip_;
     size_t port_;
-    std::unique_ptr<iroha::protocol::QueryService::Stub> stub_;
+    std::unique_ptr<iroha::protocol::QueryService_v1::Stub> stub_;
   };
   /**
    * QueryAsyncClient

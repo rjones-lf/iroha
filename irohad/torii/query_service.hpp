@@ -36,7 +36,7 @@ namespace torii {
    * ToriiServiceHandler::(SomeMethod)Handler calls a corresponding method in
    * this class.
    */
-  class QueryService : public iroha::protocol::QueryService::Service {
+  class QueryService : public iroha::protocol::QueryService_v1::Service {
    public:
     QueryService(std::shared_ptr<iroha::torii::QueryProcessor> query_processor);
 
