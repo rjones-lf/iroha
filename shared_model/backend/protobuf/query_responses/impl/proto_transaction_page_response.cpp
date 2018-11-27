@@ -19,7 +19,8 @@ namespace shared_model {
                 transactionPageResponse_.transactions().begin(),
                 transactionPageResponse_.transactions().end());
           }()},
-          next_hash_(transactionPageResponse_.next_tx_hash()) {}
+          next_hash_(crypto::Hash::fromHexString(
+              transactionPageResponse_.next_tx_hash())) {}
 
     template TransactionsPageResponse::TransactionsPageResponse(
         TransactionsPageResponse::TransportType &);
