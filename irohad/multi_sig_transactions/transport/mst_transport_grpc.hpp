@@ -18,6 +18,11 @@
 #include "network/impl/async_grpc_client.hpp"
 
 namespace iroha {
+
+  namespace ametsuchi {
+    class TxPresenceCache;
+  }
+
   namespace network {
     class MstTransportGrpc : public MstTransport,
                              public transport::MstTransportGrpc::Service {
@@ -35,6 +40,7 @@ namespace iroha {
               batch_parser,
           std::shared_ptr<shared_model::interface::TransactionBatchFactory>
               transaction_batch_factory,
+          std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
           shared_model::crypto::PublicKey my_key);
 
       /**
@@ -70,6 +76,7 @@ namespace iroha {
           batch_parser_;
       std::shared_ptr<shared_model::interface::TransactionBatchFactory>
           batch_factory_;
+      std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache_;
       /// source peer key for MST propogation messages
       const std::string my_key_;
     };

@@ -25,6 +25,7 @@ namespace iroha {
       struct HashContainer {
         HashContainer() = default;
         explicit HashContainer(const HashType &h) : hash(h) {}
+
         HashType hash;
       };
     }  // namespace tx_cache_response_details

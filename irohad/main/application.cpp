@@ -334,6 +334,7 @@ void Irohad::initMstProcessor() {
         transaction_factory,
         batch_parser,
         transaction_batch_factory_,
+        std::move(persistent_cache),
         keypair.publicKey());
     // TODO: IR-1317 @l4l (02/05/18) magics should be replaced with options via
     // cli parameters
