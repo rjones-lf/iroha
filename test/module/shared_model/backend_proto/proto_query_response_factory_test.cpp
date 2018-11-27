@@ -19,6 +19,7 @@
 #include "interfaces/query_responses/role_permissions.hpp"
 #include "interfaces/query_responses/roles_response.hpp"
 #include "interfaces/query_responses/signatories_response.hpp"
+#include "interfaces/query_responses/transactions_page_response.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
@@ -279,6 +280,41 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsResponse) {
       ASSERT_EQ(response.transactions()[i].creatorAccountId(),
                 transactions_test_copy[i]->creatorAccountId());
     }
+  });
+}
+
+TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsPageResponse) {
+  const HashType kQueryHash{"my_super_hash"};
+  const HashType kNextTxHash{"next_tx_hash"};
+
+  constexpr int kTransactionsNumber = 5;
+
+  std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+      transactions, transactions_test_copy;
+  for (auto i = 0; i < kTransactionsNumber; ++i) {
+    auto tx = std::make_unique<shared_model::proto::Transaction>(
+        TestTransactionBuilder().creatorAccountId(std::to_string(i)).build());
+    auto tx_copy = std::make_unique<shared_model::proto::Transaction>(
+        TestTransactionBuilder().creatorAccountId(std::to_string(i)).build());
+    transactions.push_back(std::move(tx));
+    transactions_test_copy.push_back(std::move(tx_copy));
+  }
+  auto query_response = response_factory->createTransactionsPageResponse(
+      std::move(transactions), kNextTxHash, kTransactionsNumber, kQueryHash);
+
+  ASSERT_TRUE(query_response);
+  ASSERT_EQ(query_response->queryHash(), kQueryHash);
+  ASSERT_NO_THROW({
+    const auto &response =
+        boost::get<const shared_model::interface::TransactionsPageResponse &>(
+            query_response->get());
+
+    for (auto i = 0; i < kTransactionsNumber; ++i) {
+      ASSERT_EQ(response.transactions()[i].creatorAccountId(),
+                transactions_test_copy[i]->creatorAccountId());
+    }
+    ASSERT_EQ(response.nextTxHash(), kNextTxHash);
+    ASSERT_EQ(response.allTransactionsSize(), kTransactionsNumber);
   });
 }
 

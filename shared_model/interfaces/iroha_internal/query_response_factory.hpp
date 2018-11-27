@@ -121,6 +121,13 @@ namespace shared_model {
               transactions,
           const crypto::Hash &query_hash) const = 0;
 
+      virtual std::unique_ptr<QueryResponse> createTransactionsPageResponse(
+          std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+          transactions,
+          const crypto::Hash& next_tx_hash,
+          interface::types::TransactionsNumberType all_transactions_size,
+          const crypto::Hash &query_hash) const = 0;
+
       /**
        * Create response for asset query
        * @param asset_id of asset to be inserted into the response
