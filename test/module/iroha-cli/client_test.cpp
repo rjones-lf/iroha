@@ -38,6 +38,8 @@
 #include "interfaces/iroha_internal/query_response_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
+#include "validators/protobuf/proto_query_validator.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 using ::testing::_;
 using ::testing::A;
@@ -131,17 +133,23 @@ class ClientServerTest : public testing::Test {
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Transaction>>
-        transaction_validator = std::make_unique<
+        interface_transaction_validator = std::make_unique<
             shared_model::validation::DefaultUnsignedTransactionValidator>();
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        iroha::protocol::Transaction>>
+        proto_transaction_validator = std::make_unique<
+            shared_model::validation::ProtoTransactionValidator>();
     auto transaction_factory =
         std::make_shared<shared_model::proto::ProtoTransportFactory<
             shared_model::interface::Transaction,
             shared_model::proto::Transaction>>(
-            std::move(transaction_validator));
+            std::move(interface_transaction_validator),
+            std::move(proto_transaction_validator));
     auto batch_parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     auto batch_factory = std::make_shared<
         shared_model::interface::TransactionBatchFactoryImpl>();
+    initQueryFactory();
     runner
         ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
             std::make_shared<torii::CommandServiceImpl>(
@@ -153,7 +161,7 @@ class ClientServerTest : public testing::Test {
             transaction_factory,
             batch_parser,
             batch_factory))
-        .append(std::make_unique<torii::QueryService>(qpi))
+        .append(std::make_unique<torii::QueryService>(qpi, query_factory))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -165,6 +173,22 @@ class ClientServerTest : public testing::Test {
 
     runner->waitForServersReady();
   }
+
+  void initQueryFactory() {
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        shared_model::interface::Query>>
+        query_validator = std::make_unique<
+            shared_model::validation::DefaultSignedQueryValidator>();
+    std::unique_ptr<
+        shared_model::validation::AbstractValidator<iroha::protocol::Query>>
+        proto_query_validator =
+            std::make_unique<shared_model::validation::ProtoQueryValidator>();
+    query_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
+        shared_model::interface::Query,
+        shared_model::proto::Query>>(std::move(query_validator),
+                                     std::move(proto_query_validator));
+  }
+
   decltype(shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair())
       pair =
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
@@ -174,6 +198,7 @@ class ClientServerTest : public testing::Test {
   std::unique_ptr<ServerRunner> runner;
   std::shared_ptr<MockPeerCommunicationService> pcsMock;
   std::shared_ptr<iroha::MockMstProcessor> mst;
+  std::shared_ptr<torii::QueryService::QueryFactoryType> query_factory;
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
       query_response_factory;
 

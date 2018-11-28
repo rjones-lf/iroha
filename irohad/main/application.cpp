@@ -28,8 +28,9 @@
 #include "multi_sig_transactions/transport/mst_transport_stub.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
-#include "validators/default_proto_validator.hpp"
 #include "validators/field_validator.hpp"
+#include "validators/protobuf/proto_query_validator.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -192,20 +193,42 @@ void Irohad::initNetworkClient() {
 }
 
 void Irohad::initFactories() {
+  // transaction factories
   transaction_batch_factory_ =
       std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
+
   std::unique_ptr<shared_model::validation::AbstractValidator<
       shared_model::interface::Transaction>>
-      transaction_validator = std::make_unique<
-          shared_model::validation::
-              DefaultOptionalSignedProtoTransactionValidator>();
+      transaction_validator =
+          std::make_unique<shared_model::validation::
+                               DefaultOptionalSignedTransactionValidator>();
+  std::unique_ptr<
+      shared_model::validation::AbstractValidator<iroha::protocol::Transaction>>
+      proto_transaction_validator = std::make_unique<
+          shared_model::validation::ProtoTransactionValidator>();
   transaction_factory =
       std::make_shared<shared_model::proto::ProtoTransportFactory<
           shared_model::interface::Transaction,
-          shared_model::proto::Transaction>>(std::move(transaction_validator));
+          shared_model::proto::Transaction>>(
+          std::move(transaction_validator),
+          std::move(proto_transaction_validator));
 
+  // query factories
   query_response_factory_ =
       std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
+
+  std::unique_ptr<shared_model::validation::AbstractValidator<
+      shared_model::interface::Query>>
+      query_validator = std::make_unique<
+          shared_model::validation::DefaultSignedQueryValidator>();
+  std::unique_ptr<
+      shared_model::validation::AbstractValidator<iroha::protocol::Query>>
+      proto_query_validator =
+          std::make_unique<shared_model::validation::ProtoQueryValidator>();
+  query_factory = std::make_shared<
+      shared_model::proto::ProtoTransportFactory<shared_model::interface::Query,
+                                                 shared_model::proto::Query>>(
+      std::move(query_validator), std::move(proto_query_validator));
 
   log_->info("[Init] => factories");
 }
@@ -382,7 +405,8 @@ void Irohad::initQueryService() {
   auto query_processor = std::make_shared<QueryProcessorImpl>(
       storage, storage, pending_txs_storage_, query_response_factory_);
 
-  query_service = std::make_shared<::torii::QueryService>(query_processor);
+  query_service =
+      std::make_shared<::torii::QueryService>(query_processor, query_factory);
 
   log_->info("[Init] => query service");
 }

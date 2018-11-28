@@ -49,7 +49,6 @@ namespace iroha {
 
 class Irohad {
  public:
-
   using RunResult = iroha::expected::Result<void, std::string>;
 
   /**
@@ -65,8 +64,8 @@ class Irohad {
    * @param proposal_delay - maximum waiting time util emitting new proposal
    * @param vote_delay - waiting time before sending vote to next peer
    * @param keypair - public and private keys for crypto signer
-   * @param opt_mst_gossip_params - parameters for Gossip MST propagation (optional).
-   * If not provided, disables mst processing support
+   * @param opt_mst_gossip_params - parameters for Gossip MST propagation
+   * (optional). If not provided, disables mst processing support
    *
    * TODO mboldyrev 03.11.2018 IR-1844 Refactor the constructor.
    */
@@ -222,6 +221,12 @@ class Irohad {
       shared_model::interface::Transaction,
       iroha::protocol::Transaction>>
       transaction_factory;
+
+  // query factory
+  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::Query,
+      iroha::protocol::Query>>
+      query_factory;
 
   // query response factory
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
