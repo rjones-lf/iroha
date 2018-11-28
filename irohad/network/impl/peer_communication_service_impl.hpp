@@ -9,12 +9,19 @@
 #include "network/peer_communication_service.hpp"
 
 #include "logger/logger.hpp"
-#include "network/ordering_gate.hpp"
-#include "simulator/verified_proposal_creator.hpp"
-#include "synchronizer/synchronizer.hpp"
 
 namespace iroha {
+  namespace simulator {
+    class VerifiedProposalCreator;
+  }  // namespace simulator
+
+  namespace synchronizer {
+    class Synchronizer;
+  }  // namespace synchronizer
+
   namespace network {
+    class OrderingGate;
+
     class PeerCommunicationServiceImpl : public PeerCommunicationService {
      public:
       PeerCommunicationServiceImpl(
