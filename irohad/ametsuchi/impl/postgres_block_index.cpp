@@ -32,11 +32,12 @@ namespace {
   // make index tx hash -> block where hash is stored
   std::string makeHashIndex(
       const shared_model::interface::types::HashType &hash,
-      shared_model::interface::types::HeightType height) {
+      shared_model::interface::types::HeightType height,
+      size_t index) {
     boost::format base(
-        "INSERT INTO height_by_hash(hash, height) VALUES ('%s', "
-        "'%s');");
-    return (base % hash.hex() % height).str();
+        "INSERT INTO position_by_hash(hash, height, index) VALUES ('%s', "
+        "'%s', '%s');");
+    return (base % hash.hex() % height % index).str();
   }
 
   // make index account_id:height -> list of tx indexes
@@ -121,7 +122,7 @@ namespace iroha {
             query += makeAccountHeightIndex(creator_id, height);
             query += makeAccountAssetIndex(
                 creator_id, height, index, tx.value().commands());
-            query += makeHashIndex(tx.value().hash(), height);
+            query += makeHashIndex(tx.value().hash(), height, index);
             query += makeCreatorHeightIndex(creator_id, height, index);
             return query;
           });

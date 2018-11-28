@@ -525,7 +525,7 @@ namespace iroha {
       auto cmd = (boost::format(R"(WITH has_my_perm AS (%s),
       has_all_perm AS (%s),
       t AS (
-          SELECT height, hash FROM height_by_hash WHERE hash IN (%s)
+          SELECT height, hash FROM position_by_hash WHERE hash IN (%s)
       )
       SELECT height, hash, has_my_perm.perm, has_all_perm.perm FROM t
       RIGHT OUTER JOIN has_my_perm ON TRUE

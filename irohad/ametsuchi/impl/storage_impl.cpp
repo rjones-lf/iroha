@@ -534,7 +534,7 @@ DELETE FROM domain;
 DELETE FROM signatory;
 DELETE FROM peer;
 DELETE FROM role;
-DELETE FROM height_by_hash;
+DELETE FROM position_by_hash;
 DELETE FROM height_by_account_set;
 DELETE FROM index_by_creator_height;
 DELETE FROM index_by_id_height_asset;
@@ -606,9 +606,10 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
         + R"() NOT NULL,
     PRIMARY KEY (permittee_account_id, account_id)
 );
-CREATE TABLE IF NOT EXISTS height_by_hash (
+CREATE TABLE IF NOT EXISTS position_by_hash (
     hash varchar,
-    height text
+    height text,
+    index text
 );
 CREATE TABLE IF NOT EXISTS height_by_account_set (
     account_id text,

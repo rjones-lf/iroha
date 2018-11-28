@@ -94,7 +94,7 @@ namespace iroha {
       boost::optional<std::string> block_str;
       auto hash_str = hash.hex();
 
-      sql_ << "SELECT height FROM height_by_hash WHERE hash = :hash",
+      sql_ << "SELECT height FROM position_by_hash WHERE hash = :hash",
           soci::into(block_str), soci::use(hash_str);
       if (block_str) {
         blockId = std::stoull(block_str.get());
