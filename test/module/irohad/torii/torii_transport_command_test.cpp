@@ -25,6 +25,7 @@
 #include "torii/impl/command_service_transport_grpc.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 constexpr size_t kTimes = 5;
 
@@ -53,6 +54,8 @@ class ToriiTransportCommandTest : public testing::Test {
           shared_model::proto::Transaction::TransportType>;
   using TxValidator = shared_model::validation::MockValidator<
       shared_model::interface::Transaction>;
+  using ProtoTxValidator =
+      shared_model::validation::MockValidator<iroha::protocol::Transaction>;
 
  public:
   /**
@@ -61,10 +64,14 @@ class ToriiTransportCommandTest : public testing::Test {
   void init() {
     status_factory =
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
+
     auto validator = std::make_unique<TxValidator>();
     tx_validator = validator.get();
-    transaction_factory =
-        std::make_shared<TransportFactory>(std::move(validator));
+    auto proto_validator = std::make_unique<ProtoTxValidator>();
+    proto_tx_validator = proto_validator.get();
+    transaction_factory = std::make_shared<TransportFactory>(
+        std::move(validator), std::move(proto_validator));
+
     batch_parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     batch_factory = std::make_shared<MockTransactionBatchFactory>();
@@ -89,6 +96,7 @@ class ToriiTransportCommandTest : public testing::Test {
 
   std::shared_ptr<MockStatusBus> status_bus;
   const TxValidator *tx_validator;
+  const ProtoTxValidator *proto_tx_validator;
 
   std::shared_ptr<TransportFactoryBase> transaction_factory;
   std::shared_ptr<shared_model::interface::TransactionBatchParser> batch_parser;
@@ -143,6 +151,9 @@ TEST_F(ToriiTransportCommandTest, ListTorii) {
     request.add_transactions();
   }
 
+  EXPECT_CALL(*proto_tx_validator, validate(_))
+      .Times(kTimes)
+      .WillRepeatedly(Return(shared_model::validation::Answer{}));
   EXPECT_CALL(*tx_validator, validate(_))
       .Times(kTimes)
       .WillRepeatedly(Return(shared_model::validation::Answer{}));
@@ -173,6 +184,9 @@ TEST_F(ToriiTransportCommandTest, ListToriiInvalid) {
 
   shared_model::validation::Answer error;
   error.addReason(std::make_pair("some error", std::vector<std::string>{}));
+  EXPECT_CALL(*proto_tx_validator, validate(_))
+      .Times(kTimes)
+      .WillRepeatedly(Return(shared_model::validation::Answer{}));
   EXPECT_CALL(*tx_validator, validate(_))
       .Times(kTimes)
       .WillRepeatedly(Return(error));
@@ -200,6 +214,9 @@ TEST_F(ToriiTransportCommandTest, ListToriiPartialInvalid) {
   }
 
   int counter = 0;
+  EXPECT_CALL(*proto_tx_validator, validate(_))
+      .Times(kTimes)
+      .WillRepeatedly(Return(shared_model::validation::Answer{}));
   EXPECT_CALL(*tx_validator, validate(_))
       .Times(kTimes)
       .WillRepeatedly(Invoke([&counter](const auto &) mutable {

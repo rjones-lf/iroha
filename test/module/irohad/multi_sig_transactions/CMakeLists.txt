@@ -47,3 +47,8 @@ target_link_libraries(gossip_propagation_strategy_test
     shared_model_stateless_validation
     shared_model_proto_backend
     )
+
+AddTest(mst_net_input_test mst_net_input_test.cpp)
+target_link_libraries(mst_net_input_test
+    integration_framework
+    )

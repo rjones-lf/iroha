@@ -15,6 +15,7 @@
 #include "module/shared_model/validators/validators.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 #include "validators/field_validator.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 using namespace iroha::network;
 using namespace iroha::model;
@@ -36,11 +37,15 @@ using ::testing::InvokeWithoutArgs;
 TEST(TransportTest, SendAndReceive) {
   auto async_call_ = std::make_shared<
       iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
-  auto tx_validator = std::make_unique<shared_model::validation::MockValidator<
-      shared_model::interface::Transaction>>();
+  auto interface_tx_validator =
+      std::make_unique<shared_model::validation::MockValidator<
+          shared_model::interface::Transaction>>();
+  auto proto_tx_validator = std::make_unique<
+      shared_model::validation::MockValidator<iroha::protocol::Transaction>>();
   auto tx_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
       shared_model::interface::Transaction,
-      shared_model::proto::Transaction>>(std::move(tx_validator));
+      shared_model::proto::Transaction>>(std::move(interface_tx_validator),
+                                         std::move(proto_tx_validator));
   auto parser =
       std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
   auto batch_factory =
@@ -87,13 +92,13 @@ TEST(TransportTest, SendAndReceive) {
   // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side
   EXPECT_CALL(*notifications, onNewState(_, _))
-      .WillOnce(Invoke(
-          [&my_key, &cv, &state](const auto &from_key, auto const &target_state) {
-            EXPECT_EQ(my_key.publicKey(), from_key);
+      .WillOnce(Invoke([&my_key, &cv, &state](const auto &from_key,
+                                              auto const &target_state) {
+        EXPECT_EQ(my_key.publicKey(), from_key);
 
-            EXPECT_EQ(state, target_state);
-            cv.notify_one();
-          }));
+        EXPECT_EQ(state, target_state);
+        cv.notify_one();
+      }));
 
   transport->sendState(*peer, state);
   std::unique_lock<std::mutex> lock(mtx);

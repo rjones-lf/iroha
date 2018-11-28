@@ -38,7 +38,7 @@ namespace iroha {
     };
 
     class MockCommandServiceTransport
-        : public iroha::protocol::CommandService::Service {
+        : public iroha::protocol::CommandService_v1::Service {
      public:
       MOCK_METHOD3(Torii,
                    grpc::Status(grpc::ServerContext *,
