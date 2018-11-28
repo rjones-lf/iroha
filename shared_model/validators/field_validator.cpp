@@ -14,6 +14,7 @@
 #include "interfaces/common_objects/amount.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/queries/query_payload_meta.hpp"
+#include "interfaces/queries/tx_pagination_meta.hpp"
 #include "validators/field_validator.hpp"
 
 // TODO: 15.02.18 nickaleks Change structure to compositional IR-978
@@ -385,7 +386,18 @@ namespace shared_model {
     void FieldValidator::validateTxPaginationMeta(
         ReasonsGroupType &reason,
         const interface::TxPaginationMeta &tx_pagination_meta) const {
-      // TODO mboldyrev 27.11.2018, IR-26 IR-27: implement validation
+      const auto page_size = tx_pagination_meta.pageSize();
+      if (page_size <= 0) {
+        reason.second.push_back(
+            (boost::format(
+                 "Page size is %s (%d), while it must be a non-zero positive.")
+             % (page_size == 0 ? "zero" : "negative") % page_size)
+                .str());
+      }
+      const auto first_hash = tx_pagination_meta.firstTxHash();
+      if (first_hash) {
+        validateHash(reason, *first_hash);
+      }
     }
 
   }  // namespace validation
