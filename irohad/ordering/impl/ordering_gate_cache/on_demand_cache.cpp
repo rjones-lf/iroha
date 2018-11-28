@@ -5,6 +5,8 @@
 
 #include "ordering/impl/ordering_gate_cache/on_demand_cache.hpp"
 
+#include "interfaces/iroha_internal/transaction_batch.hpp"
+
 using namespace iroha::ordering::cache;
 
 // TODO: IR-1864 13.11.18 kamilsa use nvi to separate business logic and locking
@@ -16,13 +18,16 @@ void OnDemandCache::addToBack(
   circ_buffer.back().insert(batches.begin(), batches.end());
 }
 
-void OnDemandCache::remove(
-    const OrderingGateCache::BatchesSetType &remove_batches) {
+void OnDemandCache::remove(const OrderingGateCache::HashesSetType &hashes) {
   std::unique_lock<std::shared_timed_mutex> lock(mutex_);
   for (auto &batches : circ_buffer) {
-    for (const auto &removed_batch : remove_batches) {
-      batches.erase(removed_batch);
-    };
+    for (auto it = batches.begin(); it != batches.end();) {
+      if (hashes.find(it->get()->reducedHash()) != hashes.end()) {
+        it = batches.erase(it);
+      } else {
+        ++it;
+      }
+    }
   }
 }
 

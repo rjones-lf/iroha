@@ -32,7 +32,7 @@ namespace iroha {
        */
       struct BlockEvent {
         consensus::Round round;
-        cache::OrderingGateCache::BatchesSetType batches;
+        cache::OrderingGateCache::HashesSetType hashes;
       };
 
       /**
