@@ -11,6 +11,7 @@ add_library(ordering_service
 
 target_link_libraries(ordering_service
     rxcpp
+    common
     tbb
     shared_model_interfaces
     shared_model_proto_backend
@@ -19,11 +20,20 @@ target_link_libraries(ordering_service
     shared_model_interfaces_factories
     )
 
+add_library(on_demand_common
+    impl/on_demand_common.cpp
+    )
+
+target_link_libraries(on_demand_common
+    consensus_round
+    )
+
 add_library(on_demand_ordering_service
     impl/on_demand_ordering_service_impl.cpp
     )
 
 target_link_libraries(on_demand_ordering_service
+    on_demand_common
     tbb
     shared_model_interfaces
     consensus_round
@@ -42,12 +52,14 @@ target_link_libraries(on_demand_ordering_service_transport_grpc
     consensus_round
     logger
     ordering_grpc
+    common
     )
 
 add_library(on_demand_connection_manager
     impl/on_demand_connection_manager.cpp
     )
 target_link_libraries(on_demand_connection_manager
+    on_demand_common
     shared_model_interfaces
     consensus_round
     rxcpp
@@ -59,9 +71,11 @@ add_library(on_demand_ordering_gate
     impl/on_demand_ordering_gate.cpp
     )
 target_link_libraries(on_demand_ordering_gate
+    on_demand_common
     shared_model_interfaces
     consensus_round
     rxcpp
     boost
     logger
+    common
     )

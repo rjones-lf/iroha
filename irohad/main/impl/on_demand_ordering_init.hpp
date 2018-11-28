@@ -6,6 +6,8 @@
 #ifndef IROHA_ON_DEMAND_ORDERING_INIT_HPP
 #define IROHA_ON_DEMAND_ORDERING_INIT_HPP
 
+#include <random>
+
 #include "ametsuchi/peer_query_factory.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "logger/logger.hpp"
@@ -44,7 +46,7 @@ namespace iroha {
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call,
           std::chrono::milliseconds delay,
-          std::vector<shared_model::interface::types::HashType> hashes);
+          std::vector<shared_model::interface::types::HashType> initial_hashes);
 
       /**
        * Creates on-demand ordering gate. \see initOrderingGate for parameters
@@ -54,7 +56,8 @@ namespace iroha {
           std::shared_ptr<ordering::OnDemandOrderingService> ordering_service,
           std::shared_ptr<ordering::transport::OdOsNotification> network_client,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
-              factory);
+              proposal_factory,
+          consensus::Round initial_round);
 
       /**
        * Creates on-demand ordering service. \see initOrderingGate for
@@ -63,7 +66,7 @@ namespace iroha {
       auto createService(
           size_t max_size,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
-              factory);
+              proposal_factory);
 
      public:
       /**
@@ -71,8 +74,8 @@ namespace iroha {
        *
        * @param max_size maximum number of transaction in a proposal
        * @param delay timeout for ordering service response on proposal request
-       * @param hashes seeds for peer list permutations for first k rounds
-       * they are required since hash of block i defines round i + k
+       * @param initial_hashes seeds for peer list permutations for first k
+       * rounds they are required since hash of block i defines round i + k
        * @param peer_query_factory factory for getLedgerPeers query required by
        * connection manager
        * @param transaction_factory transport factory for transactions required
@@ -83,14 +86,16 @@ namespace iroha {
        * batch candidates produced by parser
        * @param async_call asynchronous gRPC client required for sending batches
        * requests to ordering service and processing responses
-       * @param factory proposal factory required by ordering service to produce
+       * @param proposal_factory factory required by ordering service to produce
        * proposals
+       * @param initial_round initial value for current round used in
+       * OnDemandOrderingGate
        * @return initialized ordering gate
        */
       std::shared_ptr<network::OrderingGate> initOrderingGate(
           size_t max_size,
           std::chrono::milliseconds delay,
-          std::vector<shared_model::interface::types::HashType> hashes,
+          std::vector<shared_model::interface::types::HashType> initial_hashes,
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
           std::shared_ptr<
               ordering::transport::OnDemandOsServerGrpc::TransportFactoryType>
@@ -102,7 +107,8 @@ namespace iroha {
           std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call,
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
-              factory);
+              proposal_factory,
+          consensus::Round initial_round);
 
       /// gRPC service for ordering service
       std::shared_ptr<ordering::proto::OnDemandOrdering::Service> service;
@@ -128,6 +134,11 @@ namespace iroha {
 
       /// permutations for peers lists
       std::array<std::vector<size_t>, kCount> permutations_;
+
+      /// random generator for peer list permutations
+      // TODO andrei 08.11.2018 IR-1850 Refactor default_random_engine usages
+      // with platform-independent class
+      std::default_random_engine gen_;
     };
   }  // namespace network
 }  // namespace iroha

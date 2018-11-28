@@ -8,14 +8,16 @@
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
+#include "backend/protobuf/proto_permission_to_string.hpp"
 #include "backend/protobuf/proto_proposal_factory.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
-#include "common/types.hpp"
+#include "common/bind.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy_stub.hpp"
@@ -23,6 +25,7 @@
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "multi_sig_transactions/transport/mst_transport_stub.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "validators/default_validator.hpp"
@@ -112,12 +115,15 @@ void Irohad::initStorage() {
   common_objects_factory_ =
       std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
           shared_model::validation::FieldValidator>>();
+  auto perm_converter =
+      std::make_shared<shared_model::proto::ProtoPermissionToString>();
   auto block_converter =
       std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
   auto storageResult = StorageImpl::create(block_store_dir_,
                                            pg_conn_,
                                            common_objects_factory_,
-                                           std::move(block_converter));
+                                           std::move(block_converter),
+                                           perm_converter);
   storageResult.match(
       [&](expected::Value<std::shared_ptr<ametsuchi::StorageImpl>> &_storage) {
         storage = _storage.value;
@@ -203,26 +209,18 @@ void Irohad::initOrderingGate() {
     log_->error("Failed to create block query");
     return;
   }
-  auto height = (*block_query)->getTopBlockHeight();
   // since delay is 2, it is required to get two more hashes from block store,
   // in addition to top block
-  size_t start_height = 1;
-  size_t required_num_blocks = 0;
-  if (height > 2) {
-    start_height = height - 2;
-    required_num_blocks = 2;
-  } else if (height == 2) {
-    required_num_blocks = 1;
-  }
-  auto blocks = (*block_query)->getBlocks(start_height, required_num_blocks);
+  const size_t kNumBlocks = 3;
+  auto blocks = (*block_query)->getTopBlocks(kNumBlocks);
   auto hash_stub = shared_model::interface::types::HashType{std::string(
       shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength, '0')};
   auto hashes = std::accumulate(
       blocks.begin(),
-      blocks.end(),
+      std::prev(blocks.end()),
       // add hash stubs if there are not enough blocks in storage
       std::vector<shared_model::interface::types::HashType>{
-          2 - required_num_blocks, hash_stub},
+          kNumBlocks - blocks.size(), hash_stub},
       [](auto &acc, const auto &val) {
         acc.push_back(val->hash());
         return acc;
@@ -239,7 +237,8 @@ void Irohad::initOrderingGate() {
                                                  batch_parser,
                                                  transaction_batch_factory_,
                                                  async_call_,
-                                                 std::move(factory));
+                                                 std::move(factory),
+                                                 {blocks.back()->height(), 1});
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -466,7 +465,8 @@ Irohad::RunResult Irohad::run() {
             pcs->on_commit()
                 .start_with(synchronizer::SynchronizationEvent{
                     rxcpp::observable<>::just(block),
-                    SynchronizationOutcomeType::kCommit})
+                    SynchronizationOutcomeType::kCommit,
+                    {block->height(), ordering::kFirstRejectRound}})
                 .subscribe(ordering_init.notifier.get_subscriber());
             return {};
           },

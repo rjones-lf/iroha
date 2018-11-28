@@ -29,20 +29,18 @@ namespace iroha {
      public:
       virtual ~ChainValidator() = default;
 
-      // TODO andrei 16.10.18 IR-1761 Rename methods in validators
-
       /**
-       * Validate method provide chain validation for application it to ledger.
+       * Try to apply the blocks from observable to the storage.
        *
-       * Chain validation will validate all signatures of new blocks
+       * While applying the blocks it will validate all their signatures
        * and related meta information such as previous hash, height and
        * other meta information
        * @param blocks - observable with all blocks, that should be applied
        * atomically
-       * @param storage - storage that may be modified during loading
-       * @return true if commit is valid, false otherwise
+       * @param storage - storage to which the blocks are applied
+       * @return true if commit is valid and successfully applied, false otherwise
        */
-      virtual bool validateChain(
+      virtual bool validateAndApply(
           rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
               blocks,
           ametsuchi::MutableStorage &storage) const = 0;

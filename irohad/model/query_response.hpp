@@ -19,8 +19,10 @@
 #define IROHA_QUERY_RESPONSE_HPP
 
 #include <memory>
-#include <model/client.hpp>
-#include <model/query.hpp>
+
+#include "crypto/hash_types.hpp"
+#include "model/client.hpp"
+#include "model/query.hpp"
 
 namespace iroha {
   namespace model {

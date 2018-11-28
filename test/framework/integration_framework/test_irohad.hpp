@@ -18,7 +18,6 @@
 #ifndef IROHA_TESTIROHAD_HPP
 #define IROHA_TESTIROHAD_HPP
 
-#include "common/types.hpp"
 #include "cryptography/keypair.hpp"
 #include "main/application.hpp"
 

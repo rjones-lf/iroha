@@ -15,6 +15,7 @@
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 #include "module/shared_model/validators/validators.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -34,8 +35,10 @@ class OnDemandOsTest : public ::testing::Test {
   std::shared_ptr<OnDemandOrderingService> os;
   const uint64_t transaction_limit = 20;
   const uint32_t proposal_limit = 5;
-  const consensus::Round initial_round = {2, 1}, target_round = {4, 1},
-                         commit_round = {3, 1}, reject_round = {2, 2};
+  const consensus::Round initial_round = {2, kFirstRejectRound},
+                         target_round = {4, kNextCommitRoundConsumer},
+                         commit_round = {3, kFirstRejectRound},
+                         reject_round = {2, kNextRejectRoundConsumer};
 
   void SetUp() override {
     // TODO: nickaleks IR-1811 use mock factory

@@ -19,7 +19,6 @@
 #define IROHA_TRANSFER_ASSET_HPP
 
 #include <string>
-#include "common/types.hpp"
 #include "model/command.hpp"
 
 namespace iroha {

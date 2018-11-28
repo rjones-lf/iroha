@@ -81,6 +81,7 @@ struct MockProposal : public shared_model::interface::Proposal {
   MOCK_CONST_METHOD0(createdTime,
                      shared_model::interface::types::TimestampType());
   MOCK_CONST_METHOD0(blob, const shared_model::interface::types::BlobType &());
+  MOCK_CONST_METHOD0(hash, const shared_model::interface::types::HashType &());
   MOCK_CONST_METHOD0(clone, MockProposal *());
 };
 

@@ -30,6 +30,7 @@
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/block_json_converter.hpp"
 #include "interfaces/iroha_internal/query_response_factory.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/query_response.hpp"
@@ -53,7 +54,9 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
               converter,
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
-              response_factory);
+              response_factory,
+          std::shared_ptr<shared_model::interface::PermissionToString>
+              perm_converter);
 
       void setCreatorId(
           const shared_model::interface::types::AccountIdType &creator_id);
@@ -146,6 +149,8 @@ namespace iroha {
       std::shared_ptr<shared_model::interface::BlockJsonConverter> converter_;
       std::shared_ptr<shared_model::interface::QueryResponseFactory>
           query_response_factory_;
+      std::shared_ptr<shared_model::interface::PermissionToString>
+          perm_converter_;
       logger::Logger log_;
     };
 
@@ -160,7 +165,9 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
               converter,
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
-              response_factory);
+              response_factory,
+          std::shared_ptr<shared_model::interface::PermissionToString>
+              perm_converter);
 
       QueryExecutorResult validateAndExecute(
           const shared_model::interface::Query &query) override;

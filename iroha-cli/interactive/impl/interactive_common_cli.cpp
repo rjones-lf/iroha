@@ -17,7 +17,7 @@
 #include <numeric>
 #include <utility>
 
-#include "common/types.hpp"
+#include "common/bind.hpp"
 #include "interactive/interactive_common_cli.hpp"
 #include "parser/parser.hpp"
 
