@@ -20,6 +20,7 @@
 #include "backend/protobuf/queries/proto_get_signatories.hpp"
 #include "backend/protobuf/queries/proto_get_transactions.hpp"
 #include "backend/protobuf/queries/proto_query.hpp"
+#include "interfaces/queries/tx_pagination_meta.hpp"
 #include "validators/abstract_validator.hpp"
 #include "validators/answer.hpp"
 
@@ -61,6 +62,7 @@ namespace shared_model {
         reason.first = "GetAccountTransactions";
 
         validator_.validateAccountId(reason, qry.accountId());
+        validator_.validateTxPaginationMeta(reason, qry.paginationMeta());
 
         return reason;
       }
@@ -72,6 +74,7 @@ namespace shared_model {
 
         validator_.validateAccountId(reason, qry.accountId());
         validator_.validateAssetId(reason, qry.assetId());
+        validator_.validateTxPaginationMeta(reason, qry.paginationMeta());
 
         return reason;
       }
