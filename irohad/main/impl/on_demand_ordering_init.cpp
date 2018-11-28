@@ -5,6 +5,7 @@
 
 #include "main/impl/on_demand_ordering_init.hpp"
 
+#include <limits>
 #include <random>
 
 #include "common/timeout.hpp"
@@ -121,12 +122,19 @@ namespace iroha {
           notifier.get_observable()
               .lift<iroha::synchronizer::SynchronizationEvent>(
                   iroha::makeTimeout<iroha::synchronizer::SynchronizationEvent>(
-                      [reject_counter = -1](const auto &commit) mutable {
+                      [reject_counter = -1ll](const auto &commit) mutable {
                         using namespace std::chrono;
                         using namespace iroha::synchronizer;
                         if (commit.sync_outcome
                             == SynchronizationOutcomeType::kReject) {
-                          return seconds(std::min(reject_counter++, 0));
+                          if (reject_counter
+                              != std::numeric_limits<decltype(
+                                     reject_counter)>::max()) {
+                            reject_counter++;
+                          }
+                          return seconds(std::min(
+                              reject_counter,
+                              static_cast<decltype(reject_counter)>(0)));
                         } else {
                           reject_counter = -1;
                           return seconds(0);
