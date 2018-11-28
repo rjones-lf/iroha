@@ -59,13 +59,11 @@ namespace shared_model {
                                                  which);
       }()};
 
-      QueryVariantType ivariant_{
-          [this] { return QueryVariantType(variant_); }()};
+      QueryVariantType ivariant_{variant_};
 
-      interface::types::BlobType blob_{[this] { return makeBlob(*proto_); }()};
+      interface::types::BlobType blob_{makeBlob(*proto_)};
 
-      interface::types::BlobType payload_{
-          [this] { return makeBlob(proto_->payload()); }()};
+      interface::types::BlobType payload_{makeBlob(proto_->payload())};
 
       SignatureSetType<proto::Signature> signatures_{[this] {
         SignatureSetType<proto::Signature> set;
