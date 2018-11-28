@@ -454,15 +454,26 @@ namespace iroha {
       using PermissionTuple = boost::tuple<int>;
 
       // returns mapping from block height to index in a block
-      // TODO: add position to tx_hash index
-      // and remove all txs where height and index < than in starting transaction
-      // apply limit to remove
+      // 1. Find height and index of all txes which came before hash in a query
+      // 2. use it to remove columns which came after
+      // TODO: add limit
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
+      first_hash AS (
+          SELECT height, index FROM position_by_hash WHERE hash = :hash
+      ),
+      previous_txes AS (
+          SELECT position_by_hash.height, position_by_hash.index
+          FROM position_by_hash JOIN first_hash
+          ON position_by_hash.height <= first_hash.height
+          AND position_by_hash.index <= first_hash.index
+      ),
       t AS (
           SELECT DISTINCT has.height, index
           FROM height_by_account_set AS has
           JOIN index_by_creator_height AS ich ON has.height = ich.height
           AND has.account_id = ich.creator_id
+          JOIN previous_txes ON has.height = previous_txes.height
+          AND index = previous_txes.index
           WHERE account_id = :account_id
           ORDER BY has.height, index ASC
       )
