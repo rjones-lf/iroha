@@ -12,7 +12,11 @@
 
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
+#include "backend/protobuf/query_responses/proto_account_asset_response.hpp"
+#include "backend/protobuf/query_responses/proto_account_response.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "backend/protobuf/query_responses/proto_signatories_response.hpp"
+#include "backend/protobuf/query_responses/proto_transaction_response.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"

@@ -20,9 +20,10 @@
 #include <gtest/gtest.h>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
+#include "backend/protobuf/query_responses/proto_error_query_response.hpp"
+#include "common/byteutils.hpp"
 #include "cryptography/hash.hpp"
 #include "framework/specified_visitor.hpp"
-#include "common/byteutils.hpp"
 
 /**
  * @given protobuf's QueryResponse with different responses and some hash

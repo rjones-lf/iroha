@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "query_permission_test_ast.hpp"
+#include "interfaces/query_responses/account_asset_response.hpp"
 #include "query_permission_fixture.hpp"
+#include "query_permission_test_ast.hpp"
 
 using namespace common_constants;
 using AccountAssetsFixture = QueryPermissionFixture<QueryPermissionAssets>;

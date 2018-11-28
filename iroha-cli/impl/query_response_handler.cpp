@@ -19,6 +19,7 @@
 #include "backend/protobuf/commands/proto_command.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "backend/protobuf/query_responses/proto_transaction_response.hpp"
 #include "interfaces/permissions.hpp"
 #include "logger/logger.hpp"
 #include "model/converters/pb_common.hpp"

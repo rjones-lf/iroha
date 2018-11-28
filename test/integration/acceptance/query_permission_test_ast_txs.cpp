@@ -5,6 +5,8 @@
 
 #include "query_permission_test_ast_txs.hpp"
 
+#include "interfaces/query_responses/transactions_response.hpp"
+
 using namespace common_constants;
 
 QueryPermissionAssetTxs::QueryPermissionAssetTxs()

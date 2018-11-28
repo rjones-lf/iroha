@@ -9,6 +9,7 @@
 
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
+#include "interfaces/query_responses/account_response.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 
 using namespace integration_framework;

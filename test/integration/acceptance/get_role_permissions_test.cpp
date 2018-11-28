@@ -9,6 +9,7 @@
 #include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/permissions.hpp"
+#include "interfaces/query_responses/error_responses/stateful_failed_error_response.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
