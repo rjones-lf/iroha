@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <validators/protobuf/proto_transaction_validator.hpp>
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -129,13 +130,18 @@ class ToriiServiceTest : public testing::Test {
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Transaction>>
-        transaction_validator = std::make_unique<
+        interface_transaction_validator = std::make_unique<
             shared_model::validation::DefaultUnsignedTransactionValidator>();
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        iroha::protocol::Transaction>>
+        proto_transaction_validator = std::make_unique<
+            shared_model::validation::ProtoTransactionValidator>();
     auto transaction_factory =
         std::make_shared<shared_model::proto::ProtoTransportFactory<
             shared_model::interface::Transaction,
             shared_model::proto::Transaction>>(
-            std::move(transaction_validator));
+            std::move(interface_transaction_validator),
+            std::move(proto_transaction_validator));
     auto batch_parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     auto batch_factory = std::make_shared<

@@ -23,7 +23,7 @@ namespace torii_utils {
   QuerySyncClient::QuerySyncClient(const std::string &ip, size_t port)
       : ip_(ip),
         port_(port),
-        stub_(iroha::network::createClient<iroha::protocol::QueryService>(
+        stub_(iroha::network::createClient<iroha::protocol::QueryService_v1>(
             ip + ":" + std::to_string(port))) {}
 
   QuerySyncClient::QuerySyncClient(const QuerySyncClient &rhs)
