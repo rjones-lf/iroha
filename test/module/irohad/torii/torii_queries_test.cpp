@@ -232,6 +232,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
   // Should not return Error Response because tx is stateless and stateful valid
   ASSERT_FALSE(response.has_error_response());
 
+  // TODO [IR-48] Akvinikym 28.11.18: destroy specified visitor
   ASSERT_NO_THROW({
     const auto &account_resp = boost::apply_visitor(
         framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),

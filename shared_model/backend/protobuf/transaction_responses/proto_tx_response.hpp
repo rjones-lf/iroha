@@ -6,9 +6,9 @@
 #ifndef IROHA_PROTO_TX_RESPONSE_HPP
 #define IROHA_PROTO_TX_RESPONSE_HPP
 
-#include <limits>
+#include "interfaces/transaction_responses/tx_response.hpp"
 
-#include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
+#include "endpoint.pb.h"
 
 namespace shared_model {
   namespace proto {
@@ -50,7 +50,6 @@ namespace shared_model {
       struct Impl;
       std::unique_ptr<Impl> impl_;
 
-      static constexpr int max_priority = std::numeric_limits<int>::max();
       int priority() const noexcept override;
     };
   }  // namespace  proto

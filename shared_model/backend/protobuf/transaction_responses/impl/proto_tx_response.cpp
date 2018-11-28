@@ -5,13 +5,16 @@
 
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 
+#include <limits>
+
+#include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
 #include "common/visitor.hpp"
 #include "cryptography/hash.hpp"
 #include "utils/reference_holder.hpp"
 #include "utils/variant_deserializer.hpp"
 
 namespace {
-  /// Type of variant, that handle all concrete tx responses in the system
+  /// Variant type, that contains all concrete tx responses in the system
   using ProtoResponseVariantType =
       boost::variant<shared_model::proto::StatelessFailedTxResponse,
                      shared_model::proto::StatelessValidTxResponse,
@@ -26,6 +29,8 @@ namespace {
 
   /// Type with list of types in ResponseVariantType
   using ProtoResponseListType = ProtoResponseVariantType::types;
+
+  constexpr int kMaxPriority = std::numeric_limits<int>::max();
 }  // namespace
 
 namespace shared_model {
@@ -113,8 +118,8 @@ namespace shared_model {
           [](const StatefulFailedTxResponse &) { return 5; },
           [](const MstExpiredResponse &) { return 5; },
           // following types are the final ones
-          [](const CommittedTxResponse &) { return max_priority; },
-          [](const RejectedTxResponse &) { return max_priority; });
+          [](const CommittedTxResponse &) { return kMaxPriority; },
+          [](const RejectedTxResponse &) { return kMaxPriority; });
     }
 
     const TransactionResponse::TransportType &
