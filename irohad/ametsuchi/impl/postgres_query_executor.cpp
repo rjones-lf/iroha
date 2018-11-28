@@ -453,6 +453,10 @@ namespace iroha {
           QueryType<shared_model::interface::types::HeightType, uint64_t>;
       using PermissionTuple = boost::tuple<int>;
 
+      // returns mapping from block height to index in a block
+      // TODO: add position to tx_hash index
+      // and remove all txs where height and index < than in starting transaction
+      // apply limit to remove
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
       t AS (
           SELECT DISTINCT has.height, index
@@ -475,6 +479,8 @@ namespace iroha {
       return executeQuery<QueryTuple, PermissionTuple>(
           [&] { return (sql_.prepare << cmd, soci::use(q.accountId())); },
           [&](auto range, auto &) {
+            // unpack results to get map from block height to index of tx in
+            // a block
             std::map<uint64_t, std::vector<uint64_t>> index;
             boost::for_each(range, [&index](auto t) {
               apply(t, [&index](auto &height, auto &idx) {
@@ -484,6 +490,7 @@ namespace iroha {
 
             std::vector<std::unique_ptr<shared_model::interface::Transaction>>
                 response_txs;
+            // get transactions corresponding to indexes
             for (auto &block : index) {
               auto txs = this->getTransactionsFromBlock(
                   block.first,
