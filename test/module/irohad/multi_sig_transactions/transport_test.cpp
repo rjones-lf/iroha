@@ -14,8 +14,8 @@
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
-#include "validators/default_proto_validator.hpp"
 #include "validators/field_validator.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 using namespace iroha::network;
 using namespace iroha::model;
@@ -37,11 +37,15 @@ using ::testing::InvokeWithoutArgs;
 TEST(TransportTest, SendAndReceive) {
   auto async_call_ = std::make_shared<
       iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
-  auto tx_validator = std::make_unique<shared_model::validation::MockValidator<
-      shared_model::interface::Transaction>>();
+  auto interface_tx_validator =
+      std::make_unique<shared_model::validation::MockValidator<
+          shared_model::interface::Transaction>>();
+  auto proto_tx_validator = std::make_unique<
+      shared_model::validation::MockValidator<iroha::protocol::Transaction>>();
   auto tx_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
       shared_model::interface::Transaction,
-      shared_model::proto::Transaction>>(std::move(tx_validator));
+      shared_model::proto::Transaction>>(std::move(interface_tx_validator),
+                                         std::move(proto_tx_validator));
   auto parser =
       std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
   auto batch_factory =
