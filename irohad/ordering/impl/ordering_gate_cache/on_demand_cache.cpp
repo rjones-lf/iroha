@@ -23,6 +23,8 @@ void OnDemandCache::remove(const OrderingGateCache::HashesSetType &hashes) {
   for (auto &batches : circ_buffer) {
     for (auto it = batches.begin(); it != batches.end();) {
       if (hashes.find(it->get()->reducedHash()) != hashes.end()) {
+        // returns iterator following the last removed element
+        // hence there is no increment in loop iteration_expression
         it = batches.erase(it);
       } else {
         ++it;
