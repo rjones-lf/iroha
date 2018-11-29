@@ -19,8 +19,15 @@ namespace shared_model {
                 transactionPageResponse_.transactions().begin(),
                 transactionPageResponse_.transactions().end());
           }()},
-          next_hash_(crypto::Hash::fromHexString(
-              transactionPageResponse_.next_tx_hash())) {}
+          next_hash_{[this]() -> boost::optional<interface::types::HashType> {
+            switch (transactionPageResponse_.next_page_tag_case()) {
+              case iroha::protocol::TransactionsPageResponse::kNextTxHash:
+                return crypto::Hash::fromHexString(
+                    transactionPageResponse_.next_tx_hash());
+              default:
+                return boost::none;
+            }
+          }()} {}
 
     template TransactionsPageResponse::TransactionsPageResponse(
         TransactionsPageResponse::TransportType &);
@@ -42,7 +49,8 @@ namespace shared_model {
       return transactions_;
     }
 
-    interface::types::HashType TransactionsPageResponse::nextTxHash() const {
+    boost::optional<interface::types::HashType>
+    TransactionsPageResponse::nextTxHash() const {
       return next_hash_;
     }
 
