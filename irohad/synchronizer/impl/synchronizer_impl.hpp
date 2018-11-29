@@ -14,6 +14,11 @@
 #include "validation/chain_validator.hpp"
 
 namespace iroha {
+
+  namespace ametsuchi {
+    class BlockQueryFactory;
+  }
+
   namespace synchronizer {
 
     class SynchronizerImpl : public Synchronizer {
@@ -21,8 +26,9 @@ namespace iroha {
       SynchronizerImpl(
           std::shared_ptr<network::ConsensusGate> consensus_gate,
           std::shared_ptr<validation::ChainValidator> validator,
-          std::shared_ptr<ametsuchi::MutableFactory> mutableFactory,
-          std::shared_ptr<network::BlockLoader> blockLoader);
+          std::shared_ptr<ametsuchi::MutableFactory> mutable_factory,
+          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
+          std::shared_ptr<network::BlockLoader> block_loader);
 
       ~SynchronizerImpl() override;
 
@@ -37,10 +43,12 @@ namespace iroha {
        */
       SynchronizationEvent downloadMissingBlocks(
           std::shared_ptr<shared_model::interface::Block> commit_message,
-          std::unique_ptr<ametsuchi::MutableStorage> storage);
+          std::unique_ptr<ametsuchi::MutableStorage> storage,
+          const shared_model::interface::types::HeightType &height);
 
       std::shared_ptr<validation::ChainValidator> validator_;
       std::shared_ptr<ametsuchi::MutableFactory> mutable_factory_;
+      std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory_;
       std::shared_ptr<network::BlockLoader> block_loader_;
 
       // internal

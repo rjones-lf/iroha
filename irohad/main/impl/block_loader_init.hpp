@@ -44,11 +44,10 @@ namespace iroha {
        * Create block loader for loading blocks from given peer factory by top
        * block
        * @param peer_query_factory - factory to peer query component
-       * @param block_query_factory - factory to block query component
        * @return initialized loader
        */
-      auto createLoader(std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
-                        std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory);
+      auto createLoader(
+          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory);
 
      public:
       /**

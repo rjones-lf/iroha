@@ -34,11 +34,11 @@ namespace iroha {
      public:
       BlockLoaderImpl(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
-          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           shared_model::proto::ProtoBlockFactory factory);
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlocks(
+          const shared_model::interface::types::HeightType &height,
           const shared_model::crypto::PublicKey &peer_pubkey) override;
 
       boost::optional<std::shared_ptr<shared_model::interface::Block>>
@@ -67,7 +67,6 @@ namespace iroha {
                          std::unique_ptr<proto::Loader::Stub>>
           peer_connections_;
       std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory_;
-      std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory_;
       shared_model::proto::ProtoBlockFactory block_factory_;
 
       logger::Logger log_;

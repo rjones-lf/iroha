@@ -34,11 +34,13 @@ namespace iroha {
      public:
       /**
        * Retrieve block from given peer starting from current top
+       * @param height - top block height in requester's peer storage
        * @param peer_pubkey - peer for requesting blocks
        * @return
        */
       virtual rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-      retrieveBlocks(const shared_model::crypto::PublicKey &peer_pubkey) = 0;
+      retrieveBlocks(const shared_model::interface::types::HeightType &height,
+                     const shared_model::crypto::PublicKey &peer_pubkey) = 0;
 
       /**
        * Retrieve block by its block_hash from given peer

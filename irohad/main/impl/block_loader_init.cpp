@@ -30,13 +30,12 @@ auto BlockLoaderInit::createService(
 }
 
 auto BlockLoaderInit::createLoader(
-    std::shared_ptr<PeerQueryFactory> peer_query_factory,
-    std::shared_ptr<BlockQueryFactory> block_query_factory) {
+    std::shared_ptr<PeerQueryFactory> peer_query_factory) {
   shared_model::proto::ProtoBlockFactory factory(
       std::make_unique<
           shared_model::validation::DefaultSignedBlockValidator>());
   return std::make_shared<BlockLoaderImpl>(
-      peer_query_factory, block_query_factory, std::move(factory));
+      peer_query_factory, std::move(factory));
 }
 
 std::shared_ptr<BlockLoader> BlockLoaderInit::initBlockLoader(
@@ -45,6 +44,6 @@ std::shared_ptr<BlockLoader> BlockLoaderInit::initBlockLoader(
     std::shared_ptr<consensus::ConsensusResultCache> consensus_result_cache) {
   service =
       createService(block_query_factory, std::move(consensus_result_cache));
-  loader = createLoader(peer_query_factory, block_query_factory);
+  loader = createLoader(peer_query_factory);
   return loader;
 }
