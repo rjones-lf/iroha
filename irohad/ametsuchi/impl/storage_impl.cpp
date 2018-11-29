@@ -99,9 +99,9 @@ namespace iroha {
                   [](expected::Error<std::string> &) {
                     return shared_model::interface::types::HashType("");
                   }),
+              std::make_shared<PostgresCommandExecutor>(*sql, perm_converter_),
               std::move(sql),
-              factory_,
-              perm_converter_));
+              factory_));
     }
 
     boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery()

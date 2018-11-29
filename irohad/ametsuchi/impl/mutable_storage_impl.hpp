@@ -15,15 +15,10 @@
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 
-namespace shared_model {
-  namespace interface {
-    class PermissionToString;
-  }
-}  // namespace shared_model
-
 namespace iroha {
   namespace ametsuchi {
     class BlockIndex;
+    class PostgresCommandExecutor;
 
     class MutableStorageImpl : public MutableStorage {
       friend class StorageImpl;
@@ -31,11 +26,10 @@ namespace iroha {
      public:
       MutableStorageImpl(
           shared_model::interface::types::HashType top_hash,
+          std::shared_ptr<PostgresCommandExecutor> cmd_executor,
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory,
-          std::shared_ptr<shared_model::interface::PermissionToString>
-              perm_converter);
+              factory);
 
       bool apply(const shared_model::interface::Block &block) override;
 

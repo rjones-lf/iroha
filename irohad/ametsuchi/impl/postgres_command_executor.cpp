@@ -296,6 +296,14 @@ namespace {
                          : PreparedStatement::noValidationPrefix);
     cmd % command_name;
   }
+
+  /**
+   * Get a pretty string builder initialized for query arguments append
+   * @return string builder
+   */
+  shared_model::detail::PrettyStringBuilder getQueryArgsStringBuilder() {
+    return shared_model::detail::PrettyStringBuilder().init("Query arguments");
+  }
 }  // namespace
 
 namespace iroha {
@@ -788,8 +796,7 @@ namespace iroha {
       cmd = (cmd % account_id % asset_id % precision % amount);
 
       auto str_args = [&account_id, &asset_id, &amount, precision] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
+        return getQueryArgsStringBuilder()
             .append("account_id", account_id)
             .append("asset_id", asset_id)
             .append("amount", amount)
@@ -812,8 +819,7 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % peer.pubkey().hex() % peer.address());
 
       auto str_args = [&peer] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
+        return getQueryArgsStringBuilder()
             .append("peer", peer.toString())
             .finalize();
       };
@@ -832,8 +838,7 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
 
       auto str_args = [&account_id, &pubkey] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
+        return getQueryArgsStringBuilder()
             .append("account_id", account_id)
             .append("pubkey", pubkey)
             .finalize();
@@ -853,8 +858,7 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % role_name);
 
       auto str_args = [&account_id, &role_name] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
+        return getQueryArgsStringBuilder()
             .append("account_id", account_id)
             .append("role_name", role_name)
             .finalize();
@@ -878,8 +882,7 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % domain_id % pubkey);
 
       auto str_args = [&account_id, &domain_id, &pubkey] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
+        return getQueryArgsStringBuilder()
             .append("account_id", account_id)
             .append("domain_id", domain_id)
             .append("pubkey", pubkey)
@@ -902,8 +905,7 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % asset_id % domain_id % precision);
 
       auto str_args = [&domain_id, &asset_id, precision] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
+        return getQueryArgsStringBuilder()
             .append("domain_id", domain_id)
             .append("asset_id", asset_id)
             .append("precision", std::to_string(precision))
@@ -924,8 +926,7 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % domain_id % default_role);
 
       auto str_args = [&domain_id, &default_role] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
+        return getQueryArgsStringBuilder()
             .append("domain_id", domain_id)
             .append("default_role", default_role)
             .finalize();
@@ -948,8 +949,7 @@ namespace iroha {
       auto str_args = [&role_id, &perm_str] {
         // TODO [IR-1889] Akvinikym 21.11.18: integrate
         // PermissionSet::toString() instead of bit string, when it is created
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
+        return getQueryArgsStringBuilder()
             .append("role_id", role_id)
             .append("perm_str", perm_str)
             .finalize();
@@ -969,8 +969,7 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % role_name);
 
       auto str_args = [&account_id, &role_name] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
+        return getQueryArgsStringBuilder()
             .append("account_id", account_id)
             .append("role_name", role_name)
             .finalize();
@@ -997,12 +996,11 @@ namespace iroha {
       cmd =
           (cmd % creator_account_id_ % permittee_account_id % perm_str % perm);
 
-      auto str_args = [&creator_account_id_ = creator_account_id_,
+      auto str_args = [&creator_account_id = creator_account_id_,
                        &permittee_account_id,
                        permission = perm_converter_->toString(permission)] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
-            .append("creator_account_id_", creator_account_id_)
+        return getQueryArgsStringBuilder()
+            .append("creator_account_id_", creator_account_id)
             .append("permittee_account_id", permittee_account_id)
             .append("permission", permission)
             .finalize();
@@ -1023,8 +1021,7 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
 
       auto str_args = [&account_id, &pubkey] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
+        return getQueryArgsStringBuilder()
             .append("account_id", account_id)
             .append("pubkey", pubkey)
             .finalize();
@@ -1054,12 +1051,11 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % permittee_account_id % perms
              % without_perm_str);
 
-      auto str_args = [&creator_account_id_ = creator_account_id_,
+      auto str_args = [&creator_account_id = creator_account_id_,
                        &permittee_account_id,
                        permission = perm_converter_->toString(permission)] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
-            .append("creator_account_id_", creator_account_id_)
+        return getQueryArgsStringBuilder()
+            .append("creator_account_id_", creator_account_id)
             .append("permittee_account_id", permittee_account_id)
             .append("permission", permission)
             .finalize();
@@ -1092,8 +1088,7 @@ namespace iroha {
              % empty_json);
 
       auto str_args = [&account_id, &key, &value] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
+        return getQueryArgsStringBuilder()
             .append("account_id", account_id)
             .append("key", key)
             .append("value", value)
@@ -1115,8 +1110,7 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % quorum);
 
       auto str_args = [&account_id, quorum] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
+        return getQueryArgsStringBuilder()
             .append("account_id", account_id)
             .append("quorum", std::to_string(quorum))
             .finalize();
@@ -1136,13 +1130,12 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % asset_id % precision % amount);
 
-      auto str_args = [&creator_account_id_ = creator_account_id_,
+      auto str_args = [&creator_account_id = creator_account_id_,
                        &asset_id,
                        &amount,
                        precision] {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Query arguments")
-            .append("creator_account_id", creator_account_id_)
+        return getQueryArgsStringBuilder()
+            .append("creator_account_id", creator_account_id)
             .append("asset_id", asset_id)
             .append("amount", amount)
             .append("precision", std::to_string(precision))
@@ -1170,8 +1163,7 @@ namespace iroha {
 
       auto str_args =
           [&src_account_id, &dest_account_id, &asset_id, &amount, precision] {
-            return shared_model::detail::PrettyStringBuilder()
-                .init("Query arguments")
+            return getQueryArgsStringBuilder()
                 .append("src_account_id", src_account_id)
                 .append("dest_account_id", dest_account_id)
                 .append("asset_id", asset_id)
