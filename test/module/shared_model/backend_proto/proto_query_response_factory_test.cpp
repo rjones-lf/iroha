@@ -308,20 +308,19 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsPageResponse) {
       std::move(transactions), kNextTxHash, kTransactionsNumber, kQueryHash);
 
   ASSERT_TRUE(query_response);
-  ASSERT_EQ(query_response->queryHash(), kQueryHash);
-  ASSERT_NO_THROW({
+  EXPECT_EQ(query_response->queryHash(), kQueryHash);
+  EXPECT_NO_THROW({
     const auto &response =
         boost::get<const shared_model::interface::TransactionsPageResponse &>(
             query_response->get());
 
+    EXPECT_EQ(response.allTransactionsSize(), kTransactionsNumber);
     for (auto i = 0; i < kTransactionsNumber; ++i) {
-      ASSERT_EQ(response.transactions()[i].creatorAccountId(),
+      EXPECT_EQ(response.transactions()[i].creatorAccountId(),
                 transactions_test_copy[i]->creatorAccountId());
     }
     ASSERT_TRUE(response.nextTxHash());
-    ASSERT_EQ(response.nextTxHash().value(), kNextTxHash);
-
-    ASSERT_EQ(response.allTransactionsSize(), kTransactionsNumber);
+    EXPECT_EQ(response.nextTxHash().value(), kNextTxHash);
   });
 }
 
@@ -351,18 +350,18 @@ TEST_F(ProtoQueryResponseFactoryTest,
       std::move(transactions), kTransactionsNumber, kQueryHash);
 
   ASSERT_TRUE(query_response);
-  ASSERT_EQ(query_response->queryHash(), kQueryHash);
-  ASSERT_NO_THROW({
+  EXPECT_EQ(query_response->queryHash(), kQueryHash);
+  EXPECT_NO_THROW({
     const auto &response =
         boost::get<const shared_model::interface::TransactionsPageResponse &>(
             query_response->get());
 
+    ASSERT_EQ(response.allTransactionsSize(), kTransactionsNumber);
     for (auto i = 0; i < kTransactionsNumber; ++i) {
-      ASSERT_EQ(response.transactions()[i].creatorAccountId(),
+      EXPECT_EQ(response.transactions()[i].creatorAccountId(),
                 transactions_test_copy[i]->creatorAccountId());
     }
-    ASSERT_FALSE(response.nextTxHash());
-    ASSERT_EQ(response.allTransactionsSize(), kTransactionsNumber);
+    EXPECT_FALSE(response.nextTxHash());
   });
 }
 
