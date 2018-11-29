@@ -223,6 +223,30 @@ shared_model::proto::ProtoQueryResponseFactory::createTransactionsPageResponse(
 }
 
 std::unique_ptr<shared_model::interface::QueryResponse>
+shared_model::proto::ProtoQueryResponseFactory::createTransactionsPageResponse(
+    std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+    transactions,
+    interface::types::TransactionsNumberType all_transactions_size,
+    const crypto::Hash &query_hash) const {
+  return createQueryResponse(
+      [transactions = std::move(transactions),
+          &all_transactions_size](
+          iroha::protocol::QueryResponse &protocol_query_response) {
+        iroha::protocol::TransactionsPageResponse *protocol_specific_response =
+            protocol_query_response.mutable_transactions_page_response();
+        for (const auto &tx : transactions) {
+          *protocol_specific_response->add_transactions() =
+              static_cast<shared_model::proto::Transaction *>(tx.get())
+                  ->getTransport();
+        }
+        protocol_specific_response->set_all_transactions_size(
+            all_transactions_size);
+      },
+      query_hash);
+}
+
+
+std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
     const interface::types::AssetIdType asset_id,
     const interface::types::DomainIdType domain_id,

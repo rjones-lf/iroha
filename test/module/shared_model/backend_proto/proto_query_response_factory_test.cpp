@@ -7,7 +7,6 @@
 #include <gtest/gtest.h>
 #include <boost/optional.hpp>
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
-#include "cryptography/blob.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
 #include "interfaces/query_responses/account_detail_response.hpp"
@@ -319,7 +318,50 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateTransactionsPageResponse) {
       ASSERT_EQ(response.transactions()[i].creatorAccountId(),
                 transactions_test_copy[i]->creatorAccountId());
     }
-    ASSERT_EQ(response.nextTxHash(), kNextTxHash);
+    ASSERT_TRUE(response.nextTxHash());
+    ASSERT_EQ(response.nextTxHash().value(), kNextTxHash);
+
+    ASSERT_EQ(response.allTransactionsSize(), kTransactionsNumber);
+  });
+}
+
+/**
+ * Checks createTransactionsPageResponse method of QueryResponseFactory
+ * @given collection of transactions, next tx hash and transactions number
+ * @when creating transactions page response via factory
+ * @then that response is created @and is well-formed
+ */
+TEST_F(ProtoQueryResponseFactoryTest,
+       CreateTransactionsPageResponseWithoutNextTxHash) {
+  const HashType kQueryHash{"my_super_hash"};
+
+  constexpr int kTransactionsNumber = 5;
+
+  std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+      transactions, transactions_test_copy;
+  for (auto i = 0; i < kTransactionsNumber; ++i) {
+    auto tx = std::make_unique<shared_model::proto::Transaction>(
+        TestTransactionBuilder().creatorAccountId(std::to_string(i)).build());
+    auto tx_copy = std::make_unique<shared_model::proto::Transaction>(
+        TestTransactionBuilder().creatorAccountId(std::to_string(i)).build());
+    transactions.push_back(std::move(tx));
+    transactions_test_copy.push_back(std::move(tx_copy));
+  }
+  auto query_response = response_factory->createTransactionsPageResponse(
+      std::move(transactions), kTransactionsNumber, kQueryHash);
+
+  ASSERT_TRUE(query_response);
+  ASSERT_EQ(query_response->queryHash(), kQueryHash);
+  ASSERT_NO_THROW({
+    const auto &response =
+        boost::get<const shared_model::interface::TransactionsPageResponse &>(
+            query_response->get());
+
+    for (auto i = 0; i < kTransactionsNumber; ++i) {
+      ASSERT_EQ(response.transactions()[i].creatorAccountId(),
+                transactions_test_copy[i]->creatorAccountId());
+    }
+    ASSERT_FALSE(response.nextTxHash());
     ASSERT_EQ(response.allTransactionsSize(), kTransactionsNumber);
   });
 }
