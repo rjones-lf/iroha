@@ -16,7 +16,9 @@
  */
 
 #include "model/converters/pb_block_factory.hpp"
+
 #include <boost/assert.hpp>
+
 #include "model/converters/pb_common.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 
@@ -29,7 +31,7 @@ namespace iroha {
         protocol::Block pb_block{};
         auto *pb_block_v1 = pb_block.mutable_block_v1();
 
-        auto pl = pb_block_v1->mutable_payload();
+        auto *pl = pb_block_v1->mutable_payload();
         pl->set_tx_number(block.txs_number);
         pl->set_height(block.height);
         pl->set_prev_block_hash(block.prev_hash.to_string());
