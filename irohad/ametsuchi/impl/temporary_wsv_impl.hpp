@@ -23,6 +23,8 @@ namespace iroha {
 
   namespace ametsuchi {
     class TemporaryWsvImpl : public TemporaryWsv {
+      friend class StorageImpl;
+
      public:
       struct SavepointWrapperImpl : public TemporaryWsv::SavepointWrapper {
         SavepointWrapperImpl(const TemporaryWsvImpl &wsv,

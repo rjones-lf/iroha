@@ -341,6 +341,12 @@ namespace integration_framework {
             validation);
 
     /**
+     * Reports the port used for internal purposes like MST communications
+     * @return occupied port number
+     */
+    size_t internalPort() const;
+
+    /**
      * Shutdown ITF instance
      */
     void done();

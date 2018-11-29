@@ -33,6 +33,8 @@ using ::testing::_;
 using ::testing::A;
 using ::testing::Invoke;
 using ::testing::Return;
+using ::testing::ReturnArg;
+using ::testing::NiceMock;
 
 using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
@@ -43,7 +45,7 @@ class SimulatorTest : public ::testing::Test {
         std::make_shared<shared_model::crypto::CryptoModelSignerExpecter>();
 
     validator = std::make_shared<MockStatefulValidator>();
-    factory = std::make_shared<MockTemporaryFactory>();
+    factory = std::make_shared<NiceMock<MockTemporaryFactory>>();
     query = std::make_shared<MockBlockQuery>();
     ordering_gate = std::make_shared<MockOrderingGate>();
     crypto_signer = std::make_shared<shared_model::crypto::CryptoModelSigner<>>(

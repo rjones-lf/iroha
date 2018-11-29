@@ -6,16 +6,15 @@
 #ifndef IROHA_PROTO_TRANSACTION_VALIDATOR_HPP
 #define IROHA_PROTO_TRANSACTION_VALIDATOR_HPP
 
-#include "validators/transaction_validator.hpp"
+#include "validators/abstract_validator.hpp"
 
-#include "backend/protobuf/transaction.hpp"
+#include "transaction.pb.h"
 
 namespace shared_model {
   namespace validation {
 
-    template <typename FieldValidator, typename CommandValidator>
     class ProtoTransactionValidator
-        : public TransactionValidator<FieldValidator, CommandValidator> {
+        : public AbstractValidator<iroha::protocol::Transaction> {
      private:
       Answer validateProtoTx(
           const iroha::protocol::Transaction &transaction) const {
@@ -70,16 +69,8 @@ namespace shared_model {
       }
 
      public:
-      Answer validate(const interface::Transaction &tx) const override {
-        // validate proto-backend of transaction
-        auto proto_validation_answer = validateProtoTx(
-            static_cast<const proto::Transaction &>(tx).getTransport());
-        if (proto_validation_answer.hasErrors()) {
-          return proto_validation_answer;
-        }
-
-        return TransactionValidator<FieldValidator, CommandValidator>::validate(
-            tx);
+      Answer validate(const iroha::protocol::Transaction &tx) const override {
+        return validateProtoTx(tx);
       };
     };
   }  // namespace validation
