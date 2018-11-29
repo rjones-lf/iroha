@@ -10,12 +10,17 @@ namespace shared_model {
   namespace interface {
 
     std::string TransactionsPageResponse::toString() const {
-      return detail::PrettyStringBuilder()
-          .init("TransactionsPageResponse")
-          .appendAll(transactions(), [](auto &tx) { return tx.toString(); })
-//          .append(nextTxHash().toString())
-          .append(std::to_string(allTransactionsSize()))
-          .finalize();
+      auto builder = detail::PrettyStringBuilder()
+                         .init("TransactionsPageResponse")
+                         .appendAll("transactions",
+                                    transactions(),
+                                    [](auto &tx) { return tx.toString(); })
+                         .append("all transactions size",
+                                 std::to_string(allTransactionsSize()));
+      if (nextTxHash()) {
+        return builder.append("next tx hash", nextTxHash()->hex()).finalize();
+      }
+      return builder.finalize();
     }
 
     bool TransactionsPageResponse::operator==(const ModelType &rhs) const {
