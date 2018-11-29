@@ -22,7 +22,9 @@ using namespace iroha::ordering;
 using namespace iroha::ordering::transport;
 
 using testing::_;
+using testing::A;
 using testing::ByMove;
+using testing::Invoke;
 using testing::Matcher;
 using testing::NiceMock;
 using testing::Ref;
@@ -244,6 +246,20 @@ TEST_F(OnDemandOsTest, UseFactoryForProposal) {
   auto mock_factory = factory.get();
   auto tx_cache =
       std::make_unique<NiceMock<iroha::ametsuchi::MockTxPresenceCache>>();
+  ON_CALL(*tx_cache,
+          check(A<const shared_model::interface::TransactionBatch &>()))
+      .WillByDefault(Invoke([](const auto &batch) {
+        iroha::ametsuchi::TxPresenceCache::BatchStatusCollectionType result;
+        std::transform(
+            batch.transactions().begin(),
+            batch.transactions().end(),
+            std::back_inserter(result),
+            [](auto &tx) {
+              return iroha::ametsuchi::tx_cache_status_responses::Missing{
+                  tx->hash()};
+            });
+        return result;
+      }));
   os = std::make_shared<OnDemandOrderingServiceImpl>(transaction_limit,
                                                      std::move(factory),
                                                      std::move(tx_cache),

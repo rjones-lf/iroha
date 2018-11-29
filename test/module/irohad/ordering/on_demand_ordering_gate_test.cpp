@@ -35,7 +35,8 @@ struct OnDemandOrderingGateTest : public ::testing::Test {
     ON_CALL(*tx_cache,
             check(testing::Matcher<const shared_model::crypto::Hash &>(_)))
         .WillByDefault(
-            Return(iroha::ametsuchi::tx_cache_status_responses::Missing()));
+            Return(boost::make_optional<ametsuchi::TxCacheStatusType>(
+                iroha::ametsuchi::tx_cache_status_responses::Missing())));
     ordering_gate =
         std::make_shared<OnDemandOrderingGate>(ordering_service,
                                                notification,
@@ -222,8 +223,8 @@ TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
       .WillOnce(Return(ByMove(std::move(arriving_proposal))));
   EXPECT_CALL(*tx_cache,
               check(testing::Matcher<const shared_model::crypto::Hash &>(_)))
-      .WillOnce(
-          Return(iroha::ametsuchi::tx_cache_status_responses::Committed()));
+      .WillOnce(Return(boost::make_optional<ametsuchi::TxCacheStatusType>(
+          iroha::ametsuchi::tx_cache_status_responses::Committed())));
   // expect proposal to be created without any transactions because it was
   // removed by tx cache
   EXPECT_CALL(

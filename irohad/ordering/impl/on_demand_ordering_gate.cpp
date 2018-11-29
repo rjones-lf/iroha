@@ -90,8 +90,12 @@ OnDemandOrderingGate::removeReplays(
     shared_model::interface::Proposal &&proposal) const {
   auto tx_is_not_processed = [this](const auto &tx) {
     auto tx_result = tx_cache_->check(tx.hash());
+    if (not tx_result) {
+      // TODO handle
+      return false;
+    }
     return iroha::visit_in_place(
-        tx_result,
+        *tx_result,
         [](const ametsuchi::tx_cache_status_responses::Missing &) {
           return true;
         },

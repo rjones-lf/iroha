@@ -61,7 +61,7 @@ namespace iroha {
 
       uint32_t getTopBlockHeight() override;
 
-      TxCacheStatusType checkTxPresence(
+      boost::optional<TxCacheStatusType> checkTxPresence(
           const shared_model::crypto::Hash &hash) override;
 
       expected::Result<wBlock, std::string> getTopBlock() override;

@@ -220,7 +220,8 @@ TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
 
   ON_CALL(*block_query, checkTxPresence(_))
       .WillByDefault(
-          Return(iroha::ametsuchi::tx_cache_status_responses::Missing()));
+          Return(boost::make_optional<iroha::ametsuchi::TxCacheStatusType>(
+              iroha::ametsuchi::tx_cache_status_responses::Missing())));
 
   // create transactions, but do not send them
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {

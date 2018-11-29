@@ -22,6 +22,7 @@ using namespace iroha::model;
 using namespace shared_model::interface;
 
 using ::testing::_;
+using ::testing::A;
 using ::testing::Invoke;
 
 class TransportTest : public ::testing::Test {
@@ -62,6 +63,21 @@ TEST_F(TransportTest, SendAndReceive) {
   auto tx_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
       shared_model::interface::Transaction,
       shared_model::proto::Transaction>>(std::move(tx_validator));
+
+  ON_CALL(*tx_presence_cache_,
+          check(A<const shared_model::interface::TransactionBatch &>()))
+      .WillByDefault(Invoke([](const auto &batch) {
+        iroha::ametsuchi::TxPresenceCache::BatchStatusCollectionType result;
+        std::transform(
+            batch.transactions().begin(),
+            batch.transactions().end(),
+            std::back_inserter(result),
+            [](auto &tx) {
+              return iroha::ametsuchi::tx_cache_status_responses::Missing{
+                  tx->hash()};
+            });
+        return result;
+      }));
 
   auto transport =
       std::make_shared<MstTransportGrpc>(std::move(async_call_),

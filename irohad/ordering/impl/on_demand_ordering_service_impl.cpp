@@ -202,13 +202,19 @@ void OnDemandOrderingServiceImpl::tryErase() {
     round_queue_.pop();
   }
 }
+
 bool OnDemandOrderingServiceImpl::batchAlreadyProcessed(
     const shared_model::interface::TransactionBatch &batch) {
   auto tx_statuses = tx_cache_->check(batch);
+  if (not tx_statuses) {
+    // TODO handle
+    log_->warn("Check tx presence database error. Batch: {}", batch.toString());
+    return true;
+  }
   // if any transaction is commited or rejected, batch was already processed
   // Note: any_of returns false for empty sequence
   return std::any_of(
-      tx_statuses.begin(), tx_statuses.end(), [this](const auto &tx_status) {
+      tx_statuses->begin(), tx_statuses->end(), [this](const auto &tx_status) {
         if (iroha::ametsuchi::isAlreadyProcessed(tx_status)) {
           log_->warn("Duplicate transaction: {}",
                      iroha::ametsuchi::getHash(tx_status).hex());

@@ -242,23 +242,31 @@ namespace iroha {
         };
     }
 
-    TxCacheStatusType PostgresBlockQuery::checkTxPresence(
+    boost::optional<TxCacheStatusType> PostgresBlockQuery::checkTxPresence(
         const shared_model::crypto::Hash &hash) {
       int res = -1;
       const auto &hash_str = hash.hex();
 
-      sql_ << "SELECT status FROM tx_status_by_hash WHERE hash = :hash",
-          soci::into(res), soci::use(hash_str);
+      try {
+        sql_ << "SELECT status FROM tx_status_by_hash WHERE hash = :hash",
+            soci::into(res), soci::use(hash_str);
+      } catch (const std::exception &e) {
+        log_->error("Failed to execute query: {}", e.what());
+        return boost::none;
+      }
 
       // res > 0 => Committed
       // res == 0 => Rejected
       // res < 0 => Missing
       if (res > 0) {
-        return tx_cache_status_responses::Committed{hash};
+        return boost::make_optional<TxCacheStatusType>(
+            tx_cache_status_responses::Committed{hash});
       } else if (res == 0) {
-        return tx_cache_status_responses::Rejected{hash};
+        return boost::make_optional<TxCacheStatusType>(
+            tx_cache_status_responses::Rejected{hash});
       }
-      return tx_cache_status_responses::Missing{hash};
+      return boost::make_optional<TxCacheStatusType>(
+          tx_cache_status_responses::Missing{hash});
     }
 
     uint32_t PostgresBlockQuery::getTopBlockHeight() {
