@@ -68,7 +68,6 @@ class BlockLoaderTest : public testing::Test {
     validator = validator_ptr.get();
     loader = std::make_shared<BlockLoaderImpl>(
         peer_query_factory,
-        block_query_factory,
         shared_model::proto::ProtoBlockFactory(std::move(validator_ptr)));
     service =
         std::make_shared<BlockLoaderService>(block_query_factory, block_cache);
@@ -168,12 +167,12 @@ TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getTopBlock())
-      .WillOnce(Return(iroha::expected::makeValue(wBlock(clone(block)))));
+  EXPECT_CALL(*storage, getTopBlock()).Times(0);
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
       .WillOnce(Return(std::vector<wBlock>()));
+
   auto wrapper = make_test_subscriber<CallExact>(
-      loader->retrieveBlocks(peer->pubkey()), 0);
+      loader->retrieveBlocks(1, peer->pubkey()), 0);
   wrapper.subscribe();
 
   ASSERT_TRUE(wrapper.validate());
@@ -203,12 +202,11 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getTopBlock())
-      .WillOnce(Return(iroha::expected::makeValue(wBlock(clone(block)))));
+  EXPECT_CALL(*storage, getTopBlock()).Times(0);
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
       .WillOnce(Return(std::vector<wBlock>{clone(top_block)}));
   auto wrapper =
-      make_test_subscriber<CallExact>(loader->retrieveBlocks(peer_key), 1);
+      make_test_subscriber<CallExact>(loader->retrieveBlocks(1, peer_key), 1);
   wrapper.subscribe(
       [&top_block](auto block) { ASSERT_EQ(*block.operator->(), top_block); });
 
@@ -245,11 +243,10 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getTopBlock())
-      .WillOnce(Return(iroha::expected::makeValue(wBlock(clone(block)))));
+  EXPECT_CALL(*storage, getTopBlock()).Times(0);
   EXPECT_CALL(*storage, getBlocksFrom(next_height)).WillOnce(Return(blocks));
   auto wrapper = make_test_subscriber<CallExact>(
-      loader->retrieveBlocks(peer_key), num_blocks);
+      loader->retrieveBlocks(1, peer_key), num_blocks);
   auto height = next_height;
   wrapper.subscribe(
       [&height](auto block) { ASSERT_EQ(block->height(), height++); });

@@ -60,9 +60,10 @@ namespace iroha {
 
     class MockBlockLoader : public BlockLoader {
      public:
-      MOCK_METHOD1(
+      MOCK_METHOD2(
           retrieveBlocks,
           rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>(
+              const shared_model::interface::types::HeightType &height,
               const shared_model::crypto::PublicKey &));
       MOCK_METHOD2(
           retrieveBlock,
@@ -93,9 +94,7 @@ namespace iroha {
      public:
       MOCK_METHOD1(vote, void(std::shared_ptr<shared_model::interface::Block>));
 
-      MOCK_METHOD0(
-          on_commit,
-          rxcpp::observable<Commit>());
+      MOCK_METHOD0(on_commit, rxcpp::observable<Commit>());
     };
 
   }  // namespace network
