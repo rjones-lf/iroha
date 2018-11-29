@@ -64,7 +64,7 @@ TYPED_TEST(ProtoTransactionStatusBuilderTest, TestStatusType) {
                       .txHash(shared_model::crypto::Hash(expected_hash))
                       .build();
 
-  ASSERT_NO_THROW(boost::get<StatusType>(response.get()));
+  ASSERT_NO_THROW(boost::get<const StatusType &>(response.get()));
 
   auto proto_status = response.getTransport();
   ASSERT_EQ(proto_status.tx_status(), expected_status);
