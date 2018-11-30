@@ -516,7 +516,8 @@ namespace iroha {
             if (first_hash) {
               return (sql_.prepare << cmd,
                       soci::use(first_hash->hex()),
-                      soci::use(q.accountId()) soci::use(page_size));
+                      soci::use(q.accountId()),
+                      soci::use(page_size));
             } else {
               return (sql_.prepare << cmd,
                       soci::use(q.accountId()),
@@ -543,6 +544,24 @@ namespace iroha {
                   [](auto &) { return true; });
               std::move(
                   txs.begin(), txs.end(), std::back_inserter(response_txs));
+            }
+            // query is stateful invalid if:
+            // 1. pagination hash is provided
+            // 2. first hash in response is different from pagination hash
+            // This happens because we issue join, this means
+            // that if hash does not exist, the join will be performed with
+            // an empty table. With join condition involving >=, the result
+            // is the whole table. In this case all transactions will be
+            // returned.
+            // Checking first hashes of the result is the only way to avoid
+            // additional database queries
+            if (first_hash and not response_txs.empty()
+                and response_txs[0]->hash() != *first_hash) {
+              auto error = (boost::format("invalid pagination hash: %s")
+                            % first_hash->hex())
+                               .str();
+              return this->logAndReturnErrorResponse(
+                  QueryErrorType::kStatefulFailed, error);
             }
 
             return query_response_factory_->createTransactionsResponse(
