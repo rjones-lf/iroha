@@ -5,6 +5,7 @@
 
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 
+#include "cryptography/hash.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 using namespace shared_model::proto;

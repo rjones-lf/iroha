@@ -34,14 +34,14 @@ auto port_visitor = iroha::make_visitor(
 TEST(ServerRunnerTest, SamePortNoReuse) {
   ServerRunner first_runner((address % 0).str());
   auto first_query_service =
-      std::make_shared<iroha::protocol::QueryService::Service>();
+      std::make_shared<iroha::protocol::QueryService_v1::Service>();
   auto result = first_runner.append(first_query_service).run();
   auto port = boost::apply_visitor(port_visitor, result);
   ASSERT_NE(0, port);
 
   ServerRunner second_runner((address % port).str(), false);
   auto second_query_service =
-      std::make_shared<iroha::protocol::QueryService::Service>();
+      std::make_shared<iroha::protocol::QueryService_v1::Service>();
   result = second_runner.append(second_query_service).run();
   port = boost::apply_visitor(port_visitor, result);
   ASSERT_EQ(0, port);
@@ -55,14 +55,14 @@ TEST(ServerRunnerTest, SamePortNoReuse) {
 TEST(ServerRunnerTest, SamePortWithReuse) {
   ServerRunner first_runner((address % 0).str());
   auto first_query_service =
-      std::make_shared<iroha::protocol::QueryService::Service>();
+      std::make_shared<iroha::protocol::QueryService_v1::Service>();
   auto result = first_runner.append(first_query_service).run();
   auto port = boost::apply_visitor(port_visitor, result);
   ASSERT_NE(0, port);
 
   ServerRunner second_runner((address % port).str(), true);
   auto second_query_service =
-      std::make_shared<iroha::protocol::QueryService::Service>();
+      std::make_shared<iroha::protocol::QueryService_v1::Service>();
   result = second_runner.append(second_query_service).run();
   port = boost::apply_visitor(port_visitor, result);
   ASSERT_NE(0, port);

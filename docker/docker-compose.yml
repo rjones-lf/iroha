@@ -32,6 +32,7 @@ services:
     environment:
       - POSTGRES_USER=iroha
       - IROHA_POSTGRES_PASSWORD=helloworld
+    command: -c 'max_prepared_transactions=100'
 
 volumes:
   ccache-data:

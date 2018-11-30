@@ -24,8 +24,11 @@
 #include "synchronizer/synchronizer_common.hpp"
 
 namespace iroha {
-  namespace synchronizer {
+  namespace network {
+    struct Commit;
+  }
 
+  namespace synchronizer {
     /**
      * Synchronizer is interface for fetching missed blocks
      */
@@ -34,8 +37,7 @@ namespace iroha {
       /**
        * Processing last committed block
        */
-      virtual void process_commit(
-          std::shared_ptr<shared_model::interface::Block> commit_message) = 0;
+      virtual void process_commit(network::Commit commit_message) = 0;
 
       /**
        * After synchronization this observable emits zero or more blocks plus
