@@ -32,6 +32,7 @@
 #include "interfaces/queries/get_signatories.hpp"
 #include "interfaces/queries/get_transactions.hpp"
 #include "interfaces/queries/query.hpp"
+#include "interfaces/queries/tx_pagination_meta.hpp"
 
 using namespace shared_model::interface::permissions;
 
@@ -453,19 +454,19 @@ namespace iroha {
           QueryType<shared_model::interface::types::HeightType, uint64_t>;
       using PermissionTuple = boost::tuple<int>;
 
-      // returns mapping from block height to index in a block
-      // 1. Find height and index of all txes which came before hash in a query
-      // 2. use it to remove columns which came after
-      // TODO: add limit
-      auto cmd = (boost::format(R"(WITH has_perms AS (%s),
+      auto pagination_info = q.paginationMeta();
+      auto hash = pagination_info->firstTxHash();
+      auto page_size = pagination_info->pageSize();
+
+      auto base = R"(WITH has_perms AS (%s),
       first_hash AS (
-          SELECT height, index FROM position_by_hash WHERE hash = :hash
+          %s
       ),
       previous_txes AS (
           SELECT position_by_hash.height, position_by_hash.index
           FROM position_by_hash JOIN first_hash
-          ON position_by_hash.height <= first_hash.height
-          AND position_by_hash.index <= first_hash.index
+          ON position_by_hash.height >= first_hash.height
+          AND position_by_hash.index >= first_hash.index
       ),
       t AS (
           SELECT DISTINCT has.height, index
@@ -476,6 +477,73 @@ namespace iroha {
           AND index = previous_txes.index
           WHERE account_id = :account_id
           ORDER BY has.height, index ASC
+      )
+      SELECT height, index, perm FROM t
+      RIGHT OUTER JOIN has_perms ON TRUE
+      )";
+
+      // pagination: SELECT height, index FROM position_by_hash WHERE hash = :hash
+      // no pagination SELECT height, index FROM position_by_hash ORDER BY height, index ASC LIMIT 1;
+
+      auto query = R"(WITH has_perms AS (%s),
+      first_hash AS (
+          SELECT height, index FROM position_by_hash WHERE hash = :hash
+      ),
+      previous_txes AS (
+          SELECT position_by_hash.height, position_by_hash.index
+          FROM position_by_hash JOIN first_hash
+          ON position_by_hash.height >= first_hash.height
+          AND position_by_hash.index >= first_hash.index
+      ),
+      t AS (
+          SELECT DISTINCT has.height, index
+          FROM height_by_account_set AS has
+          JOIN index_by_creator_height AS ich ON has.height = ich.height
+          AND has.account_id = ich.creator_id
+          JOIN previous_txes ON has.height = previous_txes.height
+          AND index = previous_txes.index
+          WHERE account_id = :account_id
+          ORDER BY has.height, index ASC
+      )
+      SELECT height, index, perm FROM t
+      RIGHT OUTER JOIN has_perms ON TRUE
+      )";
+
+    //   auto cmd = boost::format(query);
+    //   if (hash) {
+    //       cmd = starting_from(hash, query);
+    //   } else {
+    //       cmd = starting_from_first(query);
+    //   }
+
+      // returns mapping from block height to index in a block
+      // 1. Find height and index of all txes which came before hash in a query
+      // 2. use it to remove columns which came after
+      // TODO: add limit
+      // OR (position_by_hash.height = first_hash.height AND
+              //position_by_hash.index >= first_hash.index)
+      auto cmd = (boost::format(R"(WITH has_perms AS (%s),
+      first_hash AS (
+          SELECT height, index FROM position_by_hash
+          ORDER BY height, index ASC LIMIT 1
+      ),
+      previous_txes AS (
+          SELECT position_by_hash.height, position_by_hash.index
+          FROM position_by_hash JOIN first_hash
+          ON position_by_hash.height > first_hash.height
+          OR (position_by_hash.height = first_hash.height AND
+              position_by_hash.index >= first_hash.index)
+      ),
+      t AS (
+          SELECT DISTINCT has.height, ich.index
+          FROM height_by_account_set AS has
+          JOIN index_by_creator_height AS ich ON has.height = ich.height
+          AND has.account_id = ich.creator_id
+          JOIN previous_txes ON has.height = previous_txes.height
+          AND ich.index = previous_txes.index
+          WHERE account_id = :account_id
+          ORDER BY has.height, ich.index ASC
+          LIMIT 2
       )
       SELECT height, index, perm FROM t
       RIGHT OUTER JOIN has_perms ON TRUE
