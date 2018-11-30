@@ -239,32 +239,25 @@ namespace iroha {
       if (boost::size(keys_range) != 1) {
         return false;
       }
-      auto keys = std::accumulate(
-          std::next(std::begin(keys_range)),
-          std::end(keys_range),
-          keys_range.front(),
-          [](auto acc, const auto &val) { return acc + "'), ('" + val; });
+      std::string keys = *std::end(keys_range);
       // not using bool since it is not supported by SOCI
       boost::optional<uint8_t> signatories_valid;
 
-      boost::format qry(R"(
-        SELECT COUNT(public_key) = 1
+      auto qry = (boost::format(R"(
+        SELECT count(public_key) = 1
         FROM account_has_signatory
         WHERE account_id = :account_id AND public_key IN ('%s')
-        )");
+        )") % keys).str();
 
       try {
-        *sql_ << (qry % keys).str(), soci::into(signatories_valid),
+        *sql_ << qry, soci::into(signatories_valid),
             soci::use(query.creatorAccountId(), "account_id");
       } catch (const std::exception &e) {
         log_->error(e.what());
         return false;
       }
 
-      if (signatories_valid and *signatories_valid) {
-        return true;
-      }
-      return false;
+      return signatories_valid and *signatories_valid;
     }
 
     PostgresQueryExecutor::PostgresQueryExecutor(
@@ -385,7 +378,7 @@ namespace iroha {
           error =
               "no asset with such name in account with such id: " + error_body;
           break;
-          // other error are either handled by generic response or do not
+          // other errors are either handled by generic response or do not
           // appear yet
         default:
           error = "failed to execute query: " + error_body;
