@@ -50,7 +50,7 @@ namespace integration_framework {
 
   PortGuard::PortType PortGuard::getPort(const PortType min_value,
                                          const PortType max_value) {
-    const boost::optional<PortType> opt_port = tryGetPort(min_value, max_value);
+    const auto opt_port = tryGetPort(min_value, max_value);
     BOOST_VERIFY_MSG(
         opt_port,
         ("Could not get a port in interval [" + std::to_string(min_value) + ", "
