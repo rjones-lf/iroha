@@ -44,7 +44,7 @@ namespace iroha {
       SynchronizationEvent downloadMissingBlocks(
           std::shared_ptr<shared_model::interface::Block> commit_message,
           std::unique_ptr<ametsuchi::MutableStorage> storage,
-          const shared_model::interface::types::HeightType &height);
+          const shared_model::interface::types::HeightType height);
 
       std::shared_ptr<validation::ChainValidator> validator_;
       std::shared_ptr<ametsuchi::MutableFactory> mutable_factory_;

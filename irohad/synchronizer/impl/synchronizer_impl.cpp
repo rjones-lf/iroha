@@ -34,7 +34,7 @@ namespace iroha {
     SynchronizationEvent SynchronizerImpl::downloadMissingBlocks(
         std::shared_ptr<shared_model::interface::Block> commit_message,
         std::unique_ptr<ametsuchi::MutableStorage> storage,
-        const shared_model::interface::types::HeightType &height) {
+        const shared_model::interface::types::HeightType height) {
       auto expected_height = commit_message->height();
 
       // while blocks are not loaded and not committed
@@ -70,10 +70,13 @@ namespace iroha {
     void SynchronizerImpl::process_commit(network::Commit commit_message) {
       log_->info("processing commit");
 
-      auto top_block_height = block_query_factory_->createBlockQuery() |
-          [](const auto &block_query) {
-            return block_query->getTopBlockHeight();
-          };
+      shared_model::interface::types::HeightType top_block_height{0};
+      if (auto block_query = block_query_factory_->createBlockQuery()) {
+        top_block_height = (*block_query)->getTopBlockHeight();
+      } else {
+        log_->error("Unable to retrieve top block height");
+        return;
+      }
 
       const auto &block = commit_message.block;
 
