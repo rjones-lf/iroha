@@ -95,9 +95,10 @@ namespace iroha {
       /**
        * Synchronously checks whether transaction with given hash is present in
        * any block
-       * @param hash - rejected transaction's hash
-       * @return TxCacheStatusType which returns status of transaction:
-       * Committed, Rejected or Missing
+       * @param hash - transaction's hash
+       * @return TxCacheStatusType which returns status (Committed, Rejected or
+       * Missing) of transaction if storage query was successful, boost::none
+       * otherwise
        */
       virtual boost::optional<TxCacheStatusType> checkTxPresence(
           const shared_model::crypto::Hash &hash) = 0;

@@ -28,7 +28,8 @@ namespace iroha {
       /**
        * Performs an actual storage request about hash status
        * @param hash to check
-       * @return hash status
+       * @return hash status if storage query was successful, boost::none
+       * otherwise
        */
       boost::optional<TxCacheStatusType> checkInStorage(
           const shared_model::crypto::Hash &hash) const;
