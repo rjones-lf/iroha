@@ -38,6 +38,7 @@ namespace iroha {
   namespace ametsuchi {
 
     using namespace framework::expected;
+    using namespace shared_model::interface;
 
     class QueryExecutorTest : public AmetsuchiTest {
      public:
@@ -1279,10 +1280,8 @@ namespace iroha {
               .getAccountTransactions(another_account->accountId(), kTxPageSize)
               .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(boost::apply_visitor(
-          shared_model::interface::QueryErrorResponseChecker<
-              shared_model::interface::StatefulFailedErrorResponse>(),
-          result->get()));
+      ASSERT_TRUE(
+          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
     }
 
     /**
@@ -1298,17 +1297,15 @@ namespace iroha {
                        .getAccountTransactions("some@domain", kTxPageSize)
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(boost::apply_visitor(
-          shared_model::interface::QueryErrorResponseChecker<
-              shared_model::interface::StatefulFailedErrorResponse>(),
-          result->get()));
+      ASSERT_TRUE(
+          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
     }
 
     auto createAndCommitTransactions() {}
 
     /**
      * @given initialized storage, user has 3 transactions committed
-     * @when user requests transactions with the second transaction as a starting
+     * @when query contains second transaction as a starting
      * hash @and 2 transactions page size
      * @then response contains exactly 2 transaction @and list of transactions
      * starts from second transaction
@@ -1321,28 +1318,28 @@ namespace iroha {
 
       std::vector<shared_model::proto::Transaction> txs;
       txs.push_back(TestTransactionBuilder()
-                         .creatorAccountId(account->accountId())
-                         .createRole("user", {})
-                         .build());
+                        .creatorAccountId(account->accountId())
+                        .createRole("user", {})
+                        .build());
       txs.push_back(TestTransactionBuilder()
-                         .creatorAccountId(account->accountId())
-                         .addAssetQuantity(asset_id, "2.0")
-                         .transferAsset(account->accountId(),
-                                        account2->accountId(),
-                                        asset_id,
-                                        "",
-                                        "1.0")
-                         .build());
+                        .creatorAccountId(account->accountId())
+                        .addAssetQuantity(asset_id, "2.0")
+                        .transferAsset(account->accountId(),
+                                       account2->accountId(),
+                                       asset_id,
+                                       "",
+                                       "1.0")
+                        .build());
       txs.push_back(TestTransactionBuilder()
-                         .creatorAccountId(account->accountId())
-                         .createRole("user2", {})
-                         .build());
+                        .creatorAccountId(account->accountId())
+                        .createRole("user2", {})
+                        .build());
 
       auto block = TestBlockBuilder()
-                        .transactions(txs)
-                        .height(1)
-                        .prevHash(fake_hash)
-                        .build();
+                       .transactions(txs)
+                       .height(1)
+                       .prevHash(fake_hash)
+                       .build();
 
       apply(storage, block);
 
@@ -1372,6 +1369,124 @@ namespace iroha {
           i++;
         }
       });
+    }
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains 2 transactions page size without starting hash
+     * @then response contains exactly 2 transaction
+     * @and starts from the first one
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, ValidPaginationNoHash) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+      auto zero_string = std::string(32, '0');
+      auto fake_hash = shared_model::crypto::Hash(zero_string);
+      auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
+
+      std::vector<shared_model::proto::Transaction> txs;
+      txs.push_back(TestTransactionBuilder()
+                        .creatorAccountId(account->accountId())
+                        .createRole("user", {})
+                        .build());
+      txs.push_back(TestTransactionBuilder()
+                        .creatorAccountId(account->accountId())
+                        .addAssetQuantity(asset_id, "2.0")
+                        .transferAsset(account->accountId(),
+                                       account2->accountId(),
+                                       asset_id,
+                                       "",
+                                       "1.0")
+                        .build());
+      txs.push_back(TestTransactionBuilder()
+                        .creatorAccountId(account->accountId())
+                        .createRole("user2", {})
+                        .build());
+
+      auto block = TestBlockBuilder()
+                       .transactions(txs)
+                       .height(1)
+                       .prevHash(fake_hash)
+                       .build();
+
+      apply(storage, block);
+
+      auto &hash = txs[1].hash();
+      auto size = 2;
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId())
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_NO_THROW({
+        const auto &resp =
+            boost::get<shared_model::interface::TransactionsResponse>(
+                result->get());
+
+        EXPECT_EQ(resp.transactions().size(), size);
+        EXPECT_EQ(resp.transactions().begin()->hash(), hash);
+        for (const auto &tx : resp.transactions()) {
+          static size_t i = 0;
+          if (i == 2) {
+            EXPECT_EQ(tx.hash(), txs[2].hash());
+          }
+          EXPECT_EQ(account->accountId(), tx.creatorAccountId())
+              << tx.toString() << " ~~ " << i;
+          i++;
+        }
+      });
+    }
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains non-existent starting hash
+     * @then error response is returned
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, InvalidHashInPagination) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+      auto zero_string = std::string(32, '0');
+      auto fake_hash = shared_model::crypto::Hash(zero_string);
+      auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
+
+      std::vector<shared_model::proto::Transaction> txs;
+      txs.push_back(TestTransactionBuilder()
+                        .creatorAccountId(account->accountId())
+                        .createRole("user", {})
+                        .build());
+      txs.push_back(TestTransactionBuilder()
+                        .creatorAccountId(account->accountId())
+                        .addAssetQuantity(asset_id, "2.0")
+                        .transferAsset(account->accountId(),
+                                       account2->accountId(),
+                                       asset_id,
+                                       "",
+                                       "1.0")
+                        .build());
+      txs.push_back(TestTransactionBuilder()
+                        .creatorAccountId(account->accountId())
+                        .createRole("user2", {})
+                        .build());
+
+      auto block = TestBlockBuilder()
+                       .transactions(txs)
+                       .height(1)
+                       .prevHash(fake_hash)
+                       .build();
+
+      apply(storage, block);
+
+      // auto &hash = txs[1].hash();
+      // auto size = 2;
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId())
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_TRUE(
+          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
     }
 
     class GetTransactionsHashExecutorTest : public GetTransactionsExecutorTest {
