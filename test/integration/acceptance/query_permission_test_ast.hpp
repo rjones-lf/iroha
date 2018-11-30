@@ -7,7 +7,7 @@
 #define QUERY_PERMISSION_TEST_AST_HPP_
 
 #include "backend/protobuf/common_objects/account_asset.hpp"
-#include "query_permission_test_base.hpp"
+#include "integration/acceptance/query_permission_test_base.hpp"
 
 using namespace shared_model;
 using namespace integration_framework;

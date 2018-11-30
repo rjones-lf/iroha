@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "query_permission_test_signatories.hpp"
+#include "integration/acceptance/query_permission_test_signatories.hpp"
+
 #include "interfaces/query_responses/signatories_response.hpp"
 
 using namespace common_constants;

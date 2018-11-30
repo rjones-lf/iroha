@@ -6,7 +6,7 @@
 #ifndef QUERY_PERMISSION_TEST_AST_TXS_HPP_
 #define QUERY_PERMISSION_TEST_AST_TXS_HPP_
 
-#include "query_permission_test_base.hpp"
+#include "integration/acceptance/query_permission_test_base.hpp"
 
 using namespace shared_model;
 using namespace integration_framework;

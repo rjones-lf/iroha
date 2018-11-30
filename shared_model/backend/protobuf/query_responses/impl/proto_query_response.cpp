@@ -4,6 +4,7 @@
  */
 
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
+
 #include "backend/protobuf/query_responses/proto_account_asset_response.hpp"
 #include "backend/protobuf/query_responses/proto_account_detail_response.hpp"
 #include "backend/protobuf/query_responses/proto_account_response.hpp"

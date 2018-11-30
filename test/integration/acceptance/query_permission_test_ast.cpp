@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "query_permission_test_ast.hpp"
+#include "integration/acceptance/query_permission_test_ast.hpp"
 
 #include "interfaces/query_responses/account_asset_response.hpp"
 #include "module/shared_model/builders/common_objects/account_asset_builder.hpp"
