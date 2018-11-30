@@ -14,7 +14,8 @@ namespace shared_model {
     GetAccountAssetTransactions::GetAccountAssetTransactions(QueryType &&query)
         : CopyableProto(std::forward<QueryType>(query)),
           account_asset_transactions_{
-              proto_->payload().get_account_asset_transactions()} {}
+              proto_->payload().get_account_asset_transactions()},
+          pagination_meta_{account_asset_transactions_.pagination_meta()} {}
 
     template GetAccountAssetTransactions::GetAccountAssetTransactions(
         GetAccountAssetTransactions::TransportType &);
@@ -41,10 +42,9 @@ namespace shared_model {
       return account_asset_transactions_.asset_id();
     }
 
-    std::unique_ptr<interface::TxPaginationMeta>
+    const interface::TxPaginationMeta &
     GetAccountAssetTransactions::paginationMeta() const {
-      return std::make_unique<TxPaginationMeta>(
-          account_asset_transactions_.pagination_meta());
+      return pagination_meta_;
     }
 
   }  // namespace proto

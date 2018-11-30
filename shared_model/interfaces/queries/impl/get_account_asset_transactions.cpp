@@ -15,7 +15,7 @@ namespace shared_model {
           .init("GetAccountAssetTransactions")
           .append("account_id", accountId())
           .append("asset_id", assetId())
-          .append("pagination_meta", paginationMeta()->toString())
+          .append("pagination_meta", paginationMeta().toString())
           .finalize();
     }
 

@@ -13,7 +13,8 @@ namespace shared_model {
     template <typename QueryType>
     GetAccountTransactions::GetAccountTransactions(QueryType &&query)
         : CopyableProto(std::forward<QueryType>(query)),
-          account_transactions_{proto_->payload().get_account_transactions()} {}
+          account_transactions_{proto_->payload().get_account_transactions()},
+          pagination_meta_{account_transactions_.pagination_meta()} {}
 
     template GetAccountTransactions::GetAccountTransactions(
         GetAccountTransactions::TransportType &);
@@ -35,10 +36,9 @@ namespace shared_model {
       return account_transactions_.account_id();
     }
 
-    std::unique_ptr<interface::TxPaginationMeta>
-    GetAccountTransactions::paginationMeta() const {
-      return std::make_unique<TxPaginationMeta>(
-          account_transactions_.pagination_meta());
+    const interface::TxPaginationMeta &GetAccountTransactions::paginationMeta()
+        const {
+      return pagination_meta_;
     }
 
   }  // namespace proto

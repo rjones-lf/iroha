@@ -14,7 +14,7 @@ namespace shared_model {
       return detail::PrettyStringBuilder()
           .init("GetAccountTransactions")
           .append("account_id", accountId())
-          .append("pagination_meta", paginationMeta()->toString())
+          .append("pagination_meta", paginationMeta().toString())
           .finalize();
     }
 

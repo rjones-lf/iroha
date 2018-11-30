@@ -39,7 +39,7 @@ namespace shared_model {
       virtual const types::AccountIdType &accountId() const = 0;
 
       /// Get the query pagination metadata.
-      virtual std::unique_ptr<TxPaginationMeta> paginationMeta() const = 0;
+      virtual const TxPaginationMeta &paginationMeta() const = 0;
 
       std::string toString() const override;
 
