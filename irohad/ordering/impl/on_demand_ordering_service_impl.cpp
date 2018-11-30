@@ -207,7 +207,7 @@ bool OnDemandOrderingServiceImpl::batchAlreadyProcessed(
     const shared_model::interface::TransactionBatch &batch) {
   auto tx_statuses = tx_cache_->check(batch);
   if (not tx_statuses) {
-    // TODO handle
+    // TODO andrei 30.11.18 IR-51 Handle database error
     log_->warn("Check tx presence database error. Batch: {}", batch.toString());
     return true;
   }

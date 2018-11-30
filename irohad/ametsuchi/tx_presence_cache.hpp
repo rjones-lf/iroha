@@ -31,6 +31,8 @@ namespace iroha {
      public:
       /**
        * Check transaction status by hash
+       * @return transaction status if storage query was successful, boost::none
+       * otherwise
        */
       virtual boost::optional<TxCacheStatusType> check(
           const shared_model::crypto::Hash &hash) const = 0;
@@ -41,6 +43,7 @@ namespace iroha {
       /**
        * Check batch status
        * @return a collection with answers about each transaction in the batch
+       * if storage queries were successful, boost::none otherwise
        */
       virtual boost::optional<BatchStatusCollectionType> check(
           const shared_model::interface::TransactionBatch &batch) const = 0;

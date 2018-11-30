@@ -82,7 +82,10 @@ grpc::Status MstTransportGrpc::SendState(
                 shared_model::interface::TransactionBatch>> &value) {
           auto cache_presence = tx_presence_cache_->check(*value.value);
           if (not cache_presence) {
-            // TODO handle
+            // TODO andrei 30.11.18 IR-51 Handle database error
+            async_call_->log_->warn(
+                "Check tx presence database error. Batch: {}",
+                value.value->toString());
             return;
           }
           auto is_replay = std::any_of(

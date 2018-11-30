@@ -91,7 +91,7 @@ OnDemandOrderingGate::removeReplays(
   auto tx_is_not_processed = [this](const auto &tx) {
     auto tx_result = tx_cache_->check(tx.hash());
     if (not tx_result) {
-      // TODO handle
+      // TODO andrei 30.11.18 IR-51 Handle database error
       return false;
     }
     return iroha::visit_in_place(

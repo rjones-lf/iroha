@@ -56,14 +56,14 @@ namespace torii {
 
     auto block_query = storage_->getBlockQuery();
     if (not block_query) {
-      // TODO handle
+      // TODO andrei 30.11.18 IR-51 Handle database error
       log_->warn("Could not create block query. Tx: {}", request.hex());
       return status_factory_->makeNotReceived(request, "");
     }
 
     auto status = storage_->getBlockQuery()->checkTxPresence(request);
     if (not status) {
-      // TODO handle
+      // TODO andrei 30.11.18 IR-51 Handle database error
       log_->warn("Check tx presence database error. Tx: {}", request.hex());
       return status_factory_->makeNotReceived(request, "");
     }
