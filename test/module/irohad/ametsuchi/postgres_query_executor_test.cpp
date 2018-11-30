@@ -1198,7 +1198,7 @@ namespace iroha {
             framework::SpecifiedVisitor<
                 shared_model::interface::TransactionsResponse>(),
             result->get());
-        ASSERT_EQ(cast_resp.transactions().size(), 3);
+        EXPECT_EQ(cast_resp.transactions().size(), 3);
         for (const auto &tx : cast_resp.transactions()) {
           static size_t i = 0;
           EXPECT_EQ(account->accountId(), tx.creatorAccountId())
@@ -1229,7 +1229,7 @@ namespace iroha {
             framework::SpecifiedVisitor<
                 shared_model::interface::TransactionsResponse>(),
             result->get());
-        ASSERT_EQ(cast_resp.transactions().size(), 2);
+        EXPECT_EQ(cast_resp.transactions().size(), 2);
         for (const auto &tx : cast_resp.transactions()) {
           EXPECT_EQ(account2->accountId(), tx.creatorAccountId())
               << tx.toString();
@@ -1258,7 +1258,7 @@ namespace iroha {
             framework::SpecifiedVisitor<
                 shared_model::interface::TransactionsResponse>(),
             result->get());
-        ASSERT_EQ(cast_resp.transactions().size(), 2);
+        EXPECT_EQ(cast_resp.transactions().size(), 2);
         for (const auto &tx : cast_resp.transactions()) {
           EXPECT_EQ(account2->accountId(), tx.creatorAccountId())
               << tx.toString();
@@ -1302,6 +1302,76 @@ namespace iroha {
           shared_model::interface::QueryErrorResponseChecker<
               shared_model::interface::StatefulFailedErrorResponse>(),
           result->get()));
+    }
+
+    auto createAndCommitTransactions() {}
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when user requests transactions with the second transaction as a starting
+     * hash @and 2 transactions page size
+     * @then response contains exactly 2 transaction @and list of transactions
+     * starts from second transaction
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, ValidPagination) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+      auto zero_string = std::string(32, '0');
+      auto fake_hash = shared_model::crypto::Hash(zero_string);
+      auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
+
+      std::vector<shared_model::proto::Transaction> txs;
+      txs.push_back(TestTransactionBuilder()
+                         .creatorAccountId(account->accountId())
+                         .createRole("user", {})
+                         .build());
+      txs.push_back(TestTransactionBuilder()
+                         .creatorAccountId(account->accountId())
+                         .addAssetQuantity(asset_id, "2.0")
+                         .transferAsset(account->accountId(),
+                                        account2->accountId(),
+                                        asset_id,
+                                        "",
+                                        "1.0")
+                         .build());
+      txs.push_back(TestTransactionBuilder()
+                         .creatorAccountId(account->accountId())
+                         .createRole("user2", {})
+                         .build());
+
+      auto block = TestBlockBuilder()
+                        .transactions(txs)
+                        .height(1)
+                        .prevHash(fake_hash)
+                        .build();
+
+      apply(storage, block);
+
+      auto &hash = txs[1].hash();
+      auto size = 2;
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId())
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_NO_THROW({
+        const auto &resp =
+            boost::get<shared_model::interface::TransactionsResponse>(
+                result->get());
+
+        EXPECT_EQ(resp.transactions().size(), size);
+        EXPECT_EQ(resp.transactions().begin()->hash(), hash);
+        for (const auto &tx : resp.transactions()) {
+          static size_t i = 0;
+          if (i == 2) {
+            EXPECT_EQ(tx.hash(), txs[2].hash());
+          }
+          EXPECT_EQ(account->accountId(), tx.creatorAccountId())
+              << tx.toString() << " ~~ " << i;
+          i++;
+        }
+      });
     }
 
     class GetTransactionsHashExecutorTest : public GetTransactionsExecutorTest {
