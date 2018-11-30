@@ -31,6 +31,9 @@
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
+static constexpr shared_model::interface::types::TransactionsNumberType
+    kTxPageSize(10);
+
 namespace iroha {
   namespace ametsuchi {
 
@@ -1184,10 +1187,11 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(account->accountId())
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account->accountId())
+              .getAccountTransactions(account->accountId(), kTxPageSize)
+              .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
         const auto &cast_resp = boost::apply_visitor(
@@ -1214,10 +1218,11 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(account2->accountId())
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account->accountId())
+              .getAccountTransactions(account2->accountId(), kTxPageSize)
+              .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
         const auto &cast_resp = boost::apply_visitor(
@@ -1242,10 +1247,11 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(account2->accountId())
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account->accountId())
+              .getAccountTransactions(account2->accountId(), kTxPageSize)
+              .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
         const auto &cast_resp = boost::apply_visitor(
@@ -1267,10 +1273,11 @@ namespace iroha {
      */
     TEST_F(GetAccountTransactionsExecutorTest, InvalidDifferentDomain) {
       addPerms({shared_model::interface::permissions::Role::kGetDomainAccTxs});
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(another_account->accountId())
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account->accountId())
+              .getAccountTransactions(another_account->accountId(), kTxPageSize)
+              .build();
       auto result = executeQuery(query);
       ASSERT_TRUE(boost::apply_visitor(
           shared_model::interface::QueryErrorResponseChecker<
@@ -1288,7 +1295,7 @@ namespace iroha {
 
       auto query = TestQueryBuilder()
                        .creatorAccountId(account->accountId())
-                       .getAccountTransactions("some@domain")
+                       .getAccountTransactions("some@domain", kTxPageSize)
                        .build();
       auto result = executeQuery(query);
       ASSERT_TRUE(boost::apply_visitor(
@@ -1372,11 +1379,11 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query =
-          TestQueryBuilder()
-              .creatorAccountId(account->accountId())
-              .getAccountAssetTransactions(account->accountId(), asset_id)
-              .build();
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountAssetTransactions(
+                           account->accountId(), asset_id, kTxPageSize)
+                       .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
         const auto &cast_resp = boost::apply_visitor(
@@ -1399,11 +1406,11 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query =
-          TestQueryBuilder()
-              .creatorAccountId(account->accountId())
-              .getAccountAssetTransactions(account2->accountId(), asset_id)
-              .build();
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountAssetTransactions(
+                           account2->accountId(), asset_id, kTxPageSize)
+                       .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
         const auto &cast_resp = boost::apply_visitor(
@@ -1427,11 +1434,11 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query =
-          TestQueryBuilder()
-              .creatorAccountId(account->accountId())
-              .getAccountAssetTransactions(account2->accountId(), asset_id)
-              .build();
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountAssetTransactions(
+                           account2->accountId(), asset_id, kTxPageSize)
+                       .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
         const auto &cast_resp = boost::apply_visitor(
@@ -1453,10 +1460,11 @@ namespace iroha {
       addPerms(
           {shared_model::interface::permissions::Role::kGetDomainAccAstTxs});
 
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(another_account->accountId())
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account->accountId())
+              .getAccountTransactions(another_account->accountId(), kTxPageSize)
+              .build();
       auto result = executeQuery(query);
       ASSERT_TRUE(boost::apply_visitor(
           shared_model::interface::QueryErrorResponseChecker<

@@ -7,6 +7,9 @@
 
 using namespace common_constants;
 
+static constexpr shared_model::interface::types::TransactionsNumberType
+    kTxPageSize(10);
+
 QueryPermissionAssetTxs::QueryPermissionAssetTxs()
     : QueryPermissionTestBase({Role::kGetMyAccAstTxs},
                               {Role::kGetDomainAccAstTxs},
@@ -74,6 +77,7 @@ shared_model::proto::Query QueryPermissionAssetTxs::makeQuery(
     const interface::types::AccountIdType &spectator,
     const crypto::Keypair &spectator_keypair) {
   return fixture.complete(
-      fixture.baseQry(spectator).getAccountAssetTransactions(target, kAssetId),
+      fixture.baseQry(spectator).getAccountAssetTransactions(
+          target, kAssetId, kTxPageSize),
       spectator_keypair);
 }
