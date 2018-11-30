@@ -15,6 +15,11 @@
 
 namespace integration_framework {
 
+  /**
+   * A trivial port manager that guarantees no instances will get two equal port
+   * values. It keeps track of ports handed out bo all instances and reuses them
+   * when these die.
+   */
   class PortGuard final : public boost::noncopyable {
    public:
     using PortType = uint16_t;
@@ -29,8 +34,8 @@ namespace integration_framework {
 
     ~PortGuard();
 
-    /// Request a port in given boundaries, including them. Assertion is done
-    /// that port was obtained.
+    /// Request a port in given boundaries, including them. Aborts if
+    /// all ports within the range are in use.
     PortType getPort(PortType min_value, PortType max_value = kMaxPort);
 
     /// Request a port in given boundaries, including them.

@@ -6,6 +6,7 @@
 #include "framework/integration_framework/port_guard.hpp"
 
 #include <boost/assert.hpp>
+#include <boost/format.hpp>
 
 namespace integration_framework {
 
@@ -53,8 +54,9 @@ namespace integration_framework {
     const auto opt_port = tryGetPort(min_value, max_value);
     BOOST_VERIFY_MSG(
         opt_port,
-        ("Could not get a port in interval [" + std::to_string(min_value) + ", "
-         + std::to_string(max_value) + "]!")
+        (boost::format("Could not get a port in interval [%d, %d]!") % min_value
+         % max_value)
+            .str()
             .c_str());
     return *opt_port;
   }

@@ -77,8 +77,8 @@ void CheckPorts(std::vector<Client> &clients, PortRange port_range) {
  * overlaps
  */
 TEST(PortGuardTest, AllPortsGetUsedAndNoOverlaps) {
-  static constexpr size_t kNumClients = 10;
-  static constexpr PortRange kRange = {123, 456};
+  constexpr size_t kNumClients = 10;
+  constexpr PortRange kRange = {123, 456};
 
   std::vector<Client> clients;
   AddClients(clients, kNumClients, kRange);
@@ -93,10 +93,10 @@ TEST(PortGuardTest, AllPortsGetUsedAndNoOverlaps) {
  * overlaps
  */
 TEST(PortGuardTest, AllPortsGetUsedAndNoOverlapsAfterRestart) {
-  static constexpr size_t kNumClients = 10; // first-run clients
-  static constexpr size_t kNumClientsKilled = 3; // then these die
-  static constexpr size_t kNumClientsResurrected = 5; // then these are added
-  static constexpr PortRange kRange = {123, 456};
+  constexpr size_t kNumClients = 10; // first-run clients
+  constexpr size_t kNumClientsKilled = 3; // then these die
+  constexpr size_t kNumClientsResurrected = 5; // then these are added
+  constexpr PortRange kRange = {123, 456};
 
   std::vector<Client> clients;
 
