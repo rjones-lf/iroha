@@ -15,7 +15,7 @@ namespace integration_framework {
 
   PortGuard::PortGuard() = default;
 
-  PortGuard::PortGuard(PortGuard &&other)
+  PortGuard::PortGuard(PortGuard &&other) noexcept
       : instance_used_ports_(std::move(other.instance_used_ports_)) {
     other.instance_used_ports_.reset();
   }
@@ -30,7 +30,7 @@ namespace integration_framework {
   }
 
   boost::optional<PortGuard::PortType> PortGuard::tryGetPort(
-      const PortType &min_value, const PortType &max_value) {
+      const PortType min_value, const PortType max_value) {
     std::lock_guard<std::mutex> lock(all_used_ports_mutex_);
     PortType tested_port = min_value;
     while (all_used_ports_.test(tested_port)) {
@@ -48,9 +48,9 @@ namespace integration_framework {
     return tested_port;
   }
 
-  PortGuard::PortType PortGuard::getPort(const PortType &min_value,
-                                         const PortType &max_value) {
-    boost::optional<PortType> opt_port = tryGetPort(min_value, max_value);
+  PortGuard::PortType PortGuard::getPort(const PortType min_value,
+                                         const PortType max_value) {
+    const boost::optional<PortType> opt_port = tryGetPort(min_value, max_value);
     BOOST_VERIFY_MSG(
         opt_port,
         ("Could not get a port in interval [" + std::to_string(min_value) + ", "

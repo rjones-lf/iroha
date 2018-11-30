@@ -22,17 +22,20 @@ namespace integration_framework {
     static constexpr PortType kMaxPort = 65535;
 
     PortGuard();
-    PortGuard(PortGuard &&other);
+    PortGuard(PortGuard &&other) noexcept;
+
+    // Just not implemented.
+    PortGuard &operator=(PortGuard &&other) = delete;
 
     ~PortGuard();
 
-    /// Request a port in given boundaries, including them.
-    PortType getPort(const PortType &min_value,
-                     const PortType &max_value = kMaxPort);
+    /// Request a port in given boundaries, including them. Assertion is done
+    /// that port was obtained.
+    PortType getPort(PortType min_value, PortType max_value = kMaxPort);
 
     /// Request a port in given boundaries, including them.
-    boost::optional<PortType> tryGetPort(const PortType &min_value,
-                                         const PortType &max_value = kMaxPort);
+    boost::optional<PortType> tryGetPort(PortType min_value,
+                                         PortType max_value = kMaxPort);
 
    private:
     using UsedPorts = std::bitset<kMaxPort + 1>;
