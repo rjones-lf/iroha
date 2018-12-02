@@ -96,10 +96,11 @@ namespace iroha {
           boost::get<expected::Value<std::unique_ptr<ametsuchi::TemporaryWsv>>>(
               &temporary_wsv_var)
               ->value);
+
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>
           validated_proposal_and_errors =
               validator_->validate(proposal, *storage);
-      storage.reset();
+      ametsuchi_factory_->prepareBlock(std::move(storage));
 
       notifier_.get_subscriber().on_next(
           std::move(validated_proposal_and_errors));

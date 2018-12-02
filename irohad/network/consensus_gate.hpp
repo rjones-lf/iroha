@@ -28,7 +28,6 @@ namespace shared_model {
 
 namespace iroha {
   namespace network {
-
     /// Shows whether the peer has voted for the block in the commit
     enum class PeerVotedFor {
       kThisBlock,

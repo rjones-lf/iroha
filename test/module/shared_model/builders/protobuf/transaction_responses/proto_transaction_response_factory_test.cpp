@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 
+#include "cryptography/hash.hpp"
 #include "framework/specified_visitor.hpp"
 
 using shared_model::proto::ProtoTxStatusFactory;

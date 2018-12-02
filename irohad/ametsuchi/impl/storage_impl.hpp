@@ -8,6 +8,7 @@
 
 #include "ametsuchi/storage.hpp"
 
+#include <atomic>
 #include <cmath>
 #include <shared_mutex>
 
@@ -101,12 +102,16 @@ namespace iroha {
 
       void commit(std::unique_ptr<MutableStorage> mutableStorage) override;
 
+      bool commitPrepared(const shared_model::interface::Block &block) override;
+
       std::shared_ptr<WsvQuery> getWsvQuery() const override;
 
       std::shared_ptr<BlockQuery> getBlockQuery() const override;
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override;
+
+      void prepareBlock(std::unique_ptr<TemporaryWsv> wsv) override;
 
       ~StorageImpl() override;
 
@@ -121,7 +126,8 @@ namespace iroha {
                       converter,
                   std::shared_ptr<shared_model::interface::PermissionToString>
                       perm_converter,
-                  size_t pool_size);
+                  size_t pool_size,
+                  bool enable_prepared_blocks);
 
       /**
        * Folder with raw blocks
@@ -132,6 +138,16 @@ namespace iroha {
       const PostgresOptions postgres_options_;
 
      private:
+      /**
+       * revert prepared transaction
+       */
+      void rollbackPrepared(soci::session &sql);
+
+      /**
+       * add block to block storage
+       */
+      bool storeBlock(const shared_model::interface::Block &block);
+
       std::unique_ptr<KeyValueStorage> block_store_;
 
       std::shared_ptr<soci::connection_pool> connection_;
@@ -151,6 +167,12 @@ namespace iroha {
       mutable std::shared_timed_mutex drop_mutex;
 
       size_t pool_size_;
+
+      bool prepared_blocks_enabled_;
+
+      std::atomic<bool> block_is_prepared;
+
+      std::string prepared_block_name_;
 
      protected:
       static const std::string &drop_;

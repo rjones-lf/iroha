@@ -191,6 +191,12 @@ namespace iroha {
       MOCK_METHOD0(
           createTemporaryWsv,
           expected::Result<std::unique_ptr<TemporaryWsv>, std::string>(void));
+      MOCK_METHOD1(prepareBlock_, void(std::unique_ptr<TemporaryWsv> &));
+
+      void prepareBlock(std::unique_ptr<TemporaryWsv> wsv) override {
+        // gmock workaround for non-copyable parameters
+        prepareBlock_(wsv);
+      }
     };
 
     class MockTemporaryWsv : public TemporaryWsv {
@@ -219,6 +225,7 @@ namespace iroha {
                         PeerQuery &,
                         const shared_model::interface::types::HashType &)>));
       MOCK_METHOD1(apply, bool(const shared_model::interface::Block &));
+      MOCK_METHOD1(applyPrepared, bool(const shared_model::interface::Block &));
     };
 
     /**
@@ -243,6 +250,8 @@ namespace iroha {
         commit_(mutableStorage);
       }
 
+      MOCK_METHOD1(commitPrepared,
+                   bool(const shared_model::interface::Block &));
       MOCK_METHOD1(commit_, void(std::unique_ptr<MutableStorage> &));
     };
 
@@ -276,6 +285,8 @@ namespace iroha {
               std::shared_ptr<PendingTransactionStorage>,
               std::shared_ptr<shared_model::interface::QueryResponseFactory>));
       MOCK_METHOD1(doCommit, void(MutableStorage *storage));
+      MOCK_METHOD1(commitPrepared,
+                   bool(const shared_model::interface::Block &));
       MOCK_METHOD1(insertBlock, bool(const shared_model::interface::Block &));
       MOCK_METHOD1(insertBlocks,
                    bool(const std::vector<
@@ -283,6 +294,12 @@ namespace iroha {
       MOCK_METHOD0(reset, void(void));
       MOCK_METHOD0(dropStorage, void(void));
       MOCK_METHOD0(freeConnections, void(void));
+      MOCK_METHOD1(prepareBlock_, void(std::unique_ptr<TemporaryWsv> &));
+
+      void prepareBlock(std::unique_ptr<TemporaryWsv> wsv) override {
+        // gmock workaround for non-copyable parameters
+        prepareBlock_(wsv);
+      }
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       on_commit() override {

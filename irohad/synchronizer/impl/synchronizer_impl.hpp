@@ -26,8 +26,7 @@ namespace iroha {
 
       ~SynchronizerImpl() override;
 
-      void process_commit(std::shared_ptr<shared_model::interface::Block>
-                              commit_message) override;
+      void process_commit(network::Commit commit_message) override;
 
       rxcpp::observable<SynchronizationEvent> on_commit_chain() override;
 

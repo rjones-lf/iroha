@@ -24,9 +24,7 @@ namespace iroha {
           log_(logger::log("synchronizer")) {
       consensus_gate->on_commit().subscribe(
           subscription_,
-          [&](network::Commit commit) {
-            this->process_commit(commit.block);
-          });
+          [&](network::Commit commit) { this->process_commit(commit); });
     }
 
     SynchronizationEvent SynchronizerImpl::downloadMissingBlocks(
@@ -62,9 +60,23 @@ namespace iroha {
       }
     }
 
-    void SynchronizerImpl::process_commit(
-        std::shared_ptr<shared_model::interface::Block> commit_message) {
+    void SynchronizerImpl::process_commit(network::Commit commit_message) {
       log_->info("processing commit");
+
+      const auto &block = commit_message.block;
+
+      auto commit = rxcpp::observable<>::just(block);
+
+      // if already voted for commit, try to apply prepared block
+      if (commit_message.type == network::PeerVotedFor::kThisBlock) {
+        bool block_applied =
+            mutable_factory_->commitPrepared(*block);
+        if (block_applied) {
+          notifier_.get_subscriber().on_next(SynchronizationEvent{
+              commit, SynchronizationOutcomeType::kCommit});
+          return;
+        }
+      }
 
       auto mutable_storage_var = mutable_factory_->createMutableStorage();
       if (auto e =
@@ -79,7 +91,6 @@ namespace iroha {
                   mutable_storage_var))
               .value;
 
-      auto commit = rxcpp::observable<>::just(commit_message);
       SynchronizationEvent result;
 
       if (validator_->validateAndApply(commit, *storage)) {
@@ -87,8 +98,7 @@ namespace iroha {
 
         result = {commit, SynchronizationOutcomeType::kCommit};
       } else {
-        result = downloadMissingBlocks(std::move(commit_message),
-                                       std::move(storage));
+        result = downloadMissingBlocks(std::move(block), std::move(storage));
       }
 
       notifier_.get_subscriber().on_next(result);

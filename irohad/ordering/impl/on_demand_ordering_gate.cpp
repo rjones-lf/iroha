@@ -27,7 +27,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                        [this](const BlockEvent &block_event) {
                          // block committed, increment block round
                          current_round_ = block_event.round;
-                         cache_->remove(block_event.batches);
+                         cache_->remove(block_event.hashes);
                        },
                        [this](const EmptyEvent &empty) {
                          // no blocks committed, increment reject round

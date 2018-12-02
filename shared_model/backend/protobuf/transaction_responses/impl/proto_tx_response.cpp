@@ -5,84 +5,106 @@
 
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 
+#include <limits>
+
+#include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
 #include "common/visitor.hpp"
+#include "cryptography/hash.hpp"
+#include "utils/reference_holder.hpp"
 #include "utils/variant_deserializer.hpp"
 
-using Variant =
-    shared_model::proto::TransactionResponse::ProtoResponseVariantType;
-template Variant::~variant();
-template Variant::variant(Variant &&);
-template void Variant::destroy_content();
-template int Variant::which() const;
-template void Variant::indicate_which(int);
-template bool Variant::using_backup() const;
+namespace {
+  /// Variant type, that contains all concrete tx responses in the system
+  using ProtoResponseVariantType =
+      boost::variant<shared_model::proto::StatelessFailedTxResponse,
+                     shared_model::proto::StatelessValidTxResponse,
+                     shared_model::proto::StatefulFailedTxResponse,
+                     shared_model::proto::StatefulValidTxResponse,
+                     shared_model::proto::RejectedTxResponse,
+                     shared_model::proto::CommittedTxResponse,
+                     shared_model::proto::MstExpiredResponse,
+                     shared_model::proto::NotReceivedTxResponse,
+                     shared_model::proto::MstPendingResponse,
+                     shared_model::proto::EnoughSignaturesCollectedResponse>;
+
+  /// Type with list of types in ResponseVariantType
+  using ProtoResponseListType = ProtoResponseVariantType::types;
+
+  constexpr int kMaxPriority = std::numeric_limits<int>::max();
+}  // namespace
 
 namespace shared_model {
   namespace proto {
 
-    template <typename TxResponse>
-    TransactionResponse::TransactionResponse(TxResponse &&ref)
-        : CopyableProto(std::forward<TxResponse>(ref)),
-          variant_([this] {
-            auto &&ar = *proto_;
+    struct TransactionResponse::Impl {
+      explicit Impl(TransportType &&ref) : proto_{std::move(ref)} {}
+      explicit Impl(const TransportType &ref) : proto_{ref} {}
 
-            unsigned which = ar.GetDescriptor()
-                                 ->FindFieldByName("tx_status")
-                                 ->enum_type()
-                                 ->FindValueByNumber(ar.tx_status())
-                                 ->index();
-            constexpr unsigned last =
-                boost::mpl::size<ProtoResponseListType>::type::value - 1;
+      detail::ReferenceHolder<TransportType> proto_;
 
-            return shared_model::detail::variant_impl<ProtoResponseListType>::
-                template load<shared_model::proto::TransactionResponse::
-                                  ProtoResponseVariantType>(
-                    std::forward<decltype(ar)>(ar),
-                    which > last ? last : which);
-          }()),
-          ivariant_(variant_),
-          hash_(proto_->tx_hash()) {}
+      const ProtoResponseVariantType variant_{[this] {
+        auto &&ar = *proto_;
 
-    template TransactionResponse::TransactionResponse(
-        TransactionResponse::TransportType &);
-    template TransactionResponse::TransactionResponse(
-        const TransactionResponse::TransportType &);
-    template TransactionResponse::TransactionResponse(
-        TransactionResponse::TransportType &&);
+        unsigned which = ar.GetDescriptor()
+                             ->FindFieldByName("tx_status")
+                             ->enum_type()
+                             ->FindValueByNumber(ar.tx_status())
+                             ->index();
+        constexpr unsigned last =
+            boost::mpl::size<ProtoResponseListType>::type::value - 1;
+
+        return shared_model::detail::variant_impl<ProtoResponseListType>::
+            template load<ProtoResponseVariantType>(
+                std::forward<decltype(ar)>(ar), which > last ? last : which);
+      }()};
+
+      const ResponseVariantType ivariant_{variant_};
+
+      // stub hash
+      const crypto::Hash hash_{proto_->tx_hash()};
+    };
 
     TransactionResponse::TransactionResponse(const TransactionResponse &r)
-        : TransactionResponse(r.proto_) {}
+        : TransactionResponse(*r.impl_->proto_) {}
+    TransactionResponse::TransactionResponse(TransactionResponse &&r) noexcept =
+        default;
 
-    TransactionResponse::TransactionResponse(TransactionResponse &&r) noexcept
-        : TransactionResponse(std::move(r.proto_)) {}
+    TransactionResponse::TransactionResponse(const TransportType &ref) {
+      impl_ = std::make_unique<Impl>(ref);
+    }
+    TransactionResponse::TransactionResponse(TransportType &&ref) {
+      impl_ = std::make_unique<Impl>(std::move(ref));
+    }
+
+    TransactionResponse::~TransactionResponse() = default;
 
     const interface::types::HashType &TransactionResponse::transactionHash()
         const {
-      return hash_;
+      return impl_->hash_;
     }
 
     const TransactionResponse::ResponseVariantType &TransactionResponse::get()
         const {
-      return ivariant_;
+      return impl_->ivariant_;
     }
 
     const TransactionResponse::StatelessErrorOrFailedCommandNameType &
     TransactionResponse::statelessErrorOrCommandName() const {
-      return proto_->err_or_cmd_name();
+      return impl_->proto_->err_or_cmd_name();
     }
 
     TransactionResponse::FailedCommandIndexType
     TransactionResponse::failedCommandIndex() const {
-      return proto_->failed_cmd_index();
+      return impl_->proto_->failed_cmd_index();
     }
 
     TransactionResponse::ErrorCodeType TransactionResponse::errorCode() const {
-      return proto_->error_code();
+      return impl_->proto_->error_code();
     }
 
     int TransactionResponse::priority() const noexcept {
       return iroha::visit_in_place(
-          variant_,
+          impl_->variant_,
           // not received can be changed to any response
           [](const NotReceivedTxResponse &) { return 0; },
           // following types are sequential in pipeline
@@ -96,8 +118,17 @@ namespace shared_model {
           [](const StatefulFailedTxResponse &) { return 5; },
           [](const MstExpiredResponse &) { return 5; },
           // following types are the final ones
-          [](const CommittedTxResponse &) { return max_priority; },
-          [](const RejectedTxResponse &) { return max_priority; });
+          [](const CommittedTxResponse &) { return kMaxPriority; },
+          [](const RejectedTxResponse &) { return kMaxPriority; });
+    }
+
+    const TransactionResponse::TransportType &
+    TransactionResponse::getTransport() const {
+      return *impl_->proto_;
+    }
+
+    TransactionResponse *TransactionResponse::clone() const {
+      return new TransactionResponse(*impl_->proto_);
     }
   };  // namespace proto
 }  // namespace shared_model

@@ -28,7 +28,7 @@ namespace torii {
   CommandSyncClient::CommandSyncClient(const std::string &ip, size_t port)
       : ip_(ip),
         port_(port),
-        stub_(iroha::network::createClient<iroha::protocol::CommandService>(
+        stub_(iroha::network::createClient<iroha::protocol::CommandService_v1>(
             ip + ":" + std::to_string(port))),
         log_(logger::log("CommandSyncClient")) {}
 
@@ -56,7 +56,8 @@ namespace torii {
     return stub_->Torii(&context, tx, &a);
   }
 
-  grpc::Status CommandSyncClient::ListTorii(const iroha::protocol::TxList &tx_list) const {
+  grpc::Status CommandSyncClient::ListTorii(
+      const iroha::protocol::TxList &tx_list) const {
     google::protobuf::Empty a;
     grpc::ClientContext context;
     return stub_->ListTorii(&context, tx_list, &a);

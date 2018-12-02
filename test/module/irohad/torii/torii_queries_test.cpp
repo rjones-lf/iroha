@@ -11,10 +11,16 @@
 #include "module/irohad/validation/validation_mocks.hpp"
 
 #include "backend/protobuf/proto_query_response_factory.hpp"
+#include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/queries.hpp"
+#include "interfaces/query_responses/account_asset_response.hpp"
+#include "interfaces/query_responses/account_response.hpp"
+#include "interfaces/query_responses/signatories_response.hpp"
+#include "interfaces/query_responses/transactions_response.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "validators/protobuf/proto_query_validator.hpp"
 
 #include "framework/specified_visitor.hpp"
 #include "main/server_runner.hpp"
@@ -65,7 +71,8 @@ class ToriiQueriesTest : public testing::Test {
         storage, storage, pending_txs_storage, query_response_factory);
 
     //----------- Server run ----------------
-    runner->append(std::make_unique<torii::QueryService>(qpi))
+    initQueryFactory();
+    runner->append(std::make_unique<torii::QueryService>(qpi, query_factory))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -76,6 +83,21 @@ class ToriiQueriesTest : public testing::Test {
             });
 
     runner->waitForServersReady();
+  }
+
+  void initQueryFactory() {
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        shared_model::interface::Query>>
+        query_validator = std::make_unique<
+            shared_model::validation::DefaultSignedQueryValidator>();
+    std::unique_ptr<
+        shared_model::validation::AbstractValidator<iroha::protocol::Query>>
+        proto_query_validator =
+            std::make_unique<shared_model::validation::ProtoQueryValidator>();
+    query_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
+        shared_model::interface::Query,
+        shared_model::proto::Query>>(std::move(query_validator),
+                                     std::move(proto_query_validator));
   }
 
   std::unique_ptr<ServerRunner> runner;
@@ -91,6 +113,7 @@ class ToriiQueriesTest : public testing::Test {
   std::shared_ptr<iroha::MockPendingTransactionStorage> pending_txs_storage;
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
       query_response_factory;
+  std::shared_ptr<torii::QueryService::QueryFactoryType> query_factory;
 
   const std::string ip = "127.0.0.1";
   int port;
@@ -232,6 +255,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
   // Should not return Error Response because tx is stateless and stateful valid
   ASSERT_FALSE(response.has_error_response());
 
+  // TODO [IR-48] Akvinikym 28.11.18: destroy specified visitor
   ASSERT_NO_THROW({
     const auto &account_resp = boost::apply_visitor(
         framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
