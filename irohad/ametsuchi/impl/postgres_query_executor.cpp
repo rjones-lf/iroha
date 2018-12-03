@@ -457,9 +457,8 @@ namespace iroha {
 
       auto &pagination_info = q.paginationMeta();
       auto first_hash = pagination_info.firstTxHash();
-      auto page_size = pagination_info.pageSize();
       // retrieve one extra transaction to populate next_hash
-      auto query_size = page_size + 1u;
+      auto query_size = pagination_info.pageSize() + 1u;
 
       auto base = boost::format(R"(WITH has_perms AS (%s),
       first_hash AS (%s),
@@ -497,54 +496,50 @@ namespace iroha {
       auto first_by_hash = R"(SELECT height, index FROM position_by_hash
       WHERE hash = :hash LIMIT 1)";
 
+      // select first ever tx
       auto first_tx = R"(SELECT height, index FROM position_by_hash
       ORDER BY height, index ASC LIMIT 1)";
 
-      std::string cmd;
+      auto cmd = boost::format(base
+                               % hasQueryPermission(creator_id_,
+                                                    q.accountId(),
+                                                    Role::kGetMyAccTxs,
+                                                    Role::kGetAllAccTxs,
+                                                    Role::kGetDomainAccTxs));
       if (first_hash) {
-        cmd = (base
-               % hasQueryPermission(creator_id_,
-                                    q.accountId(),
-                                    Role::kGetMyAccTxs,
-                                    Role::kGetAllAccTxs,
-                                    Role::kGetDomainAccTxs)
-               % first_by_hash)
-                  .str();
+        cmd = base % first_by_hash;
       } else {
-        cmd = (base
-               % hasQueryPermission(creator_id_,
-                                    q.accountId(),
-                                    Role::kGetMyAccTxs,
-                                    Role::kGetAllAccTxs,
-                                    Role::kGetDomainAccTxs)
-               % first_tx)
-                  .str();
+        cmd = base % first_tx;
       }
+
+      auto query = cmd.str();
 
       return executeQuery<QueryTuple, PermissionTuple>(
           [&] {
             if (first_hash) {
-              return (sql_.prepare << cmd,
+              return (sql_.prepare << query,
                       soci::use(first_hash->hex()),
                       soci::use(q.accountId()),
                       soci::use(query_size));
             } else {
-              return (sql_.prepare << cmd,
+              return (sql_.prepare << query,
                       soci::use(q.accountId()),
                       soci::use(query_size));
             }
           },
           [&](auto range, auto &) {
+            uint64_t total_size = 0;
+            if (not boost::empty(range)) {
+              total_size = boost::get<2>(*range.begin());
+            }
+            std::map<uint64_t, std::vector<uint64_t>> index;
             // unpack results to get map from block height to index of tx in
             // a block
-            uint64_t total_size;
-            std::map<uint64_t, std::vector<uint64_t>> index;
-            boost::for_each(range, [&index, &total_size](auto t) {
+            boost::for_each(range, [&index](auto t) {
               apply(
                   t,
-                  [&index, &total_size](auto &height, auto &idx, auto &count) {
+                  [&index](auto &height, auto &idx, auto &count) {
                     index[height].push_back(idx);
-                    total_size = count;
                   });
             });
 
@@ -559,7 +554,7 @@ namespace iroha {
               std::move(
                   txs.begin(), txs.end(), std::back_inserter(response_txs));
             }
-            // If no transactions are returned, we assume that hash is invalid.
+            // If 0 transactions are returned, we assume that hash is invalid.
             // Since query with valid hash is guaranteed to return at least one
             // transaction
             if (first_hash and response_txs.empty()) {
