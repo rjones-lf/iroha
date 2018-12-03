@@ -17,13 +17,14 @@
 
 #include <gflags/gflags.h>
 #include <rapidjson/istreamwrapper.h>
-#include <rapidjson/rapidjson.h>
 #include <boost/filesystem.hpp>
 #include <iostream>
 
+#include "backend/protobuf/proto_block_json_converter.hpp"
 #include "backend/protobuf/queries/proto_query.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "client.hpp"
+#include "common/result.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "grpc_response_handler.hpp"
@@ -122,9 +123,19 @@ int main(int argc, char *argv[]) {
     // Convert to json
     std::ofstream output_file("genesis.block");
     auto bl = shared_model::proto::Block(
-        iroha::model::converters::PbBlockFactory().serialize(block));
-    output_file << shared_model::converters::protobuf::modelToJson(bl);
-    logger->info("File saved to genesis.block");
+        iroha::model::converters::PbBlockFactory().serialize(block).block_v1());
+
+    shared_model::proto::ProtoBlockJsonConverter().serialize(bl).match(
+        [&logger,
+         &output_file](const iroha::expected::Value<std::string> &json) {
+          output_file << json.value;
+          logger->info("File saved to genesis.block");
+        },
+        [&logger](const auto &error) {
+          // should not get here
+          logger->error("error while parsing serializing genesis block");
+          std::exit(EXIT_FAILURE);
+        });
   }
   // Create new pub/priv key, register in Iroha Network
   else if (FLAGS_new_account) {

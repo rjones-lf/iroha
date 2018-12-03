@@ -33,7 +33,7 @@ namespace iroha {
 
   hash256_t hash(const model::Block &block) {
     auto &&pb_dat = block_factory.serialize(block);
-    return hash(pb_dat);
+    return hash(pb_dat.block_v1());
   }
 
   hash256_t hash(const model::Query &query) {
