@@ -13,6 +13,9 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/account_detail_response.hpp"
+#include "interfaces/query_responses/account_response.hpp"
+#include "interfaces/query_responses/signatories_response.hpp"
 
 class GrantablePermissionsFixture : public AcceptanceFixture {
  public:
