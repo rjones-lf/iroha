@@ -8,9 +8,9 @@
 
 #include "ordering/impl/ordering_gate_cache/ordering_gate_cache.hpp"
 
-#include <boost/circular_buffer.hpp>
-#include <queue>
 #include <shared_mutex>
+
+#include <boost/circular_buffer.hpp>
 
 namespace iroha {
   namespace ordering {
@@ -22,7 +22,7 @@ namespace iroha {
 
         BatchesSetType pop() override;
 
-        void remove(const BatchesSetType &batches) override;
+        void remove(const HashesSetType &hashes) override;
 
         virtual const BatchesSetType &head() const override;
 

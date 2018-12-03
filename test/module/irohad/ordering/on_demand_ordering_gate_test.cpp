@@ -226,8 +226,8 @@ TEST_F(OnDemandOrderingGateTest, BatchesRemoveFromCache) {
   auto batch2 = createMockBatchWithHash(hash2);
 
   EXPECT_CALL(*cache, pop()).Times(1);
-  EXPECT_CALL(*cache, remove(UnorderedElementsAre(batch1, batch2))).Times(1);
+  EXPECT_CALL(*cache, remove(UnorderedElementsAre(hash1, hash2))).Times(1);
 
   rounds.get_subscriber().on_next(
-      OnDemandOrderingGate::BlockEvent{initial_round, {batch1, batch2}});
+      OnDemandOrderingGate::BlockEvent{initial_round, {hash1, hash2}});
 }

@@ -6,43 +6,26 @@
 #ifndef IROHA_PROTO_TX_RESPONSE_HPP
 #define IROHA_PROTO_TX_RESPONSE_HPP
 
-#include <limits>
+#include "interfaces/transaction_responses/tx_response.hpp"
 
-#include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
-#include "cryptography/hash.hpp"
+#include "endpoint.pb.h"
 
 namespace shared_model {
   namespace proto {
     /**
      * TransactionResponse is a status of transaction in system
      */
-    class TransactionResponse final
-        : public CopyableProto<interface::TransactionResponse,
-                               iroha::protocol::ToriiResponse,
-                               TransactionResponse> {
+    class TransactionResponse final : public interface::TransactionResponse {
      public:
-      /// Type of variant, that handle all concrete tx responses in the system
-      using ProtoResponseVariantType =
-          boost::variant<StatelessFailedTxResponse,
-                         StatelessValidTxResponse,
-                         StatefulFailedTxResponse,
-                         StatefulValidTxResponse,
-                         RejectedTxResponse,
-                         CommittedTxResponse,
-                         MstExpiredResponse,
-                         NotReceivedTxResponse,
-                         MstPendingResponse,
-                         EnoughSignaturesCollectedResponse>;
-
-      /// Type with list of types in ResponseVariantType
-      using ProtoResponseListType = ProtoResponseVariantType::types;
-
-      template <typename TxResponse>
-      explicit TransactionResponse(TxResponse &&ref);
+      using TransportType = iroha::protocol::ToriiResponse;
 
       TransactionResponse(const TransactionResponse &r);
-
       TransactionResponse(TransactionResponse &&r) noexcept;
+
+      explicit TransactionResponse(const TransportType &ref);
+      explicit TransactionResponse(TransportType &&ref);
+
+      ~TransactionResponse() override;
 
       const interface::types::HashType &transactionHash() const override;
 
@@ -51,39 +34,25 @@ namespace shared_model {
        */
       const ResponseVariantType &get() const override;
 
-      virtual const StatelessErrorOrFailedCommandNameType &
-      statelessErrorOrCommandName() const override;
+      const StatelessErrorOrFailedCommandNameType &statelessErrorOrCommandName()
+          const override;
 
-      virtual FailedCommandIndexType failedCommandIndex() const override;
+      FailedCommandIndexType failedCommandIndex() const override;
 
-      virtual ErrorCodeType errorCode() const override;
+      ErrorCodeType errorCode() const override;
+
+      const TransportType &getTransport() const;
+
+     protected:
+      TransactionResponse *clone() const override;
 
      private:
-      const ProtoResponseVariantType variant_;
+      struct Impl;
+      std::unique_ptr<Impl> impl_;
 
-      const ResponseVariantType ivariant_;
-
-      // stub hash
-      const crypto::Hash hash_;
-
-      static constexpr int max_priority = std::numeric_limits<int>::max();
       int priority() const noexcept override;
     };
   }  // namespace  proto
 }  // namespace shared_model
-
-namespace boost {
-  extern template class variant<
-      shared_model::proto::StatelessFailedTxResponse,
-      shared_model::proto::StatelessValidTxResponse,
-      shared_model::proto::StatefulFailedTxResponse,
-      shared_model::proto::StatefulValidTxResponse,
-      shared_model::proto::RejectedTxResponse,
-      shared_model::proto::CommittedTxResponse,
-      shared_model::proto::MstExpiredResponse,
-      shared_model::proto::NotReceivedTxResponse,
-      shared_model::proto::MstPendingResponse,
-      shared_model::proto::EnoughSignaturesCollectedResponse>;
-}
 
 #endif  // IROHA_PROTO_TX_RESPONSE_HPP

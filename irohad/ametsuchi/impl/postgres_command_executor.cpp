@@ -26,6 +26,8 @@
 #include "interfaces/commands/subtract_asset_quantity.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/permission_to_string.hpp"
+#include "utils/string_builder.hpp"
 
 namespace {
   struct PreparedStatement {
@@ -74,12 +76,13 @@ namespace {
     sql << queries.second;
   }
 
+  template <typename QueryArgsCallable>
   iroha::expected::Error<iroha::ametsuchi::CommandError> makeCommandError(
       std::string &&command_name,
       const iroha::ametsuchi::CommandError::ErrorCodeType code,
-      const std::string &error_extra = "") noexcept {
+      QueryArgsCallable &&query_args) noexcept {
     return iroha::expected::makeError(iroha::ametsuchi::CommandError{
-        std::move(command_name), code, error_extra});
+        std::move(command_name), code, query_args()});
   }
 
   /// mapping between pairs of SQL error substrings and related fake error
@@ -154,12 +157,18 @@ namespace {
   // parsing vs nested queries
   /**
    * Get an error code from the text SQL error
+   * @tparam QueryArgsCallable - type of callable to get query arguments
    * @param command_name - name of the failed command
    * @param error - string error, which SQL gave out
+   * @param query_args - callable to get a string representation of query
+   * arguments
    * @return command_error structure
    */
+  template <typename QueryArgsCallable>
   iroha::ametsuchi::CommandResult getCommandError(
-      std::string &&command_name, const std::string &error) noexcept {
+      std::string &&command_name,
+      const std::string &error,
+      QueryArgsCallable &&query_args) noexcept {
     std::string key, to_be_presented;
     bool errors_matched;
 
@@ -173,38 +182,50 @@ namespace {
       if (errors_matched) {
         if (auto real_error_code =
                 getRealErrorCode(fakeErrorCode, command_name)) {
-          return makeCommandError(
-              std::move(command_name), *real_error_code, error);
+          return makeCommandError(std::move(command_name),
+                                  *real_error_code,
+                                  std::forward<QueryArgsCallable>(query_args));
         }
         break;
       }
     }
     // parsing is not successful, return the general error
-    return makeCommandError(std::move(command_name), 1, error);
+    return makeCommandError(std::move(command_name),
+                            1,
+                            std::forward<QueryArgsCallable>(query_args));
   }
 
   /**
    * Executes sql query
    * Assumes that statement query returns 0 in case of success
    * or error code in case of failure
+   * @tparam QueryArgsCallable - type of callable to get query arguments
    * @param sql - connection on which to execute statement
    * @param cmd - sql query to be executed
    * @param command_name - which command executes a query
+   * @param query_args - callable to get a string representation of query
+   * arguments
    * @return CommandResult with command name and error message
    */
+  template <typename QueryArgsCallable>
   iroha::ametsuchi::CommandResult executeQuery(
       soci::session &sql,
       const std::string &cmd,
-      std::string command_name) noexcept {
+      std::string command_name,
+      QueryArgsCallable &&query_args) noexcept {
     uint32_t result;
     try {
       sql << cmd, soci::into(result);
       if (result != 0) {
-        return makeCommandError(std::move(command_name), result);
+        return makeCommandError(std::move(command_name),
+                                result,
+                                std::forward<QueryArgsCallable>(query_args));
       }
       return {};
     } catch (const std::exception &e) {
-      return getCommandError(std::move(command_name), e.what());
+      return getCommandError(std::move(command_name),
+                             e.what(),
+                             std::forward<QueryArgsCallable>(query_args));
     }
   }
 
@@ -274,6 +295,14 @@ namespace {
         + (do_validation ? PreparedStatement::validationPrefix
                          : PreparedStatement::noValidationPrefix);
     cmd % command_name;
+  }
+
+  /**
+   * Get a pretty string builder initialized for query arguments append
+   * @return string builder
+   */
+  shared_model::detail::PrettyStringBuilder getQueryArgsStringBuilder() {
+    return shared_model::detail::PrettyStringBuilder().init("Query arguments");
   }
 }  // namespace
 
@@ -734,8 +763,13 @@ namespace iroha {
           .str();
     }
 
-    PostgresCommandExecutor::PostgresCommandExecutor(soci::session &sql)
-        : sql_(sql), do_validation_(true) {}
+    PostgresCommandExecutor::PostgresCommandExecutor(
+        soci::session &sql,
+        std::shared_ptr<shared_model::interface::PermissionToString>
+            perm_converter)
+        : sql_(sql),
+          do_validation_(true),
+          perm_converter_{std::move(perm_converter)} {}
 
     void PostgresCommandExecutor::setCreatorAccountId(
         const shared_model::interface::types::AccountIdType
@@ -761,7 +795,17 @@ namespace iroha {
 
       cmd = (cmd % account_id % asset_id % precision % amount);
 
-      return executeQuery(sql_, cmd.str(), "AddAssetQuantity");
+      auto str_args = [&account_id, &asset_id, &amount, precision] {
+        return getQueryArgsStringBuilder()
+            .append("account_id", account_id)
+            .append("asset_id", asset_id)
+            .append("amount", amount)
+            .append("precision", std::to_string(precision))
+            .finalize();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "AddAssetQuantity", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -774,7 +818,13 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % peer.pubkey().hex() % peer.address());
 
-      return executeQuery(sql_, cmd.str(), "AddPeer");
+      auto str_args = [&peer] {
+        return getQueryArgsStringBuilder()
+            .append("peer", peer.toString())
+            .finalize();
+      };
+
+      return executeQuery(sql_, cmd.str(), "AddPeer", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -787,7 +837,14 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
 
-      return executeQuery(sql_, cmd.str(), "AddSignatory");
+      auto str_args = [&account_id, &pubkey] {
+        return getQueryArgsStringBuilder()
+            .append("account_id", account_id)
+            .append("pubkey", pubkey)
+            .finalize();
+      };
+
+      return executeQuery(sql_, cmd.str(), "AddSignatory", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -800,7 +857,14 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % role_name);
 
-      return executeQuery(sql_, cmd.str(), "AppendRole");
+      auto str_args = [&account_id, &role_name] {
+        return getQueryArgsStringBuilder()
+            .append("account_id", account_id)
+            .append("role_name", role_name)
+            .finalize();
+      };
+
+      return executeQuery(sql_, cmd.str(), "AppendRole", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -817,7 +881,16 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % domain_id % pubkey);
 
-      return executeQuery(sql_, cmd.str(), "CreateAccount");
+      auto str_args = [&account_id, &domain_id, &pubkey] {
+        return getQueryArgsStringBuilder()
+            .append("account_id", account_id)
+            .append("domain_id", domain_id)
+            .append("pubkey", pubkey)
+            .finalize();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "CreateAccount", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -831,7 +904,15 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % asset_id % domain_id % precision);
 
-      return executeQuery(sql_, cmd.str(), "CreateAsset");
+      auto str_args = [&domain_id, &asset_id, precision] {
+        return getQueryArgsStringBuilder()
+            .append("domain_id", domain_id)
+            .append("asset_id", asset_id)
+            .append("precision", std::to_string(precision))
+            .finalize();
+      };
+
+      return executeQuery(sql_, cmd.str(), "CreateAsset", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -844,7 +925,14 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % domain_id % default_role);
 
-      return executeQuery(sql_, cmd.str(), "CreateDomain");
+      auto str_args = [&domain_id, &default_role] {
+        return getQueryArgsStringBuilder()
+            .append("domain_id", domain_id)
+            .append("default_role", default_role)
+            .finalize();
+      };
+
+      return executeQuery(sql_, cmd.str(), "CreateDomain", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -858,7 +946,16 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % role_id % perm_str);
 
-      return executeQuery(sql_, cmd.str(), "CreateRole");
+      auto str_args = [&role_id, &perm_str] {
+        // TODO [IR-1889] Akvinikym 21.11.18: integrate
+        // PermissionSet::toString() instead of bit string, when it is created
+        return getQueryArgsStringBuilder()
+            .append("role_id", role_id)
+            .append("perm_str", perm_str)
+            .finalize();
+      };
+
+      return executeQuery(sql_, cmd.str(), "CreateRole", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -871,7 +968,14 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % role_name);
 
-      return executeQuery(sql_, cmd.str(), "DetachRole");
+      auto str_args = [&account_id, &role_name] {
+        return getQueryArgsStringBuilder()
+            .append("account_id", account_id)
+            .append("role_name", role_name)
+            .finalize();
+      };
+
+      return executeQuery(sql_, cmd.str(), "DetachRole", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -892,7 +996,18 @@ namespace iroha {
       cmd =
           (cmd % creator_account_id_ % permittee_account_id % perm_str % perm);
 
-      return executeQuery(sql_, cmd.str(), "GrantPermission");
+      auto str_args = [&creator_account_id = creator_account_id_,
+                       &permittee_account_id,
+                       permission = perm_converter_->toString(permission)] {
+        return getQueryArgsStringBuilder()
+            .append("creator_account_id_", creator_account_id)
+            .append("permittee_account_id", permittee_account_id)
+            .append("permission", permission)
+            .finalize();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "GrantPermission", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -905,7 +1020,15 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % pubkey);
 
-      return executeQuery(sql_, cmd.str(), "RemoveSignatory");
+      auto str_args = [&account_id, &pubkey] {
+        return getQueryArgsStringBuilder()
+            .append("account_id", account_id)
+            .append("pubkey", pubkey)
+            .finalize();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "RemoveSignatory", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -928,7 +1051,18 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % permittee_account_id % perms
              % without_perm_str);
 
-      return executeQuery(sql_, cmd.str(), "RevokePermission");
+      auto str_args = [&creator_account_id = creator_account_id_,
+                       &permittee_account_id,
+                       permission = perm_converter_->toString(permission)] {
+        return getQueryArgsStringBuilder()
+            .append("creator_account_id_", creator_account_id)
+            .append("permittee_account_id", permittee_account_id)
+            .append("permission", permission)
+            .finalize();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "RevokePermission", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -953,7 +1087,16 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % account_id % json % filled_json % val
              % empty_json);
 
-      return executeQuery(sql_, cmd.str(), "SetAccountDetail");
+      auto str_args = [&account_id, &key, &value] {
+        return getQueryArgsStringBuilder()
+            .append("account_id", account_id)
+            .append("key", key)
+            .append("value", value)
+            .finalize();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "SetAccountDetail", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -966,7 +1109,14 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % account_id % quorum);
 
-      return executeQuery(sql_, cmd.str(), "SetQuorum");
+      auto str_args = [&account_id, quorum] {
+        return getQueryArgsStringBuilder()
+            .append("account_id", account_id)
+            .append("quorum", std::to_string(quorum))
+            .finalize();
+      };
+
+      return executeQuery(sql_, cmd.str(), "SetQuorum", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -980,7 +1130,20 @@ namespace iroha {
 
       cmd = (cmd % creator_account_id_ % asset_id % precision % amount);
 
-      return executeQuery(sql_, cmd.str(), "SubtractAssetQuantity");
+      auto str_args = [&creator_account_id = creator_account_id_,
+                       &asset_id,
+                       &amount,
+                       precision] {
+        return getQueryArgsStringBuilder()
+            .append("creator_account_id", creator_account_id)
+            .append("asset_id", asset_id)
+            .append("amount", amount)
+            .append("precision", std::to_string(precision))
+            .finalize();
+      };
+
+      return executeQuery(
+          sql_, cmd.str(), "SubtractAssetQuantity", std::move(str_args));
     }
 
     CommandResult PostgresCommandExecutor::operator()(
@@ -998,7 +1161,19 @@ namespace iroha {
       cmd = (cmd % creator_account_id_ % src_account_id % dest_account_id
              % asset_id % precision % amount);
 
-      return executeQuery(sql_, cmd.str(), "TransferAsset");
+      auto str_args =
+          [&src_account_id, &dest_account_id, &asset_id, &amount, precision] {
+            return getQueryArgsStringBuilder()
+                .append("src_account_id", src_account_id)
+                .append("dest_account_id", dest_account_id)
+                .append("asset_id", asset_id)
+                .append("amount", amount)
+                .append("precision", std::to_string(precision))
+                .finalize();
+          };
+
+      return executeQuery(
+          sql_, cmd.str(), "TransferAsset", std::move(str_args));
     }
 
     void PostgresCommandExecutor::prepareStatements(soci::session &sql) {

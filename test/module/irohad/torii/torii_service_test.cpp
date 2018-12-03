@@ -343,7 +343,7 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   uint32_t error_code = 3;
   validation_result->rejected_transactions.emplace(
       failed_tx_hash,
-      iroha::validation::CommandError{cmd_name, error_code, true, cmd_index});
+      iroha::validation::CommandError{cmd_name, error_code, "", true, cmd_index});
   verified_prop_notifier_.get_subscriber().on_next(validation_result);
 
   // create commit from block notifier's observable

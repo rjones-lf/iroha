@@ -139,6 +139,9 @@ class Validator : public testing::Test {
   std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory;
   std::shared_ptr<iroha::ametsuchi::MockTemporaryWsv> temp_wsv_mock;
   std::shared_ptr<shared_model::interface::TransactionBatchParser> parser;
+
+  const uint32_t sample_error_code = 2;
+  const std::string sample_error_extra = "account_id: doge@account";
 };
 
 /**
@@ -222,7 +225,8 @@ TEST_F(Validator, SomeTxsFail) {
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(0)))))
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(1)))))
-      .WillOnce(Return(iroha::expected::makeError(CommandError{"", 2, false})));
+      .WillOnce(Return(iroha::expected::makeError(
+          CommandError{"", sample_error_code, sample_error_extra, true})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs.at(2)))))
       .WillRepeatedly(Return(iroha::expected::Value<void>({})));
 
@@ -231,9 +235,12 @@ TEST_F(Validator, SomeTxsFail) {
       verified_proposal_and_errors->verified_proposal->transactions().size(),
       2);
   ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 1);
-  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
+  EXPECT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
                 ->second.error_code,
-            2);
+            sample_error_code);
+  EXPECT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
+                ->second.error_extra,
+            sample_error_extra);
 }
 
 /**
@@ -298,8 +305,8 @@ TEST_F(Validator, Batches) {
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[2]))))
       .WillOnce(Return(iroha::expected::Value<void>({})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[3]))))
-      .WillOnce(
-          Return(iroha::expected::makeError(CommandError({"", 2, false}))));
+      .WillOnce(Return(iroha::expected::makeError(
+          CommandError({"", sample_error_code, sample_error_extra, false}))));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[5]))))
       .WillOnce(Return(iroha::expected::Value<void>({})));
   EXPECT_CALL(*temp_wsv_mock, apply(Eq(ByRef(txs[6]))))
@@ -310,7 +317,10 @@ TEST_F(Validator, Batches) {
       verified_proposal_and_errors->verified_proposal->transactions().size(),
       5);
   ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 1);
-  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
+  EXPECT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
                 ->second.error_code,
-            2);
+            sample_error_code);
+  EXPECT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
+                ->second.error_extra,
+            sample_error_extra);
 }

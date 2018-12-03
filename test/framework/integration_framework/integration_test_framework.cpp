@@ -27,6 +27,7 @@
 #include "framework/common_constants.hpp"
 #include "framework/integration_framework/fake_peer/fake_peer.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
+#include "framework/integration_framework/port_guard.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
@@ -63,14 +64,6 @@ namespace {
   std::string kLocalHost = "127.0.0.1";
   constexpr size_t kDefaultToriiPort = 11501;
   constexpr size_t kDefaultInternalPort = 50541;
-  constexpr size_t kMaxPort = 65535;
-
-  template <size_t default_port>
-  size_t getNextPort() {
-    static size_t increment = 0;
-    BOOST_VERIFY_MSG(increment <= kMaxPort, "The maximum port value reached");
-    return default_port + (++increment);
-  }
 }  // namespace
 
 namespace integration_framework {
@@ -84,8 +77,9 @@ namespace integration_framework {
       milliseconds proposal_waiting,
       milliseconds block_waiting,
       milliseconds tx_response_waiting)
-      : torii_port_(getNextPort<kDefaultToriiPort>()),
-        internal_port_(getNextPort<kDefaultInternalPort>()),
+      : port_guard_(std::make_unique<PortGuard>()),
+        torii_port_(port_guard_->getPort(kDefaultToriiPort)),
+        internal_port_(port_guard_->getPort(kDefaultInternalPort)),
         iroha_instance_(std::make_shared<IrohaInstance>(mst_support,
                                                         block_store_path,
                                                         kLocalHost,
@@ -141,7 +135,7 @@ namespace integration_framework {
     for (auto &promise_and_key : fake_peers_promises_) {
       auto fake_peer =
           std::make_shared<FakePeer>(kLocalHost,
-                                     getNextPort<kDefaultInternalPort>(),
+                                     port_guard_->getPort(kDefaultInternalPort),
                                      promise_and_key.second,
                                      this_peer_,
                                      common_objects_factory_,

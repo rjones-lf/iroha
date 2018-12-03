@@ -14,6 +14,10 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/queries.hpp"
+#include "interfaces/query_responses/account_asset_response.hpp"
+#include "interfaces/query_responses/account_response.hpp"
+#include "interfaces/query_responses/signatories_response.hpp"
+#include "interfaces/query_responses/transactions_response.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"
@@ -251,6 +255,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
   // Should not return Error Response because tx is stateless and stateful valid
   ASSERT_FALSE(response.has_error_response());
 
+  // TODO [IR-48] Akvinikym 28.11.18: destroy specified visitor
   ASSERT_NO_THROW({
     const auto &account_resp = boost::apply_visitor(
         framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
