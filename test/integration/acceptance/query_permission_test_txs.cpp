@@ -59,7 +59,8 @@ QueryPermissionTxs::getGeneralResponseChecker() {
   return [this](const proto::QueryResponse &response) {
     ASSERT_NO_THROW({
       const auto &resp =
-          boost::get<const interface::TransactionsResponse &>(response.get());
+          boost::get<const interface::TransactionsPageResponse &>(
+              response.get());
 
       const auto &transactions = resp.transactions();
       ASSERT_EQ(boost::size(transactions), tx_hashes_.size());

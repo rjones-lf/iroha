@@ -1345,8 +1345,9 @@ namespace iroha {
      * @given initialized storage, user has 3 transactions committed
      * @when query contains second transaction as a starting
      * hash @and 2 transactions page size
-     * @then response contains exactly 2 transaction @and list of transactions
-     * starts from second transaction
+     * @then response contains exactly 2 transaction
+     * @and list of transactions starts from second transaction
+     * @and next transaction hash is not present
      */
     TEST_F(GetAccountTransactionsExecutorTest, ValidPagination) {
       addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
@@ -1369,6 +1370,7 @@ namespace iroha {
 
         EXPECT_EQ(resp.transactions().size(), size);
         EXPECT_EQ(resp.transactions().begin()->hash(), hash);
+        EXPECT_FALSE(resp.nextTxHash());
         for (const auto &tx : resp.transactions()) {
           static size_t i = 1;
           EXPECT_EQ(tx.hash(), txs[i].hash());
@@ -1384,6 +1386,7 @@ namespace iroha {
      * @when query contains 2 transactions page size without starting hash
      * @then response contains exactly 2 transactions
      * @and starts from the first one
+     * @and next transaction hash is equal to last committed transaction
      */
     TEST_F(GetAccountTransactionsExecutorTest, ValidPaginationNoHash) {
       addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
@@ -1405,6 +1408,8 @@ namespace iroha {
 
         EXPECT_EQ(resp.transactions().size(), size);
         EXPECT_EQ(resp.transactions().begin()->hash(), txs[0].hash());
+        ASSERT_TRUE(resp.nextTxHash());
+        EXPECT_EQ(*resp.nextTxHash(), txs[2].hash());
         for (const auto &tx : resp.transactions()) {
           static size_t i = 0;
           EXPECT_EQ(tx.hash(), txs[i].hash());
@@ -1463,62 +1468,6 @@ namespace iroha {
 
       ASSERT_TRUE(
           checkForQueryError<StatefulFailedErrorResponse>(result->get()));
-    }
-
-    /**
-     * @given initialized storage, user has 3 transactions committed
-     * @when query contains 2 transactions page size starting from 1st tx
-     * @then response contains hash of the third transaction as next hash
-     */
-    TEST_F(GetAccountTransactionsExecutorTest, ValidPaginantionNextHash) {
-      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
-
-      auto txs = createTransactionsAndCommit(3, account->accountId());
-
-      auto &hash = txs[0].hash();
-      auto size = 2;
-      auto &expected_next_hash = txs[2].hash();
-
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(account->accountId(), size, hash)
-                       .build();
-      auto result = executeQuery(query);
-
-      ASSERT_NO_THROW({
-        const auto &resp =
-            boost::get<shared_model::interface::TransactionsPageResponse>(
-                result->get());
-        ASSERT_TRUE(resp.nextTxHash());
-        EXPECT_EQ(*resp.nextTxHash(), expected_next_hash);
-      });
-    }
-
-    /**
-     * @given initialized storage, user has 3 transactions committed
-     * @when query contains 2 transactions page size starting from 2nd tx
-     * @then response does not contain next page hash
-     */
-    TEST_F(GetAccountTransactionsExecutorTest, PaginantionNoNextHash) {
-      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
-
-      auto txs = createTransactionsAndCommit(3, account->accountId());
-
-      auto &hash = txs[1].hash();
-      auto size = 2;
-
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(account->accountId(), size, hash)
-                       .build();
-      auto result = executeQuery(query);
-
-      ASSERT_NO_THROW({
-        const auto &resp =
-            boost::get<shared_model::interface::TransactionsPageResponse>(
-                result->get());
-        EXPECT_FALSE(resp.nextTxHash());
-      });
     }
 
     /**
