@@ -45,7 +45,7 @@ IntegrationTestFramework &QueryPermissionTxs::prepareState(
   auto &itf = QueryPermissionTestBase::prepareState(
       fixture, spectator_permissions, target_permissions);
 
-  for (const auto& tx : user_transactions) {
+  for (const auto &tx : user_transactions) {
     itf.sendTxAwait(tx, getBlockTransactionsAmountChecker(1));
   }
 
@@ -57,7 +57,8 @@ QueryPermissionTxs::getGeneralResponseChecker() {
   return [this](const proto::QueryResponse &response) {
     ASSERT_NO_THROW({
       const auto &resp =
-          boost::get<const interface::TransactionsResponse &>(response.get());
+          boost::get<const interface::TransactionsPageResponse &>(
+              response.get());
 
       const auto &transactions = resp.transactions();
       ASSERT_EQ(boost::size(transactions), tx_hashes_.size());
