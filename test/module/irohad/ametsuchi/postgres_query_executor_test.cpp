@@ -1548,6 +1548,34 @@ namespace iroha {
       });
     }
 
+    /**
+     * @given initialized storage, user has no committed transactions
+     * @when query contains 2 transactions page size
+     * @then response does not contain any transactions
+     * @and total size is 0
+     * @and next hash is not present
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, PaginationNoTransactions) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+
+      auto txs = createTransactionsAndCommit(0, account->accountId());
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId(), 0)
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_NO_THROW({
+        const auto &resp =
+            boost::get<shared_model::interface::TransactionsPageResponse>(
+                result->get());
+        EXPECT_EQ(boost::size(resp.transactions()), 0);
+        EXPECT_EQ(resp.allTransactionsSize(), 0);
+        EXPECT_FALSE(resp.nextTxHash());
+      });
+    }
+
     class GetTransactionsHashExecutorTest : public GetTransactionsExecutorTest {
     };
 
