@@ -6,7 +6,8 @@
 #ifndef QUERY_PERMISSION_TEST_AST_HPP_
 #define QUERY_PERMISSION_TEST_AST_HPP_
 
-#include "query_permission_test_base.hpp"
+#include "backend/protobuf/common_objects/account_asset.hpp"
+#include "integration/acceptance/query_permission_test_base.hpp"
 
 using namespace shared_model;
 using namespace integration_framework;
@@ -14,7 +15,6 @@ using namespace shared_model::interface::permissions;
 
 class QueryPermissionAssets final : public QueryPermissionTestBase {
  public:
-
   QueryPermissionAssets();
 
   /**
@@ -49,6 +49,5 @@ class QueryPermissionAssets final : public QueryPermissionTestBase {
 
   std::vector<shared_model::proto::AccountAsset> account_assets_;
 };
-
 
 #endif /* QUERY_PERMISSION_TEST_AST_HPP_ */

@@ -23,6 +23,7 @@
 #include "framework/common_constants.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
+#include "interfaces/query_responses/transactions_response.hpp"
 
 using namespace common_constants;
 using shared_model::interface::permissions::Role;
@@ -101,8 +102,7 @@ TEST(RegressionTest, StateRecovery) {
                 .createRole(kRole, {Role::kReceive})
                 .appendRole(kUserId, kRole)
                 .addAssetQuantity(kAssetId, "133.0")
-                .transferAsset(
-                    kAdminId, kUserId, kAssetId, "descrs", "97.8")
+                .transferAsset(kAdminId, kUserId, kAssetId, "descrs", "97.8")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(kAdminKeypair)
@@ -177,6 +177,5 @@ TEST(RegressionTest, DoubleCallOfDone) {
  * @then no exceptions are risen
  */
 TEST(RegressionTest, DestructionOfNonInitializedItf) {
-  integration_framework::IntegrationTestFramework itf(
-      1, {}, true);
+  integration_framework::IntegrationTestFramework itf(1, {}, true);
 }

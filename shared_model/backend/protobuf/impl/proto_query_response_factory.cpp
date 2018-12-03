@@ -7,6 +7,9 @@
 #include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/query_responses/proto_block_query_response.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "backend/protobuf/transaction.hpp"
+#include "cryptography/public_key.hpp"
+#include "interfaces/common_objects/amount.hpp"
 
 namespace {
   /**

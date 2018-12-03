@@ -3,9 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "integration/acceptance/query_permission_test_acc_details.hpp"
+
 #include <regex>
 
-#include "query_permission_test_acc_details.hpp"
+#include "interfaces/query_responses/account_detail_response.hpp"
 
 using namespace common_constants;
 

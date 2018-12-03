@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "query_permission_test_txs.hpp"
+#include "integration/acceptance/query_permission_test_txs.hpp"
+
+#include "interfaces/query_responses/transactions_response.hpp"
 
 using namespace common_constants;
 
@@ -45,7 +47,7 @@ IntegrationTestFramework &QueryPermissionTxs::prepareState(
   auto &itf = QueryPermissionTestBase::prepareState(
       fixture, spectator_permissions, target_permissions);
 
-  for (const auto& tx : user_transactions) {
+  for (const auto &tx : user_transactions) {
     itf.sendTxAwait(tx, getBlockTransactionsAmountChecker(1));
   }
 

@@ -9,6 +9,8 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
+#include "interfaces/query_responses/error_query_response.hpp"
+#include "interfaces/query_responses/error_responses/stateless_failed_error_response.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 
 template <typename BaseType>

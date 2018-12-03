@@ -8,8 +8,10 @@
 #include <gtest/gtest.h>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
-#include "framework/specified_visitor.hpp"
 #include "common/byteutils.hpp"
+#include "cryptography/hash.hpp"
+#include "framework/specified_visitor.hpp"
+#include "interfaces/query_responses/error_query_response.hpp"
 
 /**
  * @given protobuf's QueryResponse with different responses and some hash
