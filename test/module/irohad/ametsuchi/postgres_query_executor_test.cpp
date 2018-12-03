@@ -37,11 +37,11 @@ static constexpr shared_model::interface::types::TransactionsNumberType
 
 namespace shared_model {
   namespace crypto {
-    void PrintTo(const shared_model::crypto::Hash &hash, std::ostream* os) {
+    void PrintTo(const shared_model::crypto::Hash &hash, std::ostream *os) {
       *os << hash.toString();
     }
-  }
-}
+  }  // namespace crypto
+}  // namespace shared_model
 
 namespace iroha {
   namespace ametsuchi {
@@ -1191,14 +1191,13 @@ namespace iroha {
       std::vector<shared_model::proto::Transaction> createTransactionsAndCommit(
           size_t size,
           const shared_model::interface::types::AccountIdType &creator) {
-
         std::vector<shared_model::proto::Transaction> txs;
         txs.reserve(size);
         for (size_t i = 0; i < size; i++) {
           txs.push_back(TestTransactionBuilder()
-                          .creatorAccountId(account->accountId())
-                          .createRole("user" + std::to_string(i), {})
-                          .build());
+                            .creatorAccountId(account->accountId())
+                            .createRole("user" + std::to_string(i), {})
+                            .build());
         }
 
         auto block = TestBlockBuilder()
@@ -1383,7 +1382,7 @@ namespace iroha {
     /**
      * @given initialized storage, user has 3 transactions committed
      * @when query contains 2 transactions page size without starting hash
-     * @then response contains exactly 2 transaction
+     * @then response contains exactly 2 transactions
      * @and starts from the first one
      */
     TEST_F(GetAccountTransactionsExecutorTest, ValidPaginationNoHash) {
@@ -1391,7 +1390,6 @@ namespace iroha {
 
       auto txs = createTransactionsAndCommit(3, account->accountId());
 
-      auto &hash = txs[0].hash();
       auto size = 2;
 
       auto query = TestQueryBuilder()
@@ -1406,7 +1404,7 @@ namespace iroha {
                 result->get());
 
         EXPECT_EQ(resp.transactions().size(), size);
-        EXPECT_EQ(resp.transactions().begin()->hash(), hash);
+        EXPECT_EQ(resp.transactions().begin()->hash(), txs[0].hash());
         for (const auto &tx : resp.transactions()) {
           static size_t i = 0;
           EXPECT_EQ(tx.hash(), txs[i].hash());
@@ -1414,6 +1412,33 @@ namespace iroha {
               << tx.toString() << " ~~ " << i;
           i++;
         }
+      });
+    }
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains 10 page size
+     * @then response contains only 3 committed transactions
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, PaginationPageBiggerThanTotal) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+
+      auto txs = createTransactionsAndCommit(3, account->accountId());
+
+      auto size = 10;
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId(), size)
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_NO_THROW({
+        const auto &resp =
+            boost::get<shared_model::interface::TransactionsPageResponse>(
+                result->get());
+
+        EXPECT_EQ(resp.transactions().size(), 3);
       });
     }
 
