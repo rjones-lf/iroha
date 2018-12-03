@@ -5,7 +5,7 @@
 
 #include "integration/acceptance/query_permission_test_txs.hpp"
 
-#include "interfaces/query_responses/transactions_response.hpp"
+#include "interfaces/query_responses/transactions_page_response.hpp"
 
 using namespace common_constants;
 
