@@ -118,14 +118,14 @@ namespace iroha {
         matchEvent(latest_commit, on_blocks, on_nothing);
 
         const auto current_block_round = latest_commit.round.block_round + 1;
-        auto peer = [this, &current_block_round](auto block_round_advance,
-                                                 auto reject_round) {
+        auto getOsPeer = [this, &current_block_round](auto block_round_advance,
+                                                      auto reject_round) {
           auto &permutation = permutations_[block_round_advance];
           // since reject round can be greater than number of peers, wrap it
           // with number of peers
           auto &peer =
               current_peers_[permutation[reject_round % permutation.size()]];
-          log_->debug("For round [block={}, reject={}, ], using peer: {}",
+          log_->debug("For round [block={}, reject={}, ], using OS on peer: {}",
                       current_block_round + block_round_advance,
                       reject_round,
                       peer->toString());
@@ -149,14 +149,15 @@ namespace iroha {
          * o, round 0 - kIssuer
          */
         peers.peers.at(OnDemandConnectionManager::kCurrentRoundRejectConsumer) =
-            peer(kCurrentRound,
-                 ordering::currentRejectRoundConsumer(current_reject_round_));
+            getOsPeer(
+                kCurrentRound,
+                ordering::currentRejectRoundConsumer(current_reject_round_));
         peers.peers.at(OnDemandConnectionManager::kNextRoundRejectConsumer) =
-            peer(kNextRound, ordering::kNextRejectRoundConsumer);
+            getOsPeer(kNextRound, ordering::kNextRejectRoundConsumer);
         peers.peers.at(OnDemandConnectionManager::kNextRoundCommitConsumer) =
-            peer(kRoundAfterNext, ordering::kNextCommitRoundConsumer);
+            getOsPeer(kRoundAfterNext, ordering::kNextCommitRoundConsumer);
         peers.peers.at(OnDemandConnectionManager::kIssuer) =
-            peer(kCurrentRound, current_reject_round_);
+            getOsPeer(kCurrentRound, current_reject_round_);
         return peers;
       };
 
