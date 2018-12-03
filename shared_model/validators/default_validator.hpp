@@ -15,7 +15,6 @@
 #include "validators/transaction_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
 #include "validators/transactions_collection/transactions_collection_validator.hpp"
-#include "validators/tx_pagination_meta_validator.hpp"
 
 namespace shared_model {
   namespace validation {
@@ -126,13 +125,6 @@ namespace shared_model {
         SignableModelValidator<DefaultUnsignedBlockValidator,
                                const interface::Block &,
                                FieldValidator>;
-
-    /**
-     * TxPaginationMeta validator which checks stateless validity of a
-     * transaction pagination metadata object
-     */
-    using DefaultTxPaginationMetaValidator =
-        TxPaginationMetaValidator<FieldValidator>;
 
   }  // namespace validation
 }  // namespace shared_model
