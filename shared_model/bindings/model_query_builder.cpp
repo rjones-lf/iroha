@@ -39,7 +39,7 @@ namespace shared_model {
     ModelQueryBuilder ModelQueryBuilder::getAccountTransactions(
         const interface::types::AccountIdType &account_id,
         interface::types::TransactionsNumberType page_size,
-        boost::optional<interface::types::HashType> first_hash) {
+        const boost::optional<interface::types::HashType> &first_hash) {
       return ModelQueryBuilder(
           builder_.getAccountTransactions(account_id, page_size, first_hash));
     }
@@ -48,7 +48,7 @@ namespace shared_model {
         const interface::types::AccountIdType &account_id,
         const interface::types::AssetIdType &asset_id,
         interface::types::TransactionsNumberType page_size,
-        boost::optional<interface::types::HashType> first_hash) {
+        const boost::optional<interface::types::HashType> &first_hash) {
       return ModelQueryBuilder(builder_.getAccountAssetTransactions(
           account_id, asset_id, page_size, first_hash));
     }
