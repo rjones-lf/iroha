@@ -18,8 +18,8 @@
 #include "interfaces/query_responses/role_permissions.hpp"
 #include "interfaces/query_responses/roles_response.hpp"
 #include "interfaces/query_responses/signatories_response.hpp"
-#include "interfaces/query_responses/transactions_response.hpp"
 #include "interfaces/query_responses/transactions_page_response.hpp"
+#include "interfaces/query_responses/transactions_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
@@ -34,6 +34,14 @@
 
 static constexpr shared_model::interface::types::TransactionsNumberType
     kTxPageSize(10);
+
+namespace shared_model {
+  namespace crypto {
+    void PrintTo(const shared_model::crypto::Hash &hash, std::ostream* os) {
+      *os << hash.toString();
+    }
+  }
+}
 
 namespace iroha {
   namespace ametsuchi {
@@ -1177,7 +1185,37 @@ namespace iroha {
     };
 
     class GetAccountTransactionsExecutorTest
-        : public GetTransactionsExecutorTest {};
+        : public GetTransactionsExecutorTest {
+     public:
+      // create valid transactions and commit them
+      std::vector<shared_model::proto::Transaction> createTransactionsAndCommit(
+          size_t size,
+          const shared_model::interface::types::AccountIdType &creator) {
+
+        std::vector<shared_model::proto::Transaction> txs;
+        txs.reserve(size);
+        for (size_t i = 0; i < size; i++) {
+          txs.push_back(TestTransactionBuilder()
+                          .creatorAccountId(account->accountId())
+                          .createRole("user" + std::to_string(i), {})
+                          .build());
+        }
+
+        auto block = TestBlockBuilder()
+                         .transactions(txs)
+                         .height(1)
+                         .prevHash(fake_hash)
+                         .build();
+
+        apply(storage, block);
+
+        return txs;
+      }
+
+      std::string zero_string{32, '0'};
+      shared_model::crypto::Hash fake_hash{zero_string};
+      shared_model::crypto::PublicKey fake_pubkey{zero_string};
+    };
 
     /**
      * @given initialized storage, permission to his/her account
@@ -1313,38 +1351,10 @@ namespace iroha {
      */
     TEST_F(GetAccountTransactionsExecutorTest, ValidPagination) {
       addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
-      auto zero_string = std::string(32, '0');
-      auto fake_hash = shared_model::crypto::Hash(zero_string);
-      auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
 
-      std::vector<shared_model::proto::Transaction> txs;
-      txs.push_back(TestTransactionBuilder()
-                        .creatorAccountId(account->accountId())
-                        .createRole("user", {})
-                        .build());
-      txs.push_back(TestTransactionBuilder()
-                        .creatorAccountId(account->accountId())
-                        .addAssetQuantity(asset_id, "2.0")
-                        .transferAsset(account->accountId(),
-                                       account2->accountId(),
-                                       asset_id,
-                                       "",
-                                       "1.0")
-                        .build());
-      txs.push_back(TestTransactionBuilder()
-                        .creatorAccountId(account->accountId())
-                        .createRole("user2", {})
-                        .build());
+      auto txs = createTransactionsAndCommit(3, account->accountId());
 
-      auto block = TestBlockBuilder()
-                       .transactions(txs)
-                       .height(1)
-                       .prevHash(fake_hash)
-                       .build();
-
-      apply(storage, block);
-
-      auto &hash = txs[1].hash();
+      auto &hash = txs.at(1).hash();
       auto size = 2;
 
       auto query = TestQueryBuilder()
@@ -1378,36 +1388,8 @@ namespace iroha {
      */
     TEST_F(GetAccountTransactionsExecutorTest, ValidPaginationNoHash) {
       addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
-      auto zero_string = std::string(32, '0');
-      auto fake_hash = shared_model::crypto::Hash(zero_string);
-      auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
 
-      std::vector<shared_model::proto::Transaction> txs;
-      txs.push_back(TestTransactionBuilder()
-                        .creatorAccountId(account->accountId())
-                        .createRole("user", {})
-                        .build());
-      txs.push_back(TestTransactionBuilder()
-                        .creatorAccountId(account->accountId())
-                        .addAssetQuantity(asset_id, "2.0")
-                        .transferAsset(account->accountId(),
-                                       account2->accountId(),
-                                       asset_id,
-                                       "",
-                                       "1.0")
-                        .build());
-      txs.push_back(TestTransactionBuilder()
-                        .creatorAccountId(account->accountId())
-                        .createRole("user2", {})
-                        .build());
-
-      auto block = TestBlockBuilder()
-                       .transactions(txs)
-                       .height(1)
-                       .prevHash(fake_hash)
-                       .build();
-
-      apply(storage, block);
+      auto txs = createTransactionsAndCommit(3, account->accountId());
 
       auto &hash = txs[0].hash();
       auto size = 2;
@@ -1442,36 +1424,8 @@ namespace iroha {
      */
     TEST_F(GetAccountTransactionsExecutorTest, InvalidHashInPagination) {
       addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
-      auto zero_string = std::string(32, '0');
-      auto fake_hash = shared_model::crypto::Hash(zero_string);
-      auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
 
-      std::vector<shared_model::proto::Transaction> txs;
-      txs.push_back(TestTransactionBuilder()
-                        .creatorAccountId(account->accountId())
-                        .createRole("user", {})
-                        .build());
-      txs.push_back(TestTransactionBuilder()
-                        .creatorAccountId(account->accountId())
-                        .addAssetQuantity(asset_id, "2.0")
-                        .transferAsset(account->accountId(),
-                                       account2->accountId(),
-                                       asset_id,
-                                       "",
-                                       "1.0")
-                        .build());
-      txs.push_back(TestTransactionBuilder()
-                        .creatorAccountId(account->accountId())
-                        .createRole("user2", {})
-                        .build());
-
-      auto block = TestBlockBuilder()
-                       .transactions(txs)
-                       .height(1)
-                       .prevHash(fake_hash)
-                       .build();
-
-      apply(storage, block);
+      createTransactionsAndCommit(3, account->accountId());
 
       auto size = 2;
 
@@ -1484,6 +1438,62 @@ namespace iroha {
 
       ASSERT_TRUE(
           checkForQueryError<StatefulFailedErrorResponse>(result->get()));
+    }
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains 2 transactions page size starting from 1st tx
+     * @then response contains hash of the third transaction as next hash
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, ValidPaginantionNextHash) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+
+      auto txs = createTransactionsAndCommit(3, account->accountId());
+
+      auto &hash = txs[0].hash();
+      auto size = 2;
+      auto &expected_next_hash = txs[2].hash();
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId(), size, hash)
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_NO_THROW({
+        const auto &resp =
+            boost::get<shared_model::interface::TransactionsPageResponse>(
+                result->get());
+        ASSERT_TRUE(resp.nextTxHash());
+        EXPECT_EQ(*resp.nextTxHash(), expected_next_hash);
+      });
+    }
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains 2 transactions page size starting from 2nd tx
+     * @then response does not contain next page hash
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, PaginantionNoNextHash) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+
+      auto txs = createTransactionsAndCommit(3, account->accountId());
+
+      auto &hash = txs[1].hash();
+      auto size = 2;
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId(), size, hash)
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_NO_THROW({
+        const auto &resp =
+            boost::get<shared_model::interface::TransactionsPageResponse>(
+                result->get());
+        EXPECT_FALSE(resp.nextTxHash());
+      });
     }
 
     class GetTransactionsHashExecutorTest : public GetTransactionsExecutorTest {
