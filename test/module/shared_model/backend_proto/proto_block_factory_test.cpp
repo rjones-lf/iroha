@@ -16,14 +16,14 @@ using namespace shared_model;
 class ProtoBlockFactoryTest : public ::testing::Test {
  public:
   std::unique_ptr<proto::ProtoBlockFactory> factory;
-  validation::MockValidator<interface::Block> *validator;
 
   ProtoBlockFactoryTest() {
-    auto validator_ptr =
+    auto interface_validator =
         std::make_unique<validation::MockValidator<interface::Block>>();
-    validator = validator_ptr.get();
-    factory =
-        std::make_unique<proto::ProtoBlockFactory>(std::move(validator_ptr));
+    auto proto_validator =
+        std::make_unique<validation::MockValidator<iroha::protocol::Block>>();
+    factory = std::make_unique<proto::ProtoBlockFactory>(
+        std::move(interface_validator), std::move(proto_validator));
   }
 };
 

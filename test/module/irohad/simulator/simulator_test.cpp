@@ -32,9 +32,9 @@ using namespace framework::test_subscriber;
 using ::testing::_;
 using ::testing::A;
 using ::testing::Invoke;
+using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::ReturnArg;
-using ::testing::NiceMock;
 
 using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
@@ -56,7 +56,9 @@ class SimulatorTest : public ::testing::Test {
             std::shared_ptr<iroha::ametsuchi::BlockQuery>(query))));
     block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory>(
         std::make_unique<shared_model::validation::MockValidator<
-            shared_model::interface::Block>>());
+            shared_model::interface::Block>>(),
+        std::make_unique<
+            shared_model::validation::MockValidator<iroha::protocol::Block>>());
   }
 
   void TearDown() override {
@@ -307,7 +309,8 @@ TEST_F(SimulatorTest, SomeFailingTxs) {
   for (auto rejected_tx = txs.begin() + 1; rejected_tx != txs.end();
        ++rejected_tx) {
     verified_proposal_and_errors->rejected_transactions.emplace(
-        rejected_tx->hash(), validation::CommandError{"SomeCommand", 1, "", true});
+        rejected_tx->hash(),
+        validation::CommandError{"SomeCommand", 1, "", true});
   }
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
 

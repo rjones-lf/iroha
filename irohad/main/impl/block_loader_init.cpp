@@ -17,6 +17,7 @@
 
 #include "main/impl/block_loader_init.hpp"
 #include "validators/default_validator.hpp"
+#include "validators/protobuf/proto_block_validator.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -33,8 +34,8 @@ auto BlockLoaderInit::createLoader(
     std::shared_ptr<PeerQueryFactory> peer_query_factory,
     std::shared_ptr<BlockQueryFactory> block_query_factory) {
   shared_model::proto::ProtoBlockFactory factory(
-      std::make_unique<
-          shared_model::validation::DefaultSignedBlockValidator>());
+      std::make_unique<shared_model::validation::DefaultSignedBlockValidator>(),
+      std::make_unique<shared_model::validation::ProtoBlockValidator>());
   return std::make_shared<BlockLoaderImpl>(
       peer_query_factory, block_query_factory, std::move(factory));
 }

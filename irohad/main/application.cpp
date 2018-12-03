@@ -29,6 +29,7 @@
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "validators/field_validator.hpp"
+#include "validators/protobuf/proto_block_validator.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"
 #include "validators/protobuf/proto_transaction_validator.hpp"
 
@@ -260,7 +261,8 @@ void Irohad::initSimulator() {
       //  are validated in the ordering gate, where they are received from the
       //  ordering service.
       std::make_unique<
-          shared_model::validation::DefaultUnsignedBlockValidator>());
+          shared_model::validation::DefaultUnsignedBlockValidator>(),
+      std::make_unique<shared_model::validation::ProtoBlockValidator>());
   simulator = std::make_shared<Simulator>(ordering_gate,
                                           stateful_validator,
                                           storage,

@@ -69,7 +69,9 @@ class BlockLoaderTest : public testing::Test {
     loader = std::make_shared<BlockLoaderImpl>(
         peer_query_factory,
         block_query_factory,
-        shared_model::proto::ProtoBlockFactory(std::move(validator_ptr)));
+        shared_model::proto::ProtoBlockFactory(
+            std::move(validator_ptr),
+            std::make_unique<MockValidator<iroha::protocol::Block>>()));
     service =
         std::make_shared<BlockLoaderService>(block_query_factory, block_cache);
 
