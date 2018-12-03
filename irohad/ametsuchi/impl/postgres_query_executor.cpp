@@ -454,10 +454,9 @@ namespace iroha {
           QueryType<shared_model::interface::types::HeightType, uint64_t>;
       using PermissionTuple = boost::tuple<int>;
 
-      auto pagination_info = q.paginationMeta();
-      auto first_hash = pagination_info->firstTxHash();
-      auto page_size = pagination_info->pageSize();
-      page_size = 3;
+      auto &pagination_info = q.paginationMeta();
+      auto first_hash = pagination_info.firstTxHash();
+      auto page_size = pagination_info.pageSize();
 
       auto base = boost::format(R"(WITH has_perms AS (%s),
       first_hash AS (%s),
@@ -545,18 +544,10 @@ namespace iroha {
               std::move(
                   txs.begin(), txs.end(), std::back_inserter(response_txs));
             }
-            // query is stateful invalid if:
-            // 1. pagination hash is provided
-            // 2. first hash in response is different from pagination hash
-            // This happens because we issue join, this means
-            // that if hash does not exist, the join will be performed with
-            // an empty table. With join condition involving >=, the result
-            // is the whole table. In this case all transactions will be
-            // returned.
-            // Checking first hashes of the result is the only way to avoid
-            // additional database queries
-            if (first_hash and not response_txs.empty()
-                and response_txs[0]->hash() != *first_hash) {
+            // If no transactions are returned, we assume that hash is invalid.
+            // Since query with valid hash is guaranteed to return at least one
+            // transaction
+            if (first_hash and response_txs.empty()) {
               auto error = (boost::format("invalid pagination hash: %s")
                             % first_hash->hex())
                                .str();
@@ -564,8 +555,8 @@ namespace iroha {
                   QueryErrorType::kStatefulFailed, error);
             }
 
-            return query_response_factory_->createTransactionsResponse(
-                std::move(response_txs), query_hash_);
+            return query_response_factory_->createTransactionsPageResponse(
+                std::move(response_txs), shared_model::crypto::Hash(""), 10, query_hash_);
           },
           notEnoughPermissionsResponse(perm_converter_,
                                        Role::kGetMyAccTxs,

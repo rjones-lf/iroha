@@ -19,6 +19,7 @@
 #include "interfaces/query_responses/roles_response.hpp"
 #include "interfaces/query_responses/signatories_response.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
+#include "interfaces/query_responses/transactions_page_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
@@ -1197,7 +1198,7 @@ namespace iroha {
       ASSERT_NO_THROW({
         const auto &cast_resp = boost::apply_visitor(
             framework::SpecifiedVisitor<
-                shared_model::interface::TransactionsResponse>(),
+                shared_model::interface::TransactionsPageResponse>(),
             result->get());
         EXPECT_EQ(cast_resp.transactions().size(), 3);
         for (const auto &tx : cast_resp.transactions()) {
@@ -1228,7 +1229,7 @@ namespace iroha {
       ASSERT_NO_THROW({
         const auto &cast_resp = boost::apply_visitor(
             framework::SpecifiedVisitor<
-                shared_model::interface::TransactionsResponse>(),
+                shared_model::interface::TransactionsPageResponse>(),
             result->get());
         EXPECT_EQ(cast_resp.transactions().size(), 2);
         for (const auto &tx : cast_resp.transactions()) {
@@ -1257,7 +1258,7 @@ namespace iroha {
       ASSERT_NO_THROW({
         const auto &cast_resp = boost::apply_visitor(
             framework::SpecifiedVisitor<
-                shared_model::interface::TransactionsResponse>(),
+                shared_model::interface::TransactionsPageResponse>(),
             result->get());
         EXPECT_EQ(cast_resp.transactions().size(), 2);
         for (const auto &tx : cast_resp.transactions()) {
@@ -1348,22 +1349,20 @@ namespace iroha {
 
       auto query = TestQueryBuilder()
                        .creatorAccountId(account->accountId())
-                       .getAccountTransactions(account->accountId())
+                       .getAccountTransactions(account->accountId(), size, hash)
                        .build();
       auto result = executeQuery(query);
 
       ASSERT_NO_THROW({
         const auto &resp =
-            boost::get<shared_model::interface::TransactionsResponse>(
+            boost::get<shared_model::interface::TransactionsPageResponse>(
                 result->get());
 
         EXPECT_EQ(resp.transactions().size(), size);
         EXPECT_EQ(resp.transactions().begin()->hash(), hash);
         for (const auto &tx : resp.transactions()) {
-          static size_t i = 0;
-          if (i == 2) {
-            EXPECT_EQ(tx.hash(), txs[2].hash());
-          }
+          static size_t i = 1;
+          EXPECT_EQ(tx.hash(), txs[i].hash());
           EXPECT_EQ(account->accountId(), tx.creatorAccountId())
               << tx.toString() << " ~~ " << i;
           i++;
@@ -1410,27 +1409,25 @@ namespace iroha {
 
       apply(storage, block);
 
-      auto &hash = txs[1].hash();
+      auto &hash = txs[0].hash();
       auto size = 2;
 
       auto query = TestQueryBuilder()
                        .creatorAccountId(account->accountId())
-                       .getAccountTransactions(account->accountId())
+                       .getAccountTransactions(account->accountId(), size)
                        .build();
       auto result = executeQuery(query);
 
       ASSERT_NO_THROW({
         const auto &resp =
-            boost::get<shared_model::interface::TransactionsResponse>(
+            boost::get<shared_model::interface::TransactionsPageResponse>(
                 result->get());
 
         EXPECT_EQ(resp.transactions().size(), size);
         EXPECT_EQ(resp.transactions().begin()->hash(), hash);
         for (const auto &tx : resp.transactions()) {
           static size_t i = 0;
-          if (i == 2) {
-            EXPECT_EQ(tx.hash(), txs[2].hash());
-          }
+          EXPECT_EQ(tx.hash(), txs[i].hash());
           EXPECT_EQ(account->accountId(), tx.creatorAccountId())
               << tx.toString() << " ~~ " << i;
           i++;
@@ -1476,13 +1473,13 @@ namespace iroha {
 
       apply(storage, block);
 
-      // auto &hash = txs[1].hash();
-      // auto size = 2;
+      auto size = 2;
 
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(account->accountId())
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account->accountId())
+              .getAccountTransactions(account->accountId(), size, fake_hash)
+              .build();
       auto result = executeQuery(query);
 
       ASSERT_TRUE(
