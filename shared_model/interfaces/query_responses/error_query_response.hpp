@@ -72,6 +72,17 @@ namespace shared_model {
        */
       virtual const ErrorMessageType &errorMessage() const = 0;
 
+      /// Error code type
+      using ErrorCodeType = uint32_t;
+
+      /**
+       * @return stateful error code of this query response:
+       *    0 - no stateful error
+       *    1 - internal error
+       *    2 - not enough permissions
+       */
+      virtual ErrorCodeType errorCode() const = 0;
+
       // ------------------------| Primitive override |-------------------------
 
       std::string toString() const override;

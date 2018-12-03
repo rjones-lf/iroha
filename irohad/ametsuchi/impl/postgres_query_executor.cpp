@@ -207,9 +207,12 @@ namespace iroha {
               if (std::all_of(std::begin(temp), std::end(temp), [](auto b) {
                     return b;
                   })) {
+                // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 2
+                // with a named constant
                 return this->logAndReturnErrorResponse(
                     QueryErrorType::kStatefulFailed,
-                    std::forward<ErrResponse>(err_response)());
+                    std::forward<ErrResponse>(err_response)(),
+                    2);
               }
               auto query_range = range
                   | boost::adaptors::transformed([](auto &t) {
@@ -223,8 +226,8 @@ namespace iroha {
                   query_range, perms...);
             });
       } catch (const std::exception &e) {
-        return logAndReturnErrorResponse(QueryErrorType::kStatefulFailed,
-                                         e.what());
+        return logAndReturnErrorResponse(
+            QueryErrorType::kStatefulFailed, e.what(), 1);
       }
     }
 
@@ -302,15 +305,9 @@ namespace iroha {
 
     std::unique_ptr<shared_model::interface::QueryResponse>
     PostgresQueryExecutorVisitor::logAndReturnErrorResponse(
-        iroha::ametsuchi::QueryErrorType error_type,
-        std::string error_body) const {
-      using QueryErrorType = iroha::ametsuchi::QueryErrorType;
-
-      auto make_error_response = [this, error_type](std::string error) {
-        return query_response_factory_->createErrorQueryResponse(
-            error_type, error, query_hash_);
-      };
-
+        QueryErrorType error_type,
+        QueryErrorMessageType error_body,
+        QueryErrorCodeType error_code) const {
       std::string error;
       switch (error_type) {
         case QueryErrorType::kNoAccount:
@@ -338,7 +335,8 @@ namespace iroha {
       }
 
       log_->error(error);
-      return make_error_response(error);
+      return query_response_factory_->createErrorQueryResponse(
+          error_type, error, error_code, query_hash_);
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -389,8 +387,8 @@ namespace iroha {
           },
           [this, &q, &query_apply](auto range, auto &) {
             if (range.empty()) {
-              return this->logAndReturnErrorResponse(QueryErrorType::kNoAccount,
-                                                     q.accountId());
+              return this->logAndReturnErrorResponse(
+                  QueryErrorType::kNoAccount, q.accountId(), 0);
             }
 
             return apply(range.front(), query_apply);
@@ -426,7 +424,7 @@ namespace iroha {
           [this, &q](auto range, auto &) {
             if (range.empty()) {
               return this->logAndReturnErrorResponse(
-                  QueryErrorType::kNoSignatories, q.accountId());
+                  QueryErrorType::kNoSignatories, q.accountId(), 0);
             }
 
             auto pubkeys = boost::copy_range<
@@ -730,7 +728,7 @@ namespace iroha {
           [this, &q](auto range, auto &) {
             if (range.empty()) {
               return this->logAndReturnErrorResponse(
-                  QueryErrorType::kNoAccountDetail, q.accountId());
+                  QueryErrorType::kNoAccountDetail, q.accountId(), 0);
             }
 
             return apply(range.front(), [this](auto &json) {
@@ -798,7 +796,8 @@ namespace iroha {
             if (range.empty()) {
               return this->logAndReturnErrorResponse(
                   QueryErrorType::kNoRoles,
-                  "{" + q.roleId() + ", " + creator_id_ + "}");
+                  "{" + q.roleId() + ", " + creator_id_ + "}",
+                  0);
             }
 
             return apply(range.front(), [this](auto &permission) {
@@ -835,7 +834,8 @@ namespace iroha {
             if (range.empty()) {
               return this->logAndReturnErrorResponse(
                   QueryErrorType::kNoAsset,
-                  "{" + q.assetId() + ", " + creator_id_ + "}");
+                  "{" + q.assetId() + ", " + creator_id_ + "}",
+                  0);
             }
 
             return apply(range.front(),

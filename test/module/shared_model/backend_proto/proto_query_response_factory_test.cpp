@@ -176,7 +176,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
  * Checks createErrorQueryResponse method of QueryResponseFactory
  * @given
  * @when creating error query responses for a couple of cases via factory
- * @then that response is created @and is well-formed
+ * @then that responses are created @and are well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   using ErrorTypes =
@@ -184,12 +184,15 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   const HashType kQueryHash{"my_super_hash"};
 
   const auto kStatelessErrorMsg = "stateless failed";
-  const auto kNoSigsErrorMsg = "stateless failed";
+  const auto kStatefulFailedErrorMsg = "stateful failed";
+  const auto kNoSigsErrorMsg = "no signatories";
 
   auto stateless_invalid_response = response_factory->createErrorQueryResponse(
-      ErrorTypes::kStatelessFailed, kStatelessErrorMsg, kQueryHash);
+      ErrorTypes::kStatelessFailed, kStatelessErrorMsg, 0, kQueryHash);
+  auto stateful_failed_response = response_factory->createErrorQueryResponse(
+      ErrorTypes::kStatefulFailed, kStatefulFailedErrorMsg, 1, kQueryHash);
   auto no_signatories_response = response_factory->createErrorQueryResponse(
-      ErrorTypes::kNoSignatories, kNoSigsErrorMsg, kQueryHash);
+      ErrorTypes::kNoSignatories, kNoSigsErrorMsg, 0, kQueryHash);
 
   ASSERT_TRUE(stateless_invalid_response);
   ASSERT_EQ(stateless_invalid_response->queryHash(), kQueryHash);
@@ -199,10 +202,26 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
             stateless_invalid_response->get());
 
     ASSERT_EQ(general_resp.errorMessage(), kStatelessErrorMsg);
+    ASSERT_EQ(general_resp.errorCode(), 0);
     (void)boost::get<
         const shared_model::interface::StatelessFailedErrorResponse &>(
         general_resp.get());
   });
+
+  ASSERT_TRUE(stateful_failed_response);
+  ASSERT_EQ(stateful_failed_response->queryHash(), kQueryHash);
+  ASSERT_NO_THROW({
+    const auto &general_resp =
+        boost::get<const shared_model::interface::ErrorQueryResponse &>(
+            stateful_failed_response->get());
+
+    ASSERT_EQ(general_resp.errorMessage(), kStatefulFailedErrorMsg);
+    ASSERT_EQ(general_resp.errorCode(), 1);
+    (void)boost::get<
+        const shared_model::interface::StatefulFailedErrorResponse &>(
+        general_resp.get());
+  });
+
   ASSERT_TRUE(no_signatories_response);
   ASSERT_EQ(no_signatories_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
@@ -211,6 +230,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
             no_signatories_response->get());
 
     ASSERT_EQ(general_resp.errorMessage(), kNoSigsErrorMsg);
+    ASSERT_EQ(general_resp.errorCode(), 0);
     (void)
         boost::get<const shared_model::interface::NoSignatoriesErrorResponse &>(
             general_resp.get());
