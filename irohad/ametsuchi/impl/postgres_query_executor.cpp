@@ -450,8 +450,9 @@ namespace iroha {
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountTransactions &q) {
-      using QueryTuple =
-          QueryType<shared_model::interface::types::HeightType, uint64_t>;
+      using QueryTuple = QueryType<shared_model::interface::types::HeightType,
+                                   uint64_t,
+                                   uint64_t>;
       using PermissionTuple = boost::tuple<int>;
 
       auto &pagination_info = q.paginationMeta();
@@ -469,19 +470,27 @@ namespace iroha {
           OR (position_by_hash.height = first_hash.height AND
               position_by_hash.index >= first_hash.index)
       ),
+      my_txs AS (
+        SELECT DISTINCT has.height, ich.index
+        FROM height_by_account_set AS has
+        JOIN index_by_creator_height AS ich
+        ON has.height = ich.height AND has.account_id = ich.creator_id
+        WHERE account_id = :account_id
+        ORDER BY has.height, ich.index ASC
+      ),
+      total_size AS (
+        SELECT COUNT(*) FROM my_txs
+      ),
       t AS (
-          SELECT DISTINCT has.height, ich.index
-          FROM height_by_account_set AS has
-          JOIN index_by_creator_height AS ich ON has.height = ich.height
-          AND has.account_id = ich.creator_id
-          JOIN previous_txes ON has.height = previous_txes.height
-          AND ich.index = previous_txes.index
-          WHERE account_id = :account_id
-          ORDER BY has.height, ich.index ASC
+          SELECT my_txs.height, my_txs.index
+          FROM my_txs
+          JOIN previous_txes ON my_txs.height = previous_txes.height
+          AND my_txs.index = previous_txes.index
           LIMIT :page_size
       )
-      SELECT height, index, perm FROM t
+      SELECT height, index, count, perm FROM t
       RIGHT OUTER JOIN has_perms ON TRUE
+      JOIN total_size ON TRUE
       )");
 
       // select tx with specified hash
@@ -528,11 +537,15 @@ namespace iroha {
           [&](auto range, auto &) {
             // unpack results to get map from block height to index of tx in
             // a block
+            uint64_t total_size;
             std::map<uint64_t, std::vector<uint64_t>> index;
-            boost::for_each(range, [&index](auto t) {
-              apply(t, [&index](auto &height, auto &idx) {
-                index[height].push_back(idx);
-              });
+            boost::for_each(range, [&index, &total_size](auto t) {
+              apply(
+                  t,
+                  [&index, &total_size](auto &height, auto &idx, auto &count) {
+                    index[height].push_back(idx);
+                    total_size = count;
+                  });
             });
 
             std::vector<std::unique_ptr<shared_model::interface::Transaction>>
@@ -562,11 +575,11 @@ namespace iroha {
               auto next_hash = response_txs.back()->hash();
               response_txs.pop_back();
               return query_response_factory_->createTransactionsPageResponse(
-                std::move(response_txs), next_hash, 10, query_hash_);
+                  std::move(response_txs), next_hash, total_size, query_hash_);
             }
 
             return query_response_factory_->createTransactionsPageResponse(
-                std::move(response_txs), 10, query_hash_);
+                std::move(response_txs), total_size, query_hash_);
           },
           notEnoughPermissionsResponse(perm_converter_,
                                        Role::kGetMyAccTxs,

@@ -1496,6 +1496,33 @@ namespace iroha {
       });
     }
 
+    /**
+     * @given initialized storage, user has 5 transactions committed
+     * @when query contains 2 transactions page size
+     * @then total number of transactions equal to 5
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, PaginantionTotalTransactions) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+
+      auto total_txs = 5;
+      auto txs = createTransactionsAndCommit(total_txs, account->accountId());
+
+      auto size = 2;
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId(), size)
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_NO_THROW({
+        const auto &resp =
+            boost::get<shared_model::interface::TransactionsPageResponse>(
+                result->get());
+        EXPECT_EQ(resp.allTransactionsSize(), total_txs);
+      });
+    }
+
     class GetTransactionsHashExecutorTest : public GetTransactionsExecutorTest {
     };
 
