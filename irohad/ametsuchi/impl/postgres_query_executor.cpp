@@ -457,6 +457,8 @@ namespace iroha {
       auto &pagination_info = q.paginationMeta();
       auto first_hash = pagination_info.firstTxHash();
       auto page_size = pagination_info.pageSize();
+      // retrieve one extra transaction to populate next_hash
+      auto query_size = page_size + 1u;
 
       auto base = boost::format(R"(WITH has_perms AS (%s),
       first_hash AS (%s),
@@ -516,11 +518,11 @@ namespace iroha {
               return (sql_.prepare << cmd,
                       soci::use(first_hash->hex()),
                       soci::use(q.accountId()),
-                      soci::use(page_size));
+                      soci::use(query_size));
             } else {
               return (sql_.prepare << cmd,
                       soci::use(q.accountId()),
-                      soci::use(page_size));
+                      soci::use(query_size));
             }
           },
           [&](auto range, auto &) {
@@ -555,8 +557,16 @@ namespace iroha {
                   QueryErrorType::kStatefulFailed, error);
             }
 
+            // next transaction exists
+            if (response_txs.size() == query_size) {
+              auto next_hash = response_txs.back()->hash();
+              response_txs.pop_back();
+              return query_response_factory_->createTransactionsPageResponse(
+                std::move(response_txs), next_hash, 10, query_hash_);
+            }
+
             return query_response_factory_->createTransactionsPageResponse(
-                std::move(response_txs), shared_model::crypto::Hash(""), 10, query_hash_);
+                std::move(response_txs), 10, query_hash_);
           },
           notEnoughPermissionsResponse(perm_converter_,
                                        Role::kGetMyAccTxs,
