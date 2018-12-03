@@ -31,7 +31,7 @@ namespace iroha {
       /**
        * Create block loader for loading blocks from given peer factory by top
        * block
-       * @param peer_query_factory - factory to peer query component
+       * @param peer_query_factory - factory for peer query component creation
        * @return initialized loader
        */
       auto createLoader(
