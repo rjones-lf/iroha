@@ -52,9 +52,11 @@ class SynchronizerTest : public ::testing::Test {
   void SetUp() override {
     chain_validator = std::make_shared<MockChainValidator>();
     mutable_factory = std::make_shared<MockMutableFactory>();
-    block_query_factory = std::make_shared<MockBlockQueryFactory>();
+    block_query_factory =
+        std::make_shared<::testing::NiceMock<MockBlockQueryFactory>>();
     block_loader = std::make_shared<MockBlockLoader>();
     consensus_gate = std::make_shared<MockConsensusGate>();
+    block_query = std::make_shared<::testing::NiceMock<MockBlockQuery>>();
   }
 
   void init() {
@@ -63,12 +65,15 @@ class SynchronizerTest : public ::testing::Test {
                                                       mutable_factory,
                                                       block_query_factory,
                                                       block_loader);
+    ON_CALL(*block_query_factory, createBlockQuery())
+        .WillByDefault(Return(boost::make_optional(
+            std::shared_ptr<iroha::ametsuchi::BlockQuery>(block_query))));
   }
 
   Commit makeCommit(size_t time = iroha::time::now(),
                     PeerVotedFor type = PeerVotedFor::kOtherBlock) const {
     auto block = TestUnsignedBlockBuilder()
-                     .height(5)
+                     .height(commit_height)
                      .createdTime(time)
                      .build()
                      .signAndAddSignature(
@@ -84,6 +89,9 @@ class SynchronizerTest : public ::testing::Test {
   std::shared_ptr<MockBlockQueryFactory> block_query_factory;
   std::shared_ptr<MockBlockLoader> block_loader;
   std::shared_ptr<MockConsensusGate> consensus_gate;
+  std::shared_ptr<MockBlockQuery> block_query;
+
+  const shared_model::interface::types::HeightType commit_height{5};
 
   std::shared_ptr<SynchronizerImpl> synchronizer;
 };
@@ -186,6 +194,7 @@ TEST_F(SynchronizerTest, ValidWhenValidChain) {
 
   DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
       SetFactory(&createMockMutableStorage);
+
   EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
 
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);

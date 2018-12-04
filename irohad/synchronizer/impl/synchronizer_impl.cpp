@@ -52,7 +52,7 @@ namespace iroha {
             log_->info("Downloaded an empty chain");
             continue;
           } else {
-            log_->info("Successfully downloaded {} blocks:", blocks.size());
+            log_->info("Successfully downloaded {} blocks", blocks.size());
           }
 
           auto chain =
@@ -74,7 +74,8 @@ namespace iroha {
       if (auto block_query = block_query_factory_->createBlockQuery()) {
         top_block_height = (*block_query)->getTopBlockHeight();
       } else {
-        log_->error("Unable to retrieve top block height");
+        log_->error(
+            "Unable to create block query and retrieve top block height");
         return;
       }
 

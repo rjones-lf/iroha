@@ -145,17 +145,16 @@ class BlockLoaderTest : public testing::Test {
 };
 
 /**
+ * Current block height 1 => Other block height 1 => no blocks received
  * @given empty storage, related block loader and base block
  * @when retrieveBlocks is called
  * @then nothing is returned
  */
 TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
-  // Current block height 1 => Other block height 1 => no blocks received
   auto block = getBaseBlockBuilder().build().signAndAddSignature(key).finish();
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getTopBlock()).Times(0);
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
       .WillOnce(Return(std::vector<wBlock>()));
 
@@ -190,7 +189,6 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getTopBlock()).Times(0);
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
       .WillOnce(Return(std::vector<wBlock>{clone(top_block)}));
   auto wrapper =
@@ -231,7 +229,6 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getTopBlock()).Times(0);
   EXPECT_CALL(*storage, getBlocksFrom(next_height)).WillOnce(Return(blocks));
   auto wrapper = make_test_subscriber<CallExact>(
       loader->retrieveBlocks(1, peer_key), num_blocks);
