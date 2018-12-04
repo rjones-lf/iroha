@@ -463,29 +463,27 @@ namespace iroha {
       auto base = boost::format(R"(WITH has_perms AS (%s),
       first_hash AS (%s),
       previous_txes AS (
-          SELECT position_by_hash.height, position_by_hash.index
-          FROM position_by_hash JOIN first_hash
-          ON position_by_hash.height > first_hash.height
-          OR (position_by_hash.height = first_hash.height AND
-              position_by_hash.index >= first_hash.index)
+        SELECT position_by_hash.height, position_by_hash.index
+        FROM position_by_hash JOIN first_hash
+        ON position_by_hash.height > first_hash.height
+        OR (position_by_hash.height = first_hash.height AND
+            position_by_hash.index >= first_hash.index)
       ),
       my_txs AS (
-        SELECT DISTINCT has.height, ich.index
-        FROM height_by_account_set AS has
-        JOIN index_by_creator_height AS ich
-        ON has.height = ich.height AND has.account_id = ich.creator_id
-        WHERE account_id = :account_id
-        ORDER BY has.height, ich.index ASC
+        SELECT DISTINCT height, index
+        FROM index_by_creator_height
+        WHERE creator_id = :account_id
+        ORDER BY height, index ASC
       ),
       total_size AS (
         SELECT COUNT(*) FROM my_txs
       ),
       t AS (
-          SELECT my_txs.height, my_txs.index
-          FROM my_txs
-          JOIN previous_txes ON my_txs.height = previous_txes.height
-          AND my_txs.index = previous_txes.index
-          LIMIT :page_size
+        SELECT my_txs.height, my_txs.index
+        FROM my_txs
+        JOIN previous_txes ON my_txs.height = previous_txes.height
+        AND my_txs.index = previous_txes.index
+        LIMIT :page_size
       )
       SELECT height, index, count, perm FROM t
       RIGHT OUTER JOIN has_perms ON TRUE
