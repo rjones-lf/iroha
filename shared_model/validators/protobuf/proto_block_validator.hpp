@@ -13,9 +13,6 @@ namespace shared_model {
   namespace validation {
     class ProtoBlockValidator
         : public AbstractValidator<iroha::protocol::Block> {
-     private:
-      Answer validateProtoBlock(const iroha::protocol::Block &block) const;
-
      public:
       Answer validate(const iroha::protocol::Block &block) const override;
     };

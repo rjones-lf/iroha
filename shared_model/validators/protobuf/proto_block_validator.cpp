@@ -7,7 +7,7 @@
 
 namespace shared_model {
   namespace validation {
-    Answer ProtoBlockValidator::validateProtoBlock(
+    Answer ProtoBlockValidator::validate(
         const iroha::protocol::Block &block) const {
       Answer answer;
       std::string tx_reason_name = "Protobuf Block";
@@ -22,11 +22,6 @@ namespace shared_model {
       }
 
       return answer;
-    }
-
-    Answer ProtoBlockValidator::validate(
-        const iroha::protocol::Block &block) const {
-      return validateProtoBlock(block);
     }
   }  // namespace validation
 }  // namespace shared_model
