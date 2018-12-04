@@ -197,10 +197,10 @@ DROP TABLE IF EXISTS domain;
 DROP TABLE IF EXISTS signatory;
 DROP TABLE IF EXISTS peer;
 DROP TABLE IF EXISTS role;
-DROP TABLE IF EXISTS height_by_hash;
+DROP TABLE IF EXISTS position_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
-DROP TABLE IF EXISTS index_by_id_height_asset;
+DROP TABLE IF EXISTS position_by_account_asset;
 )";
 
     soci::session sql(soci::postgresql, pgopts_);

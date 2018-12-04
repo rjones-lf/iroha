@@ -91,7 +91,7 @@ namespace {
           // flat map accounts to unindexed keys
           for (const auto &id : ids) {
             boost::format base(
-                "INSERT INTO index_by_id_height_asset(id, "
+                "INSERT INTO position_by_account_asset(account_id, "
                 "height, asset_id, "
                 "index) "
                 "VALUES ('%s', '%s', '%s', '%s');");

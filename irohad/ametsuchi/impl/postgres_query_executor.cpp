@@ -651,13 +651,11 @@ namespace iroha {
 
       auto cmd = (boost::format(R"(WITH has_perms AS (%s),
       t AS (
-          SELECT DISTINCT has.height, index
-          FROM height_by_account_set AS has
-          JOIN index_by_id_height_asset AS ich ON has.height = ich.height
-          AND has.account_id = ich.id
+          SELECT DISTINCT height, index
+          FROM position_by_account_asset
           WHERE account_id = :account_id
           AND asset_id = :asset_id
-          ORDER BY has.height, index ASC
+          ORDER BY height, index ASC
       )
       SELECT height, index, perm FROM t
       RIGHT OUTER JOIN has_perms ON TRUE

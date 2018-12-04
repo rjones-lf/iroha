@@ -519,7 +519,7 @@ DROP TABLE IF EXISTS role;
 DROP TABLE IF EXISTS height_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
-DROP TABLE IF EXISTS index_by_id_height_asset;
+DROP TABLE IF EXISTS position_by_account_asset;
 )";
 
     const std::string &StorageImpl::reset_ = R"(
@@ -537,7 +537,7 @@ DELETE FROM role;
 DELETE FROM position_by_hash;
 DELETE FROM height_by_account_set;
 DELETE FROM index_by_creator_height;
-DELETE FROM index_by_id_height_asset;
+DELETE FROM position_by_account_asset;
 )";
 
     const std::string &StorageImpl::init_ =
@@ -621,10 +621,10 @@ CREATE TABLE IF NOT EXISTS index_by_creator_height (
     height text,
     index text
 );
-CREATE TABLE IF NOT EXISTS index_by_id_height_asset (
-    id text,
-    height text,
+CREATE TABLE IF NOT EXISTS position_by_account_asset (
+    account_id text,
     asset_id text,
+    height text,
     index text
 );
 )";

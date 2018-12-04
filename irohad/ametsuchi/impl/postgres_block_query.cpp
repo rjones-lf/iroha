@@ -174,9 +174,9 @@ namespace iroha {
         std::string row;
         soci::statement st =
             (sql_.prepare
-                 << "SELECT DISTINCT index FROM index_by_id_height_asset "
-                    "WHERE id = :id AND height = :height AND asset_id = "
-                    ":asset_id",
+                 << "SELECT DISTINCT index FROM position_by_account_asset "
+                    "WHERE account_id = :id AND height = :height "
+                    "AND asset_id = :asset_id",
              soci::into(row, ind),
              soci::use(account_id),
              soci::use(block_id),
