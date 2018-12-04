@@ -182,9 +182,9 @@ namespace iroha {
       void checkSuccessfulResult(QueryExecutorResult exec_result,
                                  QueryResultCheckCallable check_callable) {
         ASSERT_NO_THROW({
-          auto &&cast_resp =
-              boost::get<ExpectedQueryResponseType>(exec_result->get());
-          check_callable(std::move(cast_resp));
+          const auto &cast_resp =
+              boost::get<const ExpectedQueryResponseType &>(exec_result->get());
+          check_callable(cast_resp);
         }) << exec_result->toString();
       }
 
@@ -202,10 +202,10 @@ namespace iroha {
               expected_code) {
         ASSERT_NO_THROW({
           const auto &error_qry_rsp =
-              boost::get<shared_model::interface::ErrorQueryResponse>(
+              boost::get<const shared_model::interface::ErrorQueryResponse &>(
                   exec_result->get());
           ASSERT_EQ(error_qry_rsp.errorCode(), expected_code);
-          boost::get<ExpectedQueryErrorType>(error_qry_rsp.get());
+          boost::get<const ExpectedQueryErrorType &>(error_qry_rsp.get());
         }) << exec_result->toString();
       }
 
