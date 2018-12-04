@@ -7,7 +7,6 @@
 
 #include "backend/protobuf/proto_block_factory.hpp"
 #include "datetime/time.hpp"
-#include "framework/specified_visitor.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "validators/default_validator.hpp"
 
