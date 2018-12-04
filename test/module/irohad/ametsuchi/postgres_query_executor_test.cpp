@@ -43,6 +43,17 @@ namespace shared_model {
   }  // namespace crypto
 }  // namespace shared_model
 
+namespace {
+  template <typename T>
+  using ConstRef = const T &;
+
+  // old compilers fail to deduce that a variant contains reference
+  template <typename T, typename Variant>
+  ConstRef<T> getRef(Variant &&v) {
+    return boost::get<ConstRef<T>>(std::forward<Variant>(v));
+  }
+}  // namespace
+
 namespace iroha {
   namespace ametsuchi {
 
@@ -269,7 +280,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<AccountResponse>(result->get());
+        const auto &cast_resp = getRef<AccountResponse>(result->get());
         ASSERT_EQ(cast_resp.account().accountId(), account->accountId());
       }) << result->toString();
     }
@@ -287,7 +298,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<AccountResponse>(result->get());
+        const auto &cast_resp = getRef<AccountResponse>(result->get());
         ASSERT_EQ(cast_resp.account().accountId(), account2->accountId());
       }) << result->toString();
     }
@@ -306,7 +317,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<AccountResponse>(result->get());
+        const auto &cast_resp = getRef<AccountResponse>(result->get());
         ASSERT_EQ(cast_resp.account().accountId(), account2->accountId());
       }) << result->toString();
     }
@@ -380,7 +391,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<SignatoriesResponse>(result->get());
+        const auto &cast_resp = getRef<SignatoriesResponse>(result->get());
 
         ASSERT_EQ(cast_resp.keys().size(), 1);
       });
@@ -400,7 +411,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<SignatoriesResponse>(result->get());
+        const auto &cast_resp = getRef<SignatoriesResponse>(result->get());
         ASSERT_EQ(cast_resp.keys().size(), 1);
       });
     }
@@ -419,7 +430,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<SignatoriesResponse>(result->get());
+        const auto &cast_resp = getRef<SignatoriesResponse>(result->get());
 
         ASSERT_EQ(cast_resp.keys().size(), 1);
       });
@@ -519,7 +530,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<AccountAssetResponse>(result->get());
+        const auto &cast_resp = getRef<AccountAssetResponse>(result->get());
 
         ASSERT_EQ(cast_resp.accountAssets()[0].accountId(),
                   account->accountId());
@@ -540,7 +551,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<AccountAssetResponse>(result->get());
+        const auto &cast_resp = getRef<AccountAssetResponse>(result->get());
 
         ASSERT_EQ(cast_resp.accountAssets()[0].accountId(),
                   account2->accountId());
@@ -561,7 +572,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<AccountAssetResponse>(result->get());
+        const auto &cast_resp = getRef<AccountAssetResponse>(result->get());
 
         ASSERT_EQ(cast_resp.accountAssets()[0].accountId(),
                   account2->accountId());
@@ -667,8 +678,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp =
-            boost::get<AccountDetailResponse>(result->get());
+        const auto &cast_resp = getRef<AccountDetailResponse>(result->get());
 
         ASSERT_EQ(cast_resp.detail(), "{}");
       });
@@ -687,8 +697,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp =
-            boost::get<AccountDetailResponse>(result->get());
+        const auto &cast_resp = getRef<AccountDetailResponse>(result->get());
 
         ASSERT_EQ(cast_resp.detail(), account2->jsonData());
       });
@@ -708,8 +717,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp =
-            boost::get<AccountDetailResponse>(result->get());
+        const auto &cast_resp = getRef<AccountDetailResponse>(result->get());
 
         ASSERT_EQ(cast_resp.detail(), account2->jsonData());
       });
@@ -763,8 +771,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp =
-            boost::get<AccountDetailResponse>(result->get());
+        const auto &cast_resp = getRef<AccountDetailResponse>(result->get());
 
         ASSERT_EQ(cast_resp.detail(),
                   R"({ "id@domain" : {"key" : "value"}, )"
@@ -787,8 +794,7 @@ namespace iroha {
               .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp =
-            boost::get<AccountDetailResponse>(result->get());
+        const auto &cast_resp = getRef<AccountDetailResponse>(result->get());
 
         ASSERT_EQ(cast_resp.detail(),
                   R"({"id@domain" : {"key": "value", "key2": "value2"}})");
@@ -812,8 +818,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp =
-            boost::get<AccountDetailResponse>(result->get());
+        const auto &cast_resp = getRef<AccountDetailResponse>(result->get());
 
         ASSERT_EQ(cast_resp.detail(), R"({"id@domain" : {"key" : "value"}})");
       });
@@ -839,7 +844,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<RolesResponse>(result->get());
+        const auto &cast_resp = getRef<RolesResponse>(result->get());
 
         ASSERT_EQ(cast_resp.roles().size(), 2);
         ASSERT_EQ(cast_resp.roles()[0], "role");
@@ -882,8 +887,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp =
-            boost::get<RolePermissionsResponse>(result->get());
+        const auto &cast_resp = getRef<RolePermissionsResponse>(result->get());
 
         ASSERT_TRUE(cast_resp.rolePermissions().test(
             shared_model::interface::permissions::Role::kGetRoles));
@@ -950,7 +954,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<AssetResponse>(result->get());
+        const auto &cast_resp = getRef<AssetResponse>(result->get());
 
         ASSERT_EQ(cast_resp.asset().assetId(), asset_id);
         ASSERT_EQ(cast_resp.asset().domainId(), domain->domainId());
@@ -1156,8 +1160,7 @@ namespace iroha {
               .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp =
-            boost::get<TransactionsPageResponse>(result->get());
+        const auto &cast_resp = getRef<TransactionsPageResponse>(result->get());
         EXPECT_EQ(cast_resp.transactions().size(), 3);
         for (const auto &tx : cast_resp.transactions()) {
           static size_t i = 0;
@@ -1185,8 +1188,7 @@ namespace iroha {
               .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp =
-            boost::get<TransactionsPageResponse>(result->get());
+        const auto &cast_resp = getRef<TransactionsPageResponse>(result->get());
         EXPECT_EQ(cast_resp.transactions().size(), 2);
         for (const auto &tx : cast_resp.transactions()) {
           EXPECT_EQ(account2->accountId(), tx.creatorAccountId())
@@ -1212,8 +1214,7 @@ namespace iroha {
               .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp =
-            boost::get<TransactionsPageResponse>(result->get());
+        const auto &cast_resp = getRef<TransactionsPageResponse>(result->get());
         EXPECT_EQ(cast_resp.transactions().size(), 2);
         for (const auto &tx : cast_resp.transactions()) {
           EXPECT_EQ(account2->accountId(), tx.creatorAccountId())
@@ -1279,7 +1280,7 @@ namespace iroha {
       auto result = executeQuery(query);
 
       ASSERT_NO_THROW({
-        const auto &resp = boost::get<TransactionsPageResponse>(result->get());
+        const auto &resp = getRef<TransactionsPageResponse>(result->get());
 
         EXPECT_EQ(resp.transactions().size(), size);
         EXPECT_EQ(resp.transactions().begin()->hash(), hash);
@@ -1315,7 +1316,7 @@ namespace iroha {
       auto result = executeQuery(query);
 
       ASSERT_NO_THROW({
-        const auto &resp = boost::get<TransactionsPageResponse>(result->get());
+        const auto &resp = getRef<TransactionsPageResponse>(result->get());
 
         EXPECT_EQ(resp.transactions().size(), size);
         EXPECT_EQ(resp.transactions().begin()->hash(), txs[0].hash());
@@ -1350,7 +1351,7 @@ namespace iroha {
       auto result = executeQuery(query);
 
       ASSERT_NO_THROW({
-        const auto &resp = boost::get<TransactionsPageResponse>(result->get());
+        const auto &resp = getRef<TransactionsPageResponse>(result->get());
 
         EXPECT_EQ(resp.transactions().size(), 3);
       });
@@ -1399,7 +1400,7 @@ namespace iroha {
       auto result = executeQuery(query);
 
       ASSERT_NO_THROW({
-        const auto &resp = boost::get<TransactionsPageResponse>(result->get());
+        const auto &resp = getRef<TransactionsPageResponse>(result->get());
         EXPECT_EQ(resp.allTransactionsSize(), total_txs);
       });
     }
@@ -1423,7 +1424,7 @@ namespace iroha {
       auto result = executeQuery(query);
 
       ASSERT_NO_THROW({
-        const auto &resp = boost::get<TransactionsPageResponse>(result->get());
+        const auto &resp = getRef<TransactionsPageResponse>(result->get());
         EXPECT_EQ(boost::size(resp.transactions()), 0);
         EXPECT_EQ(resp.allTransactionsSize(), 0);
         EXPECT_FALSE(resp.nextTxHash());
@@ -1452,7 +1453,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<TransactionsResponse>(result->get());
+        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 1);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash3);
       });
@@ -1479,7 +1480,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<TransactionsResponse>(result->get());
+        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash1);
         ASSERT_EQ(cast_resp.transactions()[1].hash(), hash2);
@@ -1506,7 +1507,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<TransactionsResponse>(result->get());
+        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
         ASSERT_EQ(cast_resp.transactions()[1].hash(), hash3);
@@ -1530,7 +1531,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<TransactionsResponse>(result->get());
+        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
         ASSERT_EQ(cast_resp.transactions()[1].hash(), hash3);
@@ -1555,7 +1556,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = boost::get<TransactionsResponse>(result->get());
+        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
         ASSERT_EQ(cast_resp.transactions()[1].hash(), hash3);
