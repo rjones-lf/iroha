@@ -75,7 +75,8 @@ namespace iroha {
                 shared_model::validation::FieldValidator>>();
         query_executor = storage;
         PostgresCommandExecutor::prepareStatements(*sql);
-        executor = std::make_unique<PostgresCommandExecutor>(*sql);
+        executor =
+            std::make_unique<PostgresCommandExecutor>(*sql, perm_converter);
         pending_txs_storage = std::make_shared<MockPendingTransactionStorage>();
 
         auto result = execute(buildCommand(TestTransactionBuilder().createRole(
@@ -228,6 +229,10 @@ namespace iroha {
 
       std::shared_ptr<shared_model::interface::QueryResponseFactory>
           query_response_factory;
+
+      std::shared_ptr<shared_model::interface::PermissionToString>
+          perm_converter =
+              std::make_shared<shared_model::proto::ProtoPermissionToString>();
     };
 
     class BlocksQueryExecutorTest : public QueryExecutorTest {};

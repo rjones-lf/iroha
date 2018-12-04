@@ -242,9 +242,31 @@ namespace iroha {
         };
     }
 
-    bool PostgresBlockQuery::hasTxWithHash(
+    boost::optional<TxCacheStatusType> PostgresBlockQuery::checkTxPresence(
         const shared_model::crypto::Hash &hash) {
-      return getBlockId(hash) != boost::none;
+      int res = -1;
+      const auto &hash_str = hash.hex();
+
+      try {
+        sql_ << "SELECT status FROM tx_status_by_hash WHERE hash = :hash",
+            soci::into(res), soci::use(hash_str);
+      } catch (const std::exception &e) {
+        log_->error("Failed to execute query: {}", e.what());
+        return boost::none;
+      }
+
+      // res > 0 => Committed
+      // res == 0 => Rejected
+      // res < 0 => Missing
+      if (res > 0) {
+        return boost::make_optional<TxCacheStatusType>(
+            tx_cache_status_responses::Committed{hash});
+      } else if (res == 0) {
+        return boost::make_optional<TxCacheStatusType>(
+            tx_cache_status_responses::Rejected{hash});
+      }
+      return boost::make_optional<TxCacheStatusType>(
+          tx_cache_status_responses::Missing{hash});
     }
 
     uint32_t PostgresBlockQuery::getTopBlockHeight() {

@@ -30,6 +30,7 @@ addtest(on_demand_os_test on_demand_os_test.cpp)
 target_link_libraries(on_demand_os_test
     on_demand_ordering_service
     shared_model_default_builders
+    ametsuchi
     )
 
 addtest(on_demand_os_client_grpc_test on_demand_os_client_grpc_test.cpp)

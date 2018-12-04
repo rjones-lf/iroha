@@ -9,6 +9,7 @@
 
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
@@ -31,11 +32,13 @@ MstTransportGrpc::MstTransportGrpc(
         batch_parser,
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         transaction_batch_factory,
+    std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
     shared_model::crypto::PublicKey my_key)
     : async_call_(std::move(async_call)),
       transaction_factory_(std::move(transaction_factory)),
       batch_parser_(std::move(batch_parser)),
       batch_factory_(std::move(transaction_batch_factory)),
+      tx_presence_cache_(std::move(tx_presence_cache)),
       my_key_(shared_model::crypto::toBinaryString(my_key)) {}
 
 shared_model::interface::types::SharedTxsCollectionType
@@ -82,9 +85,31 @@ grpc::Status MstTransportGrpc::SendState(
 
   for (auto &batch : batches) {
     batch_factory_->createTransactionBatch(batch).match(
-        [&](iroha::expected::Value<
-            std::unique_ptr<shared_model::interface::TransactionBatch>>
-                &value) { new_state += std::move(value).value; },
+        [&](iroha::expected::Value<std::unique_ptr<
+                shared_model::interface::TransactionBatch>> &value) {
+          auto cache_presence = tx_presence_cache_->check(*value.value);
+          if (not cache_presence) {
+            // TODO andrei 30.11.18 IR-51 Handle database error
+            async_call_->log_->warn(
+                "Check tx presence database error. Batch: {}",
+                value.value->toString());
+            return;
+          }
+          auto is_replay = std::any_of(
+              cache_presence->begin(),
+              cache_presence->end(),
+              [](const auto &tx_status) {
+                return iroha::visit_in_place(
+                    tx_status,
+                    [](const iroha::ametsuchi::tx_cache_status_responses::
+                           Missing &) { return false; },
+                    [](const auto &) { return true; });
+              });
+
+          if (not is_replay) {
+            new_state += std::move(value).value;
+          }
+        },
         [&](iroha::expected::Error<std::string> &error) {
           async_call_->log_->warn("Batch deserialization failed: {}",
                                   error.error);
@@ -104,9 +129,18 @@ grpc::Status MstTransportGrpc::SendState(
     return grpc::Status::OK;
   }
 
-  subscriber_.lock()->onNewState(
-      source_key,
-      std::move(new_state));
+  if (new_state.isEmpty()) {
+    async_call_->log_->info(
+        "All transactions from received MST state have been processed already, "
+        "nothing to propagate to MST processor");
+    return grpc::Status::OK;
+  }
+
+  if (auto subscriber = subscriber_.lock()) {
+    subscriber->onNewState(source_key, std::move(new_state));
+  } else {
+    async_call_->log_->warn("No subscriber for MST SendState event is set");
+  }
 
   return grpc::Status::OK;
 }

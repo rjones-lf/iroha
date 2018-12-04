@@ -47,6 +47,9 @@ struct MockTransaction : public shared_model::interface::Transaction {
                      const shared_model::interface::types::AccountIdType &());
   MOCK_CONST_METHOD0(quorum, shared_model::interface::types::QuorumType());
   MOCK_CONST_METHOD0(commands, CommandsType());
+  MOCK_CONST_METHOD0(reducedHash,
+                     const shared_model::interface::types::HashType &());
+  MOCK_CONST_METHOD0(hash, const shared_model::interface::types::HashType &());
   MOCK_CONST_METHOD0(
       batch_meta,
       boost::optional<std::shared_ptr<shared_model::interface::BatchMeta>>());
@@ -139,7 +142,7 @@ struct MockUnsafeProposalFactory
                std::unique_ptr<shared_model::interface::Proposal>(
                    shared_model::interface::types::HeightType,
                    shared_model::interface::types::TimestampType,
-                   const TransactionsCollectionType &));
+                   TransactionsCollectionType));
 };
 
 struct MockCommonObjectsFactory

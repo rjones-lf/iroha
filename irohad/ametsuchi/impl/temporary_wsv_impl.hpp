@@ -13,6 +13,12 @@
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "logger/logger.hpp"
 
+namespace shared_model {
+  namespace interface {
+    class PermissionToString;
+  }
+}  // namespace shared_model
+
 namespace iroha {
 
   namespace ametsuchi {
@@ -37,7 +43,9 @@ namespace iroha {
       TemporaryWsvImpl(
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory);
+              factory,
+          std::shared_ptr<shared_model::interface::PermissionToString>
+              perm_converter);
 
       expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &transaction) override;

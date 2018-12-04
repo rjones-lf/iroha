@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <validators/protobuf/proto_transaction_validator.hpp>
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -24,6 +23,7 @@
 #include "torii/impl/command_service_transport_grpc.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 constexpr size_t TimesToriiBlocking = 5;
 
@@ -225,14 +225,16 @@ TEST_F(ToriiServiceTest, CommandClient) {
  * @then ensure those are not received
  */
 TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
-  std::vector<shared_model::proto::Transaction> txs;
   std::vector<shared_model::interface::types::HashType> tx_hashes;
+
+  ON_CALL(*block_query, checkTxPresence(_))
+      .WillByDefault(
+          Return(boost::make_optional<iroha::ametsuchi::TxCacheStatusType>(
+              iroha::ametsuchi::tx_cache_status_responses::Missing())));
 
   // create transactions, but do not send them
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
-    auto tx = TestTransactionBuilder().creatorAccountId("accountA").build();
-    txs.push_back(tx);
-    tx_hashes.push_back(tx.hash());
+    tx_hashes.push_back(shared_model::crypto::Hash{std::to_string(i)});
   }
 
   // get statuses of unsent transactions
@@ -343,7 +345,8 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   uint32_t error_code = 3;
   validation_result->rejected_transactions.emplace(
       failed_tx_hash,
-      iroha::validation::CommandError{cmd_name, error_code, true, cmd_index});
+      iroha::validation::CommandError{
+          cmd_name, error_code, "", true, cmd_index});
   verified_prop_notifier_.get_subscriber().on_next(validation_result);
 
   // create commit from block notifier's observable

@@ -95,7 +95,8 @@ namespace iroha {
       auto sql = std::make_unique<soci::session>(*connection_);
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
-          std::make_unique<TemporaryWsvImpl>(std::move(sql), factory_));
+          std::make_unique<TemporaryWsvImpl>(
+              std::move(sql), factory_, perm_converter_));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
@@ -125,6 +126,7 @@ namespace iroha {
                   [](expected::Error<std::string> &) {
                     return shared_model::interface::types::HashType("");
                   }),
+              std::make_shared<PostgresCommandExecutor>(*sql, perm_converter_),
               std::move(sql),
               factory_));
     }
@@ -515,6 +517,7 @@ DROP TABLE IF EXISTS signatory;
 DROP TABLE IF EXISTS peer;
 DROP TABLE IF EXISTS role;
 DROP TABLE IF EXISTS height_by_hash;
+DROP TABLE IF EXISTS tx_status_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
 DROP TABLE IF EXISTS index_by_id_height_asset;
@@ -533,6 +536,7 @@ DELETE FROM signatory;
 DELETE FROM peer;
 DELETE FROM role;
 DELETE FROM height_by_hash;
+DELETE FROM tx_status_by_hash;
 DELETE FROM height_by_account_set;
 DELETE FROM index_by_creator_height;
 DELETE FROM index_by_id_height_asset;
@@ -608,6 +612,12 @@ CREATE TABLE IF NOT EXISTS height_by_hash (
     hash varchar,
     height text
 );
+
+CREATE TABLE IF NOT EXISTS tx_status_by_hash (
+    hash varchar,
+    status boolean
+);
+
 CREATE TABLE IF NOT EXISTS height_by_account_set (
     account_id text,
     height text

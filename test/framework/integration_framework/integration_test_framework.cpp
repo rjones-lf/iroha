@@ -27,11 +27,13 @@
 #include "framework/common_constants.hpp"
 #include "framework/integration_framework/fake_peer/fake_peer.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
+#include "framework/integration_framework/port_guard.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
 #include "framework/result_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "interfaces/permissions.hpp"
+#include "module/irohad/ametsuchi/tx_presence_cache_stub.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/validators/always_valid_validators.hpp"
@@ -55,22 +57,16 @@ using AbstractTransactionValidator =
 using AlwaysValidInterfaceTransactionValidator =
     shared_model::validation::AlwaysValidModelValidator<
         shared_model::interface::Transaction>;
-using AlwaysValidProtoTransactionValudator =
+using AlwaysValidProtoTransactionValidator =
     shared_model::validation::AlwaysValidModelValidator<
         iroha::protocol::Transaction>;
+using AlwaysMissingTxPresenceCache = iroha::ametsuchi::TxPresenceCacheStub<
+    iroha::ametsuchi::tx_cache_status_responses::Missing>;
 
 namespace {
   std::string kLocalHost = "127.0.0.1";
   constexpr size_t kDefaultToriiPort = 11501;
   constexpr size_t kDefaultInternalPort = 50541;
-  constexpr size_t kMaxPort = 65535;
-
-  template <size_t default_port>
-  size_t getNextPort() {
-    static size_t increment = 0;
-    BOOST_VERIFY_MSG(increment <= kMaxPort, "The maximum port value reached");
-    return default_port + (++increment);
-  }
 }  // namespace
 
 namespace integration_framework {
@@ -84,8 +80,9 @@ namespace integration_framework {
       milliseconds proposal_waiting,
       milliseconds block_waiting,
       milliseconds tx_response_waiting)
-      : torii_port_(getNextPort<kDefaultToriiPort>()),
-        internal_port_(getNextPort<kDefaultInternalPort>()),
+      : port_guard_(std::make_unique<PortGuard>()),
+        torii_port_(port_guard_->getPort(kDefaultToriiPort)),
+        internal_port_(port_guard_->getPort(kDefaultInternalPort)),
         iroha_instance_(std::make_shared<IrohaInstance>(mst_support,
                                                         block_store_path,
                                                         kLocalHost,
@@ -103,12 +100,13 @@ namespace integration_framework {
             std::make_shared<AlwaysValidProtoCommonObjectsFactory>()),
         transaction_factory_(std::make_shared<ProtoTransactionFactory>(
             std::make_unique<AlwaysValidInterfaceTransactionValidator>(),
-            std::make_unique<AlwaysValidProtoTransactionValudator>())),
+            std::make_unique<AlwaysValidProtoTransactionValidator>())),
         batch_parser_(std::make_shared<
                       shared_model::interface::TransactionBatchParserImpl>()),
         transaction_batch_factory_(
             std::make_shared<
                 shared_model::interface::TransactionBatchFactoryImpl>()),
+        tx_presence_cache_(std::make_shared<AlwaysMissingTxPresenceCache>()),
         yac_transport_(
             std::make_shared<iroha::consensus::yac::NetworkImpl>(async_call_)),
         cleanup_on_exit_(cleanup_on_exit) {}
@@ -141,13 +139,14 @@ namespace integration_framework {
     for (auto &promise_and_key : fake_peers_promises_) {
       auto fake_peer =
           std::make_shared<FakePeer>(kLocalHost,
-                                     getNextPort<kDefaultInternalPort>(),
+                                     port_guard_->getPort(kDefaultInternalPort),
                                      promise_and_key.second,
                                      this_peer_,
                                      common_objects_factory_,
                                      transaction_factory_,
                                      batch_parser_,
-                                     transaction_batch_factory_);
+                                     transaction_batch_factory_,
+                                     tx_presence_cache_);
       fake_peers_.emplace_back(fake_peer);
       promise_and_key.first.set_value(fake_peer);
     }
