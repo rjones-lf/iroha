@@ -448,19 +448,23 @@ namespace iroha {
                                        Role::kGetDomainSignatories));
     }
 
-    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
-        const shared_model::interface::GetAccountTransactions &q) {
+    template <typename Query, typename QueryApplier, typename... Permissions>
+    QueryExecutorResult PostgresQueryExecutorVisitor::executeTransactionsQuery(
+        const Query &q,
+        const std::string &related_txs,
+        QueryApplier applier,
+        Permissions... perms) {
       using QueryTuple = QueryType<shared_model::interface::types::HeightType,
                                    uint64_t,
                                    uint64_t>;
       using PermissionTuple = boost::tuple<int>;
-
       auto &pagination_info = q.paginationMeta();
       auto first_hash = pagination_info.firstTxHash();
       // retrieve one extra transaction to populate next_hash
       auto query_size = pagination_info.pageSize() + 1u;
 
       auto base = boost::format(R"(WITH has_perms AS (%s),
+      my_txs AS (%s),
       first_hash AS (%s),
       previous_txes AS (
         SELECT position_by_hash.height, position_by_hash.index
@@ -468,12 +472,6 @@ namespace iroha {
         ON position_by_hash.height > first_hash.height
         OR (position_by_hash.height = first_hash.height AND
             position_by_hash.index >= first_hash.index)
-      ),
-      my_txs AS (
-        SELECT DISTINCT height, index
-        FROM index_by_creator_height
-        WHERE creator_id = :account_id
-        ORDER BY height, index ASC
       ),
       total_size AS (
         SELECT COUNT(*) FROM my_txs
@@ -498,12 +496,8 @@ namespace iroha {
       auto first_tx = R"(SELECT height, index FROM position_by_hash
       ORDER BY height, index ASC LIMIT 1)";
 
-      auto cmd = boost::format(base
-                               % hasQueryPermission(creator_id_,
-                                                    q.accountId(),
-                                                    Role::kGetMyAccTxs,
-                                                    Role::kGetAllAccTxs,
-                                                    Role::kGetDomainAccTxs));
+      auto cmd = base % hasQueryPermission(creator_id_, q.accountId(), perms...)
+          % related_txs;
       if (first_hash) {
         cmd = base % first_by_hash;
       } else {
@@ -513,18 +507,7 @@ namespace iroha {
       auto query = cmd.str();
 
       return executeQuery<QueryTuple, PermissionTuple>(
-          [&] {
-            if (first_hash) {
-              return (sql_.prepare << query,
-                      soci::use(first_hash->hex()),
-                      soci::use(q.accountId()),
-                      soci::use(query_size));
-            } else {
-              return (sql_.prepare << query,
-                      soci::use(q.accountId()),
-                      soci::use(query_size));
-            }
-          },
+          applier(query),
           [&](auto range, auto &) {
             uint64_t total_size = 0;
             if (not boost::empty(range)) {
@@ -534,11 +517,9 @@ namespace iroha {
             // unpack results to get map from block height to index of tx in
             // a block
             boost::for_each(range, [&index](auto t) {
-              apply(
-                  t,
-                  [&index](auto &height, auto &idx, auto &count) {
-                    index[height].push_back(idx);
-                  });
+              apply(t, [&index](auto &height, auto &idx, auto &count) {
+                index[height].push_back(idx);
+              });
             });
 
             std::vector<std::unique_ptr<shared_model::interface::Transaction>>
@@ -574,10 +555,42 @@ namespace iroha {
             return query_response_factory_->createTransactionsPageResponse(
                 std::move(response_txs), total_size, query_hash_);
           },
-          notEnoughPermissionsResponse(perm_converter_,
-                                       Role::kGetMyAccTxs,
-                                       Role::kGetAllAccTxs,
-                                       Role::kGetDomainAccTxs));
+          notEnoughPermissionsResponse(perm_converter_, perms...));
+    }
+
+    QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
+        const shared_model::interface::GetAccountTransactions &q) {
+      std::string related_txs = R"(SELECT DISTINCT height, index
+      FROM index_by_creator_height
+      WHERE creator_id = :account_id
+      ORDER BY height, index ASC)";
+
+      auto &pagination_info = q.paginationMeta();
+      auto first_hash = pagination_info.firstTxHash();
+      // retrieve one extra transaction to populate next_hash
+      auto query_size = pagination_info.pageSize() + 1u;
+
+      auto apply_query = [&](const auto &query) {
+        return [&] {
+          if (first_hash) {
+            return (sql_.prepare << query,
+                    soci::use(q.accountId()),
+                    soci::use(first_hash->hex()),
+                    soci::use(query_size));
+          } else {
+            return (sql_.prepare << query,
+                    soci::use(q.accountId()),
+                    soci::use(query_size));
+          }
+        };
+      };
+
+      return executeTransactionsQuery(q,
+                                      related_txs,
+                                      apply_query,
+                                      Role::kGetMyAccTxs,
+                                      Role::kGetAllAccTxs,
+                                      Role::kGetDomainAccTxs);
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -645,60 +658,40 @@ namespace iroha {
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountAssetTransactions &q) {
-      using QueryTuple =
-          QueryType<shared_model::interface::types::HeightType, uint64_t>;
-      using PermissionTuple = boost::tuple<int>;
-
-      auto cmd = (boost::format(R"(WITH has_perms AS (%s),
-      t AS (
-          SELECT DISTINCT height, index
+      std::string related_txs = R"(SELECT DISTINCT height, index
           FROM position_by_account_asset
           WHERE account_id = :account_id
           AND asset_id = :asset_id
-          ORDER BY height, index ASC
-      )
-      SELECT height, index, perm FROM t
-      RIGHT OUTER JOIN has_perms ON TRUE
-      )")
-                  % hasQueryPermission(creator_id_,
-                                       q.accountId(),
-                                       Role::kGetMyAccAstTxs,
-                                       Role::kGetAllAccAstTxs,
-                                       Role::kGetDomainAccAstTxs))
-                     .str();
+          ORDER BY height, index ASC)";
 
-      return executeQuery<QueryTuple, PermissionTuple>(
-          [&] {
-            return (sql_.prepare << cmd,
-                    soci::use(q.accountId(), "account_id"),
-                    soci::use(q.assetId(), "asset_id"));
-          },
-          [&](auto range, auto &) {
-            std::map<uint64_t, std::vector<uint64_t>> index;
-            boost::for_each(range, [&index](auto t) {
-              apply(t, [&index](auto &height, auto &idx) {
-                index[height].push_back(idx);
-              });
-            });
+      auto &pagination_info = q.paginationMeta();
+      auto first_hash = pagination_info.firstTxHash();
+      // retrieve one extra transaction to populate next_hash
+      auto query_size = pagination_info.pageSize() + 1u;
 
-            std::vector<std::unique_ptr<shared_model::interface::Transaction>>
-                response_txs;
-            for (auto &block : index) {
-              auto txs = this->getTransactionsFromBlock(
-                  block.first,
-                  [&block](auto) { return block.second; },
-                  [](auto &) { return true; });
-              std::move(
-                  txs.begin(), txs.end(), std::back_inserter(response_txs));
-            }
+      auto apply_query = [&](const auto &query) {
+        return [&] {
+          if (first_hash) {
+            return (sql_.prepare << query,
+                    soci::use(q.accountId()),
+                    soci::use(q.assetId()),
+                    soci::use(first_hash->hex()),
+                    soci::use(query_size));
+          } else {
+            return (sql_.prepare << query,
+                    soci::use(q.accountId()),
+                    soci::use(q.assetId()),
+                    soci::use(query_size));
+          }
+        };
+      };
 
-            return query_response_factory_->createTransactionsResponse(
-                std::move(response_txs), query_hash_);
-          },
-          notEnoughPermissionsResponse(perm_converter_,
-                                       Role::kGetMyAccAstTxs,
-                                       Role::kGetAllAccAstTxs,
-                                       Role::kGetDomainAccAstTxs));
+      return executeTransactionsQuery(q,
+                                      related_txs,
+                                      apply_query,
+                                      Role::kGetMyAccAstTxs,
+                                      Role::kGetAllAccAstTxs,
+                                      Role::kGetDomainAccAstTxs);
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(

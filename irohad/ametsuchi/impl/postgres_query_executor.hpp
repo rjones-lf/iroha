@@ -136,6 +136,13 @@ namespace iroha {
       logAndReturnErrorResponse(iroha::ametsuchi::QueryErrorType error_type,
                                 std::string error_body) const;
 
+      template <typename Query, typename QueryApplier, typename... Permissions>
+      QueryExecutorResult executeTransactionsQuery(
+          const Query &q,
+          const std::string &related_txs,
+          QueryApplier applier,
+          Permissions... perms);
+
       soci::session &sql_;
       KeyValueStorage &block_store_;
       shared_model::interface::types::AccountIdType creator_id_;

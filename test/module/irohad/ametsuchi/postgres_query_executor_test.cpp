@@ -1507,7 +1507,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
+        const auto &cast_resp = getRef<TransactionsPageResponse>(result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
         ASSERT_EQ(cast_resp.transactions()[1].hash(), hash3);
@@ -1531,7 +1531,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
+        const auto &cast_resp = getRef<TransactionsPageResponse>(result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
         ASSERT_EQ(cast_resp.transactions()[1].hash(), hash3);
@@ -1556,7 +1556,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
+        const auto &cast_resp = getRef<TransactionsPageResponse>(result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
         ASSERT_EQ(cast_resp.transactions()[1].hash(), hash3);
