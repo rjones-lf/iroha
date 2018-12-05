@@ -86,7 +86,6 @@ spec:
           name: inter-peer
         - containerPort: 50051
           name: external
-        command: ['bash', '/opt/iroha_data/entrypoint.sh']
         volumeMounts:
         - name: iroha-data
           mountPath: /opt/iroha_data
