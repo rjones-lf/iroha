@@ -4,7 +4,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: iroha-peer-key{{ loop.index - 1 }}
+  name: iroha-peer-key-{{ loop.index - 1 }}
 type: Opaque
 data:
   node.priv: {{ keys[0] }}

@@ -40,7 +40,7 @@ spec:
                 fieldPath: metadata.name
         volumeMounts:
 {% for key_pair in peer_keys.stdout_lines %}
-        - name: iroha-secret{{ loop.index - 1 }}
+        - name: iroha-secret-{{ loop.index - 1 }}
           mountPath: /opt/secrets/iroha-{{ loop.index - 1 }}
 {% endfor %}
         - name: iroha-config
@@ -89,9 +89,9 @@ spec:
           mountPath: /tmp/block_store
       volumes:
 {% for key_pair in peer_keys.stdout_lines %}
-        - name: iroha-secret{{ loop.index - 1 }}
+        - name: iroha-secret-{{ loop.index - 1 }}
           secret:
-            secretName: iroha-peer-key{{ loop.index - 1 }}
+            secretName: iroha-peer-key-{{ loop.index - 1 }}
 {% endfor %}
         - name: iroha-config
           configMap:

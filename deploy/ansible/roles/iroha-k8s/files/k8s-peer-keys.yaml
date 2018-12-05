@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: iroha-peer-key0
+  name: iroha-peer-key-0
 type: Opaque
 data:
   node.priv: MWUwYTdhOTcyMGQ5MTAzNDNiZDE2MWM1NWM5NDQ5NGY1ZTA1MWZiYzgwMDFjMTAzNzNiOWQ1ZWJmNDA0MmVmNw==
@@ -11,7 +11,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: iroha-peer-key1
+  name: iroha-peer-key-1
 type: Opaque
 data:
   node.priv: MmZlYmQ0MDRjNjAyMTdhZmEzZWNmYjlhZTQ1NDZhMWQ3ODM2MjhjYmMyNjU5M2ZhMzFjYzU4YzEyNmUyZGQ3Zg==
@@ -20,7 +20,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: iroha-peer-key2
+  name: iroha-peer-key-2
 type: Opaque
 data:
   node.priv: ZWUwZTgzZWRkMjQzOGZhN2Q5NjljZjE3YWY0ZGNhZGZhMWQxMTNmZmI3MjNhYjc0NjFmOTlhNWQ4MWRiNTVlOQ==
@@ -29,7 +29,7 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: iroha-peer-key3
+  name: iroha-peer-key-3
 type: Opaque
 data:
   node.priv: OTE1ZTk0NWE3NmY4NGQwZjQ5MWNiZDQxY2Q4MzM4Zjc2Y2ZlNmZmMmM5ZDkxYmMzNGNlZDFjZmY4NGQ3NWFmNQ==

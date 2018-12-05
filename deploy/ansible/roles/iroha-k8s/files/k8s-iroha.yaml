@@ -39,13 +39,13 @@ spec:
               fieldRef:
                 fieldPath: metadata.name
         volumeMounts:
-        - name: iroha-secret0
+        - name: iroha-secret-0
           mountPath: /opt/secrets/iroha-0
-        - name: iroha-secret1
+        - name: iroha-secret-1
           mountPath: /opt/secrets/iroha-1
-        - name: iroha-secret2
+        - name: iroha-secret-2
           mountPath: /opt/secrets/iroha-2
-        - name: iroha-secret3
+        - name: iroha-secret-3
           mountPath: /opt/secrets/iroha-3
         - name: iroha-config
           mountPath: /opt/iroha_config
@@ -92,18 +92,18 @@ spec:
         - name: block-store
           mountPath: /tmp/block_store
       volumes:
-        - name: iroha-secret0
+        - name: iroha-secret-0
           secret:
-            secretName: iroha-peer-key0
-        - name: iroha-secret1
+            secretName: iroha-peer-key-0
+        - name: iroha-secret-1
           secret:
-            secretName: iroha-peer-key1
-        - name: iroha-secret2
+            secretName: iroha-peer-key-1
+        - name: iroha-secret-2
           secret:
-            secretName: iroha-peer-key2
-        - name: iroha-secret3
+            secretName: iroha-peer-key-2
+        - name: iroha-secret-3
           secret:
-            secretName: iroha-peer-key3
+            secretName: iroha-peer-key-3
         - name: iroha-config
           configMap:
             name: iroha-config
