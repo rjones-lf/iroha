@@ -59,8 +59,6 @@ spec:
         - containerPort: 5432
           name: pg-port
         env:
-          - name: IROHA_POSTGRES_HOST
-            value: localhost
           - name: POSTGRES_PASSWORD
             value: mysecretpassword
           - name: PGDATA
@@ -86,6 +84,11 @@ spec:
           name: inter-peer
         - containerPort: 50051
           name: external
+        env:
+          - name: IROHA_POSTGRES_HOST
+            value: localhost
+          - name: KEY
+            value: node
         volumeMounts:
         - name: iroha-data
           mountPath: /opt/iroha_data
