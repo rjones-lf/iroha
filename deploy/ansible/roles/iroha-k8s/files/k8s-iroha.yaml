@@ -89,7 +89,7 @@ spec:
         - name: iroha-data
           mountPath: /opt/iroha_data
         - name: block-store
-          mountPath: /opt/block_store
+          mountPath: /tmp/block_store
       volumes:
         - name: iroha-secret0
           secret:
