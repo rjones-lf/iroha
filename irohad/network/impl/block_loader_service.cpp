@@ -50,7 +50,7 @@ grpc::Status BlockLoaderService::retrieveBlock(
     ::grpc::ServerContext *context,
     const proto::BlockRequest *request,
     protocol::Block *response) {
-  const auto hash = shared_model::crypto::Hash(request->hash());
+  const auto hash = shared_model::crypto::Hash::fromHexString(request->hash());
   if (hash.size() == 0) {
     log_->error("Bad hash in request");
     return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,

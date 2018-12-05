@@ -186,7 +186,7 @@ namespace shared_model {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_transactions();
           boost::for_each(hashes, [&query](const auto &hash) {
-            query->add_tx_hashes(toBinaryString(hash));
+            query->add_tx_hashes(hash.hex());
           });
         });
       }

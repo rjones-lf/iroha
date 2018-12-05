@@ -4,6 +4,7 @@
  */
 
 #include "backend/protobuf/commands/proto_add_signatory.hpp"
+#include "cryptography/hash.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -13,7 +14,8 @@ namespace shared_model {
         : CopyableProto(std::forward<CommandType>(command)),
           add_signatory_{proto_->add_signatory()},
           pubkey_{[this] {
-            return interface::types::PubkeyType(add_signatory_.public_key());
+            return interface::types::PubkeyType(
+                crypto::Hash::fromHexString(add_signatory_.public_key()));
           }} {}
 
     template AddSignatory::AddSignatory(AddSignatory::TransportType &);

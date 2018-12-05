@@ -22,6 +22,7 @@
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "backend/protobuf/util.hpp"
+#include "cryptography/hash.hpp"
 #include "cryptography/public_key.hpp"
 #include "primitive.pb.h"
 #include "utils/lazy_initializer.hpp"
@@ -52,8 +53,10 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<interface::types::PubkeyType> public_key_{
-          [this] { return interface::types::PubkeyType(proto_->peer_key()); }};
+      const Lazy<interface::types::PubkeyType> public_key_{[this] {
+        return interface::types::PubkeyType(
+            crypto::Hash::fromHexString(proto_->peer_key()));
+      }};
     };
 
   }  // namespace proto

@@ -15,13 +15,13 @@ message Block {
     uint32 tx_number = 2;  ///< The number of accepted transactions inside.
                            ///< Maximum 16384 or 2^14.
     uint64 height = 3;          ///< The current block number in a ledger.
-    bytes prev_block_hash = 4;  ///< Previous block hash.
+    string prev_block_hash = 4;  ///< Previous block hash.
     uint64 created_time = 5;
 
     /// Hashes of the transactions that did not pass stateful validation.
     /// Needed here to be able to guarantee the client that this transaction
     /// was not and will never be executed.
-    repeated bytes rejected_transactions_hashes = 6;
+    repeated string rejected_transactions_hashes = 6;
   }
 
   Payload payload = 1;

@@ -144,7 +144,7 @@ class IrohadTest : public AcceptanceFixture {
 
     auto tx =
         complete(baseTx(kAdminId).setAccountQuorum(kAdminId, 1), key_pair);
-    tx_request.set_tx_hash(shared_model::crypto::toBinaryString(tx.hash()));
+    tx_request.set_tx_hash(tx.hash().hex());
 
     auto client = torii::CommandSyncClient(kAddress, kPort);
     client.Torii(tx.getTransport());

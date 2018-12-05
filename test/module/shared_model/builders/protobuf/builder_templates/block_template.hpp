@@ -88,7 +88,7 @@ namespace shared_model {
           for (const auto &hash : rejected_transactions_hashes) {
             auto *next_hash =
                 block.mutable_payload()->add_rejected_transactions_hashes();
-            (*next_hash) = shared_model::crypto::toBinaryString(hash);
+            (*next_hash) = hash.hex();
           }
         });
       }
@@ -100,8 +100,7 @@ namespace shared_model {
 
       auto prevHash(crypto::Hash hash) const {
         return transform<PrevHash>([&](auto &block) {
-          block.mutable_payload()->set_prev_block_hash(
-              crypto::toBinaryString(hash));
+          block.mutable_payload()->set_prev_block_hash(hash.hex());
         });
       }
 

@@ -13,6 +13,7 @@
 #include <boost/range/numeric.hpp>
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "backend/protobuf/util.hpp"
+#include "cryptography/hash.hpp"
 #include "interfaces/common_objects/amount.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "transaction.pb.h"
@@ -41,7 +42,7 @@ namespace shared_model {
                   proto_->reduced_hashes(),
                   ReducedHashesType{},
                   [](auto &&acc, const auto &hash) {
-                    acc.emplace_back(hash);
+                    acc.emplace_back(crypto::Hash::fromHexString(hash));
                     return std::forward<decltype(acc)>(acc);
                   });
             }} {}

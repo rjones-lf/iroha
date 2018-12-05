@@ -7,6 +7,7 @@
 
 #include <boost/assign/list_inserter.hpp>
 
+#include "common/byteutils.hpp"
 #include "common/instanceof.hpp"
 #include "model/converters/pb_common.hpp"
 
@@ -206,17 +207,15 @@ namespace iroha {
           const model::AddSignatory &add_signatory) {
         protocol::AddSignatory pb_add_signatory;
         pb_add_signatory.set_account_id(add_signatory.account_id);
-        pb_add_signatory.set_public_key(add_signatory.pubkey.data(),
-                                        add_signatory.pubkey.size());
+        pb_add_signatory.set_public_key(add_signatory.pubkey.to_hexstring());
         return pb_add_signatory;
       }
       model::AddSignatory PbCommandFactory::deserializeAddSignatory(
           const protocol::AddSignatory &pb_add_signatory) {
         model::AddSignatory add_signatory;
         add_signatory.account_id = pb_add_signatory.account_id();
-        std::copy(pb_add_signatory.public_key().begin(),
-                  pb_add_signatory.public_key().end(),
-                  add_signatory.pubkey.begin());
+        iroha::hexstringToArray<32>(pb_add_signatory.public_key()) |
+            [&add_signatory](const auto &blob) { add_signatory.pubkey = blob; };
         return add_signatory;
       }
 
@@ -246,8 +245,7 @@ namespace iroha {
         protocol::CreateAccount pb_create_account;
         pb_create_account.set_account_name(create_account.account_name);
         pb_create_account.set_domain_id(create_account.domain_id);
-        pb_create_account.set_public_key(create_account.pubkey.data(),
-                                         create_account.pubkey.size());
+        pb_create_account.set_public_key(create_account.pubkey.to_hexstring());
         return pb_create_account;
       }
       model::CreateAccount PbCommandFactory::deserializeCreateAccount(
@@ -255,9 +253,10 @@ namespace iroha {
         model::CreateAccount create_account;
         create_account.account_name = pb_create_account.account_name();
         create_account.domain_id = pb_create_account.domain_id();
-        std::copy(pb_create_account.public_key().begin(),
-                  pb_create_account.public_key().end(),
-                  create_account.pubkey.begin());
+        iroha::hexstringToArray<32>(pb_create_account.public_key()) |
+            [&create_account](const auto &blob) {
+              create_account.pubkey = blob;
+            };
         return create_account;
       }
 
@@ -283,8 +282,8 @@ namespace iroha {
           const model::RemoveSignatory &remove_signatory) {
         protocol::RemoveSignatory pb_remove_signatory;
         pb_remove_signatory.set_account_id(remove_signatory.account_id);
-        pb_remove_signatory.set_public_key(remove_signatory.pubkey.data(),
-                                           remove_signatory.pubkey.size());
+        pb_remove_signatory.set_public_key(
+            remove_signatory.pubkey.to_hexstring());
         return pb_remove_signatory;
       }
 
@@ -292,9 +291,10 @@ namespace iroha {
           const protocol::RemoveSignatory &pb_remove_signatory) {
         model::RemoveSignatory remove_signatory;
         remove_signatory.account_id = pb_remove_signatory.account_id();
-        std::copy(pb_remove_signatory.public_key().begin(),
-                  pb_remove_signatory.public_key().end(),
-                  remove_signatory.pubkey.begin());
+        iroha::hexstringToArray<32>(pb_remove_signatory.public_key()) |
+            [&remove_signatory](const auto &blob) {
+              remove_signatory.pubkey = blob;
+            };
         return remove_signatory;
       }
       // set account quorum

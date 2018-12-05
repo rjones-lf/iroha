@@ -86,7 +86,7 @@ TEST(CommandTest, add_peer) {
   auto factory = iroha::model::converters::PbCommandFactory();
 
   auto proto_add_peer = factory.serializeAddPeer(orig_addPeer);
-  auto serial_addPeer = factory.deserializeAddPeer(proto_add_peer);
+  const auto& serial_addPeer = factory.deserializeAddPeer(proto_add_peer);
 
   ASSERT_EQ(orig_addPeer, serial_addPeer);
   command_converter_test(orig_addPeer);

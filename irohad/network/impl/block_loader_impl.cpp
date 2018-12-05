@@ -113,7 +113,7 @@ boost::optional<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlock(
   protocol::Block block;
 
   // request block with specified hash
-  request.set_hash(toBinaryString(block_hash));
+  request.set_hash(block_hash.hex());
 
   auto status = getPeerStub(**peer).retrieveBlock(&context, request, &block);
   if (not status.ok()) {

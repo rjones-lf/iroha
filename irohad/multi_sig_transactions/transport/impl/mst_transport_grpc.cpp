@@ -18,11 +18,10 @@ using namespace iroha::network;
 
 using iroha::ConstRefState;
 
-void sendStateAsyncImpl(
-    const shared_model::interface::Peer &to,
-    ConstRefState state,
-    const std::string &sender_key,
-    AsyncGrpcClient<google::protobuf::Empty> &async_call);
+void sendStateAsyncImpl(const shared_model::interface::Peer &to,
+                        ConstRefState state,
+                        const std::string &sender_key,
+                        AsyncGrpcClient<google::protobuf::Empty> &async_call);
 
 MstTransportGrpc::MstTransportGrpc(
     std::shared_ptr<AsyncGrpcClient<google::protobuf::Empty>> async_call,
@@ -36,7 +35,7 @@ MstTransportGrpc::MstTransportGrpc(
       transaction_factory_(std::move(transaction_factory)),
       batch_parser_(std::move(batch_parser)),
       batch_factory_(std::move(transaction_batch_factory)),
-      my_key_(shared_model::crypto::toBinaryString(my_key)) {}
+      my_key_(my_key.hex()) {}
 
 shared_model::interface::types::SharedTxsCollectionType
 MstTransportGrpc::deserializeTransactions(const transport::MstState *request) {
@@ -94,7 +93,8 @@ grpc::Status MstTransportGrpc::SendState(
   async_call_->log_->info("batches in MstState: {}",
                           new_state.getBatches().size());
 
-  shared_model::crypto::PublicKey source_key(request->source_peer_key());
+  shared_model::crypto::PublicKey source_key(
+      shared_model::crypto::Hash::fromHexString(request->source_peer_key()));
   auto key_invalid_reason =
       shared_model::validation::validatePubkey(source_key);
   if (key_invalid_reason) {
@@ -104,9 +104,7 @@ grpc::Status MstTransportGrpc::SendState(
     return grpc::Status::OK;
   }
 
-  subscriber_.lock()->onNewState(
-      source_key,
-      std::move(new_state));
+  subscriber_.lock()->onNewState(source_key, std::move(new_state));
 
   return grpc::Status::OK;
 }
@@ -127,8 +125,7 @@ void iroha::network::sendStateAsync(
     ConstRefState state,
     const shared_model::crypto::PublicKey &sender_key,
     AsyncGrpcClient<google::protobuf::Empty> &async_call) {
-  sendStateAsyncImpl(
-      to, state, shared_model::crypto::toBinaryString(sender_key), async_call);
+  sendStateAsyncImpl(to, state, sender_key.hex(), async_call);
 }
 
 void sendStateAsyncImpl(const shared_model::interface::Peer &to,

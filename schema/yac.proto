@@ -1,11 +1,16 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 syntax = "proto3";
 package iroha.consensus.yac.proto;
 
 import "google/protobuf/empty.proto";
 
 message Signature {
-  bytes pubkey = 1;
-  bytes signature = 2;
+  string pubkey = 1;
+  string signature = 2;
 }
 
 message VoteRound {
@@ -14,8 +19,8 @@ message VoteRound {
 }
 
 message VoteHashes {
-  bytes proposal = 1;
-  bytes block = 2;
+  string proposal = 1;
+  string block = 2;
 }
 
 message Hash {

@@ -170,8 +170,7 @@ shared_model::proto::ProtoQueryResponseFactory::createSignatoriesResponse(
         iroha::protocol::SignatoriesResponse *protocol_specific_response =
             protocol_query_response.mutable_signatories_response();
         for (const auto &key : signatories) {
-          const auto &blob = key.blob();
-          protocol_specific_response->add_keys(blob.data(), blob.size());
+          protocol_specific_response->add_keys(key.hex());
         }
       },
       query_hash);

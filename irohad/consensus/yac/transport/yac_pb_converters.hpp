@@ -55,10 +55,10 @@ namespace iroha {
 
           auto block_signature =
               pb_vote.mutable_hash()->mutable_block_signature();
-          block_signature->set_signature(shared_model::crypto::toBinaryString(
-              vote.hash.block_signature->signedData()));
-          block_signature->set_pubkey(shared_model::crypto::toBinaryString(
-              vote.hash.block_signature->publicKey()));
+          block_signature->set_signature(
+              vote.hash.block_signature->signedData().hex());
+          block_signature->set_pubkey(
+              vote.hash.block_signature->publicKey().hex());
 
           return pb_vote;
         }
@@ -68,17 +68,15 @@ namespace iroha {
 
           auto block_signature =
               pb_vote.mutable_hash()->mutable_block_signature();
-          block_signature->set_signature(shared_model::crypto::toBinaryString(
-              vote.hash.block_signature->signedData()));
-          block_signature->set_pubkey(shared_model::crypto::toBinaryString(
-              vote.hash.block_signature->publicKey()));
+          block_signature->set_signature(
+              vote.hash.block_signature->signedData().hex());
+          block_signature->set_pubkey(
+              vote.hash.block_signature->publicKey().hex());
 
           auto signature = pb_vote.mutable_signature();
           const auto &sig = *vote.signature;
-          signature->set_signature(
-              shared_model::crypto::toBinaryString(sig.signedData()));
-          signature->set_pubkey(
-              shared_model::crypto::toBinaryString(sig.publicKey()));
+          signature->set_signature(sig.signedData().hex());
+          signature->set_pubkey(sig.publicKey().hex());
 
           return pb_vote;
         }
@@ -91,20 +89,24 @@ namespace iroha {
 
           auto vote = deserealizeRoundAndHashes(pb_vote);
 
-          auto deserialize =
-              [&](auto &pubkey, auto &signature, auto &val, const auto &msg) {
-                factory_
-                    .createSignature(shared_model::crypto::PublicKey(pubkey),
-                                     shared_model::crypto::Signed(signature))
-                    .match(
-                        [&](iroha::expected::Value<
-                            std::unique_ptr<shared_model::interface::Signature>>
-                                &sig) { val = std::move(sig.value); },
-                        [&](iroha::expected::Error<std::string> &reason) {
-                          logger::log("YacPbConverter::deserializeVote")
-                              ->error(msg, reason.error);
-                        });
-              };
+          auto deserialize = [&](auto &pubkey,
+                                 auto &signature,
+                                 auto &val,
+                                 const auto &msg) {
+            factory_
+                .createSignature(
+                    shared_model::crypto::PublicKey{
+                        shared_model::crypto::PublicKey::fromHexString(pubkey)},
+                    shared_model::crypto::Signed{
+                        shared_model::crypto::Signed::fromHexString(signature)})
+                .match([&](iroha::expected::Value<
+                           std::unique_ptr<shared_model::interface::Signature>>
+                               &sig) { val = std::move(sig.value); },
+                       [&](iroha::expected::Error<std::string> &reason) {
+                         logger::log("YacPbConverter::deserializeVote")
+                             ->error(msg, reason.error);
+                       });
+          };
 
           deserialize(pb_vote.hash().block_signature().pubkey(),
                       pb_vote.hash().block_signature().signature(),

@@ -40,11 +40,14 @@ namespace shared_model {
       template <typename T>
       using Lazy = detail::LazyInitializer<T>;
 
-      const Lazy<PublicKeyType> public_key_{
-          [this] { return PublicKeyType(proto_->public_key()); }};
+      const Lazy<PublicKeyType> public_key_{[this] {
+        return PublicKeyType(
+            PublicKeyType::fromHexString(proto_->public_key()));
+      }};
 
-      const Lazy<SignedType> signed_{
-          [this] { return SignedType(proto_->signature()); }};
+      const Lazy<SignedType> signed_{[this] {
+        return SignedType(SignedType::fromHexString(proto_->signature()));
+      }};
     };
   }  // namespace proto
 }  // namespace shared_model

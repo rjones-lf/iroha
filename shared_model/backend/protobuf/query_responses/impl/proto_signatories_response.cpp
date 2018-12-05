@@ -5,6 +5,9 @@
 
 #include "backend/protobuf/query_responses/proto_signatories_response.hpp"
 
+#include "boost/range/numeric.hpp"
+#include "cryptography/hash.hpp"
+
 namespace shared_model {
   namespace proto {
 
@@ -13,9 +16,13 @@ namespace shared_model {
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
           signatoriesResponse_{proto_->signatories_response()},
           keys_{[this] {
-            return interface::types::PublicKeyCollectionType(
-                signatoriesResponse_.keys().begin(),
-                signatoriesResponse_.keys().end());
+            return boost::accumulate(
+                signatoriesResponse_.keys(),
+                interface::types::PublicKeyCollectionType{},
+                [](auto acc, auto key) {
+                  acc.emplace_back(crypto::Hash::fromHexString(key));
+                  return acc;
+                });
           }} {}
 
     template SignatoriesResponse::SignatoriesResponse(

@@ -41,7 +41,7 @@ namespace shared_model {
                     which > last ? last : which);
           }()),
           ivariant_(variant_),
-          hash_(proto_->tx_hash()) {}
+          hash_(crypto::Hash::fromHexString(proto_->tx_hash())) {}
 
     template TransactionResponse::TransactionResponse(
         TransactionResponse::TransportType &);
