@@ -73,7 +73,8 @@ namespace shared_model {
       ModelQueryBuilder getAccountTransactions(
           const interface::types::AccountIdType &account_id,
           interface::types::TransactionsNumberType page_size,
-          boost::optional<interface::types::HashType> first_hash = boost::none);
+          const boost::optional<interface::types::HashType> &first_hash =
+              boost::none);
 
       /**
        * Queries account transaction collection for a given asset
@@ -85,7 +86,8 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id,
           interface::types::TransactionsNumberType page_size,
-          boost::optional<interface::types::HashType> first_hash = boost::none);
+          const boost::optional<interface::types::HashType> &first_hash =
+              boost::none);
 
       /**
        * Queries balance of specific asset for given account

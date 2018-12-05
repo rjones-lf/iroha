@@ -83,7 +83,7 @@ namespace shared_model {
       static auto setTxPaginationMeta(
           PageMetaPayload *page_meta_payload,
           interface::types::TransactionsNumberType page_size,
-          boost::optional<interface::types::HashType> first_hash =
+          const boost::optional<interface::types::HashType> &first_hash =
               boost::none) {
         page_meta_payload->set_page_size(page_size);
         if (first_hash) {
@@ -134,7 +134,7 @@ namespace shared_model {
       auto getAccountTransactions(
           const interface::types::AccountIdType &account_id,
           interface::types::TransactionsNumberType page_size,
-          boost::optional<interface::types::HashType> first_hash =
+          const boost::optional<interface::types::HashType> &first_hash =
               boost::none) const {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_account_transactions();
@@ -148,7 +148,7 @@ namespace shared_model {
           const interface::types::AccountIdType &account_id,
           const interface::types::AssetIdType &asset_id,
           interface::types::TransactionsNumberType page_size,
-          boost::optional<interface::types::HashType> first_hash =
+          const boost::optional<interface::types::HashType> &first_hash =
               boost::none) const {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_account_asset_transactions();
