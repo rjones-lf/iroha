@@ -77,7 +77,7 @@ spec:
         - name: pg-data
           mountPath: /var/lib/postgresql/data
       - name: iroha
-        image: hyperledger/iroha@sha256:2b52fdb7d5d1b243ac8d5244ca1c11e146586e11e0582d3ddaa32d6200b78d41
+        image: hyperledger/iroha:develop
         imagePullPolicy: Always
         ports:
         - containerPort: 10001

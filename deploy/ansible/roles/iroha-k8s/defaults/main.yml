@@ -4,7 +4,6 @@ proposal_delay: 300
 vote_delay: 5000
 load_delay: 5000
 # k8s-iroha.yaml
-#1.0.0_beta-4
-iroha_image: hyperledger/iroha@sha256:2b52fdb7d5d1b243ac8d5244ca1c11e146586e11e0582d3ddaa32d6200b78d41
+iroha_image: hyperledger/iroha:develop
 postgres_volume_size: 1Gi
 blockstore_volume_size: 1Gi
