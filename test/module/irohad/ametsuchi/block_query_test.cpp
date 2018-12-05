@@ -1,29 +1,18 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
+
+#include "ametsuchi/impl/postgres_block_query.hpp"
 
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
-
 #include "ametsuchi/impl/postgres_block_index.hpp"
-#include "ametsuchi/impl/postgres_block_query.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
 #include "common/byteutils.hpp"
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "framework/result_fixture.hpp"
+#include "framework/specified_visitor.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
@@ -65,11 +54,14 @@ class BlockQueryTest : public AmetsuchiTest {
     txs1.push_back(std::move(txn1_1));
     txs1.push_back(std::move(txn1_2));
 
-    auto block1 = TestBlockBuilder()
-                      .height(1)
-                      .transactions(txs1)
-                      .prevHash(shared_model::crypto::Hash(zero_string))
-                      .build();
+    auto block1 =
+        TestBlockBuilder()
+            .height(1)
+            .transactions(txs1)
+            .prevHash(shared_model::crypto::Hash(zero_string))
+            .rejectedTransactions(
+                std::vector<shared_model::crypto::Hash>{rejected_hash})
+            .build();
 
     // First tx in block 1
     auto txn2_1 = TestTransactionBuilder().creatorAccountId(creator1).build();
@@ -114,6 +106,7 @@ class BlockQueryTest : public AmetsuchiTest {
   std::string creator2 = "user2@test";
   std::size_t blocks_total{0};
   std::string zero_string = std::string(32, '0');
+  shared_model::crypto::Hash rejected_hash{"rejected_tx_hash"};
 };
 
 /**
@@ -351,24 +344,46 @@ TEST_F(BlockQueryTest, GetTop2Blocks) {
 
 /**
  * @given block store with preinserted blocks
- * @when hasTxWithHash is invoked on existing transaction hash
- * @then True is returned
+ * @when checkTxPresence is invoked on existing transaction hash
+ * @then Committed status is returned
  */
 TEST_F(BlockQueryTest, HasTxWithExistingHash) {
   for (const auto &hash : tx_hashes) {
-    EXPECT_TRUE(blocks->hasTxWithHash(hash));
+    ASSERT_NO_THROW({
+      auto status = boost::get<tx_cache_status_responses::Committed>(
+          *blocks->checkTxPresence(hash));
+      ASSERT_EQ(status.hash, hash);
+    });
   }
 }
 
 /**
  * @given block store with preinserted blocks
  * user1@test AND 1 tx created by user2@test
- * @when hasTxWithHash is invoked on non-existing hash
- * @then False is returned
+ * @when checkTxPresence is invoked on non-existing hash
+ * @then Missing status is returned
  */
-TEST_F(BlockQueryTest, HasTxWithInvalidHash) {
-  shared_model::crypto::Hash invalid_tx_hash(zero_string);
-  EXPECT_FALSE(blocks->hasTxWithHash(invalid_tx_hash));
+TEST_F(BlockQueryTest, HasTxWithMissingHash) {
+  shared_model::crypto::Hash missing_tx_hash(zero_string);
+  ASSERT_NO_THROW({
+    auto status = boost::get<tx_cache_status_responses::Missing>(
+        *blocks->checkTxPresence(missing_tx_hash));
+    ASSERT_EQ(status.hash, missing_tx_hash);
+  });
+}
+
+/**
+ * @given block store with preinserted blocks containing rejected_hash1 in one
+ * of the block
+ * @when checkTxPresence is invoked on existing rejected hash
+ * @then Rejected is returned
+ */
+TEST_F(BlockQueryTest, HasTxWithRejectedHash) {
+  ASSERT_NO_THROW({
+    auto status = boost::get<tx_cache_status_responses::Rejected>(
+        *blocks->checkTxPresence(rejected_hash));
+    ASSERT_EQ(status.hash, rejected_hash);
+  });
 }
 
 /**

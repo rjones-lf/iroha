@@ -19,6 +19,10 @@
 #include "ordering/on_demand_ordering_service.hpp"
 
 namespace iroha {
+  namespace ametsuchi {
+    class TxPresenceCache;
+  }
+
   namespace ordering {
 
     /**
@@ -32,7 +36,7 @@ namespace iroha {
        */
       struct BlockEvent {
         consensus::Round round;
-        cache::OrderingGateCache::BatchesSetType batches;
+        cache::OrderingGateCache::HashesSetType hashes;
       };
 
       /**
@@ -51,6 +55,7 @@ namespace iroha {
                       // unique_ptr
           std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
+          std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           consensus::Round initial_round);
 
       void propagateBatch(
@@ -64,12 +69,26 @@ namespace iroha {
           const iroha::network::PeerCommunicationService &pcs) override;
 
      private:
+      /**
+       * Handle an incoming proposal from ordering service
+       */
+      std::unique_ptr<shared_model::interface::Proposal> processProposalRequest(
+          boost::optional<OnDemandOrderingService::ProposalType>
+              &&proposal) const;
+
+      /**
+       * remove already processed transactions from proposal
+       */
+      std::unique_ptr<shared_model::interface::Proposal> removeReplays(
+          shared_model::interface::Proposal &&proposal) const;
+
       std::shared_ptr<OnDemandOrderingService> ordering_service_;
       std::shared_ptr<transport::OdOsNotification> network_client_;
       rxcpp::composite_subscription events_subscription_;
       std::shared_ptr<cache::OrderingGateCache> cache_;
       std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
+      std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache_;
 
       consensus::Round current_round_;
       rxcpp::subjects::subject<

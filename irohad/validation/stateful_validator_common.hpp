@@ -34,6 +34,9 @@ namespace iroha {
       /// Error code, with which the command failed
       uint32_t error_code;
 
+      /// Extra information about error for developers to be placed into the log
+      std::string error_extra;
+
       /// Shows, if transaction has passed initial validation
       bool tx_passed_initial_validation;
 
@@ -41,13 +44,11 @@ namespace iroha {
       size_t index = 0;
     };
 
-
     /// Collection of transactions errors - a map from the failed transaction
     /// hash to the description of failed command.
     using TransactionHash = shared_model::crypto::Hash;
-    using TransactionsErrors = std::unordered_map<TransactionHash,
-                                                  CommandError,
-                                                  TransactionHash::Hasher>;
+    using TransactionsErrors = std::
+        unordered_map<TransactionHash, CommandError, TransactionHash::Hasher>;
     using TransactionError = TransactionsErrors::value_type;
 
     /// Type of verified proposal and errors appeared in the process; first

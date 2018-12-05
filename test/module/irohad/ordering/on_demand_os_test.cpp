@@ -13,6 +13,7 @@
 #include "builders/protobuf/transaction.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 #include "module/shared_model/validators/validators.hpp"
 
@@ -21,8 +22,12 @@ using namespace iroha::ordering;
 using namespace iroha::ordering::transport;
 
 using testing::_;
+using testing::A;
 using testing::ByMove;
+using testing::Invoke;
+using testing::Matcher;
 using testing::NiceMock;
+using testing::Ref;
 using testing::Return;
 
 using shared_model::interface::Proposal;
@@ -36,13 +41,28 @@ class OnDemandOsTest : public ::testing::Test {
   const uint32_t proposal_limit = 5;
   const consensus::Round initial_round = {2, 1}, target_round = {4, 1},
                          commit_round = {3, 1}, reject_round = {2, 2};
+  NiceMock<iroha::ametsuchi::MockTxPresenceCache> *mock_cache;
 
   void SetUp() override {
     // TODO: nickaleks IR-1811 use mock factory
     auto factory = std::make_unique<
         shared_model::proto::ProtoProposalFactory<MockProposalValidator>>();
-    os = std::make_shared<OnDemandOrderingServiceImpl>(
-        transaction_limit, std::move(factory), proposal_limit, initial_round);
+    auto tx_cache =
+        std::make_unique<NiceMock<iroha::ametsuchi::MockTxPresenceCache>>();
+    mock_cache = tx_cache.get();
+    // every batch is new by default
+    ON_CALL(
+        *mock_cache,
+        check(
+            testing::Matcher<const shared_model::interface::TransactionBatch &>(
+                _)))
+        .WillByDefault(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
+            iroha::ametsuchi::tx_cache_status_responses::Missing()}));
+    os = std::make_shared<OnDemandOrderingServiceImpl>(transaction_limit,
+                                                       std::move(factory),
+                                                       std::move(tx_cache),
+                                                       proposal_limit,
+                                                       initial_round);
   }
 
   /**
@@ -52,8 +72,14 @@ class OnDemandOsTest : public ::testing::Test {
    */
   void generateTransactionsAndInsert(consensus::Round round,
                                      std::pair<uint64_t, uint64_t> range) {
+    os->onBatches(round, generateTransactions(range));
+  }
+
+  OnDemandOrderingService::CollectionType generateTransactions(
+      std::pair<uint64_t, uint64_t> range) {
     auto now = iroha::time::now();
     OnDemandOrderingService::CollectionType collection;
+
     for (auto i = range.first; i < range.second; ++i) {
       collection.push_back(
           std::make_unique<shared_model::interface::TransactionBatchImpl>(
@@ -70,7 +96,7 @@ class OnDemandOsTest : public ::testing::Test {
                                   generateKeypair())
                           .finish())}));
     }
-    os->onBatches(round, std::move(collection));
+    return collection;
   }
 
   std::unique_ptr<Proposal> makeMockProposal() {
@@ -131,14 +157,19 @@ TEST_F(OnDemandOsTest, OverflowRound) {
  * @given initialized on-demand OS
  * @when  send transactions from different threads
  * AND initiate next round
- * @then  check that all transactions are appeared in proposal
+ * @then  check that all transactions appear in proposal
  */
 TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
   auto large_tx_limit = 10000u;
   auto factory = std::make_unique<
       shared_model::proto::ProtoProposalFactory<MockProposalValidator>>();
-  os = std::make_shared<OnDemandOrderingServiceImpl>(
-      large_tx_limit, std::move(factory), proposal_limit, initial_round);
+  auto tx_cache =
+      std::make_unique<NiceMock<iroha::ametsuchi::MockTxPresenceCache>>();
+  os = std::make_shared<OnDemandOrderingServiceImpl>(large_tx_limit,
+                                                     std::move(factory),
+                                                     std::move(tx_cache),
+                                                     proposal_limit,
+                                                     initial_round);
 
   auto call = [this](auto bounds) {
     for (auto i = bounds.first; i < bounds.second; ++i) {
@@ -213,8 +244,27 @@ TEST_F(OnDemandOsTest, EraseReject) {
 TEST_F(OnDemandOsTest, UseFactoryForProposal) {
   auto factory = std::make_unique<MockUnsafeProposalFactory>();
   auto mock_factory = factory.get();
-  os = std::make_shared<OnDemandOrderingServiceImpl>(
-      transaction_limit, std::move(factory), proposal_limit, initial_round);
+  auto tx_cache =
+      std::make_unique<NiceMock<iroha::ametsuchi::MockTxPresenceCache>>();
+  ON_CALL(*tx_cache,
+          check(A<const shared_model::interface::TransactionBatch &>()))
+      .WillByDefault(Invoke([](const auto &batch) {
+        iroha::ametsuchi::TxPresenceCache::BatchStatusCollectionType result;
+        std::transform(
+            batch.transactions().begin(),
+            batch.transactions().end(),
+            std::back_inserter(result),
+            [](auto &tx) {
+              return iroha::ametsuchi::tx_cache_status_responses::Missing{
+                  tx->hash()};
+            });
+        return result;
+      }));
+  os = std::make_shared<OnDemandOrderingServiceImpl>(transaction_limit,
+                                                     std::move(factory),
+                                                     std::move(tx_cache),
+                                                     proposal_limit,
+                                                     initial_round);
 
   EXPECT_CALL(*mock_factory, unsafeCreateProposal(_, _, _))
       .WillOnce(Return(ByMove(makeMockProposal())));
@@ -224,4 +274,91 @@ TEST_F(OnDemandOsTest, UseFactoryForProposal) {
   os->onCollaborationOutcome(commit_round);
 
   ASSERT_TRUE(os->onRequestProposal(target_round));
+}
+
+// Return matcher for batch, which passes it by const &
+// used when passing batch as an argument to check() in transaction cache
+auto batchRef(const shared_model::interface::TransactionBatch &batch) {
+  return Matcher<const shared_model::interface::TransactionBatch &>(Ref(batch));
+}
+
+/**
+ * @given initialized on-demand OS
+ * @when add a batch which was already commited
+ * @then the batch is not present in a proposal
+ */
+TEST_F(OnDemandOsTest, AlreadyProcessedProposalDiscarded) {
+  auto batches = generateTransactions({1, 2});
+  auto &batch = *batches.at(0);
+
+  EXPECT_CALL(*mock_cache, check(batchRef(batch)))
+      .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
+          iroha::ametsuchi::tx_cache_status_responses::Committed()}));
+
+  os->onBatches(initial_round, batches);
+
+  os->onCollaborationOutcome(commit_round);
+
+  auto proposal = os->onRequestProposal(initial_round);
+
+  EXPECT_FALSE(proposal);
+}
+
+/**
+ * @given initialized on-demand OS
+ * @when add a batch with new transaction
+ * @then batch is present in a proposal
+ */
+TEST_F(OnDemandOsTest, PassMissingTransaction) {
+  auto batches = generateTransactions({1, 2});
+  auto &batch = *batches.at(0);
+
+  EXPECT_CALL(*mock_cache, check(batchRef(batch)))
+      .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
+          iroha::ametsuchi::tx_cache_status_responses::Missing()}));
+
+  os->onBatches(target_round, batches);
+
+  os->onCollaborationOutcome(commit_round);
+
+  auto proposal = os->onRequestProposal(target_round);
+
+  // since we only sent one transaction,
+  // if the proposal is present, there is no need to check for that specific tx
+  EXPECT_TRUE(proposal);
+}
+
+/**
+ * @given initialized on-demand OS
+ * @when add 3 batches, with second one being already commited
+ * @then 2 new batches are in a proposal and already commited batch is discarded
+ */
+TEST_F(OnDemandOsTest, SeveralTransactionsOneCommited) {
+  auto batches = generateTransactions({1, 4});
+  auto &batch1 = *batches.at(0);
+  auto &batch2 = *batches.at(1);
+  auto &batch3 = *batches.at(2);
+
+  EXPECT_CALL(*mock_cache, check(batchRef(batch1)))
+      .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
+          iroha::ametsuchi::tx_cache_status_responses::Missing()}));
+  EXPECT_CALL(*mock_cache, check(batchRef(batch2)))
+      .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
+          iroha::ametsuchi::tx_cache_status_responses::Committed()}));
+  EXPECT_CALL(*mock_cache, check(batchRef(batch3)))
+      .WillOnce(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
+          iroha::ametsuchi::tx_cache_status_responses::Missing()}));
+
+  os->onBatches(target_round, batches);
+
+  os->onCollaborationOutcome(commit_round);
+
+  auto proposal = os->onRequestProposal(target_round);
+  const auto &txs = proposal->get()->transactions();
+  auto &batch2_tx = *batch2.transactions().at(0);
+
+  EXPECT_TRUE(proposal);
+  EXPECT_EQ(boost::size(txs), 2);
+  // already processed transaction is no present in the proposal
+  EXPECT_TRUE(std::find(txs.begin(), txs.end(), batch2_tx) == txs.end());
 }

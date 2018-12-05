@@ -43,7 +43,7 @@ def get_status(tx):
     request.tx_hash = tx_hash
 
     channel = grpc.insecure_channel('127.0.0.1:50051')
-    stub = endpoint_pb2_grpc.CommandServiceStub(channel)
+    stub = endpoint_pb2_grpc.CommandService_v1Stub(channel)
 
     response = stub.Status(request)
     status = endpoint_pb2.TxStatus.Name(response.tx_status)
@@ -72,7 +72,7 @@ def print_status_streaming(tx):
 
     # Create connection to Iroha
     channel = grpc.insecure_channel('127.0.0.1:50051')
-    stub = endpoint_pb2_grpc.CommandServiceStub(channel)
+    stub = endpoint_pb2_grpc.CommandService_v1Stub(channel)
 
     # Send request
     response = stub.StatusStream(request)
@@ -94,7 +94,7 @@ def send_tx(tx, key_pair):
     proto_tx.ParseFromString(tmp)
 
     channel = grpc.insecure_channel('127.0.0.1:50051')
-    stub = endpoint_pb2_grpc.CommandServiceStub(channel)
+    stub = endpoint_pb2_grpc.CommandService_v1Stub(channel)
 
     stub.Torii(proto_tx)
 
@@ -112,7 +112,7 @@ def send_query(query, key_pair):
     proto_query.ParseFromString(tmp)
 
     channel = grpc.insecure_channel('127.0.0.1:50051')
-    query_stub = endpoint_pb2_grpc.QueryServiceStub(channel)
+    query_stub = endpoint_pb2_grpc.QueryService_v1Stub(channel)
     query_response = query_stub.Find(proto_query)
 
     return query_response

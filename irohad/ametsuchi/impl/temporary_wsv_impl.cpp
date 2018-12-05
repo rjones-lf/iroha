@@ -9,15 +9,19 @@
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/commands/command.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "interfaces/transaction.hpp"
 
 namespace iroha {
   namespace ametsuchi {
     TemporaryWsvImpl::TemporaryWsvImpl(
         std::unique_ptr<soci::session> sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        std::shared_ptr<shared_model::interface::PermissionToString>
+            perm_converter)
         : sql_(std::move(sql)),
-          command_executor_(std::make_unique<PostgresCommandExecutor>(*sql_)),
+          command_executor_(std::make_unique<PostgresCommandExecutor>(
+              *sql_, std::move(perm_converter))),
           log_(logger::log("TemporaryWSV")) {
       *sql_ << "BEGIN";
     }
@@ -54,25 +58,23 @@ namespace iroha {
             soci::use(boost::size(keys_range), "signatures_count"),
             soci::use(transaction.creatorAccountId(), "account_id");
       } catch (const std::exception &e) {
-        log_->error(
-            "Transaction %s failed signatures validation with db error: %s",
-            transaction.toString(),
-            e.what());
+        auto error_str = "Transaction " + transaction.toString()
+            + " failed signatures validation with db error: " + e.what();
         // TODO [IR-1816] Akvinikym 29.10.18: substitute error code magic number
         // with named constant
-        return expected::makeError(
-            validation::CommandError{"signatures validation", 1, false});
+        return expected::makeError(validation::CommandError{
+            "signatures validation", 1, error_str, false});
       }
 
       if (signatories_valid and *signatories_valid) {
         return {};
       } else {
-        log_->error("Transaction %s failed signatures validation",
-                    transaction.toString());
+        auto error_str = "Transaction " + transaction.toString()
+            + " failed signatures validation";
         // TODO [IR-1816] Akvinikym 29.10.18: substitute error code magic number
         // with named constant
-        return expected::makeError(
-            validation::CommandError{"signatures validation", 2, false});
+        return expected::makeError(validation::CommandError{
+            "signatures validation", 2, error_str, false});
       }
     }
 
@@ -105,6 +107,7 @@ namespace iroha {
                          [i, &cmd_error](expected::Error<CommandError> &error) {
                            cmd_error = {error.error.command_name,
                                         error.error.error_code,
+                                        error.error.error_extra,
                                         true,
                                         i};
                            return false;

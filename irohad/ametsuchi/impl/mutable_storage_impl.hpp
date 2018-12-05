@@ -18,6 +18,7 @@
 namespace iroha {
   namespace ametsuchi {
     class BlockIndex;
+    class PostgresCommandExecutor;
 
     class MutableStorageImpl : public MutableStorage {
       friend class StorageImpl;
@@ -25,6 +26,7 @@ namespace iroha {
      public:
       MutableStorageImpl(
           shared_model::interface::types::HashType top_hash,
+          std::shared_ptr<PostgresCommandExecutor> cmd_executor,
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory);

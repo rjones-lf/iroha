@@ -16,6 +16,7 @@
  */
 
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
+#include "cryptography/hash.hpp"
 
 namespace shared_model {
   namespace proto {

@@ -75,7 +75,7 @@ namespace torii {
     void swap(CommandSyncClient &lhs, CommandSyncClient &rhs);
     std::string ip_;
     size_t port_;
-    std::unique_ptr<iroha::protocol::CommandService::Stub> stub_;
+    std::unique_ptr<iroha::protocol::CommandService_v1::Stub> stub_;
     logger::Logger log_;
   };
 

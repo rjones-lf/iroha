@@ -7,6 +7,7 @@
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/signatories_response.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;

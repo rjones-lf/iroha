@@ -128,7 +128,7 @@ TEST(OnDemandCache, Remove) {
    */
   ASSERT_THAT(cache.head(), UnorderedElementsAre(batch1, batch2, batch3));
 
-  cache.remove({batch2, batch3});
+  cache.remove({hash2, hash3});
   /**
    * 1. {batch1}
    * 2.

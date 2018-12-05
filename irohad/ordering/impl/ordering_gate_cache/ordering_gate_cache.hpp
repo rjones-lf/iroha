@@ -12,7 +12,6 @@
 
 namespace shared_model {
   namespace interface {
-
     class TransactionBatch;
   }
 }  // namespace shared_model
@@ -45,24 +44,24 @@ namespace iroha {
             std::shared_ptr<shared_model::interface::TransactionBatch>,
             BatchPointerHasher>;
 
+        using HashesSetType =
+            std::unordered_set<shared_model::crypto::Hash,
+                               shared_model::crypto::Hash::Hasher>;
+
         /**
          * Concatenates batches from the tail of the queue with provided batches
-         * @param batches set of batches that are added to the queue
          */
         virtual void addToBack(const BatchesSetType &batches) = 0;
 
         /**
-         * Pops the head batches
-         * @return batches from the head
+         * Pops the head batches and returns them
          */
         virtual BatchesSetType pop() = 0;
 
         /**
-         * Remove provided batches from the head of the queue
-         * @param batches are the batches that are removed from the head of the
-         * queue
+         * Removes batches by provided hashes from the head of the queue
          */
-        virtual void remove(const BatchesSetType &batches) = 0;
+        virtual void remove(const HashesSetType &hashes) = 0;
 
         /**
          * Return the head batches

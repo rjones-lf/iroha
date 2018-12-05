@@ -7,6 +7,7 @@
 #define IROHA_APPLICATION_HPP
 
 #include "ametsuchi/impl/storage_impl.hpp"
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
@@ -49,7 +50,6 @@ namespace iroha {
 
 class Irohad {
  public:
-
   using RunResult = iroha::expected::Result<void, std::string>;
 
   /**
@@ -65,8 +65,8 @@ class Irohad {
    * @param proposal_delay - maximum waiting time util emitting new proposal
    * @param vote_delay - waiting time before sending vote to next peer
    * @param keypair - public and private keys for crypto signer
-   * @param opt_mst_gossip_params - parameters for Gossip MST propagation (optional).
-   * If not provided, disables mst processing support
+   * @param opt_mst_gossip_params - parameters for Gossip MST propagation
+   * (optional). If not provided, disables mst processing support
    *
    * TODO mboldyrev 03.11.2018 IR-1844 Refactor the constructor.
    */
@@ -133,6 +133,8 @@ class Irohad {
   virtual void initConsensusCache();
 
   virtual void initBlockLoader();
+
+  virtual void initPersistentCache();
 
   virtual void initConsensusGate();
 
@@ -208,6 +210,9 @@ class Irohad {
   // block loader
   std::shared_ptr<iroha::network::BlockLoader> block_loader;
 
+  // persistent cache
+  std::shared_ptr<iroha::ametsuchi::TxPresenceCache> persistent_cache;
+
   // consensus gate
   std::shared_ptr<iroha::network::ConsensusGate> consensus_gate;
 
@@ -222,6 +227,12 @@ class Irohad {
       shared_model::interface::Transaction,
       iroha::protocol::Transaction>>
       transaction_factory;
+
+  // query factory
+  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::Query,
+      iroha::protocol::Query>>
+      query_factory;
 
   // query response factory
   std::shared_ptr<shared_model::interface::QueryResponseFactory>

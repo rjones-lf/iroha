@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "network/impl/block_loader_impl.hpp"
@@ -32,40 +20,22 @@ using namespace shared_model::interface;
 
 namespace {
   const char *kPeerNotFound = "Cannot find peer";
-  const char *kTopBlockRetrieveFail = "Failed to retrieve top block";
   const char *kPeerRetrieveFail = "Failed to retrieve peers";
   const char *kPeerFindFail = "Failed to find requested peer";
 }  // namespace
 
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQueryFactory> peer_query_factory,
-    std::shared_ptr<BlockQueryFactory> block_query_factory,
     shared_model::proto::ProtoBlockFactory factory)
     : peer_query_factory_(std::move(peer_query_factory)),
-      block_query_factory_(std::move(block_query_factory)),
       block_factory_(std::move(factory)),
       log_(logger::log("BlockLoaderImpl")) {}
 
 rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
+    const shared_model::interface::types::HeightType height,
     const PublicKey &peer_pubkey) {
   return rxcpp::observable<>::create<std::shared_ptr<Block>>(
-      [this, peer_pubkey](auto subscriber) {
-        std::shared_ptr<Block> top_block;
-        block_query_factory_->createBlockQuery() |
-            [this, &top_block](const auto &block_query) {
-              block_query->getTopBlock().match(
-                  [&top_block](expected::Value<
-                               std::shared_ptr<shared_model::interface::Block>>
-                                   block) { top_block = block.value; },
-                  [this](const expected::Error<std::string> &error) {
-                    log_->error("{}: {}", kTopBlockRetrieveFail, error.error);
-                  });
-            };
-        if (not top_block) {
-          subscriber.on_completed();
-          return;
-        }
-
+      [this, height, &peer_pubkey](auto subscriber) {
         auto peer = this->findPeer(peer_pubkey);
         if (not peer) {
           log_->error(kPeerNotFound);
@@ -78,7 +48,7 @@ rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
         protocol::Block block;
 
         // request next block to our top
-        request.set_height(top_block->height() + 1);
+        request.set_height(height + 1);
 
         auto reader =
             this->getPeerStub(**peer).retrieveBlocks(&context, request);

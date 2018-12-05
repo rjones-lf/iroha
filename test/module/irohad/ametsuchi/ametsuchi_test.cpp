@@ -10,6 +10,7 @@
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "ametsuchi/mutable_storage.hpp"
+#include "ametsuchi/temporary_wsv.hpp"
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/result_fixture.hpp"
@@ -25,6 +26,15 @@ using namespace shared_model::interface::permissions;
 auto zero_string = std::string(32, '0');
 auto fake_hash = shared_model::crypto::Hash(zero_string);
 auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
+
+// Allows to print amount string in case of test failure
+namespace shared_model {
+  namespace interface {
+    void PrintTo(const Amount &amount, std::ostream *os) {
+      *os << amount.toString();
+    }
+  }  // namespace interface
+}  // namespace shared_model
 
 /**
  * Validate getAccountTransaction with given parameters
@@ -805,4 +815,166 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
 
   res = storage->getWsvQuery()->getDomain("test");
   EXPECT_TRUE(res);
+}
+
+class PreparedBlockTest : public AmetsuchiTest {
+ public:
+  PreparedBlockTest()
+      : key(shared_model::crypto::DefaultCryptoAlgorithmType::
+                generateKeypair()) {}
+
+  shared_model::proto::Transaction createAddAsset(const std::string &amount) {
+    return shared_model::proto::TransactionBuilder()
+        .creatorAccountId("admin@test")
+        .createdTime(iroha::time::now())
+        .quorum(1)
+        .addAssetQuantity("coin#test", amount)
+        .build()
+        .signAndAddSignature(key)
+        .finish();
+  }
+
+  shared_model::proto::Block createBlock(
+      std::initializer_list<shared_model::proto::Transaction> txs) {
+    return TestBlockBuilder()
+        .transactions(std::vector<shared_model::proto::Transaction>(txs))
+        .height(1)
+        .prevHash(shared_model::crypto::Sha3_256::makeHash(
+            shared_model::crypto::Blob("")))
+        .createdTime(iroha::time::now())
+        .build();
+  }
+
+  void SetUp() override {
+    AmetsuchiTest::SetUp();
+    genesis_tx =
+        clone(shared_model::proto::TransactionBuilder()
+                  .creatorAccountId("admin@test")
+                  .createdTime(iroha::time::now())
+                  .quorum(1)
+                  .createRole(default_role,
+                              {Role::kCreateDomain,
+                               Role::kCreateAccount,
+                               Role::kAddAssetQty,
+                               Role::kAddPeer,
+                               Role::kReceive,
+                               Role::kTransfer})
+                  .createDomain(default_domain, default_role)
+                  .createAccount("admin", "test", key.publicKey())
+                  .createAsset("coin", default_domain, 2)
+                  .addAssetQuantity("coin#test", base_balance.toStringRepr())
+                  .build()
+                  .signAndAddSignature(key)
+                  .finish());
+    genesis_block = clone(createBlock({*genesis_tx}));
+    initial_tx = clone(createAddAsset("5.00"));
+    apply(storage, *genesis_block);
+    using framework::expected::val;
+    temp_wsv = std::move(val(storage->createTemporaryWsv())->value);
+  }
+
+  shared_model::crypto::Keypair key;
+  std::string default_domain{"test"};
+  std::string default_role{"admin"};
+  std::unique_ptr<shared_model::proto::Transaction> genesis_tx;
+  std::unique_ptr<shared_model::proto::Transaction> initial_tx;
+  std::unique_ptr<shared_model::proto::Block> genesis_block;
+  std::unique_ptr<iroha::ametsuchi::TemporaryWsv> temp_wsv;
+  shared_model::interface::Amount base_balance{"5.00"};
+};
+
+/**
+ * @given TemporaryWSV with several transactions
+ * @when block is prepared for two phase commit
+ * @then state of the ledger remains unchanged
+ */
+TEST_F(PreparedBlockTest, PrepareBlockNoStateChanged) {
+  validateAccountAsset(storage->getWsvQuery(),
+                       "admin@test",
+                       "coin#test",
+                       shared_model::interface::Amount(base_balance));
+
+  auto result = temp_wsv->apply(*initial_tx);
+  ASSERT_FALSE(framework::expected::err(result));
+  storage->prepareBlock(std::move(temp_wsv));
+
+  // balance remains unchanged
+  validateAccountAsset(
+      storage->getWsvQuery(), "admin@test", "coin#test", base_balance);
+}
+
+/**
+ * @given Storage with prepared state
+ * @when prepared state is applied
+ * @then state of the ledger is changed
+ */
+TEST_F(PreparedBlockTest, CommitPreparedStateChanged) {
+  shared_model::interface::Amount added_amount{"5.00"};
+
+  auto block = createBlock({*initial_tx});
+
+  auto result = temp_wsv->apply(*initial_tx);
+  ASSERT_FALSE(framework::expected::err(result));
+  storage->prepareBlock(std::move(temp_wsv));
+
+  auto commited = storage->commitPrepared(block);
+
+  EXPECT_TRUE(commited);
+
+  shared_model::interface::Amount resultingAmount("10.00");
+
+  validateAccountAsset(
+      storage->getWsvQuery(), "admin@test", "coin#test", resultingAmount);
+}
+
+/**
+ * @given Storage with prepared state
+ * @when another block is applied
+ * @then state of the ledger is changed to that of the applied block
+ * and not of the prepared state
+ */
+TEST_F(PreparedBlockTest, PrepareBlockCommitDifferentBlock) {
+  // tx which actually gets commited
+  auto other_tx = createAddAsset("10.00");
+
+  auto block = createBlock({other_tx});
+
+  auto result = temp_wsv->apply(*initial_tx);
+  ASSERT_TRUE(framework::expected::val(result));
+  storage->prepareBlock(std::move(temp_wsv));
+
+  apply(storage, block);
+
+  shared_model::interface::Amount resultingBalance{"15.00"};
+  validateAccountAsset(
+      storage->getWsvQuery(), "admin@test", "coin#test", resultingBalance);
+}
+
+/**
+ * @given Storage with prepared state
+ * @when another block is applied
+ * @then commitPrepared fails @and prepared state is not applied
+ */
+TEST_F(PreparedBlockTest, CommitPreparedFailsAfterCommit) {
+  // tx which we prepare
+  auto tx = createAddAsset("5.00");
+
+  // tx which actually gets commited
+  auto other_tx = createAddAsset("10.00");
+
+  auto block = createBlock({other_tx});
+
+  auto result = temp_wsv->apply(*initial_tx);
+  ASSERT_FALSE(framework::expected::err(result));
+  storage->prepareBlock(std::move(temp_wsv));
+
+  apply(storage, block);
+
+  auto commited = storage->commitPrepared(block);
+
+  ASSERT_FALSE(commited);
+
+  shared_model::interface::Amount resultingBalance{"15.00"};
+  validateAccountAsset(
+      storage->getWsvQuery(), "admin@test", "coin#test", resultingBalance);
 }
