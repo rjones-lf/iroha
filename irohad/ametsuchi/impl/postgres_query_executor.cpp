@@ -455,7 +455,7 @@ namespace iroha {
                                    uint64_t>;
       using PermissionTuple = boost::tuple<int>;
 
-      auto &pagination_info = q.paginationMeta();
+      const auto &pagination_info = q.paginationMeta();
       auto first_hash = pagination_info.firstTxHash();
       // retrieve one extra transaction to populate next_hash
       auto query_size = pagination_info.pageSize() + 1u;
@@ -563,7 +563,10 @@ namespace iroha {
                   QueryErrorType::kStatefulFailed, error);
             }
 
-            // next transaction exists
+            // if the number of returned transactions is equal to the
+            // page size + 1, it means that the last transaction is the
+            // first one in the next page and we need to return it as
+            // the next hash
             if (response_txs.size() == query_size) {
               auto next_hash = response_txs.back()->hash();
               response_txs.pop_back();

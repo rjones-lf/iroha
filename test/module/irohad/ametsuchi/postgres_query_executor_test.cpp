@@ -280,7 +280,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AccountResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::AccountResponse>(),
+            result->get());
         ASSERT_EQ(cast_resp.account().accountId(), account->accountId());
       }) << result->toString();
     }
@@ -298,7 +301,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AccountResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::AccountResponse>(),
+            result->get());
         ASSERT_EQ(cast_resp.account().accountId(), account2->accountId());
       }) << result->toString();
     }
@@ -317,7 +323,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AccountResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::AccountResponse>(),
+            result->get());
         ASSERT_EQ(cast_resp.account().accountId(), account2->accountId());
       }) << result->toString();
     }
@@ -335,8 +344,10 @@ namespace iroha {
                        .getAccount(another_account->accountId())
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<StatefulFailedErrorResponse>(result->get()))
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::StatefulFailedErrorResponse>(),
+          result->get()))
           << result->toString();
     }
 
@@ -352,7 +363,10 @@ namespace iroha {
                        .getAccount("some@domain")
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(checkForQueryError<NoAccountErrorResponse>(result->get()))
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::NoAccountErrorResponse>(),
+          result->get()))
           << result->toString();
     }
 
@@ -391,7 +405,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<SignatoriesResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::SignatoriesResponse>(),
+            result->get());
 
         ASSERT_EQ(cast_resp.keys().size(), 1);
       });
@@ -411,7 +428,11 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<SignatoriesResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::SignatoriesResponse>(),
+            result->get());
+
         ASSERT_EQ(cast_resp.keys().size(), 1);
       });
     }
@@ -430,7 +451,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<SignatoriesResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::SignatoriesResponse>(),
+            result->get());
 
         ASSERT_EQ(cast_resp.keys().size(), 1);
       });
@@ -449,8 +473,10 @@ namespace iroha {
                        .getSignatories(another_account->accountId())
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::StatefulFailedErrorResponse>(),
+          result->get()));
     }
 
     /**
@@ -466,8 +492,10 @@ namespace iroha {
                        .getSignatories("some@domain")
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<NoSignatoriesErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::NoSignatoriesErrorResponse>(),
+          result->get()));
     }
 
     class GetAccountAssetExecutorTest : public QueryExecutorTest {
@@ -530,7 +558,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AccountAssetResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::AccountAssetResponse>(),
+            result->get());
 
         ASSERT_EQ(cast_resp.accountAssets()[0].accountId(),
                   account->accountId());
@@ -551,7 +582,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AccountAssetResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::AccountAssetResponse>(),
+            result->get());
 
         ASSERT_EQ(cast_resp.accountAssets()[0].accountId(),
                   account2->accountId());
@@ -572,7 +606,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AccountAssetResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::AccountAssetResponse>(),
+            result->get());
 
         ASSERT_EQ(cast_resp.accountAssets()[0].accountId(),
                   account2->accountId());
@@ -592,8 +629,10 @@ namespace iroha {
                        .getAccountAssets(another_account->accountId())
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::StatefulFailedErrorResponse>(),
+          result->get()));
     }
 
     /**
@@ -608,8 +647,10 @@ namespace iroha {
                        .getAccountAssets("some@domain")
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<NoAccountAssetsErrorResponse>(result->get()))
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::NoAccountAssetsErrorResponse>(),
+          result->get()))
           << result->toString();
     }
 
@@ -678,7 +719,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AccountDetailResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::AccountDetailResponse>(),
+            result->get());
 
         ASSERT_EQ(cast_resp.detail(), "{}");
       });
@@ -697,7 +741,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AccountDetailResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::AccountDetailResponse>(),
+            result->get());
 
         ASSERT_EQ(cast_resp.detail(), account2->jsonData());
       });
@@ -717,7 +764,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AccountDetailResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::AccountDetailResponse>(),
+            result->get());
 
         ASSERT_EQ(cast_resp.detail(), account2->jsonData());
       });
@@ -736,8 +786,10 @@ namespace iroha {
                        .getAccountDetail(another_account->accountId())
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::StatefulFailedErrorResponse>(),
+          result->get()));
     }
 
     /**
@@ -752,8 +804,10 @@ namespace iroha {
                        .getAccountDetail("some@domain")
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<NoAccountDetailErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::NoAccountDetailErrorResponse>(),
+          result->get()));
     }
 
     /**
@@ -771,7 +825,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AccountDetailResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::AccountDetailResponse>(),
+            result->get());
 
         ASSERT_EQ(cast_resp.detail(),
                   R"({ "id@domain" : {"key" : "value"}, )"
@@ -794,7 +851,10 @@ namespace iroha {
               .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AccountDetailResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::AccountDetailResponse>(),
+            result->get());
 
         ASSERT_EQ(cast_resp.detail(),
                   R"({"id@domain" : {"key": "value", "key2": "value2"}})");
@@ -818,7 +878,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AccountDetailResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::AccountDetailResponse>(),
+            result->get());
 
         ASSERT_EQ(cast_resp.detail(), R"({"id@domain" : {"key" : "value"}})");
       });
@@ -844,7 +907,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<RolesResponse>(result->get());
+        const auto &cast_resp =
+            boost::apply_visitor(framework::SpecifiedVisitor<
+                                     shared_model::interface::RolesResponse>(),
+                                 result->get());
 
         ASSERT_EQ(cast_resp.roles().size(), 2);
         ASSERT_EQ(cast_resp.roles()[0], "role");
@@ -863,8 +929,10 @@ namespace iroha {
                        .getRoles()
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::StatefulFailedErrorResponse>(),
+          result->get()));
     }
 
     class GetRolePermsExecutorTest : public QueryExecutorTest {
@@ -887,7 +955,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<RolePermissionsResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::RolePermissionsResponse>(),
+            result->get());
 
         ASSERT_TRUE(cast_resp.rolePermissions().test(
             shared_model::interface::permissions::Role::kGetRoles));
@@ -907,7 +978,10 @@ namespace iroha {
                        .getRolePermissions("some")
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(checkForQueryError<NoRolesErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::NoRolesErrorResponse>(),
+          result->get()));
     }
 
     /**
@@ -921,8 +995,10 @@ namespace iroha {
                        .getRolePermissions("role")
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::StatefulFailedErrorResponse>(),
+          result->get()));
     }
 
     class GetAssetInfoExecutorTest : public QueryExecutorTest {
@@ -954,7 +1030,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<AssetResponse>(result->get());
+        const auto &cast_resp =
+            boost::apply_visitor(framework::SpecifiedVisitor<
+                                     shared_model::interface::AssetResponse>(),
+                                 result->get());
 
         ASSERT_EQ(cast_resp.asset().assetId(), asset_id);
         ASSERT_EQ(cast_resp.asset().domainId(), domain->domainId());
@@ -974,7 +1053,10 @@ namespace iroha {
                        .getAssetInfo("some#domain")
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(checkForQueryError<NoAssetErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::NoAssetErrorResponse>(),
+          result->get()));
     }
 
     /**
@@ -988,8 +1070,10 @@ namespace iroha {
                        .getAssetInfo(asset_id)
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::StatefulFailedErrorResponse>(),
+          result->get()));
     }
 
     class GetTransactionsExecutorTest : public QueryExecutorTest {
@@ -1236,8 +1320,10 @@ namespace iroha {
               .getAccountTransactions(another_account->accountId(), kTxPageSize)
               .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::StatefulFailedErrorResponse>(),
+          result->get()));
     }
 
     /**
@@ -1253,8 +1339,10 @@ namespace iroha {
                        .getAccountTransactions("some@domain", kTxPageSize)
                        .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::StatefulFailedErrorResponse>(),
+          result->get()));
     }
 
     /**
@@ -1453,7 +1541,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::TransactionsResponse>(),
+            result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 1);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash3);
       });
@@ -1480,7 +1571,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::TransactionsResponse>(),
+            result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash1);
         ASSERT_EQ(cast_resp.transactions()[1].hash(), hash2);
@@ -1507,7 +1601,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::TransactionsResponse>(),
+            result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
         ASSERT_EQ(cast_resp.transactions()[1].hash(), hash3);
@@ -1531,7 +1628,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::TransactionsResponse>(),
+            result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
         ASSERT_EQ(cast_resp.transactions()[1].hash(), hash3);
@@ -1556,7 +1656,10 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       ASSERT_NO_THROW({
-        const auto &cast_resp = getRef<TransactionsResponse>(result->get());
+        const auto &cast_resp = boost::apply_visitor(
+            framework::SpecifiedVisitor<
+                shared_model::interface::TransactionsResponse>(),
+            result->get());
         ASSERT_EQ(cast_resp.transactions().size(), 2);
         ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
         ASSERT_EQ(cast_resp.transactions()[1].hash(), hash3);
@@ -1578,8 +1681,10 @@ namespace iroha {
               .getAccountTransactions(another_account->accountId(), kTxPageSize)
               .build();
       auto result = executeQuery(query);
-      ASSERT_TRUE(
-          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
+      ASSERT_TRUE(boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<
+              shared_model::interface::StatefulFailedErrorResponse>(),
+          result->get()));
     }
 
     /**
