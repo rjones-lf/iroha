@@ -39,7 +39,7 @@ namespace iroha {
               proposal_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           size_t number_of_proposals = 3,
-          const consensus::Round &initial_round = {2, 1});
+          const consensus::Round &initial_round = {2, 0});
 
       // --------------------- | OnDemandOrderingService |_---------------------
 

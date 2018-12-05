@@ -72,15 +72,16 @@ namespace iroha {
       /**
        * Handle an incoming proposal from ordering service
        */
-      std::unique_ptr<shared_model::interface::Proposal> processProposalRequest(
+      boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+      processProposalRequest(
           boost::optional<OnDemandOrderingService::ProposalType> &&proposal)
           const;
 
       /**
        * remove already processed transactions from proposal
        */
-      std::unique_ptr<shared_model::interface::Proposal> removeReplays(
-          shared_model::interface::Proposal &&proposal) const;
+      boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+      removeReplays(shared_model::interface::Proposal &&proposal) const;
 
       logger::Logger log_;
       std::shared_ptr<OnDemandOrderingService> ordering_service_;

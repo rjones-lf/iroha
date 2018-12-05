@@ -12,6 +12,7 @@
 #include "consensus/round.hpp"
 #include "consensus/yac/storage/yac_common.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "simulator/block_creator_common.hpp"
 #include "utils/string_builder.hpp"
 
 namespace shared_model {
@@ -92,12 +93,10 @@ namespace iroha {
       class YacHashProvider {
        public:
         /**
-         * Make hash from block
-         * @param block - for hashing
-         * @return hashed value of block
+         * Make hash from block creator event
          */
         virtual YacHash makeHash(
-            const shared_model::interface::Block &block) const = 0;
+            const simulator::BlockCreatorEvent &event) const = 0;
 
         /**
          * Convert YacHash to model hash

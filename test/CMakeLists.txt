@@ -9,8 +9,7 @@ add_subdirectory(module)
 add_subdirectory(framework)
 add_subdirectory(integration)
 add_subdirectory(regression)
-# TODO andrei 01.11.18 IR-1825 Refactor ordering gate observable with optional
-#add_subdirectory(system)
+add_subdirectory(system)
 
 if(BENCHMARKING)
   add_subdirectory(benchmark)

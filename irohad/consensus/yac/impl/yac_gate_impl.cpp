@@ -14,7 +14,7 @@
 #include "consensus/yac/yac_peer_orderer.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/signature.hpp"
-#include "network/block_loader.hpp"
+#include "interfaces/iroha_internal/block.hpp"
 #include "simulator/block_creator.hpp"
 
 namespace iroha {
@@ -39,26 +39,15 @@ namespace iroha {
       }
 
       void YacGateImpl::vote(const simulator::BlockCreatorEvent &event) {
-        boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
-            proposal;
-        boost::optional<std::shared_ptr<shared_model::interface::Block>> block;
-        if (event.round_data) {
-          proposal = event.round_data->proposal;
-          block = event.round_data->block;
-        }
-        Round round = event.round;
-        // TODO IR-1717: uncomment
-        bool is_none = /*not proposal or */ not block;
-        if (is_none) {
+        current_hash_ = hash_provider_->makeHash(event);
+
+        if (not event.round_data) {
           current_block_ = boost::none;
-          current_hash_ = {};
-          current_hash_.vote_round = round;
           log_->debug("Agreed on nothing to commit");
         } else {
-          current_block_ = block.value();
-          // TODO IR-1717: uncomment
-          current_hash_ = hash_provider_->makeHash(
-              *current_block_.value() /*, *proposal, round*/);
+          current_block_ = event.round_data->block;
+          // insert the block we voted for to the consensus cache
+          consensus_result_cache_->insert(event.round_data->block);
           log_->info("vote for (proposal: {}, block: {})",
                      current_hash_.vote_hashes.proposal_hash,
                      current_hash_.vote_hashes.block_hash);
@@ -71,11 +60,6 @@ namespace iroha {
         }
 
         hash_gate_->vote(current_hash_, *order);
-
-        // insert the block we voted for to the consensus cache
-        if (not is_none) {
-          consensus_result_cache_->insert(block.value());
-        }
       }
 
       rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::onOutcome() {
@@ -103,7 +87,7 @@ namespace iroha {
         const auto hash = getHash(msg.votes).value();
         if (hash.vote_hashes.proposal_hash.empty()) {
           // if consensus agreed on nothing for commit
-          log_->debug("Consensus skipped round, voted for nothing");
+          log_->info("Consensus skipped round, voted for nothing");
           return rxcpp::observable<>::just<GateObject>(
               AgreementOnNone{current_hash_.vote_round});
         } else if (hash == current_hash_) {

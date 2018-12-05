@@ -263,10 +263,7 @@ namespace integration_framework {
                          ->getPeerCommunicationService()
                          ->onProposal();
 
-    proposals
-        .filter([](const auto &event) {
-          return boost::size(getProposalUnsafe(event)->transactions()) != 0;
-        })
+    proposals.filter([](const auto &event) { return event.proposal; })
         .subscribe([this](const auto &event) {
           proposal_queue_.push(getProposalUnsafe(event));
           log_->info("proposal");
@@ -275,7 +272,7 @@ namespace integration_framework {
 
     auto proposal_flat_map =
         [](auto t) -> rxcpp::observable<std::tuple_element_t<0, decltype(t)>> {
-      if (boost::size(getProposalUnsafe(std::get<1>(t))->transactions()) != 0) {
+      if (std::get<1>(t).proposal) {
         return rxcpp::observable<>::just(std::get<0>(t));
       }
       return rxcpp::observable<>::empty<std::tuple_element_t<0, decltype(t)>>();

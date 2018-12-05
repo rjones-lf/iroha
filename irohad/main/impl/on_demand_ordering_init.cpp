@@ -6,6 +6,7 @@
 #include "main/impl/on_demand_ordering_init.hpp"
 
 #include "common/bind.hpp"
+#include "common/delay.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/peer.hpp"
@@ -171,38 +172,62 @@ namespace iroha {
             proposal_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
         consensus::Round initial_round) {
+      auto delay = [reject_counter = static_cast<uint64_t>(0),
+                    local_counter =
+                        static_cast<uint64_t>(0)](const auto &commit) mutable {
+        using iroha::synchronizer::SynchronizationOutcomeType;
+        if (commit.sync_outcome == SynchronizationOutcomeType::kReject
+            or commit.sync_outcome == SynchronizationOutcomeType::kNothing) {
+          if (local_counter++ == 2) {
+            local_counter = 0;
+            if (reject_counter < std::numeric_limits<uint64_t>::max()) {
+              reject_counter++;
+            }
+          }
+        } else {
+          reject_counter = 0;
+        }
+        return std::chrono::seconds(reject_counter);
+      };
+
+      auto map = [](auto commit) {
+        return matchEvent(
+            commit,
+            [](const auto &commit)
+                -> ordering::OnDemandOrderingGate::BlockRoundEventType {
+              ordering::cache::OrderingGateCache::HashesSetType hashes;
+              commit.synced_blocks.as_blocking().subscribe(
+                  [&hashes](const auto &block) {
+                    const auto &committed = block->transactions();
+                    std::transform(committed.begin(),
+                                   committed.end(),
+                                   std::inserter(hashes, hashes.end()),
+                                   [](const auto &transaction) {
+                                     return transaction.hash();
+                                   });
+                    const auto &rejected =
+                        block->rejected_transactions_hashes();
+                    std::copy(rejected.begin(),
+                              rejected.end(),
+                              std::inserter(hashes, hashes.end()));
+                  });
+              return ordering::OnDemandOrderingGate::BlockEvent{commit.round,
+                                                                hashes};
+            },
+            [](const auto &)
+                -> ordering::OnDemandOrderingGate::BlockRoundEventType {
+              return ordering::OnDemandOrderingGate::EmptyEvent{};
+            });
+      };
+
       return std::make_shared<ordering::OnDemandOrderingGate>(
           std::move(ordering_service),
           std::move(network_client),
-          notifier.get_observable().map([](auto commit) {
-            return matchEvent(
-                commit,
-                [](const auto &commit)
-                    -> ordering::OnDemandOrderingGate::BlockRoundEventType {
-                  ordering::cache::OrderingGateCache::HashesSetType hashes;
-                  commit.synced_blocks.as_blocking().subscribe(
-                      [&hashes](const auto &block) {
-                        const auto &committed = block->transactions();
-                        std::transform(committed.begin(),
-                                       committed.end(),
-                                       std::inserter(hashes, hashes.end()),
-                                       [](const auto &transaction) {
-                                         return transaction.hash();
-                                       });
-                        const auto &rejected =
-                            block->rejected_transactions_hashes();
-                        std::copy(rejected.begin(),
-                                  rejected.end(),
-                                  std::inserter(hashes, hashes.end()));
-                      });
-                  return ordering::OnDemandOrderingGate::BlockEvent{
-                      commit.round, hashes};
-                },
-                [](const auto &)
-                    -> ordering::OnDemandOrderingGate::BlockRoundEventType {
-                  return ordering::OnDemandOrderingGate::EmptyEvent{};
-                });
-          }),
+          notifier.get_observable()
+              .lift<iroha::synchronizer::SynchronizationEvent>(
+                  iroha::makeDelay<iroha::synchronizer::SynchronizationEvent>(
+                      delay, rxcpp::identity_current_thread()))
+              .map(map),
           std::move(cache),
           std::move(proposal_factory),
           std::move(tx_cache),
@@ -237,7 +262,8 @@ namespace iroha {
             proposal_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
         consensus::Round initial_round) {
-      auto ordering_service = createService(max_size, proposal_factory, tx_cache);
+      auto ordering_service =
+          createService(max_size, proposal_factory, tx_cache);
       service = std::make_shared<ordering::transport::OnDemandOsServerGrpc>(
           ordering_service,
           std::move(transaction_factory),

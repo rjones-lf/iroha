@@ -60,19 +60,11 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         ordering_service_->onCollaborationOutcome(current_round_);
 
         // request proposal for the current round
-        auto proposal = network_client_->onRequestProposal(current_round_)
-                            .value_or_eval([&] {
-                              return proposal_factory_->unsafeCreateProposal(
-                                  current_round_.block_round,
-                                  current_round_.reject_round,
-                                  {});
-                            });
-
-        std::shared_ptr<shared_model::interface::Proposal> final_proposal =
-            this->processProposalRequest(std::move(proposal));
+        auto proposal = this->processProposalRequest(
+            network_client_->onRequestProposal(current_round_));
         // vote for the object received from the network
         proposal_notifier_.get_subscriber().on_next(
-            network::OrderingEvent{final_proposal, current_round_});
+            network::OrderingEvent{proposal, current_round_});
       })),
       cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),
@@ -98,21 +90,20 @@ void OnDemandOrderingGate::setPcs(
       "Method is deprecated. PCS observable should be set in ctor");
 }
 
-std::unique_ptr<shared_model::interface::Proposal>
+boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
 OnDemandOrderingGate::processProposalRequest(
     boost::optional<OnDemandOrderingService::ProposalType> &&proposal) const {
   if (not proposal) {
-    return proposal_factory_->unsafeCreateProposal(
-        current_round_.block_round, current_round_.reject_round, {});
+    return boost::none;
   }
   // no need to check empty proposal
   if (boost::empty(proposal.value()->transactions())) {
-    return std::move(proposal.value());
+    return boost::none;
   }
   return removeReplays(std::move(**std::move(proposal)));
 }
 
-std::unique_ptr<shared_model::interface::Proposal>
+boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
 OnDemandOrderingGate::removeReplays(
     shared_model::interface::Proposal &&proposal) const {
   auto tx_is_not_processed = [this](const auto &tx) {
@@ -135,6 +126,13 @@ OnDemandOrderingGate::removeReplays(
   auto unprocessed_txs =
       boost::adaptors::filter(proposal.transactions(), tx_is_not_processed);
 
-  return proposal_factory_->unsafeCreateProposal(
+  auto result = proposal_factory_->unsafeCreateProposal(
       proposal.height(), proposal.createdTime(), unprocessed_txs);
+
+  if (boost::empty(result->transactions())) {
+    return boost::none;
+  }
+
+  return boost::make_optional<
+      std::shared_ptr<shared_model::interface::Proposal>>(std::move(result));
 }

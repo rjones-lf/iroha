@@ -14,7 +14,7 @@ namespace iroha {
       class YacHashProviderImpl : public YacHashProvider {
        public:
         YacHash makeHash(
-            const shared_model::interface::Block &block) const override;
+            const simulator::BlockCreatorEvent &event) const override;
 
         shared_model::interface::types::HashType toModelHash(
             const YacHash &hash) const override;
@@ -22,4 +22,5 @@ namespace iroha {
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
+
 #endif  // IROHA_YAC_HASH_PROVIDER_IMPL_HPP

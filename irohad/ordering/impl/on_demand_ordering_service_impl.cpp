@@ -81,6 +81,7 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
                        return request_reject_round == reject_round
                            or (request_reject_round >= 2 and reject_round >= 2);
                      });
+        // add log
   }
   std::for_each(unprocessed_batches.begin(),
                 unprocessed_batches.end(),
