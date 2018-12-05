@@ -34,8 +34,7 @@ namespace shared_model {
       }
 
      private:
-      const interface::types::PubkeyType public_key_{
-          interface::types::PubkeyType(proto_->peer_key())};
+      const interface::types::PubkeyType public_key_{proto_->peer_key()};
     };
   }  // namespace proto
 }  // namespace shared_model

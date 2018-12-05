@@ -35,9 +35,9 @@ namespace shared_model {
       }
 
      private:
-      const PublicKeyType public_key_{PublicKeyType(proto_->public_key())};
+      const PublicKeyType public_key_{proto_->public_key()};
 
-      const SignedType signed_{SignedType(proto_->signature())};
+      const SignedType signed_{proto_->signature()};
     };
   }  // namespace proto
 }  // namespace shared_model

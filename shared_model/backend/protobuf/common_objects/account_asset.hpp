@@ -40,7 +40,7 @@ namespace shared_model {
       }
 
      private:
-      const interface::Amount balance_{interface::Amount(proto_->balance())};
+      const interface::Amount balance_{proto_->balance()};
     };
   }  // namespace proto
 }  // namespace shared_model
