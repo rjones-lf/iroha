@@ -12,7 +12,7 @@ namespace shared_model {
     AddPeer::AddPeer(CommandType &&command)
         : CopyableProto(std::forward<CommandType>(command)),
           add_peer_{proto_->add_peer()},
-          peer_{proto::Peer(add_peer_.peer())} {}
+          peer_{add_peer_.peer()} {}
 
     template AddPeer::AddPeer(AddPeer::TransportType &);
     template AddPeer::AddPeer(const AddPeer::TransportType &);

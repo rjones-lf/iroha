@@ -12,7 +12,7 @@ namespace shared_model {
     CreateAccount::CreateAccount(CommandType &&command)
         : CopyableProto(std::forward<CommandType>(command)),
           create_account_{proto_->create_account()},
-          pubkey_{interface::types::PubkeyType(create_account_.public_key())} {}
+          pubkey_{create_account_.public_key()} {}
 
     template CreateAccount::CreateAccount(CreateAccount::TransportType &);
     template CreateAccount::CreateAccount(const CreateAccount::TransportType &);
