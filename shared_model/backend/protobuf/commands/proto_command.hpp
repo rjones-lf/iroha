@@ -16,11 +16,9 @@ namespace shared_model {
      public:
       using TransportType = iroha::protocol::Command;
 
-      Command(const Command &o);
       Command(Command &&o) noexcept;
 
-      explicit Command(const TransportType &ref);
-      explicit Command(TransportType &&ref);
+      explicit Command(TransportType &ref);
 
       ~Command() override;
 
