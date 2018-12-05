@@ -4,6 +4,7 @@
  */
 
 #include "backend/protobuf/query_responses/proto_role_permissions_response.hpp"
+
 #include <boost/range/numeric.hpp>
 #include "backend/protobuf/permissions.hpp"
 #include "utils/string_builder.hpp"
@@ -16,17 +17,14 @@ namespace shared_model {
         QueryResponseType &&queryResponse)
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
           rolePermissionsResponse_{proto_->role_permissions_response()},
-          rolePermissions_{[this] {
-            return boost::accumulate(
-                rolePermissionsResponse_.permissions(),
-                interface::RolePermissionSet{},
-                [](auto &&permissions, const auto &permission) {
-                  permissions.set(permissions::fromTransport(
-                      static_cast<iroha::protocol::RolePermission>(
-                          permission)));
-                  return std::forward<decltype(permissions)>(permissions);
-                });
-          }} {}
+          rolePermissions_{boost::accumulate(
+              rolePermissionsResponse_.permissions(),
+              interface::RolePermissionSet{},
+              [](auto &&permissions, const auto &permission) {
+                permissions.set(permissions::fromTransport(
+                    static_cast<iroha::protocol::RolePermission>(permission)));
+                return std::forward<decltype(permissions)>(permissions);
+              })} {}
 
     template RolePermissionsResponse::RolePermissionsResponse(
         RolePermissionsResponse::TransportType &);
@@ -45,7 +43,7 @@ namespace shared_model {
 
     const interface::RolePermissionSet &
     RolePermissionsResponse::rolePermissions() const {
-      return *rolePermissions_;
+      return rolePermissions_;
     }
 
     std::string RolePermissionsResponse::toString() const {

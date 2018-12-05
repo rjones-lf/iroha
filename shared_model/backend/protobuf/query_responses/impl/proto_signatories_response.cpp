@@ -12,11 +12,9 @@ namespace shared_model {
     SignatoriesResponse::SignatoriesResponse(QueryResponseType &&queryResponse)
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
           signatoriesResponse_{proto_->signatories_response()},
-          keys_{[this] {
-            return interface::types::PublicKeyCollectionType(
-                signatoriesResponse_.keys().begin(),
-                signatoriesResponse_.keys().end());
-          }} {}
+          keys_{interface::types::PublicKeyCollectionType(
+              signatoriesResponse_.keys().begin(),
+              signatoriesResponse_.keys().end())} {}
 
     template SignatoriesResponse::SignatoriesResponse(
         SignatoriesResponse::TransportType &);
@@ -33,7 +31,7 @@ namespace shared_model {
 
     const interface::types::PublicKeyCollectionType &SignatoriesResponse::keys()
         const {
-      return *keys_;
+      return keys_;
     }
 
   }  // namespace proto
