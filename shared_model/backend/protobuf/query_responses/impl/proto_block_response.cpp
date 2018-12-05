@@ -12,7 +12,7 @@ namespace shared_model {
     BlockResponse::BlockResponse(QueryResponseType &&queryResponse)
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
           block_response_{proto_->block_response()},
-          block_{Block(block_response_.block())} {}
+          block_{block_response_.block()} {}
 
     template BlockResponse::BlockResponse(BlockResponse::TransportType &);
     template BlockResponse::BlockResponse(const BlockResponse::TransportType &);
