@@ -17,6 +17,7 @@
 
 #include <gflags/gflags.h>
 #include <rapidjson/istreamwrapper.h>
+#include <rapidjson/rapidjson.h>
 #include <boost/filesystem.hpp>
 #include <iostream>
 
@@ -133,7 +134,7 @@ int main(int argc, char *argv[]) {
         },
         [&logger](const auto &error) {
           // should not get here
-          logger->error("error while parsing serializing genesis block");
+          logger->error("error while serializing genesis block");
           std::exit(EXIT_FAILURE);
         });
   }
