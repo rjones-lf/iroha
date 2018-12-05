@@ -17,10 +17,10 @@
       chdir: "{{ playbook_dir }}/../../roles/iroha-k8s/files"
     loop: "{{ range(replicas|int)|list }}"
 
-  - name: Generate config.sample
+  - name: Generate config.docker
     template:
-      src: config.sample.j2
-      dest: "{{ playbook_dir }}/../../roles/iroha-k8s/files/conf/config.sample"
+      src: config.docker.j2
+      dest: "{{ playbook_dir }}/../../roles/iroha-k8s/files/conf/config.docker"
     delegate_to: localhost
 
   - name: Make genesis block file
