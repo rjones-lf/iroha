@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <grpc++/security/server_credentials.h>
@@ -68,7 +56,6 @@ class BlockLoaderTest : public testing::Test {
     validator = validator_ptr.get();
     loader = std::make_shared<BlockLoaderImpl>(
         peer_query_factory,
-        block_query_factory,
         shared_model::proto::ProtoBlockFactory(std::move(validator_ptr)));
     service =
         std::make_shared<BlockLoaderService>(block_query_factory, block_cache);
@@ -158,22 +145,21 @@ class BlockLoaderTest : public testing::Test {
 };
 
 /**
+ * Current block height 1 => Other block height 1 => no blocks received
  * @given empty storage, related block loader and base block
  * @when retrieveBlocks is called
  * @then nothing is returned
  */
 TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
-  // Current block height 1 => Other block height 1 => no blocks received
   auto block = getBaseBlockBuilder().build().signAndAddSignature(key).finish();
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getTopBlock())
-      .WillOnce(Return(iroha::expected::makeValue(wBlock(clone(block)))));
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
       .WillOnce(Return(std::vector<wBlock>()));
+
   auto wrapper = make_test_subscriber<CallExact>(
-      loader->retrieveBlocks(peer->pubkey()), 0);
+      loader->retrieveBlocks(1, peer->pubkey()), 0);
   wrapper.subscribe();
 
   ASSERT_TRUE(wrapper.validate());
@@ -203,12 +189,10 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getTopBlock())
-      .WillOnce(Return(iroha::expected::makeValue(wBlock(clone(block)))));
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
       .WillOnce(Return(std::vector<wBlock>{clone(top_block)}));
   auto wrapper =
-      make_test_subscriber<CallExact>(loader->retrieveBlocks(peer_key), 1);
+      make_test_subscriber<CallExact>(loader->retrieveBlocks(1, peer_key), 1);
   wrapper.subscribe(
       [&top_block](auto block) { ASSERT_EQ(*block.operator->(), top_block); });
 
@@ -245,11 +229,9 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getTopBlock())
-      .WillOnce(Return(iroha::expected::makeValue(wBlock(clone(block)))));
   EXPECT_CALL(*storage, getBlocksFrom(next_height)).WillOnce(Return(blocks));
   auto wrapper = make_test_subscriber<CallExact>(
-      loader->retrieveBlocks(peer_key), num_blocks);
+      loader->retrieveBlocks(1, peer_key), num_blocks);
   auto height = next_height;
   wrapper.subscribe(
       [&height](auto block) { ASSERT_EQ(block->height(), height++); });

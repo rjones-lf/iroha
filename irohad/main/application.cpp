@@ -322,7 +322,7 @@ void Irohad::initConsensusGate() {
  */
 void Irohad::initSynchronizer() {
   synchronizer = std::make_shared<SynchronizerImpl>(
-      consensus_gate, chain_validator, storage, block_loader);
+      consensus_gate, chain_validator, storage, storage, block_loader);
 
   log_->info("[Init] => synchronizer");
 }

@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_NETWORK_MOCKS_HPP
@@ -60,9 +48,10 @@ namespace iroha {
 
     class MockBlockLoader : public BlockLoader {
      public:
-      MOCK_METHOD1(
+      MOCK_METHOD2(
           retrieveBlocks,
           rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>(
+              const shared_model::interface::types::HeightType,
               const shared_model::crypto::PublicKey &));
       MOCK_METHOD2(
           retrieveBlock,
@@ -93,9 +82,7 @@ namespace iroha {
      public:
       MOCK_METHOD1(vote, void(std::shared_ptr<shared_model::interface::Block>));
 
-      MOCK_METHOD0(
-          on_commit,
-          rxcpp::observable<Commit>());
+      MOCK_METHOD0(on_commit, rxcpp::observable<Commit>());
     };
 
   }  // namespace network
