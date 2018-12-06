@@ -366,7 +366,8 @@ namespace iroha {
       ASSERT_TRUE(boost::apply_visitor(
           shared_model::interface::QueryErrorResponseChecker<
               shared_model::interface::NoAccountErrorResponse>(),
-          result->get()));
+          result->get()))
+          << result->toString();
     }
 
     class GetSignatoriesExecutorTest : public QueryExecutorTest {
@@ -431,6 +432,7 @@ namespace iroha {
             framework::SpecifiedVisitor<
                 shared_model::interface::SignatoriesResponse>(),
             result->get());
+
         ASSERT_EQ(cast_resp.keys().size(), 1);
       });
     }
