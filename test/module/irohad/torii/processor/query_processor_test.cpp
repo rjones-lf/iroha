@@ -148,7 +148,7 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
   auto block_number = 5;
   auto block_query = getBlocksQuery(kAccountId);
 
-  EXPECT_CALL(*qry_exec, validate(_)).WillOnce(Return(true));
+  EXPECT_CALL(*qry_exec, validate(_, _)).WillOnce(Return(true));
 
   auto wrapper = make_test_subscriber<CallExact>(
       qpi->blocksQueryHandle(block_query), block_number);
@@ -177,7 +177,7 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
 
   EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
       .WillRepeatedly(Return(signatories));
-  EXPECT_CALL(*qry_exec, validate(_)).WillOnce(Return(false));
+  EXPECT_CALL(*qry_exec, validate(_, _)).WillOnce(Return(false));
 
   auto wrapper =
       make_test_subscriber<CallExact>(qpi->blocksQueryHandle(block_query), 1);

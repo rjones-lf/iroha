@@ -333,8 +333,9 @@ namespace iroha {
           bool validate_signatories = true) override {
         return QueryExecutorResult(validateAndExecute_(q));
       }
-      MOCK_METHOD1(validate,
-                   bool(const shared_model::interface::BlocksQuery &));
+      MOCK_METHOD2(validate,
+                   bool(const shared_model::interface::BlocksQuery &,
+                        const bool validate_signatories));
     };
 
   }  // namespace ametsuchi

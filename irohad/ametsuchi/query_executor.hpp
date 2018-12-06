@@ -36,8 +36,8 @@ namespace iroha {
        * Perform BlocksQuery validation
        * @return true if valid, false otherwise
        */
-      virtual bool validate(
-          const shared_model::interface::BlocksQuery &query) = 0;
+      virtual bool validate(const shared_model::interface::BlocksQuery &query,
+                            const bool validate_signatories) = 0;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

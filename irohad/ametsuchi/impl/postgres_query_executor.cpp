@@ -229,8 +229,7 @@ namespace iroha {
     }
 
     template <class Q>
-    bool PostgresQueryExecutor::validateSignatures(
-        const Q &query) {
+    bool PostgresQueryExecutor::validateSignatures(const Q &query) {
       auto keys_range =
           query.signatures() | boost::adaptors::transformed([](const auto &s) {
             return s.publicKey().hex();
@@ -239,7 +238,7 @@ namespace iroha {
       if (boost::size(keys_range) != 1) {
         return false;
       }
-      std::string keys = *std::end(keys_range);
+      std::string keys = *std::begin(keys_range);
       // not using bool since it is not supported by SOCI
       boost::optional<uint8_t> signatories_valid;
 
@@ -300,9 +299,11 @@ namespace iroha {
     }
 
     bool PostgresQueryExecutor::validate(
-        const shared_model::interface::BlocksQuery &query) {
-      if (not validateSignatures(query)) {
+        const shared_model::interface::BlocksQuery &query,
+        const bool validate_signatories = true) {
+      if (validate_signatories and not validateSignatures(query)) {
         log_->error("query signatories did not pass validation");
+        return false;
       }
       using T = boost::tuple<int>;
       boost::format cmd(R"(%s)");

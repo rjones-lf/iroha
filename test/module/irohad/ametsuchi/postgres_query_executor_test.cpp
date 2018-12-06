@@ -202,7 +202,7 @@ namespace iroha {
       ASSERT_TRUE(query_executor->createQueryExecutor(pending_txs_storage,
                                                       query_response_factory)
                   | [&blocks_query](const auto &executor) {
-                      return executor->validate(blocks_query);
+                      return executor->validate(blocks_query, false);
                     });
     }
 
@@ -213,7 +213,7 @@ namespace iroha {
       ASSERT_FALSE(query_executor->createQueryExecutor(pending_txs_storage,
                                                        query_response_factory)
                    | [&blocks_query](const auto &executor) {
-                       return executor->validate(blocks_query);
+                       return executor->validate(blocks_query, false);
                      });
     }
 

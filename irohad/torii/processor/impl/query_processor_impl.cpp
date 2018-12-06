@@ -56,7 +56,7 @@ namespace iroha {
       auto exec = qry_exec_->createQueryExecutor(pending_transactions_,
                                                  response_factory_);
       if (not exec or not(exec | [&qry](const auto &executor) {
-            return executor->validate(qry);
+            return executor->validate(qry, true);
           })) {
         std::shared_ptr<shared_model::interface::BlockQueryResponse> response =
             response_factory_->createBlockQueryResponse("stateful invalid");
