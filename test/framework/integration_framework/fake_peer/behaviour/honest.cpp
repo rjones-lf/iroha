@@ -83,6 +83,12 @@ namespace integration_framework {
 
     void HonestBehaviour::processOrderingBatches(
         const BatchesForRound &batches_for_round) {
+      if (batches_for_round.batches.empty()) {
+        getLogger()->debug(
+            "Got an OnDemandOrderingService.SendBatches call, for {}, with "
+            "empty batches set. Ignoring it.");
+        return;
+      }
       auto &fake_peer = getFakePeer();
       auto proposal_storage = fake_peer.getProposalStorage();
       if (!proposal_storage) {
