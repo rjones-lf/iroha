@@ -1267,7 +1267,7 @@ namespace iroha {
           const boost::optional<types::HashType> &first_hash =
               boost::none) const {
         EXPECT_EQ(tx_page_response.allTransactionsSize(), tx_hashes_.size())
-            << "Wrong \"total transactions\" number.";
+            << "Wrong `total transactions' number.";
         auto resp_tx_hashes = tx_page_response.transactions()
             | boost::adaptors::transformed(
                                   [](const auto &tx) { return tx.hash(); });
@@ -1607,7 +1607,7 @@ namespace iroha {
       this->createTransactionsAndCommit(3);
       auto size = 2;
       char unknown_hash_string[kHashLength];
-      std::strcpy(unknown_hash_string, zero_string.data());
+      zero_string.copy(unknown_hash_string, kHashLength);
       std::strcpy(unknown_hash_string, "no such hash!");
       auto query_response =
           this->queryPage(size, types::HashType(unknown_hash_string));
