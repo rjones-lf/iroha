@@ -342,6 +342,119 @@ namespace iroha {
       return make_error_response(error);
     }
 
+    template <typename Query, typename QueryApplier, typename... Permissions>
+    QueryExecutorResult PostgresQueryExecutorVisitor::executeTransactionsQuery(
+        const Query &q,
+        const std::string &related_txs,
+        QueryApplier applier,
+        Permissions... perms) {
+      using QueryTuple = QueryType<shared_model::interface::types::HeightType,
+                                   uint64_t,
+                                   uint64_t>;
+      using PermissionTuple = boost::tuple<int>;
+      const auto &pagination_info = q.paginationMeta();
+      auto first_hash = pagination_info.firstTxHash();
+      // retrieve one extra transaction to populate next_hash
+      auto query_size = pagination_info.pageSize() + 1u;
+
+      auto base = boost::format(R"(WITH has_perms AS (%s),
+      my_txs AS (%s),
+      first_hash AS (%s),
+      previous_txes AS (
+        SELECT position_by_hash.height, position_by_hash.index
+        FROM position_by_hash JOIN first_hash
+        ON position_by_hash.height > first_hash.height
+        OR (position_by_hash.height = first_hash.height AND
+            position_by_hash.index >= first_hash.index)
+      ),
+      total_size AS (
+        SELECT COUNT(*) FROM my_txs
+      ),
+      t AS (
+        SELECT my_txs.height, my_txs.index
+        FROM my_txs
+        JOIN previous_txes ON my_txs.height = previous_txes.height
+        AND my_txs.index = previous_txes.index
+        LIMIT :page_size
+      )
+      SELECT height, index, count, perm FROM t
+      RIGHT OUTER JOIN has_perms ON TRUE
+      JOIN total_size ON TRUE
+      )");
+
+      // select tx with specified hash
+      auto first_by_hash = R"(SELECT height, index FROM position_by_hash
+      WHERE hash = :hash LIMIT 1)";
+
+      // select first ever tx
+      auto first_tx = R"(SELECT height, index FROM position_by_hash
+      ORDER BY height, index ASC LIMIT 1)";
+
+      auto cmd = base % hasQueryPermission(creator_id_, q.accountId(), perms...)
+          % related_txs;
+      if (first_hash) {
+        cmd = base % first_by_hash;
+      } else {
+        cmd = base % first_tx;
+      }
+
+      auto query = cmd.str();
+
+      return executeQuery<QueryTuple, PermissionTuple>(
+          applier(query),
+          [&](auto range, auto &) {
+            uint64_t total_size = 0;
+            if (not boost::empty(range)) {
+              total_size = boost::get<2>(*range.begin());
+            }
+            std::map<uint64_t, std::vector<uint64_t>> index;
+            // unpack results to get map from block height to index of tx in
+            // a block
+            boost::for_each(range, [&index](auto t) {
+              apply(t, [&index](auto &height, auto &idx, auto &count) {
+                index[height].push_back(idx);
+              });
+            });
+
+            std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+                response_txs;
+            // get transactions corresponding to indexes
+            for (auto &block : index) {
+              auto txs = this->getTransactionsFromBlock(
+                  block.first,
+                  [&block](auto) { return block.second; },
+                  [](auto &) { return true; });
+              std::move(
+                  txs.begin(), txs.end(), std::back_inserter(response_txs));
+            }
+            // If 0 transactions are returned, we assume that hash is invalid.
+            // Since query with valid hash is guaranteed to return at least one
+            // transaction
+            if (first_hash and response_txs.empty()) {
+              auto error = (boost::format("invalid pagination hash: %s")
+                            % first_hash->hex())
+                               .str();
+              return this->logAndReturnErrorResponse(
+                  QueryErrorType::kStatefulFailed, error);
+            }
+
+            // if the number of returned transactions is equal to the
+            // page size + 1, it means that the last transaction is the
+            // first one in the next page and we need to return it as
+            // the next hash
+            if (response_txs.size() == query_size) {
+              auto next_hash = response_txs.back()->hash();
+              response_txs.pop_back();
+              return query_response_factory_->createTransactionsPageResponse(
+                  std::move(response_txs), next_hash, total_size, query_hash_);
+            }
+
+            return query_response_factory_->createTransactionsPageResponse(
+                std::move(response_txs), total_size, query_hash_);
+          },
+          notEnoughPermissionsResponse(perm_converter_, perms...));
+    }
+
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccount &q) {
       using QueryTuple =
@@ -448,116 +561,6 @@ namespace iroha {
                                        Role::kGetDomainSignatories));
     }
 
-    template <typename Query, typename QueryApplier, typename... Permissions>
-    QueryExecutorResult PostgresQueryExecutorVisitor::executeTransactionsQuery(
-        const Query &q,
-        const std::string &related_txs,
-        QueryApplier applier,
-        Permissions... perms) {
-      using QueryTuple = QueryType<shared_model::interface::types::HeightType,
-                                   uint64_t,
-                                   uint64_t>;
-      using PermissionTuple = boost::tuple<int>;
-      auto &pagination_info = q.paginationMeta();
-      auto first_hash = pagination_info.firstTxHash();
-      // retrieve one extra transaction to populate next_hash
-      auto query_size = pagination_info.pageSize() + 1u;
-
-      auto base = boost::format(R"(WITH has_perms AS (%s),
-      my_txs AS (%s),
-      first_hash AS (%s),
-      previous_txes AS (
-        SELECT position_by_hash.height, position_by_hash.index
-        FROM position_by_hash JOIN first_hash
-        ON position_by_hash.height > first_hash.height
-        OR (position_by_hash.height = first_hash.height AND
-            position_by_hash.index >= first_hash.index)
-      ),
-      total_size AS (
-        SELECT COUNT(*) FROM my_txs
-      ),
-      t AS (
-        SELECT my_txs.height, my_txs.index
-        FROM my_txs
-        JOIN previous_txes ON my_txs.height = previous_txes.height
-        AND my_txs.index = previous_txes.index
-        LIMIT :page_size
-      )
-      SELECT height, index, count, perm FROM t
-      RIGHT OUTER JOIN has_perms ON TRUE
-      JOIN total_size ON TRUE
-      )");
-
-      // select tx with specified hash
-      auto first_by_hash = R"(SELECT height, index FROM position_by_hash
-      WHERE hash = :hash LIMIT 1)";
-
-      // select first ever tx
-      auto first_tx = R"(SELECT height, index FROM position_by_hash
-      ORDER BY height, index ASC LIMIT 1)";
-
-      auto cmd = base % hasQueryPermission(creator_id_, q.accountId(), perms...)
-          % related_txs;
-      if (first_hash) {
-        cmd = base % first_by_hash;
-      } else {
-        cmd = base % first_tx;
-      }
-
-      auto query = cmd.str();
-
-      return executeQuery<QueryTuple, PermissionTuple>(
-          applier(query),
-          [&](auto range, auto &) {
-            uint64_t total_size = 0;
-            if (not boost::empty(range)) {
-              total_size = boost::get<2>(*range.begin());
-            }
-            std::map<uint64_t, std::vector<uint64_t>> index;
-            // unpack results to get map from block height to index of tx in
-            // a block
-            boost::for_each(range, [&index](auto t) {
-              apply(t, [&index](auto &height, auto &idx, auto &count) {
-                index[height].push_back(idx);
-              });
-            });
-
-            std::vector<std::unique_ptr<shared_model::interface::Transaction>>
-                response_txs;
-            // get transactions corresponding to indexes
-            for (auto &block : index) {
-              auto txs = this->getTransactionsFromBlock(
-                  block.first,
-                  [&block](auto) { return block.second; },
-                  [](auto &) { return true; });
-              std::move(
-                  txs.begin(), txs.end(), std::back_inserter(response_txs));
-            }
-            // If 0 transactions are returned, we assume that hash is invalid.
-            // Since query with valid hash is guaranteed to return at least one
-            // transaction
-            if (first_hash and response_txs.empty()) {
-              auto error = (boost::format("invalid pagination hash: %s")
-                            % first_hash->hex())
-                               .str();
-              return this->logAndReturnErrorResponse(
-                  QueryErrorType::kStatefulFailed, error);
-            }
-
-            // next transaction exists
-            if (response_txs.size() == query_size) {
-              auto next_hash = response_txs.back()->hash();
-              response_txs.pop_back();
-              return query_response_factory_->createTransactionsPageResponse(
-                  std::move(response_txs), next_hash, total_size, query_hash_);
-            }
-
-            return query_response_factory_->createTransactionsPageResponse(
-                std::move(response_txs), total_size, query_hash_);
-          },
-          notEnoughPermissionsResponse(perm_converter_, perms...));
-    }
-
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
         const shared_model::interface::GetAccountTransactions &q) {
       std::string related_txs = R"(SELECT DISTINCT height, index
@@ -565,7 +568,7 @@ namespace iroha {
       WHERE creator_id = :account_id
       ORDER BY height, index ASC)";
 
-      auto &pagination_info = q.paginationMeta();
+      const auto &pagination_info = q.paginationMeta();
       auto first_hash = pagination_info.firstTxHash();
       // retrieve one extra transaction to populate next_hash
       auto query_size = pagination_info.pageSize() + 1u;
@@ -664,7 +667,7 @@ namespace iroha {
           AND asset_id = :asset_id
           ORDER BY height, index ASC)";
 
-      auto &pagination_info = q.paginationMeta();
+      const auto &pagination_info = q.paginationMeta();
       auto first_hash = pagination_info.firstTxHash();
       // retrieve one extra transaction to populate next_hash
       auto query_size = pagination_info.pageSize() + 1u;
