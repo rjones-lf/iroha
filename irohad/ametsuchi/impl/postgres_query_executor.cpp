@@ -360,21 +360,15 @@ namespace iroha {
       auto base = boost::format(R"(WITH has_perms AS (%s),
       my_txs AS (%s),
       first_hash AS (%s),
-      previous_txes AS (
-        SELECT position_by_hash.height, position_by_hash.index
-        FROM position_by_hash JOIN first_hash
-        ON position_by_hash.height > first_hash.height
-        OR (position_by_hash.height = first_hash.height AND
-            position_by_hash.index >= first_hash.index)
-      ),
       total_size AS (
         SELECT COUNT(*) FROM my_txs
       ),
       t AS (
         SELECT my_txs.height, my_txs.index
-        FROM my_txs
-        JOIN previous_txes ON my_txs.height = previous_txes.height
-        AND my_txs.index = previous_txes.index
+        FROM my_txs JOIN
+        first_hash ON my_txs.height > first_hash.height
+        OR (my_txs.height = first_hash.height AND
+            my_txs.index >= first_hash.index)
         LIMIT :page_size
       )
       SELECT height, index, count, perm FROM t
