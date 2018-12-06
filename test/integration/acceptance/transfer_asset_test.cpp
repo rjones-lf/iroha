@@ -4,13 +4,13 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "acceptance_fixture.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
@@ -353,9 +353,9 @@ TEST_F(TransferAsset, BigPrecision) {
 
   auto check_balance = [](std::string account_id, std::string val) {
     return [a = std::move(account_id), v = val](auto &resp) {
-      auto &acc_ast = boost::apply_visitor(
-          framework::SpecifiedVisitor<interface::AccountAssetResponse>(),
-          resp.get());
+      auto &acc_ast =
+          boost::get<const shared_model::interface::AccountAssetResponse &>(
+              resp.get());
       for (auto &ast : acc_ast.accountAssets()) {
         if (ast.accountId() == a) {
           ASSERT_EQ(v, ast.balance().toStringRepr());

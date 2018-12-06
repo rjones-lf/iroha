@@ -4,9 +4,9 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
 #include "cryptography/hash.hpp"
-#include "framework/specified_visitor.hpp"
 
 using shared_model::proto::TransactionStatusBuilder;
 

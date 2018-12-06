@@ -7,11 +7,10 @@
 #define IROHA_GRANTABLE_PERMISSIONS_FIXTURE_HPP
 
 #include <gtest/gtest.h>
-
+#include <boost/variant.hpp>
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/query_responses/account_detail_response.hpp"
 #include "interfaces/query_responses/account_response.hpp"
@@ -212,10 +211,9 @@ class GrantablePermissionsFixture : public AcceptanceFixture {
     return [&signatory, quantity, is_contained](
                const shared_model::proto::QueryResponse &query_response) {
       ASSERT_NO_THROW({
-        const auto &resp = boost::apply_visitor(
-            framework::SpecifiedVisitor<
-                shared_model::interface::SignatoriesResponse>(),
-            query_response.get());
+        const auto &resp =
+            boost::get<const shared_model::interface::SignatoriesResponse &>(
+                query_response.get());
 
         ASSERT_EQ(resp.keys().size(), quantity);
         auto &keys = resp.keys();
@@ -237,10 +235,9 @@ class GrantablePermissionsFixture : public AcceptanceFixture {
     return [quorum_quantity](
                const shared_model::proto::QueryResponse &query_response) {
       ASSERT_NO_THROW({
-        const auto &resp = boost::apply_visitor(
-            framework::SpecifiedVisitor<
-                shared_model::interface::AccountResponse>(),
-            query_response.get());
+        const auto &resp =
+            boost::get<const shared_model::interface::AccountResponse &>(
+                query_response.get());
 
         ASSERT_EQ(resp.account().quorum(), quorum_quantity);
       });
@@ -258,10 +255,9 @@ class GrantablePermissionsFixture : public AcceptanceFixture {
     return [&key,
             &detail](const shared_model::proto::QueryResponse &query_response) {
       ASSERT_NO_THROW({
-        const auto &resp = boost::apply_visitor(
-            framework::SpecifiedVisitor<
-                shared_model::interface::AccountDetailResponse>(),
-            query_response.get());
+        const auto &resp =
+            boost::get<const shared_model::interface::AccountDetailResponse &>(
+                query_response.get());
         ASSERT_TRUE(resp.detail().find(key) != std::string::npos);
         ASSERT_TRUE(resp.detail().find(detail) != std::string::npos);
       });

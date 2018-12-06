@@ -6,9 +6,8 @@
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 
 #include <gtest/gtest.h>
-
+#include <boost/variant.hpp>
 #include "cryptography/hash.hpp"
-#include "framework/specified_visitor.hpp"
 
 using shared_model::proto::ProtoTxStatusFactory;
 
@@ -35,9 +34,8 @@ TEST(ProtoTransactionStatusFactoryTest, TestStatusType) {
   ASSERT_EQ(response->errorCode(), error_code);
 
   ASSERT_NO_THROW(
-      boost::apply_visitor(framework::SpecifiedVisitor<
-                               shared_model::interface::CommittedTxResponse>(),
-                           response->get()));
+      boost::get<const shared_model::interface::CommittedTxResponse &>(
+          response->get()));
 }
 
 /**

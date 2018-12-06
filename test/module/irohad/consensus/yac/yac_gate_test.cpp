@@ -10,7 +10,6 @@
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
-#include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
@@ -190,8 +189,8 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   EXPECT_CALL(*signature, publicKey())
       .WillRepeatedly(ReturnRefOfCopy(actual_pubkey));
 
-  message.hash = YacHash(
-      iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
+  message.hash =
+      YacHash(iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
   message.signature = signature;
   commit_message = CommitMessage({message});
   expected_commit = rxcpp::observable<>::just(Answer(commit_message));
@@ -353,8 +352,8 @@ TEST_F(YacGateTest, ProperCommitTypeWhenDifferentBlock) {
   EXPECT_CALL(*signature, publicKey())
       .WillRepeatedly(ReturnRefOfCopy(actual_pubkey));
 
-  message.hash = YacHash(
-      iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
+  message.hash =
+      YacHash(iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
   message.signature = signature;
   commit_message = CommitMessage({message});
   expected_commit = rxcpp::observable<>::just(Answer(commit_message));

@@ -4,10 +4,10 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 #include "interfaces/permissions.hpp"
@@ -255,15 +255,15 @@ TEST_F(BatchPipelineTest, InvalidAtomicBatch) {
       .sendTxAwait(
           createAndAddAssets(kSecondUserId, kAssetB, "1.0", kSecondUserKeypair),
           [](const auto &) {})
-      .sendTxSequence(transaction_sequence,
-                      [](const auto &statuses) {
-                        for (const auto &status : statuses) {
-                          EXPECT_NO_THROW(boost::apply_visitor(
-                              framework::SpecifiedVisitor<
-                                  interface::StatelessValidTxResponse>(),
-                              status.get()));
-                        }
-                      })
+      .sendTxSequence(
+          transaction_sequence,
+          [](const auto &statuses) {
+            for (const auto &status : statuses) {
+              EXPECT_NO_THROW(
+                  boost::get<const shared_model::interface::
+                                 StatelessValidTxResponse &>(status.get()));
+            }
+          })
       .checkStatus(batch_transactions[0]->hash(), CHECK_ENOUGH_SIGNATURES)
       .checkStatus(batch_transactions[0]->hash(), CHECK_STATELESS_VALID)
       .checkStatus(batch_transactions[1]->hash(), CHECK_ENOUGH_SIGNATURES)
