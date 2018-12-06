@@ -168,10 +168,10 @@ namespace iroha {
                         true)));
       }
 
+      // TODO [IR-1816] Akvinikym 06.12.18: remove these constants after
+      // introducing a uniform way to use them in code
       static constexpr shared_model::interface::ErrorQueryResponse::
           ErrorCodeType kNoStatefulError = 0;
-      static constexpr shared_model::interface::ErrorQueryResponse::
-          ErrorCodeType kInternalError = 1;
       static constexpr shared_model::interface::ErrorQueryResponse::
           ErrorCodeType kNoPermissions = 2;
 
