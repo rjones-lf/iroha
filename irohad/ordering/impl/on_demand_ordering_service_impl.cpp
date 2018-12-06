@@ -80,8 +80,11 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
                        return request_reject_round == reject_round
                            or (request_reject_round >= 2 and reject_round >= 2);
                      });
-    log_->info(
-        "Using round [{}, {}]", it->first.block_round, it->first.reject_round);
+    BOOST_ASSERT_MSG(it != current_proposals_.end(),
+                     "No place to store the batches!");
+    log_->debug("onBatches => collection will be inserted to [{}, {}]",
+                it->first.block_round,
+                it->first.reject_round);
   }
   std::for_each(unprocessed_batches.begin(),
                 unprocessed_batches.end(),
@@ -94,6 +97,10 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
   auto proposal = proposal_map_.find(round);
+  log_->debug("onRequestProposal, round[{}, {}], {}returning a proposal.",
+              round.block_round,
+              round.reject_round,
+              (proposal == proposal_map_.end()) ? "NOT " : "");
   if (proposal != proposal_map_.end()) {
     return clone(*proposal->second);
   } else {
