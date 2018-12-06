@@ -20,6 +20,7 @@ def developDockerManifestPush(dockerImageObj, environment) {
       withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
         manifest.manifestPush("${env.DOCKER_REGISTRY_BASENAME}:develop-build", login, password)
       }
+    }
     else {
       sh('echo [WARNING] Docker CLI does not support manifest management features. Manifest will not be updated')
     }

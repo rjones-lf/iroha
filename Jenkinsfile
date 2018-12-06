@@ -35,9 +35,7 @@ def build(Build build) {
         build.builder.postSteps.success.each {
           it()
         }
-      catch(e) {
-
-      }
+      } catch(Exception e) {
         if (currentBuild.currentResult == 'SUCCESS') {
 
         }
@@ -85,29 +83,47 @@ node ('master') {
     environmentList.add("${e.key}=${e.value}")
   }
 
+  // Load Scripts
   x64LinuxReleaseBuildScript = load '.jenkinsci/builders/x64-linux-release-build-steps.groovy'
   x64LinuxDebugBuildScript = load '.jenkinsci/builders/x64-linux-debug-build-steps.groovy'
+
+  // Define Workers
   x64LinuxWorker = new Worker(label: 'x86_64', cpusAvailable: 4)
   // def x64MacWorker = new Worker(label: 'mac', cpusAvailable: 4)
+
+  // Define all possible steps
   x64LinuxReleaseBuildSteps = [{x64LinuxReleaseBuildScript.buildSteps(
     x64LinuxWorker.cpusAvailable, 'gcc54', 'develop', false, environmentList)}]
   x64LinuxReleasePostSteps = new Builder.PostSteps(
     always: [{x64LinuxReleaseBuildScript.alwaysPostSteps(environmentList)}],
     success: [{x64LinuxReleaseBuildScript.successPostSteps(scmVars, environmentList)}])
-  x64LinuxReleaseBuilder = new Builder(buildSteps: x64LinuxReleaseBuildSteps, postSteps: x64LinuxReleasePostSteps)
 
-  x64LinuxDebugBuildSteps = x64LinuxDebugBuildScript.buildSteps(
-    parallelism=x64LinuxWorker.cpusAvailable, compilerVersion='gcc54', pushDockerTag=false, coverage=false,
-    testing=false, cppcheck=true, sonar=false, environment=environmentList)
-  x64LinuxDebugPostSteps = new x64LinuxDebugBuildSteps.PostSteps(
+  x64LinuxDebugBuildSteps = [{ x64LinuxDebugBuildScript.buildSteps(
+    parallelism=x64LinuxWorker.cpusAvailable,
+    compilerVersion='gcc54',
+    pushDockerTag=false,
+    coverage=false,
+    testing=false,
+    cppcheck=true,
+    sonar=false,
+    environment=environmentList)}]
+  x64LinuxDebugPostSteps = new Builder.PostSteps(
     always: [{x64LinuxDebugBuildScript.alwaysPostSteps(environmentList)}])
   //def x64MacReleaseBuildSteps = x64LinuxReleaseBuildScript.buildSteps(x64MacWorker.label, x64MacWorker.cpusAvailable)
 
+  // Define builders
+  x64LinuxReleaseBuilder = new Builder(buildSteps: x64LinuxReleaseBuildSteps, postSteps: x64LinuxReleasePostSteps)
   x64LinuxDebugBuilder = new Builder(buildSteps: x64LinuxDebugBuildSteps, postSteps: x64LinuxDebugPostSteps)
   //def x64MacBuilder = new Builder(buildSteps: x64MacReleaseBuildSteps)
 
+
+
+
+  // Define Build
   x64LinuxReleaseBuild = new Build(name: 'x86_64 Linux Release',
-    type: 'Release', builder: x64LinuxReleaseBuilder, worker: x64LinuxWorker)
+                                   type: 'Release',
+                                   builder: x64LinuxReleaseBuilder,
+                                   worker: x64LinuxWorker)
 
   // x64LinuxDebugBuild = new Build(name: 'x86_64 Linux Debug',
   //                                      type: 'Debug',
@@ -119,7 +135,7 @@ node ('master') {
   //                                    worker: x64MacWorker)
 
   tasks[x64LinuxReleaseBuild.name] = build(x64LinuxReleaseBuild)
-  tasks[x64LinuxDebugBuild.name] = build(x64LinuxDebugBuild)
+  //tasks[x64LinuxDebugBuild.name] = build(x64LinuxDebugBuild)
   //tasks[x64MacReleaseBuild.name] = { x64MacReleaseBuild.build() }
   cleanWs()
   parallel tasks
