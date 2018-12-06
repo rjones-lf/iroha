@@ -21,6 +21,7 @@
 #include "backend/protobuf/commands/proto_set_quorum.hpp"
 #include "backend/protobuf/commands/proto_subtract_asset_quantity.hpp"
 #include "backend/protobuf/commands/proto_transfer_asset.hpp"
+#include "logger/logger.hpp"
 #include "utils/variant_deserializer.hpp"
 
 namespace {
@@ -65,6 +66,8 @@ namespace shared_model {
       }()};
 
       CommandVariantType ivariant_{variant_};
+
+      logger::Logger log_{logger::log("ProtoCommand")};
     };
 
     Command::Command(Command &&o) noexcept = default;
@@ -80,7 +83,12 @@ namespace shared_model {
     }
 
     Command *Command::clone() const {
+      logError("tried to clone a proto command, which is uncloneable");
       std::terminate();
+    }
+
+    void Command::logError(const std::string &message) const {
+      impl_->log_->error(message);
     }
 
   }  // namespace proto
