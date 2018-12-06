@@ -98,15 +98,8 @@ node ('master') {
     always: [{x64LinuxReleaseBuildScript.alwaysPostSteps(environmentList)}],
     success: [{x64LinuxReleaseBuildScript.successPostSteps(scmVars, environmentList)}])
 
-  x64LinuxDebugBuildSteps = [{ x64LinuxDebugBuildScript.buildSteps(
-    parallelism=x64LinuxWorker.cpusAvailable,
-    compilerVersion='gcc54',
-    pushDockerTag=false,
-    coverage=false,
-    testing=false,
-    cppcheck=true,
-    sonar=false,
-    environment=environmentList)}]
+  x64LinuxDebugBuildSteps = [{x64LinuxDebugBuildScript.buildSteps(
+    x64LinuxWorker.cpusAvailable, 'gcc54', false, false, false, true, false, environmentList)}]
   x64LinuxDebugPostSteps = new Builder.PostSteps(
     always: [{x64LinuxDebugBuildScript.alwaysPostSteps(environmentList)}])
   //def x64MacReleaseBuildSteps = x64LinuxReleaseBuildScript.buildSteps(x64MacWorker.label, x64MacWorker.cpusAvailable)
@@ -124,18 +117,17 @@ node ('master') {
                                    type: 'Release',
                                    builder: x64LinuxReleaseBuilder,
                                    worker: x64LinuxWorker)
-
-  // x64LinuxDebugBuild = new Build(name: 'x86_64 Linux Debug',
-  //                                      type: 'Debug',
-  //                                      builder: x64LinuxDebugBuilder,
-  //                                      worker: x64LinuxWorker)
+  x64LinuxDebugBuild = new Build(name: 'x86_64 Linux Debug',
+                                    type: 'Debug',
+                                    builder: x64LinuxDebugBuilder,
+                                    worker: x64LinuxWorker)
   // def x64MacReleaseBuild = new Build(name: 'Mac Linux Release',
   //                                    type: 'Release',
   //                                    builder: x64MacBuilder,
   //                                    worker: x64MacWorker)
 
-  tasks[x64LinuxReleaseBuild.name] = build(x64LinuxReleaseBuild)
-  //tasks[x64LinuxDebugBuild.name] = build(x64LinuxDebugBuild)
+  //tasks[x64LinuxReleaseBuild.name] = build(x64LinuxReleaseBuild)
+  tasks[x64LinuxDebugBuild.name] = build(x64LinuxDebugBuild)
   //tasks[x64MacReleaseBuild.name] = { x64MacReleaseBuild.build() }
   cleanWs()
   parallel tasks
