@@ -239,7 +239,7 @@ namespace {
         shared_model::interface::RolePermissionSet({role}).toBitstring();
     const auto bits = shared_model::interface::RolePermissionSet::size();
     std::string query = (boost::format(R"(
-          SELECT COALESCE(bit_or(rp.role), '0'::bit(%1%))
+          SELECT COALESCE(bit_or(permission), '0'::bit(%1%))
           & '%2%' = '%2%' FROM role_has_permissions AS rp
               JOIN account_has_roles AS ar on ar.role_id = rp.role_id
               WHERE ar.account_id = %3%)")
@@ -267,26 +267,19 @@ namespace {
     return query;
   }
 
-  shared_model::interface::types::DomainIdType getDomainFromName(
-      const shared_model::interface::types::AccountIdType &account_id) {
-    // TODO 03.10.18 andrei: IR-1728 Move getDomainFromName to shared_model
-    std::vector<std::string> res;
-    boost::split(res, account_id, boost::is_any_of("@"));
-    return res.at(1);
-  }
-
   std::string checkAccountDomainRoleOrGlobalRolePermission(
-      shared_model::interface::permissions::Role domain_role,
       shared_model::interface::permissions::Role global_role,
+      shared_model::interface::permissions::Role domain_role,
       const shared_model::interface::types::AccountIdType &creator_id,
       const shared_model::interface::types::AccountIdType
           &id_with_target_domain) {
     std::string query = (boost::format(R"(WITH
-          has_global_role_perm AS (%s),
-          has_domain_role_perm AS (%s)
+          has_global_role_perm AS (%1%),
+          has_domain_role_perm AS (%2%)
           SELECT CASE
                            WHEN (SELECT * FROM has_global_role_perm) THEN true
-                           WHEN (%s = %s) THEN
+                           WHEN ((split_part(%3%, '@', 2) = split_part(%4%, '@', 2))
+                              OR (split_part(%3%, '@', 2) = split_part(%4%, '#', 2))) THEN
                                CASE
                                    WHEN (SELECT * FROM has_domain_role_perm) THEN true
                                    ELSE false
@@ -294,8 +287,7 @@ namespace {
                            ELSE false END
           )") % checkAccountRolePermission(global_role, creator_id)
                          % checkAccountRolePermission(domain_role, creator_id)
-                         % getDomainFromName(creator_id)
-                         % getDomainFromName(id_with_target_domain))
+                         % creator_id % id_with_target_domain)
                             .str();
     return query;
   }
