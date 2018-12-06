@@ -11,6 +11,18 @@
 
 namespace iroha {
 
+  /**
+   * This class is mostly the same as rxcpp::operators::delay,
+   * the only change is that it accepts a selector lambda which generates
+   * a duration based on observable value instead of a fixed duration
+   * Return an observable that emits each item emitted by the source observable
+   * after the specified delay
+   * Delay is generated with selector from the last received value
+   * @tparam T value type
+   * @tparam Selector the type of the transforming function
+   * which returns time interval
+   * @tparam Coordination the type of the scheduler
+   */
   template <class T, class Selector, class Coordination>
   struct delay {
     typedef rxcpp::util::decay_t<T> source_value_type;

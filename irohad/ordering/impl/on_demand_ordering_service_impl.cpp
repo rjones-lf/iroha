@@ -19,7 +19,6 @@
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
-#include "ordering/impl/on_demand_common.hpp"
 
 using namespace iroha::ordering;
 
@@ -81,7 +80,8 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
                        return request_reject_round == reject_round
                            or (request_reject_round >= 2 and reject_round >= 2);
                      });
-        // add log
+    log_->info(
+        "Using round [{}, {}]", it->first.block_round, it->first.reject_round);
   }
   std::for_each(unprocessed_batches.begin(),
                 unprocessed_batches.end(),

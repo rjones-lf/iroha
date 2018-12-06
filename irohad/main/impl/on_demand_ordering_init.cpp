@@ -172,22 +172,32 @@ namespace iroha {
             proposal_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
         consensus::Round initial_round) {
-      auto delay = [reject_counter = static_cast<uint64_t>(0),
-                    local_counter =
-                        static_cast<uint64_t>(0)](const auto &commit) mutable {
+      // TODO andrei 06.12.18 IR-75 Make counter and generator parametrizable
+      const uint64_t kCounter = 0, kMaxLocalCounter = 2;
+      auto time_generator = [](auto reject_counter) {
+        return std::chrono::seconds(reject_counter);
+      };
+      // reject_counter and local_counter are local mutable variables of lambda
+      auto delay = [reject_counter = kCounter,
+                    local_counter = kCounter,
+                    &time_generator,
+                    kMaxLocalCounter](const auto &commit) mutable {
         using iroha::synchronizer::SynchronizationOutcomeType;
         if (commit.sync_outcome == SynchronizationOutcomeType::kReject
             or commit.sync_outcome == SynchronizationOutcomeType::kNothing) {
-          if (local_counter++ == 2) {
+          // Increment reject_counter each local_counter calls of function
+          ++local_counter;
+          if (local_counter == kMaxLocalCounter) {
             local_counter = 0;
-            if (reject_counter < std::numeric_limits<uint64_t>::max()) {
+            if (reject_counter
+                < std::numeric_limits<decltype(reject_counter)>::max()) {
               reject_counter++;
             }
           }
         } else {
           reject_counter = 0;
         }
-        return std::chrono::seconds(reject_counter);
+        return time_generator(reject_counter);
       };
 
       auto map = [](auto commit) {
