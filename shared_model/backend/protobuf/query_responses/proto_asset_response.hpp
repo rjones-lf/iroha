@@ -28,7 +28,7 @@ namespace shared_model {
       const Asset &asset() const override;
 
      private:
-      const iroha::protocol::AssetResponse &assetResponse_;
+      const iroha::protocol::AssetResponse &asset_response_;
 
       const Asset asset_;
     };

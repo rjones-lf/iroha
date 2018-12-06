@@ -30,9 +30,9 @@ namespace shared_model {
       const AccountRolesIdType &roles() const override;
 
      private:
-      const iroha::protocol::AccountResponse &accountResponse_;
+      const iroha::protocol::AccountResponse &account_response_;
 
-      const AccountRolesIdType accountRoles_;
+      const AccountRolesIdType account_roles_;
 
       const shared_model::proto::Account account_;
     };

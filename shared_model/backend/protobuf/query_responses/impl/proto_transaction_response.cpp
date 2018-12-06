@@ -12,9 +12,9 @@ namespace shared_model {
     TransactionsResponse::TransactionsResponse(
         QueryResponseType &&queryResponse)
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-          transactionResponse_{proto_->transactions_response()},
-          transactions_{transactionResponse_.transactions().begin(),
-                        transactionResponse_.transactions().end()} {}
+          transaction_response_{proto_->transactions_response()},
+          transactions_{transaction_response_.transactions().begin(),
+                        transaction_response_.transactions().end()} {}
 
     template TransactionsResponse::TransactionsResponse(
         TransactionsResponse::TransportType &);

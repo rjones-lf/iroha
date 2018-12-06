@@ -28,7 +28,7 @@ namespace shared_model {
       const interface::types::PublicKeyCollectionType &keys() const override;
 
      private:
-      const iroha::protocol::SignatoriesResponse &signatoriesResponse_;
+      const iroha::protocol::SignatoriesResponse &signatories_response_;
 
       const interface::types::PublicKeyCollectionType keys_;
     };

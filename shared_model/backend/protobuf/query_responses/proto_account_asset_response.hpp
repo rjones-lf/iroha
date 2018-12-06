@@ -30,9 +30,9 @@ namespace shared_model {
           const override;
 
      private:
-      const iroha::protocol::AccountAssetResponse &accountAssetResponse_;
+      const iroha::protocol::AccountAssetResponse &account_asset_response_;
 
-      const std::vector<AccountAsset> accountAssets_;
+      const std::vector<AccountAsset> account_assets_;
     };
   }  // namespace proto
 }  // namespace shared_model

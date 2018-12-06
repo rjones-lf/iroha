@@ -29,9 +29,9 @@ namespace shared_model {
       std::string toString() const override;
 
      private:
-      const iroha::protocol::RolePermissionsResponse &rolePermissionsResponse_;
+      const iroha::protocol::RolePermissionsResponse &role_permissions_response_;
 
-      const interface::RolePermissionSet rolePermissions_;
+      const interface::RolePermissionSet role_permissions_;
     };
   }  // namespace proto
 }  // namespace shared_model

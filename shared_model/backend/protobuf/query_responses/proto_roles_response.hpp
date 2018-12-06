@@ -27,7 +27,7 @@ namespace shared_model {
       const RolesIdType &roles() const override;
 
      private:
-      const iroha::protocol::RolesResponse &rolesResponse_;
+      const iroha::protocol::RolesResponse &roles_response_;
 
       const RolesIdType roles_;
     };

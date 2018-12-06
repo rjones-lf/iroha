@@ -30,7 +30,7 @@ namespace shared_model {
           const override;
 
      private:
-      const iroha::protocol::TransactionsResponse &transactionResponse_;
+      const iroha::protocol::TransactionsResponse &transaction_response_;
 
       const std::vector<proto::Transaction> transactions_;
     };

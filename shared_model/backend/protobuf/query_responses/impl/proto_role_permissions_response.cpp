@@ -16,9 +16,9 @@ namespace shared_model {
     RolePermissionsResponse::RolePermissionsResponse(
         QueryResponseType &&queryResponse)
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-          rolePermissionsResponse_{proto_->role_permissions_response()},
-          rolePermissions_{boost::accumulate(
-              rolePermissionsResponse_.permissions(),
+          role_permissions_response_{proto_->role_permissions_response()},
+          role_permissions_{boost::accumulate(
+              role_permissions_response_.permissions(),
               interface::RolePermissionSet{},
               [](auto &&permissions, const auto &permission) {
                 permissions.set(permissions::fromTransport(
@@ -43,7 +43,7 @@ namespace shared_model {
 
     const interface::RolePermissionSet &
     RolePermissionsResponse::rolePermissions() const {
-      return rolePermissions_;
+      return role_permissions_;
     }
 
     std::string RolePermissionsResponse::toString() const {

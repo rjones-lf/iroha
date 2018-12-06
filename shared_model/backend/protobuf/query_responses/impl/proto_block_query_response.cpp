@@ -23,7 +23,7 @@ namespace shared_model {
                 template load<ProtoQueryResponseVariantType>(
                     std::forward<decltype(ar)>(ar), which);
           }()},
-          ivariant_{QueryResponseVariantType{variant_}} {}
+          ivariant_{variant_} {}
 
     template BlockQueryResponse::BlockQueryResponse(
         BlockQueryResponse::TransportType &);

@@ -13,15 +13,15 @@ namespace shared_model {
     template <typename QueryResponseType>
     AccountResponse::AccountResponse(QueryResponseType &&queryResponse)
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-          accountResponse_{proto_->account_response()},
-          accountRoles_{boost::accumulate(
-              accountResponse_.account_roles(),
+          account_response_{proto_->account_response()},
+          account_roles_{boost::accumulate(
+              account_response_.account_roles(),
               AccountRolesIdType{},
               [](auto &&roles, const auto &role) {
                 roles.push_back(interface::types::RoleIdType(role));
                 return std::move(roles);
               })},
-          account_{Account(accountResponse_.account())} {}
+          account_{account_response_.account()} {}
 
     template AccountResponse::AccountResponse(AccountResponse::TransportType &);
     template AccountResponse::AccountResponse(
@@ -40,7 +40,7 @@ namespace shared_model {
     }
 
     const AccountResponse::AccountRolesIdType &AccountResponse::roles() const {
-      return accountRoles_;
+      return account_roles_;
     }
 
   }  // namespace proto

@@ -13,8 +13,8 @@ namespace shared_model {
     template <typename QueryResponseType>
     RolesResponse::RolesResponse(QueryResponseType &&queryResponse)
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-          rolesResponse_{proto_->roles_response()},
-          roles_{boost::accumulate(rolesResponse_.roles(),
+          roles_response_{proto_->roles_response()},
+          roles_{boost::accumulate(roles_response_.roles(),
                                    RolesIdType{},
                                    [](auto &&roles, const auto &role) {
                                      roles.emplace_back(role);

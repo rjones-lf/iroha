@@ -11,9 +11,9 @@ namespace shared_model {
     template <typename QueryResponseType>
     SignatoriesResponse::SignatoriesResponse(QueryResponseType &&queryResponse)
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-          signatoriesResponse_{proto_->signatories_response()},
-          keys_{signatoriesResponse_.keys().begin(),
-                signatoriesResponse_.keys().end()} {}
+          signatories_response_{proto_->signatories_response()},
+          keys_{signatories_response_.keys().begin(),
+                signatories_response_.keys().end()} {}
 
     template SignatoriesResponse::SignatoriesResponse(
         SignatoriesResponse::TransportType &);
