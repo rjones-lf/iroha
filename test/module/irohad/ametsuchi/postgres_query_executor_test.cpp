@@ -168,6 +168,13 @@ namespace iroha {
                         true)));
       }
 
+      static constexpr shared_model::interface::ErrorQueryResponse::
+          ErrorCodeType kNoStatefulError = 0;
+      static constexpr shared_model::interface::ErrorQueryResponse::
+          ErrorCodeType kInternalError = 1;
+      static constexpr shared_model::interface::ErrorQueryResponse::
+          ErrorCodeType kNoPermissions = 2;
+
       /**
        * Check that query response meets defined requirements
        * @tparam ExpectedQueryResponseType - expected type of that query
@@ -305,7 +312,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.account().accountId(), account->accountId());
           });
     }
@@ -323,7 +330,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.account().accountId(), account2->accountId());
           });
     }
@@ -342,7 +349,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.account().accountId(), account2->accountId());
           });
     }
@@ -361,7 +368,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
-          std::move(result), 2);
+          std::move(result), kNoPermissions);
     }
 
     /**
@@ -377,7 +384,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::NoAccountErrorResponse>(
-          std::move(result), 0);
+          std::move(result), kNoStatefulError);
     }
 
     class GetSignatoriesExecutorTest : public QueryExecutorTest {
@@ -416,7 +423,7 @@ namespace iroha {
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::SignatoriesResponse>(
           std::move(result),
-          [](auto &&cast_resp) { ASSERT_EQ(cast_resp.keys().size(), 1); });
+          [](const auto &cast_resp) { ASSERT_EQ(cast_resp.keys().size(), 1); });
     }
 
     /**
@@ -434,7 +441,7 @@ namespace iroha {
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::SignatoriesResponse>(
           std::move(result),
-          [](auto &&cast_resp) { ASSERT_EQ(cast_resp.keys().size(), 1); });
+          [](const auto &cast_resp) { ASSERT_EQ(cast_resp.keys().size(), 1); });
     }
 
     /**
@@ -452,7 +459,7 @@ namespace iroha {
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::SignatoriesResponse>(
           std::move(result),
-          [](auto &&cast_resp) { ASSERT_EQ(cast_resp.keys().size(), 1); });
+          [](const auto &cast_resp) { ASSERT_EQ(cast_resp.keys().size(), 1); });
     }
 
     /**
@@ -469,7 +476,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
-          std::move(result), 2);
+          std::move(result), kNoPermissions);
     }
 
     /**
@@ -486,7 +493,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::NoSignatoriesErrorResponse>(
-          std::move(result), 0);
+          std::move(result), kNoStatefulError);
     }
 
     class GetAccountAssetExecutorTest : public QueryExecutorTest {
@@ -549,7 +556,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountAssetResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.accountAssets()[0].accountId(),
                       account->accountId());
             ASSERT_EQ(cast_resp.accountAssets()[0].assetId(), asset_id);
@@ -569,7 +576,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountAssetResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.accountAssets()[0].accountId(),
                       account2->accountId());
             ASSERT_EQ(cast_resp.accountAssets()[0].assetId(), asset_id);
@@ -589,7 +596,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountAssetResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.accountAssets()[0].accountId(),
                       account2->accountId());
             ASSERT_EQ(cast_resp.accountAssets()[0].assetId(), asset_id);
@@ -609,7 +616,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
-          std::move(result), 2);
+          std::move(result), kNoPermissions);
     }
 
     /**
@@ -625,7 +632,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::NoAccountAssetsErrorResponse>(
-          std::move(result), 0);
+          std::move(result), kNoStatefulError);
     }
 
     class GetAccountDetailExecutorTest : public QueryExecutorTest {
@@ -694,7 +701,7 @@ namespace iroha {
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountDetailResponse>(
           std::move(result),
-          [](auto &&cast_resp) { ASSERT_EQ(cast_resp.detail(), "{}"); });
+          [](const auto &cast_resp) { ASSERT_EQ(cast_resp.detail(), "{}"); });
     }
 
     /**
@@ -710,7 +717,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountDetailResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.detail(), account2->jsonData());
           });
     }
@@ -729,7 +736,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountDetailResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.detail(), account2->jsonData());
           });
     }
@@ -748,7 +755,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
-          std::move(result), 2);
+          std::move(result), kNoPermissions);
     }
 
     /**
@@ -764,7 +771,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::NoAccountDetailErrorResponse>(
-          std::move(result), 0);
+          std::move(result), kNoStatefulError);
     }
 
     /**
@@ -782,7 +789,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountDetailResponse>(
-          std::move(result), [](auto &&cast_resp) {
+          std::move(result), [](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.detail(),
                       R"({ "id@domain" : {"key" : "value"}, )"
                       R"("id2@domain" : {"key" : "value"} })");
@@ -804,7 +811,7 @@ namespace iroha {
               .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountDetailResponse>(
-          std::move(result), [](auto &&cast_resp) {
+          std::move(result), [](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.detail(),
                       R"({"id@domain" : {"key": "value", "key2": "value2"}})");
           });
@@ -827,7 +834,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountDetailResponse>(
-          std::move(result), [](auto &&cast_resp) {
+          std::move(result), [](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.detail(),
                       R"({"id@domain" : {"key" : "value"}})");
           });
@@ -853,7 +860,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::RolesResponse>(
-          std::move(result), [](auto &&cast_resp) {
+          std::move(result), [](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.roles().size(), 2);
             ASSERT_EQ(cast_resp.roles()[0], "role");
             ASSERT_EQ(cast_resp.roles()[1], "perms");
@@ -872,7 +879,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
-          std::move(result), 2);
+          std::move(result), kNoPermissions);
     }
 
     class GetRolePermsExecutorTest : public QueryExecutorTest {
@@ -895,7 +902,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::RolePermissionsResponse>(
-          std::move(result), [](auto &&cast_resp) {
+          std::move(result), [](const auto &cast_resp) {
             ASSERT_TRUE(cast_resp.rolePermissions().test(
                 shared_model::interface::permissions::Role::kGetRoles));
           });
@@ -915,7 +922,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::NoRolesErrorResponse>(
-          std::move(result), 0);
+          std::move(result), kNoStatefulError);
     }
 
     /**
@@ -930,7 +937,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
-          std::move(result), 2);
+          std::move(result), kNoPermissions);
     }
 
     class GetAssetInfoExecutorTest : public QueryExecutorTest {
@@ -962,7 +969,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AssetResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.asset().assetId(), asset_id);
             ASSERT_EQ(cast_resp.asset().domainId(), domain->domainId());
             ASSERT_EQ(cast_resp.asset().precision(), 1);
@@ -982,7 +989,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::NoAssetErrorResponse>(
-          std::move(result), 0);
+          std::move(result), kNoStatefulError);
     }
 
     /**
@@ -997,7 +1004,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
-          std::move(result), 2);
+          std::move(result), kNoPermissions);
     }
 
     class GetTransactionsExecutorTest : public QueryExecutorTest {
@@ -1138,7 +1145,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 3);
             for (const auto &tx : cast_resp.transactions()) {
               static size_t i = 0;
@@ -1165,7 +1172,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             for (const auto &tx : cast_resp.transactions()) {
               EXPECT_EQ(account2->accountId(), tx.creatorAccountId())
@@ -1190,7 +1197,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             for (const auto &tx : cast_resp.transactions()) {
               EXPECT_EQ(account2->accountId(), tx.creatorAccountId())
@@ -1212,7 +1219,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
-          std::move(result), 2);
+          std::move(result), kNoPermissions);
     }
 
     /**
@@ -1229,7 +1236,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
-          std::move(result), 2);
+          std::move(result), kNoStatefulError);
     }
 
     class GetTransactionsHashExecutorTest : public GetTransactionsExecutorTest {
@@ -1254,7 +1261,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 1);
             ASSERT_EQ(cast_resp.transactions()[0].hash(), hash3);
           });
@@ -1281,7 +1288,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             ASSERT_EQ(cast_resp.transactions()[0].hash(), hash1);
             ASSERT_EQ(cast_resp.transactions()[1].hash(), hash2);
@@ -1308,7 +1315,7 @@ namespace iroha {
               .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
             ASSERT_EQ(cast_resp.transactions()[1].hash(), hash3);
@@ -1332,7 +1339,7 @@ namespace iroha {
               .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
             ASSERT_EQ(cast_resp.transactions()[1].hash(), hash3);
@@ -1357,7 +1364,7 @@ namespace iroha {
               .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
-          std::move(result), [this](auto &&cast_resp) {
+          std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
             ASSERT_EQ(cast_resp.transactions()[1].hash(), hash3);
@@ -1379,7 +1386,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
-          std::move(result), 2);
+          std::move(result), kNoPermissions);
     }
 
     /**
