@@ -7,7 +7,6 @@
 #define QUERY_PERMISSION_TEST_BASE_HPP_
 
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/query_permission_fixture.hpp"
 #include "utils/query_error_response_visitor.hpp"
 

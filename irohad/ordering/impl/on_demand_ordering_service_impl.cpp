@@ -208,7 +208,7 @@ bool OnDemandOrderingServiceImpl::batchAlreadyProcessed(
   auto tx_statuses = tx_cache_->check(batch);
   if (not tx_statuses) {
     // TODO andrei 30.11.18 IR-51 Handle database error
-    log_->warn("Check tx presence database error. Batch: {}", batch.toString());
+    log_->warn("Check tx presence database error. Batch: {}", batch);
     return true;
   }
   // if any transaction is commited or rejected, batch was already processed

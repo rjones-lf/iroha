@@ -6,7 +6,6 @@
 #include <gmock/gmock.h>
 
 #include "backend/protobuf/block.hpp"
-#include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"

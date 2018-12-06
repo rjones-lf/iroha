@@ -21,7 +21,7 @@ class TransactionFixture : public ::testing::Test {
   logger::Logger log = logger::log("TransactionFixture");
 
   auto makeTx() {
-    log->info("keypair = {}, timestemp = {}", keypair.toString(), time);
+    log->info("keypair = {}, timestemp = {}", keypair, time);
     return std::make_shared<shared_model::proto::Transaction>(
         shared_model::proto::TransactionBuilder()
             .createdTime(time)

@@ -46,6 +46,8 @@ namespace shared_model {
 
       const ErrorMessageType &errorMessage() const override;
 
+      ErrorCodeType errorCode() const override;
+
      private:
       /// lazy variant shortcut
       template <typename T>
