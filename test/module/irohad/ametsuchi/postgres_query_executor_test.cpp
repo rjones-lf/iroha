@@ -1140,7 +1140,36 @@ namespace iroha {
     };
 
     class GetAccountTransactionsExecutorTest
-        : public GetTransactionsExecutorTest {};
+        : public GetTransactionsExecutorTest {
+     public:
+      // create valid transactions and commit them
+      std::vector<shared_model::proto::Transaction> createTransactionsAndCommit(
+          size_t size,
+          const shared_model::interface::types::AccountIdType &creator) {
+        std::vector<shared_model::proto::Transaction> txs;
+        txs.reserve(size);
+        for (size_t i = 0; i < size; i++) {
+          txs.push_back(TestTransactionBuilder()
+                            .creatorAccountId(account->accountId())
+                            .createRole("user" + std::to_string(i), {})
+                            .build());
+        }
+
+        auto block = TestBlockBuilder()
+                         .transactions(txs)
+                         .height(1)
+                         .prevHash(fake_hash)
+                         .build();
+
+        apply(storage, block);
+
+        return txs;
+      }
+
+      std::string zero_string{32, '0'};
+      shared_model::crypto::Hash fake_hash{zero_string};
+      shared_model::crypto::PublicKey fake_pubkey{zero_string};
+    };
 
     /**
      * @given initialized storage, permission to his/her account
@@ -1254,6 +1283,180 @@ namespace iroha {
       auto result = executeQuery(query);
       ASSERT_TRUE(
           checkForQueryError<StatefulFailedErrorResponse>(result->get()));
+    }
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains second transaction as a starting
+     * hash @and 2 transactions page size
+     * @then response contains exactly 2 transaction
+     * @and list of transactions starts from second transaction
+     * @and next transaction hash is not present
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, ValidPagination) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+
+      auto txs = createTransactionsAndCommit(3, account->accountId());
+
+      auto &hash = txs.at(1).hash();
+      auto size = 2;
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId(), size, hash)
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_NO_THROW({
+        const auto &resp = getRef<TransactionsPageResponse>(result->get());
+
+        EXPECT_EQ(resp.transactions().size(), size);
+        EXPECT_EQ(resp.transactions().begin()->hash(), hash);
+        EXPECT_FALSE(resp.nextTxHash());
+        for (const auto &tx : resp.transactions()) {
+          static size_t i = 1;
+          EXPECT_EQ(tx.hash(), txs[i].hash());
+          EXPECT_EQ(account->accountId(), tx.creatorAccountId())
+              << tx.toString() << " ~~ " << i;
+          i++;
+        }
+      });
+    }
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains 2 transactions page size without starting hash
+     * @then response contains exactly 2 transactions
+     * @and starts from the first one
+     * @and next transaction hash is equal to last committed transaction
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, ValidPaginationNoHash) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+
+      auto txs = createTransactionsAndCommit(3, account->accountId());
+
+      auto size = 2;
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId(), size)
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_NO_THROW({
+        const auto &resp = getRef<TransactionsPageResponse>(result->get());
+
+        EXPECT_EQ(resp.transactions().size(), size);
+        EXPECT_EQ(resp.transactions().begin()->hash(), txs[0].hash());
+        ASSERT_TRUE(resp.nextTxHash());
+        EXPECT_EQ(*resp.nextTxHash(), txs[2].hash());
+        for (const auto &tx : resp.transactions()) {
+          static size_t i = 0;
+          EXPECT_EQ(tx.hash(), txs[i].hash());
+          EXPECT_EQ(account->accountId(), tx.creatorAccountId())
+              << tx.toString() << " ~~ " << i;
+          i++;
+        }
+      });
+    }
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains 10 page size
+     * @then response contains only 3 committed transactions
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, PaginationPageBiggerThanTotal) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+
+      auto txs = createTransactionsAndCommit(3, account->accountId());
+
+      auto size = 10;
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId(), size)
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_NO_THROW({
+        const auto &resp = getRef<TransactionsPageResponse>(result->get());
+
+        EXPECT_EQ(resp.transactions().size(), 3);
+      });
+    }
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains non-existent starting hash
+     * @then error response is returned
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, InvalidHashInPagination) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+
+      createTransactionsAndCommit(3, account->accountId());
+
+      auto size = 2;
+
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account->accountId())
+              .getAccountTransactions(account->accountId(), size, fake_hash)
+              .build();
+      auto result = executeQuery(query);
+
+      ASSERT_TRUE(
+          checkForQueryError<StatefulFailedErrorResponse>(result->get()));
+    }
+
+    /**
+     * @given initialized storage, user has 5 transactions committed
+     * @when query contains 2 transactions page size
+     * @then total number of transactions equal to 5
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, PaginantionTotalTransactions) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+
+      auto total_txs = 5;
+      auto txs = createTransactionsAndCommit(total_txs, account->accountId());
+
+      auto size = 2;
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId(), size)
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_NO_THROW({
+        const auto &resp = getRef<TransactionsPageResponse>(result->get());
+        EXPECT_EQ(resp.allTransactionsSize(), total_txs);
+      });
+    }
+
+    /**
+     * @given initialized storage, user has no committed transactions
+     * @when query contains 2 transactions page size
+     * @then response does not contain any transactions
+     * @and total size is 0
+     * @and next hash is not present
+     */
+    TEST_F(GetAccountTransactionsExecutorTest, PaginationNoTransactions) {
+      addPerms({shared_model::interface::permissions::Role::kGetMyAccTxs});
+
+      auto txs = createTransactionsAndCommit(0, account->accountId());
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountTransactions(account->accountId(), 0)
+                       .build();
+      auto result = executeQuery(query);
+
+      ASSERT_NO_THROW({
+        const auto &resp = getRef<TransactionsPageResponse>(result->get());
+        EXPECT_EQ(boost::size(resp.transactions()), 0);
+        EXPECT_EQ(resp.allTransactionsSize(), 0);
+        EXPECT_FALSE(resp.nextTxHash());
+      });
     }
 
     /**
