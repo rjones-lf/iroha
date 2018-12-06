@@ -1261,7 +1261,7 @@ namespace iroha {
        * - next transaction hash in response is unset if the last transaction is
        * in the response, otherwise it matches the next target transaction hash
        */
-      void GeneralTransactionsPageResponseCheck(
+      void generalTransactionsPageResponseCheck(
           const TransactionsPageResponse &tx_page_response,
           types::TransactionsNumberType page_size,
           const boost::optional<types::HashType> &first_hash =
@@ -1560,7 +1560,7 @@ namespace iroha {
 
       EXPECT_EQ(tx_page_response.transactions().begin()->hash(), hash);
       EXPECT_FALSE(tx_page_response.nextTxHash());
-      this->GeneralTransactionsPageResponseCheck(tx_page_response, size, hash);
+      this->generalTransactionsPageResponseCheck(tx_page_response, size, hash);
     }
 
     /**
@@ -1580,7 +1580,7 @@ namespace iroha {
       EXPECT_EQ(tx_page_response.transactions().begin()->hash(),
                 this->tx_hashes_.at(0));
       ASSERT_TRUE(tx_page_response.nextTxHash());
-      this->GeneralTransactionsPageResponseCheck(tx_page_response, size);
+      this->generalTransactionsPageResponseCheck(tx_page_response, size);
     }
 
     /**
@@ -1595,7 +1595,7 @@ namespace iroha {
       auto query_response = this->queryPage(size);
       auto &tx_page_response = getTransactionsPageResponse(query_response);
 
-      this->GeneralTransactionsPageResponseCheck(tx_page_response, size);
+      this->generalTransactionsPageResponseCheck(tx_page_response, size);
     }
 
     /**
@@ -1629,7 +1629,7 @@ namespace iroha {
       auto query_response = this->queryPage(size);
       auto &tx_page_response = getTransactionsPageResponse(query_response);
 
-      this->GeneralTransactionsPageResponseCheck(tx_page_response, size);
+      this->generalTransactionsPageResponseCheck(tx_page_response, size);
     }
 
     // --------------------\ end of tx pagination tests /-------------------- //
