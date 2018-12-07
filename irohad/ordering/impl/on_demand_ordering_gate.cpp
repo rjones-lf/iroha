@@ -52,9 +52,12 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         auto batches = cache_->pop();
 
         cache_->addToBack(batches);
-        network_client_->onBatches(current_round_,
-                                   transport::OdOsNotification::CollectionType{
-                                       batches.begin(), batches.end()});
+        if (not batches.empty()) {
+          network_client_->onBatches(
+              current_round_,
+              transport::OdOsNotification::CollectionType{batches.begin(),
+                                                          batches.end()});
+        }
 
         // notify our ordering service about new round
         ordering_service_->onCollaborationOutcome(current_round_);

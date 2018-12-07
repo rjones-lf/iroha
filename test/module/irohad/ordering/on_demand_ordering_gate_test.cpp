@@ -280,7 +280,7 @@ TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
  * batch2 on the head
  * @then batch1 and batch2 are propagated to network
  */
-TEST_F(OnDemandOrderingGateTest, SendBatchesFromTheCache) {
+TEST_F(OnDemandOrderingGateTest, PopNonEmptyBatchesFromTheCache) {
   consensus::Round round{initial_round.block_round + 1,
                          initial_round.reject_round};
 
@@ -301,6 +301,26 @@ TEST_F(OnDemandOrderingGateTest, SendBatchesFromTheCache) {
   EXPECT_CALL(*notification,
               onBatches(round, UnorderedElementsAreArray(collection)))
       .Times(1);
+
+  rounds.get_subscriber().on_next(
+      OnDemandOrderingGate::BlockEvent{initial_round, {}});
+}
+
+/**
+ * @given initialized ordering gate
+ * @when block event with no batches is emitted @and cache contains no batches
+ * on the head
+ * @then nothing is propagated to the network
+ */
+TEST_F(OnDemandOrderingGateTest, PopEmptyBatchesFromTheCache) {
+  consensus::Round round{initial_round.block_round + 1,
+                         initial_round.reject_round};
+  cache::OrderingGateCache::BatchesSetType empty_collection{};
+
+  EXPECT_CALL(*cache, pop()).WillOnce(Return(empty_collection));
+  EXPECT_CALL(*cache, addToBack(UnorderedElementsAreArray(empty_collection)))
+      .Times(1);
+  EXPECT_CALL(*notification, onBatches(_, _)).Times(0);
 
   rounds.get_subscriber().on_next(
       OnDemandOrderingGate::BlockEvent{initial_round, {}});
