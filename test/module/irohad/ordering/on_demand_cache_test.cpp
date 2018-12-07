@@ -104,7 +104,8 @@ TEST(OnDemandCache, Pop) {
 
 /**
  * @given cache with batch1, batch2, and batch3 on the top
- * @when remove({batch2, batch3}) is invoked
+ * @when remove({hash1}) is invoked, where hash1 is the hash of transactions
+ * from batch1
  * @then only batch1 remains on the head of the queue
  */
 TEST(OnDemandCache, Remove) {
@@ -114,25 +115,28 @@ TEST(OnDemandCache, Remove) {
   shared_model::interface::types::HashType hash2("hash2");
   shared_model::interface::types::HashType hash3("hash3");
 
-  auto batch1 = createMockBatchWithHash(hash1);
-  auto batch2 = createMockBatchWithHash(hash2);
-  auto batch3 = createMockBatchWithHash(hash3);
+  auto tx1 = createMockTransactionWithHash(hash1);
+  auto tx2 = createMockTransactionWithHash(hash2);
+  auto tx3 = createMockTransactionWithHash(hash3);
 
-  cache.addToBack({batch1, batch2, batch3});
+  auto batch1 = createMockBatchWithTransactions({tx1, tx2});
+  auto batch2 = createMockBatchWithTransactions({tx3});
+
+  cache.addToBack({batch1, batch2});
   cache.pop();
   cache.pop();
   /**
-   * 1. {batch1, batch2, batch3}
+   * 1. {batch1, batch2}
    * 2.
    * 3.
    */
-  ASSERT_THAT(cache.head(), UnorderedElementsAre(batch1, batch2, batch3));
+  ASSERT_THAT(cache.head(), UnorderedElementsAre(batch1, batch2));
 
-  cache.remove({hash2, hash3});
+  cache.remove({hash1});
   /**
    * 1. {batch1}
    * 2.
    * 3.
    */
-  ASSERT_THAT(cache.head(), ElementsAre(batch1));
+  ASSERT_THAT(cache.head(), ElementsAre(batch2));
 }
