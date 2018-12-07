@@ -69,5 +69,4 @@ target_link_libraries(shared_model_proto_backend
     schema
     common
     shared_model_interfaces
-    logger
     )
