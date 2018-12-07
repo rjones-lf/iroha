@@ -405,7 +405,7 @@ namespace iroha {
             // unpack results to get map from block height to index of tx in
             // a block
             boost::for_each(range, [&index](auto t) {
-              apply(t, [&index](auto &height, auto &idx, auto &count) {
+              apply(t, [&index](auto &height, auto &idx, auto &) {
                 index[height].push_back(idx);
               });
             });
@@ -428,6 +428,8 @@ namespace iroha {
               auto error = (boost::format("invalid pagination hash: %s")
                             % first_hash->hex())
                                .str();
+              // TODO: IR-82 nickaleks 7.12.18
+              // add status code for invalid pagination
               return this->logAndReturnErrorResponse(
                   QueryErrorType::kStatefulFailed, error);
             }
