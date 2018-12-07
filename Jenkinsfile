@@ -65,6 +65,18 @@ def build(Build build) {
   }
 }
 
+properties([
+    parameters([
+        choice(choices: 'gcc54\ngcc54,gcc7,clang6', description: 'x64 Linux Compiler', name: 'x64linux_compiler'),
+        choice(choices: '\ngcc54\ngcc54,gcc7,clang6', description: 'x32 Linux Compiler', name: 'x32linux_compiler'),
+        choice(choices: '\nappleclang', description: 'MacOS Compiler', name: 'mac_compiler'),
+        choice(choices: '\nmsvc', description: 'Windows Compiler', name: 'windows_compiler'),
+    ]),
+    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
+])
+
+
+timestamps(){
 node ('master') {
   scmVars = checkout scm
   environmentList = []
@@ -98,8 +110,13 @@ node ('master') {
     always: [{x64LinuxReleaseBuildScript.alwaysPostSteps(environmentList)}],
     success: [{x64LinuxReleaseBuildScript.successPostSteps(scmVars, environmentList)}])
 
-  x64LinuxDebugBuildSteps = [{x64LinuxDebugBuildScript.buildSteps(
-    x64LinuxWorker.cpusAvailable, 'gcc54', false, false, false, true, false, environmentList)}]
+  x64LinuxDebugBuildSteps = []
+  for (compiler in params.x64linux_compiler.split(',')) {
+    if(compiler){
+      x64LinuxDebugBuildSteps += {x64LinuxDebugBuildScript.buildSteps(
+        x64LinuxWorker.cpusAvailable, compiler, false, false, false, true, false, environmentList)}
+    }
+  }
   x64LinuxDebugPostSteps = new Builder.PostSteps(
     always: [{x64LinuxDebugBuildScript.alwaysPostSteps(environmentList)}])
   //def x64MacReleaseBuildSteps = x64LinuxReleaseBuildScript.buildSteps(x64MacWorker.label, x64MacWorker.cpusAvailable)
@@ -139,4 +156,5 @@ node ('master') {
   //     }
   //   }
   // }
+}
 }
