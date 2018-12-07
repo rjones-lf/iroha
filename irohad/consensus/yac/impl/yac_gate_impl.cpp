@@ -33,12 +33,24 @@ namespace iroha {
             hash_provider_(std::move(hash_provider)),
             block_creator_(std::move(block_creator)),
             consensus_result_cache_(std::move(consensus_result_cache)),
-            log_(logger::log("YacGate")) {
+            log_(logger::log("YacGate")),
+            current_hash_() {
         block_creator_->onBlock().subscribe(
             [this](const auto &event) { this->vote(event); });
       }
 
       void YacGateImpl::vote(const simulator::BlockCreatorEvent &event) {
+        if (not(current_hash_.vote_round < event.round)) {
+          log_->info(
+              "Current round [{}, {}] is greater or equal than vote round [{}, "
+              "{}], skipped",
+              current_hash_.vote_round.block_round,
+              current_hash_.vote_round.reject_round,
+              event.round.block_round,
+              event.round.reject_round);
+          return;
+        }
+
         current_hash_ = hash_provider_->makeHash(event);
 
         if (not event.round_data) {
@@ -85,12 +97,18 @@ namespace iroha {
       rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::handleCommit(
           const CommitMessage &msg) {
         const auto hash = getHash(msg.votes).value();
-        if (hash.vote_hashes.proposal_hash.empty()) {
-          // if consensus agreed on nothing for commit
-          log_->info("Consensus skipped round, voted for nothing");
-          return rxcpp::observable<>::just<GateObject>(
-              AgreementOnNone{current_hash_.vote_round});
-        } else if (hash == current_hash_) {
+        if (hash.vote_round < current_hash_.vote_round) {
+          log_->info(
+              "Current round [{}, {}] is greater than commit round [{}, {}], "
+              "skipped",
+              current_hash_.vote_round.block_round,
+              current_hash_.vote_round.reject_round,
+              hash.vote_round.block_round,
+              hash.vote_round.reject_round);
+          return rxcpp::observable<>::empty<GateObject>();
+        }
+
+        if (hash == current_hash_ and current_block_) {
           // if node has voted for the committed block
           // append signatures of other nodes
           this->copySignatures(msg);
@@ -101,7 +119,19 @@ namespace iroha {
           return rxcpp::observable<>::just<GateObject>(
               PairValid{block, current_hash_.vote_round});
         }
+
+        current_hash_ = hash;
+
+        if (hash.vote_hashes.proposal_hash.empty()) {
+          // if consensus agreed on nothing for commit
+          log_->info("Consensus skipped round, voted for nothing");
+          current_block_ = boost::none;
+          return rxcpp::observable<>::just<GateObject>(
+              AgreementOnNone{current_hash_.vote_round});
+        }
+
         log_->info("Voted for another block, waiting for sync");
+        current_block_ = boost::none;
         auto public_keys = boost::copy_range<
             shared_model::interface::types::PublicKeyCollectionType>(
             msg.votes | boost::adaptors::transformed([](auto &vote) {
@@ -116,8 +146,26 @@ namespace iroha {
 
       rxcpp::observable<YacGateImpl::GateObject> YacGateImpl::handleReject(
           const RejectMessage &msg) {
-        const auto hash = getHash(msg.votes);
-        if (not hash) {
+        const auto hash = getHash(msg.votes).value();
+        if (hash.vote_round < current_hash_.vote_round) {
+          log_->info(
+              "Current round [{}, {}] is greater than reject round [{}, {}], "
+              "skipped",
+              current_hash_.vote_round.block_round,
+              current_hash_.vote_round.reject_round,
+              hash.vote_round.block_round,
+              hash.vote_round.reject_round);
+          return rxcpp::observable<>::empty<GateObject>();
+        }
+
+        auto has_same_proposals =
+            std::all_of(std::next(msg.votes.begin()),
+                        msg.votes.end(),
+                        [first = msg.votes.begin()](const auto &current) {
+                          return first->hash.vote_hashes.proposal_hash
+                              == current.hash.vote_hashes.proposal_hash;
+                        });
+        if (not has_same_proposals) {
           log_->info("Proposal reject since all hashes are different");
           return rxcpp::observable<>::just<GateObject>(
               ProposalReject{current_hash_.vote_round});

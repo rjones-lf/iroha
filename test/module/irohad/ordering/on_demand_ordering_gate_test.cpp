@@ -62,7 +62,8 @@ class OnDemandOrderingGateTest : public ::testing::Test {
 
   std::shared_ptr<cache::MockOrderingGateCache> cache;
 
-  const consensus::Round initial_round = {2, kFirstRejectRound};
+  const consensus::Round initial_round = {1, kFirstRejectRound},
+                         round = {2, kFirstRejectRound};
 };
 
 /**
@@ -88,9 +89,6 @@ TEST_F(OnDemandOrderingGateTest, propagateBatch) {
  * @then new proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, BlockEvent) {
-  consensus::Round event_round{3, kFirstRejectRound},
-      round{4, kFirstRejectRound};
-
   auto mproposal = std::make_unique<MockProposal>();
   auto proposal = mproposal.get();
   boost::optional<OdOsNotification::ProposalType> oproposal(
@@ -119,8 +117,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
     ASSERT_EQ(factory_proposal, getProposalUnsafe(val).get());
   });
 
-  rounds.get_subscriber().on_next(
-      OnDemandOrderingGate::BlockEvent{event_round, {}});
+  rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{round, {}});
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -132,9 +129,6 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
  * @then new proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
-  consensus::Round round{initial_round.block_round,
-                         initial_round.reject_round + 1};
-
   auto mproposal = std::make_unique<MockProposal>();
   auto proposal = mproposal.get();
   boost::optional<OdOsNotification::ProposalType> oproposal(
@@ -163,7 +157,7 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
     ASSERT_EQ(factory_proposal, getProposalUnsafe(val).get());
   });
 
-  rounds.get_subscriber().on_next(OnDemandOrderingGate::EmptyEvent{});
+  rounds.get_subscriber().on_next(OnDemandOrderingGate::EmptyEvent{round});
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -175,9 +169,6 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
  * @then new empty proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
-  consensus::Round event_round{3, kFirstRejectRound},
-      round{4, kFirstRejectRound};
-
   boost::optional<OdOsNotification::ProposalType> proposal;
 
   EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
@@ -188,8 +179,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
       make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
   gate_wrapper.subscribe([&](auto val) { ASSERT_FALSE(val.proposal); });
 
-  rounds.get_subscriber().on_next(
-      OnDemandOrderingGate::BlockEvent{event_round, {}});
+  rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{round, {}});
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -201,9 +191,6 @@ TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
  * @then new empty proposal round based on the received height is initiated
  */
 TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
-  consensus::Round round{initial_round.block_round,
-                         initial_round.reject_round + 1};
-
   boost::optional<OdOsNotification::ProposalType> proposal;
 
   EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
@@ -214,7 +201,7 @@ TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
       make_test_subscriber<CallExact>(ordering_gate->onProposal(), 1);
   gate_wrapper.subscribe([&](auto val) { ASSERT_FALSE(val.proposal); });
 
-  rounds.get_subscriber().on_next(OnDemandOrderingGate::EmptyEvent{});
+  rounds.get_subscriber().on_next(OnDemandOrderingGate::EmptyEvent{round});
 
   ASSERT_TRUE(gate_wrapper.validate());
 }
@@ -226,9 +213,7 @@ TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
  * this transaction
  */
 TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
-  OnDemandOrderingGate::BlockEvent event = {initial_round, {}};
-  consensus::Round round{initial_round.block_round + 1,
-                         initial_round.reject_round};
+  OnDemandOrderingGate::BlockEvent event = {round, {}};
 
   // initialize mock transaction
   auto tx1 = std::make_shared<NiceMock<MockTransaction>>();
@@ -281,9 +266,6 @@ TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
  * @then batch1 and batch2 are propagated to network
  */
 TEST_F(OnDemandOrderingGateTest, SendBatchesFromTheCache) {
-  consensus::Round round{initial_round.block_round + 1,
-                         initial_round.reject_round};
-
   // prepare hashes for mock batches
   shared_model::interface::types::HashType hash1("hash1");
   shared_model::interface::types::HashType hash2("hash2");
@@ -302,8 +284,7 @@ TEST_F(OnDemandOrderingGateTest, SendBatchesFromTheCache) {
               onBatches(round, UnorderedElementsAreArray(collection)))
       .Times(1);
 
-  rounds.get_subscriber().on_next(
-      OnDemandOrderingGate::BlockEvent{initial_round, {}});
+  rounds.get_subscriber().on_next(OnDemandOrderingGate::BlockEvent{round, {}});
 }
 
 /**
@@ -324,5 +305,5 @@ TEST_F(OnDemandOrderingGateTest, BatchesRemoveFromCache) {
   EXPECT_CALL(*cache, remove(UnorderedElementsAre(hash1, hash2))).Times(1);
 
   rounds.get_subscriber().on_next(
-      OnDemandOrderingGate::BlockEvent{initial_round, {hash1, hash2}});
+      OnDemandOrderingGate::BlockEvent{round, {hash1, hash2}});
 }

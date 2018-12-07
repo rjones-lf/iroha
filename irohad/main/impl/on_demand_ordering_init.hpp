@@ -127,8 +127,6 @@ namespace iroha {
      private:
       logger::Logger log_ = logger::log("OnDemandOrderingInit");
 
-      /// reject round set from latest commit chain size
-      consensus::RejectRoundType current_reject_round_ = 1;
       std::vector<std::shared_ptr<shared_model::interface::Peer>>
           current_peers_;
 

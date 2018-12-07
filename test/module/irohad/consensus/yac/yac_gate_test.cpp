@@ -77,6 +77,9 @@ class YacGateTest : public ::testing::Test {
     block_creator = std::make_shared<MockBlockCreator>();
     block_cache = std::make_shared<ConsensusResultCache>();
 
+    ON_CALL(*hash_gate, onOutcome())
+        .WillByDefault(Return(outcome_notifier.get_observable()));
+
     ON_CALL(*block_creator, onBlock())
         .WillByDefault(Return(block_notifier.get_observable()));
 
@@ -121,9 +124,6 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
   // yac consensus
   EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
 
-  EXPECT_CALL(*hash_gate, onOutcome())
-      .WillOnce(Return(outcome_notifier.get_observable()));
-
   // generate order of peers
   EXPECT_CALL(*peer_orderer, getOrdering(_))
       .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
@@ -163,8 +163,6 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
   // yac consensus
   EXPECT_CALL(*hash_gate, vote(_, _)).Times(0);
 
-  EXPECT_CALL(*hash_gate, onOutcome()).Times(0);
-
   // generate order of peers
   EXPECT_CALL(*peer_orderer, getOrdering(_)).WillOnce(Return(boost::none));
 
@@ -188,7 +186,7 @@ TEST_F(YacGateTest, AgreementOnNone) {
 
   ASSERT_EQ(block_cache->get(), nullptr);
 
-  gate->vote({boost::none, {}});
+  gate->vote({boost::none, round});
 
   ASSERT_EQ(block_cache->get(), nullptr);
 }
@@ -225,10 +223,6 @@ TEST_F(YacGateTest, DifferentCommit) {
   commit_message = CommitMessage({message});
   expected_commit = commit_message;
 
-  // yac
-  EXPECT_CALL(*hash_gate, onOutcome())
-      .WillOnce(Return(outcome_notifier.get_observable()));
-
   // convert yac hash to model hash
   EXPECT_CALL(*hash_provider, toModelHash(message.hash))
       .WillOnce(Return(actual_hash));
@@ -250,6 +244,107 @@ TEST_F(YacGateTest, DifferentCommit) {
   });
 
   outcome_notifier.get_subscriber().on_next(expected_commit);
+
+  ASSERT_TRUE(gate_wrapper.validate());
+}
+
+/**
+ * @given yac gate with current round initialized
+ * @when vote for older round is called
+ * @then vote is ignored
+ */
+TEST_F(YacGateTest, OlderVote) {
+  // generate order of peers
+  ON_CALL(*peer_orderer, getOrdering(_))
+      .WillByDefault(Return(ClusterOrdering::create({mk_peer("fake_node")})));
+
+  // make hash from block
+  ON_CALL(*hash_provider, makeHash(_)).WillByDefault(Return(expected_hash));
+
+  block_notifier.get_subscriber().on_next(
+      BlockCreatorEvent{RoundData{expected_proposal, expected_block}, round});
+
+  EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(0);
+
+  EXPECT_CALL(*peer_orderer, getOrdering(_)).Times(0);
+
+  EXPECT_CALL(*hash_provider, makeHash(_)).Times(0);
+
+  block_notifier.get_subscriber().on_next(BlockCreatorEvent{
+      boost::none, {round.block_round - 1, round.reject_round}});
+}
+
+/**
+ * @given yac gate with current round initialized
+ * @when commit for older round is received
+ * @then commit is ignored
+ */
+TEST_F(YacGateTest, OlderCommit) {
+  // generate order of peers
+  ON_CALL(*peer_orderer, getOrdering(_))
+      .WillByDefault(Return(ClusterOrdering::create({mk_peer("fake_node")})));
+
+  // make hash from block
+  ON_CALL(*hash_provider, makeHash(_)).WillByDefault(Return(expected_hash));
+
+  block_notifier.get_subscriber().on_next(
+      BlockCreatorEvent{RoundData{expected_proposal, expected_block}, round});
+
+  auto signature = std::make_shared<MockSignature>();
+  EXPECT_CALL(*signature, publicKey())
+      .WillRepeatedly(ReturnRefOfCopy(PublicKey("actual_pubkey")));
+
+  VoteMessage message{YacHash({round.block_round - 1, round.reject_round},
+                              "actual_proposal",
+                              "actual_block"),
+                      signature};
+  Answer commit{CommitMessage({message})};
+
+  auto gate_wrapper = make_test_subscriber<CallExact>(gate->onOutcome(), 0);
+  gate_wrapper.subscribe();
+
+  outcome_notifier.get_subscriber().on_next(commit);
+
+  ASSERT_TRUE(gate_wrapper.validate());
+}
+
+/**
+ * @given yac gate with current round initialized
+ * @when reject for older round is received
+ * @then reject is ignored
+ */
+TEST_F(YacGateTest, OlderReject) {
+  // generate order of peers
+  ON_CALL(*peer_orderer, getOrdering(_))
+      .WillByDefault(Return(ClusterOrdering::create({mk_peer("fake_node")})));
+
+  // make hash from block
+  ON_CALL(*hash_provider, makeHash(_)).WillByDefault(Return(expected_hash));
+
+  block_notifier.get_subscriber().on_next(
+      BlockCreatorEvent{RoundData{expected_proposal, expected_block}, round});
+
+  auto signature1 = std::make_shared<MockSignature>(),
+       signature2 = std::make_shared<MockSignature>();
+  EXPECT_CALL(*signature1, publicKey())
+      .WillRepeatedly(ReturnRefOfCopy(PublicKey("actual_pubkey1")));
+  EXPECT_CALL(*signature2, publicKey())
+      .WillRepeatedly(ReturnRefOfCopy(PublicKey("actual_pubkey2")));
+
+  VoteMessage message1{YacHash({round.block_round - 1, round.reject_round},
+                               "actual_proposal1",
+                               "actual_block1"),
+                       signature1},
+      message2{YacHash({round.block_round - 1, round.reject_round},
+                       "actual_proposal2",
+                       "actual_block2"),
+               signature2};
+  Answer reject{RejectMessage({message1, message2})};
+
+  auto gate_wrapper = make_test_subscriber<CallExact>(gate->onOutcome(), 0);
+  gate_wrapper.subscribe();
+
+  outcome_notifier.get_subscriber().on_next(reject);
 
   ASSERT_TRUE(gate_wrapper.validate());
 }

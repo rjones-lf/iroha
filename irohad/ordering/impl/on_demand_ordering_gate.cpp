@@ -35,15 +35,13 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                          log_->debug("BlockEvent. round [{}, {}]",
                                      block_event.round.block_round,
                                      block_event.round.reject_round);
-                         current_round_ = {block_event.round.block_round + 1,
-                                           kFirstRejectRound};
+                         current_round_ = block_event.round;
                          cache_->remove(block_event.hashes);
                        },
-                       [this](const EmptyEvent &empty) {
+                       [this](const EmptyEvent &empty_event) {
                          // no blocks committed, increment reject round
                          log_->debug("EmptyEvent");
-                         current_round_ = {current_round_.block_round,
-                                           current_round_.reject_round + 1};
+                         current_round_ = empty_event.round;
                        });
         log_->debug("Current round: [{}, {}]",
                     current_round_.block_round,

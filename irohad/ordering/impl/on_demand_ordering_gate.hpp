@@ -43,7 +43,9 @@ namespace iroha {
       /**
        * Represents no storage modification. Reject round increment
        */
-      struct EmptyEvent {};
+      struct EmptyEvent {
+        consensus::Round round;
+      };
 
       using BlockRoundEventType = boost::variant<BlockEvent, EmptyEvent>;
 

@@ -84,51 +84,56 @@ namespace iroha {
         auto &latest_commit = std::get<0>(latest_data);
         auto &current_hashes = std::get<1>(latest_data);
 
-        auto on_blocks =
-            [this, peer_query_factory, current_hashes](const auto &commit) {
-              current_reject_round_ = ordering::kFirstRejectRound;
+        consensus::Round current_round = latest_commit.round;
 
-              // retrieve peer list from database
-              // TODO andrei 08.11.2018 IR-1853 Refactor PeerQuery without
-              // database access and optional
-              peer_query_factory->createPeerQuery() | [](auto &&query) {
-                return query->getLedgerPeers();
-              } | [this](auto &&peers) { current_peers_ = std::move(peers); };
+        auto on_blocks = [this,
+                          peer_query_factory,
+                          current_hashes,
+                          &current_round](const auto &commit) {
+          current_round = ordering::nextCommitRound(current_round);
 
-              // generate permutation of peers list from corresponding round
-              // hash
-              auto generate_permutation = [&](auto round) {
-                auto &hash = std::get<round()>(current_hashes);
-                log_->debug("Using hash: {}", hash.toString());
-                auto &permutation = permutations_[round()];
+          // retrieve peer list from database
+          // TODO andrei 08.11.2018 IR-1853 Refactor PeerQuery without
+          // database access and optional
+          peer_query_factory->createPeerQuery() | [](auto &&query) {
+            return query->getLedgerPeers();
+          } | [this](auto &&peers) { current_peers_ = std::move(peers); };
 
-                std::seed_seq seed(hash.blob().begin(), hash.blob().end());
-                gen_.seed(seed);
+          // generate permutation of peers list from corresponding round
+          // hash
+          auto generate_permutation = [&](auto round) {
+            auto &hash = std::get<round()>(current_hashes);
+            log_->debug("Using hash: {}", hash.toString());
+            auto &permutation = permutations_[round()];
 
-                permutation.resize(current_peers_.size());
-                std::iota(permutation.begin(), permutation.end(), 0);
+            std::seed_seq seed(hash.blob().begin(), hash.blob().end());
+            gen_.seed(seed);
 
-                std::shuffle(permutation.begin(), permutation.end(), gen_);
-              };
+            permutation.resize(current_peers_.size());
+            std::iota(permutation.begin(), permutation.end(), 0);
 
-              generate_permutation(RoundTypeConstant<kCurrentRound>{});
-              generate_permutation(RoundTypeConstant<kNextRound>{});
-              generate_permutation(RoundTypeConstant<kRoundAfterNext>{});
-            };
-        auto on_nothing = [this](const auto &) { current_reject_round_++; };
+            std::shuffle(permutation.begin(), permutation.end(), gen_);
+          };
+
+          generate_permutation(RoundTypeConstant<kCurrentRound>{});
+          generate_permutation(RoundTypeConstant<kNextRound>{});
+          generate_permutation(RoundTypeConstant<kRoundAfterNext>{});
+        };
+        auto on_nothing = [this, &current_round](const auto &) {
+          current_round = ordering::nextRejectRound(current_round);
+        };
 
         matchEvent(latest_commit, on_blocks, on_nothing);
 
-        const auto current_block_round = latest_commit.round.block_round + 1;
-        auto getOsPeer = [this, &current_block_round](auto block_round_advance,
-                                                      auto reject_round) {
+        auto getOsPeer = [this, &current_round](auto block_round_advance,
+                                                auto reject_round) {
           auto &permutation = permutations_[block_round_advance];
           // since reject round can be greater than number of peers, wrap it
           // with number of peers
           auto &peer =
               current_peers_[permutation[reject_round % permutation.size()]];
           log_->debug("For round [block={}, reject={}, ], using OS on peer: {}",
-                      current_block_round + block_round_advance,
+                      current_round.block_round,
                       reject_round,
                       peer->toString());
           return peer;
@@ -151,15 +156,15 @@ namespace iroha {
          * o, round 0 - kIssuer
          */
         peers.peers.at(OnDemandConnectionManager::kCurrentRoundRejectConsumer) =
-            getOsPeer(
-                kCurrentRound,
-                ordering::currentRejectRoundConsumer(current_reject_round_));
+            getOsPeer(kCurrentRound,
+                      ordering::currentRejectRoundConsumer(
+                          current_round.reject_round));
         peers.peers.at(OnDemandConnectionManager::kNextRoundRejectConsumer) =
             getOsPeer(kNextRound, ordering::kNextRejectRoundConsumer);
         peers.peers.at(OnDemandConnectionManager::kNextRoundCommitConsumer) =
             getOsPeer(kRoundAfterNext, ordering::kNextCommitRoundConsumer);
         peers.peers.at(OnDemandConnectionManager::kIssuer) =
-            getOsPeer(kCurrentRound, current_reject_round_);
+            getOsPeer(kCurrentRound, current_round.reject_round);
         return peers;
       };
 
@@ -228,12 +233,13 @@ namespace iroha {
                               rejected.end(),
                               std::inserter(hashes, hashes.end()));
                   });
-              return ordering::OnDemandOrderingGate::BlockEvent{commit.round,
-                                                                hashes};
+              return ordering::OnDemandOrderingGate::BlockEvent{
+                  ordering::nextCommitRound(commit.round), hashes};
             },
-            [](const auto &)
+            [](const auto &nothing)
                 -> ordering::OnDemandOrderingGate::BlockRoundEventType {
-              return ordering::OnDemandOrderingGate::EmptyEvent{};
+              return ordering::OnDemandOrderingGate::EmptyEvent{
+                  ordering::nextRejectRound(nothing.round)};
             });
       };
 
