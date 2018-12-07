@@ -8,13 +8,6 @@ add_subdirectory(builders)
 add_subdirectory(validators)
 add_subdirectory(cryptography)
 
-AddTest(lazy_test
-    lazy_test.cpp
-    )
-target_link_libraries(lazy_test
-    boost
-    )
-
 AddTest(reference_holder_test
     reference_holder_test.cpp
     )

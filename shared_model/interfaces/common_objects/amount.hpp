@@ -10,7 +10,6 @@
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include "interfaces/common_objects/types.hpp"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace interface {
