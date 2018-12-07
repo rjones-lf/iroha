@@ -203,7 +203,8 @@ Get Account Transactions
 Purpose
 -------
 
-In a case when a list of transactions per account is needed, `GetAccountTransactions` query can be formed. Please note, that this query uses pagination for query responses.
+In a case when a list of transactions per account is needed, `GetAccountTransactions` query can be formed.
+.. note:: This query uses pagination for query responses.
 
 Request Schema
 --------------
@@ -230,8 +231,8 @@ Request Structure
     :widths: 15, 30, 20, 15
 
     "Account ID", "account id to request transactions from", "<account_name>@<domain_id>", "makoto@soramitsu"
-    "Page size", "size of the page to be returned by the query, if response contains less transactions than page size, then next tx hash will be empty in response", "page_size > 0", "5"
-    "First tx hash", "hash of the first transaction in the page. If that field is not set, then first transactions are returned", "hash in hex format", "bddd58404d1315e0eb27902c5d7c8eb0602c16238f005773df406bc191308929"
+    "Page size", "size of the page to be returned by the query, if the response contains fewer transactions than a page size, then next tx hash will be empty in response", "page_size > 0", "5"
+    "First tx hash", "hash of the first transaction in the page. If that field is not set — then the first transactions are returned", "hash in hex format", "bddd58404d1315e0eb27902c5d7c8eb0602c16238f005773df406bc191308929"
 
 Response Schema
 ---------------
@@ -254,8 +255,8 @@ Response Structure
     :widths: 15, 30, 20, 15
 
     "Transactions", "an array of transactions for given account", "Committed transactions", "{tx1, tx2…}"
-    "All transactions size", "total number of transactions created by given account", "", "100"
-    "Next transaction hash", "hash pointing to the next transaction after the last transaction in the page. Empty if page contains the last transaction for requested account", "bddd58404d1315e0eb27902c5d7c8eb0602c16238f005773df406bc191308929"
+    "All transactions size", "total number of transactions created by the given account", "", "100"
+    "Next transaction hash", "hash pointing to the next transaction after the last transaction in the page. Empty if a page contains the last transaction for the given account", "bddd58404d1315e0eb27902c5d7c8eb0602c16238f005773df406bc191308929"
 
 Get Account Asset Transactions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -263,7 +264,8 @@ Get Account Asset Transactions
 Purpose
 -------
 
-`GetAccountAssetTransactions` query returns all transactions associated with given account and asset. Please note, that this query uses pagination for query responses.
+`GetAccountAssetTransactions` query returns all transactions associated with given account and asset.
+.. note:: This query uses pagination for query responses.
 
 Request Schema
 --------------
@@ -292,8 +294,8 @@ Request Structure
 
     "Account ID", "account id to request transactions from", "<account_name>@<domain_id>", "makoto@soramitsu"
     "Asset ID", "asset id in order to filter transactions containing this asset", "<asset_name>#<domain_id>", "jpy#japan"
-    "Page size", "size of the page to be returned by the query, if response contains less transactions than page size, then next tx hash will be empty in reponse", "page_size > 0", "5"
-    "First tx hash", "hash of the first transaction in the page. If that field is not set, then first transactions are returned", "hash in hex format", "bddd58404d1315e0eb27902c5d7c8eb0602c16238f005773df406bc191308929"
+    "Page size", "size of the page to be returned by the query, if the response contains fewer transactions than a page size, then next tx hash will be empty in response", "page_size > 0", "5"
+    "First tx hash", "hash of the first transaction in the page. If that field is not set — then the first transactions are returned", "hash in hex format", "bddd58404d1315e0eb27902c5d7c8eb0602c16238f005773df406bc191308929"
 
 Response Schema
 ---------------
@@ -317,7 +319,7 @@ Response Structure
 
     "Transactions", "an array of transactions for given account and asset", "Committed transactions", "{tx1, tx2…}"
     "All transactions size", "total number of transactions for given account and asset", "", "100"
-    "Next transaction hash", "hash pointing to the next transaction after the last transaction in the page. Empty if page contains the last transaction for given account and asset", "bddd58404d1315e0eb27902c5d7c8eb0602c16238f005773df406bc191308929"
+    "Next transaction hash", "hash pointing to the next transaction after the last transaction in the page. Empty if a page contains the last transaction for given account and asset", "bddd58404d1315e0eb27902c5d7c8eb0602c16238f005773df406bc191308929"
 
 Get Account Assets
 ^^^^^^^^^^^^^^^^^^
