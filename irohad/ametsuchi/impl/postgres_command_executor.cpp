@@ -69,8 +69,6 @@ namespace {
     return {with_validation.str(), without_validation.str()};
   }
 
-  auto hasCommandPermission() {}
-
   void prepareStatement(soci::session &sql,
                         const PreparedStatement &statement) {
     auto queries = compileStatement(statement);
