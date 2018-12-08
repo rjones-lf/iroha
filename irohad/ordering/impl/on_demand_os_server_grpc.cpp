@@ -46,7 +46,7 @@ OnDemandOsServerGrpc::deserializeTransactions(
               [&](const iroha::expected::Error<TransportFactoryType::Error>
                       &error) {
                 log_->info("Transaction deserialization failed: hash {}, {}",
-                           error.error.hash.toString(),
+                           error.error.hash,
                            error.error.error);
                 return false;
               });

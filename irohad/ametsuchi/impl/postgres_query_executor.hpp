@@ -27,7 +27,6 @@
 #include "interfaces/commands/set_quorum.hpp"
 #include "interfaces/commands/subtract_asset_quantity.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
-#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/block_json_converter.hpp"
 #include "interfaces/iroha_internal/query_response_factory.hpp"
 #include "interfaces/permission_to_string.hpp"
@@ -42,13 +41,15 @@ namespace iroha {
     using QueryErrorType =
         shared_model::interface::QueryResponseFactory::ErrorQueryType;
 
+    using ErrorQueryResponse = shared_model::interface::ErrorQueryResponse;
+    using QueryErrorMessageType = ErrorQueryResponse::ErrorMessageType;
+    using QueryErrorCodeType = ErrorQueryResponse::ErrorCodeType;
+
     class PostgresQueryExecutorVisitor
         : public boost::static_visitor<QueryExecutorResult> {
      public:
       PostgresQueryExecutorVisitor(
           soci::session &sql,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory,
           KeyValueStorage &block_store,
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
@@ -132,19 +133,19 @@ namespace iroha {
       /**
        * Create a query error response and log it
        * @param error_type - type of query error
-       * @param error body as string message
+       * @param error_body - stringified error of the query
+       * @param error_code of the query
        * @return ptr to created error response
        */
       std::unique_ptr<shared_model::interface::QueryResponse>
       logAndReturnErrorResponse(iroha::ametsuchi::QueryErrorType error_type,
-                                std::string error_body) const;
+                                QueryErrorMessageType error_body,
+                                QueryErrorCodeType error_code) const;
 
       soci::session &sql_;
       KeyValueStorage &block_store_;
       shared_model::interface::types::AccountIdType creator_id_;
       shared_model::interface::types::HashType query_hash_;
-      std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-          common_objects_factory_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;
       std::shared_ptr<shared_model::interface::BlockJsonConverter> converter_;
       std::shared_ptr<shared_model::interface::QueryResponseFactory>
@@ -158,8 +159,6 @@ namespace iroha {
      public:
       PostgresQueryExecutor(
           std::unique_ptr<soci::session> sql,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory,
           KeyValueStorage &block_store,
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
@@ -182,7 +181,6 @@ namespace iroha {
 
       std::unique_ptr<soci::session> sql_;
       KeyValueStorage &block_store_;
-      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;
       PostgresQueryExecutorVisitor visitor_;
       std::shared_ptr<shared_model::interface::QueryResponseFactory>

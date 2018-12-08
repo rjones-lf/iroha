@@ -68,38 +68,46 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountAssetResponse) {
   const std::string kAccountId = "doge@meme";
   const std::string kAssetId = "dogecoin#iroha";
 
-  std::vector<std::unique_ptr<shared_model::interface::AccountAsset>> assets,
+  std::vector<std::unique_ptr<shared_model::interface::QueryResponse>>
+      query_responses;
+  std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
       assets_test_copy;
+  std::vector<std::tuple<shared_model::interface::types::AccountIdType,
+                         shared_model::interface::types::AssetIdType,
+                         shared_model::interface::Amount>>
+      assets;
   for (auto i = 1; i < kAccountAssetsNumber; ++i) {
     ASSERT_NO_THROW({
-      auto asset = unwrapResult(objects_factory->createAccountAsset(
-          kAccountId,
-          kAssetId,
-          shared_model::interface::Amount(std::to_string(i))));
       auto asset_copy = unwrapResult(objects_factory->createAccountAsset(
           kAccountId,
           kAssetId,
           shared_model::interface::Amount(std::to_string(i))));
-      assets.push_back(std::move(asset));
       assets_test_copy.push_back(std::move(asset_copy));
     });
+    assets.push_back(
+        std::make_tuple(kAccountId,
+                        kAssetId,
+                        shared_model::interface::Amount(std::to_string(i))));
   }
-  auto query_response = response_factory->createAccountAssetResponse(
-      std::move(assets), kQueryHash);
 
-  ASSERT_TRUE(query_response);
-  ASSERT_EQ(query_response->queryHash(), kQueryHash);
-  ASSERT_NO_THROW({
-    const auto &response =
-        boost::get<const shared_model::interface::AccountAssetResponse &>(
-            query_response->get());
-    ASSERT_EQ(response.accountAssets().front().accountId(), kAccountId);
-    ASSERT_EQ(response.accountAssets().front().assetId(), kAssetId);
-    for (auto i = 1; i < kAccountAssetsNumber; i++) {
-      ASSERT_EQ(response.accountAssets()[i - 1].balance(),
-                assets_test_copy[i - 1]->balance());
-    }
-  });
+  query_responses.push_back(
+      response_factory->createAccountAssetResponse(assets, kQueryHash));
+
+  for (auto &query_response : query_responses) {
+    ASSERT_TRUE(query_response);
+    ASSERT_EQ(query_response->queryHash(), kQueryHash);
+    ASSERT_NO_THROW({
+      const auto &response =
+          boost::get<const shared_model::interface::AccountAssetResponse &>(
+              query_response->get());
+      ASSERT_EQ(response.accountAssets().front().accountId(), kAccountId);
+      ASSERT_EQ(response.accountAssets().front().assetId(), kAssetId);
+      for (auto i = 1; i < kAccountAssetsNumber; i++) {
+        ASSERT_EQ(response.accountAssets()[i - 1].balance(),
+                  assets_test_copy[i - 1]->balance());
+      }
+    });
+  }
 }
 
 /**
@@ -141,34 +149,34 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAccountResponse) {
   const std::vector<RoleIdType> kRoles{"admin", "user"};
 
   std::unique_ptr<shared_model::interface::Account> account;
-  std::unique_ptr<shared_model::interface::QueryResponse> query_response;
-  ASSERT_NO_THROW({
-    account = unwrapResult(
-        objects_factory->createAccount(kAccountId, kDomainId, kQuorum, kJson));
-    query_response = response_factory->createAccountResponse(
-        std::move(account), kRoles, kQueryHash);
-  });
+  std::vector<std::unique_ptr<shared_model::interface::QueryResponse>>
+      query_responses;
 
-  ASSERT_TRUE(query_response);
-  ASSERT_EQ(query_response->queryHash(), kQueryHash);
-  ASSERT_NO_THROW({
-    const auto &response =
-        boost::get<const shared_model::interface::AccountResponse &>(
-            query_response->get());
+  query_responses.push_back(response_factory->createAccountResponse(
+      kAccountId, kDomainId, kQuorum, kJson, kRoles, kQueryHash));
 
-    ASSERT_EQ(response.account().accountId(), kAccountId);
-    ASSERT_EQ(response.account().domainId(), kDomainId);
-    ASSERT_EQ(response.account().quorum(), kQuorum);
-    ASSERT_EQ(response.account().jsonData(), kJson);
-    ASSERT_EQ(response.roles(), kRoles);
-  });
+  for (auto &query_response : query_responses) {
+    ASSERT_TRUE(query_response);
+    ASSERT_EQ(query_response->queryHash(), kQueryHash);
+    ASSERT_NO_THROW({
+      const auto &response =
+          boost::get<const shared_model::interface::AccountResponse &>(
+              query_response->get());
+
+      ASSERT_EQ(response.account().accountId(), kAccountId);
+      ASSERT_EQ(response.account().domainId(), kDomainId);
+      ASSERT_EQ(response.account().quorum(), 1);
+      ASSERT_EQ(response.account().jsonData(), kJson);
+      ASSERT_EQ(response.roles(), kRoles);
+    });
+  }
 }
 
 /**
  * Checks createErrorQueryResponse method of QueryResponseFactory
  * @given
  * @when creating error query responses for a couple of cases via factory
- * @then that response is created @and is well-formed
+ * @then that responses are created @and are well-formed
  */
 TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   using ErrorTypes =
@@ -176,12 +184,15 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
   const HashType kQueryHash{"my_super_hash"};
 
   const auto kStatelessErrorMsg = "stateless failed";
-  const auto kNoSigsErrorMsg = "stateless failed";
+  const auto kStatefulFailedErrorMsg = "stateful failed";
+  const auto kNoSigsErrorMsg = "no signatories";
 
   auto stateless_invalid_response = response_factory->createErrorQueryResponse(
-      ErrorTypes::kStatelessFailed, kStatelessErrorMsg, kQueryHash);
+      ErrorTypes::kStatelessFailed, kStatelessErrorMsg, 0, kQueryHash);
+  auto stateful_failed_response = response_factory->createErrorQueryResponse(
+      ErrorTypes::kStatefulFailed, kStatefulFailedErrorMsg, 1, kQueryHash);
   auto no_signatories_response = response_factory->createErrorQueryResponse(
-      ErrorTypes::kNoSignatories, kNoSigsErrorMsg, kQueryHash);
+      ErrorTypes::kNoSignatories, kNoSigsErrorMsg, 0, kQueryHash);
 
   ASSERT_TRUE(stateless_invalid_response);
   ASSERT_EQ(stateless_invalid_response->queryHash(), kQueryHash);
@@ -191,10 +202,26 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
             stateless_invalid_response->get());
 
     ASSERT_EQ(general_resp.errorMessage(), kStatelessErrorMsg);
+    ASSERT_EQ(general_resp.errorCode(), 0);
     (void)boost::get<
         const shared_model::interface::StatelessFailedErrorResponse &>(
         general_resp.get());
   });
+
+  ASSERT_TRUE(stateful_failed_response);
+  ASSERT_EQ(stateful_failed_response->queryHash(), kQueryHash);
+  ASSERT_NO_THROW({
+    const auto &general_resp =
+        boost::get<const shared_model::interface::ErrorQueryResponse &>(
+            stateful_failed_response->get());
+
+    ASSERT_EQ(general_resp.errorMessage(), kStatefulFailedErrorMsg);
+    ASSERT_EQ(general_resp.errorCode(), 1);
+    (void)boost::get<
+        const shared_model::interface::StatefulFailedErrorResponse &>(
+        general_resp.get());
+  });
+
   ASSERT_TRUE(no_signatories_response);
   ASSERT_EQ(no_signatories_response->queryHash(), kQueryHash);
   ASSERT_NO_THROW({
@@ -203,6 +230,7 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateErrorQueryResponse) {
             no_signatories_response->get());
 
     ASSERT_EQ(general_resp.errorMessage(), kNoSigsErrorMsg);
+    ASSERT_EQ(general_resp.errorCode(), 0);
     (void)
         boost::get<const shared_model::interface::NoSignatoriesErrorResponse &>(
             general_resp.get());
@@ -287,26 +315,24 @@ TEST_F(ProtoQueryResponseFactoryTest, CreateAssetResponse) {
   const DomainIdType kDomainId = "coin";
   const PrecisionType kPrecision = 2;
 
-  std::unique_ptr<shared_model::interface::Asset> asset;
-  std::unique_ptr<shared_model::interface::QueryResponse> query_response;
-  ASSERT_NO_THROW({
-    asset = unwrapResult(
-        objects_factory->createAsset(kAssetId, kDomainId, kPrecision));
-    query_response =
-        response_factory->createAssetResponse(std::move(asset), kQueryHash);
-  });
+  std::vector<std::unique_ptr<shared_model::interface::QueryResponse>>
+      query_responses;
+  query_responses.push_back(response_factory->createAssetResponse(
+      kAssetId, kDomainId, kPrecision, kQueryHash));
 
-  ASSERT_TRUE(query_response);
-  ASSERT_EQ(query_response->queryHash(), kQueryHash);
-  ASSERT_NO_THROW({
-    const auto &response =
-        boost::get<const shared_model::interface::AssetResponse &>(
-            query_response->get());
+  for (auto &query_response : query_responses) {
+    ASSERT_TRUE(query_response);
+    ASSERT_EQ(query_response->queryHash(), kQueryHash);
+    ASSERT_NO_THROW({
+      const auto &response =
+          boost::get<const shared_model::interface::AssetResponse &>(
+              query_response->get());
 
-    ASSERT_EQ(response.asset().assetId(), kAssetId);
-    ASSERT_EQ(response.asset().domainId(), kDomainId);
-    ASSERT_EQ(response.asset().precision(), kPrecision);
-  });
+      ASSERT_EQ(response.asset().assetId(), kAssetId);
+      ASSERT_EQ(response.asset().domainId(), kDomainId);
+      ASSERT_EQ(response.asset().precision(), kPrecision);
+    });
+  }
 }
 
 /**

@@ -9,6 +9,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/transactions_response.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
@@ -17,7 +18,7 @@ using namespace common_constants;
 
 class MstPipelineTest : public AcceptanceFixture {
  public:
-  MstPipelineTest() : mst_itf_{1, {}, [](auto &i) { i.done(); }, true} {}
+  MstPipelineTest() : mst_itf_{1, {}, true, true} {}
 
   /**
    * Creates a mst user

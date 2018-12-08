@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "query_permission_test_signatories.hpp"
+#include "integration/acceptance/query_permission_test_signatories.hpp"
+
+#include "interfaces/query_responses/signatories_response.hpp"
 
 using namespace common_constants;
 
@@ -29,7 +31,7 @@ IntegrationTestFramework &QueryPermissionSignatories::prepareState(
       fixture, spectator_permissions, target_permissions);
 
   // Add assets to target user
-  for(const auto &public_key : user_signatories_) {
+  for (const auto &public_key : user_signatories_) {
     itf.sendTxAwait(fixture.complete(fixture.baseTx(kUserId).addSignatory(
                                          kUserId, public_key),
                                      kUserKeypair),

@@ -11,6 +11,7 @@
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 #include "ametsuchi/impl/peer_query_wsv.hpp"
+#include "ametsuchi/impl/postgres_block_index.hpp"
 #include "ametsuchi/impl/postgres_block_query.hpp"
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_query_executor.hpp"
@@ -28,7 +29,17 @@ namespace {
       soci::session &session = connections.at(i);
       iroha::ametsuchi::PostgresCommandExecutor::prepareStatements(session);
     }
-  };
+  }
+
+  /**
+   * Verify whether postgres supports prepared transactions
+   */
+  bool preparedTransactionsAvailable(soci::session &sql) {
+    int prepared_txs_count = 0;
+    sql << "SHOW max_prepared_transactions;", soci::into(prepared_txs_count);
+    return prepared_txs_count != 0;
+  }
+
 }  // namespace
 
 namespace iroha {
@@ -50,7 +61,8 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
         std::shared_ptr<shared_model::interface::PermissionToString>
             perm_converter,
-        size_t pool_size)
+        size_t pool_size,
+        bool enable_prepared_blocks)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
@@ -59,8 +71,17 @@ namespace iroha {
           converter_(std::move(converter)),
           perm_converter_(std::move(perm_converter)),
           log_(logger::log("StorageImpl")),
-          pool_size_(pool_size) {
+          pool_size_(pool_size),
+          prepared_blocks_enabled_(enable_prepared_blocks),
+          block_is_prepared(false) {
+      prepared_block_name_ =
+          "prepared_block" + postgres_options_.dbname().value_or("");
       soci::session sql(*connection_);
+      // rollback current prepared transaction
+      // if there exists any since last session
+      if (prepared_blocks_enabled_) {
+        rollbackPrepared(sql);
+      }
       sql << init_;
       prepareStatements(*connection_, pool_size_);
     }
@@ -88,6 +109,12 @@ namespace iroha {
       }
 
       auto sql = std::make_unique<soci::session>(*connection_);
+      // if we create mutable storage, then we intend to mutate wsv
+      // this means that any state prepared before that moment is not needed
+      // and must be removed to preventy locking
+      if (block_is_prepared) {
+        rollbackPrepared(*sql);
+      }
       auto block_result = getBlockQuery()->getTopBlock();
       return expected::makeValue<std::unique_ptr<MutableStorage>>(
           std::make_unique<MutableStorageImpl>(
@@ -99,9 +126,9 @@ namespace iroha {
                   [](expected::Error<std::string> &) {
                     return shared_model::interface::types::HashType("");
                   }),
+              std::make_shared<PostgresCommandExecutor>(*sql, perm_converter_),
               std::move(sql),
-              factory_,
-              perm_converter_));
+              factory_));
     }
 
     boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery()
@@ -150,7 +177,6 @@ namespace iroha {
       return boost::make_optional<std::shared_ptr<QueryExecutor>>(
           std::make_shared<PostgresQueryExecutor>(
               std::make_unique<soci::session>(*connection_),
-              factory_,
               *block_store_,
               std::move(pending_txs_storage),
               converter_,
@@ -237,6 +263,11 @@ namespace iroha {
       if (connection_ == nullptr) {
         log_->warn("Tried to free connections without active connection");
         return;
+      }
+      // rollback possible prepared transaction
+      if (block_is_prepared) {
+        soci::session sql(*connection_);
+        rollbackPrepared(sql);
       }
       std::vector<std::shared_ptr<soci::session>> connections;
       for (size_t i = 0; i < pool_size_; i++) {
@@ -336,6 +367,9 @@ namespace iroha {
             db_result.match(
                 [&](expected::Value<std::shared_ptr<soci::connection_pool>>
                         &connection) {
+                  soci::session sql(*connection.value);
+                  bool enable_prepared_transactions =
+                      preparedTransactionsAvailable(sql);
                   storage = expected::makeValue(std::shared_ptr<StorageImpl>(
                       new StorageImpl(block_store_dir,
                                       options,
@@ -344,7 +378,8 @@ namespace iroha {
                                       factory,
                                       converter,
                                       perm_converter,
-                                      pool_size)));
+                                      pool_size,
+                                      enable_prepared_transactions)));
                 },
                 [&](expected::Error<std::string> &error) { storage = error; });
           },
@@ -356,19 +391,44 @@ namespace iroha {
       auto storage_ptr = std::move(mutableStorage);  // get ownership of storage
       auto storage = static_cast<MutableStorageImpl *>(storage_ptr.get());
       for (const auto &block : storage->block_store_) {
-        auto json_result = converter_->serialize(*block.second);
-        json_result.match(
-            [this, &block](const expected::Value<std::string> &v) {
-              block_store_->add(block.first, stringToBytes(v.value));
-              notifier_.get_subscriber().on_next(block.second);
-            },
-            [this](const expected::Error<std::string> &e) {
-              log_->error(e.error);
-            });
+        storeBlock(*block.second);
       }
-
       *(storage->sql_) << "COMMIT";
       storage->committed = true;
+    }
+
+    bool StorageImpl::commitPrepared(
+        const shared_model::interface::Block &block) {
+      if (not prepared_blocks_enabled_) {
+        log_->warn("prepared blocks are not enabled");
+        return false;
+      }
+
+      if (not block_is_prepared) {
+        log_->info("there are no prepared blocks");
+        return false;
+      }
+      log_->info("applying prepared block");
+
+      try {
+        std::shared_lock<std::shared_timed_mutex> lock(drop_mutex);
+        if (not connection_) {
+          log_->info("connection to database is not initialised");
+          return false;
+        }
+        soci::session sql(*connection_);
+        sql << "COMMIT PREPARED '" + prepared_block_name_ + "';";
+        PostgresBlockIndex block_index(sql);
+        block_index.index(block);
+        block_is_prepared = false;
+      } catch (const std::exception &e) {
+        log_->warn("failed to apply prepared block {}: {}",
+                   block.hash().hex(),
+                   e.what());
+        return false;
+      }
+
+      return storeBlock(block);
     }
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
@@ -398,8 +458,50 @@ namespace iroha {
       return notifier_.get_observable();
     }
 
+    void StorageImpl::prepareBlock(std::unique_ptr<TemporaryWsv> wsv) {
+      auto &wsv_impl = static_cast<TemporaryWsvImpl &>(*wsv);
+      if (not prepared_blocks_enabled_) {
+        log_->warn("prepared block are not enabled");
+        return;
+      }
+      if (not block_is_prepared) {
+        soci::session &sql = *wsv_impl.sql_;
+        try {
+          sql << "PREPARE TRANSACTION '" + prepared_block_name_ + "';";
+          block_is_prepared = true;
+        } catch (const std::exception &e) {
+          log_->warn("failed to prepare state: {}", e.what());
+        }
+
+        log_->info("state prepared successfully");
+      }
+    }
+
     StorageImpl::~StorageImpl() {
       freeConnections();
+    }
+
+    void StorageImpl::rollbackPrepared(soci::session &sql) {
+      try {
+        sql << "ROLLBACK PREPARED '" + prepared_block_name_ + "';";
+        block_is_prepared = false;
+      } catch (const std::exception &e) {
+        log_->info(e.what());
+      }
+    }
+
+    bool StorageImpl::storeBlock(const shared_model::interface::Block &block) {
+      auto json_result = converter_->serialize(block);
+      return json_result.match(
+          [this, &block](const expected::Value<std::string> &v) {
+            block_store_->add(block.height(), stringToBytes(v.value));
+            notifier_.get_subscriber().on_next(clone(block));
+            return true;
+          },
+          [this](const expected::Error<std::string> &e) {
+            log_->error(e.error);
+            return false;
+          });
     }
 
     const std::string &StorageImpl::drop_ = R"(
@@ -415,6 +517,7 @@ DROP TABLE IF EXISTS signatory;
 DROP TABLE IF EXISTS peer;
 DROP TABLE IF EXISTS role;
 DROP TABLE IF EXISTS height_by_hash;
+DROP TABLE IF EXISTS tx_status_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
 DROP TABLE IF EXISTS index_by_id_height_asset;
@@ -433,6 +536,7 @@ DELETE FROM signatory;
 DELETE FROM peer;
 DELETE FROM role;
 DELETE FROM height_by_hash;
+DELETE FROM tx_status_by_hash;
 DELETE FROM height_by_account_set;
 DELETE FROM index_by_creator_height;
 DELETE FROM index_by_id_height_asset;
@@ -508,6 +612,12 @@ CREATE TABLE IF NOT EXISTS height_by_hash (
     hash varchar,
     height text
 );
+
+CREATE TABLE IF NOT EXISTS tx_status_by_hash (
+    hash varchar,
+    status boolean
+);
+
 CREATE TABLE IF NOT EXISTS height_by_account_set (
     account_id text,
     height text

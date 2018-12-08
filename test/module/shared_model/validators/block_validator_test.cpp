@@ -71,9 +71,9 @@ class BlockValidatorTest : public ValidatorsTest {
  * @then result is OK
  */
 TEST_F(BlockValidatorTest, ValidBlock) {
-  auto valid_tx = generateTx(true);
-  auto valid_block =
-      generateBlock(std::vector<decltype(valid_tx)>{std::move(valid_tx)});
+  std::vector<shared_model::proto::Transaction> txs;
+  txs.push_back(generateTx(true));
+  auto valid_block = generateBlock(txs);
 
   auto validation_result = validator_.validate(valid_block);
   ASSERT_FALSE(validation_result.hasErrors());
@@ -98,9 +98,9 @@ TEST_F(BlockValidatorTest, EmptyBlock) {
  * @then error appears after validation
  */
 TEST_F(BlockValidatorTest, InvalidBlock) {
-  auto invalid_tx = generateTx(false);
-  auto invalid_block =
-      generateBlock(std::vector<decltype(invalid_tx)>{invalid_tx});
+  std::vector<shared_model::proto::Transaction> txs;
+  txs.push_back(generateTx(false));
+  auto invalid_block = generateBlock(txs);
 
   auto validation_result = validator_.validate(invalid_block);
   ASSERT_TRUE(validation_result.hasErrors());

@@ -21,7 +21,7 @@
 
 namespace torii {
   class CommandServiceTransportGrpc
-      : public iroha::protocol::CommandService::Service {
+      : public iroha::protocol::CommandService_v1::Service {
    public:
     using TransportFactoryType =
         shared_model::interface::AbstractTransportFactory<

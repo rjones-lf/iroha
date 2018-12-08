@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_BLOCK_LOADER_IMPL_HPP
@@ -22,7 +10,6 @@
 
 #include <unordered_map>
 
-#include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
 #include "backend/protobuf/proto_block_factory.hpp"
 #include "loader.grpc.pb.h"
@@ -34,11 +21,11 @@ namespace iroha {
      public:
       BlockLoaderImpl(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
-          std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           shared_model::proto::ProtoBlockFactory factory);
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlocks(
+          const shared_model::interface::types::HeightType height,
           const shared_model::crypto::PublicKey &peer_pubkey) override;
 
       boost::optional<std::shared_ptr<shared_model::interface::Block>>
@@ -67,7 +54,6 @@ namespace iroha {
                          std::unique_ptr<proto::Loader::Stub>>
           peer_connections_;
       std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory_;
-      std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory_;
       shared_model::proto::ProtoBlockFactory block_factory_;
 
       logger::Logger log_;

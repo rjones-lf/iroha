@@ -207,9 +207,12 @@ namespace iroha {
               if (std::all_of(std::begin(temp), std::end(temp), [](auto b) {
                     return b;
                   })) {
+                // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 2
+                // with a named constant
                 return this->logAndReturnErrorResponse(
                     QueryErrorType::kStatefulFailed,
-                    std::forward<ErrResponse>(err_response)());
+                    std::forward<ErrResponse>(err_response)(),
+                    2);
               }
               auto query_range = range
                   | boost::adaptors::transformed([](auto &t) {
@@ -223,8 +226,8 @@ namespace iroha {
                   query_range, perms...);
             });
       } catch (const std::exception &e) {
-        return logAndReturnErrorResponse(QueryErrorType::kStatefulFailed,
-                                         e.what());
+        return logAndReturnErrorResponse(
+            QueryErrorType::kStatefulFailed, e.what(), 1);
       }
     }
 
@@ -246,7 +249,8 @@ namespace iroha {
         SELECT count(public_key) = 1
         FROM account_has_signatory
         WHERE account_id = :account_id AND public_key = '%s'
-        )") % keys).str();
+        )") % keys)
+                     .str();
 
       try {
         *sql_ << qry, soci::into(signatories_valid),
@@ -261,7 +265,6 @@ namespace iroha {
 
     PostgresQueryExecutor::PostgresQueryExecutor(
         std::unique_ptr<soci::session> sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         KeyValueStorage &block_store,
         std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
@@ -271,10 +274,8 @@ namespace iroha {
             perm_converter)
         : sql_(std::move(sql)),
           block_store_(block_store),
-          factory_(std::move(factory)),
           pending_txs_storage_(std::move(pending_txs_storage)),
           visitor_(*sql_,
-                   factory_,
                    block_store_,
                    pending_txs_storage_,
                    std::move(converter),
@@ -289,10 +290,13 @@ namespace iroha {
       visitor_.setCreatorId(query.creatorAccountId());
       visitor_.setQueryHash(query.hash());
       if (validate_signatories and not validateSignatures(query)) {
+        // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 3
+        // with a named constant
         return query_response_factory_->createErrorQueryResponse(
             shared_model::interface::QueryResponseFactory::ErrorQueryType::
                 kStatefulFailed,
             "query signatories did not pass validation",
+            3,
             query.hash());
       }
       return boost::apply_visitor(visitor_, query.get());
@@ -322,7 +326,6 @@ namespace iroha {
 
     PostgresQueryExecutorVisitor::PostgresQueryExecutorVisitor(
         soci::session &sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         KeyValueStorage &block_store,
         std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
         std::shared_ptr<shared_model::interface::BlockJsonConverter> converter,
@@ -332,7 +335,6 @@ namespace iroha {
             perm_converter)
         : sql_(sql),
           block_store_(block_store),
-          common_objects_factory_(std::move(factory)),
           pending_txs_storage_(std::move(pending_txs_storage)),
           converter_(std::move(converter)),
           query_response_factory_{std::move(response_factory)},
@@ -351,15 +353,9 @@ namespace iroha {
 
     std::unique_ptr<shared_model::interface::QueryResponse>
     PostgresQueryExecutorVisitor::logAndReturnErrorResponse(
-        iroha::ametsuchi::QueryErrorType error_type,
-        std::string error_body) const {
-      using QueryErrorType = iroha::ametsuchi::QueryErrorType;
-
-      auto make_error_response = [this, error_type](std::string error) {
-        return query_response_factory_->createErrorQueryResponse(
-            error_type, error, query_hash_);
-      };
-
+        QueryErrorType error_type,
+        QueryErrorMessageType error_body,
+        QueryErrorCodeType error_code) const {
       std::string error;
       switch (error_type) {
         case QueryErrorType::kNoAccount:
@@ -387,7 +383,8 @@ namespace iroha {
       }
 
       log_->error(error);
-      return make_error_response(error);
+      return query_response_factory_->createErrorQueryResponse(
+          error_type, error, error_code, query_hash_);
     }
 
     QueryExecutorResult PostgresQueryExecutorVisitor::operator()(
@@ -423,25 +420,12 @@ namespace iroha {
                                 auto &quorum,
                                 auto &data,
                                 auto &roles_str) {
-        // TODO [IR-1750] Akvinikym 10.10.18: Make QueryResponseFactory accept
-        // parameters for objects creation
-        return common_objects_factory_
-            ->createAccount(account_id, domain_id, quorum, data)
-            .match(
-                [this, roles_str = roles_str.substr(1, roles_str.size() - 2)](
-                    auto &v) {
-                  std::vector<shared_model::interface::types::RoleIdType> roles;
-
-                  boost::split(
-                      roles, roles_str, [](char c) { return c == ','; });
-
-                  return query_response_factory_->createAccountResponse(
-                      std::move(v.value), std::move(roles), query_hash_);
-                },
-                [this](expected::Error<std::string> &e) {
-                  return this->logAndReturnErrorResponse(
-                      QueryErrorType::kStatefulFailed, std::move(e.error));
-                });
+        std::vector<shared_model::interface::types::RoleIdType> roles;
+        auto roles_str_no_brackets = roles_str.substr(1, roles_str.size() - 2);
+        boost::split(
+            roles, roles_str_no_brackets, [](char c) { return c == ','; });
+        return query_response_factory_->createAccountResponse(
+            account_id, domain_id, quorum, data, std::move(roles), query_hash_);
       };
 
       return executeQuery<QueryTuple, PermissionTuple>(
@@ -451,8 +435,8 @@ namespace iroha {
           },
           [this, &q, &query_apply](auto range, auto &) {
             if (range.empty()) {
-              return this->logAndReturnErrorResponse(QueryErrorType::kNoAccount,
-                                                     q.accountId());
+              return this->logAndReturnErrorResponse(
+                  QueryErrorType::kNoAccount, q.accountId(), 0);
             }
 
             return apply(range.front(), query_apply);
@@ -488,7 +472,7 @@ namespace iroha {
           [this, &q](auto range, auto &) {
             if (range.empty()) {
               return this->logAndReturnErrorResponse(
-                  QueryErrorType::kNoSignatories, q.accountId());
+                  QueryErrorType::kNoSignatories, q.accountId(), 0);
             }
 
             auto pubkeys = boost::copy_range<
@@ -713,31 +697,22 @@ namespace iroha {
       return executeQuery<QueryTuple, PermissionTuple>(
           [&] { return (sql_.prepare << cmd, soci::use(q.accountId())); },
           [&](auto range, auto &) {
-            std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
-                account_assets;
-            boost::for_each(range, [this, &account_assets](auto t) {
+            std::vector<
+                std::tuple<shared_model::interface::types::AccountIdType,
+                           shared_model::interface::types::AssetIdType,
+                           shared_model::interface::Amount>>
+                assets;
+            boost::for_each(range, [&assets](auto t) {
               apply(t,
-                    [this, &account_assets](
-                        auto &account_id, auto &asset_id, auto &amount) {
-                      common_objects_factory_
-                          ->createAccountAsset(
-                              account_id,
-                              asset_id,
-                              shared_model::interface::Amount(amount))
-                          .match(
-                              [&account_assets](auto &v) {
-                                account_assets.push_back(std::move(v.value));
-                              },
-                              [this](expected::Error<std::string> &e) {
-                                log_->error(
-                                    "could not create account asset object: {}",
-                                    e.error);
-                              });
+                    [&assets](auto &account_id, auto &asset_id, auto &amount) {
+                      assets.push_back(std::make_tuple(
+                          std::move(account_id),
+                          std::move(asset_id),
+                          shared_model::interface::Amount(amount)));
                     });
             });
-
             return query_response_factory_->createAccountAssetResponse(
-                std::move(account_assets), query_hash_);
+                assets, query_hash_);
           },
           notEnoughPermissionsResponse(perm_converter_,
                                        Role::kGetMyAccAst,
@@ -801,7 +776,7 @@ namespace iroha {
           [this, &q](auto range, auto &) {
             if (range.empty()) {
               return this->logAndReturnErrorResponse(
-                  QueryErrorType::kNoAccountDetail, q.accountId());
+                  QueryErrorType::kNoAccountDetail, q.accountId(), 0);
             }
 
             return apply(range.front(), [this](auto &json) {
@@ -869,7 +844,8 @@ namespace iroha {
             if (range.empty()) {
               return this->logAndReturnErrorResponse(
                   QueryErrorType::kNoRoles,
-                  "{" + q.roleId() + ", " + creator_id_ + "}");
+                  "{" + q.roleId() + ", " + creator_id_ + "}",
+                  0);
             }
 
             return apply(range.front(), [this](auto &permission) {
@@ -906,24 +882,15 @@ namespace iroha {
             if (range.empty()) {
               return this->logAndReturnErrorResponse(
                   QueryErrorType::kNoAsset,
-                  "{" + q.assetId() + ", " + creator_id_ + "}");
+                  "{" + q.assetId() + ", " + creator_id_ + "}",
+                  0);
             }
 
-            return apply(
-                range.front(), [this, &q](auto &domain_id, auto &precision) {
-                  auto asset = common_objects_factory_->createAsset(
-                      q.assetId(), domain_id, precision);
-                  return asset.match(
-                      [this](expected::Value<std::unique_ptr<
-                                 shared_model::interface::Asset>> &asset) {
-                        return query_response_factory_->createAssetResponse(
-                            std::move(asset.value), query_hash_);
-                      },
-                      [this](const expected::Error<std::string> &err) {
-                        return this->logAndReturnErrorResponse(
-                            QueryErrorType::kStatefulFailed, err.error);
-                      });
-                });
+            return apply(range.front(),
+                         [this, &q](auto &domain_id, auto &precision) {
+                           return query_response_factory_->createAssetResponse(
+                               q.assetId(), domain_id, precision, query_hash_);
+                         });
           },
           notEnoughPermissionsResponse(perm_converter_, Role::kReadAssets));
     }

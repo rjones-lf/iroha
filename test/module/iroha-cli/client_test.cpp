@@ -38,6 +38,8 @@
 #include "interfaces/iroha_internal/query_response_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
+#include "validators/protobuf/proto_query_validator.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 using ::testing::_;
 using ::testing::A;
@@ -105,7 +107,10 @@ class ClientServerTest : public testing::Test {
     auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
     auto tx_processor =
         std::make_shared<iroha::torii::TransactionProcessorImpl>(
-            pcsMock, mst, status_bus);
+            pcsMock,
+            mst,
+            status_bus,
+            std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
 
     auto pb_tx_factory =
         std::make_shared<iroha::model::converters::PbTransactionFactory>();
@@ -128,17 +133,23 @@ class ClientServerTest : public testing::Test {
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Transaction>>
-        transaction_validator = std::make_unique<
+        interface_transaction_validator = std::make_unique<
             shared_model::validation::DefaultUnsignedTransactionValidator>();
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        iroha::protocol::Transaction>>
+        proto_transaction_validator = std::make_unique<
+            shared_model::validation::ProtoTransactionValidator>();
     auto transaction_factory =
         std::make_shared<shared_model::proto::ProtoTransportFactory<
             shared_model::interface::Transaction,
             shared_model::proto::Transaction>>(
-            std::move(transaction_validator));
+            std::move(interface_transaction_validator),
+            std::move(proto_transaction_validator));
     auto batch_parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     auto batch_factory = std::make_shared<
         shared_model::interface::TransactionBatchFactoryImpl>();
+    initQueryFactory();
     runner
         ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
             std::make_shared<torii::CommandServiceImpl>(
@@ -150,7 +161,7 @@ class ClientServerTest : public testing::Test {
             transaction_factory,
             batch_parser,
             batch_factory))
-        .append(std::make_unique<torii::QueryService>(qpi))
+        .append(std::make_unique<torii::QueryService>(qpi, query_factory))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -162,6 +173,22 @@ class ClientServerTest : public testing::Test {
 
     runner->waitForServersReady();
   }
+
+  void initQueryFactory() {
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        shared_model::interface::Query>>
+        query_validator = std::make_unique<
+            shared_model::validation::DefaultSignedQueryValidator>();
+    std::unique_ptr<
+        shared_model::validation::AbstractValidator<iroha::protocol::Query>>
+        proto_query_validator =
+            std::make_unique<shared_model::validation::ProtoQueryValidator>();
+    query_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
+        shared_model::interface::Query,
+        shared_model::proto::Query>>(std::move(query_validator),
+                                     std::move(proto_query_validator));
+  }
+
   decltype(shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair())
       pair =
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
@@ -171,6 +198,7 @@ class ClientServerTest : public testing::Test {
   std::unique_ptr<ServerRunner> runner;
   std::shared_ptr<MockPeerCommunicationService> pcsMock;
   std::shared_ptr<iroha::MockMstProcessor> mst;
+  std::shared_ptr<torii::QueryService::QueryFactoryType> query_factory;
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
       query_response_factory;
 
@@ -255,7 +283,7 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
            and --read_attempt_counter);
   ASSERT_EQ(answer.tx_status(),
             iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
-  ASSERT_NE(answer.error_message().size(), 0);
+  ASSERT_NE(answer.err_or_cmd_name().size(), 0);
 }
 
 /**
@@ -292,19 +320,19 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
   ASSERT_EQ(client.sendTx(tx).answer, iroha_cli::CliClient::OK);
 
   // fail the tx
+  auto cmd_name = "CommandName";
+  size_t cmd_index = 2;
+  uint32_t error_code = 3;
   auto verified_proposal_and_errors =
       std::make_shared<VerifiedProposalAndErrors>();
   verified_proposal_and_errors
       ->verified_proposal = std::make_unique<shared_model::proto::Proposal>(
       TestProposalBuilder().height(0).createdTime(iroha::time::now()).build());
-  verified_proposal_and_errors->rejected_transactions.emplace(std::make_pair(
-      tx.hash(),
-      iroha::validation::CommandError{"CommandName", "CommandError", true, 2}));
+  verified_proposal_and_errors->rejected_transactions.emplace(
+      std::make_pair(tx.hash(),
+                     iroha::validation::CommandError{
+                         cmd_name, error_code, "", true, cmd_index}));
   verified_prop_notifier.get_subscriber().on_next(verified_proposal_and_errors);
-  auto stringified_error = "Stateful validation error in transaction "
-                           + tx.hash().hex() + ": command 'CommandName' with "
-                                               "index '2' did not pass verification with "
-                                               "error 'CommandError'";
 
   auto getAnswer = [&]() {
     return client.getTxStatus(shared_model::crypto::toBinaryString(tx.hash()))
@@ -320,7 +348,9 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
            and --read_attempt_counter);
   ASSERT_EQ(answer.tx_status(),
             iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED);
-  ASSERT_EQ(answer.error_message(), stringified_error);
+  ASSERT_EQ(answer.err_or_cmd_name(), cmd_name);
+  ASSERT_EQ(answer.failed_cmd_index(), cmd_index);
+  ASSERT_EQ(answer.error_code(), error_code);
 }
 
 TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {
@@ -411,6 +441,7 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
                        shared_model::interface::QueryResponseFactory::
                            ErrorQueryType::kStatefulFailed,
                        "",
+                       1,
                        query.hash())
                    .release();
 

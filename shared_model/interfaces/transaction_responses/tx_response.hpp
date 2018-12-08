@@ -67,13 +67,28 @@ namespace shared_model {
        */
       virtual const ResponseVariantType &get() const = 0;
 
-      /// Message type
-      using ErrorMessageType = std::string;
-
+      /// Type of stateless validation error or command name, which failed
+      /// validation
+      using StatelessErrorOrFailedCommandNameType = std::string;
       /**
-       * @return error message if present, otherwise - an empty string
+       * @return name of the failed command, if present; empty string otherwise
        */
-      virtual const ErrorMessageType &errorMessage() const = 0;
+      virtual const StatelessErrorOrFailedCommandNameType &
+      statelessErrorOrCommandName() const = 0;
+
+      /// Type of command index, which failed validation
+      using FailedCommandIndexType = size_t;
+      /**
+       * @return index of failed command
+       */
+      virtual FailedCommandIndexType failedCommandIndex() const = 0;
+
+      /// Type of command error code
+      using ErrorCodeType = uint32_t;
+      /**
+       * @return error code, with which the command failed
+       */
+      virtual ErrorCodeType errorCode() const = 0;
 
       /**
        * Enumeration for holding result of priorities comparison

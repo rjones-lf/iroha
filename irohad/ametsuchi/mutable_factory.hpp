@@ -21,6 +21,12 @@
 #include <memory>
 #include "common/result.hpp"
 
+namespace shared_model {
+  namespace interface {
+    class Block;
+  }
+}
+
 namespace iroha {
   namespace ametsuchi {
 
@@ -43,6 +49,14 @@ namespace iroha {
        * @param mutableStorage
        */
       virtual void commit(std::unique_ptr<MutableStorage> mutableStorage) = 0;
+
+      /**
+       * Try to apply prepared block to Ametsuchi.
+       * @return true if commit is succesful, false if prepared block failed
+       * to apply. WSV is not changed if it returns false.
+       *
+       */
+      virtual bool commitPrepared(const shared_model::interface::Block& block) = 0;
 
       virtual ~MutableFactory() = default;
     };

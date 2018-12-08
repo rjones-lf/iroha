@@ -44,7 +44,7 @@ namespace iroha {
         auto hash = hash_provider_->makeHash(*block);
         log_->info("vote for block ({}, {})",
                    hash.vote_hashes.proposal_hash,
-                   block->hash().toString());
+                   block->hash());
         auto order = orderer_->getOrdering(hash);
         if (not order) {
           log_->error("ordering doesn't provide peers => pass round");

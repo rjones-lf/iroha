@@ -3,14 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "query_permission_test_ast.hpp"
+#include "integration/acceptance/query_permission_test_ast.hpp"
 
+#include "interfaces/query_responses/account_asset_response.hpp"
 #include "module/shared_model/builders/common_objects/account_asset_builder.hpp"
 #include "module/shared_model/builders/protobuf/common_objects/proto_account_asset_builder.hpp"
 
-using shared_model::proto::AccountAssetBuilder;
-using shared_model::proto::AccountAsset;
 using shared_model::interface::Amount;
+using shared_model::proto::AccountAsset;
+using shared_model::proto::AccountAssetBuilder;
 using namespace common_constants;
 
 QueryPermissionAssets::QueryPermissionAssets()
@@ -41,7 +42,7 @@ IntegrationTestFramework &QueryPermissionAssets::prepareState(
       fixture, spectator_permissions, target_permissions);
 
   // Add assets to target user
-  for(const auto &asset : account_assets_) {
+  for (const auto &asset : account_assets_) {
     const std::string asset_id = asset.assetId();
     const auto domain_sep = std::find(asset_id.cbegin(), asset_id.cend(), '#');
     const std::string asset_name(asset_id.cbegin(), domain_sep);

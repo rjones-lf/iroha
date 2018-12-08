@@ -1,27 +1,14 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_BLOCK_QUERY_HPP
 #define IROHA_BLOCK_QUERY_HPP
 
 #include <boost/optional.hpp>
-#include <cmath>
 #include <rxcpp/rx.hpp>
-
+#include "ametsuchi/tx_cache_response.hpp"
 #include "common/result.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/transaction.hpp"
@@ -106,12 +93,15 @@ namespace iroha {
           const shared_model::crypto::Hash &hash) = 0;
 
       /**
-       * Synchronously checks whether transaction
-       * with given hash is present in any block
-       * @param hash - transaction hash
-       * @return true if transaction exists, false otherwise
+       * Synchronously checks whether transaction with given hash is present in
+       * any block
+       * @param hash - transaction's hash
+       * @return TxCacheStatusType which returns status (Committed, Rejected or
+       * Missing) of transaction if storage query was successful, boost::none
+       * otherwise
        */
-      virtual bool hasTxWithHash(const shared_model::crypto::Hash &hash) = 0;
+      virtual boost::optional<TxCacheStatusType> checkTxPresence(
+          const shared_model::crypto::Hash &hash) = 0;
 
       /**
        * Get the top-most block

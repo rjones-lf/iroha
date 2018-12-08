@@ -4,44 +4,89 @@
  */
 
 #include "backend/protobuf/commands/proto_command.hpp"
+
+#include "backend/protobuf/commands/proto_add_asset_quantity.hpp"
+#include "backend/protobuf/commands/proto_add_peer.hpp"
+#include "backend/protobuf/commands/proto_add_signatory.hpp"
+#include "backend/protobuf/commands/proto_append_role.hpp"
+#include "backend/protobuf/commands/proto_create_account.hpp"
+#include "backend/protobuf/commands/proto_create_asset.hpp"
+#include "backend/protobuf/commands/proto_create_domain.hpp"
+#include "backend/protobuf/commands/proto_create_role.hpp"
+#include "backend/protobuf/commands/proto_detach_role.hpp"
+#include "backend/protobuf/commands/proto_grant_permission.hpp"
+#include "backend/protobuf/commands/proto_remove_signatory.hpp"
+#include "backend/protobuf/commands/proto_revoke_permission.hpp"
+#include "backend/protobuf/commands/proto_set_account_detail.hpp"
+#include "backend/protobuf/commands/proto_set_quorum.hpp"
+#include "backend/protobuf/commands/proto_subtract_asset_quantity.hpp"
+#include "backend/protobuf/commands/proto_transfer_asset.hpp"
+#include "utils/reference_holder.hpp"
 #include "utils/variant_deserializer.hpp"
 
-using Variant = shared_model::proto::Command::ProtoCommandVariantType;
-template Variant::~variant();
-template Variant::variant(Variant &&);
-template void Variant::destroy_content();
-template int Variant::which() const;
-template void Variant::indicate_which(int);
-template bool Variant::using_backup() const;
+namespace {
+  /// type of proto variant
+  using ProtoCommandVariantType =
+      ::boost::variant<shared_model::proto::AddAssetQuantity,
+                       shared_model::proto::AddPeer,
+                       shared_model::proto::AddSignatory,
+                       shared_model::proto::AppendRole,
+                       shared_model::proto::CreateAccount,
+                       shared_model::proto::CreateAsset,
+                       shared_model::proto::CreateDomain,
+                       shared_model::proto::CreateRole,
+                       shared_model::proto::DetachRole,
+                       shared_model::proto::GrantPermission,
+                       shared_model::proto::RemoveSignatory,
+                       shared_model::proto::RevokePermission,
+                       shared_model::proto::SetAccountDetail,
+                       shared_model::proto::SetQuorum,
+                       shared_model::proto::SubtractAssetQuantity,
+                       shared_model::proto::TransferAsset>;
+
+  /// list of types in proto variant
+  using ProtoCommandListType = ProtoCommandVariantType::types;
+}  // namespace
 
 namespace shared_model {
   namespace proto {
 
-    template <typename CommandType>
-    Command::Command(CommandType &&command)
-        : CopyableProto(std::forward<CommandType>(command)),
-          variant_{[this] {
-            auto &&ar = *proto_;
-            int which = ar.GetDescriptor()
-                            ->FindFieldByNumber(ar.command_case())
-                            ->index();
-            return shared_model::detail::variant_impl<ProtoCommandListType>::
-                template load<ProtoCommandVariantType>(
-                    std::forward<decltype(ar)>(ar), which);
-          }},
-          ivariant_{detail::makeLazyInitializer(
-              [this] { return CommandVariantType(*variant_); })} {}
+    struct Command::Impl {
+      explicit Impl(TransportType &&ref) : proto_(std::move(ref)) {}
+      explicit Impl(const TransportType &ref) : proto_(ref) {}
 
-    template Command::Command(Command::TransportType &);
-    template Command::Command(const Command::TransportType &);
-    template Command::Command(Command::TransportType &&);
+      detail::ReferenceHolder<TransportType> proto_;
 
-    Command::Command(const Command &o) : Command(o.proto_) {}
+      ProtoCommandVariantType variant_{[this] {
+        auto &&ar = *proto_;
+        int which =
+            ar.GetDescriptor()->FindFieldByNumber(ar.command_case())->index();
+        return shared_model::detail::variant_impl<ProtoCommandListType>::
+            template load<ProtoCommandVariantType>(
+                std::forward<decltype(ar)>(ar), which);
+      }()};
 
-    Command::Command(Command &&o) noexcept : Command(std::move(o.proto_)) {}
+      CommandVariantType ivariant_{variant_};
+    };
+
+    Command::Command(const Command &o) : Command(*o.impl_->proto_) {}
+    Command::Command(Command &&o) noexcept = default;
+
+    Command::Command(const TransportType &ref) {
+      impl_ = std::make_unique<Impl>(ref);
+    }
+    Command::Command(TransportType &&ref) {
+      impl_ = std::make_unique<Impl>(std::move(ref));
+    }
+
+    Command::~Command() = default;
 
     const Command::CommandVariantType &Command::get() const {
-      return *ivariant_;
+      return impl_->ivariant_;
+    }
+
+    Command *Command::clone() const {
+      return new Command(*impl_->proto_);
     }
 
   }  // namespace proto

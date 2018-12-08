@@ -36,7 +36,7 @@ namespace iroha {
                 std::move(block_response));
           });
     }
-    
+
     std::unique_ptr<shared_model::interface::QueryResponse>
     QueryProcessorImpl::queryHandle(const shared_model::interface::Query &qry) {
       auto executor = qry_exec_->createQueryExecutor(pending_transactions_,

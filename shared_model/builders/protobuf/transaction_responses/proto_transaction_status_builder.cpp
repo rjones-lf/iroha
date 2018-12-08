@@ -16,6 +16,7 @@
  */
 
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
+#include "cryptography/hash.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -47,14 +48,14 @@ namespace shared_model {
       return copy;
     }
 
-  TransactionStatusBuilder TransactionStatusBuilder::mstPending() {
+    TransactionStatusBuilder TransactionStatusBuilder::mstPending() {
       TransactionStatusBuilder copy(*this);
-      copy.tx_response_.set_tx_status(
-          iroha::protocol::TxStatus::MST_PENDING);
+      copy.tx_response_.set_tx_status(iroha::protocol::TxStatus::MST_PENDING);
       return copy;
     }
 
-    TransactionStatusBuilder TransactionStatusBuilder::enoughSignaturesCollected() {
+    TransactionStatusBuilder
+    TransactionStatusBuilder::enoughSignaturesCollected() {
       TransactionStatusBuilder copy(*this);
       copy.tx_response_.set_tx_status(
           iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED);
@@ -102,9 +103,24 @@ namespace shared_model {
       return copy;
     }
 
-    TransactionStatusBuilder TransactionStatusBuilder::errorMsg(const std::string &msg) {
+    TransactionStatusBuilder TransactionStatusBuilder::statelessErrorOrCmdName(
+        const std::string &err_or_cmd) {
       TransactionStatusBuilder copy(*this);
-      copy.tx_response_.set_error_message(msg);
+      copy.tx_response_.set_err_or_cmd_name(err_or_cmd);
+      return copy;
+    }
+
+    TransactionStatusBuilder TransactionStatusBuilder::failedCmdIndex(
+        uint32_t index) {
+      TransactionStatusBuilder copy(*this);
+      copy.tx_response_.set_failed_cmd_index(index);
+      return copy;
+    }
+
+    TransactionStatusBuilder TransactionStatusBuilder::errorCode(
+        uint32_t code) {
+      TransactionStatusBuilder copy(*this);
+      copy.tx_response_.set_error_code(code);
       return copy;
     }
 
