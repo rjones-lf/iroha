@@ -245,7 +245,7 @@ namespace iroha {
       auto qry = (boost::format(R"(
         SELECT count(public_key) = 1
         FROM account_has_signatory
-        WHERE account_id = :account_id AND public_key IN ('%s')
+        WHERE account_id = :account_id AND public_key = '%s'
         )") % keys).str();
 
       try {
