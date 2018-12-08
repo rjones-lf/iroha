@@ -565,7 +565,8 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
       "=> insert block "
       "=> assert that inserted");
   ASSERT_TRUE(storage);
-  auto wrapper = make_test_subscriber<CallExact>(storage->on_commit(), 1);
+  static auto wrapper =
+      make_test_subscriber<CallExact>(storage->on_commit(), 1);
   wrapper.subscribe();
   auto wsv = storage->getWsvQuery();
   ASSERT_EQ(0, wsv->getPeers().value().size());
@@ -580,6 +581,7 @@ TEST_F(AmetsuchiTest, TestingStorageWhenInsertBlock) {
   ASSERT_NE(0, wsv->getPeers().value().size());
 
   ASSERT_TRUE(wrapper.validate());
+  wrapper.unsubscribe();
 }
 
 /**
@@ -593,7 +595,8 @@ TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
   auto expected_block = getBlock();
 
   // create test subscriber to check if committed block is as expected
-  auto wrapper = make_test_subscriber<CallExact>(storage->on_commit(), 1);
+  static auto wrapper =
+      make_test_subscriber<CallExact>(storage->on_commit(), 1);
   wrapper.subscribe([&expected_block](const auto &block) {
     ASSERT_EQ(*block, expected_block);
   });
@@ -606,12 +609,12 @@ TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
       },
       [](const auto &) { FAIL() << "Mutable storage cannot be created"; });
 
-  mutable_storage->apply(
-      expected_block);
+  mutable_storage->apply(expected_block);
 
   storage->commit(std::move(mutable_storage));
 
   ASSERT_TRUE(wrapper.validate());
+  wrapper.unsubscribe();
 }
 
 /**
