@@ -13,6 +13,7 @@
 #include "interfaces/permissions.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
 #include "interfaces/query_responses/query_response.hpp"
+#include "interfaces/query_responses/error_query_response.hpp"
 
 namespace shared_model {
   namespace crypto {
@@ -92,12 +93,14 @@ namespace shared_model {
        * Create response for failed query
        * @param error_type - type of error to be inserted into the response
        * @param error_msg - message, which is to be set in the response
+       * @param error_code - stateful error code to be set in the response
        * @param query_hash - hash of the query, for which response is created
        * @return error response
        */
       virtual std::unique_ptr<QueryResponse> createErrorQueryResponse(
           ErrorQueryType error_type,
-          std::string error_msg,
+          ErrorQueryResponse::ErrorMessageType error_msg,
+          ErrorQueryResponse::ErrorCodeType error_code,
           const crypto::Hash &query_hash) const = 0;
 
       /**

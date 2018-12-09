@@ -7,6 +7,7 @@
 #define IROHA_APPLICATION_HPP
 
 #include "ametsuchi/impl/storage_impl.hpp"
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
@@ -133,6 +134,8 @@ class Irohad {
 
   virtual void initBlockLoader();
 
+  virtual void initPersistentCache();
+
   virtual void initConsensusGate();
 
   virtual void initSynchronizer();
@@ -206,6 +209,9 @@ class Irohad {
 
   // block loader
   std::shared_ptr<iroha::network::BlockLoader> block_loader;
+
+  // persistent cache
+  std::shared_ptr<iroha::ametsuchi::TxPresenceCache> persistent_cache;
 
   // consensus gate
   std::shared_ptr<iroha::network::ConsensusGate> consensus_gate;

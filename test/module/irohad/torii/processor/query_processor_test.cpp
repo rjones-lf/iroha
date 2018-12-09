@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <boost/variant.hpp>
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/query_responses/proto_error_query_response.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/keypair.hpp"
-#include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
@@ -99,10 +99,9 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
 
   auto response = qpi->queryHandle(qry);
   ASSERT_TRUE(response);
-  ASSERT_NO_THROW(boost::apply_visitor(
-      framework::SpecifiedVisitor<
-          shared_model::interface::AccountDetailResponse>(),
-      response->get()));
+  ASSERT_NO_THROW(
+      boost::get<const shared_model::interface::AccountDetailResponse &>(
+          response->get()));
 }
 
 /**
@@ -149,8 +148,7 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
       qpi->blocksQueryHandle(block_query), block_number);
   wrapper.subscribe([](auto response) {
     ASSERT_NO_THROW({
-      boost::apply_visitor(
-          framework::SpecifiedVisitor<shared_model::interface::BlockResponse>(),
+      boost::get<const shared_model::interface::BlockResponse &>(
           response->get());
     });
   });
@@ -178,9 +176,8 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
       make_test_subscriber<CallExact>(qpi->blocksQueryHandle(block_query), 1);
   wrapper.subscribe([](auto response) {
     ASSERT_NO_THROW({
-      boost::apply_visitor(framework::SpecifiedVisitor<
-                               shared_model::interface::BlockErrorResponse>(),
-                           response->get());
+      boost::get<const shared_model::interface::BlockErrorResponse &>(
+          response->get());
     });
   });
   for (int i = 0; i < block_number; i++) {

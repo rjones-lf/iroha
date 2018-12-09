@@ -16,6 +16,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
@@ -23,7 +24,6 @@
 #include "datetime/time.hpp"
 #include "framework/batch_helper.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
 #include "utils/query_error_response_visitor.hpp"
@@ -112,10 +112,10 @@ TEST_F(PipelineIntegrationTest, SendTx) {
   auto tx = prepareCreateDomainTransaction();
 
   auto check_enough_signatures_collected_status = [](auto &status) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            shared_model::interface::EnoughSignaturesCollectedResponse>(),
-        status.get()));
+    ASSERT_NO_THROW(
+        boost::get<
+            const shared_model::interface::EnoughSignaturesCollectedResponse &>(
+            status.get()));
   };
   auto check_proposal = [](auto &proposal) {
     ASSERT_EQ(proposal->transactions().size(), 1);
@@ -150,10 +150,9 @@ TEST_F(PipelineIntegrationTest, SendTxSequence) {
 
   auto check_stateless_valid = [](auto &statuses) {
     for (const auto &status : statuses) {
-      EXPECT_NO_THROW(boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              shared_model::interface::StatelessValidTxResponse>(),
-          status.get()));
+      EXPECT_NO_THROW(
+          boost::get<const shared_model::interface::StatelessValidTxResponse &>(
+              status.get()));
     }
   };
   auto check_proposal = [&tx_size](auto &proposal) {

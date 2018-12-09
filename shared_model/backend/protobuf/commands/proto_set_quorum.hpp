@@ -28,10 +28,6 @@ namespace shared_model {
       interface::types::QuorumType newQuorum() const override;
 
      private:
-      // lazy
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
-
       const iroha::protocol::SetAccountQuorum &set_account_quorum_;
     };
 

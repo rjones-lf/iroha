@@ -33,7 +33,8 @@ namespace shared_model {
 
       std::unique_ptr<interface::QueryResponse> createErrorQueryResponse(
           ErrorQueryType error_type,
-          std::string error_msg,
+          interface::ErrorQueryResponse::ErrorMessageType error_msg,
+          interface::ErrorQueryResponse::ErrorCodeType error_code,
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createSignatoriesResponse(

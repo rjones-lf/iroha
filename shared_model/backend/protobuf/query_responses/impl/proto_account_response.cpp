@@ -5,23 +5,23 @@
 
 #include "backend/protobuf/query_responses/proto_account_response.hpp"
 
+#include <boost/range/numeric.hpp>
+
 namespace shared_model {
   namespace proto {
 
     template <typename QueryResponseType>
     AccountResponse::AccountResponse(QueryResponseType &&queryResponse)
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-          accountResponse_{proto_->account_response()},
-          accountRoles_{[this] {
-            return boost::accumulate(
-                accountResponse_.account_roles(),
-                AccountRolesIdType{},
-                [](auto &&roles, const auto &role) {
-                  roles.push_back(interface::types::RoleIdType(role));
-                  return std::move(roles);
-                });
-          }},
-          account_{[this] { return Account(accountResponse_.account()); }} {}
+          account_response_{proto_->account_response()},
+          account_roles_{boost::accumulate(
+              account_response_.account_roles(),
+              AccountRolesIdType{},
+              [](auto &&roles, const auto &role) {
+                roles.push_back(interface::types::RoleIdType(role));
+                return std::move(roles);
+              })},
+          account_{account_response_.account()} {}
 
     template AccountResponse::AccountResponse(AccountResponse::TransportType &);
     template AccountResponse::AccountResponse(
@@ -36,11 +36,11 @@ namespace shared_model {
         : AccountResponse(std::move(o.proto_)) {}
 
     const interface::Account &AccountResponse::account() const {
-      return *account_;
+      return account_;
     }
 
     const AccountResponse::AccountRolesIdType &AccountResponse::roles() const {
-      return *accountRoles_;
+      return account_roles_;
     }
 
   }  // namespace proto

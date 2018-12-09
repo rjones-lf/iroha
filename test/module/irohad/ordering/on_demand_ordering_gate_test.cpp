@@ -6,8 +6,10 @@
 #include "ordering/impl/on_demand_ordering_gate.hpp"
 
 #include <gtest/gtest.h>
+#include <boost/range/adaptor/indirected.hpp>
 #include "framework/test_subscriber.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
@@ -19,6 +21,7 @@ using namespace framework::test_subscriber;
 
 using ::testing::_;
 using ::testing::ByMove;
+using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::Truly;
 using ::testing::UnorderedElementsAre;
@@ -30,14 +33,21 @@ class OnDemandOrderingGateTest : public ::testing::Test {
     ordering_service = std::make_shared<MockOnDemandOrderingService>();
     notification = std::make_shared<MockOdOsNotification>();
     cache = std::make_shared<cache::MockOrderingGateCache>();
-    auto ufactory = std::make_unique<MockUnsafeProposalFactory>();
+    auto ufactory = std::make_unique<NiceMock<MockUnsafeProposalFactory>>();
     factory = ufactory.get();
+    tx_cache = std::make_shared<ametsuchi::MockTxPresenceCache>();
+    ON_CALL(*tx_cache,
+            check(testing::Matcher<const shared_model::crypto::Hash &>(_)))
+        .WillByDefault(
+            Return(boost::make_optional<ametsuchi::TxCacheStatusType>(
+                iroha::ametsuchi::tx_cache_status_responses::Missing())));
     ordering_gate =
         std::make_shared<OnDemandOrderingGate>(ordering_service,
                                                notification,
                                                rounds.get_observable(),
                                                cache,
                                                std::move(ufactory),
+                                               tx_cache,
                                                initial_round);
   }
 
@@ -45,6 +55,7 @@ class OnDemandOrderingGateTest : public ::testing::Test {
   std::shared_ptr<MockOnDemandOrderingService> ordering_service;
   std::shared_ptr<MockOdOsNotification> notification;
   MockUnsafeProposalFactory *factory;
+  std::shared_ptr<ametsuchi::MockTxPresenceCache> tx_cache;
   std::shared_ptr<OnDemandOrderingGate> ordering_gate;
 
   std::shared_ptr<cache::MockOrderingGateCache> cache;
@@ -77,7 +88,8 @@ TEST_F(OnDemandOrderingGateTest, propagateBatch) {
 TEST_F(OnDemandOrderingGateTest, BlockEvent) {
   consensus::Round round{3, 1};
 
-  boost::optional<OdOsNotification::ProposalType> oproposal(nullptr);
+  boost::optional<OdOsNotification::ProposalType> oproposal(
+      std::make_unique<MockProposal>());
   auto proposal = oproposal.value().get();
 
   EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
@@ -104,7 +116,8 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
   consensus::Round round{initial_round.block_round,
                          initial_round.reject_round + 1};
 
-  boost::optional<OdOsNotification::ProposalType> oproposal(nullptr);
+  boost::optional<OdOsNotification::ProposalType> oproposal(
+      std::make_unique<MockProposal>());
   auto proposal = oproposal.value().get();
 
   EXPECT_CALL(*ordering_service, onCollaborationOutcome(round)).Times(1);
@@ -184,6 +197,53 @@ TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
 
 /**
  * @given initialized ordering gate
+ * @when new proposal arrives and the transaction was already committed
+ * @then the resulting proposal emitted by ordering gate does not contain
+ * this transaction
+ */
+TEST_F(OnDemandOrderingGateTest, ReplayedTransactionInProposal) {
+  OnDemandOrderingGate::BlockEvent event = {initial_round, {}};
+
+  // initialize mock transaction
+  auto tx1 = std::make_shared<NiceMock<MockTransaction>>();
+  auto hash = shared_model::crypto::Hash("mock code is readable");
+  ON_CALL(*tx1, hash()).WillByDefault(testing::ReturnRef(testing::Const(hash)));
+  std::vector<decltype(tx1)> txs{tx1};
+  auto tx_range = txs | boost::adaptors::indirected;
+
+  // initialize mock proposal
+  auto proposal = std::make_unique<NiceMock<MockProposal>>();
+  ON_CALL(*proposal, transactions()).WillByDefault(Return(tx_range));
+  boost::optional<OdOsNotification::ProposalType> arriving_proposal =
+      std::unique_ptr<shared_model::interface::Proposal>(std::move(proposal));
+
+  // set expectations for ordering service
+  EXPECT_CALL(*ordering_service, onCollaborationOutcome(initial_round))
+      .Times(1);
+  EXPECT_CALL(*notification, onRequestProposal(initial_round))
+      .WillOnce(Return(ByMove(std::move(arriving_proposal))));
+  EXPECT_CALL(*tx_cache,
+              check(testing::Matcher<const shared_model::crypto::Hash &>(_)))
+      .WillOnce(Return(boost::make_optional<ametsuchi::TxCacheStatusType>(
+          iroha::ametsuchi::tx_cache_status_responses::Committed())));
+  // expect proposal to be created without any transactions because it was
+  // removed by tx cache
+  EXPECT_CALL(
+      *factory,
+      unsafeCreateProposal(
+          _, _, MockUnsafeProposalFactory::TransactionsCollectionType()))
+      .Times(1);
+
+  auto gate_wrapper =
+      make_test_subscriber<CallExact>(ordering_gate->on_proposal(), 1);
+  gate_wrapper.subscribe([&](auto proposal) {});
+  rounds.get_subscriber().on_next(event);
+
+  ASSERT_TRUE(gate_wrapper.validate());
+}
+
+/**
+ * @given initialized ordering gate
  * @when block event with no batches is emitted @and cache contains batch1 and
  * batch2 on the head
  * @then batch1 and batch2 are propagated to network
@@ -226,8 +286,8 @@ TEST_F(OnDemandOrderingGateTest, BatchesRemoveFromCache) {
   auto batch2 = createMockBatchWithHash(hash2);
 
   EXPECT_CALL(*cache, pop()).Times(1);
-  EXPECT_CALL(*cache, remove(UnorderedElementsAre(batch1, batch2))).Times(1);
+  EXPECT_CALL(*cache, remove(UnorderedElementsAre(hash1, hash2))).Times(1);
 
   rounds.get_subscriber().on_next(
-      OnDemandOrderingGate::BlockEvent{initial_round, {batch1, batch2}});
+      OnDemandOrderingGate::BlockEvent{initial_round, {hash1, hash2}});
 }

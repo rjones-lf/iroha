@@ -6,6 +6,7 @@
 #include "main/application.hpp"
 
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
+#include "ametsuchi/impl/tx_presence_cache_impl.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
@@ -79,7 +80,7 @@ Irohad::Irohad(const std::string &block_store_dir,
  * Initializing iroha daemon
  */
 void Irohad::init() {
-  // Recover VSW from the existing ledger to be sure it is consistent
+  // Recover WSV from the existing ledger to be sure it is consistent
   initWsvRestorer();
   restoreWsv();
 
@@ -92,6 +93,7 @@ void Irohad::init() {
   initSimulator();
   initConsensusCache();
   initBlockLoader();
+  initPersistentCache();
   initConsensusGate();
   initSynchronizer();
   initPeerCommunicationService();
@@ -291,6 +293,15 @@ void Irohad::initBlockLoader() {
 }
 
 /**
+ * Initializing persistent cache
+ */
+void Irohad::initPersistentCache() {
+  persistent_cache = std::make_shared<TxPresenceCacheImpl>(storage);
+
+  log_->info("[Init] => persistent cache");
+}
+
+/**
  * Initializing consensus gate
  */
 void Irohad::initConsensusGate() {
@@ -311,7 +322,7 @@ void Irohad::initConsensusGate() {
  */
 void Irohad::initSynchronizer() {
   synchronizer = std::make_shared<SynchronizerImpl>(
-      consensus_gate, chain_validator, storage, block_loader);
+      consensus_gate, chain_validator, storage, storage, block_loader);
 
   log_->info("[Init] => synchronizer");
 }
@@ -350,6 +361,7 @@ void Irohad::initMstProcessor() {
         transaction_factory,
         batch_parser,
         transaction_batch_factory_,
+        persistent_cache,
         keypair.publicKey());
     mst_propagation = std::make_shared<GossipPropagationStrategy>(
         storage, rxcpp::observe_on_new_thread(), *opt_mst_gossip_params_);

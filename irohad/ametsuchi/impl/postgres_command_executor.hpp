@@ -9,12 +9,21 @@
 #include "ametsuchi/command_executor.hpp"
 #include "ametsuchi/impl/soci_utils.hpp"
 
+namespace shared_model {
+  namespace interface {
+    class PermissionToString;
+  }
+}  // namespace shared_model
+
 namespace iroha {
   namespace ametsuchi {
 
     class PostgresCommandExecutor : public CommandExecutor {
      public:
-      PostgresCommandExecutor(soci::session &transaction);
+      PostgresCommandExecutor(
+          soci::session &transaction,
+          std::shared_ptr<shared_model::interface::PermissionToString>
+              perm_converter);
 
       void setCreatorAccountId(
           const shared_model::interface::types::AccountIdType
@@ -78,6 +87,8 @@ namespace iroha {
       bool do_validation_;
 
       shared_model::interface::types::AccountIdType creator_account_id_;
+      std::shared_ptr<shared_model::interface::PermissionToString>
+          perm_converter_;
 
       // 14.09.18 nickaleks: IR-1708 Load SQL from separate files
       static const std::string addAssetQuantityBase;

@@ -28,7 +28,7 @@ namespace shared_model {
       virtual std::unique_ptr<Proposal> unsafeCreateProposal(
           types::HeightType height,
           types::TimestampType created_time,
-          const TransactionsCollectionType &transactions) = 0;
+          TransactionsCollectionType transactions) = 0;
 
       virtual ~UnsafeProposalFactory() = default;
     };

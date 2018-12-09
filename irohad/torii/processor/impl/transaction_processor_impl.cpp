@@ -24,17 +24,20 @@ namespace iroha {
         const auto tx_hash = tx_hash_and_error.first.hex();
         const auto &cmd_error = tx_hash_and_error.second;
         if (not cmd_error.tx_passed_initial_validation) {
-          return (boost::format("Stateful validation error: transaction %s "
-                                "did not pass initial verification: "
-                                "checking '%s', error code '%d'")
-                  % tx_hash % cmd_error.name % cmd_error.error_code)
+          return (boost::format(
+                      "Stateful validation error: transaction %s "
+                      "did not pass initial verification: "
+                      "checking '%s', error code '%d', query arguments: %s")
+                  % tx_hash % cmd_error.name % cmd_error.error_code
+                  % cmd_error.error_extra)
               .str();
         }
-        return (boost::format("Stateful validation error in transaction %s: "
-                              "command '%s' with index '%d' did not pass "
-                              "verification with code '%d'")
+        return (boost::format(
+                    "Stateful validation error in transaction %s: "
+                    "command '%s' with index '%d' did not pass "
+                    "verification with code '%d', query arguments: %s")
                 % tx_hash % cmd_error.name % cmd_error.index
-                % cmd_error.error_code)
+                % cmd_error.error_code % cmd_error.error_extra)
             .str();
       }
     }  // namespace
@@ -115,7 +118,7 @@ namespace iroha {
         this->pcs_->propagate_batch(batch);
       });
       mst_processor_->onExpiredBatches().subscribe([this](auto &&batch) {
-        log_->info("MST batch {} is expired", batch->reducedHash().toString());
+        log_->info("MST batch {} is expired", batch->reducedHash());
         for (auto &&tx : batch->transactions()) {
           this->publishStatus(TxStatusType::kMstExpired, tx->hash());
         }
