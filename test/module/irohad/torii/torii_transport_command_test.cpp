@@ -11,8 +11,8 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "builders/protobuf/transaction.hpp"
-#include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
 #include "endpoint.pb.h"
+#include "endpoint_mock.grpc.pb.h"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
@@ -27,12 +27,12 @@
 #include "torii/processor/transaction_processor_impl.hpp"
 #include "validators/protobuf/proto_transaction_validator.hpp"
 
-constexpr size_t kTimes = 5;
-
 using ::testing::_;
 using ::testing::A;
 using ::testing::Invoke;
+using ::testing::Property;
 using ::testing::Return;
+using ::testing::StrEq;
 
 using namespace iroha::network;
 using namespace iroha::ametsuchi;
@@ -45,16 +45,15 @@ constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
 
 class ToriiTransportCommandTest : public testing::Test {
  private:
-  using TransportFactory = shared_model::proto::ProtoTransportFactory<
+  using ProtoTxTransportFactory = shared_model::proto::ProtoTransportFactory<
       shared_model::interface::Transaction,
       shared_model::proto::Transaction>;
-  using TransportFactoryBase =
-      shared_model::interface::AbstractTransportFactory<
-          shared_model::interface::Transaction,
-          shared_model::proto::Transaction::TransportType>;
-  using TxValidator = shared_model::validation::MockValidator<
+  using TxTransportFactory = shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::Transaction,
+      shared_model::proto::Transaction::TransportType>;
+  using MockTxValidator = shared_model::validation::MockValidator<
       shared_model::interface::Transaction>;
-  using ProtoTxValidator =
+  using MockProtoTxValidator =
       shared_model::validation::MockValidator<iroha::protocol::Transaction>;
 
  public:
@@ -65,11 +64,11 @@ class ToriiTransportCommandTest : public testing::Test {
     status_factory =
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
 
-    auto validator = std::make_unique<TxValidator>();
+    auto validator = std::make_unique<MockTxValidator>();
     tx_validator = validator.get();
-    auto proto_validator = std::make_unique<ProtoTxValidator>();
+    auto proto_validator = std::make_unique<MockProtoTxValidator>();
     proto_tx_validator = proto_validator.get();
-    transaction_factory = std::make_shared<TransportFactory>(
+    transaction_factory = std::make_shared<ProtoTxTransportFactory>(
         std::move(validator), std::move(proto_validator));
 
     batch_parser =
@@ -95,10 +94,10 @@ class ToriiTransportCommandTest : public testing::Test {
   }
 
   std::shared_ptr<MockStatusBus> status_bus;
-  const TxValidator *tx_validator;
-  const ProtoTxValidator *proto_tx_validator;
+  const MockTxValidator *tx_validator;
+  const MockProtoTxValidator *proto_tx_validator;
 
-  std::shared_ptr<TransportFactoryBase> transaction_factory;
+  std::shared_ptr<TxTransportFactory> transaction_factory;
   std::shared_ptr<shared_model::interface::TransactionBatchParser> batch_parser;
   std::shared_ptr<MockTransactionBatchFactory> batch_factory;
 
@@ -107,8 +106,8 @@ class ToriiTransportCommandTest : public testing::Test {
   std::shared_ptr<MockCommandService> command_service;
   std::shared_ptr<torii::CommandServiceTransportGrpc> transport_grpc;
 
-  const size_t kHashLength =
-      shared_model::crypto::CryptoProviderEd25519Sha3::kHashLength;
+  const size_t kHashLength = 32;
+  const size_t kTimes = 5;
 };
 
 /**
@@ -202,28 +201,28 @@ TEST_F(ToriiTransportCommandTest, ListToriiInvalid) {
  *        and one stateless invalid tx
  * @when calling ListTorii
  * @then ensure that CommandService haven't called handleTransactionBatch
- *       and StatusBus publishes statelessInvalid for all txes
+ *       and statelessInvalid status is published for invalid transaction
  */
 TEST_F(ToriiTransportCommandTest, ListToriiPartialInvalid) {
   grpc::ServerContext context;
   google::protobuf::Empty response;
+  const std::string kError = "some error";
 
   iroha::protocol::TxList request{};
   for (size_t i = 0; i < kTimes; ++i) {
     request.add_transactions();
   }
 
-  int counter = 0;
+  size_t counter = 0;
   EXPECT_CALL(*proto_tx_validator, validate(_))
       .Times(kTimes)
       .WillRepeatedly(Return(shared_model::validation::Answer{}));
   EXPECT_CALL(*tx_validator, validate(_))
       .Times(kTimes)
-      .WillRepeatedly(Invoke([&counter](const auto &) mutable {
+      .WillRepeatedly(Invoke([this, &counter, kError](const auto &) mutable {
         shared_model::validation::Answer res;
         if (counter++ == kTimes - 1) {
-          res.addReason(
-              std::make_pair("some error", std::vector<std::string>{}));
+          res.addReason(std::make_pair(kError, std::vector<std::string>{}));
         }
         return res;
       }));
@@ -234,8 +233,9 @@ TEST_F(ToriiTransportCommandTest, ListToriiPartialInvalid) {
       .Times(kTimes - 1);
 
   EXPECT_CALL(*command_service, handleTransactionBatch(_)).Times(kTimes - 1);
-  EXPECT_CALL(*status_bus, publish(_)).WillOnce(Invoke([](auto status) {
-    EXPECT_FALSE(status->statelessErrorOrCommandName().empty());
+  EXPECT_CALL(*status_bus, publish(_)).WillOnce(Invoke([&kError](auto status) {
+    EXPECT_THAT(status->statelessErrorOrCommandName(),
+                testing::HasSubstr(kError));
   }));
 
   transport_grpc->ListTorii(&context, &request, &response);
@@ -245,6 +245,7 @@ TEST_F(ToriiTransportCommandTest, ListToriiPartialInvalid) {
  * @given torii service and command_service with empty status stream
  * @when calling StatusStream on transport
  * @then Ok status is eventually returned without any fault
+ *       and nothing is written to the status stream
  */
 TEST_F(ToriiTransportCommandTest, StatusStreamEmpty) {
   grpc::ServerContext context;
@@ -255,6 +256,50 @@ TEST_F(ToriiTransportCommandTest, StatusStreamEmpty) {
                            shared_model::interface::TransactionResponse>>()));
 
   ASSERT_TRUE(transport_grpc->StatusStream(&context, &request, nullptr).ok());
+}
+
+/**
+ * @given torii service with changed timeout, a transaction
+ *        and a status stream with one NotRecieved status
+ * @when calling StatusStream
+ * @then ServerWriter call Write method and waits for initial timeout
+ *
+ */
+TEST_F(ToriiTransportCommandTest, DISABLED_StatusStreamOnNotRecieved) {
+  const std::chrono::milliseconds kInitialTimeout = 1ms;
+  // big so it will hang
+  const std::chrono::milliseconds kNonFinalTimeout = 1000s;
+  transport_grpc =
+      std::make_shared<torii::CommandServiceTransportGrpc>(command_service,
+                                                           status_bus,
+                                                           kInitialTimeout,
+                                                           kNonFinalTimeout,
+                                                           status_factory,
+                                                           transaction_factory,
+                                                           batch_parser,
+                                                           batch_factory);
+  grpc::ServerContext context;
+  iroha::protocol::TxStatusRequest request;
+  iroha::MockServerWriter<iroha::protocol::ToriiResponse> response_writer;
+  std::vector<std::shared_ptr<shared_model::interface::TransactionResponse>>
+      responses;
+  shared_model::crypto::Hash hash("1");
+  responses.emplace_back(status_factory->makeNotReceived(hash, {}));
+  EXPECT_CALL(*command_service, getStatusStream(_))
+      .WillOnce(Return(rxcpp::observable<>::iterate(responses)));
+  EXPECT_CALL(response_writer,
+              Write(Property(&iroha::protocol::ToriiResponse::tx_hash,
+                             StrEq(shared_model::crypto::toBinaryString(hash))),
+                    _))
+      .WillOnce(Return(true));
+  ASSERT_TRUE(transport_grpc
+                  ->StatusStream(
+                      &context,
+                      &request,
+                      reinterpret_cast<
+                          grpc::ServerWriter<iroha::protocol::ToriiResponse> *>(
+                          &response_writer))
+                  .ok());
 }
 
 /**
@@ -271,12 +316,11 @@ TEST_F(ToriiTransportCommandTest, StatusStream) {
       responses;
   for (size_t i = 0; i < kTimes; ++i) {
     shared_model::crypto::Hash hash(std::to_string(i));
-    auto push_response = [this, hash = std::move(hash), &responses](
-                             auto member_fn) {
-      responses.emplace_back((this->status_factory.get()->*member_fn)(
-                                 hash, {} /*"ErrMessage" + std::to_string(i)*/)
-                                 .release());
-    };
+    auto push_response =
+        [this, hash = std::move(hash), &responses](auto member_fn) {
+          responses.emplace_back(
+              (this->status_factory.get()->*member_fn)(hash, {}).release());
+        };
 
     using shared_model::interface::TxStatusFactory;
     // cover different type of statuses

@@ -3,19 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "torii/command_client.hpp"
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-
-#include "cryptography/ed25519_sha3_impl/crypto_provider.hpp"
+#include "endpoint_mock.grpc.pb.h"
 #include "main/server_runner.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
-#include "torii/command_client.hpp"
 
 using testing::_;
 using testing::Invoke;
 using testing::Return;
 
-class SyncClient : public testing::Test {
+class CommandSyncClientTest : public testing::Test {
  public:
   void SetUp() override {
     runner = std::make_unique<ServerRunner>(ip + ":0");
@@ -23,15 +23,13 @@ class SyncClient : public testing::Test {
     runner->append(server).run().match(
         [this](iroha::expected::Value<int> port) { this->port = port.value; },
         [](iroha::expected::Error<std::string> err) { FAIL() << err.error; });
-    runner->waitForServersReady();
   }
 
   std::unique_ptr<ServerRunner> runner;
   std::shared_ptr<iroha::torii::MockCommandServiceTransport> server;
 
   const std::string ip = "127.0.0.1";
-  const size_t kHashLength =
-      shared_model::crypto::CryptoProviderEd25519Sha3::kHashLength;
+  const size_t kHashLength = 32;
   int port;
 };
 
@@ -40,7 +38,7 @@ class SyncClient : public testing::Test {
  * @when Status is called
  * @then the same method of the server is called and client successfully return
  */
-TEST_F(SyncClient, Status) {
+TEST_F(CommandSyncClientTest, Status) {
   iroha::protocol::TxStatusRequest tx_request;
   tx_request.set_tx_hash(std::string(kHashLength, '1'));
   iroha::protocol::ToriiResponse toriiResponse;
@@ -56,7 +54,7 @@ TEST_F(SyncClient, Status) {
  * @when Torii is called
  * @then the same method of the server is called and client successfully return
  */
-TEST_F(SyncClient, Torii) {
+TEST_F(CommandSyncClientTest, Torii) {
   iroha::protocol::Transaction tx;
   EXPECT_CALL(*server, Torii(_, _, _)).WillOnce(Return(grpc::Status()));
   torii::CommandSyncClient client(ip, port);
@@ -69,7 +67,7 @@ TEST_F(SyncClient, Torii) {
  * @when ListTorii is called
  * @then the same method of the server is called and client successfully return
  */
-TEST_F(SyncClient, ListTorii) {
+TEST_F(CommandSyncClientTest, ListTorii) {
   iroha::protocol::TxList tx;
   EXPECT_CALL(*server, ListTorii(_, _, _)).WillOnce(Return(grpc::Status()));
   torii::CommandSyncClient client(ip, port);
@@ -82,7 +80,7 @@ TEST_F(SyncClient, ListTorii) {
  * @when StatusStream is called
  * @then the same method of the server is called and client successfully return
  */
-TEST_F(SyncClient, StatusStream) {
+TEST_F(CommandSyncClientTest, StatusStream) {
   iroha::protocol::TxStatusRequest tx;
   iroha::protocol::ToriiResponse resp;
   resp.set_tx_hash(std::string(kHashLength, '1'));

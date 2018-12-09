@@ -86,12 +86,12 @@ namespace torii {
   CommandServiceTransportGrpc::deserializeTransactions(
       const iroha::protocol::TxList *request) {
     shared_model::interface::types::SharedTxsCollectionType tx_collection;
-    for (auto &&tx : request->transactions()) {
+    for (const auto &tx : request->transactions()) {
       transaction_factory_->build(tx).match(
           [&tx_collection](
               iroha::expected::Value<
                   std::unique_ptr<shared_model::interface::Transaction>> &v) {
-            tx_collection.emplace_back(v.value.release());
+            tx_collection.emplace_back(std::move(v).value);
           },
           [this](iroha::expected::Error<TransportFactoryType::Error> &error) {
             status_bus_->publish(status_factory_->makeStatelessFail(
