@@ -7,7 +7,6 @@
 #define IROHA_SHARED_MODEL_INTERFACE_MOCKS_HPP
 
 #include <gmock/gmock.h>
-#include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/public_key.hpp"
 #include "cryptography/signed.hpp"
 #include "interfaces/commands/command.hpp"
@@ -134,7 +133,8 @@ auto createMockBatchWithHash(
  * @return shared_ptr for batch
  */
 auto createMockBatchWithTransactions(
-    const shared_model::interface::types::SharedTxsCollectionType &txs) {
+    const shared_model::interface::types::SharedTxsCollectionType &txs,
+    std::string hash) {
   using ::testing::NiceMock;
   using ::testing::ReturnRefOfCopy;
 
@@ -143,9 +143,7 @@ auto createMockBatchWithTransactions(
   ON_CALL(*res, transactions()).WillByDefault(ReturnRefOfCopy(txs));
 
   ON_CALL(*res, reducedHash())
-      .WillByDefault(ReturnRefOfCopy(shared_model::crypto::Hash::fromHexString(
-          shared_model::crypto::DefaultCryptoAlgorithmType::generateSeed()
-              .hex())));
+      .WillByDefault(ReturnRefOfCopy(shared_model::crypto::Hash{hash}));
 
   return res;
 }

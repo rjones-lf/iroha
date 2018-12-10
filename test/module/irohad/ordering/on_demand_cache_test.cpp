@@ -119,8 +119,8 @@ TEST(OnDemandCache, Remove) {
   auto tx2 = createMockTransactionWithHash(hash2);
   auto tx3 = createMockTransactionWithHash(hash3);
 
-  auto batch1 = createMockBatchWithTransactions({tx1, tx2});
-  auto batch2 = createMockBatchWithTransactions({tx3});
+  auto batch1 = createMockBatchWithTransactions({tx1, tx2}, "abc");
+  auto batch2 = createMockBatchWithTransactions({tx3}, "123");
 
   cache.addToBack({batch1, batch2});
   cache.pop();
