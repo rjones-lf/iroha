@@ -237,7 +237,7 @@ namespace {
         shared_model::interface::RolePermissionSet({role}).toBitstring();
     const auto bits = shared_model::interface::RolePermissionSet::size();
     std::string query = (boost::format(R"(
-          SELECT COALESCE(bit_or(permission), '0'::bit(%1%))
+          SELECT COALESCE(bit_or(rp.permission), '0'::bit(%1%))
           & '%2%' = '%2%' FROM role_has_permissions AS rp
               JOIN account_has_roles AS ar on ar.role_id = rp.role_id
               WHERE ar.account_id = %3%)")
