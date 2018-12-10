@@ -29,7 +29,7 @@ namespace iroha {
         // find exist
         auto iter = std::find_if(block_storages_.begin(),
                                  block_storages_.end(),
-                                 [&store_hash](auto block_storage) {
+                                 [&store_hash](const auto &block_storage) {
                                    auto storage_key =
                                        block_storage.getStorageKey();
                                    return storage_key == store_hash;

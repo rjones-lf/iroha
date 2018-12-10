@@ -128,6 +128,10 @@ namespace iroha {
          */
         void nextProcessingState(const Round &round);
 
+        /// Get the highest round with proposal in kSentProcessed state, if any,
+        /// otherwize boost::none.
+        boost::optional<Round> getLastCompletedRound() const;
+
        private:
         // --------| fields |--------
 
@@ -143,6 +147,9 @@ namespace iroha {
          */
         std::unordered_map<Round, ProposalState, RoundTypeHasher>
             processing_state_;
+
+        /// Highest round with proposal in kSentProcessed state.
+        boost::optional<Round> last_sent_processed_proposal_round_;
       };
 
     }  // namespace yac

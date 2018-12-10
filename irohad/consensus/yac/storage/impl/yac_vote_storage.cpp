@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <utility>
 
+#include <boost/range/adaptor/map.hpp>
+#include <boost/range/algorithm/max_element.hpp>
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 
 namespace iroha {
@@ -77,10 +79,28 @@ namespace iroha {
             break;
           case ProposalState::kSentNotProcessed:
             val = ProposalState::kSentProcessed;
-            break;
           case ProposalState::kSentProcessed:
-            break;
+            last_sent_processed_proposal_round_ =
+                last_sent_processed_proposal_round_
+                ? std::max(*last_sent_processed_proposal_round_, round)
+                : round;
         }
+      }
+
+      boost::optional<Round> YacVoteStorage::getLastCompletedRound() const {
+        BOOST_ASSERT_MSG(
+            !last_sent_processed_proposal_round_
+                or boost::range::max_element(
+                       processing_state_,
+                       [](const auto &lhs, const auto &rhs) {
+                         return lhs.second == ProposalState::kSentProcessed
+                             and rhs.second == ProposalState::kSentProcessed
+                             and lhs.first < rhs.first;
+                       })
+                        ->first
+                    == *last_sent_processed_proposal_round_,
+            "Wrong last sent processed proposal round!");
+        return last_sent_processed_proposal_round_;
       }
 
     }  // namespace yac
