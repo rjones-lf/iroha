@@ -69,27 +69,6 @@ namespace iroha {
        * Class provide storage for votes and useful methods for it.
        */
       class YacVoteStorage {
-       private:
-        // --------| private api |--------
-
-        /**
-         * Retrieve iterator for storage with specified key
-         * @param round - key of that storage
-         * @return iterator to proposal storage
-         */
-        auto getProposalStorage(const Round &round);
-
-        /**
-         * Find existed proposal storage or create new if required
-         * @param msg - vote for finding
-         * @param peers_in_round - number of peer required
-         * for verify supermajority;
-         * This parameter used on creation of proposal storage
-         * @return - iter for required proposal storage
-         */
-        auto findProposalStorage(const VoteMessage &msg,
-                                 PeersNumberType peers_in_round);
-
        public:
         // --------| public api |--------
 
@@ -132,13 +111,39 @@ namespace iroha {
         /// otherwize boost::none.
         boost::optional<Round> getLastCompletedRound() const;
 
+        /// Get the outcome of given round, if any, otherwize boost::none.
+        boost::optional<Answer> getRoundOutcome(const Round &round) const;
+
        private:
+        using ProposalStoragePtr = std::shared_ptr<YacProposalStorage>;
+        using OptProposalStoragePtr = boost::optional<ProposalStoragePtr>;
+
+        // --------| private api |--------
+
+        /**
+         * Retrieve iterator for storage with specified key
+         * @param round - key of that storage
+         * @return iterator to proposal storage
+         */
+        OptProposalStoragePtr getProposalStorage(const Round &round) const;
+
+        /**
+         * Find existed proposal storage or create new if required
+         * @param msg - vote for finding
+         * @param peers_in_round - number of peer required
+         * for verify supermajority;
+         * This parameter used on creation of proposal storage
+         * @return - iter for required proposal storage
+         */
+        ProposalStoragePtr findProposalStorage(const VoteMessage &msg,
+                                               PeersNumberType peers_in_round);
+
         // --------| fields |--------
 
         /**
          * Active proposal storages
          */
-        std::vector<YacProposalStorage> proposal_storages_;
+        std::vector<ProposalStoragePtr> proposal_storages_;
 
         /**
          * Processing set provide user flags about processing some

@@ -30,25 +30,32 @@ namespace iroha {
 
       // --------| private api |--------
 
-      auto YacVoteStorage::getProposalStorage(const Round &round) {
-        return std::find_if(proposal_storages_.begin(),
+      YacVoteStorage::OptProposalStoragePtr YacVoteStorage::getProposalStorage(
+          const Round &round) const {
+        auto it = std::find_if(proposal_storages_.begin(),
                             proposal_storages_.end(),
                             [&round](const auto &storage) {
-                              return storage.getStorageKey() == round;
+                              return storage->getStorageKey() == round;
                             });
+        if (it == proposal_storages_.end()) {
+          return boost::none;
+        } else {
+          return *it;
+        }
       }
 
-      auto YacVoteStorage::findProposalStorage(const VoteMessage &msg,
-                                               PeersNumberType peers_in_round) {
+      YacVoteStorage::ProposalStoragePtr YacVoteStorage::findProposalStorage(
+          const VoteMessage &msg, PeersNumberType peers_in_round) {
         auto val = getProposalStorage(msg.hash.vote_round);
-        if (val != proposal_storages_.end()) {
-          return val;
+        if (val) {
+          return *val;
         }
-        return proposal_storages_.emplace(
+        return *proposal_storages_.emplace(
             proposal_storages_.end(),
-            msg.hash.vote_round,
-            peers_in_round,
-            std::make_shared<SupermajorityCheckerImpl>());
+            std::make_shared<YacProposalStorage>(
+                msg.hash.vote_round,
+                peers_in_round,
+                std::make_shared<SupermajorityCheckerImpl>()));
       }
 
       // --------| public api |--------
@@ -60,11 +67,7 @@ namespace iroha {
       }
 
       bool YacVoteStorage::isCommitted(const Round &round) {
-        auto iter = getProposalStorage(round);
-        if (iter == proposal_storages_.end()) {
-          return false;
-        }
-        return bool(iter->getState());
+        return static_cast<bool>(getRoundOutcome(round));
       }
 
       ProposalState YacVoteStorage::getProcessingState(const Round &round) {
@@ -101,6 +104,15 @@ namespace iroha {
                     == *last_sent_processed_proposal_round_,
             "Wrong last sent processed proposal round!");
         return last_sent_processed_proposal_round_;
+      }
+
+      boost::optional<Answer> YacVoteStorage::getRoundOutcome(
+          const Round &round) const {
+        auto opt_proposal_storage = getProposalStorage(round);
+        if (opt_proposal_storage) {
+          return (*opt_proposal_storage)->getState();
+        }
+        return boost::none;
       }
 
     }  // namespace yac
