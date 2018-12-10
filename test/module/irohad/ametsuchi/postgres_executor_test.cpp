@@ -103,6 +103,12 @@ namespace iroha {
                         true)));
       }
 
+      /**
+       * Add one specific permission for account
+       * @param perm - role permission to add
+       * @param account_id - tester account_id, by default "id@domain"
+       * @param role_id - name of the role for tester, by default "all"
+       */
       void addOnePerm(
           const shared_model::interface::permissions::Role perm,
           const shared_model::interface::types::AccountIdType account_id =

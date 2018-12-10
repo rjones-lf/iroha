@@ -269,15 +269,14 @@ namespace {
       shared_model::interface::permissions::Role global_role,
       shared_model::interface::permissions::Role domain_role,
       const shared_model::interface::types::AccountIdType &creator_id,
-      const shared_model::interface::types::AccountIdType
+      const shared_model::interface::types::AssetIdType
           &id_with_target_domain) {
     std::string query = (boost::format(R"(WITH
           has_global_role_perm AS (%1%),
           has_domain_role_perm AS (%2%)
           SELECT CASE
                            WHEN (SELECT * FROM has_global_role_perm) THEN true
-                           WHEN ((split_part(%3%, '@', 2) = split_part(%4%, '@', 2))
-                              OR (split_part(%3%, '@', 2) = split_part(%4%, '#', 2))) THEN
+                           WHEN ((split_part(%3%, '@', 2) = split_part(%4%, '#', 2))) THEN
                                CASE
                                    WHEN (SELECT * FROM has_domain_role_perm) THEN true
                                    ELSE false
