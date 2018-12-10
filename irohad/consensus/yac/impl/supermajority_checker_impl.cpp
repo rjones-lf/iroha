@@ -38,8 +38,8 @@ namespace iroha {
         if (current > all) {
           return false;
         }
-        auto f = (all - 1) / 3.0;
-        return current >= 2 * f + 1;
+        // current >= 2 * f + 1, where f = (all - 1) / 3.0;
+        return current * 3 >= 2 * (all - 1) + 3;
       }
 
       bool SupermajorityCheckerImpl::peersSubset(
