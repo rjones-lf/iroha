@@ -101,28 +101,35 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
 
   initYac(my_order.value());
 
-  EXPECT_CALL(*network, sendState(_, _))
-      .Times(my_peers.size() + 1);  // $(peers.size()) sendings done during
-                                    // multicast + 1 for single peer, who votes
-                                    // after reject happened
+  // $(peers.size()) sendings done during multicast for each of the 2 rounds,
+  // then one more is done for single peer, who votes after reject happened
+  EXPECT_CALL(*network, sendState(_, _)).Times(my_peers.size() * 2 + 1);
 
-  EXPECT_CALL(*timer, deny()).Times(1);
+  EXPECT_CALL(*timer, deny()).Times(2); // once each of 2 rounds
 
   EXPECT_CALL(*crypto, verify(_)).WillRepeatedly(Return(true));
+
+  auto create_peer_vote = [](const auto &peer, const auto &yac_hash) {
+    auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
+    return create_vote(yac_hash, pubkey);
+  };
+
+  // we need to have a succeeded commit by the time the last state is sent
+  YacHash prev_round_hash(
+      iroha::consensus::Round{0, 0}, "prev_proposal_hash", "prev_block_hash");
+  for (const auto &peer : my_peers) {
+    yac->onState({create_peer_vote(peer, prev_round_hash)});
+  };
 
   YacHash hash1(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash");
   YacHash hash2(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash2");
 
   std::vector<VoteMessage> votes;
   for (size_t i = 0; i < peers_number / 2; ++i) {
-    auto peer = my_order->getPeers().at(i);
-    auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
-    votes.push_back(create_vote(hash1, pubkey));
+    votes.push_back(create_peer_vote(my_order->getPeers().at(i), hash1));
   };
   for (size_t i = peers_number / 2; i < peers_number - 1; ++i) {
-    auto peer = my_order->getPeers().at(i);
-    auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
-    votes.push_back(create_vote(hash2, pubkey));
+    votes.push_back(create_peer_vote(my_order->getPeers().at(i), hash2));
   };
 
   for (const auto &vote : votes) {
@@ -130,7 +137,5 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
   }
 
   yac->onState(votes);
-  auto peer = my_order->getPeers().back();
-  auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
-  yac->onState({create_vote(hash1, pubkey)});
+  yac->onState({create_peer_vote(my_order->getPeers().back(), hash1)});
 }
