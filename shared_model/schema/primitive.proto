@@ -43,6 +43,8 @@ enum RolePermission {
   can_transfer = 12;
   can_receive = 13;
   can_create_domain = 14;
+  can_add_domain_asset_qty = 43;
+  can_subtract_domain_asset_qty = 44;
 
   // Query permissions
   can_read_assets = 15;
@@ -75,10 +77,6 @@ enum RolePermission {
   can_grant_can_remove_my_signatory = 39;
   can_grant_can_transfer_my_assets = 40;
   can_grant_can_set_my_account_detail = 41;
-
-  // Domain commands permissions
-  can_add_domain_asset_qty = 43;
-  can_subtract_domain_asset_qty = 44;
 }
 
 enum GrantablePermission {

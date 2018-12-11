@@ -231,10 +231,10 @@ namespace {
   }
 
   std::string checkAccountRolePermission(
-      shared_model::interface::permissions::Role role,
+      shared_model::interface::permissions::Role permission,
       const shared_model::interface::types::AccountIdType &account_id) {
     const auto perm_str =
-        shared_model::interface::RolePermissionSet({role}).toBitstring();
+        shared_model::interface::RolePermissionSet({permission}).toBitstring();
     const auto bits = shared_model::interface::RolePermissionSet::size();
     std::string query = (boost::format(R"(
           SELECT COALESCE(bit_or(rp.permission), '0'::bit(%1%))
@@ -266,8 +266,8 @@ namespace {
   }
 
   std::string checkAccountDomainRoleOrGlobalRolePermission(
-      shared_model::interface::permissions::Role global_role,
-      shared_model::interface::permissions::Role domain_role,
+      shared_model::interface::permissions::Role global_permission,
+      shared_model::interface::permissions::Role domain_permission,
       const shared_model::interface::types::AccountIdType &creator_id,
       const shared_model::interface::types::AssetIdType
           &id_with_target_domain) {
@@ -282,8 +282,8 @@ namespace {
                                    ELSE false
                                 END
                            ELSE false END
-          )") % checkAccountRolePermission(global_role, creator_id)
-                         % checkAccountRolePermission(domain_role, creator_id)
+          )") % checkAccountRolePermission(global_permission, creator_id)
+                         % checkAccountRolePermission(domain_permission, creator_id)
                          % creator_id % id_with_target_domain)
                             .str();
     return query;
