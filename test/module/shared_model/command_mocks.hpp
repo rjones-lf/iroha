@@ -96,6 +96,7 @@ namespace shared_model {
         : public shared_model::interface::GrantPermission {
       MOCK_CONST_METHOD0(accountId, const types::AccountIdType &());
       MOCK_CONST_METHOD0(permissionName, permissions::Grantable());
+      MOCK_CONST_METHOD0(toString, std::string());
       MOCK_CONST_METHOD0(clone, MockGrantPermission *());
     };
 
@@ -110,6 +111,7 @@ namespace shared_model {
         : public shared_model::interface::RevokePermission {
       MOCK_CONST_METHOD0(accountId, const types::AccountIdType &());
       MOCK_CONST_METHOD0(permissionName, permissions::Grantable());
+      MOCK_CONST_METHOD0(toString, std::string());
       MOCK_CONST_METHOD0(clone, MockRevokePermission *());
     };
 
