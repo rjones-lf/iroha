@@ -20,8 +20,9 @@
 #include <algorithm>
 #include <utility>
 
-#include <boost/range/adaptor/map.hpp>
 #include <boost/range/algorithm/max_element.hpp>
+#include "common/bind.hpp"
+#include "common/visitor.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 
 namespace iroha {
@@ -82,28 +83,30 @@ namespace iroha {
             break;
           case ProposalState::kSentNotProcessed:
             val = ProposalState::kSentProcessed;
+            break;
           case ProposalState::kSentProcessed:
-            last_sent_processed_proposal_round_ =
-                last_sent_processed_proposal_round_
-                ? std::max(*last_sent_processed_proposal_round_, round)
-                : round;
+            break;
         }
       }
 
-      boost::optional<Round> YacVoteStorage::getLastCompletedRound() const {
-        BOOST_ASSERT_MSG(
-            !last_sent_processed_proposal_round_
-                or boost::range::max_element(
-                       processing_state_,
-                       [](const auto &lhs, const auto &rhs) {
-                         return lhs.second == ProposalState::kSentProcessed
-                             and rhs.second == ProposalState::kSentProcessed
-                             and lhs.first < rhs.first;
-                       })
-                        ->first
-                    == *last_sent_processed_proposal_round_,
-            "Wrong last sent processed proposal round!");
-        return last_sent_processed_proposal_round_;
+      boost::optional<CommitMessage> YacVoteStorage::getLastCommit() const {
+        boost::optional<CommitMessage> opt_commit_message;
+        for (auto it = processing_state_.rbegin();
+             it != processing_state_.rend() and not opt_commit_message;
+             ++it) {
+          if (it->second == ProposalState::kSentProcessed) {
+            getRoundOutcome(it->first) |
+                [&opt_commit_message](const auto &answer) {
+                  iroha::visit_in_place(
+                      answer,
+                      [&opt_commit_message](const CommitMessage &commit) {
+                        opt_commit_message = commit;
+                      },
+                      [](const auto &) {});
+                };
+          }
+        }
+        return opt_commit_message;
       }
 
       boost::optional<Answer> YacVoteStorage::getRoundOutcome(

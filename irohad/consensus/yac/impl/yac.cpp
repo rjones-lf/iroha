@@ -192,17 +192,13 @@ namespace iroha {
             case ProposalState::kSentProcessed:
               if (state.size() == 1) {
                 this->findPeer(state.at(0)) | [&](const auto &from) {
-                  auto opt_answer = this->vote_storage_.getLastCompletedRound()
-                      | [&](const auto &round) {
-                          return this->vote_storage_.getRoundOutcome(round);
-                        };
-                  if (opt_answer) {
+                  auto opt_commit = this->vote_storage_.getLastCommit();
+                  if (opt_commit) {
                     log_->info("Propagate state ({}, {}) directly to {}",
                                proposal_round.block_round,
                                proposal_round.reject_round,
                                from->address());
-                    this->propagateStateDirectly(
-                        *from, visit_in_place(*opt_answer, votes));
+                    this->propagateStateDirectly(*from, opt_commit->votes);
                   } else {
                     log_->info(
                         "Have no completed round outcome to share with {}",

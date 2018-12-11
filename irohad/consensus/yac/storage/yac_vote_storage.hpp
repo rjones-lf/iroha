@@ -18,8 +18,8 @@
 #ifndef IROHA_YAC_VOTE_STORAGE_HPP
 #define IROHA_YAC_VOTE_STORAGE_HPP
 
+#include <map>
 #include <memory>
-#include <unordered_map>
 #include <vector>
 
 #include <boost/optional.hpp>
@@ -107,9 +107,8 @@ namespace iroha {
          */
         void nextProcessingState(const Round &round);
 
-        /// Get the highest round with proposal in kSentProcessed state, if any,
-        /// otherwize boost::none.
-        boost::optional<Round> getLastCompletedRound() const;
+        /// Get the highest commit, if any, otherwize boost::none.
+        boost::optional<CommitMessage> getLastCommit() const;
 
         /// Get the outcome of given round, if any, otherwize boost::none.
         boost::optional<Answer> getRoundOutcome(const Round &round) const;
@@ -150,11 +149,7 @@ namespace iroha {
          * proposals/blocks.
          * If such round exists <=> processed
          */
-        std::unordered_map<Round, ProposalState, RoundTypeHasher>
-            processing_state_;
-
-        /// Highest round with proposal in kSentProcessed state.
-        boost::optional<Round> last_sent_processed_proposal_round_;
+        std::map<Round, ProposalState> processing_state_;
       };
 
     }  // namespace yac
