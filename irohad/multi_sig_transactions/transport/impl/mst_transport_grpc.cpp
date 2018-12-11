@@ -19,11 +19,10 @@ using namespace iroha::network;
 
 using iroha::ConstRefState;
 
-void sendStateAsyncImpl(
-    const shared_model::interface::Peer &to,
-    ConstRefState state,
-    const std::string &sender_key,
-    AsyncGrpcClient<google::protobuf::Empty> &async_call);
+void sendStateAsyncImpl(const shared_model::interface::Peer &to,
+                        ConstRefState state,
+                        const std::string &sender_key,
+                        AsyncGrpcClient<google::protobuf::Empty> &async_call);
 
 MstTransportGrpc::MstTransportGrpc(
     std::shared_ptr<AsyncGrpcClient<google::protobuf::Empty>> async_call,
@@ -58,7 +57,7 @@ MstTransportGrpc::deserializeTransactions(const transport::MstState *request) {
                       &error) {
                 async_call_->log_->info(
                     "Transaction deserialization failed: hash {}, {}",
-                    error.error.hash.toString(),
+                    error.error.hash,
                     error.error.error);
                 return false;
               });

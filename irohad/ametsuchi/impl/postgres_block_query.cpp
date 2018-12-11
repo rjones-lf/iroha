@@ -99,7 +99,7 @@ namespace iroha {
       if (block_str) {
         blockId = std::stoull(block_str.get());
       } else {
-        log_->info("No block with transaction {}", hash.toString());
+        log_->info("No block with transaction {}", hash);
       }
       return blockId;
     }

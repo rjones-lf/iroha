@@ -196,7 +196,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
 
   auto *r = query_response_factory
                 ->createErrorQueryResponse(
-                    ErrorQueryType::kStatefulFailed, "", model_query.hash())
+                    ErrorQueryType::kStatefulFailed, "", 2, model_query.hash())
                 .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
@@ -335,7 +335,7 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
 
   auto *r = query_response_factory
                 ->createErrorQueryResponse(
-                    ErrorQueryType::kStatefulFailed, "", model_query.hash())
+                    ErrorQueryType::kStatefulFailed, "", 2, model_query.hash())
                 .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
@@ -437,7 +437,7 @@ TEST_F(ToriiQueriesTest, FindSignatoriesWhenNoGrantPermissions) {
 
   auto *r = query_response_factory
                 ->createErrorQueryResponse(
-                    ErrorQueryType::kStatefulFailed, "", model_query.hash())
+                    ErrorQueryType::kStatefulFailed, "", 2, model_query.hash())
                 .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))

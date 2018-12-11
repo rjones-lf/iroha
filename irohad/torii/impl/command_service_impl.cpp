@@ -103,7 +103,7 @@ namespace torii {
     using ResponsePtrType =
         std::shared_ptr<shared_model::interface::TransactionResponse>;
     auto initial_status = cache_->findItem(hash).value_or([&] {
-      log_->debug("tx is not received: {}", hash.toString());
+      log_->debug("tx is not received: {}", hash);
       return status_factory_->makeNotReceived(hash);
     }());
     return status_bus_

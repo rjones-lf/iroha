@@ -118,7 +118,7 @@ namespace iroha {
         this->pcs_->propagate_batch(batch);
       });
       mst_processor_->onExpiredBatches().subscribe([this](auto &&batch) {
-        log_->info("MST batch {} is expired", batch->reducedHash().toString());
+        log_->info("MST batch {} is expired", batch->reducedHash());
         for (auto &&tx : batch->transactions()) {
           this->publishStatus(TxStatusType::kMstExpired, tx->hash());
         }

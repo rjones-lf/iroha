@@ -60,10 +60,13 @@ namespace iroha {
     std::unique_ptr<shared_model::interface::QueryResponse>
     QueryProcessorImpl::queryHandle(const shared_model::interface::Query &qry) {
       if (not checkSignatories(qry)) {
+        // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 3
+        // with a named constant
         return response_factory_->createErrorQueryResponse(
             shared_model::interface::QueryResponseFactory::ErrorQueryType::
                 kStatefulFailed,
             "query signatories did not pass validation",
+            3,
             qry.hash());
       }
 

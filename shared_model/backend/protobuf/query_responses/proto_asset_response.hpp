@@ -10,7 +10,6 @@
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/query_responses/asset_response.hpp"
 #include "qry_responses.pb.h"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -29,12 +28,9 @@ namespace shared_model {
       const Asset &asset() const override;
 
      private:
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
+      const iroha::protocol::AssetResponse &asset_response_;
 
-      const iroha::protocol::AssetResponse &assetResponse_;
-
-      const Lazy<Asset> asset_;
+      const Asset asset_;
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -4,6 +4,7 @@
  */
 
 #include "interfaces/query_responses/error_query_response.hpp"
+
 #include "utils/visitor_apply_for_all.hpp"
 
 namespace shared_model {

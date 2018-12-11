@@ -41,6 +41,10 @@ namespace iroha {
     using QueryErrorType =
         shared_model::interface::QueryResponseFactory::ErrorQueryType;
 
+    using ErrorQueryResponse = shared_model::interface::ErrorQueryResponse;
+    using QueryErrorMessageType = ErrorQueryResponse::ErrorMessageType;
+    using QueryErrorCodeType = ErrorQueryResponse::ErrorCodeType;
+
     class PostgresQueryExecutorVisitor
         : public boost::static_visitor<QueryExecutorResult> {
      public:
@@ -129,12 +133,14 @@ namespace iroha {
       /**
        * Create a query error response and log it
        * @param error_type - type of query error
-       * @param error body as string message
+       * @param error_body - stringified error of the query
+       * @param error_code of the query
        * @return ptr to created error response
        */
       std::unique_ptr<shared_model::interface::QueryResponse>
       logAndReturnErrorResponse(iroha::ametsuchi::QueryErrorType error_type,
-                                std::string error_body) const;
+                                QueryErrorMessageType error_body,
+                                QueryErrorCodeType error_code) const;
 
       soci::session &sql_;
       KeyValueStorage &block_store_;

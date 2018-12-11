@@ -10,7 +10,6 @@
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/query_responses/account_detail_response.hpp"
 #include "qry_responses.pb.h"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {

@@ -10,7 +10,6 @@
 #include "backend/protobuf/transaction_responses/proto_concrete_tx_response.hpp"
 #include "common/visitor.hpp"
 #include "cryptography/hash.hpp"
-#include "utils/reference_holder.hpp"
 #include "utils/variant_deserializer.hpp"
 
 namespace {
@@ -40,10 +39,10 @@ namespace shared_model {
       explicit Impl(TransportType &&ref) : proto_{std::move(ref)} {}
       explicit Impl(const TransportType &ref) : proto_{ref} {}
 
-      detail::ReferenceHolder<TransportType> proto_;
+      TransportType proto_;
 
       const ProtoResponseVariantType variant_{[this] {
-        auto &&ar = *proto_;
+        const auto &ar = proto_;
 
         unsigned which = ar.GetDescriptor()
                              ->FindFieldByName("tx_status")
@@ -61,11 +60,11 @@ namespace shared_model {
       const ResponseVariantType ivariant_{variant_};
 
       // stub hash
-      const crypto::Hash hash_{proto_->tx_hash()};
+      const crypto::Hash hash_{proto_.tx_hash()};
     };
 
     TransactionResponse::TransactionResponse(const TransactionResponse &r)
-        : TransactionResponse(*r.impl_->proto_) {}
+        : TransactionResponse(r.impl_->proto_) {}
     TransactionResponse::TransactionResponse(TransactionResponse &&r) noexcept =
         default;
 
@@ -90,16 +89,16 @@ namespace shared_model {
 
     const TransactionResponse::StatelessErrorOrFailedCommandNameType &
     TransactionResponse::statelessErrorOrCommandName() const {
-      return impl_->proto_->err_or_cmd_name();
+      return impl_->proto_.err_or_cmd_name();
     }
 
     TransactionResponse::FailedCommandIndexType
     TransactionResponse::failedCommandIndex() const {
-      return impl_->proto_->failed_cmd_index();
+      return impl_->proto_.failed_cmd_index();
     }
 
     TransactionResponse::ErrorCodeType TransactionResponse::errorCode() const {
-      return impl_->proto_->error_code();
+      return impl_->proto_.error_code();
     }
 
     int TransactionResponse::priority() const noexcept {
@@ -124,11 +123,11 @@ namespace shared_model {
 
     const TransactionResponse::TransportType &
     TransactionResponse::getTransport() const {
-      return *impl_->proto_;
+      return impl_->proto_;
     }
 
     TransactionResponse *TransactionResponse::clone() const {
-      return new TransactionResponse(*impl_->proto_);
+      return new TransactionResponse(impl_->proto_);
     }
   };  // namespace proto
 }  // namespace shared_model

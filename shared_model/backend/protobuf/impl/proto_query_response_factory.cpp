@@ -4,6 +4,7 @@
  */
 
 #include "backend/protobuf/proto_query_response_factory.hpp"
+
 #include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/query_responses/proto_block_query_response.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
@@ -120,10 +121,11 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
     ErrorQueryType error_type,
-    std::string error_msg,
+    interface::ErrorQueryResponse::ErrorMessageType error_msg,
+    interface::ErrorQueryResponse::ErrorCodeType error_code,
     const crypto::Hash &query_hash) const {
   return createQueryResponse(
-      [error_type, error_msg = std::move(error_msg)](
+      [error_type, error_msg = std::move(error_msg), error_code](
           iroha::protocol::QueryResponse &protocol_query_response) mutable {
         iroha::protocol::ErrorResponse_Reason reason;
         switch (error_type) {
@@ -159,6 +161,7 @@ shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
             protocol_query_response.mutable_error_response();
         protocol_specific_response->set_reason(reason);
         protocol_specific_response->set_message(std::move(error_msg));
+        protocol_specific_response->set_error_code(error_code);
       },
       query_hash);
 }

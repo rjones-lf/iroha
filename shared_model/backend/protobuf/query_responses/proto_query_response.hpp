@@ -7,7 +7,6 @@
 #define IROHA_SHARED_MODEL_PROTO_QUERY_RESPONSE_HPP
 
 #include "interfaces/query_responses/query_response.hpp"
-
 #include "qry_responses.pb.h"
 
 namespace shared_model {

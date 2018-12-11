@@ -359,7 +359,7 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::sendTxWithoutValidation(
       const shared_model::proto::Transaction &tx) {
     log_->info("sending transaction");
-    log_->debug(tx.toString());
+    log_->debug("{}", tx);
 
     command_client_.Torii(tx.getTransport());
     return *this;
@@ -499,7 +499,7 @@ namespace integration_framework {
       std::function<void(const shared_model::proto::QueryResponse &)>
           validation) {
     log_->info("send query");
-    log_->debug(qry.toString());
+    log_->debug("{}", qry);
 
     iroha::protocol::QueryResponse response;
     query_client_.Find(qry.getTransport(), response);

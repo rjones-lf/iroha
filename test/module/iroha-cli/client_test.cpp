@@ -441,6 +441,7 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
                        shared_model::interface::QueryResponseFactory::
                            ErrorQueryType::kStatefulFailed,
                        "",
+                       1,
                        query.hash())
                    .release();
 
