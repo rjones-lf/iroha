@@ -15,6 +15,7 @@
 #include "module/shared_model/builders/protobuf/test_domain_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_peer_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "module/shared_model/mock_objects_factories/mock_command_factory.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -64,27 +65,14 @@ namespace iroha {
         AmetsuchiTest::TearDown();
       }
 
-      CommandResult execute(
-          const std::unique_ptr<shared_model::interface::Command> &command,
-          bool do_validation = false,
-          const shared_model::interface::types::AccountIdType &creator =
-              "id@domain") {
+      template <typename CommandType>
+      CommandResult execute(CommandType &&command,
+                            bool do_validation = false,
+                            const shared_model::interface::types::AccountIdType
+                                &creator = "id@domain") {
         executor->doValidation(not do_validation);
         executor->setCreatorAccountId(creator);
-        return boost::apply_visitor(*executor, command->get());
-      }
-
-      // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework function with
-      // CommandBuilder
-      /**
-       * Hepler function to build command and wrap it into
-       * std::unique_ptr<>
-       * @param builder command builder
-       * @return command
-       */
-      std::unique_ptr<shared_model::interface::Command> buildCommand(
-          const TestTransactionBuilder &builder) {
-        return clone(builder.build().commands().front());
+        return executor->operator()(std::forward<CommandType>(command));
       }
 
       void addAllPerms(
@@ -93,14 +81,14 @@ namespace iroha {
           const shared_model::interface::types::RoleIdType role_id = "all") {
         shared_model::interface::RolePermissionSet permissions;
         permissions.set();
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createRole(
-                            role_id, permissions)),
-                        true)));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().appendRole(
-                            account_id, role_id)),
-                        true)));
+
+        auto create_role =
+            mock_command_factory->constructCreateRole(role_id, permissions);
+        ASSERT_TRUE(val(execute(*create_role, true)));
+
+        auto append_role =
+            mock_command_factory->constructAppendRole(account_id, role_id);
+        ASSERT_TRUE(val(execute(*append_role, true)));
       }
 
       /**
@@ -141,9 +129,12 @@ namespace iroha {
 
       const std::string uint256_halfmax =
           "57896044618658097711785492504343953926634992332820282019728792003956"
-          "5648"
-          "19966.0";  // 2**255
+          "564819966.0";  // 2**255
       const std::string asset_amount_one_zero = "1.0";
+
+      std::unique_ptr<shared_model::interface::MockCommandFactory>
+          mock_command_factory =
+              std::make_unique<shared_model::interface::MockCommandFactory>();
     };
 
     class AddAccountAssetTest : public CommandExecutorTest {
@@ -151,33 +142,25 @@ namespace iroha {
       void SetUp() override {
         CommandExecutorTest::SetUp();
 
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createRole(
-                            role, role_permissions)),
-                        true)));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createDomain(
-                            domain->domainId(), role)),
-                        true)));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAccount(
-                            "id", domain->domainId(), *pubkey)),
-                        true)));
+        auto create_role =
+            mock_command_factory->constructCreateRole(role, role_permissions);
+        ASSERT_TRUE(val(execute(*create_role, true)));
+
+        auto create_domain = mock_command_factory->constructCreateDomain(
+            domain->domainId(), role);
+        ASSERT_TRUE(val(execute(*create_domain, true)));
+
+        auto create_account = mock_command_factory->constructCreateAccount(
+            "id", domain->domainId(), *pubkey);
+        ASSERT_TRUE(val(execute(*create_account, true)));
       }
       /**
        * Add default asset and check that it is done
        */
       void addAsset() {
-        auto asset = clone(TestAccountAssetBuilder()
-                               .domainId(domain->domainId())
-                               .assetId(asset_id)
-                               .precision(1)
-                               .build());
-
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAsset(
-                            "coin", domain->domainId(), 1)),
-                        true)));
+        auto create_asset = mock_command_factory->constructCreateAsset(
+            "coin", domain->domainId(), 1);
+        ASSERT_TRUE(val(execute(*create_asset, true)));
       }
 
       shared_model::interface::types::AssetIdType asset_id =
@@ -192,19 +175,21 @@ namespace iroha {
     TEST_F(AddAccountAssetTest, Valid) {
       addAsset();
       addAllPerms();
-      ASSERT_TRUE(val(execute(
-          buildCommand(TestTransactionBuilder()
-                           .addAssetQuantity(asset_id, asset_amount_one_zero)
-                           .creatorAccountId(account->accountId())))));
+
+      auto add_asset = mock_command_factory->constructAddAssetQuantity(
+          asset_id, shared_model::interface::Amount(asset_amount_one_zero));
+      ASSERT_TRUE(val(execute(*add_asset)));
+
       auto account_asset =
           query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ(asset_amount_one_zero,
                 account_asset.get()->balance().toStringRepr());
-      ASSERT_TRUE(val(execute(
-          buildCommand(TestTransactionBuilder()
-                           .addAssetQuantity(asset_id, asset_amount_one_zero)
-                           .creatorAccountId(account->accountId())))));
+
+      auto add_more_asset = mock_command_factory->constructAddAssetQuantity(
+          asset_id, shared_model::interface::Amount(asset_amount_one_zero));
+      ASSERT_TRUE(val(execute(*add_more_asset)));
+
       account_asset = query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ("2.0", account_asset.get()->balance().toStringRepr());
@@ -217,21 +202,20 @@ namespace iroha {
      */
     TEST_F(AddAccountAssetTest, NoPerms) {
       addAsset();
-      ASSERT_TRUE(val(execute(
-          buildCommand(TestTransactionBuilder()
-                           .addAssetQuantity(asset_id, asset_amount_one_zero)
-                           .creatorAccountId(account->accountId())),
-          true)));
+
+      auto add_asset = mock_command_factory->constructAddAssetQuantity(
+          asset_id, shared_model::interface::Amount(asset_amount_one_zero));
+      ASSERT_TRUE(val(execute(*add_asset, true)));
+
       auto account_asset =
           query->getAccountAsset(account->accountId(), asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ(asset_amount_one_zero,
                 account_asset.get()->balance().toStringRepr());
 
-      auto cmd_result = execute(
-          buildCommand(TestTransactionBuilder()
-                           .addAssetQuantity(asset_id, asset_amount_one_zero)
-                           .creatorAccountId(account->accountId())));
+      auto add_more_asset = mock_command_factory->constructAddAssetQuantity(
+          asset_id, shared_model::interface::Amount(asset_amount_one_zero));
+      auto cmd_result = execute(*add_asset);
 
       std::vector<std::string> query_args{
           account->accountId(), asset_amount_one_zero, asset_id, "1"};
@@ -244,11 +228,9 @@ namespace iroha {
      * @then account asset fails to be added
      */
     TEST_F(AddAccountAssetTest, InvalidAsset) {
-      auto cmd_result = execute(
-          buildCommand(TestTransactionBuilder()
-                           .addAssetQuantity(asset_id, asset_amount_one_zero)
-                           .creatorAccountId(account->accountId())),
-          true);
+      auto add_asset = mock_command_factory->constructAddAssetQuantity(
+          asset_id, shared_model::interface::Amount(asset_amount_one_zero));
+      auto cmd_result = execute(*add_asset, true);
 
       std::vector<std::string> query_args{
           account->accountId(), asset_amount_one_zero, asset_id, "1"};
@@ -262,16 +244,14 @@ namespace iroha {
      */
     TEST_F(AddAccountAssetTest, Uint256Overflow) {
       addAsset();
-      ASSERT_TRUE(val(
-          execute(buildCommand(TestTransactionBuilder()
-                                   .addAssetQuantity(asset_id, uint256_halfmax)
-                                   .creatorAccountId(account->accountId())),
-                  true)));
-      auto cmd_result =
-          execute(buildCommand(TestTransactionBuilder()
-                                   .addAssetQuantity(asset_id, uint256_halfmax)
-                                   .creatorAccountId(account->accountId())),
-                  true);
+
+      auto add_asset = mock_command_factory->constructAddAssetQuantity(
+          asset_id, shared_model::interface::Amount(uint256_halfmax));
+      ASSERT_TRUE(val(execute(*add_asset, true)));
+
+      auto add_more_asset = mock_command_factory->constructAddAssetQuantity(
+          asset_id, shared_model::interface::Amount(uint256_halfmax));
+      auto cmd_result = execute(*add_asset, true);
 
       std::vector<std::string> query_args{
           account->accountId(), uint256_halfmax, asset_id, "1"};

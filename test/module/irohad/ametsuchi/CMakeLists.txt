@@ -52,6 +52,7 @@ addtest(postgres_executor_test postgres_executor_test.cpp)
 target_link_libraries(postgres_executor_test
     integration_framework
     ametsuchi
+    commands_mocks_factory
     )
 
 addtest(postgres_query_executor_test postgres_query_executor_test.cpp)
