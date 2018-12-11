@@ -132,9 +132,8 @@ namespace iroha {
           // with number of peers
           auto &peer =
               current_peers_[permutation[reject_round % permutation.size()]];
-          log_->debug("For round [block={}, reject={}, ], using OS on peer: {}",
-                      current_round.block_round,
-                      reject_round,
+          log_->debug("For round {}, using OS on peer: {}",
+                      consensus::Round{current_round.block_round, reject_round},
                       peer->toString());
           return peer;
         };

@@ -28,10 +28,9 @@ namespace iroha {
           votes_.push_back(msg);
 
           log_->info(
-              "Vote with rounds ({}, {}) and hashes ({}, {}) inserted, votes "
-              "in storage [{}/{}]",
-              msg.hash.vote_round.block_round,
-              msg.hash.vote_round.reject_round,
+              "Vote with round {} and hashes ({}, {}) inserted, votes in "
+              "storage [{}/{}]",
+              msg.hash.vote_round,
               msg.hash.vote_hashes.proposal_hash,
               msg.hash.vote_hashes.block_hash,
               votes_.size(),
