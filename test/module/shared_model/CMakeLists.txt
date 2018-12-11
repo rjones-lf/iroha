@@ -36,5 +36,6 @@ add_library(commands_mocks_factory
 target_link_libraries(commands_mocks_factory
     shared_model_interfaces
     logger
+    gtest::main
     gmock::main
     )
