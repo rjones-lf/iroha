@@ -107,10 +107,10 @@ namespace iroha {
          */
         void nextProcessingState(const Round &round);
 
-        /// Get the highest commit, if any, otherwize boost::none.
+        /// Get the highest commit, if any, otherwise boost::none.
         boost::optional<CommitMessage> getLastCommit() const;
 
-        /// Get the outcome of given round, if any, otherwize boost::none.
+        /// Get the outcome of given round, if any, otherwise boost::none.
         boost::optional<Answer> getRoundOutcome(const Round &round) const;
 
        private:
@@ -120,9 +120,9 @@ namespace iroha {
         // --------| private api |--------
 
         /**
-         * Retrieve iterator for storage with specified key
-         * @param round - key of that storage
-         * @return iterator to proposal storage
+         * Retrieve the storage with specified key, if there is any.
+         * @param round - key of that storage.
+         * @return Optional pointer to proposal storage or boost::none.
          */
         OptProposalStoragePtr getProposalStorage(const Round &round) const;
 
