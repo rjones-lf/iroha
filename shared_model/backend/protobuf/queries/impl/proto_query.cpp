@@ -46,10 +46,10 @@ namespace shared_model {
       explicit Impl(TransportType &&ref) : proto_{std::move(ref)} {}
       explicit Impl(const TransportType &ref) : proto_{ref} {}
 
-      detail::ReferenceHolder<TransportType> proto_;
+      TransportType proto_;
 
       ProtoQueryVariantType variant_{[this] {
-        auto &&ar = *proto_;
+        const auto &ar = proto_;
         int which = ar.payload()
                         .GetDescriptor()
                         ->FindFieldByNumber(ar.payload().query_case())
@@ -61,20 +61,20 @@ namespace shared_model {
 
       QueryVariantType ivariant_{variant_};
 
-      interface::types::BlobType blob_{makeBlob(*proto_)};
+      interface::types::BlobType blob_{makeBlob(proto_)};
 
-      interface::types::BlobType payload_{makeBlob(proto_->payload())};
+      interface::types::BlobType payload_{makeBlob(proto_.payload())};
 
       SignatureSetType<proto::Signature> signatures_{[this] {
         SignatureSetType<proto::Signature> set;
-        if (proto_->has_signature()) {
-          set.emplace(proto_->signature());
+        if (proto_.has_signature()) {
+          set.emplace(proto_.signature());
         }
         return set;
       }()};
     };
 
-    Query::Query(const Query &o) : Query(*o.impl_->proto_) {}
+    Query::Query(const Query &o) : Query(o.impl_->proto_) {}
     Query::Query(Query &&o) noexcept = default;
 
     Query::Query(const TransportType &ref) {
@@ -91,11 +91,11 @@ namespace shared_model {
     }
 
     const interface::types::AccountIdType &Query::creatorAccountId() const {
-      return impl_->proto_->payload().meta().creator_account_id();
+      return impl_->proto_.payload().meta().creator_account_id();
     }
 
     interface::types::CounterType Query::queryCounter() const {
-      return impl_->proto_->payload().meta().query_counter();
+      return impl_->proto_.payload().meta().query_counter();
     }
 
     const interface::types::BlobType &Query::blob() const {
@@ -112,11 +112,11 @@ namespace shared_model {
 
     bool Query::addSignature(const crypto::Signed &signed_blob,
                              const crypto::PublicKey &public_key) {
-      if (impl_->proto_->has_signature()) {
+      if (impl_->proto_.has_signature()) {
         return false;
       }
 
-      auto sig = impl_->proto_->mutable_signature();
+      auto sig = impl_->proto_.mutable_signature();
       sig->set_signature(crypto::toBinaryString(signed_blob));
       sig->set_public_key(crypto::toBinaryString(public_key));
 
@@ -127,15 +127,15 @@ namespace shared_model {
     }
 
     interface::types::TimestampType Query::createdTime() const {
-      return impl_->proto_->payload().meta().created_time();
+      return impl_->proto_.payload().meta().created_time();
     }
 
     const Query::TransportType &Query::getTransport() const {
-      return *impl_->proto_;
+      return impl_->proto_;
     }
 
     Query *Query::clone() const {
-      return new Query(*impl_->proto_);
+      return new Query(impl_->proto_);
     }
 
   }  // namespace proto
