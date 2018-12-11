@@ -101,7 +101,7 @@ namespace iroha {
 
           // generate permutation of peers list from corresponding round
           // hash
-          auto generate_permutation = [&](auto &&round) {
+          auto generate_permutation = [&](auto round) {
             auto &hash = std::get<round()>(current_hashes);
             log_->debug("Using hash: {}", hash.toString());
             auto &permutation = permutations_[round()];
@@ -119,7 +119,7 @@ namespace iroha {
           generate_permutation(RoundTypeConstant<kNextRound>{});
           generate_permutation(RoundTypeConstant<kRoundAfterNext>{});
         };
-        auto on_nothing = [this, &current_round](const auto &) {
+        auto on_nothing = [&current_round](const auto &) {
           current_round = ordering::nextRejectRound(current_round);
         };
 
