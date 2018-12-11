@@ -103,10 +103,10 @@ TEST(OnDemandCache, Pop) {
 }
 
 /**
- * @given cache with batch1, batch2, and batch3 on the top
+ * @given cache with batch1 and batch2 on the top
  * @when remove({hash1}) is invoked, where hash1 is the hash of transactions
  * from batch1
- * @then only batch1 remains on the head of the queue
+ * @then only batch2 remains on the head of the queue
  */
 TEST(OnDemandCache, Remove) {
   OnDemandCache cache;
@@ -134,7 +134,7 @@ TEST(OnDemandCache, Remove) {
 
   cache.remove({hash1});
   /**
-   * 1. {batch1}
+   * 1. {batch2}
    * 2.
    * 3.
    */
