@@ -21,11 +21,11 @@ namespace iroha {
     const consensus::RejectRoundType kNextCommitRoundConsumer =
         kFirstRejectRound;
 
-    consensus::Round nextCommitRound(consensus::Round round) {
+    consensus::Round nextCommitRound(const consensus::Round &round) {
       return {round.block_round + 1, kFirstRejectRound};
     }
 
-    consensus::Round nextRejectRound(consensus::Round round) {
+    consensus::Round nextRejectRound(const consensus::Round &round) {
       return {round.block_round, round.reject_round + 1};
     }
 

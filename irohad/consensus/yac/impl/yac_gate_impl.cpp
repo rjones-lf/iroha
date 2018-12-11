@@ -40,14 +40,12 @@ namespace iroha {
       }
 
       void YacGateImpl::vote(const simulator::BlockCreatorEvent &event) {
-        if (not(current_hash_.vote_round < event.round)) {
+        if (current_hash_.vote_round >= event.round) {
           log_->info(
-              "Current round [{}, {}] is greater or equal than vote round [{}, "
-              "{}], skipped",
-              current_hash_.vote_round.block_round,
-              current_hash_.vote_round.reject_round,
-              event.round.block_round,
-              event.round.reject_round);
+              "Current round {} is greater than or equal to vote round {}, "
+              "skipped",
+              current_hash_.vote_round,
+              event.round);
           return;
         }
 
@@ -99,12 +97,9 @@ namespace iroha {
         const auto hash = getHash(msg.votes).value();
         if (hash.vote_round < current_hash_.vote_round) {
           log_->info(
-              "Current round [{}, {}] is greater than commit round [{}, {}], "
-              "skipped",
-              current_hash_.vote_round.block_round,
-              current_hash_.vote_round.reject_round,
-              hash.vote_round.block_round,
-              hash.vote_round.reject_round);
+              "Current round {} is greater than commit round {}, skipped",
+              current_hash_.vote_round,
+              hash.vote_round);
           return rxcpp::observable<>::empty<GateObject>();
         }
 
@@ -149,12 +144,9 @@ namespace iroha {
         const auto hash = getHash(msg.votes).value();
         if (hash.vote_round < current_hash_.vote_round) {
           log_->info(
-              "Current round [{}, {}] is greater than reject round [{}, {}], "
-              "skipped",
-              current_hash_.vote_round.block_round,
-              current_hash_.vote_round.reject_round,
-              hash.vote_round.block_round,
-              hash.vote_round.reject_round);
+              "Current round {} is greater than reject round {}, skipped",
+              current_hash_.vote_round,
+              hash.vote_round);
           return rxcpp::observable<>::empty<GateObject>();
         }
 

@@ -93,7 +93,7 @@ namespace iroha {
           current_round = ordering::nextCommitRound(current_round);
 
           // retrieve peer list from database
-          // TODO andrei 08.11.2018 IR-1853 Refactor PeerQuery without
+          // TODO lebdron 08.11.2018 IR-1853 Refactor PeerQuery without
           // database access and optional
           peer_query_factory->createPeerQuery() | [](auto &&query) {
             return query->getLedgerPeers();
@@ -101,7 +101,7 @@ namespace iroha {
 
           // generate permutation of peers list from corresponding round
           // hash
-          auto generate_permutation = [&](auto round) {
+          auto generate_permutation = [&](auto &&round) {
             auto &hash = std::get<round()>(current_hashes);
             log_->debug("Using hash: {}", hash.toString());
             auto &permutation = permutations_[round()];

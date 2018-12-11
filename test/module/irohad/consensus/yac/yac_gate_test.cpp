@@ -248,22 +248,28 @@ TEST_F(YacGateTest, DifferentCommit) {
   ASSERT_TRUE(gate_wrapper.validate());
 }
 
+class YacGateOlderTest : public YacGateTest {
+  void SetUp() override {
+    YacGateTest::SetUp();
+
+    // generate order of peers
+    ON_CALL(*peer_orderer, getOrdering(_))
+        .WillByDefault(Return(ClusterOrdering::create({mk_peer("fake_node")})));
+
+    // make hash from block
+    ON_CALL(*hash_provider, makeHash(_)).WillByDefault(Return(expected_hash));
+
+    block_notifier.get_subscriber().on_next(
+        BlockCreatorEvent{RoundData{expected_proposal, expected_block}, round});
+  }
+};
+
 /**
  * @given yac gate with current round initialized
  * @when vote for older round is called
  * @then vote is ignored
  */
-TEST_F(YacGateTest, OlderVote) {
-  // generate order of peers
-  ON_CALL(*peer_orderer, getOrdering(_))
-      .WillByDefault(Return(ClusterOrdering::create({mk_peer("fake_node")})));
-
-  // make hash from block
-  ON_CALL(*hash_provider, makeHash(_)).WillByDefault(Return(expected_hash));
-
-  block_notifier.get_subscriber().on_next(
-      BlockCreatorEvent{RoundData{expected_proposal, expected_block}, round});
-
+TEST_F(YacGateOlderTest, OlderVote) {
   EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(0);
 
   EXPECT_CALL(*peer_orderer, getOrdering(_)).Times(0);
@@ -279,17 +285,7 @@ TEST_F(YacGateTest, OlderVote) {
  * @when commit for older round is received
  * @then commit is ignored
  */
-TEST_F(YacGateTest, OlderCommit) {
-  // generate order of peers
-  ON_CALL(*peer_orderer, getOrdering(_))
-      .WillByDefault(Return(ClusterOrdering::create({mk_peer("fake_node")})));
-
-  // make hash from block
-  ON_CALL(*hash_provider, makeHash(_)).WillByDefault(Return(expected_hash));
-
-  block_notifier.get_subscriber().on_next(
-      BlockCreatorEvent{RoundData{expected_proposal, expected_block}, round});
-
+TEST_F(YacGateOlderTest, OlderCommit) {
   auto signature = std::make_shared<MockSignature>();
   EXPECT_CALL(*signature, publicKey())
       .WillRepeatedly(ReturnRefOfCopy(PublicKey("actual_pubkey")));
@@ -313,17 +309,7 @@ TEST_F(YacGateTest, OlderCommit) {
  * @when reject for older round is received
  * @then reject is ignored
  */
-TEST_F(YacGateTest, OlderReject) {
-  // generate order of peers
-  ON_CALL(*peer_orderer, getOrdering(_))
-      .WillByDefault(Return(ClusterOrdering::create({mk_peer("fake_node")})));
-
-  // make hash from block
-  ON_CALL(*hash_provider, makeHash(_)).WillByDefault(Return(expected_hash));
-
-  block_notifier.get_subscriber().on_next(
-      BlockCreatorEvent{RoundData{expected_proposal, expected_block}, round});
-
+TEST_F(YacGateOlderTest, OlderReject) {
   auto signature1 = std::make_shared<MockSignature>(),
        signature2 = std::make_shared<MockSignature>();
   EXPECT_CALL(*signature1, publicKey())
