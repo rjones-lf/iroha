@@ -39,10 +39,9 @@ namespace shared_model {
       interface::types::HashType reduced_hash_{
           shared_model::crypto::Sha3_256::makeHash(reduced_payload_blob_)};
 
-      std::vector<proto::Command> commands_{[this] {
-        return std::vector<proto::Command>(reduced_payload_.commands().begin(),
-                                           reduced_payload_.commands().end());
-      }()};
+      std::vector<proto::Command> commands_{
+          reduced_payload_.mutable_commands()->begin(),
+          reduced_payload_.mutable_commands()->end()};
 
       boost::optional<std::shared_ptr<interface::BatchMeta>> meta_{
           [this]() -> boost::optional<std::shared_ptr<interface::BatchMeta>> {
