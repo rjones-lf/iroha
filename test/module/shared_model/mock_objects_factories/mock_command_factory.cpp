@@ -6,6 +6,7 @@
 #include "module/shared_model/mock_objects_factories/mock_command_factory.hpp"
 
 using ::testing::Return;
+using ::testing::ReturnRef;
 using ::testing::ReturnRefOfCopy;
 
 namespace shared_model {
@@ -37,7 +38,7 @@ namespace shared_model {
       return createFactoryResult<MockAddPeer>(
           [&peer](FactoryResult<MockAddPeer> specific_cmd_mock) {
             EXPECT_CALL(*specific_cmd_mock, peer())
-                .WillRepeatedly(ReturnRefOfCopy(peer));
+                .WillRepeatedly(ReturnRef(peer));
             return specific_cmd_mock;
           });
     }
