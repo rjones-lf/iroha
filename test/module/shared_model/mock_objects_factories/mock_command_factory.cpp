@@ -251,25 +251,24 @@ namespace shared_model {
         const types::AccountIdType &src_account_id,
         const types::AccountIdType &dest_account_id,
         const types::AssetIdType &asset_id,
-        const Amount &cmd_amount,
-        const types::DescriptionType &cmd_description) const {
+        const types::DescriptionType &cmd_description,
+        const Amount &cmd_amount) const {
       return createFactoryResult<MockTransferAsset>(
           [&src_account_id,
            &dest_account_id,
            &asset_id,
-           &cmd_amount,
-           &cmd_description](
-              FactoryResult<MockTransferAsset> specific_cmd_mock) {
+           &cmd_description,
+           &cmd_amount](FactoryResult<MockTransferAsset> specific_cmd_mock) {
             EXPECT_CALL(*specific_cmd_mock, srcAccountId())
                 .WillRepeatedly(ReturnRefOfCopy(src_account_id));
             EXPECT_CALL(*specific_cmd_mock, destAccountId())
                 .WillRepeatedly(ReturnRefOfCopy(dest_account_id));
             EXPECT_CALL(*specific_cmd_mock, assetId())
                 .WillRepeatedly(ReturnRefOfCopy(asset_id));
-            EXPECT_CALL(*specific_cmd_mock, amount())
-                .WillRepeatedly(ReturnRefOfCopy(cmd_amount));
             EXPECT_CALL(*specific_cmd_mock, description())
                 .WillRepeatedly(ReturnRefOfCopy(cmd_description));
+            EXPECT_CALL(*specific_cmd_mock, amount())
+                .WillRepeatedly(ReturnRefOfCopy(cmd_amount));
             return specific_cmd_mock;
           });
     }

@@ -171,16 +171,16 @@ namespace shared_model {
        * @param src_account_id to be in that command
        * @param dest_account_id to be in that command
        * @param asset_id to be in that command
-       * @param amount to be in that command
        * @param description to be in that command
+       * @param amount to be in that command
        * @return pointer to the created command
        */
       FactoryResult<MockTransferAsset> constructTransferAsset(
           const types::AccountIdType &src_account_id,
           const types::AccountIdType &dest_account_id,
           const types::AssetIdType &asset_id,
-          const Amount &amount,
-          const types::DescriptionType &description) const;
+          const types::DescriptionType &description,
+          const Amount &amount) const;
 
      private:
       /**
