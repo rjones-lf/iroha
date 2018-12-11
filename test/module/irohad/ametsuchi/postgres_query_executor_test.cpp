@@ -28,6 +28,7 @@
 #include "module/shared_model/builders/protobuf/test_peer_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "module/shared_model/mock_objects_factories/mock_command_factory.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -52,6 +53,8 @@ namespace iroha {
             shared_model::interface::permissions::Grantable::kAddMySignatory;
         pubkey = std::make_unique<shared_model::interface::types::PubkeyType>(
             std::string('1', 32));
+        pubkey2 = std::make_unique<shared_model::interface::types::PubkeyType>(
+            std::string('2', 32));
 
         another_domain = clone(
             TestDomainBuilder().domainId("andomain").defaultRole(role).build());
@@ -79,27 +82,23 @@ namespace iroha {
             std::make_unique<PostgresCommandExecutor>(*sql, perm_converter);
         pending_txs_storage = std::make_shared<MockPendingTransactionStorage>();
 
-        auto result = execute(buildCommand(TestTransactionBuilder().createRole(
-                                  role, role_permissions)),
-                              true);
+        auto result = execute(
+            *mock_command_factory->constructCreateRole(role, role_permissions),
+            true);
         ASSERT_TRUE(val(result)) << err(result)->error.toString();
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createDomain(
-                            domain->domainId(), role)),
-                        true)));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAccount(
-                            "id", domain->domainId(), *pubkey)),
-                        true)));
+        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateDomain(
+                                    domain->domainId(), role),
+                                true)));
+        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateAccount(
+                                    "id", domain->domainId(), *pubkey),
+                                true)));
 
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createDomain(
-                            another_domain->domainId(), role)),
-                        true)));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAccount(
-                            "id", another_domain->domainId(), *pubkey)),
-                        true)));
+        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateDomain(
+                                    another_domain->domainId(), role),
+                                true)));
+        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateAccount(
+                                    "id", another_domain->domainId(), *pubkey),
+                                true)));
       }
 
       void TearDown() override {
@@ -115,27 +114,14 @@ namespace iroha {
               };
       }
 
-      CommandResult execute(
-          const std::unique_ptr<shared_model::interface::Command> &command,
-          bool do_validation = false,
-          const shared_model::interface::types::AccountIdType &creator =
-              "id@domain") {
+      template <typename CommandType>
+      CommandResult execute(CommandType &&command,
+                            bool do_validation = false,
+                            const shared_model::interface::types::AccountIdType
+                                &creator = "id@domain") {
         executor->doValidation(not do_validation);
         executor->setCreatorAccountId(creator);
-        return boost::apply_visitor(*executor, command->get());
-      }
-
-      // TODO 2018-04-20 Alexey Chernyshov - IR-1276 - rework function with
-      // CommandBuilder
-      /**
-       * Helper function to build command and wrap it into
-       * std::unique_ptr<>
-       * @param builder command builder
-       * @return command
-       */
-      std::unique_ptr<shared_model::interface::Command> buildCommand(
-          const TestTransactionBuilder &builder) {
-        return clone(builder.build().commands().front());
+        return executor->operator()(std::forward<CommandType>(command));
       }
 
       void addPerms(
@@ -144,12 +130,10 @@ namespace iroha {
               "id@domain",
           const shared_model::interface::types::RoleIdType role_id = "perms") {
         ASSERT_TRUE(val(execute(
-            buildCommand(TestTransactionBuilder().createRole(role_id, set)),
+            *mock_command_factory->constructCreateRole(role_id, set), true)));
+        ASSERT_TRUE(val(execute(
+            *mock_command_factory->constructAppendRole(account_id, role_id),
             true)));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().appendRole(
-                            account_id, role_id)),
-                        true)));
       }
 
       void addAllPerms(
@@ -158,14 +142,12 @@ namespace iroha {
           const shared_model::interface::types::RoleIdType role_id = "all") {
         shared_model::interface::RolePermissionSet permissions;
         permissions.set();
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createRole(
-                            role_id, permissions)),
-                        true)));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().appendRole(
-                            account_id, role_id)),
-                        true)));
+        ASSERT_TRUE(val(execute(
+            *mock_command_factory->constructCreateRole(role_id, permissions),
+            true)));
+        ASSERT_TRUE(val(execute(
+            *mock_command_factory->constructAppendRole(account_id, role_id),
+            true)));
       }
 
       // TODO [IR-1816] Akvinikym 06.12.18: remove these constants after
@@ -216,6 +198,18 @@ namespace iroha {
         }) << exec_result->toString();
       }
 
+      void createDefaultAccount() {
+        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateAccount(
+                                    "id2", domain->domainId(), *pubkey2),
+                                true)));
+      }
+
+      void createDefaultAsset() {
+        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateAsset(
+                                    "coin", domain->domainId(), 1),
+                                true)));
+      }
+
       std::string role = "role";
       shared_model::interface::RolePermissionSet role_permissions;
       shared_model::interface::permissions::Grantable grantable_permission;
@@ -223,6 +217,7 @@ namespace iroha {
           another_account;
       std::unique_ptr<shared_model::interface::Domain> domain, another_domain;
       std::unique_ptr<shared_model::interface::types::PubkeyType> pubkey;
+      std::unique_ptr<shared_model::interface::types::PubkeyType> pubkey2;
 
       std::unique_ptr<soci::session> sql;
 
@@ -240,6 +235,10 @@ namespace iroha {
       std::shared_ptr<shared_model::interface::PermissionToString>
           perm_converter =
               std::make_shared<shared_model::proto::ProtoPermissionToString>();
+
+      std::unique_ptr<shared_model::interface::MockCommandFactory>
+          mock_command_factory =
+              std::make_unique<shared_model::interface::MockCommandFactory>();
     };
 
     class BlocksQueryExecutorTest : public QueryExecutorTest {};
@@ -287,13 +286,7 @@ namespace iroha {
                              .quorum(1)
                              .jsonData(R"({"id@domain": {"key": "value"}})")
                              .build());
-        auto pubkey2 =
-            std::make_unique<shared_model::interface::types::PubkeyType>(
-                std::string('2', 32));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAccount(
-                            "id2", domain->domainId(), *pubkey2)),
-                        true)));
+        createDefaultAccount();
       }
 
       std::unique_ptr<shared_model::interface::Account> account2;
@@ -397,13 +390,7 @@ namespace iroha {
                              .quorum(1)
                              .jsonData(R"({"id@domain": {"key": "value"}})")
                              .build());
-        auto pubkey2 =
-            std::make_unique<shared_model::interface::types::PubkeyType>(
-                std::string('2', 32));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAccount(
-                            "id2", domain->domainId(), *pubkey2)),
-                        true)));
+        createDefaultAccount();
       }
 
       std::unique_ptr<shared_model::interface::Account> account2;
@@ -512,30 +499,18 @@ namespace iroha {
                              .quorum(1)
                              .jsonData(R"({"id@domain": {"key": "value"}})")
                              .build());
-        auto pubkey2 =
-            std::make_unique<shared_model::interface::types::PubkeyType>(
-                std::string('2', 32));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAccount(
-                            "id2", domain->domainId(), *pubkey2)),
-                        true)));
+        createDefaultAccount();
+        createDefaultAsset();
 
         ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAsset(
-                            "coin", domain->domainId(), 1)),
+            val(execute(*mock_command_factory->constructAddAssetQuantity(
+                            asset_id, shared_model::interface::Amount{"1.0"}),
                         true)));
-
-        ASSERT_TRUE(val(
-            execute(buildCommand(TestTransactionBuilder()
-                                     .addAssetQuantity(asset_id, "1.0")
-                                     .creatorAccountId(account->accountId())),
-                    true)));
-        ASSERT_TRUE(val(
-            execute(buildCommand(TestTransactionBuilder()
-                                     .addAssetQuantity(asset_id, "1.0")
-                                     .creatorAccountId(account2->accountId())),
-                    true,
-                    account2->accountId())));
+        ASSERT_TRUE(
+            val(execute(*mock_command_factory->constructAddAssetQuantity(
+                            asset_id, shared_model::interface::Amount{"1.0"}),
+                        true,
+                        account2->accountId())));
       }
 
       std::unique_ptr<shared_model::interface::Account> account2;
@@ -649,37 +624,27 @@ namespace iroha {
                                        " \"id2@domain\": {\"key\": \"value\", "
                                        "\"key2\": \"value2\"}}")
                              .build());
-        auto pubkey2 =
-            std::make_unique<shared_model::interface::types::PubkeyType>(
-                std::string('2', 32));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAccount(
-                            "id2", domain->domainId(), *pubkey2)),
-                        true)));
+        createDefaultAccount();
+        createDefaultAsset();
 
         ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAsset(
-                            "coin", domain->domainId(), 1)),
-                        true)));
-
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().setAccountDetail(
-                            account2->accountId(), "key", "value")),
+            val(execute(*mock_command_factory->constructSetAccountDetail(
+                            account2->accountId(), "key", "value"),
                         true,
                         account->accountId())));
         ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().setAccountDetail(
-                            account2->accountId(), "key2", "value2")),
+            val(execute(*mock_command_factory->constructSetAccountDetail(
+                            account2->accountId(), "key2", "value2"),
                         true,
                         account->accountId())));
         ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().setAccountDetail(
-                            account2->accountId(), "key", "value")),
+            val(execute(*mock_command_factory->constructSetAccountDetail(
+                            account2->accountId(), "key", "value"),
                         true,
                         account2->accountId())));
         ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().setAccountDetail(
-                            account2->accountId(), "key2", "value2")),
+            val(execute(*mock_command_factory->constructSetAccountDetail(
+                            account2->accountId(), "key2", "value2"),
                         true,
                         account2->accountId())));
       }
@@ -947,10 +912,9 @@ namespace iroha {
       }
 
       void createAsset() {
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAsset(
-                            "coin", domain->domainId(), 1)),
-                        true)));
+        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateAsset(
+                                    "coin", domain->domainId(), 1),
+                                true)));
       }
       const std::string asset_id = "coin#domain";
     };
@@ -1027,17 +991,8 @@ namespace iroha {
                              .quorum(1)
                              .jsonData(R"({"id@domain": {"key": "value"}})")
                              .build());
-        auto pubkey2 =
-            std::make_unique<shared_model::interface::types::PubkeyType>(
-                std::string('2', 32));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAccount(
-                            "id2", domain->domainId(), *pubkey2)),
-                        true)));
-        ASSERT_TRUE(
-            val(execute(buildCommand(TestTransactionBuilder().createAsset(
-                            "coin", domain->domainId(), 1)),
-                        true)));
+        createDefaultAccount();
+        createDefaultAsset();
       }
 
       /**

@@ -58,6 +58,7 @@ addtest(postgres_query_executor_test postgres_query_executor_test.cpp)
 target_link_libraries(postgres_query_executor_test
     ametsuchi_fixture
     ametsuchi
+    commands_mocks_factory
     )
 
 addtest(tx_presence_cache_test tx_presence_cache_test.cpp)
