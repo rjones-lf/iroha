@@ -129,7 +129,8 @@ auto createMockBatchWithHash(
 
 /**
  * Creates mock batch with provided transactions
- * @param txs -- const ref to hash to be returned by the batch
+ * @param txs -- list of transactions in the batch
+ * @param hash -- const ref to hash to be returned by the batch
  * @return shared_ptr for batch
  */
 auto createMockBatchWithTransactions(
