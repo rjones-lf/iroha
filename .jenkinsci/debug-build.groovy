@@ -5,12 +5,16 @@ def doDebugBuild(coverageEnabled=false) {
   def manifest = load ".jenkinsci/docker-manifest.groovy"
   def pCommit = load ".jenkinsci/previous-commit.groovy"
   def parallelism = params.PARALLELISM
+  def sanitizeEnabled = params.sanitize
   def platform = sh(script: 'uname -m', returnStdout: true).trim()
   def previousCommit = pCommit.previousCommitOrCurrent()
   // params are always null unless job is started
   // this is the case for the FIRST build only.
   // So just set this to same value as default.
   // This is a known bug. See https://issues.jenkins-ci.org/browse/JENKINS-41929
+  if (sanitizeEnabled == null){
+    sanitizeEnabled = true
+  }
   if (!parallelism) {
     parallelism = 4
   }
@@ -62,7 +66,10 @@ def doDebugBuild(coverageEnabled=false) {
     def scmVars = checkout scm
     def cmakeOptions = ""
     if ( coverageEnabled ) {
-      cmakeOptions = " -DCOVERAGE=ON "
+      cmakeOptions += " -DCOVERAGE=ON "
+    }
+    if ( sanitizeEnabled ){
+      cmakeOptions += " -DSANITIZE='address;leak' "
     }
     env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
     env.IROHA_HOME = "/opt/iroha"
