@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-def developDockerManifestPush(dockerImageObj, environment) {
+def developDockerManifestPush(dockerImageObj, environment) { stage('developDockerManifestPush') {
   manifest = load ".jenkinsci/utils/docker-manifest.groovy"
   withEnv(environment) {
     if (manifest.manifestSupportEnabled()) {
@@ -25,34 +25,34 @@ def developDockerManifestPush(dockerImageObj, environment) {
       sh('echo [WARNING] Docker CLI does not support manifest management features. Manifest will not be updated')
     }
   }
-}
+}}
 
-def initialCoverage(buildDir) {
+def initialCoverage(buildDir) { stage('InitCoverage') {
   sh "cmake --build ${buildDir} --target coverage.init.info"
-}
+}}
 
-def postCoverage(buildDir) {
+def postCoverage(buildDir) { stage('PostCoverage') {
   sh "cmake --build ${buildDir} --target coverage.info"
   sh "python /tmp/lcov_cobertura.py ${buildDir}/reports/coverage.info -o ${buildDir}/reports/coverage.xml"
   cobertura autoUpdateHealth: false, autoUpdateStability: false,
     coberturaReportFile: "**/${buildDir}/reports/coverage.xml", conditionalCoverageTargets: '75, 50, 0',
     failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50,
     methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
-}
+}}
 
-def testSteps(buildDir, environment) {
+def testSteps(String buildDir, List environment, String testList) { stage('Test') {
   withEnv(environment) {
-    sh "cd ${buildDir}; ctest --output-on-failure --no-compress-output -T Test || true"
-    sh 'python .jenkinsci/helpers/platform_tag.py "Linux \$(uname -m)" \$(ls ${buildDir}/Testing/*/Test.xml)'
+    sh "cd ${buildDir}; ctest --output-on-failure --no-compress-output --tests-regex '${testList}'  --test-action Test || true"
+    sh "python .jenkinsci/helpers/platform_tag.py 'Linux \$(uname -m)' \$(ls ${buildDir}/Testing/*/Test.xml)"
     // Mark build as UNSTABLE if there are any failed tests (threshold <100%)
     xunit testTimeMargin: '3000', thresholdMode: 2, thresholds: [passed(unstableThreshold: '100')], \
       tools: [CTest(deleteOutputFiles: true, failIfNotNew: false, \
       pattern: "${buildDir}/Testing/**/Test.xml", skipNoTestFiles: false, stopProcessingIfError: true)]
   }
-}
+}}
 
 def buildSteps(int parallelism, String compilerVersion,
-      boolean pushDockerTag, boolean coverage, boolean testing, boolean cppcheck, boolean sonar, List environment) {
+      boolean pushDockerTag, boolean coverage, boolean testing, String testList, boolean cppcheck, boolean sonar, List environment) {
   stage('Build') {
     withEnv(environment) {
       scmVars = checkout scm
@@ -101,7 +101,7 @@ def buildSteps(int parallelism, String compilerVersion,
           build.cmakeBuild(buildDir, "", parallelism)
           if (testing) {
             coverage ? initialCoverage(buildDir) : sh('echo Skipping initial coverage...')
-            testSteps(buildDir, environment)
+            testSteps(buildDir, environment, testList)
             coverage ? postCoverage(buildDir) : sh('echo Skipping post coverage...')
           }
           cppcheck ? build.cppCheck(buildDir, parallelism) : sh('echo Skipping Cppcheck...')
@@ -112,11 +112,11 @@ def buildSteps(int parallelism, String compilerVersion,
   }
 }
 
-def alwaysPostSteps(List environment) {
+def alwaysPostSteps(List environment) { stage('alwaysPostSteps') {
   withEnv(environment) {
     sh "docker network rm ${env.IROHA_NETWORK}"
     cleanWs()
   }
-}
+}}
 
 return this

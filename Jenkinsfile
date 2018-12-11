@@ -65,12 +65,34 @@ def build(Build build) {
   }
 }
 
+def getTestList() {
+    list = []
+    prefix = 'test_'
+    for (i in  params){
+        if(i.key.startsWith(prefix) && i.value.getClass() == Boolean &&  i.value){
+            list += i.key.minus(prefix)
+        } else {
+            echo "Skip params: $i"
+        }
+    }
+    status = (list.size() > 0)
+    line = ( "(" +list.findAll({it != ''}).join('|') + ")")
+    return [status, line]
+}
+
 properties([
     parameters([
         choice(choices: 'gcc54\ngcc54,gcc7,clang6', description: 'x64 Linux Compiler', name: 'x64linux_compiler'),
         choice(choices: '\ngcc54\ngcc54,gcc7,clang6', description: 'x32 Linux Compiler', name: 'x32linux_compiler'),
         choice(choices: '\nappleclang', description: 'MacOS Compiler', name: 'mac_compiler'),
         choice(choices: '\nmsvc', description: 'Windows Compiler', name: 'windows_compiler'),
+
+        booleanParam(defaultValue: true, description: 'Unit tests', name: 'test_module'),
+        booleanParam(defaultValue: false, description: '', name: 'test_integration'),
+        booleanParam(defaultValue: false, description: '', name: 'test_system'),
+        booleanParam(defaultValue: false, description: '', name: 'test_cmake'),
+        booleanParam(defaultValue: false, description: '', name: 'test_regression'),
+        booleanParam(defaultValue: false, description: '', name: 'test_benchmark'),
     ]),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
 ])
@@ -103,6 +125,9 @@ node ('master') {
   x64LinuxWorker = new Worker(label: 'x86_64', cpusAvailable: 4)
   // def x64MacWorker = new Worker(label: 'mac', cpusAvailable: 4)
 
+  // Define Tests
+  (testing,testList) = getTestList()
+
   // Define all possible steps
   x64LinuxReleaseBuildSteps = [{x64LinuxReleaseBuildScript.buildSteps(
     x64LinuxWorker.cpusAvailable, 'gcc54', 'develop', false, environmentList)}]
@@ -114,7 +139,7 @@ node ('master') {
   for (compiler in params.x64linux_compiler.split(',')) {
     if(compiler){
       x64LinuxDebugBuildSteps += {x64LinuxDebugBuildScript.buildSteps(
-        x64LinuxWorker.cpusAvailable, compiler, false, false, false, true, false, environmentList)}
+        x64LinuxWorker.cpusAvailable, compiler, false, false, testing, testList, true, false, environmentList)}
     }
   }
   x64LinuxDebugPostSteps = new Builder.PostSteps(
