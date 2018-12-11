@@ -18,6 +18,7 @@ auto operator<<(StreamType &os, const T &object)
   return os << object.toString();
 }
 
+#include <spdlog/fmt/ostr.h>
 #include <spdlog/spdlog.h>
 
 namespace logger {
