@@ -104,8 +104,10 @@ def buildSteps(int parallelism, String compilerVersion,
             testSteps(buildDir, environment, testList)
             coverage ? postCoverage(buildDir) : sh('echo Skipping post coverage...')
           }
-          cppcheck ? build.cppCheck(buildDir, parallelism) : sh('echo Skipping Cppcheck...')
-          sonar ? build.sonarScanner(scmVars, environment) : sh('echo Skipping Sonar Scanner...')
+          stage('Analysis') {
+              cppcheck ? build.cppCheck(buildDir, parallelism) : sh('echo Skipping Cppcheck...')
+              sonar ? build.sonarScanner(scmVars, environment) : sh('echo Skipping Sonar Scanner...')
+          }
         }
       }
     }

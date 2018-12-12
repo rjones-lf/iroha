@@ -71,11 +71,9 @@ def getTestList() {
     for (i in  params){
         if(i.key.startsWith(prefix) && i.value.getClass() == Boolean &&  i.value){
             list += i.key.minus(prefix)
-        } else {
-            echo "Skip params: $i"
         }
     }
-    status = (list.size() > 0)
+    status = !list.isEmpty()
     line = ( "(" +list.findAll({it != ''}).join('|') + ")")
     return [status, line]
 }
@@ -86,6 +84,10 @@ properties([
         choice(choices: '\ngcc54\ngcc54,gcc7,clang6', description: 'x32 Linux Compiler', name: 'x32linux_compiler'),
         choice(choices: '\nappleclang', description: 'MacOS Compiler', name: 'mac_compiler'),
         choice(choices: '\nmsvc', description: 'Windows Compiler', name: 'windows_compiler'),
+
+        booleanParam(defaultValue: false, description: '', name: 'coverage'),
+        booleanParam(defaultValue: true, description: '', name: 'cppcheck'),
+        booleanParam(defaultValue: false, description: '', name: 'sonar'),
 
         booleanParam(defaultValue: true, description: 'Unit tests', name: 'test_module'),
         booleanParam(defaultValue: false, description: '', name: 'test_integration'),
@@ -127,6 +129,7 @@ node ('master') {
 
   // Define Tests
   (testing,testList) = getTestList()
+  echo "testing=${testing}, testList=${testList}"
 
   // Define all possible steps
   x64LinuxReleaseBuildSteps = [{x64LinuxReleaseBuildScript.buildSteps(
@@ -139,7 +142,7 @@ node ('master') {
   for (compiler in params.x64linux_compiler.split(',')) {
     if(compiler){
       x64LinuxDebugBuildSteps += {x64LinuxDebugBuildScript.buildSteps(
-        x64LinuxWorker.cpusAvailable, compiler, false, false, testing, testList, true, false, environmentList)}
+        x64LinuxWorker.cpusAvailable, compiler, false, params.coverage, testing, testList, params.cppcheck, params.sonar, environmentList)}
     }
   }
   x64LinuxDebugPostSteps = new Builder.PostSteps(
