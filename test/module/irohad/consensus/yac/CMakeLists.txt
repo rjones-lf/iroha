@@ -78,3 +78,8 @@ addtest(supermajority_checker_test supermajority_checker_test.cpp)
 target_link_libraries(supermajority_checker_test
     yac
     )
+
+addtest(yac_storage_buffered_cleanup yac_storage_buffered_cleanup.cpp)
+target_link_libraries(yac_storage_buffered_cleanup
+        yac
+        )
