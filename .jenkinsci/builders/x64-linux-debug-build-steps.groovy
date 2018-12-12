@@ -83,31 +83,31 @@ def buildSteps(int parallelism, String compilerVersion,
         utils.dockerPush(iC, "${platform}-develop-build")
         developDockerManifestPush(iC, environment)
       }
-      docker.image('postgres:9.5').withRun(""
-        + " -e POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
-        + " -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
-        + " --name ${env.IROHA_POSTGRES_HOST}"
-        + " --network=${env.IROHA_NETWORK}") {
-        iC.inside(""
-        + " -e IROHA_POSTGRES_HOST=${env.IROHA_POSTGRES_HOST}"
-        + " -e IROHA_POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
-        + " -e IROHA_POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
-        + " --network=${env.IROHA_NETWORK}"
-        + " -v /var/jenkins/ccache:${env.CCACHE_DEBUG_DIR}") {
-          utils.ccacheSetup(5)
-          build.cmakeConfigure(buildDir, "-DCMAKE_CXX_COMPILER=${compilers[compilerVersion]['cxx_compiler']} \
-            -DCMAKE_CC_COMPILER=${compilers[compilerVersion]['cc_compiler']} -DCMAKE_BUILD_TYPE=Debug \
-            -DCOVERAGE=${cmakeBooleanOption[coverage]} -DTESTING=${cmakeBooleanOption[testing]}")
-          build.cmakeBuild(buildDir, "", parallelism)
-          if (testing) {
-            coverage ? initialCoverage(buildDir) : sh('echo Skipping initial coverage...')
-            testSteps(buildDir, environment, testList)
-            coverage ? postCoverage(buildDir) : sh('echo Skipping post coverage...')
-          }
-          stage('Analysis') {
-              cppcheck ? build.cppCheck(buildDir, parallelism) : sh('echo Skipping Cppcheck...')
-              sonar ? build.sonarScanner(scmVars, environment) : sh('echo Skipping Sonar Scanner...')
-          }
+
+      // enable prepared transactions so that 2 phase commit works
+      // we set it to 100 as a safe value
+      sh "docker run -td -e POSTGRES_USER=${env.IROHA_POSTGRES_USER} \
+      -e POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD} --name ${env.IROHA_POSTGRES_HOST} \
+      --network=${env.IROHA_NETWORK} postgres:9.5 -c 'max_prepared_transactions=100'"
+      iC.inside(""
+      + " -e IROHA_POSTGRES_HOST=${env.IROHA_POSTGRES_HOST}"
+      + " -e IROHA_POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
+      + " -e IROHA_POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
+      + " --network=${env.IROHA_NETWORK}"
+      + " -v /var/jenkins/ccache:${env.CCACHE_DEBUG_DIR}") {
+        utils.ccacheSetup(5)
+        build.cmakeConfigure(buildDir, "-DCMAKE_CXX_COMPILER=${compilers[compilerVersion]['cxx_compiler']} \
+          -DCMAKE_CC_COMPILER=${compilers[compilerVersion]['cc_compiler']} -DCMAKE_BUILD_TYPE=Debug \
+          -DCOVERAGE=${cmakeBooleanOption[coverage]} -DTESTING=${cmakeBooleanOption[testing]}")
+        build.cmakeBuild(buildDir, "", parallelism)
+        if (testing) {
+          coverage ? initialCoverage(buildDir) : sh('echo Skipping initial coverage...')
+          testSteps(buildDir, environment, testList)
+          coverage ? postCoverage(buildDir) : sh('echo Skipping post coverage...')
+        }
+        stage('Analysis') {
+            cppcheck ? build.cppCheck(buildDir, parallelism) : sh('echo Skipping Cppcheck...')
+            sonar ? build.sonarScanner(scmVars, environment) : sh('echo Skipping Sonar Scanner...')
         }
       }
     }
@@ -116,6 +116,7 @@ def buildSteps(int parallelism, String compilerVersion,
 
 def alwaysPostSteps(List environment) { stage('alwaysPostSteps') {
   withEnv(environment) {
+    sh "docker rm -f ${env.IROHA_POSTGRES_HOST} || true"
     sh "docker network rm ${env.IROHA_NETWORK}"
     cleanWs()
   }
