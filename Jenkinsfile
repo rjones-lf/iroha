@@ -113,6 +113,7 @@ node ('master') {
     "IROHA_POSTGRES_HOST": "pg-${scmVars.CHANGE_ID}-${scmVars.GIT_COMMIT}-${env.BUILD_NUMBER}",
     "IROHA_POSTGRES_USER": "pguser${scmVars.GIT_COMMIT}",
     "IROHA_POSTGRES_PASSWORD": "${scmVars.GIT_COMMIT}",
+    "IROHA_POSTGRES_PORT": "5432",
     "GIT_RAW_BASE_URL": "https://raw.githubusercontent.com/hyperledger/iroha"
   ]
   environment.each { e ->

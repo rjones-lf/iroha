@@ -91,6 +91,7 @@ def buildSteps(int parallelism, String compilerVersion,
       --network=${env.IROHA_NETWORK} postgres:9.5 -c 'max_prepared_transactions=100'"
       iC.inside(""
       + " -e IROHA_POSTGRES_HOST=${env.IROHA_POSTGRES_HOST}"
+      + " -e IROHA_POSTGRES_PORT=${env.IROHA_POSTGRES_PORT}"
       + " -e IROHA_POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
       + " -e IROHA_POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
       + " --network=${env.IROHA_NETWORK}"
