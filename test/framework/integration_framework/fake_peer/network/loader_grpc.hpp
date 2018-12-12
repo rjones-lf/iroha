@@ -18,9 +18,23 @@ namespace integration_framework {
      public:
       explicit LoaderGrpc(const std::shared_ptr<FakePeer> &fake_peer);
 
+      /**
+       * Send a `retrieveBlock' request to the peer at given address.
+       *
+       * @param dest_address - the destination of the request.
+       * @param request - the data of the request.
+       * @return true if the grpc request succeeded, false otherwise.
+       */
       bool sendBlockRequest(const std::string &dest_address,
                             const LoaderBlockRequest &request);
 
+      /**
+       * Send a `retrieveBlocks' request to the peer at given address.
+       *
+       * @param dest_address - the destination of the request.
+       * @param request - the data of the request.
+       * @return the number of received in reply blocks.
+       */
       size_t sendBlocksRequest(const std::string &dest_address,
                                const LoaderBlocksRequest &request);
 
@@ -32,11 +46,13 @@ namespace integration_framework {
 
       // --------------| iroha::network::proto::Loader::Service |--------------
 
+      /// Handler of grpc retrieveBlocks calls.
       grpc::Status retrieveBlocks(
           ::grpc::ServerContext *context,
           const iroha::network::proto::BlocksRequest *request,
           ::grpc::ServerWriter<iroha::protocol::Block> *writer) override;
 
+      /// Handler of grpc retrieveBlock calls.
       grpc::Status retrieveBlock(
           ::grpc::ServerContext *context,
           const iroha::network::proto::BlockRequest *request,
