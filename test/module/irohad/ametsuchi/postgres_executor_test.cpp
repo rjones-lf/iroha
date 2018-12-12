@@ -7,8 +7,6 @@
 #include "ametsuchi/impl/postgres_query_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "backend/protobuf/proto_permission_to_string.hpp"
-#include "cryptography/crypto_provider/crypto_defaults.hpp"
-#include "cryptography/keypair.hpp"
 #include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
@@ -1362,22 +1360,18 @@ namespace iroha {
 
     class SetQuorum : public CommandExecutorTest {
      public:
-      SetQuorum()
-          : additional_key_(shared_model::crypto::DefaultCryptoAlgorithmType::
-                                generateKeypair()) {}
+      SetQuorum() : additional_pubkey_{std::string('9', 32)} {}
 
       void SetUp() override {
         CommandExecutorTest::SetUp();
         createDefaultRole();
         createDefaultDomain();
         createDefaultAccount();
-        ASSERT_TRUE(
-            val(execute(*mock_command_factory->constructAddSignatory(
-                            additional_key_.publicKey(), account->accountId()),
-                        true)));
+        ASSERT_TRUE(val(execute(*mock_command_factory->constructAddSignatory(
+                                    additional_pubkey_, account->accountId()),
+                                true)));
       }
-
-      shared_model::crypto::Keypair additional_key_;
+      shared_model::interface::types::PubkeyType additional_pubkey_;
     };
 
     /**
@@ -1408,7 +1402,7 @@ namespace iroha {
                               "id2@domain")));
 
       ASSERT_TRUE(val(execute(*mock_command_factory->constructAddSignatory(
-                                  additional_key_.publicKey(), "id2@domain"),
+                                  additional_pubkey_, "id2@domain"),
                               true,
                               "id2@domain")));
 
