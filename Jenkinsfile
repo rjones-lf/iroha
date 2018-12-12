@@ -95,6 +95,7 @@ properties([
         booleanParam(defaultValue: false, description: '', name: 'test_cmake'),
         booleanParam(defaultValue: false, description: '', name: 'test_regression'),
         booleanParam(defaultValue: false, description: '', name: 'test_benchmark'),
+        booleanParam(defaultValue: true, description: 'Build docs', name: 'Doxygen'),
     ]),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
 ])
@@ -123,6 +124,7 @@ node ('master') {
   // Load Scripts
   x64LinuxReleaseBuildScript = load '.jenkinsci/builders/x64-linux-release-build-steps.groovy'
   x64LinuxDebugBuildScript = load '.jenkinsci/builders/x64-linux-debug-build-steps.groovy'
+  x64LinuxDocsBuildScript = load '.jenkinsci/builders/docs-build-steps.groovy'
 
   // Define Workers
   x64LinuxWorker = new Worker(label: 'x86_64', cpusAvailable: 4)
@@ -145,6 +147,9 @@ node ('master') {
       x64LinuxDebugBuildSteps += {x64LinuxDebugBuildScript.buildSteps(
         x64LinuxWorker.cpusAvailable, compiler, false, params.coverage, testing, testList, params.cppcheck, params.sonar, environmentList)}
     }
+  }
+  if(params.Doxygen){
+     x64LinuxDebugBuildSteps += {x64LinuxDocsBuildScript.buildSteps()}
   }
   x64LinuxDebugPostSteps = new Builder.PostSteps(
     always: [{x64LinuxDebugBuildScript.alwaysPostSteps(environmentList)}])
