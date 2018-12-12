@@ -82,23 +82,22 @@ namespace iroha {
             std::make_unique<PostgresCommandExecutor>(*sql, perm_converter);
         pending_txs_storage = std::make_shared<MockPendingTransactionStorage>();
 
-        auto result = execute(
+        execute(
             *mock_command_factory->constructCreateRole(role, role_permissions),
             true);
-        ASSERT_TRUE(val(result)) << err(result)->error.toString();
-        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateDomain(
-                                    domain->domainId(), role),
-                                true)));
-        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateAccount(
-                                    "id", domain->domainId(), *pubkey),
-                                true)));
+        execute(*mock_command_factory->constructCreateDomain(domain->domainId(),
+                                                             role),
+                true);
+        execute(*mock_command_factory->constructCreateAccount(
+                    "id", domain->domainId(), *pubkey),
+                true);
 
-        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateDomain(
-                                    another_domain->domainId(), role),
-                                true)));
-        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateAccount(
-                                    "id", another_domain->domainId(), *pubkey),
-                                true)));
+        execute(*mock_command_factory->constructCreateDomain(
+                    another_domain->domainId(), role),
+                true);
+        execute(*mock_command_factory->constructCreateAccount(
+                    "id", another_domain->domainId(), *pubkey),
+                true);
       }
 
       void TearDown() override {
@@ -115,13 +114,14 @@ namespace iroha {
       }
 
       template <typename CommandType>
-      CommandResult execute(CommandType &&command,
-                            bool do_validation = false,
-                            const shared_model::interface::types::AccountIdType
-                                &creator = "id@domain") {
+      void execute(CommandType &&command,
+                   bool do_validation = false,
+                   const shared_model::interface::types::AccountIdType
+                       &creator = "id@domain") {
         executor->doValidation(not do_validation);
         executor->setCreatorAccountId(creator);
-        return executor->operator()(std::forward<CommandType>(command));
+        ASSERT_TRUE(
+            val(executor->operator()(std::forward<CommandType>(command))));
       }
 
       void addPerms(
@@ -129,11 +129,9 @@ namespace iroha {
           const shared_model::interface::types::AccountIdType account_id =
               "id@domain",
           const shared_model::interface::types::RoleIdType role_id = "perms") {
-        ASSERT_TRUE(val(execute(
-            *mock_command_factory->constructCreateRole(role_id, set), true)));
-        ASSERT_TRUE(val(execute(
-            *mock_command_factory->constructAppendRole(account_id, role_id),
-            true)));
+        execute(*mock_command_factory->constructCreateRole(role_id, set), true);
+        execute(*mock_command_factory->constructAppendRole(account_id, role_id),
+                true);
       }
 
       void addAllPerms(
@@ -142,12 +140,11 @@ namespace iroha {
           const shared_model::interface::types::RoleIdType role_id = "all") {
         shared_model::interface::RolePermissionSet permissions;
         permissions.set();
-        ASSERT_TRUE(val(execute(
+        execute(
             *mock_command_factory->constructCreateRole(role_id, permissions),
-            true)));
-        ASSERT_TRUE(val(execute(
-            *mock_command_factory->constructAppendRole(account_id, role_id),
-            true)));
+            true);
+        execute(*mock_command_factory->constructAppendRole(account_id, role_id),
+                true);
       }
 
       // TODO [IR-1816] Akvinikym 06.12.18: remove these constants after
@@ -199,15 +196,15 @@ namespace iroha {
       }
 
       void createDefaultAccount() {
-        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateAccount(
-                                    "id2", domain->domainId(), *pubkey2),
-                                true)));
+        execute(*mock_command_factory->constructCreateAccount(
+                    "id2", domain->domainId(), *pubkey2),
+                true);
       }
 
       void createDefaultAsset() {
-        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateAsset(
-                                    "coin", domain->domainId(), 1),
-                                true)));
+        execute(*mock_command_factory->constructCreateAsset(
+                    "coin", domain->domainId(), 1),
+                true);
       }
 
       std::string role = "role";
@@ -502,15 +499,13 @@ namespace iroha {
         createDefaultAccount();
         createDefaultAsset();
 
-        ASSERT_TRUE(
-            val(execute(*mock_command_factory->constructAddAssetQuantity(
-                            asset_id, shared_model::interface::Amount{"1.0"}),
-                        true)));
-        ASSERT_TRUE(
-            val(execute(*mock_command_factory->constructAddAssetQuantity(
-                            asset_id, shared_model::interface::Amount{"1.0"}),
-                        true,
-                        account2->accountId())));
+        execute(*mock_command_factory->constructAddAssetQuantity(
+                    asset_id, shared_model::interface::Amount{"1.0"}),
+                true);
+        execute(*mock_command_factory->constructAddAssetQuantity(
+                    asset_id, shared_model::interface::Amount{"1.0"}),
+                true,
+                account2->accountId());
       }
 
       std::unique_ptr<shared_model::interface::Account> account2;
@@ -627,26 +622,22 @@ namespace iroha {
         createDefaultAccount();
         createDefaultAsset();
 
-        ASSERT_TRUE(
-            val(execute(*mock_command_factory->constructSetAccountDetail(
-                            account2->accountId(), "key", "value"),
-                        true,
-                        account->accountId())));
-        ASSERT_TRUE(
-            val(execute(*mock_command_factory->constructSetAccountDetail(
-                            account2->accountId(), "key2", "value2"),
-                        true,
-                        account->accountId())));
-        ASSERT_TRUE(
-            val(execute(*mock_command_factory->constructSetAccountDetail(
-                            account2->accountId(), "key", "value"),
-                        true,
-                        account2->accountId())));
-        ASSERT_TRUE(
-            val(execute(*mock_command_factory->constructSetAccountDetail(
-                            account2->accountId(), "key2", "value2"),
-                        true,
-                        account2->accountId())));
+        execute(*mock_command_factory->constructSetAccountDetail(
+                    account2->accountId(), "key", "value"),
+                true,
+                account->accountId());
+        execute(*mock_command_factory->constructSetAccountDetail(
+                    account2->accountId(), "key2", "value2"),
+                true,
+                account->accountId());
+        execute(*mock_command_factory->constructSetAccountDetail(
+                    account2->accountId(), "key", "value"),
+                true,
+                account2->accountId());
+        execute(*mock_command_factory->constructSetAccountDetail(
+                    account2->accountId(), "key2", "value2"),
+                true,
+                account2->accountId());
       }
 
       std::unique_ptr<shared_model::interface::Account> account2;
@@ -912,9 +903,9 @@ namespace iroha {
       }
 
       void createAsset() {
-        ASSERT_TRUE(val(execute(*mock_command_factory->constructCreateAsset(
-                                    "coin", domain->domainId(), 1),
-                                true)));
+        execute(*mock_command_factory->constructCreateAsset(
+                    "coin", domain->domainId(), 1),
+                true);
       }
       const std::string asset_id = "coin#domain";
     };
