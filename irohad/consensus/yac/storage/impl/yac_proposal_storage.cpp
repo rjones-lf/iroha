@@ -27,13 +27,12 @@ namespace iroha {
 
       auto YacProposalStorage::findStore(const YacHash &store_hash) {
         // find exist
-        auto iter = std::find_if(block_storages_.begin(),
-                                 block_storages_.end(),
-                                 [&store_hash](const auto &block_storage) {
-                                   auto storage_key =
-                                       block_storage.getStorageKey();
-                                   return storage_key == store_hash;
-                                 });
+        auto iter =
+            std::find_if(block_storages_.begin(),
+                         block_storages_.end(),
+                         [&store_hash](const auto &block_storage) {
+                           return store_hash == block_storage.getStorageKey();
+                         });
         if (iter != block_storages_.end()) {
           return iter;
         }

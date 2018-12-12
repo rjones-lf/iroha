@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <utility>
 
-#include <boost/range/algorithm/max_element.hpp>
 #include "common/bind.hpp"
 #include "common/visitor.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
