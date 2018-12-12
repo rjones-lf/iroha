@@ -56,8 +56,8 @@ namespace iroha {
       }
 
       boost::optional<Answer> YacBlockStorage::getState() {
-        auto supermajority =
-            supermajority_checker_->checkSize(votes_.size(), peers_in_round_);
+        auto supermajority = supermajority_checker_->hasSupermajority(
+            votes_.size(), peers_in_round_);
         if (supermajority) {
           return Answer(CommitMessage(votes_));
         }

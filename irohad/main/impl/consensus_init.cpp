@@ -4,6 +4,8 @@
  */
 
 #include "main/impl/consensus_init.hpp"
+
+#include "consensus/yac/consistency_model.hpp"
 #include "consensus/yac/impl/peer_orderer_impl.hpp"
 #include "consensus/yac/impl/timer_impl.hpp"
 #include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
@@ -12,31 +14,54 @@
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 
+using namespace iroha::consensus::yac;
+
+namespace {
+  auto createPeerOrderer(
+      std::shared_ptr<iroha::ametsuchi::PeerQueryFactory> peer_query_factory) {
+    return std::make_shared<PeerOrdererImpl>(peer_query_factory);
+  }
+
+  auto createCryptoProvider(
+      const shared_model::crypto::Keypair &keypair,
+      std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+          common_objects_factory) {
+    auto crypto = std::make_shared<CryptoProviderImpl>(
+        keypair, std::move(common_objects_factory));
+
+    return crypto;
+  }
+
+  auto createHashProvider() {
+    return std::make_shared<YacHashProviderImpl>();
+  }
+
+  std::shared_ptr<Yac> createYac(
+      ClusterOrdering initial_order,
+      const shared_model::crypto::Keypair &keypair,
+      std::shared_ptr<Timer> timer,
+      std::shared_ptr<YacNetwork> network,
+      std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+          common_objects_factory,
+      ConsistencyModel consistency_model) {
+    return Yac::create(
+        YacVoteStorage(consistency_model),
+        std::move(network),
+        createCryptoProvider(keypair, std::move(common_objects_factory)),
+        std::move(timer),
+        initial_order);
+  }
+}  // namespace
+
 namespace iroha {
   namespace consensus {
     namespace yac {
 
-      auto YacInit::createPeerOrderer(
-          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory) {
-        return std::make_shared<PeerOrdererImpl>(peer_query_factory);
-      }
-
-      auto YacInit::createNetwork(
-          std::shared_ptr<
-              iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
-              async_call) {
-        consensus_network = std::make_shared<NetworkImpl>(async_call);
-        return consensus_network;
-      }
-
-      auto YacInit::createCryptoProvider(
-          const shared_model::crypto::Keypair &keypair,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              common_objects_factory) {
-        auto crypto = std::make_shared<CryptoProviderImpl>(
-            keypair, std::move(common_objects_factory));
-
-        return crypto;
+      std::shared_ptr<NetworkImpl> YacInit::getConsensusNetwork() const {
+        BOOST_ASSERT_MSG(initialized_,
+                         "YacInit::initConsensusGate(...) must be called prior "
+                         "to YacInit::getConsensusNetwork()!");
+        return consensus_network_;
       }
 
       auto YacInit::createTimer(std::chrono::milliseconds delay_milliseconds) {
@@ -56,29 +81,9 @@ namespace iroha {
         });
       }
 
-      auto YacInit::createHashProvider() {
-        return std::make_shared<YacHashProviderImpl>();
-      }
-
-      std::shared_ptr<consensus::yac::Yac> YacInit::createYac(
-          ClusterOrdering initial_order,
-          const shared_model::crypto::Keypair &keypair,
-          std::chrono::milliseconds delay_milliseconds,
-          std::shared_ptr<
-              iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
-              async_call,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              common_objects_factory) {
-        return Yac::create(
-            YacVoteStorage(),
-            createNetwork(std::move(async_call)),
-            createCryptoProvider(keypair, std::move(common_objects_factory)),
-            createTimer(delay_milliseconds),
-            initial_order);
-      }
-
       std::shared_ptr<YacGate> YacInit::initConsensusGate(
-          std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
+          std::shared_ptr<iroha::ametsuchi::PeerQueryFactory>
+              peer_query_factory,
           std::shared_ptr<simulator::BlockCreator> block_creator,
           std::shared_ptr<network::BlockLoader> block_loader,
           const shared_model::crypto::Keypair &keypair,
@@ -89,17 +94,24 @@ namespace iroha {
               iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
               async_call,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              common_objects_factory) {
+              common_objects_factory,
+          ConsistencyModel consistency_model) {
         auto peer_orderer = createPeerOrderer(peer_query_factory);
+
+        consensus_network_ = std::make_shared<NetworkImpl>(async_call);
 
         auto yac = createYac(peer_orderer->getInitialOrdering().value(),
                              keypair,
-                             vote_delay_milliseconds,
-                             std::move(async_call),
-                             std::move(common_objects_factory));
-        consensus_network->subscribe(yac);
+                             createTimer(vote_delay_milliseconds),
+                             consensus_network_,
+                             std::move(common_objects_factory),
+                             consistency_model);
+        consensus_network_->subscribe(yac);
 
         auto hash_provider = createHashProvider();
+
+        initialized_ = true;
+
         return std::make_shared<YacGateImpl>(std::move(yac),
                                              std::move(peer_orderer),
                                              hash_provider,

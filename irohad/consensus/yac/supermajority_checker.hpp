@@ -9,6 +9,8 @@
 #include <memory>
 #include <vector>
 
+#include <boost/range/any_range.hpp>
+#include "consensus/yac/consistency_model.hpp"
 #include "consensus/yac/yac_types.hpp"
 #include "interfaces/common_objects/range_types.hpp"
 #include "interfaces/common_objects/types.hpp"
@@ -20,7 +22,6 @@ namespace shared_model {
 }  // namespace shared_model
 
 namespace iroha {
-
   namespace consensus {
     namespace yac {
 
@@ -29,54 +30,35 @@ namespace iroha {
        */
       class SupermajorityChecker {
        public:
+        using VoteGroups = boost::any_range<PeersNumberType,
+                                            boost::forward_traversal_tag,
+                                            PeersNumberType,
+                                            std::ptrdiff_t>;
+
         virtual ~SupermajorityChecker() = default;
 
         /**
          * Check if supermajority is achieved
-         * @param signatures set of signatures to check
-         * @param peers set of peers with signatures
-         * @return true on supermajority is achieved or false otherwise
-         */
-        virtual bool hasSupermajority(
-            const shared_model::interface::types::SignatureRangeType
-                &signatures,
-            const std::vector<std::shared_ptr<shared_model::interface::Peer>>
-                &peers) const = 0;
-
-        /**
-         * Check if supermajority is possible
          * @param current actual number of signatures
          * @param all number of peers
          * @return true if supermajority is possible or false otherwise
          */
-        virtual bool checkSize(PeersNumberType current,
-                               PeersNumberType all) const = 0;
+        virtual bool hasSupermajority(PeersNumberType current,
+                                      PeersNumberType all) const = 0;
 
         /**
-         * Checks if signatures is a subset of signatures of peers
-         * @param signatures to check
-         * @param peers with signatures
-         * @return true if is subset or false otherwise
-         */
-        virtual bool peersSubset(
-            const shared_model::interface::types::SignatureRangeType
-                &signatures,
-            const std::vector<std::shared_ptr<shared_model::interface::Peer>>
-                &peers) const = 0;
-
-        /**
-         * Check if there is available reject proof.
-         * Reject proof is proof that in current round
-         * no one hash doesn't achieve supermajority.
-         * @param frequent - number of times, that appears most frequent element
-         * @param voted - all number of voted peers
+         * Check if supermajority is possible
+         * @param voted - numbers of peers voted for each option
          * @param all - number of peers in round
          * @return true, if reject
          */
-        virtual bool hasReject(PeersNumberType frequent,
-                               PeersNumberType voted,
-                               PeersNumberType all) const = 0;
+        virtual bool canHaveSupermajority(const VoteGroups &votes,
+                                          PeersNumberType all) const = 0;
       };
+
+      /// Get a SupermajorityChecker for the given consistency model.
+      std::unique_ptr<SupermajorityChecker> getSupermajorityChecker(
+          ConsistencyModel c);
 
     }  // namespace yac
   }    // namespace consensus
