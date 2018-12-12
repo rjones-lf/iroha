@@ -28,6 +28,8 @@
 #include "interfaces/commands/transfer_asset.hpp"
 #include "logger/logger.hpp"
 
+using testing::Return;
+
 namespace shared_model {
   namespace interface {
     struct MockCommand : public shared_model::interface::Command {
@@ -80,6 +82,10 @@ namespace shared_model {
     };
 
     struct MockCreateRole : public shared_model::interface::CreateRole {
+      MockCreateRole() {
+        ON_CALL(*this, toString()).WillByDefault(Return("MockCreateRole"));
+      }
+
       MOCK_CONST_METHOD0(roleName, const types::RoleIdType &());
       MOCK_CONST_METHOD0(rolePermissions, const RolePermissionSet &());
       MOCK_CONST_METHOD0(toString, std::string());
@@ -94,6 +100,11 @@ namespace shared_model {
 
     struct MockGrantPermission
         : public shared_model::interface::GrantPermission {
+      MockGrantPermission() {
+        ON_CALL(*this, toString())
+            .WillByDefault(Return("MockGrantPermissions"));
+      }
+
       MOCK_CONST_METHOD0(accountId, const types::AccountIdType &());
       MOCK_CONST_METHOD0(permissionName, permissions::Grantable());
       MOCK_CONST_METHOD0(toString, std::string());
@@ -109,6 +120,11 @@ namespace shared_model {
 
     struct MockRevokePermission
         : public shared_model::interface::RevokePermission {
+      MockRevokePermission() {
+        ON_CALL(*this, toString())
+            .WillByDefault(Return("MockRevokePermission"));
+      }
+
       MOCK_CONST_METHOD0(accountId, const types::AccountIdType &());
       MOCK_CONST_METHOD0(permissionName, permissions::Grantable());
       MOCK_CONST_METHOD0(toString, std::string());

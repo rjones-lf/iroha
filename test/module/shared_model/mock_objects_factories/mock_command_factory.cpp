@@ -4,6 +4,8 @@
  */
 
 #include "module/shared_model/mock_objects_factories/mock_command_factory.hpp"
+#include "backend/protobuf/permissions.hpp"
+#include "utils/string_builder.hpp"
 
 using ::testing::Return;
 using ::testing::ReturnRef;
@@ -135,6 +137,15 @@ namespace shared_model {
                 .WillRepeatedly(ReturnRefOfCopy(role_id));
             EXPECT_CALL(*specific_cmd_mock, rolePermissions())
                 .WillRepeatedly(ReturnRefOfCopy(role_permissions));
+            EXPECT_CALL(*specific_cmd_mock, toString())
+                .WillRepeatedly(Return(
+                    detail::PrettyStringBuilder()
+                        .init("CreateRole")
+                        .append("role_name", role_id)
+                        .appendAll(shared_model::proto::permissions::toString(
+                                       role_permissions),
+                                   [](auto p) { return p; })
+                        .finalize()));
             return specific_cmd_mock;
           });
     }
@@ -165,6 +176,15 @@ namespace shared_model {
                 .WillRepeatedly(ReturnRefOfCopy(account_id));
             EXPECT_CALL(*specific_cmd_mock, permissionName())
                 .WillRepeatedly(Return(permission));
+            EXPECT_CALL(*specific_cmd_mock, toString())
+                .WillRepeatedly(Return(
+                    detail::PrettyStringBuilder()
+                        .init("GrantPermission")
+                        .append("account_id", account_id)
+                        .append("permission",
+                                shared_model::proto::permissions::toString(
+                                    permission))
+                        .finalize()));
             return specific_cmd_mock;
           });
     }
@@ -195,6 +215,15 @@ namespace shared_model {
                 .WillRepeatedly(ReturnRefOfCopy(account_id));
             EXPECT_CALL(*specific_cmd_mock, permissionName())
                 .WillRepeatedly(Return(permission));
+            EXPECT_CALL(*specific_cmd_mock, toString())
+                .WillRepeatedly(Return(
+                    detail::PrettyStringBuilder()
+                        .init("RevokePermission")
+                        .append("account_id", account_id)
+                        .append("permission",
+                                shared_model::proto::permissions::toString(
+                                    permission))
+                        .finalize()));
             return specific_cmd_mock;
           });
     }
