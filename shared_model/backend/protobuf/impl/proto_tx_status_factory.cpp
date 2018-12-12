@@ -5,6 +5,9 @@
 
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 
+#include "cryptography/hash.hpp"
+#include "interfaces/common_objects/types.hpp"
+
 using namespace shared_model::proto;
 
 // -------------------------------| Private API |-------------------------------
@@ -15,11 +18,13 @@ namespace {
    */
   iroha::protocol::ToriiResponse fillCommon(
       ProtoTxStatusFactory::TransactionHashType hash,
-      ProtoTxStatusFactory::ErrorMessageType error,
+      ProtoTxStatusFactory::TransactionError tx_error,
       iroha::protocol::TxStatus status) {
     iroha::protocol::ToriiResponse response;
     response.set_tx_hash(shared_model::crypto::toBinaryString(hash));
-    response.set_error_message(error);
+    response.set_err_or_cmd_name(tx_error.cmd_name_);
+    response.set_failed_cmd_index(tx_error.cmd_index_);
+    response.set_error_code(tx_error.error_code_);
     response.set_tx_status(status);
     return response;
   }
@@ -37,58 +42,66 @@ namespace {
 // ---------------------------| Stateless statuses |----------------------------
 
 ProtoTxStatusFactory::FactoryReturnType ProtoTxStatusFactory::makeStatelessFail(
-    TransactionHashType hash, ErrorMessageType error) {
+    TransactionHashType hash, TransactionError tx_error) {
   return wrap(fillCommon(
-      hash, error, iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED));
+      hash, tx_error, iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED));
 }
 
 ProtoTxStatusFactory::FactoryReturnType
 ProtoTxStatusFactory::makeStatelessValid(TransactionHashType hash,
-                                         ErrorMessageType error) {
+                                         TransactionError tx_error) {
   return wrap(fillCommon(
-      hash, error, iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS));
+      hash, tx_error, iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS));
 }
 
 // ---------------------------| Stateful statuses |-----------------------------
 
 ProtoTxStatusFactory::FactoryReturnType ProtoTxStatusFactory::makeStatefulFail(
-    TransactionHashType hash, ErrorMessageType error) {
+    TransactionHashType hash, TransactionError tx_error) {
   return wrap(fillCommon(
-      hash, error, iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED));
+      hash, tx_error, iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED));
 }
 ProtoTxStatusFactory::FactoryReturnType ProtoTxStatusFactory::makeStatefulValid(
-    TransactionHashType hash, ErrorMessageType error) {
+    TransactionHashType hash, TransactionError tx_error) {
   return wrap(fillCommon(
-      hash, error, iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS));
+      hash, tx_error, iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS));
 }
 
 // -----------------------------| Final statuses |------------------------------
 
 ProtoTxStatusFactory::FactoryReturnType ProtoTxStatusFactory::makeCommitted(
-    TransactionHashType hash, ErrorMessageType error) {
-  return wrap(fillCommon(hash, error, iroha::protocol::TxStatus::COMMITTED));
+    TransactionHashType hash, TransactionError tx_error) {
+  return wrap(fillCommon(hash, tx_error, iroha::protocol::TxStatus::COMMITTED));
 }
 
 ProtoTxStatusFactory::FactoryReturnType ProtoTxStatusFactory::makeRejected(
-    TransactionHashType hash, ErrorMessageType error) {
-  return wrap(fillCommon(hash, error, iroha::protocol::TxStatus::REJECTED));
+    TransactionHashType hash, TransactionError tx_error) {
+  return wrap(fillCommon(hash, tx_error, iroha::protocol::TxStatus::REJECTED));
 }
 
 // -----------------------------| Rest statuses |-------------------------------
 
 ProtoTxStatusFactory::FactoryReturnType ProtoTxStatusFactory::makeMstExpired(
-    TransactionHashType hash, ErrorMessageType error) {
-  return wrap(fillCommon(hash, error, iroha::protocol::TxStatus::MST_EXPIRED));
+    TransactionHashType hash, TransactionError tx_error) {
+  return wrap(
+      fillCommon(hash, tx_error, iroha::protocol::TxStatus::MST_EXPIRED));
+}
+
+ProtoTxStatusFactory::FactoryReturnType ProtoTxStatusFactory::makeMstPending(
+    TransactionHashType hash, TransactionError tx_error) {
+  return wrap(
+      fillCommon(hash, tx_error, iroha::protocol::TxStatus::MST_PENDING));
 }
 
 ProtoTxStatusFactory::FactoryReturnType ProtoTxStatusFactory::makeNotReceived(
-    TransactionHashType hash, ErrorMessageType error) {
-  return wrap(fillCommon(hash, error, iroha::protocol::TxStatus::NOT_RECEIVED));
+    TransactionHashType hash, TransactionError tx_error) {
+  return wrap(
+      fillCommon(hash, tx_error, iroha::protocol::TxStatus::NOT_RECEIVED));
 }
 
 ProtoTxStatusFactory::FactoryReturnType
 ProtoTxStatusFactory::makeEnoughSignaturesCollected(TransactionHashType hash,
-                                                    ErrorMessageType error) {
+                                                    TransactionError tx_error) {
   return wrap(fillCommon(
-      hash, error, iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED));
+      hash, tx_error, iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED));
 }

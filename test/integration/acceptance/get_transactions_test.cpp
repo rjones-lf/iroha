@@ -4,16 +4,18 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/transactions_response.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class GetTransactions : public AcceptanceFixture {
  public:
@@ -85,9 +87,9 @@ TEST_F(GetTransactions, HaveGetAllTx) {
   auto dummy_tx = dummyTx();
   auto check = [&dummy_tx](auto &status) {
     ASSERT_NO_THROW({
-      const auto &resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<interface::TransactionsResponse>(),
-          status.get());
+      const auto &resp =
+          boost::get<const shared_model::interface::TransactionsResponse &>(
+              status.get());
       ASSERT_EQ(resp.transactions().size(), 1);
       ASSERT_EQ(resp.transactions().front(), dummy_tx);
     });
@@ -113,9 +115,9 @@ TEST_F(GetTransactions, HaveGetMyTx) {
   auto dummy_tx = dummyTx();
   auto check = [&dummy_tx](auto &status) {
     ASSERT_NO_THROW({
-      const auto &resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<interface::TransactionsResponse>(),
-          status.get());
+      const auto &resp =
+          boost::get<const shared_model::interface::TransactionsResponse &>(
+              status.get());
       ASSERT_EQ(resp.transactions().size(), 1);
       ASSERT_EQ(resp.transactions().front(), dummy_tx);
     });
@@ -141,10 +143,13 @@ TEST_F(GetTransactions, HaveGetMyTx) {
 TEST_F(GetTransactions, InvalidSignatures) {
   auto dummy_tx = dummyTx();
   auto check = [](auto &status) {
-    ASSERT_TRUE(boost::apply_visitor(
-        shared_model::interface::QueryErrorResponseChecker<
-            shared_model::interface::StatefulFailedErrorResponse>(),
-        status.get()));
+    ASSERT_NO_THROW({
+      const auto &error_rsp =
+          boost::get<const shared_model::interface::ErrorQueryResponse &>(
+              status.get());
+      boost::get<const shared_model::interface::StatefulFailedErrorResponse &>(
+          error_rsp.get());
+    });
   };
 
   auto query = baseQry()
@@ -172,9 +177,9 @@ TEST_F(GetTransactions, InvalidSignatures) {
 TEST_F(GetTransactions, NonexistentHash) {
   auto check = [](auto &status) {
     ASSERT_NO_THROW({
-      const auto &resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<interface::TransactionsResponse>(),
-          status.get());
+      const auto &resp =
+          boost::get<const shared_model::interface::TransactionsResponse &>(
+              status.get());
       ASSERT_EQ(resp.transactions().size(), 0);
     });
   };
@@ -197,9 +202,9 @@ TEST_F(GetTransactions, NonexistentHash) {
 TEST_F(GetTransactions, OtherUserTx) {
   auto check = [](auto &status) {
     ASSERT_NO_THROW({
-      const auto &resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<interface::TransactionsResponse>(),
-          status.get());
+      const auto &resp =
+          boost::get<const shared_model::interface::TransactionsResponse &>(
+              status.get());
       ASSERT_EQ(resp.transactions().size(), 0);
     });
   };

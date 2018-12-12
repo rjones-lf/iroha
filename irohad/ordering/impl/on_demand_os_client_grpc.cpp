@@ -6,6 +6,9 @@
 #include "ordering/impl/on_demand_os_client_grpc.hpp"
 
 #include "backend/protobuf/proposal.hpp"
+#include "backend/protobuf/transaction.hpp"
+#include "interfaces/common_objects/peer.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 
 using namespace iroha::ordering::transport;
@@ -22,26 +25,28 @@ OnDemandOsClientGrpc::OnDemandOsClientGrpc(
       time_provider_(std::move(time_provider)),
       proposal_request_timeout_(proposal_request_timeout) {}
 
-void OnDemandOsClientGrpc::onTransactions(transport::Round round,
-                                          CollectionType transactions) {
-  proto::TransactionsRequest request;
+void OnDemandOsClientGrpc::onBatches(consensus::Round round,
+                                     CollectionType batches) {
+  proto::BatchesRequest request;
   request.mutable_round()->set_block_round(round.block_round);
   request.mutable_round()->set_reject_round(round.reject_round);
-  for (auto &transaction : transactions) {
-    *request.add_transactions() = std::move(
-        static_cast<shared_model::proto::Transaction *>(transaction.get())
-            ->getTransport());
+  for (auto &batch : batches) {
+    for (auto &transaction : batch->transactions()) {
+      *request.add_transactions() = std::move(
+          static_cast<shared_model::proto::Transaction *>(transaction.get())
+              ->getTransport());
+    }
   }
 
   log_->debug("Propagating: '{}'", request.DebugString());
 
   async_call_->Call([&](auto context, auto cq) {
-    return stub_->AsyncSendTransactions(context, request, cq);
+    return stub_->AsyncSendBatches(context, request, cq);
   });
 }
 
 boost::optional<OdOsNotification::ProposalType>
-OnDemandOsClientGrpc::onRequestProposal(transport::Round round) {
+OnDemandOsClientGrpc::onRequestProposal(consensus::Round round) {
   grpc::ClientContext context;
   context.set_deadline(time_provider_() + proposal_request_timeout_);
   proto::ProposalRequest request;

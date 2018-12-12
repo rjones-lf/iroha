@@ -1,25 +1,13 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "consensus/yac/yac.hpp"
 
 #include <utility>
 
-#include "common/types.hpp"
+#include "common/bind.hpp"
 #include "common/visitor.hpp"
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
@@ -108,13 +96,15 @@ namespace iroha {
           return;
         }
 
-        log_->info("Vote for round ({}, {}), hash ({}, {})",
-                   vote.hash.vote_round.block_round,
-                   vote.hash.vote_round.reject_round,
-                   vote.hash.vote_hashes.proposal_hash,
-                   vote.hash.vote_hashes.block_hash);
+        const auto &current_leader = cluster_order_.currentLeader();
 
-        network_->sendState(cluster_order_.currentLeader(), {vote});
+        log_->info("Vote for round {}, hash ({}, {}) to peer {}",
+                   vote.hash.vote_round,
+                   vote.hash.vote_hashes.proposal_hash,
+                   vote.hash.vote_hashes.block_hash,
+                   current_leader);
+
+        network_->sendState(current_leader, {vote});
         cluster_order_.switchToNext();
         if (cluster_order_.hasNext()) {
           timer_->invokeAfterDelay([this, vote] { this->votingStep(vote); });

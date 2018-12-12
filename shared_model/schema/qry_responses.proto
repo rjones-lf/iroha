@@ -74,6 +74,7 @@ message ErrorResponse {
   }
   Reason reason = 1;
   string message = 2;
+  uint32 error_code = 3;
 }
 
 message SignatoriesResponse {

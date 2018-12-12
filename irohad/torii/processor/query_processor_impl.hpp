@@ -7,6 +7,7 @@
 #define IROHA_QUERY_PROCESSOR_IMPL_HPP
 
 #include "ametsuchi/storage.hpp"
+#include "interfaces/iroha_internal/query_response_factory.hpp"
 #include "logger/logger.hpp"
 #include "torii/processor/query_processor.hpp"
 
@@ -22,7 +23,9 @@ namespace iroha {
           std::shared_ptr<ametsuchi::Storage> storage,
           std::shared_ptr<ametsuchi::QueryExecutorFactory> qry_exec,
           std::shared_ptr<iroha::PendingTransactionStorage>
-              pending_transactions);
+              pending_transactions,
+          std::shared_ptr<shared_model::interface::QueryResponseFactory>
+              response_factory);
 
       /**
        * Checks if query has needed signatures
@@ -47,6 +50,8 @@ namespace iroha {
       std::shared_ptr<ametsuchi::Storage> storage_;
       std::shared_ptr<ametsuchi::QueryExecutorFactory> qry_exec_;
       std::shared_ptr<iroha::PendingTransactionStorage> pending_transactions_;
+      std::shared_ptr<shared_model::interface::QueryResponseFactory>
+          response_factory_;
 
       logger::Logger log_;
     };

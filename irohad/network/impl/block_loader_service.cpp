@@ -17,6 +17,7 @@
 
 #include "network/impl/block_loader_service.hpp"
 #include "backend/protobuf/block.hpp"
+#include "common/bind.hpp"
 
 using namespace iroha;
 using namespace iroha::ametsuchi;
@@ -56,21 +57,50 @@ grpc::Status BlockLoaderService::retrieveBlock(
                         "Bad hash provided");
   }
 
-  // required block must be in the cache
+  // try to fetch block from the consensus cache
   auto block = consensus_result_cache_->get();
-  if (not block) {
-    log_->info("Requested to retrieve a block from an empty cache");
-    return grpc::Status(grpc::StatusCode::NOT_FOUND, "Cache is empty");
-  }
-  if (block->hash() != hash) {
+  if (block) {
+    if (block->hash() == hash) {
+      *response = std::static_pointer_cast<shared_model::proto::Block>(block)
+                      ->getTransport();
+      return grpc::Status::OK;
+    } else {
+      log_->info(
+          "Requested to retrieve a block, but cache contains another block: "
+          "requested {}, in cache {}",
+          hash.hex(),
+          block->hash().hex());
+    }
+  } else {
     log_->info(
-        "Requested to retrieve a block with hash other than the one in cache");
+        "Tried to retrieve a block from an empty cache: requested block hash "
+        "{}",
+        hash.hex());
+  }
+
+  // cache missed: notify and try to fetch the block from block storage itself
+  auto blocks = block_query_factory_->createBlockQuery() |
+      // TODO [IR-1757] Akvinikym 12.10.18: use block height to get one block
+      // instead of the whole chain
+      [](const auto &block_query) {
+        return boost::make_optional(block_query->getBlocksFrom(1));
+      };
+  if (not blocks) {
+    log_->error("Could not create block query to retrieve block from storage");
+    return grpc::Status(grpc::StatusCode::INTERNAL, "internal error happened");
+  }
+
+  auto found_block = std::find_if(
+      std::begin(*blocks), std::end(*blocks), [&hash](const auto &block) {
+        return block->hash() == hash;
+      });
+  if (found_block == std::end(*blocks)) {
+    log_->error("Could not retrieve a block from block storage: requested {}",
+                hash.hex());
     return grpc::Status(grpc::StatusCode::NOT_FOUND, "Block not found");
   }
 
-  auto transport_block =
-      std::static_pointer_cast<shared_model::proto::Block>(block)
-          ->getTransport();
-  response->CopyFrom(transport_block);
+  *response = std::static_pointer_cast<shared_model::proto::Block>(*found_block)
+                  ->getTransport();
   return grpc::Status::OK;
 }

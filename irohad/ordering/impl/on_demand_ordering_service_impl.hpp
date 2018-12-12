@@ -13,48 +13,52 @@
 #include <unordered_map>
 
 #include <tbb/concurrent_queue.h>
-
+#include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "logger/logger.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 
 namespace iroha {
+  namespace ametsuchi {
+    class TxPresenceCache;
+  }
   namespace ordering {
     class OnDemandOrderingServiceImpl : public OnDemandOrderingService {
      public:
       /**
        * Create on_demand ordering service with following options:
-       * @param transaction_limit - number of maximum transactions in a one
+       * @param transaction_limit - number of maximum transactions in one
        * proposal
+       * @param proposal_factory - used to generate proposals
        * @param number_of_proposals - number of stored proposals, older will be
        * removed. Default value is 3
        * @param initial_round - first round of agreement.
-       * Default value is {2, 1} since genesis block height is 1
+       * Default value is {2, kFirstRejectRound} since genesis block height is 1
        */
-      explicit OnDemandOrderingServiceImpl(
+      OnDemandOrderingServiceImpl(
           size_t transaction_limit,
-          size_t number_of_proposals,
-          const transport::Round &initial_round);
-
-      explicit OnDemandOrderingServiceImpl(size_t transaction_limit)
-          : OnDemandOrderingServiceImpl(transaction_limit, 3, {2, 1}) {}
+          std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
+              proposal_factory,
+          std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
+          size_t number_of_proposals = 3,
+          const consensus::Round &initial_round = {2, kFirstRejectRound});
 
       // --------------------- | OnDemandOrderingService |_---------------------
 
-      void onCollaborationOutcome(transport::Round round) override;
+      void onCollaborationOutcome(consensus::Round round) override;
 
       // ----------------------- | OdOsNotification | --------------------------
 
-      void onTransactions(transport::Round,
-                          CollectionType transactions) override;
+      void onBatches(consensus::Round, CollectionType batches) override;
 
       boost::optional<ProposalType> onRequestProposal(
-          transport::Round round) override;
+          consensus::Round round) override;
 
      private:
       /**
        * Packs new proposals and creates new rounds
        * Note: method is not thread-safe
        */
-      void packNextProposals(const transport::Round &round);
+      void packNextProposals(const consensus::Round &round);
 
       /**
        * Removes last elements if it is required
@@ -67,7 +71,13 @@ namespace iroha {
        * @return packed proposal from the given round queue
        * Note: method is not thread-safe
        */
-      ProposalType emitProposal(const transport::Round &round);
+      ProposalType emitProposal(const consensus::Round &round);
+
+      /**
+       * Check if batch was already processed by the peer
+       */
+      bool batchAlreadyProcessed(
+          const shared_model::interface::TransactionBatch &batch);
 
       /**
        * Max number of transaction in one proposal
@@ -82,28 +92,36 @@ namespace iroha {
       /**
        * Queue which holds all rounds in linear order
        */
-      std::queue<transport::Round> round_queue_;
+      std::queue<consensus::Round> round_queue_;
 
       /**
        * Map of available proposals
        */
-      std::unordered_map<transport::Round,
+      std::unordered_map<consensus::Round,
                          ProposalType,
-                         transport::RoundTypeHasher>
+                         consensus::RoundTypeHasher>
           proposal_map_;
 
       /**
        * Proposals for current rounds
        */
-      std::unordered_map<transport::Round,
-                         tbb::concurrent_queue<TransactionType>,
-                         transport::RoundTypeHasher>
+      std::unordered_map<consensus::Round,
+                         tbb::concurrent_queue<TransactionBatchType>,
+                         consensus::RoundTypeHasher>
           current_proposals_;
 
       /**
        * Read write mutex for public methods
        */
       std::shared_timed_mutex lock_;
+
+      std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
+          proposal_factory_;
+
+      /**
+       * Processed transactions cache used for replay prevention
+       */
+      std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache_;
 
       /**
        * Logger instance

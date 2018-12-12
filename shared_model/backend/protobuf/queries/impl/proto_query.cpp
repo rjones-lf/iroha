@@ -4,84 +4,138 @@
  */
 
 #include "backend/protobuf/queries/proto_query.hpp"
+
+#include "backend/protobuf/common_objects/signature.hpp"
+#include "backend/protobuf/queries/proto_get_account.hpp"
+#include "backend/protobuf/queries/proto_get_account_asset_transactions.hpp"
+#include "backend/protobuf/queries/proto_get_account_assets.hpp"
+#include "backend/protobuf/queries/proto_get_account_detail.hpp"
+#include "backend/protobuf/queries/proto_get_account_transactions.hpp"
+#include "backend/protobuf/queries/proto_get_asset_info.hpp"
+#include "backend/protobuf/queries/proto_get_pending_transactions.hpp"
+#include "backend/protobuf/queries/proto_get_role_permissions.hpp"
+#include "backend/protobuf/queries/proto_get_roles.hpp"
+#include "backend/protobuf/queries/proto_get_signatories.hpp"
+#include "backend/protobuf/queries/proto_get_transactions.hpp"
 #include "backend/protobuf/util.hpp"
 #include "utils/variant_deserializer.hpp"
+
+namespace {
+  /// type of proto variant
+  using ProtoQueryVariantType =
+      boost::variant<shared_model::proto::GetAccount,
+                     shared_model::proto::GetSignatories,
+                     shared_model::proto::GetAccountTransactions,
+                     shared_model::proto::GetAccountAssetTransactions,
+                     shared_model::proto::GetTransactions,
+                     shared_model::proto::GetAccountAssets,
+                     shared_model::proto::GetAccountDetail,
+                     shared_model::proto::GetRoles,
+                     shared_model::proto::GetRolePermissions,
+                     shared_model::proto::GetAssetInfo,
+                     shared_model::proto::GetPendingTransactions>;
+
+  /// list of types in proto variant
+  using ProtoQueryListType = ProtoQueryVariantType::types;
+}  // namespace
 
 namespace shared_model {
   namespace proto {
 
-    template <typename QueryType>
-    Query::Query(QueryType &&query)
-        : CopyableProto(std::forward<QueryType>(query)),
-          variant_{[this] {
-            auto &&ar = *proto_;
-            int which = ar.payload()
-                            .GetDescriptor()
-                            ->FindFieldByNumber(ar.payload().query_case())
-                            ->index_in_oneof();
-            return shared_model::detail::
-                variant_impl<Query::ProtoQueryListType>::template load<
-                    Query::ProtoQueryVariantType>(
-                    std::forward<decltype(ar)>(ar), which);
-          }},
-          ivariant_{detail::makeLazyInitializer(
-              [this] { return QueryVariantType(*Query::variant_); })},
-          blob_{[this] { return makeBlob(*proto_); }},
-          payload_{[this] { return makeBlob(proto_->payload()); }},
-          signatures_{[this] {
-            SignatureSetType<proto::Signature> set;
-            if (proto_->has_signature()) {
-              set.emplace(proto_->signature());
-            }
-            return set;
-          }} {}
+    struct Query::Impl {
+      explicit Impl(TransportType &&ref) : proto_{std::move(ref)} {}
+      explicit Impl(const TransportType &ref) : proto_{ref} {}
 
-    template Query::Query(Query::TransportType &);
-    template Query::Query(const Query::TransportType &);
-    template Query::Query(Query::TransportType &&);
+      TransportType proto_;
 
-    Query::Query(const Query &o) : Query(o.proto_) {}
+      ProtoQueryVariantType variant_{[this] {
+        const auto &ar = proto_;
+        int which = ar.payload()
+                        .GetDescriptor()
+                        ->FindFieldByNumber(ar.payload().query_case())
+                        ->index_in_oneof();
+        return shared_model::detail::variant_impl<ProtoQueryListType>::
+            template load<ProtoQueryVariantType>(std::forward<decltype(ar)>(ar),
+                                                 which);
+      }()};
 
-    Query::Query(Query &&o) noexcept : Query(std::move(o.proto_)) {}
+      QueryVariantType ivariant_{variant_};
+
+      interface::types::BlobType blob_{makeBlob(proto_)};
+
+      interface::types::BlobType payload_{makeBlob(proto_.payload())};
+
+      SignatureSetType<proto::Signature> signatures_{[this] {
+        SignatureSetType<proto::Signature> set;
+        if (proto_.has_signature()) {
+          set.emplace(proto_.signature());
+        }
+        return set;
+      }()};
+    };
+
+    Query::Query(const Query &o) : Query(o.impl_->proto_) {}
+    Query::Query(Query &&o) noexcept = default;
+
+    Query::Query(const TransportType &ref) {
+      impl_ = std::make_unique<Impl>(ref);
+    }
+    Query::Query(TransportType &&ref) {
+      impl_ = std::make_unique<Impl>(std::move(ref));
+    }
+
+    Query::~Query() = default;
 
     const Query::QueryVariantType &Query::get() const {
-      return *ivariant_;
+      return impl_->ivariant_;
     }
 
     const interface::types::AccountIdType &Query::creatorAccountId() const {
-      return proto_->payload().meta().creator_account_id();
+      return impl_->proto_.payload().meta().creator_account_id();
     }
 
     interface::types::CounterType Query::queryCounter() const {
-      return proto_->payload().meta().query_counter();
+      return impl_->proto_.payload().meta().query_counter();
     }
 
     const interface::types::BlobType &Query::blob() const {
-      return *blob_;
+      return impl_->blob_;
     }
 
     const interface::types::BlobType &Query::payload() const {
-      return *payload_;
+      return impl_->payload_;
     }
 
     interface::types::SignatureRangeType Query::signatures() const {
-      return *signatures_;
+      return impl_->signatures_;
     }
 
     bool Query::addSignature(const crypto::Signed &signed_blob,
                              const crypto::PublicKey &public_key) {
-      if (proto_->has_signature()) {
+      if (impl_->proto_.has_signature()) {
         return false;
       }
 
-      auto sig = proto_->mutable_signature();
+      auto sig = impl_->proto_.mutable_signature();
       sig->set_signature(crypto::toBinaryString(signed_blob));
       sig->set_public_key(crypto::toBinaryString(public_key));
+
+      impl_->signatures_ =
+          SignatureSetType<proto::Signature>{proto::Signature{*sig}};
+
       return true;
     }
 
     interface::types::TimestampType Query::createdTime() const {
-      return proto_->payload().meta().created_time();
+      return impl_->proto_.payload().meta().created_time();
+    }
+
+    const Query::TransportType &Query::getTransport() const {
+      return impl_->proto_;
+    }
+
+    Query *Query::clone() const {
+      return new Query(impl_->proto_);
     }
 
   }  // namespace proto

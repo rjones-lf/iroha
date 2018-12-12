@@ -5,29 +5,82 @@
 
 #include "ametsuchi/impl/temporary_wsv_impl.hpp"
 
+#include <boost/format.hpp>
 #include "ametsuchi/impl/postgres_command_executor.hpp"
-#include "ametsuchi/impl/postgres_wsv_command.hpp"
-#include "ametsuchi/impl/postgres_wsv_query.hpp"
+#include "cryptography/public_key.hpp"
 #include "interfaces/commands/command.hpp"
+#include "interfaces/permission_to_string.hpp"
+#include "interfaces/transaction.hpp"
 
 namespace iroha {
   namespace ametsuchi {
     TemporaryWsvImpl::TemporaryWsvImpl(
         std::unique_ptr<soci::session> sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        std::shared_ptr<shared_model::interface::PermissionToString>
+            perm_converter)
         : sql_(std::move(sql)),
-          wsv_(std::make_shared<PostgresWsvQuery>(*sql_, factory)),
-          command_executor_(std::make_unique<PostgresCommandExecutor>(*sql_)),
+          command_executor_(std::make_unique<PostgresCommandExecutor>(
+              *sql_, std::move(perm_converter))),
           log_(logger::log("TemporaryWSV")) {
       *sql_ << "BEGIN";
     }
 
+    expected::Result<void, validation::CommandError>
+    TemporaryWsvImpl::validateSignatures(
+        const shared_model::interface::Transaction &transaction) {
+      auto keys_range = transaction.signatures()
+          | boost::adaptors::transformed(
+                            [](const auto &s) { return s.publicKey().hex(); });
+      auto keys = std::accumulate(
+          std::next(std::begin(keys_range)),
+          std::end(keys_range),
+          keys_range.front(),
+          [](auto acc, const auto &val) { return acc + "'), ('" + val; });
+      // not using bool since it is not supported by SOCI
+      boost::optional<uint8_t> signatories_valid;
+
+      boost::format query(R"(SELECT sum(count) = :signatures_count
+                          AND sum(quorum) <= :signatures_count
+                  FROM
+                      (SELECT count(public_key)
+                      FROM ( VALUES ('%s') ) AS CTE1(public_key)
+                      WHERE public_key IN
+                          (SELECT public_key
+                          FROM account_has_signatory
+                          WHERE account_id = :account_id ) ) AS CTE2(count),
+                          (SELECT quorum
+                          FROM account
+                          WHERE account_id = :account_id) AS CTE3(quorum))");
+
+      try {
+        *sql_ << (query % keys).str(), soci::into(signatories_valid),
+            soci::use(boost::size(keys_range), "signatures_count"),
+            soci::use(transaction.creatorAccountId(), "account_id");
+      } catch (const std::exception &e) {
+        auto error_str = "Transaction " + transaction.toString()
+            + " failed signatures validation with db error: " + e.what();
+        // TODO [IR-1816] Akvinikym 29.10.18: substitute error code magic number
+        // with named constant
+        return expected::makeError(validation::CommandError{
+            "signatures validation", 1, error_str, false});
+      }
+
+      if (signatories_valid and *signatories_valid) {
+        return {};
+      } else {
+        auto error_str = "Transaction " + transaction.toString()
+            + " failed signatures validation";
+        // TODO [IR-1816] Akvinikym 29.10.18: substitute error code magic number
+        // with named constant
+        return expected::makeError(validation::CommandError{
+            "signatures validation", 2, error_str, false});
+      }
+    }
+
     expected::Result<void, validation::CommandError> TemporaryWsvImpl::apply(
-        const shared_model::interface::Transaction &tx,
-        std::function<expected::Result<void, validation::CommandError>(
-            const shared_model::interface::Transaction &, WsvQuery &)>
-            apply_function) {
-      const auto &tx_creator = tx.creatorAccountId();
+        const shared_model::interface::Transaction &transaction) {
+      const auto &tx_creator = transaction.creatorAccountId();
       command_executor_->setCreatorAccountId(tx_creator);
       command_executor_->doValidation(true);
       auto execute_command =
@@ -38,12 +91,13 @@ namespace iroha {
 
       auto savepoint_wrapper = createSavepoint("savepoint_temp_wsv");
 
-      return apply_function(tx, *wsv_) |
+      return validateSignatures(transaction) |
                  [savepoint = std::move(savepoint_wrapper),
                   &execute_command,
-                  &tx]() -> expected::Result<void, validation::CommandError> {
+                  &transaction]()
+                 -> expected::Result<void, validation::CommandError> {
         // check transaction's commands validity
-        const auto &commands = tx.commands();
+        const auto &commands = transaction.commands();
         validation::CommandError cmd_error;
         for (size_t i = 0; i < commands.size(); ++i) {
           // in case of failed command, rollback and return
@@ -52,7 +106,8 @@ namespace iroha {
                   .match([](expected::Value<void> &) { return true; },
                          [i, &cmd_error](expected::Error<CommandError> &error) {
                            cmd_error = {error.error.command_name,
-                                        error.error.toString(),
+                                        error.error.error_code,
+                                        error.error.error_extra,
                                         true,
                                         i};
                            return false;

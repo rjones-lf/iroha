@@ -31,19 +31,21 @@ struct ContainerValidatorTest : public ::testing::Test {
 
   auto makeProposal(shared_model::interface::types::TimestampType timestamp,
                     shared_model::proto::Transaction transaction) {
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(std::move(transaction));
     return TestProposalBuilder()
         .height(1)
         .createdTime(timestamp)
-        .transactions(
-            std::vector<shared_model::proto::Transaction>{transaction})
+        .transactions(txs)
         .build();
   }
 
   auto makeBlock(shared_model::interface::types::TimestampType timestamp,
                  shared_model::proto::Transaction transaction) {
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(std::move(transaction));
     return TestUnsignedBlockBuilder()
-        .transactions(
-            std::vector<shared_model::proto::Transaction>{transaction})
+        .transactions(txs)
         .height(1)
         .prevHash(shared_model::crypto::DefaultHashProvider::makeHash(
             shared_model::crypto::Blob("")))

@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <grpc++/security/server_credentials.h>
@@ -25,7 +13,6 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/hash.hpp"
 #include "datetime/time.hpp"
-#include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/common_objects/peer_builder.hpp"
@@ -68,7 +55,6 @@ class BlockLoaderTest : public testing::Test {
     validator = validator_ptr.get();
     loader = std::make_shared<BlockLoaderImpl>(
         peer_query_factory,
-        block_query_factory,
         shared_model::proto::ProtoBlockFactory(std::move(validator_ptr)));
     service =
         std::make_shared<BlockLoaderService>(block_query_factory, block_cache);
@@ -98,14 +84,15 @@ class BlockLoaderTest : public testing::Test {
   }
 
   auto getBaseBlockBuilder() const {
-    auto tx = TestUnsignedTransactionBuilder()
-                  .creatorAccountId("account@domain")
-                  .setAccountQuorum("account@domain", 1)
-                  .createdTime(iroha::time::now())
-                  .quorum(1)
-                  .build()
-                  .signAndAddSignature(key)
-                  .finish();
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(TestUnsignedTransactionBuilder()
+                      .creatorAccountId("account@domain")
+                      .setAccountQuorum("account@domain", 1)
+                      .createdTime(iroha::time::now())
+                      .quorum(1)
+                      .build()
+                      .signAndAddSignature(key)
+                      .finish());
     return shared_model::proto::TemplateBlockBuilder<
                (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
                shared_model::validation::AlwaysValidValidator,
@@ -114,7 +101,28 @@ class BlockLoaderTest : public testing::Test {
         .height(1)
         .prevHash(kPrevHash)
         .createdTime(iroha::time::now())
-        .transactions(std::vector<decltype(tx)>{tx});
+        .transactions(txs);
+  }
+
+  auto getBaseBlockBuilder(const Hash &prev_hash) const {
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(TestUnsignedTransactionBuilder()
+                      .creatorAccountId("account@domain")
+                      .setAccountQuorum("account@domain", 1)
+                      .createdTime(iroha::time::now())
+                      .quorum(1)
+                      .build()
+                      .signAndAddSignature(key)
+                      .finish());
+    return shared_model::proto::TemplateBlockBuilder<
+               (1 << shared_model::proto::TemplateBlockBuilder<>::total) - 1,
+               shared_model::validation::AlwaysValidValidator,
+               shared_model::proto::UnsignedWrapper<
+                   shared_model::proto::Block>>()
+        .height(1)
+        .prevHash(prev_hash)
+        .createdTime(iroha::time::now())
+        .transactions(txs);
   }
 
   const Hash kPrevHash =
@@ -136,22 +144,21 @@ class BlockLoaderTest : public testing::Test {
 };
 
 /**
+ * Current block height 1 => Other block height 1 => no blocks received
  * @given empty storage, related block loader and base block
  * @when retrieveBlocks is called
  * @then nothing is returned
  */
 TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
-  // Current block height 1 => Other block height 1 => no blocks received
   auto block = getBaseBlockBuilder().build().signAndAddSignature(key).finish();
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getTopBlock())
-      .WillOnce(Return(iroha::expected::makeValue(wBlock(clone(block)))));
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
       .WillOnce(Return(std::vector<wBlock>()));
+
   auto wrapper = make_test_subscriber<CallExact>(
-      loader->retrieveBlocks(peer->pubkey()), 0);
+      loader->retrieveBlocks(1, peer->pubkey()), 0);
   wrapper.subscribe();
 
   ASSERT_TRUE(wrapper.validate());
@@ -181,12 +188,10 @@ TEST_F(BlockLoaderTest, ValidWhenOneBlock) {
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getTopBlock())
-      .WillOnce(Return(iroha::expected::makeValue(wBlock(clone(block)))));
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
       .WillOnce(Return(std::vector<wBlock>{clone(top_block)}));
   auto wrapper =
-      make_test_subscriber<CallExact>(loader->retrieveBlocks(peer_key), 1);
+      make_test_subscriber<CallExact>(loader->retrieveBlocks(1, peer_key), 1);
   wrapper.subscribe(
       [&top_block](auto block) { ASSERT_EQ(*block.operator->(), top_block); });
 
@@ -223,11 +228,9 @@ TEST_F(BlockLoaderTest, ValidWhenMultipleBlocks) {
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getTopBlock())
-      .WillOnce(Return(iroha::expected::makeValue(wBlock(clone(block)))));
   EXPECT_CALL(*storage, getBlocksFrom(next_height)).WillOnce(Return(blocks));
   auto wrapper = make_test_subscriber<CallExact>(
-      loader->retrieveBlocks(peer_key), num_blocks);
+      loader->retrieveBlocks(1, peer_key), num_blocks);
   auto height = next_height;
   wrapper.subscribe(
       [&height](auto block) { ASSERT_EQ(block->height(), height++); });
@@ -262,34 +265,74 @@ TEST_F(BlockLoaderTest, ValidWhenBlockPresent) {
 }
 
 /**
- * @given block loader @and consensus cache with a block
- * @when retrieveBlock is called with a different hash
- * @then nothing is returned @and block loader service does not ask storage
+ * @given block loader @and consensus cache with a block @and mocked storage
+ * with two blocks
+ * @when retrieveBlock is called with a hash of previous block
+ * @then consensus cache is missed @and block loader tries to fetch block from
+ * the storage
  */
 TEST_F(BlockLoaderTest, ValidWhenBlockMissing) {
-  // Request nonexisting block => failure
-  auto present = std::make_shared<shared_model::proto::Block>(
+  auto prev_block = std::make_shared<shared_model::proto::Block>(
       getBaseBlockBuilder().build().signAndAddSignature(key).finish());
-  block_cache->insert(present);
+  auto cur_block = std::make_shared<shared_model::proto::Block>(
+      getBaseBlockBuilder(prev_block->hash())
+          .build()
+          .signAndAddSignature(key)
+          .finish());
+  block_cache->insert(cur_block);
 
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getBlocksFrom(_)).Times(0);
-  auto block = loader->retrieveBlock(peer_key, kPrevHash);
+  EXPECT_CALL(*storage, getBlocksFrom(1))
+      .WillOnce(
+          Return(std::vector<std::shared_ptr<shared_model::interface::Block>>{
+              prev_block, cur_block}));
 
-  ASSERT_FALSE(block);
+  auto block = loader->retrieveBlock(peer_key, prev_block->hash());
+  ASSERT_TRUE(block);
+  ASSERT_EQ(block.value()->hash(), prev_block->hash());
 }
 
 /**
- * @given block loader @and empty consensus cache
- * @when retrieveBlock is called with some hash
- * @then nothing is returned @and block loader service does not ask storage
+ * @given block loader @and empty consensus cache @and two blocks in storage
+ * @when retrieveBlock is called with first block's hash
+ * @then consensus cache is missed @and block loader tries to fetch block from
+ * the storage
  */
 TEST_F(BlockLoaderTest, ValidWithEmptyCache) {
+  auto prev_block = std::make_shared<shared_model::proto::Block>(
+      getBaseBlockBuilder().build().signAndAddSignature(key).finish());
+  auto cur_block = std::make_shared<shared_model::proto::Block>(
+      getBaseBlockBuilder(prev_block->hash())
+          .build()
+          .signAndAddSignature(key)
+          .finish());
+
   EXPECT_CALL(*peer_query, getLedgerPeers())
       .WillOnce(Return(std::vector<wPeer>{peer}));
-  EXPECT_CALL(*storage, getBlocksFrom(_)).Times(0);
+  EXPECT_CALL(*storage, getBlocksFrom(1))
+      .WillOnce(
+          Return(std::vector<std::shared_ptr<shared_model::interface::Block>>{
+              prev_block, cur_block}));
 
-  auto emptiness = loader->retrieveBlock(peer_key, kPrevHash);
-  ASSERT_FALSE(emptiness);
+  auto block = loader->retrieveBlock(peer_key, prev_block->hash());
+  ASSERT_TRUE(block);
+  ASSERT_EQ(block.value()->hash(), prev_block->hash());
+}
+
+/**
+ * @given block loader @and empty consensus cache @and no blocks in storage
+ * @when retrieveBlock is called with some block hash
+ * @then consensus cache is missed @and block storage is missed @and block
+ * loader returns nothing
+ */
+TEST_F(BlockLoaderTest, NoBlocksInStorage) {
+  EXPECT_CALL(*peer_query, getLedgerPeers())
+      .WillOnce(Return(std::vector<wPeer>{peer}));
+  EXPECT_CALL(*storage, getBlocksFrom(1))
+      .WillOnce(Return(
+          std::vector<std::shared_ptr<shared_model::interface::Block>>{}));
+
+  auto block = loader->retrieveBlock(peer_key, kPrevHash);
+  ASSERT_FALSE(block);
 }

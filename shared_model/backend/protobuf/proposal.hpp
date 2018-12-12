@@ -6,25 +6,21 @@
 #ifndef IROHA_SHARED_MODEL_PROTO_PROPOSAL_HPP
 #define IROHA_SHARED_MODEL_PROTO_PROPOSAL_HPP
 
-#include "backend/protobuf/transaction.hpp"
-#include "interfaces/iroha_internal/proposal.hpp"
-
-#include "common_objects/noncopyable_proto.hpp"
-
 #include "interfaces/common_objects/types.hpp"
+#include "interfaces/iroha_internal/proposal.hpp"
 #include "proposal.pb.h"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
-    class Proposal final : public NonCopyableProto<interface::Proposal,
-                                                   iroha::protocol::Proposal,
-                                                   Proposal> {
+    class Proposal final : public interface::Proposal {
      public:
-      using NonCopyableProto::NonCopyableProto;
+      using TransportType = iroha::protocol::Proposal;
 
       Proposal(Proposal &&o) noexcept;
-      Proposal &operator=(Proposal &&o) noexcept;
+      Proposal &operator=(Proposal &&o) noexcept = default;
+
+      explicit Proposal(const TransportType &ref);
+      explicit Proposal(TransportType &&ref);
 
       interface::types::TransactionsCollectionType transactions()
           const override;
@@ -35,18 +31,18 @@ namespace shared_model {
 
       const interface::types::BlobType &blob() const override;
 
+      const TransportType &getTransport() const;
+
+      const interface::types::HashType &hash() const override;
+
+      ~Proposal() override;
+
+     protected:
+      Proposal::ModelType *clone() const override;
+
      private:
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
-
-      const Lazy<std::vector<proto::Transaction>> transactions_{[this] {
-        return std::vector<proto::Transaction>(
-            proto_.mutable_transactions()->begin(),
-            proto_.mutable_transactions()->end());
-      }};
-
-      Lazy<interface::types::BlobType> blob_{
-          [this] { return makeBlob(proto_); }};
+      struct Impl;
+      std::unique_ptr<Impl> impl_;
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -35,26 +35,23 @@ namespace iroha {
 
       ~Simulator() override;
 
-      void process_proposal(
-          const shared_model::interface::Proposal &proposal) override;
+      void processProposal(const shared_model::interface::Proposal &proposal,
+                           const consensus::Round &round) override;
 
-      rxcpp::observable<
-          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
-      on_verified_proposal() override;
+      rxcpp::observable<VerifiedProposalCreatorEvent> onVerifiedProposal()
+          override;
 
-      void process_verified_proposal(
-          const shared_model::interface::Proposal &proposal) override;
+      void processVerifiedProposal(
+          const std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>
+              &verified_proposal_and_errors,
+          const consensus::Round &round) override;
 
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-      on_block() override;
+      rxcpp::observable<BlockCreatorEvent> onBlock() override;
 
      private:
       // internal
-      rxcpp::subjects::subject<
-          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
-          notifier_;
-      rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
-          block_notifier_;
+      rxcpp::subjects::subject<VerifiedProposalCreatorEvent> notifier_;
+      rxcpp::subjects::subject<BlockCreatorEvent> block_notifier_;
 
       rxcpp::composite_subscription proposal_subscription_;
       rxcpp::composite_subscription verified_proposal_subscription_;

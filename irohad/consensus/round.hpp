@@ -8,6 +8,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
+
+#include <boost/operators.hpp>
 
 namespace iroha {
   namespace consensus {
@@ -25,7 +28,7 @@ namespace iroha {
     /**
      * Type of proposal round
      */
-    struct Round {
+    struct Round : public boost::less_than_comparable<Round> {
       BlockRoundType block_round;
       RejectRoundType reject_round;
 
@@ -38,6 +41,8 @@ namespace iroha {
       bool operator==(const Round &rhs) const;
 
       bool operator!=(const Round &rhs) const;
+
+      std::string toString() const;
     };
 
     /**

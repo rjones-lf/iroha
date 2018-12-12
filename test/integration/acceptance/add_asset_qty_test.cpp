@@ -9,6 +9,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class AddAssetQuantity : public AcceptanceFixture {
  public:
@@ -70,7 +71,7 @@ TEST_F(AddAssetQuantity, NegativeAmount) {
       .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, "-1.0")),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -87,7 +88,7 @@ TEST_F(AddAssetQuantity, ZeroAmount) {
       .skipVerifiedProposal()
       .skipBlock()
       .sendTx(complete(baseTx().addAssetQuantity(kAssetId, "0.0")),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**

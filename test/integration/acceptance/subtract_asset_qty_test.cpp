@@ -12,6 +12,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class SubtractAssetQuantity : public AcceptanceFixture {
  public:
@@ -119,7 +120,7 @@ TEST_F(SubtractAssetQuantity, NegativeAmount) {
       .skipBlock()
       .sendTxAwait(replenish(), [](auto &) {})
       .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, "-1.0")),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -136,7 +137,7 @@ TEST_F(SubtractAssetQuantity, ZeroAmount) {
       .skipBlock()
       .sendTxAwait(replenish(), [](auto &) {})
       .sendTx(complete(baseTx().subtractAssetQuantity(kAssetId, "0.0")),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**

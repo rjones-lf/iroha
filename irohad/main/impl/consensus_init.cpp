@@ -129,7 +129,6 @@ namespace iroha {
                                              std::move(peer_orderer),
                                              hash_provider,
                                              block_creator,
-                                             block_loader,
                                              std::move(consensus_result_cache));
       }
     }  // namespace yac

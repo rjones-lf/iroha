@@ -83,7 +83,11 @@ target_link_libraries(tx_heavy_data
     acceptance_fixture
     )
 
-addtest(get_account_assets_test get_account_assets_test.cpp)
+addtest(get_account_assets_test
+    "get_account_assets_test.cpp;\
+query_permission_test_ast.cpp;\
+query_permission_test_base.cpp"
+    )
 target_link_libraries(get_account_assets_test
     acceptance_fixture
     )
@@ -109,9 +113,24 @@ target_link_libraries(create_asset_test
     )
 
 addtest(get_account_asset_txs_test
-    get_account_asset_txs_test.cpp
+    "get_account_asset_txs_test.cpp;\
+query_permission_test_ast_txs.cpp;\
+query_permission_test_base.cpp"
     )
 target_link_libraries(get_account_asset_txs_test
+    acceptance_fixture
+    )
+
+addtest(query_permissions_common_test
+    "query_permission_common_tests.cpp;\
+query_permission_test_ast_txs.cpp;\
+query_permission_test_base.cpp;\
+query_permission_test_ast.cpp;\
+query_permission_test_acc_details.cpp;\
+query_permission_test_txs.cpp;\
+query_permission_test_signatories.cpp"
+    )
+target_link_libraries(query_permissions_common_test
     acceptance_fixture
     )
 
@@ -147,5 +166,26 @@ addtest(get_role_permissions_test
     get_role_permissions_test.cpp
     )
 target_link_libraries(get_role_permissions_test
+    acceptance_fixture
+    )
+
+addtest(replay_test
+    replay_test.cpp
+    )
+target_link_libraries(replay_test
+    acceptance_fixture
+    )
+
+addtest(basic_mst_state_propagation_test
+    basic_mst_state_propagation.cpp
+    )
+target_link_libraries(basic_mst_state_propagation_test
+    acceptance_fixture
+    )
+
+addtest(set_account_quorum_test
+    set_account_quorum_test.cpp
+    )
+target_link_libraries(set_account_quorum_test
     acceptance_fixture
     )

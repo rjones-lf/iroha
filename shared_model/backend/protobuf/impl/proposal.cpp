@@ -5,38 +5,71 @@
 
 #include "backend/protobuf/proposal.hpp"
 
+#include "backend/protobuf/transaction.hpp"
+#include "backend/protobuf/util.hpp"
+
 namespace shared_model {
   namespace proto {
     using namespace interface::types;
 
-    Proposal::Proposal(Proposal &&o) noexcept
-        : NonCopyableProto(std::move(o.proto_)) {}
+    struct Proposal::Impl {
+      explicit Impl(TransportType &&ref) : proto_(std::move(ref)) {}
 
-    Proposal &Proposal::operator=(Proposal &&o) noexcept {
-      proto_ = std::move(o.proto_);
+      explicit Impl(const TransportType &ref) : proto_(ref) {}
 
-      hash_.invalidate();
-      transactions_.invalidate();
-      blob_.invalidate();
+      TransportType proto_;
 
-      return *this;
+      const std::vector<proto::Transaction> transactions_{[this] {
+        return std::vector<proto::Transaction>(
+            proto_.mutable_transactions()->begin(),
+            proto_.mutable_transactions()->end());
+      }()};
+
+      interface::types::BlobType blob_{[this] { return makeBlob(proto_); }()};
+
+      const interface::types::HashType hash_{
+          [this] { return crypto::DefaultHashProvider::makeHash(blob_); }()};
+    };
+
+    Proposal::Proposal(Proposal &&o) noexcept = default;
+
+    Proposal::Proposal(const TransportType &ref) {
+      impl_ = std::make_unique<Proposal::Impl>(ref);
+    }
+
+    Proposal::Proposal(TransportType &&ref) {
+      impl_ = std::make_unique<Proposal::Impl>(std::move(ref));
     }
 
     TransactionsCollectionType Proposal::transactions() const {
-      return *transactions_;
+      return impl_->transactions_;
     }
 
     TimestampType Proposal::createdTime() const {
-      return proto_.created_time();
+      return impl_->proto_.created_time();
     }
 
     HeightType Proposal::height() const {
-      return proto_.height();
+      return impl_->proto_.height();
     }
 
     const interface::types::BlobType &Proposal::blob() const {
-      return *blob_;
+      return impl_->blob_;
     }
+
+    const Proposal::TransportType &Proposal::getTransport() const {
+      return impl_->proto_;
+    }
+
+    Proposal::ModelType *Proposal::clone() const {
+      return new Proposal(impl_->proto_);
+    }
+
+    const interface::types::HashType &Proposal::hash() const {
+      return impl_->hash_;
+    }
+
+    Proposal::~Proposal() = default;
 
   }  // namespace proto
 }  // namespace shared_model

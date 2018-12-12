@@ -6,13 +6,14 @@
 #include <gtest/gtest.h>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-
+#include <boost/variant.hpp>
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/account_response.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class HeavyTransactionTest : public AcceptanceFixture {
  public:
@@ -119,9 +120,9 @@ TEST_F(HeavyTransactionTest, DISABLED_QueryLargeData) {
 
   auto query_checker = [&](auto &status) {
     ASSERT_NO_THROW({
-      auto &&response = boost::apply_visitor(
-          framework::SpecifiedVisitor<const interface::AccountResponse &>(),
-          status.get());
+      auto &&response =
+          boost::get<const shared_model::interface::AccountResponse &>(
+              status.get());
 
       boost::property_tree::ptree root;
       boost::property_tree::read_json(response.account().jsonData(), root);

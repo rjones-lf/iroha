@@ -6,15 +6,15 @@
 #ifndef IROHA_AMETSUCHI_H
 #define IROHA_AMETSUCHI_H
 
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include <vector>
 
 #include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/os_persistent_state_factory.hpp"
 #include "ametsuchi/peer_query_factory.hpp"
-#include "ametsuchi/temporary_factory.hpp"
 #include "ametsuchi/query_executor_factory.hpp"
+#include "ametsuchi/temporary_factory.hpp"
 #include "common/result.hpp"
 
 namespace shared_model {

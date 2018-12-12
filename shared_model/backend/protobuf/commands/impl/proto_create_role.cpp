@@ -15,16 +15,14 @@ namespace shared_model {
     CreateRole::CreateRole(CommandType &&command)
         : CopyableProto(std::forward<CommandType>(command)),
           create_role_{proto_->create_role()},
-          role_permissions_{[this] {
-            return boost::accumulate(
-                create_role_.permissions(),
-                interface::RolePermissionSet{},
-                [](auto &&acc, const auto &perm) {
-                  acc.set(permissions::fromTransport(
-                      static_cast<iroha::protocol::RolePermission>(perm)));
-                  return std::forward<decltype(acc)>(acc);
-                });
-          }} {}
+          role_permissions_{boost::accumulate(
+              create_role_.permissions(),
+              interface::RolePermissionSet{},
+              [](auto &&acc, const auto &perm) {
+                acc.set(permissions::fromTransport(
+                    static_cast<iroha::protocol::RolePermission>(perm)));
+                return std::forward<decltype(acc)>(acc);
+              })} {}
 
     template CreateRole::CreateRole(CreateRole::TransportType &);
     template CreateRole::CreateRole(const CreateRole::TransportType &);
@@ -40,7 +38,7 @@ namespace shared_model {
     }
 
     const interface::RolePermissionSet &CreateRole::rolePermissions() const {
-      return *role_permissions_;
+      return role_permissions_;
     }
 
     std::string CreateRole::toString() const {

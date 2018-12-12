@@ -46,6 +46,7 @@ namespace shared_model {
        */
       virtual const types::BlobType &reducedPayload() const = 0;
 
+      // TODO [IR-1874] Akvinikym 16.11.18: rename the field
       /**
        * @return hash of reduced payload
        */

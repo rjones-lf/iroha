@@ -8,8 +8,7 @@
 #include <boost/range/size.hpp>
 
 #include "ametsuchi/wsv_query.hpp"
-#include "builders/protobuf/builder_templates/query_response_template.hpp"
-#include "builders/protobuf/query_responses/proto_block_query_response_builder.hpp"
+#include "common/bind.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
@@ -19,47 +18,23 @@
 namespace iroha {
   namespace torii {
 
-    /**
-     * Builds QueryResponse that contains StatefulError
-     * @param hash - original query hash
-     * @return QueryRepsonse
-     */
-    auto buildStatefulError(
-        const shared_model::interface::types::HashType &hash) {
-      return clone(
-          shared_model::proto::TemplateQueryResponseBuilder<>()
-              .queryHash(hash)
-              .errorQueryResponse<
-                  shared_model::interface::StatefulFailedErrorResponse>()
-              .build());
-    }
-
-    std::shared_ptr<shared_model::interface::BlockQueryResponse>
-    buildBlocksQueryError(const std::string &message) {
-      return clone(shared_model::proto::BlockQueryResponseBuilder()
-                       .errorResponse(message)
-                       .build());
-    }
-
-    std::shared_ptr<shared_model::interface::BlockQueryResponse>
-    buildBlocksQueryBlock(shared_model::interface::Block &block) {
-      return clone(shared_model::proto::BlockQueryResponseBuilder()
-                       .blockResponse(block)
-                       .build());
-    }
-
     QueryProcessorImpl::QueryProcessorImpl(
         std::shared_ptr<ametsuchi::Storage> storage,
         std::shared_ptr<ametsuchi::QueryExecutorFactory> qry_exec,
-        std::shared_ptr<iroha::PendingTransactionStorage> pending_transactions)
-        : storage_(storage),
-          qry_exec_(qry_exec),
-          pending_transactions_(pending_transactions),
-          log_(logger::log("QueryProcessorImpl")) {
+        std::shared_ptr<iroha::PendingTransactionStorage> pending_transactions,
+        std::shared_ptr<shared_model::interface::QueryResponseFactory>
+            response_factory)
+        : storage_{std::move(storage)},
+          qry_exec_{std::move(qry_exec)},
+          pending_transactions_{std::move(pending_transactions)},
+          response_factory_{std::move(response_factory)},
+          log_{logger::log("QueryProcessorImpl")} {
       storage_->on_commit().subscribe(
           [this](std::shared_ptr<shared_model::interface::Block> block) {
-            auto response = buildBlocksQueryBlock(*block);
-            blocks_query_subject_.get_subscriber().on_next(response);
+            auto block_response =
+                response_factory_->createBlockQueryResponse(clone(*block));
+            blocks_query_subject_.get_subscriber().on_next(
+                std::move(block_response));
           });
     }
 
@@ -85,10 +60,18 @@ namespace iroha {
     std::unique_ptr<shared_model::interface::QueryResponse>
     QueryProcessorImpl::queryHandle(const shared_model::interface::Query &qry) {
       if (not checkSignatories(qry)) {
-        return buildStatefulError(qry.hash());
+        // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 3
+        // with a named constant
+        return response_factory_->createErrorQueryResponse(
+            shared_model::interface::QueryResponseFactory::ErrorQueryType::
+                kStatefulFailed,
+            "query signatories did not pass validation",
+            3,
+            qry.hash());
       }
 
-      auto executor = qry_exec_->createQueryExecutor(pending_transactions_);
+      auto executor = qry_exec_->createQueryExecutor(pending_transactions_,
+                                                     response_factory_);
       if (not executor) {
         log_->error("Cannot create query executor");
         return nullptr;
@@ -102,15 +85,19 @@ namespace iroha {
     QueryProcessorImpl::blocksQueryHandle(
         const shared_model::interface::BlocksQuery &qry) {
       if (not checkSignatories(qry)) {
-        auto response = buildBlocksQueryError("Wrong signatories");
-        return rxcpp::observable<>::just(response);
+        std::shared_ptr<shared_model::interface::BlockQueryResponse> response =
+            response_factory_->createBlockQueryResponse(
+                "query signatories did not pass validation");
+        return rxcpp::observable<>::just(std::move(response));
       }
 
-      auto exec = qry_exec_->createQueryExecutor(pending_transactions_);
+      auto exec = qry_exec_->createQueryExecutor(pending_transactions_,
+                                                 response_factory_);
       if (not exec or not(exec | [&qry](const auto &executor) {
             return executor->validate(qry);
           })) {
-        auto response = buildBlocksQueryError("Stateful invalid");
+        std::shared_ptr<shared_model::interface::BlockQueryResponse> response =
+            response_factory_->createBlockQueryResponse("stateful invalid");
         return rxcpp::observable<>::just(response);
       }
       return blocks_query_subject_.get_observable();

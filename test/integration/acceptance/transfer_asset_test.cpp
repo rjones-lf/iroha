@@ -4,17 +4,19 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "acceptance_fixture.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
+#include "interfaces/query_responses/account_asset_response.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class TransferAsset : public AcceptanceFixture {
  public:
@@ -27,8 +29,7 @@ class TransferAsset : public AcceptanceFixture {
                          interface::permissions::Role::kTransfer}) {
     auto new_perms = perms;
     new_perms.set(interface::permissions::Role::kAddAssetQty);
-    const std::string kRole1 = "roleone";
-    return AcceptanceFixture::makeUserWithPerms(kRole1, new_perms);
+    return AcceptanceFixture::makeUserWithPerms(new_perms);
   }
 
   /**
@@ -65,7 +66,7 @@ class TransferAsset : public AcceptanceFixture {
   const std::string kDesc = "description";
   const std::string kRole2 = "roletwo";
   const std::string kUser2 = "usertwo";
-  const std::string kUser2Id = kUser2 + "@test";
+  const std::string kUser2Id = kUser2 + "@" + kDomain;
   const crypto::Keypair kUser2Keypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
@@ -177,7 +178,7 @@ TEST_F(TransferAsset, NegativeAmount) {
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
-      .sendTx(makeTransfer("-1.0"), checkStatelessInvalid);
+      .sendTx(makeTransfer("-1.0"), CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -192,7 +193,7 @@ TEST_F(TransferAsset, ZeroAmount) {
       .sendTxAwait(makeFirstUser(), check(1))
       .sendTxAwait(makeSecondUser(), check(1))
       .sendTxAwait(addAssets(), check(1))
-      .sendTx(makeTransfer("0.0"), checkStatelessInvalid);
+      .sendTx(makeTransfer("0.0"), CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -226,7 +227,7 @@ TEST_F(TransferAsset, LongDesc) {
       .sendTx(
           complete(baseTx().transferAsset(
               kUserId, kUser2Id, kAssetId, std::string(100000, 'a'), kAmount)),
-          checkStatelessInvalid);
+          CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -290,7 +291,7 @@ TEST_F(TransferAsset, SourceIsDest) {
       .sendTxAwait(addAssets(), check(1))
       .sendTx(complete(baseTx().transferAsset(
                   kUserId, kUserId, kAssetId, kDesc, kAmount)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -302,16 +303,15 @@ TEST_F(TransferAsset, SourceIsDest) {
 TEST_F(TransferAsset, InterDomain) {
   const std::string kNewDomain = "newdom";
   const std::string kUser2Id = kUser2 + "@" + kNewDomain;
-  const std::string kNewAssetId =
-      IntegrationTestFramework::kAssetName + "#" + kNewDomain;
+  const std::string kNewAssetId = kAssetName + "#" + kNewDomain;
 
   auto make_second_user =
       baseTx()
-          .creatorAccountId(IntegrationTestFramework::kAdminId)
+          .creatorAccountId(kAdminId)
           .createRole(kRole2, {interface::permissions::Role::kReceive})
           .createDomain(kNewDomain, kRole2)
           .createAccount(kUser2, kNewDomain, kUser2Keypair.publicKey())
-          .createAsset(IntegrationTestFramework::kAssetName, kNewDomain, 1)
+          .createAsset(kAssetName, kNewDomain, 1)
           .build()
           .signAndAddSignature(kAdminKeypair)
           .finish();
@@ -334,32 +334,28 @@ TEST_F(TransferAsset, InterDomain) {
  * @then txes passed commit and the state as intented
  */
 TEST_F(TransferAsset, BigPrecision) {
-  const std::string kNewAsset = IntegrationTestFramework::kAssetName + "a";
-  const std::string kNewAssetId =
-      kNewAsset + "#" + IntegrationTestFramework::kDefaultDomain;
+  const std::string kNewAsset = kAssetName + "a";
+  const std::string kNewAssetId = kNewAsset + "#" + kDomain;
   const auto kPrecision = 5;
   const std::string kInitial = "500";
   const std::string kForTransfer = "1";
   const std::string kLeft = "499";
 
-  auto create_asset =
-      baseTx()
-          .creatorAccountId(
-              integration_framework::IntegrationTestFramework::kAdminId)
-          .createAsset(
-              kNewAsset, IntegrationTestFramework::kDefaultDomain, kPrecision)
-          .build()
-          .signAndAddSignature(kAdminKeypair)
-          .finish();
+  auto create_asset = baseTx()
+                          .creatorAccountId(kAdminId)
+                          .createAsset(kNewAsset, kDomain, kPrecision)
+                          .build()
+                          .signAndAddSignature(kAdminKeypair)
+                          .finish();
   auto add_assets = complete(baseTx().addAssetQuantity(kNewAssetId, kInitial));
   auto make_transfer = complete(baseTx().transferAsset(
       kUserId, kUser2Id, kNewAssetId, kDesc, kForTransfer));
 
   auto check_balance = [](std::string account_id, std::string val) {
     return [a = std::move(account_id), v = val](auto &resp) {
-      auto &acc_ast = boost::apply_visitor(
-          framework::SpecifiedVisitor<interface::AccountAssetResponse>(),
-          resp.get());
+      auto &acc_ast =
+          boost::get<const shared_model::interface::AccountAssetResponse &>(
+              resp.get());
       for (auto &ast : acc_ast.accountAssets()) {
         if (ast.accountId() == a) {
           ASSERT_EQ(v, ast.balance().toStringRepr());
@@ -370,7 +366,7 @@ TEST_F(TransferAsset, BigPrecision) {
 
   auto make_query = [this](std::string account_id) {
     return baseQry()
-        .creatorAccountId(IntegrationTestFramework::kAdminId)
+        .creatorAccountId(kAdminId)
         .getAccountAssets(account_id)
         .build()
         .signAndAddSignature(kAdminKeypair)

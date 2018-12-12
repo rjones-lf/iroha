@@ -3,10 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "bindings/client_api.hpp"
+#include <boost/optional.hpp>
+
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/util.hpp"
-#include "common/types.hpp"
+#include "bindings/client_api.hpp"
+#include "common/bind.hpp"
 #include "cryptography/crypto_provider/crypto_signer.hpp"
 #include "cryptography/ed25519_sha3_impl/internal/sha3_hash.hpp"
 #include "validators/default_validator.hpp"

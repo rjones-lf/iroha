@@ -21,6 +21,7 @@
 
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
+#include <boost/variant.hpp>
 
 /**
  * For each protobuf command type

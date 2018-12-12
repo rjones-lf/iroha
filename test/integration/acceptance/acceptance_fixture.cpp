@@ -5,45 +5,23 @@
 
 #include "integration/acceptance/acceptance_fixture.hpp"
 
+#include <utility>
+
 #include "datetime/time.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
+using namespace common_constants;
+
 AcceptanceFixture::AcceptanceFixture()
-    : kUser("user"),
-      kRole("role"),
-      kDomain(integration_framework::IntegrationTestFramework::kDefaultDomain),
-      kAssetId(
-          integration_framework::IntegrationTestFramework::kAssetName + "#"
-          + integration_framework::IntegrationTestFramework::kDefaultDomain),
-      kUserId(
-          kUser + "@"
-          + integration_framework::IntegrationTestFramework::kDefaultDomain),
-      kAdminId(integration_framework::IntegrationTestFramework::kAdminId),
-      kAdminKeypair(
-          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()),
-      kUserKeypair(
-          shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()),
-      checkStatelessInvalid([](auto &status) {
-        ASSERT_NO_THROW(boost::apply_visitor(
-            framework::SpecifiedVisitor<
-                shared_model::interface::StatelessFailedTxResponse>(),
-            status.get()));
-      }),
-      initial_time(iroha::time::now()),
-      nonce_counter(1) {}
+    : initial_time(iroha::time::now()), nonce_counter(1) {}
 
 TestUnsignedTransactionBuilder AcceptanceFixture::createUser(
     const shared_model::interface::types::AccountNameType &user,
     const shared_model::crypto::PublicKey &key) {
   return TestUnsignedTransactionBuilder()
-      .createAccount(
-          user,
-          integration_framework::IntegrationTestFramework::kDefaultDomain,
-          key)
-      .creatorAccountId(
-          integration_framework::IntegrationTestFramework::kAdminId)
+      .createAccount(user, kDomain, key)
+      .creatorAccountId(kAdminId)
       .createdTime(getUniqueTime())
       .quorum(1);
 }
@@ -53,11 +31,9 @@ TestUnsignedTransactionBuilder AcceptanceFixture::createUserWithPerms(
     const shared_model::crypto::PublicKey &key,
     const shared_model::interface::types::RoleIdType &role_id,
     const shared_model::interface::RolePermissionSet &perms) {
-  const auto user_id = user + "@"
-      + integration_framework::IntegrationTestFramework::kDefaultDomain;
+  const auto user_id = user + "@" + kDomain;
   return createUser(user, key)
-      .detachRole(user_id,
-                  integration_framework::IntegrationTestFramework::kDefaultRole)
+      .detachRole(user_id, kDefaultRole)
       .createRole(role_id, perms)
       .appendRole(user_id, role_id);
 }

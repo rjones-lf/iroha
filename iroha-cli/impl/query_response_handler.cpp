@@ -16,8 +16,10 @@
  */
 
 #include "query_response_handler.hpp"
+#include "backend/protobuf/commands/proto_command.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "backend/protobuf/query_responses/proto_transaction_response.hpp"
 #include "interfaces/permissions.hpp"
 #include "logger/logger.hpp"
 #include "model/converters/pb_common.hpp"
@@ -189,7 +191,7 @@ namespace iroha_cli {
 
       auto cmds = tx.commands();
       std::for_each(cmds.begin(), cmds.end(), [this](auto &cmd) {
-        log_->info(prefix.at(kDefault), cmd.toString());
+        log_->info(prefix.at(kDefault), cmd);
       });
     });
   }

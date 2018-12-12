@@ -4,15 +4,17 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/asset_response.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class GetAssetInfo : public AcceptanceFixture {
  public:
@@ -72,9 +74,9 @@ class GetAssetInfo : public AcceptanceFixture {
                        uint8_t precision) {
     return [&](const proto::QueryResponse &response) {
       ASSERT_NO_THROW({
-        const auto &resp = boost::apply_visitor(
-            framework::SpecifiedVisitor<interface::AssetResponse>(),
-            response.get());
+        const auto &resp =
+            boost::get<const shared_model::interface::AssetResponse &>(
+                response.get());
         ASSERT_EQ(resp.asset().assetId(), asset);
         ASSERT_EQ(resp.asset().domainId(), domain);
         ASSERT_EQ(resp.asset().precision(), precision);

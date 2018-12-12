@@ -5,6 +5,7 @@
 
 #include "main/impl/ordering_init.hpp"
 #include "ametsuchi/os_persistent_state_factory.hpp"
+#include "common/bind.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"

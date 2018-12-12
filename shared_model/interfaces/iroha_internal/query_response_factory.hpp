@@ -8,8 +8,12 @@
 
 #include <memory>
 
+#include "interfaces/common_objects/account.hpp"
+#include "interfaces/common_objects/asset.hpp"
+#include "interfaces/permissions.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
 #include "interfaces/query_responses/query_response.hpp"
+#include "interfaces/query_responses/error_query_response.hpp"
 
 namespace shared_model {
   namespace crypto {
@@ -17,7 +21,8 @@ namespace shared_model {
   }
   namespace interface {
     class Block;
-  }
+    class Amount;
+  }  // namespace interface
 }  // namespace shared_model
 
 namespace shared_model {
@@ -37,9 +42,10 @@ namespace shared_model {
        * @return account asset response
        */
       virtual std::unique_ptr<QueryResponse> createAccountAssetResponse(
-          std::vector<std::unique_ptr<shared_model::interface::AccountAsset>>
-              assets,
-          const crypto::Hash &query_hash) = 0;
+          std::vector<std::tuple<types::AccountIdType,
+                                 types::AssetIdType,
+                                 shared_model::interface::Amount>> assets,
+          const crypto::Hash &query_hash) const = 0;
 
       /**
        * Create response for account detail query
@@ -48,19 +54,26 @@ namespace shared_model {
        * @return account detail response
        */
       virtual std::unique_ptr<QueryResponse> createAccountDetailResponse(
-          types::DetailType account_detail, const crypto::Hash &query_hash) = 0;
+          types::DetailType account_detail,
+          const crypto::Hash &query_hash) const = 0;
 
       /**
        * Create response for account query
-       * @param account to be inserted into the response
+       * @param account_id of account to be inserted into the response
+       * @param domain_id of account to be inserted into the response
+       * @param quorum of account to be inserted into the response
+       * @param jsonData of account to be inserted into the response
        * @param roles to be inserted into the response
        * @param query_hash - hash of the query, for which response is created
        * @return account response
        */
       virtual std::unique_ptr<QueryResponse> createAccountResponse(
-          std::unique_ptr<Account> account,
+          interface::types::AccountIdType account_id,
+          interface::types::DomainIdType domain_id,
+          interface::types::QuorumType quorum,
+          interface::types::JsonType jsonData,
           std::vector<std::string> roles,
-          const crypto::Hash &query_hash) = 0;
+          const crypto::Hash &query_hash) const = 0;
 
       /**
        * Describes type of error to be placed inside the error query response
@@ -80,13 +93,15 @@ namespace shared_model {
        * Create response for failed query
        * @param error_type - type of error to be inserted into the response
        * @param error_msg - message, which is to be set in the response
+       * @param error_code - stateful error code to be set in the response
        * @param query_hash - hash of the query, for which response is created
        * @return error response
        */
       virtual std::unique_ptr<QueryResponse> createErrorQueryResponse(
           ErrorQueryType error_type,
-          std::string error_msg,
-          const crypto::Hash &query_hash) = 0;
+          ErrorQueryResponse::ErrorMessageType error_msg,
+          ErrorQueryResponse::ErrorCodeType error_code,
+          const crypto::Hash &query_hash) const = 0;
 
       /**
        * Create response for signatories query
@@ -96,7 +111,7 @@ namespace shared_model {
        */
       virtual std::unique_ptr<QueryResponse> createSignatoriesResponse(
           std::vector<types::PubkeyType> signatories,
-          const crypto::Hash &query_hash) = 0;
+          const crypto::Hash &query_hash) const = 0;
 
       /**
        * Create response for transactions query
@@ -107,16 +122,21 @@ namespace shared_model {
       virtual std::unique_ptr<QueryResponse> createTransactionsResponse(
           std::vector<std::unique_ptr<shared_model::interface::Transaction>>
               transactions,
-          const crypto::Hash &query_hash) = 0;
+          const crypto::Hash &query_hash) const = 0;
 
       /**
        * Create response for asset query
-       * @param asset to be inserted into the response
+       * @param asset_id of asset to be inserted into the response
+       * @param domain_id of asset to be inserted into the response
+       * @param precision of asset to be inserted into the response
        * @param query_hash - hash of the query, for which response is created
        * @return asset response
        */
       virtual std::unique_ptr<QueryResponse> createAssetResponse(
-          std::unique_ptr<Asset> asset, const crypto::Hash &query_hash) = 0;
+          types::AssetIdType asset_id,
+          types::DomainIdType domain_id,
+          types::PrecisionType precision,
+          const crypto::Hash &query_hash) const = 0;
 
       /**
        * Create response for roles query
@@ -126,7 +146,7 @@ namespace shared_model {
        */
       virtual std::unique_ptr<QueryResponse> createRolesResponse(
           std::vector<types::RoleIdType> roles,
-          const crypto::Hash &query_hash) = 0;
+          const crypto::Hash &query_hash) const = 0;
 
       /**
        * Create response for role permissions query
@@ -136,7 +156,7 @@ namespace shared_model {
        */
       virtual std::unique_ptr<QueryResponse> createRolePermissionsResponse(
           RolePermissionSet role_permissions,
-          const crypto::Hash &query_hash) = 0;
+          const crypto::Hash &query_hash) const = 0;
 
       /**
        * Create response for block query with block
@@ -144,7 +164,7 @@ namespace shared_model {
        * @return block query response with block
        */
       virtual std::unique_ptr<BlockQueryResponse> createBlockQueryResponse(
-          std::unique_ptr<Block> block) = 0;
+          std::unique_ptr<Block> block) const = 0;
 
       /**
        * Create response for block query with error
@@ -152,7 +172,7 @@ namespace shared_model {
        * @return block query response with error
        */
       virtual std::unique_ptr<BlockQueryResponse> createBlockQueryResponse(
-          std::string error_message) = 0;
+          std::string error_message) const = 0;
     };
 
   }  // namespace interface

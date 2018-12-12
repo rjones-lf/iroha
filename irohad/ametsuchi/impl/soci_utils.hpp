@@ -12,7 +12,7 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/tuple/tuple.hpp>
-#include "common/types.hpp"
+#include "common/bind.hpp"
 
 namespace iroha {
   namespace ametsuchi {

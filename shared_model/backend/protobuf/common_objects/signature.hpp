@@ -6,11 +6,10 @@
 #ifndef IROHA_PROTO_SIGNATURE_HPP
 #define IROHA_PROTO_SIGNATURE_HPP
 
-#include "interfaces/common_objects/signature.hpp"
-
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "cryptography/public_key.hpp"
 #include "cryptography/signed.hpp"
+#include "interfaces/common_objects/signature.hpp"
 #include "primitive.pb.h"
 
 namespace shared_model {
@@ -28,23 +27,17 @@ namespace shared_model {
       Signature(Signature &&o) noexcept : Signature(std::move(o.proto_)) {}
 
       const PublicKeyType &publicKey() const override {
-        return *public_key_;
+        return public_key_;
       }
 
       const SignedType &signedData() const override {
-        return *signed_;
+        return signed_;
       }
 
      private:
-      // lazy
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
+      const PublicKeyType public_key_{proto_->public_key()};
 
-      const Lazy<PublicKeyType> public_key_{
-          [this] { return PublicKeyType(proto_->public_key()); }};
-
-      const Lazy<SignedType> signed_{
-          [this] { return SignedType(proto_->signature()); }};
+      const SignedType signed_{proto_->signature()};
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -4,12 +4,14 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/signatories_response.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class AddSignatory : public AcceptanceFixture {
  public:
@@ -28,7 +30,7 @@ class AddSignatory : public AcceptanceFixture {
 
   const std::string kRole2 = "roletwo";
   const std::string kUser2 = "usertwo";
-  const std::string kUser2Id = kUser2 + "@test";
+  const std::string kUser2Id = kUser2 + "@" + kDomain;
   const std::string kAmount = "1.0";
   const crypto::Keypair kUser2Keypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
@@ -58,9 +60,8 @@ TEST_F(AddSignatory, Basic) {
           [this](auto &resp) {
             ASSERT_NO_THROW({
               auto &keys =
-                  boost::apply_visitor(
-                      framework::SpecifiedVisitor<
-                          shared_model::interface::SignatoriesResponse>(),
+                  boost::get<
+                      const shared_model::interface::SignatoriesResponse &>(
                       resp.get())
                       .keys();
               ASSERT_EQ(keys.size(), 2);  // self + signatory
@@ -167,7 +168,7 @@ TEST_F(AddSignatory, InvalidKey) {
                                              shared_model::crypto::PublicKey(
                                                  std::string(1337, 'a'))),
                        kUser2Keypair),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**

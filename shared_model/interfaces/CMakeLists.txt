@@ -57,6 +57,7 @@ if (IROHA_ROOT_PROJECT)
       query_responses/impl/block_error_response.cpp
       query_responses/impl/block_query_response.cpp
       query_responses/impl/block_response.cpp
+      transaction_responses/impl/tx_response.cpp
       iroha_internal/transaction_sequence.cpp
       iroha_internal/transaction_batch_impl.cpp
       iroha_internal/transaction_batch_parser_impl.cpp
@@ -77,5 +78,6 @@ endif ()
 target_link_libraries(shared_model_interfaces
     shared_model_utils
     shared_model_cryptography
+    common
     ${Boost_LIBRARIES}
     )

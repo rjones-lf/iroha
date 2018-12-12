@@ -9,18 +9,22 @@ ENV IROHA_HOME /opt/iroha
 ENV IROHA_BUILD /opt/iroha/build
 
 RUN apt-get update && \
-    apt-get -y --no-install-recommends install apt-utils software-properties-common; \
+    apt-get -y --no-install-recommends install apt-utils software-properties-common wget; \
     apt-get -y clean
 
-
-# add git repository
-RUN add-apt-repository -y ppa:git-core/ppa && \
+# add repos
+RUN set -e; \
+    add-apt-repository -y ppa:git-core/ppa; \
+    add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
+    wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -; \
+    echo 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main' >> /etc/apt/sources.list; \
     apt-get update
 
-
 RUN set -e; \
-    apt-get -y --no-install-recommends install build-essential python-software-properties \
+    apt-get -y --no-install-recommends install python-software-properties \
         automake libtool \
+        # compilers (gcc-5, gcc-7, clang-6)
+        build-essential clang-6.0 lldb-6.0 lld-6.0 g++-7 \
         # dev dependencies
         libssl-dev zlib1g-dev libcurl4-openssl-dev libc6-dbg golang \
         # CI dependencies
@@ -30,7 +34,7 @@ RUN set -e; \
         # SWIG dependencies
         libpcre3-dev autoconf bison  \
         # other
-        wget curl file gdb gdbserver ccache \
+        curl file gdb gdbserver ccache \
         gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip vim zip; \
     apt-get -y clean
 
@@ -137,7 +141,8 @@ RUN set -e; \
 # install rxcpp
 RUN set -e; \
     git clone https://github.com/Reactive-Extensions/RxCpp /tmp/RxCpp; \
-    (cd /tmp/RxCpp ; git checkout 1b2e0589f19cb34d8cd58803677701dcf2161876); \
+    # this version is chosen, because it fixes 100% node overload [IR-1736] bug
+    (cd /tmp/RxCpp ; git checkout a7d5856385f126e874db6010d9dbfd37290c61de); \
     cmake \
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} \
         -H/tmp/RxCpp \

@@ -13,7 +13,6 @@
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_query_response_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
 #include "client.hpp"
@@ -31,12 +30,16 @@
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
 
+#include "backend/protobuf/proto_query_response_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
+#include "interfaces/iroha_internal/query_response_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
+#include "validators/protobuf/proto_query_validator.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 using ::testing::_;
 using ::testing::A;
@@ -79,15 +82,14 @@ class ClientServerTest : public testing::Test {
     query_executor = std::make_shared<MockQueryExecutor>();
     storage = std::make_shared<MockStorage>();
 
-    rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
-        prop_notifier;
+    rxcpp::subjects::subject<OrderingEvent> prop_notifier;
     rxcpp::subjects::subject<iroha::synchronizer::SynchronizationEvent>
         commit_notifier;
-    EXPECT_CALL(*pcsMock, on_proposal())
+    EXPECT_CALL(*pcsMock, onProposal())
         .WillRepeatedly(Return(prop_notifier.get_observable()));
     EXPECT_CALL(*pcsMock, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
-    EXPECT_CALL(*pcsMock, on_verified_proposal())
+    EXPECT_CALL(*pcsMock, onVerifiedProposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
     EXPECT_CALL(*mst, onStateUpdateImpl())
@@ -97,14 +99,17 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*mst, onExpiredBatchesImpl())
         .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
-    EXPECT_CALL(*storage, createQueryExecutor(_))
+    EXPECT_CALL(*storage, createQueryExecutor(_, _))
         .WillRepeatedly(Return(boost::make_optional(
             std::shared_ptr<QueryExecutor>(query_executor))));
 
     auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
     auto tx_processor =
         std::make_shared<iroha::torii::TransactionProcessorImpl>(
-            pcsMock, mst, status_bus);
+            pcsMock,
+            mst,
+            status_bus,
+            std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
 
     auto pb_tx_factory =
         std::make_shared<iroha::model::converters::PbTransactionFactory>();
@@ -112,29 +117,38 @@ class ClientServerTest : public testing::Test {
     auto pending_txs_storage =
         std::make_shared<iroha::MockPendingTransactionStorage>();
 
+    query_response_factory =
+        std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
+
     //----------- Query Service ----------
     EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_query));
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage, storage, pending_txs_storage);
+        storage, storage, pending_txs_storage, query_response_factory);
 
     //----------- Server run ----------------
     auto status_factory =
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Transaction>>
-        transaction_validator = std::make_unique<
+        interface_transaction_validator = std::make_unique<
             shared_model::validation::DefaultUnsignedTransactionValidator>();
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        iroha::protocol::Transaction>>
+        proto_transaction_validator = std::make_unique<
+            shared_model::validation::ProtoTransactionValidator>();
     auto transaction_factory =
         std::make_shared<shared_model::proto::ProtoTransportFactory<
             shared_model::interface::Transaction,
             shared_model::proto::Transaction>>(
-            std::move(transaction_validator));
+            std::move(interface_transaction_validator),
+            std::move(proto_transaction_validator));
     auto batch_parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     auto batch_factory = std::make_shared<
         shared_model::interface::TransactionBatchFactoryImpl>();
+    initQueryFactory();
     runner
         ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
             std::make_shared<torii::CommandServiceImpl>(
@@ -146,7 +160,7 @@ class ClientServerTest : public testing::Test {
             transaction_factory,
             batch_parser,
             batch_factory))
-        .append(std::make_unique<torii::QueryService>(qpi))
+        .append(std::make_unique<torii::QueryService>(qpi, query_factory))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -158,6 +172,22 @@ class ClientServerTest : public testing::Test {
 
     runner->waitForServersReady();
   }
+
+  void initQueryFactory() {
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        shared_model::interface::Query>>
+        query_validator = std::make_unique<
+            shared_model::validation::DefaultSignedQueryValidator>();
+    std::unique_ptr<
+        shared_model::validation::AbstractValidator<iroha::protocol::Query>>
+        proto_query_validator =
+            std::make_unique<shared_model::validation::ProtoQueryValidator>();
+    query_factory = std::make_shared<shared_model::proto::ProtoTransportFactory<
+        shared_model::interface::Query,
+        shared_model::proto::Query>>(std::move(query_validator),
+                                     std::move(proto_query_validator));
+  }
+
   decltype(shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair())
       pair =
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
@@ -167,9 +197,11 @@ class ClientServerTest : public testing::Test {
   std::unique_ptr<ServerRunner> runner;
   std::shared_ptr<MockPeerCommunicationService> pcsMock;
   std::shared_ptr<iroha::MockMstProcessor> mst;
+  std::shared_ptr<torii::QueryService::QueryFactoryType> query_factory;
+  std::shared_ptr<shared_model::interface::QueryResponseFactory>
+      query_response_factory;
 
-  rxcpp::subjects::subject<
-      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+  rxcpp::subjects::subject<iroha::simulator::VerifiedProposalCreatorEvent>
       verified_prop_notifier;
   rxcpp::subjects::subject<std::shared_ptr<iroha::MstState>>
       mst_update_notifier;
@@ -181,6 +213,7 @@ class ClientServerTest : public testing::Test {
   std::shared_ptr<MockQueryExecutor> query_executor;
   std::shared_ptr<MockStorage> storage;
 
+  iroha::consensus::Round round;
   const std::string ip = "127.0.0.1";
   int port;
 };
@@ -249,7 +282,7 @@ TEST_F(ClientServerTest, SendTxWhenStatelessInvalid) {
            and --read_attempt_counter);
   ASSERT_EQ(answer.tx_status(),
             iroha::protocol::TxStatus::STATELESS_VALIDATION_FAILED);
-  ASSERT_NE(answer.error_message().size(), 0);
+  ASSERT_NE(answer.err_or_cmd_name().size(), 0);
 }
 
 /**
@@ -286,19 +319,21 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
   ASSERT_EQ(client.sendTx(tx).answer, iroha_cli::CliClient::OK);
 
   // fail the tx
-  auto verified_proposal = std::make_shared<shared_model::proto::Proposal>(
+  auto cmd_name = "CommandName";
+  size_t cmd_index = 2;
+  uint32_t error_code = 3;
+  auto verified_proposal_and_errors =
+      std::make_shared<VerifiedProposalAndErrors>();
+  verified_proposal_and_errors
+      ->verified_proposal = std::make_unique<shared_model::proto::Proposal>(
       TestProposalBuilder().height(0).createdTime(iroha::time::now()).build());
+  verified_proposal_and_errors->rejected_transactions.emplace(
+      std::make_pair(tx.hash(),
+                     iroha::validation::CommandError{
+                         cmd_name, error_code, "", true, cmd_index}));
   verified_prop_notifier.get_subscriber().on_next(
-      std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
-          std::make_pair(verified_proposal,
-                         iroha::validation::TransactionsErrors{std::make_pair(
-                             iroha::validation::CommandError{
-                                 "CommandName", "CommandError", true, 2},
-                             tx.hash())})));
-  auto stringified_error = "Stateful validation error in transaction "
-                           + tx.hash().hex() + ": command 'CommandName' with "
-                                               "index '2' did not pass verification with "
-                                               "error 'CommandError'";
+      iroha::simulator::VerifiedProposalCreatorEvent{
+          verified_proposal_and_errors, round});
 
   auto getAnswer = [&]() {
     return client.getTxStatus(shared_model::crypto::toBinaryString(tx.hash()))
@@ -314,7 +349,9 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
            and --read_attempt_counter);
   ASSERT_EQ(answer.tx_status(),
             iroha::protocol::TxStatus::STATEFUL_VALIDATION_FAILED);
-  ASSERT_EQ(answer.error_message(), stringified_error);
+  ASSERT_EQ(answer.err_or_cmd_name(), cmd_name);
+  ASSERT_EQ(answer.failed_cmd_index(), cmd_index);
+  ASSERT_EQ(answer.error_code(), error_code);
 }
 
 TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {
@@ -366,12 +403,6 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));
 
-  auto *resp =
-      clone(TestQueryResponseBuilder().accountDetailResponse("value").build())
-          .release();
-
-  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
-
   auto query = QueryBuilder()
                    .createdTime(iroha::time::now())
                    .creatorAccountId("admin@test")
@@ -380,6 +411,12 @@ TEST_F(ClientServerTest, SendQueryWhenValid) {
                    .build()
                    .signAndAddSignature(pair)
                    .finish();
+
+  auto *resp =
+      query_response_factory->createAccountDetailResponse("value", query.hash())
+          .release();
+
+  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
 
   auto res = client.sendQuery(query);
   ASSERT_EQ(res.answer.account_detail_response().detail(), "value");
@@ -391,15 +428,6 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
   EXPECT_CALL(*wsv_query, getSignatories("admin@test"))
       .WillRepeatedly(Return(signatories));
 
-  auto *resp =
-      clone(TestQueryResponseBuilder()
-                .errorQueryResponse<
-                    shared_model::interface::StatefulFailedErrorResponse>()
-                .build())
-          .release();
-
-  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
-
   auto query = QueryBuilder()
                    .createdTime(iroha::time::now())
                    .creatorAccountId("admin@test")
@@ -408,6 +436,17 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
                    .build()
                    .signAndAddSignature(pair)
                    .finish();
+
+  auto *resp = query_response_factory
+                   ->createErrorQueryResponse(
+                       shared_model::interface::QueryResponseFactory::
+                           ErrorQueryType::kStatefulFailed,
+                       "",
+                       1,
+                       query.hash())
+                   .release();
+
+  EXPECT_CALL(*query_executor, validateAndExecute_(_)).WillOnce(Return(resp));
 
   auto res = client.sendQuery(query);
   ASSERT_EQ(res.answer.error_response().reason(),

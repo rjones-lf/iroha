@@ -43,6 +43,8 @@ enum RolePermission {
   can_transfer = 12;
   can_receive = 13;
   can_create_domain = 14;
+  can_add_domain_asset_qty = 43;
+  can_subtract_domain_asset_qty = 44;
 
   // Query permissions
   can_read_assets = 15;

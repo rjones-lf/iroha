@@ -10,7 +10,7 @@
 #include "builders/protobuf/transaction.hpp"
 #include "builders/protobuf/transaction_sequence_builder.hpp"
 #include "builders/protobuf/transport_builder.hpp"
-#include "common/types.hpp"
+#include "common/bind.hpp"
 #include "endpoint.pb.h"
 #include "framework/batch_helper.hpp"
 #include "framework/result_fixture.hpp"
@@ -107,10 +107,9 @@ class TransportBuilderTest : public ::testing::Test {
   //-------------------------------------Block-------------------------------------
   template <typename BlockBuilder>
   auto getBaseBlockBuilder() {
-    return BlockBuilder()
-        .transactions(std::vector<Transaction>({createTransaction()}))
-        .height(1)
-        .createdTime(created_time);
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(createTransaction());
+    return BlockBuilder().transactions(txs).height(1).createdTime(created_time);
   }
 
   auto createBlock() {
@@ -134,14 +133,18 @@ class TransportBuilderTest : public ::testing::Test {
   }
 
   auto createProposal() {
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(createTransaction());
     return getBaseProposalBuilder<shared_model::proto::ProposalBuilder>()
-        .transactions(std::vector<Transaction>({createTransaction()}))
+        .transactions(txs)
         .build();
   }
 
   auto createInvalidProposal() {
+    std::vector<shared_model::proto::Transaction> txs;
+    txs.push_back(createInvalidTransaction());
     return getBaseProposalBuilder<TestProposalBuilder>()
-        .transactions(std::vector<Transaction>({createInvalidTransaction()}))
+        .transactions(txs)
         .build();
   }
 
@@ -220,7 +223,7 @@ TEST_F(TransportBuilderTest, InvalidTransactionCreationTest) {
   auto orig_model = createInvalidTransaction();
   testTransport<validation::DefaultSignedTransactionValidator>(
       orig_model,
-      [](const Value<decltype(orig_model)>) { FAIL(); },
+      [](const Value<decltype(orig_model)> &) { FAIL(); },
       [](const Error<std::string> &) { SUCCEED(); });
 }
 

@@ -10,6 +10,7 @@ using namespace integration_framework;
 using namespace shared_model;
 using namespace shared_model::interface;
 using namespace shared_model::interface::permissions;
+using namespace common_constants;
 
 /**
  * C256 Grant permission to a non-existing account
@@ -236,7 +237,7 @@ TEST_F(GrantablePermissionsFixture, GrantTransferPermission) {
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .sendTxAwait(
-          addAssetAndTransfer(IntegrationTestFramework::kAdminName,
+          addAssetAndTransfer(kAdminName,
                               kAdminKeypair,
                               amount_of_asset,
                               kAccount1),

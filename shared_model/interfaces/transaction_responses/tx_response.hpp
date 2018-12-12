@@ -6,24 +6,25 @@
 #ifndef IROHA_TX_RESPONSE_HPP
 #define IROHA_TX_RESPONSE_HPP
 
-#include <boost/variant.hpp>
+#include <boost/variant/variant_fwd.hpp>
 
 #include "interfaces/base/model_primitive.hpp"
-#include "interfaces/transaction.hpp"
-#include "interfaces/transaction_responses/committed_tx_response.hpp"
-#include "interfaces/transaction_responses/enough_signatures_collected_response.hpp"
-#include "interfaces/transaction_responses/mst_expired_response.hpp"
-#include "interfaces/transaction_responses/mst_pending_response.hpp"
-#include "interfaces/transaction_responses/not_received_tx_response.hpp"
-#include "interfaces/transaction_responses/rejected_tx_response.hpp"
-#include "interfaces/transaction_responses/stateful_failed_tx_response.hpp"
-#include "interfaces/transaction_responses/stateful_valid_tx_response.hpp"
-#include "interfaces/transaction_responses/stateless_failed_tx_response.hpp"
-#include "interfaces/transaction_responses/stateless_valid_tx_response.hpp"
-#include "utils/visitor_apply_for_all.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
+
+    class StatelessFailedTxResponse;
+    class StatelessValidTxResponse;
+    class StatefulFailedTxResponse;
+    class StatefulValidTxResponse;
+    class RejectTxResponse;
+    class CommittedTxResponse;
+    class MstExpiredResponse;
+    class NotReceivedTxResponse;
+    class MstPendingResponse;
+    class EnoughSignaturesCollectedResponse;
+
     /**
      * TransactionResponse is a status of transaction in system
      */
@@ -53,9 +54,6 @@ namespace shared_model {
                                        MstPendingResponse,
                                        EnoughSignaturesCollectedResponse>;
 
-      /// Type with list of types in ResponseVariantType
-      using ResponseListType = ResponseVariantType::types;
-
       /// Type of transaction hash
       using TransactionHashType = interface::types::HashType;
 
@@ -69,13 +67,28 @@ namespace shared_model {
        */
       virtual const ResponseVariantType &get() const = 0;
 
-      /// Message type
-      using ErrorMessageType = std::string;
-
+      /// Type of stateless validation error or command name, which failed
+      /// validation
+      using StatelessErrorOrFailedCommandNameType = std::string;
       /**
-       * @return error message if present, otherwise - an empty string
+       * @return name of the failed command, if present; empty string otherwise
        */
-      virtual const ErrorMessageType &errorMessage() const = 0;
+      virtual const StatelessErrorOrFailedCommandNameType &
+      statelessErrorOrCommandName() const = 0;
+
+      /// Type of command index, which failed validation
+      using FailedCommandIndexType = size_t;
+      /**
+       * @return index of failed command
+       */
+      virtual FailedCommandIndexType failedCommandIndex() const = 0;
+
+      /// Type of command error code
+      using ErrorCodeType = uint32_t;
+      /**
+       * @return error code, with which the command failed
+       */
+      virtual ErrorCodeType errorCode() const = 0;
 
       /**
        * Enumeration for holding result of priorities comparison
@@ -87,30 +100,13 @@ namespace shared_model {
        * @return enumeration result of that comparison
        */
       PrioritiesComparisonResult comparePriorities(const ModelType &other) const
-          noexcept {
-        if (this->priority() < other.priority()) {
-          return PrioritiesComparisonResult::kLess;
-        } else if (this->priority() == other.priority()) {
-          return PrioritiesComparisonResult::kEqual;
-        }
-        return PrioritiesComparisonResult::kGreater;
-      };
+          noexcept;
 
       // ------------------------| Primitive override |-------------------------
 
-      std::string toString() const override {
-        return detail::PrettyStringBuilder()
-            .init("TransactionResponse")
-            .append("transactionHash", transactionHash().hex())
-            .append(boost::apply_visitor(detail::ToStringVisitor(), get()))
-            .append("errorMessage", errorMessage())
-            .finalize();
-      }
+      std::string toString() const override;
 
-      bool operator==(const ModelType &rhs) const override {
-        return transactionHash() == rhs.transactionHash()
-            and errorMessage() == rhs.errorMessage() and get() == rhs.get();
-      }
+      bool operator==(const ModelType &rhs) const override;
     };
   }  // namespace interface
 }  // namespace shared_model

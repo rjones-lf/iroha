@@ -20,7 +20,7 @@
 
 #include <functional>
 #include <memory>
-#include <rxcpp/rx-observable.hpp>
+#include <rxcpp/rx.hpp>
 #include <utility>
 
 namespace framework {

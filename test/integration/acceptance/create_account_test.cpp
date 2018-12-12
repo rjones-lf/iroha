@@ -9,6 +9,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class CreateAccount : public AcceptanceFixture {
  public:
@@ -135,7 +136,7 @@ TEST_F(CreateAccount, TooLongName) {
       .skipBlock()
       .sendTx(complete(baseTx().createAccount(
                   std::string(33, 'a'), kDomain, kNewUserKeypair.publicKey())),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -153,5 +154,5 @@ TEST_F(CreateAccount, EmptyName) {
       .skipBlock()
       .sendTx(complete(baseTx().createAccount(
                   empty_name, kDomain, kNewUserKeypair.publicKey())),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }

@@ -7,25 +7,56 @@
 
 #include <gtest/gtest.h>
 #include "backend/protobuf/proposal.hpp"
+#include "backend/protobuf/proto_transport_factory.hpp"
+#include "backend/protobuf/transaction.hpp"
+#include "interfaces/iroha_internal/transaction_batch_impl.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
+#include "module/shared_model/interface/mock_transaction_batch_factory.hpp"
+#include "module/shared_model/validators/validators.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
 using namespace iroha::ordering::transport;
 
 using ::testing::_;
+using ::testing::A;
 using ::testing::ByMove;
+using ::testing::Invoke;
 using ::testing::Return;
 
 struct OnDemandOsServerGrpcTest : public ::testing::Test {
   void SetUp() override {
     notification = std::make_shared<MockOdOsNotification>();
-    server = std::make_shared<OnDemandOsServerGrpc>(notification);
+    std::unique_ptr<shared_model::validation::AbstractValidator<
+        shared_model::interface::Transaction>>
+        interface_transaction_validator =
+            std::make_unique<shared_model::validation::MockValidator<
+                shared_model::interface::Transaction>>();
+    std::unique_ptr<
+        shared_model::validation::AbstractValidator<protocol::Transaction>>
+        proto_transaction_validator = std::make_unique<
+            shared_model::validation::MockValidator<protocol::Transaction>>();
+    auto transaction_factory =
+        std::make_shared<shared_model::proto::ProtoTransportFactory<
+            shared_model::interface::Transaction,
+            shared_model::proto::Transaction>>(
+            std::move(interface_transaction_validator),
+            std::move(proto_transaction_validator));
+    auto batch_parser =
+        std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
+    batch_factory = std::make_shared<MockTransactionBatchFactory>();
+    server =
+        std::make_shared<OnDemandOsServerGrpc>(notification,
+                                               std::move(transaction_factory),
+                                               std::move(batch_parser),
+                                               batch_factory);
   }
 
   std::shared_ptr<MockOdOsNotification> notification;
+  std::shared_ptr<MockTransactionBatchFactory> batch_factory;
   std::shared_ptr<OnDemandOsServerGrpc> server;
-  Round round{1, 2};
+  consensus::Round round{1, 2};
 };
 
 /**
@@ -40,13 +71,29 @@ ACTION_P(SaveArg1Move, var) {
  * @when collection is received from the network
  * @then it is correctly deserialized and passed
  */
-TEST_F(OnDemandOsServerGrpcTest, SendTransactions) {
+TEST_F(OnDemandOsServerGrpcTest, SendBatches) {
   OdOsNotification::CollectionType collection;
   auto creator = "test";
 
-  EXPECT_CALL(*notification, onTransactions(round, _))
+  EXPECT_CALL(
+      *batch_factory,
+      createTransactionBatch(
+          A<const shared_model::interface::types::SharedTxsCollectionType &>()))
+      .WillOnce(Invoke(
+          [](const shared_model::interface::types::SharedTxsCollectionType
+                 &cand)
+              -> shared_model::interface::TransactionBatchFactory::
+                  FactoryResult<std::unique_ptr<
+                      shared_model::interface::TransactionBatch>> {
+                    return iroha::expected::makeValue<std::unique_ptr<
+                        shared_model::interface::TransactionBatch>>(
+                        std::make_unique<
+                            shared_model::interface::TransactionBatchImpl>(
+                            cand));
+                  }));
+  EXPECT_CALL(*notification, onBatches(round, _))
       .WillOnce(SaveArg1Move(&collection));
-  proto::TransactionsRequest request;
+  proto::BatchesRequest request;
   request.mutable_round()->set_block_round(round.block_round);
   request.mutable_round()->set_reject_round(round.reject_round);
   request.add_transactions()
@@ -54,9 +101,10 @@ TEST_F(OnDemandOsServerGrpcTest, SendTransactions) {
       ->mutable_reduced_payload()
       ->set_creator_account_id(creator);
 
-  server->SendTransactions(nullptr, &request, nullptr);
+  server->SendBatches(nullptr, &request, nullptr);
 
-  ASSERT_EQ(collection.at(0)->creatorAccountId(), creator);
+  ASSERT_EQ(collection.at(0)->transactions().at(0)->creatorAccountId(),
+            creator);
 }
 
 /**

@@ -28,10 +28,12 @@ enum TxStatus {
 message ToriiResponse {
   TxStatus tx_status = 1;
   bytes tx_hash = 2;
-  string error_message = 3;
+  string err_or_cmd_name = 3;
+  uint64 failed_cmd_index = 4;
+  uint32 error_code = 5;
 }
 
-message TxStatusRequest{
+message TxStatusRequest {
   bytes tx_hash = 1;
 }
 
@@ -39,14 +41,14 @@ message TxList {
   repeated Transaction transactions = 1;
 }
 
-service CommandService {
+service CommandService_v1 {
   rpc Torii (Transaction) returns (google.protobuf.Empty);
   rpc ListTorii (TxList) returns (google.protobuf.Empty);
   rpc Status (TxStatusRequest) returns (ToriiResponse);
   rpc StatusStream(TxStatusRequest) returns (stream ToriiResponse);
 }
 
-service QueryService {
+service QueryService_v1 {
   rpc Find (Query) returns (QueryResponse);
   rpc FetchCommits (BlocksQuery) returns (stream BlockQueryResponse);
 }

@@ -110,12 +110,9 @@ namespace shared_model {
     void FieldValidator::validatePubkey(
         ReasonsGroupType &reason,
         const interface::types::PubkeyType &pubkey) const {
-      if (pubkey.blob().size() != public_key_size) {
-        auto message = (boost::format("Public key has wrong size, passed size: "
-                                      "%d. Expected size: %d")
-                        % pubkey.blob().size() % public_key_size)
-                           .str();
-        reason.second.push_back(std::move(message));
+      auto opt_reason = shared_model::validation::validatePubkey(pubkey);
+      if (opt_reason) {
+        reason.second.push_back(std::move(*opt_reason));
       }
     }
 
@@ -231,7 +228,7 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::permissions::Role &permission) const {
       if (not isValid(permission)) {
-        reason.second.push_back("Provided role permission does not exist");
+        reason.second.emplace_back("Provided role permission does not exist");
       }
     }
 
@@ -239,7 +236,7 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::permissions::Grantable &permission) const {
       if (not isValid(permission)) {
-        reason.second.push_back("Provided grantable permission does not exist");
+        reason.second.emplace_back("Provided grantable permission does not exist");
       }
     }
 
@@ -247,7 +244,7 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::types::QuorumType &quorum) const {
       if (quorum == 0 or quorum > 128) {
-        reason.second.push_back("Quorum should be within range (0, 128]");
+        reason.second.emplace_back("Quorum should be within range (0, 128]");
       }
     }
 
@@ -307,7 +304,7 @@ namespace shared_model {
         const interface::types::SignatureRangeType &signatures,
         const crypto::Blob &source) const {
       if (boost::empty(signatures)) {
-        reason.second.push_back("Signatures cannot be empty");
+        reason.second.emplace_back("Signatures cannot be empty");
       }
       for (const auto &signature : signatures) {
         const auto &sign = signature.signedData();
@@ -372,6 +369,17 @@ namespace shared_model {
         reason.second.push_back(
             (boost::format("Hash has invalid size: %d") % hash.size()).str());
       }
+    }
+
+    boost::optional<ConcreteReasonType> validatePubkey(
+        const interface::types::PubkeyType &pubkey) {
+      if (pubkey.blob().size() != FieldValidator::public_key_size) {
+        return (boost::format("Public key has wrong size, passed size: "
+                              "%d. Expected size: %d")
+                % pubkey.blob().size() % FieldValidator::public_key_size)
+            .str();
+      }
+      return boost::none;
     }
 
   }  // namespace validation

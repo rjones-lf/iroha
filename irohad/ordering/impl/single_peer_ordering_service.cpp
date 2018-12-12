@@ -9,7 +9,9 @@
 #include <iterator>
 
 #include <boost/range/adaptor/indirected.hpp>
+
 #include "ametsuchi/ordering_service_persistent_state.hpp"
+#include "common/bind.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/transaction_batch_impl.hpp"
@@ -101,7 +103,7 @@ namespace iroha {
 
       auto tx_range = txs | boost::adaptors::indirected;
       auto proposal = factory_->createProposal(
-          proposal_height_++, iroha::time::now(), tx_range);
+          proposal_height_, iroha::time::now(), tx_range);
 
       proposal.match(
           [this](expected::Value<
@@ -110,9 +112,10 @@ namespace iroha {
             // In case of restart it reloads state.
             if (persistent_state_->createOsPersistentState() |
                 [this](const auto &state) {
-                  return state->saveProposalHeight(proposal_height_);
+                  return state->saveProposalHeight(proposal_height_ + 1);
                 }) {
               publishProposal(std::move(v.value));
+              proposal_height_++;
             } else {
               // TODO(@l4l) 23/03/18: publish proposal independent of psql
               // status IR-1162

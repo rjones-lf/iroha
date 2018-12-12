@@ -21,8 +21,14 @@
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/test_irohad.hpp"
+#include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/transaction_sequence.hpp"
 #include "logger/logger.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
+#include "network/impl/async_grpc_client.hpp"
+#include "network/mst_transport.hpp"
+#include "torii/command_client.hpp"
+#include "torii/query_client.hpp"
 
 namespace shared_model {
   namespace crypto {
@@ -36,56 +42,79 @@ namespace shared_model {
     class Block;
   }
 }  // namespace shared_model
+namespace iroha {
+  namespace consensus {
+    namespace yac {
+      class YacNetwork;
+      struct VoteMessage;
+    }  // namespace yac
+  }    // namespace consensus
+  namespace network {
+    class MstTransportGrpc;
+  }
+  namespace validation {
+    struct VerifiedProposalAndErrors;
+  }
+}  // namespace iroha
 
 namespace integration_framework {
 
   using std::chrono::milliseconds;
 
+  class FakePeer;
+  class PortGuard;
+
   class IntegrationTestFramework {
    private:
     using ProposalType = std::shared_ptr<shared_model::interface::Proposal>;
+    using VerifiedProposalType =
+        std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>;
     using BlockType = std::shared_ptr<shared_model::interface::Block>;
+    using TxResponseType =
+        std::shared_ptr<shared_model::interface::TransactionResponse>;
 
    public:
     /**
      * Construct test framework instance
      * @param maximum_proposal_size - Maximum number of transactions per
      * proposal
-     * @param proposal_waiting - maximum time of waiting before next proposal
-     * @param block_waiting - maximum time of waiting before appearing next
-     * committed block
-     * @param destructor_lambda - (default nullptr) Pointer to function which
-     * receives pointer to constructed instance of Integration Test Framework.
-     * If specified, then will be called instead of default destructor's code
-     * @param mst_support enables multisignature tx support
-     * @param block_store_path specifies path where blocks will be stored
+     * @param dbname - override database name to use (optional)
+     * @param cleanup_on_exit - whether to clean resources on exit
+     * @param mst_support - enables multisignature tx support
+     * @param block_store_path - specifies path where blocks will be stored
+     * @param proposal_waiting - timeout for next proposal appearing
+     * @param block_waiting - timeout for next committed block appearing
      */
     explicit IntegrationTestFramework(
         size_t maximum_proposal_size,
         const boost::optional<std::string> &dbname = boost::none,
-        std::function<void(IntegrationTestFramework &)> deleter =
-            [](IntegrationTestFramework &itf) { itf.done(); },
+        bool cleanup_on_exit = true,
         bool mst_support = false,
         const std::string &block_store_path =
             (boost::filesystem::temp_directory_path()
              / boost::filesystem::unique_path())
                 .string(),
         milliseconds proposal_waiting = milliseconds(20000),
-        milliseconds block_waiting = milliseconds(20000));
+        milliseconds block_waiting = milliseconds(20000),
+        milliseconds tx_response_waiting = milliseconds(10000));
 
     ~IntegrationTestFramework();
+
+    std::future<std::shared_ptr<FakePeer>> addInitailPeer(
+        const boost::optional<shared_model::crypto::Keypair> &key);
 
     /**
      * Construct default genesis block.
      *
      * Genesis block contains single transaction that
-     * creates a single role (kDefaultRole), domain (kDefaultDomain),
-     * account (kAdminName) and asset (kAssetName).
+     * creates an admin account (kAdminName) with its role (kAdminRole), a
+     * domain (kDomain) with its default role (kDefaultRole), and an asset
+     * (kAssetName).
      * @param key - signing key
      * @return signed genesis block
      */
-    static shared_model::proto::Block defaultBlock(
-        const shared_model::crypto::Keypair &key);
+    shared_model::proto::Block defaultBlock(
+        const shared_model::crypto::Keypair &key) const;
 
     /**
      * Initialize Iroha instance with default genesis block and provided signing
@@ -95,6 +124,11 @@ namespace integration_framework {
      */
     IntegrationTestFramework &setInitialState(
         const shared_model::crypto::Keypair &keypair);
+
+    /// Set Gossip MST propagation parameters.
+    IntegrationTestFramework &setMstGossipParams(
+        std::chrono::milliseconds mst_gossip_emitting_period,
+        uint32_t mst_gossip_amount_per_once);
 
     /**
      * Initialize Iroha instance with provided genesis block and signing key
@@ -113,6 +147,14 @@ namespace integration_framework {
      */
     IntegrationTestFramework &recoverState(
         const shared_model::crypto::Keypair &keypair);
+
+    /**
+     * Send transaction to Iroha without wating for proposal and validating its
+     * status
+     * @param tx - transaction to send
+     */
+    IntegrationTestFramework &sendTxWithoutValidation(
+        const shared_model::proto::Transaction &tx);
 
     /**
      * Send transaction to Iroha and validate its status
@@ -138,6 +180,15 @@ namespace integration_framework {
     /**
      * Send transaction to Iroha with awaiting proposal
      * and without status validation
+     * @param tx - transaction for sending
+     * @return this
+     */
+    IntegrationTestFramework &sendTxAwait(
+        const shared_model::proto::Transaction &tx);
+
+    /**
+     * Send transaction to Iroha with awaiting proposal and without status
+     * validation. Issue callback on the result.
      * @param tx - transaction for sending
      * @param check - callback for checking committed block
      * @return this
@@ -200,6 +251,27 @@ namespace integration_framework {
     IntegrationTestFramework &sendQuery(const shared_model::proto::Query &qry);
 
     /**
+     * Send MST state message to this peer.
+     * @param src_key - the key of the peer which the message appears to come
+     * from
+     * @param mst_state - the MST state to send
+     * @return this
+     */
+    IntegrationTestFramework &sendMstState(
+        const shared_model::crypto::PublicKey &src_key,
+        const iroha::MstState &mst_state);
+
+    /**
+     * Send MST state message to this peer.
+     * @param src_key - the key of the peer which the message appears to come
+     * from
+     * @param mst_state - the MST state to send
+     * @return this
+     */
+    IntegrationTestFramework &sendYacState(
+        const std::vector<iroha::consensus::yac::VoteMessage> &yac_state);
+
+    /**
      * Request next proposal from queue and serve it with custom handler
      * @param validation - callback that receives object of type \relates
      * std::shared_ptr<shared_model::interface::Proposal> by reference
@@ -220,6 +292,8 @@ namespace integration_framework {
      * @param validation - callback that receives object of type \relates
      * std::shared_ptr<shared_model::interface::Proposal> by reference
      * @return this
+     * TODO mboldyrev 27.10.2018: make validation function accept
+     *                IR-1822     VerifiedProposalType argument
      */
     IntegrationTestFramework &checkVerifiedProposal(
         std::function<void(const ProposalType &)> validation);
@@ -245,19 +319,43 @@ namespace integration_framework {
      */
     IntegrationTestFramework &skipBlock();
 
+    rxcpp::observable<std::shared_ptr<iroha::MstState>>
+    getMstStateUpdateObservable();
+
+    rxcpp::observable<iroha::BatchPtr> getMstPreparedBatchesObservable();
+
+    rxcpp::observable<iroha::BatchPtr> getMstExpiredBatchesObservable();
+
+    rxcpp::observable<iroha::network::ConsensusGate::GateObject>
+    getYacOnCommitObservable();
+
+    IntegrationTestFramework &subscribeForAllMstNotifications(
+        std::shared_ptr<iroha::network::MstTransportNotification> notification);
+
+    /**
+     * Request next status of the transaction
+     * @param tx_hash is hash for filtering responses
+     * @return this
+     */
+    IntegrationTestFramework &checkStatus(
+        const shared_model::interface::types::HashType &tx_hash,
+        std::function<void(const shared_model::proto::TransactionResponse &)>
+            validation);
+
+    /**
+     * Reports the port used for internal purposes like MST communications
+     * @return occupied port number
+     */
+    size_t internalPort() const;
+
     /**
      * Shutdown ITF instance
      */
     void done();
 
-    static const std::string kDefaultDomain;
-    static const std::string kDefaultRole;
-
-    static const std::string kAdminName;
-    static const std::string kAdminId;
-    static const std::string kAssetName;
-
    protected:
+    using AsyncCall = iroha::network::AsyncGrpcClient<google::protobuf::Empty>;
+
     /**
      * general way to fetch object from concurrent queue
      * @tparam Queue - Type of queue
@@ -274,10 +372,23 @@ namespace integration_framework {
                         const WaitTime &wait,
                         const std::string &error_reason);
 
+    /// Cleanup the resources
+    void cleanup();
+
     tbb::concurrent_queue<ProposalType> proposal_queue_;
-    tbb::concurrent_queue<ProposalType> verified_proposal_queue_;
+    tbb::concurrent_queue<VerifiedProposalType> verified_proposal_queue_;
     tbb::concurrent_queue<BlockType> block_queue_;
+    std::map<std::string, tbb::concurrent_queue<TxResponseType>>
+        responses_queues_;
+
+    std::unique_ptr<PortGuard> port_guard_;
+    size_t torii_port_;
+    size_t internal_port_;
     std::shared_ptr<IrohaInstance> iroha_instance_;
+    torii::CommandSyncClient command_client_;
+    torii_utils::QuerySyncClient query_client_;
+
+    std::shared_ptr<AsyncCall> async_call_;
 
     void initPipeline(const shared_model::crypto::Keypair &keypair);
     void subscribeQueuesAndRun();
@@ -291,13 +402,38 @@ namespace integration_framework {
     /// maximum time of waiting before appearing next committed block
     milliseconds block_waiting;
 
+    /// maximum time of waiting before appearing next transaction response
+    milliseconds tx_response_waiting;
+
     size_t maximum_proposal_size_;
 
+    std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+        common_objects_factory_;
+    std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+        shared_model::interface::Transaction,
+        iroha::protocol::Transaction>>
+        transaction_factory_;
+    std::shared_ptr<shared_model::interface::TransactionBatchParser>
+        batch_parser_;
+    std::shared_ptr<shared_model::interface::TransactionBatchFactory>
+        transaction_batch_factory_;
+    std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache_;
+    std::shared_ptr<iroha::network::MstTransportGrpc> mst_transport_;
+    std::shared_ptr<iroha::consensus::yac::YacNetwork> yac_transport_;
+
+    std::shared_ptr<shared_model::interface::Peer> this_peer_;
+
    private:
+    void makeFakePeers();
+
     logger::Logger log_ = logger::log("IntegrationTestFramework");
     std::mutex queue_mu;
     std::condition_variable queue_cond;
-    std::function<void(IntegrationTestFramework &)> deleter_;
+    bool cleanup_on_exit_;
+    std::vector<std::pair<std::promise<std::shared_ptr<FakePeer>>,
+                          boost::optional<shared_model::crypto::Keypair>>>
+        fake_peers_promises_;
+    std::vector<std::shared_ptr<FakePeer>> fake_peers_;
   };
 
   template <typename Queue, typename ObjectType, typename WaitTime>

@@ -11,6 +11,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class SetAccountDetail : public AcceptanceFixture {
  public:
@@ -42,8 +43,7 @@ class SetAccountDetail : public AcceptanceFixture {
   const interface::types::AccountDetailKeyType kKey = "key";
   const interface::types::AccountDetailValueType kValue = "value";
   const std::string kUser2 = "user2";
-  const std::string kUser2Id =
-      kUser2 + "@" + IntegrationTestFramework::kDefaultDomain;
+  const std::string kUser2Id = kUser2 + "@" + kDomain;
   const crypto::Keypair kUser2Keypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
@@ -201,7 +201,7 @@ TEST_F(SetAccountDetail, EmptyKey) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx(kUserId, kEmptyKey, kValue)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -237,5 +237,5 @@ TEST_F(SetAccountDetail, HugeKeyValue) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx(kUserId, kHugeKey, kHugeValue)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }

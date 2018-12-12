@@ -7,11 +7,11 @@
 
 #include <gtest/gtest.h>
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class CreateAssetFixture : public AcceptanceFixture {
  public:
@@ -20,7 +20,7 @@ class CreateAssetFixture : public AcceptanceFixture {
     return AcceptanceFixture::makeUserWithPerms(perms);
   }
 
-  const interface::types::AssetNameType kAssetName = "newcoin";
+  const interface::types::AssetNameType kAnotherAssetName = "newcoin";
   const interface::types::PrecisionType kPrecision = 1;
   const interface::types::PrecisionType kNonDefaultPrecision = kPrecision + 17;
   const interface::types::DomainIdType kNonExistingDomain = "nonexisting";
@@ -43,7 +43,7 @@ class CreateAssetFixture : public AcceptanceFixture {
  * @then asset is successfully created
  */
 TEST_F(CreateAssetFixture, Basic) {
-  const auto asset_id = kAssetName + "#" + kDomain;
+  const auto asset_id = kAnotherAssetName + "#" + kDomain;
   const auto asset_amount = "100.0";
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
@@ -53,7 +53,8 @@ TEST_F(CreateAssetFixture, Basic) {
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       // testing the target command
-      .sendTx(complete(baseTx().createAsset(kAssetName, kDomain, kPrecision)))
+      .sendTx(complete(
+          baseTx().createAsset(kAnotherAssetName, kDomain, kPrecision)))
       .skipProposal()
       .checkBlock(
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
@@ -80,7 +81,7 @@ TEST_F(CreateAssetFixture, IllegalCharactersInName) {
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); });
   for (const auto &name : kIllegalAssetNames) {
     itf.sendTx(complete(baseTx().createAsset(name, kDomain, kPrecision)),
-               checkStatelessInvalid);
+               CHECK_STATELESS_INVALID);
   }
 }
 
@@ -96,8 +97,7 @@ TEST_F(CreateAssetFixture, ExistingName) {
       .sendTxAwait(
           makeUserWithPerms(),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(complete(baseTx().createAsset(
-          IntegrationTestFramework::kAssetName, kDomain, kPrecision)))
+      .sendTx(complete(baseTx().createAsset(kAssetName, kDomain, kPrecision)))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkVerifiedProposal(
@@ -123,8 +123,8 @@ TEST_F(CreateAssetFixture, ExistingNameDifferentPrecision) {
       .sendTxAwait(
           makeUserWithPerms(),
           [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendTx(complete(baseTx().createAsset(
-          IntegrationTestFramework::kAssetName, kDomain, kNonDefaultPrecision)))
+      .sendTx(complete(
+          baseTx().createAsset(kAssetName, kDomain, kNonDefaultPrecision)))
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkVerifiedProposal(
@@ -200,6 +200,6 @@ TEST_F(CreateAssetFixture, InvalidDomain) {
       });
   for (const auto &domain : kIllegalDomainNames) {
     itf.sendTx(complete(baseTx().createAsset(kAssetName, domain, kPrecision)),
-               checkStatelessInvalid);
+               CHECK_STATELESS_INVALID);
   }
 }

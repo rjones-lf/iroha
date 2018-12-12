@@ -29,23 +29,19 @@ namespace iroha {
   namespace validation {
     class MockStatefulValidator : public validation::StatefulValidator {
      public:
-      MOCK_METHOD2(
-          validate,
-          VerifiedProposalAndErrors(const shared_model::interface::Proposal &,
-                                    ametsuchi::TemporaryWsv &));
+      MOCK_METHOD2(validate,
+                   std::unique_ptr<VerifiedProposalAndErrors>(
+                       const shared_model::interface::Proposal &,
+                       ametsuchi::TemporaryWsv &));
     };
 
     class MockChainValidator : public ChainValidator {
      public:
       MOCK_CONST_METHOD2(
-          validateChain,
+          validateAndApply,
           bool(rxcpp::observable<
                    std::shared_ptr<shared_model::interface::Block>>,
                ametsuchi::MutableStorage &));
-
-      MOCK_CONST_METHOD2(validateBlock,
-                         bool(std::shared_ptr<shared_model::interface::Block>,
-                              ametsuchi::MutableStorage &));
     };
   }  // namespace validation
 }  // namespace iroha

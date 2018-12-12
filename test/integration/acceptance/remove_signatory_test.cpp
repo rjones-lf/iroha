@@ -9,6 +9,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class RemoveSignatory : public AcceptanceFixture {
  public:
@@ -29,7 +30,7 @@ class RemoveSignatory : public AcceptanceFixture {
 
   const std::string kRole2 = "roletwo";
   const std::string kUser2 = "usertwo";
-  const std::string kUser2Id = kUser2 + "@test";
+  const std::string kUser2Id = kUser2 + "@" + kDomain;
   const crypto::Keypair kUser2Keypair =
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
@@ -168,7 +169,7 @@ TEST_F(RemoveSignatory, InvalidKey) {
       .sendTx(complete(baseTx().removeSignatory(
                   kUserId,
                   shared_model::crypto::PublicKey(std::string(1337, 'a')))),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**

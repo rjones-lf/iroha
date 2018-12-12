@@ -13,12 +13,13 @@ add_library(ametsuchi
     impl/wsv_restorer_impl.cpp
     impl/postgres_options.cpp
     impl/postgres_query_executor.cpp
+    impl/tx_presence_cache_impl.cpp
     )
 
 target_link_libraries(ametsuchi
     logger
     rxcpp
-    libs_common
+    libs_files
     common
     shared_model_interfaces
     shared_model_stateless_validation

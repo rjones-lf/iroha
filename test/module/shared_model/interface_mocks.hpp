@@ -14,6 +14,7 @@
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/iroha_internal/block.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
 #include "interfaces/transaction.hpp"
 
@@ -23,6 +24,8 @@ struct MockBlock : public shared_model::interface::Block {
   MOCK_CONST_METHOD0(
       transactions,
       shared_model::interface::types::TransactionsCollectionType());
+  MOCK_CONST_METHOD0(rejected_transactions_hashes,
+                     shared_model::interface::types::HashCollectionType());
   MOCK_CONST_METHOD0(height, shared_model::interface::types::HeightType());
   MOCK_CONST_METHOD0(prevHash,
                      const shared_model::interface::types::HashType &());
@@ -44,8 +47,9 @@ struct MockTransaction : public shared_model::interface::Transaction {
                      const shared_model::interface::types::AccountIdType &());
   MOCK_CONST_METHOD0(quorum, shared_model::interface::types::QuorumType());
   MOCK_CONST_METHOD0(commands, CommandsType());
-  MOCK_CONST_METHOD0(reduced_payload,
-                     const shared_model::interface::types::BlobType &());
+  MOCK_CONST_METHOD0(reducedHash,
+                     const shared_model::interface::types::HashType &());
+  MOCK_CONST_METHOD0(hash, const shared_model::interface::types::HashType &());
   MOCK_CONST_METHOD0(
       batch_meta,
       boost::optional<std::shared_ptr<shared_model::interface::BatchMeta>>());
@@ -67,6 +71,84 @@ struct MockTransaction : public shared_model::interface::Transaction {
       boost::optional<std::shared_ptr<shared_model::interface::BatchMeta>>());
 };
 
+/**
+ * Creates mock transaction with provided hash
+ * @param hash -- const ref to hash to be returned by the transaction
+ * @return shared_ptr for transaction
+ */
+auto createMockTransactionWithHash(
+    const shared_model::interface::types::HashType &hash) {
+  using ::testing::NiceMock;
+  using ::testing::ReturnRefOfCopy;
+
+  auto res = std::make_shared<NiceMock<MockTransaction>>();
+
+  ON_CALL(*res, hash()).WillByDefault(ReturnRefOfCopy(hash));
+
+  return res;
+}
+
+struct MockTransactionBatch : public shared_model::interface::TransactionBatch {
+  MOCK_CONST_METHOD0(
+      transactions,
+      const shared_model::interface::types::SharedTxsCollectionType &());
+  MOCK_CONST_METHOD0(reducedHash,
+                     const shared_model::interface::types::HashType &());
+  MOCK_CONST_METHOD0(hasAllSignatures, bool());
+  MOCK_METHOD3(addSignature,
+               bool(size_t,
+                    const shared_model::crypto::Signed &,
+                    const shared_model::crypto::PublicKey &));
+  MOCK_CONST_METHOD1(Equals,
+                     bool(const shared_model::interface::TransactionBatch &));
+  virtual bool operator==(
+      const shared_model::interface::TransactionBatch &rhs) const override {
+    return Equals(rhs);
+  }
+  MOCK_CONST_METHOD1(NotEquals,
+                     bool(const shared_model::interface::TransactionBatch &));
+  MOCK_CONST_METHOD0(clone, MockTransactionBatch *());
+};
+
+/**
+ * Creates mock batch with provided hash
+ * @param hash -- const ref to reduced hash to be returned by the batch
+ * @return shared_ptr for batch
+ */
+auto createMockBatchWithHash(
+    const shared_model::interface::types::HashType &hash) {
+  using ::testing::NiceMock;
+  using ::testing::ReturnRefOfCopy;
+
+  auto res = std::make_shared<NiceMock<MockTransactionBatch>>();
+
+  ON_CALL(*res, reducedHash()).WillByDefault(ReturnRefOfCopy(hash));
+
+  return res;
+}
+
+/**
+ * Creates mock batch with provided transactions
+ * @param txs -- list of transactions in the batch
+ * @param hash -- const ref to hash to be returned by the batch
+ * @return shared_ptr for batch
+ */
+auto createMockBatchWithTransactions(
+    const shared_model::interface::types::SharedTxsCollectionType &txs,
+    std::string hash) {
+  using ::testing::NiceMock;
+  using ::testing::ReturnRefOfCopy;
+
+  auto res = std::make_shared<NiceMock<MockTransactionBatch>>();
+
+  ON_CALL(*res, transactions()).WillByDefault(ReturnRefOfCopy(txs));
+
+  ON_CALL(*res, reducedHash())
+      .WillByDefault(ReturnRefOfCopy(shared_model::crypto::Hash{hash}));
+
+  return res;
+}
+
 struct MockSignature : public shared_model::interface::Signature {
   MOCK_CONST_METHOD0(publicKey, const PublicKeyType &());
   MOCK_CONST_METHOD0(signedData, const SignedType &());
@@ -81,6 +163,7 @@ struct MockProposal : public shared_model::interface::Proposal {
   MOCK_CONST_METHOD0(createdTime,
                      shared_model::interface::types::TimestampType());
   MOCK_CONST_METHOD0(blob, const shared_model::interface::types::BlobType &());
+  MOCK_CONST_METHOD0(hash, const shared_model::interface::types::HashType &());
   MOCK_CONST_METHOD0(clone, MockProposal *());
 };
 

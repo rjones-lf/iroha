@@ -4,20 +4,21 @@
  */
 
 #include <gtest/gtest.h>
-#include <chrono>
 
 #include "builders/protobuf/queries.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/transactions_response.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class MstPipelineTest : public AcceptanceFixture {
  public:
-  MstPipelineTest() : mst_itf_{1, {}, [](auto &i) { i.done(); }, true} {}
+  MstPipelineTest() : mst_itf_{1, {}, true, true} {}
 
   /**
    * Creates a mst user
@@ -78,7 +79,14 @@ class MstPipelineTest : public AcceptanceFixture {
    */
   auto makeGetPendingTxsQuery(const std::string &creator,
                               const crypto::Keypair &key) {
-    return complete(baseQry(creator).getPendingTransactions(), key);
+    return shared_model::proto::QueryBuilder()
+        .createdTime(getUniqueTime())
+        .creatorAccountId(creator)
+        .queryCounter(1)
+        .getPendingTransactions()
+        .build()
+        .signAndAddSignature(key)
+        .finish();
   }
 
   /**
@@ -138,23 +146,17 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
   auto tx = baseTx()
                 .setAccountDetail(kUserId, "fav_meme", "doge")
                 .quorum(kSignatories + 1);
-  auto check_mst_pending_tx_status =
-      [](const proto::TransactionResponse &resp) {
-        ASSERT_NO_THROW(
-            boost::get<const interface::MstPendingResponse &>(resp.get()));
-      };
-  auto check_enough_signatures_collected_tx_status =
-      [](const proto::TransactionResponse &resp) {
-        ASSERT_NO_THROW(
-            boost::get<const interface::EnoughSignaturesCollectedResponse &>(
-                resp.get()));
-      };
+  auto hash = tx.build().hash();
 
   auto &mst_itf = prepareMstItf();
-  mst_itf.sendTx(complete(tx, kUserKeypair), check_mst_pending_tx_status)
-      .sendTx(complete(tx, signatories[0]), check_mst_pending_tx_status)
-      .sendTx(complete(tx, signatories[1]),
-              check_enough_signatures_collected_tx_status)
+  mst_itf.sendTx(complete(tx, kUserKeypair))
+      .sendTx(complete(tx, signatories[0]))
+      .sendTx(complete(tx, signatories[1]))
+      .checkStatus(hash, CHECK_MST_PENDING)
+      .checkStatus(hash, CHECK_STATELESS_VALID)
+      .checkStatus(hash, CHECK_MST_PENDING)
+      .checkStatus(hash, CHECK_STATELESS_VALID)
+      .checkStatus(hash, CHECK_ENOUGH_SIGNATURES)
       .skipProposal()
       .skipVerifiedProposal()
       .checkBlock([](auto &proposal) {
@@ -200,17 +202,14 @@ TEST_F(MstPipelineTest, GetPendingTxsLatestSignatures) {
                         .setAccountDetail(kUserId, "fav_meme", "doge")
                         .quorum(kSignatories + 1);
 
-  using namespace std::chrono_literals;
-
+  // make the same queries have different hashes with help of timestamps
+  const auto q1 = makeGetPendingTxsQuery(kUserId, kUserKeypair);
+  const auto q2 = makeGetPendingTxsQuery(kUserId, kUserKeypair);
   auto &mst_itf = prepareMstItf();
   mst_itf.sendTx(complete(pending_tx, signatories[0]))
-      .sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
-                 signatoryCheck(1))
-      .sendTx(complete(pending_tx, signatories[1]));
-  std::this_thread::sleep_for(500ms);
-
-  mst_itf.sendQuery(makeGetPendingTxsQuery(kUserId, kUserKeypair),
-                    signatoryCheck(2));
+      .sendQuery(q1, signatoryCheck(1))
+      .sendTx(complete(pending_tx, signatories[1]))
+      .sendQuery(q2, signatoryCheck(2));
 }
 
 /**

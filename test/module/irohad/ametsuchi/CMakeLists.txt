@@ -1,7 +1,6 @@
 addtest(ametsuchi_test ametsuchi_test.cpp)
 target_link_libraries(ametsuchi_test
     ametsuchi
-    libs_common
     ametsuchi_fixture
     shared_model_stateless_validation
     )
@@ -9,28 +8,24 @@ target_link_libraries(ametsuchi_test
 addtest(wsv_query_command_test wsv_query_command_test.cpp)
 target_link_libraries(wsv_query_command_test
     ametsuchi
-    libs_common
     ametsuchi_fixture
     )
 
 addtest(flat_file_test flat_file_test.cpp)
 target_link_libraries(flat_file_test
     ametsuchi
-    libs_common
     )
 
 addtest(block_query_test block_query_test.cpp)
 target_link_libraries(block_query_test
     ametsuchi
     ametsuchi_fixture
-    libs_common
     shared_model_stateless_validation
     )
 
 addtest(block_query_transfer_test block_query_transfer_test.cpp)
 target_link_libraries(block_query_transfer_test
     ametsuchi
-    libs_common
     ametsuchi_fixture
     shared_model_stateless_validation
     )
@@ -38,21 +33,12 @@ target_link_libraries(block_query_transfer_test
 addtest(kv_storage_test kv_storage_test.cpp)
 target_link_libraries(kv_storage_test
     ametsuchi
-    libs_common
-    ametsuchi_fixture
-    )
-
-addtest(mutable_storage_test mutable_storage_test.cpp)
-target_link_libraries(mutable_storage_test
-    ametsuchi
-    libs_common
     ametsuchi_fixture
     )
 
 addtest(storage_init_test storage_init_test.cpp)
 target_link_libraries(storage_init_test
     ametsuchi
-    libs_common
     integration_framework_config_helper
     shared_model_proto_backend
     )
@@ -60,21 +46,27 @@ target_link_libraries(storage_init_test
 addtest(postgres_options_test postgres_options_test.cpp)
 target_link_libraries(postgres_options_test
     ametsuchi
-    libs_common
     )
 
 addtest(postgres_executor_test postgres_executor_test.cpp)
 target_link_libraries(postgres_executor_test
-    integration_framework
+    integration_framework_config_helper
+    shared_model_proto_backend
+    shared_model_default_builders
     ametsuchi
-    libs_common
     )
 
 addtest(postgres_query_executor_test postgres_query_executor_test.cpp)
 target_link_libraries(postgres_query_executor_test
+    shared_model_proto_backend
     ametsuchi_fixture
     ametsuchi
-    libs_common
+    )
+
+addtest(tx_presence_cache_test tx_presence_cache_test.cpp)
+target_link_libraries(tx_presence_cache_test
+    ametsuchi
+    shared_model_interfaces_factories
     )
 
 add_library(ametsuchi_fixture INTERFACE)

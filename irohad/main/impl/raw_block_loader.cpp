@@ -19,8 +19,9 @@
 
 #include <fstream>
 
-#include "converters/protobuf/json_proto_converter.hpp"
 #include "backend/protobuf/block.hpp"
+#include "common/bind.hpp"
+#include "converters/protobuf/json_proto_converter.hpp"
 
 namespace iroha {
   namespace main {

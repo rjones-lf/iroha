@@ -10,7 +10,9 @@
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 
+using namespace iroha;
 using namespace iroha::ordering;
 using namespace iroha::ordering::transport;
 
@@ -43,7 +45,7 @@ struct OnDemandConnectionManagerTest : public ::testing::Test {
     }
 
     manager = std::make_shared<OnDemandConnectionManager>(
-        factory, cpeers, peers.get_observable());
+        factory, peers.get_observable(), cpeers);
   }
 
   OnDemandConnectionManager::CurrentPeers cpeers;
@@ -68,27 +70,27 @@ TEST_F(OnDemandConnectionManagerTest, FactoryUsed) {
 
 /**
  * @given initialized OnDemandConnectionManager
- * @when onTransactions is called
+ * @when onBatches is called
  * @then peers get data for propagation
  */
-TEST_F(OnDemandConnectionManagerTest, onTransactions) {
+TEST_F(OnDemandConnectionManagerTest, onBatches) {
   OdOsNotification::CollectionType collection;
-  Round round{1, 2};
-  const OnDemandConnectionManager::PeerType types[] = {
-      OnDemandConnectionManager::kCurrentRoundRejectConsumer,
-      OnDemandConnectionManager::kNextRoundRejectConsumer,
-      OnDemandConnectionManager::kNextRoundCommitConsumer};
-  const transport::Round rounds[] = {
-      {round.block_round, round.reject_round + 2},
-      {round.block_round + 1, 2},
-      {round.block_round + 2, 1}};
-  for (auto &&pair : boost::combine(types, rounds)) {
-    EXPECT_CALL(*connections[boost::get<0>(pair)],
-                onTransactions(boost::get<1>(pair), collection))
-        .Times(1);
-  }
+  consensus::Round round{1, 2};
 
-  manager->onTransactions(round, collection);
+  auto set_expect = [&](OnDemandConnectionManager::PeerType type,
+                        consensus::Round round) {
+    EXPECT_CALL(*connections[type], onBatches(round, collection)).Times(1);
+  };
+
+  set_expect(
+      OnDemandConnectionManager::kCurrentRoundRejectConsumer,
+      {round.block_round, currentRejectRoundConsumer(round.reject_round)});
+  set_expect(OnDemandConnectionManager::kNextRoundRejectConsumer,
+             {round.block_round + 1, kNextRejectRoundConsumer});
+  set_expect(OnDemandConnectionManager::kNextRoundCommitConsumer,
+             {round.block_round + 2, kNextCommitRoundConsumer});
+
+  manager->onBatches(round, collection);
 }
 
 /**
@@ -99,7 +101,7 @@ TEST_F(OnDemandConnectionManagerTest, onTransactions) {
  * AND return data is forwarded
  */
 TEST_F(OnDemandConnectionManagerTest, onRequestProposal) {
-  Round round;
+  consensus::Round round;
   boost::optional<OnDemandConnectionManager::ProposalType> oproposal =
       OnDemandConnectionManager::ProposalType{};
   auto proposal = oproposal.value().get();
@@ -121,7 +123,7 @@ TEST_F(OnDemandConnectionManagerTest, onRequestProposal) {
  * AND return data is forwarded
  */
 TEST_F(OnDemandConnectionManagerTest, onRequestProposalNone) {
-  Round round;
+  consensus::Round round;
   boost::optional<OnDemandConnectionManager::ProposalType> oproposal;
   EXPECT_CALL(*connections[OnDemandConnectionManager::kIssuer],
               onRequestProposal(round))

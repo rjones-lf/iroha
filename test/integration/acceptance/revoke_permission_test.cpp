@@ -3,15 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "integration/acceptance/grantable_permissions_fixture.hpp"
-
 #include "builders/protobuf/builder_templates/query_template.hpp"
+
+#include "integration/acceptance/grantable_permissions_fixture.hpp"
 
 using namespace integration_framework;
 
 using namespace shared_model;
 using namespace shared_model::interface;
 using namespace shared_model::interface::permissions;
+using namespace common_constants;
 
 /**
  * C269 Revoke permission from a non-existing account
@@ -96,7 +97,7 @@ TEST_F(GrantablePermissionsFixture, DISABLED_RevokeWithoutPermission) {
   auto detach_role_tx =
       GrantablePermissionsFixture::TxBuilder()
           .createdTime(getUniqueTime())
-          .creatorAccountId(IntegrationTestFramework::kAdminId)
+          .creatorAccountId(kAdminId)
           .quorum(1)
           .detachRole(kAccount1 + "@" + kDomain, kRole1)
           .build()
@@ -181,7 +182,7 @@ namespace grantables {
 
     IntegrationTestFramework &prepare(GrantablePermissionsFixture &f,
                                       IntegrationTestFramework &itf) override {
-      auto account_id = f.kAccount1 + "@" + f.kDomain;
+      auto account_id = f.kAccount1 + "@" + kDomain;
       auto pkey =
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
               .publicKey();
@@ -248,16 +249,16 @@ namespace grantables {
       auto create_and_transfer_coins =
           GrantablePermissionsFixture::TxBuilder()
               .createdTime(f.getUniqueTime())
-              .creatorAccountId(itf.kAdminId)
+              .creatorAccountId(kAdminId)
               .quorum(1)
-              .addAssetQuantity(f.kAssetId, "9000.0")
-              .transferAsset(itf.kAdminId,
-                             f.kAccount1 + "@" + f.kDomain,
-                             f.kAssetId,
+              .addAssetQuantity(kAssetId, "9000.0")
+              .transferAsset(kAdminId,
+                             f.kAccount1 + "@" + kDomain,
+                             kAssetId,
                              "init top up",
                              "8000.0")
               .build()
-              .signAndAddSignature(f.kAdminKeypair)
+              .signAndAddSignature(kAdminKeypair)
               .finish();
       itf.sendTx(create_and_transfer_coins)
           .checkProposal(
@@ -300,7 +301,7 @@ namespace grantables {
    */
   TYPED_TEST(GrantRevokeFixture, GrantAndRevokePermission) {
     IntegrationTestFramework itf(1);
-    itf.setInitialState(gpf::kAdminKeypair);
+    itf.setInitialState(kAdminKeypair);
 
     gpf::createTwoAccounts(itf,
                            {this->grantable_type_.can_grant_permission_,
@@ -332,12 +333,12 @@ namespace grantables {
     auto last_check_tx = this->grantable_type_.testTransaction(*this);
     std::vector<interface::types::HashType> hashes{last_check_tx.hash()};
     auto last_tx_status_query = TestUnsignedQueryBuilder()
-                                    .creatorAccountId(itf.kAdminId)
+                                    .creatorAccountId(kAdminId)
                                     .createdTime(this->getUniqueTime())
                                     .queryCounter(1)
                                     .getTransactions(hashes)
                                     .build()
-                                    .signAndAddSignature(this->kAdminKeypair)
+                                    .signAndAddSignature(kAdminKeypair)
                                     .finish();
     itf.sendTx(last_check_tx)
         .checkProposal([](auto &proposal) {
@@ -346,15 +347,12 @@ namespace grantables {
         .skipVerifiedProposal()
         .skipBlock()
         .getTxStatus(last_check_tx.hash(),
-                     [](auto &status) {
-                       auto message = status.errorMessage();
-
-                       ASSERT_NE(message.find("did not pass verification"),
-                                 std::string::npos)
-                           << "Fail reason: " << message
-                           << "\nRaw status:" << status.toString();
-                       // we saw empty message was received once
-                       // that is why we have added the raw print of status
+                     [&last_check_tx](auto &status) {
+                       auto err_cmd_name = status.statelessErrorOrCommandName();
+                       auto cmd_in_tx = last_check_tx.commands()[0].toString();
+                       auto cmd_in_tx_name =
+                           cmd_in_tx.substr(0, cmd_in_tx.find(":"));
+                       ASSERT_EQ(err_cmd_name, cmd_in_tx_name);
                      })
         .done();
   }

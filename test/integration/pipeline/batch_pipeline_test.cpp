@@ -4,14 +4,17 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
+#include "interfaces/permissions.hpp"
 
 using namespace shared_model;
+using namespace common_constants;
+using interface::permissions::Role;
 using ::testing::ElementsAre;
 using ::testing::get;
 using ::testing::IsEmpty;
@@ -42,6 +45,34 @@ class BatchPipelineTest
   auto createSecondUser() {
     return AcceptanceFixture::createUser(kSecondUser,
                                          kSecondUserKeypair.publicKey())
+        .build()
+        .signAndAddSignature(kAdminKeypair)
+        .finish();
+  }
+
+  /**
+   * @return transaction to create the role for the two users
+   */
+  auto createRole() {
+    return AcceptanceFixture::baseTx(kAdminId)
+        .createRole(kRole,
+                    {Role::kReceive,
+                     Role::kTransfer,
+                     Role::kAddAssetQty,
+                     Role::kSubtractAssetQty,
+                     Role::kCreateAsset})
+        .build()
+        .signAndAddSignature(kAdminKeypair)
+        .finish();
+  }
+
+  /**
+   * @return transaction to add the role to the two users
+   */
+  auto addRoleToUsers() {
+    return AcceptanceFixture::baseTx(kAdminId)
+        .appendRole(kFirstUserId, kRole)
+        .appendRole(kSecondUserId, kRole)
         .build()
         .signAndAddSignature(kAdminKeypair)
         .finish();
@@ -171,8 +202,10 @@ TEST_P(BatchPipelineTest, ValidBatch) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(createFirstUser(), [](const auto &) {})
-      .sendTxAwait(createSecondUser(), [](const auto &) {})
+      .sendTxAwait(createFirstUser())
+      .sendTxAwait(createSecondUser())
+      .sendTxAwait(createRole())
+      .sendTxAwait(addRoleToUsers())
       .sendTxAwait(
           createAndAddAssets(kFirstUserId, kAssetA, "1.0", kFirstUserKeypair),
           [](const auto &) {})
@@ -212,23 +245,30 @@ TEST_F(BatchPipelineTest, InvalidAtomicBatch) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(createFirstUser(), [](const auto &) {})
-      .sendTxAwait(createSecondUser(), [](const auto &) {})
+      .sendTxAwait(createFirstUser())
+      .sendTxAwait(createSecondUser())
+      .sendTxAwait(createRole())
+      .sendTxAwait(addRoleToUsers())
       .sendTxAwait(
           createAndAddAssets(kFirstUserId, kAssetA, "1.0", kFirstUserKeypair),
           [](const auto &) {})
       .sendTxAwait(
           createAndAddAssets(kSecondUserId, kAssetB, "1.0", kSecondUserKeypair),
           [](const auto &) {})
-      .sendTxSequence(transaction_sequence,
-                      [](const auto &statuses) {
-                        for (const auto &status : statuses) {
-                          EXPECT_NO_THROW(boost::apply_visitor(
-                              framework::SpecifiedVisitor<
-                                  interface::StatelessValidTxResponse>(),
-                              status.get()));
-                        }
-                      })
+      .sendTxSequence(
+          transaction_sequence,
+          [](const auto &statuses) {
+            for (const auto &status : statuses) {
+              EXPECT_NO_THROW(
+                  boost::get<const shared_model::interface::
+                                 StatelessValidTxResponse &>(status.get()));
+            }
+          })
+      .checkStatus(batch_transactions[0]->hash(), CHECK_ENOUGH_SIGNATURES)
+      .checkStatus(batch_transactions[0]->hash(), CHECK_STATELESS_VALID)
+      .checkStatus(batch_transactions[1]->hash(), CHECK_ENOUGH_SIGNATURES)
+      .checkStatus(batch_transactions[1]->hash(), CHECK_STATELESS_VALID)
+      .checkStatus(batch_transactions[1]->hash(), CHECK_STATEFUL_INVALID)
       .checkProposal([&transaction_sequence](const auto proposal) {
         ASSERT_THAT(
             proposal->transactions(),
@@ -267,8 +307,10 @@ TEST_F(BatchPipelineTest, InvalidOrderedBatch) {
 
   integration_framework::IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(createFirstUser(), [](const auto &) {})
-      .sendTxAwait(createSecondUser(), [](const auto &) {})
+      .sendTxAwait(createFirstUser())
+      .sendTxAwait(createSecondUser())
+      .sendTxAwait(createRole())
+      .sendTxAwait(addRoleToUsers())
       .sendTxAwait(
           createAndAddAssets(kFirstUserId, kAssetA, "1.0", kFirstUserKeypair),
           [](const auto &) {})

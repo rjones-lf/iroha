@@ -1,55 +1,52 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_CONSENSUS_GATE_HPP
 #define IROHA_CONSENSUS_GATE_HPP
 
 #include <rxcpp/rx.hpp>
+#include "consensus/gate_object.hpp"
 
 namespace shared_model {
   namespace interface {
     class Block;
-  }
+    class Proposal;
+  }  // namespace interface
 }  // namespace shared_model
 
 namespace iroha {
+
+  namespace simulator {
+    struct BlockCreatorEvent;
+  }  // namespace simulator
+
   namespace network {
+
     /**
      * Public api of consensus module
      */
     class ConsensusGate {
      public:
-      /**
-       * Providing data for consensus for voting
-       * @param block is the block for which current node is voting
-       */
-      virtual void vote(
-          std::shared_ptr<shared_model::interface::Block> block) = 0;
+      using Round = consensus::Round;
 
       /**
-       * Emit committed blocks
-       * Note: committed block may be not satisfy for top block in ledger
-       * because synchronization reasons
+       * Vote for given block creator event in consensus
        */
-      virtual rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-      on_commit() = 0;
+      virtual void vote(const simulator::BlockCreatorEvent &event) = 0;
+
+      using GateObject = consensus::GateObject;
+
+      /**
+       * @return emit gate responses
+       */
+      virtual rxcpp::observable<consensus::GateObject> onOutcome() = 0;
 
       virtual ~ConsensusGate() = default;
     };
+
   }  // namespace network
 }  // namespace iroha
+
 #endif  // IROHA_CONSENSUS_GATE_HPP

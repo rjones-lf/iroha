@@ -29,22 +29,25 @@ namespace integration_framework {
    public:
     TestIrohad(const std::string &block_store_dir,
                const std::string &pg_conn,
+               const std::string &listen_ip,
                size_t torii_port,
                size_t internal_port,
                size_t max_proposal_size,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
                const shared_model::crypto::Keypair &keypair,
-               bool is_mst_supported)
+               const boost::optional<iroha::GossipPropagationStrategyParams>
+                   &opt_mst_gossip_params = boost::none)
         : Irohad(block_store_dir,
                  pg_conn,
+                 listen_ip,
                  torii_port,
                  internal_port,
                  max_proposal_size,
                  proposal_delay,
                  vote_delay,
                  keypair,
-                 is_mst_supported) {}
+                 opt_mst_gossip_params) {}
 
     auto &getCommandService() {
       return command_service;
@@ -56,6 +59,14 @@ namespace integration_framework {
 
     auto &getQueryService() {
       return query_service;
+    }
+
+    auto &getMstProcessor() {
+      return mst_processor;
+    }
+
+    auto &getConsensusGate() {
+      return consensus_gate;
     }
 
     auto &getPeerCommunicationService() {
@@ -70,24 +81,19 @@ namespace integration_framework {
       return status_bus_;
     }
 
-    void run() override {
-      internal_server = std::make_unique<ServerRunner>(
-          "127.0.0.1:" + std::to_string(internal_port_));
-      internal_server->append(ordering_init.ordering_gate_transport)
-          .append(ordering_init.ordering_service_transport)
-          .append(yac_init.consensus_network)
-          .append(loader_init.service)
-          .run()
-          .match([](iroha::expected::Value<int>) {},
-                 [](iroha::expected::Error<std::string> e) {
-                   BOOST_ASSERT_MSG(false, e.error.c_str());
-                 });
-      log_->info("===> iroha initialized");
-    }
-
     void terminate() {
       if (internal_server) {
         internal_server->shutdown();
+      } else {
+        log_->warn("Tried to terminate without internal server");
+      }
+    }
+
+    void terminate(const std::chrono::system_clock::time_point &deadline) {
+      if (internal_server) {
+        internal_server->shutdown(deadline);
+      } else {
+        log_->warn("Tried to terminate without internal server");
       }
     }
   };

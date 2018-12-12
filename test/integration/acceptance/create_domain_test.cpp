@@ -9,6 +9,7 @@
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class CreateDomain : public AcceptanceFixture {
  public:
@@ -83,14 +84,13 @@ TEST_F(CreateDomain, NoRole) {
  * @then verified proposal is empty
  */
 TEST_F(CreateDomain, ExistingName) {
-  std::string existing_domain = IntegrationTestFramework::kDefaultDomain;
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTx(makeUserWithPerms())
       .skipProposal()
       .skipVerifiedProposal()
       .skipBlock()
-      .sendTx(complete(baseTx().createDomain(existing_domain, kRole)))
+      .sendTx(complete(baseTx().createDomain(kDomain, kRole)))
       .skipProposal()
       .checkVerifiedProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
@@ -133,7 +133,7 @@ TEST_F(CreateDomain, TooLongName) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(std::string(257, 'a'), kRole)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -150,7 +150,7 @@ TEST_F(CreateDomain, EmptyName) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(empty_name, kRole)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
 
 /**
@@ -167,5 +167,5 @@ TEST_F(CreateDomain, DISABLED_EmptyRoleName) {
       .skipProposal()
       .skipBlock()
       .sendTx(complete(baseTx().createDomain(kNewDomain, empty_name)),
-              checkStatelessInvalid);
+              CHECK_STATELESS_INVALID);
 }
