@@ -67,7 +67,6 @@ namespace torii {
 
    private:
     std::string ip_;
-    size_t port_;
     std::unique_ptr<iroha::protocol::CommandService_v1::Stub> stub_;
     logger::Logger log_;
   };

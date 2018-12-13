@@ -27,7 +27,6 @@ namespace torii {
 
   CommandSyncClient::CommandSyncClient(const std::string &ip, size_t port)
       : ip_(ip),
-        port_(port),
         stub_(iroha::network::createClient<iroha::protocol::CommandService_v1>(
             ip + ":" + std::to_string(port))),
         log_(logger::log("CommandSyncClient")) {}
