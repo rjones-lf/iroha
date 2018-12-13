@@ -147,13 +147,11 @@ namespace iroha {
           perm_converter =
               std::make_shared<shared_model::proto::ProtoPermissionToString>();
 
-      const shared_model::interface::Amount uint256_halfmax =
-          shared_model::interface::Amount{
-              "5789604461865809771178549250434395392663499233282028201972879200"
-              "3956"
-              "564819966.0"};  // 2**255
-      const shared_model::interface::Amount asset_amount_one_zero =
-          shared_model::interface::Amount{"1.0"};
+      const shared_model::interface::Amount uint256_halfmax{
+          "5789604461865809771178549250434395392663499233282028201972879200"
+          "3956"
+          "564819966.0"};  // 2**255
+      const shared_model::interface::Amount asset_amount_one_zero{"1.0"};
 
       std::unique_ptr<shared_model::interface::MockCommandFactory>
           mock_command_factory =
