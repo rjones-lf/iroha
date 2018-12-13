@@ -9,6 +9,7 @@
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/impl/timer_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+#include "consensus/yac/storage/yac_storage_cleanup_strategy_impl.hpp"
 #include "consensus/yac/storage/yac_vote_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "consensus/yac/yac.hpp"
@@ -61,6 +62,7 @@ class FixedCryptoProvider : public MockYacCryptoProvider {
 
 class ConsensusSunnyDayTest : public ::testing::Test {
  public:
+  std::shared_ptr<CleanupStrategy> cleanup_strategy;
   std::unique_ptr<grpc::Server> server;
   std::shared_ptr<NetworkImpl> network;
   std::shared_ptr<MockYacCryptoProvider> crypto;
@@ -84,6 +86,11 @@ class ConsensusSunnyDayTest : public ::testing::Test {
   }
 
   void SetUp() override {
+    cleanup_strategy =
+        std::make_shared<iroha::consensus::yac::BufferedCleanupStrategy>(
+            10,
+            iroha::consensus::Round(1, 0),
+            std::queue<iroha::consensus::Round>());
     auto async_call = std::make_shared<
         iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
     network = std::make_shared<NetworkImpl>(async_call);
@@ -99,7 +106,11 @@ class ConsensusSunnyDayTest : public ::testing::Test {
     auto order = ClusterOrdering::create(default_peers);
     ASSERT_TRUE(order);
 
-    yac = Yac::create(YacVoteStorage(), network, crypto, timer, order.value());
+    yac = Yac::create(YacVoteStorage(cleanup_strategy),
+                      network,
+                      crypto,
+                      timer,
+                      order.value());
     network->subscribe(yac);
 
     grpc::ServerBuilder builder;

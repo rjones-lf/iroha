@@ -82,4 +82,5 @@ target_link_libraries(supermajority_checker_test
 addtest(yac_storage_buffered_cleanup yac_storage_buffered_cleanup.cpp)
 target_link_libraries(yac_storage_buffered_cleanup
         yac
+        consensus_round
         )

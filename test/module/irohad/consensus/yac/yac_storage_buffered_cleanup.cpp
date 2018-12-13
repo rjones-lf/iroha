@@ -18,7 +18,9 @@ class BufferedCleanupStrategyTest : public ::testing::Test {
   std::shared_ptr<CleanupStrategy> strategy_;
 
   void SetUp() override {
-    init(10, BufferedCleanupStrategy::RoundType{1, 0}, {});
+    init(10,
+         BufferedCleanupStrategy::RoundType(1, 0),
+         std::queue<BufferedCleanupStrategy::RoundType>());
   }
 
   void init(BufferedCleanupStrategy::QueueSizeType max_queue_size,
