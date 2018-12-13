@@ -13,7 +13,6 @@ def doDebugBuild(coverageEnabled=false) {
   // this is the case for the FIRST build only.
   // So just set this to same value as default.
   // This is a known bug. See https://issues.jenkins-ci.org/browse/JENKINS-41929
-  echo "fuzzingEnabled=${fuzzingEnabled}"
   if (sanitizeEnabled == null){
     sanitizeEnabled = true
   }
@@ -74,7 +73,7 @@ def doDebugBuild(coverageEnabled=false) {
       cmakeOptions += " -DSANITIZE='address;leak' "
     }
     if ( fuzzingEnabled ){
-      cmakeOptions += " -DFUZZING=ON "
+      cmakeOptions += " -DCMAKE_CC_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 -DFUZZING=ON "
     }
     env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
     env.IROHA_HOME = "/opt/iroha"
