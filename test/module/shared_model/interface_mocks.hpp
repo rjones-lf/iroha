@@ -47,6 +47,9 @@ struct MockTransaction : public shared_model::interface::Transaction {
                      const shared_model::interface::types::AccountIdType &());
   MOCK_CONST_METHOD0(quorum, shared_model::interface::types::QuorumType());
   MOCK_CONST_METHOD0(commands, CommandsType());
+  MOCK_CONST_METHOD0(reducedHash,
+                     const shared_model::interface::types::HashType &());
+  MOCK_CONST_METHOD0(hash, const shared_model::interface::types::HashType &());
   MOCK_CONST_METHOD0(
       batch_meta,
       boost::optional<std::shared_ptr<shared_model::interface::BatchMeta>>());
@@ -67,6 +70,23 @@ struct MockTransaction : public shared_model::interface::Transaction {
       batchMeta,
       boost::optional<std::shared_ptr<shared_model::interface::BatchMeta>>());
 };
+
+/**
+ * Creates mock transaction with provided hash
+ * @param hash -- const ref to hash to be returned by the transaction
+ * @return shared_ptr for transaction
+ */
+auto createMockTransactionWithHash(
+    const shared_model::interface::types::HashType &hash) {
+  using ::testing::NiceMock;
+  using ::testing::ReturnRefOfCopy;
+
+  auto res = std::make_shared<NiceMock<MockTransaction>>();
+
+  ON_CALL(*res, hash()).WillByDefault(ReturnRefOfCopy(hash));
+
+  return res;
+}
 
 struct MockTransactionBatch : public shared_model::interface::TransactionBatch {
   MOCK_CONST_METHOD0(
@@ -92,7 +112,7 @@ struct MockTransactionBatch : public shared_model::interface::TransactionBatch {
 
 /**
  * Creates mock batch with provided hash
- * @param hash -- const ref to hash to be returned by the batch
+ * @param hash -- const ref to reduced hash to be returned by the batch
  * @return shared_ptr for batch
  */
 auto createMockBatchWithHash(
@@ -103,6 +123,28 @@ auto createMockBatchWithHash(
   auto res = std::make_shared<NiceMock<MockTransactionBatch>>();
 
   ON_CALL(*res, reducedHash()).WillByDefault(ReturnRefOfCopy(hash));
+
+  return res;
+}
+
+/**
+ * Creates mock batch with provided transactions
+ * @param txs -- list of transactions in the batch
+ * @param hash -- const ref to hash to be returned by the batch
+ * @return shared_ptr for batch
+ */
+auto createMockBatchWithTransactions(
+    const shared_model::interface::types::SharedTxsCollectionType &txs,
+    std::string hash) {
+  using ::testing::NiceMock;
+  using ::testing::ReturnRefOfCopy;
+
+  auto res = std::make_shared<NiceMock<MockTransactionBatch>>();
+
+  ON_CALL(*res, transactions()).WillByDefault(ReturnRefOfCopy(txs));
+
+  ON_CALL(*res, reducedHash())
+      .WillByDefault(ReturnRefOfCopy(shared_model::crypto::Hash{hash}));
 
   return res;
 }
@@ -139,7 +181,7 @@ struct MockUnsafeProposalFactory
                std::unique_ptr<shared_model::interface::Proposal>(
                    shared_model::interface::types::HeightType,
                    shared_model::interface::types::TimestampType,
-                   const TransactionsCollectionType &));
+                   TransactionsCollectionType));
 };
 
 struct MockCommonObjectsFactory

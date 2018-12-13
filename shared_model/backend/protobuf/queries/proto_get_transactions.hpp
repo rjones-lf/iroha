@@ -45,10 +45,7 @@ namespace shared_model {
 
       const iroha::protocol::GetTransactions &get_transactions_;
 
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
-
-      const Lazy<TransactionHashesType> transaction_hashes_;
+      const TransactionHashesType transaction_hashes_;
     };
 
   }  // namespace proto

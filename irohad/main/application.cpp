@@ -5,7 +5,7 @@
 
 #include "main/application.hpp"
 
-#include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
+#include "ametsuchi/impl/tx_presence_cache_impl.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_block_json_converter.hpp"
@@ -26,9 +26,12 @@
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "multi_sig_transactions/transport/mst_transport_stub.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/status_bus_impl.hpp"
+#include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
+#include "validators/protobuf/proto_block_validator.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"
 #include "validators/protobuf/proto_transaction_validator.hpp"
 
@@ -79,7 +82,7 @@ Irohad::Irohad(const std::string &block_store_dir,
  * Initializing iroha daemon
  */
 void Irohad::init() {
-  // Recover VSW from the existing ledger to be sure it is consistent
+  // Recover WSV from the existing ledger to be sure it is consistent
   initWsvRestorer();
   restoreWsv();
 
@@ -88,6 +91,7 @@ void Irohad::init() {
   initValidators();
   initNetworkClient();
   initFactories();
+  initPersistentCache();
   initOrderingGate();
   initSimulator();
   initConsensusCache();
@@ -109,8 +113,6 @@ void Irohad::init() {
  */
 void Irohad::dropStorage() {
   storage->reset();
-  storage->createOsPersistentState() |
-      [](const auto &state) { state->resetState(); };
 }
 
 /**
@@ -136,12 +138,6 @@ void Irohad::initStorage() {
       [&](expected::Error<std::string> &error) { log_->error(error.error); });
 
   log_->info("[Init] => storage", logger::logBool(storage));
-}
-
-void Irohad::resetOrderingService() {
-  if (not(storage->createOsPersistentState() |
-          [](const auto &state) { return state->resetState(); }))
-    log_->error("cannot reset ordering service storage");
 }
 
 bool Irohad::restoreWsv() {
@@ -234,16 +230,54 @@ void Irohad::initFactories() {
 }
 
 /**
+ * Initializing persistent cache
+ */
+void Irohad::initPersistentCache() {
+  persistent_cache = std::make_shared<TxPresenceCacheImpl>(storage);
+
+  log_->info("[Init] => persistent cache");
+}
+
+/**
  * Initializing ordering gate
  */
 void Irohad::initOrderingGate() {
-  ordering_gate = ordering_init.initOrderingGate(storage,
-                                                 max_proposal_size_,
+  auto block_query = storage->createBlockQuery();
+  if (not block_query) {
+    log_->error("Failed to create block query");
+    return;
+  }
+  // since delay is 2, it is required to get two more hashes from block store,
+  // in addition to top block
+  const size_t kNumBlocks = 3;
+  auto blocks = (*block_query)->getTopBlocks(kNumBlocks);
+  auto hash_stub = shared_model::interface::types::HashType{std::string(
+      shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength, '0')};
+  auto hashes = std::accumulate(
+      blocks.begin(),
+      std::prev(blocks.end()),
+      // add hash stubs if there are not enough blocks in storage
+      std::vector<shared_model::interface::types::HashType>{
+          kNumBlocks - blocks.size(), hash_stub},
+      [](auto &acc, const auto &val) {
+        acc.push_back(val->hash());
+        return acc;
+      });
+
+  auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
+      shared_model::validation::DefaultProposalValidator>>();
+
+  ordering_gate = ordering_init.initOrderingGate(max_proposal_size_,
                                                  proposal_delay_,
+                                                 std::move(hashes),
                                                  storage,
-                                                 storage,
+                                                 transaction_factory,
+                                                 batch_parser,
                                                  transaction_batch_factory_,
-                                                 async_call_);
+                                                 async_call_,
+                                                 std::move(factory),
+                                                 persistent_cache,
+                                                 {blocks.back()->height(), 1});
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -260,7 +294,8 @@ void Irohad::initSimulator() {
       //  are validated in the ordering gate, where they are received from the
       //  ordering service.
       std::make_unique<
-          shared_model::validation::DefaultUnsignedBlockValidator>());
+          shared_model::validation::DefaultUnsignedBlockValidator>(),
+      std::make_unique<shared_model::validation::ProtoBlockValidator>());
   simulator = std::make_shared<Simulator>(ordering_gate,
                                           stateful_validator,
                                           storage,
@@ -311,7 +346,7 @@ void Irohad::initConsensusGate() {
  */
 void Irohad::initSynchronizer() {
   synchronizer = std::make_shared<SynchronizerImpl>(
-      consensus_gate, chain_validator, storage, block_loader);
+      consensus_gate, chain_validator, storage, storage, block_loader);
 
   log_->info("[Init] => synchronizer");
 }
@@ -323,14 +358,11 @@ void Irohad::initPeerCommunicationService() {
   pcs = std::make_shared<PeerCommunicationServiceImpl>(
       ordering_gate, synchronizer, simulator);
 
-  pcs->on_proposal().subscribe(
+  pcs->onProposal().subscribe(
       [this](auto) { log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ "); });
 
   pcs->on_commit().subscribe(
       [this](auto) { log_->info("~~~~~~~~~| COMMIT =^._.^= |~~~~~~~~~ "); });
-
-  // complete initialization of ordering gate
-  ordering_gate->setPcs(*pcs);
 
   log_->info("[Init] => pcs");
 }
@@ -350,6 +382,7 @@ void Irohad::initMstProcessor() {
         transaction_factory,
         batch_parser,
         transaction_batch_factory_,
+        persistent_cache,
         keypair.publicKey());
     mst_propagation = std::make_shared<GossipPropagationStrategy>(
         storage, rxcpp::observe_on_new_thread(), *opt_mst_gossip_params_);
@@ -420,6 +453,7 @@ void Irohad::initWsvRestorer() {
  */
 Irohad::RunResult Irohad::run() {
   using iroha::expected::operator|;
+  using iroha::operator|;
 
   // Initializing torii server
   torii_server = std::make_unique<ServerRunner>(
@@ -441,9 +475,7 @@ Irohad::RunResult Irohad::run() {
                   std::static_pointer_cast<MstTransportGrpc>(mst_transport));
             }
             // Run internal server
-            return internal_server
-                ->append(ordering_init.ordering_gate_transport)
-                .append(ordering_init.ordering_service_transport)
+            return internal_server->append(ordering_init.service)
                 .append(yac_init.consensus_network)
                 .append(loader_init.service)
                 .run();
@@ -452,6 +484,27 @@ Irohad::RunResult Irohad::run() {
           [&](const auto &port) -> RunResult {
             log_->info("Internal server bound on port {}", port.value);
             log_->info("===> iroha initialized");
+            // initiate first round
+            auto block_query = storage->createBlockQuery();
+            if (not block_query) {
+              return expected::makeError("Failed to create block query");
+            }
+            auto block_var = (*block_query)->getTopBlock();
+            if (auto e = boost::get<expected::Error<std::string>>(&block_var)) {
+              return expected::makeError("Failed to get the top block: "
+                                         + e->error);
+            }
+
+            auto block = boost::get<expected::Value<
+                std::shared_ptr<shared_model::interface::Block>>>(&block_var)
+                             ->value;
+
+            pcs->on_commit()
+                .start_with(synchronizer::SynchronizationEvent{
+                    rxcpp::observable<>::just(block),
+                    SynchronizationOutcomeType::kCommit,
+                    {block->height(), ordering::kFirstRejectRound}})
+                .subscribe(ordering_init.notifier.get_subscriber());
             return {};
           },
           [&](const expected::Error<std::string> &e) -> RunResult {

@@ -75,6 +75,9 @@ class ValidatorsTest : public ::testing::Test {
     field_setters["peer"] = [&](auto refl, auto msg, auto field) {
       refl->MutableMessage(msg, field)->CopyFrom(peer);
     };
+    field_setters["pagination_meta"] = [&](auto refl, auto msg, auto field) {
+      refl->MutableMessage(msg, field)->CopyFrom(tx_pagination_meta);
+    };
   }
 
   /**
@@ -192,6 +195,7 @@ class ValidatorsTest : public ::testing::Test {
     quorum = 2;
     peer.set_address(address_localhost);
     peer.set_peer_key(public_key);
+    tx_pagination_meta.set_page_size(10);
   }
 
   size_t public_key_size{0};
@@ -224,6 +228,7 @@ class ValidatorsTest : public ::testing::Test {
   iroha::protocol::Peer peer;
   decltype(iroha::time::now()) created_time;
   iroha::protocol::QueryPayloadMeta meta;
+  iroha::protocol::TxPaginationMeta tx_pagination_meta;
 
   // List all used fields in commands
   std::unordered_map<

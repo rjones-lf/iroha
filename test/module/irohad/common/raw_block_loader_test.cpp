@@ -20,13 +20,15 @@ TEST(BlockLoaderTest, BlockLoaderJsonParsing) {
   BlockLoader loader;
   auto str =
       R"({
-"payload": {
-  "transactions": [],
-  "height": 1,
-  "prev_block_hash": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
-  "created_time": 0
-  },
-"signatures": []
+"block_v1": {
+  "payload": {
+    "transactions": [],
+    "height": 1,
+    "prev_block_hash": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=",
+    "created_time": 0
+    },
+  "signatures": []
+}
 })";
 
   auto block = loader.parseBlock(str);

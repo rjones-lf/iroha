@@ -7,9 +7,14 @@
 
 #include <unordered_set>
 
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/adaptor/indirected.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/for_each.hpp>
-#include <boost/range/adaptor/indirected.hpp>
+#include <boost/range/size.hpp>
+#include "ametsuchi/tx_presence_cache.hpp"
+#include "ametsuchi/tx_presence_cache_utils.hpp"
+#include "common/visitor.hpp"
 #include "datetime/time.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
@@ -17,20 +22,17 @@
 
 using namespace iroha::ordering;
 
-/**
- * First round after successful committing block
- */
-const iroha::consensus::RejectRoundType kFirstRound = 1;
-
 OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
     size_t transaction_limit,
-    std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
-              proposal_factory,
+    std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
+        proposal_factory,
+    std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
     size_t number_of_proposals,
     const consensus::Round &initial_round)
     : transaction_limit_(transaction_limit),
       number_of_proposals_(number_of_proposals),
       proposal_factory_(std::move(proposal_factory)),
+      tx_cache_(std::move(tx_cache)),
       log_(logger::log("OnDemandOrderingServiceImpl")) {
   onCollaborationOutcome(initial_round);
 }
@@ -44,7 +46,7 @@ void OnDemandOrderingServiceImpl::onCollaborationOutcome(
              round.reject_round);
   // exclusive write lock
   std::lock_guard<std::shared_timed_mutex> guard(lock_);
-  log_->info("onCollaborationOutcome => write lock is acquired");
+  log_->debug("onCollaborationOutcome => write lock is acquired");
 
   packNextProposals(round);
   tryErase();
@@ -61,13 +63,33 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
              round.block_round,
              round.reject_round);
 
+  auto unprocessed_batches =
+      boost::adaptors::filter(batches, [this](const auto &batch) {
+        log_->info("check batch {} for already processed transactions",
+                   batch->reducedHash().hex());
+        return not this->batchAlreadyProcessed(*batch);
+      });
   auto it = current_proposals_.find(round);
-  if (it != current_proposals_.end()) {
-    std::for_each(batches.begin(), batches.end(), [&it](auto &obj) {
-      it->second.push(std::move(obj));
-    });
-    log_->info("onTransactions => collection is inserted");
+  if (it == current_proposals_.end()) {
+    it =
+        std::find_if(current_proposals_.begin(),
+                     current_proposals_.end(),
+                     [&round](const auto &p) {
+                       auto request_reject_round = round.reject_round;
+                       auto reject_round = p.first.reject_round;
+                       return request_reject_round == reject_round
+                           or (request_reject_round >= 2 and reject_round >= 2);
+                     });
+    BOOST_ASSERT_MSG(it != current_proposals_.end(),
+                     "No place to store the batches!");
+    log_->debug("onBatches => collection will be inserted to [{}, {}]",
+                it->first.block_round,
+                it->first.reject_round);
   }
+  std::for_each(unprocessed_batches.begin(),
+                unprocessed_batches.end(),
+                [&it](auto &obj) { it->second.push(std::move(obj)); });
+  log_->debug("onBatches => collection is inserted");
 }
 
 boost::optional<OnDemandOrderingServiceImpl::ProposalType>
@@ -75,6 +97,10 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
   auto proposal = proposal_map_.find(round);
+  log_->debug("onRequestProposal, round[{}, {}], {}returning a proposal.",
+              round.block_round,
+              round.reject_round,
+              (proposal == proposal_map_.end()) ? "NOT " : "");
   if (proposal != proposal_map_.end()) {
     return clone(*proposal->second);
   } else {
@@ -87,17 +113,25 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
 void OnDemandOrderingServiceImpl::packNextProposals(
     const consensus::Round &round) {
   auto close_round = [this](consensus::Round round) {
+    log_->debug("close round[{}, {}]", round.block_round, round.reject_round);
+
     auto it = current_proposals_.find(round);
     if (it != current_proposals_.end()) {
+      log_->debug("proposal found");
       if (not it->second.empty()) {
         proposal_map_.emplace(round, emitProposal(round));
-        log_->info("packNextProposal: data has been fetched for round[{}, {}]",
-                   round.block_round,
-                   round.reject_round);
+        log_->debug("packNextProposal: data has been fetched for round[{}, {}]",
+                    round.block_round,
+                    round.reject_round);
         round_queue_.push(round);
       }
       current_proposals_.erase(it);
     }
+  };
+
+  auto open_round = [this](consensus::Round round) {
+    log_->debug("open round[{}, {}]", round.block_round, round.reject_round);
+    current_proposals_[round];
   };
 
   /*
@@ -134,27 +168,27 @@ void OnDemandOrderingServiceImpl::packNextProposals(
   // close next reject round
   close_round({round.block_round, round.reject_round + 1});
 
-  if (round.reject_round == kFirstRound) {
+  if (round.reject_round == kFirstRejectRound) {
     // new block round
     close_round({round.block_round + 1, round.reject_round});
 
     // remove current queues
     current_proposals_.clear();
     // initialize the 3 diagonal rounds from the commit case diagram
-    for (uint32_t i = 0; i <= 2; ++i) {
-      current_proposals_[{round.block_round + i, round.reject_round + 2 - i}];
-    }
-  } else {
-    // new reject round
-    current_proposals_[{round.block_round, round.reject_round + 2}];
+    open_round({round.block_round + 1, kNextRejectRoundConsumer});
+    open_round({round.block_round + 2, kNextCommitRoundConsumer});
   }
+
+  // new reject round
+  open_round(
+      {round.block_round, currentRejectRoundConsumer(round.reject_round)});
 }
 
 OnDemandOrderingServiceImpl::ProposalType
 OnDemandOrderingServiceImpl::emitProposal(const consensus::Round &round) {
-  log_->info("Mutable proposal generation, round[{}, {}]",
-             round.block_round,
-             round.reject_round);
+  log_->debug("Mutable proposal generation, round[{}, {}]",
+              round.block_round,
+              round.reject_round);
 
   TransactionBatchType batch;
   std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
@@ -172,7 +206,9 @@ OnDemandOrderingServiceImpl::emitProposal(const consensus::Round &round) {
         std::make_move_iterator(std::begin(batch->transactions())),
         std::make_move_iterator(std::end(batch->transactions())));
   }
-  log_->info("Number of transactions in proposal = {}", collection.size());
+  log_->debug("Number of transactions in proposal = {}", collection.size());
+  log_->debug("Number of lost transactions = {}",
+              current_proposal.unsafe_size());
 
   auto txs = collection | boost::adaptors::indirected;
   return proposal_factory_->unsafeCreateProposal(
@@ -188,4 +224,25 @@ void OnDemandOrderingServiceImpl::tryErase() {
                round.reject_round);
     round_queue_.pop();
   }
+}
+
+bool OnDemandOrderingServiceImpl::batchAlreadyProcessed(
+    const shared_model::interface::TransactionBatch &batch) {
+  auto tx_statuses = tx_cache_->check(batch);
+  if (not tx_statuses) {
+    // TODO andrei 30.11.18 IR-51 Handle database error
+    log_->warn("Check tx presence database error. Batch: {}", batch);
+    return true;
+  }
+  // if any transaction is commited or rejected, batch was already processed
+  // Note: any_of returns false for empty sequence
+  return std::any_of(
+      tx_statuses->begin(), tx_statuses->end(), [this](const auto &tx_status) {
+        if (iroha::ametsuchi::isAlreadyProcessed(tx_status)) {
+          log_->warn("Duplicate transaction: {}",
+                     iroha::ametsuchi::getHash(tx_status).hex());
+          return true;
+        }
+        return false;
+      });
 }

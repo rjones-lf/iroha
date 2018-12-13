@@ -66,8 +66,7 @@ namespace shared_model {
                 std::forward<decltype(ar)>(ar), which);
       }()};
 
-      CommandVariantType ivariant_{
-          [this] { return CommandVariantType(variant_); }()};
+      CommandVariantType ivariant_{variant_};
     };
 
     Command::Command(const Command &o) : Command(*o.impl_->proto_) {}

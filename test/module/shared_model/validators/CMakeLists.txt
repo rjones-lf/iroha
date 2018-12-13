@@ -69,3 +69,11 @@ target_link_libraries(proto_transaction_validator_test
     shared_model_proto_backend
     shared_model_stateless_validation
     )
+
+addtest(proto_block_validator_test
+    protobuf/proto_block_validator_test.cpp
+    )
+target_link_libraries(proto_block_validator_test
+    shared_model_proto_backend
+    shared_model_stateless_validation
+    )

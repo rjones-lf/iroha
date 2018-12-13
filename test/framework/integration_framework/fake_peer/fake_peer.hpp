@@ -28,6 +28,9 @@ namespace shared_model {
 }  // namespace shared_model
 
 namespace iroha {
+  namespace ametsuchi {
+    class TxPresenceCache;
+  }  // namespace ametsuchi
   namespace protocol {
     class Transaction;
   }
@@ -40,8 +43,8 @@ namespace iroha {
       class NetworkImpl;
       class YacCryptoProvider;
       class YacHash;
-    }
-  }
+    }  // namespace yac
+  }    // namespace consensus
 }  // namespace iroha
 class ServerRunner;
 
@@ -83,6 +86,7 @@ namespace integration_framework {
             batch_parser,
         std::shared_ptr<shared_model::interface::TransactionBatchFactory>
             transaction_batch_factory,
+        std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
         bool agree_all_proposals = true);
 
     /// Start the fake peer.
