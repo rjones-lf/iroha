@@ -7,10 +7,10 @@
 
 #include <backend/protobuf/proto_tx_status_factory.hpp>
 #include <boost/range/join.hpp>
+#include <boost/variant.hpp>
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "framework/batch_helper.hpp"
-#include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_sequence_factory.hpp"
@@ -44,7 +44,7 @@ class TransactionProcessorTest : public ::testing::Test {
 
     EXPECT_CALL(*pcs, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
-    EXPECT_CALL(*pcs, on_verified_proposal())
+    EXPECT_CALL(*pcs, onVerifiedProposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
     EXPECT_CALL(*mst, onStateUpdateImpl())
@@ -115,8 +115,7 @@ class TransactionProcessorTest : public ::testing::Test {
     for (const auto &tx : transactions) {
       auto tx_status = status_map.find(tx.hash());
       ASSERT_NE(tx_status, status_map.end());
-      ASSERT_NO_THROW(boost::apply_visitor(
-          framework::SpecifiedVisitor<Status>(), tx_status->second->get()));
+      ASSERT_NO_THROW(boost::get<const Status &>(tx_status->second->get()));
     }
   }
 
@@ -136,10 +135,10 @@ class TransactionProcessorTest : public ::testing::Test {
       status_builder;
 
   rxcpp::subjects::subject<SynchronizationEvent> commit_notifier;
-  rxcpp::subjects::subject<
-      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+  rxcpp::subjects::subject<simulator::VerifiedProposalCreatorEvent>
       verified_prop_notifier;
 
+  consensus::Round round;
   const size_t proposal_size = 5;
   const size_t block_size = 3;
 };
@@ -267,7 +266,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
           TestProposalBuilder().transactions(txs).build());
 
   // empty transactions errors - all txs are valid
-  verified_prop_notifier.get_subscriber().on_next(validation_result);
+  verified_prop_notifier.get_subscriber().on_next(
+      simulator::VerifiedProposalCreatorEvent{validation_result, round});
 
   auto block = TestBlockBuilder().transactions(txs).build();
 
@@ -275,8 +275,10 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
       blocks_notifier;
 
-  commit_notifier.get_subscriber().on_next(SynchronizationEvent{
-      blocks_notifier.get_observable(), SynchronizationOutcomeType::kCommit});
+  commit_notifier.get_subscriber().on_next(
+      SynchronizationEvent{blocks_notifier.get_observable(),
+                           SynchronizationOutcomeType::kCommit,
+                           {}});
 
   blocks_notifier.get_subscriber().on_next(
       std::shared_ptr<shared_model::interface::Block>(clone(block)));
@@ -323,7 +325,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
           TestProposalBuilder().transactions(txs).build());
 
   // empty transactions errors - all txs are valid
-  verified_prop_notifier.get_subscriber().on_next(validation_result);
+  verified_prop_notifier.get_subscriber().on_next(
+      simulator::VerifiedProposalCreatorEvent{validation_result, round});
 
   auto block = TestBlockBuilder().transactions(txs).build();
 
@@ -331,7 +334,8 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   SynchronizationEvent commit_event{
       rxcpp::observable<>::just(
           std::shared_ptr<shared_model::interface::Block>(clone(block))),
-      SynchronizationOutcomeType::kCommit};
+      SynchronizationOutcomeType::kCommit,
+      {}};
   commit_notifier.get_subscriber().on_next(commit_event);
 
   SCOPED_TRACE("Committed status verification");
@@ -390,18 +394,20 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
       std::make_unique<shared_model::proto::Proposal>(
           TestProposalBuilder().transactions(block_txs).build());
   for (size_t i = 0; i < invalid_txs.size(); ++i) {
-    validation_result->rejected_transactions.emplace(
+    validation_result->rejected_transactions.emplace_back(validation::TransactionError{
         invalid_txs[i].hash(),
-        iroha::validation::CommandError{"SomeCommandName", 1, "", true, i});
+        iroha::validation::CommandError{"SomeCommandName", 1, "", true, i}});
   }
-  verified_prop_notifier.get_subscriber().on_next(validation_result);
+  verified_prop_notifier.get_subscriber().on_next(
+      simulator::VerifiedProposalCreatorEvent{validation_result, round});
 
   auto block = TestBlockBuilder().transactions(block_txs).build();
 
   SynchronizationEvent commit_event{
       rxcpp::observable<>::just(
           std::shared_ptr<shared_model::interface::Block>(clone(block))),
-      SynchronizationOutcomeType::kCommit};
+      SynchronizationOutcomeType::kCommit,
+      {}};
   commit_notifier.get_subscriber().on_next(commit_event);
 
   {

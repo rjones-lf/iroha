@@ -12,12 +12,12 @@
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <boost/process.hpp>
+#include <boost/variant.hpp>
 
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "common/bind.hpp"
 #include "common/files.hpp"
 #include "crypto/keys_manager_impl.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/query_responses/roles_response.hpp"
 #include "main/iroha_conf_loader.hpp"
@@ -197,10 +197,10 @@ DROP TABLE IF EXISTS domain;
 DROP TABLE IF EXISTS signatory;
 DROP TABLE IF EXISTS peer;
 DROP TABLE IF EXISTS role;
-DROP TABLE IF EXISTS height_by_hash;
+DROP TABLE IF EXISTS position_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
-DROP TABLE IF EXISTS index_by_id_height_asset;
+DROP TABLE IF EXISTS position_by_account_asset;
 )";
 
     soci::session sql(soci::postgresql, pgopts_);
@@ -284,11 +284,8 @@ TEST_F(IrohadTest, SendQuery) {
   client.Find(query.getTransport(), response);
   auto resp = shared_model::proto::QueryResponse(response);
 
-  ASSERT_NO_THROW({
-    boost::apply_visitor(
-        framework::SpecifiedVisitor<shared_model::interface::RolesResponse>(),
-        resp.get());
-  });
+  ASSERT_NO_THROW(
+      boost::get<const shared_model::interface::RolesResponse &>(resp.get()));
 }
 
 /**

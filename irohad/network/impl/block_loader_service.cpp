@@ -40,8 +40,12 @@ grpc::Status BlockLoaderService::retrieveBlocks(
         return block_query->getBlocksFrom(height);
       };
   std::for_each(blocks.begin(), blocks.end(), [&writer](const auto &block) {
-    writer->Write(std::dynamic_pointer_cast<shared_model::proto::Block>(block)
-                      ->getTransport());
+    protocol::Block proto_block;
+    *proto_block.mutable_block_v1() =
+        std::dynamic_pointer_cast<shared_model::proto::Block>(block)
+            ->getTransport();
+
+    writer->Write(proto_block);
   });
   return grpc::Status::OK;
 }
@@ -61,8 +65,10 @@ grpc::Status BlockLoaderService::retrieveBlock(
   auto block = consensus_result_cache_->get();
   if (block) {
     if (block->hash() == hash) {
-      *response = std::static_pointer_cast<shared_model::proto::Block>(block)
-                      ->getTransport();
+      auto block_v1 =
+          std::static_pointer_cast<shared_model::proto::Block>(block)
+              ->getTransport();
+      *response->mutable_block_v1() = block_v1;
       return grpc::Status::OK;
     } else {
       log_->info(
@@ -100,7 +106,9 @@ grpc::Status BlockLoaderService::retrieveBlock(
     return grpc::Status(grpc::StatusCode::NOT_FOUND, "Block not found");
   }
 
-  *response = std::static_pointer_cast<shared_model::proto::Block>(*found_block)
-                  ->getTransport();
+  auto block_v1 =
+      std::static_pointer_cast<shared_model::proto::Block>(*found_block)
+          ->getTransport();
+  *response->mutable_block_v1() = block_v1;
   return grpc::Status::OK;
 }

@@ -4,8 +4,8 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/query_responses/signatories_response.hpp"
 
@@ -60,9 +60,8 @@ TEST_F(AddSignatory, Basic) {
           [this](auto &resp) {
             ASSERT_NO_THROW({
               auto &keys =
-                  boost::apply_visitor(
-                      framework::SpecifiedVisitor<
-                          shared_model::interface::SignatoriesResponse>(),
+                  boost::get<
+                      const shared_model::interface::SignatoriesResponse &>(
                       resp.get())
                       .keys();
               ASSERT_EQ(keys.size(), 2);  // self + signatory

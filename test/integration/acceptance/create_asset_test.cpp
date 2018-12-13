@@ -7,7 +7,6 @@
 
 #include <gtest/gtest.h>
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 
 using namespace integration_framework;

@@ -146,23 +146,17 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
   auto tx = baseTx()
                 .setAccountDetail(kUserId, "fav_meme", "doge")
                 .quorum(kSignatories + 1);
-  auto check_mst_pending_tx_status =
-      [](const proto::TransactionResponse &resp) {
-        ASSERT_NO_THROW(
-            boost::get<const interface::MstPendingResponse &>(resp.get()));
-      };
-  auto check_enough_signatures_collected_tx_status =
-      [](const proto::TransactionResponse &resp) {
-        ASSERT_NO_THROW(
-            boost::get<const interface::EnoughSignaturesCollectedResponse &>(
-                resp.get()));
-      };
+  auto hash = tx.build().hash();
 
   auto &mst_itf = prepareMstItf();
-  mst_itf.sendTx(complete(tx, kUserKeypair), check_mst_pending_tx_status)
-      .sendTx(complete(tx, signatories[0]), check_mst_pending_tx_status)
-      .sendTx(complete(tx, signatories[1]),
-              check_enough_signatures_collected_tx_status)
+  mst_itf.sendTx(complete(tx, kUserKeypair))
+      .sendTx(complete(tx, signatories[0]))
+      .sendTx(complete(tx, signatories[1]))
+      .checkStatus(hash, CHECK_MST_PENDING)
+      .checkStatus(hash, CHECK_STATELESS_VALID)
+      .checkStatus(hash, CHECK_MST_PENDING)
+      .checkStatus(hash, CHECK_STATELESS_VALID)
+      .checkStatus(hash, CHECK_ENOUGH_SIGNATURES)
       .skipProposal()
       .skipVerifiedProposal()
       .checkBlock([](auto &proposal) {

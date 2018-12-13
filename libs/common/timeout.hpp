@@ -209,7 +209,7 @@ namespace iroha {
           timeout<T, ResolvedSelector, rxcpp::util::decay_t<Coordination>>>
   static auto makeTimeout(Selector &&s, Coordination &&cn) {
     return Timeout(std::forward<Selector>(s), std::forward<Coordination>(cn));
-  };
+  }
 
 }  // namespace iroha
 

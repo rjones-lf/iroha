@@ -23,7 +23,7 @@ namespace shared_model {
       Impl &operator=(Impl &&o) noexcept = delete;
 
       TransportType proto_;
-      iroha::protocol::Block::Payload &payload_{*proto_.mutable_payload()};
+      iroha::protocol::Block_v1::Payload &payload_{*proto_.mutable_payload()};
 
       std::vector<proto::Transaction> transactions_{[this] {
         return std::vector<proto::Transaction>(
@@ -134,7 +134,7 @@ namespace shared_model {
       return impl_->payload_blob_;
     }
 
-    const iroha::protocol::Block &Block::getTransport() const {
+    const iroha::protocol::Block_v1 &Block::getTransport() const {
       return impl_->proto_;
     }
 

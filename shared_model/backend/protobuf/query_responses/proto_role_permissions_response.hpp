@@ -9,7 +9,6 @@
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/query_responses/role_permissions.hpp"
 #include "qry_responses.pb.h"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -30,12 +29,9 @@ namespace shared_model {
       std::string toString() const override;
 
      private:
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
+      const iroha::protocol::RolePermissionsResponse &role_permissions_response_;
 
-      const iroha::protocol::RolePermissionsResponse &rolePermissionsResponse_;
-
-      const Lazy<interface::RolePermissionSet> rolePermissions_;
+      const interface::RolePermissionSet role_permissions_;
     };
   }  // namespace proto
 }  // namespace shared_model

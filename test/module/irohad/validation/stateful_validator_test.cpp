@@ -236,10 +236,10 @@ TEST_F(Validator, SomeTxsFail) {
       2);
   ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 1);
   EXPECT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
-                ->second.error_code,
+                ->error.error_code,
             sample_error_code);
   EXPECT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
-                ->second.error_extra,
+                ->error.error_extra,
             sample_error_extra);
 }
 
@@ -318,9 +318,9 @@ TEST_F(Validator, Batches) {
       5);
   ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 1);
   EXPECT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
-                ->second.error_code,
+                ->error.error_code,
             sample_error_code);
   EXPECT_EQ(verified_proposal_and_errors->rejected_transactions.begin()
-                ->second.error_extra,
+                ->error.error_extra,
             sample_error_extra);
 }

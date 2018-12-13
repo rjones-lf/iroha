@@ -12,9 +12,7 @@ namespace shared_model {
     AddSignatory::AddSignatory(CommandType &&command)
         : CopyableProto(std::forward<CommandType>(command)),
           add_signatory_{proto_->add_signatory()},
-          pubkey_{[this] {
-            return interface::types::PubkeyType(add_signatory_.public_key());
-          }} {}
+          pubkey_{add_signatory_.public_key()} {}
 
     template AddSignatory::AddSignatory(AddSignatory::TransportType &);
     template AddSignatory::AddSignatory(const AddSignatory::TransportType &);
@@ -31,7 +29,7 @@ namespace shared_model {
     }
 
     const interface::types::PubkeyType &AddSignatory::pubkey() const {
-      return *pubkey_;
+      return pubkey_;
     }
 
   }  // namespace proto

@@ -15,3 +15,10 @@ target_link_libraries(irohad_test
 add_dependencies(irohad_test irohad)
 add_definitions(-DPATHIROHAD="${PROJECT_BINARY_DIR}/bin")
 add_definitions(-DPATHTESTDATA="${CMAKE_CURRENT_SOURCE_DIR}/irohad_test_data")
+
+if (SANITIZE)
+    target_link_libraries(irohad_test asan)
+    foreach(el ${SANITIZE})
+        target_compile_options(irohad_test PRIVATE  -fsanitize=${el})
+    endforeach(el)
+endif ()

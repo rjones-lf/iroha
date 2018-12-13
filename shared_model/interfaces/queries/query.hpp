@@ -7,7 +7,6 @@
 #define IROHA_SHARED_MODEL_QUERY_HPP
 
 #include <boost/variant/variant_fwd.hpp>
-
 #include "interfaces/base/signable.hpp"
 #include "interfaces/common_objects/types.hpp"
 

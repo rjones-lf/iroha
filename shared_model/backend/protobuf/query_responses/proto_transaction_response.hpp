@@ -11,7 +11,6 @@
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
 #include "qry_responses.pb.h"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -31,12 +30,9 @@ namespace shared_model {
           const override;
 
      private:
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
+      const iroha::protocol::TransactionsResponse &transaction_response_;
 
-      const iroha::protocol::TransactionsResponse &transactionResponse_;
-
-      const Lazy<std::vector<proto::Transaction>> transactions_;
+      const std::vector<proto::Transaction> transactions_;
     };
   }  // namespace proto
 }  // namespace shared_model

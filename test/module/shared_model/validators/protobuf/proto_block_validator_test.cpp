@@ -1,0 +1,44 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include "validators/protobuf/proto_block_validator.hpp"
+#include <gmock/gmock-matchers.h>
+#include "block.pb.h"
+#include "module/shared_model/validators/validators_fixture.hpp"
+
+using testing::HasSubstr;
+
+class ProtoBlockValidatorTest : public ValidatorsTest {
+ public:
+  shared_model::validation::ProtoBlockValidator validator;
+};
+
+/**
+ * @given protocol block object with unset version field
+ * @when validating this object
+ * @then corresponding error is returned
+ */
+TEST_F(ProtoBlockValidatorTest, UnsetVersion) {
+  iroha::protocol::Block invalid_block;
+
+  auto answer = validator.validate(invalid_block);
+  ASSERT_TRUE(answer.hasErrors());
+  ASSERT_THAT(answer.reason(), HasSubstr("Block version is not set"));
+}
+
+/**
+ * @given valid protocol block object
+ * @when validating this object
+ * @then validation is successful
+ */
+TEST_F(ProtoBlockValidatorTest, ValidBlock) {
+  iroha::protocol::Block valid_block;
+
+  iroha::protocol::Block_v1 versioned_block;
+  *valid_block.mutable_block_v1() = versioned_block;
+
+  auto answer = validator.validate(valid_block);
+  ASSERT_FALSE(answer.hasErrors());
+}

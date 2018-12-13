@@ -43,7 +43,7 @@ namespace iroha {
         sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
 
         index = std::make_shared<PostgresBlockIndex>(*sql);
-        auto converter =
+        converter =
             std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
         blocks = std::make_shared<PostgresBlockQuery>(*sql, *file, converter);
 
@@ -51,10 +51,12 @@ namespace iroha {
       }
 
       void insert(const shared_model::proto::Block &block) {
-        file->add(block.height(),
-                  iroha::stringToBytes(
-                      shared_model::converters::protobuf::modelToJson(block)));
-        index->index(block);
+        converter->serialize(block).match(
+            [this, &block](const iroha::expected::Value<std::string> &json) {
+              file->add(block.height(), iroha::stringToBytes(json.value));
+              index->index(block);
+            },
+            [](const auto &error) { FAIL() << error.error; });
       }
 
       void TearDown() override {
@@ -71,6 +73,7 @@ namespace iroha {
       std::string creator2 = "user2@test";
       std::string creator3 = "user3@test";
       std::string asset = "coin#test";
+      std::shared_ptr<shared_model::proto::ProtoBlockJsonConverter> converter;
     };
 
     auto zero_string = std::string(32, '0');

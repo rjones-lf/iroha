@@ -13,7 +13,6 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "cryptography/hash.hpp"
 #include "datetime/time.hpp"
-#include "framework/specified_visitor.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/builders/common_objects/peer_builder.hpp"
@@ -56,7 +55,9 @@ class BlockLoaderTest : public testing::Test {
     validator = validator_ptr.get();
     loader = std::make_shared<BlockLoaderImpl>(
         peer_query_factory,
-        shared_model::proto::ProtoBlockFactory(std::move(validator_ptr)));
+        shared_model::proto::ProtoBlockFactory(
+            std::move(validator_ptr),
+            std::make_unique<MockValidator<iroha::protocol::Block>>()));
     service =
         std::make_shared<BlockLoaderService>(block_query_factory, block_cache);
 

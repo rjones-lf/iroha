@@ -71,8 +71,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)
           override;
 
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
-      on_proposal() override;
+      rxcpp::observable<network::OrderingEvent> onProposal() override;
 
       void setPcs(const iroha::network::PeerCommunicationService &pcs) override;
 
@@ -92,9 +91,7 @@ namespace iroha {
       void tryNextRound(
           shared_model::interface::types::HeightType last_block_height);
 
-      rxcpp::subjects::subject<
-          std::shared_ptr<shared_model::interface::Proposal>>
-          proposals_;
+      rxcpp::subjects::subject<network::OrderingEvent> proposals_;
 
       /**
        * Notification subject which is used only for notification purposes

@@ -94,12 +94,12 @@ namespace iroha {
       boost::optional<std::string> block_str;
       auto hash_str = hash.hex();
 
-      sql_ << "SELECT height FROM height_by_hash WHERE hash = :hash",
+      sql_ << "SELECT height FROM position_by_hash WHERE hash = :hash",
           soci::into(block_str), soci::use(hash_str);
       if (block_str) {
         blockId = std::stoull(block_str.get());
       } else {
-        log_->info("No block with transaction {}", hash.toString());
+        log_->info("No block with transaction {}", hash);
       }
       return blockId;
     }
@@ -174,9 +174,9 @@ namespace iroha {
         std::string row;
         soci::statement st =
             (sql_.prepare
-                 << "SELECT DISTINCT index FROM index_by_id_height_asset "
-                    "WHERE id = :id AND height = :height AND asset_id = "
-                    ":asset_id",
+                 << "SELECT DISTINCT index FROM position_by_account_asset "
+                    "WHERE account_id = :id AND height = :height "
+                    "AND asset_id = :asset_id",
              soci::into(row, ind),
              soci::use(account_id),
              soci::use(block_id),

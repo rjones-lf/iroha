@@ -152,9 +152,10 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
     permission_id character varying(45),
     PRIMARY KEY (permittee_account_id, account_id, permission_id)
 );
-CREATE TABLE IF NOT EXISTS height_by_hash (
+CREATE TABLE IF NOT EXISTS position_by_hash (
     hash varchar,
-    height text
+    height text,
+    index text
 );
 
 CREATE TABLE IF NOT EXISTS tx_status_by_hash (

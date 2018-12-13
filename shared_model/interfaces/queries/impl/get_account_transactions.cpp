@@ -5,6 +5,8 @@
 
 #include "interfaces/queries/get_account_transactions.hpp"
 
+#include "interfaces/queries/tx_pagination_meta.hpp"
+
 namespace shared_model {
   namespace interface {
 
@@ -12,6 +14,7 @@ namespace shared_model {
       return detail::PrettyStringBuilder()
           .init("GetAccountTransactions")
           .append("account_id", accountId())
+          .append("pagination_meta", paginationMeta().toString())
           .finalize();
     }
 

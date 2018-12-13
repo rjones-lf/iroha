@@ -18,11 +18,15 @@
 #ifndef IROHA_SHARED_MODEL_GET_ACCOUNT_TRANSACTIONS_HPP
 #define IROHA_SHARED_MODEL_GET_ACCOUNT_TRANSACTIONS_HPP
 
+#include <memory>
+
 #include "interfaces/base/model_primitive.hpp"
 #include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
+    class TxPaginationMeta;
+
     /**
      * Query for getting transactions of account
      */
@@ -33,6 +37,9 @@ namespace shared_model {
        * @return account_id of requested transactions
        */
       virtual const types::AccountIdType &accountId() const = 0;
+
+      /// Get the query pagination metadata.
+      virtual const TxPaginationMeta &paginationMeta() const = 0;
 
       std::string toString() const override;
 

@@ -12,15 +12,15 @@ namespace shared_model {
     template <typename BlocksQueryType>
     BlocksQuery::BlocksQuery(BlocksQueryType &&query)
         : CopyableProto(std::forward<BlocksQueryType>(query)),
-          blob_{[this] { return makeBlob(*proto_); }},
-          payload_{[this] { return makeBlob(proto_->meta()); }},
+          blob_{makeBlob(*proto_)},
+          payload_{makeBlob(proto_->meta())},
           signatures_{[this] {
             SignatureSetType<proto::Signature> set;
             if (proto_->has_signature()) {
               set.emplace(proto_->signature());
             }
             return set;
-          }} {}
+          }()} {}
 
     template BlocksQuery::BlocksQuery(BlocksQuery::TransportType &);
     template BlocksQuery::BlocksQuery(const BlocksQuery::TransportType &);
@@ -41,15 +41,15 @@ namespace shared_model {
     }
 
     const interface::types::BlobType &BlocksQuery::blob() const {
-      return *blob_;
+      return blob_;
     }
 
     const interface::types::BlobType &BlocksQuery::payload() const {
-      return *payload_;
+      return payload_;
     }
 
     interface::types::SignatureRangeType BlocksQuery::signatures() const {
-      return *signatures_;
+      return signatures_;
     }
 
     bool BlocksQuery::addSignature(const crypto::Signed &signed_blob,
@@ -61,6 +61,8 @@ namespace shared_model {
       auto sig = proto_->mutable_signature();
       sig->set_signature(crypto::toBinaryString(signed_blob));
       sig->set_public_key(crypto::toBinaryString(public_key));
+      // TODO: nickaleks IR-120 12.12.2018 remove set
+      signatures_.emplace(proto_->signature());
       return true;
     }
 

@@ -82,15 +82,14 @@ class ClientServerTest : public testing::Test {
     query_executor = std::make_shared<MockQueryExecutor>();
     storage = std::make_shared<MockStorage>();
 
-    rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
-        prop_notifier;
+    rxcpp::subjects::subject<OrderingEvent> prop_notifier;
     rxcpp::subjects::subject<iroha::synchronizer::SynchronizationEvent>
         commit_notifier;
-    EXPECT_CALL(*pcsMock, on_proposal())
+    EXPECT_CALL(*pcsMock, onProposal())
         .WillRepeatedly(Return(prop_notifier.get_observable()));
     EXPECT_CALL(*pcsMock, on_commit())
         .WillRepeatedly(Return(commit_notifier.get_observable()));
-    EXPECT_CALL(*pcsMock, on_verified_proposal())
+    EXPECT_CALL(*pcsMock, onVerifiedProposal())
         .WillRepeatedly(Return(verified_prop_notifier.get_observable()));
 
     EXPECT_CALL(*mst, onStateUpdateImpl())
@@ -202,8 +201,7 @@ class ClientServerTest : public testing::Test {
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
       query_response_factory;
 
-  rxcpp::subjects::subject<
-      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+  rxcpp::subjects::subject<iroha::simulator::VerifiedProposalCreatorEvent>
       verified_prop_notifier;
   rxcpp::subjects::subject<std::shared_ptr<iroha::MstState>>
       mst_update_notifier;
@@ -215,6 +213,7 @@ class ClientServerTest : public testing::Test {
   std::shared_ptr<MockQueryExecutor> query_executor;
   std::shared_ptr<MockStorage> storage;
 
+  iroha::consensus::Round round;
   const std::string ip = "127.0.0.1";
   int port;
 };
@@ -328,11 +327,14 @@ TEST_F(ClientServerTest, SendTxWhenStatefulInvalid) {
   verified_proposal_and_errors
       ->verified_proposal = std::make_unique<shared_model::proto::Proposal>(
       TestProposalBuilder().height(0).createdTime(iroha::time::now()).build());
-  verified_proposal_and_errors->rejected_transactions.emplace(
-      std::make_pair(tx.hash(),
-                     iroha::validation::CommandError{
-                         cmd_name, error_code, "", true, cmd_index}));
-  verified_prop_notifier.get_subscriber().on_next(verified_proposal_and_errors);
+  verified_proposal_and_errors->rejected_transactions.emplace_back(
+      iroha::validation::TransactionError{
+          tx.hash(),
+          iroha::validation::CommandError{
+              cmd_name, error_code, "", true, cmd_index}});
+  verified_prop_notifier.get_subscriber().on_next(
+      iroha::simulator::VerifiedProposalCreatorEvent{
+          verified_proposal_and_errors, round});
 
   auto getAnswer = [&]() {
     return client.getTxStatus(shared_model::crypto::toBinaryString(tx.hash()))
@@ -441,6 +443,7 @@ TEST_F(ClientServerTest, SendQueryWhenStatefulInvalid) {
                        shared_model::interface::QueryResponseFactory::
                            ErrorQueryType::kStatefulFailed,
                        "",
+                       1,
                        query.hash())
                    .release();
 
