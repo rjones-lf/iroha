@@ -6,12 +6,14 @@ def doDebugBuild(coverageEnabled=false) {
   def pCommit = load ".jenkinsci/previous-commit.groovy"
   def parallelism = params.PARALLELISM
   def sanitizeEnabled = params.sanitize
+  def fuzzingEnabled = params.fuzzing
   def platform = sh(script: 'uname -m', returnStdout: true).trim()
   def previousCommit = pCommit.previousCommitOrCurrent()
   // params are always null unless job is started
   // this is the case for the FIRST build only.
   // So just set this to same value as default.
   // This is a known bug. See https://issues.jenkins-ci.org/browse/JENKINS-41929
+  echo "fuzzingEnabled=${fuzzingEnabled}"
   if (sanitizeEnabled == null){
     sanitizeEnabled = true
   }
@@ -71,6 +73,9 @@ def doDebugBuild(coverageEnabled=false) {
     if ( sanitizeEnabled ){
       cmakeOptions += " -DSANITIZE='address;leak' "
     }
+    if ( fuzzingEnabled ){
+      cmakeOptions += " -DFUZZING=ON "
+    }
     env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
     env.IROHA_HOME = "/opt/iroha"
     env.IROHA_BUILD = "${env.IROHA_HOME}/build"
@@ -95,12 +100,15 @@ def doDebugBuild(coverageEnabled=false) {
     if ( coverageEnabled ) {
       sh "cmake --build build --target coverage.init.info"
     }
-    sh "cd build; ctest --output-on-failure --no-compress-output -T Test || true"
-    sh 'python .jenkinsci/helpers/platform_tag.py "Linux \$(uname -m)" \$(ls build/Testing/*/Test.xml)'
-    // Mark build as UNSTABLE if there are any failed tests (threshold <100%)
-    xunit testTimeMargin: '3000', thresholdMode: 2, thresholds: [passed(unstableThreshold: '100')], \
-      tools: [CTest(deleteOutputFiles: true, failIfNotNew: false, \
-      pattern: 'build/Testing/**/Test.xml', skipNoTestFiles: false, stopProcessingIfError: true)]
+    //If fuzzing Enabled do not run tests, they never stop
+    if ( !fuzzingEnabled ){
+      sh "cd build; ctest --output-on-failure --no-compress-output -T Test || true"
+      sh 'python .jenkinsci/helpers/platform_tag.py "Linux \$(uname -m)" \$(ls build/Testing/*/Test.xml)'
+      // Mark build as UNSTABLE if there are any failed tests (threshold <100%)
+      xunit testTimeMargin: '3000', thresholdMode: 2, thresholds: [passed(unstableThreshold: '100')], \
+        tools: [CTest(deleteOutputFiles: true, failIfNotNew: false, \
+        pattern: 'build/Testing/**/Test.xml', skipNoTestFiles: false, stopProcessingIfError: true)]
+    }
     if ( coverageEnabled ) {
       sh "cmake --build build --target cppcheck"
       // Sonar
