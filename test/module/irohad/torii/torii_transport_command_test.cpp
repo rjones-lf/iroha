@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "torii/impl/command_service_transport_grpc.hpp"
+
 #include <algorithm>
 #include <iterator>
 #include <string>
@@ -21,10 +23,7 @@
 #include "module/shared_model/interface/mock_transaction_batch_factory.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "module/vendor/grpc_mocks.hpp"
-#include "torii/impl/command_service_impl.hpp"
-#include "torii/impl/command_service_transport_grpc.hpp"
 #include "torii/impl/status_bus_impl.hpp"
-#include "torii/processor/transaction_processor_impl.hpp"
 #include "validators/protobuf/proto_transaction_validator.hpp"
 
 using ::testing::_;
@@ -34,16 +33,14 @@ using ::testing::Property;
 using ::testing::Return;
 using ::testing::StrEq;
 
-using namespace iroha::network;
 using namespace iroha::ametsuchi;
 using namespace iroha::torii;
-using namespace iroha::synchronizer;
 
 using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds initial_timeout = 1s;
 constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
 
-class ToriiTransportCommandTest : public testing::Test {
+class CommandServiceTransportGrpcTest : public testing::Test {
  private:
   using ProtoTxTransportFactory = shared_model::proto::ProtoTransportFactory<
       shared_model::interface::Transaction,
@@ -112,28 +109,26 @@ class ToriiTransportCommandTest : public testing::Test {
 
 /**
  * @given torii service and number of transactions
- * @when retrieving their status
- * @then ensure those are coming from CommandService
+ * @when transaction status for given hash is requested
+ * @then protobuf message with corresponding hash and status is returned
  */
-TEST_F(ToriiTransportCommandTest, Status) {
-  for (size_t i = 0; i < kTimes; ++i) {
-    grpc::ServerContext context;
+TEST_F(CommandServiceTransportGrpcTest, Status) {
+  grpc::ServerContext context;
 
-    iroha::protocol::TxStatusRequest tx_request;
-    const shared_model::crypto::Hash hash(std::string(kHashLength, '1'));
-    tx_request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
+  iroha::protocol::TxStatusRequest tx_request;
+  const shared_model::crypto::Hash hash(std::string(kHashLength, '1'));
+  tx_request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
 
-    iroha::protocol::ToriiResponse toriiResponse;
-    std::shared_ptr<shared_model::interface::TransactionResponse> response =
-        status_factory->makeEnoughSignaturesCollected(hash, {});
+  iroha::protocol::ToriiResponse toriiResponse;
+  std::shared_ptr<shared_model::interface::TransactionResponse> response =
+      status_factory->makeEnoughSignaturesCollected(hash, {});
 
-    EXPECT_CALL(*command_service, getStatus(hash)).WillOnce(Return(response));
+  EXPECT_CALL(*command_service, getStatus(hash)).WillOnce(Return(response));
 
-    transport_grpc->Status(&context, &tx_request, &toriiResponse);
+  transport_grpc->Status(&context, &tx_request, &toriiResponse);
 
-    ASSERT_EQ(toriiResponse.tx_status(),
-              iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED);
-  }
+  ASSERT_EQ(toriiResponse.tx_status(),
+            iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED);
 }
 
 /**
@@ -141,7 +136,7 @@ TEST_F(ToriiTransportCommandTest, Status) {
  * @when calling ListTorii
  * @then ensure that CommandService called handleTransactionBatch as the tx num
  */
-TEST_F(ToriiTransportCommandTest, ListTorii) {
+TEST_F(CommandServiceTransportGrpcTest, ListTorii) {
   grpc::ServerContext context;
   google::protobuf::Empty response;
 
@@ -172,7 +167,7 @@ TEST_F(ToriiTransportCommandTest, ListTorii) {
  * @then ensure that CommandService haven't called handleTransactionBatch
  *       and StatusBus update status tx num times
  */
-TEST_F(ToriiTransportCommandTest, ListToriiInvalid) {
+TEST_F(CommandServiceTransportGrpcTest, ListToriiInvalid) {
   grpc::ServerContext context;
   google::protobuf::Empty response;
 
@@ -200,10 +195,10 @@ TEST_F(ToriiTransportCommandTest, ListToriiInvalid) {
  *        and some number of valid transactions
  *        and one stateless invalid tx
  * @when calling ListTorii
- * @then ensure that CommandService haven't called handleTransactionBatch
+ * @then handleTransactionBatch is called kTimes - 1 times
  *       and statelessInvalid status is published for invalid transaction
  */
-TEST_F(ToriiTransportCommandTest, ListToriiPartialInvalid) {
+TEST_F(CommandServiceTransportGrpcTest, ListToriiPartialInvalid) {
   grpc::ServerContext context;
   google::protobuf::Empty response;
   const std::string kError = "some error";
@@ -247,7 +242,7 @@ TEST_F(ToriiTransportCommandTest, ListToriiPartialInvalid) {
  * @then Ok status is eventually returned without any fault
  *       and nothing is written to the status stream
  */
-TEST_F(ToriiTransportCommandTest, StatusStreamEmpty) {
+TEST_F(CommandServiceTransportGrpcTest, StatusStreamEmpty) {
   grpc::ServerContext context;
   iroha::protocol::TxStatusRequest request;
 
@@ -265,7 +260,7 @@ TEST_F(ToriiTransportCommandTest, StatusStreamEmpty) {
  * @then ServerWriter call Write method and waits for initial timeout
  *
  */
-TEST_F(ToriiTransportCommandTest, DISABLED_StatusStreamOnNotRecieved) {
+TEST_F(CommandServiceTransportGrpcTest, DISABLED_StatusStreamOnNotRecieved) {
   const std::chrono::milliseconds kInitialTimeout = 1ms;
   // big so it will hang
   const std::chrono::milliseconds kNonFinalTimeout = 1000s;
@@ -307,7 +302,7 @@ TEST_F(ToriiTransportCommandTest, DISABLED_StatusStreamOnNotRecieved) {
  * @when calling StatusStream
  * @then ServerWriter call Write method the same number of times
  */
-TEST_F(ToriiTransportCommandTest, StatusStream) {
+TEST_F(CommandServiceTransportGrpcTest, StatusStream) {
   grpc::ServerContext context;
   iroha::protocol::TxStatusRequest request;
   iroha::MockServerWriter<iroha::protocol::ToriiResponse> response_writer;
