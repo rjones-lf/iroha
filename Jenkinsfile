@@ -18,6 +18,7 @@ properties([parameters([
   choice(choices: 'Release\nDebug', description: 'Android bindings build type', name: 'ABBuildType'),
   choice(choices: 'arm64-v8a\narmeabi-v7a\narmeabi\nx86_64\nx86', description: 'Android bindings platform', name: 'ABPlatform'),
   booleanParam(defaultValue: true, description: 'Build docs', name: 'Doxygen'),
+  booleanParam(defaultValue: true, description: 'Sanitize address;leak', name: 'sanitize'),
   string(defaultValue: '8', description: 'Expect ~3GB memory consumtion per CPU core', name: 'PARALLELISM')])])
 
 

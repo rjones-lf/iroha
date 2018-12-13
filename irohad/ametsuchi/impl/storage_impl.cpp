@@ -520,7 +520,7 @@ DROP TABLE IF EXISTS height_by_hash;
 DROP TABLE IF EXISTS tx_status_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
-DROP TABLE IF EXISTS index_by_id_height_asset;
+DROP TABLE IF EXISTS position_by_account_asset;
 )";
 
     const std::string &StorageImpl::reset_ = R"(
@@ -535,11 +535,11 @@ DELETE FROM domain;
 DELETE FROM signatory;
 DELETE FROM peer;
 DELETE FROM role;
-DELETE FROM height_by_hash;
+DELETE FROM position_by_hash;
 DELETE FROM tx_status_by_hash;
 DELETE FROM height_by_account_set;
 DELETE FROM index_by_creator_height;
-DELETE FROM index_by_id_height_asset;
+DELETE FROM position_by_account_asset;
 )";
 
     const std::string &StorageImpl::init_ =
@@ -608,9 +608,10 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
         + R"() NOT NULL,
     PRIMARY KEY (permittee_account_id, account_id)
 );
-CREATE TABLE IF NOT EXISTS height_by_hash (
+CREATE TABLE IF NOT EXISTS position_by_hash (
     hash varchar,
-    height text
+    height text,
+    index text
 );
 
 CREATE TABLE IF NOT EXISTS tx_status_by_hash (
@@ -628,10 +629,10 @@ CREATE TABLE IF NOT EXISTS index_by_creator_height (
     height text,
     index text
 );
-CREATE TABLE IF NOT EXISTS index_by_id_height_asset (
-    id text,
-    height text,
+CREATE TABLE IF NOT EXISTS position_by_account_asset (
+    account_id text,
     asset_id text,
+    height text,
     index text
 );
 )";

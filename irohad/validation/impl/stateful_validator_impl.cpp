@@ -34,7 +34,8 @@ namespace iroha {
           [](expected::Value<void> &) { return true; },
           [&tx, &transactions_errors_log](
               expected::Error<validation::CommandError> &error) {
-            transactions_errors_log.emplace(tx.hash(), std::move(error.error));
+            transactions_errors_log.emplace_back(validation::TransactionError{
+                tx.hash(), std::move(error.error)});
             return false;
           });
     };

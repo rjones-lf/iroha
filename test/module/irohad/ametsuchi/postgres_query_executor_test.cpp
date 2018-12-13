@@ -5,11 +5,22 @@
 
 #include "ametsuchi/impl/postgres_query_executor.hpp"
 
+#include <chrono>
+#include <cstring>
+#include <iomanip>
+#include <sstream>
+#include <type_traits>
+
+#include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/size.hpp>
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "backend/protobuf/proto_query_response_factory.hpp"
+#include "datetime/time.hpp"
 #include "framework/result_fixture.hpp"
+#include "interfaces/common_objects/types.hpp"
+#include "interfaces/permissions.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
 #include "interfaces/query_responses/account_detail_response.hpp"
 #include "interfaces/query_responses/account_response.hpp"
@@ -17,6 +28,7 @@
 #include "interfaces/query_responses/role_permissions.hpp"
 #include "interfaces/query_responses/roles_response.hpp"
 #include "interfaces/query_responses/signatories_response.hpp"
+#include "interfaces/query_responses/transactions_page_response.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
@@ -29,23 +41,90 @@
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
+using namespace framework::expected;
+using namespace shared_model::interface;
+
+namespace shared_model {
+  namespace crypto {
+    void PrintTo(const shared_model::crypto::Hash &hash, std::ostream *os) {
+      *os << hash.toString();
+    }
+  }  // namespace crypto
+}  // namespace shared_model
+
+namespace {
+  constexpr types::TransactionsNumberType kTxPageSize(10);
+  constexpr types::PrecisionType kAssetPrecision(1);
+  // TODO mboldyrev 05.12.2018 IR-57 unify the common constants.
+  constexpr size_t kHashLength = 32;
+  const std::string zero_string{kHashLength, '0'};
+  const std::string asset_id = "coin#domain";
+  const std::string role = "role";
+  const std::unique_ptr<Domain> domain =
+      clone(TestDomainBuilder().domainId("domain").defaultRole(role).build());
+  const std::unique_ptr<Account> account =
+      clone(TestAccountBuilder()
+                .domainId(domain->domainId())
+                .accountId("id@" + domain->domainId())
+                .quorum(1)
+                .jsonData(R"({"id@domain": {"key": "value"}})")
+                .build());
+  const std::unique_ptr<Account> account2 =
+      clone(TestAccountBuilder()
+                .domainId(domain->domainId())
+                .accountId("id2@" + domain->domainId())
+                .quorum(1)
+                .jsonData(R"({"id@domain": {"key": "value"}})")
+                .build());
+}  // namespace
+
 namespace iroha {
   namespace ametsuchi {
 
-    using namespace framework::expected;
+    /**
+     * Check that query response meets defined requirements
+     * @tparam ExpectedQueryResponseType - expected type of that query
+     * response
+     * @tparam QueryResultCheckCallable - type of callable, which checks query
+     * response
+     * @param exec_result to be checked
+     * @param check_callable - that check callable
+     */
+    template <typename ExpectedQueryResponseType,
+              typename QueryResultCheckCallable>
+    void checkSuccessfulResult(QueryExecutorResult exec_result,
+                               QueryResultCheckCallable check_callable) {
+      ASSERT_NO_THROW({
+        const auto &cast_resp =
+            boost::get<const ExpectedQueryResponseType &>(exec_result->get());
+        check_callable(cast_resp);
+      }) << exec_result->toString();
+    }
+
+    /**
+     * Check that stateful error in query response is the one expected
+     * @tparam ExpectedQueryErrorType - expected sub-type of that query
+     * response
+     * @param exec_result to be checked
+     * @param expected_code, which is to be in the query response
+     */
+    template <typename ExpectedQueryErrorType>
+    void checkStatefulError(
+        QueryExecutorResult exec_result,
+        shared_model::interface::ErrorQueryResponse::ErrorCodeType
+            expected_code) {
+      ASSERT_NO_THROW({
+        const auto &error_qry_rsp =
+            boost::get<const shared_model::interface::ErrorQueryResponse &>(
+                exec_result->get());
+        ASSERT_EQ(error_qry_rsp.errorCode(), expected_code);
+        boost::get<const ExpectedQueryErrorType &>(error_qry_rsp.get());
+      }) << exec_result->toString();
+    }
 
     class QueryExecutorTest : public AmetsuchiTest {
      public:
       QueryExecutorTest() {
-        domain = clone(
-            TestDomainBuilder().domainId("domain").defaultRole(role).build());
-
-        account = clone(TestAccountBuilder()
-                            .domainId(domain->domainId())
-                            .accountId("id@" + domain->domainId())
-                            .quorum(1)
-                            .jsonData(R"({"id@domain": {"key": "value"}})")
-                            .build());
         role_permissions.set(
             shared_model::interface::permissions::Role::kAddMySignatory);
         grantable_permission =
@@ -174,54 +253,14 @@ namespace iroha {
           ErrorCodeType kNoStatefulError = 0;
       static constexpr shared_model::interface::ErrorQueryResponse::
           ErrorCodeType kNoPermissions = 2;
-
-      /**
-       * Check that query response meets defined requirements
-       * @tparam ExpectedQueryResponseType - expected type of that query
-       * response
-       * @tparam QueryResultCheckCallable - type of callable, which checks query
-       * response
-       * @param exec_result to be checked
-       * @param check_callable - that check callable
-       */
-      template <typename ExpectedQueryResponseType,
-                typename QueryResultCheckCallable>
-      void checkSuccessfulResult(QueryExecutorResult exec_result,
-                                 QueryResultCheckCallable check_callable) {
-        ASSERT_NO_THROW({
-          const auto &cast_resp =
-              boost::get<const ExpectedQueryResponseType &>(exec_result->get());
-          check_callable(cast_resp);
-        }) << exec_result->toString();
-      }
-
-      /**
-       * Check that stateful error in query response is the one expected
-       * @tparam ExpectedQueryErrorType - expected sub-type of that query
-       * response
-       * @param exec_result to be checked
-       * @param expected_code, which is to be in the query response
-       */
-      template <typename ExpectedQueryErrorType>
-      void checkStatefulError(
-          QueryExecutorResult exec_result,
-          shared_model::interface::ErrorQueryResponse::ErrorCodeType
-              expected_code) {
-        ASSERT_NO_THROW({
-          const auto &error_qry_rsp =
-              boost::get<const shared_model::interface::ErrorQueryResponse &>(
-                  exec_result->get());
-          ASSERT_EQ(error_qry_rsp.errorCode(), expected_code);
-          boost::get<const ExpectedQueryErrorType &>(error_qry_rsp.get());
-        }) << exec_result->toString();
-      }
+      static constexpr shared_model::interface::ErrorQueryResponse::
+          ErrorCodeType kInvalidPagination = 4;
 
       std::string role = "role";
       shared_model::interface::RolePermissionSet role_permissions;
       shared_model::interface::permissions::Grantable grantable_permission;
-      std::unique_ptr<shared_model::interface::Account> account,
-          another_account;
-      std::unique_ptr<shared_model::interface::Domain> domain, another_domain;
+      std::unique_ptr<shared_model::interface::Account> another_account;
+      std::unique_ptr<shared_model::interface::Domain> another_domain;
       std::unique_ptr<shared_model::interface::types::PubkeyType> pubkey;
 
       std::unique_ptr<soci::session> sql;
@@ -312,7 +351,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountResponse>(
-          std::move(result), [this](const auto &cast_resp) {
+          std::move(result), [](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.account().accountId(), account->accountId());
           });
     }
@@ -406,6 +445,11 @@ namespace iroha {
                         true)));
       }
 
+      // TODO mboldyrev 05.12.2018 IR-57 unify the common constants.
+      // Some of them, like account2, are defined multiple times, but seem
+      // contain the same and never modified. Looks like a global constant.
+      // Also, there is another_account, which seems forgotten by the creators
+      // of account2's (probably due to the same reason).
       std::unique_ptr<shared_model::interface::Account> account2;
     };
 
@@ -1021,12 +1065,6 @@ namespace iroha {
         ASSERT_TRUE(block_store);
         this->block_store = std::move(block_store.get());
 
-        account2 = clone(TestAccountBuilder()
-                             .domainId(domain->domainId())
-                             .accountId("id2@" + domain->domainId())
-                             .quorum(1)
-                             .jsonData(R"({"id@domain": {"key": "value"}})")
-                             .build());
         auto pubkey2 =
             std::make_unique<shared_model::interface::types::PubkeyType>(
                 std::string('2', 32));
@@ -1061,7 +1099,6 @@ namespace iroha {
       }
 
       void commitBlocks() {
-        auto zero_string = std::string(32, '0');
         auto fake_hash = shared_model::crypto::Hash(zero_string);
         auto fake_pubkey = shared_model::crypto::PublicKey(zero_string);
 
@@ -1119,15 +1156,203 @@ namespace iroha {
         hash3 = txs2.at(0).hash();
       }
 
-      const std::string asset_id = "coin#domain";
-      std::unique_ptr<shared_model::interface::Account> account2;
+      shared_model::crypto::Hash fake_hash{zero_string};
+      shared_model::crypto::PublicKey fake_pubkey{zero_string};
       shared_model::crypto::Hash hash1;
       shared_model::crypto::Hash hash2;
       shared_model::crypto::Hash hash3;
     };
 
-    class GetAccountTransactionsExecutorTest
-        : public GetTransactionsExecutorTest {};
+    template <typename QueryTxPaginationTest>
+    class GetPagedTransactionsExecutorTest
+        : public GetTransactionsExecutorTest {
+     protected:
+      using Impl = QueryTxPaginationTest;
+
+      // create valid transactions and commit them
+      void createTransactionsAndCommit(size_t transactions_amount) {
+        addPerms(Impl::getUserPermissions());
+
+        auto initial_txs = Impl::makeInitialTransactions(transactions_amount);
+        auto target_txs = Impl::makeTargetTransactions(transactions_amount);
+
+        tx_hashes_.reserve(target_txs.size());
+        initial_txs.reserve(initial_txs.size() + target_txs.size());
+        for (auto &tx : target_txs) {
+          tx_hashes_.emplace_back(tx.hash());
+          initial_txs.emplace_back(std::move(tx));
+        }
+
+        auto block = TestBlockBuilder()
+                         .transactions(initial_txs)
+                         .height(1)
+                         .prevHash(fake_hash)
+                         .build();
+
+        apply(storage, block);
+      }
+
+      auto queryPage(
+          types::TransactionsNumberType page_size,
+          const boost::optional<types::HashType> &first_hash = boost::none) {
+        auto query = Impl::makeQuery(page_size, first_hash);
+        return executeQuery(query);
+      }
+
+      /**
+       * Check the transactions pagination response compliance to general rules:
+       * - total transactions number is equal to the number of target
+       * transactions
+       * - the number of transactions in response is equal to the requested
+       * amount if there are enough, otherwie equal to the available amount
+       * - the returned transactions' and the target transactions' hashes match
+       * - next transaction hash in response is unset if the last transaction is
+       * in the response, otherwise it matches the next target transaction hash
+       */
+      void generalTransactionsPageResponseCheck(
+          const TransactionsPageResponse &tx_page_response,
+          types::TransactionsNumberType page_size,
+          const boost::optional<types::HashType> &first_hash =
+              boost::none) const {
+        EXPECT_EQ(tx_page_response.allTransactionsSize(), tx_hashes_.size())
+            << "Wrong `total transactions' number.";
+        auto resp_tx_hashes = tx_page_response.transactions()
+            | boost::adaptors::transformed(
+                                  [](const auto &tx) { return tx.hash(); });
+        const auto page_start = first_hash
+            ? std::find(tx_hashes_.cbegin(), tx_hashes_.cend(), *first_hash)
+            : tx_hashes_.cbegin();
+        if (first_hash and page_start == tx_hashes_.cend()) {
+          // Should never reach here as a non-existing first_hash in the
+          // pagination metadata must cause an error query response instead of
+          // transaction page response. If we get here, it is a problem of wrong
+          // test logic.
+          BOOST_THROW_EXCEPTION(
+              std::runtime_error("Checking response that does not match "
+                                 "the provided query pagination data."));
+          return;
+        }
+        const auto expected_txs_amount =
+            std::min<size_t>(page_size, tx_hashes_.cend() - page_start);
+        const auto response_txs_amount = boost::size(resp_tx_hashes);
+        EXPECT_EQ(response_txs_amount, expected_txs_amount)
+            << "Wrong number of transactions returned.";
+        auto expected_hash = page_start;
+        auto response_hash = resp_tx_hashes.begin();
+        const auto page_end =
+            page_start + std::min(response_txs_amount, expected_txs_amount);
+        while (expected_hash != page_end) {
+          EXPECT_EQ(*expected_hash++, *response_hash++)
+              << "Wrong transaction returned.";
+        }
+        if (page_end == tx_hashes_.cend()) {
+          EXPECT_EQ(tx_page_response.nextTxHash(), boost::none)
+              << "Next transaction hash value must be unset.";
+        } else {
+          EXPECT_TRUE(tx_page_response.nextTxHash());
+          if (tx_page_response.nextTxHash()) {
+            EXPECT_EQ(*tx_page_response.nextTxHash(), *page_end)
+                << "Wrong next transaction hash value.";
+          }
+        }
+      }
+
+      std::vector<types::HashType> tx_hashes_;
+    };
+
+    struct GetAccountTxPaginationImpl {
+      static std::initializer_list<permissions::Role> getUserPermissions() {
+        return {permissions::Role::kSetDetail, permissions::Role::kGetMyAccTxs};
+      }
+
+      static std::vector<shared_model::proto::Transaction>
+      makeInitialTransactions(size_t transactions_amount) {
+        return {};
+      }
+
+      static auto makeTargetTransactions(size_t transactions_amount) {
+        std::vector<shared_model::proto::Transaction> transactions;
+        transactions.reserve(transactions_amount);
+        for (size_t i = 0; i < transactions_amount; ++i) {
+          transactions.emplace_back(
+              TestTransactionBuilder()
+                  .creatorAccountId(account->accountId())
+                  .createdTime(iroha::time::now(std::chrono::milliseconds(i)))
+                  .setAccountDetail(account->accountId(),
+                                    "key_" + std::to_string(i),
+                                    "val_" + std::to_string(i))
+                  .build());
+        }
+        return transactions;
+      }
+
+      static shared_model::proto::Query makeQuery(
+          types::TransactionsNumberType page_size,
+          const boost::optional<types::HashType> &first_hash = boost::none) {
+        return TestQueryBuilder()
+            .creatorAccountId(account->accountId())
+            .createdTime(iroha::time::now())
+            .getAccountTransactions(account->accountId(), page_size, first_hash)
+            .build();
+      }
+    };
+
+    template <typename T>
+    static std::string assetAmount(T mantissa, types::PrecisionType precision) {
+      std::stringstream ss;
+      ss << std::setprecision(precision) << mantissa;
+      return ss.str();
+    }
+
+    struct GetAccountAssetTxPaginationImpl {
+      static std::initializer_list<permissions::Role> getUserPermissions() {
+        return {permissions::Role::kReceive,
+                permissions::Role::kGetMyAccAstTxs};
+      }
+
+      static std::vector<shared_model::proto::Transaction>
+      makeInitialTransactions(size_t transactions_amount) {
+        return {
+            TestTransactionBuilder()
+                .creatorAccountId(account->accountId())
+                .createdTime(iroha::time::now())
+                .addAssetQuantity(
+                    asset_id, assetAmount(transactions_amount, kAssetPrecision))
+                .build()};
+      }
+
+      static auto makeTargetTransactions(size_t transactions_amount) {
+        std::vector<shared_model::proto::Transaction> transactions;
+        transactions.reserve(transactions_amount);
+        for (size_t i = 0; i < transactions_amount; ++i) {
+          transactions.emplace_back(
+              TestTransactionBuilder()
+                  .creatorAccountId(account->accountId())
+                  .createdTime(iroha::time::now(std::chrono::milliseconds(i)))
+                  .transferAsset(account->accountId(),
+                                 account2->accountId(),
+                                 asset_id,
+                                 "tx #" + std::to_string(i),
+                                 assetAmount(1, kAssetPrecision))
+                  .build());
+        }
+        return transactions;
+      }
+
+      static shared_model::proto::Query makeQuery(
+          types::TransactionsNumberType page_size,
+          const boost::optional<types::HashType> &first_hash = boost::none) {
+        return TestQueryBuilder()
+            .creatorAccountId(account->accountId())
+            .createdTime(iroha::time::now())
+            .getAccountAssetTransactions(
+                account->accountId(), asset_id, page_size, first_hash)
+            .build();
+      }
+    };
+
+    using GetAccountTransactionsExecutorTest =
+        GetPagedTransactionsExecutorTest<GetAccountTxPaginationImpl>;
 
     /**
      * @given initialized storage, permission to his/her account
@@ -1139,13 +1364,14 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(account->accountId())
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account->accountId())
+              .getAccountTransactions(account->accountId(), kTxPageSize)
+              .build();
       auto result = executeQuery(query);
-      checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
-          std::move(result), [this](const auto &cast_resp) {
+      checkSuccessfulResult<shared_model::interface::TransactionsPageResponse>(
+          std::move(result), [](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 3);
             for (const auto &tx : cast_resp.transactions()) {
               static size_t i = 0;
@@ -1166,13 +1392,14 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(account2->accountId())
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account->accountId())
+              .getAccountTransactions(account2->accountId(), kTxPageSize)
+              .build();
       auto result = executeQuery(query);
-      checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
-          std::move(result), [this](const auto &cast_resp) {
+      checkSuccessfulResult<shared_model::interface::TransactionsPageResponse>(
+          std::move(result), [](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             for (const auto &tx : cast_resp.transactions()) {
               EXPECT_EQ(account2->accountId(), tx.creatorAccountId())
@@ -1191,13 +1418,14 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(account2->accountId())
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account->accountId())
+              .getAccountTransactions(account2->accountId(), kTxPageSize)
+              .build();
       auto result = executeQuery(query);
-      checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
-          std::move(result), [this](const auto &cast_resp) {
+      checkSuccessfulResult<shared_model::interface::TransactionsPageResponse>(
+          std::move(result), [](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             for (const auto &tx : cast_resp.transactions()) {
               EXPECT_EQ(account2->accountId(), tx.creatorAccountId())
@@ -1213,10 +1441,11 @@ namespace iroha {
      */
     TEST_F(GetAccountTransactionsExecutorTest, InvalidDifferentDomain) {
       addPerms({shared_model::interface::permissions::Role::kGetDomainAccTxs});
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(another_account->accountId())
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account->accountId())
+              .getAccountTransactions(another_account->accountId(), kTxPageSize)
+              .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
           std::move(result), kNoPermissions);
@@ -1232,12 +1461,123 @@ namespace iroha {
 
       auto query = TestQueryBuilder()
                        .creatorAccountId(account->accountId())
-                       .getAccountTransactions("some@domain")
+                       .getAccountTransactions("some@domain", kTxPageSize)
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
           std::move(result), kNoStatefulError);
     }
+
+    // ------------------------/ tx pagination tests \----------------------- //
+
+    using QueryTxPaginationTestingTypes =
+        ::testing::Types<GetAccountTxPaginationImpl,
+                         GetAccountAssetTxPaginationImpl>;
+    TYPED_TEST_CASE(GetPagedTransactionsExecutorTest,
+                    QueryTxPaginationTestingTypes);
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains second transaction as a starting
+     * hash @and 2 transactions page size
+     * @then response contains exactly 2 transaction
+     * @and list of transactions starts from second transaction
+     * @and next transaction hash is not present
+     */
+    TYPED_TEST(GetPagedTransactionsExecutorTest, ValidPagination) {
+      this->createTransactionsAndCommit(3);
+      auto &hash = this->tx_hashes_.at(1);
+      auto size = 2;
+      auto query_response = this->queryPage(size, hash);
+      checkSuccessfulResult<TransactionsPageResponse>(
+          std::move(query_response),
+          [this, &hash, size](const auto &tx_page_response) {
+            EXPECT_EQ(tx_page_response.transactions().begin()->hash(), hash);
+            EXPECT_FALSE(tx_page_response.nextTxHash());
+            this->generalTransactionsPageResponseCheck(
+                tx_page_response, size, hash);
+          });
+    }
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains 2 transactions page size without starting hash
+     * @then response contains exactly 2 transactions
+     * @and starts from the first one
+     * @and next transaction hash is equal to last committed transaction
+     * @and total number of transactions equal to 3
+     */
+    TYPED_TEST(GetPagedTransactionsExecutorTest, ValidPaginationNoHash) {
+      this->createTransactionsAndCommit(3);
+      auto size = 2;
+      auto query_response = this->queryPage(size);
+      checkSuccessfulResult<TransactionsPageResponse>(
+          std::move(query_response),
+          [this, size](const auto &tx_page_response) {
+            EXPECT_EQ(tx_page_response.transactions().begin()->hash(),
+                      this->tx_hashes_.at(0));
+            ASSERT_TRUE(tx_page_response.nextTxHash());
+            this->generalTransactionsPageResponseCheck(tx_page_response, size);
+          });
+    }
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains 10 page size
+     * @then response contains only 3 committed transactions
+     */
+    TYPED_TEST(GetPagedTransactionsExecutorTest,
+               PaginationPageBiggerThanTotal) {
+      this->createTransactionsAndCommit(3);
+      auto size = 10;
+      auto query_response = this->queryPage(size);
+
+      checkSuccessfulResult<TransactionsPageResponse>(
+          std::move(query_response),
+          [this, size](const auto &tx_page_response) {
+            this->generalTransactionsPageResponseCheck(tx_page_response, size);
+          });
+    }
+
+    /**
+     * @given initialized storage, user has 3 transactions committed
+     * @when query contains non-existent starting hash
+     * @then error response is returned
+     */
+    TYPED_TEST(GetPagedTransactionsExecutorTest, InvalidHashInPagination) {
+      this->createTransactionsAndCommit(3);
+      auto size = 2;
+      char unknown_hash_string[kHashLength];
+      zero_string.copy(unknown_hash_string, kHashLength);
+      std::strcpy(unknown_hash_string, "no such hash!");
+      auto query_response =
+          this->queryPage(size, types::HashType(unknown_hash_string));
+
+      checkStatefulError<StatefulFailedErrorResponse>(
+          std::move(query_response),
+          BlocksQueryExecutorTest::kInvalidPagination);
+    }
+
+    /**
+     * @given initialized storage, user has no committed transactions
+     * @when query contains 2 transactions page size
+     * @then response does not contain any transactions
+     * @and total size is 0
+     * @and next hash is not present
+     */
+    TYPED_TEST(GetPagedTransactionsExecutorTest, PaginationNoTransactions) {
+      this->createTransactionsAndCommit(0);
+      auto size = 2;
+      auto query_response = this->queryPage(size);
+
+      checkSuccessfulResult<TransactionsPageResponse>(
+          std::move(query_response),
+          [this, size](const auto &tx_page_response) {
+            this->generalTransactionsPageResponseCheck(tx_page_response, size);
+          });
+    }
+
+    // --------------------\ end of tx pagination tests /-------------------- //
 
     class GetTransactionsHashExecutorTest : public GetTransactionsExecutorTest {
     };
@@ -1295,8 +1635,8 @@ namespace iroha {
           });
     }
 
-    class GetAccountAssetTransactionsExecutorTest
-        : public GetTransactionsExecutorTest {};
+    using GetAccountAssetTransactionsExecutorTest =
+        GetPagedTransactionsExecutorTest<GetAccountAssetTxPaginationImpl>;
 
     /**
      * @given initialized storage, permission to his/her account
@@ -1308,13 +1648,13 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query =
-          TestQueryBuilder()
-              .creatorAccountId(account->accountId())
-              .getAccountAssetTransactions(account->accountId(), asset_id)
-              .build();
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountAssetTransactions(
+                           account->accountId(), asset_id, kTxPageSize)
+                       .build();
       auto result = executeQuery(query);
-      checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
+      checkSuccessfulResult<shared_model::interface::TransactionsPageResponse>(
           std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
@@ -1332,13 +1672,13 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query =
-          TestQueryBuilder()
-              .creatorAccountId(account->accountId())
-              .getAccountAssetTransactions(account2->accountId(), asset_id)
-              .build();
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountAssetTransactions(
+                           account2->accountId(), asset_id, kTxPageSize)
+                       .build();
       auto result = executeQuery(query);
-      checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
+      checkSuccessfulResult<shared_model::interface::TransactionsPageResponse>(
           std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
@@ -1357,13 +1697,13 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query =
-          TestQueryBuilder()
-              .creatorAccountId(account->accountId())
-              .getAccountAssetTransactions(account2->accountId(), asset_id)
-              .build();
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account->accountId())
+                       .getAccountAssetTransactions(
+                           account2->accountId(), asset_id, kTxPageSize)
+                       .build();
       auto result = executeQuery(query);
-      checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
+      checkSuccessfulResult<shared_model::interface::TransactionsPageResponse>(
           std::move(result), [this](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             ASSERT_EQ(cast_resp.transactions()[0].hash(), hash2);
@@ -1380,10 +1720,11 @@ namespace iroha {
       addPerms(
           {shared_model::interface::permissions::Role::kGetDomainAccAstTxs});
 
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account->accountId())
-                       .getAccountTransactions(another_account->accountId())
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account->accountId())
+              .getAccountTransactions(another_account->accountId(), kTxPageSize)
+              .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
           std::move(result), kNoPermissions);

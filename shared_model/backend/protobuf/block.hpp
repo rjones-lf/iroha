@@ -27,7 +27,7 @@ namespace shared_model {
   namespace proto {
     class Block final : public interface::Block {
      public:
-      using TransportType = iroha::protocol::Block;
+      using TransportType = iroha::protocol::Block_v1;
 
       Block(Block &&o) noexcept;
       Block &operator=(Block &&o) noexcept = default;
@@ -59,7 +59,7 @@ namespace shared_model {
 
       typename interface::Block::ModelType *clone() const override;
 
-      const iroha::protocol::Block &getTransport() const;
+      const iroha::protocol::Block_v1 &getTransport() const;
 
       ~Block() override;
 

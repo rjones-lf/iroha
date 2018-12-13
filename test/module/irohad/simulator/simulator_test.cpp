@@ -3,9 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "simulator/impl/simulator.hpp"
+
 #include <vector>
 
-#include <boost/range/adaptor/map.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/algorithm/find.hpp>
 #include "backend/protobuf/proto_block_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
@@ -19,7 +21,6 @@
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/cryptography/crypto_model_signer_mock.hpp"
 #include "module/shared_model/validators/validators.hpp"
-#include "simulator/impl/simulator.hpp"
 
 using namespace iroha;
 using namespace iroha::validation;
@@ -31,9 +32,9 @@ using namespace framework::test_subscriber;
 using ::testing::_;
 using ::testing::A;
 using ::testing::Invoke;
+using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::ReturnArg;
-using ::testing::NiceMock;
 
 using wBlock = std::shared_ptr<shared_model::interface::Block>;
 
@@ -55,7 +56,9 @@ class SimulatorTest : public ::testing::Test {
             std::shared_ptr<iroha::ametsuchi::BlockQuery>(query))));
     block_factory = std::make_unique<shared_model::proto::ProtoBlockFactory>(
         std::make_unique<shared_model::validation::MockValidator<
-            shared_model::interface::Block>>());
+            shared_model::interface::Block>>(),
+        std::make_unique<
+            shared_model::validation::MockValidator<iroha::protocol::Block>>());
   }
 
   void TearDown() override {
@@ -70,6 +73,8 @@ class SimulatorTest : public ::testing::Test {
                                             crypto_signer,
                                             std::move(block_factory));
   }
+
+  consensus::Round round;
 
   std::shared_ptr<MockStatefulValidator> validator;
   std::shared_ptr<MockTemporaryFactory> factory;
@@ -90,7 +95,7 @@ shared_model::proto::Block makeBlock(int height) {
       .build();
 }
 
-shared_model::proto::Proposal makeProposal(int height) {
+auto makeProposal(int height) {
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
@@ -107,14 +112,13 @@ shared_model::proto::Proposal makeProposal(int height) {
                       .createdTime(iroha::time::now())
                       .transactions(txs)
                       .build();
-  return proposal;
+  return std::make_shared<shared_model::proto::Proposal>(std::move(proposal));
 }
 
 TEST_F(SimulatorTest, ValidWhenInitialized) {
-  // simulator constructor => on_proposal subscription called
-  EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Proposal>>()));
+  // simulator constructor => onProposal subscription called
+  EXPECT_CALL(*ordering_gate, onProposal())
+      .WillOnce(Return(rxcpp::observable<>::empty<OrderingEvent>()));
 
   init();
 }
@@ -155,9 +159,8 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
         return std::move(validation_result);
       }));
 
-  EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Proposal>>()));
+  EXPECT_CALL(*ordering_gate, onProposal())
+      .WillOnce(Return(rxcpp::observable<>::empty<OrderingEvent>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
               sign(A<shared_model::interface::Block &>()))
@@ -166,8 +169,10 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   init();
 
   auto proposal_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
-  proposal_wrapper.subscribe([&proposal](auto verified_proposal) {
+      make_test_subscriber<CallExact>(simulator->onVerifiedProposal(), 1);
+  proposal_wrapper.subscribe([&proposal](auto event) {
+    auto verified_proposal = getVerifiedProposalUnsafe(event);
+
     ASSERT_EQ(verified_proposal->verified_proposal->height(),
               proposal->height());
     ASSERT_EQ(verified_proposal->verified_proposal->transactions(),
@@ -175,14 +180,15 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
     ASSERT_TRUE(verified_proposal->rejected_transactions.empty());
   });
 
-  auto block_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_block(), 1);
-  block_wrapper.subscribe([&proposal](const auto block) {
+  auto block_wrapper = make_test_subscriber<CallExact>(simulator->onBlock(), 1);
+  block_wrapper.subscribe([&proposal](const auto &event) {
+    auto block = getBlockUnsafe(event);
+
     ASSERT_EQ(block->height(), proposal->height());
     ASSERT_EQ(block->transactions(), proposal->transactions());
   });
 
-  simulator->process_proposal(*proposal);
+  simulator->processProposal(*proposal, round);
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
@@ -198,9 +204,8 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
-  EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Proposal>>()));
+  EXPECT_CALL(*ordering_gate, onProposal())
+      .WillOnce(Return(rxcpp::observable<>::empty<OrderingEvent>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
               sign(A<shared_model::interface::Block &>()))
@@ -209,14 +214,13 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   init();
 
   auto proposal_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 0);
+      make_test_subscriber<CallExact>(simulator->onVerifiedProposal(), 0);
   proposal_wrapper.subscribe();
 
-  auto block_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_block(), 0);
+  auto block_wrapper = make_test_subscriber<CallExact>(simulator->onBlock(), 0);
   block_wrapper.subscribe();
 
-  simulator->process_proposal(proposal);
+  simulator->processProposal(*proposal, round);
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
@@ -226,7 +230,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   // proposal with height 2 => height 2 block present => no validated proposal
   auto proposal = makeProposal(2);
 
-  auto block = makeBlock(proposal.height());
+  auto block = makeBlock(proposal->height());
 
   EXPECT_CALL(*factory, createTemporaryWsv()).Times(0);
 
@@ -235,9 +239,8 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
 
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
-  EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Proposal>>()));
+  EXPECT_CALL(*ordering_gate, onProposal())
+      .WillOnce(Return(rxcpp::observable<>::empty<OrderingEvent>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
               sign(A<shared_model::interface::Block &>()))
@@ -246,14 +249,13 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   init();
 
   auto proposal_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 0);
+      make_test_subscriber<CallExact>(simulator->onVerifiedProposal(), 0);
   proposal_wrapper.subscribe();
 
-  auto block_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_block(), 0);
+  auto block_wrapper = make_test_subscriber<CallExact>(simulator->onBlock(), 0);
   block_wrapper.subscribe();
 
-  simulator->process_proposal(proposal);
+  simulator->processProposal(*proposal, round);
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
@@ -305,8 +307,10 @@ TEST_F(SimulatorTest, SomeFailingTxs) {
               .build());
   for (auto rejected_tx = txs.begin() + 1; rejected_tx != txs.end();
        ++rejected_tx) {
-    verified_proposal_and_errors->rejected_transactions.emplace(
-        rejected_tx->hash(), validation::CommandError{"SomeCommand", 1, "", true});
+    verified_proposal_and_errors->rejected_transactions.emplace_back(
+        validation::TransactionError{
+            rejected_tx->hash(),
+            validation::CommandError{"SomeCommand", 1, "", true}});
   }
   shared_model::proto::Block block = makeBlock(proposal->height() - 1);
 
@@ -321,9 +325,8 @@ TEST_F(SimulatorTest, SomeFailingTxs) {
         return std::move(verified_proposal_and_errors);
       }));
 
-  EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Proposal>>()));
+  EXPECT_CALL(*ordering_gate, onProposal())
+      .WillOnce(Return(rxcpp::observable<>::empty<OrderingEvent>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
               sign(A<shared_model::interface::Block &>()))
@@ -332,8 +335,10 @@ TEST_F(SimulatorTest, SomeFailingTxs) {
   init();
 
   auto proposal_wrapper =
-      make_test_subscriber<CallExact>(simulator->on_verified_proposal(), 1);
-  proposal_wrapper.subscribe([&](auto verified_proposal_) {
+      make_test_subscriber<CallExact>(simulator->onVerifiedProposal(), 1);
+  proposal_wrapper.subscribe([&](auto event) {
+    auto verified_proposal_ = getVerifiedProposalUnsafe(event);
+
     // ensure that txs in verified proposal do not include failed ones
     ASSERT_EQ(verified_proposal_->verified_proposal->height(),
               verified_proposal_height);
@@ -342,7 +347,9 @@ TEST_F(SimulatorTest, SomeFailingTxs) {
     ASSERT_TRUE(verified_proposal_->rejected_transactions.size()
                 == kNumTransactions - 1);
     const auto verified_proposal_rejected_tx_hashes =
-        verified_proposal_->rejected_transactions | boost::adaptors::map_keys;
+        verified_proposal_->rejected_transactions
+        | boost::adaptors::transformed(
+              [](const auto &tx_error) { return tx_error.tx_hash; });
     for (auto rejected_tx = txs.begin() + 1; rejected_tx != txs.end();
          ++rejected_tx) {
       ASSERT_NE(boost::range::find(verified_proposal_rejected_tx_hashes,
@@ -352,7 +359,7 @@ TEST_F(SimulatorTest, SomeFailingTxs) {
     }
   });
 
-  simulator->process_proposal(*proposal);
+  simulator->processProposal(*proposal, round);
 
   ASSERT_TRUE(proposal_wrapper.validate());
 }

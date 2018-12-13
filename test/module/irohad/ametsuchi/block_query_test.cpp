@@ -81,11 +81,13 @@ class BlockQueryTest : public AmetsuchiTest {
                       .build();
 
     for (const auto &b : {std::move(block1), std::move(block2)}) {
-      file->add(b.height(),
-                iroha::stringToBytes(
-                    shared_model::converters::protobuf::modelToJson(b)));
-      index->index(b);
-      blocks_total++;
+      converter->serialize(b).match(
+          [this, &b](const iroha::expected::Value<std::string> &json) {
+            file->add(b.height(), iroha::stringToBytes(json.value));
+            index->index(b);
+            blocks_total++;
+          },
+          [](const auto &error) { FAIL() << error.error; });
     }
   }
 

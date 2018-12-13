@@ -38,6 +38,13 @@ namespace shared_model {
         return false;
       }
     };
+
+    template <typename Error, typename QueryVariant>
+    bool checkForQueryError(QueryVariant &&query) {
+      return boost::apply_visitor(
+          shared_model::interface::QueryErrorResponseChecker<Error>(),
+          std::forward<QueryVariant>(query));
+    }
   }  // namespace interface
 }  // namespace shared_model
 

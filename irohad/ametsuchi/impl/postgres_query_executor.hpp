@@ -142,6 +142,24 @@ namespace iroha {
                                 QueryErrorMessageType error_body,
                                 QueryErrorCodeType error_code) const;
 
+      /**
+       * Execute query which returns list of transactions
+       * uses pagination
+       * @param query - query object
+       * @param related_txs - SQL query which returns transaction relevant
+       * to this query
+       * @param applier - function which accepts SQL
+       * and returns another function which executes that query
+       * @param perms - permissions, necessary to execute the query
+       * @return Result of a query execution
+       */
+      template <typename Query, typename QueryApplier, typename... Permissions>
+      QueryExecutorResult executeTransactionsQuery(
+          const Query &query,
+          const std::string &related_txs,
+          QueryApplier applier,
+          Permissions... perms);
+
       soci::session &sql_;
       KeyValueStorage &block_store_;
       shared_model::interface::types::AccountIdType creator_id_;
