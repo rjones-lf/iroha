@@ -73,7 +73,7 @@ def doDebugBuild(coverageEnabled=false) {
       cmakeOptions += " -DSANITIZE='address;leak' "
     }
     if ( fuzzingEnabled ){
-      cmakeOptions += " -DCMAKE_CC_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 -DFUZZING=ON "
+      cmakeOptions += " -DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 -DFUZZING=ON "
     }
     env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
     env.IROHA_HOME = "/opt/iroha"
