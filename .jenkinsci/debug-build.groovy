@@ -28,17 +28,12 @@ def doDebugBuild(coverageEnabled=false) {
   // or it is a commit into PR which base branch is develop (usually develop -> master)
   if ((GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop' || GIT_LOCAL_BRANCH == 'dev' || CHANGE_BRANCH_LOCAL == 'dev') && manifest.manifestSupportEnabled()) {
     manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop-build",
-      ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
-       "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
-       "${DOCKER_REGISTRY_BASENAME}:aarch64-develop-build"])
+      ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build"]
+    )
     manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:develop-build",
       [
         [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
-         arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
-        [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
-         arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
-        [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-develop-build",
-         arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
+         arch: 'amd64', os: 'linux', osfeatures: [], variant: '']
       ])
     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
       manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:develop-build", login, password)
