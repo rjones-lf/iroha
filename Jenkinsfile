@@ -124,7 +124,6 @@ node ('master') {
   // Load Scripts
   x64LinuxReleaseBuildScript = load '.jenkinsci/builders/x64-linux-release-build-steps.groovy'
   x64LinuxDebugBuildScript = load '.jenkinsci/builders/x64-linux-debug-build-steps.groovy'
-  x64LinuxDocsBuildScript = load '.jenkinsci/builders/docs-build-steps.groovy'
 
   // Define Workers
   x64LinuxWorker = new Worker(label: 'x86_64', cpusAvailable: 4)
