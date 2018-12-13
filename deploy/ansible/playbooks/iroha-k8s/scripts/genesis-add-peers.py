@@ -25,13 +25,13 @@ def genesis_add_peers(peers_list, genesis_block_fp):
     with open(genesis_block_fp, 'r+') as genesis_json:
         genesis_dict = json.load(genesis_json)
         try:
-            genesis_dict['payload']['transactions'][0]['payload']['reducedPayload']['commands'] = filter(lambda c: not c.get('addPeer'), genesis_dict['payload']['transactions'][0]['payload']['reducedPayload']['commands'])
+            genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'] = filter(lambda c: not c.get('addPeer'), genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'])
         except KeyError:
             pass
-        genesis_dict['payload']['transactions'][0]['payload']['reducedPayload']['commands'] = list(genesis_dict['payload']['transactions'][0]['payload']['reducedPayload']['commands'])
+        genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'] = list(genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'])
         for p in peers_list:
             p_add_command = {"addPeer": {"peer": {"address": "%s:%s" % (p.host, '10001'), "peerKey":hex_to_b64(p.pub_key)}}}
-            genesis_dict['payload']['transactions'][0]['payload']['reducedPayload']['commands'].append(p_add_command)
+            genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'].append(p_add_command)
         genesis_json.seek(0)
         json.dump(genesis_dict, genesis_json, sort_keys=True)
         genesis_json.truncate()
