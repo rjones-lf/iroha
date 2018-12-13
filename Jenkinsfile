@@ -37,7 +37,8 @@ def build(Build build) {
         }
       } catch(Exception e) {
         if (currentBuild.currentResult == 'SUCCESS') {
-
+            print e
+            currentBuild.currentResult = 'FAILURE'
         }
         else if(currentBuild.currentResult == 'UNSTABLE') {
           build.builder.postSteps.unstable.each {
@@ -95,7 +96,7 @@ properties([
         booleanParam(defaultValue: false, description: '', name: 'test_cmake'),
         booleanParam(defaultValue: false, description: '', name: 'test_regression'),
         booleanParam(defaultValue: false, description: '', name: 'test_benchmark'),
-        booleanParam(defaultValue: true, description: 'Build docs', name: 'Doxygen'),
+        booleanParam(defaultValue: false, description: 'Build docs', name: 'Doxygen'),
     ]),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
 ])
