@@ -25,6 +25,8 @@ namespace shared_model {
       const CommandVariantType &get() const override;
 
      protected:
+      // TODO [IR-126] Akvinikym 13.12.18: Rework inheritance hierarchy so that
+      // this clone will disappear
       Command *clone() const override;
 
      private:
