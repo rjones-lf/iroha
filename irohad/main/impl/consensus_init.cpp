@@ -10,6 +10,7 @@
 #include "consensus/yac/impl/yac_gate_impl.hpp"
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+#include "consensus/yac/storage/yac_storage_cleanup_strategy_impl.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 
 namespace iroha {
@@ -37,6 +38,44 @@ namespace iroha {
             keypair, std::move(common_objects_factory));
 
         return crypto;
+      }
+
+  auto createHashProvider() {
+    return std::make_shared<YacHashProviderImpl>();
+  }
+
+  std::shared_ptr<Yac> createYac(
+      ClusterOrdering initial_order,
+      const shared_model::crypto::Keypair &keypair,
+      std::shared_ptr<Timer> timer,
+      std::shared_ptr<YacNetwork> network,
+      std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+          common_objects_factory,
+      ConsistencyModel consistency_model) {
+    std::shared_ptr<iroha::consensus::yac::CleanupStrategy>
+            cleanup_strategy = std::make_shared<
+                iroha::consensus::yac::BufferedCleanupStrategy>(
+                3,
+                iroha::consensus::Round(1, 0),
+                std::queue<iroha::consensus::Round>());
+    return Yac::create(
+        YacVoteStorage(cleanup_strategy),
+        std::move(network),
+        createCryptoProvider(keypair, std::move(common_objects_factory)),
+        std::move(timer),
+        initial_order);
+  }
+}  // namespace
+
+namespace iroha {
+  namespace consensus {
+    namespace yac {
+
+      std::shared_ptr<NetworkImpl> YacInit::getConsensusNetwork() const {
+        BOOST_ASSERT_MSG(initialized_,
+                         "YacInit::initConsensusGate(...) must be called prior "
+                         "to YacInit::getConsensusNetwork()!");
+        return consensus_network_;
       }
 
       auto YacInit::createTimer(std::chrono::milliseconds delay_milliseconds) {
