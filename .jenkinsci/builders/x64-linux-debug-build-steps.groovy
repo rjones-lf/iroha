@@ -122,7 +122,7 @@ def buildSteps(int parallelism, String compilerVersion,
         stage('Build docs'){
           docs ? doxygen.doDoxygen() : echo("Skipping Doxygen...")
         }
-        if (pushDockerTag) {
+        if (packagebuild) {
           // In rare situations, if someone needs to get a deb / tar.gz package
           stage('Build package'){
              archiveArtifacts artifacts: 'build/iroha*.deb', allowEmptyArchive: true
