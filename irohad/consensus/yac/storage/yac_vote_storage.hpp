@@ -110,9 +110,6 @@ namespace iroha {
         /// Get the highest commit, if any, otherwise boost::none.
         boost::optional<CommitMessage> getLastCommit() const;
 
-        /// Get the outcome of given round, if any, otherwise boost::none.
-        boost::optional<Answer> getRoundOutcome(const Round &round) const;
-
        private:
         using ProposalStoragePtr = std::shared_ptr<YacProposalStorage>;
         using OptProposalStoragePtr = boost::optional<ProposalStoragePtr>;
@@ -136,6 +133,9 @@ namespace iroha {
          */
         ProposalStoragePtr findProposalStorage(const VoteMessage &msg,
                                                PeersNumberType peers_in_round);
+
+        /// Get the outcome of given round, if any, otherwise boost::none.
+        boost::optional<Answer> getRoundOutcome(const Round &round) const;
 
         // --------| fields |--------
 

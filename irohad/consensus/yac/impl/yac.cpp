@@ -201,8 +201,8 @@ namespace iroha {
                     this->propagateStateDirectly(*from, opt_commit->votes);
                   } else {
                     log_->error(
-                        "Have no completed round commit outcome to share with "
-                        "{}.",
+                        "Most likely a BUG, please report: Have no completed "
+                        "round commit outcome to share with {}.",
                         from->address());
                     BOOST_ASSERT_MSG(opt_commit,
                                      "Have no completed round outcome to share "
