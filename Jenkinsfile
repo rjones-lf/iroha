@@ -37,7 +37,7 @@ def build(Build build) {
         }
       } catch(Exception e) {
         if (currentBuild.currentResult == 'SUCCESS') {
-            print e
+            print "Error: " + e
             currentBuild.currentResult = 'FAILURE'
         }
         else if(currentBuild.currentResult == 'UNSTABLE') {
@@ -81,8 +81,8 @@ def getTestList() {
 
 properties([
     parameters([
-        choice(choices: 'gcc54\ngcc54,gcc7,clang6', description: 'x64 Linux Compiler', name: 'x64linux_compiler'),
-        choice(choices: '\ngcc54\ngcc54,gcc7,clang6', description: 'x32 Linux Compiler', name: 'x32linux_compiler'),
+        choice(choices: 'gcc5\ngcc5,gcc7,clang6', description: 'x64 Linux Compiler', name: 'x64linux_compiler'),
+        choice(choices: '\ngcc5\ngcc5,gcc7,clang6', description: 'x32 Linux Compiler', name: 'x32linux_compiler'),
         choice(choices: '\nappleclang', description: 'MacOS Compiler', name: 'mac_compiler'),
         choice(choices: '\nmsvc', description: 'Windows Compiler', name: 'windows_compiler'),
 
@@ -97,6 +97,7 @@ properties([
         booleanParam(defaultValue: false, description: '', name: 'test_regression'),
         booleanParam(defaultValue: false, description: '', name: 'test_benchmark'),
         booleanParam(defaultValue: false, description: 'Build docs', name: 'Doxygen'),
+        booleanParam(defaultValue: true, description: 'Build package, for build type debug', name: 'package'),
     ]),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
 ])
@@ -136,7 +137,7 @@ node ('master') {
 
   // Define all possible steps
   x64LinuxReleaseBuildSteps = [{x64LinuxReleaseBuildScript.buildSteps(
-    x64LinuxWorker.cpusAvailable, 'gcc54', 'develop', false, environmentList)}]
+    x64LinuxWorker.cpusAvailable, 'gcc5', 'develop', false, environmentList)}]
   x64LinuxReleasePostSteps = new Builder.PostSteps(
     always: [{x64LinuxReleaseBuildScript.alwaysPostSteps(environmentList)}],
     success: [{x64LinuxReleaseBuildScript.successPostSteps(scmVars, environmentList)}])
@@ -145,7 +146,7 @@ node ('master') {
   for (compiler in params.x64linux_compiler.split(',')) {
     if(compiler){
       x64LinuxDebugBuildSteps += {x64LinuxDebugBuildScript.buildSteps(
-        x64LinuxWorker.cpusAvailable, compiler, false, params.coverage, testing, testList, params.cppcheck, params.sonar, params.Doxygen, environmentList)}
+        x64LinuxWorker.cpusAvailable, compiler, false, params.coverage, testing, testList, params.cppcheck, params.sonar, params.Doxygen, params.package, environmentList)}
     }
   }
   x64LinuxDebugPostSteps = new Builder.PostSteps(

@@ -52,7 +52,7 @@ def testSteps(String buildDir, List environment, String testList) { stage('Test'
 }}
 
 def buildSteps(int parallelism, String compilerVersion,
-      boolean pushDockerTag, boolean coverage, boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, List environment) {
+      boolean pushDockerTag, boolean coverage, boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild, List environment) {
   stage('Build') {
     withEnv(environment) {
       scmVars = checkout scm
@@ -65,6 +65,10 @@ def buildSteps(int parallelism, String compilerVersion,
       compilers = vars.compilerMapping()
       cmakeBooleanOption = [ (true): 'ON', (false): 'OFF' ]
       platform = sh(script: 'uname -m', returnStdout: true).trim()
+      cmakeBuildOptions = ""
+      if (packagebuild){
+        cmakeBuildOptions = " --target package "
+      }
       sh "docker network create ${env.IROHA_NETWORK}"
       // iC = dockerUtils.dockerPullOrBuild("${platform}-develop-build",
       //      "${env.GIT_RAW_BASE_URL}/${scmVars.GIT_COMMIT}/docker/develop/Dockerfile",
@@ -99,9 +103,13 @@ def buildSteps(int parallelism, String compilerVersion,
       + " -v /var/jenkins/ccache:${env.CCACHE_DEBUG_DIR}") {
         utils.ccacheSetup(5)
         build.cmakeConfigure(buildDir, "-DCMAKE_CXX_COMPILER=${compilers[compilerVersion]['cxx_compiler']} \
-          -DCMAKE_CC_COMPILER=${compilers[compilerVersion]['cc_compiler']} -DCMAKE_BUILD_TYPE=Debug \
-          -DCOVERAGE=${cmakeBooleanOption[coverage]} -DTESTING=${cmakeBooleanOption[testing]}")
-        build.cmakeBuild(buildDir, "", parallelism)
+          -DCMAKE_CC_COMPILER=${compilers[compilerVersion]['cc_compiler']} \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCOVERAGE=${cmakeBooleanOption[coverage]} \
+          -DTESTING=${cmakeBooleanOption[testing]} \
+          -DPACKAGE_DEB=${cmakeBooleanOption[packagebuild]} \
+          -DPACKAGE_TGZ=${cmakeBooleanOption[packagebuild]} ")
+        build.cmakeBuild(buildDir, cmakeBuildOptions, parallelism)
         if (testing) {
           coverage ? initialCoverage(buildDir) : echo('Skipping initial coverage...')
           testSteps(buildDir, environment, testList)
@@ -113,6 +121,13 @@ def buildSteps(int parallelism, String compilerVersion,
         }
         stage('Build docs'){
           docs ? doxygen.doDoxygen() : echo("Skipping Doxygen...")
+        }
+        if (pushDockerTag) {
+          // In rare situations, if someone needs to get a deb / tar.gz package
+          stage('Build package'){
+             archiveArtifacts artifacts: 'build/iroha*.deb', allowEmptyArchive: true
+             archiveArtifacts artifacts: 'build/iroha*.tar.gz', allowEmptyArchive: true
+          }
         }
       }
     }
