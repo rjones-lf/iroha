@@ -30,7 +30,7 @@ def genesis_add_peers(peers_list, genesis_block_fp):
             pass
         genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'] = list(genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'])
         for p in peers_list:
-            p_add_command = {"addPeer": {"peer": {"address": "%s:%s" % (p.host, '10001'), "peerKey":hex_to_b64(p.pub_key)}}}
+            p_add_command = {"addPeer": {"peer": {"address": "%s:%s" % (p.host, '10001'), "peerKey": p.pub_key}}}
             genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'].append(p_add_command)
         genesis_json.seek(0)
         json.dump(genesis_dict, genesis_json, sort_keys=True)
@@ -61,9 +61,6 @@ def caliper_rename_keys(priv_key_name, pub_key_name, caliper_conf_fp):
 
 def to_b64(bytes_array):
     return base64.b64encode(bytes_array).decode('utf-8')
-
-def hex_to_b64(hex_string):
-    return to_b64(bytearray.fromhex(hex_string))
 
 def print_keys_b64(peers):
     for peer in peers:
