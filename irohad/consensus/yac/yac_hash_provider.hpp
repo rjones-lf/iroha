@@ -89,6 +89,16 @@ namespace iroha {
           return not(*this == obj);
         };
 
+        /// Lexograplic comparison.
+        bool operator<(const YacHash &rhs) const {
+          return std::make_tuple(vote_round,
+                                 vote_hashes.proposal_hash,
+                                 vote_hashes.block_hash)
+              < std::make_tuple(rhs.vote_round,
+                                rhs.vote_hashes.proposal_hash,
+                                rhs.vote_hashes.block_hash);
+        };
+
         std::string toString() const {
           return shared_model::detail::PrettyStringBuilder()
               .init("YacHash")

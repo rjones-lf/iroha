@@ -43,6 +43,12 @@ namespace iroha {
           return not(*this == rhs);
         }
 
+        /// Lexograplic comparison.
+        bool operator<(const VoteMessage &rhs) const {
+          return hash < rhs.hash
+              or (hash == rhs.hash and *signature < *rhs.signature);
+        }
+
         std::string toString() const {
           return shared_model::detail::PrettyStringBuilder()
               .init("VoteMessage")

@@ -45,6 +45,9 @@ namespace shared_model {
 
       bool operator==(const Signature &rhs) const override;
 
+      /// Lexograplic comparison.
+      bool operator<(const Signature &rhs) const;
+
       std::string toString() const override;
     };
   }  // namespace interface

@@ -80,6 +80,9 @@ namespace shared_model {
 
       bool operator==(const Blob &rhs) const override;
 
+      /// Lexograplic comparison.
+      bool operator<(const Blob &rhs) const;
+
      protected:
       Blob *clone() const override;
 

@@ -37,6 +37,11 @@ target_link_libraries(yac_proposal_storage_test
     yac
     )
 
+addtest(yac_vote_storage_test yac_vote_storage_test.cpp)
+target_link_libraries(yac_vote_storage_test
+    yac
+    )
+
 addtest(yac_timer_test timer_test.cpp)
 target_link_libraries(yac_timer_test
     yac

@@ -14,6 +14,13 @@ namespace shared_model {
       return publicKey() == rhs.publicKey();
     }
 
+    /// Lexograplic comparison.
+    bool Signature::operator<(const Signature &rhs) const {
+      return publicKey() < rhs.publicKey()
+          or (publicKey() == rhs.publicKey()
+              and signedData() < rhs.signedData());
+    }
+
     std::string Signature::toString() const {
       return detail::PrettyStringBuilder()
           .init("Signature")

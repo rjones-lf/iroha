@@ -43,6 +43,14 @@ namespace shared_model {
       return blob() == rhs.blob();
     }
 
+    /// Lexograplic comparison.
+    bool Blob::operator<(const Blob &rhs) const {
+      return std::lexicographical_compare(blob().cbegin(),
+                                          blob().cend(),
+                                          rhs.blob().cbegin(),
+                                          rhs.blob().cend());
+    }
+
     Blob Blob::fromHexString(const std::string &hex) {
       using iroha::operator|;
       Blob b("");
