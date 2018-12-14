@@ -24,7 +24,7 @@ namespace iroha {
                     -> std::shared_ptr<OrderingGate> {
                   const auto &height = block.value->height();
                   auto gate = std::make_shared<ordering::OrderingGateImpl>(
-                      transport, height);
+                      transport, height, logger::log("OrderingGate"));
                   log_->info("Creating Ordering Gate with initial height {}",
                              height);
                   transport->subscribe(gate);
@@ -54,6 +54,7 @@ namespace iroha {
                                         rxcpp::observe_on_new_thread()),
           transport,
           persistent_state,
+          logger::log("OrderingServiceImpl"),
           std::move(factory));
     }
 

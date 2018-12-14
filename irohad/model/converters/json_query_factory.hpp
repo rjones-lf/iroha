@@ -31,7 +31,7 @@ namespace iroha {
     namespace converters {
       class JsonQueryFactory {
        public:
-        JsonQueryFactory();
+        explicit JsonQueryFactory(logger::Logger log);
 
         /**
          * get query from string json

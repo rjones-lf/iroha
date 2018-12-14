@@ -21,8 +21,9 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<cache::OrderingGateCache> cache,
     std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-    consensus::Round initial_round)
-    : log_(logger::log("OnDemandOrderingGate")),
+    consensus::Round initial_round,
+    logger::Logger log)
+    : log_(std::move(log)),
       ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {

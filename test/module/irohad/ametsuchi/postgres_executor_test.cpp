@@ -51,7 +51,8 @@ namespace iroha {
         auto factory =
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
                 shared_model::validation::FieldValidator>>();
-        query = std::make_unique<PostgresWsvQuery>(*sql, factory);
+        query = std::make_unique<PostgresWsvQuery>(
+            *sql, factory, logger::log("PostgresWsvQuery"));
         PostgresCommandExecutor::prepareStatements(*sql);
         executor =
             std::make_unique<PostgresCommandExecutor>(*sql, perm_converter);
@@ -190,7 +191,8 @@ namespace iroha {
       /**
        * Add default asset and check that it is done
        */
-      void addAsset(const shared_model::interface::types::DomainIdType &domain_id = "domain") {
+      void addAsset(const shared_model::interface::types::DomainIdType
+                        &domain_id = "domain") {
         auto asset = clone(TestAccountAssetBuilder()
                                .domainId(domain_id)
                                .assetId(asset_id)
@@ -240,7 +242,8 @@ namespace iroha {
      */
     TEST_F(AddAccountAssetTest, DomainPermValid) {
       addAsset();
-      addOnePerm(shared_model::interface::permissions::Role::kAddDomainAssetQty);
+      addOnePerm(
+          shared_model::interface::permissions::Role::kAddDomainAssetQty);
       ASSERT_TRUE(val(execute(
           buildCommand(TestTransactionBuilder()
                            .addAssetQuantity(asset_id, asset_amount_one_zero)
@@ -259,54 +262,52 @@ namespace iroha {
       ASSERT_EQ("2.0", account_asset.get()->balance().toStringRepr());
     }
 
-  /**
-   * @given addAccountAsset command and invalid domain permission
-   * @when trying to add asset
-   * @then account asset is not added
-   */
-  TEST_F(AddAccountAssetTest, DomainPermInvalid) {
-    std::unique_ptr<shared_model::interface::Domain> domain2;
-    domain2 = clone(
-        TestDomainBuilder().domainId("domain2").defaultRole(role).build());
-    ASSERT_TRUE(
-        val(execute(buildCommand(TestTransactionBuilder().createDomain(
-            domain2->domainId(), role)),
-                    true)));
-    addAsset(domain2->domainId());
-    addOnePerm(shared_model::interface::permissions::Role::kAddDomainAssetQty);
+    /**
+     * @given addAccountAsset command and invalid domain permission
+     * @when trying to add asset
+     * @then account asset is not added
+     */
+    TEST_F(AddAccountAssetTest, DomainPermInvalid) {
+      std::unique_ptr<shared_model::interface::Domain> domain2;
+      domain2 = clone(
+          TestDomainBuilder().domainId("domain2").defaultRole(role).build());
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().createDomain(
+                          domain2->domainId(), role)),
+                      true)));
+      addAsset(domain2->domainId());
+      addOnePerm(
+          shared_model::interface::permissions::Role::kAddDomainAssetQty);
 
-    auto asset2_id = "coin#"+domain2->domainId();
+      auto asset2_id = "coin#" + domain2->domainId();
 
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset2_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
 
-    ASSERT_TRUE(val(execute(
-        buildCommand(TestTransactionBuilder()
-                         .addAssetQuantity(asset2_id, asset_amount_one_zero)
-                         .creatorAccountId(account->accountId())),
-        true)));
+      auto account_asset =
+          query->getAccountAsset(account->accountId(), asset2_id);
+      ASSERT_TRUE(account_asset);
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
 
+      auto cmd_result = execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset2_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())));
 
-    auto account_asset =
-        query->getAccountAsset(account->accountId(), asset2_id);
-    ASSERT_TRUE(account_asset);
-    ASSERT_EQ(asset_amount_one_zero,
-              account_asset.get()->balance().toStringRepr());
+      std::vector<std::string> query_args{
+          account->accountId(), asset_amount_one_zero, asset2_id, "1"};
+      CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 2, query_args);
+    }
 
-    auto cmd_result = execute(
-        buildCommand(TestTransactionBuilder()
-                         .addAssetQuantity(asset2_id, asset_amount_one_zero)
-                         .creatorAccountId(account->accountId())));
-
-    std::vector<std::string> query_args{
-        account->accountId(), asset_amount_one_zero, asset2_id, "1"};
-    CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 2, query_args);
-  }
-
-
-  /**
-   * @given command
-   * @when trying to add account asset without permission
-   * @then account asset not added
-   */
+    /**
+     * @given command
+     * @when trying to add account asset without permission
+     * @then account asset not added
+     */
     TEST_F(AddAccountAssetTest, NoPerms) {
       addAsset();
       ASSERT_TRUE(val(execute(
@@ -1745,7 +1746,8 @@ namespace iroha {
       /**
        * Add default asset and check that it is done
        */
-      void addAsset(const shared_model::interface::types::DomainIdType &domain_id="domain") {
+      void addAsset(const shared_model::interface::types::DomainIdType
+                        &domain_id = "domain") {
         auto asset = clone(TestAccountAssetBuilder()
                                .domainId(domain_id)
                                .assetId(asset_id)
@@ -1831,88 +1833,87 @@ namespace iroha {
                 account_asset.get()->balance().toStringRepr());
     }
 
+    /**
+     * @given command and domain permission
+     * @when trying to subtract account asset
+     * @then account asset is successfully subtracted
+     */
+    TEST_F(SubtractAccountAssetTest, DomainPermValid) {
+      addAsset();
+      addOnePerm(
+          shared_model::interface::permissions::Role::kSubtractDomainAssetQty);
 
-  /**
-  * @given command and domain permission
-  * @when trying to subtract account asset
-  * @then account asset is successfully subtracted
-  */
-  TEST_F(SubtractAccountAssetTest, DomainPermValid) {
-    addAsset();
-    addOnePerm(shared_model::interface::permissions::Role::kSubtractDomainAssetQty);
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
+      auto account_asset =
+          query->getAccountAsset(account->accountId(), asset_id);
+      ASSERT_TRUE(account_asset);
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
+      account_asset = query->getAccountAsset(account->accountId(), asset_id);
+      ASSERT_TRUE(account_asset);
+      ASSERT_EQ("2.0", account_asset.get()->balance().toStringRepr());
+      ASSERT_TRUE(val(execute(buildCommand(
+          TestTransactionBuilder()
+              .subtractAssetQuantity(asset_id, asset_amount_one_zero)
+              .creatorAccountId(account->accountId())))));
+      account_asset = query->getAccountAsset(account->accountId(), asset_id);
+      ASSERT_TRUE(account_asset);
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
+    }
 
-    ASSERT_TRUE(val(execute(
-        buildCommand(TestTransactionBuilder()
-                         .addAssetQuantity(asset_id, asset_amount_one_zero)
-                         .creatorAccountId(account->accountId())),
-        true)));
-    auto account_asset =
-        query->getAccountAsset(account->accountId(), asset_id);
-    ASSERT_TRUE(account_asset);
-    ASSERT_EQ(asset_amount_one_zero,
-              account_asset.get()->balance().toStringRepr());
-    ASSERT_TRUE(val(execute(
-        buildCommand(TestTransactionBuilder()
-                         .addAssetQuantity(asset_id, asset_amount_one_zero)
-                         .creatorAccountId(account->accountId())),
-        true)));
-    account_asset = query->getAccountAsset(account->accountId(), asset_id);
-    ASSERT_TRUE(account_asset);
-    ASSERT_EQ("2.0", account_asset.get()->balance().toStringRepr());
-    ASSERT_TRUE(val(execute(buildCommand(
-        TestTransactionBuilder()
-            .subtractAssetQuantity(asset_id, asset_amount_one_zero)
-            .creatorAccountId(account->accountId())))));
-    account_asset = query->getAccountAsset(account->accountId(), asset_id);
-    ASSERT_TRUE(account_asset);
-    ASSERT_EQ(asset_amount_one_zero,
-              account_asset.get()->balance().toStringRepr());
-  }
+    /**
+     * @given command and invalid domain permission/ permission in other domain
+     * @when trying to subtract asset
+     * @then no account asset is subtracted
+     */
+    TEST_F(SubtractAccountAssetTest, DomainPermInvalid) {
+      std::unique_ptr<shared_model::interface::Domain> domain2;
+      domain2 = clone(
+          TestDomainBuilder().domainId("domain2").defaultRole(role).build());
+      ASSERT_TRUE(
+          val(execute(buildCommand(TestTransactionBuilder().createDomain(
+                          domain2->domainId(), role)),
+                      true)));
+      addAsset(domain2->domainId());
+      addOnePerm(
+          shared_model::interface::permissions::Role::kSubtractDomainAssetQty);
 
-  /**
-   * @given command and invalid domain permission/ permission in other domain
-   * @when trying to subtract asset
-   * @then no account asset is subtracted
-   */
-  TEST_F(SubtractAccountAssetTest, DomainPermInvalid) {
-    std::unique_ptr<shared_model::interface::Domain> domain2;
-    domain2 = clone(
-        TestDomainBuilder().domainId("domain2").defaultRole(role).build());
-    ASSERT_TRUE(
-        val(execute(buildCommand(TestTransactionBuilder().createDomain(
-            domain2->domainId(), role)),
-                    true)));
-    addAsset(domain2->domainId());
-    addOnePerm(shared_model::interface::permissions::Role::kSubtractDomainAssetQty);
+      auto asset2_id = "coin#" + domain2->domainId();
+      ASSERT_TRUE(val(execute(
+          buildCommand(TestTransactionBuilder()
+                           .addAssetQuantity(asset2_id, asset_amount_one_zero)
+                           .creatorAccountId(account->accountId())),
+          true)));
+      auto account_asset =
+          query->getAccountAsset(account->accountId(), asset2_id);
+      ASSERT_TRUE(account_asset);
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
 
-    auto asset2_id = "coin#"+domain2->domainId();
-    ASSERT_TRUE(val(execute(
-        buildCommand(TestTransactionBuilder()
-                         .addAssetQuantity(asset2_id, asset_amount_one_zero)
-                         .creatorAccountId(account->accountId())),
-        true)));
-    auto account_asset =
-        query->getAccountAsset(account->accountId(), asset2_id);
-    ASSERT_TRUE(account_asset);
-    ASSERT_EQ(asset_amount_one_zero,
-              account_asset.get()->balance().toStringRepr());
+      auto cmd_result = execute(buildCommand(
+          TestTransactionBuilder()
+              .subtractAssetQuantity(asset2_id, asset_amount_one_zero)
+              .creatorAccountId(account->accountId())));
 
-    auto cmd_result = execute(buildCommand(
-        TestTransactionBuilder()
-            .subtractAssetQuantity(asset2_id, asset_amount_one_zero)
-            .creatorAccountId(account->accountId())));
+      std::vector<std::string> query_args{
+          account->accountId(), asset2_id, asset_amount_one_zero, "1"};
+      CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 2, query_args);
 
-    std::vector<std::string> query_args{
-        account->accountId(), asset2_id, asset_amount_one_zero, "1"};
-    CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 2, query_args);
-
-    account_asset = query->getAccountAsset(account->accountId(), asset2_id);
-    ASSERT_TRUE(account_asset);
-    ASSERT_EQ(asset_amount_one_zero,
-              account_asset.get()->balance().toStringRepr());
-  }
-
-
+      account_asset = query->getAccountAsset(account->accountId(), asset2_id);
+      ASSERT_TRUE(account_asset);
+      ASSERT_EQ(asset_amount_one_zero,
+                account_asset.get()->balance().toStringRepr());
+    }
 
     /**
      * @given command

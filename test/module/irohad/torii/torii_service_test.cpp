@@ -92,7 +92,8 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
 class ToriiServiceTest : public testing::Test {
  public:
   virtual void SetUp() {
-    runner = std::make_unique<ServerRunner>(ip + ":0");
+    runner =
+        std::make_unique<ServerRunner>(ip + ":0", logger::log("ServerRunner"));
 
     // ----------- Command Service --------------
     pcsMock = std::make_shared<CustomPeerCommunicationServiceMock>(
@@ -115,7 +116,8 @@ class ToriiServiceTest : public testing::Test {
             pcsMock,
             mst,
             status_bus,
-            std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
+            std::make_shared<shared_model::proto::ProtoTxStatusFactory>(),
+            logger::log("TxProcessor"));
 
     EXPECT_CALL(*block_query, getTxByHashSync(_))
         .WillRepeatedly(Return(boost::none));
@@ -152,7 +154,8 @@ class ToriiServiceTest : public testing::Test {
             status_factory,
             transaction_factory,
             batch_parser,
-            batch_factory))
+            batch_factory,
+            logger::log("CommandServiceTransportGrpc")))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -201,7 +204,8 @@ TEST_F(ToriiServiceTest, CommandClient) {
   tx_request.set_tx_hash(std::string(32, '1'));
   iroha::protocol::ToriiResponse toriiResponse;
 
-  auto client1 = torii::CommandSyncClient(ip, port);
+  auto client1 =
+      torii::CommandSyncClient(ip, port, logger::log("CommandSyncClient"));
   // Copy ctor
   torii::CommandSyncClient client2(client1);
   // copy assignment
@@ -233,7 +237,8 @@ TEST_F(ToriiServiceTest, StatusWhenTxWasNotReceivedBlocking) {
   }
 
   // get statuses of unsent transactions
-  auto client = torii::CommandSyncClient(ip, port);
+  auto client =
+      torii::CommandSyncClient(ip, port, logger::log("CommandSyncClient"));
 
   for (size_t i = 0; i < TimesToriiBlocking; ++i) {
     iroha::protocol::TxStatusRequest tx_request;
@@ -264,7 +269,8 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   std::vector<shared_model::proto::Transaction> txs;
   std::vector<shared_model::interface::types::HashType> tx_hashes;
 
-  auto client1 = torii::CommandSyncClient(ip, port);
+  auto client1 =
+      torii::CommandSyncClient(ip, port, logger::log("CommandSyncClient"));
 
   // create transactions and send them to Torii
   std::string account_id = "some@account";
@@ -423,7 +429,8 @@ TEST_F(ToriiServiceTest, CheckHash) {
     tx_hashes.push_back(tx.hash());
   }
 
-  auto client = torii::CommandSyncClient(ip, port);
+  auto client =
+      torii::CommandSyncClient(ip, port, logger::log("CommandSyncClient"));
 
   // get statuses of transactions
   for (auto &hash : tx_hashes) {
@@ -449,7 +456,8 @@ TEST_F(ToriiServiceTest, CheckHash) {
 TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   using namespace shared_model;
 
-  auto client = torii::CommandSyncClient(ip, port);
+  auto client =
+      torii::CommandSyncClient(ip, port, logger::log("CommandSyncClient"));
   auto iroha_tx = proto::TransactionBuilder()
                       .creatorAccountId("a@domain")
                       .setAccountQuorum("a@domain", 2)
@@ -530,7 +538,8 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
  * @then ensure that response will have exactly 1 status - NOT_RECEIVED
  */
 TEST_F(ToriiServiceTest, StreamingNoTx) {
-  auto client = torii::CommandSyncClient(ip, port);
+  auto client =
+      torii::CommandSyncClient(ip, port, logger::log("CommandSyncClient"));
   std::vector<iroha::protocol::ToriiResponse> torii_response;
   std::thread t([&]() {
     iroha::protocol::TxStatusRequest tx_request;
@@ -557,7 +566,8 @@ TEST_F(ToriiServiceTest, ListOfTxs) {
   const auto test_txs_number = 5;
 
   // initial preparations: creation of variables and txs
-  auto client = torii::CommandSyncClient(ip, port);
+  auto client =
+      torii::CommandSyncClient(ip, port, logger::log("CommandSyncClient"));
   std::vector<shared_model::interface::types::HashType> tx_hashes(
       test_txs_number);
   iroha::protocol::TxList tx_list;
@@ -613,7 +623,8 @@ TEST_F(ToriiServiceTest, FailedListOfTxs) {
   const auto test_txs_number = 5;
 
   // initial preparations: creation of variables and txs
-  auto client = torii::CommandSyncClient(ip, port);
+  auto client =
+      torii::CommandSyncClient(ip, port, logger::log("CommandSyncClient"));
   std::vector<shared_model::interface::types::HashType> tx_hashes(
       test_txs_number);
   iroha::protocol::TxList tx_list;

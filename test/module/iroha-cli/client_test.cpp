@@ -72,7 +72,8 @@ class ClientServerTest : public testing::Test {
   virtual void SetUp() {
     spdlog::set_level(spdlog::level::off);
     // Run a server
-    runner = std::make_unique<ServerRunner>(ip + ":0");
+    runner =
+        std::make_unique<ServerRunner>(ip + ":0", logger::log("ServerRunner"));
 
     // ----------- Command Service --------------
     pcsMock = std::make_shared<MockPeerCommunicationService>();
@@ -109,7 +110,8 @@ class ClientServerTest : public testing::Test {
             pcsMock,
             mst,
             status_bus,
-            std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
+            std::make_shared<shared_model::proto::ProtoTxStatusFactory>(),
+            logger::log("TxProcessor"));
 
     auto pb_tx_factory =
         std::make_shared<iroha::model::converters::PbTransactionFactory>();
@@ -125,7 +127,11 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage, storage, pending_txs_storage, query_response_factory);
+        storage,
+        storage,
+        pending_txs_storage,
+        query_response_factory,
+        logger::log("QueryProcessorImpl"));
 
     //----------- Server run ----------------
     auto status_factory =
@@ -159,7 +165,8 @@ class ClientServerTest : public testing::Test {
             status_factory,
             transaction_factory,
             batch_parser,
-            batch_factory))
+            batch_factory,
+            logger::log("CommandServiceTransportGrpc")))
         .append(std::make_unique<torii::QueryService>(qpi, query_factory))
         .run()
         .match(

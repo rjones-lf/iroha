@@ -52,7 +52,8 @@ namespace iroha {
         sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
 
         command = std::make_unique<PostgresWsvCommand>(*sql);
-        query = std::make_unique<PostgresWsvQuery>(*sql, factory);
+        query = std::make_unique<PostgresWsvQuery>(
+            *sql, factory, logger::log("PostgresWsvQuery"));
 
         *sql << init_;
       }
@@ -552,7 +553,8 @@ namespace iroha {
         sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
 
         command = std::make_unique<PostgresWsvCommand>(*sql);
-        query = std::make_unique<PostgresWsvQuery>(*sql, factory);
+        query = std::make_unique<PostgresWsvQuery>(
+            *sql, factory, logger::log("PostgresWsvQuery"));
       }
     };
 

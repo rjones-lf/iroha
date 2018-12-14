@@ -62,7 +62,8 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::PermissionToString>
             perm_converter,
         size_t pool_size,
-        bool enable_prepared_blocks)
+        bool enable_prepared_blocks,
+        logger::Logger log)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
@@ -70,7 +71,7 @@ namespace iroha {
           factory_(std::move(factory)),
           converter_(std::move(converter)),
           perm_converter_(std::move(perm_converter)),
-          log_(logger::log("StorageImpl")),
+          log_(std::move(log)),
           pool_size_(pool_size),
           prepared_blocks_enabled_(enable_prepared_blocks),
           block_is_prepared(false) {
@@ -95,8 +96,10 @@ namespace iroha {
       auto sql = std::make_unique<soci::session>(*connection_);
 
       return expected::makeValue<std::unique_ptr<TemporaryWsv>>(
-          std::make_unique<TemporaryWsvImpl>(
-              std::move(sql), factory_, perm_converter_));
+          std::make_unique<TemporaryWsvImpl>(std::move(sql),
+                                             factory_,
+                                             perm_converter_,
+                                             logger::log("TemporaryWSV")));
     }
 
     expected::Result<std::unique_ptr<MutableStorage>, std::string>
@@ -128,7 +131,8 @@ namespace iroha {
                   }),
               std::make_shared<PostgresCommandExecutor>(*sql, perm_converter_),
               std::move(sql),
-              factory_));
+              factory_,
+              logger::log("MutableStorage")));
     }
 
     boost::optional<std::shared_ptr<PeerQuery>> StorageImpl::createPeerQuery()
@@ -161,7 +165,8 @@ namespace iroha {
       return boost::make_optional<
           std::shared_ptr<OrderingServicePersistentState>>(
           std::make_shared<PostgresOrderingServicePersistentState>(
-              std::make_unique<soci::session>(*connection_)));
+              std::make_unique<soci::session>(*connection_),
+              logger::log("PostgresOrderingServicePersistentState")));
     }
 
     boost::optional<std::shared_ptr<QueryExecutor>>
@@ -379,7 +384,8 @@ namespace iroha {
                                       converter,
                                       perm_converter,
                                       pool_size,
-                                      enable_prepared_transactions)));
+                                      enable_prepared_transactions,
+                                      logger::log("StorageImpl"))));
                 },
                 [&](expected::Error<std::string> &error) { storage = error; });
           },
@@ -418,7 +424,7 @@ namespace iroha {
         }
         soci::session sql(*connection_);
         sql << "COMMIT PREPARED '" + prepared_block_name_ + "';";
-        PostgresBlockIndex block_index(sql);
+        PostgresBlockIndex block_index(sql, logger::log("PostgresBlockIndex"));
         block_index.index(block);
         block_is_prepared = false;
       } catch (const std::exception &e) {
@@ -438,7 +444,9 @@ namespace iroha {
         return nullptr;
       }
       return std::make_shared<PostgresWsvQuery>(
-          std::make_unique<soci::session>(*connection_), factory_);
+          std::make_unique<soci::session>(*connection_),
+          factory_,
+          logger::log("PostgresWsvQuery"));
     }
 
     std::shared_ptr<BlockQuery> StorageImpl::getBlockQuery() const {
@@ -450,7 +458,8 @@ namespace iroha {
       return std::make_shared<PostgresBlockQuery>(
           std::make_unique<soci::session>(*connection_),
           *block_store_,
-          converter_);
+          converter_,
+          logger::log("PostgresBlockQuery"));
     }
 
     rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>

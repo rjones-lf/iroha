@@ -29,7 +29,8 @@ namespace torii {
       std::shared_ptr<shared_model::interface::TransactionBatchParser>
           batch_parser,
       std::shared_ptr<shared_model::interface::TransactionBatchFactory>
-          transaction_batch_factory)
+          transaction_batch_factory,
+      logger::Logger log)
       : command_service_(std::move(command_service)),
         status_bus_(std::move(status_bus)),
         initial_timeout_(initial_timeout),
@@ -38,7 +39,7 @@ namespace torii {
         transaction_factory_(std::move(transaction_factory)),
         batch_parser_(std::move(batch_parser)),
         batch_factory_(std::move(transaction_batch_factory)),
-        log_(logger::log("CommandServiceTransportGrpc")) {}
+        log_(std::move(log)) {}
 
   grpc::Status CommandServiceTransportGrpc::Torii(
       grpc::ServerContext *context,

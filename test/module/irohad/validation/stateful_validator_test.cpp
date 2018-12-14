@@ -102,8 +102,8 @@ class Validator : public testing::Test {
         shared_model::validation::DefaultProposalValidator>>();
     parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
-    sfv = std::make_shared<StatefulValidatorImpl>(std::move(factory),
-                                                  std::move(parser));
+    sfv = std::make_shared<StatefulValidatorImpl>(
+        std::move(factory), std::move(parser), logger::log("SFV"));
     temp_wsv_mock = std::make_shared<iroha::ametsuchi::MockTemporaryWsv>();
   }
 

@@ -99,10 +99,11 @@ namespace iroha {
     StatefulValidatorImpl::StatefulValidatorImpl(
         std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
         std::shared_ptr<shared_model::interface::TransactionBatchParser>
-            batch_parser)
+            batch_parser,
+        logger::Logger log)
         : factory_(std::move(factory)),
           batch_parser_(std::move(batch_parser)),
-          log_(logger::log("SFV")) {}
+          log_(std::move(log)) {}
 
     std::unique_ptr<validation::VerifiedProposalAndErrors>
     StatefulValidatorImpl::validate(

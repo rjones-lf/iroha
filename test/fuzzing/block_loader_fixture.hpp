@@ -37,7 +37,9 @@ namespace fuzzing {
       block_cache_ = std::make_shared<iroha::consensus::ConsensusResultCache>();
       block_loader_service_ =
           std::make_shared<iroha::network::BlockLoaderService>(
-              block_query_factory_, block_cache_);
+              block_query_factory_,
+              block_cache_,
+              logger::log("BlockLoaderService"));
       EXPECT_CALL(*block_query_factory_, createBlockQuery())
           .WillRepeatedly(Return(boost::make_optional(
               std::shared_ptr<iroha::ametsuchi::BlockQuery>(storage_))));

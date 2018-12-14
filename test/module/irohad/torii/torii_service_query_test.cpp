@@ -31,7 +31,8 @@ using ::testing::Truly;
 class ToriiQueryServiceTest : public ::testing::Test {
  public:
   virtual void SetUp() {
-    runner = std::make_unique<ServerRunner>(ip + ":0");
+    runner =
+        std::make_unique<ServerRunner>(ip + ":0", logger::log("ServerRunner"));
 
     // ----------- Command Service --------------
     query_processor = std::make_shared<iroha::torii::MockQueryProcessor>();

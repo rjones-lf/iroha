@@ -51,7 +51,8 @@ using ErrorQueryType =
 class ToriiQueriesTest : public testing::Test {
  public:
   virtual void SetUp() {
-    runner = std::make_unique<ServerRunner>(ip + ":0");
+    runner =
+        std::make_unique<ServerRunner>(ip + ":0", logger::log("ServerRunner"));
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
     query_executor = std::make_shared<MockQueryExecutor>();
@@ -70,7 +71,11 @@ class ToriiQueriesTest : public testing::Test {
             std::shared_ptr<QueryExecutor>(query_executor))));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage, storage, pending_txs_storage, query_response_factory);
+        storage,
+        storage,
+        pending_txs_storage,
+        query_response_factory,
+        logger::log("QueryProcessorImpl"));
 
     //----------- Server run ----------------
     initQueryFactory();

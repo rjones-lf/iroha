@@ -28,7 +28,7 @@ namespace iroha {
 
       class JsonBlockFactory {
        public:
-        JsonBlockFactory();
+        explicit JsonBlockFactory(logger::Logger log);
         rapidjson::Document serialize(const Block &block);
 
         boost::optional<Block> deserialize(

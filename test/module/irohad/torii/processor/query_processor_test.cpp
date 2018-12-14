@@ -40,7 +40,11 @@ class QueryProcessorTest : public ::testing::Test {
     query_response_factory =
         std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
     qpi = std::make_shared<torii::QueryProcessorImpl>(
-        storage, storage, nullptr, query_response_factory);
+        storage,
+        storage,
+        nullptr,
+        query_response_factory,
+        logger::log("QueryProcessorImpl"));
     wsv_queries = std::make_shared<MockWsvQuery>();
     EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
     EXPECT_CALL(*storage, getBlockQuery())

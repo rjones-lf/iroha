@@ -62,7 +62,8 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-          consensus::Round initial_round);
+          consensus::Round initial_round,
+          logger::Logger log);
 
       void propagateBatch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)

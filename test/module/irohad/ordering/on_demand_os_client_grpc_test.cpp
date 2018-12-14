@@ -30,7 +30,11 @@ struct OnDemandOsClientGrpcTest : public ::testing::Test {
     async_call =
         std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
     client = std::make_shared<OnDemandOsClientGrpc>(
-        std::move(ustub), async_call, [&] { return timepoint; }, timeout);
+        std::move(ustub),
+        async_call,
+        [&] { return timepoint; },
+        timeout,
+        logger::log("OnDemandOsClientGrpc"));
   }
 
   proto::MockOnDemandOrderingStub *stub;

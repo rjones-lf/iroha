@@ -144,7 +144,8 @@ int main(int argc, char *argv[]) {
       logger->error("No account name specified");
       return EXIT_FAILURE;
     }
-    auto keysManager = iroha::KeysManagerImpl(FLAGS_account_name);
+    auto keysManager = iroha::KeysManagerImpl(FLAGS_account_name,
+                                              logger::log("KeysManagerImpl"));
     if (not(FLAGS_pass_phrase.size() == 0
                 ? keysManager.createKeys()
                 : keysManager.createKeys(FLAGS_pass_phrase))) {
@@ -195,7 +196,9 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
       } else {
         auto query = shared_model::proto::Query(
-            *iroha::model::converters::PbQueryFactory().serialize(*query_opt));
+            *iroha::model::converters::PbQueryFactory(
+                 logger::log("PbQueryFactory"))
+                 .serialize(*query_opt));
         auto response = client.sendQuery(query);
         response_handler.handle(response);
       }

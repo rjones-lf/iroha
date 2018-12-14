@@ -274,8 +274,10 @@ namespace iroha_cli {
       provider_->sign(*query_);
 
       CliClient client(address.value().first, address.value().second);
-      auto query = shared_model::proto::Query(
-          *iroha::model::converters::PbQueryFactory().serialize(query_));
+      auto query =
+          shared_model::proto::Query(*iroha::model::converters::PbQueryFactory(
+                                          logger::log("PbQueryFactory"))
+                                          .serialize(query_));
       GrpcResponseHandler{}.handle(client.sendQuery(query));
       printEnd();
       // Stop parsing

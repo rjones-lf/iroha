@@ -46,6 +46,7 @@ namespace iroha {
        * @param transport receive transactions and publish proposals
        * @param persistent_state factory to storage for auxiliary information
        * @param factory is used to generate proposals
+       * @param log to print progress
        * @param is_async whether proposals are generated in a separate thread
        */
       SinglePeerOrderingService(
@@ -55,6 +56,7 @@ namespace iroha {
           std::shared_ptr<network::OrderingServiceTransport> transport,
           std::shared_ptr<ametsuchi::OsPersistentStateFactory> persistent_state,
           std::unique_ptr<shared_model::interface::ProposalFactory> factory,
+          logger::Logger log,
           bool is_async = true);
 
       /**

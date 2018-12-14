@@ -61,7 +61,8 @@ class OrderingGateTest : public ::testing::Test {
         std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
     transport =
         std::make_shared<OrderingGateTransportGrpc>(address, async_call_);
-    gate_impl = std::make_shared<OrderingGateImpl>(transport, 1, false);
+    gate_impl = std::make_shared<OrderingGateImpl>(
+        transport, 1, logger::log("OrderingGate"), false);
     transport->subscribe(gate_impl);
 
     ASSERT_NE(port, 0);

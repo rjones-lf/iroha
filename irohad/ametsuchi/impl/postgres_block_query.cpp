@@ -18,22 +18,24 @@ namespace iroha {
         soci::session &sql,
         KeyValueStorage &file_store,
         std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
-            converter)
+            converter,
+        logger::Logger log)
         : sql_(sql),
           block_store_(file_store),
           converter_(std::move(converter)),
-          log_(logger::log("PostgresBlockQuery")) {}
+          log_(std::move(log)) {}
 
     PostgresBlockQuery::PostgresBlockQuery(
         std::unique_ptr<soci::session> sql,
         KeyValueStorage &file_store,
         std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
-            converter)
+            converter,
+        logger::Logger log)
         : psql_(std::move(sql)),
           sql_(*psql_),
           block_store_(file_store),
           converter_(std::move(converter)),
-          log_(logger::log("PostgresBlockQuery")) {}
+          log_(std::move(log)) {}
 
     std::vector<BlockQuery::wBlock> PostgresBlockQuery::getBlocks(
         shared_model::interface::types::HeightType height, uint32_t count) {

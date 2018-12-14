@@ -47,12 +47,13 @@ namespace iroha {
         std::shared_ptr<MstProcessor> mst_processor,
         std::shared_ptr<iroha::torii::StatusBus> status_bus,
         std::shared_ptr<shared_model::interface::TxStatusFactory>
-            status_factory)
+            status_factory,
+        logger::Logger log)
         : pcs_(std::move(pcs)),
           mst_processor_(std::move(mst_processor)),
           status_bus_(std::move(status_bus)),
           status_factory_(std::move(status_factory)),
-          log_(logger::log("TxProcessor")) {
+          log_(std::move(log)) {
       // process stateful validation results
       pcs_->onVerifiedProposal().subscribe(
           [this](const simulator::VerifiedProposalCreatorEvent &event) {

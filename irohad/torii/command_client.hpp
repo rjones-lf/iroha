@@ -31,7 +31,7 @@ namespace torii {
    */
   class CommandSyncClient {
    public:
-    CommandSyncClient(const std::string &ip, size_t port);
+    CommandSyncClient(const std::string &ip, size_t port, logger::Logger log);
 
     CommandSyncClient(const CommandSyncClient &);
     CommandSyncClient &operator=(CommandSyncClient);

@@ -18,8 +18,9 @@ OnDemandOsClientGrpc::OnDemandOsClientGrpc(
     std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
         async_call,
     std::function<TimepointType()> time_provider,
-    std::chrono::milliseconds proposal_request_timeout)
-    : log_(logger::log("OnDemandOsClientGrpc")),
+    std::chrono::milliseconds proposal_request_timeout,
+    logger::Logger log)
+    : log_(std::move(log)),
       stub_(std::move(stub)),
       async_call_(std::move(async_call)),
       time_provider_(std::move(time_provider)),
@@ -80,5 +81,6 @@ std::unique_ptr<OdOsNotification> OnDemandOsClientGrpcFactory::create(
       network::createClient<proto::OnDemandOrdering>(to.address()),
       async_call_,
       time_provider_,
-      proposal_request_timeout_);
+      proposal_request_timeout_,
+      logger::log("OnDemandOsClientGrpc"));
 }

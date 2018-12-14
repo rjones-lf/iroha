@@ -29,7 +29,7 @@ namespace iroha {
   namespace ametsuchi {
     class PostgresBlockIndex : public BlockIndex {
      public:
-      explicit PostgresBlockIndex(soci::session &sql);
+      PostgresBlockIndex(soci::session &sql, logger::Logger log);
 
       /**
        * Create several indices for block. Namely:

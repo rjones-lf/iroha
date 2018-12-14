@@ -172,7 +172,9 @@ namespace iroha {
                        .map(map_peers);
 
       return std::make_shared<ordering::OnDemandConnectionManager>(
-          createNotificationFactory(std::move(async_call), delay), peers);
+          createNotificationFactory(std::move(async_call), delay),
+          peers,
+          logger::log("OnDemandConnectionManager"));
     }
 
     auto OnDemandOrderingInit::createGate(
@@ -253,7 +255,8 @@ namespace iroha {
           std::move(cache),
           std::move(proposal_factory),
           std::move(tx_cache),
-          initial_round);
+          initial_round,
+          logger::log("OnDemandOrderingGate"));
     }
 
     auto OnDemandOrderingInit::createService(
@@ -262,7 +265,10 @@ namespace iroha {
             proposal_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache) {
       return std::make_shared<ordering::OnDemandOrderingServiceImpl>(
-          max_size, std::move(proposal_factory), std::move(tx_cache));
+          max_size,
+          std::move(proposal_factory),
+          std::move(tx_cache),
+          logger::log("OnDemandOrderingServiceImpl"));
     }
 
     std::shared_ptr<iroha::network::OrderingGate>
@@ -290,7 +296,8 @@ namespace iroha {
           ordering_service,
           std::move(transaction_factory),
           std::move(batch_parser),
-          std::move(transaction_batch_factory));
+          std::move(transaction_batch_factory),
+          logger::log("OnDemandOsServerGrpc"));
       return createGate(ordering_service,
                         createConnectionManager(std::move(peer_query_factory),
                                                 std::move(async_call),

@@ -21,7 +21,8 @@ namespace iroha {
      public:
       BlockLoaderImpl(
           std::shared_ptr<ametsuchi::PeerQueryFactory> peer_query_factory,
-          shared_model::proto::ProtoBlockFactory factory);
+          shared_model::proto::ProtoBlockFactory factory,
+          logger::Logger log);
 
       rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
       retrieveBlocks(
