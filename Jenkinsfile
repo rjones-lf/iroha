@@ -38,7 +38,7 @@ def build(Build build) {
       } catch(Exception e) {
         if (currentBuild.currentResult == 'SUCCESS') {
             print "Error: " + e
-            currentBuild.currentResult = 'FAILURE'
+            currentBuild.result = 'FAILURE'
         }
         else if(currentBuild.currentResult == 'UNSTABLE') {
           build.builder.postSteps.unstable.each {
@@ -79,12 +79,18 @@ def getTestList() {
     return [status, line]
 }
 
+
+stage('Prepare environment'){
+timestamps(){
+
 properties([
     parameters([
         choice(choices: 'gcc5\ngcc5,gcc7,clang6', description: 'x64 Linux Compiler', name: 'x64linux_compiler'),
-        choice(choices: '\ngcc5\ngcc5,gcc7,clang6', description: 'x32 Linux Compiler', name: 'x32linux_compiler'),
+        //TODO add x32 Linux Machine
+        //choice(choices: '\ngcc5\ngcc5,gcc7,clang6', description: 'x32 Linux Compiler', name: 'x32linux_compiler'),
         choice(choices: '\nappleclang', description: 'MacOS Compiler', name: 'mac_compiler'),
-        choice(choices: '\nmsvc', description: 'Windows Compiler', name: 'windows_compiler'),
+        //TODO Write pipeline for Windows
+        //choice(choices: '\nmsvc', description: 'Windows Compiler', name: 'windows_compiler'),
 
         booleanParam(defaultValue: false, description: '', name: 'coverage'),
         booleanParam(defaultValue: true, description: '', name: 'cppcheck'),
@@ -103,8 +109,6 @@ properties([
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
 ])
 
-
-timestamps(){
 node ('master') {
   scmVars = checkout scm
   environmentList = []
@@ -144,11 +148,9 @@ node ('master') {
     success: [{x64LinuxReleaseBuildScript.successPostSteps(scmVars, environmentList)}])
 
   x64LinuxDebugBuildSteps = []
-  for (compiler in params.x64linux_compiler.split(',')) {
-    if(compiler){
-      x64LinuxDebugBuildSteps += {x64LinuxDebugBuildScript.buildSteps(
-        x64LinuxWorker.cpusAvailable, compiler, false, params.coverage, testing, testList, params.cppcheck, params.sonar, params.Doxygen, params.package, environmentList)}
-    }
+  if(params.x64linux_compiler){
+    x64LinuxDebugBuildSteps += {x64LinuxDebugBuildScript.buildSteps(
+      x64LinuxWorker.cpusAvailable, params.x64linux_compiler, false, params.coverage, testing, testList, params.cppcheck, params.sonar, params.Doxygen, params.package, environmentList)}
   }
   x64LinuxDebugPostSteps = new Builder.PostSteps(
     always: [{x64LinuxDebugBuildScript.alwaysPostSteps(environmentList)}])
@@ -189,5 +191,7 @@ node ('master') {
   //     }
   //   }
   // }
+}
+
 }
 }
