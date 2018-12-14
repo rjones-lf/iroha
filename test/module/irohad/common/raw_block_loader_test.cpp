@@ -17,7 +17,7 @@ using iroha::main::BlockLoader;
  * @then check that the block is correct
  */
 TEST(BlockLoaderTest, BlockLoaderJsonParsing) {
-  BlockLoader loader;
+  BlockLoader loader{logger::log("BlockLoader")};
   auto str =
       R"({
 "block_v1": {

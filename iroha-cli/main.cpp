@@ -189,7 +189,8 @@ int main(int argc, char *argv[]) {
       std::ifstream file(FLAGS_json_query);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
-      iroha::model::converters::JsonQueryFactory serializer;
+      iroha::model::converters::JsonQueryFactory serializer{
+          logger::log("JsonQueryFactory")};
       auto query_opt = serializer.deserialize(std::move(str));
       if (not query_opt) {
         logger->error("Json has wrong format.");
@@ -215,7 +216,8 @@ int main(int argc, char *argv[]) {
       logger->error("Path {} not found.", path.string());
       return EXIT_FAILURE;
     }
-    iroha::KeysManagerImpl manager((path / FLAGS_account_name).string());
+    iroha::KeysManagerImpl manager((path / FLAGS_account_name).string(),
+                                   logger::log("KeyManagerImpl"));
     auto keypair = FLAGS_pass_phrase.size() != 0
         ? manager.loadKeys(FLAGS_pass_phrase)
         : manager.loadKeys();

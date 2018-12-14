@@ -191,7 +191,8 @@ void Irohad::initValidators() {
  */
 void Irohad::initNetworkClient() {
   async_call_ =
-      std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
+      std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>(
+          logger::log("AsyncGrpcClient"));
 }
 
 void Irohad::initFactories() {

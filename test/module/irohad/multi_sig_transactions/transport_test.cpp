@@ -29,8 +29,8 @@ using ::testing::Invoke;
 class TransportTest : public ::testing::Test {
  public:
   TransportTest()
-      : async_call_(
-            std::make_shared<AsyncGrpcClient<google::protobuf::Empty>>()),
+      : async_call_(std::make_shared<AsyncGrpcClient<google::protobuf::Empty>>(
+            logger::log("AsyncGrpcClient"))),
         parser_(std::make_shared<TransactionBatchParserImpl>()),
         batch_factory_(std::make_shared<TransactionBatchFactoryImpl>()),
         tx_presence_cache_(

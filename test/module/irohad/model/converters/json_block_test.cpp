@@ -24,7 +24,7 @@ using namespace iroha::model::converters;
 
 class JsonBlockTest : public ::testing::Test {
  public:
-  JsonBlockFactory factory;
+  JsonBlockFactory factory{logger::log("JsonBlockFactory")};
 };
 
 TEST_F(JsonBlockTest, ValidWhenWellFormed) {

@@ -288,7 +288,8 @@ namespace iroha_cli {
       provider_->sign(*query_);
 
       auto path = params[0];
-      iroha::model::converters::JsonQueryFactory json_factory;
+      iroha::model::converters::JsonQueryFactory json_factory{
+          logger::log("JsonQueryFactory")};
       auto json_string = json_factory.serialize(query_);
       std::ofstream output_file(path);
       if (not output_file) {

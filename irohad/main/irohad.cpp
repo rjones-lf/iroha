@@ -119,7 +119,8 @@ int main(int argc, char *argv[]) {
   log->info("config initialized");
 
   // Reading public and private key files
-  iroha::KeysManagerImpl keysManager(FLAGS_keypair_name);
+  iroha::KeysManagerImpl keysManager(FLAGS_keypair_name,
+                                     logger::log("KeysManagerImpl"));
   auto keypair = keysManager.loadKeys();
   // Check if both keys are read properly
   if (not keypair) {
@@ -182,7 +183,7 @@ int main(int argc, char *argv[]) {
           "Passed genesis block will be ignored without --overwrite_ledger "
           "flag. Restoring existing state.");
     } else {
-      iroha::main::BlockLoader loader;
+      iroha::main::BlockLoader loader{logger::log("BlockLoader")};
       auto file = loader.loadFile(FLAGS_genesis_block);
       auto block = loader.parseBlock(file.value());
 

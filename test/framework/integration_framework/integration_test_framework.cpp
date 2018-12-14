@@ -89,9 +89,11 @@ namespace integration_framework {
                                                         torii_port_,
                                                         internal_port_,
                                                         dbname)),
-        command_client_(kLocalHost, torii_port_),
+        command_client_(
+            kLocalHost, torii_port_, logger::log("CommandSyncClient")),
         query_client_(kLocalHost, torii_port_),
-        async_call_(std::make_shared<AsyncCall>()),
+        async_call_(
+            std::make_shared<AsyncCall>(logger::log("AsyncGrpcClient"))),
         proposal_waiting(proposal_waiting),
         block_waiting(block_waiting),
         tx_response_waiting(tx_response_waiting),

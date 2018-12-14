@@ -378,7 +378,8 @@ TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {
           }]
         })";
 
-  iroha::model::converters::JsonQueryFactory queryFactory;
+  iroha::model::converters::JsonQueryFactory queryFactory{
+      logger::log("JsonQueryFactory")};
   auto model_query = queryFactory.deserialize(json_query);
   ASSERT_FALSE(model_query);
 }

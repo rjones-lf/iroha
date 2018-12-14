@@ -58,7 +58,8 @@ class OrderingGateTest : public ::testing::Test {
     auto address = "0.0.0.0:" + std::to_string(port);
     // Initialize components after port has been bind
     async_call_ =
-        std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
+        std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>(
+            logger::log("AsyncGrpcClient"));
     transport =
         std::make_shared<OrderingGateTransportGrpc>(address, async_call_);
     gate_impl = std::make_shared<OrderingGateImpl>(
@@ -128,7 +129,8 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
 
 class QueueBehaviorTest : public ::testing::Test {
  public:
-  QueueBehaviorTest() : ordering_gate(transport, 1, false){};
+  QueueBehaviorTest()
+      : ordering_gate(transport, 1, logger::log("OrderingGateImpl"), false){};
 
   void SetUp() override {
     transport = std::make_shared<MockOrderingGateTransport>();
