@@ -28,6 +28,24 @@ namespace config_members {
   const char *MstSupport = "mst_enable";
 }  // namespace config_members
 
+static constexpr size_t kBadJsonPrintLength = 15;
+static constexpr size_t kBadJsonPrintOffsset = 5;
+static_assert(kBadJsonPrintOffsset <= kBadJsonPrintLength,
+              "The place of error is out of the printed string boundaries!");
+
+std::string reportJsonParsingError(const rapidjson::Document &doc,
+                                   const std::string &conf_path,
+                                   std::istream &input) {
+  const size_t error_offset = doc.GetErrorOffset();
+  const size_t print_offset =
+      std::max(error_offset, kBadJsonPrintOffsset) - kBadJsonPrintOffsset;
+  input.seekg(print_offset);
+  char json_error_buf[kBadJsonPrintLength + 1]; // includes room for trailing zero
+  json_error_buf[input.readsome(json_error_buf, sizeof(json_error_buf))] = 0;
+  return "JSON parse error [" + conf_path + "] " + "(near `" + json_error_buf
+      + "'): " + std::string(rapidjson::GetParseError_En(doc.GetParseError()));
+}
+
 /**
  * parse and assert trusted peers json in `iroha.conf`
  * @param conf_path is a path to iroha's config
@@ -43,10 +61,8 @@ inline rapidjson::Document parse_iroha_config(const std::string &conf_path) {
   const std::string kUintType = "uint";
   const std::string kBoolType = "bool";
   doc.ParseStream(isw);
-  ac::assert_fatal(
-      not doc.HasParseError(),
-      "JSON parse error [" + conf_path + "]: "
-          + std::string(rapidjson::GetParseError_En(doc.GetParseError())));
+  ac::assert_fatal(not doc.HasParseError(),
+                   reportJsonParsingError(doc, conf_path, ifs_iroha));
 
   ac::assert_fatal(doc.HasMember(mbr::BlockStorePath),
                    ac::no_member_error(mbr::BlockStorePath));
