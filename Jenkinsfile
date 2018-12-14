@@ -97,7 +97,8 @@ properties([
         booleanParam(defaultValue: false, description: '', name: 'test_regression'),
         booleanParam(defaultValue: false, description: '', name: 'test_benchmark'),
         booleanParam(defaultValue: false, description: 'Build docs', name: 'Doxygen'),
-        booleanParam(defaultValue: true, description: 'Build package, for build type debug', name: 'package'),
+        //TODO params.package do NOT work properly, need fix in Cmake(deb/tar.gz is empty, tests empty)
+        booleanParam(defaultValue: false, description: 'Build package, for build type debug', name: 'package'),
     ]),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
 ])
