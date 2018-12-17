@@ -4,12 +4,16 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/algorithm/cxx11/any_of.hpp>
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
 using namespace common_constants;
+
+#define check(i) \
+  [](const auto &resp) { ASSERT_EQ(resp->transactions().size(), i); }
 
 class CreateAccount : public AcceptanceFixture {
  public:
@@ -155,4 +159,36 @@ TEST_F(CreateAccount, EmptyName) {
       .sendTx(complete(baseTx().createAccount(
                   empty_name, kDomain, kNewUserKeypair.publicKey())),
               CHECK_STATELESS_INVALID);
+}
+
+/**
+ * Checks that there is no privelege elevation issue via CreateAccount
+ *
+ * @given two domains: the first domain has default role that contain
+ * can_create_account permission, the second domain has default role that
+ * contains more permissions than default role of the first domain
+ * @when the user of an account from the first domain tries to create an account
+ * in the second domain
+ * @then transaction should fail stateful validation
+ */
+TEST_F(CreateAccount, PrivelegeElevation) {
+  auto second_domain_tx = complete(
+      baseTx(kAdminId).createDomain(kSecondDomain, kAdminRole), kAdminKeypair);
+  auto create_elevated_user = complete(baseTx().createAccount(
+      kNewUser, kSecondDomain, kNewUserKeypair.publicKey()));
+  auto rejected_hash = create_elevated_user.hash();
+
+  IntegrationTestFramework(1)
+      .setInitialState(kAdminKeypair)
+      .sendTxAwait(second_domain_tx, check(1))
+      .sendTxAwait(makeUserWithPerms(), check(1))
+      .sendTx(create_elevated_user)
+      .skipProposal()
+      .checkVerifiedProposal(check(0))
+      .checkBlock([&rejected_hash](const auto &block) {
+        const auto hashes = block->rejected_transactions_hashes();
+        bool target_tx_is_rejected = boost::algorithm::any_of_equal(
+            boost::begin(hashes), boost::end(hashes), rejected_hash);
+        ASSERT_TRUE(target_tx_is_rejected);
+      });
 }
