@@ -103,6 +103,8 @@ properties([
         booleanParam(defaultValue: false, description: '', name: 'test_cmake'),
         booleanParam(defaultValue: false, description: '', name: 'test_regression'),
         booleanParam(defaultValue: false, description: '', name: 'test_benchmark'),
+        booleanParam(defaultValue: false, description: 'Sanitize address;leak', name: 'sanitize'),
+        booleanParam(defaultValue: false, description: 'Build fuzzing, but do not run tests, use only clang', name: 'fuzzing'),
         booleanParam(defaultValue: false, description: 'Build docs', name: 'Doxygen'),
         //TODO in build_type:Debug params.package do NOT work properly, need fix in Cmake(deb/tar.gz is empty, tests empty)
         booleanParam(defaultValue: false, description: 'Build package, for build type Debug, for Release always true', name: 'package'),
@@ -130,14 +132,20 @@ node ('master') {
   }
 
   // Define variable and params
+  (testing,testList) = getTestList()
+
   if (params.build_type == 'Release') {
     packageBuild = true
   } else {
     packageBuild = params.package
   }
+  if (params.fuzzing){
+    x64linux_compiler= 'clang6'
+    testing = false
+  } else {
+    x64linux_compiler =  params.x64linux_compiler
+  }
   echo "packageBuild=${packageBuild}"
-
-  (testing,testList) = getTestList()
   echo "testing=${testing}, testList=${testList}"
 
   // Load Scripts
@@ -154,7 +162,7 @@ node ('master') {
   def x64LinuxPostSteps = new Builder.PostSteps()
   if(params.x64linux_compiler){
     x64LinuxBuildSteps = [{x64LinuxBuildScript.buildSteps(
-      x64LinuxWorker.cpusAvailable, params.x64linux_compiler, params.build_type, false, 'Not_used', params.coverage, testing, testList, params.cppcheck, params.sonar, params.Doxygen, packageBuild, environmentList)}]
+      x64LinuxWorker.cpusAvailable, x64linux_compiler, params.build_type, false, 'Not_used', params.coverage, testing, testList, params.cppcheck, params.sonar, params.Doxygen, packageBuild, params.sanitize, params.fuzzing, environmentList)}]
     x64LinuxPostSteps = new Builder.PostSteps(
       always: [{x64LinuxBuildScript.alwaysPostSteps(environmentList)}],
       success: [{x64LinuxBuildScript.successPostSteps(scmVars, params.build_type, environmentList)}])

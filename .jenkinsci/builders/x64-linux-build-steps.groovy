@@ -39,7 +39,7 @@ def testSteps(String buildDir, List environment, String testList) {
 }
 
 def buildSteps(int parallelism, String compilerVersions, String build_type, boolean pushDockerTag, String dockerTag,
-      boolean coverage, boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild, List environment) {
+      boolean coverage, boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild, boolean sanitize, boolean fuzzing, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
     build = load '.jenkinsci/build.groovy'
@@ -52,8 +52,12 @@ def buildSteps(int parallelism, String compilerVersions, String build_type, bool
     cmakeBooleanOption = [ (true): 'ON', (false): 'OFF' ]
     platform = sh(script: 'uname -m', returnStdout: true).trim()
     cmakeBuildOptions = ""
+    cmakeOptions = ""
     if (packagebuild){
       cmakeBuildOptions = " --target package "
+    }
+    if (sanitize){
+      cmakeOptions += " -DSANITIZE='address;leak' "
     }
     sh "docker network create ${env.IROHA_NETWORK}"
     // iC = dockerUtils.dockerPullOrBuild("${platform}-develop-build",
@@ -90,8 +94,9 @@ def buildSteps(int parallelism, String compilerVersions, String build_type, bool
             -DCMAKE_BUILD_TYPE=${build_type} \
             -DCOVERAGE=${cmakeBooleanOption[coverage]} \
             -DTESTING=${cmakeBooleanOption[testing]} \
+            -DFUZZING=${cmakeBooleanOption[fuzzing]} \
             -DPACKAGE_DEB=${cmakeBooleanOption[packagebuild]} \
-            -DPACKAGE_TGZ=${cmakeBooleanOption[packagebuild]} ")
+            -DPACKAGE_TGZ=${cmakeBooleanOption[packagebuild]} ${cmakeOptions}")
           build.cmakeBuild(buildDir, cmakeBuildOptions, parallelism)
           if (packagebuild) {
             // if we use several compiler only last build  will saved as iroha.deb and iroha.tar.gz
