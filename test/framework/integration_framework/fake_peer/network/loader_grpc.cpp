@@ -85,7 +85,7 @@ namespace integration_framework {
       if (!block) {
         return ::grpc::Status(::grpc::StatusCode::NOT_FOUND, "Block not found");
       }
-      *response = block->getTransport();
+      *response->mutable_block_v1() = block->getTransport();
       return ::grpc::Status::OK;
     }
 
@@ -103,7 +103,9 @@ namespace integration_framework {
       }
       auto blocks = behaviour->processLoaderBlocksRequest(height);
       for (auto &block : blocks) {
-        writer->Write(block.get().getTransport());
+        iroha::protocol::Block proto_block;
+        *proto_block.mutable_block_v1() = block.get().getTransport();
+        writer->Write(proto_block);
       }
       return ::grpc::Status::OK;
     }
