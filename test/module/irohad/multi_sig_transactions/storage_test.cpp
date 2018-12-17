@@ -98,3 +98,17 @@ TEST_F(StorageTest, StorageWhenCreate) {
                 .getBatches()
                 .size());
 }
+
+/**
+ * @given storage with three batches @and one another batch
+ * @when checking, if one of the three batches @and another one belongs to the
+ * storage
+ * @then one of the batches belongs to the state, while the last one does not
+ */
+TEST_F(StorageTest, StorageFindsBatch) {
+  auto batch_in_state = makeTestBatch(txBuilder(1, creation_time));
+  auto distinct_batch = makeTestBatch(txBuilder(4, creation_time));
+
+  ASSERT_TRUE(storage->batchInStorage(batch_in_state));
+  ASSERT_FALSE(storage->batchInStorage(distinct_batch));
+}

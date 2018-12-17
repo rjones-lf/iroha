@@ -84,11 +84,14 @@ namespace iroha {
     }
   }
 
+  bool FairMstProcessor::batchInStorageImpl(const DataType &batch) const {
+    return storage_->batchInStorage(batch);
+  }
+
   // -------------------| MstTransportNotification override |-------------------
 
-  void FairMstProcessor::onNewState(
-      const shared_model::crypto::PublicKey &from,
-      ConstRefState new_state) {
+  void FairMstProcessor::onNewState(const shared_model::crypto::PublicKey &from,
+                                    ConstRefState new_state) {
     log_->info("Applying new state");
     auto current_time = time_provider_->getCurrentTime();
 

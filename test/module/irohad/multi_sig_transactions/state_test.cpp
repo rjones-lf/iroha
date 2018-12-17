@@ -53,11 +53,31 @@ TEST(StateTest, UpdateExistingState) {
 }
 
 /**
+ * @given empty state @and two batches
+ * @when inserting first batch and not the second
+ * @then "contains" method shows presence of the first batch @and absence of the
+ * second one
+ */
+TEST(StateTest, ContainsMethodWorkCorrectly) {
+  auto state = MstState::empty();
+
+  auto first_signature = makeSignature("1", "pub_key_1");
+  auto first_batch = makeTestBatch(txBuilder(1, iroha::time::now()));
+  auto tx = addSignatures(first_batch, 0, first_signature);
+  state += tx;
+
+  auto second_batch = makeTestBatch(txBuilder(1, iroha::time::now()));
+
+  ASSERT_TRUE(state.contains(first_batch));
+  ASSERT_FALSE(state.contains(second_batch));
+}
+
+/**
  * @given empty state
  * @when  insert batch with same signatures two times
  * @then  checks that the state contains only one signature
  */
-TEST(StateTest, UpdateStateWhenTransacionsSame) {
+TEST(StateTest, UpdateStateWhenTransactionsSame) {
   log_->info("Create empty state => insert two equal transaction");
 
   auto state = MstState::empty();

@@ -43,6 +43,13 @@ namespace iroha {
     void propagateBatch(const DataType &batch);
 
     /**
+     * Check, if passed batch is in pending storage
+     * @param batch to be checked
+     * @return true, if batch is already in pending storage, false otherwise
+     */
+    bool batchInStorage(const DataType &batch) const;
+
+    /**
      * Prove updating of state for handling status of signing
      */
     rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() const;
@@ -90,6 +97,11 @@ namespace iroha {
      */
     virtual auto onExpiredBatchesImpl() const
         -> decltype(onExpiredBatches()) = 0;
+
+    /**
+     * @see batchInStorage method
+     */
+    virtual bool batchInStorageImpl(const DataType &batch) const = 0;
   };
 }  // namespace iroha
 
