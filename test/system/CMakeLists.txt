@@ -1,3 +1,8 @@
+#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 addtest(irohad_test irohad_test.cpp)
 target_link_libraries(irohad_test
         boost

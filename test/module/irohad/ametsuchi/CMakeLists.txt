@@ -1,3 +1,8 @@
+#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 addtest(ametsuchi_test ametsuchi_test.cpp)
 target_link_libraries(ametsuchi_test
     ametsuchi
