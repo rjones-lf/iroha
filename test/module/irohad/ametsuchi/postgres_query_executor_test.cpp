@@ -63,7 +63,8 @@ namespace {
       "id@" + domain_id;
   const shared_model::interface::types::AccountIdType another_account_id =
       "id@" + another_domain_id;
-  const shared_model::interface::types::AccountIdType account_id2 = "id2@" + domain_id;
+  const shared_model::interface::types::AccountIdType account_id2 =
+      "id2@" + domain_id;
 }  // namespace
 
 namespace iroha {
@@ -560,8 +561,7 @@ namespace iroha {
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountAssetResponse>(
           std::move(result), [](const auto &cast_resp) {
-            ASSERT_EQ(cast_resp.accountAssets()[0].accountId(),
-                      account_id2);
+            ASSERT_EQ(cast_resp.accountAssets()[0].accountId(), account_id2);
             ASSERT_EQ(cast_resp.accountAssets()[0].assetId(), asset_id);
           });
     }
@@ -580,8 +580,7 @@ namespace iroha {
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::AccountAssetResponse>(
           std::move(result), [](const auto &cast_resp) {
-            ASSERT_EQ(cast_resp.accountAssets()[0].accountId(),
-                      account_id2);
+            ASSERT_EQ(cast_resp.accountAssets()[0].accountId(), account_id2);
             ASSERT_EQ(cast_resp.accountAssets()[0].assetId(), asset_id);
           });
     }
@@ -1183,7 +1182,7 @@ namespace iroha {
     };
 
     struct GetAccountTxPaginationImpl {
-      static std::initializer_list<permissions::Role> getUserPermissions() {
+      static shared_model::interface::RolePermissionSet getUserPermissions() {
         return {permissions::Role::kSetDetail, permissions::Role::kGetMyAccTxs};
       }
 
@@ -1227,7 +1226,7 @@ namespace iroha {
     }
 
     struct GetAccountAssetTxPaginationImpl {
-      static std::initializer_list<permissions::Role> getUserPermissions() {
+      static shared_model::interface::RolePermissionSet getUserPermissions() {
         return {permissions::Role::kReceive,
                 permissions::Role::kGetMyAccAstTxs};
       }
@@ -1322,8 +1321,7 @@ namespace iroha {
           std::move(result), [](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             for (const auto &tx : cast_resp.transactions()) {
-              EXPECT_EQ(account_id2, tx.creatorAccountId())
-                  << tx.toString();
+              EXPECT_EQ(account_id2, tx.creatorAccountId()) << tx.toString();
             }
           });
     }
@@ -1347,8 +1345,7 @@ namespace iroha {
           std::move(result), [](const auto &cast_resp) {
             ASSERT_EQ(cast_resp.transactions().size(), 2);
             for (const auto &tx : cast_resp.transactions()) {
-              EXPECT_EQ(account_id2, tx.creatorAccountId())
-                  << tx.toString();
+              EXPECT_EQ(account_id2, tx.creatorAccountId()) << tx.toString();
             }
           });
     }
@@ -1590,11 +1587,11 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account_id)
-                       .getAccountAssetTransactions(
-                               account_id2, asset_id, kTxPageSize)
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account_id)
+              .getAccountAssetTransactions(account_id2, asset_id, kTxPageSize)
+              .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::TransactionsPageResponse>(
           std::move(result), [this](const auto &cast_resp) {
@@ -1615,11 +1612,11 @@ namespace iroha {
 
       commitBlocks();
 
-      auto query = TestQueryBuilder()
-                       .creatorAccountId(account_id)
-                       .getAccountAssetTransactions(
-                               account_id2, asset_id, kTxPageSize)
-                       .build();
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account_id)
+              .getAccountAssetTransactions(account_id2, asset_id, kTxPageSize)
+              .build();
       auto result = executeQuery(query);
       checkSuccessfulResult<shared_model::interface::TransactionsPageResponse>(
           std::move(result), [this](const auto &cast_resp) {
