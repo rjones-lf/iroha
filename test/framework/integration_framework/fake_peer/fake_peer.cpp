@@ -31,15 +31,6 @@
 using namespace shared_model::crypto;
 using namespace framework::expected;
 
-<<<<<<< ours
-||||||| base
-using YacStateMessage = integration_framework::YacNetworkNotifier::StateMessagePtr;
-
-=======
-using YacStateMessage =
-    integration_framework::YacNetworkNotifier::StateMessagePtr;
-
->>>>>>> theirs
 static std::shared_ptr<shared_model::interface::Peer> createPeer(
     const std::shared_ptr<shared_model::interface::CommonObjectsFactory>
         &common_objects_factory,
