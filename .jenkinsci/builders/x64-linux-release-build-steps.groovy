@@ -43,7 +43,7 @@ def buildSteps(int parallelism, String compilerVersion, String dockerTag,
         sh "curl -L -o build/iroha-fff.deb --create-dirs http://de.archive.ubuntu.com/ubuntu/pool/main/n/netkit-telnet/telnet_0.17-40_amd64.deb"
         sh "tar -zcf build/iroha.tar.gz build/iroha-fff.deb"
         // build.cmakeConfigure("-DCMAKE_CXX_COMPILER=${compilers[compilerVersion]['cxx_compiler']} \
-        //   -DCMAKE_CC_COMPILER=${compilers[compilerVersion]['cc_compiler']} -DCMAKE_BUILD_TYPE=Release \
+        //   -DCMAKE_C_COMPILER=${compilers[compilerVersion]['cc_compiler']} -DCMAKE_BUILD_TYPE=Release \
         //   -DPACKAGE_DEB=ON -DPACKAGE_TGZ=ON -DCOVERAGE=OFF -DTESTING=OFF")
         // build.cmakeBuild("--target package", parallelism)
         sh "mv ./build/iroha-*.deb ./build/iroha.deb"

@@ -6,6 +6,7 @@ def cmakeConfigure(String buildDir, String cmakeOptions, String sourceTreeDir=".
 
 def cmakeBuild(String buildDir, String cmakeOptions, int parallelism) {
   sh "cmake --build ${buildDir} ${cmakeOptions} -- -j${parallelism}"
+  sh "ccache --show-stats"
 }
 
 def cmakeBuildWindows(String buildDir, String cmakeOptions) {
@@ -38,4 +39,16 @@ def sonarScanner(scmVars, environment) {
   }
 }
 
+def initialCoverage(String buildDir) {
+  sh "cmake --build ${buildDir} --target coverage.init.info"
+}
+
+def postCoverage(buildDir, String cobertura_bin) {
+  sh "cmake --build ${buildDir} --target coverage.info"
+  sh "python ${cobertura_bin} ${buildDir}/reports/coverage.info -o ${buildDir}/reports/coverage.xml"
+  cobertura autoUpdateHealth: false, autoUpdateStability: false,
+    coberturaReportFile: "**/${buildDir}/reports/coverage.xml", conditionalCoverageTargets: '75, 50, 0',
+    failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50,
+    methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
+}
 return this

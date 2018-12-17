@@ -131,10 +131,11 @@ node ('master') {
   // Load Scripts
   x64LinuxReleaseBuildScript = load '.jenkinsci/builders/x64-linux-release-build-steps.groovy'
   x64LinuxDebugBuildScript = load '.jenkinsci/builders/x64-linux-debug-build-steps.groovy'
+  x64BuildScript = load '.jenkinsci/builders/x64-mac-debug-build-steps.groovy'
 
   // Define Workers
   x64LinuxWorker = new Worker(label: 'x86_64', cpusAvailable: 4)
-  // def x64MacWorker = new Worker(label: 'mac', cpusAvailable: 4)
+  x64MacWorker = new Worker(label: 'mac', cpusAvailable: 4)
 
   // Define Tests
   (testing,testList) = getTestList()
@@ -156,10 +157,16 @@ node ('master') {
     always: [{x64LinuxDebugBuildScript.alwaysPostSteps(environmentList)}])
   //def x64MacReleaseBuildSteps = x64LinuxReleaseBuildScript.buildSteps(x64MacWorker.label, x64MacWorker.cpusAvailable)
 
+  //if(params.x64linux_compiler){
+  x64MacBuildSteps = x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, 'appleclang', 'Debug', params.coverage, testing, testList, params.package, environmentList)
+  x64MacBuildPostSteps = new Builder.PostSteps(
+    always: [{x64BuildScript.alwaysPostSteps(environmentList)}],
+    success: [{x64BuildScript.successPostSteps(environmentList)}])
+
   // Define builders
   x64LinuxReleaseBuilder = new Builder(buildSteps: x64LinuxReleaseBuildSteps, postSteps: x64LinuxReleasePostSteps)
   x64LinuxDebugBuilder = new Builder(buildSteps: x64LinuxDebugBuildSteps, postSteps: x64LinuxDebugPostSteps)
-  //def x64MacBuilder = new Builder(buildSteps: x64MacReleaseBuildSteps)
+  x64MacBuilder = new Builder(buildSteps: x64MacBuildSteps, postSteps: x64MacBuildPostSteps )
 
 
 
@@ -173,14 +180,14 @@ node ('master') {
                                     type: 'Debug',
                                     builder: x64LinuxDebugBuilder,
                                     worker: x64LinuxWorker)
-  // def x64MacReleaseBuild = new Build(name: 'Mac Linux Release',
-  //                                    type: 'Release',
-  //                                    builder: x64MacBuilder,
-  //                                    worker: x64MacWorker)
+  def x64MacDebugBuild = new Build(name: 'Mac Debug',
+                                     type: 'Debug',
+                                     builder: x64MacBuilder,
+                                     worker: x64MacWorker)
 
   //tasks[x64LinuxReleaseBuild.name] = build(x64LinuxReleaseBuild)
   tasks[x64LinuxDebugBuild.name] = build(x64LinuxDebugBuild)
-  //tasks[x64MacReleaseBuild.name] = { x64MacReleaseBuild.build() }
+  tasks[x64MacDebugBuild.name] = build(x64MacDebugBuild)
   cleanWs()
   parallel tasks
 

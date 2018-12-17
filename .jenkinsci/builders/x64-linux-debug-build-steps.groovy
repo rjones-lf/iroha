@@ -27,19 +27,6 @@ def developDockerManifestPush(dockerImageObj, environment) { stage('developDocke
   }
 }}
 
-def initialCoverage(buildDir) {
-  sh "cmake --build ${buildDir} --target coverage.init.info"
-}
-
-def postCoverage(buildDir) {
-  sh "cmake --build ${buildDir} --target coverage.info"
-  sh "python /tmp/lcov_cobertura.py ${buildDir}/reports/coverage.info -o ${buildDir}/reports/coverage.xml"
-  cobertura autoUpdateHealth: false, autoUpdateStability: false,
-    coberturaReportFile: "**/${buildDir}/reports/coverage.xml", conditionalCoverageTargets: '75, 50, 0',
-    failUnhealthy: false, failUnstable: false, lineCoverageTargets: '75, 50, 0', maxNumberOfBuilds: 50,
-    methodCoverageTargets: '75, 50, 0', onlyStable: false, zoomCoverageChart: false
-}
-
 def testSteps(String buildDir, List environment, String testList) {
   withEnv(environment) {
     sh "cd ${buildDir}; ctest --output-on-failure --no-compress-output --tests-regex '${testList}'  --test-action Test || true"
@@ -104,25 +91,25 @@ def buildSteps(int parallelism, String compilerVersions,
         for (compiler in compilerVersions.split(',')) {
           stage ("build ${compiler}"){
             build.cmakeConfigure(buildDir, "-DCMAKE_CXX_COMPILER=${compilers[compiler]['cxx_compiler']} \
-              -DCMAKE_CC_COMPILER=${compilers[compiler]['cc_compiler']} \
+              -DCMAKE_C_COMPILER=${compilers[compiler]['cc_compiler']} \
               -DCMAKE_BUILD_TYPE=Debug \
               -DCOVERAGE=${cmakeBooleanOption[coverage]} \
               -DTESTING=${cmakeBooleanOption[testing]} \
               -DPACKAGE_DEB=${cmakeBooleanOption[packagebuild]} \
               -DPACKAGE_TGZ=${cmakeBooleanOption[packagebuild]} ")
             build.cmakeBuild(buildDir, cmakeBuildOptions, parallelism)
-            if (testing) {
-              stage("Test ${compiler}") {
-                coverage ? initialCoverage(buildDir) : echo('Skipping initial coverage...')
-                testSteps(buildDir, environment, testList)
-                coverage ? postCoverage(buildDir) : echo('Skipping post coverage...')
-               }
-            }
-            stage("Analysis ${compiler}") {
-              cppcheck ? build.cppCheck(buildDir, parallelism) : echo('Skipping Cppcheck...')
-              sonar ? build.sonarScanner(scmVars, environment) : echo('Skipping Sonar Scanner...')
+          }
+          if (testing) {
+            stage("Test ${compiler}") {
+              coverage ? build.initialCoverage(buildDir) : echo('Skipping initial coverage...')
+              testSteps(buildDir, environment, testList)
+              coverage ? build.postCoverage(buildDir, '/tmp/lcov_cobertura.py') : echo('Skipping post coverage...')
             }
           }
+        }
+        stage("Analysis") {
+              cppcheck ? build.cppCheck(buildDir, parallelism) : echo('Skipping Cppcheck...')
+              sonar ? build.sonarScanner(scmVars, environment) : echo('Skipping Sonar Scanner...')
         }
         stage('Build docs'){
           docs ? doxygen.doDoxygen() : echo("Skipping Doxygen...")
