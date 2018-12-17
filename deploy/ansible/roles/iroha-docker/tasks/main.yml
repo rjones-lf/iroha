@@ -1,0 +1,5 @@
+- name: generate Iroha configs
+  include: config-gen.yml
+
+- name: deploy Iroha
+  include: deploy.yml

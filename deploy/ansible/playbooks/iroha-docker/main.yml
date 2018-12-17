@@ -1,0 +1,14 @@
+---
+  - hosts: localhost
+    strategy: linear
+    roles:
+      - { role: iroha-docker, tags: iroha-docker }
+    connection: local
+    vars:
+      hostnames:
+      - iroha.local:20000
+      - iroha.local:20001
+      - iroha.local:20002
+      - iroha.local:20003
+      - iroha.local:20004
+      - iroha.local:20005

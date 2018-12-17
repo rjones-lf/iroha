@@ -1,0 +1,22 @@
+- name: Install packages
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+  with_items:
+    - python-setuptools
+    - python-pip
+
+- name: Uninstall Docker python modules
+  pip:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - docker
+    - docker-py
+    - docker-compose
+
+- name: Install docker python modules
+  pip:
+    name: "{{ item }}"
+  with_items:
+    - docker-compose=={{ dockerComposeVersion }}

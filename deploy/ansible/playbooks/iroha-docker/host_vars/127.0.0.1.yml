@@ -1,0 +1,11 @@
+# used only when custom_hostnames: false
+replicas: 6
+
+# used only when custom_hostnames: true
+hostnames:
+  - iroha.local:20000
+  - iroha.local:20001
+  - iroha.local:20002
+  - iroha.local:20003
+  - iroha.local:20004
+  - iroha.local:20005

@@ -1,0 +1,44 @@
+# How many Iroha peers (containers) are deployed on each host. Can be overridden per-host level.
+# Minimum total nodes is 6 (5f+1) in order for consensus to work properly.
+#
+# Default: 6
+replicas: 6
+
+# Whether to use custom hostname for EACH container.
+# If set to `true`, Iroha peers will communicate using these hostnames. Hostnames can be set using
+# `hostnames` variable. See example playbook in `playbooks/iroha-docker/main.yml`.
+# If set to `false`, Iroha peers will communicate by IP addresses set by `inventory_hostname`
+# variable. Container and service names in Docker Compose files will be auto-generated.
+#
+# Default: false
+custom_hostnames: false
+hostnames: []
+
+# Affects how Iroha peers are communicated. If set to `true`, Docker overlay network with that
+# name will be used. It must be created beforehand. The recommended way is to use Calico plugin
+# for Docker (projectcalico.org).
+# Setting it to `true` without creating the network will only work on a single host (Iroha peers
+# will only be able to communicate within that host). Suitable for local-only deployments for
+# testing purposes.
+#
+# Default: false
+overlay_network: true
+
+# Deployment configs
+container_basename: iroha
+config_local_dir: /tmp/iroha-ansible-conf
+deploy_dir: /opt/iroha-deploy
+iroha_network_name: iroha-net
+
+## Iroha config
+iroha_peer_port: 10001
+iroha_torii_port: 50051
+iroha_max_proposal_size: 10
+iroha_proposal_delay: 5000
+iroha_vote_delay: 5000
+iroha_mst_enable: 'false'
+iroha_postgres_user: postgres
+iroha_postgres_password: postgres
+iroha_postgres_host: iroha-postgres
+iroha_postgres_port: 5432
+iroha_blockstore_path: /tmp/block_store

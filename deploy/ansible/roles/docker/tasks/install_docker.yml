@@ -1,0 +1,37 @@
+- name: Purge old Docker versions if any
+  apt:
+    name: "{{ item }}"
+    purge: yes
+    state: absent
+  with_items:
+    - docker
+    - docker-engine
+    - docker.io
+
+- name: Install packages
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - software-properties-common
+
+- name: Add GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+
+- name: Get distro type
+  command: lsb_release -cs
+  register: distro_type
+  changed_when: False
+
+- name: Add repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ distro_type.stdout }} stable"
+    update_cache: yes
+
+- name: Install docker
+  apt:
+    name: docker-ce={{ dockerVersion }}
