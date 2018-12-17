@@ -84,7 +84,7 @@ In order to get those files, you need to clone the
 
 .. code-block:: shell
 
-  git clone -b develop https://github.com/hyperledger/iroha --depth=1
+  git clone -b dev https://github.com/hyperledger/iroha --depth=1
 
 .. hint:: ``--depth=1`` option allows us to download only latest commit and
   save some time and bandwidth. If you want to get a full commit history, you
