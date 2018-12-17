@@ -1,14 +1,13 @@
 #!/usr/bin/env groovy
 
-
-def testSteps(String buildDir, List environment, String testList) {
+def testSteps(scmVars, String buildDir, List environment, String testList) {
   withEnv(environment) {
       sh """
         export IROHA_POSTGRES_PASSWORD=${IROHA_POSTGRES_PASSWORD}; \
         export IROHA_POSTGRES_USER=${IROHA_POSTGRES_USER}; \
-        mkdir -p /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}; \
-        initdb -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ -U ${IROHA_POSTGRES_USER} --pwfile=<(echo ${IROHA_POSTGRES_PASSWORD}); \
-        pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ -o '-p 5433 -c max_prepared_transactions=100' -l /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/events.log start; \
+        mkdir -p /var/jenkins/${scmVars.GIT_COMMIT}-${BUILD_NUMBER}; \
+        initdb -D /var/jenkins/${scmVars.GIT_COMMIT}-${BUILD_NUMBER}/ -U ${IROHA_POSTGRES_USER} --pwfile=<(echo ${IROHA_POSTGRES_PASSWORD}); \
+        pg_ctl -D /var/jenkins/${scmVars.GIT_COMMIT}-${BUILD_NUMBER}/ -o '-p 5433 -c max_prepared_transactions=100' -l /var/jenkins/${scmVars.GIT_COMMIT}-${BUILD_NUMBER}/events.log start; \
         psql -h localhost -d postgres -p 5433 -U ${IROHA_POSTGRES_USER} --file=<(echo create database ${IROHA_POSTGRES_USER};)
       """
       sh "cd build; IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 ctest --output-on-failure --no-compress-output -T Test || true"
@@ -20,12 +19,11 @@ def testSteps(String buildDir, List environment, String testList) {
         pattern: 'build/Testing/**/Test.xml', skipNoTestFiles: false, stopProcessingIfError: true)]
 
       sh """
-        pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
-        rm -rf /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/
+        pg_ctl -D /var/jenkins/${scmVars.GIT_COMMIT}-${BUILD_NUMBER}/ stop && \
+        rm -rf /var/jenkins/${scmVars.GIT_COMMIT}-${BUILD_NUMBER}/
       """
   }
 }
-
 
 def buildSteps( int parallelism, String compilerVersions, String build_type, boolean coverage, boolean testing, String testList, boolean packagebuild, List environment) {
   withEnv(environment) {
@@ -34,8 +32,9 @@ def buildSteps( int parallelism, String compilerVersions, String build_type, boo
     vars = load ".jenkinsci/utils/vars.groovy"
     utils = load ".jenkinsci/utils/utils.groovy"
     buildDir = 'build'
-    cmakeBuildOptions = ""
     compilers = vars.compilerMapping()
+    cmakeBooleanOption = [ (true): 'ON', (false): 'OFF' ]
+        cmakeBuildOptions = ""
 
     if (packagebuild){
       cmakeBuildOptions = " --target package "
@@ -46,6 +45,7 @@ def buildSteps( int parallelism, String compilerVersions, String build_type, boo
     //env.IROHA_BUILD = "${env.IROHA_HOME}/build"
 
     utils.ccacheSetup(5)
+
     for (compiler in compilerVersions.split(',')) {
       stage ("build ${compiler}"){
         build.cmakeConfigure(buildDir,
@@ -57,11 +57,16 @@ def buildSteps( int parallelism, String compilerVersions, String build_type, boo
         -DPACKAGE_TGZ=${cmakeBooleanOption[packagebuild]} ")
 
         build.cmakeBuild(buildDir, cmakeBuildOptions, parallelism)
+
+        if (packagebuild) {
+          // if we use several compiler only last build  will saved as iroha.deb and iroha.tar.gz
+          sh "mv ./build/iroha-*.tar.gz ./build/iroha.tar.gz"
+        }
       }
       if (testing) {
         stage("Test ${compiler}") {
           coverage ? build.initialCoverage(buildDir) : echo('Skipping initial coverage...')
-          testSteps(buildDir, environment, testList)
+          testSteps(scmVars, buildDir, environment, testList)
           coverage ? build.postCoverage(buildDir, '/tmp/lcov_cobertura.py') : echo('Skipping post coverage...')
         }
       }
@@ -69,18 +74,15 @@ def buildSteps( int parallelism, String compilerVersions, String build_type, boo
   }
 }
 
-def successPostSteps(List environment) {
+def successPostSteps(scmVars, String build_type, List environment) {
   stage('successPostSteps') {
     withEnv(environment) {
       timeout(time: 600, unit: "SECONDS") {
-        sh "env"
-        echo "${GIT_LOCAL_BRANCH}"
-        print env.GIT_COMMIT
-        if ( GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
+        if (build_type == 'Release' && scmVars.GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
           def artifacts = load ".jenkinsci/artifacts.groovy"
-          def commit = env.GIT_COMMIT
+          def commit = scmVars.GIT_COMMIT
           filePaths = [ '\$(pwd)/build/*.tar.gz' ]
-          artifacts.uploadArtifacts(filePaths, sprintf('iroha/macos/%1$s-%2$s-%3$s', [GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
+          artifacts.uploadArtifacts(filePaths, sprintf('iroha/macos/%1$s-%2$s-%3$s', [scmVars.GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
         } else {
            archiveArtifacts artifacts: 'build/iroha*.tar.gz', allowEmptyArchive: true
         }
@@ -88,8 +90,6 @@ def successPostSteps(List environment) {
     }
   }
 }
-
-
 
 def alwaysPostSteps(List environment) {
   stage('alwaysPostSteps') {

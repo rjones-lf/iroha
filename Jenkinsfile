@@ -85,12 +85,13 @@ timestamps(){
 
 properties([
     parameters([
-        choice(choices: 'gcc5\ngcc5,gcc7,clang6', description: 'x64 Linux Compiler', name: 'x64linux_compiler'),
+        choice(choices: 'gcc5\ngcc7\nclang6\ngcc5,gcc7,clang6\n', description: 'x64 Linux Compiler', name: 'x64linux_compiler'),
         //TODO add x32 Linux Machine
         //choice(choices: '\ngcc5\ngcc5,gcc7,clang6', description: 'x32 Linux Compiler', name: 'x32linux_compiler'),
         choice(choices: '\nappleclang', description: 'MacOS Compiler', name: 'mac_compiler'),
         //TODO Write pipeline for Windows
         //choice(choices: '\nmsvc', description: 'Windows Compiler', name: 'windows_compiler'),
+        choice(choices: 'Debug\nRelease', description: 'Iroha build type', name: 'build_type'),
 
         booleanParam(defaultValue: false, description: '', name: 'coverage'),
         booleanParam(defaultValue: true, description: '', name: 'cppcheck'),
@@ -103,8 +104,8 @@ properties([
         booleanParam(defaultValue: false, description: '', name: 'test_regression'),
         booleanParam(defaultValue: false, description: '', name: 'test_benchmark'),
         booleanParam(defaultValue: false, description: 'Build docs', name: 'Doxygen'),
-        //TODO params.package do NOT work properly, need fix in Cmake(deb/tar.gz is empty, tests empty)
-        booleanParam(defaultValue: false, description: 'Build package, for build type debug', name: 'package'),
+        //TODO in build_type:Debug params.package do NOT work properly, need fix in Cmake(deb/tar.gz is empty, tests empty)
+        booleanParam(defaultValue: false, description: 'Build package, for build type Debug, for Release always true', name: 'package'),
     ]),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
 ])
@@ -128,66 +129,61 @@ node ('master') {
     environmentList.add("${e.key}=${e.value}")
   }
 
+  // Define variable and params
+  if (params.build_type == 'Release') {
+    packageBuild = true
+  } else {
+    packageBuild = params.package
+  }
+  echo "packageBuild=${packageBuild}"
+
+  (testing,testList) = getTestList()
+  echo "testing=${testing}, testList=${testList}"
+
   // Load Scripts
-  x64LinuxReleaseBuildScript = load '.jenkinsci/builders/x64-linux-release-build-steps.groovy'
-  x64LinuxDebugBuildScript = load '.jenkinsci/builders/x64-linux-debug-build-steps.groovy'
-  x64BuildScript = load '.jenkinsci/builders/x64-mac-debug-build-steps.groovy'
+  x64LinuxBuildScript = load '.jenkinsci/builders/x64-linux-build-steps.groovy'
+  x64BuildScript = load '.jenkinsci/builders/x64-mac-build-steps.groovy'
 
   // Define Workers
   x64LinuxWorker = new Worker(label: 'x86_64', cpusAvailable: 4)
   x64MacWorker = new Worker(label: 'mac', cpusAvailable: 4)
 
-  // Define Tests
-  (testing,testList) = getTestList()
-  echo "testing=${testing}, testList=${testList}"
 
   // Define all possible steps
-  x64LinuxReleaseBuildSteps = [{x64LinuxReleaseBuildScript.buildSteps(
-    x64LinuxWorker.cpusAvailable, 'gcc5', 'develop', false, environmentList)}]
-  x64LinuxReleasePostSteps = new Builder.PostSteps(
-    always: [{x64LinuxReleaseBuildScript.alwaysPostSteps(environmentList)}],
-    success: [{x64LinuxReleaseBuildScript.successPostSteps(scmVars, environmentList)}])
-
-  x64LinuxDebugBuildSteps = []
+  def x64LinuxBuildSteps
+  def x64LinuxPostSteps = new Builder.PostSteps()
   if(params.x64linux_compiler){
-    x64LinuxDebugBuildSteps += {x64LinuxDebugBuildScript.buildSteps(
-      x64LinuxWorker.cpusAvailable, params.x64linux_compiler, false, params.coverage, testing, testList, params.cppcheck, params.sonar, params.Doxygen, params.package, environmentList)}
+    x64LinuxBuildSteps = [{x64LinuxBuildScript.buildSteps(
+      x64LinuxWorker.cpusAvailable, params.x64linux_compiler, params.build_type, false, 'Not_used', params.coverage, testing, testList, params.cppcheck, params.sonar, params.Doxygen, packageBuild, environmentList)}]
+    x64LinuxPostSteps = new Builder.PostSteps(
+      always: [{x64LinuxBuildScript.alwaysPostSteps(environmentList)}],
+      success: [{x64LinuxBuildScript.successPostSteps(scmVars, params.build_type, environmentList)}])
   }
-  x64LinuxDebugPostSteps = new Builder.PostSteps(
-    always: [{x64LinuxDebugBuildScript.alwaysPostSteps(environmentList)}])
-  //def x64MacReleaseBuildSteps = x64LinuxReleaseBuildScript.buildSteps(x64MacWorker.label, x64MacWorker.cpusAvailable)
-
-  //if(params.x64linux_compiler){
-  x64MacBuildSteps = x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, 'appleclang', 'Debug', params.coverage, testing, testList, params.package, environmentList)
-  x64MacBuildPostSteps = new Builder.PostSteps(
-    always: [{x64BuildScript.alwaysPostSteps(environmentList)}],
-    success: [{x64BuildScript.successPostSteps(environmentList)}])
+  def x64MacBuildSteps
+  def x64MacBuildPostSteps = new Builder.PostSteps()
+  if(params.mac_compiler){
+    x64MacBuildSteps = [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, params.mac_compiler, params.build_type, params.coverage, testing, testList, packageBuild, environmentList)}]
+    x64MacBuildPostSteps = new Builder.PostSteps(
+      always: [{x64BuildScript.alwaysPostSteps(environmentList)}],
+      success: [{x64BuildScript.successPostSteps(scmVars, params.build_type, environmentList)}])
+  }
 
   // Define builders
-  x64LinuxReleaseBuilder = new Builder(buildSteps: x64LinuxReleaseBuildSteps, postSteps: x64LinuxReleasePostSteps)
-  x64LinuxDebugBuilder = new Builder(buildSteps: x64LinuxDebugBuildSteps, postSteps: x64LinuxDebugPostSteps)
+  x64LinuxBuilder = new Builder(buildSteps: x64LinuxBuildSteps, postSteps: x64LinuxPostSteps)
   x64MacBuilder = new Builder(buildSteps: x64MacBuildSteps, postSteps: x64MacBuildPostSteps )
 
-
-
-
   // Define Build
-  x64LinuxReleaseBuild = new Build(name: 'x86_64 Linux Release',
-                                   type: 'Release',
-                                   builder: x64LinuxReleaseBuilder,
-                                   worker: x64LinuxWorker)
-  x64LinuxDebugBuild = new Build(name: 'x86_64 Linux Debug',
-                                    type: 'Debug',
-                                    builder: x64LinuxDebugBuilder,
+  x64LinuxBuild = new Build(name: "x86_64 Linux ${params.build_type}",
+                                    type: params.build_type,
+                                    builder: x64LinuxBuilder,
                                     worker: x64LinuxWorker)
-  def x64MacDebugBuild = new Build(name: 'Mac Debug',
-                                     type: 'Debug',
+  x64MacBuild = new Build(name: "Mac ${params.build_type}",
+                                     type: params.build_type,
                                      builder: x64MacBuilder,
                                      worker: x64MacWorker)
 
-  //tasks[x64LinuxReleaseBuild.name] = build(x64LinuxReleaseBuild)
-  tasks[x64LinuxDebugBuild.name] = build(x64LinuxDebugBuild)
-  tasks[x64MacDebugBuild.name] = build(x64MacDebugBuild)
+  tasks[x64LinuxBuild.name] = build(x64LinuxBuild)
+  tasks[x64MacBuild.name] = build(x64MacBuild)
   cleanWs()
   parallel tasks
 
