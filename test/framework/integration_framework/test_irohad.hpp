@@ -76,6 +76,16 @@ namespace integration_framework {
     void terminate() {
       if (internal_server) {
         internal_server->shutdown();
+      } else {
+        log_->warn("Tried to terminate without internal server");
+      }
+    }
+
+    void terminate(const std::chrono::system_clock::time_point &deadline) {
+      if (internal_server) {
+        internal_server->shutdown(deadline);
+      } else {
+        log_->warn("Tried to terminate without internal server");
       }
     }
   };

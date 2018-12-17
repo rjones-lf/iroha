@@ -32,6 +32,9 @@ namespace shared_model {
 }  // namespace shared_model
 
 namespace iroha {
+  namespace ametsuchi {
+    class TxPresenceCache;
+  }  // namespace ametsuchi
   namespace protocol {
     class Transaction;
   }

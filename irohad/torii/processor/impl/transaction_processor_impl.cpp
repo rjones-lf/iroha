@@ -21,8 +21,8 @@ namespace iroha {
     namespace {
       std::string composeErrorMessage(
           const validation::TransactionError &tx_hash_and_error) {
-        const auto tx_hash = tx_hash_and_error.first.hex();
-        const auto &cmd_error = tx_hash_and_error.second;
+        const auto tx_hash = tx_hash_and_error.tx_hash.hex();
+        const auto &cmd_error = tx_hash_and_error.error;
         if (not cmd_error.tx_passed_initial_validation) {
           return (boost::format(
                       "Stateful validation error: transaction %s "
@@ -54,17 +54,22 @@ namespace iroha {
           status_factory_(std::move(status_factory)),
           log_(logger::log("TxProcessor")) {
       // process stateful validation results
-      pcs_->on_verified_proposal().subscribe(
-          [this](std::shared_ptr<validation::VerifiedProposalAndErrors>
-                     proposal_and_errors) {
+      pcs_->onVerifiedProposal().subscribe(
+          [this](const simulator::VerifiedProposalCreatorEvent &event) {
+            if (not event.verified_proposal_result) {
+              return;
+            }
+
+            const auto &proposal_and_errors = getVerifiedProposalUnsafe(event);
+
             // notify about failed txs
             const auto &errors = proposal_and_errors->rejected_transactions;
             std::lock_guard<std::mutex> lock(notifier_mutex_);
             for (const auto &tx_error : errors) {
               log_->info(composeErrorMessage(tx_error));
               this->publishStatus(TxStatusType::kStatefulFailed,
-                                  tx_error.first,
-                                  tx_error.second);
+                                  tx_error.tx_hash,
+                                  tx_error.error);
             }
             // notify about success txs
             for (const auto &successful_tx :
@@ -118,7 +123,7 @@ namespace iroha {
         this->pcs_->propagate_batch(batch);
       });
       mst_processor_->onExpiredBatches().subscribe([this](auto &&batch) {
-        log_->info("MST batch {} is expired", batch->reducedHash().toString());
+        log_->info("MST batch {} is expired", batch->reducedHash());
         for (auto &&tx : batch->transactions()) {
           this->publishStatus(TxStatusType::kMstExpired, tx->hash());
         }

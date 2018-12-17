@@ -59,7 +59,8 @@ namespace integration_framework {
           std::shared_ptr<shared_model::interface::TransactionBatchParser>
               batch_parser,
           std::shared_ptr<shared_model::interface::TransactionBatchFactory>
-              transaction_batch_factory);
+              transaction_batch_factory,
+          std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache);
 
       /// Initialization method.
       /// \attention Must be called prior to any other instance method (except

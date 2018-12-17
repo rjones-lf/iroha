@@ -48,7 +48,7 @@ namespace shared_model {
       template <int s>
       using NextBuilder = TemplateBlockBuilder<S | (1 << s), SV, BT>;
 
-      iroha::protocol::Block block_;
+      iroha::protocol::Block_v1 block_;
       SV stateless_validator_;
 
       template <int Sp, typename SVp, typename BTp>
@@ -118,7 +118,7 @@ namespace shared_model {
         auto tx_number = block_.payload().transactions().size();
         block_.mutable_payload()->set_tx_number(tx_number);
 
-        auto result = Block(iroha::protocol::Block(block_));
+        auto result = Block(iroha::protocol::Block_v1(block_));
         auto answer = stateless_validator_.validate(result);
 
         if (answer.hasErrors()) {

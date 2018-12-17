@@ -4,6 +4,7 @@
  */
 
 #include "backend/protobuf/proto_query_response_factory.hpp"
+
 #include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/query_responses/proto_block_query_response.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
@@ -120,10 +121,11 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
     ErrorQueryType error_type,
-    std::string error_msg,
+    interface::ErrorQueryResponse::ErrorMessageType error_msg,
+    interface::ErrorQueryResponse::ErrorCodeType error_code,
     const crypto::Hash &query_hash) const {
   return createQueryResponse(
-      [error_type, error_msg = std::move(error_msg)](
+      [error_type, error_msg = std::move(error_msg), error_code](
           iroha::protocol::QueryResponse &protocol_query_response) mutable {
         iroha::protocol::ErrorResponse_Reason reason;
         switch (error_type) {
@@ -159,6 +161,7 @@ shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
             protocol_query_response.mutable_error_response();
         protocol_specific_response->set_reason(reason);
         protocol_specific_response->set_message(std::move(error_msg));
+        protocol_specific_response->set_error_code(error_code);
       },
       query_hash);
 }
@@ -195,6 +198,54 @@ shared_model::proto::ProtoQueryResponseFactory::createTransactionsResponse(
               static_cast<shared_model::proto::Transaction *>(tx.get())
                   ->getTransport();
         }
+      },
+      query_hash);
+}
+
+std::unique_ptr<shared_model::interface::QueryResponse>
+shared_model::proto::ProtoQueryResponseFactory::createTransactionsPageResponse(
+    std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+        transactions,
+    const crypto::Hash &next_tx_hash,
+    interface::types::TransactionsNumberType all_transactions_size,
+    const crypto::Hash &query_hash) const {
+  return createQueryResponse(
+      [transactions = std::move(transactions),
+       &next_tx_hash,
+       &all_transactions_size](
+          iroha::protocol::QueryResponse &protocol_query_response) {
+        auto *protocol_specific_response =
+            protocol_query_response.mutable_transactions_page_response();
+        for (const auto &tx : transactions) {
+          *protocol_specific_response->add_transactions() =
+              static_cast<shared_model::proto::Transaction *>(tx.get())
+                  ->getTransport();
+        }
+        protocol_specific_response->set_next_tx_hash(next_tx_hash.hex());
+        protocol_specific_response->set_all_transactions_size(
+            all_transactions_size);
+      },
+      query_hash);
+}
+
+std::unique_ptr<shared_model::interface::QueryResponse>
+shared_model::proto::ProtoQueryResponseFactory::createTransactionsPageResponse(
+    std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+        transactions,
+    interface::types::TransactionsNumberType all_transactions_size,
+    const crypto::Hash &query_hash) const {
+  return createQueryResponse(
+      [transactions = std::move(transactions), &all_transactions_size](
+          iroha::protocol::QueryResponse &protocol_query_response) {
+        iroha::protocol::TransactionsPageResponse *protocol_specific_response =
+            protocol_query_response.mutable_transactions_page_response();
+        for (const auto &tx : transactions) {
+          *protocol_specific_response->add_transactions() =
+              static_cast<shared_model::proto::Transaction *>(tx.get())
+                  ->getTransport();
+        }
+        protocol_specific_response->set_all_transactions_size(
+            all_transactions_size);
       },
       query_hash);
 }
@@ -263,7 +314,7 @@ shared_model::proto::ProtoQueryResponseFactory::createBlockQueryResponse(
                                      &protocol_query_response) {
     iroha::protocol::BlockResponse *protocol_specific_response =
         protocol_query_response.mutable_block_response();
-    *protocol_specific_response->mutable_block() =
+    *protocol_specific_response->mutable_block()->mutable_block_v1() =
         static_cast<shared_model::proto::Block *>(block.get())->getTransport();
   });
 }

@@ -8,7 +8,6 @@ target_link_libraries(test_subscriber_testing
     rxcpp
     )
 
-
 add_library(integration_framework
     integration_framework/integration_test_framework.cpp
     integration_framework/iroha_instance.cpp
@@ -30,6 +29,7 @@ target_link_libraries(integration_framework
     integration_framework_config_helper
     command_client
     query_client
+    ordering_gate_common
     yac_transport
     shared_model_cryptography_model
     server_runner

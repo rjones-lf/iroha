@@ -100,8 +100,9 @@ TEST_F(ToriiQueryServiceTest, FetchBlocksWhenValidQuery) {
           .finish());
 
   iroha::protocol::Block block;
-  block.mutable_payload()->set_height(123);
-  auto proto_block = std::make_unique<shared_model::proto::Block>(block);
+  block.mutable_block_v1()->mutable_payload()->set_height(123);
+  auto proto_block =
+      std::make_unique<shared_model::proto::Block>(block.block_v1());
   std::shared_ptr<shared_model::interface::BlockQueryResponse> block_response =
       shared_model::proto::ProtoQueryResponseFactory().createBlockQueryResponse(
           std::move(proto_block));

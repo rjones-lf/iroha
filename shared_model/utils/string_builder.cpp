@@ -8,6 +8,13 @@
 namespace shared_model {
   namespace detail {
 
+    const std::string PrettyStringBuilder::beginBlockMarker = "[";
+    const std::string PrettyStringBuilder::endBlockMarker = "]";
+    const std::string PrettyStringBuilder::keyValueSeparator = "=";
+    const std::string PrettyStringBuilder::singleFieldsSeparator = ",";
+    const std::string PrettyStringBuilder::initSeparator = ":";
+    const std::string PrettyStringBuilder::spaceSeparator = " ";
+
     PrettyStringBuilder &PrettyStringBuilder::init(const std::string &name) {
       result_.append(name);
       result_.append(initSeparator);

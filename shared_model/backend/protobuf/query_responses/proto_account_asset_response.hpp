@@ -6,14 +6,11 @@
 #ifndef IROHA_SHARED_MODEL_PROTO_ACCOUNT_ASSET_RESPONSE_HPP
 #define IROHA_SHARED_MODEL_PROTO_ACCOUNT_ASSET_RESPONSE_HPP
 
-#include <boost/range/numeric.hpp>
-
 #include "backend/protobuf/common_objects/account_asset.hpp"
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/query_responses/account_asset_response.hpp"
 #include "qry_responses.pb.h"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -33,12 +30,9 @@ namespace shared_model {
           const override;
 
      private:
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
+      const iroha::protocol::AccountAssetResponse &account_asset_response_;
 
-      const iroha::protocol::AccountAssetResponse &accountAssetResponse_;
-
-      const Lazy<std::vector<AccountAsset>> accountAssets_;
+      const std::vector<AccountAsset> account_assets_;
     };
   }  // namespace proto
 }  // namespace shared_model

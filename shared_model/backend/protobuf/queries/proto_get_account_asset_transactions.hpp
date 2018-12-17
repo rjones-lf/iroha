@@ -19,6 +19,7 @@
 #define IROHA_GET_ACCOUNT_ASSET_TRANSACTIONS_H
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
+#include "backend/protobuf/queries/proto_tx_pagination_meta.hpp"
 #include "interfaces/queries/get_account_asset_transactions.hpp"
 #include "queries.pb.h"
 
@@ -40,11 +41,14 @@ namespace shared_model {
 
       const interface::types::AssetIdType &assetId() const override;
 
+      const interface::TxPaginationMeta &paginationMeta() const override;
+
      private:
       // ------------------------------| fields |-------------------------------
 
       const iroha::protocol::GetAccountAssetTransactions
           &account_asset_transactions_;
+      const TxPaginationMeta pagination_meta_;
     };
 
   }  // namespace proto

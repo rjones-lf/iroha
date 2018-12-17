@@ -36,11 +36,11 @@ struct CommandFixture {
 
   CommandFixture() {
     pcs_ = std::make_shared<iroha::network::MockPeerCommunicationService>();
-    EXPECT_CALL(*pcs_, on_proposal())
+    EXPECT_CALL(*pcs_, onProposal())
         .WillRepeatedly(Return(prop_notifier_.get_observable()));
     EXPECT_CALL(*pcs_, on_commit())
         .WillRepeatedly(Return(commit_notifier_.get_observable()));
-    EXPECT_CALL(*pcs_, on_verified_proposal())
+    EXPECT_CALL(*pcs_, onVerifiedProposal())
         .WillRepeatedly(Return(vprop_notifier_.get_observable()));
 
     mst_processor_ = std::make_shared<iroha::MockMstProcessor>();

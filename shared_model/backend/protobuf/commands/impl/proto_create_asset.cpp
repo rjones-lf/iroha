@@ -12,7 +12,8 @@ namespace shared_model {
     CreateAsset::CreateAsset(CommandType &&command)
         : CopyableProto(std::forward<CommandType>(command)),
           create_asset_{proto_->create_asset()},
-          precision_{[this] { return create_asset_.precision(); }} {}
+          precision_{
+              static_cast<const PrecisionType>(create_asset_.precision())} {}
 
     template CreateAsset::CreateAsset(CreateAsset::TransportType &);
     template CreateAsset::CreateAsset(const CreateAsset::TransportType &);
@@ -32,7 +33,7 @@ namespace shared_model {
     }
 
     const CreateAsset::PrecisionType &CreateAsset::precision() const {
-      return *precision_;
+      return precision_;
     }
 
   }  // namespace proto

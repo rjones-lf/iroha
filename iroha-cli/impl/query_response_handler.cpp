@@ -191,7 +191,7 @@ namespace iroha_cli {
 
       auto cmds = tx.commands();
       std::for_each(cmds.begin(), cmds.end(), [this](auto &cmd) {
-        log_->info(prefix.at(kDefault), cmd.toString());
+        log_->info(prefix.at(kDefault), cmd);
       });
     });
   }

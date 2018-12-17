@@ -7,6 +7,7 @@
 #define IROHA_APPLICATION_HPP
 
 #include "ametsuchi/impl/storage_impl.hpp"
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
@@ -16,7 +17,7 @@
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
-#include "main/impl/ordering_init.hpp"
+#include "main/impl/on_demand_ordering_init.hpp"
 #include "main/server_runner.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy_params.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
@@ -87,11 +88,6 @@ class Irohad {
   virtual void init();
 
   /**
-   * Reset oredering service storage state to default
-   */
-  void resetOrderingService();
-
-  /**
    * Restore World State View
    * @return true on success, false otherwise
    */
@@ -124,6 +120,8 @@ class Irohad {
   virtual void initNetworkClient();
 
   virtual void initFactories();
+
+  virtual void initPersistentCache();
 
   virtual void initOrderingGate();
 
@@ -194,6 +192,9 @@ class Irohad {
   std::shared_ptr<shared_model::interface::TransactionBatchFactory>
       transaction_batch_factory_;
 
+  // persistent cache
+  std::shared_ptr<iroha::ametsuchi::TxPresenceCache> persistent_cache;
+
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;
 
@@ -252,7 +253,7 @@ class Irohad {
   std::unique_ptr<ServerRunner> internal_server;
 
   // initialization objects
-  iroha::network::OrderingInit ordering_init;
+  iroha::network::OnDemandOrderingInit ordering_init;
   iroha::consensus::yac::YacInit yac_init;
   iroha::network::BlockLoaderInit loader_init;
 

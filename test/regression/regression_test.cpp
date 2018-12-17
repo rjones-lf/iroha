@@ -16,13 +16,13 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "common/files.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/common_constants.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
 
 using namespace common_constants;
@@ -46,10 +46,10 @@ TEST(RegressionTest, SequentialInitialization) {
                 .finish();
 
   auto check_enough_signatures_collected_status = [](auto &status) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            shared_model::interface::EnoughSignaturesCollectedResponse>(),
-        status.get()));
+    ASSERT_NO_THROW(
+        boost::get<
+            const shared_model::interface::EnoughSignaturesCollectedResponse &>(
+            status.get()));
   };
   auto checkProposal = [](auto &proposal) {
     ASSERT_EQ(proposal->transactions().size(), 1);
@@ -121,10 +121,9 @@ TEST(RegressionTest, StateRecovery) {
   auto checkOne = [](auto &res) { ASSERT_EQ(res->transactions().size(), 1); };
   auto checkQuery = [&tx](auto &status) {
     ASSERT_NO_THROW({
-      const auto &resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              shared_model::interface::TransactionsResponse>(),
-          status.get());
+      const auto &resp =
+          boost::get<const shared_model::interface::TransactionsResponse &>(
+              status.get());
       ASSERT_EQ(resp.transactions().size(), 1);
       ASSERT_EQ(resp.transactions().front(), tx);
     });

@@ -13,9 +13,9 @@
 #include "backend/protobuf/query_responses/proto_role_permissions_response.hpp"
 #include "backend/protobuf/query_responses/proto_roles_response.hpp"
 #include "backend/protobuf/query_responses/proto_signatories_response.hpp"
+#include "backend/protobuf/query_responses/proto_transactions_page_response.hpp"
 #include "backend/protobuf/query_responses/proto_transaction_response.hpp"
 #include "common/byteutils.hpp"
-#include "utils/reference_holder.hpp"
 #include "utils/variant_deserializer.hpp"
 
 namespace {
@@ -29,7 +29,8 @@ namespace {
                      shared_model::proto::TransactionsResponse,
                      shared_model::proto::AssetResponse,
                      shared_model::proto::RolesResponse,
-                     shared_model::proto::RolePermissionsResponse>;
+                     shared_model::proto::RolePermissionsResponse,
+                     shared_model::proto::TransactionsPageResponse>;
 
   /// list of types in variant
   using ProtoQueryResponseListType = ProtoQueryResponseVariantType::types;
@@ -42,10 +43,10 @@ namespace shared_model {
       explicit Impl(const TransportType &ref) : proto_{ref} {}
       explicit Impl(TransportType &&ref) : proto_{std::move(ref)} {}
 
-      detail::ReferenceHolder<TransportType> proto_;
+      TransportType proto_;
 
       const ProtoQueryResponseVariantType variant_{[this] {
-        auto &&ar = *proto_;
+        const auto &ar = proto_;
         int which =
             ar.GetDescriptor()->FindFieldByNumber(ar.response_case())->index();
         return shared_model::detail::variant_impl<ProtoQueryResponseListType>::
@@ -56,11 +57,11 @@ namespace shared_model {
       const QueryResponseVariantType ivariant_{variant_};
 
       const crypto::Hash hash_{
-          iroha::hexstringToBytestring(proto_->query_hash()).get()};
+          iroha::hexstringToBytestring(proto_.query_hash()).get()};
     };
 
     QueryResponse::QueryResponse(const QueryResponse &o)
-        : QueryResponse(*o.impl_->proto_) {}
+        : QueryResponse(o.impl_->proto_) {}
     QueryResponse::QueryResponse(QueryResponse &&o) noexcept = default;
 
     QueryResponse::QueryResponse(const TransportType &ref) {
@@ -81,11 +82,11 @@ namespace shared_model {
     }
 
     const QueryResponse::TransportType &QueryResponse::getTransport() const {
-      return *impl_->proto_;
+      return impl_->proto_;
     }
 
     QueryResponse *QueryResponse::clone() const {
-      return new QueryResponse(*impl_->proto_);
+      return new QueryResponse(impl_->proto_);
     }
 
   }  // namespace proto

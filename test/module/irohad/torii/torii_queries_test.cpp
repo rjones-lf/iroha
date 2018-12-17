@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <boost/variant.hpp>
 #include "crypto/keypair.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
@@ -22,7 +23,6 @@
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"
 
-#include "framework/specified_visitor.hpp"
 #include "main/server_runner.hpp"
 #include "torii/processor/query_processor_impl.hpp"
 #include "torii/query_client.hpp"
@@ -30,6 +30,8 @@
 #include "utils/query_error_response_visitor.hpp"
 
 constexpr size_t TimesFind = 1;
+static constexpr shared_model::interface::types::TransactionsNumberType
+    kTxPageSize(10);
 
 using ::testing::_;
 using ::testing::A;
@@ -196,7 +198,7 @@ TEST_F(ToriiQueriesTest, FindAccountWhenNoGrantPermissions) {
 
   auto *r = query_response_factory
                 ->createErrorQueryResponse(
-                    ErrorQueryType::kStatefulFailed, "", model_query.hash())
+                    ErrorQueryType::kStatefulFailed, "", 2, model_query.hash())
                 .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
@@ -255,11 +257,10 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasReadPermissions) {
   // Should not return Error Response because tx is stateless and stateful valid
   ASSERT_FALSE(response.has_error_response());
 
-  // TODO [IR-48] Akvinikym 28.11.18: destroy specified visitor
   ASSERT_NO_THROW({
-    const auto &account_resp = boost::apply_visitor(
-        framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
-        resp.get());
+    const auto &account_resp =
+        boost::get<const shared_model::interface::AccountResponse &>(
+            resp.get());
 
     ASSERT_EQ(account_resp.account().accountId(), accountB_id);
     ASSERT_EQ(account_resp.roles().size(), 1);
@@ -302,9 +303,9 @@ TEST_F(ToriiQueriesTest, FindAccountWhenHasRolePermission) {
   ASSERT_FALSE(response.has_error_response());
 
   ASSERT_NO_THROW({
-    const auto &detail_resp = boost::apply_visitor(
-        framework::SpecifiedVisitor<shared_model::interface::AccountResponse>(),
-        resp.get());
+    const auto &detail_resp =
+        boost::get<const shared_model::interface::AccountResponse &>(
+            resp.get());
 
     ASSERT_EQ(detail_resp.account().accountId(), account_id);
     ASSERT_EQ(detail_resp.account().domainId(), domain_id);
@@ -336,7 +337,7 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenNoGrantPermissions) {
 
   auto *r = query_response_factory
                 ->createErrorQueryResponse(
-                    ErrorQueryType::kStatefulFailed, "", model_query.hash())
+                    ErrorQueryType::kStatefulFailed, "", 2, model_query.hash())
                 .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
@@ -399,10 +400,9 @@ TEST_F(ToriiQueriesTest, FindAccountAssetWhenHasRolePermissions) {
 
   auto resp = shared_model::proto::QueryResponse(response);
   ASSERT_NO_THROW({
-    const auto &asset_resp = boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            shared_model::interface::AccountAssetResponse>(),
-        resp.get());
+    const auto &asset_resp =
+        boost::get<const shared_model::interface::AccountAssetResponse &>(
+            resp.get());
     // Check if the fields in account asset response are correct
     ASSERT_EQ(asset_resp.accountAssets()[0].assetId(), asset_id);
     ASSERT_EQ(asset_resp.accountAssets()[0].accountId(), account_id);
@@ -439,7 +439,7 @@ TEST_F(ToriiQueriesTest, FindSignatoriesWhenNoGrantPermissions) {
 
   auto *r = query_response_factory
                 ->createErrorQueryResponse(
-                    ErrorQueryType::kStatefulFailed, "", model_query.hash())
+                    ErrorQueryType::kStatefulFailed, "", 2, model_query.hash())
                 .release();
 
   EXPECT_CALL(*query_executor, validateAndExecute_(_))
@@ -492,12 +492,11 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
       model_query.getTransport(), response);
   auto shared_response = shared_model::proto::QueryResponse(response);
   ASSERT_NO_THROW({
-    auto resp_pubkey = *boost::apply_visitor(
-                            framework::SpecifiedVisitor<
-                                shared_model::interface::SignatoriesResponse>(),
-                            shared_response.get())
-                            .keys()
-                            .begin();
+    auto resp_pubkey =
+        *boost::get<const shared_model::interface::SignatoriesResponse &>(
+             shared_response.get())
+             .keys()
+             .begin();
 
     ASSERT_TRUE(stat.ok());
     /// Should not return Error Response because tx is stateless and stateful
@@ -535,7 +534,7 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
                          .creatorAccountId(creator)
                          .queryCounter(1)
                          .createdTime(iroha::time::now())
-                         .getAccountTransactions(creator)
+                         .getAccountTransactions(creator, kTxPageSize)
                          .build()
                          .signAndAddSignature(pair)
                          .finish();
@@ -562,10 +561,9 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
   ASSERT_FALSE(response.has_error_response());
   auto resp = shared_model::proto::QueryResponse(response);
   ASSERT_NO_THROW({
-    const auto &tx_resp = boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            shared_model::interface::TransactionsResponse>(),
-        resp.get());
+    const auto &tx_resp =
+        boost::get<const shared_model::interface::TransactionsResponse &>(
+            resp.get());
 
     const auto &txs = tx_resp.transactions();
     for (const auto &tx : txs) {
@@ -586,7 +584,7 @@ TEST_F(ToriiQueriesTest, FindManyTimesWhereQueryServiceSync) {
                            .creatorAccountId("a@domain")
                            .queryCounter(i)
                            .createdTime(iroha::time::now())
-                           .getAccountTransactions("a@2domain")
+                           .getAccountTransactions("a@2domain", kTxPageSize)
                            .build();
 
     auto stat = client.Find(model_query.getTransport(), response);

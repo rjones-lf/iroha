@@ -33,6 +33,7 @@
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "interfaces/permissions.hpp"
+#include "module/irohad/ametsuchi/tx_presence_cache_stub.hpp"
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/validators/always_valid_validators.hpp"
@@ -58,9 +59,11 @@ using AbstractTransactionValidator =
 using AlwaysValidInterfaceTransactionValidator =
     shared_model::validation::AlwaysValidModelValidator<
         shared_model::interface::Transaction>;
-using AlwaysValidProtoTransactionValudator =
+using AlwaysValidProtoTransactionValidator =
     shared_model::validation::AlwaysValidModelValidator<
         iroha::protocol::Transaction>;
+using AlwaysMissingTxPresenceCache = iroha::ametsuchi::TxPresenceCacheStub<
+    iroha::ametsuchi::tx_cache_status_responses::Missing>;
 using FakePeer = integration_framework::fake_peer::FakePeer;
 
 namespace {
@@ -100,12 +103,13 @@ namespace integration_framework {
             std::make_shared<AlwaysValidProtoCommonObjectsFactory>()),
         transaction_factory_(std::make_shared<ProtoTransactionFactory>(
             std::make_unique<AlwaysValidInterfaceTransactionValidator>(),
-            std::make_unique<AlwaysValidProtoTransactionValudator>())),
+            std::make_unique<AlwaysValidProtoTransactionValidator>())),
         batch_parser_(std::make_shared<
                       shared_model::interface::TransactionBatchParserImpl>()),
         transaction_batch_factory_(
             std::make_shared<
                 shared_model::interface::TransactionBatchFactoryImpl>()),
+        tx_presence_cache_(std::make_shared<AlwaysMissingTxPresenceCache>()),
         yac_transport_(
             std::make_shared<iroha::consensus::yac::NetworkImpl>(async_call_)),
         os_transport_(
@@ -123,7 +127,8 @@ namespace integration_framework {
     }
     // the code below should be executed anyway in order to prevent app hang
     if (iroha_instance_ and iroha_instance_->getIrohaInstance()) {
-      iroha_instance_->getIrohaInstance()->terminate();
+      iroha_instance_->getIrohaInstance()->terminate(
+          std::chrono::system_clock::now());
     }
   }
 
@@ -151,7 +156,8 @@ namespace integration_framework {
                                      common_objects_factory_,
                                      transaction_factory_,
                                      batch_parser_,
-                                     transaction_batch_factory_);
+                                     transaction_batch_factory_,
+                                     tx_presence_cache_);
       fake_peer->initialize();
       fake_peers_.emplace_back(fake_peer);
       promise_and_key.first.set_value(fake_peer);
@@ -257,7 +263,6 @@ namespace integration_framework {
 
     iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
-    iroha_instance_->getIrohaInstance()->resetOrderingService();
 
     makeFakePeers();
   }
@@ -265,20 +270,33 @@ namespace integration_framework {
   void IntegrationTestFramework::subscribeQueuesAndRun() {
     // subscribing for components
 
-    iroha_instance_->getIrohaInstance()
-        ->getPeerCommunicationService()
-        ->on_proposal()
-        .subscribe([this](auto proposal) {
-          proposal_queue_.push(proposal);
+    auto proposals = iroha_instance_->getIrohaInstance()
+                         ->getPeerCommunicationService()
+                         ->onProposal();
+
+    proposals.filter([](const auto &event) { return event.proposal; })
+        .subscribe([this](const auto &event) {
+          proposal_queue_.push(getProposalUnsafe(event));
           log_->info("proposal");
           queue_cond.notify_all();
         });
 
+    auto proposal_flat_map =
+        [](auto t) -> rxcpp::observable<std::tuple_element_t<0, decltype(t)>> {
+      if (std::get<1>(t).proposal) {
+        return rxcpp::observable<>::just(std::get<0>(t));
+      }
+      return rxcpp::observable<>::empty<std::tuple_element_t<0, decltype(t)>>();
+    };
+
     iroha_instance_->getIrohaInstance()
         ->getPeerCommunicationService()
-        ->on_verified_proposal()
+        ->onVerifiedProposal()
+        .zip(proposals)
+        .flat_map(proposal_flat_map)
         .subscribe([this](auto verified_proposal_and_errors) {
-          verified_proposal_queue_.push(verified_proposal_and_errors);
+          verified_proposal_queue_.push(
+              getVerifiedProposalUnsafe(verified_proposal_and_errors));
           log_->info("verified proposal");
           queue_cond.notify_all();
         });
@@ -286,6 +304,8 @@ namespace integration_framework {
     iroha_instance_->getIrohaInstance()
         ->getPeerCommunicationService()
         ->on_commit()
+        .zip(proposals)
+        .flat_map(proposal_flat_map)
         .subscribe([this](auto commit_event) {
           commit_event.synced_blocks.subscribe([this](auto committed_block) {
             block_queue_.push(committed_block);
@@ -334,9 +354,9 @@ namespace integration_framework {
         ->onExpiredBatches();
   }
 
-  rxcpp::observable<iroha::network::Commit>
+  rxcpp::observable<iroha::network::ConsensusGate::GateObject>
   IntegrationTestFramework::getYacOnCommitObservable() {
-    return iroha_instance_->getIrohaInstance()->getConsensusGate()->on_commit();
+    return iroha_instance_->getIrohaInstance()->getConsensusGate()->onOutcome();
   }
 
   IntegrationTestFramework &IntegrationTestFramework::getTxStatus(
@@ -354,7 +374,7 @@ namespace integration_framework {
   IntegrationTestFramework &IntegrationTestFramework::sendTxWithoutValidation(
       const shared_model::proto::Transaction &tx) {
     log_->info("sending transaction");
-    log_->debug(tx.toString());
+    log_->debug("{}", tx);
 
     command_client_.Torii(tx.getTransport());
     return *this;
@@ -494,7 +514,7 @@ namespace integration_framework {
       std::function<void(const shared_model::proto::QueryResponse &)>
           validation) {
     log_->info("send query");
-    log_->debug(qry.toString());
+    log_->debug("{}", qry);
 
     iroha::protocol::QueryResponse response;
     query_client_.Find(qry.getTransport(), response);

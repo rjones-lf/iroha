@@ -8,9 +8,9 @@
 #include <gtest/gtest.h>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
+#include <boost/variant.hpp>
 #include "common/byteutils.hpp"
 #include "cryptography/hash.hpp"
-#include "framework/specified_visitor.hpp"
 #include "interfaces/query_responses/error_query_response.hpp"
 
 /**
@@ -60,13 +60,12 @@ TEST(QueryResponse, ErrorResponseLoad) {
             error_resp, resp_reason, resp_reason_enum->value(i)->number());
         auto shared_response = shared_model::proto::QueryResponse(response);
         ASSERT_NO_THROW({
-          ASSERT_EQ(i,
-                    boost::apply_visitor(
-                        framework::SpecifiedVisitor<
-                            shared_model::interface::ErrorQueryResponse>(),
-                        shared_response.get())
-                        .get()
-                        .which());
+          ASSERT_EQ(
+              i,
+              boost::get<const shared_model::interface::ErrorQueryResponse &>(
+                  shared_response.get())
+                  .get()
+                  .which());
           ASSERT_EQ(shared_response.queryHash(),
                     shared_model::crypto::Hash(hash));
         });

@@ -10,7 +10,6 @@
 #include "backend/protobuf/query_responses/proto_concrete_error_query_response.hpp"
 #include "interfaces/query_responses/error_query_response.hpp"
 #include "qry_responses.pb.h"
-#include "utils/lazy_initializer.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -46,16 +45,12 @@ namespace shared_model {
 
       const ErrorMessageType &errorMessage() const override;
 
+      ErrorCodeType errorCode() const override;
+
      private:
-      /// lazy variant shortcut
-      template <typename T>
-      using Lazy = detail::LazyInitializer<T>;
+      const ProtoQueryErrorResponseVariantType variant_;
 
-      using LazyVariantType = Lazy<ProtoQueryErrorResponseVariantType>;
-
-      const LazyVariantType variant_;
-
-      const Lazy<QueryErrorResponseVariantType> ivariant_;
+      const QueryErrorResponseVariantType ivariant_;
     };
   }  // namespace proto
 }  // namespace shared_model

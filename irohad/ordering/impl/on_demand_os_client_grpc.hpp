@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_ON_DEMAND_OS_TRANSPORT_SERVER_GRPC_HPP
-#define IROHA_ON_DEMAND_OS_TRANSPORT_SERVER_GRPC_HPP
+#ifndef IROHA_ON_DEMAND_OS_TRANSPORT_CLIENT_GRPC_HPP
+#define IROHA_ON_DEMAND_OS_TRANSPORT_CLIENT_GRPC_HPP
 
 #include "ordering/on_demand_os_transport.hpp"
 
@@ -76,4 +76,4 @@ namespace iroha {
   }    // namespace ordering
 }  // namespace iroha
 
-#endif  // IROHA_ON_DEMAND_OS_TRANSPORT_SERVER_GRPC_HPP
+#endif  // IROHA_ON_DEMAND_OS_TRANSPORT_CLIENT_GRPC_HPP

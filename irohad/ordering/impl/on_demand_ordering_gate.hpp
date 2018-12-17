@@ -15,10 +15,15 @@
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "interfaces/iroha_internal/unsafe_proposal_factory.hpp"
+#include "logger/logger.hpp"
 #include "ordering/impl/ordering_gate_cache/ordering_gate_cache.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
 
 namespace iroha {
+  namespace ametsuchi {
+    class TxPresenceCache;
+  }
+
   namespace ordering {
 
     /**
@@ -31,14 +36,19 @@ namespace iroha {
        * Represents storage modification. Proposal round increment
        */
       struct BlockEvent {
+        /// next round number
         consensus::Round round;
+        /// hashes of processed transactions
         cache::OrderingGateCache::HashesSetType hashes;
       };
 
       /**
        * Represents no storage modification. Reject round increment
        */
-      struct EmptyEvent {};
+      struct EmptyEvent {
+        /// next round number
+        consensus::Round round;
+      };
 
       using BlockRoundEventType = boost::variant<BlockEvent, EmptyEvent>;
 
@@ -49,33 +59,46 @@ namespace iroha {
           std::shared_ptr<cache::OrderingGateCache>
               cache,  // TODO: IR-1863 12.11.18 kamilsa change cache to
                       // unique_ptr
-          std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+          std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
+          std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           consensus::Round initial_round);
 
       void propagateBatch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)
           override;
 
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
-      on_proposal() override;
+      rxcpp::observable<network::OrderingEvent> onProposal() override;
 
       [[deprecated("Use ctor")]] void setPcs(
           const iroha::network::PeerCommunicationService &pcs) override;
 
      private:
+      /**
+       * Handle an incoming proposal from ordering service
+       */
+      boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+      processProposalRequest(
+          boost::optional<OnDemandOrderingService::ProposalType> &&proposal)
+          const;
+
+      /**
+       * remove already processed transactions from proposal
+       */
+      boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
+      removeReplays(shared_model::interface::Proposal &&proposal) const;
+
+      logger::Logger log_;
       std::shared_ptr<OnDemandOrderingService> ordering_service_;
       std::shared_ptr<transport::OdOsNotification> network_client_;
       rxcpp::composite_subscription events_subscription_;
       std::shared_ptr<cache::OrderingGateCache> cache_;
-      std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
+      std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
           proposal_factory_;
+      std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache_;
 
       consensus::Round current_round_;
-      rxcpp::subjects::subject<
-          std::shared_ptr<shared_model::interface::Proposal>>
-          proposal_notifier_;
-
+      rxcpp::subjects::subject<network::OrderingEvent> proposal_notifier_;
       mutable std::shared_timed_mutex mutex_;
     };
 

@@ -61,7 +61,8 @@ namespace iroha {
 
       uint32_t getTopBlockHeight() override;
 
-      bool hasTxWithHash(const shared_model::crypto::Hash &hash) override;
+      boost::optional<TxCacheStatusType> checkTxPresence(
+          const shared_model::crypto::Hash &hash) override;
 
       expected::Result<wBlock, std::string> getTopBlock() override;
 
@@ -73,7 +74,6 @@ namespace iroha {
        */
       std::vector<shared_model::interface::types::HeightType> getBlockIds(
           const shared_model::interface::types::AccountIdType &account_id);
-
       /**
        * Returns block id which contains transaction with a given hash
        * @param hash - hash of transaction

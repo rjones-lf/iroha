@@ -342,7 +342,8 @@ namespace integration_framework {
 
     rxcpp::observable<iroha::BatchPtr> getMstExpiredBatchesObservable();
 
-    rxcpp::observable<iroha::network::Commit> getYacOnCommitObservable();
+    rxcpp::observable<iroha::network::ConsensusGate::GateObject>
+    getYacOnCommitObservable();
 
     /**
      * Request next status of the transaction
@@ -432,6 +433,7 @@ namespace integration_framework {
         batch_parser_;
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         transaction_batch_factory_;
+    std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache_;
     std::shared_ptr<iroha::network::MstTransportGrpc> mst_transport_;
     std::shared_ptr<iroha::consensus::yac::YacNetwork> yac_transport_;
     std::shared_ptr<iroha::network::OrderingServiceTransport> os_transport_;

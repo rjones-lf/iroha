@@ -33,7 +33,8 @@ namespace shared_model {
 
       std::unique_ptr<interface::QueryResponse> createErrorQueryResponse(
           ErrorQueryType error_type,
-          std::string error_msg,
+          interface::ErrorQueryResponse::ErrorMessageType error_msg,
+          interface::ErrorQueryResponse::ErrorCodeType error_code,
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createSignatoriesResponse(
@@ -43,6 +44,19 @@ namespace shared_model {
       std::unique_ptr<interface::QueryResponse> createTransactionsResponse(
           std::vector<std::unique_ptr<shared_model::interface::Transaction>>
               transactions,
+          const crypto::Hash &query_hash) const override;
+
+      std::unique_ptr<interface::QueryResponse> createTransactionsPageResponse(
+          std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+              transactions,
+          const crypto::Hash &next_tx_hash,
+          interface::types::TransactionsNumberType all_transactions_size,
+          const crypto::Hash &query_hash) const override;
+
+      std::unique_ptr<interface::QueryResponse> createTransactionsPageResponse(
+          std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+          transactions,
+          interface::types::TransactionsNumberType all_transactions_size,
           const crypto::Hash &query_hash) const override;
 
       std::unique_ptr<interface::QueryResponse> createAssetResponse(
