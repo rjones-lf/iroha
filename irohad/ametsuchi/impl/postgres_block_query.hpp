@@ -36,20 +36,6 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
               converter);
 
-      std::vector<wTransaction> getAccountTransactions(
-          const shared_model::interface::types::AccountIdType &account_id)
-          override;
-
-      std::vector<wTransaction> getAccountAssetTransactions(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::AssetIdType &asset_id) override;
-
-      std::vector<boost::optional<wTransaction>> getTransactions(
-          const std::vector<shared_model::crypto::Hash> &tx_hashes) override;
-
-      boost::optional<wTransaction> getTxByHashSync(
-          const shared_model::crypto::Hash &hash) override;
-
       std::vector<wBlock> getBlocks(
           shared_model::interface::types::HeightType height,
           uint32_t count) override;
@@ -67,31 +53,6 @@ namespace iroha {
       expected::Result<wBlock, std::string> getTopBlock() override;
 
      private:
-      /**
-       * Returns all blocks' ids containing given account id
-       * @param account_id
-       * @return vector of block ids
-       */
-      std::vector<shared_model::interface::types::HeightType> getBlockIds(
-          const shared_model::interface::types::AccountIdType &account_id);
-      /**
-       * Returns block id which contains transaction with a given hash
-       * @param hash - hash of transaction
-       * @return block id or boost::none
-       */
-      boost::optional<shared_model::interface::types::HeightType> getBlockId(
-          const shared_model::crypto::Hash &hash);
-
-      /**
-       * creates callback to lrange query to Postgres to supply result to
-       * subscriber s
-       * @param s
-       * @param block_id
-       * @return
-       */
-      std::function<void(std::vector<std::string> &result)> callback(
-          std::vector<wTransaction> &s, uint64_t block_id);
-
       /**
        * Retrieve block with given id block storage
        * @param id - height of a block to retrieve

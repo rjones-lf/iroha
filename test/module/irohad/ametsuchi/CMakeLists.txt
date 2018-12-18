@@ -23,13 +23,6 @@ target_link_libraries(block_query_test
     shared_model_stateless_validation
     )
 
-addtest(block_query_transfer_test block_query_transfer_test.cpp)
-target_link_libraries(block_query_transfer_test
-    ametsuchi
-    ametsuchi_fixture
-    shared_model_stateless_validation
-    )
-
 addtest(kv_storage_test kv_storage_test.cpp)
 target_link_libraries(kv_storage_test
     ametsuchi
