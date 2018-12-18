@@ -50,19 +50,21 @@
 
   - name: make config dirs
     file:
-      path: "{{ config_local_dir }}/{{ inventory_hostname }}/conf"
+      path: "{{ config_local_dir }}/{{ inventory_hostname }}/conf/{{ item.human_hostname }}"
       state: directory
+    loop: "{{ iroha_nodes }}"
 
   - name: move keys
     copy:
       src: "{{ config_local_dir }}/{{ item[0].hostname }}{{ item[1] }}"
-      dest: "{{ config_local_dir }}/{{ inventory_hostname }}/conf"
+      dest: "{{ config_local_dir }}/{{ inventory_hostname }}/conf/{{ item[0].human_hostname }}"
     loop: "{{ iroha_nodes | product(['.priv', '.pub']) | list }}"
 
   - name: move genesis.block
     copy:
       src: "{{ config_local_dir }}/genesis.block"
-      dest: "{{ config_local_dir }}/{{ inventory_hostname }}/conf"
+      dest: "{{ config_local_dir }}/{{ inventory_hostname }}/conf/{{ item.human_hostname }}"
+    loop: "{{ iroha_nodes }}"
 
   - name: cleanup
     file:

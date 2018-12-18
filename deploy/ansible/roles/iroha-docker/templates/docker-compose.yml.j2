@@ -20,8 +20,7 @@ services:
       IROHA_POSTGRES_HOST: {{ node.human_hostname }}-postgres
     volumes:
       - iroha_block_store-{{ node.human_hostname }}:/tmp/block_store
-      - ./conf:/opt/iroha_data
-      - ./conf/config-{{ node.human_hostname }}.docker:/opt/iroha_data/config.docker
+      - ./conf/{{ node.human_hostname }}:/opt/iroha_data
     depends_on:
       - {{ node.human_hostname }}-postgres
     networks:

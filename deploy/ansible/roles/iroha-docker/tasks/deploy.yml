@@ -34,15 +34,8 @@
 - name: generate config files
   template:
     src: config.docker.j2
-    dest: "{{ deploy_dir }}/conf/config-{{ item.human_hostname }}.docker"
+    dest: "{{ deploy_dir }}/conf/{{ item.human_hostname }}/config.docker"
   loop: "{{ iroha_nodes }}"
-
-- name: Create dummy config.docker
-  copy:
-    content: ""
-    dest: "{{ deploy_dir }}/conf/config.docker"
-    force: no
-    mode: 0644
 
 - name: run Iroha
   docker_service:
