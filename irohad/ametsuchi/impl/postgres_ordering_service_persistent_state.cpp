@@ -88,8 +88,14 @@ namespace iroha {
     boost::optional<size_t>
     PostgresOrderingServicePersistentState::loadProposalHeight() const {
       boost::optional<size_t> height;
-      *sql_ << "SELECT * FROM ordering_service_state LIMIT 1",
-          soci::into(height);
+      std::string query = "SELECT * FROM ordering_service_state LIMIT 1";
+      try {
+        *sql_ << query, soci::into(height);
+      } catch (std::exception &e) {
+        log_->error("Failed to execute query: " + query
+                    + ". Reason: " + e.what());
+        return boost::none;
+      }
 
       if (not height) {
         log_->error(
