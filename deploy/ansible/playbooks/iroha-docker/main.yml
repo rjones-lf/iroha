@@ -3,9 +3,12 @@
     strategy: linear
     roles:
       - { role: iroha-docker, tags: iroha-docker }
-    connection: local
+    # connection: local
     vars:
+      # this is only used when `custom_hostnames` set to `true`. Can be set on a per-host level
       hostnames:
+        # port number in the hostname can be omitted. In that case it will be auto-generated
+        # starting from base number defined in `iroha_peer_port` variable
       - iroha.local:20000
       - iroha.local:20001
       - iroha.local:20002

@@ -3,7 +3,7 @@ version: "2.4"
 services:
 {% for node in iroha_nodes %}
   {{ node.human_hostname }}:
-    image: hyperledger/iroha:develop
+    image: hyperledger/iroha:{{ iroha_docker_tag }}
 {% if overlay_network %}
     container_name: {{ node.hostname.split(':')[0] }}
     expose:
@@ -29,7 +29,7 @@ services:
       - iroha-db-net
 
   {{ node.human_hostname }}-postgres:
-    image: postgres:9.5
+    image: postgres:{{ postgres_docker_tag }}
     container_name: {{ node.human_hostname }}-postgres
     environment:
       POSTGRES_PASSWORD: {{ iroha_postgres_password }}

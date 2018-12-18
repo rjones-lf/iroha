@@ -32,7 +32,7 @@
     loop: "{{ iroha_nodes }}"
 
   - debug:
-      msg: "Resulting Iroha peers map: {{ iroha_peers_map }}"
+      var: iroha_peers_map
 
   - set_fact:
       iroha_nodes: "{{ iroha_peers_map }}"

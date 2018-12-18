@@ -1,4 +1,4 @@
-# How many Iroha peers (containers) are deployed on each host. Can be overridden per-host level.
+# How many Iroha peers (containers) are deployed on each host. Can be set on a per-host level.
 # Minimum total nodes is 6 (5f+1) in order for consensus to work properly.
 #
 # Default: 6
@@ -12,14 +12,13 @@ replicas: 6
 #
 # Default: false
 custom_hostnames: false
-hostnames: []
 
 # Affects how Iroha peers are communicated. If set to `true`, Docker overlay network with that
 # name will be used. It must be created beforehand. The recommended way is to use Calico plugin
 # for Docker (projectcalico.org).
-# Setting it to `true` without creating the network will only work on a single host (Iroha peers
-# will only be able to communicate within that host). Suitable for local-only deployments for
-# testing purposes.
+# Setting it to `true` without creating the network will only work for a single host deployment
+# (Iroha peers will only be able to communicate within that host). Suitable for local-only
+# deployments for testing purposes.
 #
 # Default: false
 overlay_network: true
@@ -29,6 +28,8 @@ container_basename: iroha
 config_local_dir: /tmp/iroha-ansible-conf
 deploy_dir: /opt/iroha-deploy
 iroha_network_name: iroha-net
+iroha_docker_tag: 1.0.0_rc1
+postgres_docker_tag: '9.5'
 
 ## Iroha config
 iroha_peer_port: 10001
