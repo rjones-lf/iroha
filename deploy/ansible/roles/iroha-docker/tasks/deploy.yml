@@ -37,6 +37,13 @@
     dest: "{{ deploy_dir }}/conf/config-{{ item.human_hostname }}.docker"
   loop: "{{ iroha_nodes }}"
 
+- name: Create dummy config.docker
+  copy:
+    content: ""
+    dest: "{{ deploy_dir }}/conf/config.docker"
+    force: no
+    mode: 0644
+
 - name: run Iroha
   docker_service:
     project_src: "{{ deploy_dir }}"
