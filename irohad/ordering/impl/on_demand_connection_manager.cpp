@@ -32,6 +32,10 @@ OnDemandConnectionManager::OnDemandConnectionManager(
   initializeConnections(initial_peers);
 }
 
+OnDemandConnectionManager::~OnDemandConnectionManager() {
+  subscription_.unsubscribe();
+}
+
 void OnDemandConnectionManager::onBatches(consensus::Round round,
                                           CollectionType batches) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);

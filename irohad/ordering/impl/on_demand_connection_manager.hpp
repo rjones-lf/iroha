@@ -58,6 +58,8 @@ namespace iroha {
           rxcpp::observable<CurrentPeers> peers,
           CurrentPeers initial_peers);
 
+      ~OnDemandConnectionManager() override;
+
       void onBatches(consensus::Round round, CollectionType batches) override;
 
       boost::optional<ProposalType> onRequestProposal(
