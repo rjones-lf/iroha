@@ -34,10 +34,16 @@ namespace {
   /**
    * Verify whether postgres supports prepared transactions
    */
-  bool preparedTransactionsAvailable(soci::session &sql) {
+  iroha::expected::Result<bool, std::string> preparedTransactionsAvailable(
+      soci::session &sql) {
     int prepared_txs_count = 0;
-    sql << "SHOW max_prepared_transactions;", soci::into(prepared_txs_count);
-    return prepared_txs_count != 0;
+    try {
+      sql << "SHOW max_prepared_transactions;", soci::into(prepared_txs_count);
+      return iroha::expected::makeValue(prepared_txs_count != 0);
+    } catch (std::exception &e) {
+      return iroha::expected::makeError(
+          std::string("Postgres session has been interrupted"));
+    }
   }
 
 }  // namespace
@@ -82,8 +88,12 @@ namespace iroha {
       if (prepared_blocks_enabled_) {
         rollbackPrepared(sql);
       }
-      sql << init_;
-      prepareStatements(*connection_, pool_size_);
+      try {
+        sql << init_;
+        prepareStatements(*connection_, pool_size_);
+      } catch (std::exception &e) {
+        log_->error("Storage was not initialized. Reason: {}", e.what());
+      }
     }
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
@@ -228,10 +238,13 @@ namespace iroha {
     void StorageImpl::reset() {
       log_->info("drop wsv records from db tables");
       soci::session sql(*connection_);
-      sql << reset_;
-
-      log_->info("drop blocks from disk");
-      block_store_->dropAll();
+      try {
+        sql << reset_;
+        log_->info("drop blocks from disk");
+        block_store_->dropAll();
+      } catch (std::exception &e) {
+        log_->warn("Drop wsv was failed. Reason: {}", e.what());
+      }
     }
 
     void StorageImpl::dropStorage() {
@@ -249,7 +262,11 @@ namespace iroha {
         soci::session sql(soci::postgresql,
                           postgres_options_.optionsStringWithoutDbName());
         // perform dropping
-        sql << "DROP DATABASE " + db;
+        try {
+          sql << "DROP DATABASE " + db;
+        } catch (std::exception &e) {
+          log_->warn("Drop database was failed. Reason: {}", e.what());
+        }
       } else {
         soci::session(*connection_) << drop_;
       }
@@ -368,18 +385,23 @@ namespace iroha {
                 [&](expected::Value<std::shared_ptr<soci::connection_pool>>
                         &connection) {
                   soci::session sql(*connection.value);
-                  bool enable_prepared_transactions =
-                      preparedTransactionsAvailable(sql);
-                  storage = expected::makeValue(std::shared_ptr<StorageImpl>(
-                      new StorageImpl(block_store_dir,
-                                      options,
-                                      std::move(ctx.value.block_store),
-                                      connection.value,
-                                      factory,
-                                      converter,
-                                      perm_converter,
-                                      pool_size,
-                                      enable_prepared_transactions)));
+                  preparedTransactionsAvailable(sql).match(
+                      [&](expected::Value<bool> &enable_prepared_transactions) {
+                        storage = expected::makeValue(
+                            std::shared_ptr<StorageImpl>(new StorageImpl(
+                                block_store_dir,
+                                options,
+                                std::move(ctx.value.block_store),
+                                connection.value,
+                                factory,
+                                converter,
+                                perm_converter,
+                                pool_size,
+                                enable_prepared_transactions.value)));
+                      },
+                      [&](expected::Error<std::string> &error) {
+                        storage = error;
+                      });
                 },
                 [&](expected::Error<std::string> &error) { storage = error; });
           },
@@ -393,8 +415,13 @@ namespace iroha {
       for (const auto &block : storage->block_store_) {
         storeBlock(*block.second);
       }
-      *(storage->sql_) << "COMMIT";
-      storage->committed = true;
+      try {
+        *(storage->sql_) << "COMMIT";
+        storage->committed = true;
+      } catch (std::exception &e) {
+        storage->committed = false;
+        log_->warn("Mutable storage is not committed. Reason: {}", e.what());
+      }
     }
 
     bool StorageImpl::commitPrepared(

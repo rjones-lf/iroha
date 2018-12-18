@@ -38,6 +38,7 @@ namespace iroha {
         soci::session &sql_;
         std::string savepoint_name_;
         bool is_released_;
+        logger::Logger log_;
       };
 
       TemporaryWsvImpl(

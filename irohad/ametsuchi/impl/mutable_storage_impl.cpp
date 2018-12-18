@@ -29,7 +29,11 @@ namespace iroha {
           command_executor_(std::move(cmd_executor)),
           committed(false),
           log_(logger::log("MutableStorage")) {
-      *sql_ << "BEGIN";
+      try {
+        *sql_ << "BEGIN";
+      } catch (std::exception &e) {
+        log_->error("Mutable storage initialization has been failed");
+      }
     }
 
     bool MutableStorageImpl::apply(const shared_model::interface::Block &block,
@@ -75,17 +79,21 @@ namespace iroha {
 
     template <typename Function>
     bool MutableStorageImpl::withSavepoint(Function &&function) {
-      *sql_ << "SAVEPOINT savepoint_";
+      try {
+        *sql_ << "SAVEPOINT savepoint_";
 
-      auto function_executed = std::forward<Function>(function)();
+        auto function_executed = std::forward<Function>(function)();
 
-      if (function_executed) {
-        *sql_ << "RELEASE SAVEPOINT savepoint_";
-      } else {
-        *sql_ << "ROLLBACK TO SAVEPOINT savepoint_";
+        if (function_executed) {
+          *sql_ << "RELEASE SAVEPOINT savepoint_";
+        } else {
+          *sql_ << "ROLLBACK TO SAVEPOINT savepoint_";
+        }
+        return function_executed;
+      } catch (std::exception &e) {
+        log_->warn("Apply has been failed. Reason: {}", e.what());
+        return false;
       }
-
-      return function_executed;
     }
 
     bool MutableStorageImpl::apply(
@@ -110,7 +118,11 @@ namespace iroha {
 
     MutableStorageImpl::~MutableStorageImpl() {
       if (not committed) {
-        *sql_ << "ROLLBACK";
+        try {
+          *sql_ << "ROLLBACK";
+        } catch (std::exception &e) {
+          log_->warn("Apply has been failed. Reason: {}", e.what());
+        }
       }
     }
   }  // namespace ametsuchi
