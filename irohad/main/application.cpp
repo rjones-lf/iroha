@@ -358,11 +358,26 @@ void Irohad::initPeerCommunicationService() {
   pcs = std::make_shared<PeerCommunicationServiceImpl>(
       ordering_gate, synchronizer, simulator);
 
-  pcs->onProposal().subscribe(
-      [this](auto) { log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ "); });
+  pcs->onProposal().subscribe([this](const auto &) {
+    log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ ");
+  });
 
-  pcs->on_commit().subscribe(
-      [this](auto) { log_->info("~~~~~~~~~| COMMIT =^._.^= |~~~~~~~~~ "); });
+  pcs->on_commit().subscribe([this](const auto &event) {
+    using iroha::synchronizer::SynchronizationOutcomeType;
+    switch (event.sync_outcome) {
+      case SynchronizationOutcomeType::kCommit:
+        log_->info(R"(~~~~~~~~~| COMMIT =^._.^= |~~~~~~~~~ )");
+        break;
+      case SynchronizationOutcomeType::kReject:
+        log_->info(R"(~~~~~~~~~| REJECT \(*.*)/ |~~~~~~~~~ )");
+        break;
+      case SynchronizationOutcomeType::kNothing:
+        log_->info(R"(~~~~~~~~~| EMPTY (-_-)zzz |~~~~~~~~~ )");
+        break;
+      default:
+        break;
+    }
+  });
 
   log_->info("[Init] => pcs");
 }
