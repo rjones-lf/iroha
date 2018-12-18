@@ -64,9 +64,8 @@ namespace iroha {
         if (shouldInsert(msg)) {
           // insert to block store
 
-          log_->info("Vote with round [{}, {}] and hashes [{}, {}] looks valid",
-                     msg.hash.vote_round.block_round,
-                     msg.hash.vote_round.reject_round,
+          log_->info("Vote with {} and hashes [{}, {}] looks valid",
+                     msg.hash.vote_round,
                      msg.hash.vote_hashes.proposal_hash,
                      msg.hash.vote_hashes.block_hash);
 

@@ -193,7 +193,7 @@ namespace torii {
         ->getStatusStream(hash)
         // convert to transport objects
         .map([&](auto response) {
-          log_->debug("mapped {}, {}", response->toString(), client_id);
+          log_->debug("mapped {}, {}", *response, client_id);
           return std::static_pointer_cast<
                      shared_model::proto::TransactionResponse>(response)
               ->getTransport();

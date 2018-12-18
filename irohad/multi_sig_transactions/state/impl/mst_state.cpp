@@ -138,7 +138,7 @@ namespace iroha {
 
   void MstState::insertOne(StateUpdateResult &state_update,
                            const DataType &rhs_batch) {
-    log_->info("batch: {}", rhs_batch->toString());
+    log_->info("batch: {}", *rhs_batch);
     auto corresponding = internal_state_.find(rhs_batch);
     if (corresponding == internal_state_.end()) {
       // when state does not contain transaction

@@ -50,8 +50,7 @@ void OnDemandConnectionManager::onBatches(consensus::Round round,
    */
 
   auto propagate = [this, batches](PeerType type, consensus::Round round) {
-    log_->debug(
-        "onTransactions, round[{}, {}]", round.block_round, round.reject_round);
+    log_->debug("onBatches, {}", round);
 
     connections_.peers[type]->onBatches(round, batches);
   };
@@ -69,9 +68,7 @@ boost::optional<OnDemandConnectionManager::ProposalType>
 OnDemandConnectionManager::onRequestProposal(consensus::Round round) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
-  log_->debug("onRequestProposal, round[{}, {}]",
-              round.block_round,
-              round.reject_round);
+  log_->debug("onRequestProposal, {}", round);
 
   return connections_.peers[kIssuer]->onRequestProposal(round);
 }
