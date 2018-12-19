@@ -18,6 +18,7 @@ RUN set -e; \
     add-apt-repository -y ppa:ubuntu-toolchain-r/test; \
     wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -; \
     echo 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-6.0 main' >> /etc/apt/sources.list; \
+    echo 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main' >> /etc/apt/sources.list; \
     apt-get update
 
 RUN set -e; \
@@ -37,6 +38,14 @@ RUN set -e; \
         curl file gdb gdbserver ccache \
         gcovr cppcheck doxygen rsync graphviz graphviz-dev unzip vim zip; \
     apt-get -y clean
+
+# compiler clang-7 and libc++ only on x86_64, for debug purpose
+RUN set -e; \
+    if [ `uname -m` = "x86_64" ]; then \
+      apt-get -y --no-install-recommends install \
+        clang-7 lldb-7 lld-7 libc++-7-dev libc++abi-7-dev; \
+      apt-get -y clean; \
+    fi
 
 # install cmake 3.11.4
 RUN set -e; \
