@@ -19,6 +19,7 @@
 #define IROHA_MST_STORAGE_HPP
 
 #include <mutex>
+
 #include "cryptography/public_key.hpp"
 #include "logger/logger.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
@@ -79,6 +80,13 @@ namespace iroha {
      */
     MstState whatsNew(ConstRefState new_state) const;
 
+    /**
+     * Check, if passed batch is in the storage
+     * @param batch to be checked
+     * @return true, if batch is already in the storage, false otherwise
+     */
+    bool batchInStorage(const DataType &batch) const;
+
     virtual ~MstStorage() = default;
 
    protected:
@@ -108,6 +116,8 @@ namespace iroha {
 
     virtual auto whatsNewImpl(ConstRefState new_state) const
         -> decltype(whatsNew(new_state)) = 0;
+
+    virtual bool batchInStorageImpl(const DataType &batch) const = 0;
 
     // -------------------------------| fields |--------------------------------
 

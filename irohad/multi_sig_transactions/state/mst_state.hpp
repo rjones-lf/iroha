@@ -128,6 +128,13 @@ namespace iroha {
      */
     MstState eraseByTime(const TimeType &time);
 
+    /**
+     * Check, if this MST state contains that element
+     * @param element to be checked
+     * @return true, if state contains the element, false otherwise
+     */
+    bool contains(const DataType &element) const;
+
    private:
     // --------------------------| private api |------------------------------
 

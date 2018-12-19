@@ -61,6 +61,8 @@ namespace iroha {
 
     auto onExpiredBatchesImpl() const -> decltype(onExpiredBatches()) override;
 
+    bool batchInStorageImpl(const DataType &batch) const override;
+
     // ------------------| MstTransportNotification override |------------------
 
     void onNewState(const shared_model::crypto::PublicKey &from,

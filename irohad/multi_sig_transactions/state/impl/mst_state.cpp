@@ -171,4 +171,8 @@ namespace iroha {
     index_.push(rhs_batch);
   }
 
+  bool MstState::contains(const DataType &element) const {
+    return internal_state_.find(element) != internal_state_.end();
+  }
+
 }  // namespace iroha

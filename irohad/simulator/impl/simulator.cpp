@@ -5,7 +5,6 @@
 
 #include "simulator/impl/simulator.hpp"
 
-#include <boost/range/adaptor/map.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include "common/bind.hpp"
 #include "interfaces/iroha_internal/block.hpp"
@@ -126,15 +125,17 @@ namespace iroha {
         return;
       }
       const auto &proposal = verified_proposal_and_errors->verified_proposal;
-      const auto &rejected_tx_hashes =
-          verified_proposal_and_errors->rejected_transactions
-          | boost::adaptors::map_keys;
+      std::vector<shared_model::crypto::Hash> rejected_hashes;
+      for (const auto &rejected_tx :
+           verified_proposal_and_errors->rejected_transactions) {
+        rejected_hashes.push_back(rejected_tx.tx_hash);
+      }
       std::shared_ptr<shared_model::interface::Block> block =
           block_factory_->unsafeCreateBlock(height,
                                             last_block->hash(),
                                             proposal->createdTime(),
                                             proposal->transactions(),
-                                            rejected_tx_hashes);
+                                            rejected_hashes);
       crypto_signer_->sign(*block);
       block_notifier_.get_subscriber().on_next(
           BlockCreatorEvent{RoundData{proposal, block}, round});

@@ -40,4 +40,8 @@ namespace iroha {
     std::lock_guard<std::mutex> lock{this->mutex_};
     return whatsNewImpl(new_state);
   }
+
+  bool MstStorage::batchInStorage(const DataType &batch) const {
+    return batchInStorageImpl(batch);
+  }
 }  // namespace iroha

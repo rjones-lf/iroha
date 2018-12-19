@@ -25,13 +25,13 @@ def genesis_add_peers(peers_list, genesis_block_fp):
     with open(genesis_block_fp, 'r+') as genesis_json:
         genesis_dict = json.load(genesis_json)
         try:
-            genesis_dict['payload']['transactions'][0]['payload']['reducedPayload']['commands'] = filter(lambda c: not c.get('addPeer'), genesis_dict['payload']['transactions'][0]['payload']['reducedPayload']['commands'])
+            genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'] = filter(lambda c: not c.get('addPeer'), genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'])
         except KeyError:
             pass
-        genesis_dict['payload']['transactions'][0]['payload']['reducedPayload']['commands'] = list(genesis_dict['payload']['transactions'][0]['payload']['reducedPayload']['commands'])
+        genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'] = list(genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'])
         for p in peers_list:
             p_add_command = {"addPeer": {"peer": {"address": "%s:%s" % (p.host, '10001'), "peerKey":hex_to_b64(p.pub_key)}}}
-            genesis_dict['payload']['transactions'][0]['payload']['reducedPayload']['commands'].append(p_add_command)
+            genesis_dict['blockV1']['payload']['transactions'][0]['payload']['reducedPayload']['commands'].append(p_add_command)
         genesis_json.seek(0)
         json.dump(genesis_dict, genesis_json, sort_keys=True)
         genesis_json.truncate()
@@ -59,16 +59,17 @@ def caliper_rename_keys(priv_key_name, pub_key_name, caliper_conf_fp):
         json.dump(caliper_conf_dict, caliper_conf_json, sort_keys=True)
         caliper_conf_json.truncate()
 
-def hex_to_b64(hex_string):
-    hex_string = base64.b64encode(bytearray.fromhex(hex_string))
-    return hex_string.decode('utf-8')
+def to_b64(bytes_array):
+    return base64.b64encode(bytes_array).decode('utf-8')
 
-def make_keys(peers):
-    for i, p in enumerate(peers):
-        with open('node%s.priv' % i, 'w+') as priv_key_file:
-            priv_key_file.write(p.priv_key)
-        with open('node%s.pub' % i, 'w+') as pub_key_file:
-            pub_key_file.write(p.pub_key)
+def hex_to_b64(hex_string):
+    return to_b64(bytearray.fromhex(hex_string))
+
+def print_keys_b64(peers):
+    for peer in peers:
+        priv_key = peer.priv_key.encode()
+        pub_key = peer.pub_key.encode()
+        print(to_b64(priv_key) + ',' + to_b64(pub_key))
 
 if __name__ ==  "__main__":
     command = sys.argv[1]
@@ -83,7 +84,7 @@ if __name__ ==  "__main__":
     elif command == 'add_caliper_peers':
         caliper_add_peers(peers, json_conf)
         caliper_rename_keys('admin-test.priv', 'admin-test.pub', json_conf)
-    elif command == 'make_key_files':
-        make_keys(peers)
+    elif command == 'print_keys_b64':
+        print_keys_b64(peers)
     else:
         print('Invalid command')

@@ -6,8 +6,8 @@
 #ifndef IROHA_SHARED_MODEL_PROTO_COMMAND_HPP
 #define IROHA_SHARED_MODEL_PROTO_COMMAND_HPP
 
-#include "interfaces/commands/command.hpp"
 #include "commands.pb.h"
+#include "interfaces/commands/command.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -16,25 +16,26 @@ namespace shared_model {
      public:
       using TransportType = iroha::protocol::Command;
 
-      Command(const Command &o);
       Command(Command &&o) noexcept;
 
-      explicit Command(const TransportType &ref);
-      explicit Command(TransportType &&ref);
+      explicit Command(TransportType &ref);
 
       ~Command() override;
 
       const CommandVariantType &get() const override;
 
      protected:
+      // TODO [IR-126] Akvinikym 13.12.18: Rework inheritance hierarchy so that
+      // this clone will disappear
       Command *clone() const override;
 
      private:
       struct Impl;
       std::unique_ptr<Impl> impl_;
+
+      void logError(const std::string &message) const;
     };
   }  // namespace proto
 }  // namespace shared_model
-
 
 #endif  // IROHA_SHARED_MODEL_PROTO_COMMAND_HPP

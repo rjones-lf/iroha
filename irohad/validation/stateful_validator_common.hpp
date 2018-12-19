@@ -44,18 +44,19 @@ namespace iroha {
       size_t index = 0;
     };
 
-    /// Collection of transactions errors - a map from the failed transaction
-    /// hash to the description of failed command.
-    using TransactionHash = shared_model::crypto::Hash;
-    using TransactionsErrors = std::
-        unordered_map<TransactionHash, CommandError, TransactionHash::Hasher>;
-    using TransactionError = TransactionsErrors::value_type;
+    /// Hash of transaction with error, which appeared during validation of this
+    /// transaction
+    struct TransactionError {
+      shared_model::crypto::Hash tx_hash;
+      CommandError error;
+    };
 
-    /// Type of verified proposal and errors appeared in the process; first
-    /// dimension of errors vector is transaction, second is error itself with
-    /// number of transaction, where it happened
-    // TODO mboldyrev 27.10.2018: create a special class for VerifiedProposal
-    //      IR-1849               which will include the rejected tx hashes
+    /// Collection of transactions errors
+    using TransactionsErrors = std::vector<TransactionError>;
+
+    /// Type of verified proposal and errors appeared in the process
+    // TODO [IR-1849] mboldyrev 27.10.2018: create a special class
+    // for VerifiedProposal which will include the rejected tx hashes
     struct VerifiedProposalAndErrors {
       std::shared_ptr<shared_model::interface::Proposal> verified_proposal;
       TransactionsErrors rejected_transactions;

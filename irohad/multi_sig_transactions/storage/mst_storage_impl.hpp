@@ -57,6 +57,8 @@ namespace iroha {
     auto whatsNewImpl(ConstRefState new_state) const
         -> decltype(whatsNew(new_state)) override;
 
+    bool batchInStorageImpl(const DataType &batch) const override;
+
    private:
     // ---------------------------| private fields |----------------------------
 
