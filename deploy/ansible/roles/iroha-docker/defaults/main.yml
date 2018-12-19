@@ -23,17 +23,32 @@ custom_hostnames: false
 # Default: false
 overlay_network: true
 
-# Deployment configs
+## Deployment configs
 container_basename: iroha
+# Path on a local machine for generated configs prior moving them on the remote
 config_local_dir: /tmp/iroha-ansible-conf
+# Path on a remote machine for generated configs
 deploy_dir: /opt/iroha-deploy
+# Overlay network name
+# If using overlay network plugin (like Calico) the network must be created prior running this role
+# The network will be created automatically if deploying locally or with `overlay_network`
+# set to `false`
 iroha_network_name: iroha-net
+
 iroha_docker_tag: 1.0.0_rc1
 postgres_docker_tag: '9.5'
 
 ## Iroha config
+# This value will be used as a base peer port for Iroha container. E.g. setting `replicas` option to
+# 6 will generate Docker Compose file with port numbers starting from 10001 counting up to 10006.
+# If `custom_hostnames` set to `true` AND contains port numbers this option is ignored
 iroha_peer_port: 10001
+# As above but for base Torii port
 iroha_torii_port: 50051
+
+# Rest of the options affect Iroha configuration
+# See https://iroha.readthedocs.io/en/latest/guides/configuration.html#configuration
+# for more info.
 iroha_max_proposal_size: 10
 iroha_proposal_delay: 5000
 iroha_vote_delay: 5000
