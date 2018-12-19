@@ -107,7 +107,9 @@ with open('common.yaml', 'r') as stream:
 with open('locale.yaml', 'r') as stream:    
     locale = yaml.load(stream)
     language = locale.get('language')
-    locale_dirs = locale.get('locale_dirs')
+    if locale.get('locale_dirs'):
+        print("Setting locale dir to " + locale.get('locale_dirs'))
+        locale_dirs = [(locale.get('locale_dirs'))]
 
 
 # Grouping the document tree into LaTeX files. List of tuples
