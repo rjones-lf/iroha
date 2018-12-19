@@ -1,12 +1,12 @@
 #!/usr/bin/env groovy
 
-def doDoxygen() {
+def doDoxygen(boolean specialBranch, String local_branch) {
   sh "doxygen Doxyfile"
   // TODO: Remove this comment once dev branch will return to develop
   // I will not be changing branches here. It requires some rewriting
   // Hope dev branch situation will be resolved soon
-  if (env.GIT_LOCAL_BRANCH in ["master","develop"] || env.CHANGE_BRANCH_LOCAL == 'develop') {
-    def branch = env.CHANGE_BRANCH_LOCAL == 'develop' ? env.CHANGE_BRANCH_LOCAL : env.GIT_LOCAL_BRANCH
+  if (specialBranch) {
+    def branch = local_branch == "master" ? local_branch : "develop"
     sshagent(['jenkins-artifact']) {
       sh "ssh-agent"
       sh """

@@ -66,17 +66,16 @@ def build(Build build) {
   }
 }
 
-def getTestList() {
+def getParamsAsList(String prefix) {
+    // Returns Boolean key if they set as true
     list = []
-    prefix = 'test_'
     for (i in  params){
         if(i.key.startsWith(prefix) && i.value.getClass() == Boolean &&  i.value){
             list += i.key.minus(prefix)
         }
     }
     status = !list.isEmpty()
-    line = ( "(" +list.findAll({it != ''}).join('|') + ")")
-    return [status, line]
+    return [status, list]
 }
 
 
@@ -85,12 +84,13 @@ timestamps(){
 
 properties([
     parameters([
-        choice(choices: 'gcc5\ngcc7\nclang6\ngcc5,gcc7,clang6\n', description: 'x64 Linux Compiler', name: 'x64linux_compiler'),
-        //TODO add x32 Linux Machine
-        //choice(choices: '\ngcc5\ngcc5,gcc7,clang6', description: 'x32 Linux Compiler', name: 'x32linux_compiler'),
-        choice(choices: '\nappleclang', description: 'MacOS Compiler', name: 'mac_compiler'),
-        //TODO Write pipeline for Windows
-        //choice(choices: '\nmsvc', description: 'Windows Compiler', name: 'windows_compiler'),
+        booleanParam(defaultValue: true, description: '', name: 'x64linux_compiler_gcc5'),
+        booleanParam(defaultValue: false, description: '', name: 'x64linux_compiler_gcc7'),
+        booleanParam(defaultValue: false, description: '', name: 'x64linux_compiler_clang6'),
+        booleanParam(defaultValue: false, description: '', name: 'x64linux_compiler_clang7'),
+
+        booleanParam(defaultValue: false, description: '', name: 'mac_compiler_appleclang'),
+
         choice(choices: 'Debug\nRelease', description: 'Iroha build type', name: 'build_type'),
 
         booleanParam(defaultValue: false, description: '', name: 'coverage'),
@@ -104,7 +104,7 @@ properties([
         booleanParam(defaultValue: false, description: '', name: 'test_regression'),
         booleanParam(defaultValue: false, description: '', name: 'test_benchmark'),
         booleanParam(defaultValue: false, description: 'Sanitize address;leak', name: 'sanitize'),
-        booleanParam(defaultValue: false, description: 'Build fuzzing, but do not run tests, use only clang', name: 'fuzzing'),
+        booleanParam(defaultValue: false, description: 'Build fuzzing, uses only clang6', name: 'fuzzing'),
         booleanParam(defaultValue: false, description: 'Build docs', name: 'Doxygen'),
         //TODO in build_type:Debug params.package do NOT work properly, need fix in Cmake(deb/tar.gz is empty, tests empty)
         booleanParam(defaultValue: false, description: 'Build package, for build type Debug, for Release always true', name: 'package'),
@@ -132,21 +132,52 @@ node ('master') {
   }
 
   // Define variable and params
-  (testing,testList) = getTestList()
+  (testing,testList) = getParamsAsList('test_')
+  testList = ( "(" +testList.findAll({it != ''}).join('|') + ")")
+  (x64linux_compiler, x64linux_compiler_list) =  getParamsAsList('x64linux_compiler_')
+  (mac_compiler, mac_compiler_list) =  getParamsAsList('mac_compiler_')
 
   if (params.build_type == 'Release') {
     packageBuild = true
+    if (scmVars.GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/){
+      packagePush = true
+    }
   } else {
     packageBuild = params.package
+    packagePush = false
   }
+
   if (params.fuzzing){
-    x64linux_compiler= 'clang6'
-    testing = false
-  } else {
-    x64linux_compiler =  params.x64linux_compiler
+    x64linux_compiler = true
+    x64linux_compiler_list= ['clang6']
+    //if no test selected still build it with test
+    if(!testing){
+      testing = true
+      testList = "(None)"
+    }
   }
-  echo "packageBuild=${packageBuild}"
+
+  if (scmVars.GIT_LOCAL_BRANCH ==~ /(develop|dev)/){
+    pushDockerTag =  'develop'
+  } else if (scmVars.GIT_LOCAL_BRANCH == 'master'){
+    pushDockerTag = 'latest'
+  } else {
+    pushDockerTag = 'not-supposed-to-be-pushed'
+  }
+
+  if (scmVars.GIT_LOCAL_BRANCH in ["master","develop","dev"] || scmVars.CHANGE_BRANCH_LOCAL in ["develop","dev"]) {
+    specialBranch =  true
+  }else {
+    specialBranch = false
+  }
+  echo "packageBuild=${packageBuild}, pushDockerTag=${pushDockerTag}"
   echo "testing=${testing}, testList=${testList}"
+  echo "x64linux_compiler=${x64linux_compiler}, x64linux_compiler_list=${x64linux_compiler_list}"
+  echo "mac_compiler=${mac_compiler}, mac_compiler_list=${mac_compiler_list}"
+  echo "specialBranch=${specialBranch}"
+  print scmVars
+  print environmentList
+
 
   // Load Scripts
   x64LinuxBuildScript = load '.jenkinsci/builders/x64-linux-build-steps.groovy'
@@ -160,20 +191,21 @@ node ('master') {
   // Define all possible steps
   def x64LinuxBuildSteps
   def x64LinuxPostSteps = new Builder.PostSteps()
-  if(params.x64linux_compiler){
+  if(x64linux_compiler){
     x64LinuxBuildSteps = [{x64LinuxBuildScript.buildSteps(
-      x64LinuxWorker.cpusAvailable, x64linux_compiler, params.build_type, false, 'Not_used', params.coverage, testing, testList, params.cppcheck, params.sonar, params.Doxygen, packageBuild, params.sanitize, params.fuzzing, environmentList)}]
+      x64LinuxWorker.cpusAvailable, x64linux_compiler_list, params.build_type, specialBranch, params.coverage,
+      testing, testList, params.cppcheck, params.sonar, params.Doxygen, packageBuild, packagePush, params.sanitize, params.fuzzing, environmentList)}]
     x64LinuxPostSteps = new Builder.PostSteps(
       always: [{x64LinuxBuildScript.alwaysPostSteps(environmentList)}],
-      success: [{x64LinuxBuildScript.successPostSteps(scmVars, params.build_type, environmentList)}])
+      success: [{x64LinuxBuildScript.successPostSteps(scmVars, params.build_type, packagePush, pushDockerTag, environmentList)}])
   }
   def x64MacBuildSteps
   def x64MacBuildPostSteps = new Builder.PostSteps()
-  if(params.mac_compiler){
-    x64MacBuildSteps = [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, params.mac_compiler, params.build_type, params.coverage, testing, testList, packageBuild, environmentList)}]
+  if(mac_compiler){
+    x64MacBuildSteps = [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, mac_compiler_list, params.build_type, params.coverage, testing, testList, packageBuild,  environmentList)}]
     x64MacBuildPostSteps = new Builder.PostSteps(
       always: [{x64BuildScript.alwaysPostSteps(environmentList)}],
-      success: [{x64BuildScript.successPostSteps(scmVars, params.build_type, environmentList)}])
+      success: [{x64BuildScript.successPostSteps(scmVars, params.build_type, packagePush, environmentList)}])
   }
 
   // Define builders

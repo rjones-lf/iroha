@@ -1,21 +1,15 @@
 #!/usr/bin/env groovy
 
-def DockerManifestPush(dockerImageObj, String dockerTag, environment) {
+def dockerManifestPush(dockerImageObj, String dockerTag, environment) {
   manifest = load ".jenkinsci/utils/docker-manifest.groovy"
   withEnv(environment) {
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${env.DOCKER_REGISTRY_BASENAME}:${dockerTag}",
-        ["${env.DOCKER_REGISTRY_BASENAME}:x86_64-${dockerTag}",
-         "${env.DOCKER_REGISTRY_BASENAME}:armv7l-${dockerTag}",
-         "${env.DOCKER_REGISTRY_BASENAME}:aarch64-${dockerTag}"])
+        ["${env.DOCKER_REGISTRY_BASENAME}:x86_64-${dockerTag}"])
       manifest.manifestAnnotate("${env.DOCKER_REGISTRY_BASENAME}:${dockerTag}",
         [
           [manifest: "${env.DOCKER_REGISTRY_BASENAME}:x86_64-${dockerTag}",
            arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
-          [manifest: "${env.DOCKER_REGISTRY_BASENAME}:armv7l-${dockerTag}",
-           arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
-          [manifest: "${env.DOCKER_REGISTRY_BASENAME}:aarch64-${dockerTag}",
-           arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
         ])
       withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
         manifest.manifestPush("${env.DOCKER_REGISTRY_BASENAME}:${dockerTag}", login, password)
@@ -38,8 +32,8 @@ def testSteps(String buildDir, List environment, String testList) {
   }
 }
 
-def buildSteps(int parallelism, String compilerVersions, String build_type, boolean pushDockerTag, String dockerTag,
-      boolean coverage, boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild, boolean sanitize, boolean fuzzing, List environment) {
+def buildSteps(int parallelism, List compilerVersions, String build_type, boolean specialBranch, boolean coverage,
+      boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild, boolean packagePush, boolean sanitize, boolean fuzzing, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
     build = load '.jenkinsci/build.groovy'
@@ -60,20 +54,13 @@ def buildSteps(int parallelism, String compilerVersions, String build_type, bool
       cmakeOptions += " -DSANITIZE='address;leak' "
     }
     sh "docker network create ${env.IROHA_NETWORK}"
-    // iC = dockerUtils.dockerPullOrBuild("${platform}-develop-build",
-    //      "${env.GIT_RAW_BASE_URL}/${scmVars.GIT_COMMIT}/docker/develop/Dockerfile",
-    //      "${env.GIT_RAW_BASE_URL}/${utils.previousCommitOrCurrent(scmVars)}/docker/develop/Dockerfile",
-    //      "${env.GIT_RAW_BASE_URL}/dev/docker/develop/Dockerfile",
-    //      scmVars,
-    //      environment,
-    //      ['PARALLELISM': parallelism])
     iC = dockerUtils.dockerPullOrBuild("${platform}-develop-build",
-         "${env.GIT_RAW_BASE_URL}/dev/docker/develop/Dockerfile",
-         "${env.GIT_RAW_BASE_URL}/dev/docker/develop/Dockerfile",
-         "${env.GIT_RAW_BASE_URL}/dev/docker/develop/Dockerfile",
-         scmVars,
-         environment,
-         ['PARALLELISM': parallelism])
+        "${env.GIT_RAW_BASE_URL}/${scmVars.GIT_COMMIT}/docker/develop/Dockerfile",
+        "${env.GIT_RAW_BASE_URL}/${utils.previousCommitOrCurrent(scmVars)}/docker/develop/Dockerfile",
+        "${env.GIT_RAW_BASE_URL}/dev/docker/develop/Dockerfile",
+        scmVars,
+        environment,
+        ['PARALLELISM': parallelism])
     // enable prepared transactions so that 2 phase commit works
     // we set it to 100 as a safe value
     sh "docker run -td -e POSTGRES_USER=${env.IROHA_POSTGRES_USER} \
@@ -87,7 +74,7 @@ def buildSteps(int parallelism, String compilerVersions, String build_type, bool
     + " --network=${env.IROHA_NETWORK}"
     + " -v /var/jenkins/ccache:${env.CCACHE_DEBUG_DIR}") {
       utils.ccacheSetup(5)
-      for (compiler in compilerVersions.split(',')) {
+      for (compiler in compilerVersions) {
         stage ("build ${compiler}"){
           build.cmakeConfigure(buildDir, "-DCMAKE_CXX_COMPILER=${compilers[compiler]['cxx_compiler']} \
             -DCMAKE_C_COMPILER=${compilers[compiler]['cc_compiler']} \
@@ -98,11 +85,6 @@ def buildSteps(int parallelism, String compilerVersions, String build_type, bool
             -DPACKAGE_DEB=${cmakeBooleanOption[packagebuild]} \
             -DPACKAGE_TGZ=${cmakeBooleanOption[packagebuild]} ${cmakeOptions}")
           build.cmakeBuild(buildDir, cmakeBuildOptions, parallelism)
-          if (packagebuild) {
-            // if we use several compiler only last build  will saved as iroha.deb and iroha.tar.gz
-            sh "mv ./build/iroha-*.deb ./build/iroha.deb"
-            sh "mv ./build/iroha-*.tar.gz ./build/iroha.tar.gz"
-          }
         }
         if (testing) {
           stage("Test ${compiler}") {
@@ -117,34 +99,40 @@ def buildSteps(int parallelism, String compilerVersions, String build_type, bool
             sonar ? build.sonarScanner(scmVars, environment) : echo('Skipping Sonar Scanner...')
       }
       stage('Build docs'){
-        docs ? doxygen.doDoxygen() : echo("Skipping Doxygen...")
+        docs ? doxygen.doDoxygen(specialBranch, scmVars.GIT_LOCAL_BRANCH) : echo("Skipping Doxygen...")
       }
       stage ('DockerManifestPush'){
-        if (pushDockerTag) {
+        if (specialBranch) {
           utils.dockerPush(iC, "${platform}-develop-build")
-          DockerManifestPush(iC, "develop-build", environment)
-          if (build_type == 'Release' && scmVars.GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/){
-            sh "cp ./build/iroha.deb docker/release/iroha.deb"
-            iCRelease = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${scmVars.GIT_COMMIT}-${env.BUILD_NUMBER}-release", "--no-cache -f docker/release/Dockerfile ${WORKSPACE}/docker/release")
-            utils.dockerPush(iCRelease, "${platform}-develop")
-            DockerManifestPush(iCRelease, "develop", environment)
-            sh "docker rmi ${iCRelease.id}"
-          }
+          dockerManifestPush(iC, "develop-build", environment)
         }
       }
     }
   }
 }
 
-def successPostSteps(scmVars, String build_type, List environment) {
+def successPostSteps(scmVars, String build_type, boolean packagePush, String dockerTag, List environment) {
   stage('successPostSteps') {
     withEnv(environment) {
       artifacts = load ".jenkinsci/artifacts.groovy"
       filesToUpload = []
       platform = sh(script: 'uname -m', returnStdout: true).trim()
-      if (build_type == 'Release' && scmVars.GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
-        sh("mkdir -p build/artifacts")
-        sh("mv ./build/iroha.deb ./build/iroha.tar.gz build/artifacts")
+      if (packagePush) {
+        // if we use several compiler only last build  will saved as iroha.deb and iroha.tar.gz
+        sh """
+          mv ./build/iroha-*.deb ./build/iroha.deb
+          mv ./build/iroha-*.tar.gz ./build/iroha.tar.gz
+          cp ./build/iroha.deb docker/release/iroha.deb
+          mkdir -p build/artifacts
+          mv ./build/iroha.deb ./build/iroha.tar.gz build/artifacts
+        """
+        // publish docker
+        iCRelease = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${scmVars.GIT_COMMIT}-${env.BUILD_NUMBER}-release", "--no-cache -f docker/release/Dockerfile ${WORKSPACE}/docker/release")
+        utils.dockerPush(iCRelease, "${platform}-develop")
+        dockerManifestPush(iCRelease, dockerTag, environment)
+        sh "docker rmi ${iCRelease.id}"
+
+        // publish packages
         filePaths = [ './build/artifacts/iroha.deb', './build/artifacts/iroha.tar.gz' ]
         filePaths.each {
           filesToUpload.add("${it}")

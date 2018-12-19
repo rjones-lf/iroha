@@ -25,7 +25,7 @@ def testSteps(scmVars, String buildDir, List environment, String testList) {
   }
 }
 
-def buildSteps( int parallelism, String compilerVersions, String build_type, boolean coverage, boolean testing, String testList, boolean packagebuild, List environment) {
+def buildSteps( int parallelism, List compilerVersions, String build_type, boolean coverage, boolean testing, String testList, boolean packagebuild, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
     build = load '.jenkinsci/build.groovy'
@@ -39,14 +39,10 @@ def buildSteps( int parallelism, String compilerVersions, String build_type, boo
     if (packagebuild){
       cmakeBuildOptions = " --target package "
     }
-    //not sure if we need this
-    //env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
-    //env.IROHA_HOME = "/opt/iroha"
-    //env.IROHA_BUILD = "${env.IROHA_HOME}/build"
 
     utils.ccacheSetup(5)
 
-    for (compiler in compilerVersions.split(',')) {
+    for (compiler in compilerVersions) {
       stage ("build ${compiler}"){
         build.cmakeConfigure(buildDir,
         "-DCMAKE_CXX_COMPILER=${compilers[compiler]['cxx_compiler']} \
@@ -57,11 +53,6 @@ def buildSteps( int parallelism, String compilerVersions, String build_type, boo
         -DPACKAGE_TGZ=${cmakeBooleanOption[packagebuild]} ")
 
         build.cmakeBuild(buildDir, cmakeBuildOptions, parallelism)
-
-        if (packagebuild) {
-          // if we use several compiler only last build  will saved as iroha.deb and iroha.tar.gz
-          sh "mv ./build/iroha-*.tar.gz ./build/iroha.tar.gz"
-        }
       }
       if (testing) {
         stage("Test ${compiler}") {
@@ -74,13 +65,15 @@ def buildSteps( int parallelism, String compilerVersions, String build_type, boo
   }
 }
 
-def successPostSteps(scmVars, String build_type, List environment) {
+def successPostSteps(scmVars, String build_type, boolean packagePush, List environment) {
   stage('successPostSteps') {
     withEnv(environment) {
       timeout(time: 600, unit: "SECONDS") {
-        if (build_type == 'Release' && scmVars.GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/) {
+        if (packagePush) {
           def artifacts = load ".jenkinsci/artifacts.groovy"
           def commit = scmVars.GIT_COMMIT
+          // if we use several compiler only last build  will saved as iroha.deb and iroha.tar.gz
+          sh "mv ./build/iroha-*.tar.gz ./build/iroha.tar.gz"
           filePaths = [ '\$(pwd)/build/*.tar.gz' ]
           artifacts.uploadArtifacts(filePaths, sprintf('iroha/macos/%1$s-%2$s-%3$s', [scmVars.GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
         } else {
