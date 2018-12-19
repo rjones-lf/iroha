@@ -114,21 +114,23 @@ namespace iroha {
        * @tparam PermissionTuple - permissions, needed for the query
        * @tparam QueryExecutor - type of function, which executes the query
        * @tparam ResponseCreator - type of function, which creates response of
-       * the query
-       * @tparam ErrResponse - type of function, which creates error response
+       * the query, successful or error one
+       * @tparam PermissionsErrResponse - type of function, which creates error
+       * response in case something wrong with permissions
        * @param query_executor - function, executing query
        * @param response_creator - function, creating query response
-       * @param err_response - function, creating error response
+       * @param perms_err_response - function, creating error response
        * @return query response created as a result of query execution
        */
       template <typename QueryTuple,
                 typename PermissionTuple,
                 typename QueryExecutor,
                 typename ResponseCreator,
-                typename ErrResponse>
-      QueryExecutorResult executeQuery(QueryExecutor &&query_executor,
-                                       ResponseCreator &&response_creator,
-                                       ErrResponse &&err_response);
+                typename PermissionsErrResponse>
+      QueryExecutorResult executeQuery(
+          QueryExecutor &&query_executor,
+          ResponseCreator &&response_creator,
+          PermissionsErrResponse &&perms_err_response);
 
       /**
        * Create a query error response and log it

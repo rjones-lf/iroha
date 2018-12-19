@@ -122,6 +122,7 @@ Purpose
 -------
 
 GetTransactions is used for retrieving information about transactions, based on their hashes.
+.. note:: This query is valid if and only if all the requested hashes are correct: corresponding transactions exist, and the user has a permission to retrieve them
 
 Request Schema
 --------------
