@@ -53,23 +53,31 @@ TEST(StateTest, UpdateExistingState) {
 }
 
 /**
- * @given empty state @and two batches
- * @when inserting first batch and not the second
- * @then "contains" method shows presence of the first batch @and absence of the
- * second one
+ * @given empty state @and a batch
+ * @when inserting the batch
+ * @then "contains" method shows presence of the batch
  */
-TEST(StateTest, ContainsMethodWorkCorrectly) {
+TEST(StateTest, ContainsMethodFindsInsertedBatch) {
   auto state = MstState::empty();
 
   auto first_signature = makeSignature("1", "pub_key_1");
-  auto first_batch = makeTestBatch(txBuilder(1, iroha::time::now()));
-  auto tx = addSignatures(first_batch, 0, first_signature);
+  auto batch = makeTestBatch(txBuilder(1, iroha::time::now()));
+  auto tx = addSignatures(batch, 0, first_signature);
   state += tx;
 
-  auto second_batch = makeTestBatch(txBuilder(1, iroha::time::now()));
+  EXPECT_TRUE(state.contains(batch));
+}
 
-  ASSERT_TRUE(state.contains(first_batch));
-  ASSERT_FALSE(state.contains(second_batch));
+/**
+ * @given empty state @and a distinct batch
+ * @when checking that batch's presence in the state
+ * @then "contains" method shows absence of the batch
+ */
+TEST(StateTest, ContainsMethodDoesNotFindNonInsertedBatch) {
+  auto state = MstState::empty();
+  auto batch = makeTestBatch(txBuilder(1, iroha::time::now()));
+
+  EXPECT_FALSE(state.contains(batch));
 }
 
 /**
