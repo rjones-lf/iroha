@@ -15,9 +15,9 @@ def cmakeBuildWindows(String buildDir, String cmakeOptions) {
 
 def cppCheck(String buildDir, int parallelism) {
   // github.com/jenkinsci/cppcheck-plugin/pull/36
-  sh "cppcheck -j${parallelism} --enable=all --template='{file},,{line},,{severity},,{id},,{message}' ${buildDir} 2> cppcheck.txt"
+  sh "cppcheck -j${parallelism} --enable=all --template='{file},,{line},,{severity},,{id},,{message}' . 2> cppcheck.txt"
   warnings (
-    parserConfigurations: [[parserName: 'Cppcheck', pattern: "${buildDir}/cppcheck.txt"]], categoriesPattern: '',
+    parserConfigurations: [[parserName: 'Cppcheck', pattern: "cppcheck.txt"]], categoriesPattern: '',
     defaultEncoding: '', excludePattern: '', healthy: '', includePattern: '', messagesPattern: '', unHealthy: ''
   )
 }
