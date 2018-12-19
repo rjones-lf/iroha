@@ -125,22 +125,35 @@ If they are met, you can move forward with the following command:
 .. code-block:: shell
 
     docker run --name iroha \
-    # External port
     -p 50051:50051 \
-    # Folder with configuration files
     -v ~/Developer/iroha/example:/opt/iroha_data \
-    # Blockstore volume
-    -v blockstore:/tmp/block_store \
-    # Postgres settings
+    -v blockstore:/tmp/block_store \ 
     -e POSTGRES_HOST='some-postgres' \
     -e POSTGRES_PORT='5432' \
     -e POSTGRES_PASSWORD='mysecretpassword' \
     -e POSTGRES_USER='postgres' \
-    # Node keypair name
     -e KEY='node0' \
-    # Docker network name
     --network=iroha-network \
-    hyperledger/iroha:latest
+    hyperledger/iroha:latest.
+
+A little more about what these commands mean:
+
+``-p 50051:50051 \`` -  external port
+
+``-v ~/Developer/iroha/example:/opt/iroha_data \`` - folder with configuration files
+
+``-v blockstore:/tmp/block_store \`` - blockstore volume
+
+``-e POSTGRES_HOST='some-postgres' \``
+    ``-e POSTGRES_PORT='5432' \``
+    ``-e POSTGRES_PASSWORD='mysecretpassword' \``
+    ``-e POSTGRES_USER='postgres' \`` - Postgres settings. Currently you only need them for testing purposes, because at the moment they are being taken from the ``config.docker`` file. 
+
+``-e KEY='node0' \`` - node keypair name
+
+``--network=iroha-network \``
+    ``hyperledger/iroha:latest`` - Docker network name and corresponding version for Iroha. Latest here will correspond with master branch. 
+
 
 Running multiple instances (peer network)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
