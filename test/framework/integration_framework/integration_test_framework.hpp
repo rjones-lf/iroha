@@ -107,7 +107,7 @@ namespace integration_framework {
 
     ~IntegrationTestFramework();
 
-    std::future<std::shared_ptr<fake_peer::FakePeer>> addInitialPeer(
+    std::shared_ptr<fake_peer::FakePeer> addInitialPeer(
         const boost::optional<shared_model::crypto::Keypair> &key);
 
     /**
@@ -122,6 +122,13 @@ namespace integration_framework {
      */
     shared_model::proto::Block defaultBlock(
         const shared_model::crypto::Keypair &key) const;
+
+    /// Construct default genesis block using the my_key_ key.
+    shared_model::proto::Block defaultBlock() const;
+
+    /// Set the provided genesis block.
+    IntegrationTestFramework &setGenesisBlock(
+        const shared_model::interface::Block &block);
 
     /**
      * Initialize Iroha instance with default genesis block and provided signing
@@ -369,6 +376,12 @@ namespace integration_framework {
     /// Get the controlled Iroha instance.
     const std::shared_ptr<IrohaInstance> &getIrohaInstance() const;
 
+    /// Set the ITF peer keypair and initialize irohad pipeline.
+    void initPipeline(const shared_model::crypto::Keypair &keypair);
+
+    /// Start the ITF.
+    void subscribeQueuesAndRun();
+
    protected:
     using AsyncCall = iroha::network::AsyncGrpcClient<google::protobuf::Empty>;
 
@@ -406,9 +419,6 @@ namespace integration_framework {
 
     std::shared_ptr<AsyncCall> async_call_;
 
-    void initPipeline(const shared_model::crypto::Keypair &keypair);
-    void subscribeQueuesAndRun();
-
     // config area
 
     /// maximum time of waiting before appearing next proposal
@@ -439,11 +449,10 @@ namespace integration_framework {
     std::shared_ptr<iroha::network::OrderingServiceTransport> os_transport_;
     std::shared_ptr<iroha::ordering::OrderingGateTransportGrpc> og_transport_;
 
+    boost::optional<shared_model::crypto::Keypair> my_key_;
     std::shared_ptr<shared_model::interface::Peer> this_peer_;
 
    private:
-    void makeFakePeers();
-
     logger::Logger log_ = logger::log("IntegrationTestFramework");
     std::mutex queue_mu;
     std::condition_variable queue_cond;

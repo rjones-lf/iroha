@@ -40,29 +40,25 @@ class FakePeerExampleFixture : public AcceptanceFixture {
    */
   IntegrationTestFramework &prepareState(size_t num_fake_peers) {
     // request the fake peers construction
-    std::vector<std::future<FakePeerPtr>> fake_peers_futures;
-    std::generate_n(std::back_inserter(fake_peers_futures),
-                    num_fake_peers,
-                    [this] { return itf_->addInitialPeer({}); });
+    itf_->initPipeline(kAdminKeypair);
 
-    itf_->setInitialState(kAdminKeypair);
-
-    auto permissions =
-        interface::RolePermissionSet({Role::kReceive, Role::kTransfer});
-
-    // get the constructed fake peers & set honest behaviour
-    for (auto &fake_peer_future : fake_peers_futures) {
-      assert(fake_peer_future.valid() && "fake peer must be ready");
-      FakePeerPtr fake_peer = fake_peer_future.get();
+    // make the fake peers with honest behaviour
+    std::generate_n(std::back_inserter(fake_peers_), num_fake_peers, [this] {
+      FakePeerPtr fake_peer = this->itf_->addInitialPeer({});
       fake_peer->setBehaviour(std::make_shared<fake_peer::HonestBehaviour>());
-      fake_peers_.emplace_back(std::move(fake_peer));
-    }
+      return fake_peer;
+    });
+
+    itf_->setGenesisBlock(itf_->defaultBlock()).subscribeQueuesAndRun();
 
     // inside prepareState we can use lambda for such assert, since
     // prepare transactions are not going to fail
     auto block_with_tx = [](auto &block) {
       ASSERT_EQ(block->transactions().size(), 1);
     };
+
+    auto permissions =
+        interface::RolePermissionSet({Role::kReceive, Role::kTransfer});
 
     return itf_->sendTxAwait(makeUserWithPerms(permissions), block_with_tx)
         .sendTxAwait(
