@@ -13,7 +13,6 @@
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
-#include "common/timeout.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
 
@@ -22,8 +21,6 @@ namespace torii {
   CommandServiceTransportGrpc::CommandServiceTransportGrpc(
       std::shared_ptr<CommandService> command_service,
       std::shared_ptr<iroha::torii::StatusBus> status_bus,
-      std::chrono::milliseconds initial_timeout,
-      std::chrono::milliseconds nonfinal_timeout,
       std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory,
       std::shared_ptr<TransportFactoryType> transaction_factory,
       std::shared_ptr<shared_model::interface::TransactionBatchParser>
@@ -33,8 +30,6 @@ namespace torii {
       SubscriptionWatcherPtrType consensus_round_watcher)
       : command_service_(std::move(command_service)),
         status_bus_(std::move(status_bus)),
-        initial_timeout_(initial_timeout),
-        nonfinal_timeout_(nonfinal_timeout),
         status_factory_(std::move(status_factory)),
         transaction_factory_(std::move(transaction_factory)),
         batch_parser_(std::move(batch_parser)),

@@ -52,10 +52,6 @@ using namespace iroha::network;
 using namespace iroha::validation;
 using namespace shared_model::proto;
 
-using namespace std::chrono_literals;
-constexpr std::chrono::milliseconds initial_timeout = 1s;
-constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
-
 /**
 Here we imitate the behavior of StatusStram client but on a bit lower level. So
 the do-while cycle imitates client resubscription to the stream. Stream
@@ -163,8 +159,6 @@ class ClientServerTest : public testing::Test {
             std::make_shared<torii::CommandServiceImpl>(
                 tx_processor, storage, status_bus, status_factory),
             status_bus,
-            initial_timeout,
-            nonfinal_timeout,
             status_factory,
             transaction_factory,
             batch_parser,

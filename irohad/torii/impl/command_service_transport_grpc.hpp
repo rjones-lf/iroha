@@ -44,8 +44,6 @@ namespace torii {
     CommandServiceTransportGrpc(
         std::shared_ptr<CommandService> command_service,
         std::shared_ptr<iroha::torii::StatusBus> status_bus,
-        std::chrono::milliseconds initial_timeout,
-        std::chrono::milliseconds nonfinal_timeout,
         std::shared_ptr<shared_model::interface::TxStatusFactory>
             status_factory,
         std::shared_ptr<TransportFactoryType> transaction_factory,
@@ -113,8 +111,6 @@ namespace torii {
 
     std::shared_ptr<CommandService> command_service_;
     std::shared_ptr<iroha::torii::StatusBus> status_bus_;
-    const std::chrono::milliseconds initial_timeout_;
-    const std::chrono::milliseconds nonfinal_timeout_;
     std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory_;
     std::shared_ptr<TransportFactoryType> transaction_factory_;
     std::shared_ptr<shared_model::interface::TransactionBatchParser>

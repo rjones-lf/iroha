@@ -40,10 +40,6 @@ using namespace iroha::ametsuchi;
 using namespace iroha::torii;
 using namespace iroha::synchronizer;
 
-using namespace std::chrono_literals;
-constexpr std::chrono::milliseconds initial_timeout = 1s;
-constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
-
 /**
 The do-while cycle imitates client resubscription to the stream. Stream
 "expiration" is a valid designed case (see pr #1615 for the details).
@@ -155,8 +151,6 @@ class ToriiServiceTest : public testing::Test {
             std::make_shared<torii::CommandServiceImpl>(
                 tx_processor, storage, status_bus, status_factory),
             status_bus,
-            initial_timeout,
-            nonfinal_timeout,
             status_factory,
             transaction_factory,
             batch_parser,

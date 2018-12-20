@@ -427,8 +427,6 @@ void Irohad::initTransactionCommandService() {
       std::make_shared<::torii::CommandServiceTransportGrpc>(
           command_service,
           status_bus_,
-          std::chrono::seconds(1),
-          2 * proposal_delay_,
           status_factory,
           transaction_factory,
           batch_parser,
