@@ -2,7 +2,11 @@
 
 from builtins import chr
 from past.utils import old_div
-from sha3 import sha3_512 as SHA3512
+import sys
+if sys.version_info < (3, 6):
+    from sha3 import sha3_512 as SHA3512
+else:
+    import hashlib
 
 import sys, os
 
@@ -13,8 +17,12 @@ l = 2 ** 252 + 27742317777372353535851937790883648493
 
 
 def H(m):
-    return SHA3512(m).digest()
-
+    if sys.version_info < (3, 6):
+        return SHA3512(m).digest()
+    else:
+        sha3_512 = hashlib.sha3_512()
+        sha3_512.update(m)
+        return sha3_512.digest()
 
 def expmod(b, e, m):
     if e == 0: return 1
