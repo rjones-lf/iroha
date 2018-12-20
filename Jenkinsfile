@@ -182,6 +182,14 @@ node ('master') {
   // Load Scripts
   x64LinuxBuildScript = load '.jenkinsci/builders/x64-linux-build-steps.groovy'
   x64BuildScript = load '.jenkinsci/builders/x64-mac-build-steps.groovy'
+  build = load '.jenkinsci/build.groovy'
+  vars = load ".jenkinsci/utils/vars.groovy"
+  utils = load ".jenkinsci/utils/utils.groovy"
+  dockerUtils = load ".jenkinsci/utils/docker-pull-or-build.groovy"
+  doxygen = load ".jenkinsci/utils/doxygen.groovy"
+  artifacts = load ".jenkinsci/artifacts.groovy"
+  manifest = load ".jenkinsci/utils/docker-manifest.groovy"
+
 
   // Define Workers
   x64LinuxWorker = new Worker(label: 'x86_64', cpusAvailable: 4)
