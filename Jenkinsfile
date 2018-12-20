@@ -107,7 +107,7 @@ properties([
         booleanParam(defaultValue: false, description: 'Build fuzzing, uses only clang6', name: 'fuzzing'),
         booleanParam(defaultValue: false, description: 'Build docs', name: 'Doxygen'),
         //TODO in build_type:Debug params.package do NOT work properly, need fix in Cmake(problem : deb/tar.gz is empty, tests empty)
-        //booleanParam(defaultValue: false, description: 'Build package, for build type Debug, for Release always true', name: 'package'),
+        booleanParam(defaultValue: false, description: 'Build package, for build type Debug, for Release always true', name: 'package'),
     ]),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
 ])
@@ -137,14 +137,15 @@ node ('master') {
   (x64linux_compiler, x64linux_compiler_list) =  getParamsAsList('x64linux_compiler_')
   (mac_compiler, mac_compiler_list) =  getParamsAsList('mac_compiler_')
 
+  packageBuild = params.package
+  packagePush = false
+  
   if (params.build_type == 'Release') {
     packageBuild = true
+    testing = false
     if (scmVars.GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/){
       packagePush = true
     }
-  } else {
-    packageBuild = params.package
-    packagePush = false
   }
 
   if (params.fuzzing){
