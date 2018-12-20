@@ -115,6 +115,7 @@ def successPostSteps(scmVars, String build_type, boolean packagePush, String doc
   stage('successPostSteps') {
     withEnv(environment) {
       artifacts = load ".jenkinsci/artifacts.groovy"
+      utils = load ".jenkinsci/utils/utils.groovy"
       filesToUpload = []
       platform = sh(script: 'uname -m', returnStdout: true).trim()
       if (packagePush) {
