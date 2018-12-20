@@ -90,6 +90,8 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
   auto proposal = proposal_map_.find(round);
+  // space between '{}' and 'returning' is not missing, since either nothing, or
+  // NOT with space is printed
   log_->debug("onRequestProposal, {}, {}returning a proposal.",
               round,
               (proposal == proposal_map_.end()) ? "NOT " : "");
