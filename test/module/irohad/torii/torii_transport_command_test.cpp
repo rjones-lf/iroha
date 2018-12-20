@@ -12,7 +12,8 @@
 
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
-#include "builders/protobuf/transaction.hpp"
+#include "backend/protobuf/transaction.hpp"
+#include "cryptography/public_key.hpp"
 #include "endpoint.pb.h"
 #include "endpoint_mock.grpc.pb.h"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
@@ -108,7 +109,7 @@ class CommandServiceTransportGrpcTest : public testing::Test {
 };
 
 /**
- * @given torii service and number of transactions
+ * @given torii service
  * @when transaction status for given hash is requested
  * @then protobuf message with corresponding hash and status is returned
  */
@@ -257,13 +258,12 @@ TEST_F(CommandServiceTransportGrpcTest, StatusStreamEmpty) {
  * @given torii service with changed timeout, a transaction
  *        and a status stream with one NotRecieved status
  * @when calling StatusStream
- * @then ServerWriter call Write method and waits for initial timeout
+ * @then ServerWriter calls Write method
  *
  */
-TEST_F(CommandServiceTransportGrpcTest, DISABLED_StatusStreamOnNotRecieved) {
+TEST_F(CommandServiceTransportGrpcTest, StatusStreamOnNotReceived) {
   const std::chrono::milliseconds kInitialTimeout = 1ms;
-  // big so it will hang
-  const std::chrono::milliseconds kNonFinalTimeout = 1000s;
+  const std::chrono::milliseconds kNonFinalTimeout = 1ms;
   transport_grpc =
       std::make_shared<torii::CommandServiceTransportGrpc>(command_service,
                                                            status_bus,

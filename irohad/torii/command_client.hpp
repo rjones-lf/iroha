@@ -66,7 +66,6 @@ namespace torii {
         std::vector<iroha::protocol::ToriiResponse> &response) const;
 
    private:
-    std::string ip_;
     std::unique_ptr<iroha::protocol::CommandService_v1::Stub> stub_;
     logger::Logger log_;
   };
