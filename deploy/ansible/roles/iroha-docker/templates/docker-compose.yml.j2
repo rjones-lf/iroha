@@ -8,7 +8,8 @@ services:
     container_name: {{ node.hostname.split(':')[0] }}
     expose:
       - {{ iroha_peer_port }}
-      - {{ iroha_torii_port }}
+    ports:
+        - 127.0.0.1:{{ iroha_torii_port | int + loop.index - 1 }}:{{ iroha_torii_port }}
 {% else %}
     container_name: {{ node.human_hostname }}
     ports:
