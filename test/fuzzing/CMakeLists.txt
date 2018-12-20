@@ -93,5 +93,6 @@ target_link_libraries(mst_fuzz
   gtest::gtest
   gmock::gmock
   mst_transport
+  ametsuchi
   protobuf-mutator
   )
