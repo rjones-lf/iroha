@@ -29,11 +29,7 @@ namespace iroha {
           command_executor_(std::move(cmd_executor)),
           committed(false),
           log_(logger::log("MutableStorage")) {
-      try {
-        *sql_ << "BEGIN";
-      } catch (std::exception &e) {
-        log_->error("Mutable storage initialization has been failed");
-      }
+      *sql_ << "BEGIN";
     }
 
     bool MutableStorageImpl::apply(const shared_model::interface::Block &block,
@@ -91,7 +87,7 @@ namespace iroha {
         }
         return function_executed;
       } catch (std::exception &e) {
-        log_->warn("Apply has been failed. Reason: {}", e.what());
+        log_->warn("Apply has failed. Reason: {}", e.what());
         return false;
       }
     }

@@ -23,11 +23,7 @@ namespace iroha {
           command_executor_(std::make_unique<PostgresCommandExecutor>(
               *sql_, std::move(perm_converter))),
           log_(logger::log("TemporaryWSV")) {
-      try {
-        *sql_ << "BEGIN";
-      } catch (std::exception &e) {
-        log_->error("Temporary wsv was not initialized. Reason: {}", e.what());
-      }
+      *sql_ << "BEGIN";
     }
 
     expected::Result<void, validation::CommandError>
@@ -146,12 +142,8 @@ namespace iroha {
         : sql_{*wsv.sql_},
           savepoint_name_{std::move(savepoint_name)},
           is_released_{false},
-          log_(logger::log("Temporary wsv's svaepoint wrapper")) {
-      try {
-        sql_ << "SAVEPOINT " + savepoint_name_ + ";";
-      } catch (std::exception &e) {
-        log_->error("Savepoint did not happen: {}", e.what());
-      }
+          log_(logger::log("Temporary wsv's savepoint wrapper")) {
+      sql_ << "SAVEPOINT " + savepoint_name_ + ";";
     }
 
     void TemporaryWsvImpl::SavepointWrapperImpl::release() {

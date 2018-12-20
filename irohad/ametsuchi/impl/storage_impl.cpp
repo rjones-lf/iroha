@@ -34,15 +34,13 @@ namespace {
   /**
    * Verify whether postgres supports prepared transactions
    */
-  iroha::expected::Result<bool, std::string> preparedTransactionsAvailable(
-      soci::session &sql) {
+  bool preparedTransactionsAvailable(soci::session &sql) {
     int prepared_txs_count = 0;
     try {
       sql << "SHOW max_prepared_transactions;", soci::into(prepared_txs_count);
-      return iroha::expected::makeValue(prepared_txs_count != 0);
+      return prepared_txs_count != 0;
     } catch (std::exception &e) {
-      return iroha::expected::makeError(
-          std::string("Postgres session has been interrupted"));
+      return false;
     }
   }
 
@@ -385,23 +383,18 @@ namespace iroha {
                 [&](expected::Value<std::shared_ptr<soci::connection_pool>>
                         &connection) {
                   soci::session sql(*connection.value);
-                  preparedTransactionsAvailable(sql).match(
-                      [&](expected::Value<bool> &enable_prepared_transactions) {
-                        storage = expected::makeValue(
-                            std::shared_ptr<StorageImpl>(new StorageImpl(
-                                block_store_dir,
-                                options,
-                                std::move(ctx.value.block_store),
-                                connection.value,
-                                factory,
-                                converter,
-                                perm_converter,
-                                pool_size,
-                                enable_prepared_transactions.value)));
-                      },
-                      [&](expected::Error<std::string> &error) {
-                        storage = error;
-                      });
+                  bool enable_prepared_transactions =
+                      preparedTransactionsAvailable(sql);
+                  storage = expected::makeValue(std::shared_ptr<StorageImpl>(
+                      new StorageImpl(block_store_dir,
+                                      options,
+                                      std::move(ctx.value.block_store),
+                                      connection.value,
+                                      factory,
+                                      converter,
+                                      perm_converter,
+                                      pool_size,
+                                      enable_prepared_transactions)));
                 },
                 [&](expected::Error<std::string> &error) { storage = error; });
           },
