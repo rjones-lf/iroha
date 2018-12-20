@@ -139,7 +139,7 @@ node ('master') {
 
   packageBuild = params.package
   packagePush = false
-  
+
   if (params.build_type == 'Release') {
     packageBuild = true
     testing = false

@@ -115,7 +115,7 @@ def successPostSteps(scmVars, String build_type, boolean packagePush, String doc
   stage('successPostSteps') {
     withEnv(environment) {
       artifacts = load ".jenkinsci/artifacts.groovy"
-      utils = load ".jenkinsci/utils/utils.groovy"
+      //utils = load ".jenkinsci/utils/utils.groovy"
       filesToUpload = []
       platform = sh(script: 'uname -m', returnStdout: true).trim()
       if (packagePush) {
@@ -129,7 +129,7 @@ def successPostSteps(scmVars, String build_type, boolean packagePush, String doc
         """
         // publish docker
         iCRelease = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${scmVars.GIT_COMMIT}-${env.BUILD_NUMBER}-release", "--no-cache -f docker/release/Dockerfile ${WORKSPACE}/docker/release")
-        utils.dockerPush(iCRelease, "${platform}-develop")
+        utils.dockerPush(iCRelease, "${platform}-${dockerTag}")
         dockerManifestPush(iCRelease, dockerTag, environment)
         sh "docker rmi ${iCRelease.id}"
 
