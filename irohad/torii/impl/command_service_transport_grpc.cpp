@@ -216,10 +216,10 @@ namespace torii {
                        consensus_round_watcher_->resetCounter(hash);
                      }
                    },
-                   //                   [&](std::exception_ptr ep) {
-                   //                     log_->debug("processing timeout, {}",
-                   //                     client_id);
-                   //                   },
+                   [&](std::exception_ptr ep) {
+                     log_->error("something bad happened, client_id {}",
+                                 client_id);
+                   },
                    [&] {
                      log_->debug("stream done, {}", client_id);
                      consensus_round_watcher_->removeSubscription(hash);

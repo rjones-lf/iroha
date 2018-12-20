@@ -24,6 +24,7 @@ target_link_libraries(torii_service_test
     processors
     consensus_round
     on_demand_common
+    gate_object
     )
 
 addtest(torii_queries_test torii_queries_test.cpp)

@@ -77,6 +77,7 @@ class ClientServerTest : public testing::Test {
     // ----------- Command Service --------------
     pcsMock = std::make_shared<MockPeerCommunicationService>();
     mst = std::make_shared<iroha::MockMstProcessor>();
+    mock_consensus_gate = std::make_shared<MockConsensusGate>();
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
     query_executor = std::make_shared<MockQueryExecutor>();
@@ -102,6 +103,8 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*storage, createQueryExecutor(_, _))
         .WillRepeatedly(Return(boost::make_optional(
             std::shared_ptr<QueryExecutor>(query_executor))));
+    ON_CALL(*mock_consensus_gate, onOutcome())
+        .WillByDefault(Return(round_notifier.get_observable()));
 
     auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
     auto tx_processor =
@@ -149,6 +152,12 @@ class ClientServerTest : public testing::Test {
     auto batch_factory = std::make_shared<
         shared_model::interface::TransactionBatchFactoryImpl>();
     initQueryFactory();
+
+    auto round_subscription_watcher = std::make_unique<
+        iroha::SubscriptionWatcher<shared_model::crypto::Hash,
+                                   iroha::consensus::GateObject,
+                                   shared_model::crypto::Hash::Hasher>>(
+        mock_consensus_gate->onOutcome(), 2);
     runner
         ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
             std::make_shared<torii::CommandServiceImpl>(
@@ -159,7 +168,8 @@ class ClientServerTest : public testing::Test {
             status_factory,
             transaction_factory,
             batch_parser,
-            batch_factory))
+            batch_factory,
+            std::move(round_subscription_watcher)))
         .append(std::make_unique<torii::QueryService>(qpi, query_factory))
         .run()
         .match(
@@ -196,6 +206,7 @@ class ClientServerTest : public testing::Test {
 
   std::unique_ptr<ServerRunner> runner;
   std::shared_ptr<MockPeerCommunicationService> pcsMock;
+  std::shared_ptr<MockConsensusGate> mock_consensus_gate;
   std::shared_ptr<iroha::MockMstProcessor> mst;
   std::shared_ptr<torii::QueryService::QueryFactoryType> query_factory;
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
@@ -207,6 +218,7 @@ class ClientServerTest : public testing::Test {
       mst_update_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
+  rxcpp::subjects::subject<iroha::consensus::GateObject> round_notifier;
 
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;

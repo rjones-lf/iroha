@@ -110,7 +110,7 @@ class ToriiServiceTest : public testing::Test {
     EXPECT_CALL(*mst, onExpiredBatchesImpl())
         .WillRepeatedly(Return(mst_expired_notifier.get_observable()));
 
-    auto status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
+    status_bus = std::make_shared<iroha::torii::StatusBusImpl>();
     auto tx_processor =
         std::make_shared<iroha::torii::TransactionProcessorImpl>(
             pcsMock,
@@ -125,7 +125,7 @@ class ToriiServiceTest : public testing::Test {
         .WillByDefault(Return(round_notifier.get_observable()));
 
     //----------- Server run ----------------
-    auto status_factory =
+    status_factory =
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Transaction>>
@@ -180,6 +180,8 @@ class ToriiServiceTest : public testing::Test {
   std::shared_ptr<MockBlockQuery> block_query;
   std::shared_ptr<MockStorage> storage;
   std::shared_ptr<MockConsensusGate> mock_consensus_gate;
+  std::shared_ptr<iroha::torii::StatusBus> status_bus;
+  std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory;
 
   rxcpp::subjects::subject<OrderingEvent> prop_notifier_;
   rxcpp::subjects::subject<SynchronizationEvent> commit_notifier_;
@@ -536,24 +538,66 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
 }
 
 /**
- * @given torii service and fake transaction hash
+ * @given torii service and not hash of non-existent transaction
  * @when sending streaming request for this hash
- * @then ensure that response will have exactly 1 status - NOT_RECEIVED
+ * @then ensure that streaming ends only after two consecutive rounds
+ * without tx's state change
  */
-TEST_F(ToriiServiceTest, StreamingNoTx) {
+TEST_F(ToriiServiceTest, StreamingEndsAfterConsecutiveRounds) {
+  using namespace shared_model;
+  using namespace std::chrono_literals;
+  using shared_model::interface::TxStatusFactory;
+
   auto client = torii::CommandSyncClient(ip, port);
   std::vector<iroha::protocol::ToriiResponse> torii_response;
-  std::thread t([&]() {
+
+  auto iroha_tx = proto::TransactionBuilder()
+                      .creatorAccountId("a@domain")
+                      .setAccountQuorum("a@domain", 2)
+                      .createdTime(iroha::time::now())
+                      .quorum(1)
+                      .build()
+                      .signAndAddSignature(keypair)
+                      .finish();
+  auto tx_hash = iroha_tx.hash();
+
+  std::thread t([&torii_response, &tx_hash, &client]() {
     iroha::protocol::TxStatusRequest tx_request;
-    tx_request.set_tx_hash("0123456789abcdef");
-    // this test does not require the fix for thread scheduling issues
+    tx_request.set_tx_hash(crypto::toBinaryString(tx_hash));
     client.StatusStream(tx_request, torii_response);
   });
 
-  t.join();
+  // we did not send the tx yet, so we expect NOT_RECEIVED
+  std::this_thread::sleep_for(1s);
   ASSERT_EQ(torii_response.size(), 1);
   ASSERT_EQ(torii_response.at(0).tx_status(),
             iroha::protocol::TxStatus::NOT_RECEIVED);
+
+  // one round happens, no matter with which result
+  round_notifier.get_subscriber().on_next(iroha::consensus::BlockReject{});
+  status_bus->publish(status_factory->makeStatelessValid(
+      tx_hash, TxStatusFactory::TransactionError{}));
+  std::this_thread::sleep_for(1s);
+  ASSERT_EQ(torii_response.size(), 2);
+  ASSERT_EQ(torii_response.at(1).tx_status(),
+            iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+
+  // after one more round stream will still be up, as renew of tx status
+  // happened - two rounds went non-consecutively; check it the same way
+  round_notifier.get_subscriber().on_next(iroha::consensus::BlockReject{});
+  status_bus->publish(status_factory->makeStatefulValid(
+      tx_hash, TxStatusFactory::TransactionError{}));
+  std::this_thread::sleep_for(1s);
+  ASSERT_EQ(torii_response.size(), 3);
+  ASSERT_EQ(torii_response.at(2).tx_status(),
+            iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
+
+  // make two consecutive rounds happen
+  round_notifier.get_subscriber().on_next(iroha::consensus::BlockReject{});
+  round_notifier.get_subscriber().on_next(iroha::consensus::BlockReject{});
+
+  // if this join happens, this means that stream is off
+  t.join();
 }
 
 /**
