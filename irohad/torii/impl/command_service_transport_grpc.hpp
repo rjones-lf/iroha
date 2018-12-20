@@ -10,6 +10,7 @@
 
 #include <chrono>
 
+#include "common/subscription_watcher.hpp"
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
