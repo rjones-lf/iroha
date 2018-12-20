@@ -1,6 +1,7 @@
 #!/usr/bin/env groovy
 
 def dockerManifestPush(dockerImageObj, String dockerTag, environment) {
+  manifest = load ".jenkinsci/utils/docker-manifest.groovy"
   withEnv(environment) {
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${env.DOCKER_REGISTRY_BASENAME}:${dockerTag}",
@@ -35,6 +36,11 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
       boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild, boolean packagePush, boolean sanitize, boolean fuzzing, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
+    build = load '.jenkinsci/build.groovy'
+    vars = load ".jenkinsci/utils/vars.groovy"
+    utils = load ".jenkinsci/utils/utils.groovy"
+    dockerUtils = load ".jenkinsci/utils/docker-pull-or-build.groovy"
+    doxygen = load ".jenkinsci/utils/doxygen.groovy"
     buildDir = 'build'
     compilers = vars.compilerMapping()
     cmakeBooleanOption = [ (true): 'ON', (false): 'OFF' ]
@@ -108,6 +114,8 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
 def successPostSteps(scmVars, String build_type, boolean packagePush, String dockerTag, List environment) {
   stage('successPostSteps') {
     withEnv(environment) {
+      artifacts = load ".jenkinsci/artifacts.groovy"
+      utils = load ".jenkinsci/utils/utils.groovy"
       filesToUpload = []
       platform = sh(script: 'uname -m', returnStdout: true).trim()
       if (packagePush) {
