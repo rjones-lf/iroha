@@ -70,7 +70,7 @@ def successPostSteps(scmVars, String build_type, boolean packagePush, List envir
     withEnv(environment) {
       timeout(time: 600, unit: "SECONDS") {
         if (packagePush) {
-          def artifacts = load ".jenkinsci/artifacts.groovy"
+          artifacts = load ".jenkinsci/artifacts.groovy"
           def commit = scmVars.GIT_COMMIT
           // if we use several compiler only last build  will saved as iroha.deb and iroha.tar.gz
           sh "mv ./build/iroha-*.tar.gz ./build/iroha.tar.gz"
