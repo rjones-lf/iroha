@@ -291,7 +291,7 @@ TEST_F(FakePeerExampleFixture,
  * @then it must propagate either a proposal or a batch
  */
 TEST_F(FakePeerExampleFixture,
-       OrderingMessagePropagationAfterValidCommandReceived) {
+       DISABLED_OrderingMessagePropagationAfterValidCommandReceived) {
   std::mutex m;
   std::condition_variable cv;
   std::atomic_bool got_message(false);
