@@ -5,8 +5,8 @@ metadata:
   name: iroha-peer-key-0
 type: Opaque
 data:
-  node.priv: ODI0NTIxZmYyZWRmYzY5OGVkNmU5YzAyMjNkYTQ1YWQ4NTlmNGQ3YTkyNTNlNWFlYjkwM2QwOTI3MzI4MDU2Ng==
-  node.pub: NzMyZDM3MDlhZjEwODY4NTkyZTYzNzkwMTViNGY1ZGMwNjQ2YmIwZDFmOGYxYjVlZTFjYzNhN2ViZDg3NmFkOQ==
+  node.priv: YmI2MGE2ODNiZjQxYTc5ZWRhNzQxODhkYmUxYmM1M2RiOGY0ZmNlYTQwMWY2NDI3MTE1N2QwYWFkNzQxODdjYQ==
+  node.pub: YzEzMjhiMDkwNjE3OTkyNTgxY2E5YmM0YjI0NjZmNTg2MzRiMDY3ZGQzNDVjNzgzZTRhMWFiMDJhNjkxMzAyYw==
 ---
 apiVersion: v1
 kind: Secret
@@ -14,8 +14,8 @@ metadata:
   name: iroha-peer-key-1
 type: Opaque
 data:
-  node.priv: ZTU1ODcyNTc5YWRlMjhlMjg0NjIzYWE1YzQwNGFmNTMyZTc1MWNkM2RjNTJiYTYyZTdhODBiMmZjYTQyZmZiOQ==
-  node.pub: OTM4MzMzMjg4M2NlYjFlZDU0MzViNzJlMWM4ZDgyN2E4ZjgyYTExZmRiMmEzYWExMTU3NWI5MzU4Y2EwNWRiOQ==
+  node.priv: NGViOWJhZmIyYTEzZWNiMDRkOTZkN2JmNmQzY2Y3MTNkNTA4NDRjNWYyYTQxMjczNWEwMzU3NDFmYjU0NmU5NQ==
+  node.pub: MTVjMDlhNjAxOWFjZTdiOThjOGE1NjA2YThjYmNhNTgzZDY0NDJlODRiNWZhYWY1N2Y5NzI0NWYzZDU3NWVmNQ==
 ---
 apiVersion: v1
 kind: Secret
@@ -23,8 +23,8 @@ metadata:
   name: iroha-peer-key-2
 type: Opaque
 data:
-  node.priv: MjkzODc5NjE2N2YwOTdjODFhYzI3YWI4ODM2ZjkyMzg0ZjA4NjJhNmFlMTg1OTFjNzFhYzQwZjE4ZTcyOGIwZg==
-  node.pub: YmEwZTJmZDFlMTExMjBhMzlmMmU5NzgwMDBiYTYzYjVlNTg1NjQ1NDYzYTJmODE1ODQ1OGIyOTRmNTVkM2FkMQ==
+  node.priv: N2Y3OTI0NWRjMzRiN2FkOGVmNTNjNmI4MzUyZWZlNTdiMzE1N2VlZTgxODQxYzliM2U4NzdjMjQzMzZkNmVmZg==
+  node.pub: ZjExZjdiZDg4MzY3NGU3NzQ1ZmI4OGI4YjJmZjdlOTE3ZmFjMmViYzQ0ZjQ3NDBiZDc5MWE4NzExMzE2OWEwMA==
 ---
 apiVersion: v1
 kind: Secret
@@ -32,5 +32,5 @@ metadata:
   name: iroha-peer-key-3
 type: Opaque
 data:
-  node.priv: ZDcyYjU2OGRiZTkzZmNmYTg1YjBmYmNmMWNhNzA4MGE0ODBjNWVmMWY1ZThkYjRjNGM5Zjc0MDYwNzk1YjZkOQ==
-  node.pub: MWFlMzY3MjVmMGUyZGRjOGRjYWE4MDkwZDI0N2RhZmEwNGE2MzEzYTkyMzhiMjliNDJkZmFhNTExMTFhOTY0Yw==
+  node.priv: NGE3Yzc4ODRhNmNhOTFlN2YzOTE2NGQ2Y2UzOGY2NjAwMzFjYzZiYTdjNGFhZjIwNWQ2MjA1MmU0MWE3Nzg0MQ==
+  node.pub: ODdhOTdiNjNiMzBlZjQ4NzM2YzE5YjVlNmE1MDUwNGU0ZWI1N2Q1ODI4NjFjMjVmNWM5ZTBhNTZhMjJkOGRkMw==
