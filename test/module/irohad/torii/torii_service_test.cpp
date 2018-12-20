@@ -101,6 +101,7 @@ class ToriiServiceTest : public testing::Test {
     wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
     storage = std::make_shared<MockStorage>();
+    mock_consensus_gate = std::make_shared<MockConsensusGate>();
 
     EXPECT_CALL(*mst, onStateUpdateImpl())
         .WillRepeatedly(Return(mst_update_notifier.get_observable()));
@@ -120,6 +121,8 @@ class ToriiServiceTest : public testing::Test {
     EXPECT_CALL(*block_query, getTxByHashSync(_))
         .WillRepeatedly(Return(boost::none));
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
+    ON_CALL(*mock_consensus_gate, onOutcome())
+        .WillByDefault(Return(round_notifier.get_observable()));
 
     //----------- Server run ----------------
     auto status_factory =
@@ -142,6 +145,11 @@ class ToriiServiceTest : public testing::Test {
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     auto batch_factory = std::make_shared<
         shared_model::interface::TransactionBatchFactoryImpl>();
+    auto round_subscription_watcher = std::make_unique<
+        iroha::SubscriptionWatcher<shared_model::crypto::Hash,
+                                   iroha::consensus::GateObject,
+                                   shared_model::crypto::Hash::Hasher>>(
+        mock_consensus_gate->onOutcome(), 2);
     runner
         ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
             std::make_shared<torii::CommandServiceImpl>(
@@ -152,7 +160,8 @@ class ToriiServiceTest : public testing::Test {
             status_factory,
             transaction_factory,
             batch_parser,
-            batch_factory))
+            batch_factory,
+            std::move(round_subscription_watcher)))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -170,6 +179,7 @@ class ToriiServiceTest : public testing::Test {
   std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
   std::shared_ptr<MockStorage> storage;
+  std::shared_ptr<MockConsensusGate> mock_consensus_gate;
 
   rxcpp::subjects::subject<OrderingEvent> prop_notifier_;
   rxcpp::subjects::subject<SynchronizationEvent> commit_notifier_;
@@ -179,6 +189,7 @@ class ToriiServiceTest : public testing::Test {
       mst_update_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_prepared_notifier;
   rxcpp::subjects::subject<iroha::DataType> mst_expired_notifier;
+  rxcpp::subjects::subject<iroha::consensus::GateObject> round_notifier;
 
   std::shared_ptr<CustomPeerCommunicationServiceMock> pcsMock;
   std::shared_ptr<iroha::MockMstProcessor> mst;

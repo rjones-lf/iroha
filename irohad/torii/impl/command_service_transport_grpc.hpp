@@ -11,6 +11,7 @@
 #include <chrono>
 
 #include "common/subscription_watcher.hpp"
+#include "consensus/gate_object.hpp"
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
@@ -28,6 +29,10 @@ namespace torii {
         shared_model::interface::AbstractTransportFactory<
             shared_model::interface::Transaction,
             iroha::protocol::Transaction>;
+    using SubscriptionWatcherPtrType = std::unique_ptr<
+        iroha::SubscriptionWatcher<shared_model::crypto::Hash,
+                                   iroha::consensus::GateObject,
+                                   shared_model::crypto::Hash::Hasher>>;
 
     /**
      * Creates a new instance of CommandServiceTransportGrpc
@@ -47,7 +52,8 @@ namespace torii {
         std::shared_ptr<shared_model::interface::TransactionBatchParser>
             batch_parser,
         std::shared_ptr<shared_model::interface::TransactionBatchFactory>
-            transaction_batch_factory);
+            transaction_batch_factory,
+        SubscriptionWatcherPtrType consensus_round_watcher);
 
     /**
      * Torii call via grpc
@@ -115,6 +121,7 @@ namespace torii {
         batch_parser_;
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         batch_factory_;
+    SubscriptionWatcherPtrType consensus_round_watcher_;
     logger::Logger log_;
   };
 }  // namespace torii

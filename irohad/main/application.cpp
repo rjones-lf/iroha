@@ -15,6 +15,7 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "common/bind.hpp"
+#include "common/subscription_watcher.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
@@ -417,6 +418,11 @@ void Irohad::initTransactionCommandService() {
       pcs, mst_processor, status_bus_, status_factory);
   command_service = std::make_shared<::torii::CommandServiceImpl>(
       tx_processor, storage, status_bus_, status_factory);
+  auto round_subscription_watcher =
+      std::make_unique<SubscriptionWatcher<shared_model::crypto::Hash,
+                                           iroha::consensus::GateObject,
+                                           shared_model::crypto::Hash::Hasher>>(
+          consensus_gate->onOutcome(), 2);
   command_service_transport =
       std::make_shared<::torii::CommandServiceTransportGrpc>(
           command_service,
@@ -426,7 +432,8 @@ void Irohad::initTransactionCommandService() {
           status_factory,
           transaction_factory,
           batch_parser,
-          transaction_batch_factory_);
+          transaction_batch_factory_,
+          std::move(round_subscription_watcher));
 
   log_->info("[Init] => command service");
 }

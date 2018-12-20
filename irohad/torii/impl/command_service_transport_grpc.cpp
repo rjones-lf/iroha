@@ -29,7 +29,8 @@ namespace torii {
       std::shared_ptr<shared_model::interface::TransactionBatchParser>
           batch_parser,
       std::shared_ptr<shared_model::interface::TransactionBatchFactory>
-          transaction_batch_factory)
+          transaction_batch_factory,
+      SubscriptionWatcherPtrType consensus_round_watcher)
       : command_service_(std::move(command_service)),
         status_bus_(std::move(status_bus)),
         initial_timeout_(initial_timeout),
@@ -38,6 +39,7 @@ namespace torii {
         transaction_factory_(std::move(transaction_factory)),
         batch_parser_(std::move(batch_parser)),
         batch_factory_(std::move(transaction_batch_factory)),
+        consensus_round_watcher_(std::move(consensus_round_watcher)),
         log_(logger::log("CommandServiceTransportGrpc")) {}
 
   grpc::Status CommandServiceTransportGrpc::Torii(
@@ -198,16 +200,6 @@ namespace torii {
                      shared_model::proto::TransactionResponse>(response)
               ->getTransport();
         })
-        // set a corresponding observable timeout based on status value
-        .lift<iroha::protocol::ToriiResponse>(
-            iroha::makeTimeout<iroha::protocol::ToriiResponse>(
-                [&](const auto &response) {
-                  return response.tx_status()
-                          == iroha::protocol::TxStatus::NOT_RECEIVED
-                      ? initial_timeout_
-                      : nonfinal_timeout_;
-                },
-                current_thread))
         // complete the observable if client is disconnected
         .take_while([=](const auto &) {
           auto is_cancelled = context->IsCancelled();
@@ -220,12 +212,22 @@ namespace torii {
                    [&](iroha::protocol::ToriiResponse response) {
                      if (response_writer->Write(response)) {
                        log_->debug("status written, {}", client_id);
+                       // reset consecutive rounds counter for this tx
+                       consensus_round_watcher_->resetCounter(hash);
                      }
                    },
-                   [&](std::exception_ptr ep) {
-                     log_->debug("processing timeout, {}", client_id);
-                   },
-                   [&] { log_->debug("stream done, {}", client_id); });
+                   //                   [&](std::exception_ptr ep) {
+                   //                     log_->debug("processing timeout, {}",
+                   //                     client_id);
+                   //                   },
+                   [&] {
+                     log_->debug("stream done, {}", client_id);
+                     consensus_round_watcher_->removeSubscription(hash);
+                   });
+
+    // add this stream to the watcher, so that after several consecutive rounds
+    // with no status update for this hash, stream will break
+    consensus_round_watcher_->addSubscription(hash, subscription);
 
     // run loop while subscription is active or there are pending events in
     // the queue
