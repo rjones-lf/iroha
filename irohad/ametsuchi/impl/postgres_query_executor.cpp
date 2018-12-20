@@ -623,7 +623,7 @@ namespace iroha {
             if (boost::size(range) != q.transactionHashes().size()) {
               // at least one of the hashes in the query was invalid -
               // nonexistent or permissions were lacked
-              return logAndReturnErrorResponse(
+              return this->logAndReturnErrorResponse(
                   QueryErrorType::kStatefulFailed,
                   "At least one of the supplied hashes is incorrect",
                   4);
