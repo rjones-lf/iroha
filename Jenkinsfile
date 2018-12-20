@@ -106,8 +106,8 @@ properties([
         booleanParam(defaultValue: false, description: 'Sanitize address;leak', name: 'sanitize'),
         booleanParam(defaultValue: false, description: 'Build fuzzing, uses only clang6', name: 'fuzzing'),
         booleanParam(defaultValue: false, description: 'Build docs', name: 'Doxygen'),
-        //TODO in build_type:Debug params.package do NOT work properly, need fix in Cmake(deb/tar.gz is empty, tests empty)
-        booleanParam(defaultValue: false, description: 'Build package, for build type Debug, for Release always true', name: 'package'),
+        //TODO in build_type:Debug params.package do NOT work properly, need fix in Cmake(problem : deb/tar.gz is empty, tests empty)
+        //booleanParam(defaultValue: false, description: 'Build package, for build type Debug, for Release always true', name: 'package'),
     ]),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
 ])
