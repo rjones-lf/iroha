@@ -259,12 +259,15 @@ Transaction Status Set
 ^^^^^^^^^^^^^^^^^^^^^^
 
  - NOT_RECEIVED: requested peer does not have this transaction.
- - MST_EXPIRED: this transactions is a part of MST pipeline and has expired.
+ - MST_PENDING: this transaction is a multisignature transaction which has to be signed by more keys (as requested in quorum field).
+ - MST_EXPIRED: this transaction is a multisignature transaction which is no longer valid and is going to be deleted by this peer from MST cache.
+ - ENOUGH_SIGNATURES_COLLECTED: this transaction is a multisignature transaction which has enough signatures and it going to be validated by the peer.
  - STATELESS_VALIDATION_FAILED: the transaction was formed with some fields, not meeting stateless validation constraints. This status is returned to a client, who formed transaction, right after the transaction was sent. It would also return the reason — what rule was violated.
  - STATELESS_VALIDATION_SUCCESS: the transaction has successfully passed stateless validation. This status is returned to a client, who formed transaction, right after the transaction was sent.
  - STATEFUL_VALIDATION_FAILED: the transaction has commands, which violate validation rules, checking state of the chain (e.g. asset balance, account permissions, etc.). It would also return the reason — what rule was violated.
  - STATEFUL_VALIDATION_SUCCESS: the transaction has successfully passed stateful validation.
  - COMMITTED: the transaction is the part of a block, which gained enough votes and is in the block store at the moment.
+ - REJECTED: this exact transaction was rejected by the peer during stateful validation step. This is required in order to prevent replay attacks.
 
 Pending Transactions
 ^^^^^^^^^^^^^^^^^^^^
@@ -277,8 +280,6 @@ when the transaction is a part of `batch of transactions`_ and there is a not fu
 
 Batch of Transactions
 =====================
-
-*The feature is to be released.*
 
 Transactions batch is a feature that allows sending several transactions to Iroha at once preserving their order.
 
