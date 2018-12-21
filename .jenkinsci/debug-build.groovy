@@ -9,8 +9,6 @@ def doDebugBuild(coverageEnabled=false) {
   def fuzzingEnabled = params.fuzzing
   def platform = sh(script: 'uname -m', returnStdout: true).trim()
   def previousCommit = pCommit.previousCommitOrCurrent()
-  echo "previousCommit=${previousCommit}"
-
   // params are always null unless job is started
   // this is the case for the FIRST build only.
   // So just set this to same value as default.
