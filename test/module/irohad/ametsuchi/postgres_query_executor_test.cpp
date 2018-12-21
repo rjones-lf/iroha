@@ -1477,7 +1477,7 @@ namespace iroha {
 
       commitBlocks();
 
-      std::vector<decltype(hash3)> hashes;
+      std::vector<decltype(hash1)> hashes;
       hashes.push_back(hash1);
       hashes.emplace_back("AbsolutelyInvalidHash");
       hashes.push_back(hash2);
