@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
 
 def dockerManifestPush(dockerImageObj, String dockerTag, environment) {
-  manifest = load ".jenkinsci/utils/docker-manifest.groovy"
+  def manifest = load ".jenkinsci/utils/docker-manifest.groovy"
   withEnv(environment) {
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${env.DOCKER_REGISTRY_BASENAME}:${dockerTag}",
@@ -36,11 +36,11 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
       boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild, boolean packagePush, boolean sanitize, boolean fuzzing, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
-    build = load '.jenkinsci/build.groovy'
-    vars = load ".jenkinsci/utils/vars.groovy"
-    utils = load ".jenkinsci/utils/utils.groovy"
-    dockerUtils = load ".jenkinsci/utils/docker-pull-or-build.groovy"
-    doxygen = load ".jenkinsci/utils/doxygen.groovy"
+    def build = load '.jenkinsci/build.groovy'
+    def vars = load ".jenkinsci/utils/vars.groovy"
+    def utils = load ".jenkinsci/utils/utils.groovy"
+    def dockerUtils = load ".jenkinsci/utils/docker-pull-or-build.groovy"
+    def doxygen = load ".jenkinsci/utils/doxygen.groovy"
     buildDir = 'build'
     compilers = vars.compilerMapping()
     cmakeBooleanOption = [ (true): 'ON', (false): 'OFF' ]
@@ -114,13 +114,15 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
 def successPostSteps(scmVars, String build_type, boolean packagePush, String dockerTag, List environment) {
   stage('successPostSteps') {
     withEnv(environment) {
-      artifacts = load ".jenkinsci/artifacts.groovy"
-      //utils = load ".jenkinsci/utils/utils.groovy"
-      filesToUpload = []
-      platform = sh(script: 'uname -m', returnStdout: true).trim()
       if (packagePush) {
+        def artifacts = load ".jenkinsci/artifacts.groovy"
+        def utils = load ".jenkinsci/utils/utils.groovy"
+        platform = sh(script: 'uname -m', returnStdout: true).trim()
+        def commit = scmVars.GIT_COMMIT
+
         // if we use several compiler only last build  will saved as iroha.deb and iroha.tar.gz
         sh """
+          ls -lah ./build
           mv ./build/iroha-*.deb ./build/iroha.deb
           mv ./build/iroha-*.tar.gz ./build/iroha.tar.gz
           cp ./build/iroha.deb docker/release/iroha.deb
@@ -128,26 +130,14 @@ def successPostSteps(scmVars, String build_type, boolean packagePush, String doc
           mv ./build/iroha.deb ./build/iroha.tar.gz build/artifacts
         """
         // publish docker
-        iCRelease = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${scmVars.GIT_COMMIT}-${env.BUILD_NUMBER}-release", "--no-cache -f docker/release/Dockerfile ${WORKSPACE}/docker/release")
+        iCRelease = docker.build("${env.DOCKER_REGISTRY_BASENAME}:${commit}-${env.BUILD_NUMBER}-release", "--no-cache -f docker/release/Dockerfile ${WORKSPACE}/docker/release")
         utils.dockerPush(iCRelease, "${platform}-${dockerTag}")
         dockerManifestPush(iCRelease, dockerTag, environment)
         sh "docker rmi ${iCRelease.id}"
 
         // publish packages
         filePaths = [ './build/artifacts/iroha.deb', './build/artifacts/iroha.tar.gz' ]
-        filePaths.each {
-          filesToUpload.add("${it}")
-          filesToUpload.add(artifacts.writeStringIntoFile(artifacts.md5SumLinux("${it}"), "${it}.md5sum"))
-          filesToUpload.add(artifacts.writeStringIntoFile(artifacts.sha256SumLinux("${it}"), "${it}.sha256sum"))
-          filesToUpload.add(artifacts.gpgDetachedSignatureLinux("${it}", "${it}.ascfile",'ci_gpg_privkey', 'ci_gpg_masterkey'))
-        }
-        uploadPath = sprintf('/iroha/linux/%1$s/%2$s-%3$s-%4$s',
-          [platform, scmVars.GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(),
-          scmVars.GIT_COMMIT.substring(0,6)])
-        filesToUpload.each {
-          uploadFileName = sh(script: "basename ${it}", returnStdout: true).trim()
-          artifacts.fileUploadWithCredentials("${it}", 'ci_nexus', "https://nexus.iroha.tech/repository/artifacts/${uploadPath}/${uploadFileName}")
-        }
+        artifacts.uploadArtifacts(filePaths, sprintf('/iroha/linux/%4$s/%1$s-%2$s-%3$s', [scmVars.GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6), platform]))
       } else {
         archiveArtifacts artifacts: 'build/iroha*.tar.gz', allowEmptyArchive: true
         archiveArtifacts artifacts: 'build/iroha*.deb', allowEmptyArchive: true

@@ -28,9 +28,9 @@ def testSteps(scmVars, String buildDir, List environment, String testList) {
 def buildSteps( int parallelism, List compilerVersions, String build_type, boolean coverage, boolean testing, String testList, boolean packagebuild, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
-    build = load '.jenkinsci/build.groovy'
-    vars = load ".jenkinsci/utils/vars.groovy"
-    utils = load ".jenkinsci/utils/utils.groovy"
+    def build = load '.jenkinsci/build.groovy'
+    def vars = load ".jenkinsci/utils/vars.groovy"
+    def utils = load ".jenkinsci/utils/utils.groovy"
     buildDir = 'build'
     compilers = vars.compilerMapping()
     cmakeBooleanOption = [ (true): 'ON', (false): 'OFF' ]
@@ -70,10 +70,14 @@ def successPostSteps(scmVars, String build_type, boolean packagePush, List envir
     withEnv(environment) {
       timeout(time: 600, unit: "SECONDS") {
         if (packagePush) {
-          artifacts = load ".jenkinsci/artifacts.groovy"
+          def artifacts = load ".jenkinsci/artifacts.groovy"
           def commit = scmVars.GIT_COMMIT
           // if we use several compiler only last build  will saved as iroha.deb and iroha.tar.gz
-          sh "mv ./build/iroha-*.tar.gz ./build/iroha.tar.gz"
+          sh """
+            ls -lah ./build
+            mv ./build/iroha-*.tar.gz ./build/iroha.tar.gz
+          """
+          // publish packages
           filePaths = [ '\$(pwd)/build/*.tar.gz' ]
           artifacts.uploadArtifacts(filePaths, sprintf('iroha/macos/%1$s-%2$s-%3$s', [scmVars.GIT_LOCAL_BRANCH, sh(script: 'date "+%Y%m%d"', returnStdout: true).trim(), commit.substring(0,6)]))
         } else {

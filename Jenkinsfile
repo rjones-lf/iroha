@@ -29,6 +29,7 @@ def build(Build build) {
   return {
     node(build.worker.label) {
       try {
+        echo "Worker: ${env.NODE_NAME}"
         build.builder.buildSteps.each {
           it()
         }
@@ -171,7 +172,7 @@ node ('master') {
   }else {
     specialBranch = false
   }
-  echo "packageBuild=${packageBuild}, pushDockerTag=${pushDockerTag}"
+  echo "packageBuild=${packageBuild}, pushDockerTag=${pushDockerTag}, packagePush=${packagePush} "
   echo "testing=${testing}, testList=${testList}"
   echo "x64linux_compiler=${x64linux_compiler}, x64linux_compiler_list=${x64linux_compiler_list}"
   echo "mac_compiler=${mac_compiler}, mac_compiler_list=${mac_compiler_list}"
@@ -181,8 +182,8 @@ node ('master') {
 
 
   // Load Scripts
-  x64LinuxBuildScript = load '.jenkinsci/builders/x64-linux-build-steps.groovy'
-  x64BuildScript = load '.jenkinsci/builders/x64-mac-build-steps.groovy'
+  def x64LinuxBuildScript = load '.jenkinsci/builders/x64-linux-build-steps.groovy'
+  def x64BuildScript = load '.jenkinsci/builders/x64-mac-build-steps.groovy'
 
 
   // Define Workers

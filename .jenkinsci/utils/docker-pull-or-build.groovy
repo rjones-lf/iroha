@@ -1,5 +1,4 @@
 #!/usr/bin/env groovy
-def utils = load '.jenkinsci/utils/utils.groovy'
 
 def buildOptionsString(options) {
   def s = ''
@@ -14,6 +13,7 @@ def buildOptionsString(options) {
 def dockerPullOrBuild(imageName, currentDockerfileURL, previousDockerfileURL, referenceDockerfileURL, scmVars, environment, buildOptions=null) {
   buildOptions = buildOptionsString(buildOptions)
   withEnv(environment) {
+    def utils = load '.jenkinsci/utils/utils.groovy'
     randDir = sh(script: "cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 10", returnStdout: true).trim()
     currentDockerfile = utils.getUrl(currentDockerfileURL, "/tmp/${randDir}/currentDockerfile", true)
     previousDockerfile = utils.getUrl(previousDockerfileURL, "/tmp/${randDir}/previousDockerfile")
