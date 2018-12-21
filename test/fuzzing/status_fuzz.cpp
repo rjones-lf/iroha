@@ -47,6 +47,8 @@ struct CommandFixture {
       mst_state_notifier_;
 
   CommandFixture() {
+    spdlog::set_level(spdlog::level::err);
+
     pcs_ = std::make_shared<iroha::network::MockPeerCommunicationService>();
     EXPECT_CALL(*pcs_, onProposal())
         .WillRepeatedly(Return(prop_notifier_.get_observable()));
