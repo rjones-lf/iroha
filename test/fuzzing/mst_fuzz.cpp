@@ -25,6 +25,8 @@ namespace fuzzing {
     std::shared_ptr<MstTransportGrpc> mst_transport_grpc_;
 
     MstFixture() {
+      spdlog::set_level(spdlog::level::err);
+
       auto async_call_ = std::make_shared<
           iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
       // TODO luckychess 20.11.2018 Reuse validator from application.cpp
