@@ -340,9 +340,13 @@ namespace iroha {
           error_type, error, error_code, query_hash_);
     }
 
-    template <typename Query, typename QueryApplier, typename... Permissions>
+    template <typename Query,
+              typename QueryChecker,
+              typename QueryApplier,
+              typename... Permissions>
     QueryExecutorResult PostgresQueryExecutorVisitor::executeTransactionsQuery(
         const Query &q,
+        QueryChecker &&qry_checker,
         const std::string &related_txs,
         QueryApplier applier,
         Permissions... perms) {
@@ -419,15 +423,29 @@ namespace iroha {
               std::move(
                   txs.begin(), txs.end(), std::back_inserter(response_txs));
             }
-            // If 0 transactions are returned, we assume that hash is invalid.
-            // Since query with valid hash is guaranteed to return at least one
-            // transaction
-            if (first_hash and response_txs.empty()) {
-              auto error = (boost::format("invalid pagination hash: %s")
-                            % first_hash->hex())
-                               .str();
-              return this->logAndReturnErrorResponse(
-                  QueryErrorType::kStatefulFailed, error, 4);
+
+            if (response_txs.empty()) {
+              if (first_hash) {
+                // if 0 transactions are returned, and there is a specified
+                // paging hash, we assume it's invalid, since query with valid
+                // hash is guaranteed to return at least one transaction
+                auto error = (boost::format("invalid pagination hash: %s")
+                              % first_hash->hex())
+                                 .str();
+                return this->logAndReturnErrorResponse(
+                    QueryErrorType::kStatefulFailed, error, 4);
+              }
+              // if paging hash is not specified, we should check, why 0
+              // transactions are returned - it can be because there are
+              // actually no transactions for this query or some of the
+              // parameters were wrong
+              if (auto query_incorrect =
+                      std::forward<QueryChecker>(qry_checker)(q)) {
+                return logAndReturnErrorResponse(
+                    QueryErrorType::kStatefulFailed,
+                    query_incorrect.error_message_,
+                    query_incorrect.error_code_);
+              }
             }
 
             // if the number of returned transactions is equal to the
@@ -580,7 +598,23 @@ namespace iroha {
         };
       };
 
+      auto check_query = [this](const auto &q) {
+        auto cmd = (boost::format(R"(SELECT TOP 1 quorum
+                                   FROM account
+                                   WHERE account_id = %s)")
+                    % q.accountId())
+                       .str();
+        soci::rowset<int> result = this->sql_.prepare << cmd;
+        auto account_exists = result.begin() != result.end();
+        if (account_exists) {
+          return QueryFallbackCheckResult{};
+        }
+        return QueryFallbackCheckResult{
+            5, "no account with such id found: " + q.accountId()};
+      };
+
       return executeTransactionsQuery(q,
+                                      std::move(check_query),
                                       related_txs,
                                       apply_query,
                                       Role::kGetMyAccTxs,
@@ -681,7 +715,36 @@ namespace iroha {
         };
       };
 
+      auto check_query = [this](const auto &q) {
+        auto acc_cmd = (boost::format(R"(SELECT TOP 1 quorum
+                                       FROM account
+                                       WHERE account_id = %s)")
+                        % q.accountId())
+                           .str();
+        soci::rowset<int> acc_result = this->sql_.prepare << acc_cmd;
+        auto account_exists = acc_result.begin() != acc_result.end();
+        if (not account_exists) {
+          return QueryFallbackCheckResult{
+              5, "no account with such id found: " + q.accountId()};
+        }
+
+        auto asset_cmd = (boost::format(R"(SELECT TOP 1 quorum
+                                        FROM account
+                                        WHERE account_id = %s)")
+                          % q.assetId())
+                             .str();
+        soci::rowset<int> asset_result = this->sql_.prepare << asset_cmd;
+        auto asset_exists = asset_result.begin() != asset_result.end();
+        if (not asset_exists) {
+          return QueryFallbackCheckResult{
+              6, "no asset with such id found: " + q.assetId()};
+        }
+
+        return QueryFallbackCheckResult{};
+      };
+
       return executeTransactionsQuery(q,
+                                      std::move(check_query),
                                       related_txs,
                                       apply_query,
                                       Role::kGetMyAccAstTxs,

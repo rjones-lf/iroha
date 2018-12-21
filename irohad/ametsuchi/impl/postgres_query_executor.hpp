@@ -146,6 +146,8 @@ namespace iroha {
        * Execute query which returns list of transactions
        * uses pagination
        * @param query - query object
+       * @param qry_checker - fallback checker of the query, needed in some
+       * unclear cases
        * @param related_txs - SQL query which returns transaction relevant
        * to this query
        * @param applier - function which accepts SQL
@@ -153,12 +155,31 @@ namespace iroha {
        * @param perms - permissions, necessary to execute the query
        * @return Result of a query execution
        */
-      template <typename Query, typename QueryApplier, typename... Permissions>
+      template <typename Query,
+                typename QueryChecker,
+                typename QueryApplier,
+                typename... Permissions>
       QueryExecutorResult executeTransactionsQuery(
           const Query &query,
+          QueryChecker &&qry_checker,
           const std::string &related_txs,
           QueryApplier applier,
           Permissions... perms);
+
+      struct QueryFallbackCheckResult {
+        QueryFallbackCheckResult() = default;
+        QueryFallbackCheckResult(size_t error_code, std::string &&error_message)
+            : contains_error_{true},
+              error_code_{error_code},
+              error_message_{std::move(error_message)} {}
+
+        explicit operator bool() const {
+          return contains_error_;
+        }
+        bool contains_error_ = false;
+        size_t error_code_ = 0;
+        std::string error_message_ = "";
+      };
 
       soci::session &sql_;
       KeyValueStorage &block_store_;
