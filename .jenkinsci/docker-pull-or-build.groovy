@@ -18,6 +18,7 @@ def buildOptionsString(options) {
 }
 
 def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, referenceDockerfileURL, buildOptions=null) {
+  echo "imageName=${imageName}, currentDockerfileURL=${currentDockerfileURL}, previousDockerfileURL=${previousDockerfileURL}, referenceDockerfileURL=${referenceDockerfileURL}, buildOptions=${buildOptions}"
   buildOptions = buildOptionsString(buildOptions)
   def commit = sh(script: "echo ${GIT_LOCAL_BRANCH} | md5sum | cut -c 1-8", returnStdout: true).trim()
   if (remoteFilesDiffer(currentDockerfileURL, previousDockerfileURL)) {
