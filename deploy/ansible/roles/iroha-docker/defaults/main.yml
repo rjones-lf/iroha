@@ -5,7 +5,7 @@
 replicas: 6
 
 # Whether to use custom hostname for EACH container.
-# If set to `true`, Iroha peers will communicate using these hostnames. Hostnames can be set using
+# If set to `true`, Iroha peers will communicate using these hostnames. Hostnames should be set using
 # `hostnames` variable. See example playbook in `playbooks/iroha-docker/main.yml`.
 # If set to `false`, Iroha peers will communicate by IP addresses set by `inventory_hostname`
 # variable. Container and service names in Docker Compose files will be auto-generated.

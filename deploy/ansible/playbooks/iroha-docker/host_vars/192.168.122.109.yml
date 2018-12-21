@@ -1,7 +1,0 @@
-# used only when custom_hostnames: false
-replicas: 2
-
-# used only when custom_hostnames: true
-hostnames:
-  - q1
-  - q2

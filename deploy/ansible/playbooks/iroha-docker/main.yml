@@ -4,14 +4,15 @@
     roles:
       - { role: docker, tags: docker }
       - { role: iroha-docker, tags: iroha-docker }
-    vars:
-      # this is only used when `custom_hostnames` set to `true`. Can be set on a per-host level
-      hostnames:
-        # port number in the hostname can be omitted. In that case it will be auto-generated
-        # starting from base number defined in `iroha_peer_port` variable
-      - iroha.local:20000
-      - iroha.local:20001
-      - iroha.local:20002
-      - iroha.local:20003
-      - iroha.local:20004
-      - iroha.local:20005
+    # vars:
+    #   # this is only used when `custom_hostnames` set to `true`. Must be set on a per-host level.
+    #   # Variable definition here is only for reference.
+    #   hostnames:
+    #     # port number in the hostname can be omitted. In that case it will be auto-generated
+    #     # starting from base number defined in `iroha_peer_port` variable
+    #   - iroha.local:20000
+    #   - iroha.local:20001
+    #   - iroha.local:20002
+    #   - iroha.local:20003
+    #   - iroha.local:20004
+    #   - iroha.local:20005

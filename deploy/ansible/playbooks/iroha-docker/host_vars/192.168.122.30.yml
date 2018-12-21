@@ -1,4 +1,0 @@
-replicas: 2
-hostnames:
-  - w1
-  - w2
