@@ -40,8 +40,7 @@ std::string reportJsonParsingError(const rapidjson::Document &doc,
   const size_t print_offset =
       std::max(error_offset, kBadJsonPrintOffsset) - kBadJsonPrintOffsset;
   input.seekg(print_offset);
-  char json_error_buf[kBadJsonPrintLength + 1]; // includes room for trailing zero
-  json_error_buf[input.readsome(json_error_buf, sizeof(json_error_buf))] = 0;
+  char json_error_buf[kBadJsonPrintLength + 1] = {0}; // includes room for trailing zero
   return "JSON parse error [" + conf_path + "] " + "(near `" + json_error_buf
       + "'): " + std::string(rapidjson::GetParseError_En(doc.GetParseError()));
 }
