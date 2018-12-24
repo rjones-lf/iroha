@@ -20,6 +20,7 @@
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/transaction.hpp"
 
+using namespace iroha;
 using namespace iroha::ordering;
 
 OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(

@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gflags/gflags.h>
-#include <grpc++/grpc++.h>
 #include <csignal>
 #include <fstream>
 #include <thread>
+
+#include <gflags/gflags.h>
+#include <grpc++/grpc++.h>
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
@@ -228,7 +229,9 @@ int main(int argc, char *argv[]) {
   auto handler = [](int s) { exit_requested.set_value(); };
   std::signal(SIGINT, handler);
   std::signal(SIGTERM, handler);
+#ifdef SIGQUIT
   std::signal(SIGQUIT, handler);
+#endif
 
   // runs iroha
   log->info("Running iroha");

@@ -9,11 +9,11 @@
 
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
-
 #include "backend/protobuf/proposal.hpp"
 #include "common/bind.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 
+using namespace iroha::ordering;
 using namespace iroha::ordering::transport;
 
 OnDemandOsServerGrpc::OnDemandOsServerGrpc(

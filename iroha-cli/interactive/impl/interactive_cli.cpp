@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <utility>
-
 #include "interactive/interactive_cli.hpp"
+
+#include <ciso646>
+#include <utility>
 
 namespace iroha_cli {
   namespace interactive {
@@ -35,8 +36,7 @@ namespace iroha_cli {
         uint64_t qry_counter,
         const std::shared_ptr<iroha::model::ModelCryptoProvider> &provider)
         : creator_(account_name),
-          tx_cli_(
-              creator_, default_peer_ip, default_port, provider),
+          tx_cli_(creator_, default_peer_ip, default_port, provider),
           query_cli_(
               creator_, default_peer_ip, default_port, qry_counter, provider),
           statusCli_(default_peer_ip, default_port) {

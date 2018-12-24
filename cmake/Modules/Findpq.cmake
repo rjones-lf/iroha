@@ -7,17 +7,25 @@ mark_as_advanced(pq_INCLUDE_DIR)
 find_path(postgres_INCLUDE_DIR postgres_ext.h PATH_SUFFIXES postgresql)
 mark_as_advanced(postgres_INCLUDE_DIR)
 
-find_library(pq_LIBRARY pq)
+find_library(pq_LIBRARY NAMES pq libpq)
 mark_as_advanced(pq_LIBRARY)
 
-find_program(pg_config_EXECUTABLE pg_config)
-mark_as_advanced(pg_config_EXECUTABLE)
+if (MSVC)
+  find_library(pqd_LIBRARY NAMES pqd libpqd)
+  mark_as_advanced(pqd_LIBRARY)
+endif ()
+
+if (NOT MSVC)
+  find_program(pg_config_EXECUTABLE pg_config)
+  mark_as_advanced(pg_config_EXECUTABLE)
+  set(pg_config_REQUIRED pg_config_EXECUTABLE)
+endif ()
 
 find_package_handle_standard_args(pq DEFAULT_MSG
     pq_INCLUDE_DIR
     postgres_INCLUDE_DIR
     pq_LIBRARY
-    pg_config_EXECUTABLE
+    ${pg_config_REQUIRED}
     )
 
 set(URL https://git.postgresql.org/git/postgresql.git)
@@ -50,17 +58,26 @@ endif ()
 get_filename_component(pq_LIBRARY_DIR ${pq_LIBRARY} DIRECTORY)
 mark_as_advanced(pq_LIBRARY_DIR)
 
-get_filename_component(pg_config_EXECUTABLE_DIR ${pg_config_EXECUTABLE} DIRECTORY)
-mark_as_advanced(pg_config_EXECUTABLE_DIR)
+if (MSVC)
+  set_target_properties(pq PROPERTIES
+      IMPORTED_LOCATION_DEBUG ${pqd_LIBRARY}
+      IMPORTED_LOCATION_RELEASE ${pq_LIBRARY}
+      )
+endif ()
 
 set_target_properties(pq PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${pq_INCLUDE_DIR};${postgres_INCLUDE_DIR}"
     IMPORTED_LOCATION ${pq_LIBRARY}
     )
 
-set_target_properties(pg_config PROPERTIES
-    IMPORTED_LOCATION ${pg_config_EXECUTABLE}
-    )
+if (NOT MSVC)
+  get_filename_component(pg_config_EXECUTABLE_DIR ${pg_config_EXECUTABLE} DIRECTORY)
+  mark_as_advanced(pg_config_EXECUTABLE_DIR)
+
+  set_target_properties(pg_config PROPERTIES
+      IMPORTED_LOCATION ${pg_config_EXECUTABLE}
+      )
+endif ()
 
 if(ENABLE_LIBS_PACKAGING)
   add_install_step_for_lib(${pq_LIBRARY})

@@ -7,7 +7,6 @@
 
 #include <soci/postgresql/soci-postgresql.h>
 #include <boost/format.hpp>
-
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 #include "ametsuchi/impl/peer_query_wsv.hpp"
@@ -246,7 +245,7 @@ namespace iroha {
         std::unique_lock<std::shared_timed_mutex> lock(drop_mutex);
         log_->info("Drop database {}", db);
         freeConnections();
-        soci::session sql(soci::postgresql,
+        soci::session sql(*soci::factory_postgresql(),
                           postgres_options_.optionsStringWithoutDbName());
         // perform dropping
         sql << "DROP DATABASE " + db;
@@ -283,7 +282,8 @@ namespace iroha {
         const std::string &dbname,
         const std::string &options_str_without_dbname) {
       try {
-        soci::session sql(soci::postgresql, options_str_without_dbname);
+        soci::session sql(*soci::factory_postgresql(),
+                          options_str_without_dbname);
 
         int size;
         std::string name = dbname;
@@ -326,12 +326,16 @@ namespace iroha {
                                         size_t pool_size) {
       auto pool = std::make_shared<soci::connection_pool>(pool_size);
 
-      for (size_t i = 0; i != pool_size; i++) {
-        soci::session &session = pool->at(i);
-        session.open(soci::postgresql, options_str);
+      try {
+        for (size_t i = 0; i != pool_size; i++) {
+          soci::session &session = pool->at(i);
+          session.open(*soci::factory_postgresql(), options_str);
+        }
+      } catch (const std::exception &e) {
+        return expected::makeError(e.what());
       }
       return expected::makeValue(pool);
-    };
+    }
 
     expected::Result<std::shared_ptr<StorageImpl>, std::string>
     StorageImpl::create(

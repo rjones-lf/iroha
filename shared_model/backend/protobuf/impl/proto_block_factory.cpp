@@ -7,6 +7,7 @@
 
 #include "backend/protobuf/block.hpp"
 
+using namespace shared_model;
 using namespace shared_model::proto;
 
 ProtoBlockFactory::ProtoBlockFactory(

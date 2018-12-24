@@ -11,6 +11,8 @@
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 
+using namespace iroha;
+using namespace iroha::ordering;
 using namespace iroha::ordering::transport;
 
 OnDemandOsClientGrpc::OnDemandOsClientGrpc(
