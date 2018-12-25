@@ -37,6 +37,7 @@ std::string reportJsonParsingError(const rapidjson::Document &doc,
                                    const std::string &conf_path,
                                    std::istream &input) {
   const size_t error_offset = doc.GetErrorOffset();
+  // This ensures the unsigned string beginning position does not cross zero:
   const size_t print_offset =
       std::max(error_offset, kBadJsonPrintOffsset) - kBadJsonPrintOffsset;
   input.seekg(print_offset);
