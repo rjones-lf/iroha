@@ -266,6 +266,10 @@ namespace iroha {
           max_size, std::move(proposal_factory), std::move(tx_cache));
     }
 
+    OnDemandOrderingInit::~OnDemandOrderingInit() {
+      notifier.get_subscriber().unsubscribe();
+    }
+
     std::shared_ptr<iroha::network::OrderingGate>
     OnDemandOrderingInit::initOrderingGate(
         size_t max_size,

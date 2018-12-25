@@ -64,6 +64,8 @@ namespace iroha {
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           consensus::Round initial_round);
 
+      ~OnDemandOrderingGate() override;
+
       void propagateBatch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)
           override;

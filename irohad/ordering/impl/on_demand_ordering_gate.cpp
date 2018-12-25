@@ -68,6 +68,10 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       tx_cache_(std::move(tx_cache)),
       current_round_(initial_round) {}
 
+OnDemandOrderingGate::~OnDemandOrderingGate() {
+  events_subscription_.unsubscribe();
+}
+
 void OnDemandOrderingGate::propagateBatch(
     std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
