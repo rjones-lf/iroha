@@ -6,8 +6,8 @@
 #ifndef IROHA_ABSTRACT_VALIDATOR_HPP
 #define IROHA_ABSTRACT_VALIDATOR_HPP
 
-#include "validators/answer.hpp"
 #include <regex>
+#include "validators/answer.hpp"
 
 namespace shared_model {
   namespace validation {
