@@ -49,11 +49,13 @@ namespace iroha {
        * @param initial_height - height of the last block stored on this peer
        * @param run_async - whether proposals should be handled
        * asynchronously (on separate thread). Default is true.
+       * @param log to print progress
        */
       OrderingGateImpl(
           std::shared_ptr<iroha::network::OrderingGateTransport> transport,
           shared_model::interface::types::HeightType initial_height,
-          bool run_async = true);
+          bool run_async = true,
+          logger::Logger log = logger::log("OrderingGate"));
 
       void propagateBatch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)

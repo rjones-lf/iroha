@@ -18,8 +18,8 @@ using namespace rapidjson;
 namespace iroha {
   namespace model {
     namespace converters {
-      JsonQueryFactory::JsonQueryFactory()
-          : log_(logger::log("JsonQueryFactory")) {
+      JsonQueryFactory::JsonQueryFactory(logger::Logger log)
+          : log_{std::move(log)} {
         deserializers_ = {
             {"GetAccount", &JsonQueryFactory::deserializeGetAccount},
             {"GetAccountAssets",

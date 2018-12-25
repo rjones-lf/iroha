@@ -36,8 +36,6 @@ namespace fuzzing {
         batch_parser_;
     std::shared_ptr<NiceMock<MockTransactionBatchFactory>>
         transaction_batch_factory_;
-    shared_model::validation::AbstractValidator<
-        shared_model::interface::Transaction> *transaction_validator_;
 
     OrderingServiceFixture() {
       // fuzzing target is intended to run many times (~millions) so any
@@ -46,19 +44,19 @@ namespace fuzzing {
 
       std::unique_ptr<shared_model::validation::AbstractValidator<
           shared_model::interface::Transaction>>
-          transaction_validator =
-              std::make_unique<shared_model::validation::
-                                   DefaultOptionalSignedTransactionValidator>();
-      transaction_validator_ = transaction_validator.get();
+          interface_transaction_validator =
+              std::make_unique<NiceMock<shared_model::validation::MockValidator<
+                  shared_model::interface::Transaction>>>();
       std::unique_ptr<shared_model::validation::AbstractValidator<
           iroha::protocol::Transaction>>
-          proto_transaction_validator = std::make_unique<
-              shared_model::validation::ProtoTransactionValidator>();
+          proto_transaction_validator =
+              std::make_unique<NiceMock<shared_model::validation::MockValidator<
+                  iroha::protocol::Transaction>>>();
       transaction_factory_ =
           std::make_shared<shared_model::proto::ProtoTransportFactory<
               shared_model::interface::Transaction,
               shared_model::proto::Transaction>>(
-              std::move(transaction_validator),
+              std::move(interface_transaction_validator),
               std::move(proto_transaction_validator));
 
       batch_parser_ = std::make_shared<

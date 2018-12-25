@@ -23,9 +23,10 @@ namespace iroha {
     template <typename Response>
     class AsyncGrpcClient {
      public:
-      AsyncGrpcClient()
+      explicit AsyncGrpcClient(
+          logger::Logger log = logger::log("AsyncGrpcClient"))
           : thread_(&AsyncGrpcClient::asyncCompleteRpc, this),
-            log_(logger::log("AsyncGrpcClient")) {}
+            log_(std::move(log)) {}
 
       /**
        * Listen to gRPC server responses

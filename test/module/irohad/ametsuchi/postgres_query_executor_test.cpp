@@ -1468,31 +1468,29 @@ namespace iroha {
     }
 
     /**
-     * @given initialized storage, permission to his/her account
-     * @when get transactions
-     * @then Return transactions of user
+     * @given initialized storage @and global permission
+     * @when get transactions with two valid @and one invalid hashes in query
+     * @then error is returned
      */
-    TEST_F(GetTransactionsHashExecutorTest, ValidMyAccount) {
-      addPerms({shared_model::interface::permissions::Role::kGetMyTxs});
+    TEST_F(GetTransactionsHashExecutorTest, BadHash) {
+      addPerms({shared_model::interface::permissions::Role::kGetAllTxs});
 
       commitBlocks();
 
       std::vector<decltype(hash1)> hashes;
       hashes.push_back(hash1);
+      hashes.emplace_back("AbsolutelyInvalidHash");
       hashes.push_back(hash2);
-      hashes.push_back(hash3);
 
       auto query = TestQueryBuilder()
                        .creatorAccountId(account_id)
                        .getTransactions(hashes)
                        .build();
       auto result = executeQuery(query);
-      checkSuccessfulResult<shared_model::interface::TransactionsResponse>(
-          std::move(result), [this](const auto &cast_resp) {
-            ASSERT_EQ(cast_resp.transactions().size(), 2);
-            ASSERT_EQ(cast_resp.transactions()[0].hash(), hash1);
-            ASSERT_EQ(cast_resp.transactions()[1].hash(), hash2);
-          });
+      // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 4
+      // with a named constant
+      checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
+          std::move(result), 4);
     }
 
     using GetAccountAssetTransactionsExecutorTest =

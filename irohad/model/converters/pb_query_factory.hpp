@@ -37,7 +37,8 @@ namespace iroha {
         boost::optional<protocol::Query> serialize(
             std::shared_ptr<const model::Query> query) const;
 
-        PbQueryFactory();
+        explicit PbQueryFactory(
+            logger::Logger log = logger::log("PbQueryFactory"));
 
        private:
         // Query serializer:

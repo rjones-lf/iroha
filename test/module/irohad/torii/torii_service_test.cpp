@@ -98,7 +98,6 @@ class ToriiServiceTest : public testing::Test {
     pcsMock = std::make_shared<CustomPeerCommunicationServiceMock>(
         prop_notifier_, commit_notifier_, verified_prop_notifier_);
     mst = std::make_shared<iroha::MockMstProcessor>();
-    wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
     storage = std::make_shared<MockStorage>();
 
@@ -117,8 +116,6 @@ class ToriiServiceTest : public testing::Test {
             status_bus,
             std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
 
-    EXPECT_CALL(*block_query, getTxByHashSync(_))
-        .WillRepeatedly(Return(boost::none));
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     //----------- Server run ----------------
@@ -167,7 +164,6 @@ class ToriiServiceTest : public testing::Test {
 
   std::unique_ptr<ServerRunner> runner;
 
-  std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
   std::shared_ptr<MockStorage> storage;
 

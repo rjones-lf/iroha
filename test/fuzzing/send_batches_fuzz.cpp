@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "ametsuchi/impl/tx_presence_cache_impl.hpp"
+#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "ordering_service_fixture.hpp"
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, std::size_t size) {
@@ -16,8 +18,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, std::size_t size) {
   std::shared_ptr<OnDemandOsServerGrpc> server_;
 
   auto proposal_factory = std::make_unique<MockUnsafeProposalFactory>();
+  auto storage = std::make_shared<NiceMock<iroha::ametsuchi::MockStorage>>();
+  auto cache = std::make_shared<iroha::ametsuchi::TxPresenceCacheImpl>(storage);
   ordering_service_ = std::make_shared<OnDemandOrderingServiceImpl>(
-      data[0], std::move(proposal_factory));
+      data[0], std::move(proposal_factory), std::move(cache));
   server_ = std::make_shared<OnDemandOsServerGrpc>(
       ordering_service_,
       fixture.transaction_factory_,

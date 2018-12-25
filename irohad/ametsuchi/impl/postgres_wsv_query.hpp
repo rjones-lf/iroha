@@ -20,12 +20,14 @@ namespace iroha {
       PostgresWsvQuery(
           soci::session &sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory);
+              factory,
+          logger::Logger log = logger::log("PostgresWsvQuery"));
 
       PostgresWsvQuery(
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory);
+              factory,
+          logger::Logger log = logger::log("PostgresWsvQuery"));
 
       boost::optional<std::vector<shared_model::interface::types::RoleIdType>>
       getAccountRoles(const shared_model::interface::types::AccountIdType

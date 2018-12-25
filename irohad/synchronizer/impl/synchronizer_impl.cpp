@@ -123,8 +123,11 @@ namespace iroha {
         }
         std::unique_ptr<ametsuchi::MutableStorage> storage =
             std::move(opt_storage.value());
-        storage->apply(*msg.block);
-        mutable_factory_->commit(std::move(storage));
+        if (storage->apply(*msg.block)) {
+          mutable_factory_->commit(std::move(storage));
+        } else {
+          log_->warn("Block was not committed due to fail in mutable storage");
+        }
       }
       notifier_.get_subscriber().on_next(
           SynchronizationEvent{rxcpp::observable<>::just(msg.block),

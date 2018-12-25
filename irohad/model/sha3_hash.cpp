@@ -29,4 +29,4 @@ namespace iroha {
     auto &&pb_dat = query_factory.serialize(qptr);
     return hash(*pb_dat);
   }
-}
+}  // namespace iroha

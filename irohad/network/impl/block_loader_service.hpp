@@ -15,10 +15,11 @@ namespace iroha {
   namespace network {
     class BlockLoaderService : public proto::Loader::Service {
      public:
-      explicit BlockLoaderService(
+      BlockLoaderService(
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
           std::shared_ptr<iroha::consensus::ConsensusResultCache>
-              consensus_result_cache);
+              consensus_result_cache,
+          logger::Logger log = logger::log("BlockLoaderService"));
 
       grpc::Status retrieveBlocks(
           ::grpc::ServerContext *context,

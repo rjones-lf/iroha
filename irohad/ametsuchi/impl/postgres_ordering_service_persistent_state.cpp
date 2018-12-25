@@ -16,8 +16,7 @@ namespace iroha {
       try {
         *sql_ << query;
       } catch (std::exception &e) {
-        log_->error("Failed to execute query: " + query
-                    + ". Reason: " + e.what());
+        log_->error("Failed to execute query: {}. Reason: {}", query, e.what());
         return false;
       }
       return true;
@@ -48,9 +47,8 @@ namespace iroha {
 
     PostgresOrderingServicePersistentState::
         PostgresOrderingServicePersistentState(
-            std::unique_ptr<soci::session> sql)
-        : sql_(std::move(sql)),
-          log_(logger::log("PostgresOrderingServicePersistentState")) {}
+            std::unique_ptr<soci::session> sql, logger::Logger log)
+        : sql_(std::move(sql)), log_(std::move(log)) {}
 
     bool PostgresOrderingServicePersistentState::initStorage() {
       return execute_(
@@ -76,8 +74,14 @@ namespace iroha {
     boost::optional<size_t>
     PostgresOrderingServicePersistentState::loadProposalHeight() const {
       boost::optional<size_t> height;
-      *sql_ << "SELECT * FROM ordering_service_state LIMIT 1",
-          soci::into(height);
+      std::string query = "SELECT * FROM ordering_service_state LIMIT 1";
+      try {
+        *sql_ << query, soci::into(height);
+      } catch (std::exception &e) {
+        log_->error("Failed to execute query: " + query
+                    + ". Reason: " + e.what());
+        return boost::none;
+      }
 
       if (not height) {
         log_->error(

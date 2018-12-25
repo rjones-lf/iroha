@@ -33,12 +33,13 @@ namespace iroha {
       create(const std::string &postgres_options);
 
       /**
-       * Constructor
-       * @param postgres_connection postgres connection object
-       * @param postgres_transaction postgres transaction object
+       * @param sql - pointer to soci session
+       * @param log to print progress
        */
-      explicit PostgresOrderingServicePersistentState(
-          std::unique_ptr<soci::session> sql);
+      PostgresOrderingServicePersistentState(
+          std::unique_ptr<soci::session> sql,
+          logger::Logger log =
+              logger::log("PostgresOrderingServicePersistentState"));
 
       /**
        * Initialize storage.

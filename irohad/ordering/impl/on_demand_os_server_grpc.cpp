@@ -22,12 +22,13 @@ OnDemandOsServerGrpc::OnDemandOsServerGrpc(
     std::shared_ptr<shared_model::interface::TransactionBatchParser>
         batch_parser,
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
-        transaction_batch_factory)
+        transaction_batch_factory,
+    logger::Logger log)
     : ordering_service_(ordering_service),
       transaction_factory_(std::move(transaction_factory)),
       batch_parser_(std::move(batch_parser)),
       batch_factory_(std::move(transaction_batch_factory)),
-      log_(logger::log("OnDemandOsServerGrpc")) {}
+      log_(std::move(log)) {}
 
 shared_model::interface::types::SharedTxsCollectionType
 OnDemandOsServerGrpc::deserializeTransactions(

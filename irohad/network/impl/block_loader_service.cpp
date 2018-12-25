@@ -14,10 +14,11 @@ using namespace iroha::network;
 BlockLoaderService::BlockLoaderService(
     std::shared_ptr<BlockQueryFactory> block_query_factory,
     std::shared_ptr<iroha::consensus::ConsensusResultCache>
-        consensus_result_cache)
+        consensus_result_cache,
+    logger::Logger log)
     : block_query_factory_(std::move(block_query_factory)),
       consensus_result_cache_(std::move(consensus_result_cache)),
-      log_(logger::log("BlockLoaderService")) {}
+      log_(std::move(log)) {}
 
 grpc::Status BlockLoaderService::retrieveBlocks(
     ::grpc::ServerContext *context,

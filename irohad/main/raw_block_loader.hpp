@@ -17,7 +17,7 @@ namespace shared_model {
   namespace interface {
     class Block;
   }
-}
+}  // namespace shared_model
 
 namespace iroha {
   namespace main {
@@ -29,7 +29,7 @@ namespace iroha {
      */
     class BlockLoader {
      public:
-      BlockLoader();
+      explicit BlockLoader(logger::Logger log = logger::log("BlockLoader"));
 
       /**
        * Parse block from file
