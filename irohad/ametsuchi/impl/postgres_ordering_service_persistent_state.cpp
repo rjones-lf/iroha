@@ -60,9 +60,8 @@ namespace iroha {
 
     PostgresOrderingServicePersistentState::
         PostgresOrderingServicePersistentState(
-            std::unique_ptr<soci::session> sql)
-        : sql_(std::move(sql)),
-          log_(logger::log("PostgresOrderingServicePersistentState")) {}
+            std::unique_ptr<soci::session> sql, logger::Logger log)
+        : sql_(std::move(sql)), log_(std::move(log)) {}
 
     bool PostgresOrderingServicePersistentState::initStorage() {
       return execute_(

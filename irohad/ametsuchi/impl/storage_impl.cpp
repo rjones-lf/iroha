@@ -62,7 +62,8 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::PermissionToString>
             perm_converter,
         size_t pool_size,
-        bool enable_prepared_blocks)
+        bool enable_prepared_blocks,
+        logger::Logger log)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
@@ -70,7 +71,7 @@ namespace iroha {
           factory_(std::move(factory)),
           converter_(std::move(converter)),
           perm_converter_(std::move(perm_converter)),
-          log_(logger::log("StorageImpl")),
+          log_(std::move(log)),
           pool_size_(pool_size),
           prepared_blocks_enabled_(enable_prepared_blocks),
           block_is_prepared(false) {

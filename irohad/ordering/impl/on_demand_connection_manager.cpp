@@ -13,8 +13,9 @@ using namespace iroha::ordering;
 
 OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
-    rxcpp::observable<CurrentPeers> peers)
-    : log_(logger::log("OnDemandConnectionManager")),
+    rxcpp::observable<CurrentPeers> peers,
+    logger::Logger log)
+    : log_(std::move(log)),
       factory_(std::move(factory)),
       subscription_(peers.subscribe([this](const auto &peers) {
         // exclusive lock
@@ -26,8 +27,9 @@ OnDemandConnectionManager::OnDemandConnectionManager(
 OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
     rxcpp::observable<CurrentPeers> peers,
-    CurrentPeers initial_peers)
-    : OnDemandConnectionManager(std::move(factory), peers) {
+    CurrentPeers initial_peers,
+    logger::Logger log)
+    : OnDemandConnectionManager(std::move(factory), peers, std::move(log)) {
   // using start_with(initial_peers) results in deadlock
   initializeConnections(initial_peers);
 }

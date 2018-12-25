@@ -28,12 +28,13 @@ OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
         proposal_factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
     size_t number_of_proposals,
-    const consensus::Round &initial_round)
+    const consensus::Round &initial_round,
+    logger::Logger log)
     : transaction_limit_(transaction_limit),
       number_of_proposals_(number_of_proposals),
       proposal_factory_(std::move(proposal_factory)),
       tx_cache_(std::move(tx_cache)),
-      log_(logger::log("OnDemandOrderingServiceImpl")) {
+      log_(std::move(log)) {
   onCollaborationOutcome(initial_round);
 }
 

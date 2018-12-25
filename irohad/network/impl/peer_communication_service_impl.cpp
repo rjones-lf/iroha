@@ -16,12 +16,12 @@ namespace iroha {
         std::shared_ptr<OrderingGate> ordering_gate,
         std::shared_ptr<synchronizer::Synchronizer> synchronizer,
         std::shared_ptr<iroha::simulator::VerifiedProposalCreator>
-            proposal_creator)
+            proposal_creator,
+        logger::Logger log)
         : ordering_gate_(std::move(ordering_gate)),
           synchronizer_(std::move(synchronizer)),
-          proposal_creator_(std::move(proposal_creator)) {
-      log_ = logger::log("PCS");
-    }
+          proposal_creator_(std::move(proposal_creator)),
+          log_{std::move(log)} {}
 
     void PeerCommunicationServiceImpl::propagate_batch(
         std::shared_ptr<shared_model::interface::TransactionBatch> batch)
