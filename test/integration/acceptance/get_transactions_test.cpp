@@ -180,6 +180,8 @@ TEST_F(GetTransactions, NonexistentHash) {
       const auto &resp =
           boost::get<const shared_model::interface::ErrorQueryResponse &>(
               status.get());
+      // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 4
+      // with a named constant
       ASSERT_EQ(resp.errorCode(), 4);
       boost::get<const shared_model::interface::StatefulFailedErrorResponse &>(
           resp.get());

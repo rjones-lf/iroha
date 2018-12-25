@@ -1472,7 +1472,7 @@ namespace iroha {
      * @when get transactions with two valid @and one invalid hashes in query
      * @then error is returned
      */
-    TEST_F(GetTransactionsHashExecutorTest, InvalidBadHash) {
+    TEST_F(GetTransactionsHashExecutorTest, BadHash) {
       addPerms({shared_model::interface::permissions::Role::kGetAllTxs});
 
       commitBlocks();
@@ -1487,6 +1487,8 @@ namespace iroha {
                        .getTransactions(hashes)
                        .build();
       auto result = executeQuery(query);
+      // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 4
+      // with a named constant
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
           std::move(result), 4);
     }

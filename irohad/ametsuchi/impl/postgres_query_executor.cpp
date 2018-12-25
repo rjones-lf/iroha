@@ -621,8 +621,10 @@ namespace iroha {
           },
           [&](auto range, auto &my_perm, auto &all_perm) {
             if (boost::size(range) != q.transactionHashes().size()) {
+              // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 4
+              // with a named constant
               // at least one of the hashes in the query was invalid -
-              // nonexistent or permissions were lacked
+              // nonexistent or permissions were missed
               return this->logAndReturnErrorResponse(
                   QueryErrorType::kStatefulFailed,
                   "At least one of the supplied hashes is incorrect",
