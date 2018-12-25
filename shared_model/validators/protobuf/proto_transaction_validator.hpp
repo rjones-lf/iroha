@@ -29,6 +29,41 @@ namespace shared_model {
               answer.addReason(std::move(reason));
               return answer;
             }
+            case iroha::protocol::Command::kAddSignatory: {
+              const auto &as = command.add_signatory();
+              if (not validateHexString(as.public_key())) {
+                reason.second.emplace_back("Public key is not in hex format");
+                answer.addReason(std::move(reason));
+                return answer;
+              }
+              break;
+            }
+            case iroha::protocol::Command::kCreateAccount: {
+              const auto &ca = command.create_account();
+              if (not validateHexString(ca.public_key())) {
+                reason.second.emplace_back("Public key is not in hex format");
+                answer.addReason(std::move(reason));
+                return answer;
+              }
+              break;
+            }
+            case iroha::protocol::Command::kRemoveSignatory: {
+              const auto &rs = command.remove_signatory();
+              if (not validateHexString(rs.public_key())) {
+                reason.second.emplace_back("Public key is not in hex format");
+                answer.addReason(std::move(reason));
+                return answer;
+              }
+              break;
+            }
+            case iroha::protocol::Command::kAddPeer: {
+              const auto& ap = command.add_peer();
+              if (not validateHexString(ap.peer().peer_key())) {
+                reason.second.emplace_back("Peer key is not in hex format");
+                answer.addReason(std::move(reason));
+                return answer;
+              }
+            }
             case iroha::protocol::Command::kCreateRole: {
               const auto &cr = command.create_role();
               bool all_permissions_valid = std::all_of(

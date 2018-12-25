@@ -7,6 +7,7 @@
 #define IROHA_ABSTRACT_VALIDATOR_HPP
 
 #include "validators/answer.hpp"
+#include <regex>
 
 namespace shared_model {
   namespace validation {
@@ -14,6 +15,12 @@ namespace shared_model {
     // validator which can be overloaded for dynamic polymorphism
     template <typename Model>
     class AbstractValidator {
+     protected:
+      bool validateHexString(const std::string &str) const {
+        static const std::regex hex_regex{R"([0-9a-fA-F]*)"};
+        return std::regex_match(str, hex_regex);
+      }
+
      public:
       virtual Answer validate(const Model &m) const = 0;
 

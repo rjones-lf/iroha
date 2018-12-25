@@ -18,7 +18,17 @@ namespace shared_model {
           == iroha::protocol::Block::BLOCK_VERSION_NOT_SET) {
         reason.second.emplace_back("Block version is not set");
         answer.addReason(std::move(reason));
-        return answer;
+      }
+
+      const auto &rejected_hashes =
+          block.block_v1().payload().rejected_transactions_hashes();
+      if (std::any_of(rejected_hashes.begin(),
+                      rejected_hashes.end(),
+                      [this](const auto &hash) {
+                        return not this->validateHexString(hash);
+                      })) {
+        reason.second.emplace_back("Some rejected hashes has incorrect format");
+        answer.addReason(std::move(reason));
       }
 
       return answer;
