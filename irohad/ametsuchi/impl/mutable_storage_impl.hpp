@@ -29,7 +29,8 @@ namespace iroha {
           std::shared_ptr<PostgresCommandExecutor> cmd_executor,
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory);
+              factory,
+          logger::Logger log = logger::log("MutableStorage"));
 
       bool apply(const shared_model::interface::Block &block) override;
 

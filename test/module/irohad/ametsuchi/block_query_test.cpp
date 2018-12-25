@@ -36,8 +36,8 @@ class BlockQueryTest : public AmetsuchiTest {
     auto converter =
         std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
     blocks = std::make_shared<PostgresBlockQuery>(*sql, *file, converter);
-    empty_blocks =
-        std::make_shared<PostgresBlockQuery>(*sql, *mock_file, converter);
+    empty_blocks = std::make_shared<PostgresBlockQuery>(
+        *sql, *mock_file, converter, logger::log("PostgresBlockQueryEmpty"));
 
     *sql << init_;
 

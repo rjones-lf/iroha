@@ -1,15 +1,7 @@
-/*
-Copyright 2017 Soramitsu Co., Ltd.
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include <thread>
 
@@ -25,15 +17,17 @@ namespace torii {
   using iroha::protocol::ToriiResponse;
   using iroha::protocol::Transaction;
 
-  CommandSyncClient::CommandSyncClient(const std::string &ip, size_t port)
+  CommandSyncClient::CommandSyncClient(const std::string &ip,
+                                       size_t port,
+                                       logger::Logger log)
       : ip_(ip),
         port_(port),
         stub_(iroha::network::createClient<iroha::protocol::CommandService_v1>(
             ip + ":" + std::to_string(port))),
-        log_(logger::log("CommandSyncClient")) {}
+        log_(std::move(log)) {}
 
   CommandSyncClient::CommandSyncClient(const CommandSyncClient &rhs)
-      : CommandSyncClient(rhs.ip_, rhs.port_) {}
+      : CommandSyncClient(rhs.ip_, rhs.port_, rhs.log_) {}
 
   CommandSyncClient &CommandSyncClient::operator=(CommandSyncClient rhs) {
     swap(*this, rhs);
@@ -91,6 +85,7 @@ namespace torii {
     swap(lhs.ip_, rhs.ip_);
     swap(lhs.port_, rhs.port_);
     swap(lhs.stub_, rhs.stub_);
+    swap(lhs.log_, rhs.log_);
   }
 
 }  // namespace torii

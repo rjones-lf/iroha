@@ -1,3 +1,8 @@
+#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 
 if (SWIG_PYTHON OR SWIG_JAVA)
   get_property(SWIG_BUILD_DIR GLOBAL PROPERTY SWIG_BUILD_DIR)

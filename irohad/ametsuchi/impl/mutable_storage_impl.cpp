@@ -20,7 +20,8 @@ namespace iroha {
         shared_model::interface::types::HashType top_hash,
         std::shared_ptr<PostgresCommandExecutor> cmd_executor,
         std::unique_ptr<soci::session> sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        logger::Logger log)
         : top_hash_(top_hash),
           sql_(std::move(sql)),
           peer_query_(std::make_unique<PeerQueryWsv>(
@@ -28,7 +29,7 @@ namespace iroha {
           block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
           command_executor_(std::move(cmd_executor)),
           committed(false),
-          log_(logger::log("MutableStorage")) {
+          log_(std::move(log)) {
       *sql_ << "BEGIN";
     }
 

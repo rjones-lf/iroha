@@ -47,12 +47,13 @@ namespace iroha {
         std::shared_ptr<MstProcessor> mst_processor,
         std::shared_ptr<iroha::torii::StatusBus> status_bus,
         std::shared_ptr<shared_model::interface::TxStatusFactory>
-            status_factory)
+            status_factory,
+        logger::Logger log)
         : pcs_(std::move(pcs)),
           mst_processor_(std::move(mst_processor)),
           status_bus_(std::move(status_bus)),
           status_factory_(std::move(status_factory)),
-          log_(logger::log("TxProcessor")) {
+          log_(std::move(log)) {
       // process stateful validation results
       pcs_->onVerifiedProposal().subscribe(
           [this](const simulator::VerifiedProposalCreatorEvent &event) {
@@ -134,7 +135,8 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::TransactionBatch>
             transaction_batch) const {
       log_->info("handle batch");
-      if (transaction_batch->hasAllSignatures()) {
+      if (transaction_batch->hasAllSignatures()
+          and not mst_processor_->batchInStorage(transaction_batch)) {
         log_->info("propagating batch to PCS");
         this->publishEnoughSignaturesStatus(transaction_batch->transactions());
         pcs_->propagate_batch(transaction_batch);

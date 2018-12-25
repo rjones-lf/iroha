@@ -191,11 +191,11 @@ namespace iroha {
               typename PermissionTuple,
               typename QueryExecutor,
               typename ResponseCreator,
-              typename ErrResponse>
+              typename PermissionsErrResponse>
     QueryExecutorResult PostgresQueryExecutorVisitor::executeQuery(
         QueryExecutor &&query_executor,
         ResponseCreator &&response_creator,
-        ErrResponse &&err_response) {
+        PermissionsErrResponse &&perms_err_response) {
       using T = concat<QueryTuple, PermissionTuple>;
       try {
         soci::rowset<T> st = std::forward<QueryExecutor>(query_executor)();
@@ -203,7 +203,8 @@ namespace iroha {
 
         return apply(
             viewPermissions<PermissionTuple>(range.front()),
-            [this, range, &response_creator, &err_response](auto... perms) {
+            [this, range, &response_creator, &perms_err_response](
+                auto... perms) {
               bool temp[] = {not perms...};
               if (std::all_of(std::begin(temp), std::end(temp), [](auto b) {
                     return b;
@@ -212,7 +213,7 @@ namespace iroha {
                 // with a named constant
                 return this->logAndReturnErrorResponse(
                     QueryErrorType::kStatefulFailed,
-                    std::forward<ErrResponse>(err_response)(),
+                    std::forward<PermissionsErrResponse>(perms_err_response)(),
                     2);
               }
               auto query_range = range
@@ -619,6 +620,16 @@ namespace iroha {
             return (sql_.prepare << cmd, soci::use(creator_id_, "account_id"));
           },
           [&](auto range, auto &my_perm, auto &all_perm) {
+            if (boost::size(range) != q.transactionHashes().size()) {
+              // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 4
+              // with a named constant
+              // at least one of the hashes in the query was invalid -
+              // nonexistent or permissions were missed
+              return this->logAndReturnErrorResponse(
+                  QueryErrorType::kStatefulFailed,
+                  "At least one of the supplied hashes is incorrect",
+                  4);
+            }
             std::map<uint64_t, std::unordered_set<std::string>> index;
             boost::for_each(range, [&index](auto t) {
               apply(t, [&index](auto &height, auto &hash) {

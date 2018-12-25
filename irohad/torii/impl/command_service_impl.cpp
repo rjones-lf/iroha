@@ -136,7 +136,7 @@ namespace torii {
   void CommandServiceImpl::pushStatus(
       const std::string &who,
       std::shared_ptr<shared_model::interface::TransactionResponse> response) {
-    log_->debug("{}: adding item to cache: {}", who, response->toString());
+    log_->debug("{}: adding item to cache: {}", who, *response);
     status_bus_->publish(response);
   }
 

@@ -74,6 +74,8 @@ namespace iroha {
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache);
 
      public:
+      ~OnDemandOrderingInit();
+
       /**
        * Initializes on-demand ordering gate and ordering sevice components
        *
