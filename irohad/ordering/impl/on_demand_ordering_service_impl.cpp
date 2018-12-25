@@ -42,9 +42,7 @@ OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
 
 void OnDemandOrderingServiceImpl::onCollaborationOutcome(
     consensus::Round round) {
-  log_->info("onCollaborationOutcome => round[{}, {}]",
-             round.block_round,
-             round.reject_round);
+  log_->info("onCollaborationOutcome => {}", round);
   // exclusive write lock
   std::lock_guard<std::shared_timed_mutex> guard(lock_);
   log_->debug("onCollaborationOutcome => write lock is acquired");
@@ -59,10 +57,7 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
                                             CollectionType batches) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
-  log_->info("onBatches => collection size = {}, round[{}, {}]",
-             batches.size(),
-             round.block_round,
-             round.reject_round);
+  log_->info("onBatches => collection size = {}, {}", batches.size(), round);
 
   auto unprocessed_batches =
       boost::adaptors::filter(batches, [this](const auto &batch) {
@@ -83,9 +78,7 @@ void OnDemandOrderingServiceImpl::onBatches(consensus::Round round,
                      });
     BOOST_ASSERT_MSG(it != current_proposals_.end(),
                      "No place to store the batches!");
-    log_->debug("onBatches => collection will be inserted to [{}, {}]",
-                it->first.block_round,
-                it->first.reject_round);
+    log_->debug("onBatches => collection will be inserted to {}", it->first);
   }
   std::for_each(unprocessed_batches.begin(),
                 unprocessed_batches.end(),
@@ -98,9 +91,10 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
   auto proposal = proposal_map_.find(round);
-  log_->debug("onRequestProposal, round[{}, {}], {}returning a proposal.",
-              round.block_round,
-              round.reject_round,
+  // space between '{}' and 'returning' is not missing, since either nothing, or
+  // NOT with space is printed
+  log_->debug("onRequestProposal, {}, {}returning a proposal.",
+              round,
               (proposal == proposal_map_.end()) ? "NOT " : "");
   if (proposal != proposal_map_.end()) {
     return clone(*proposal->second);
@@ -114,16 +108,14 @@ OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
 void OnDemandOrderingServiceImpl::packNextProposals(
     const consensus::Round &round) {
   auto close_round = [this](consensus::Round round) {
-    log_->debug("close round[{}, {}]", round.block_round, round.reject_round);
+    log_->debug("close {}", round);
 
     auto it = current_proposals_.find(round);
     if (it != current_proposals_.end()) {
       log_->debug("proposal found");
       if (not it->second.empty()) {
         proposal_map_.emplace(round, emitProposal(round));
-        log_->debug("packNextProposal: data has been fetched for round[{}, {}]",
-                    round.block_round,
-                    round.reject_round);
+        log_->debug("packNextProposal: data has been fetched for {}", round);
         round_queue_.push(round);
       }
       current_proposals_.erase(it);
@@ -131,7 +123,7 @@ void OnDemandOrderingServiceImpl::packNextProposals(
   };
 
   auto open_round = [this](consensus::Round round) {
-    log_->debug("open round[{}, {}]", round.block_round, round.reject_round);
+    log_->debug("open {}", round);
     current_proposals_[round];
   };
 
@@ -187,9 +179,7 @@ void OnDemandOrderingServiceImpl::packNextProposals(
 
 OnDemandOrderingServiceImpl::ProposalType
 OnDemandOrderingServiceImpl::emitProposal(const consensus::Round &round) {
-  log_->debug("Mutable proposal generation, round[{}, {}]",
-              round.block_round,
-              round.reject_round);
+  log_->debug("Mutable proposal generation, {}", round);
 
   TransactionBatchType batch;
   std::vector<std::shared_ptr<shared_model::interface::Transaction>> collection;
@@ -220,9 +210,7 @@ void OnDemandOrderingServiceImpl::tryErase() {
   if (round_queue_.size() >= number_of_proposals_) {
     auto &round = round_queue_.front();
     proposal_map_.erase(round);
-    log_->info("tryErase: erased round[{}, {}]",
-               round.block_round,
-               round.reject_round);
+    log_->info("tryErase: erased {}", round);
     round_queue_.pop();
   }
 }

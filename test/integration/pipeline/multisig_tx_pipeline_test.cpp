@@ -231,15 +231,12 @@ TEST_F(MstPipelineTest, GetPendingTxsNoSignedTxs) {
 }
 
 /**
- * Disabled because fully signed transaction doesn't go through MST and pending
- * transaction remains in query response IR-1329
  * @given a ledger with mst user (quorum=3) created
  * @when the user sends a transaction with only one signature, then sends the
  * transaction with all three signatures
  * @then there should be no pending transactions
  */
-TEST_F(MstPipelineTest, DISABLED_ReplayViaFullySignedTransaction) {
-  // TODO igor-egorov, 2018-09-25, IR-1329, enable the test
+TEST_F(MstPipelineTest, ReplayViaFullySignedTransaction) {
   auto &mst_itf = prepareMstItf();
   auto pending_tx =
       baseTx().setAccountDetail(kUserId, "age", "10").quorum(kSignatories + 1);

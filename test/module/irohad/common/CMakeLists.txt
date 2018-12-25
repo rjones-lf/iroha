@@ -1,3 +1,8 @@
+#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 AddTest(blob_converter_test blob_converter_test.cpp)
 target_link_libraries(blob_converter_test
     common

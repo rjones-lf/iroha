@@ -65,6 +65,8 @@ namespace iroha {
           consensus::Round initial_round,
           logger::Logger log = logger::log("OnDemandOrderingGate"));
 
+      ~OnDemandOrderingGate() override;
+
       void propagateBatch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)
           override;

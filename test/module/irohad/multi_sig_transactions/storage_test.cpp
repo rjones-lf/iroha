@@ -98,3 +98,28 @@ TEST_F(StorageTest, StorageWhenCreate) {
                 .getBatches()
                 .size());
 }
+
+/**
+ * @given storage with three batches
+ * @when checking, if those batches belong to the storage
+ * @then storage reports, that those batches are in it
+ */
+TEST_F(StorageTest, StorageFindsExistingBatch) {
+  auto batch1 = makeTestBatch(txBuilder(1, creation_time));
+  auto batch2 = makeTestBatch(txBuilder(2, creation_time));
+  auto batch3 = makeTestBatch(txBuilder(3, creation_time));
+
+  EXPECT_TRUE(storage->batchInStorage(batch1));
+  EXPECT_TRUE(storage->batchInStorage(batch2));
+  EXPECT_TRUE(storage->batchInStorage(batch3));
+}
+
+/**
+ * @given storage with three batches @and one another batch not in the storage
+ * @when checking, if the last batch belongs to the storage
+ * @then storage reports, that this batch is not in it
+ */
+TEST_F(StorageTest, StorageDoesNotFindNonExistingBatch) {
+  auto distinct_batch = makeTestBatch(txBuilder(4, creation_time));
+  EXPECT_FALSE(storage->batchInStorage(distinct_batch));
+}

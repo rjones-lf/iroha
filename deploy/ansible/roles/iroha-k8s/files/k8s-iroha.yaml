@@ -29,6 +29,28 @@ spec:
         app: iroha
     spec:
       terminationGracePeriodSeconds: 7
+      initContainers:
+      - name: copy-data
+        image: busybox
+        command: ['sh', '-c', 'cp -v /opt/secrets/$PODNAME/node* /opt/iroha_data && cp -v /opt/iroha_config/* /opt/iroha_data']
+        env:
+          - name: PODNAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+        volumeMounts:
+        - name: iroha-secret-0
+          mountPath: /opt/secrets/iroha-0
+        - name: iroha-secret-1
+          mountPath: /opt/secrets/iroha-1
+        - name: iroha-secret-2
+          mountPath: /opt/secrets/iroha-2
+        - name: iroha-secret-3
+          mountPath: /opt/secrets/iroha-3
+        - name: iroha-config
+          mountPath: /opt/iroha_config
+        - name: iroha-data
+          mountPath: /opt/iroha_data
       containers:
       - name: postgres
         image: postgres:9.5
@@ -39,8 +61,22 @@ spec:
         env:
           - name: POSTGRES_PASSWORD
             value: mysecretpassword
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+        livenessProbe:
+          exec:
+            command: ["pg_isready", "-h", "localhost", "-U", "postgres"]
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-h", "localhost", "-U", "postgres"]
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+        volumeMounts:
+        - name: pg-data
+          mountPath: /var/lib/postgresql/data
       - name: iroha
-        #image: hyperledger/iroha@sha256:eb059d2a03544e2bde91a0e16b7d03076b09bc31e9b970c1c4269f02084e8e91
         image: hyperledger/iroha:develop
         imagePullPolicy: Always
         ports:
@@ -49,24 +85,53 @@ spec:
         - containerPort: 50051
           name: external
         env:
+          - name: IROHA_POSTGRES_HOST
+            value: localhost
           - name: KEY
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          - name: pg-host
-            valueFrom:
-              fieldRef:
-                fieldPath: status.podIP
-        command: ['bash', '/opt/iroha_data/entrypoint.sh']
+            value: node
         volumeMounts:
+        - name: iroha-data
+          mountPath: /opt/iroha_data
         - name: block-store
           mountPath: /tmp/block_store
-        - name: iroha-config
-          mountPath: /opt/iroha_data
       volumes:
-        # TODO: secrets
+        - name: iroha-secret-0
+          secret:
+            secretName: iroha-peer-key-0
+        - name: iroha-secret-1
+          secret:
+            secretName: iroha-peer-key-1
+        - name: iroha-secret-2
+          secret:
+            secretName: iroha-peer-key-2
+        - name: iroha-secret-3
+          secret:
+            secretName: iroha-peer-key-3
         - name: iroha-config
           configMap:
             name: iroha-config
+        - name: iroha-data
+          emptyDir: {}
         - name: block-store
           emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: pg-data
+        labels:
+          app: iroha
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+    - metadata:
+        name: block-store
+        labels:
+          app: iroha
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

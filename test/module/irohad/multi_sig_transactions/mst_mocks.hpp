@@ -57,6 +57,7 @@ namespace iroha {
                        rxcpp::observable<std::shared_ptr<MstState>>());
     MOCK_CONST_METHOD0(onPreparedBatchesImpl, rxcpp::observable<DataType>());
     MOCK_CONST_METHOD0(onExpiredBatchesImpl, rxcpp::observable<DataType>());
+    MOCK_CONST_METHOD1(batchInStorageImpl, bool(const DataType &));
   };
 }  // namespace iroha
 #endif  // IROHA_MST_MOCKS_HPP

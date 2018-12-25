@@ -23,6 +23,7 @@ kubectl create configmap iroha-config --from-file=files/conf/
 We're ready to deploy Iroha cluster:
 ```
 kubectl create -f files/k8s-iroha.yaml
+kubectl create -f files/k8s-peer-keys.yaml
 ```
 
 You should see all the pods are in `Running` state after Docker images are downloaded and run on every node. Check the status with `kubectl get pods` command.

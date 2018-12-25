@@ -60,6 +60,8 @@ namespace iroha {
           CurrentPeers initial_peers,
           logger::Logger log = logger::log("OnDemandConnectionManager"));
 
+      ~OnDemandConnectionManager() override;
+
       void onBatches(consensus::Round round, CollectionType batches) override;
 
       boost::optional<ProposalType> onRequestProposal(
