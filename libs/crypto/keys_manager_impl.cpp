@@ -9,6 +9,7 @@
 
 #include "common/byteutils.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "logger/logger.hpp"
 
 using namespace shared_model::crypto;
 

@@ -70,11 +70,7 @@ class ToriiQueriesTest : public testing::Test {
             std::shared_ptr<QueryExecutor>(query_executor))));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage,
-        storage,
-        pending_txs_storage,
-        query_response_factory,
-        logger::log("QueryProcessorImpl"));
+        storage, storage, pending_txs_storage, query_response_factory);
 
     //----------- Server run ----------------
     initQueryFactory();

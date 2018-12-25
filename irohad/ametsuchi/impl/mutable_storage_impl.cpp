@@ -24,11 +24,9 @@ namespace iroha {
         logger::Logger log)
         : top_hash_(top_hash),
           sql_(std::move(sql)),
-          peer_query_(
-              std::make_unique<PeerQueryWsv>(std::make_shared<PostgresWsvQuery>(
-                  *sql_, std::move(factory), logger::log("PostgresWsvQuery")))),
-          block_index_(std::make_unique<PostgresBlockIndex>(
-              *sql_, logger::log("PostgresBlockIndex"))),
+          peer_query_(std::make_unique<PeerQueryWsv>(
+              std::make_shared<PostgresWsvQuery>(*sql_, std::move(factory)))),
+          block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
           command_executor_(std::move(cmd_executor)),
           committed(false),
           log_(std::move(log)) {

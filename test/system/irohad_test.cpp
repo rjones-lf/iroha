@@ -146,8 +146,7 @@ class IrohadTest : public AcceptanceFixture {
         complete(baseTx(kAdminId).setAccountQuorum(kAdminId, 1), key_pair);
     tx_request.set_tx_hash(shared_model::crypto::toBinaryString(tx.hash()));
 
-    auto client = torii::CommandSyncClient(
-        kAddress, kPort, logger::log("CommandSyncClient"));
+    auto client = torii::CommandSyncClient(kAddress, kPort);
     client.Torii(tx.getTransport());
 
     auto resub_counter(resubscribe_attempts);
@@ -259,8 +258,7 @@ TEST_F(IrohadTest, RunIrohad) {
 TEST_F(IrohadTest, SendTx) {
   launchIroha();
 
-  auto key_manager = iroha::KeysManagerImpl(
-      kAdminId, test_data_path_, logger::log("KeysManagerImpl"));
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, test_data_path_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 
@@ -276,8 +274,7 @@ TEST_F(IrohadTest, SendTx) {
  */
 TEST_F(IrohadTest, SendQuery) {
   launchIroha();
-  auto key_manager = iroha::KeysManagerImpl(
-      kAdminId, test_data_path_, logger::log("KeysManagerImpl"));
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, test_data_path_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 
@@ -304,8 +301,7 @@ TEST_F(IrohadTest, SendQuery) {
 TEST_F(IrohadTest, RestartWithOverwriteLedger) {
   launchIroha();
 
-  auto key_manager = iroha::KeysManagerImpl(
-      kAdminId, test_data_path_, logger::log("KeysManagerImpl"));
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, test_data_path_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 
@@ -337,8 +333,7 @@ TEST_F(IrohadTest, RestartWithOverwriteLedger) {
 TEST_F(IrohadTest, RestartWithoutResetting) {
   launchIroha();
 
-  auto key_manager = iroha::KeysManagerImpl(
-      kAdminId, test_data_path_, logger::log("KeysManagerImpl"));
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, test_data_path_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 

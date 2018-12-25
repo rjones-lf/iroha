@@ -262,10 +262,8 @@ namespace iroha_cli {
       provider_->sign(*query_);
 
       CliClient client(address.value().first, address.value().second);
-      auto query =
-          shared_model::proto::Query(*iroha::model::converters::PbQueryFactory(
-                                          logger::log("PbQueryFactory"))
-                                          .serialize(query_));
+      auto query = shared_model::proto::Query(
+          *iroha::model::converters::PbQueryFactory().serialize(query_));
       GrpcResponseHandler{}.handle(client.sendQuery(query));
       printEnd();
       // Stop parsing
@@ -276,8 +274,7 @@ namespace iroha_cli {
       provider_->sign(*query_);
 
       auto path = params[0];
-      iroha::model::converters::JsonQueryFactory json_factory{
-          logger::log("JsonQueryFactory")};
+      iroha::model::converters::JsonQueryFactory json_factory;
       auto json_string = json_factory.serialize(query_);
       std::ofstream output_file(path);
       if (not output_file) {

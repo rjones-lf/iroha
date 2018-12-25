@@ -12,8 +12,7 @@ namespace iroha {
   // TODO: 24.01.2018 @victordrobny: remove factories IR-850
   const static model::converters::PbTransactionFactory tx_factory;
   const static model::converters::PbBlockFactory block_factory;
-  const static model::converters::PbQueryFactory query_factory{
-      logger::log("PbQueryFactory")};
+  const static model::converters::PbQueryFactory query_factory;
 
   hash256_t hash(const model::Transaction &tx) {
     auto &&pb_dat = tx_factory.serialize(tx);

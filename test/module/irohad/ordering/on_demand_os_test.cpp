@@ -61,13 +61,11 @@ class OnDemandOsTest : public ::testing::Test {
                 _)))
         .WillByDefault(Return(std::vector<iroha::ametsuchi::TxCacheStatusType>{
             iroha::ametsuchi::tx_cache_status_responses::Missing()}));
-    os = std::make_shared<OnDemandOrderingServiceImpl>(
-        transaction_limit,
-        std::move(factory),
-        std::move(tx_cache),
-        proposal_limit,
-        initial_round,
-        logger::log("OnDemandOrderingServiceImpl"));
+    os = std::make_shared<OnDemandOrderingServiceImpl>(transaction_limit,
+                                                       std::move(factory),
+                                                       std::move(tx_cache),
+                                                       proposal_limit,
+                                                       initial_round);
   }
 
   /**
@@ -170,13 +168,11 @@ TEST_F(OnDemandOsTest, DISABLED_ConcurrentInsert) {
       shared_model::proto::ProtoProposalFactory<MockProposalValidator>>();
   auto tx_cache =
       std::make_unique<NiceMock<iroha::ametsuchi::MockTxPresenceCache>>();
-  os = std::make_shared<OnDemandOrderingServiceImpl>(
-      large_tx_limit,
-      std::move(factory),
-      std::move(tx_cache),
-      proposal_limit,
-      initial_round,
-      logger::log("OnDemandOrderingServiceImpl"));
+  os = std::make_shared<OnDemandOrderingServiceImpl>(large_tx_limit,
+                                                     std::move(factory),
+                                                     std::move(tx_cache),
+                                                     proposal_limit,
+                                                     initial_round);
 
   auto call = [this](auto bounds) {
     for (auto i = bounds.first; i < bounds.second; ++i) {
@@ -267,13 +263,11 @@ TEST_F(OnDemandOsTest, UseFactoryForProposal) {
             });
         return result;
       }));
-  os = std::make_shared<OnDemandOrderingServiceImpl>(
-      transaction_limit,
-      std::move(factory),
-      std::move(tx_cache),
-      proposal_limit,
-      initial_round,
-      logger::log("OnDemandOrderingServiceImpl"));
+  os = std::make_shared<OnDemandOrderingServiceImpl>(transaction_limit,
+                                                     std::move(factory),
+                                                     std::move(tx_cache),
+                                                     proposal_limit,
+                                                     initial_round);
 
   EXPECT_CALL(*mock_factory, unsafeCreateProposal(_, _, _))
       .WillOnce(Return(ByMove(makeMockProposal())));

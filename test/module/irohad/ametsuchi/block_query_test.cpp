@@ -32,8 +32,7 @@ class BlockQueryTest : public AmetsuchiTest {
     mock_file = std::make_shared<MockKeyValueStorage>();
     sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
 
-    index = std::make_shared<PostgresBlockIndex>(
-        *sql, logger::log("PostgresBlockIndex"));
+    index = std::make_shared<PostgresBlockIndex>(*sql);
     auto converter =
         std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
     blocks = std::make_shared<PostgresBlockQuery>(*sql, *file, converter);

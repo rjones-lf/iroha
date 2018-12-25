@@ -109,8 +109,7 @@ class ClientServerTest : public testing::Test {
             pcsMock,
             mst,
             status_bus,
-            std::make_shared<shared_model::proto::ProtoTxStatusFactory>(),
-            logger::log("TxProcessor"));
+            std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
 
     auto pb_tx_factory =
         std::make_shared<iroha::model::converters::PbTransactionFactory>();
@@ -126,11 +125,7 @@ class ClientServerTest : public testing::Test {
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     auto qpi = std::make_shared<iroha::torii::QueryProcessorImpl>(
-        storage,
-        storage,
-        pending_txs_storage,
-        query_response_factory,
-        logger::log("QueryProcessorImpl"));
+        storage, storage, pending_txs_storage, query_response_factory);
 
     //----------- Server run ----------------
     auto status_factory =
@@ -164,8 +159,7 @@ class ClientServerTest : public testing::Test {
             status_factory,
             transaction_factory,
             batch_parser,
-            batch_factory,
-            logger::log("CommandServiceTransportGrpc")))
+            batch_factory))
         .append(std::make_unique<torii::QueryService>(qpi, query_factory))
         .run()
         .match(
@@ -377,8 +371,7 @@ TEST_F(ClientServerTest, SendQueryWhenInvalidJson) {
           }]
         })";
 
-  iroha::model::converters::JsonQueryFactory queryFactory{
-      logger::log("JsonQueryFactory")};
+  iroha::model::converters::JsonQueryFactory queryFactory;
   auto model_query = queryFactory.deserialize(json_query);
   ASSERT_FALSE(model_query);
 }

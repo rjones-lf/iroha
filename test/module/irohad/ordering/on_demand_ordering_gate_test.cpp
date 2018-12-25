@@ -43,15 +43,14 @@ class OnDemandOrderingGateTest : public ::testing::Test {
         .WillByDefault(
             Return(boost::make_optional<ametsuchi::TxCacheStatusType>(
                 iroha::ametsuchi::tx_cache_status_responses::Missing())));
-    ordering_gate = std::make_shared<OnDemandOrderingGate>(
-        ordering_service,
-        notification,
-        rounds.get_observable(),
-        cache,
-        std::move(ufactory),
-        tx_cache,
-        initial_round,
-        logger::log("OnDemandOrderingGate"));
+    ordering_gate =
+        std::make_shared<OnDemandOrderingGate>(ordering_service,
+                                               notification,
+                                               rounds.get_observable(),
+                                               cache,
+                                               std::move(ufactory),
+                                               tx_cache,
+                                               initial_round);
   }
 
   rxcpp::subjects::subject<OnDemandOrderingGate::BlockRoundEventType> rounds;

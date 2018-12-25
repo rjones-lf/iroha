@@ -71,8 +71,7 @@ namespace integration_framework {
         this_peer_(createPeer(
             common_objects_factory, getAddress(), keypair_->publicKey())),
         real_peer_(real_peer),
-        async_call_(
-            std::make_shared<AsyncCall>(logger::log("AsyncGrpcClient"))),
+        async_call_(std::make_shared<AsyncCall>()),
         mst_transport_(std::make_shared<MstTransport>(async_call_,
                                                       transaction_factory,
                                                       batch_parser,

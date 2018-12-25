@@ -59,8 +59,7 @@ class TransactionProcessorTest : public ::testing::Test {
         pcs,
         mst,
         status_bus,
-        std::make_shared<shared_model::proto::ProtoTxStatusFactory>(),
-        logger::log("TxProcessor"));
+        std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
   }
 
   auto base_tx() {

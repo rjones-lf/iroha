@@ -132,8 +132,7 @@ int main(int argc, char *argv[]) {
       logger->error("No account name specified");
       return EXIT_FAILURE;
     }
-    auto keysManager = iroha::KeysManagerImpl(FLAGS_account_name,
-                                              logger::log("KeysManagerImpl"));
+    auto keysManager = iroha::KeysManagerImpl(FLAGS_account_name);
     if (not(FLAGS_pass_phrase.size() == 0
                 ? keysManager.createKeys()
                 : keysManager.createKeys(FLAGS_pass_phrase))) {
@@ -177,17 +176,14 @@ int main(int argc, char *argv[]) {
       std::ifstream file(FLAGS_json_query);
       std::string str((std::istreambuf_iterator<char>(file)),
                       std::istreambuf_iterator<char>());
-      iroha::model::converters::JsonQueryFactory serializer{
-          logger::log("JsonQueryFactory")};
+      iroha::model::converters::JsonQueryFactory serializer;
       auto query_opt = serializer.deserialize(std::move(str));
       if (not query_opt) {
         logger->error("Json has wrong format.");
         return EXIT_FAILURE;
       } else {
         auto query = shared_model::proto::Query(
-            *iroha::model::converters::PbQueryFactory(
-                 logger::log("PbQueryFactory"))
-                 .serialize(*query_opt));
+            *iroha::model::converters::PbQueryFactory().serialize(*query_opt));
         auto response = client.sendQuery(query);
         response_handler.handle(response);
       }
@@ -204,8 +200,7 @@ int main(int argc, char *argv[]) {
       logger->error("Path {} not found.", path.string());
       return EXIT_FAILURE;
     }
-    iroha::KeysManagerImpl manager((path / FLAGS_account_name).string(),
-                                   logger::log("KeyManagerImpl"));
+    iroha::KeysManagerImpl manager((path / FLAGS_account_name).string());
     auto keypair = FLAGS_pass_phrase.size() != 0
         ? manager.loadKeys(FLAGS_pass_phrase)
         : manager.loadKeys();

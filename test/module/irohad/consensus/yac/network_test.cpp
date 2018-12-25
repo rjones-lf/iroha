@@ -24,8 +24,7 @@ namespace iroha {
         void SetUp() override {
           notifications = std::make_shared<MockYacNetworkNotifications>();
           async_call = std::make_shared<
-              network::AsyncGrpcClient<google::protobuf::Empty>>(
-              logger::log("AsyncGrpcClient"));
+              network::AsyncGrpcClient<google::protobuf::Empty>>();
           network = std::make_shared<NetworkImpl>(async_call);
 
           message.hash.vote_hashes.proposal_hash = "proposal";

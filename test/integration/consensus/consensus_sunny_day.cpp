@@ -71,8 +71,7 @@ class ConsensusSunnyDayTest : public ::testing::Test {
 
   void SetUp() override {
     auto async_call = std::make_shared<
-        iroha::network::AsyncGrpcClient<google::protobuf::Empty>>(
-        logger::log("AsyncGrpcClient"));
+        iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
     network = std::make_shared<NetworkImpl>(async_call);
     crypto = std::make_shared<FixedCryptoProvider>(std::to_string(my_num));
     timer = std::make_shared<TimerImpl>([this] {

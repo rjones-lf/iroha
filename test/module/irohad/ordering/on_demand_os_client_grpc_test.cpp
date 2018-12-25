@@ -28,14 +28,9 @@ struct OnDemandOsClientGrpcTest : public ::testing::Test {
     auto ustub = std::make_unique<proto::MockOnDemandOrderingStub>();
     stub = ustub.get();
     async_call =
-        std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>(
-            logger::log("AsyncGrpcClient"));
+        std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
     client = std::make_shared<OnDemandOsClientGrpc>(
-        std::move(ustub),
-        async_call,
-        [&] { return timepoint; },
-        timeout,
-        logger::log("OnDemandOsClientGrpc"));
+        std::move(ustub), async_call, [&] { return timepoint; }, timeout);
   }
 
   proto::MockOnDemandOrderingStub *stub;

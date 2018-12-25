@@ -46,12 +46,6 @@ using namespace iroha::consensus::yac;
 
 using namespace std::chrono_literals;
 
-namespace {
-  logger::Logger createLogger(const std::string &logger_name) {
-    return logger::log(logger_name);
-  }
-}  // namespace
-
 /**
  * Configuring iroha daemon
  */
@@ -77,7 +71,7 @@ Irohad::Irohad(const std::string &block_store_dir,
       is_mst_supported_(opt_mst_gossip_params),
       opt_mst_gossip_params_(opt_mst_gossip_params),
       keypair(keypair) {
-  log_ = createLogger("IROHAD");
+  log_ = logger::log("IROHAD");
   log_->info("created");
   // Initializing storage at this point in order to insert genesis block before
   // initialization of iroha daemon
@@ -178,8 +172,8 @@ void Irohad::initBatchParser() {
 void Irohad::initValidators() {
   auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
       shared_model::validation::DefaultProposalValidator>>();
-  stateful_validator = std::make_shared<StatefulValidatorImpl>(
-      std::move(factory), batch_parser, createLogger("SFV"));
+  stateful_validator =
+      std::make_shared<StatefulValidatorImpl>(std::move(factory), batch_parser);
   chain_validator = std::make_shared<ChainValidatorImpl>(
       std::make_shared<consensus::yac::SupermajorityCheckerImpl>());
 
@@ -191,8 +185,7 @@ void Irohad::initValidators() {
  */
 void Irohad::initNetworkClient() {
   async_call_ =
-      std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>(
-          logger::log("AsyncGrpcClient"));
+      std::make_shared<network::AsyncGrpcClient<google::protobuf::Empty>>();
 }
 
 void Irohad::initFactories() {
@@ -363,7 +356,7 @@ void Irohad::initSynchronizer() {
  */
 void Irohad::initPeerCommunicationService() {
   pcs = std::make_shared<PeerCommunicationServiceImpl>(
-      ordering_gate, synchronizer, simulator, createLogger("PCS"));
+      ordering_gate, synchronizer, simulator);
 
   pcs->onProposal().subscribe(
       [this](auto) { log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ "); });
@@ -420,12 +413,8 @@ void Irohad::initPendingTxsStorage() {
 void Irohad::initTransactionCommandService() {
   auto status_factory =
       std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
-  auto tx_processor =
-      std::make_shared<TransactionProcessorImpl>(pcs,
-                                                 mst_processor,
-                                                 status_bus_,
-                                                 status_factory,
-                                                 createLogger("TxProcessor"));
+  auto tx_processor = std::make_shared<TransactionProcessorImpl>(
+      pcs, mst_processor, status_bus_, status_factory);
   command_service = std::make_shared<::torii::CommandServiceImpl>(
       tx_processor, storage, status_bus_, status_factory);
   command_service_transport =
@@ -437,8 +426,7 @@ void Irohad::initTransactionCommandService() {
           status_factory,
           transaction_factory,
           batch_parser,
-          transaction_batch_factory_,
-          createLogger("CommandServiceTransportGrpc"));
+          transaction_batch_factory_);
 
   log_->info("[Init] => command service");
 }
@@ -447,12 +435,8 @@ void Irohad::initTransactionCommandService() {
  * Initializing query command service
  */
 void Irohad::initQueryService() {
-  auto query_processor =
-      std::make_shared<QueryProcessorImpl>(storage,
-                                           storage,
-                                           pending_txs_storage_,
-                                           query_response_factory_,
-                                           createLogger("QueryProcessorImpl"));
+  auto query_processor = std::make_shared<QueryProcessorImpl>(
+      storage, storage, pending_txs_storage_, query_response_factory_);
 
   query_service =
       std::make_shared<::torii::QueryService>(query_processor, query_factory);

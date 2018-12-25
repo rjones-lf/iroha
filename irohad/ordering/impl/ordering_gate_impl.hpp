@@ -47,7 +47,6 @@ namespace iroha {
       /**
        * @param transport - network communication layer
        * @param initial_height - height of the last block stored on this peer
-       * @param log to print progress
        * @param run_async - whether proposals should be handled
        * asynchronously (on separate thread). Default is true.
        * @param log to print progress

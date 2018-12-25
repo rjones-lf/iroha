@@ -42,8 +42,7 @@ namespace iroha {
           storage;
       storage = expected::makeValue(
           std::make_shared<PostgresOrderingServicePersistentState>(
-              std::move(sql),
-              logger::log("PostgresOrderingServicePersistentState")));
+              std::move(sql)));
       return storage;
     }
 
