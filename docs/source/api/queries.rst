@@ -531,7 +531,7 @@ Get Asset Info
 Purpose
 -------
 
-In order to know precision for given asset, and other information related to it (in the future - at the moment the option is not implemented), such as a description of the asset, etc. user can send `GetAssetInfo` query.
+In order to get information on the given asset (as for now - its precision), user can send `GetAssetInfo` query.
 
 Request Schema
 --------------
