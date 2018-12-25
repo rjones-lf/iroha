@@ -266,10 +266,7 @@ namespace iroha {
             proposal_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache) {
       return std::make_shared<ordering::OnDemandOrderingServiceImpl>(
-          max_size,
-          std::move(proposal_factory),
-          std::move(tx_cache),
-          logger::log("OnDemandOrderingServiceImpl"));
+          max_size, std::move(proposal_factory), std::move(tx_cache));
     }
 
     OnDemandOrderingInit::~OnDemandOrderingInit() {

@@ -92,8 +92,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
 class ToriiServiceTest : public testing::Test {
  public:
   virtual void SetUp() {
-    runner =
-        std::make_unique<ServerRunner>(ip + ":0", logger::log("ServerRunner"));
+    runner = std::make_unique<ServerRunner>(ip + ":0");
 
     // ----------- Command Service --------------
     pcsMock = std::make_shared<CustomPeerCommunicationServiceMock>(

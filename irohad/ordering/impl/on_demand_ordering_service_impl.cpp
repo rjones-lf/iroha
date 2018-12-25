@@ -27,7 +27,6 @@ OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
     std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
         proposal_factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-    logger::Logger log,
     size_t number_of_proposals,
     const consensus::Round &initial_round,
     logger::Logger log)

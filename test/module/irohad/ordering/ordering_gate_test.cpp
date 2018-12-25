@@ -62,8 +62,7 @@ class OrderingGateTest : public ::testing::Test {
             logger::log("AsyncGrpcClient"));
     transport =
         std::make_shared<OrderingGateTransportGrpc>(address, async_call_);
-    gate_impl = std::make_shared<OrderingGateImpl>(
-        transport, 1, logger::log("OrderingGate"), false);
+    gate_impl = std::make_shared<OrderingGateImpl>(transport, 1, false);
     transport->subscribe(gate_impl);
 
     ASSERT_NE(port, 0);
@@ -129,8 +128,7 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
 
 class QueueBehaviorTest : public ::testing::Test {
  public:
-  QueueBehaviorTest()
-      : ordering_gate(transport, 1, logger::log("OrderingGateImpl"), false){};
+  QueueBehaviorTest() : ordering_gate(transport, 1, false){};
 
   void SetUp() override {
     transport = std::make_shared<MockOrderingGateTransport>();

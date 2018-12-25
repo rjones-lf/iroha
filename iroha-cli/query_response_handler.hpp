@@ -11,11 +11,8 @@
 #include <typeindex>
 #include <unordered_map>
 
+#include "logger/logger.hpp"
 #include "qry_responses.pb.h"
-
-namespace spdlog {
-  class logger;
-}
 
 namespace iroha_cli {
   /*

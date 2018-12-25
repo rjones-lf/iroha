@@ -96,8 +96,7 @@ namespace integration_framework {
   void FakePeer::run() {
     // start instance
     log_->info("starting listening server");
-    internal_server_ = std::make_unique<ServerRunner>(
-        getAddress(), logger::log("ServerRunner"));
+    internal_server_ = std::make_unique<ServerRunner>(getAddress());
     internal_server_->append(yac_transport_)
         .append(mst_transport_)
         .run()

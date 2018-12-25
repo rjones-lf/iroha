@@ -88,8 +88,8 @@ class OrderingServiceTest : public ::testing::Test {
         fake_transport,
         persistent_state_factory,
         std::move(factory),
-        logger::log("OrderingServiceImpl"),
-        false);
+        false,
+        logger::log("OrderingServiceImpl"));
   }
 
   void makeProposalTimeout() {

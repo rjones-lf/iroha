@@ -72,8 +72,7 @@ class ClientServerTest : public testing::Test {
   virtual void SetUp() {
     spdlog::set_level(spdlog::level::off);
     // Run a server
-    runner =
-        std::make_unique<ServerRunner>(ip + ":0", logger::log("ServerRunner"));
+    runner = std::make_unique<ServerRunner>(ip + ":0");
 
     // ----------- Command Service --------------
     pcsMock = std::make_shared<MockPeerCommunicationService>();
