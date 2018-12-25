@@ -12,7 +12,7 @@
 using testing::HasSubstr;
 
 class ProtoQueryValidatorTest : public ValidatorsTest {
- protected:
+ public:
   shared_model::validation::ProtoQueryValidator validator;
 };
 
