@@ -149,11 +149,6 @@ class ClientServerTest : public testing::Test {
         shared_model::interface::TransactionBatchFactoryImpl>();
     initQueryFactory();
 
-    auto round_subscription_watcher = std::make_unique<
-        iroha::SubscriptionWatcher<shared_model::crypto::Hash,
-                                   iroha::consensus::GateObject,
-                                   shared_model::crypto::Hash::Hasher>>(
-        mock_consensus_gate->onOutcome(), 2);
     runner
         ->append(std::make_unique<torii::CommandServiceTransportGrpc>(
             std::make_shared<torii::CommandServiceImpl>(
@@ -163,7 +158,8 @@ class ClientServerTest : public testing::Test {
             transaction_factory,
             batch_parser,
             batch_factory,
-            std::move(round_subscription_watcher)))
+            mock_consensus_gate,
+            2))
         .append(std::make_unique<torii::QueryService>(qpi, query_factory))
         .run()
         .match(

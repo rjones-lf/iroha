@@ -14,7 +14,12 @@
 #include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser.hpp"
+#include "interfaces/iroha_internal/tx_status_factory.hpp"
 #include "interfaces/transaction.hpp"
+#include "network/consensus_gate.hpp"
+#include "torii/status_bus.hpp"
 
 namespace torii {
 
@@ -27,15 +32,17 @@ namespace torii {
           batch_parser,
       std::shared_ptr<shared_model::interface::TransactionBatchFactory>
           transaction_batch_factory,
-      SubscriptionWatcherPtrType consensus_round_watcher)
+      std::shared_ptr<iroha::network::ConsensusGate> consensus_gate,
+      int maximum_rounds_without_update)
       : command_service_(std::move(command_service)),
         status_bus_(std::move(status_bus)),
         status_factory_(std::move(status_factory)),
         transaction_factory_(std::move(transaction_factory)),
         batch_parser_(std::move(batch_parser)),
         batch_factory_(std::move(transaction_batch_factory)),
-        consensus_round_watcher_(std::move(consensus_round_watcher)),
-        log_(logger::log("CommandServiceTransportGrpc")) {}
+        log_(logger::log("CommandServiceTransportGrpc")),
+        consensus_gate_(std::move(consensus_gate)),
+        kMaximumRoundsWithoutUpdate(maximum_rounds_without_update) {}
 
   grpc::Status CommandServiceTransportGrpc::Torii(
       grpc::ServerContext *context,
@@ -186,6 +193,19 @@ namespace torii {
     std::string client_id =
         (client_id_format % context->peer() % hash.toString()).str();
 
+    // in each round, increment the round counter, showing number of consecutive
+    // rounds without status update; if it becomes greater than some predefined
+    // value, stop the status streaming
+    auto round_counter = std::make_shared<int>(0);
+    consensus_gate_->onOutcome().subscribe(
+        [this, &subscription, rcounter = round_counter](const auto &) {
+          std::lock_guard<std::mutex> lock{round_update_mutex_};
+          ++(*rcounter);
+          if (*rcounter >= kMaximumRoundsWithoutUpdate) {
+            subscription.unsubscribe();
+          }
+        });
+
     command_service_
         ->getStatusStream(hash)
         // convert to transport objects
@@ -204,25 +224,20 @@ namespace torii {
           return not is_cancelled;
         })
         .subscribe(subscription,
-                   [&](iroha::protocol::ToriiResponse response) {
+                   [&, rcounter = std::move(round_counter)](
+                       iroha::protocol::ToriiResponse response) {
                      if (response_writer->Write(response)) {
                        log_->debug("status written, {}", client_id);
                        // reset consecutive rounds counter for this tx
-                       consensus_round_watcher_->resetCounter(hash);
+                       std::lock_guard<std::mutex> lock{round_update_mutex_};
+                       *rcounter = 0;
                      }
                    },
                    [&](std::exception_ptr ep) {
                      log_->error("something bad happened, client_id {}",
                                  client_id);
                    },
-                   [&] {
-                     log_->debug("stream done, {}", client_id);
-                     consensus_round_watcher_->removeSubscription(hash);
-                   });
-
-    // add this stream to the watcher, so that after several consecutive rounds
-    // with no status update for this hash, stream will break
-    consensus_round_watcher_->addSubscription(hash, subscription);
+                   [&] { log_->debug("stream done, {}", client_id); });
 
     // run loop while subscription is active or there are pending events in
     // the queue

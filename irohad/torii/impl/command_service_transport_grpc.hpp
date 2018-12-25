@@ -8,18 +8,33 @@
 
 #include "torii/command_service.hpp"
 
-#include <chrono>
+#include <mutex>
 
-#include "common/subscription_watcher.hpp"
-#include "consensus/gate_object.hpp"
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
+#include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
-#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
-#include "interfaces/iroha_internal/transaction_batch_parser.hpp"
-#include "interfaces/iroha_internal/tx_status_factory.hpp"
 #include "logger/logger.hpp"
-#include "torii/status_bus.hpp"
+
+namespace iroha {
+  namespace torii {
+    class StatusBus;
+  }
+}  // namespace iroha
+
+namespace shared_model {
+  namespace interface {
+    class TxStatusFactory;
+    class TransactionBatchParser;
+    class TransactionBatchFactory;
+  }  // namespace interface
+}  // namespace shared_model
+
+namespace iroha {
+  namespace network {
+    class ConsensusGate;
+  }
+}  // namespace iroha
 
 namespace torii {
   class CommandServiceTransportGrpc
@@ -29,17 +44,18 @@ namespace torii {
         shared_model::interface::AbstractTransportFactory<
             shared_model::interface::Transaction,
             iroha::protocol::Transaction>;
-    using SubscriptionWatcherPtrType = std::unique_ptr<
-        iroha::SubscriptionWatcher<shared_model::crypto::Hash,
-                                   iroha::consensus::GateObject,
-                                   shared_model::crypto::Hash::Hasher>>;
 
     /**
      * Creates a new instance of CommandServiceTransportGrpc
      * @param command_service - to delegate logic work
      * @param status_bus is a common notifier for tx statuses
-     * @param initial_timeout - streaming timeout when tx is not received
-     * @param nonfinal_timeout - streaming timeout when tx is being processed
+     * @param status_factory to create stateless invalid tx statuses
+     * @param batch_parser to parse the received batches
+     * @param transaction_batch_factory to create model batch objects
+     * @param consensus_gate to subscribe for rounds updated
+     * @param maximum_rounds_without_update - if number of consecutive rounds
+     * without status update for any tx becomes higher than this value,
+     * streaming breaks off
      */
     CommandServiceTransportGrpc(
         std::shared_ptr<CommandService> command_service,
@@ -51,7 +67,8 @@ namespace torii {
             batch_parser,
         std::shared_ptr<shared_model::interface::TransactionBatchFactory>
             transaction_batch_factory,
-        SubscriptionWatcherPtrType consensus_round_watcher);
+        std::shared_ptr<iroha::network::ConsensusGate> consensus_gate,
+        int maximum_rounds_without_update);
 
     /**
      * Torii call via grpc
@@ -117,8 +134,11 @@ namespace torii {
         batch_parser_;
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         batch_factory_;
-    SubscriptionWatcherPtrType consensus_round_watcher_;
     logger::Logger log_;
+
+    std::mutex round_update_mutex_;
+    std::shared_ptr<iroha::network::ConsensusGate> consensus_gate_;
+    const int kMaximumRoundsWithoutUpdate;
   };
 }  // namespace torii
 
