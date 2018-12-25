@@ -29,8 +29,8 @@ namespace fuzzing {
 
       auto async_call_ = std::make_shared<
           iroha::network::AsyncGrpcClient<google::protobuf::Empty>>();
-      // TODO luckychess 20.11.2018 Reuse validator from application.cpp
-      // IR-1886
+      // TODO luckychess 25.12.2018 Component initialisation reuse
+      // IR-1886, IR-142
       std::unique_ptr<shared_model::validation::AbstractValidator<
           shared_model::interface::Transaction>>
           interface_validator = std::make_unique<
