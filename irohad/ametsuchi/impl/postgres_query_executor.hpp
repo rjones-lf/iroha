@@ -166,6 +166,25 @@ namespace iroha {
           QueryApplier applier,
           Permissions... perms);
 
+      /**
+       * Check if entry with such key exists in the database
+       * @tparam ReturnValueType - type of the value to be returned in the
+       * underlying query
+       * @param table_name - name of the table to be checked
+       * @param key_name - name of the table attritute, against which the search
+       * is performed
+       * @param selected_value_name - name of the value, which is to be returned
+       * from the search (attribute with such name is to exist)
+       * @param actual value of the key attribute
+       * @return true, if entry with such value of the key attribute exists,
+       * false otherwise
+       */
+      template <typename ReturnValueType>
+      bool existsInDb(const std::string &table_name,
+                      const std::string &key_name,
+                      const std::string &value_name,
+                      const std::string &value) const;
+
       struct QueryFallbackCheckResult {
         QueryFallbackCheckResult() = default;
         QueryFallbackCheckResult(size_t error_code, std::string &&error_message)

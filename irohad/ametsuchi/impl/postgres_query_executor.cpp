@@ -599,14 +599,7 @@ namespace iroha {
       };
 
       auto check_query = [this](const auto &q) {
-        auto cmd = (boost::format(R"(SELECT TOP 1 quorum
-                                   FROM account
-                                   WHERE account_id = %s)")
-                    % q.accountId())
-                       .str();
-        soci::rowset<int> result = this->sql_.prepare << cmd;
-        auto account_exists = result.begin() != result.end();
-        if (account_exists) {
+        if (existsInDb<int>("account", "account_id", "quorum", q.accountId())) {
           return QueryFallbackCheckResult{};
         }
         return QueryFallbackCheckResult{
@@ -716,26 +709,13 @@ namespace iroha {
       };
 
       auto check_query = [this](const auto &q) {
-        auto acc_cmd = (boost::format(R"(SELECT TOP 1 quorum
-                                       FROM account
-                                       WHERE account_id = %s)")
-                        % q.accountId())
-                           .str();
-        soci::rowset<int> acc_result = this->sql_.prepare << acc_cmd;
-        auto account_exists = acc_result.begin() != acc_result.end();
-        if (not account_exists) {
+        if (not existsInDb<int>(
+                "account", "account_id", "quorum", q.accountId())) {
           return QueryFallbackCheckResult{
               5, "no account with such id found: " + q.accountId()};
         }
-
-        auto asset_cmd = (boost::format(R"(SELECT TOP 1 quorum
-                                        FROM account
-                                        WHERE account_id = %s)")
-                          % q.assetId())
-                             .str();
-        soci::rowset<int> asset_result = this->sql_.prepare << asset_cmd;
-        auto asset_exists = asset_result.begin() != asset_result.end();
-        if (not asset_exists) {
+        if (not existsInDb<int>(
+                "asset", "asset_id", "precision", q.assetId())) {
           return QueryFallbackCheckResult{
               6, "no asset with such id found: " + q.assetId()};
         }
@@ -990,6 +970,22 @@ namespace iroha {
                      [](auto &tx) { return clone(*tx); });
       return query_response_factory_->createTransactionsResponse(
           std::move(response_txs), query_hash_);
+    }
+
+    template <typename ReturnValueType>
+    bool PostgresQueryExecutorVisitor::existsInDb(
+        const std::string &table_name,
+        const std::string &key_name,
+        const std::string &value_name,
+        const std::string &value) const {
+      auto cmd = (boost::format(R"(SELECT %s
+                                   FROM %s
+                                   WHERE %s = '%s'
+                                   LIMIT 1)")
+                  % value_name % table_name % key_name % value)
+                     .str();
+      soci::rowset<ReturnValueType> result = this->sql_.prepare << cmd;
+      return result.begin() != result.end();
     }
 
   }  // namespace ametsuchi
