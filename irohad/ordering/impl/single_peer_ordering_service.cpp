@@ -26,8 +26,8 @@ namespace iroha {
         std::shared_ptr<network::OrderingServiceTransport> transport,
         std::shared_ptr<ametsuchi::OsPersistentStateFactory> persistent_state,
         std::unique_ptr<shared_model::interface::ProposalFactory> factory,
-        logger::Logger log,
-        bool is_async)
+        bool is_async,
+        logger::Logger log)
         : peer_query_factory_(peer_query_factory),
           max_size_(max_size),
           current_size_(0),

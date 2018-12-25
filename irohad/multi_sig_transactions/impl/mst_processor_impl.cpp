@@ -82,6 +82,10 @@ namespace iroha {
     }
   }
 
+  bool FairMstProcessor::batchInStorageImpl(const DataType &batch) const {
+    return storage_->batchInStorage(batch);
+  }
+
   // -------------------| MstTransportNotification override |-------------------
 
   void FairMstProcessor::onNewState(const shared_model::crypto::PublicKey &from,

@@ -63,7 +63,9 @@ namespace iroha {
               factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
           consensus::Round initial_round,
-          logger::Logger log);
+          logger::Logger log = logger::log("OnDemandOrderingGate"));
+
+      ~OnDemandOrderingGate() override;
 
       void propagateBatch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)

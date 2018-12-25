@@ -59,4 +59,8 @@ namespace iroha {
     return new_state - own_state_;
   }
 
+  bool MstStorageStateImpl::batchInStorageImpl(const DataType &batch) const {
+    return own_state_.contains(batch);
+  }
+
 }  // namespace iroha

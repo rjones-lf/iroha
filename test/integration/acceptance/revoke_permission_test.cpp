@@ -83,26 +83,54 @@ TEST_F(GrantablePermissionsFixture, RevokeTwice) {
 
 /**
  * Revoke without permission
+ * @given ITF instance, three accounts:
+ *  - first account does not have any permissions
+ *  - second account has a grantable permission from the third account
+ *  - third account gives a grantable permissions to the second account
+ * @when first account tries to revoke permissions from the second
+ * @then revoke fails
+ */
+TEST_F(GrantablePermissionsFixture, RevokeWithoutPermission) {
+  IntegrationTestFramework itf(1);
+  itf.setInitialState(kAdminKeypair);
+  createTwoAccounts(itf, {}, {Role::kReceive})
+      .sendTxAwait(makeUserWithPerms(
+          {interface::permissions::Role::kSetMyQuorum}),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .sendTxAwait(
+          grantPermission(kUser,
+                          kUserKeypair,
+                          kAccount2,
+                          permissions::Grantable::kSetMyQuorum),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
+      .sendTxAwait(
+          revokePermission(kAccount1,
+                           kAccount1Keypair,
+                           kAccount2,
+                           permissions::Grantable::kSetMyQuorum),
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+      .done();
+}
+
+/**
+ * Revoke permission, which was granted, though the granter does not have a
+ * corresponding permission already
  * @given ITF instance, two accounts, at the beginning first account have
  * can_grant permission and grants a permission to second account, then the
  * first account lost can_grant permission
  * @when the first account tries to revoke permission from the second
- * @then stateful validation fails
+ * @then revoke is successful
  */
-/**
- * TODO igor-egorov, 2018-08-03, enable test case
- * https://soramitsu.atlassian.net/browse/IR-1572
- */
-TEST_F(GrantablePermissionsFixture, DISABLED_RevokeWithoutPermission) {
-  auto detach_role_tx =
-      GrantablePermissionsFixture::TxBuilder()
-          .createdTime(getUniqueTime())
-          .creatorAccountId(kAdminId)
-          .quorum(1)
-          .detachRole(kAccount1 + "@" + kDomain, kRole1)
-          .build()
-          .signAndAddSignature(kAdminKeypair)
-          .finish();
+TEST_F(GrantablePermissionsFixture,
+       RevokeTheGrantedPermissionWithoutPermission) {
+  auto detach_role_tx = GrantablePermissionsFixture::TxBuilder()
+                            .createdTime(getUniqueTime())
+                            .creatorAccountId(kAdminId)
+                            .quorum(1)
+                            .detachRole(kAccount1 + "@" + kDomain, kRole1)
+                            .build()
+                            .signAndAddSignature(kAdminKeypair)
+                            .finish();
 
   IntegrationTestFramework itf(1);
   itf.setInitialState(kAdminKeypair);
@@ -123,9 +151,9 @@ TEST_F(GrantablePermissionsFixture, DISABLED_RevokeWithoutPermission) {
       .checkProposal(
           [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkVerifiedProposal(
-          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 0); })
+          [](auto &proposal) { ASSERT_EQ(proposal->transactions().size(), 1); })
       .checkBlock(
-          [](auto &block) { ASSERT_EQ(block->transactions().size(), 0); })
+          [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
       .done();
 }
 

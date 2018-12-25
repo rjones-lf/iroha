@@ -25,8 +25,8 @@ namespace iroha {
     OrderingGateImpl::OrderingGateImpl(
         std::shared_ptr<iroha::network::OrderingGateTransport> transport,
         shared_model::interface::types::HeightType initial_height,
-        logger::Logger log,
-        bool run_async)
+        bool run_async,
+        logger::Logger log)
         : transport_(std::move(transport)),
           last_block_height_(initial_height),
           log_(std::move(log)),

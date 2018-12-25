@@ -25,4 +25,9 @@ namespace iroha {
   rxcpp::observable<DataType> MstProcessor::onExpiredBatches() const {
     return this->onExpiredBatchesImpl();
   }
+
+  bool MstProcessor::batchInStorage(const DataType &batch) const {
+    return this->batchInStorageImpl(batch);
+  }
+
 }  // namespace iroha

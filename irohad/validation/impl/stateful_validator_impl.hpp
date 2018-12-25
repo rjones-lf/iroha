@@ -25,7 +25,7 @@ namespace iroha {
               factory,
           std::shared_ptr<shared_model::interface::TransactionBatchParser>
               batch_parser,
-          logger::Logger log);
+          logger::Logger log = logger::log("SFV"));
 
       std::unique_ptr<validation::VerifiedProposalAndErrors> validate(
           const shared_model::interface::Proposal &proposal,

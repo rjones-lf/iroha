@@ -26,7 +26,7 @@ namespace iroha {
               pending_transactions,
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
               response_factory,
-          logger::Logger log);
+          logger::Logger log = logger::log("QueryProcessorImpl"));
 
       /**
        * Checks if query has needed signatures

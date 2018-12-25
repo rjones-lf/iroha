@@ -52,7 +52,7 @@ namespace torii {
             batch_parser,
         std::shared_ptr<shared_model::interface::TransactionBatchFactory>
             transaction_batch_factory,
-        logger::Logger log);
+        logger::Logger log = logger::log("CommandServiceTransportGrpc"));
 
     /**
      * Torii call via grpc

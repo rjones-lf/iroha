@@ -138,7 +138,7 @@ namespace iroha {
 
   void MstState::insertOne(StateUpdateResult &state_update,
                            const DataType &rhs_batch) {
-    log_->info("batch: {}", rhs_batch->toString());
+    log_->info("batch: {}", *rhs_batch);
     auto corresponding = internal_state_.find(rhs_batch);
     if (corresponding == internal_state_.end()) {
       // when state does not contain transaction
@@ -169,6 +169,10 @@ namespace iroha {
   void MstState::rawInsert(const DataType &rhs_batch) {
     internal_state_.insert(rhs_batch);
     index_.push(rhs_batch);
+  }
+
+  bool MstState::contains(const DataType &element) const {
+    return internal_state_.find(element) != internal_state_.end();
   }
 
 }  // namespace iroha

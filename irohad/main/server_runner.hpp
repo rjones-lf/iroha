@@ -19,12 +19,12 @@ class ServerRunner {
   /**
    * Constructor. Initialize a new instance of ServerRunner class.
    * @param address - the address the server will be bind to in URI form
-   * @param log to print progress to
    * @param reuse - allow multiple sockets to bind to the same port
+   * @param log to print progress to
    */
-  ServerRunner(const std::string &address,
-               logger::Logger log,
-               bool reuse = true);
+  explicit ServerRunner(const std::string &address,
+                        bool reuse = true,
+                        logger::Logger log = logger::log("ServerRunner"));
 
   /**
    * Adds a new grpc service to be run.

@@ -28,7 +28,7 @@ namespace iroha {
           std::shared_ptr<OrderingGate> ordering_gate,
           std::shared_ptr<synchronizer::Synchronizer> synchronizer,
           std::shared_ptr<simulator::VerifiedProposalCreator> proposal_creator,
-          logger::Logger log);
+          logger::Logger log = logger::log("PCS"));
 
       void propagate_batch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)

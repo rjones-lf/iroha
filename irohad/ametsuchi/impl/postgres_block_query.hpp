@@ -29,14 +29,14 @@ namespace iroha {
           KeyValueStorage &file_store,
           std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
               converter,
-          logger::Logger log);
+          logger::Logger log = logger::log("PostgresBlockQuery"));
 
       PostgresBlockQuery(
           std::unique_ptr<soci::session> sql,
           KeyValueStorage &file_store,
           std::shared_ptr<shared_model::interface::BlockJsonDeserializer>
               converter,
-          logger::Logger log);
+          logger::Logger log = logger::log("PostgresBlockQuery"));
 
       std::vector<wTransaction> getAccountTransactions(
           const shared_model::interface::types::AccountIdType &account_id)

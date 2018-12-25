@@ -128,7 +128,7 @@ namespace iroha {
                       perm_converter,
                   size_t pool_size,
                   bool enable_prepared_blocks,
-                  logger::Logger log);
+                  logger::Logger log = logger::log("StorageImpl"));
 
       /**
        * Folder with raw blocks

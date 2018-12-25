@@ -33,7 +33,7 @@ namespace iroha {
                 async_call,
             std::function<TimepointType()> time_provider,
             std::chrono::milliseconds proposal_request_timeout,
-            logger::Logger log);
+            logger::Logger log = logger::log("OnDemandOsClientGrpc"));
 
         void onBatches(consensus::Round round, CollectionType batches) override;
 

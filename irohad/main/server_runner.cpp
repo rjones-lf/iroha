@@ -10,8 +10,8 @@
 const auto kPortBindError = "Cannot bind server to address %s";
 
 ServerRunner::ServerRunner(const std::string &address,
-                           logger::Logger log,
-                           bool reuse)
+                           bool reuse,
+                           logger::Logger log)
     : log_(std::move(log)), serverAddress_(address), reuse_(reuse) {}
 
 ServerRunner &ServerRunner::append(std::shared_ptr<grpc::Service> service) {

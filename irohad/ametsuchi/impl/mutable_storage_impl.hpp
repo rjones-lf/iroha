@@ -30,7 +30,7 @@ namespace iroha {
           std::unique_ptr<soci::session> sql,
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory,
-          logger::Logger log);
+          logger::Logger log = logger::log("MutableStorage"));
 
       bool apply(const shared_model::interface::Block &block) override;
 

@@ -36,7 +36,7 @@ namespace iroha {
           std::shared_ptr<iroha::torii::StatusBus> status_bus,
           std::shared_ptr<shared_model::interface::TxStatusFactory>
               status_factory,
-          logger::Logger log);
+          logger::Logger log = logger::log("TxProcessor"));
 
       void batchHandle(
           std::shared_ptr<shared_model::interface::TransactionBatch>
