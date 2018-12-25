@@ -27,8 +27,9 @@
 using namespace iroha::protocol;
 namespace iroha_cli {
 
-  QueryResponseHandler::QueryResponseHandler()
-      : log_(logger::log("QueryResponseHandler")) {
+  QueryResponseHandler::QueryResponseHandler(
+      std::shared_ptr<spdlog::logger> log)
+      : log_(std::move(log)) {
     handler_map_[QueryResponse::ResponseCase::kErrorResponse] =
         &QueryResponseHandler::handleErrorResponse;
     handler_map_[QueryResponse::ResponseCase::kAccountResponse] =

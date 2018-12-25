@@ -240,7 +240,8 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::QueryResponseFactory>
             response_factory,
         std::shared_ptr<shared_model::interface::PermissionToString>
-            perm_converter)
+            perm_converter,
+        logger::Logger log)
         : sql_(std::move(sql)),
           block_store_(block_store),
           pending_txs_storage_(std::move(pending_txs_storage)),
@@ -251,7 +252,7 @@ namespace iroha {
                    response_factory,
                    perm_converter),
           query_response_factory_{std::move(response_factory)},
-          log_(logger::log("PostgresQueryExecutor")) {}
+          log_(std::move(log)) {}
 
     QueryExecutorResult PostgresQueryExecutor::validateAndExecute(
         const shared_model::interface::Query &query) {
@@ -285,14 +286,15 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::QueryResponseFactory>
             response_factory,
         std::shared_ptr<shared_model::interface::PermissionToString>
-            perm_converter)
+            perm_converter,
+        logger::Logger log)
         : sql_(sql),
           block_store_(block_store),
           pending_txs_storage_(std::move(pending_txs_storage)),
           converter_(std::move(converter)),
           query_response_factory_{std::move(response_factory)},
           perm_converter_(std::move(perm_converter)),
-          log_(logger::log("PostgresQueryExecutorVisitor")) {}
+          log_(std::move(log)) {}
 
     void PostgresQueryExecutorVisitor::setCreatorId(
         const shared_model::interface::types::AccountIdType &creator_id) {

@@ -57,7 +57,8 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
               response_factory,
           std::shared_ptr<shared_model::interface::PermissionToString>
-              perm_converter);
+              perm_converter,
+          logger::Logger log = logger::log("PostgresQueryExecutorVisitor"));
 
       void setCreatorId(
           const shared_model::interface::types::AccountIdType &creator_id);
@@ -184,7 +185,8 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
               response_factory,
           std::shared_ptr<shared_model::interface::PermissionToString>
-              perm_converter);
+              perm_converter,
+          logger::Logger log = logger::log("PostgresQueryExecutor"));
 
       QueryExecutorResult validateAndExecute(
           const shared_model::interface::Query &query) override;

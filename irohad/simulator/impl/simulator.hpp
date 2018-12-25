@@ -31,7 +31,8 @@ namespace iroha {
           std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
               crypto_signer,
           std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
-              block_factory);
+              block_factory,
+          logger::Logger log = logger::log("Simulator"));
 
       ~Simulator() override;
 

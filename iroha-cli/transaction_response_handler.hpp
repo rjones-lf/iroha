@@ -28,7 +28,9 @@ namespace iroha_cli {
 
   class TransactionResponseHandler {
    public:
-    TransactionResponseHandler();
+    explicit TransactionResponseHandler(
+        std::shared_ptr<spdlog::logger> log =
+            logger::log("TransactionResponseHandler"));
     /**
      * Handle response from Iroha
      * @param status of transaction

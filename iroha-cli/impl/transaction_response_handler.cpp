@@ -32,7 +32,8 @@ namespace iroha_cli {
          */
     }
   }
-  TransactionResponseHandler::TransactionResponseHandler()
-      : log_(logger::log("TransactionResponseHandler")) {}
+  TransactionResponseHandler::TransactionResponseHandler(
+      std::shared_ptr<spdlog::logger> log)
+      : log_(std::move(log)) {}
 
 }  // namespace iroha_cli
