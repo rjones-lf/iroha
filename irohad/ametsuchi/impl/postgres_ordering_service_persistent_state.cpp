@@ -16,8 +16,7 @@ namespace iroha {
       try {
         *sql_ << query;
       } catch (std::exception &e) {
-        log_->error("Failed to execute query: " + query
-                    + ". Reason: " + e.what());
+        log_->error("Failed to execute query: {}. Reason: {}", query, e.what());
         return false;
       }
       return true;
