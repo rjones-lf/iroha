@@ -8,11 +8,6 @@
 #include <gtest/gtest.h>
 #include "module/shared_model/validators/validators_fixture.hpp"
 
-class ProtoTxValidatorTest : public ValidatorsTest {
- protected:
-  shared_model::validation::ProtoTransactionValidator validator;
-};
-
 const static std::string rolename = "rolename";
 const static std::string account_id = "account@domain";
 const static std::string account_name = "account";
@@ -124,6 +119,13 @@ iroha::protocol::Transaction generateAddPeerTransaction(
   return tx;
 }
 
+class ProtoTxValidatorTest : public ValidatorsTest {
+ protected:
+  shared_model::validation::ProtoTransactionValidator validator;
+};
+
+// valid transaction tests
+
 class ValidProtoTxValidatorTest
     : public ProtoTxValidatorTest,
       public ::testing::WithParamInterface<iroha::protocol::Transaction> {};
@@ -153,6 +155,8 @@ INSTANTIATE_TEST_CASE_P(
         generateCreateRoleTransaction(valid_role_permission),
         generateGrantPermissionTransaction(valid_grantable_permission),
         generateRevokePermissionTransaction(valid_grantable_permission)), );
+
+// invalid transaction tests
 
 class InvalidProtoTxValidatorTest
     : public ProtoTxValidatorTest,
