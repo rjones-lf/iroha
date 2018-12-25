@@ -21,6 +21,8 @@
 #include "module/shared_model/validators/validators.hpp"
 #include "ordering/impl/on_demand_ordering_service_impl.hpp"
 #include "ordering/impl/on_demand_os_server_grpc.hpp"
+#include "validators/default_validator.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 using namespace testing;
 using namespace iroha::ordering;
