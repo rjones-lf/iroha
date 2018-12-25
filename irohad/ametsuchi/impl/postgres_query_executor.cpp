@@ -227,7 +227,7 @@ namespace iroha {
                   query_range, perms...);
             });
       } catch (const std::exception &e) {
-        return logAndReturnErrorResponse(
+        return this->logAndReturnErrorResponse(
             QueryErrorType::kStatefulFailed, e.what(), 1);
       }
     }
@@ -441,7 +441,7 @@ namespace iroha {
               // parameters were wrong
               if (auto query_incorrect =
                       std::forward<QueryChecker>(qry_checker)(q)) {
-                return logAndReturnErrorResponse(
+                return this->logAndReturnErrorResponse(
                     QueryErrorType::kStatefulFailed,
                     query_incorrect.error_message_,
                     query_incorrect.error_code_);
