@@ -16,7 +16,7 @@ namespace shared_model {
     class ProtoQueryValidator
         : public AbstractValidator<iroha::protocol::Query> {
      private:
-      void validatePaginationQuery(
+      void validatePaginationMeta(
           const iroha::protocol::TxPaginationMeta &paginationMeta,
           ReasonsGroupType &reason) const {
         if (paginationMeta.opt_first_tx_hash_case()
@@ -38,12 +38,12 @@ namespace shared_model {
           }
           case iroha::protocol::Query_Payload::kGetAccountTransactions: {
             const auto &gat = qry.payload().get_account_transactions();
-            validatePaginationQuery(gat.pagination_meta(), reason);
+            validatePaginationMeta(gat.pagination_meta(), reason);
             break;
           }
           case iroha::protocol::Query_Payload::kGetAccountAssetTransactions: {
             const auto &gat = qry.payload().get_account_asset_transactions();
-            validatePaginationQuery(gat.pagination_meta(), reason);
+            validatePaginationMeta(gat.pagination_meta(), reason);
             break;
           }
           default: { break; }
