@@ -1318,7 +1318,7 @@ namespace iroha {
     /**
      * @given initialized storage, all permissions
      * @when get account transactions of non existing account
-     * @then Return empty account transactions
+     * @then return error
      */
     TEST_F(GetAccountTransactionsExecutorTest, InvalidNoAccount) {
       addAllPerms();
@@ -1595,7 +1595,7 @@ namespace iroha {
     }
 
     /**
-     * @given initialized storage
+     * @given initialized storage, all permissions
      * @when get account asset transactions of non-existing user
      * @then corresponding error is returned
      */
@@ -1613,7 +1613,7 @@ namespace iroha {
     }
 
     /**
-     * @given initialized storage
+     * @given initialized storage, all permissions
      * @when get account asset transactions of non-existing asset
      * @then corresponding error is returned
      */

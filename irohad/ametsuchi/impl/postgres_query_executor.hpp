@@ -146,8 +146,8 @@ namespace iroha {
        * Execute query which returns list of transactions
        * uses pagination
        * @param query - query object
-       * @param qry_checker - fallback checker of the query, needed in some
-       * unclear cases
+       * @param qry_checker - fallback checker of the query, needed if paging
+       * hash is not specified and 0 transaction are returned as a query result
        * @param related_txs - SQL query which returns transaction relevant
        * to this query
        * @param applier - function which accepts SQL
@@ -171,13 +171,15 @@ namespace iroha {
        * @tparam ReturnValueType - type of the value to be returned in the
        * underlying query
        * @param table_name - name of the table to be checked
-       * @param key_name - name of the table attritute, against which the search
+       * @param key_name - name of the table attribute, against which the search
        * is performed
-       * @param selected_value_name - name of the value, which is to be returned
+       * @param value_name - name of the value, which is to be returned
        * from the search (attribute with such name is to exist)
-       * @param actual value of the key attribute
+       * @param value - actual value of the key attribute
        * @return true, if entry with such value of the key attribute exists,
        * false otherwise
+       *
+       * @throws if check query finishes with an exception
        */
       template <typename ReturnValueType>
       bool existsInDb(const std::string &table_name,
@@ -187,17 +189,23 @@ namespace iroha {
 
       struct QueryFallbackCheckResult {
         QueryFallbackCheckResult() = default;
-        QueryFallbackCheckResult(size_t error_code, std::string &&error_message)
-            : contains_error_{true},
-              error_code_{error_code},
-              error_message_{std::move(error_message)} {}
+        QueryFallbackCheckResult(
+            shared_model::interface::ErrorQueryResponse::ErrorCodeType
+                error_code,
+            shared_model::interface::ErrorQueryResponse::ErrorMessageType
+                &&error_message)
+            : contains_error{true},
+              error_code{error_code},
+              error_message{std::move(error_message)} {}
 
         explicit operator bool() const {
-          return contains_error_;
+          return contains_error;
         }
-        bool contains_error_ = false;
-        size_t error_code_ = 0;
-        std::string error_message_ = "";
+        bool contains_error = false;
+        shared_model::interface::ErrorQueryResponse::ErrorCodeType error_code =
+            0;
+        shared_model::interface::ErrorQueryResponse::ErrorMessageType
+            error_message = "";
       };
 
       soci::session &sql_;

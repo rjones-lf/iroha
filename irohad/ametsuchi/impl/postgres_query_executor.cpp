@@ -443,8 +443,8 @@ namespace iroha {
                       std::forward<QueryChecker>(qry_checker)(q)) {
                 return this->logAndReturnErrorResponse(
                     QueryErrorType::kStatefulFailed,
-                    query_incorrect.error_message_,
-                    query_incorrect.error_code_);
+                    query_incorrect.error_message,
+                    query_incorrect.error_code);
               }
             }
 
@@ -599,7 +599,7 @@ namespace iroha {
       };
 
       auto check_query = [this](const auto &q) {
-        if (existsInDb<int>("account", "account_id", "quorum", q.accountId())) {
+        if (this->existsInDb<int>("account", "account_id", "quorum", q.accountId())) {
           return QueryFallbackCheckResult{};
         }
         return QueryFallbackCheckResult{
@@ -709,12 +709,12 @@ namespace iroha {
       };
 
       auto check_query = [this](const auto &q) {
-        if (not existsInDb<int>(
+        if (not this->existsInDb<int>(
                 "account", "account_id", "quorum", q.accountId())) {
           return QueryFallbackCheckResult{
               5, "no account with such id found: " + q.accountId()};
         }
-        if (not existsInDb<int>(
+        if (not this->existsInDb<int>(
                 "asset", "asset_id", "precision", q.assetId())) {
           return QueryFallbackCheckResult{
               6, "no asset with such id found: " + q.assetId()};
