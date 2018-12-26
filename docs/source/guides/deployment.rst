@@ -128,31 +128,26 @@ If they are met, you can move forward with the following command:
     -p 50051:50051 \
     -v ~/Developer/iroha/example:/opt/iroha_data \
     -v blockstore:/tmp/block_store \ 
-    -e POSTGRES_HOST='some-postgres' \
-    -e POSTGRES_PORT='5432' \
-    -e POSTGRES_PASSWORD='mysecretpassword' \
-    -e POSTGRES_USER='postgres' \
     -e KEY='node0' \
     --network=iroha-network \
-    hyperledger/iroha:latest.
+    hyperledger/iroha:latest\
+    -c 'max_prepared_transactions=100' \
 
-A little more about what these commands mean:
+A little more about what these lines mean:
 
-``-p 50051:50051 \`` -  external port
+``-p 50051:50051 \`` -  exposes port 50051 to the host
 
-``-v ~/Developer/iroha/example:/opt/iroha_data \`` - folder with configuration files
+``-v ~/Developer/iroha/example:/opt/iroha_data \`` - mounts the folder with configuration files on the host into container
 
 ``-v blockstore:/tmp/block_store \`` - blockstore volume
 
-``-e POSTGRES_HOST='some-postgres' \``
-    ``-e POSTGRES_PORT='5432' \``
-    ``-e POSTGRES_PASSWORD='mysecretpassword' \``
-    ``-e POSTGRES_USER='postgres' \`` - Postgres settings. Currently you only need them for testing purposes, because at the moment they are being taken from the ``config.docker`` file. 
-
-``-e KEY='node0' \`` - node keypair name
+``-e KEY='node0' \`` - node keypair name. KEY is a base name for a key, Iroha then adds .priv and .pub file extensions to it
 
 ``--network=iroha-network \``
-    ``hyperledger/iroha:latest`` - Docker network name and corresponding version for Iroha. Latest here will correspond with master branch. 
+    ``hyperledger/iroha:latest`` - Docker network name and corresponding version for Iroha. git diff`latest` here will correspond with master branch
+
+``-c 'max_prepared_transactions=100'`` - Currently, we have max_prepared_transactions option, which enables 2 phase commit optimization for iroha.
+Postgres documentation suggests setting it to a max number of connections, which is 100 by default.
 
 
 Running multiple instances (peer network)
