@@ -8,8 +8,6 @@
 
 #include "torii/command_service.hpp"
 
-#include <mutex>
-
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
@@ -136,9 +134,8 @@ namespace torii {
         batch_factory_;
     logger::Logger log_;
 
-    std::mutex round_update_mutex_;
     std::shared_ptr<iroha::network::ConsensusGate> consensus_gate_;
-    const int kMaximumRoundsWithoutUpdate;
+    const int maximum_rounds_without_update_;
   };
 }  // namespace torii
 

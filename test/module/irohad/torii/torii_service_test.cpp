@@ -558,36 +558,62 @@ TEST_F(ToriiServiceTest, StreamingEndsAfterConsecutiveRounds) {
   });
 
   // we did not send the tx yet, so we expect NOT_RECEIVED
-  std::this_thread::sleep_for(1s);
-  ASSERT_EQ(torii_response.size(), 1);
-  ASSERT_EQ(torii_response.at(0).tx_status(),
-            iroha::protocol::TxStatus::NOT_RECEIVED);
+  // lambdas are used, because statuses renew not immediately, and in
+  // the end of the test we can launch all checks at once
+  auto first_check = [torii_response] {
+    ASSERT_EQ(torii_response.size(), 1);
+    ASSERT_EQ(torii_response.at(0).tx_status(),
+              iroha::protocol::TxStatus::NOT_RECEIVED);
+  };
 
   // one round happens, no matter with which result
   round_notifier.get_subscriber().on_next(iroha::consensus::BlockReject{});
   status_bus->publish(status_factory->makeStatelessValid(
       tx_hash, TxStatusFactory::TransactionError{}));
-  std::this_thread::sleep_for(1s);
-  ASSERT_EQ(torii_response.size(), 2);
-  ASSERT_EQ(torii_response.at(1).tx_status(),
-            iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+  auto second_check = [torii_response] {
+    ASSERT_EQ(torii_response.size(), 2);
+    ASSERT_EQ(torii_response.at(1).tx_status(),
+              iroha::protocol::TxStatus::STATELESS_VALIDATION_SUCCESS);
+  };
 
   // after one more round stream will still be up, as renew of tx status
   // happened - two rounds went non-consecutively; check it the same way
   round_notifier.get_subscriber().on_next(iroha::consensus::BlockReject{});
   status_bus->publish(status_factory->makeStatefulValid(
       tx_hash, TxStatusFactory::TransactionError{}));
-  std::this_thread::sleep_for(1s);
-  ASSERT_EQ(torii_response.size(), 3);
-  ASSERT_EQ(torii_response.at(2).tx_status(),
-            iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
+  auto third_check = [torii_response] {
+    ASSERT_EQ(torii_response.size(), 3);
+    ASSERT_EQ(torii_response.at(2).tx_status(),
+              iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS);
+  };
 
   // make two consecutive rounds happen
   round_notifier.get_subscriber().on_next(iroha::consensus::BlockReject{});
   round_notifier.get_subscriber().on_next(iroha::consensus::BlockReject{});
 
-  // if this join happens, this means that stream is off
-  t.join();
+  // wait for thread join with timeout - success join means that stream is off
+  std::mutex join_mutex;
+  std::condition_variable cv;
+  auto joined = false;
+  std::thread waiting_thread([&t, &joined, &cv, &join_mutex] {
+    std::lock_guard<std::mutex> lg{join_mutex};
+    t.join();
+    joined = true;
+    cv.notify_all();
+  });
+
+  std::unique_lock<std::mutex> lk{join_mutex};
+  cv.wait_for(lk, 5s, [&joined] { return joined; });
+//  waiting_thread.join();
+
+  if (not joined) {
+    FAIL() << "stream is not off after timeout";
+  }
+
+  // finally, check the statuses - they are updated now for sure
+  first_check();
+  second_check();
+  third_check();
 }
 
 /**

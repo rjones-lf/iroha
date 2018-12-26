@@ -7,6 +7,7 @@
 
 #include "torii/impl/command_service_transport_grpc.hpp"
 
+#include <atomic>
 #include <iterator>
 
 #include <boost/format.hpp>
@@ -42,7 +43,7 @@ namespace torii {
         batch_factory_(std::move(transaction_batch_factory)),
         log_(logger::log("CommandServiceTransportGrpc")),
         consensus_gate_(std::move(consensus_gate)),
-        kMaximumRoundsWithoutUpdate(maximum_rounds_without_update) {}
+        maximum_rounds_without_update_(maximum_rounds_without_update) {}
 
   grpc::Status CommandServiceTransportGrpc::Torii(
       grpc::ServerContext *context,
@@ -196,13 +197,14 @@ namespace torii {
     // in each round, increment the round counter, showing number of consecutive
     // rounds without status update; if it becomes greater than some predefined
     // value, stop the status streaming
-    auto round_counter = std::make_shared<int>(0);
+    std::atomic_int round_counter{0};
     consensus_gate_->onOutcome().subscribe(
-        [this, &subscription, rcounter = round_counter](const auto &) {
-          std::lock_guard<std::mutex> lock{round_update_mutex_};
-          ++(*rcounter);
-          if (*rcounter >= kMaximumRoundsWithoutUpdate) {
+        [this, &subscription, &round_counter](const auto &) {
+          auto new_val = round_counter.load() + 1;
+          if (new_val >= maximum_rounds_without_update_) {
             subscription.unsubscribe();
+          } else {
+            round_counter++;
           }
         });
 
@@ -224,13 +226,12 @@ namespace torii {
           return not is_cancelled;
         })
         .subscribe(subscription,
-                   [&, rcounter = std::move(round_counter)](
+                   [this, &response_writer, &client_id, &round_counter](
                        iroha::protocol::ToriiResponse response) {
                      if (response_writer->Write(response)) {
                        log_->debug("status written, {}", client_id);
                        // reset consecutive rounds counter for this tx
-                       std::lock_guard<std::mutex> lock{round_update_mutex_};
-                       *rcounter = 0;
+                       round_counter.store(0);
                      }
                    },
                    [&](std::exception_ptr ep) {
