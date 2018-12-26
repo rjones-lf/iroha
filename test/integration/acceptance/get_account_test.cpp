@@ -4,15 +4,18 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "backend/protobuf/transaction.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/account_response.hpp"
 #include "utils/query_error_response_visitor.hpp"
+#include "interfaces/query_responses/account_response.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 #define CHECK_BLOCK(i) \
   [](auto &block) { ASSERT_EQ(block->transactions().size(), i); }
@@ -88,9 +91,9 @@ class GetAccount : public AcceptanceFixture {
                          const std::string &role) {
     return [&](const proto::QueryResponse &response) {
       ASSERT_NO_THROW({
-        const auto &resp = boost::apply_visitor(
-            framework::SpecifiedVisitor<interface::AccountResponse>(),
-            response.get());
+        const auto &resp =
+            boost::get<const shared_model::interface::AccountResponse &>(
+                response.get());
         ASSERT_EQ(resp.account().accountId(), user);
         ASSERT_EQ(resp.account().domainId(), domain);
         ASSERT_EQ(resp.roles().size(), 1);
@@ -125,7 +128,7 @@ class GetAccount : public AcceptanceFixture {
   auto makeSecondInterdomainUser() {
     return complete(
         baseTx()
-            .creatorAccountId(IntegrationTestFramework::kAdminId)
+            .creatorAccountId(kAdminId)
             .createRole(kRole2, {interface::permissions::Role::kSetQuorum})
             .createDomain(kNewDomain, kRole2)
             .createAccount(kUser2, kNewDomain, kUser2Keypair.publicKey()),

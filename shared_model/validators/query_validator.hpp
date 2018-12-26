@@ -8,7 +8,20 @@
 
 #include <boost/variant/static_visitor.hpp>
 
+#include "backend/protobuf/queries/proto_get_account.hpp"
+#include "backend/protobuf/queries/proto_get_account_asset_transactions.hpp"
+#include "backend/protobuf/queries/proto_get_account_assets.hpp"
+#include "backend/protobuf/queries/proto_get_account_detail.hpp"
+#include "backend/protobuf/queries/proto_get_account_transactions.hpp"
+#include "backend/protobuf/queries/proto_get_asset_info.hpp"
+#include "backend/protobuf/queries/proto_get_pending_transactions.hpp"
+#include "backend/protobuf/queries/proto_get_role_permissions.hpp"
+#include "backend/protobuf/queries/proto_get_roles.hpp"
+#include "backend/protobuf/queries/proto_get_signatories.hpp"
+#include "backend/protobuf/queries/proto_get_transactions.hpp"
 #include "backend/protobuf/queries/proto_query.hpp"
+#include "interfaces/queries/tx_pagination_meta.hpp"
+#include "validators/abstract_validator.hpp"
 #include "validators/answer.hpp"
 
 namespace shared_model {
@@ -49,6 +62,7 @@ namespace shared_model {
         reason.first = "GetAccountTransactions";
 
         validator_.validateAccountId(reason, qry.accountId());
+        validator_.validateTxPaginationMeta(reason, qry.paginationMeta());
 
         return reason;
       }
@@ -60,6 +74,7 @@ namespace shared_model {
 
         validator_.validateAccountId(reason, qry.accountId());
         validator_.validateAssetId(reason, qry.assetId());
+        validator_.validateTxPaginationMeta(reason, qry.paginationMeta());
 
         return reason;
       }
@@ -143,7 +158,7 @@ namespace shared_model {
      * @tparam QueryFieldValidator - concrete query validator type
      */
     template <typename FieldValidator, typename QueryFieldValidator>
-    class QueryValidator {
+    class QueryValidator : public AbstractValidator<interface::Query> {
      public:
       QueryValidator(const FieldValidator &field_validator = FieldValidator(),
                      const QueryFieldValidator &query_field_validator =
@@ -156,7 +171,7 @@ namespace shared_model {
        * @param qry - query to validate
        * @return Answer containing found error if any
        */
-      Answer validate(const interface::Query &qry) const {
+      Answer validate(const interface::Query &qry) const override {
         Answer answer;
         std::string qry_reason_name = "Query";
         ReasonsGroupType qry_reason(qry_reason_name, GroupedReasons());
@@ -170,20 +185,10 @@ namespace shared_model {
           answer.addReason(std::move(qry_reason));
         }
 
-        auto qry_case = static_cast<const shared_model::proto::Query &>(qry)
-                            .getTransport()
-                            .payload()
-                            .query_case();
-        if (iroha::protocol::Query_Payload::QUERY_NOT_SET == qry_case) {
-          ReasonsGroupType reason;
-          reason.first = "Undefined";
-          reason.second.push_back("query is undefined");
-          answer.addReason(std::move(reason));
-        } else {
-          auto reason = boost::apply_visitor(query_field_validator_, qry.get());
-          if (not reason.second.empty()) {
-            answer.addReason(std::move(reason));
-          }
+        auto field_reason =
+            boost::apply_visitor(query_field_validator_, qry.get());
+        if (not field_reason.second.empty()) {
+          answer.addReason(std::move(field_reason));
         }
 
         return answer;

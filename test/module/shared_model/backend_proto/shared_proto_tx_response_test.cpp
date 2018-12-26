@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
+#include <boost/variant.hpp>
 #include "cryptography/hash.hpp"
 
 /**

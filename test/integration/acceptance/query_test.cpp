@@ -3,12 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <boost/variant.hpp>
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/transactions_response.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class QueryAcceptanceTest : public AcceptanceFixture {
  public:
@@ -55,9 +57,9 @@ TEST_F(QueryAcceptanceTest, ParallelBlockQuery) {
   auto dummy_tx = dummyTx();
   auto check = [dummy_tx = dummy_tx](auto &status) {
     ASSERT_NO_THROW({
-      const auto &resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<interface::TransactionsResponse>(),
-          status.get());
+      const auto &resp =
+          boost::get<const shared_model::interface::TransactionsResponse &>(
+              status.get());
       ASSERT_EQ(resp.transactions().size(), 1);
       ASSERT_EQ(resp.transactions().front(), dummy_tx);
     });

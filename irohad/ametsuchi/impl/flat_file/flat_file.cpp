@@ -111,9 +111,9 @@ void FlatFile::dropAll() {
 
 FlatFile::FlatFile(Identifier current_id,
                    const std::string &path,
-                   FlatFile::private_tag)
-    : dump_dir_(path) {
-  log_ = logger::log("FlatFile");
+                   FlatFile::private_tag,
+                   logger::Logger log)
+    : dump_dir_(path), log_{std::move(log)} {
   current_id_.store(current_id);
 }
 

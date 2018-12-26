@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_ON_DEMAND_OS_TRANSPORT_SERVER_GRPC_HPP
-#define IROHA_ON_DEMAND_OS_TRANSPORT_SERVER_GRPC_HPP
+#ifndef IROHA_ON_DEMAND_OS_TRANSPORT_CLIENT_GRPC_HPP
+#define IROHA_ON_DEMAND_OS_TRANSPORT_CLIENT_GRPC_HPP
 
 #include "ordering/on_demand_os_transport.hpp"
 
@@ -32,7 +32,8 @@ namespace iroha {
             std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
                 async_call,
             std::function<TimepointType()> time_provider,
-            std::chrono::milliseconds proposal_request_timeout);
+            std::chrono::milliseconds proposal_request_timeout,
+            logger::Logger log = logger::log("OnDemandOsClientGrpc"));
 
         void onBatches(consensus::Round round, CollectionType batches) override;
 
@@ -76,4 +77,4 @@ namespace iroha {
   }    // namespace ordering
 }  // namespace iroha
 
-#endif  // IROHA_ON_DEMAND_OS_TRANSPORT_SERVER_GRPC_HPP
+#endif  // IROHA_ON_DEMAND_OS_TRANSPORT_CLIENT_GRPC_HPP

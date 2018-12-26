@@ -29,7 +29,8 @@ namespace torii {
       std::shared_ptr<shared_model::interface::TransactionBatchParser>
           batch_parser,
       std::shared_ptr<shared_model::interface::TransactionBatchFactory>
-          transaction_batch_factory)
+          transaction_batch_factory,
+      logger::Logger log)
       : command_service_(std::move(command_service)),
         status_bus_(std::move(status_bus)),
         initial_timeout_(initial_timeout),
@@ -38,7 +39,7 @@ namespace torii {
         transaction_factory_(std::move(transaction_factory)),
         batch_parser_(std::move(batch_parser)),
         batch_factory_(std::move(transaction_batch_factory)),
-        log_(logger::log("CommandServiceTransportGrpc")) {}
+        log_(std::move(log)) {}
 
   grpc::Status CommandServiceTransportGrpc::Torii(
       grpc::ServerContext *context,
@@ -99,7 +100,9 @@ namespace torii {
                 [&](const iroha::expected::Error<TransportFactoryType::Error>
                         &error) {
                   status_bus_->publish(status_factory_->makeStatelessFail(
-                      error.error.hash, error.error.error));
+                      error.error.hash,
+                      shared_model::interface::TxStatusFactory::
+                          TransactionError{error.error.error, 0, 0}));
                   return false;
                 });
           })
@@ -138,8 +141,10 @@ namespace torii {
             // set error response for each transaction in a batch candidate
             std::for_each(
                 hashes.begin(), hashes.end(), [this, &error_msg](auto &hash) {
-                  status_bus_->publish(
-                      status_factory_->makeStatelessFail(hash, error_msg));
+                  status_bus_->publish(status_factory_->makeStatelessFail(
+                      hash,
+                      shared_model::interface::TxStatusFactory::
+                          TransactionError{error_msg, 0, 0}));
                 });
           });
     }
@@ -181,7 +186,7 @@ namespace torii {
 
     auto hash = shared_model::crypto::Hash(request->tx_hash());
 
-    static auto client_id_format = boost::format("Peer: '%s', %s");
+    auto client_id_format = boost::format("Peer: '%s', %s");
     std::string client_id =
         (client_id_format % context->peer() % hash.toString()).str();
 
@@ -189,7 +194,7 @@ namespace torii {
         ->getStatusStream(hash)
         // convert to transport objects
         .map([&](auto response) {
-          log_->debug("mapped {}, {}", response->toString(), client_id);
+          log_->debug("mapped {}, {}", *response, client_id);
           return std::static_pointer_cast<
                      shared_model::proto::TransactionResponse>(response)
               ->getTransport();

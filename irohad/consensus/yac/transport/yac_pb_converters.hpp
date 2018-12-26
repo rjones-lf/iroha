@@ -53,12 +53,14 @@ namespace iroha {
         static proto::Vote serializeVotePayload(const VoteMessage &vote) {
           auto pb_vote = serializeRoundAndHashes(vote);
 
-          auto block_signature =
-              pb_vote.mutable_hash()->mutable_block_signature();
-          block_signature->set_signature(shared_model::crypto::toBinaryString(
-              vote.hash.block_signature->signedData()));
-          block_signature->set_pubkey(shared_model::crypto::toBinaryString(
-              vote.hash.block_signature->publicKey()));
+          if (vote.hash.block_signature) {
+            auto block_signature =
+                pb_vote.mutable_hash()->mutable_block_signature();
+            block_signature->set_signature(shared_model::crypto::toBinaryString(
+                vote.hash.block_signature->signedData()));
+            block_signature->set_pubkey(shared_model::crypto::toBinaryString(
+                vote.hash.block_signature->publicKey()));
+          }
 
           return pb_vote;
         }
@@ -66,12 +68,14 @@ namespace iroha {
         static proto::Vote serializeVote(const VoteMessage &vote) {
           auto pb_vote = serializeRoundAndHashes(vote);
 
-          auto block_signature =
-              pb_vote.mutable_hash()->mutable_block_signature();
-          block_signature->set_signature(shared_model::crypto::toBinaryString(
-              vote.hash.block_signature->signedData()));
-          block_signature->set_pubkey(shared_model::crypto::toBinaryString(
-              vote.hash.block_signature->publicKey()));
+          if (vote.hash.block_signature) {
+            auto block_signature =
+                pb_vote.mutable_hash()->mutable_block_signature();
+            block_signature->set_signature(shared_model::crypto::toBinaryString(
+                vote.hash.block_signature->signedData()));
+            block_signature->set_pubkey(shared_model::crypto::toBinaryString(
+                vote.hash.block_signature->publicKey()));
+          }
 
           auto signature = pb_vote.mutable_signature();
           const auto &sig = *vote.signature;
@@ -106,10 +110,12 @@ namespace iroha {
                         });
               };
 
-          deserialize(pb_vote.hash().block_signature().pubkey(),
-                      pb_vote.hash().block_signature().signature(),
-                      vote.hash.block_signature,
-                      "Cannot build vote hash block signature: {}");
+          if (pb_vote.hash().has_block_signature()) {
+            deserialize(pb_vote.hash().block_signature().pubkey(),
+                        pb_vote.hash().block_signature().signature(),
+                        vote.hash.block_signature,
+                        "Cannot build vote hash block signature: {}");
+          }
 
           deserialize(pb_vote.signature().pubkey(),
                       pb_vote.signature().signature(),

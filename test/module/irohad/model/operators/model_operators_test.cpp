@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
@@ -355,6 +343,9 @@ Block createBlock() {
   std::fill(block.prev_hash.begin(), block.prev_hash.end(), 0x23);
   block.sigs.push_back(createSignature());
   block.transactions.push_back(createTransaction());
+  Block::HashType rejected_tx_hash;
+  std::fill(rejected_tx_hash.begin(), rejected_tx_hash.end(), 0x24);
+  block.rejected_transactions_hashes.emplace_back(std::move(rejected_tx_hash));
   block.height = 123;
 
   block.hash = iroha::hash(block);

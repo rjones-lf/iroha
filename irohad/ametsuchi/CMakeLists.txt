@@ -1,3 +1,8 @@
+#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 add_library(ametsuchi
     impl/flat_file/flat_file.cpp
     impl/storage_impl.cpp
@@ -13,6 +18,7 @@ add_library(ametsuchi
     impl/wsv_restorer_impl.cpp
     impl/postgres_options.cpp
     impl/postgres_query_executor.cpp
+    impl/tx_presence_cache_impl.cpp
     )
 
 target_link_libraries(ametsuchi

@@ -5,19 +5,24 @@
 
 #include "consensus/yac/impl/yac_hash_provider_impl.hpp"
 #include "interfaces/iroha_internal/block.hpp"
+#include "interfaces/iroha_internal/proposal.hpp"
 
 namespace iroha {
   namespace consensus {
     namespace yac {
 
       YacHash YacHashProviderImpl::makeHash(
-          const shared_model::interface::Block &block) const {
+          const simulator::BlockCreatorEvent &event) const {
         YacHash result;
-        auto hex_hash = block.hash().hex();
-        result.vote_round = {block.height(), 1};
-        result.vote_hashes.proposal_hash = hex_hash;
-        result.vote_hashes.block_hash = hex_hash;
-        result.block_signature = clone(block.signatures().front());
+        if (event.round_data) {
+          result.vote_hashes.proposal_hash =
+              event.round_data->proposal->hash().hex();
+          result.vote_hashes.block_hash = event.round_data->block->hash().hex();
+          result.block_signature =
+              clone(event.round_data->block->signatures().front());
+        }
+        result.vote_round = event.round;
+
         return result;
       }
 
@@ -28,6 +33,7 @@ namespace iroha {
         auto string_blob = shared_model::crypto::toBinaryString(blob);
         return shared_model::interface::types::HashType(string_blob);
       }
+
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha

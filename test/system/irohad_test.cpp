@@ -12,12 +12,12 @@
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <boost/process.hpp>
+#include <boost/variant.hpp>
 
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "common/bind.hpp"
 #include "common/files.hpp"
 #include "crypto/keys_manager_impl.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/query_responses/roles_response.hpp"
 #include "main/iroha_conf_loader.hpp"
@@ -32,6 +32,7 @@
 using namespace boost::process;
 using namespace boost::filesystem;
 using namespace std::chrono_literals;
+using namespace common_constants;
 using iroha::operator|;
 
 class IrohadTest : public AcceptanceFixture {
@@ -176,10 +177,10 @@ class IrohadTest : public AcceptanceFixture {
   void setPaths() {
     path_irohad_ = boost::filesystem::path(PATHIROHAD);
     irohad_executable = path_irohad_ / "irohad";
-    path_example_ = boost::filesystem::path(PATHEXAMPLE);
-    path_config_ = path_example_ / "config.sample";
-    path_genesis_ = path_example_ / "genesis.block";
-    path_keypair_ = path_example_ / "node0";
+    test_data_path_ = boost::filesystem::path(PATHTESTDATA);
+    path_config_ = test_data_path_ / "config.sample";
+    path_genesis_ = test_data_path_ / "genesis.block";
+    path_keypair_ = test_data_path_ / "node0";
     config_copy_ = path_config_.string() + std::string(".copy");
   }
 
@@ -196,10 +197,10 @@ DROP TABLE IF EXISTS domain;
 DROP TABLE IF EXISTS signatory;
 DROP TABLE IF EXISTS peer;
 DROP TABLE IF EXISTS role;
-DROP TABLE IF EXISTS height_by_hash;
+DROP TABLE IF EXISTS position_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
-DROP TABLE IF EXISTS index_by_id_height_asset;
+DROP TABLE IF EXISTS position_by_account_asset;
 )";
 
     soci::session sql(soci::postgresql, pgopts_);
@@ -229,7 +230,7 @@ DROP TABLE IF EXISTS index_by_id_height_asset;
 
  protected:
   boost::filesystem::path path_irohad_;
-  boost::filesystem::path path_example_;
+  boost::filesystem::path test_data_path_;
   boost::filesystem::path path_config_;
   boost::filesystem::path path_genesis_;
   boost::filesystem::path path_keypair_;
@@ -257,7 +258,7 @@ TEST_F(IrohadTest, RunIrohad) {
 TEST_F(IrohadTest, SendTx) {
   launchIroha();
 
-  auto key_manager = iroha::KeysManagerImpl(kAdminId, path_example_);
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, test_data_path_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 
@@ -273,7 +274,7 @@ TEST_F(IrohadTest, SendTx) {
  */
 TEST_F(IrohadTest, SendQuery) {
   launchIroha();
-  auto key_manager = iroha::KeysManagerImpl(kAdminId, path_example_);
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, test_data_path_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 
@@ -283,11 +284,8 @@ TEST_F(IrohadTest, SendQuery) {
   client.Find(query.getTransport(), response);
   auto resp = shared_model::proto::QueryResponse(response);
 
-  ASSERT_NO_THROW({
-    boost::apply_visitor(
-        framework::SpecifiedVisitor<shared_model::interface::RolesResponse>(),
-        resp.get());
-  });
+  ASSERT_NO_THROW(
+      boost::get<const shared_model::interface::RolesResponse &>(resp.get()));
 }
 
 /**
@@ -303,7 +301,7 @@ TEST_F(IrohadTest, SendQuery) {
 TEST_F(IrohadTest, RestartWithOverwriteLedger) {
   launchIroha();
 
-  auto key_manager = iroha::KeysManagerImpl(kAdminId, path_example_);
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, test_data_path_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 
@@ -335,7 +333,7 @@ TEST_F(IrohadTest, RestartWithOverwriteLedger) {
 TEST_F(IrohadTest, RestartWithoutResetting) {
   launchIroha();
 
-  auto key_manager = iroha::KeysManagerImpl(kAdminId, path_example_);
+  auto key_manager = iroha::KeysManagerImpl(kAdminId, test_data_path_);
   auto key_pair = key_manager.loadKeys();
   ASSERT_TRUE(key_pair);
 

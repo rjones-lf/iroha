@@ -19,13 +19,14 @@ namespace torii {
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
       std::shared_ptr<iroha::ametsuchi::Storage> storage,
       std::shared_ptr<iroha::torii::StatusBus> status_bus,
-      std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory)
+      std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory,
+      logger::Logger log)
       : tx_processor_(std::move(tx_processor)),
         storage_(std::move(storage)),
         status_bus_(std::move(status_bus)),
         cache_(std::make_shared<CacheType>()),
         status_factory_(std::move(status_factory)),
-        log_(logger::log("CommandServiceImpl")) {
+        log_(std::move(log)) {
     // Notifier for all clients
     status_bus_->statuses().subscribe([this](auto response) {
       // find response for this tx in cache; if status of received response
@@ -54,17 +55,34 @@ namespace torii {
       return cached.value();
     }
 
-    const bool is_present = storage_->getBlockQuery()->hasTxWithHash(request);
-
-    if (is_present) {
-      std::shared_ptr<shared_model::interface::TransactionResponse> response =
-          status_factory_->makeCommitted(request, "");
-      cache_->addItem(request, response);
-      return response;
-    } else {
-      log_->warn("Asked non-existing tx: {}", request.hex());
-      return status_factory_->makeNotReceived(request, "");
+    auto block_query = storage_->getBlockQuery();
+    if (not block_query) {
+      // TODO andrei 30.11.18 IR-51 Handle database error
+      log_->warn("Could not create block query. Tx: {}", request.hex());
+      return status_factory_->makeNotReceived(request);
     }
+
+    auto status = block_query->checkTxPresence(request);
+    if (not status) {
+      // TODO andrei 30.11.18 IR-51 Handle database error
+      log_->warn("Check tx presence database error. Tx: {}", request.hex());
+      return status_factory_->makeNotReceived(request);
+    }
+
+    return iroha::visit_in_place(
+        *status,
+        [this,
+         &request](const iroha::ametsuchi::tx_cache_status_responses::Missing &)
+            -> std::shared_ptr<shared_model::interface::TransactionResponse> {
+          log_->warn("Asked non-existing tx: {}", request.hex());
+          return status_factory_->makeNotReceived(request);
+        },
+        [this, &request](const auto &) {
+          std::shared_ptr<shared_model::interface::TransactionResponse>
+              response = status_factory_->makeCommitted(request);
+          cache_->addItem(request, response);
+          return response;
+        });
   }
 
   /**
@@ -86,8 +104,8 @@ namespace torii {
     using ResponsePtrType =
         std::shared_ptr<shared_model::interface::TransactionResponse>;
     auto initial_status = cache_->findItem(hash).value_or([&] {
-      log_->debug("tx is not received: {}", hash.toString());
-      return status_factory_->makeNotReceived(hash, "");
+      log_->debug("tx is not received: {}", hash);
+      return status_factory_->makeNotReceived(hash);
     }());
     return status_bus_
         ->statuses()
@@ -119,7 +137,7 @@ namespace torii {
   void CommandServiceImpl::pushStatus(
       const std::string &who,
       std::shared_ptr<shared_model::interface::TransactionResponse> response) {
-    log_->debug("{}: adding item to cache: {}", who, response->toString());
+    log_->debug("{}: adding item to cache: {}", who, *response);
     status_bus_->publish(response);
   }
 
@@ -144,7 +162,7 @@ namespace torii {
       }
 
       this->pushStatus("ToriiBatchProcessor",
-                       status_factory_->makeStatelessValid(tx_hash, ""));
+                       status_factory_->makeStatelessValid(tx_hash));
     });
   }
 

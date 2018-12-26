@@ -5,13 +5,13 @@
 
 #include "backend/protobuf/block.hpp"
 
+#include <boost/range/adaptors.hpp>
 #include "backend/protobuf/common_objects/noncopyable_proto.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/util.hpp"
-#include "interfaces/common_objects/types.hpp"
-
 #include "block.pb.h"
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -23,7 +23,7 @@ namespace shared_model {
       Impl &operator=(Impl &&o) noexcept = delete;
 
       TransportType proto_;
-      iroha::protocol::Block::Payload &payload_{*proto_.mutable_payload()};
+      iroha::protocol::Block_v1::Payload &payload_{*proto_.mutable_payload()};
 
       std::vector<proto::Transaction> transactions_{[this] {
         return std::vector<proto::Transaction>(
@@ -45,6 +45,16 @@ namespace shared_model {
         return SignatureSetType<proto::Signature>(signatures.begin(),
                                                   signatures.end());
       }()};
+
+      std::vector<interface::types::HashType> rejected_transactions_hashes_{
+          [this] {
+            std::vector<interface::types::HashType> hashes;
+            for (const auto &hash :
+                 *payload_.mutable_rejected_transactions_hashes()) {
+              hashes.emplace_back(shared_model::crypto::Hash(hash));
+            }
+            return hashes;
+          }()};
 
       interface::types::BlobType payload_blob_{
           [this] { return makeBlob(payload_); }()};
@@ -115,11 +125,16 @@ namespace shared_model {
       return impl_->payload_.tx_number();
     }
 
+    interface::types::HashCollectionType Block::rejected_transactions_hashes()
+        const {
+      return impl_->rejected_transactions_hashes_;
+    }
+
     const interface::types::BlobType &Block::payload() const {
       return impl_->payload_blob_;
     }
 
-    const iroha::protocol::Block &Block::getTransport() const {
+    const iroha::protocol::Block_v1 &Block::getTransport() const {
       return impl_->proto_;
     }
 

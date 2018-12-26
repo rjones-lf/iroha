@@ -11,13 +11,20 @@
 #include <soci/soci.h>
 #include "ametsuchi/command_executor.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
-#include "interfaces/permission_to_string.hpp"
 #include "logger/logger.hpp"
+
+namespace shared_model {
+  namespace interface {
+    class PermissionToString;
+  }
+}  // namespace shared_model
 
 namespace iroha {
 
   namespace ametsuchi {
     class TemporaryWsvImpl : public TemporaryWsv {
+      friend class StorageImpl;
+
      public:
       struct SavepointWrapperImpl : public TemporaryWsv::SavepointWrapper {
         SavepointWrapperImpl(const TemporaryWsvImpl &wsv,
@@ -31,6 +38,7 @@ namespace iroha {
         soci::session &sql_;
         std::string savepoint_name_;
         bool is_released_;
+        logger::Logger log_;
       };
 
       TemporaryWsvImpl(
@@ -38,7 +46,8 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory,
           std::shared_ptr<shared_model::interface::PermissionToString>
-              perm_converter);
+              perm_converter,
+          logger::Logger log = logger::log("TemporaryWSV"));
 
       expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &transaction) override;

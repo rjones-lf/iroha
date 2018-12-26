@@ -20,13 +20,14 @@ namespace iroha {
      */
     class StatefulValidatorImpl : public StatefulValidator {
      public:
-      explicit StatefulValidatorImpl(
+      StatefulValidatorImpl(
           std::unique_ptr<shared_model::interface::UnsafeProposalFactory>
               factory,
           std::shared_ptr<shared_model::interface::TransactionBatchParser>
-              batch_parser);
+              batch_parser,
+          logger::Logger log = logger::log("SFV"));
 
-      VerifiedProposalAndErrors validate(
+      std::unique_ptr<validation::VerifiedProposalAndErrors> validate(
           const shared_model::interface::Proposal &proposal,
           ametsuchi::TemporaryWsv &temporaryWsv) override;
 

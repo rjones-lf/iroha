@@ -7,6 +7,7 @@
 #define IROHA_SHARED_MODEL_RANGE_TYPES_HPP
 
 #include <boost/range/any_range.hpp>
+#include "interfaces/common_objects/types.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -30,6 +31,11 @@ namespace shared_model {
           boost::any_range<AccountAsset,
                            boost::random_access_traversal_tag,
                            const AccountAsset &>;
+      /// Type of hash collection
+      using HashCollectionType =
+          boost::any_range<HashType,
+                           boost::forward_traversal_tag,
+                           const HashType &>;
 
     }  // namespace types
   }    // namespace interface

@@ -84,7 +84,7 @@ namespace shared_model {
         return this->hash() == rhs.hash();
       }
 
-      const types::HashType &hash() const {
+      virtual const types::HashType &hash() const {
         if (hash_ == boost::none) {
           hash_.emplace(HashProvider::makeHash(payload()));
         }

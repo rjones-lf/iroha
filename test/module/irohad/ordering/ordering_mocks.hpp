@@ -8,6 +8,7 @@
 
 #include <gmock/gmock.h>
 
+#include "ordering/impl/ordering_gate_cache/ordering_gate_cache.hpp"
 #include "ordering/on_demand_ordering_service.hpp"
 #include "ordering/on_demand_os_transport.hpp"
 
@@ -29,6 +30,16 @@ namespace iroha {
       };
 
     }  // namespace transport
+
+    namespace cache {
+      struct MockOrderingGateCache : public OrderingGateCache {
+        MOCK_METHOD1(addToBack, void(const BatchesSetType &));
+        MOCK_METHOD0(pop, BatchesSetType());
+        MOCK_METHOD1(remove, void(const HashesSetType &));
+        MOCK_CONST_METHOD0(head, const BatchesSetType &());
+        MOCK_CONST_METHOD0(tail, const BatchesSetType &());
+      };
+    }  // namespace cache
 
     struct MockOnDemandOrderingService : public OnDemandOrderingService {
       MOCK_METHOD2(onBatches, void(consensus::Round, CollectionType));

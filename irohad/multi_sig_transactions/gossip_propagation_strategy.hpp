@@ -1,30 +1,18 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
 #define IROHA_GOSSIP_PROPAGATION_STRATEGY_HPP
-
-#include "multi_sig_transactions/mst_propagation_strategy.hpp"
 
 #include <boost/optional.hpp>
 #include <chrono>
 #include <mutex>
 
 #include "ametsuchi/peer_query_factory.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy_params.hpp"
+#include "multi_sig_transactions/mst_propagation_strategy.hpp"
 
 namespace iroha {
 
@@ -42,13 +30,11 @@ namespace iroha {
      * Initialize strategy with
      * @param peer_factory is a provider of peer list
      * @param emit_worker is the coordinator for the data emitting
-     * @param period of emitting data in ms
-     * @param amount of peers emitted per once
+     * @param params configuration parameters
      */
     GossipPropagationStrategy(PeerProviderFactory peer_factory,
                               rxcpp::observe_on_one_worker emit_worker,
-                              std::chrono::milliseconds period,
-                              uint32_t amount);
+                              const GossipPropagationStrategyParams &params);
 
     ~GossipPropagationStrategy();
 

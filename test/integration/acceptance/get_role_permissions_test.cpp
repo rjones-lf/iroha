@@ -4,14 +4,16 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "backend/protobuf/transaction.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/permissions.hpp"
+#include "interfaces/query_responses/error_responses/stateful_failed_error_response.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 /**
  * C369 Get role permissions by user with allowed GetRoles permission
@@ -21,10 +23,9 @@ using namespace shared_model;
  */
 TEST_F(AcceptanceFixture, CanGetRolePermissions) {
   auto check_query = [](auto &query_response) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            shared_model::interface::RolePermissionsResponse>(),
-        query_response.get()));
+    ASSERT_NO_THROW(
+        boost::get<const shared_model::interface::RolePermissionsResponse &>(
+            query_response.get()));
   };
 
   auto query = complete(baseQry().getRolePermissions(kRole));

@@ -42,6 +42,7 @@ target_link_libraries(yac
     logger
     hash
     consensus_round
+    gate_object
     )
 
 add_library(yac_transport

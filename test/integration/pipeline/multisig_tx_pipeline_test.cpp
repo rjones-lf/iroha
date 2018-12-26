@@ -9,14 +9,16 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+#include "interfaces/query_responses/transactions_response.hpp"
 
 using namespace std::string_literals;
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class MstPipelineTest : public AcceptanceFixture {
  public:
-  MstPipelineTest() : mst_itf_{1, {}, [](auto &i) { i.done(); }, true} {}
+  MstPipelineTest() : mst_itf_{1, {}, true, true} {}
 
   /**
    * Creates a mst user
@@ -144,23 +146,17 @@ TEST_F(MstPipelineTest, OnePeerSendsTest) {
   auto tx = baseTx()
                 .setAccountDetail(kUserId, "fav_meme", "doge")
                 .quorum(kSignatories + 1);
-  auto check_mst_pending_tx_status =
-      [](const proto::TransactionResponse &resp) {
-        ASSERT_NO_THROW(
-            boost::get<const interface::MstPendingResponse &>(resp.get()));
-      };
-  auto check_enough_signatures_collected_tx_status =
-      [](const proto::TransactionResponse &resp) {
-        ASSERT_NO_THROW(
-            boost::get<const interface::EnoughSignaturesCollectedResponse &>(
-                resp.get()));
-      };
+  auto hash = tx.build().hash();
 
   auto &mst_itf = prepareMstItf();
-  mst_itf.sendTx(complete(tx, kUserKeypair), check_mst_pending_tx_status)
-      .sendTx(complete(tx, signatories[0]), check_mst_pending_tx_status)
-      .sendTx(complete(tx, signatories[1]),
-              check_enough_signatures_collected_tx_status)
+  mst_itf.sendTx(complete(tx, kUserKeypair))
+      .sendTx(complete(tx, signatories[0]))
+      .sendTx(complete(tx, signatories[1]))
+      .checkStatus(hash, CHECK_MST_PENDING)
+      .checkStatus(hash, CHECK_STATELESS_VALID)
+      .checkStatus(hash, CHECK_MST_PENDING)
+      .checkStatus(hash, CHECK_STATELESS_VALID)
+      .checkStatus(hash, CHECK_ENOUGH_SIGNATURES)
       .skipProposal()
       .skipVerifiedProposal()
       .checkBlock([](auto &proposal) {
@@ -235,15 +231,12 @@ TEST_F(MstPipelineTest, GetPendingTxsNoSignedTxs) {
 }
 
 /**
- * Disabled because fully signed transaction doesn't go through MST and pending
- * transaction remains in query response IR-1329
  * @given a ledger with mst user (quorum=3) created
  * @when the user sends a transaction with only one signature, then sends the
  * transaction with all three signatures
  * @then there should be no pending transactions
  */
-TEST_F(MstPipelineTest, DISABLED_ReplayViaFullySignedTransaction) {
-  // TODO igor-egorov, 2018-09-25, IR-1329, enable the test
+TEST_F(MstPipelineTest, ReplayViaFullySignedTransaction) {
   auto &mst_itf = prepareMstItf();
   auto pending_tx =
       baseTx().setAccountDetail(kUserId, "age", "10").quorum(kSignatories + 1);

@@ -89,7 +89,7 @@ class OrderingGateTest : public ::testing::Test {
  * @then  Round starts <==> proposal is emitted to subscribers
  */
 TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
-  auto wrapper = make_test_subscriber<CallExact>(gate_impl->on_proposal(), 1);
+  auto wrapper = make_test_subscriber<CallExact>(gate_impl->onProposal(), 1);
   wrapper.subscribe();
 
   auto pcs = std::make_shared<MockPeerCommunicationService>();
@@ -99,17 +99,18 @@ TEST_F(OrderingGateTest, ProposalReceivedByGateWhenSent) {
   gate_impl->setPcs(*pcs);
 
   grpc::ServerContext context;
-  auto tx = shared_model::proto::TransactionBuilder()
-                .createdTime(iroha::time::now())
-                .creatorAccountId("admin@ru")
-                .addAssetQuantity("coin#coin", "1.0")
-                .quorum(1)
-                .build()
-                .signAndAddSignature(
-                    shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair())
-                .finish();
-  std::vector<shared_model::proto::Transaction> txs = {tx, tx};
+
+  std::vector<shared_model::proto::Transaction> txs;
+  txs.push_back(shared_model::proto::TransactionBuilder()
+                    .createdTime(iroha::time::now())
+                    .creatorAccountId("admin@ru")
+                    .addAssetQuantity("coin#coin", "1.0")
+                    .quorum(1)
+                    .build()
+                    .signAndAddSignature(
+                        shared_model::crypto::DefaultCryptoAlgorithmType::
+                            generateKeypair())
+                    .finish());
   iroha::protocol::Proposal proposal = shared_model::proto::ProposalBuilder()
                                            .height(2)
                                            .createdTime(iroha::time::now())
@@ -135,7 +136,7 @@ class QueueBehaviorTest : public ::testing::Test {
         .WillOnce(Return(commit_subject.get_observable()));
 
     ordering_gate.setPcs(*pcs);
-    ordering_gate.on_proposal().subscribe(
+    ordering_gate.onProposal().subscribe(
         [&](auto val) { messages.push_back(val); });
   }
 
@@ -143,7 +144,7 @@ class QueueBehaviorTest : public ::testing::Test {
   std::shared_ptr<MockPeerCommunicationService> pcs;
   rxcpp::subjects::subject<SynchronizationEvent> commit_subject;
   OrderingGateImpl ordering_gate;
-  std::vector<decltype(ordering_gate.on_proposal())::value_type> messages;
+  std::vector<decltype(ordering_gate.onProposal())::value_type> messages;
 
   void pushCommit(HeightType height) {
     commit_subject.get_subscriber().on_next(SynchronizationEvent{
@@ -151,7 +152,8 @@ class QueueBehaviorTest : public ::testing::Test {
             std::static_pointer_cast<shared_model::interface::Block>(
                 std::make_shared<shared_model::proto::Block>(
                     TestBlockBuilder().height(height).build()))),
-        SynchronizationOutcomeType::kCommit});
+        SynchronizationOutcomeType::kCommit,
+        {height, 1}});
   }
 
   void pushProposal(HeightType height) {
@@ -169,23 +171,23 @@ class QueueBehaviorTest : public ::testing::Test {
  */
 TEST_F(QueueBehaviorTest, SendManyProposals) {
   auto wrapper_before =
-      make_test_subscriber<CallExact>(ordering_gate.on_proposal(), 1);
+      make_test_subscriber<CallExact>(ordering_gate.onProposal(), 1);
   wrapper_before.subscribe();
   auto wrapper_after =
-      make_test_subscriber<CallExact>(ordering_gate.on_proposal(), 2);
+      make_test_subscriber<CallExact>(ordering_gate.onProposal(), 2);
   wrapper_after.subscribe();
 
-  auto tx = shared_model::proto::TransactionBuilder()
-                .createdTime(iroha::time::now())
-                .creatorAccountId("admin@ru")
-                .addAssetQuantity("coin#coin", "1.0")
-                .quorum(1)
-                .build()
-                .signAndAddSignature(
-                    shared_model::crypto::DefaultCryptoAlgorithmType::
-                        generateKeypair())
-                .finish();
-  std::vector<shared_model::proto::Transaction> txs = {tx, tx};
+  std::vector<shared_model::proto::Transaction> txs;
+  txs.push_back(shared_model::proto::TransactionBuilder()
+                    .createdTime(iroha::time::now())
+                    .creatorAccountId("admin@ru")
+                    .addAssetQuantity("coin#coin", "1.0")
+                    .quorum(1)
+                    .build()
+                    .signAndAddSignature(
+                        shared_model::crypto::DefaultCryptoAlgorithmType::
+                            generateKeypair())
+                    .finish());
   auto proposal1 = std::make_shared<shared_model::proto::Proposal>(
       shared_model::proto::ProposalBuilder()
           .height(2)
@@ -208,8 +210,10 @@ TEST_F(QueueBehaviorTest, SendManyProposals) {
       std::make_shared<shared_model::proto::Block>(
           TestBlockBuilder().height(2).build());
 
-  commit_subject.get_subscriber().on_next(SynchronizationEvent{
-      rxcpp::observable<>::just(block), SynchronizationOutcomeType::kCommit});
+  commit_subject.get_subscriber().on_next(
+      SynchronizationEvent{rxcpp::observable<>::just(block),
+                           SynchronizationOutcomeType::kCommit,
+                           {block->height(), 1}});
 
   ASSERT_TRUE(wrapper_after.validate());
 }
@@ -218,7 +222,7 @@ TEST_F(QueueBehaviorTest, SendManyProposals) {
  * @given Initialized OrderingGate
  * AND MockPeerCommunicationService
  * @when Receive proposals in random order
- * @then on_proposal output is ordered
+ * @then onProposal output is ordered
  */
 TEST_F(QueueBehaviorTest, ReceiveUnordered) {
   // this will set unlock_next_ to false, so proposals 3 and 4 are enqueued
@@ -231,16 +235,16 @@ TEST_F(QueueBehaviorTest, ReceiveUnordered) {
   pushCommit(3);
 
   ASSERT_EQ(3, messages.size());
-  ASSERT_EQ(2, messages.at(0)->height());
-  ASSERT_EQ(3, messages.at(1)->height());
-  ASSERT_EQ(4, messages.at(2)->height());
+  ASSERT_EQ(2, getProposalUnsafe(messages.at(0))->height());
+  ASSERT_EQ(3, getProposalUnsafe(messages.at(1))->height());
+  ASSERT_EQ(4, getProposalUnsafe(messages.at(2))->height());
 }
 
 /**
  * @given Initialized OrderingGate
  * AND MockPeerCommunicationService
  * @when Receive commits which are newer than existing proposals
- * @then on_proposal is not invoked on proposals
+ * @then onProposal is not invoked on proposals
  * which are older than last committed block
  */
 TEST_F(QueueBehaviorTest, DiscardOldProposals) {
@@ -253,8 +257,8 @@ TEST_F(QueueBehaviorTest, DiscardOldProposals) {
 
   // proposals 2 and 3 must not be forwarded down the pipeline.
   EXPECT_EQ(2, messages.size());
-  ASSERT_EQ(2, messages.at(0)->height());
-  ASSERT_EQ(5, messages.at(1)->height());
+  ASSERT_EQ(2, getProposalUnsafe(messages.at(0))->height());
+  ASSERT_EQ(5, getProposalUnsafe(messages.at(1))->height());
 }
 
 /**
@@ -272,13 +276,13 @@ TEST_F(QueueBehaviorTest, KeepNewerProposals) {
 
   // proposal 3 must  be forwarded down the pipeline, 4 kept in queue.
   EXPECT_EQ(2, messages.size());
-  EXPECT_EQ(2, messages.at(0)->height());
-  EXPECT_EQ(3, messages.at(1)->height());
+  EXPECT_EQ(2, getProposalUnsafe(messages.at(0))->height());
+  EXPECT_EQ(3, getProposalUnsafe(messages.at(1))->height());
 
   pushCommit(3);
   // Now proposal 4 is forwarded to the pipeline
   EXPECT_EQ(3, messages.size());
-  EXPECT_EQ(4, messages.at(2)->height());
+  EXPECT_EQ(4, getProposalUnsafe(messages.at(2))->height());
 }
 
 /**
@@ -304,7 +308,7 @@ TEST_F(QueueBehaviorTest, CommitBeforeProposal) {
   pushProposal(6);
 
   EXPECT_EQ(1, messages.size());
-  EXPECT_EQ(5, messages.at(0)->height());
+  EXPECT_EQ(5, getProposalUnsafe(messages.at(0))->height());
 }
 
 /**
@@ -321,5 +325,5 @@ TEST_F(QueueBehaviorTest, CommitNewerThanAllProposals) {
 
   pushCommit(4);
   EXPECT_EQ(1, messages.size());
-  EXPECT_EQ(2, messages.at(0)->height());
+  EXPECT_EQ(2, getProposalUnsafe(messages.at(0))->height());
 }

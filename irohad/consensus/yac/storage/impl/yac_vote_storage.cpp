@@ -31,7 +31,7 @@ namespace iroha {
       auto YacVoteStorage::getProposalStorage(const Round &round) {
         return std::find_if(proposal_storages_.begin(),
                             proposal_storages_.end(),
-                            [&round](auto storage) {
+                            [&round](const auto &storage) {
                               return storage.getStorageKey() == round;
                             });
       }

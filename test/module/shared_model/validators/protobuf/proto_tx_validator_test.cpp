@@ -65,11 +65,7 @@ class ProtoTxValidatorTest : public ValidatorsTest {
     return tx;
   }
 
-  shared_model::validation::ProtoTransactionValidator<
-      shared_model::validation::FieldValidator,
-      shared_model::validation::CommandValidatorVisitor<
-          shared_model::validation::FieldValidator>>
-      validator;
+  shared_model::validation::ProtoTransactionValidator validator;
 };
 
 /**
@@ -89,9 +85,8 @@ TEST_F(ProtoTxValidatorTest, CommandIsSet) {
       ->add_commands()
       ->mutable_create_domain()
       ->CopyFrom(cd);
-  shared_model::proto::Transaction proto_tx(tx);
 
-  auto answer = validator.validate(proto_tx);
+  auto answer = validator.validate(tx);
   ASSERT_FALSE(answer.hasErrors()) << answer.reason();
 }
 
@@ -104,9 +99,8 @@ TEST_F(ProtoTxValidatorTest, CommandNotSet) {
   auto tx = generateEmptyTransaction();
   // add not set command
   tx.mutable_payload()->mutable_reduced_payload()->add_commands();
-  shared_model::proto::Transaction proto_tx(tx);
 
-  auto answer = validator.validate(proto_tx);
+  auto answer = validator.validate(tx);
   ASSERT_TRUE(answer.hasErrors());
 }
 
@@ -120,8 +114,7 @@ TEST_F(ProtoTxValidatorTest, CreateRoleValid) {
   auto tx = generateCreateRoleTransaction(
       role_name, iroha::protocol::RolePermission::can_read_assets);
 
-  shared_model::proto::Transaction proto_tx(tx);
-  auto answer = validator.validate(proto_tx);
+  auto answer = validator.validate(tx);
   ASSERT_FALSE(answer.hasErrors());
 }
 
@@ -135,8 +128,7 @@ TEST_F(ProtoTxValidatorTest, CreateRoleInvalid) {
   auto tx = generateCreateRoleTransaction(
       role_name, static_cast<iroha::protocol::RolePermission>(-1));
 
-  shared_model::proto::Transaction proto_tx(tx);
-  auto answer = validator.validate(proto_tx);
+  auto answer = validator.validate(tx);
   ASSERT_TRUE(answer.hasErrors());
 }
 
@@ -150,8 +142,7 @@ TEST_F(ProtoTxValidatorTest, GrantPermissionValid) {
   auto tx = generateGrantPermissionTransaction(
       account_id, iroha::protocol::GrantablePermission::can_add_my_signatory);
 
-  shared_model::proto::Transaction proto_tx(tx);
-  auto answer = validator.validate(proto_tx);
+  auto answer = validator.validate(tx);
   ASSERT_FALSE(answer.hasErrors()) << answer.reason();
 }
 
@@ -165,8 +156,7 @@ TEST_F(ProtoTxValidatorTest, GrantPermissionInvalid) {
   auto tx = generateGrantPermissionTransaction(
       account_id, static_cast<iroha::protocol::GrantablePermission>(-1));
 
-  shared_model::proto::Transaction proto_tx(tx);
-  auto answer = validator.validate(proto_tx);
+  auto answer = validator.validate(tx);
   ASSERT_TRUE(answer.hasErrors());
 }
 
@@ -180,8 +170,7 @@ TEST_F(ProtoTxValidatorTest, RevokePermissionValid) {
   auto tx = generateRevokePermissionTransaction(
       account_id, iroha::protocol::GrantablePermission::can_add_my_signatory);
 
-  shared_model::proto::Transaction proto_tx(tx);
-  auto answer = validator.validate(proto_tx);
+  auto answer = validator.validate(tx);
   ASSERT_FALSE(answer.hasErrors()) << answer.reason();
 }
 
@@ -195,7 +184,6 @@ TEST_F(ProtoTxValidatorTest, RevokePermissionInvalid) {
   auto tx = generateRevokePermissionTransaction(
       account_id, static_cast<iroha::protocol::GrantablePermission>(-1));
 
-  shared_model::proto::Transaction proto_tx(tx);
-  auto answer = validator.validate(proto_tx);
+  auto answer = validator.validate(tx);
   ASSERT_TRUE(answer.hasErrors());
 }

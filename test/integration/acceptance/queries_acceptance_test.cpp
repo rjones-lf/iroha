@@ -4,16 +4,17 @@
  */
 
 #include <gtest/gtest.h>
-
+#include <boost/variant.hpp>
 #include "backend/protobuf/transaction.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/permissions.hpp"
+#include "interfaces/query_responses/roles_response.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;
+using namespace common_constants;
 
 class QueriesAcceptanceTest : public AcceptanceFixture {
  public:
@@ -47,9 +48,9 @@ class QueriesAcceptanceTest : public AcceptanceFixture {
 
   static void checkRolesResponse(const proto::QueryResponse &response) {
     ASSERT_NO_THROW({
-      const auto &resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<interface::RolesResponse>(),
-          response.get());
+      const auto &resp =
+          boost::get<const shared_model::interface::RolesResponse &>(
+              response.get());
       ASSERT_NE(resp.roles().size(), 0);
     });
   }

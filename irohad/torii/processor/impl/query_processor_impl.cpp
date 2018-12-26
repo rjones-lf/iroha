@@ -23,12 +23,13 @@ namespace iroha {
         std::shared_ptr<ametsuchi::QueryExecutorFactory> qry_exec,
         std::shared_ptr<iroha::PendingTransactionStorage> pending_transactions,
         std::shared_ptr<shared_model::interface::QueryResponseFactory>
-            response_factory)
+            response_factory,
+        logger::Logger log)
         : storage_{std::move(storage)},
           qry_exec_{std::move(qry_exec)},
           pending_transactions_{std::move(pending_transactions)},
           response_factory_{std::move(response_factory)},
-          log_{logger::log("QueryProcessorImpl")} {
+          log_{std::move(log)} {
       storage_->on_commit().subscribe(
           [this](std::shared_ptr<shared_model::interface::Block> block) {
             auto block_response =
@@ -60,10 +61,13 @@ namespace iroha {
     std::unique_ptr<shared_model::interface::QueryResponse>
     QueryProcessorImpl::queryHandle(const shared_model::interface::Query &qry) {
       if (not checkSignatories(qry)) {
+        // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 3
+        // with a named constant
         return response_factory_->createErrorQueryResponse(
             shared_model::interface::QueryResponseFactory::ErrorQueryType::
                 kStatefulFailed,
             "query signatories did not pass validation",
+            3,
             qry.hash());
       }
 

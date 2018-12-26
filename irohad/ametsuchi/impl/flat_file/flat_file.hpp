@@ -89,10 +89,12 @@ namespace iroha {
        * Create storage in path with respect to last key
        * @param last_id - maximal key written in storage
        * @param path - folder of storage
+       * @param log to print progress
        */
       FlatFile(Identifier last_id,
                const std::string &path,
-               FlatFile::private_tag);
+               FlatFile::private_tag,
+               logger::Logger log = logger::log("FlatFile"));
 
      private:
       // ----------| private fields |----------

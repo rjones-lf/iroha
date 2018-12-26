@@ -3,20 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <boost/variant.hpp>
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
+
+using namespace common_constants;
 
 class AcceptanceTest : public AcceptanceFixture {
  public:
-  const std::string kAdmin = "admin@test";
-
   const std::function<void(const shared_model::proto::TransactionResponse &)>
       checkEnoughSignaturesCollectedStatus = [](auto &status) {
-        ASSERT_NO_THROW(boost::apply_visitor(
-            framework::SpecifiedVisitor<
-                shared_model::interface::EnoughSignaturesCollectedResponse>(),
-            status.get()));
+        ASSERT_NO_THROW(
+            boost::get<const shared_model::interface::
+                           EnoughSignaturesCollectedResponse &>(status.get()));
       };
   const std::function<void(
       const std::shared_ptr<shared_model::interface::Proposal> &)>
@@ -31,7 +30,7 @@ class AcceptanceTest : public AcceptanceFixture {
   auto baseTx() {
     return Builder()
         .createdTime(getUniqueTime())
-        .creatorAccountId(kAdmin)
+        .creatorAccountId(kAdminId)
         .addAssetQuantity(kAssetId, "1.0")
         .quorum(1);
   }

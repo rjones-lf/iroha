@@ -15,13 +15,14 @@
 #include <boost/range/join.hpp>
 #include "block.pb.h"
 
+#include "backend/protobuf/batch_meta.hpp"
 #include "backend/protobuf/common_objects/peer.hpp"
 #include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/queries/proto_query_payload_meta.hpp"
+#include "backend/protobuf/queries/proto_tx_pagination_meta.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "module/shared_model/validators/validators_fixture.hpp"
-#include "utils/lazy_initializer.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/permissions.hpp"
 
@@ -583,6 +584,9 @@ class FieldValidatorTest : public ValidatorsTest {
       //                   "more than max")
   };
 
+  // TODO mboldyrev 27.11.2018, IR-25: add the test cases
+  std::vector<FieldTestCase> tx_pagination_meta_test_cases;
+
   /**************************************************************************/
 
   /// Create no-operation validator
@@ -677,7 +681,13 @@ class FieldValidatorTest : public ValidatorsTest {
           &FieldValidator::validateBatchMeta,
           &FieldValidatorTest::batch_meta,
           [](auto &&x) { return shared_model::proto::BatchMeta(x); },
-          batch_meta_test_cases)};
+          batch_meta_test_cases),
+      makeTransformValidator(
+          "pagination_meta",
+          &FieldValidator::validateTxPaginationMeta,
+          &FieldValidatorTest::tx_pagination_meta,
+          [](auto &&x) { return proto::TxPaginationMeta(x); },
+          tx_pagination_meta_test_cases)};
 };
 
 /**
