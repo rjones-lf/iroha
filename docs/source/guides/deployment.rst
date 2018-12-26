@@ -144,7 +144,7 @@ A little more about what these lines mean:
 ``-e KEY='node0' \`` - node keypair name. KEY is a base name for a key, Iroha then adds .priv and .pub file extensions to it
 
 ``--network=iroha-network \``
-    ``hyperledger/iroha:latest`` - Docker network name and corresponding version for Iroha. git diff`latest` here will correspond with master branch
+    ``hyperledger/iroha:latest`` - Docker network name and corresponding version for Iroha. git diff`latest` here will correspond to the master branch
 
 ``-c 'max_prepared_transactions=100'`` - Currently, we have max_prepared_transactions option, which enables 2 phase commit optimization for iroha.
 Postgres documentation suggests setting it to a max number of connections, which is 100 by default.
