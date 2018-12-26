@@ -28,6 +28,11 @@ namespace shared_model {
                         return not this->validateHexString(hash);
                       })) {
         reason.second.emplace_back("Some rejected hashes has incorrect format");
+      }
+      if (not validateHexString(block.block_v1().payload().prev_block_hash())) {
+        reason.second.emplace_back("Prev block hash has incorrect format");
+      }
+      if (not reason.second.empty()) {
         answer.addReason(std::move(reason));
       }
 
