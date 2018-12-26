@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "main/raw_block_loader.hpp"
@@ -29,13 +17,14 @@ namespace iroha {
     using shared_model::converters::protobuf::jsonToProto;
     using shared_model::interface::Block;
 
-    BlockLoader::BlockLoader() : log_(logger::log("BlockLoader")) {}
+    BlockLoader::BlockLoader(logger::Logger log) : log_(std::move(log)) {}
 
     boost::optional<std::shared_ptr<Block>> BlockLoader::parseBlock(
         const std::string &data) {
       return jsonToProto<iroha::protocol::Block>(data) | [](auto &&block) {
         return boost::optional<std::shared_ptr<Block>>(
-            std::make_shared<shared_model::proto::Block>(std::move(block.block_v1())));
+            std::make_shared<shared_model::proto::Block>(
+                std::move(block.block_v1())));
       };
     }
 

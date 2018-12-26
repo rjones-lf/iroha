@@ -127,7 +127,8 @@ namespace iroha {
                   std::shared_ptr<shared_model::interface::PermissionToString>
                       perm_converter,
                   size_t pool_size,
-                  bool enable_prepared_blocks);
+                  bool enable_prepared_blocks,
+                  logger::Logger log = logger::log("StorageImpl"));
 
       /**
        * Folder with raw blocks

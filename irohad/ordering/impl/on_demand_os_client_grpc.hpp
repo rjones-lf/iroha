@@ -32,7 +32,8 @@ namespace iroha {
             std::shared_ptr<network::AsyncGrpcClient<google::protobuf::Empty>>
                 async_call,
             std::function<TimepointType()> time_provider,
-            std::chrono::milliseconds proposal_request_timeout);
+            std::chrono::milliseconds proposal_request_timeout,
+            logger::Logger log = logger::log("OnDemandOsClientGrpc"));
 
         void onBatches(consensus::Round round, CollectionType batches) override;
 

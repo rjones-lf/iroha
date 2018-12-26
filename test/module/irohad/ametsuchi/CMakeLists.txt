@@ -1,3 +1,8 @@
+#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 addtest(ametsuchi_test ametsuchi_test.cpp)
 target_link_libraries(ametsuchi_test
     ametsuchi
@@ -18,13 +23,6 @@ target_link_libraries(flat_file_test
 
 addtest(block_query_test block_query_test.cpp)
 target_link_libraries(block_query_test
-    ametsuchi
-    ametsuchi_fixture
-    shared_model_stateless_validation
-    )
-
-addtest(block_query_transfer_test block_query_transfer_test.cpp)
-target_link_libraries(block_query_transfer_test
     ametsuchi
     ametsuchi_fixture
     shared_model_stateless_validation

@@ -34,14 +34,15 @@ namespace torii {
       std::shared_ptr<shared_model::interface::TransactionBatchFactory>
           transaction_batch_factory,
       std::shared_ptr<iroha::network::ConsensusGate> consensus_gate,
-      int maximum_rounds_without_update)
+      int maximum_rounds_without_update,
+      logger::Logger log)
       : command_service_(std::move(command_service)),
         status_bus_(std::move(status_bus)),
         status_factory_(std::move(status_factory)),
         transaction_factory_(std::move(transaction_factory)),
         batch_parser_(std::move(batch_parser)),
         batch_factory_(std::move(transaction_batch_factory)),
-        log_(logger::log("CommandServiceTransportGrpc")),
+        log_(std::move(log)),
         consensus_gate_(std::move(consensus_gate)),
         maximum_rounds_without_update_(maximum_rounds_without_update) {}
 
@@ -190,7 +191,7 @@ namespace torii {
 
     auto hash = shared_model::crypto::Hash(request->tx_hash());
 
-    static auto client_id_format = boost::format("Peer: '%s', %s");
+    auto client_id_format = boost::format("Peer: '%s', %s");
     std::string client_id =
         (client_id_format % context->peer() % hash.toString()).str();
 
@@ -212,7 +213,7 @@ namespace torii {
         ->getStatusStream(hash)
         // convert to transport objects
         .map([&](auto response) {
-          log_->debug("mapped {}, {}", response->toString(), client_id);
+          log_->debug("mapped {}, {}", *response, client_id);
           return std::static_pointer_cast<
                      shared_model::proto::TransactionResponse>(response)
               ->getTransport();

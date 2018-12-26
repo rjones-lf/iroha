@@ -461,7 +461,9 @@ Irohad::RunResult Irohad::run() {
 
   // Initializing internal server
   internal_server = std::make_unique<ServerRunner>(
-      listen_ip_ + ":" + std::to_string(internal_port_), false);
+      listen_ip_ + ":" + std::to_string(internal_port_),
+      false,
+      logger::log("InternalServerRunner"));
 
   // Run torii server
   return (torii_server->append(command_service_transport)

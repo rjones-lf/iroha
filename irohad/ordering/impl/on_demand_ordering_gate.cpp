@@ -21,8 +21,9 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<cache::OrderingGateCache> cache,
     std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-    consensus::Round initial_round)
-    : log_(logger::log("OnDemandOrderingGate")),
+    consensus::Round initial_round,
+    logger::Logger log)
+    : log_(std::move(log)),
       ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {
@@ -32,9 +33,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         visit_in_place(event,
                        [this](const BlockEvent &block_event) {
                          // block committed, increment block round
-                         log_->debug("BlockEvent. round [{}, {}]",
-                                     block_event.round.block_round,
-                                     block_event.round.reject_round);
+                         log_->debug("BlockEvent. {}", block_event.round);
                          current_round_ = block_event.round;
                          cache_->remove(block_event.hashes);
                        },
@@ -43,9 +42,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
                          log_->debug("EmptyEvent");
                          current_round_ = empty_event.round;
                        });
-        log_->debug("Current round: [{}, {}]",
-                    current_round_.block_round,
-                    current_round_.reject_round);
+        log_->debug("Current: {}", current_round_);
 
         auto batches = cache_->pop();
 
@@ -71,6 +68,10 @@ OnDemandOrderingGate::OnDemandOrderingGate(
       proposal_factory_(std::move(factory)),
       tx_cache_(std::move(tx_cache)),
       current_round_(initial_round) {}
+
+OnDemandOrderingGate::~OnDemandOrderingGate() {
+  events_subscription_.unsubscribe();
+}
 
 void OnDemandOrderingGate::propagateBatch(
     std::shared_ptr<shared_model::interface::TransactionBatch> batch) {

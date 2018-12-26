@@ -1,3 +1,8 @@
+#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 add_library(ametsuchi
     impl/flat_file/flat_file.cpp
     impl/storage_impl.cpp

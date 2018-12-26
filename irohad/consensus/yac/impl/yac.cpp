@@ -41,23 +41,24 @@ namespace iroha {
           std::shared_ptr<YacNetwork> network,
           std::shared_ptr<YacCryptoProvider> crypto,
           std::shared_ptr<Timer> timer,
-          ClusterOrdering order) {
+          ClusterOrdering order,
+          logger::Logger log) {
         return std::make_shared<Yac>(
-            vote_storage, network, crypto, timer, order);
+            vote_storage, network, crypto, timer, order, std::move(log));
       }
 
       Yac::Yac(YacVoteStorage vote_storage,
                std::shared_ptr<YacNetwork> network,
                std::shared_ptr<YacCryptoProvider> crypto,
                std::shared_ptr<Timer> timer,
-               ClusterOrdering order)
+               ClusterOrdering order,
+               logger::Logger log)
           : vote_storage_(std::move(vote_storage)),
             network_(std::move(network)),
             crypto_(std::move(crypto)),
             timer_(std::move(timer)),
-            cluster_order_(order) {
-        log_ = logger::log("YAC");
-      }
+            cluster_order_(order),
+            log_(std::move(log)) {}
 
       // ------|Hash gate|------
 
@@ -151,10 +152,8 @@ namespace iroha {
                 == ProposalState::kNotSentNotProcessed) {
               vote_storage_.nextProcessingState(proposal_round);
               log_->info(
-                  "Received supermajority of votes for ({}, {}), skip "
-                  "propagation",
-                  proposal_round.block_round,
-                  proposal_round.reject_round);
+                  "Received supermajority of votes for {}, skip propagation",
+                  proposal_round);
             }
           }
 
@@ -166,25 +165,20 @@ namespace iroha {
           switch (processing_state) {
             case ProposalState::kNotSentNotProcessed:
               vote_storage_.nextProcessingState(proposal_round);
-              log_->info("Propagate state ({}, {}) to whole network",
-                         proposal_round.block_round,
-                         proposal_round.reject_round);
+              log_->info("Propagate state {} to whole network", proposal_round);
               this->propagateState(visit_in_place(answer, votes));
               break;
             case ProposalState::kSentNotProcessed:
               vote_storage_.nextProcessingState(proposal_round);
-              log_->info("Pass outcome for ({}, {}) to pipeline",
-                         proposal_round.block_round,
-                         proposal_round.reject_round);
+              log_->info("Pass outcome for {} to pipeline", proposal_round);
               this->closeRound();
               notifier_.get_subscriber().on_next(answer);
               break;
             case ProposalState::kSentProcessed:
               if (state.size() == 1) {
                 this->findPeer(state.at(0)) | [&](const auto &from) {
-                  log_->info("Propagate state ({}, {}) directly to {}",
-                             proposal_round.block_round,
-                             proposal_round.reject_round,
+                  log_->info("Propagate state {} directly to {}",
+                             proposal_round,
                              from->address());
                   this->propagateStateDirectly(*from,
                                                visit_in_place(answer, votes));
