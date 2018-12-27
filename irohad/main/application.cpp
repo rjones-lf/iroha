@@ -272,7 +272,9 @@ void Irohad::initOrderingGate() {
   const uint64_t kMaxDelaySeconds = 5;
   auto delay = [reject_counter = kCounter,
                 local_counter = kCounter,
-                max_delay = kMaxDelaySeconds](const auto &commit) mutable {
+                // MSVC requires const variables to be captured
+                kMaxDelaySeconds,
+                kMaxLocalCounter](const auto &commit) mutable {
     using iroha::synchronizer::SynchronizationOutcomeType;
     if (commit.sync_outcome == SynchronizationOutcomeType::kReject
         or commit.sync_outcome == SynchronizationOutcomeType::kNothing) {
@@ -280,7 +282,7 @@ void Irohad::initOrderingGate() {
       ++local_counter;
       if (local_counter == kMaxLocalCounter) {
         local_counter = 0;
-        if (reject_counter < max_delay) {
+        if (reject_counter < kMaxDelaySeconds) {
           reject_counter++;
         }
       }

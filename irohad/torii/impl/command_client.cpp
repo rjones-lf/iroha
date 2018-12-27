@@ -20,29 +20,9 @@ namespace torii {
   CommandSyncClient::CommandSyncClient(const std::string &ip,
                                        size_t port,
                                        logger::Logger log)
-      : ip_(ip),
-        port_(port),
-        stub_(iroha::network::createClient<iroha::protocol::CommandService_v1>(
+      : stub_(iroha::network::createClient<iroha::protocol::CommandService_v1>(
             ip + ":" + std::to_string(port))),
         log_(std::move(log)) {}
-
-  CommandSyncClient::CommandSyncClient(const CommandSyncClient &rhs)
-      : CommandSyncClient(rhs.ip_, rhs.port_, rhs.log_) {}
-
-  CommandSyncClient &CommandSyncClient::operator=(CommandSyncClient rhs) {
-    swap(*this, rhs);
-    return *this;
-  }
-
-  CommandSyncClient::CommandSyncClient(CommandSyncClient &&rhs) noexcept {
-    swap(*this, rhs);
-  }
-
-  CommandSyncClient &CommandSyncClient::operator=(
-      CommandSyncClient &&rhs) noexcept {
-    swap(*this, rhs);
-    return *this;
-  }
 
   grpc::Status CommandSyncClient::Torii(const Transaction &tx) const {
     google::protobuf::Empty a;
@@ -78,14 +58,6 @@ namespace torii {
       response.push_back(resp);
     }
     reader->Finish();
-  }
-
-  void CommandSyncClient::swap(CommandSyncClient &lhs, CommandSyncClient &rhs) {
-    using std::swap;
-    swap(lhs.ip_, rhs.ip_);
-    swap(lhs.port_, rhs.port_);
-    swap(lhs.stub_, rhs.stub_);
-    swap(lhs.log_, rhs.log_);
   }
 
 }  // namespace torii

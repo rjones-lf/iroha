@@ -9,7 +9,7 @@
                        {
                           "addPeer":{
                              "peer":{
-                                "address":"0.0.0.0:10001",
+                                "address":"127.0.0.1:10001",
                                 "peerKey":"vd1YQE0TFeDrJ5AsXXyOsGAsFiOPAFdz30BrwZEwiSk="
                              }
                           }

@@ -75,9 +75,14 @@ endif ()
 
 set_target_properties(grpc PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIR}
-    INTERFACE_LINK_LIBRARIES "pthread;dl"
     IMPORTED_LOCATION ${grpc_LIBRARY}
     )
+
+if (NOT MSVC)
+  set_target_properties(grpc PROPERTIES
+      INTERFACE_LINK_LIBRARIES "pthread;dl"
+      )
+endif ()
 
 set_target_properties(grpc++ PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${grpc_INCLUDE_DIR}

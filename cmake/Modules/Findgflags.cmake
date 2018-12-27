@@ -36,5 +36,10 @@ endif ()
 set_target_properties(gflags PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${gflags_INCLUDE_DIR}
     IMPORTED_LOCATION ${gflags_LIBRARY}
-    INTERFACE_LINK_LIBRARIES "pthread"
     )
+
+if (NOT MSVC)
+  set_target_properties(gflags PROPERTIES
+      INTERFACE_LINK_LIBRARIES "pthread"
+      )
+endif ()

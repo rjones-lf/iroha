@@ -86,32 +86,22 @@ namespace torii {
   shared_model::interface::types::SharedTxsCollectionType
   CommandServiceTransportGrpc::deserializeTransactions(
       const iroha::protocol::TxList *request) {
-    return boost::copy_range<
-        shared_model::interface::types::SharedTxsCollectionType>(
-        request->transactions()
-        | boost::adaptors::transformed(
-              [&](const auto &tx) { return transaction_factory_->build(tx); })
-        | boost::adaptors::filtered([&](const auto &result) {
-            return result.match(
-                [](const iroha::expected::Value<
-                    std::unique_ptr<shared_model::interface::Transaction>> &) {
-                  return true;
-                },
-                [&](const iroha::expected::Error<TransportFactoryType::Error>
-                        &error) {
-                  status_bus_->publish(status_factory_->makeStatelessFail(
-                      error.error.hash,
-                      shared_model::interface::TxStatusFactory::
-                          TransactionError{error.error.error, 0, 0}));
-                  return false;
-                });
-          })
-        | boost::adaptors::transformed([&](auto result) {
-            return std::move(
-                       boost::get<iroha::expected::ValueOf<decltype(result)>>(
-                           result))
-                .value;
-          }));
+    shared_model::interface::types::SharedTxsCollectionType tx_collection;
+    for (const auto &tx : request->transactions()) {
+      transaction_factory_->build(tx).match(
+          [&tx_collection](
+              iroha::expected::Value<
+                  std::unique_ptr<shared_model::interface::Transaction>> &v) {
+            tx_collection.emplace_back(std::move(v).value);
+          },
+          [this](iroha::expected::Error<TransportFactoryType::Error> &error) {
+            status_bus_->publish(status_factory_->makeStatelessFail(
+                error.error.hash,
+                shared_model::interface::TxStatusFactory::TransactionError{
+                    error.error.error, 0, 0}));
+          });
+    }
+    return tx_collection;
   }
 
   grpc::Status CommandServiceTransportGrpc::ListTorii(
