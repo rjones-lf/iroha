@@ -259,20 +259,8 @@ TEST_F(CommandServiceTransportGrpcTest, StatusStreamEmpty) {
  *        and a status stream with one NotRecieved status
  * @when calling StatusStream
  * @then ServerWriter calls Write method
- *
  */
 TEST_F(CommandServiceTransportGrpcTest, StatusStreamOnNotReceived) {
-  const std::chrono::milliseconds kInitialTimeout = 1ms;
-  const std::chrono::milliseconds kNonFinalTimeout = 1ms;
-  transport_grpc =
-      std::make_shared<torii::CommandServiceTransportGrpc>(command_service,
-                                                           status_bus,
-                                                           kInitialTimeout,
-                                                           kNonFinalTimeout,
-                                                           status_factory,
-                                                           transaction_factory,
-                                                           batch_parser,
-                                                           batch_factory);
   grpc::ServerContext context;
   iroha::protocol::TxStatusRequest request;
   iroha::MockServerWriter<iroha::protocol::ToriiResponse> response_writer;
@@ -287,65 +275,6 @@ TEST_F(CommandServiceTransportGrpcTest, StatusStreamOnNotReceived) {
                              StrEq(shared_model::crypto::toBinaryString(hash))),
                     _))
       .WillOnce(Return(true));
-  ASSERT_TRUE(transport_grpc
-                  ->StatusStream(
-                      &context,
-                      &request,
-                      reinterpret_cast<
-                          grpc::ServerWriter<iroha::protocol::ToriiResponse> *>(
-                          &response_writer))
-                  .ok());
-}
-
-/**
- * @given torii service and number of invalid transactions
- * @when calling StatusStream
- * @then ServerWriter call Write method the same number of times
- */
-TEST_F(CommandServiceTransportGrpcTest, StatusStream) {
-  grpc::ServerContext context;
-  iroha::protocol::TxStatusRequest request;
-  iroha::MockServerWriter<iroha::protocol::ToriiResponse> response_writer;
-
-  std::vector<std::shared_ptr<shared_model::interface::TransactionResponse>>
-      responses;
-  for (size_t i = 0; i < kTimes; ++i) {
-    shared_model::crypto::Hash hash(std::to_string(i));
-    auto push_response =
-        [this, hash = std::move(hash), &responses](auto member_fn) {
-          responses.emplace_back(
-              (this->status_factory.get()->*member_fn)(hash, {}).release());
-        };
-
-    using shared_model::interface::TxStatusFactory;
-    // cover different type of statuses
-    switch (i) {
-      case 0:
-        push_response(&TxStatusFactory::makeStatelessFail);
-        break;
-      case 1:
-        push_response(&TxStatusFactory::makeStatelessValid);
-        break;
-      case 2:
-        push_response(&TxStatusFactory::makeStatefulFail);
-        break;
-      case 3:
-        push_response(&TxStatusFactory::makeStatefulValid);
-        break;
-      case 4:
-        push_response(&TxStatusFactory::makeCommitted);
-        break;
-      default:
-        throw std::runtime_error("Out of range");
-    }
-  }
-
-  EXPECT_CALL(*command_service, getStatusStream(_))
-      .WillOnce(Return(rxcpp::observable<>::iterate(responses)));
-  EXPECT_CALL(response_writer, Write(_, _))
-      .Times(kTimes)
-      .WillRepeatedly(Return(true));
-
   ASSERT_TRUE(transport_grpc
                   ->StatusStream(
                       &context,
