@@ -213,6 +213,10 @@ namespace iroha {
           ErrorCodeType kNoPermissions = 2;
       static constexpr shared_model::interface::ErrorQueryResponse::
           ErrorCodeType kInvalidPagination = 4;
+      static constexpr shared_model::interface::ErrorQueryResponse::
+          ErrorCodeType kInvalidAccountId = 5;
+      static constexpr shared_model::interface::ErrorQueryResponse::
+          ErrorCodeType kInvalidAssetId = 6;
 
       void createDefaultAccount() {
         execute(*mock_command_factory->constructCreateAccount(
@@ -1312,12 +1316,12 @@ namespace iroha {
     }
 
     /**
-     * @given initialized storage, permission
+     * @given initialized storage, all permissions
      * @when get account transactions of non existing account
-     * @then Return empty account transactions
+     * @then return error
      */
-    TEST_F(GetAccountTransactionsExecutorTest, DISABLED_InvalidNoAccount) {
-      addPerms({shared_model::interface::permissions::Role::kGetAllAccTxs});
+    TEST_F(GetAccountTransactionsExecutorTest, InvalidNoAccount) {
+      addAllPerms();
 
       auto query = TestQueryBuilder()
                        .creatorAccountId(account_id)
@@ -1325,7 +1329,7 @@ namespace iroha {
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
-          std::move(result), kNoStatefulError);
+          std::move(result), kInvalidAccountId);
     }
 
     // ------------------------/ tx pagination tests \----------------------- //
@@ -1580,11 +1584,48 @@ namespace iroha {
 
       auto query = TestQueryBuilder()
                        .creatorAccountId(account_id)
-                       .getAccountTransactions(another_account_id, kTxPageSize)
+                       .getAccountAssetTransactions(
+                           another_account_id, asset_id, kTxPageSize)
                        .build();
       auto result = executeQuery(query);
       checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
           std::move(result), kNoPermissions);
+    }
+
+    /**
+     * @given initialized storage, all permissions
+     * @when get account asset transactions of non-existing user
+     * @then corresponding error is returned
+     */
+    TEST_F(GetAccountAssetTransactionsExecutorTest, InvalidAccountId) {
+      addAllPerms();
+
+      auto query = TestQueryBuilder()
+                       .creatorAccountId(account_id)
+                       .getAccountAssetTransactions(
+                           "doge@noaccount", asset_id, kTxPageSize)
+                       .build();
+      auto result = executeQuery(query);
+      checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
+          std::move(result), kInvalidAccountId);
+    }
+
+    /**
+     * @given initialized storage, all permissions
+     * @when get account asset transactions of non-existing asset
+     * @then corresponding error is returned
+     */
+    TEST_F(GetAccountAssetTransactionsExecutorTest, InvalidAssetId) {
+      addAllPerms();
+
+      auto query =
+          TestQueryBuilder()
+              .creatorAccountId(account_id)
+              .getAccountAssetTransactions(account_id, "doge#coin", kTxPageSize)
+              .build();
+      auto result = executeQuery(query);
+      checkStatefulError<shared_model::interface::StatefulFailedErrorResponse>(
+          std::move(result), kInvalidAssetId);
     }
 
     /**

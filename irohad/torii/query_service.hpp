@@ -34,13 +34,13 @@ namespace torii {
    */
   class QueryService : public iroha::protocol::QueryService_v1::Service {
    public:
-    using QueryFactoryType =
-        shared_model::interface::AbstractTransportFactory<
-            shared_model::interface::Query,
-            iroha::protocol::Query>;
+    using QueryFactoryType = shared_model::interface::AbstractTransportFactory<
+        shared_model::interface::Query,
+        iroha::protocol::Query>;
 
     QueryService(std::shared_ptr<iroha::torii::QueryProcessor> query_processor,
-                 std::shared_ptr<QueryFactoryType> query_factory);
+                 std::shared_ptr<QueryFactoryType> query_factory,
+                 logger::Logger log = logger::log("Query Service"));
 
     QueryService(const QueryService &) = delete;
     QueryService &operator=(const QueryService &) = delete;

@@ -27,13 +27,14 @@ namespace iroha {
           std::shared_ptr<YacHashProvider> hash_provider,
           std::shared_ptr<simulator::BlockCreator> block_creator,
           std::shared_ptr<consensus::ConsensusResultCache>
-              consensus_result_cache)
+              consensus_result_cache,
+          logger::Logger log)
           : hash_gate_(std::move(hash_gate)),
             orderer_(std::move(orderer)),
             hash_provider_(std::move(hash_provider)),
             block_creator_(std::move(block_creator)),
             consensus_result_cache_(std::move(consensus_result_cache)),
-            log_(logger::log("YacGate")),
+            log_(std::move(log)),
             current_hash_() {
         block_creator_->onBlock().subscribe(
             [this](const auto &event) { this->vote(event); });

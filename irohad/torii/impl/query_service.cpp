@@ -15,10 +15,11 @@ namespace torii {
 
   QueryService::QueryService(
       std::shared_ptr<iroha::torii::QueryProcessor> query_processor,
-      std::shared_ptr<QueryFactoryType> query_factory)
+      std::shared_ptr<QueryFactoryType> query_factory,
+      logger::Logger log)
       : query_processor_{std::move(query_processor)},
         query_factory_{std::move(query_factory)},
-        log_{logger::log("Query Service")} {}
+        log_{std::move(log)} {}
 
   void QueryService::Find(iroha::protocol::Query const &request,
                           iroha::protocol::QueryResponse &response) {

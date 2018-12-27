@@ -8,9 +8,7 @@
 #include "multi_sig_transactions/storage/mst_storage.hpp"
 
 namespace iroha {
-  MstStorage::MstStorage() {
-    log_ = logger::log("MstStorage");
-  }
+  MstStorage::MstStorage(logger::Logger log) : log_{std::move(log)} {}
 
   StateUpdateResult MstStorage::apply(
       const shared_model::crypto::PublicKey &target_peer_key,

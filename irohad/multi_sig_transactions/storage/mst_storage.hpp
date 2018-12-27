@@ -83,7 +83,7 @@ namespace iroha {
     /**
      * Constructor provide initialization of protected fields, such as logger.
      */
-    MstStorage();
+    explicit MstStorage(logger::Logger log = logger::log("MstStorage"));
 
    private:
     virtual auto applyImpl(

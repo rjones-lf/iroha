@@ -186,7 +186,7 @@ namespace torii {
 
     auto hash = shared_model::crypto::Hash(request->tx_hash());
 
-    static auto client_id_format = boost::format("Peer: '%s', %s");
+    auto client_id_format = boost::format("Peer: '%s', %s");
     std::string client_id =
         (client_id_format % context->peer() % hash.toString()).str();
 
