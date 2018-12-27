@@ -36,6 +36,7 @@ addtest(proto_query_validator_test
     )
 target_link_libraries(proto_query_validator_test
     shared_model_proto_backend
+    shared_model_stateless_validation
     )
 
 addtest(field_validator_test

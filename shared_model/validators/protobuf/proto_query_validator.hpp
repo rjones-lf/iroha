@@ -9,7 +9,6 @@
 #include "validators/abstract_validator.hpp"
 
 #include "queries.pb.h"
-#include "validators/validators_common.hpp"
 
 namespace shared_model {
   namespace validation {
