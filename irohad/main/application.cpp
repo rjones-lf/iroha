@@ -267,6 +267,29 @@ void Irohad::initOrderingGate() {
   auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
       shared_model::validation::DefaultProposalValidator>>();
 
+  const uint64_t kCounter = 0, kMaxLocalCounter = 2;
+  // reject_counter and local_counter are local mutable variables of lambda
+  const uint64_t kMaxDelaySeconds = 5;
+  auto delay = [reject_counter = kCounter,
+                local_counter = kCounter,
+                max_delay = kMaxDelaySeconds](const auto &commit) mutable {
+    using iroha::synchronizer::SynchronizationOutcomeType;
+    if (commit.sync_outcome == SynchronizationOutcomeType::kReject
+        or commit.sync_outcome == SynchronizationOutcomeType::kNothing) {
+      // Increment reject_counter each local_counter calls of function
+      ++local_counter;
+      if (local_counter == kMaxLocalCounter) {
+        local_counter = 0;
+        if (reject_counter < max_delay) {
+          reject_counter++;
+        }
+      }
+    } else {
+      reject_counter = 0;
+    }
+    return std::chrono::seconds(reject_counter);
+  };
+
   ordering_gate = ordering_init.initOrderingGate(max_proposal_size_,
                                                  proposal_delay_,
                                                  std::move(hashes),
@@ -277,7 +300,8 @@ void Irohad::initOrderingGate() {
                                                  async_call_,
                                                  std::move(factory),
                                                  persistent_cache,
-                                                 {blocks.back()->height(), 1});
+                                                 {blocks.back()->height(), 1},
+                                                 delay);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
