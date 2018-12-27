@@ -4,7 +4,6 @@
  */
 
 #include <gtest/gtest.h>
-#include <boost/algorithm/cxx11/any_of.hpp>
 #include "framework/integration_framework/integration_test_framework.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 
@@ -12,6 +11,8 @@ using namespace integration_framework;
 using namespace shared_model;
 using namespace common_constants;
 
+// TODO igor-egorov, 2018-12-27, IR-148, move all check macroses to
+// acceptance_fixture.hpp
 #define check(i) \
   [](const auto &resp) { ASSERT_EQ(resp->transactions().size(), i); }
 
@@ -186,9 +187,8 @@ TEST_F(CreateAccount, PrivelegeElevation) {
       .skipProposal()
       .checkVerifiedProposal(check(0))
       .checkBlock([&rejected_hash](const auto &block) {
-        const auto hashes = block->rejected_transactions_hashes();
-        bool target_tx_is_rejected = boost::algorithm::any_of_equal(
-            boost::begin(hashes), boost::end(hashes), rejected_hash);
-        ASSERT_TRUE(target_tx_is_rejected);
+        const auto rejected_hashes = block->rejected_transactions_hashes();
+        ASSERT_THAT(rejected_hashes, ::testing::Contains(rejected_hash));
+        ASSERT_EQ(boost::size(rejected_hashes), 1);
       });
 }

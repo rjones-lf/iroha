@@ -283,7 +283,8 @@ namespace {
                                 END
                            ELSE false END
           )") % checkAccountRolePermission(global_permission, creator_id)
-                         % checkAccountRolePermission(domain_permission, creator_id)
+                         % checkAccountRolePermission(domain_permission,
+                                                      creator_id)
                          % creator_id % id_with_target_domain)
                             .str();
     return query;
@@ -1291,9 +1292,9 @@ namespace iroha {
                  FROM role_has_permissions AS rhp
                  WHERE rhp.role_id = (SELECT * FROM get_domain_default_role)),
            account_permissions AS (
-                 SELECT COALESCE(bit_or(rp.permission), '0'::bit(%1%)) AS perm
-                  FROM role_has_permissions AS rp
-                 JOIN account_has_roles AS ar on ar.role_id = rp.role_id
+                 SELECT COALESCE(bit_or(rhp.permission), '0'::bit(%1%)) AS perm
+                 FROM role_has_permissions AS rhp
+                 JOIN account_has_roles AS ar ON ar.role_id = rhp.role_id
                  WHERE ar.account_id = $1
            ),
            creator_has_enough_permissions AS (
