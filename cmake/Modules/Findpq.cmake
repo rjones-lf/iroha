@@ -7,9 +7,13 @@ mark_as_advanced(pq_INCLUDE_DIR)
 find_path(postgres_INCLUDE_DIR postgres_ext.h PATH_SUFFIXES postgresql)
 mark_as_advanced(postgres_INCLUDE_DIR)
 
+# Windows libraries are usually not prefixed with 'lib', however this library
+# has such a prefix, therefore we need to search for libpq instead of pq on
+# Windows
 find_library(pq_LIBRARY NAMES pq libpq)
 mark_as_advanced(pq_LIBRARY)
 
+# Debug library has 'd' suffix on Windows
 if (MSVC)
   find_library(pqd_LIBRARY NAMES pqd libpqd)
   mark_as_advanced(pqd_LIBRARY)

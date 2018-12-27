@@ -28,17 +28,30 @@ find_package(spdlog)
 ################################
 option(FIND_PROTOBUF "Try to find protobuf in system" ON)
 if (MSVC)
-  set(CMAKE_MODULE_PATH "")
-  find_package(Protobuf REQUIRED)
-  add_library(protobuf INTERFACE)
+  find_package(Protobuf REQUIRED CONFIG)
+  add_library(protobuf INTERFACE IMPORTED)
   target_link_libraries(protobuf INTERFACE
       protobuf::libprotobuf
       )
+
+  get_target_property(Protobuf_INCLUDE_DIR protobuf::libprotobuf
+    INTERFACE_INCLUDE_DIRECTORIES)
+
+  get_target_property(Protobuf_PROTOC_EXECUTABLE protobuf::protoc
+    IMPORTED_LOCATION_RELEASE)
+  if(NOT EXISTS "${Protobuf_PROTOC_EXECUTABLE}")
+    get_target_property(Protobuf_PROTOC_EXECUTABLE protobuf::protoc
+      IMPORTED_LOCATION_DEBUG)
+  endif()
+  if(NOT EXISTS "${Protobuf_PROTOC_EXECUTABLE}")
+    get_target_property(Protobuf_PROTOC_EXECUTABLE protobuf::protoc
+      IMPORTED_LOCATION_NOCONFIG)
+  endif()
+
   add_executable(protoc IMPORTED)
   set_target_properties(protoc PROPERTIES
       IMPORTED_LOCATION ${Protobuf_PROTOC_EXECUTABLE}
       )
-  set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 else ()
   find_package(protobuf)
 endif()
@@ -48,18 +61,17 @@ endif()
 #########################
 option(FIND_GRPC "Try to find gRPC in system" ON)
 if (MSVC)
-  set(CMAKE_MODULE_PATH "")
-  find_package(gRPC REQUIRED)
+  find_package(gRPC REQUIRED CONFIG)
 
-  add_library(grpc INTERFACE)
+  add_library(grpc INTERFACE IMPORTED)
   target_link_libraries(grpc INTERFACE
       gRPC::grpc
       )
-  add_library(grpc++ INTERFACE)
+  add_library(grpc++ INTERFACE IMPORTED)
   target_link_libraries(grpc++ INTERFACE
       gRPC::grpc++
       )
-  add_library(gpr INTERFACE)
+  add_library(gpr INTERFACE IMPORTED)
   target_link_libraries(gpr INTERFACE
       gRPC::gpr
       )
@@ -79,7 +91,6 @@ if (MSVC)
   set_target_properties(grpc_cpp_plugin PROPERTIES
       IMPORTED_LOCATION ${gRPC_CPP_PLUGIN_EXECUTABLE}
       )
-  set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 else ()
   find_package(grpc)
 endif()
@@ -103,9 +114,7 @@ find_package(soci)
 #            gflags            #
 ################################
 if (MSVC)
-  set(CMAKE_MODULE_PATH "")
-  find_package(gflags REQUIRED)
-  set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
+  find_package(gflags REQUIRED CONFIG)
 else ()
   find_package(gflags)
 endif()
@@ -119,13 +128,11 @@ find_package(rxcpp)
 #          TBB           #
 ##########################
 if (MSVC)
-  set(CMAKE_MODULE_PATH "")
-  find_package(TBB REQUIRED)
-  add_library(tbb INTERFACE)
+  find_package(TBB REQUIRED CONFIG)
+  add_library(tbb INTERFACE IMPORTED)
   target_link_libraries(tbb INTERFACE
       TBB::tbb
       )
-  set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 else ()
   find_package(tbb)
 endif()
@@ -139,21 +146,13 @@ find_package(Boost 1.65.0 REQUIRED
     system
     thread
     )
-if (MSVC)
-  add_library(boost INTERFACE)
-  target_link_libraries(boost INTERFACE
-      Boost::boost
-      Boost::filesystem
-      Boost::system
-      Boost::thread
-      )
-else ()
-  add_library(boost INTERFACE IMPORTED)
-  set_target_properties(boost PROPERTIES
-      INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS}
-      INTERFACE_LINK_LIBRARIES "${Boost_LIBRARIES}"
-      )
-endif()
+add_library(boost INTERFACE IMPORTED)
+target_link_libraries(boost INTERFACE
+    Boost::boost
+    Boost::filesystem
+    Boost::system
+    Boost::thread
+    )
 
 if(ENABLE_LIBS_PACKAGING)
   foreach (library ${Boost_LIBRARIES})
