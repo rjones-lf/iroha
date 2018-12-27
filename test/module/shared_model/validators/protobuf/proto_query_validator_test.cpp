@@ -76,7 +76,8 @@ class ValidProtoPaginationQueryValidatorTest
 
 TEST_P(ValidProtoPaginationQueryValidatorTest, ValidPaginationQuery) {
   auto answer = validator.validate(GetParam());
-  ASSERT_FALSE(answer.hasErrors());
+  ASSERT_FALSE(answer.hasErrors()) << GetParam().DebugString() << std::endl
+                                   << answer.reason();
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -93,7 +94,7 @@ class InvalidProtoPaginationQueryTest
 
 TEST_P(InvalidProtoPaginationQueryTest, InvalidPaginationQuery) {
   auto answer = validator.validate(GetParam());
-  ASSERT_TRUE(answer.hasErrors());
+  ASSERT_TRUE(answer.hasErrors()) << GetParam().DebugString();
 }
 
 INSTANTIATE_TEST_CASE_P(

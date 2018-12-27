@@ -5,6 +5,10 @@
 
 #include "validators/protobuf/proto_block_validator.hpp"
 
+#include <boost/range/adaptors.hpp>
+
+#include "validators/validators_common.hpp"
+
 namespace shared_model {
   namespace validation {
     Answer ProtoBlockValidator::validate(
@@ -22,13 +26,14 @@ namespace shared_model {
 
       const auto &rejected_hashes =
           block.block_v1().payload().rejected_transactions_hashes();
-      if (std::any_of(rejected_hashes.begin(),
-                      rejected_hashes.end(),
-                      [this](const auto &hash) {
-                        return not this->validateHexString(hash);
-                      })) {
-        reason.second.emplace_back("Some rejected hashes has incorrect format");
-      }
+      std::for_each(rejected_hashes.begin(),
+                    rejected_hashes.end(),
+                    [&reason](const auto &hash) {
+                      if (not validateHexString(hash)) {
+                        reason.second.emplace_back("Rejected hash " + hash
+                                                   + " is not in hash format");
+                      }
+                    });
       if (not validateHexString(block.block_v1().payload().prev_block_hash())) {
         reason.second.emplace_back("Prev block hash has incorrect format");
       }

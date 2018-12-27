@@ -27,13 +27,9 @@ const static iroha::protocol::GrantablePermission valid_grantable_permission =
 const static iroha::protocol::GrantablePermission invalid_grantable_permission =
     static_cast<iroha::protocol::GrantablePermission>(-1);
 
-iroha::protocol::Transaction generateEmptyTransaction() {
-  return iroha::protocol::Transaction();
-}
-
 iroha::protocol::Transaction generateCreateRoleTransaction(
     iroha::protocol::RolePermission permission) {
-  auto tx = generateEmptyTransaction();
+  auto tx = iroha::protocol::Transaction();
 
   auto cr = tx.mutable_payload()
                 ->mutable_reduced_payload()
@@ -46,7 +42,7 @@ iroha::protocol::Transaction generateCreateRoleTransaction(
 
 iroha::protocol::Transaction generateGrantPermissionTransaction(
     iroha::protocol::GrantablePermission permission) {
-  auto tx = generateEmptyTransaction();
+  auto tx = iroha::protocol::Transaction();
 
   auto gp = tx.mutable_payload()
                 ->mutable_reduced_payload()
@@ -59,7 +55,7 @@ iroha::protocol::Transaction generateGrantPermissionTransaction(
 
 iroha::protocol::Transaction generateRevokePermissionTransaction(
     iroha::protocol::GrantablePermission permission) {
-  auto tx = generateEmptyTransaction();
+  auto tx = iroha::protocol::Transaction();
 
   auto gp = tx.mutable_payload()
                 ->mutable_reduced_payload()
@@ -72,7 +68,7 @@ iroha::protocol::Transaction generateRevokePermissionTransaction(
 
 iroha::protocol::Transaction generateAddSignatoryTransaction(
     const std::string &signatory) {
-  auto tx = generateEmptyTransaction();
+  auto tx = iroha::protocol::Transaction();
   auto as = tx.mutable_payload()
                 ->mutable_reduced_payload()
                 ->add_commands()
@@ -84,7 +80,7 @@ iroha::protocol::Transaction generateAddSignatoryTransaction(
 
 iroha::protocol::Transaction generateCreateAccountTransaction(
     const std::string &pubkey) {
-  auto tx = generateEmptyTransaction();
+  auto tx = iroha::protocol::Transaction();
   auto ca = tx.mutable_payload()
                 ->mutable_reduced_payload()
                 ->add_commands()
@@ -97,7 +93,7 @@ iroha::protocol::Transaction generateCreateAccountTransaction(
 
 iroha::protocol::Transaction generateRemoveSignatoryTransaction(
     const std::string &signatory) {
-  auto tx = generateEmptyTransaction();
+  auto tx = iroha::protocol::Transaction();
   auto rs = tx.mutable_payload()
                 ->mutable_reduced_payload()
                 ->add_commands()
@@ -109,7 +105,7 @@ iroha::protocol::Transaction generateRemoveSignatoryTransaction(
 
 iroha::protocol::Transaction generateAddPeerTransaction(
     const std::string &pubkey) {
-  auto tx = generateEmptyTransaction();
+  auto tx = iroha::protocol::Transaction();
   auto as = tx.mutable_payload()
                 ->mutable_reduced_payload()
                 ->add_commands()
