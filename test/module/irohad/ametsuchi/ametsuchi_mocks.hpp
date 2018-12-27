@@ -29,51 +29,14 @@ namespace iroha {
   namespace ametsuchi {
     class MockWsvQuery : public WsvQuery {
      public:
-      MOCK_METHOD1(getAccountRoles,
-                   boost::optional<std::vector<std::string>>(
-                       const std::string &account_id));
-      MOCK_METHOD3(getAccountDetail,
-                   boost::optional<std::string>(const std::string &account_id,
-                                                const std::string &key,
-                                                const std::string &writer));
-      MOCK_METHOD1(getRolePermissions,
-                   boost::optional<shared_model::interface::RolePermissionSet>(
-                       const std::string &role_name));
-      MOCK_METHOD0(getRoles, boost::optional<std::vector<std::string>>());
-      MOCK_METHOD1(
-          getAccount,
-          boost::optional<std::shared_ptr<shared_model::interface::Account>>(
-              const std::string &account_id));
       MOCK_METHOD1(getSignatories,
                    boost::optional<
                        std::vector<shared_model::interface::types::PubkeyType>>(
                        const std::string &account_id));
-      MOCK_METHOD1(
-          getAsset,
-          boost::optional<std::shared_ptr<shared_model::interface::Asset>>(
-              const std::string &asset_id));
-      MOCK_METHOD1(getAccountAssets,
-                   boost::optional<std::vector<
-                       std::shared_ptr<shared_model::interface::AccountAsset>>>(
-                       const std::string &account_id));
-      MOCK_METHOD2(getAccountAsset,
-                   boost::optional<
-                       std::shared_ptr<shared_model::interface::AccountAsset>>(
-                       const std::string &account_id,
-                       const std::string &asset_id));
       MOCK_METHOD0(
           getPeers,
           boost::optional<
               std::vector<std::shared_ptr<shared_model::interface::Peer>>>());
-      MOCK_METHOD1(
-          getDomain,
-          boost::optional<std::shared_ptr<shared_model::interface::Domain>>(
-              const std::string &domain_id));
-      MOCK_METHOD3(
-          hasAccountGrantablePermission,
-          bool(const std::string &permitee_account_id,
-               const std::string &account_id,
-               shared_model::interface::permissions::Grantable permission));
     };
 
     class MockWsvCommand : public WsvCommand {
