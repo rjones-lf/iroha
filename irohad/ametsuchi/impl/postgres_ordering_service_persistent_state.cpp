@@ -29,7 +29,7 @@ namespace iroha {
       std::unique_ptr<soci::session> sql;
       try {
         sql =
-            std::make_unique<soci::session>(soci::postgresql, postgres_options);
+            std::make_unique<soci::session>(*soci::factory_postgresql(), postgres_options);
 
       } catch (std::exception &e) {
         return expected::makeError(

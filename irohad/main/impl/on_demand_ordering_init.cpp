@@ -193,7 +193,9 @@ namespace iroha {
       // reject_counter and local_counter are local mutable variables of lambda
       auto delay = [reject_counter = kCounter,
                     local_counter = kCounter,
-                    &time_generator](const auto &commit) mutable {
+                    &time_generator,
+                    // MSVC requires const variables to be captured
+                    kMaxLocalCounter](const auto &commit) mutable {
         using iroha::synchronizer::SynchronizationOutcomeType;
         if (commit.sync_outcome == SynchronizationOutcomeType::kReject
             or commit.sync_outcome == SynchronizationOutcomeType::kNothing) {
