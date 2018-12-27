@@ -1,5 +1,6 @@
 {
-   "payload":{
+  "block_v1":{
+    "payload":{
       "transactions":[
          {
             "payload":{
@@ -119,5 +120,6 @@
       "txNumber":1,
       "height":"1",
       "prevBlockHash":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-   }
+    }
+  }
 }

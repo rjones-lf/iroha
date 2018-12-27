@@ -20,19 +20,7 @@ Schema
 
     message AddAssetQuantity {
         string asset_id = 1;
-        Amount amount = 2;
-    }
-
-    message uint256 {
-        uint64 first = 1;
-        uint64 second = 2;
-        uint64 third = 3;
-        uint64 fourth = 4;
-    }
-
-    message Amount {
-        uint256 value = 1;
-        uint32 precision = 2;
+        string amount = 2;
     }
 
 .. note::
@@ -297,8 +285,8 @@ Schema
 .. code-block:: proto
 
     message CreateRole {
-       string role_name = 1;
-       repeated string permissions = 2;
+        string role_name = 1;
+        repeated RolePermission permissions = 2;
     }
 
 Structure
@@ -309,7 +297,7 @@ Structure
     :widths: 15, 30, 20, 15
 
     "Role name", "name of role to create", "`[a-z_0-9]{1,32}`", "User"
-    "Permissions", "array of already existent permissions", "set of passed permissions is fully included into set of existing permissions", "{can_receive, can_transfer}"
+    "RolePermission", "array of already existent permissions", "set of passed permissions is fully included into set of existing permissions", "{can_receive, can_transfer}"
 
 Validation
 ^^^^^^^^^^
@@ -366,8 +354,8 @@ Schema
 .. code-block:: proto
 
     message GrantPermission {
-       string account_id = 1;
-       string permission_name = 2;
+        string account_id = 1;
+        GrantablePermission permission = 2;
     }
 
 Structure
@@ -377,8 +365,8 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "id of account whom rights are granted", "already existent", "makoto@soramitsu"
-    "Permission name", "name of granted permission", "permission is defined", "CanTransferAssets"
+    "Account ID", "id of the account to which the rights are granted", "already existent", "makoto@soramitsu"
+    "GrantablePermission name", "name of grantable permission", "permission is defined", "CanTransferAssets"
 
 
 Validation
@@ -412,7 +400,7 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "id of account whom rights are granted", "already existent", "makoto@soramitsu"
+    "Account ID", "id of the account to which the rights are granted", "already existent", "makoto@soramitsu"
     "Public key", "Signatory to delete", "ed25519 public key", "407e57f50ca48969b08ba948171bb2435e035d82cec417e18e4a38f5fb113f83"
 
 Validation
@@ -441,8 +429,8 @@ Schema
 .. code-block:: proto
 
     message RevokePermission {
-       string account_id = 1;
-       string permission_name = 2;
+        string account_id = 1;
+        GrantablePermission permission = 2;
     }
 
 Structure
@@ -452,8 +440,8 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-        "Account ID", "id of account whom rights are granted", "already existent", "makoto@soramitsu"
-        "Permission name", "name of granted permission", "permission was granted", "CanTransferAssets"
+        "Account ID", "id of the account to which the rights are granted", "already existent", "makoto@soramitsu"
+        "GrantablePermission name", "name of grantable permission", "permission was granted", "CanTransferAssets"
 
 Validation
 ^^^^^^^^^^
@@ -488,7 +476,7 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Account ID", "id of account whom key-value information was set", "already existent", "makoto@soramitsu"
+    "Account ID", "id of the account to which the key-value information was set", "already existent", "makoto@soramitsu"
     "Key", "key of information being set", "`[A-Za-z0-9_]{1,64}`", "Name"
     "Value", "value of corresponding key", "≤ 4096", "Makoto"
 
@@ -528,7 +516,7 @@ Structure
     :widths: 15, 30, 20, 15
 
     "Account ID", "ID of account to set quorum", "already existent", "makoto@soramitsu"
-    "Quorum", "number of signatories needed to be included with a transaction from this account", "0 < quorum ≤ public-key set up to account ≤ 128", "5"
+    "Quorum", "number of signatories needed to be included within a transaction from this account", "0 < quorum ≤ public-key set up to account ≤ 128", "5"
 
 Validation
 ^^^^^^^^^^
@@ -556,19 +544,7 @@ Schema
 
     message SubtractAssetQuantity {
         string asset_id = 1;
-        Amount amount = 2;
-    }
-
-    message uint256 {
-       uint64 first = 1;
-       uint64 second = 2;
-       uint64 third = 3;
-       uint64 fourth = 4;
-    }
-
-    message Amount {
-       uint256 value = 1;
-       uint32 precision = 2;
+        string amount = 2;
     }
 
 .. note::
@@ -610,7 +586,7 @@ Schema
         string dest_account_id = 2;
         string asset_id = 3;
         string description = 4;
-        Amount amount = 5;
+        string amount = 5;
     }
 
 Structure
@@ -620,11 +596,11 @@ Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Source account ID", "ID of account to withdraw asset from", "already existent", "makoto@soramitsu"
-    "Destination account ID", "ID of account to send asset at", "already existent", "alex@california"
-    "Asset ID", "ID of asset to transfer", "already existent", "usd#usa"
-    "Description", "Message to attach to transfer", "Max length is 64", "here's my money take it"
-    "Amount", "amount of the asset to transfer", "0 < amount < max_uint256", "200.20"
+    "Source account ID", "ID of the account to withdraw the asset from", "already existent", "makoto@soramitsu"
+    "Destination account ID", "ID of the account to send the asset to", "already existent", "alex@california"
+    "Asset ID", "ID of the asset to transfer", "already existent", "usd#usa"
+    "Description", "Message to attach to the transfer", "Max length is 64", "here's my money take it"
+    "Amount", "amount of the asset to transfer", "0 <= precision <= 255", "200.20"
 
 Validation
 ^^^^^^^^^^

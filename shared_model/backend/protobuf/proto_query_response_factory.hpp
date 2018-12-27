@@ -46,6 +46,19 @@ namespace shared_model {
               transactions,
           const crypto::Hash &query_hash) const override;
 
+      std::unique_ptr<interface::QueryResponse> createTransactionsPageResponse(
+          std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+              transactions,
+          const crypto::Hash &next_tx_hash,
+          interface::types::TransactionsNumberType all_transactions_size,
+          const crypto::Hash &query_hash) const override;
+
+      std::unique_ptr<interface::QueryResponse> createTransactionsPageResponse(
+          std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+          transactions,
+          interface::types::TransactionsNumberType all_transactions_size,
+          const crypto::Hash &query_hash) const override;
+
       std::unique_ptr<interface::QueryResponse> createAssetResponse(
           interface::types::AssetIdType asset_id,
           interface::types::DomainIdType domain_id,

@@ -21,8 +21,8 @@ namespace iroha {
     namespace {
       std::string composeErrorMessage(
           const validation::TransactionError &tx_hash_and_error) {
-        const auto tx_hash = tx_hash_and_error.first.hex();
-        const auto &cmd_error = tx_hash_and_error.second;
+        const auto tx_hash = tx_hash_and_error.tx_hash.hex();
+        const auto &cmd_error = tx_hash_and_error.error;
         if (not cmd_error.tx_passed_initial_validation) {
           return (boost::format(
                       "Stateful validation error: transaction %s "
@@ -47,24 +47,30 @@ namespace iroha {
         std::shared_ptr<MstProcessor> mst_processor,
         std::shared_ptr<iroha::torii::StatusBus> status_bus,
         std::shared_ptr<shared_model::interface::TxStatusFactory>
-            status_factory)
+            status_factory,
+        logger::Logger log)
         : pcs_(std::move(pcs)),
           mst_processor_(std::move(mst_processor)),
           status_bus_(std::move(status_bus)),
           status_factory_(std::move(status_factory)),
-          log_(logger::log("TxProcessor")) {
+          log_(std::move(log)) {
       // process stateful validation results
-      pcs_->on_verified_proposal().subscribe(
-          [this](std::shared_ptr<validation::VerifiedProposalAndErrors>
-                     proposal_and_errors) {
+      pcs_->onVerifiedProposal().subscribe(
+          [this](const simulator::VerifiedProposalCreatorEvent &event) {
+            if (not event.verified_proposal_result) {
+              return;
+            }
+
+            const auto &proposal_and_errors = getVerifiedProposalUnsafe(event);
+
             // notify about failed txs
             const auto &errors = proposal_and_errors->rejected_transactions;
             std::lock_guard<std::mutex> lock(notifier_mutex_);
             for (const auto &tx_error : errors) {
               log_->info(composeErrorMessage(tx_error));
               this->publishStatus(TxStatusType::kStatefulFailed,
-                                  tx_error.first,
-                                  tx_error.second);
+                                  tx_error.tx_hash,
+                                  tx_error.error);
             }
             // notify about success txs
             for (const auto &successful_tx :
@@ -129,7 +135,8 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::TransactionBatch>
             transaction_batch) const {
       log_->info("handle batch");
-      if (transaction_batch->hasAllSignatures()) {
+      if (transaction_batch->hasAllSignatures()
+          and not mst_processor_->batchInStorage(transaction_batch)) {
         log_->info("propagating batch to PCS");
         this->publishEnoughSignaturesStatus(transaction_batch->transactions());
         pcs_->propagate_batch(transaction_batch);

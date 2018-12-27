@@ -18,11 +18,13 @@
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 #include "torii/command_client.hpp"
 #include "torii/impl/command_service_impl.hpp"
 #include "torii/impl/command_service_transport_grpc.hpp"
 #include "torii/impl/status_bus_impl.hpp"
 #include "torii/processor/transaction_processor_impl.hpp"
+#include "validation/stateful_validator_common.hpp"
 #include "validators/protobuf/proto_transaction_validator.hpp"
 
 constexpr size_t TimesToriiBlocking = 5;
@@ -55,11 +57,9 @@ constexpr uint32_t resubscribe_attempts = 3;
 class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
  public:
   CustomPeerCommunicationServiceMock(
-      rxcpp::subjects::subject<
-          std::shared_ptr<shared_model::interface::Proposal>> prop_notifier,
+      rxcpp::subjects::subject<OrderingEvent> prop_notifier,
       rxcpp::subjects::subject<SynchronizationEvent> commit_notifier,
-      rxcpp::subjects::subject<
-          std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+      rxcpp::subjects::subject<iroha::simulator::VerifiedProposalCreatorEvent>
           verified_prop_notifier)
       : prop_notifier_(prop_notifier),
         commit_notifier_(commit_notifier),
@@ -69,8 +69,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
       std::shared_ptr<shared_model::interface::TransactionBatch> batch)
       const override {}
 
-  rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
-  on_proposal() const override {
+  rxcpp::observable<OrderingEvent> onProposal() const override {
     return prop_notifier_.get_observable();
   }
 
@@ -78,18 +77,15 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
     return commit_notifier_.get_observable();
   }
 
-  rxcpp::observable<
-      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
-  on_verified_proposal() const override {
+  rxcpp::observable<iroha::simulator::VerifiedProposalCreatorEvent>
+  onVerifiedProposal() const override {
     return verified_prop_notifier_.get_observable();
   }
 
  private:
-  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
-      prop_notifier_;
+  rxcpp::subjects::subject<OrderingEvent> prop_notifier_;
   rxcpp::subjects::subject<SynchronizationEvent> commit_notifier_;
-  rxcpp::subjects::subject<
-      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+  rxcpp::subjects::subject<iroha::simulator::VerifiedProposalCreatorEvent>
       verified_prop_notifier_;
 };
 
@@ -102,7 +98,6 @@ class ToriiServiceTest : public testing::Test {
     pcsMock = std::make_shared<CustomPeerCommunicationServiceMock>(
         prop_notifier_, commit_notifier_, verified_prop_notifier_);
     mst = std::make_shared<iroha::MockMstProcessor>();
-    wsv_query = std::make_shared<MockWsvQuery>();
     block_query = std::make_shared<MockBlockQuery>();
     storage = std::make_shared<MockStorage>();
 
@@ -121,8 +116,6 @@ class ToriiServiceTest : public testing::Test {
             status_bus,
             std::make_shared<shared_model::proto::ProtoTxStatusFactory>());
 
-    EXPECT_CALL(*block_query, getTxByHashSync(_))
-        .WillRepeatedly(Return(boost::none));
     EXPECT_CALL(*storage, getBlockQuery()).WillRepeatedly(Return(block_query));
 
     //----------- Server run ----------------
@@ -171,15 +164,12 @@ class ToriiServiceTest : public testing::Test {
 
   std::unique_ptr<ServerRunner> runner;
 
-  std::shared_ptr<MockWsvQuery> wsv_query;
   std::shared_ptr<MockBlockQuery> block_query;
   std::shared_ptr<MockStorage> storage;
 
-  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
-      prop_notifier_;
+  rxcpp::subjects::subject<OrderingEvent> prop_notifier_;
   rxcpp::subjects::subject<SynchronizationEvent> commit_notifier_;
-  rxcpp::subjects::subject<
-      std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
+  rxcpp::subjects::subject<iroha::simulator::VerifiedProposalCreatorEvent>
       verified_prop_notifier_;
   rxcpp::subjects::subject<std::shared_ptr<iroha::MstState>>
       mst_update_notifier;
@@ -192,6 +182,7 @@ class ToriiServiceTest : public testing::Test {
   shared_model::crypto::Keypair keypair =
       shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
+  iroha::consensus::Round round;
   const std::string ip = "127.0.0.1";
   int port;
 };
@@ -295,13 +286,15 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   }
 
   // create proposal from these transactions
-  auto proposal = std::make_shared<shared_model::proto::Proposal>(
-      TestProposalBuilder()
-          .height(1)
-          .createdTime(iroha::time::now())
-          .transactions(txs)
-          .build());
-  prop_notifier_.get_subscriber().on_next(proposal);
+  std::shared_ptr<shared_model::interface::Proposal> proposal =
+      std::make_shared<shared_model::proto::Proposal>(
+          TestProposalBuilder()
+              .height(1)
+              .createdTime(iroha::time::now())
+              .transactions(txs)
+              .build());
+  prop_notifier_.get_subscriber().on_next(OrderingEvent{
+      proposal, {proposal->height(), iroha::ordering::kFirstRejectRound}});
 
   torii::CommandSyncClient client2(client1);
 
@@ -343,17 +336,20 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
   auto cmd_name = "FailedCommand";
   size_t cmd_index = 2;
   uint32_t error_code = 3;
-  validation_result->rejected_transactions.emplace(
-      failed_tx_hash,
-      iroha::validation::CommandError{
-          cmd_name, error_code, "", true, cmd_index});
-  verified_prop_notifier_.get_subscriber().on_next(validation_result);
+  validation_result->rejected_transactions.emplace_back(
+      iroha::validation::TransactionError{
+          failed_tx_hash,
+          iroha::validation::CommandError{
+              cmd_name, error_code, "", true, cmd_index}});
+  verified_prop_notifier_.get_subscriber().on_next(
+      iroha::simulator::VerifiedProposalCreatorEvent{validation_result, round});
 
   // create commit from block notifier's observable
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
       block_notifier_;
   SynchronizationEvent commit{block_notifier_.get_observable(),
-                              SynchronizationOutcomeType::kCommit};
+                              SynchronizationOutcomeType::kCommit,
+                              {}};
 
   // invoke on next of commit_notifier by sending new block to commit
   commit_notifier_.get_subscriber().on_next(commit);
@@ -480,22 +476,20 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
 
   std::vector<decltype(iroha_tx)> txs;
   txs.push_back(iroha_tx);
-  auto proposal =
+  std::shared_ptr<shared_model::interface::Proposal> proposal =
       std::make_shared<proto::Proposal>(proto::ProposalBuilder()
                                             .createdTime(iroha::time::now())
                                             .transactions(txs)
                                             .height(1)
                                             .build());
-  prop_notifier_.get_subscriber().on_next(proposal);
+  prop_notifier_.get_subscriber().on_next(OrderingEvent{
+      proposal, {proposal->height(), iroha::ordering::kFirstRejectRound}});
 
   auto validation_result =
       std::make_shared<iroha::validation::VerifiedProposalAndErrors>();
-  // a dirty hack: now the proposal object is kept also by unique_ptr.
-  // both shared and unique ptrs will live till the end of this function,
-  // and there the unique_ptr is released.
-  validation_result->verified_proposal =
-      std::unique_ptr<shared_model::proto::Proposal>(proposal.get());
-  verified_prop_notifier_.get_subscriber().on_next(validation_result);
+  validation_result->verified_proposal = proposal;
+  verified_prop_notifier_.get_subscriber().on_next(
+      iroha::simulator::VerifiedProposalCreatorEvent{validation_result, round});
 
   auto block = clone(proto::BlockBuilder()
                          .height(1)
@@ -510,7 +504,8 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Block>>
       block_notifier_;
   SynchronizationEvent commit{block_notifier_.get_observable(),
-                              SynchronizationOutcomeType::kCommit};
+                              SynchronizationOutcomeType::kCommit,
+                              {}};
 
   // invoke on next of commit_notifier by sending new block to commit
   commit_notifier_.get_subscriber().on_next(commit);
@@ -523,8 +518,6 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
   // it can be only one or to follow by some non-final
   ASSERT_EQ(torii_response.back().tx_status(),
             iroha::protocol::TxStatus::COMMITTED);
-
-  validation_result->verified_proposal.release();  // see initialization above
 }
 
 /**

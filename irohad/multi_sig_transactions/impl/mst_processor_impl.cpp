@@ -14,15 +14,13 @@ namespace iroha {
       std::shared_ptr<MstStorage> storage,
       std::shared_ptr<PropagationStrategy> strategy,
       std::shared_ptr<MstTimeProvider> time_provider)
-      : MstProcessor(),
+      : MstProcessor(logger::log("FairMstProcessor")),
         transport_(std::move(transport)),
         storage_(std::move(storage)),
         strategy_(std::move(strategy)),
         time_provider_(std::move(time_provider)),
         propagation_subscriber_(strategy_->emitter().subscribe(
-            [this](auto data) { this->onPropagate(data); })) {
-    log_ = logger::log("FairMstProcessor");
-  }
+            [this](auto data) { this->onPropagate(data); })) {}
 
   FairMstProcessor::~FairMstProcessor() {
     propagation_subscriber_.unsubscribe();
@@ -84,11 +82,14 @@ namespace iroha {
     }
   }
 
+  bool FairMstProcessor::batchInStorageImpl(const DataType &batch) const {
+    return storage_->batchInStorage(batch);
+  }
+
   // -------------------| MstTransportNotification override |-------------------
 
-  void FairMstProcessor::onNewState(
-      const shared_model::crypto::PublicKey &from,
-      ConstRefState new_state) {
+  void FairMstProcessor::onNewState(const shared_model::crypto::PublicKey &from,
+                                    ConstRefState new_state) {
     log_->info("Applying new state");
     auto current_time = time_provider_->getCurrentTime();
 

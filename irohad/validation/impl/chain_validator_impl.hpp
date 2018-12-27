@@ -34,8 +34,10 @@ namespace iroha {
   namespace validation {
     class ChainValidatorImpl : public ChainValidator {
      public:
-      ChainValidatorImpl(std::shared_ptr<consensus::yac::SupermajorityChecker>
-                             supermajority_checker);
+      explicit ChainValidatorImpl(
+          std::shared_ptr<consensus::yac::SupermajorityChecker>
+              supermajority_checker,
+          logger::Logger log = logger::log("ChainValidator"));
 
       bool validateAndApply(
           rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>

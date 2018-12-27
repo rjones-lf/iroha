@@ -13,6 +13,7 @@
 #include "backend/protobuf/query_responses/proto_role_permissions_response.hpp"
 #include "backend/protobuf/query_responses/proto_roles_response.hpp"
 #include "backend/protobuf/query_responses/proto_signatories_response.hpp"
+#include "backend/protobuf/query_responses/proto_transactions_page_response.hpp"
 #include "backend/protobuf/query_responses/proto_transaction_response.hpp"
 #include "common/byteutils.hpp"
 #include "utils/variant_deserializer.hpp"
@@ -28,7 +29,8 @@ namespace {
                      shared_model::proto::TransactionsResponse,
                      shared_model::proto::AssetResponse,
                      shared_model::proto::RolesResponse,
-                     shared_model::proto::RolePermissionsResponse>;
+                     shared_model::proto::RolePermissionsResponse,
+                     shared_model::proto::TransactionsPageResponse>;
 
   /// list of types in variant
   using ProtoQueryResponseListType = ProtoQueryResponseVariantType::types;

@@ -7,7 +7,7 @@
 
 namespace iroha {
 
-  MstProcessor::MstProcessor() : log_(logger::log("MstProcessor")) {}
+  MstProcessor::MstProcessor(logger::Logger log) : log_(std::move(log)) {}
 
   void MstProcessor::propagateBatch(const DataType &batch) {
     this->propagateBatchImpl(batch);
@@ -25,4 +25,9 @@ namespace iroha {
   rxcpp::observable<DataType> MstProcessor::onExpiredBatches() const {
     return this->onExpiredBatchesImpl();
   }
+
+  bool MstProcessor::batchInStorage(const DataType &batch) const {
+    return this->batchInStorageImpl(batch);
+  }
+
 }  // namespace iroha

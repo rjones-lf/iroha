@@ -9,6 +9,7 @@
 #include <boost/range/empty.hpp>
 #include "ametsuchi/tx_presence_cache.hpp"
 #include "common/visitor.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -18,10 +19,12 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<transport::OdOsNotification> network_client,
     rxcpp::observable<BlockRoundEventType> events,
     std::shared_ptr<cache::OrderingGateCache> cache,
-    std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
+    std::shared_ptr<shared_model::interface::UnsafeProposalFactory> factory,
     std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-    consensus::Round initial_round)
-    : ordering_service_(std::move(ordering_service)),
+    consensus::Round initial_round,
+    logger::Logger log)
+    : log_(std::move(log)),
+      ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {
         // exclusive lock
@@ -30,36 +33,45 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         visit_in_place(event,
                        [this](const BlockEvent &block_event) {
                          // block committed, increment block round
+                         log_->debug("BlockEvent. {}", block_event.round);
                          current_round_ = block_event.round;
                          cache_->remove(block_event.hashes);
                        },
-                       [this](const EmptyEvent &empty) {
+                       [this](const EmptyEvent &empty_event) {
                          // no blocks committed, increment reject round
-                         current_round_ = {current_round_.block_round,
-                                           current_round_.reject_round + 1};
+                         log_->debug("EmptyEvent");
+                         current_round_ = empty_event.round;
                        });
+        log_->debug("Current: {}", current_round_);
 
         auto batches = cache_->pop();
 
         cache_->addToBack(batches);
-        network_client_->onBatches(current_round_,
-                                   transport::OdOsNotification::CollectionType{
-                                       batches.begin(), batches.end()});
+        if (not batches.empty()) {
+          network_client_->onBatches(
+              current_round_,
+              transport::OdOsNotification::CollectionType{batches.begin(),
+                                                          batches.end()});
+        }
 
         // notify our ordering service about new round
         ordering_service_->onCollaborationOutcome(current_round_);
 
         // request proposal for the current round
-        auto proposal = network_client_->onRequestProposal(current_round_);
-
-        auto final_proposal = this->processProposalRequest(std::move(proposal));
+        auto proposal = this->processProposalRequest(
+            network_client_->onRequestProposal(current_round_));
         // vote for the object received from the network
-        proposal_notifier_.get_subscriber().on_next(std::move(final_proposal));
+        proposal_notifier_.get_subscriber().on_next(
+            network::OrderingEvent{proposal, current_round_});
       })),
       cache_(std::move(cache)),
       proposal_factory_(std::move(factory)),
       tx_cache_(std::move(tx_cache)),
       current_round_(initial_round) {}
+
+OnDemandOrderingGate::~OnDemandOrderingGate() {
+  events_subscription_.unsubscribe();
+}
 
 void OnDemandOrderingGate::propagateBatch(
     std::shared_ptr<shared_model::interface::TransactionBatch> batch) {
@@ -70,8 +82,7 @@ void OnDemandOrderingGate::propagateBatch(
       current_round_, transport::OdOsNotification::CollectionType{batch});
 }
 
-rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
-OnDemandOrderingGate::on_proposal() {
+rxcpp::observable<network::OrderingEvent> OnDemandOrderingGate::onProposal() {
   return proposal_notifier_.get_observable();
 }
 
@@ -81,21 +92,20 @@ void OnDemandOrderingGate::setPcs(
       "Method is deprecated. PCS observable should be set in ctor");
 }
 
-std::unique_ptr<shared_model::interface::Proposal>
+boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
 OnDemandOrderingGate::processProposalRequest(
     boost::optional<OnDemandOrderingService::ProposalType> &&proposal) const {
   if (not proposal) {
-    return proposal_factory_->unsafeCreateProposal(
-        current_round_.block_round, current_round_.reject_round, {});
+    return boost::none;
   }
   // no need to check empty proposal
   if (boost::empty(proposal.value()->transactions())) {
-    return std::move(proposal.value());
+    return boost::none;
   }
   return removeReplays(std::move(**std::move(proposal)));
 }
 
-std::unique_ptr<shared_model::interface::Proposal>
+boost::optional<std::shared_ptr<shared_model::interface::Proposal>>
 OnDemandOrderingGate::removeReplays(
     shared_model::interface::Proposal &&proposal) const {
   auto tx_is_not_processed = [this](const auto &tx) {
@@ -118,6 +128,13 @@ OnDemandOrderingGate::removeReplays(
   auto unprocessed_txs =
       boost::adaptors::filter(proposal.transactions(), tx_is_not_processed);
 
-  return proposal_factory_->unsafeCreateProposal(
+  auto result = proposal_factory_->unsafeCreateProposal(
       proposal.height(), proposal.createdTime(), unprocessed_txs);
+
+  if (boost::empty(result->transactions())) {
+    return boost::none;
+  }
+
+  return boost::make_optional<
+      std::shared_ptr<shared_model::interface::Proposal>>(std::move(result));
 }

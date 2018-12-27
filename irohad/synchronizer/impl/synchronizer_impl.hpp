@@ -6,11 +6,12 @@
 #ifndef IROHA_SYNCHRONIZER_IMPL_HPP
 #define IROHA_SYNCHRONIZER_IMPL_HPP
 
+#include "synchronizer/synchronizer.hpp"
+
 #include "ametsuchi/mutable_factory.hpp"
 #include "logger/logger.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
-#include "synchronizer/synchronizer.hpp"
 #include "validation/chain_validator.hpp"
 
 namespace iroha {
@@ -28,12 +29,12 @@ namespace iroha {
           std::shared_ptr<validation::ChainValidator> validator,
           std::shared_ptr<ametsuchi::MutableFactory> mutable_factory,
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
-          std::shared_ptr<network::BlockLoader> block_loader);
+          std::shared_ptr<network::BlockLoader> block_loader,
+          logger::Logger log = logger::log("Synchronizer"));
 
       ~SynchronizerImpl() override;
 
-      void process_commit(network::Commit commit_message) override;
-
+      void processOutcome(consensus::GateObject object) override;
       rxcpp::observable<SynchronizationEvent> on_commit_chain() override;
 
      private:
@@ -47,9 +48,14 @@ namespace iroha {
        * synchronized
        */
       SynchronizationEvent downloadMissingBlocks(
-          std::shared_ptr<shared_model::interface::Block> commit_message,
+          const consensus::VoteOther &msg,
           std::unique_ptr<ametsuchi::MutableStorage> storage,
           const shared_model::interface::types::HeightType height);
+
+      void processNext(const consensus::PairValid &msg);
+      void processDifferent(const consensus::VoteOther &msg);
+
+      boost::optional<std::unique_ptr<ametsuchi::MutableStorage>> getStorage();
 
       std::shared_ptr<validation::ChainValidator> validator_;
       std::shared_ptr<ametsuchi::MutableFactory> mutable_factory_;

@@ -6,6 +6,7 @@
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 
 #include <soci/postgresql/soci-postgresql.h>
+#include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include "ametsuchi/impl/soci_utils.hpp"
 #include "cryptography/public_key.hpp"
@@ -260,6 +261,30 @@ namespace {
               permittee_account_id = %3%
           )") % bits % perm_str
                          % creator_id % account_id)
+                            .str();
+    return query;
+  }
+
+  std::string checkAccountDomainRoleOrGlobalRolePermission(
+      shared_model::interface::permissions::Role global_permission,
+      shared_model::interface::permissions::Role domain_permission,
+      const shared_model::interface::types::AccountIdType &creator_id,
+      const shared_model::interface::types::AssetIdType
+          &id_with_target_domain) {
+    std::string query = (boost::format(R"(WITH
+          has_global_role_perm AS (%1%),
+          has_domain_role_perm AS (%2%)
+          SELECT CASE
+                           WHEN (SELECT * FROM has_global_role_perm) THEN true
+                           WHEN ((split_part(%3%, '@', 2) = split_part(%4%, '#', 2))) THEN
+                               CASE
+                                   WHEN (SELECT * FROM has_domain_role_perm) THEN true
+                                   ELSE false
+                                END
+                           ELSE false END
+          )") % checkAccountRolePermission(global_permission, creator_id)
+                         % checkAccountRolePermission(domain_permission, creator_id)
+                         % creator_id % id_with_target_domain)
                             .str();
     return query;
   }
@@ -1183,9 +1208,12 @@ namespace iroha {
           {"addAssetQuantity",
            addAssetQuantityBase,
            {(boost::format(R"(has_perm AS (%s),)")
-             % checkAccountRolePermission(
+             % checkAccountDomainRoleOrGlobalRolePermission(
                    shared_model::interface::permissions::Role::kAddAssetQty,
-                   "$1"))
+                   shared_model::interface::permissions::Role::
+                       kAddDomainAssetQty,
+                   "$1",
+                   "$2"))
                 .str(),
             "AND (SELECT * from has_perm)",
             "WHEN NOT (SELECT * from has_perm) THEN 2"}});
@@ -1444,17 +1472,20 @@ namespace iroha {
               WHEN NOT EXISTS (SELECT * FROM check_account_signatories) THEN 5
               )"}});
 
-      statements.push_back(
-          {"subtractAssetQuantity",
-           subtractAssetQuantityBase,
-           {(boost::format(R"(
+      statements.push_back({"subtractAssetQuantity",
+                            subtractAssetQuantityBase,
+                            {(boost::format(R"(
                has_perm AS (%s),)")
-             % checkAccountRolePermission(shared_model::interface::permissions::
-                                              Role::kSubtractAssetQty,
-                                          "$1"))
-                .str(),
-            R"( AND (SELECT * FROM has_perm))",
-            R"( WHEN NOT (SELECT * FROM has_perm) THEN 2 )"}});
+                              % checkAccountDomainRoleOrGlobalRolePermission(
+                                    shared_model::interface::permissions::Role::
+                                        kSubtractAssetQty,
+                                    shared_model::interface::permissions::Role::
+                                        kSubtractDomainAssetQty,
+                                    "$1",
+                                    "$2"))
+                                 .str(),
+                             R"( AND (SELECT * FROM has_perm))",
+                             R"( WHEN NOT (SELECT * FROM has_perm) THEN 2 )"}});
 
       statements.push_back(
           {"transferAsset",

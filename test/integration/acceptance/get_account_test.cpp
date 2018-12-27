@@ -11,6 +11,7 @@
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/query_responses/account_response.hpp"
 #include "utils/query_error_response_visitor.hpp"
+#include "interfaces/query_responses/account_response.hpp"
 
 using namespace integration_framework;
 using namespace shared_model;

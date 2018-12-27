@@ -16,7 +16,9 @@ using namespace shared_model::proto;
 iroha::expected::Result<interface::types::JsonType, std::string>
 ProtoBlockJsonConverter::serialize(const interface::Block &block) const
     noexcept {
-  const auto &proto_block = static_cast<const Block &>(block).getTransport();
+  const auto &proto_block_v1 = static_cast<const Block &>(block).getTransport();
+  iroha::protocol::Block proto_block;
+  *proto_block.mutable_block_v1() = proto_block_v1;
   std::string result;
   auto status =
       google::protobuf::util::MessageToJsonString(proto_block, &result);
@@ -36,6 +38,6 @@ ProtoBlockJsonConverter::deserialize(
     return iroha::expected::makeError(status.error_message());
   }
   std::unique_ptr<interface::Block> result =
-      std::make_unique<Block>(std::move(block));
+      std::make_unique<Block>(std::move(block.block_v1()));
   return iroha::expected::makeValue(std::move(result));
 }

@@ -5,6 +5,8 @@
 
 #include "interfaces/queries/get_account_asset_transactions.hpp"
 
+#include "interfaces/queries/tx_pagination_meta.hpp"
+
 namespace shared_model {
   namespace interface {
 
@@ -13,6 +15,7 @@ namespace shared_model {
           .init("GetAccountAssetTransactions")
           .append("account_id", accountId())
           .append("asset_id", assetId())
+          .append("pagination_meta", paginationMeta().toString())
           .finalize();
     }
 

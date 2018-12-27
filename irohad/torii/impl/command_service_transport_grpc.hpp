@@ -34,6 +34,11 @@ namespace torii {
      * @param status_bus is a common notifier for tx statuses
      * @param initial_timeout - streaming timeout when tx is not received
      * @param nonfinal_timeout - streaming timeout when tx is being processed
+     * @param status_factory - factory of statuses
+     * @param transaction_factory - factory of transactions
+     * @param batch_parser - parses of batches
+     * @param transaction_batch_factory - factory of batches
+     * @param log to print progress
      */
     CommandServiceTransportGrpc(
         std::shared_ptr<CommandService> command_service,
@@ -46,7 +51,8 @@ namespace torii {
         std::shared_ptr<shared_model::interface::TransactionBatchParser>
             batch_parser,
         std::shared_ptr<shared_model::interface::TransactionBatchFactory>
-            transaction_batch_factory);
+            transaction_batch_factory,
+        logger::Logger log = logger::log("CommandServiceTransportGrpc"));
 
     /**
      * Torii call via grpc

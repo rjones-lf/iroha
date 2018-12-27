@@ -190,19 +190,17 @@ namespace integration_framework {
     }
     std::vector<VoteMessage> my_votes;
     my_votes.reserve(incoming_votes->size());
-    std::transform(
-        incoming_votes->cbegin(),
-        incoming_votes->cend(),
-        std::back_inserter(my_votes),
-        [this](const VoteMessage &incoming_vote) {
-          log_->debug(
-              "Sending agreement for proposal (Round ({}, {}), hash ({}, {})).",
-              incoming_vote.hash.vote_round.block_round,
-              incoming_vote.hash.vote_round.reject_round,
-              incoming_vote.hash.vote_hashes.proposal_hash,
-              incoming_vote.hash.vote_hashes.block_hash);
-          return makeVote(incoming_vote.hash);
-        });
+    std::transform(incoming_votes->cbegin(),
+                   incoming_votes->cend(),
+                   std::back_inserter(my_votes),
+                   [this](const VoteMessage &incoming_vote) {
+                     log_->debug(
+                         "Sending agreement for proposal ({}, hash ({}, {})).",
+                         incoming_vote.hash.vote_round,
+                         incoming_vote.hash.vote_hashes.proposal_hash,
+                         incoming_vote.hash.vote_hashes.block_hash);
+                     return makeVote(incoming_vote.hash);
+                   });
     sendYacState(my_votes);
   }
 

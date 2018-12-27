@@ -21,7 +21,7 @@
 #include "backend/protobuf/commands/proto_set_quorum.hpp"
 #include "backend/protobuf/commands/proto_subtract_asset_quantity.hpp"
 #include "backend/protobuf/commands/proto_transfer_asset.hpp"
-#include "utils/reference_holder.hpp"
+#include "logger/logger.hpp"
 #include "utils/variant_deserializer.hpp"
 
 namespace {
@@ -52,13 +52,12 @@ namespace shared_model {
   namespace proto {
 
     struct Command::Impl {
-      explicit Impl(TransportType &&ref) : proto_(std::move(ref)) {}
-      explicit Impl(const TransportType &ref) : proto_(ref) {}
+      explicit Impl(TransportType &ref) : proto_(ref) {}
 
-      detail::ReferenceHolder<TransportType> proto_;
+      TransportType &proto_;
 
       ProtoCommandVariantType variant_{[this] {
-        auto &&ar = *proto_;
+        const auto &ar = proto_;
         int which =
             ar.GetDescriptor()->FindFieldByNumber(ar.command_case())->index();
         return shared_model::detail::variant_impl<ProtoCommandListType>::
@@ -67,16 +66,14 @@ namespace shared_model {
       }()};
 
       CommandVariantType ivariant_{variant_};
+
+      logger::Logger log_{logger::log("ProtoCommand")};
     };
 
-    Command::Command(const Command &o) : Command(*o.impl_->proto_) {}
     Command::Command(Command &&o) noexcept = default;
 
-    Command::Command(const TransportType &ref) {
+    Command::Command(TransportType &ref) {
       impl_ = std::make_unique<Impl>(ref);
-    }
-    Command::Command(TransportType &&ref) {
-      impl_ = std::make_unique<Impl>(std::move(ref));
     }
 
     Command::~Command() = default;
@@ -86,7 +83,12 @@ namespace shared_model {
     }
 
     Command *Command::clone() const {
-      return new Command(*impl_->proto_);
+      logError("tried to clone a proto command, which is uncloneable");
+      std::terminate();
+    }
+
+    void Command::logError(const std::string &message) const {
+      impl_->log_->error(message);
     }
 
   }  // namespace proto

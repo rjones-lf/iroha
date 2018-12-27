@@ -26,10 +26,11 @@ namespace {
 
 BlockLoaderImpl::BlockLoaderImpl(
     std::shared_ptr<PeerQueryFactory> peer_query_factory,
-    shared_model::proto::ProtoBlockFactory factory)
+    shared_model::proto::ProtoBlockFactory factory,
+    logger::Logger log)
     : peer_query_factory_(std::move(peer_query_factory)),
       block_factory_(std::move(factory)),
-      log_(logger::log("BlockLoaderImpl")) {}
+      log_(std::move(log)) {}
 
 rxcpp::observable<std::shared_ptr<Block>> BlockLoaderImpl::retrieveBlocks(
     const shared_model::interface::types::HeightType height,

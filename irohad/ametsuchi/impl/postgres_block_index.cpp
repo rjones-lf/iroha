@@ -30,11 +30,12 @@ namespace {
   // make index tx hash -> block where hash is stored
   std::string makeHashIndex(
       const shared_model::interface::types::HashType &hash,
-      shared_model::interface::types::HeightType height) {
+      shared_model::interface::types::HeightType height,
+      size_t index) {
     boost::format base(
-        "INSERT INTO height_by_hash(hash, height) VALUES ('%s', "
-        "'%s');");
-    return (base % hash.hex() % height).str();
+        "INSERT INTO position_by_hash(hash, height, index) VALUES ('%s', "
+        "'%s', '%s');");
+    return (base % hash.hex() % height % index).str();
   }
 
   std::string makeCommittedTxHashIndex(
@@ -104,7 +105,7 @@ namespace {
           // flat map accounts to unindexed keys
           for (const auto &id : ids) {
             boost::format base(
-                "INSERT INTO index_by_id_height_asset(id, "
+                "INSERT INTO position_by_account_asset(account_id, "
                 "height, asset_id, "
                 "index) "
                 "VALUES ('%s', '%s', '%s', '%s');");
@@ -117,8 +118,9 @@ namespace {
 
 namespace iroha {
   namespace ametsuchi {
-    PostgresBlockIndex::PostgresBlockIndex(soci::session &sql)
-        : sql_(sql), log_(logger::log("PostgresBlockIndex")) {}
+    PostgresBlockIndex::PostgresBlockIndex(soci::session &sql,
+                                           logger::Logger log)
+        : sql_(sql), log_(std::move(log)) {}
 
     void PostgresBlockIndex::index(
         const shared_model::interface::Block &block) {
@@ -136,7 +138,7 @@ namespace iroha {
             query += makeAccountHeightIndex(creator_id, height);
             query += makeAccountAssetIndex(
                 creator_id, height, index, tx.value().commands());
-            query += makeHashIndex(tx.value().hash(), height);
+            query += makeHashIndex(tx.value().hash(), height, index);
             query += makeCommittedTxHashIndex(tx.value().hash());
             query += makeCreatorHeightIndex(creator_id, height, index);
             return query;
