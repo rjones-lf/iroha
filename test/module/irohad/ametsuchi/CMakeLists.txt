@@ -50,7 +50,6 @@ addtest(postgres_executor_test postgres_executor_test.cpp)
 target_link_libraries(postgres_executor_test
     integration_framework_config_helper
     shared_model_proto_backend
-    shared_model_default_builders
     ametsuchi
     commands_mocks_factory
     )
