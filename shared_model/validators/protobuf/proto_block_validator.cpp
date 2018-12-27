@@ -5,7 +5,9 @@
 
 #include "validators/protobuf/proto_block_validator.hpp"
 
+#include <boost/format.hpp>
 #include <boost/range/adaptors.hpp>
+#include <boost/range/algorithm/for_each.hpp>
 
 #include "validators/validators_common.hpp"
 
@@ -26,14 +28,17 @@ namespace shared_model {
 
       const auto &rejected_hashes =
           block.block_v1().payload().rejected_transactions_hashes();
-      std::for_each(rejected_hashes.begin(),
-                    rejected_hashes.end(),
-                    [&reason](const auto &hash) {
-                      if (not validateHexString(hash)) {
-                        reason.second.emplace_back("Rejected hash " + hash
-                                                   + " is not in hash format");
-                      }
-                    });
+
+      boost::for_each(rejected_hashes | boost::adaptors::indexed(0),
+                      [&reason](const auto &hash) {
+                        if (not validateHexString(hash.value())) {
+                          reason.second.emplace_back(
+                              (boost::format("Rejected hash '%s' with index "
+                                             "'%d' is not in hash format")
+                               % hash.value() % hash.index())
+                                  .str());
+                        }
+                      });
       if (not validateHexString(block.block_v1().payload().prev_block_hash())) {
         reason.second.emplace_back("Prev block hash has incorrect format");
       }

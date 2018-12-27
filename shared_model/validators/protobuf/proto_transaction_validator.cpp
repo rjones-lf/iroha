@@ -76,7 +76,8 @@ namespace shared_model {
             }
             break;
           }
-          default: { break; }
+          default:
+            break;
         }
       }
       if (not reason.second.empty()) {

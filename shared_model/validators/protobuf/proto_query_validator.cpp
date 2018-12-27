@@ -16,7 +16,8 @@ namespace shared_model {
       if (paginationMeta.opt_first_tx_hash_case()
           != iroha::protocol::TxPaginationMeta::OPT_FIRST_TX_HASH_NOT_SET) {
         if (not validateHexString(paginationMeta.first_tx_hash())) {
-          reason.second.emplace_back("First tx hash has invalid format");
+          reason.second.emplace_back(
+              "First tx hash from pagination meta has invalid format");
         }
       }
     }
@@ -36,11 +37,12 @@ namespace shared_model {
           break;
         }
         case iroha::protocol::Query_Payload::kGetAccountAssetTransactions: {
-          const auto &gat = qry.payload().get_account_asset_transactions();
-          validatePaginationMeta(gat.pagination_meta(), reason);
+          const auto &gaat = qry.payload().get_account_asset_transactions();
+          validatePaginationMeta(gaat.pagination_meta(), reason);
           break;
         }
-        default: { break; }
+        default:
+          break;
       }
       if (not reason.second.empty()) {
         answer.addReason(std::move(reason));
