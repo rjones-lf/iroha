@@ -10,6 +10,7 @@ addtest(torii_transport_command_test torii_transport_command_test.cpp)
 target_link_libraries(torii_transport_command_test
     torii_service
     command_client
+    gate_object
     )
 
 addtest(torii_queries_test torii_queries_test.cpp)

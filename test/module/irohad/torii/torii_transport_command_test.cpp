@@ -20,6 +20,7 @@
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
 #include "module/shared_model/interface/mock_transaction_batch_factory.hpp"
 #include "module/shared_model/validators/validators.hpp"
@@ -34,12 +35,12 @@ using ::testing::Property;
 using ::testing::Return;
 using ::testing::StrEq;
 
+using iroha::consensus::BlockReject;
+using iroha::consensus::GateObject;
+
 using namespace iroha::ametsuchi;
 using namespace iroha::torii;
-
 using namespace std::chrono_literals;
-constexpr std::chrono::milliseconds initial_timeout = 1s;
-constexpr std::chrono::milliseconds nonfinal_timeout = 2 * 10s;
 
 class CommandServiceTransportGrpcTest : public testing::Test {
  private:
@@ -72,6 +73,11 @@ class CommandServiceTransportGrpcTest : public testing::Test {
     batch_parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     batch_factory = std::make_shared<MockTransactionBatchFactory>();
+
+    mock_consensus_gate = std::make_shared<iroha::network::MockConsensusGate>();
+    ON_CALL(*mock_consensus_gate, onOutcome())
+        .WillByDefault(
+            Return(rxcpp::observable<>::empty<iroha::consensus::GateObject>()));
   }
 
   void SetUp() override {
@@ -83,12 +89,12 @@ class CommandServiceTransportGrpcTest : public testing::Test {
     transport_grpc = std::make_shared<torii::CommandServiceTransportGrpc>(
         command_service,
         status_bus,
-        initial_timeout,
-        nonfinal_timeout,
         status_factory,
         transaction_factory,
         batch_parser,
-        batch_factory);
+        batch_factory,
+        mock_consensus_gate,
+        2);
   }
 
   std::shared_ptr<MockStatusBus> status_bus;
@@ -103,6 +109,8 @@ class CommandServiceTransportGrpcTest : public testing::Test {
 
   std::shared_ptr<MockCommandService> command_service;
   std::shared_ptr<torii::CommandServiceTransportGrpc> transport_grpc;
+
+  std::shared_ptr<iroha::network::MockConsensusGate> mock_consensus_gate;
 
   const size_t kHashLength = 32;
   const size_t kTimes = 5;
@@ -264,6 +272,7 @@ TEST_F(CommandServiceTransportGrpcTest, StatusStreamOnNotReceived) {
   grpc::ServerContext context;
   iroha::protocol::TxStatusRequest request;
   iroha::MockServerWriter<iroha::protocol::ToriiResponse> response_writer;
+
   std::vector<std::shared_ptr<shared_model::interface::TransactionResponse>>
       responses;
   shared_model::crypto::Hash hash("1");
@@ -275,6 +284,11 @@ TEST_F(CommandServiceTransportGrpcTest, StatusStreamOnNotReceived) {
                              StrEq(shared_model::crypto::toBinaryString(hash))),
                     _))
       .WillOnce(Return(true));
+
+  std::vector<GateObject> gate_objects{BlockReject{}, BlockReject{}};
+  EXPECT_CALL(*mock_consensus_gate, onOutcome())
+      .WillOnce(Return(rxcpp::observable<>::iterate(gate_objects)));
+
   ASSERT_TRUE(transport_grpc
                   ->StatusStream(
                       &context,
