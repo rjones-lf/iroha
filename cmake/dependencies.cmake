@@ -146,13 +146,21 @@ find_package(Boost 1.65.0 REQUIRED
     system
     thread
     )
-add_library(boost INTERFACE IMPORTED)
-target_link_libraries(boost INTERFACE
-    Boost::boost
-    Boost::filesystem
-    Boost::system
-    Boost::thread
-    )
+if (MSVC)
+  add_library(boost INTERFACE IMPORTED)
+  target_link_libraries(boost INTERFACE
+      Boost::boost
+      Boost::filesystem
+      Boost::system
+      Boost::thread
+      )
+else ()
+  add_library(boost INTERFACE IMPORTED)
+  set_target_properties(boost PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS}
+      INTERFACE_LINK_LIBRARIES "${Boost_LIBRARIES}"
+      )
+endif()
 
 if(ENABLE_LIBS_PACKAGING)
   foreach (library ${Boost_LIBRARIES})
