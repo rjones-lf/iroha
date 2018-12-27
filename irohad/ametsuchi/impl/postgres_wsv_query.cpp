@@ -28,16 +28,18 @@ namespace iroha {
 
     PostgresWsvQuery::PostgresWsvQuery(
         soci::session &sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
-        : sql_(sql), factory_(factory), log_(logger::log("PostgresWsvQuery")) {}
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        logger::Logger log)
+        : sql_(sql), factory_(factory), log_(std::move(log)) {}
 
     PostgresWsvQuery::PostgresWsvQuery(
         std::unique_ptr<soci::session> sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        logger::Logger log)
         : psql_(std::move(sql)),
           sql_(*psql_),
           factory_(factory),
-          log_(logger::log("PostgresWsvQuery")) {}
+          log_(std::move(log)) {}
 
     template <typename T>
     boost::optional<std::shared_ptr<T>> PostgresWsvQuery::fromResult(

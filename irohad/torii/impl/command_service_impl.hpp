@@ -27,13 +27,15 @@ namespace torii {
      * @param tx_processor - processor of received transactions
      * @param storage - to query transactions outside the cache
      * @param status_bus is a common notifier for tx statuses
+     * @param log to print progress
      */
     CommandServiceImpl(
         std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
         std::shared_ptr<iroha::ametsuchi::Storage> storage,
         std::shared_ptr<iroha::torii::StatusBus> status_bus,
         std::shared_ptr<shared_model::interface::TxStatusFactory>
-            status_factory);
+            status_factory,
+        logger::Logger log = logger::log("CommandServiceImpl"));
 
     /**
      * Disable copying in any way to prevent potential issues with common

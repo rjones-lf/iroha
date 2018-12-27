@@ -37,48 +37,6 @@ namespace shared_model {
 }  // namespace shared_model
 
 /**
- * Validate getAccountTransaction with given parameters
- * @tparam B block query type
- * @param blocks block query object
- * @param account id to query
- * @param call_count number of observable calls
- * @param command_count number of commands in transaction
- */
-template <typename B>
-void validateAccountTransactions(B &&blocks,
-                                 const std::string &account,
-                                 int call_count,
-                                 int command_count) {
-  auto txs = blocks->getAccountTransactions(account);
-  ASSERT_EQ(txs.size(), call_count);
-  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
-    EXPECT_EQ(tx->commands().size(), command_count);
-  });
-}
-
-/**
- * Validate getAccountAssetTransactions with given parameters
- * @tparam B block query type
- * @param blocks block query object
- * @param account id to query
- * @param asset id to query
- * @param call_count number of observable calls
- * @param command_count number of commands in transaction
- */
-template <typename B>
-void validateAccountAssetTransactions(B &&blocks,
-                                      const std::string &account,
-                                      const std::string &asset,
-                                      int call_count,
-                                      int command_count) {
-  auto txs = blocks->getAccountAssetTransactions(account, asset);
-  ASSERT_EQ(txs.size(), call_count);
-  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
-    EXPECT_EQ(tx->commands().size(), command_count);
-  });
-}
-
-/**
  * Validate getAccountAsset with given parameters
  * @tparam W WSV query type
  * @param wsv WSV query object
@@ -207,15 +165,6 @@ TEST_F(AmetsuchiTest, SampleTest) {
   for (size_t i = 0; i < stored_blocks.size(); i++) {
     EXPECT_EQ(*(hashes.begin() + i), stored_blocks[i]->hash());
   }
-
-  validateAccountTransactions(blocks, "admin1", 1, 3);
-  validateAccountTransactions(blocks, user1id, 1, 4);
-  validateAccountTransactions(blocks, "non_existing_user", 0, 0);
-
-  validateAccountAssetTransactions(blocks, user1id, assetid, 1, 4);
-  validateAccountAssetTransactions(blocks, user2id, assetid, 1, 4);
-  validateAccountAssetTransactions(
-      blocks, "non_existing_user", "non_existing_asset", 0, 0);
 }
 
 TEST_F(AmetsuchiTest, PeerTest) {
@@ -236,130 +185,6 @@ TEST_F(AmetsuchiTest, PeerTest) {
   ASSERT_EQ(peers->at(0)->address(), "192.168.9.1:50051");
 
   ASSERT_EQ(peers->at(0)->pubkey(), fake_pubkey);
-}
-
-TEST_F(AmetsuchiTest, queryGetAccountAssetTransactionsTest) {
-  ASSERT_TRUE(storage);
-  auto wsv = storage->getWsvQuery();
-  auto blocks = storage->getBlockQuery();
-
-  const auto admin = "admin", domain = "domain", user1name = "userone",
-             user2name = "usertwo", user3name = "userthree",
-             user1id = "userone@domain", user2id = "usertwo@domain",
-             user3id = "userthree@domain", asset1name = "assetone",
-             asset2name = "assettwo", asset1id = "assetone#domain",
-             asset2id = "assettwo#domain";
-
-  // 1st tx
-  std::vector<shared_model::proto::Transaction> txs;
-  txs.push_back(
-      TestTransactionBuilder()
-          .creatorAccountId(admin)
-          .createRole("user",
-                      {Role::kAddPeer, Role::kCreateAsset, Role::kGetMyAccount})
-          .createDomain(domain, "user")
-          .createAccount(user1name, domain, fake_pubkey)
-          .createAccount(user2name, domain, fake_pubkey)
-          .createAccount(user3name, domain, fake_pubkey)
-          .createAsset(asset1name, domain, 1)
-          .createAsset(asset2name, domain, 1)
-          .build());
-  txs.push_back(TestTransactionBuilder()
-                    .creatorAccountId(user1id)
-                    .addAssetQuantity(asset1id, "300.0")
-                    .build());
-  txs.push_back(TestTransactionBuilder()
-                    .creatorAccountId(user2id)
-                    .addAssetQuantity(asset2id, "250.0")
-                    .build());
-
-  auto block1 = TestBlockBuilder()
-                    .height(1)
-                    .transactions(txs)
-                    .prevHash(fake_hash)
-                    .build();
-
-  apply(storage, block1);
-
-  // Check querying accounts
-  for (const auto &id : {user1id, user2id, user3id}) {
-    validateAccount(wsv, id, domain);
-  }
-
-  // Check querying assets for users
-  validateAccountAsset(
-      wsv, user1id, asset1id, shared_model::interface::Amount("300.0"));
-  validateAccountAsset(
-      wsv, user2id, asset2id, shared_model::interface::Amount("250.0"));
-
-  // 2th tx (user1 -> user2 # asset1)
-  txs.clear();
-  txs.push_back(
-      TestTransactionBuilder()
-          .creatorAccountId(user1id)
-          .transferAsset(user1id, user2id, asset1id, "Transfer asset", "120.0")
-          .build());
-  auto block2 = TestBlockBuilder()
-                    .transactions(txs)
-                    .height(2)
-                    .prevHash(block1.hash())
-                    .build();
-
-  apply(storage, block2);
-
-  // Check account asset after transfer assets
-  validateAccountAsset(
-      wsv, user1id, asset1id, shared_model::interface::Amount("180.0"));
-  validateAccountAsset(
-      wsv, user2id, asset1id, shared_model::interface::Amount("120.0"));
-
-  // 3rd tx
-  //   (user2 -> user3 # asset2)
-  //   (user2 -> user1 # asset2)
-  txs.clear();
-  txs.push_back(
-      TestTransactionBuilder()
-          .creatorAccountId(user2id)
-          .transferAsset(user2id, user3id, asset2id, "Transfer asset", "150.0")
-          .transferAsset(user2id, user1id, asset2id, "Transfer asset", "10.0")
-          .build());
-
-  auto block3 = TestBlockBuilder()
-                    .transactions(txs)
-                    .height(3)
-                    .prevHash(block2.hash())
-                    .build();
-
-  apply(storage, block3);
-
-  validateAccountAsset(
-      wsv, user2id, asset2id, shared_model::interface::Amount("90.0"));
-  validateAccountAsset(
-      wsv, user3id, asset2id, shared_model::interface::Amount("150.0"));
-  validateAccountAsset(
-      wsv, user1id, asset2id, shared_model::interface::Amount("10.0"));
-
-  // Block store test
-  auto hashes = {block1.hash(), block2.hash(), block3.hash()};
-
-  auto stored_blocks = blocks->getBlocks(1, 3);
-  ASSERT_EQ(3, stored_blocks.size());
-  for (size_t i = 0; i < stored_blocks.size(); i++) {
-    EXPECT_EQ(*(hashes.begin() + i), stored_blocks[i]->hash());
-  }
-
-  validateAccountTransactions(blocks, admin, 1, 7);
-  validateAccountTransactions(blocks, user3id, 0, 0);
-
-  // (user1 -> user2 # asset1)
-  // (user2 -> user3 # asset2)
-  // (user2 -> user1 # asset2)
-  validateAccountAssetTransactions(blocks, user1id, asset1id, 1, 1);
-  validateAccountAssetTransactions(blocks, user2id, asset1id, 1, 1);
-  validateAccountAssetTransactions(blocks, user3id, asset1id, 0, 0);
-  validateAccountAssetTransactions(blocks, user1id, asset2id, 1, 2);
-  validateAccountAssetTransactions(blocks, user2id, asset2id, 1, 2);
-  validateAccountAssetTransactions(blocks, user3id, asset2id, 1, 2);
 }
 
 TEST_F(AmetsuchiTest, AddSignatoryTest) {
@@ -618,62 +443,6 @@ TEST_F(AmetsuchiTest, TestingStorageWhenCommitBlock) {
   storage->commit(std::move(mutable_storage));
 
   ASSERT_TRUE(wrapper.validate());
-}
-
-/**
- * @given initialized storage
- * @when insert block with 2 transactions in
- * @then both of them are found with getTxByHashSync call by hash. Transaction
- * with some other hash is not found.
- */
-TEST_F(AmetsuchiTest, FindTxByHashTest) {
-  ASSERT_TRUE(storage);
-  auto blocks = storage->getBlockQuery();
-
-  shared_model::crypto::PublicKey pubkey1(std::string(32, '1'));
-  shared_model::crypto::PublicKey pubkey2(std::string(32, '2'));
-
-  std::vector<shared_model::proto::Transaction> txs;
-  txs.push_back(
-      TestTransactionBuilder()
-          .creatorAccountId("admin1")
-          .createRole("user",
-                      {Role::kAddPeer, Role::kCreateAsset, Role::kGetMyAccount})
-          .createDomain("domain", "user")
-          .createAccount("userone", "domain", pubkey1)
-          .build());
-
-  txs.push_back(
-      TestTransactionBuilder()
-          .creatorAccountId("admin1")
-          .createRole("usertwo",
-                      {Role::kAddPeer, Role::kCreateAsset, Role::kGetMyAccount})
-          .createDomain("domaintwo", "user")
-          .build());
-
-  auto block = TestBlockBuilder()
-                   .transactions(txs)
-                   .height(1)
-                   .prevHash(fake_hash)
-                   .build();
-
-  apply(storage, block);
-
-  // TODO: 31.10.2017 luckychess move tx3hash case into a separate test after
-  // ametsuchi_test redesign
-  auto tx1hash = txs.at(0).hash();
-  auto tx2hash = txs.at(1).hash();
-  auto tx3hash = shared_model::crypto::Hash("some garbage");
-
-  auto tx1 = blocks->getTxByHashSync(tx1hash);
-  ASSERT_TRUE(tx1);
-
-  auto tx2 = blocks->getTxByHashSync(tx2hash);
-  ASSERT_TRUE(tx2);
-
-  ASSERT_EQ(**tx1, txs[0]);
-  ASSERT_EQ(**tx2, txs[1]);
-  ASSERT_EQ(blocks->getTxByHashSync(tx3hash), boost::none);
 }
 
 /**

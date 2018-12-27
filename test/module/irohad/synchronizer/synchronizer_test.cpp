@@ -100,9 +100,15 @@ class SynchronizerTest : public ::testing::Test {
  * @then Successful commit
  */
 TEST_F(SynchronizerTest, ValidWhenSingleCommitSynchronized) {
-  DefaultValue<expected::Result<std::unique_ptr<MutableStorage>, std::string>>::
-      SetFactory(&createMockMutableStorage);
-  EXPECT_CALL(*mutable_factory, createMutableStorage()).Times(1);
+  EXPECT_CALL(*mutable_factory, createMutableStorage())
+      .WillOnce(::testing::Invoke(
+          []() -> expected::Result<std::unique_ptr<MutableStorage>,
+                                   std::string> {
+            auto mutable_storage = std::make_unique<MockMutableStorage>();
+            EXPECT_CALL(*mutable_storage, apply(_)).WillOnce(Return(true));
+            return expected::Value<std::unique_ptr<MutableStorage>>{
+                std::move(mutable_storage)};
+          }));
   EXPECT_CALL(*mutable_factory, commit_(_)).Times(1);
   EXPECT_CALL(*chain_validator, validateAndApply(_, _)).Times(0);
   EXPECT_CALL(*block_loader, retrieveBlocks(_, _)).Times(0);

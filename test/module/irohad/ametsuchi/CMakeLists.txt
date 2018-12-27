@@ -1,3 +1,8 @@
+#
+# Copyright Soramitsu Co., Ltd. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+
 addtest(ametsuchi_test ametsuchi_test.cpp)
 target_link_libraries(ametsuchi_test
     ametsuchi
@@ -18,13 +23,6 @@ target_link_libraries(flat_file_test
 
 addtest(block_query_test block_query_test.cpp)
 target_link_libraries(block_query_test
-    ametsuchi
-    ametsuchi_fixture
-    shared_model_stateless_validation
-    )
-
-addtest(block_query_transfer_test block_query_transfer_test.cpp)
-target_link_libraries(block_query_transfer_test
     ametsuchi
     ametsuchi_fixture
     shared_model_stateless_validation
@@ -54,6 +52,7 @@ target_link_libraries(postgres_executor_test
     shared_model_proto_backend
     shared_model_default_builders
     ametsuchi
+    commands_mocks_factory
     )
 
 addtest(postgres_query_executor_test postgres_query_executor_test.cpp)
@@ -61,6 +60,7 @@ target_link_libraries(postgres_query_executor_test
     shared_model_proto_backend
     ametsuchi_fixture
     ametsuchi
+    commands_mocks_factory
     )
 
 addtest(tx_presence_cache_test tx_presence_cache_test.cpp)

@@ -29,7 +29,8 @@ namespace iroha {
           std::shared_ptr<validation::ChainValidator> validator,
           std::shared_ptr<ametsuchi::MutableFactory> mutable_factory,
           std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
-          std::shared_ptr<network::BlockLoader> block_loader);
+          std::shared_ptr<network::BlockLoader> block_loader,
+          logger::Logger log = logger::log("Synchronizer"));
 
       ~SynchronizerImpl() override;
 

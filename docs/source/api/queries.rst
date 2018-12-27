@@ -122,6 +122,7 @@ Purpose
 -------
 
 GetTransactions is used for retrieving information about transactions, based on their hashes.
+.. note:: This query is valid if and only if all the requested hashes are correct: corresponding transactions exist, and the user has a permission to retrieve them
 
 Request Schema
 --------------
@@ -204,7 +205,8 @@ Purpose
 -------
 
 In a case when a list of transactions per account is needed, `GetAccountTransactions` query can be formed.
-.. note:: This query uses pagination for query responses.
+
+.. note:: This query uses pagination for quicker and more convenient query responses.
 
 Request Schema
 --------------
@@ -265,6 +267,7 @@ Purpose
 -------
 
 `GetAccountAssetTransactions` query returns all transactions associated with given account and asset.
+
 .. note:: This query uses pagination for query responses.
 
 Request Schema
@@ -358,7 +361,7 @@ Response Schema
     message AccountAsset {
         string asset_id = 1;
         string account_id = 2;
-        Amount balance = 3;
+        string balance = 3;
     }
 
 Response Structure
@@ -370,7 +373,7 @@ Response Structure
 
     "Asset ID", "identifier of asset used for checking the balance", "<asset_name>#<domain_id>", "jpy#japan"
     "Account ID", "account which has this balance", "<account_name>@<domain_id>", "makoto@soramitsu"
-    "Balance", "balance of the asset", "Not less than 0", "200.20"
+    "Balance", "balance of the asset", "No less than 0", "200.20"
 
 Get Account Detail
 ^^^^^^^^^^^^^^^^^^
@@ -378,7 +381,7 @@ Get Account Detail
 Purpose
 -------
 
-To get details of the account, `GetAccountDetail` query can be used. Account details are key-value pairs, splitted into writers categories. Writers are accounts, which added the corresponding account detail. Example of such structure is:
+To get details of the account, `GetAccountDetail` query can be used. Account details are key-value pairs, splitted into writers categories. Writers are accounts, that added the corresponding account detail. Example of such structure is:
 
 .. code-block:: json
 
@@ -447,7 +450,7 @@ Response Structure
 Usage Examples
 --------------
 
-Let's again consider the example of details from the beginning and see, how different variants of `GetAccountDetail` queries will change the resulting response.
+Again, let's consider the example of details from the beginning and see how different variants of `GetAccountDetail` queries will change the resulting response.
 
 .. code-block:: json
 
@@ -513,7 +516,7 @@ Now, the response will contain all details about this account, added by one spec
 
 **account_id, key and writer are set**
 
-Lastly, if all three field are set, result will contain details, added the specific writer and under the specific key, for example, if we asked for key "age" and writer "account@a_domain", we would get:
+Finally, if all three field are set, result will contain details, added the specific writer and under the specific key, for example, if we asked for key "age" and writer "account@a_domain", we would get:
 
 .. code-block:: json
 
@@ -529,7 +532,7 @@ Get Asset Info
 Purpose
 -------
 
-In order to know precision for given asset, and other related info in the future, such as a description of the asset, etc. user can send `GetAssetInfo` query.
+In order to get information on the given asset (as for now - its precision), user can send `GetAssetInfo` query.
 
 Request Schema
 --------------
@@ -572,7 +575,7 @@ Response Structure
     :header: "Field", "Description", "Constraint", "Example"
     :widths: 15, 30, 20, 15
 
-    "Asset ID", "identifier of asset used for checking the balance", "<asset_name>#<domain_id>", "jpy"
+    "Asset ID", "identifier of asset used for checking the balance", "<asset_name>#<domain_id>", "jpy#japan"
     "Domain ID", "domain related to this asset", "RFC1035 [#f1]_, RFC1123 [#f2]_", "japan"
     "Precision", "number of digits after comma", "0 <= precision <= 255", "2"
 

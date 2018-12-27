@@ -61,7 +61,7 @@ namespace shared_model {
         return SignatureSetType<proto::Signature>(signatures.begin(),
                                                   signatures.end());
       }()};
-    };
+    };  // namespace proto
 
     Transaction::Transaction(const TransportType &transaction) {
       impl_ = std::make_unique<Transaction::Impl>(transaction);

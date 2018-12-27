@@ -17,7 +17,7 @@ port-for==0.3.1
 protobuf==3.5.1
 Pygments==2.2.0
 pytz==2017.3
-PyYAML==3.12
+PyYAML==3.13
 requests==2.20.1
 restructuredtext-lint==1.1.2
 singledispatch==3.4.0.3
@@ -26,7 +26,7 @@ snowballstemmer==1.2.1
 Sphinx==1.6.6
 sphinx-autobuild==0.7.1
 sphinx-intl==0.9.11
-sphinx-rtd-theme==0.2.5b2
+sphinx-rtd-theme==0.4.2
 sphinxcontrib-websupport==1.0.1
 tornado==4.5.3
 typing==3.6.2

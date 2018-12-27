@@ -9,6 +9,7 @@
 
 #include "common/byteutils.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
+#include "logger/logger.hpp"
 
 using namespace shared_model::crypto;
 
@@ -43,18 +44,20 @@ namespace iroha {
 
   KeysManagerImpl::KeysManagerImpl(
       const std::string &account_id,
-      const boost::filesystem::path &path_to_keypair)
+      const boost::filesystem::path &path_to_keypair,
+      logger::Logger log)
       : path_to_keypair_(path_to_keypair),
         account_id_(account_id),
-        log_(logger::log("KeysManagerImpl")) {}
+        log_(std::move(log)) {}
 
   /**
    * Here we use an empty string as a default value of path to file,
    * since there are usages of KeysManagerImpl with path passed as a part of
    * account_id.
    */
-  KeysManagerImpl::KeysManagerImpl(const std::string account_id)
-      : KeysManagerImpl(account_id, "") {}
+  KeysManagerImpl::KeysManagerImpl(const std::string account_id,
+                                   logger::Logger log)
+      : KeysManagerImpl(account_id, "", std::move(log)) {}
 
   bool KeysManagerImpl::validate(const Keypair &keypair) const {
     try {
