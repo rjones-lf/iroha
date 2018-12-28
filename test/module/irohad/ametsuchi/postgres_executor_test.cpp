@@ -11,6 +11,7 @@
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/shared_model/mock_objects_factories/mock_command_factory.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -24,7 +25,8 @@ namespace iroha {
      public:
       CommandExecutorTest() {
         domain_id = "domain";
-        account_id = "id@" + domain_id;
+        name = "id";
+        account_id = name + "@" + domain_id;
 
         role_permissions.set(
             shared_model::interface::permissions::Role::kAddMySignatory);
@@ -152,7 +154,7 @@ namespace iroha {
       void createDefaultAccount() {
         CHECK_SUCCESSFUL_RESULT(
             execute(*mock_command_factory->constructCreateAccount(
-                        "id", domain_id, *pubkey),
+                        name, domain_id, *pubkey),
                     true));
       }
 
@@ -161,7 +163,7 @@ namespace iroha {
       shared_model::interface::RolePermissionSet role_permissions;
       shared_model::interface::permissions::Grantable grantable_permission;
       shared_model::interface::types::DomainIdType domain_id;
-      shared_model::interface::types::AccountIdType account_id;
+      shared_model::interface::types::AccountIdType account_id, name;
       std::unique_ptr<shared_model::interface::types::PubkeyType> pubkey;
       std::unique_ptr<soci::session> sql;
 
@@ -267,15 +269,15 @@ namespace iroha {
      * @then account asset is not added
      */
     TEST_F(AddAccountAssetTest, DomainPermInvalid) {
-      shared_model::interface::types::DomainIdType domain_id2 = "domain2";
+      shared_model::interface::types::DomainIdType domain2_id = "domain2";
       CHECK_SUCCESSFUL_RESULT(execute(
-          *mock_command_factory->constructCreateDomain(domain_id2, role),
+          *mock_command_factory->constructCreateDomain(domain2_id, role),
           true));
-      addAsset(domain_id2);
+      addAsset(domain2_id);
       addOnePerm(
           shared_model::interface::permissions::Role::kAddDomainAssetQty);
 
-      auto asset2_id = "coin#" + domain_id2;
+      auto asset2_id = "coin#" + domain2_id;
 
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructAddAssetQuantity(
@@ -353,21 +355,6 @@ namespace iroha {
       CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 4, query_args);
     }
 
-    struct MockPeer : public shared_model::interface::Peer {
-      MOCK_CONST_METHOD0(address,
-                         const shared_model::interface::types::AddressType &());
-      MOCK_CONST_METHOD0(pubkey,
-                         const shared_model::interface::types::PubkeyType &());
-      MOCK_CONST_METHOD0(clone, MockPeer *());
-      std::string toString() const override {
-        return shared_model::detail::PrettyStringBuilder()
-            .init("Peer")
-            .append("address", address())
-            .append("pubkey", pubkey().toString())
-            .finalize();
-      }
-    };
-
     class AddPeer : public CommandExecutorTest {
      public:
       void SetUp() override {
@@ -420,7 +407,7 @@ namespace iroha {
         createDefaultDomain();
         CHECK_SUCCESSFUL_RESULT(
             execute(*mock_command_factory->constructCreateAccount(
-                        "id",
+                        name,
                         domain_id,
                         shared_model::interface::types::PubkeyType(
                             std::string('5', 32))),
@@ -653,14 +640,13 @@ namespace iroha {
      public:
       void SetUp() override {
         CommandExecutorTest::SetUp();
-        account_id = "id@" + domain_id;
-        account_id2 = "id2@" + domain_id;
+        account2_id = "id2@" + domain_id;
         createDefaultRole();
         createDefaultDomain();
         createDefaultAccount();
       }
 
-      shared_model::interface::types::AccountIdType account_id2;
+      shared_model::interface::types::AccountIdType account2_id;
     };
 
     /**
@@ -673,9 +659,9 @@ namespace iroha {
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructCreateAccount(
               "id2", domain_id, *pubkey)));
-      auto acc = query->getAccount(account_id2);
+      auto acc = query->getAccount(account2_id);
       ASSERT_TRUE(acc);
-      ASSERT_EQ(account_id2, acc.get()->accountId());
+      ASSERT_EQ(account2_id, acc.get()->accountId());
     }
 
     /**
@@ -685,12 +671,12 @@ namespace iroha {
      */
     TEST_F(CreateAccount, NoPerms) {
       auto cmd_result = execute(*mock_command_factory->constructCreateAccount(
-          account_id2, domain_id, *pubkey));
-      auto acc = query->getAccount(account_id2);
+          account2_id, domain_id, *pubkey));
+      auto acc = query->getAccount(account2_id);
       ASSERT_FALSE(acc);
 
       std::vector<std::string> query_args{
-          account_id2, domain_id, pubkey->hex()};
+          account2_id, domain_id, pubkey->hex()};
       CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 2, query_args);
     }
 
@@ -716,9 +702,9 @@ namespace iroha {
     TEST_F(CreateAccount, NameExists) {
       addAllPerms();
       auto cmd_result = execute(*mock_command_factory->constructCreateAccount(
-          "id", domain_id, *pubkey));
+          name, domain_id, *pubkey));
 
-      std::vector<std::string> query_args{"id", domain_id, pubkey->hex()};
+      std::vector<std::string> query_args{name, domain_id, pubkey->hex()};
       CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 4, query_args);
     }
 
@@ -747,7 +733,7 @@ namespace iroha {
           *mock_command_factory->constructCreateDomain(domain_id, role), true));
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructCreateAccount(
-                      "id", domain_id, *pubkey),
+                      name, domain_id, *pubkey),
                   true));
       CHECK_SUCCESSFUL_RESULT(execute(
           *mock_command_factory->constructCreateAsset("coin", domain_id, 1)));
@@ -769,7 +755,7 @@ namespace iroha {
           *mock_command_factory->constructCreateDomain(domain_id, role), true));
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructCreateAccount(
-                      "id", domain_id, *pubkey),
+                      name, domain_id, *pubkey),
                   true));
       auto cmd_result = execute(
           *mock_command_factory->constructCreateAsset("coin", domain_id, 1));
@@ -795,7 +781,7 @@ namespace iroha {
           *mock_command_factory->constructCreateDomain(domain_id, role), true));
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructCreateAccount(
-                      "id", domain_id, *pubkey),
+                      name, domain_id, *pubkey),
                   true));
       auto cmd_result = execute(*mock_command_factory->constructCreateAsset(
           asset_name, "no_domain", 1));
@@ -819,7 +805,7 @@ namespace iroha {
           *mock_command_factory->constructCreateDomain(domain_id, role), true));
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructCreateAccount(
-                      "id", domain_id, *pubkey),
+                      name, domain_id, *pubkey),
                   true));
       CHECK_SUCCESSFUL_RESULT(execute(
           *mock_command_factory->constructCreateAsset("coin", domain_id, 1)));
@@ -834,13 +820,13 @@ namespace iroha {
      public:
       void SetUp() override {
         CommandExecutorTest::SetUp();
-        domain_id2 = "domain2";
+        domain2_id = "domain2";
         createDefaultRole();
         createDefaultDomain();
         createDefaultAccount();
       }
 
-      shared_model::interface::types::DomainIdType domain_id2;
+      shared_model::interface::types::DomainIdType domain2_id;
     };
 
     /**
@@ -851,10 +837,10 @@ namespace iroha {
     TEST_F(CreateDomain, Valid) {
       addAllPerms();
       CHECK_SUCCESSFUL_RESULT(execute(
-          *mock_command_factory->constructCreateDomain(domain_id2, role)));
-      auto dom = query->getDomain(domain_id2);
+          *mock_command_factory->constructCreateDomain(domain2_id, role)));
+      auto dom = query->getDomain(domain2_id);
       ASSERT_TRUE(dom);
-      ASSERT_EQ(dom.get()->domainId(), domain_id2);
+      ASSERT_EQ(dom.get()->domainId(), domain2_id);
     }
 
     /**
@@ -864,11 +850,11 @@ namespace iroha {
      */
     TEST_F(CreateDomain, NoPerms) {
       auto cmd_result = execute(
-          *mock_command_factory->constructCreateDomain(domain_id2, role));
-      auto dom = query->getDomain(domain_id2);
+          *mock_command_factory->constructCreateDomain(domain2_id, role));
+      auto dom = query->getDomain(domain2_id);
       ASSERT_FALSE(dom);
 
-      std::vector<std::string> query_args{domain_id2, role};
+      std::vector<std::string> query_args{domain2_id, role};
       CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 2, query_args);
     }
 
@@ -880,11 +866,11 @@ namespace iroha {
     TEST_F(CreateDomain, NameNotUnique) {
       addAllPerms();
       CHECK_SUCCESSFUL_RESULT(execute(
-          *mock_command_factory->constructCreateDomain(domain_id2, role)));
+          *mock_command_factory->constructCreateDomain(domain2_id, role)));
       auto cmd_result = execute(
-          *mock_command_factory->constructCreateDomain(domain_id2, role));
+          *mock_command_factory->constructCreateDomain(domain2_id, role));
 
-      std::vector<std::string> query_args{domain_id2, role};
+      std::vector<std::string> query_args{domain2_id, role};
       CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 3, query_args);
     }
 
@@ -896,9 +882,9 @@ namespace iroha {
     TEST_F(CreateDomain, NoDefaultRole) {
       addAllPerms();
       auto cmd_result = execute(*mock_command_factory->constructCreateDomain(
-          domain_id2, another_role));
+          domain2_id, another_role));
 
-      std::vector<std::string> query_args{domain_id2, another_role};
+      std::vector<std::string> query_args{domain2_id, another_role};
       CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 4, query_args);
     }
 
@@ -1352,7 +1338,7 @@ namespace iroha {
         createDefaultRole();
         createDefaultDomain();
         createDefaultAccount();
-        account_id2 = "id2@" + domain_id;
+        account2_id = "id2@" + domain_id;
         CHECK_SUCCESSFUL_RESULT(
             execute(*mock_command_factory->constructCreateAccount(
                         "id2",
@@ -1361,7 +1347,7 @@ namespace iroha {
                             std::string('2', 32))),
                     true));
       }
-      shared_model::interface::types::AccountIdType account_id2;
+      shared_model::interface::types::AccountIdType account2_id;
     };
 
     /**
@@ -1392,10 +1378,10 @@ namespace iroha {
           "id2@domain"));
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructSetAccountDetail(
-                      account_id2, "key", "value"),
+                      account2_id, "key", "value"),
                   false,
                   account_id));
-      auto kv = query->getAccountDetail(account_id2);
+      auto kv = query->getAccountDetail(account2_id);
       ASSERT_TRUE(kv);
       ASSERT_EQ(kv.get(), "{\"id@domain\": {\"key\": \"value\"}}");
     }
@@ -1409,10 +1395,10 @@ namespace iroha {
       addAllPerms();
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructSetAccountDetail(
-                      account_id2, "key", "value"),
+                      account2_id, "key", "value"),
                   false,
                   account_id));
-      auto kv = query->getAccountDetail(account_id2);
+      auto kv = query->getAccountDetail(account2_id);
       ASSERT_TRUE(kv);
       ASSERT_EQ(kv.get(), "{\"id@domain\": {\"key\": \"value\"}}");
     }
@@ -1425,14 +1411,14 @@ namespace iroha {
     TEST_F(SetAccountDetail, NoPerms) {
       auto cmd_result =
           execute(*mock_command_factory->constructSetAccountDetail(
-                      account_id2, "key", "value"),
+                      account2_id, "key", "value"),
                   false,
                   account_id);
 
-      std::vector<std::string> query_args{account_id2, "key", "value"};
+      std::vector<std::string> query_args{account2_id, "key", "value"};
       CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 2, query_args);
 
-      auto kv = query->getAccountDetail(account_id2);
+      auto kv = query->getAccountDetail(account2_id);
       ASSERT_TRUE(kv);
       ASSERT_EQ(kv.get(), "{}");
     }
@@ -1667,15 +1653,15 @@ namespace iroha {
      * @then no account asset is subtracted
      */
     TEST_F(SubtractAccountAssetTest, DomainPermInvalid) {
-      shared_model::interface::types::DomainIdType domain_id2 = "domain2";
+      shared_model::interface::types::DomainIdType domain2_id = "domain2";
       CHECK_SUCCESSFUL_RESULT(execute(
-          *mock_command_factory->constructCreateDomain(domain_id2, role),
+          *mock_command_factory->constructCreateDomain(domain2_id, role),
           true));
-      addAsset(domain_id2);
+      addAsset(domain2_id);
       addOnePerm(
           shared_model::interface::permissions::Role::kSubtractDomainAssetQty);
 
-      auto asset2_id = "coin#" + domain_id2;
+      auto asset2_id = "coin#" + domain2_id;
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructAddAssetQuantity(
                       asset2_id, asset_amount_one_zero),
@@ -1753,7 +1739,7 @@ namespace iroha {
       void SetUp() override {
         CommandExecutorTest::SetUp();
 
-        account_id2 = "id2@" + domain_id;
+        account2_id = "id2@" + domain_id;
 
         createDefaultRole();
         createDefaultDomain();
@@ -1776,7 +1762,7 @@ namespace iroha {
 
       shared_model::interface::types::AssetIdType asset_id =
           "coin#" + domain_id;
-      shared_model::interface::types::AccountIdType account_id2;
+      shared_model::interface::types::AccountIdType account2_id;
     };
 
     /**
@@ -1786,7 +1772,7 @@ namespace iroha {
      */
     TEST_F(TransferAccountAssetTest, Valid) {
       addAllPerms();
-      addAllPerms(account_id2, "all2");
+      addAllPerms(account2_id, "all2");
       addAsset();
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructAddAssetQuantity(
@@ -1805,14 +1791,14 @@ namespace iroha {
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructTransferAsset(
               account_id,
-              account_id2,
+              account2_id,
               asset_id,
               "desc",
               asset_amount_one_zero)));
       account_asset = query->getAccountAsset(account_id, asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance());
-      account_asset = query->getAccountAsset(account_id2, asset_id);
+      account_asset = query->getAccountAsset(account2_id, asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance());
     }
@@ -1823,12 +1809,12 @@ namespace iroha {
      * @then account asset is successfully transferred
      */
     TEST_F(TransferAccountAssetTest, ValidGrantablePerms) {
-      addAllPerms(account_id2, "all2");
+      addAllPerms(account2_id, "all2");
       addAsset();
       auto perm =
           shared_model::interface::permissions::Grantable::kTransferMyAssets;
       CHECK_SUCCESSFUL_RESULT(execute(
-          *mock_command_factory->constructGrantPermission(account_id2, perm),
+          *mock_command_factory->constructGrantPermission(account2_id, perm),
           true,
           account_id));
 
@@ -1841,13 +1827,13 @@ namespace iroha {
       ASSERT_EQ("2.0", account_asset.get()->balance().toStringRepr());
       CHECK_SUCCESSFUL_RESULT(execute(
           *mock_command_factory->constructTransferAsset(
-              account_id, account_id2, asset_id, "desc", asset_amount_one_zero),
+              account_id, account2_id, asset_id, "desc", asset_amount_one_zero),
           false,
-          account_id2));
+          account2_id));
       account_asset = query->getAccountAsset(account_id, asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance());
-      account_asset = query->getAccountAsset(account_id2, asset_id);
+      account_asset = query->getAccountAsset(account2_id, asset_id);
       ASSERT_TRUE(account_asset);
       ASSERT_EQ(asset_amount_one_zero, account_asset.get()->balance());
     }
@@ -1859,10 +1845,10 @@ namespace iroha {
      */
     TEST_F(TransferAccountAssetTest, NoPerms) {
       auto cmd_result = execute(*mock_command_factory->constructTransferAsset(
-          account_id, account_id2, asset_id, "desc", asset_amount_one_zero));
+          account_id, account2_id, asset_id, "desc", asset_amount_one_zero));
 
       std::vector<std::string> query_args{account_id,
-                                          account_id2,
+                                          account2_id,
                                           asset_id,
                                           asset_amount_one_zero.toStringRepr(),
                                           "1"};
@@ -1876,7 +1862,7 @@ namespace iroha {
      */
     TEST_F(TransferAccountAssetTest, NoAccount) {
       addAllPerms();
-      addAllPerms(account_id2, "all2");
+      addAllPerms(account2_id, "all2");
       addAsset();
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructAddAssetQuantity(
@@ -1884,7 +1870,7 @@ namespace iroha {
                   true));
       auto cmd_result = execute(
           *mock_command_factory->constructTransferAsset("some@domain",
-                                                        account_id2,
+                                                        account2_id,
                                                         asset_id,
                                                         "desc",
                                                         asset_amount_one_zero),
@@ -1893,7 +1879,7 @@ namespace iroha {
       {
         std::vector<std::string> query_args{
             "some@domain",
-            account_id2,
+            account2_id,
             asset_id,
             asset_amount_one_zero.toStringRepr(),
             "1"};
@@ -1926,12 +1912,12 @@ namespace iroha {
      */
     TEST_F(TransferAccountAssetTest, NoAsset) {
       addAllPerms();
-      addAllPerms(account_id2, "all2");
+      addAllPerms(account2_id, "all2");
       auto cmd_result = execute(*mock_command_factory->constructTransferAsset(
-          account_id, account_id2, asset_id, "desc", asset_amount_one_zero));
+          account_id, account2_id, asset_id, "desc", asset_amount_one_zero));
 
       std::vector<std::string> query_args{account_id,
-                                          account_id2,
+                                          account2_id,
                                           asset_id,
                                           asset_amount_one_zero.toStringRepr(),
                                           "1"};
@@ -1945,7 +1931,7 @@ namespace iroha {
      */
     TEST_F(TransferAccountAssetTest, Overdraft) {
       addAllPerms();
-      addAllPerms(account_id2, "all2");
+      addAllPerms(account2_id, "all2");
       addAsset();
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructAddAssetQuantity(
@@ -1953,13 +1939,13 @@ namespace iroha {
                   true));
       auto cmd_result = execute(*mock_command_factory->constructTransferAsset(
           account_id,
-          account_id2,
+          account2_id,
           asset_id,
           "desc",
           shared_model::interface::Amount{"2.0"}));
 
       std::vector<std::string> query_args{
-          account_id, account_id2, asset_id, "2.0", "1"};
+          account_id, account2_id, asset_id, "2.0", "1"};
       CHECK_ERROR_CODE_AND_MESSAGE(cmd_result, 6, query_args);
     }
 
@@ -1971,7 +1957,7 @@ namespace iroha {
      */
     TEST_F(TransferAccountAssetTest, OverflowDestination) {
       addAllPerms();
-      addAllPerms(account_id2, "all2");
+      addAllPerms(account2_id, "all2");
       addAsset();
       CHECK_SUCCESSFUL_RESULT(
           execute(*mock_command_factory->constructAddAssetQuantity(
@@ -1981,14 +1967,14 @@ namespace iroha {
           execute(*mock_command_factory->constructAddAssetQuantity(
                       asset_id, uint256_halfmax),
                   false,
-                  account_id2));
+                  account2_id));
       auto cmd_result = execute(
           *mock_command_factory->constructTransferAsset(
-              account_id, account_id2, asset_id, "desc", uint256_halfmax),
+              account_id, account2_id, asset_id, "desc", uint256_halfmax),
           true);
 
       std::vector<std::string> query_args{account_id,
-                                          account_id2,
+                                          account2_id,
                                           asset_id,
                                           uint256_halfmax.toStringRepr(),
                                           "1"};
