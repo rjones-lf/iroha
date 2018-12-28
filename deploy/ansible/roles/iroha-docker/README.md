@@ -12,17 +12,33 @@ The second way is also suitable for local-only deployments and enabled by defaul
 ## Requirements
   Tested on Ubuntu 16.04, 18.04
   - Local:
-    - python-3, python3-dev
-    - PIP modules: future, ansible(>=2.4), sha3(for python<3.6)
+    - python3, python3-dev
+    - PIP modules: future, ansible(>=2.4), sha3(for Python<3.6)
   - Remote:
     - Docker (>=17.12)
+    - python3
     - PIP modules: docker, docker-compose
     There is a role for setting up a remote part of the dependencies named `docker`.
 
 ## Quick Start
-`ansible-playbook -c local playbooks/iroha-docker/main.yml -b`
+1. Install Ansible
+    ```
+    pip3 install ansible
+    ```
+2. Create inventory list containing IP address of the remote host
 
-This will deploy 6 Iroha Docker containers along with 6 Postgres containers on a localhost. Torii port of each container is exposed to the local host. Iroha peer can be communicated over port defined in `iroha_torii_port` variable (50051 by default). Overall, each host will listen the following port range: `iroha_torii_port` + *number-of-containers*.
+    **iroha.list**
+    ```
+    [all]
+    192.168.122.109
+    ```
+
+    Put this file into `../../inventory/` directory.
+
+`cd ../../ && ansible-playbook -b -e 'ansible_ssh_user=ubuntu' -i inventory/iroha.list playbooks/iroha-docker/main.yml`
+
+This will deploy 6 Iroha Docker containers along with 6 Postgres containers on a remote host. Torii port of each container is exposed on the host. Iroha peer can be communicated over port defined in `iroha_torii_port` variable (50051 by default). Overall, each host will listen the following port range: `iroha_torii_port` + *number-of-containers*.
+During installation it will also install Docker along with required python modules. If you want to skip this step comment out `docker` role in the playbook (`playbooks/iroha-docker/main.yml`)
 
 ### Note:
 > This command escalates privileges during the run. It is required to be able to spin up Docker containers. We recommend to run the playbook as a passwordless sudo user. You may also try to execute `sudo su` beforehand to temporarily grant passwordless sudo access to a regular user.
@@ -36,7 +52,7 @@ See `defaults/main.yml` file to get more details about available configuration o
 <!-- TODO: Cover more example cases -->
 Deploying 6 Iroha peers on two remote hosts communicating using public IP addresses. With 2 and 4 replicas on each host respectively.
 
-1. Create inventory list containing IP address (or hostnames if they are mutually resolve-able on both hosts) of two hosts that will run Iroha peers
+1. Create inventory list containing IP addresses (or hostnames if they are mutually resolve-able on both hosts) of two hosts that will run Iroha peers
 
     **iroha.list**
     ```
@@ -45,7 +61,7 @@ Deploying 6 Iroha peers on two remote hosts communicating using public IP addres
     192.168.122.30
     ```
 
-    Put this file into `../inventory/` directory.
+    Put this file into `../../inventory/` directory.
 2. Make sure you can SSH with a root account into either of these hosts using a private key.
 
     **Note**
@@ -65,7 +81,7 @@ Deploying 6 Iroha peers on two remote hosts communicating using public IP addres
 
 4. Create a playbook:
 
-    Replace the contents of `../playbooks/iroha-docker/main.yml` with this block:
+    Replace the contents of `../../playbooks/iroha-docker/main.yml` with this block:
     **main.yml**
     ```
     - hosts: all
@@ -74,6 +90,8 @@ Deploying 6 Iroha peers on two remote hosts communicating using public IP addres
         # docker role only works for Linux hosts
         - { role: docker, tags: docker }
         - { role: iroha-docker, tags: iroha-docker }
+      vars:
+        hostnames: []
     ```
 5. Run the playbook
 ```

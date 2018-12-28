@@ -5,18 +5,20 @@
   with_items:
     - python-setuptools
     - python-pip
+  when: ansible_python_interpreter is search("^.*python2.*$")
 
-- name: Uninstall Docker python modules
-  pip:
+- name: Install packages
+  apt:
     name: "{{ item }}"
-    state: absent
+    update_cache: yes
   with_items:
-    - docker
-    - docker-py
-    - docker-compose
+    - python3-setuptools
+    - python3-pip
+  when: ansible_python_interpreter is search("^.*python3.*$")
 
 - name: Install docker python modules
   pip:
     name: "{{ item }}"
   with_items:
+    - docker
     - docker-compose=={{ dockerComposeVersion }}
