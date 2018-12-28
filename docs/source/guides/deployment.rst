@@ -102,6 +102,8 @@ Similarly, run postgres server, attaching it to the network you have created bef
     --network=iroha-network \
     -d postgres:9.5
 
+    The parameters of the postgresql must later be included in ``config.docker`` file that will be used while starting irohad on the next steps. 
+
 Create volume for block storage
 """""""""""""""""""""""""""""""
 
@@ -137,7 +139,7 @@ A little more about what these lines mean:
 
 ``-p 50051:50051 \`` -  exposes port 50051 to the host
 
-``-v ~/Developer/iroha/example:/opt/iroha_data \`` - mounts the folder with configuration files on the host into container
+``-v ~/Developer/iroha/example:/opt/iroha_data \`` - mounts the folder with configuration files on the host into container. Configuration also contains postgresql parameters. 
 
 ``-v blockstore:/tmp/block_store \`` - blockstore volume
 
