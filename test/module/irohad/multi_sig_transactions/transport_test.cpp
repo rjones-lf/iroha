@@ -121,8 +121,10 @@ TEST_F(TransportTest, SendAndReceive) {
   ASSERT_TRUE(server);
   ASSERT_NE(port, 0);
 
-  std::shared_ptr<shared_model::interface::Peer> peer =
-      makePeer(addr + std::to_string(port), "abcdabcdabcdabcdabcdabcdabcdabcd");
+  std::string address = addr + std::to_string(port);
+  shared_model::interface::types::PubkeyType pk(
+      "abcdabcdabcdabcdabcdabcdabcdabcd");
+  std::shared_ptr<shared_model::interface::Peer> peer = makePeer(address, pk);
   // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side
   EXPECT_CALL(*mst_notification_transport_, onNewState(_, _))

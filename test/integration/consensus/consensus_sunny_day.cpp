@@ -4,13 +4,14 @@
  */
 
 #include <grpc++/grpc++.h>
+#include <gmock/gmock.h>
 #include "consensus/yac/impl/timer_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/test_subscriber.hpp"
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
-#include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 using ::testing::_;
 using ::testing::An;
@@ -38,11 +39,16 @@ class FixedCryptoProvider : public MockYacCryptoProvider {
 
   VoteMessage getVote(YacHash hash) override {
     auto vote = MockYacCryptoProvider::getVote(hash);
-    vote.signature = clone(TestSignatureBuilder().publicKey(*pubkey).build());
+    auto signature = std::make_shared<MockSignature>();
+    data = std::make_unique<shared_model::crypto::Signed>("");
+    EXPECT_CALL(*signature, publicKey()).WillRepeatedly(testing::ReturnRef(*pubkey));
+    EXPECT_CALL(*signature, signedData()).WillRepeatedly(testing::ReturnRef(*data));
+    vote.signature = signature;
     return vote;
   }
 
   std::unique_ptr<shared_model::crypto::PublicKey> pubkey;
+  std::unique_ptr<shared_model::crypto::Signed> data;
 };
 
 class ConsensusSunnyDayTest : public ::testing::Test {

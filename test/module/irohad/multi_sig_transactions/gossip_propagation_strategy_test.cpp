@@ -27,6 +27,8 @@ using namespace std::chrono_literals;
 using namespace iroha::ametsuchi;
 using PropagationData = GossipPropagationStrategy::PropagationData;
 
+const shared_model::interface::types::PubkeyType empty_pubkey("");
+
 /**
  * Generates peers with empty pub keys
  * @param ids generated addresses of peers
@@ -39,7 +41,7 @@ PropagationData generate(std::vector<std::string> &ids, size_t num) {
   PropagationData peers;
   std::transform(
       ids.begin(), ids.end(), std::back_inserter(peers), [](auto &s) {
-        return makePeer(s, "");
+        return makePeer(s, empty_pubkey);
       });
   return peers;
 }

@@ -6,14 +6,15 @@
 #ifndef IROHA_MST_TEST_HELPERS_HPP
 #define IROHA_MST_TEST_HELPERS_HPP
 
+#include <gmock/gmock.h>
 #include <string>
 #include "builders/protobuf/transaction.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "datetime/time.hpp"
 #include "framework/batch_helper.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 
 #include "logger/logger.hpp"
@@ -103,12 +104,12 @@ inline auto makeTx(const shared_model::interface::types::CounterType &counter,
           .finish());
 }
 
-inline auto makePeer(const std::string &address, const std::string &pub_key) {
-  return std::make_shared<shared_model::proto::Peer>(
-      shared_model::proto::PeerBuilder()
-          .address(address)
-          .pubkey(shared_model::crypto::PublicKey(pub_key))
-          .build());
+inline auto makePeer(const std::string &address,
+                     const shared_model::crypto::PublicKey &pub_key) {
+  auto peer = std::make_shared<MockPeer>();
+  EXPECT_CALL(*peer, address()).WillRepeatedly(testing::ReturnRef(address));
+  EXPECT_CALL(*peer, pubkey()).WillRepeatedly(testing::ReturnRef(pub_key));
+  return peer;
 }
 
 #endif  // IROHA_MST_TEST_HELPERS_HPP

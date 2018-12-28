@@ -223,4 +223,22 @@ struct MockCommonObjectsFactory
           const shared_model::interface::Signature::SignedType &));
 };
 
+struct MockDomain : public shared_model::interface::Domain {
+    MOCK_CONST_METHOD0(domainId,
+                       shared_model::interface::types::DomainIdType &());
+    MOCK_CONST_METHOD0(defaultRole,
+                       shared_model::interface::types::RoleIdType &());
+    MOCK_CONST_METHOD0(clone, MockDomain *());
+};
+
+struct MockAccount : public shared_model::interface::Account {
+    MOCK_CONST_METHOD0(accountId,
+                       shared_model::interface::types::AccountIdType &());
+    MOCK_CONST_METHOD0(domainId,
+                       shared_model::interface::types::DomainIdType &());
+    MOCK_CONST_METHOD0(quorum, shared_model::interface::types::QuorumType());
+    MOCK_CONST_METHOD0(jsonData, shared_model::interface::types::JsonType &());
+    MOCK_CONST_METHOD0(clone, MockAccount *());
+};
+
 #endif  // IROHA_SHARED_MODEL_INTERFACE_MOCKS_HPP

@@ -3,14 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <gmock/gmock.h>
+
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
-#include "module/shared_model/builders/protobuf/test_account_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_asset_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_domain_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_peer_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -20,15 +19,25 @@ namespace iroha {
     class WsvQueryCommandTest : public AmetsuchiTest {
      public:
       WsvQueryCommandTest() {
-        domain = clone(
-            TestDomainBuilder().domainId("domain").defaultRole(role).build());
+        domain_id = "domain";
+        domain = std::make_unique<MockDomain>();
+        EXPECT_CALL(*domain, domainId())
+            .WillRepeatedly(testing::ReturnRef(domain_id));
+        EXPECT_CALL(*domain, defaultRole())
+            .WillRepeatedly(testing::ReturnRef(role));
 
-        account = clone(TestAccountBuilder()
-                            .domainId(domain->domainId())
-                            .accountId("id@" + domain->domainId())
-                            .quorum(1)
-                            .jsonData(R"({"id@domain": {"key": "value"}})")
-                            .build());
+        account_id = "id@" + domain->domainId();
+        quorum = 1;
+        json = R"({"id@domain": {"key": "value"}})";
+        account = std::make_unique<MockAccount>();
+        EXPECT_CALL(*account, domainId())
+            .WillRepeatedly(testing::ReturnRef(domain_id));
+        EXPECT_CALL(*account, accountId())
+            .WillRepeatedly(testing::ReturnRef(account_id));
+        EXPECT_CALL(*account, quorum()).WillRepeatedly(testing::Return(quorum));
+        EXPECT_CALL(*account, jsonData())
+            .WillRepeatedly(testing::ReturnRef(json));
+
         role_permissions.set(
             shared_model::interface::permissions::Role::kAddMySignatory);
         grantable_permission =
@@ -53,8 +62,13 @@ namespace iroha {
       std::string role = "role";
       shared_model::interface::RolePermissionSet role_permissions;
       shared_model::interface::permissions::Grantable grantable_permission;
-      std::unique_ptr<shared_model::interface::Account> account;
-      std::unique_ptr<shared_model::interface::Domain> domain;
+      std::unique_ptr<MockAccount> account;
+      shared_model::interface::types::AccountIdType account_id;
+      shared_model::interface::types::QuorumType quorum;
+      shared_model::interface::types::JsonType json;
+
+      std::unique_ptr<MockDomain> domain;
+      shared_model::interface::types::DomainIdType domain_id;
 
       std::unique_ptr<soci::session> sql;
 
@@ -410,13 +424,16 @@ namespace iroha {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
 
-        permittee_account =
-            clone(TestAccountBuilder()
-                      .domainId(domain->domainId())
-                      .accountId("id2@" + domain->domainId())
-                      .quorum(1)
-                      .jsonData(R"({"id@domain": {"key": "value"}})")
-                      .build());
+        permittee_account_id = "id2@" + domain->domainId();
+        permittee_account = std::make_unique<MockAccount>();
+        EXPECT_CALL(*permittee_account, domainId())
+            .WillRepeatedly(testing::ReturnRef(domain_id));
+        EXPECT_CALL(*permittee_account, accountId())
+            .WillRepeatedly(testing::ReturnRef(permittee_account_id));
+        EXPECT_CALL(*permittee_account, quorum())
+            .WillRepeatedly(testing::Return(quorum));
+        EXPECT_CALL(*permittee_account, jsonData())
+            .WillRepeatedly(testing::ReturnRef(json));
 
         ASSERT_TRUE(val(command->insertRole(role)));
         ASSERT_TRUE(val(command->insertDomain(*domain)));
@@ -424,7 +441,8 @@ namespace iroha {
         ASSERT_TRUE(val(command->insertAccount(*permittee_account)));
       }
 
-      std::shared_ptr<shared_model::interface::Account> permittee_account;
+      std::shared_ptr<MockAccount> permittee_account;
+      shared_model::interface::types::AccountIdType permittee_account_id;
     };
 
     /**
@@ -493,9 +511,14 @@ namespace iroha {
       void SetUp() override {
         WsvQueryCommandTest::SetUp();
 
-        peer = clone(TestPeerBuilder().build());
+        peer = std::make_unique<MockPeer>();
+        EXPECT_CALL(*peer, address())
+            .WillRepeatedly(testing::ReturnRef(address));
+        EXPECT_CALL(*peer, pubkey()).WillRepeatedly(testing::ReturnRef(pk));
       }
-      std::unique_ptr<shared_model::interface::Peer> peer;
+      std::unique_ptr<MockPeer> peer;
+      shared_model::interface::types::AddressType address{""};
+      shared_model::interface::types::PubkeyType pk{""};
     };
 
     /**

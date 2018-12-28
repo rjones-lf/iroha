@@ -290,8 +290,9 @@ TEST_F(MstProcessorTest, onNewPropagationUsecase) {
   EXPECT_CALL(*transport, sendState(_, _)).Times(2);
 
   // ---------------------------------| when |----------------------------------
+  shared_model::crypto::PublicKey pk1("sign_one"), pk2("sign_two");
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers{
-      makePeer("one", "sign_one"), makePeer("two", "sign_two")};
+      makePeer("one", pk1), makePeer("two", pk2)};
   propagation_subject.get_subscriber().on_next(peers);
 }
 
@@ -309,7 +310,8 @@ TEST_F(MstProcessorTest, emptyStatePropagation) {
   EXPECT_CALL(*transport, sendState(_, _)).Times(0);
 
   // ---------------------------------| given |---------------------------------
-  auto another_peer = makePeer("another", "another_pubkey");
+  shared_model::crypto::PublicKey pk("another_pubkey");
+  auto another_peer = makePeer("another", pk);
 
   auto another_peer_state = MstState::empty();
   another_peer_state += makeTestBatch(txBuilder(1));
