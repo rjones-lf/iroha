@@ -28,9 +28,6 @@ namespace iroha {
      */
     class AmetsuchiTest : public ::testing::Test {
      public:
-      AmetsuchiTest() {}
-
-     protected:
       static void SetUpTestCase() {
         ASSERT_FALSE(boost::filesystem::exists(block_store_path))
             << "Temporary block store " << block_store_path
@@ -62,6 +59,7 @@ namespace iroha {
         storage->reset();
       }
 
+     protected:
       static std::shared_ptr<soci::session> sql;
 
       static std::shared_ptr<shared_model::proto::ProtoCommonObjectsFactory<

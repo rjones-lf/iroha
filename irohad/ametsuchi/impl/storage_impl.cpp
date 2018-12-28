@@ -235,8 +235,12 @@ namespace iroha {
 
     void StorageImpl::reset() {
       log_->info("drop wsv records from db tables");
-      soci::session sql(*connection_);
       try {
+        soci::session sql(*connection_);
+        // rollback possible prepared transaction
+        if (block_is_prepared) {
+          rollbackPrepared(sql);
+        }
         sql << reset_;
         log_->info("drop blocks from disk");
         block_store_->dropAll();
