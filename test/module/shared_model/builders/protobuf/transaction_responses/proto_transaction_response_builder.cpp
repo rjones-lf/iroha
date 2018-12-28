@@ -1,23 +1,12 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "builders/protobuf/transaction_responses/proto_transaction_status_builder.hpp"
-#include "framework/specified_visitor.hpp"
+#include "cryptography/hash.hpp"
 
 using shared_model::proto::TransactionStatusBuilder;
 
@@ -71,12 +60,12 @@ TYPED_TEST(ProtoTransactionStatusBuilderTest, TestStatusType) {
   auto expected_status = TypeParam::status;
   auto expected_hash = std::string(32, '1');
 
-  auto response = (TransactionStatusBuilder().*TypeParam::member)()
-                      .txHash(shared_model::crypto::Hash(expected_hash))
-                      .build();
+  auto response =
+      (TransactionStatusBuilder().*TypeParam::member)()
+          .txHash(shared_model::crypto::Hash::fromHexString(expected_hash))
+          .build();
 
-  ASSERT_NO_THROW(boost::apply_visitor(
-      framework::SpecifiedVisitor<StatusType>(),
+  ASSERT_NO_THROW(boost::get<const StatusType&>(
       response.get()));
 
   auto proto_status = response.getTransport();
@@ -94,7 +83,7 @@ TEST(ProtoTransactionStatusBuilderTest, SeveralObjectsFromOneBuilder) {
   auto expected_hash = std::string(32, '1');
 
   auto state = TransactionStatusBuilder().notReceived().txHash(
-      shared_model::crypto::Hash(expected_hash));
+      shared_model::crypto::Hash::fromHexString(expected_hash));
 
   auto response1 = state.build();
   auto response2 = state.build();

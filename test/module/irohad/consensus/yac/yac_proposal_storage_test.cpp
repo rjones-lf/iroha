@@ -30,7 +30,7 @@ class YacProposalStorageTest : public ::testing::Test {
     valid_votes = [this]() {
       std::vector<VoteMessage> votes;
       for (auto i = 0u; i < number_of_peers; ++i) {
-        votes.push_back(create_vote(hash, std::to_string(i)));
+        votes.push_back(createVote(hash, std::to_string(i)));
       }
       return votes;
     }();
@@ -83,13 +83,13 @@ TEST_F(YacProposalStorageTest, YacProposalStorageWhenRejectCase) {
                             "other_commit");
   for (auto i = 0; i < 2; ++i) {
     auto answer = storage.insert(
-        create_vote(other_hash, std::to_string(valid_votes.size() + 1 + i)));
+        createVote(other_hash, std::to_string(valid_votes.size() + 1 + i)));
     ASSERT_EQ(boost::none, answer);
   }
 
   // insert more one for other hash
   auto answer = storage.insert(
-      create_vote(other_hash, std::to_string(2 * valid_votes.size() + 1)));
+      createVote(other_hash, std::to_string(2 * valid_votes.size() + 1)));
   ASSERT_NE(boost::none, answer);
   ASSERT_EQ(6, boost::get<RejectMessage>(*answer).votes.size());
 }

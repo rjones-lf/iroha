@@ -5,8 +5,10 @@
 
 #include "ametsuchi/impl/postgres_options.hpp"
 
-#include <boost/algorithm/string.hpp>
+#include <cctype>
 #include <regex>
+
+#include <boost/algorithm/string.hpp>
 
 namespace iroha {
   namespace ametsuchi {

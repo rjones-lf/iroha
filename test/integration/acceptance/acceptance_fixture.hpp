@@ -22,7 +22,7 @@ namespace {
   template <typename Type>
   void checkTransactionResponse(
       const shared_model::interface::TransactionResponse &resp) {
-    ASSERT_NO_THROW(boost::get<const Type &>(resp.get()));
+    ASSERT_NO_THROW(boost::get<const Type &>(resp.get())) << resp.toString();
   }
 
 #define BASE_CHECK_RESPONSE(type)                                  \
@@ -43,6 +43,8 @@ namespace {
 #define CHECK_STATEFUL_VALID BASE_CHECK_RESPONSE(StatefulValidTxResponse)
 
 #define CHECK_COMMITTED BASE_CHECK_RESPONSE(CommittedTxResponse)
+
+#define CHECK_MST_PENDING BASE_CHECK_RESPONSE(MstPendingResponse)
 }  // namespace
 
 /**

@@ -12,9 +12,7 @@ namespace shared_model {
     AddAssetQuantity::AddAssetQuantity(CommandType &&command)
         : CopyableProto(std::forward<CommandType>(command)),
           add_asset_quantity_{proto_->add_asset_quantity()},
-          amount_{[this] {
-            return interface::Amount(add_asset_quantity_.amount());
-          }} {}
+          amount_{add_asset_quantity_.amount()} {}
 
     // TODO 30/05/2018 andrei Reduce boilerplate code in variant classes
     template AddAssetQuantity::AddAssetQuantity(
@@ -35,7 +33,7 @@ namespace shared_model {
     }
 
     const interface::Amount &AddAssetQuantity::amount() const {
-      return *amount_;
+      return amount_;
     }
 
   }  // namespace proto

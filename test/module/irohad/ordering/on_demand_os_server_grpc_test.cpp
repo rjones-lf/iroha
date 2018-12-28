@@ -30,14 +30,19 @@ struct OnDemandOsServerGrpcTest : public ::testing::Test {
     notification = std::make_shared<MockOdOsNotification>();
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Transaction>>
-        transaction_validator =
+        interface_transaction_validator =
             std::make_unique<shared_model::validation::MockValidator<
                 shared_model::interface::Transaction>>();
+    std::unique_ptr<
+        shared_model::validation::AbstractValidator<protocol::Transaction>>
+        proto_transaction_validator = std::make_unique<
+            shared_model::validation::MockValidator<protocol::Transaction>>();
     auto transaction_factory =
         std::make_shared<shared_model::proto::ProtoTransportFactory<
             shared_model::interface::Transaction,
             shared_model::proto::Transaction>>(
-            std::move(transaction_validator));
+            std::move(interface_transaction_validator),
+            std::move(proto_transaction_validator));
     auto batch_parser =
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     batch_factory = std::make_shared<MockTransactionBatchFactory>();

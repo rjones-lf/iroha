@@ -12,11 +12,30 @@ endif()
 PROJECT(iroha C CXX)
 
 SET(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-SET(CMAKE_CXX_FLAGS "-std=c++14 -Wall -fdiagnostics-color=always")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wno-error=deprecated-declarations")
-SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
+if (NOT MSVC)
+  SET(CMAKE_CXX_FLAGS "-std=c++14 -Wall -fdiagnostics-color=always")
+  SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wno-error=deprecated-declarations")
+  SET(CMAKE_CXX_FLAGS_DEBUG   "-g -Wextra -Wno-unused-parameter -Wno-deprecated-declarations -O0")
+endif()
 SET(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
 SET(CMAKE_INSTALL_RPATH "../lib")
+
+if(WIN32)
+    # We have to set _WIN32_WINNT for gRPC
+    if(${CMAKE_SYSTEM_VERSION} EQUAL 10) # Windows 10
+        add_definitions(-D _WIN32_WINNT=0x0A00)
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.3) # Windows 8.1
+        add_definitions(-D _WIN32_WINNT=0x0603)
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.2) # Windows 8
+        add_definitions(-D _WIN32_WINNT=0x0602)
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.1) # Windows 7
+        add_definitions(-D _WIN32_WINNT=0x0601)
+    elseif(${CMAKE_SYSTEM_VERSION} EQUAL 6.0) # Windows Vista
+        add_definitions(-D _WIN32_WINNT=0x0600)
+    else() # Windows XP (5.1)
+        add_definitions(-D _WIN32_WINNT=0x0501)
+    endif()
+endif()
 
 if(COVERAGE)
   find_program(LCOV_PROGRAM lcov)

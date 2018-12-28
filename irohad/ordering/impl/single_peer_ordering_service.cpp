@@ -26,7 +26,8 @@ namespace iroha {
         std::shared_ptr<network::OrderingServiceTransport> transport,
         std::shared_ptr<ametsuchi::OsPersistentStateFactory> persistent_state,
         std::unique_ptr<shared_model::interface::ProposalFactory> factory,
-        bool is_async)
+        bool is_async,
+        logger::Logger log)
         : peer_query_factory_(peer_query_factory),
           max_size_(max_size),
           current_size_(0),
@@ -37,7 +38,7 @@ namespace iroha {
                            [](const auto &state) {
                              return state->loadProposalHeight().value();
                            }),
-          log_(logger::log("OrderingServiceImpl")) {
+          log_(std::move(log)) {
       // restore state of ordering service from persistent storage
       rxcpp::observable<ProposalEvent> timer =
           proposal_timeout.map([](auto) { return ProposalEvent::kTimerEvent; });
@@ -103,7 +104,7 @@ namespace iroha {
 
       auto tx_range = txs | boost::adaptors::indirected;
       auto proposal = factory_->createProposal(
-          proposal_height_++, iroha::time::now(), tx_range);
+          proposal_height_, iroha::time::now(), tx_range);
 
       proposal.match(
           [this](expected::Value<
@@ -112,9 +113,10 @@ namespace iroha {
             // In case of restart it reloads state.
             if (persistent_state_->createOsPersistentState() |
                 [this](const auto &state) {
-                  return state->saveProposalHeight(proposal_height_);
+                  return state->saveProposalHeight(proposal_height_ + 1);
                 }) {
               publishProposal(std::move(v.value));
+              proposal_height_++;
             } else {
               // TODO(@l4l) 23/03/18: publish proposal independent of psql
               // status IR-1162

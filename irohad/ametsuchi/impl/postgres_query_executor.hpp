@@ -27,7 +27,6 @@
 #include "interfaces/commands/set_quorum.hpp"
 #include "interfaces/commands/subtract_asset_quantity.hpp"
 #include "interfaces/commands/transfer_asset.hpp"
-#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/block_json_converter.hpp"
 #include "interfaces/iroha_internal/query_response_factory.hpp"
 #include "interfaces/permission_to_string.hpp"
@@ -42,13 +41,15 @@ namespace iroha {
     using QueryErrorType =
         shared_model::interface::QueryResponseFactory::ErrorQueryType;
 
+    using ErrorQueryResponse = shared_model::interface::ErrorQueryResponse;
+    using QueryErrorMessageType = ErrorQueryResponse::ErrorMessageType;
+    using QueryErrorCodeType = ErrorQueryResponse::ErrorCodeType;
+
     class PostgresQueryExecutorVisitor
         : public boost::static_visitor<QueryExecutorResult> {
      public:
       PostgresQueryExecutorVisitor(
           soci::session &sql,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory,
           KeyValueStorage &block_store,
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
@@ -56,7 +57,8 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
               response_factory,
           std::shared_ptr<shared_model::interface::PermissionToString>
-              perm_converter);
+              perm_converter,
+          logger::Logger log = logger::log("PostgresQueryExecutorVisitor"));
 
       void setCreatorId(
           const shared_model::interface::types::AccountIdType &creator_id);
@@ -113,38 +115,106 @@ namespace iroha {
        * @tparam PermissionTuple - permissions, needed for the query
        * @tparam QueryExecutor - type of function, which executes the query
        * @tparam ResponseCreator - type of function, which creates response of
-       * the query
-       * @tparam ErrResponse - type of function, which creates error response
+       * the query, successful or error one
+       * @tparam PermissionsErrResponse - type of function, which creates error
+       * response in case something wrong with permissions
        * @param query_executor - function, executing query
        * @param response_creator - function, creating query response
-       * @param err_response - function, creating error response
+       * @param perms_err_response - function, creating error response
        * @return query response created as a result of query execution
        */
       template <typename QueryTuple,
                 typename PermissionTuple,
                 typename QueryExecutor,
                 typename ResponseCreator,
-                typename ErrResponse>
-      QueryExecutorResult executeQuery(QueryExecutor &&query_executor,
-                                       ResponseCreator &&response_creator,
-                                       ErrResponse &&err_response);
+                typename PermissionsErrResponse>
+      QueryExecutorResult executeQuery(
+          QueryExecutor &&query_executor,
+          ResponseCreator &&response_creator,
+          PermissionsErrResponse &&perms_err_response);
 
       /**
        * Create a query error response and log it
        * @param error_type - type of query error
-       * @param error body as string message
+       * @param error_body - stringified error of the query
+       * @param error_code of the query
        * @return ptr to created error response
        */
       std::unique_ptr<shared_model::interface::QueryResponse>
       logAndReturnErrorResponse(iroha::ametsuchi::QueryErrorType error_type,
-                                std::string error_body) const;
+                                QueryErrorMessageType error_body,
+                                QueryErrorCodeType error_code) const;
+
+      /**
+       * Execute query which returns list of transactions
+       * uses pagination
+       * @param query - query object
+       * @param qry_checker - fallback checker of the query, needed if paging
+       * hash is not specified and 0 transaction are returned as a query result
+       * @param related_txs - SQL query which returns transaction relevant
+       * to this query
+       * @param applier - function which accepts SQL
+       * and returns another function which executes that query
+       * @param perms - permissions, necessary to execute the query
+       * @return Result of a query execution
+       */
+      template <typename Query,
+                typename QueryChecker,
+                typename QueryApplier,
+                typename... Permissions>
+      QueryExecutorResult executeTransactionsQuery(
+          const Query &query,
+          QueryChecker &&qry_checker,
+          const std::string &related_txs,
+          QueryApplier applier,
+          Permissions... perms);
+
+      /**
+       * Check if entry with such key exists in the database
+       * @tparam ReturnValueType - type of the value to be returned in the
+       * underlying query
+       * @param table_name - name of the table to be checked
+       * @param key_name - name of the table attribute, against which the search
+       * is performed
+       * @param value_name - name of the value, which is to be returned
+       * from the search (attribute with such name is to exist)
+       * @param value - actual value of the key attribute
+       * @return true, if entry with such value of the key attribute exists,
+       * false otherwise
+       *
+       * @throws if check query finishes with an exception
+       */
+      template <typename ReturnValueType>
+      bool existsInDb(const std::string &table_name,
+                      const std::string &key_name,
+                      const std::string &value_name,
+                      const std::string &value) const;
+
+      struct QueryFallbackCheckResult {
+        QueryFallbackCheckResult() = default;
+        QueryFallbackCheckResult(
+            shared_model::interface::ErrorQueryResponse::ErrorCodeType
+                error_code,
+            shared_model::interface::ErrorQueryResponse::ErrorMessageType
+                &&error_message)
+            : contains_error{true},
+              error_code{error_code},
+              error_message{std::move(error_message)} {}
+
+        explicit operator bool() const {
+          return contains_error;
+        }
+        bool contains_error = false;
+        shared_model::interface::ErrorQueryResponse::ErrorCodeType error_code =
+            0;
+        shared_model::interface::ErrorQueryResponse::ErrorMessageType
+            error_message = "";
+      };
 
       soci::session &sql_;
       KeyValueStorage &block_store_;
       shared_model::interface::types::AccountIdType creator_id_;
       shared_model::interface::types::HashType query_hash_;
-      std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-          common_objects_factory_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;
       std::shared_ptr<shared_model::interface::BlockJsonConverter> converter_;
       std::shared_ptr<shared_model::interface::QueryResponseFactory>
@@ -158,8 +228,6 @@ namespace iroha {
      public:
       PostgresQueryExecutor(
           std::unique_ptr<soci::session> sql,
-          std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-              factory,
           KeyValueStorage &block_store,
           std::shared_ptr<PendingTransactionStorage> pending_txs_storage,
           std::shared_ptr<shared_model::interface::BlockJsonConverter>
@@ -167,7 +235,8 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
               response_factory,
           std::shared_ptr<shared_model::interface::PermissionToString>
-              perm_converter);
+              perm_converter,
+          logger::Logger log = logger::log("PostgresQueryExecutor"));
 
       QueryExecutorResult validateAndExecute(
           const shared_model::interface::Query &query) override;
@@ -177,7 +246,6 @@ namespace iroha {
      private:
       std::unique_ptr<soci::session> sql_;
       KeyValueStorage &block_store_;
-      std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory_;
       std::shared_ptr<PendingTransactionStorage> pending_txs_storage_;
       PostgresQueryExecutorVisitor visitor_;
       std::shared_ptr<shared_model::interface::QueryResponseFactory>

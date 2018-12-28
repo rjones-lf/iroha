@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
@@ -37,9 +25,8 @@ TEST(JsonProtoConverterTest, JsonToProtoTxTest) {
 
   std::string creator_account_id = "admin@test";
 
-  auto orig_tx = builder.creatorAccountId(creator_account_id)
-                     .createdTime(123)
-                     .build();
+  auto orig_tx =
+      builder.creatorAccountId(creator_account_id).createdTime(123).build();
 
   auto json = modelToJson(orig_tx);
 
@@ -75,10 +62,9 @@ TEST(JsonProtoConverterTest, JsonToProtoBlockTest) {
   TestTransactionBuilder tx_builder;
   TestBlockBuilder block_builder;
 
-  auto orig_block =
-      block_builder.transactions(std::vector<Transaction>({tx_builder.build()}))
-          .createdTime(123)
-          .build();
+  std::vector<shared_model::proto::Transaction> txs;
+  txs.push_back(tx_builder.build());
+  auto orig_block = block_builder.transactions(txs).createdTime(123).build();
 
   auto json = modelToJson(orig_block);
 

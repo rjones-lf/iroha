@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/irange.hpp>
+#include <boost/variant.hpp>
 #include "cryptography/hash.hpp"
 
 /**
@@ -33,7 +34,7 @@ TEST(ProtoTxResponse, TxResponseLoad) {
     auto model_response = shared_model::proto::TransactionResponse(response);
     ASSERT_EQ(i, model_response.get().which());
     ASSERT_EQ(model_response.transactionHash(),
-              shared_model::crypto::Hash(hash));
+              shared_model::crypto::Hash::fromHexString(hash));
   });
 }
 

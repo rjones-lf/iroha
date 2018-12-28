@@ -18,6 +18,8 @@ properties([parameters([
   choice(choices: 'Release\nDebug', description: 'Android bindings build type', name: 'ABBuildType'),
   choice(choices: 'arm64-v8a\narmeabi-v7a\narmeabi\nx86_64\nx86', description: 'Android bindings platform', name: 'ABPlatform'),
   booleanParam(defaultValue: true, description: 'Build docs', name: 'Doxygen'),
+  booleanParam(defaultValue: true, description: 'Sanitize address;leak', name: 'sanitize'),
+  booleanParam(defaultValue: false, description: 'Build fuzzing, but do not run tests', name: 'fuzzing'),
   string(defaultValue: '8', description: 'Expect ~3GB memory consumtion per CPU core', name: 'PARALLELISM')])])
 
 
@@ -208,7 +210,7 @@ pipeline {
                 export IROHA_POSTGRES_USER=${IROHA_POSTGRES_USER}; \
                 mkdir -p /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}; \
                 initdb -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ -U ${IROHA_POSTGRES_USER} --pwfile=<(echo ${IROHA_POSTGRES_PASSWORD}); \
-                pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ -o '-p 5433' -l /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/events.log start; \
+                pg_ctl -D /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/ -o '-p 5433 -c max_prepared_transactions=100' -l /var/jenkins/${GIT_COMMIT}-${BUILD_NUMBER}/events.log start; \
                 psql -h localhost -d postgres -p 5433 -U ${IROHA_POSTGRES_USER} --file=<(echo create database ${IROHA_POSTGRES_USER};)
               """
               sh "cd build; IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 ctest --output-on-failure --no-compress-output -T Test || true"

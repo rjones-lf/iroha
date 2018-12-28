@@ -6,6 +6,7 @@
 #ifndef IROHA_SHARED_MODEL_MODEL_QUERY_BUILDER_HPP
 #define IROHA_SHARED_MODEL_MODEL_QUERY_BUILDER_HPP
 
+#include <boost/optional.hpp>
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/unsigned_proto.hpp"
 
@@ -70,7 +71,10 @@ namespace shared_model {
        * @return builder with getAccountTransactions query inside
        */
       ModelQueryBuilder getAccountTransactions(
-          const interface::types::AccountIdType &account_id);
+          const interface::types::AccountIdType &account_id,
+          interface::types::TransactionsNumberType page_size,
+          const boost::optional<interface::types::HashType> &first_hash =
+              boost::none);
 
       /**
        * Queries account transaction collection for a given asset
@@ -80,7 +84,10 @@ namespace shared_model {
        */
       ModelQueryBuilder getAccountAssetTransactions(
           const interface::types::AccountIdType &account_id,
-          const interface::types::AssetIdType &asset_id);
+          const interface::types::AssetIdType &asset_id,
+          interface::types::TransactionsNumberType page_size,
+          const boost::optional<interface::types::HashType> &first_hash =
+              boost::none);
 
       /**
        * Queries balance of specific asset for given account

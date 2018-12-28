@@ -18,19 +18,18 @@ namespace iroha {
   namespace ametsuchi {
     MutableStorageImpl::MutableStorageImpl(
         shared_model::interface::types::HashType top_hash,
+        std::shared_ptr<PostgresCommandExecutor> cmd_executor,
         std::unique_ptr<soci::session> sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
-        std::shared_ptr<shared_model::interface::PermissionToString>
-            perm_converter)
+        logger::Logger log)
         : top_hash_(top_hash),
           sql_(std::move(sql)),
           peer_query_(std::make_unique<PeerQueryWsv>(
               std::make_shared<PostgresWsvQuery>(*sql_, std::move(factory)))),
           block_index_(std::make_unique<PostgresBlockIndex>(*sql_)),
-          command_executor_(std::make_shared<PostgresCommandExecutor>(
-              *sql_, std::move(perm_converter))),
+          command_executor_(std::move(cmd_executor)),
           committed(false),
-          log_(logger::log("MutableStorage")) {
+          log_(std::move(log)) {
       *sql_ << "BEGIN";
     }
 
@@ -77,17 +76,21 @@ namespace iroha {
 
     template <typename Function>
     bool MutableStorageImpl::withSavepoint(Function &&function) {
-      *sql_ << "SAVEPOINT savepoint_";
+      try {
+        *sql_ << "SAVEPOINT savepoint_";
 
-      auto function_executed = std::forward<Function>(function)();
+        auto function_executed = std::forward<Function>(function)();
 
-      if (function_executed) {
-        *sql_ << "RELEASE SAVEPOINT savepoint_";
-      } else {
-        *sql_ << "ROLLBACK TO SAVEPOINT savepoint_";
+        if (function_executed) {
+          *sql_ << "RELEASE SAVEPOINT savepoint_";
+        } else {
+          *sql_ << "ROLLBACK TO SAVEPOINT savepoint_";
+        }
+        return function_executed;
+      } catch (std::exception &e) {
+        log_->warn("Apply has failed. Reason: {}", e.what());
+        return false;
       }
-
-      return function_executed;
     }
 
     bool MutableStorageImpl::apply(
@@ -112,7 +115,11 @@ namespace iroha {
 
     MutableStorageImpl::~MutableStorageImpl() {
       if (not committed) {
-        *sql_ << "ROLLBACK";
+        try {
+          *sql_ << "ROLLBACK";
+        } catch (std::exception &e) {
+          log_->warn("Apply has been failed. Reason: {}", e.what());
+        }
       }
     }
   }  // namespace ametsuchi

@@ -1,28 +1,17 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
+#include <boost/variant.hpp>
 #include "builders/protobuf/queries.hpp"
 #include "builders/protobuf/transaction.hpp"
 #include "common/files.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/common_constants.hpp"
 #include "framework/integration_framework/integration_test_framework.hpp"
-#include "framework/specified_visitor.hpp"
+#include "interfaces/query_responses/transactions_response.hpp"
 
 using namespace common_constants;
 using shared_model::interface::permissions::Role;
@@ -45,10 +34,10 @@ TEST(RegressionTest, SequentialInitialization) {
                 .finish();
 
   auto check_enough_signatures_collected_status = [](auto &status) {
-    ASSERT_NO_THROW(boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            shared_model::interface::EnoughSignaturesCollectedResponse>(),
-        status.get()));
+    ASSERT_NO_THROW(
+        boost::get<
+            const shared_model::interface::EnoughSignaturesCollectedResponse &>(
+            status.get()));
   };
   auto checkProposal = [](auto &proposal) {
     ASSERT_EQ(proposal->transactions().size(), 1);
@@ -62,7 +51,7 @@ TEST(RegressionTest, SequentialInitialization) {
             .substr(0, 8);
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &) {}, false, path)
+        1, dbname, false, false, path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx, check_enough_signatures_collected_status)
         .skipProposal()
@@ -74,7 +63,7 @@ TEST(RegressionTest, SequentialInitialization) {
   }
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &itf) { itf.done(); }, false, path)
+        1, dbname, true, false, path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx, check_enough_signatures_collected_status)
         .checkProposal(checkProposal)
@@ -101,8 +90,7 @@ TEST(RegressionTest, StateRecovery) {
                 .createRole(kRole, {Role::kReceive})
                 .appendRole(kUserId, kRole)
                 .addAssetQuantity(kAssetId, "133.0")
-                .transferAsset(
-                    kAdminId, kUserId, kAssetId, "descrs", "97.8")
+                .transferAsset(kAdminId, kUserId, kAssetId, "descrs", "97.8")
                 .quorum(1)
                 .build()
                 .signAndAddSignature(kAdminKeypair)
@@ -121,10 +109,9 @@ TEST(RegressionTest, StateRecovery) {
   auto checkOne = [](auto &res) { ASSERT_EQ(res->transactions().size(), 1); };
   auto checkQuery = [&tx](auto &status) {
     ASSERT_NO_THROW({
-      const auto &resp = boost::apply_visitor(
-          framework::SpecifiedVisitor<
-              shared_model::interface::TransactionsResponse>(),
-          status.get());
+      const auto &resp =
+          boost::get<const shared_model::interface::TransactionsResponse &>(
+              status.get());
       ASSERT_EQ(resp.transactions().size(), 1);
       ASSERT_EQ(resp.transactions().front(), tx);
     });
@@ -144,7 +131,7 @@ TEST(RegressionTest, StateRecovery) {
 
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &) {}, false, path)
+        1, dbname, false, false, path)
         .setInitialState(kAdminKeypair)
         .sendTx(tx)
         .checkProposal(checkOne)
@@ -154,7 +141,7 @@ TEST(RegressionTest, StateRecovery) {
   }
   {
     integration_framework::IntegrationTestFramework(
-        1, dbname, [](auto &itf) { itf.done(); }, false, path)
+        1, dbname, true, false, path)
         .recoverState(kAdminKeypair)
         .sendQuery(makeQuery(2, kAdminKeypair), checkQuery);
   }
@@ -177,6 +164,5 @@ TEST(RegressionTest, DoubleCallOfDone) {
  * @then no exceptions are risen
  */
 TEST(RegressionTest, DestructionOfNonInitializedItf) {
-  integration_framework::IntegrationTestFramework itf(
-      1, {}, [](auto &itf) { itf.done(); });
+  integration_framework::IntegrationTestFramework itf(1, {}, true);
 }

@@ -23,11 +23,11 @@ using Variant =
 template Variant::~variant();
 template Variant::variant(Variant &&);
 template bool Variant::operator==(const Variant &) const;
-template void Variant::destroy_content();
-template int Variant::which() const;
-template void Variant::indicate_which(int);
-template bool Variant::using_backup() const;
-template Variant::convert_copy_into::convert_copy_into(void *);
+template void Variant::destroy_content() noexcept;
+template int Variant::which() const noexcept;
+template void Variant::indicate_which(int) noexcept;
+template bool Variant::using_backup() const noexcept;
+template Variant::convert_copy_into::convert_copy_into(void *) noexcept;
 
 namespace shared_model {
   namespace interface {
@@ -47,13 +47,17 @@ namespace shared_model {
           .init("TransactionResponse")
           .append("transactionHash", transactionHash().hex())
           .append(boost::apply_visitor(detail::ToStringVisitor(), get()))
-          .append("errorMessage", errorMessage())
+          .append("statelessErrorOrCmdName", statelessErrorOrCommandName())
+          .append("failedCmdIndex", std::to_string(failedCommandIndex()))
+          .append("errorCode", std::to_string(errorCode()))
           .finalize();
     }
 
     bool TransactionResponse::operator==(const ModelType &rhs) const {
       return transactionHash() == rhs.transactionHash()
-          and errorMessage() == rhs.errorMessage() and get() == rhs.get();
+          and statelessErrorOrCommandName() == rhs.statelessErrorOrCommandName()
+          and failedCommandIndex() == rhs.failedCommandIndex()
+          and errorCode() == rhs.errorCode() and get() == rhs.get();
     }
   }  // namespace interface
 }  // namespace shared_model

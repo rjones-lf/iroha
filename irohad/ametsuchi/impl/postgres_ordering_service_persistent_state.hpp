@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_POSTGRES_ORDERING_SERVICE_PERSISTENT_STATE_HPP
@@ -45,12 +33,13 @@ namespace iroha {
       create(const std::string &postgres_options);
 
       /**
-       * Constructor
-       * @param postgres_connection postgres connection object
-       * @param postgres_transaction postgres transaction object
+       * @param sql - pointer to soci session
+       * @param log to print progress
        */
-      explicit PostgresOrderingServicePersistentState(
-          std::unique_ptr<soci::session> sql);
+      PostgresOrderingServicePersistentState(
+          std::unique_ptr<soci::session> sql,
+          logger::Logger log =
+              logger::log("PostgresOrderingServicePersistentState"));
 
       /**
        * Initialize storage.

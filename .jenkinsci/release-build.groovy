@@ -59,23 +59,18 @@ def doReleaseBuild() {
 
   // push Docker image in case the current branch is develop,
   // or it is a commit into PR which base branch is develop (usually develop -> master)
+  checkTag = sh(script: 'git describe --tags --exact-match ${GIT_COMMIT}', returnStatus: true)
   if (GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop' || GIT_LOCAL_BRANCH == 'dev' || CHANGE_BRANCH_LOCAL == 'dev') {
     docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
       iCRelease.push("${platform}-develop")
     }
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop",
-        ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop",
-         "${DOCKER_REGISTRY_BASENAME}:armv7l-develop",
-         "${DOCKER_REGISTRY_BASENAME}:aarch64-develop"])
+        ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop"])
       manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:develop",
         [
           [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-develop",
-           arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-develop",
-           arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-develop",
-           arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
+           arch: 'amd64', os: 'linux', osfeatures: [], variant: '']
         ])
       withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
         manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:develop", login, password)
@@ -88,24 +83,35 @@ def doReleaseBuild() {
     }
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:latest",
-        ["${DOCKER_REGISTRY_BASENAME}:x86_64-latest",
-         "${DOCKER_REGISTRY_BASENAME}:armv7l-latest",
-         "${DOCKER_REGISTRY_BASENAME}:aarch64-latest"])
+        ["${DOCKER_REGISTRY_BASENAME}:x86_64-latest"])
       manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:latest",
         [
           [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-latest",
-           arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-latest",
-           arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
-          [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-latest",
-           arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
+           arch: 'amd64', os: 'linux', osfeatures: [], variant: '']
         ])
       withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
         manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:latest", login, password)
       }
     }
+    if (checkTag == 0) {
+      def tag = sh(script: 'git describe --tags --exact-match ${GIT_COMMIT}', returnStdout: true).trim().replaceAll('-','_')
+      docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+        iCRelease.push("${platform}-${tag}")
+      }
+      if (manifest.manifestSupportEnabled()) {
+        manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:${tag}",
+          ["${DOCKER_REGISTRY_BASENAME}:x86_64-${tag}"])
+        manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:${tag}",
+          [
+            [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-${tag}",
+            arch: 'amd64', os: 'linux', osfeatures: [], variant: '']
+          ])
+        withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
+          manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:${tag}", login, password)
+        }
+      }
+    }
   }
-
   sh "docker rmi ${iCRelease.id}"
 }
 return this

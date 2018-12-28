@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <benchmark/benchmark.h>
 #include <string>
 
+#include <benchmark/benchmark.h>
+#include <boost/variant.hpp>
 #include "backend/protobuf/transaction.hpp"
 #include "benchmark/bm_utils.hpp"
-#include "framework/specified_visitor.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "utils/query_error_response_visitor.hpp"
 
@@ -45,10 +45,7 @@ static void BM_QueryAccount(benchmark::State &state) {
   };
 
   auto check = [](auto &status) {
-    boost::apply_visitor(
-        framework::SpecifiedVisitor<
-            const shared_model::interface::AccountResponse &>(),
-        status.get());
+    boost::get<const shared_model::interface::AccountResponse &>(status.get());
   };
 
   itf.sendQuery(make_query(), check);

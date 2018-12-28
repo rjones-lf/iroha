@@ -11,8 +11,8 @@ namespace shared_model {
     template <typename QueryResponseType>
     AssetResponse::AssetResponse(QueryResponseType &&queryResponse)
         : CopyableProto(std::forward<QueryResponseType>(queryResponse)),
-          assetResponse_{proto_->asset_response()},
-          asset_{[this] { return Asset(assetResponse_.asset()); }} {}
+          asset_response_{proto_->asset_response()},
+          asset_{asset_response_.asset()} {}
 
     template AssetResponse::AssetResponse(AssetResponse::TransportType &);
     template AssetResponse::AssetResponse(const AssetResponse::TransportType &);
@@ -25,7 +25,7 @@ namespace shared_model {
         : AssetResponse(std::move(o.proto_)) {}
 
     const Asset &AssetResponse::asset() const {
-      return *asset_;
+      return asset_;
     }
 
   }  // namespace proto

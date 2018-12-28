@@ -9,6 +9,7 @@
 #include "ametsuchi/impl/postgres_command_executor.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/commands/command.hpp"
+#include "interfaces/permission_to_string.hpp"
 #include "interfaces/transaction.hpp"
 
 namespace iroha {
@@ -17,11 +18,12 @@ namespace iroha {
         std::unique_ptr<soci::session> sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         std::shared_ptr<shared_model::interface::PermissionToString>
-            perm_converter)
+            perm_converter,
+        logger::Logger log)
         : sql_(std::move(sql)),
           command_executor_(std::make_unique<PostgresCommandExecutor>(
               *sql_, std::move(perm_converter))),
-          log_(logger::log("TemporaryWSV")) {
+          log_(std::move(log)) {
       *sql_ << "BEGIN";
     }
 
@@ -57,22 +59,23 @@ namespace iroha {
             soci::use(boost::size(keys_range), "signatures_count"),
             soci::use(transaction.creatorAccountId(), "account_id");
       } catch (const std::exception &e) {
-        log_->error(e.what());
+        auto error_str = "Transaction " + transaction.toString()
+            + " failed signatures validation with db error: " + e.what();
+        // TODO [IR-1816] Akvinikym 29.10.18: substitute error code magic number
+        // with named constant
         return expected::makeError(validation::CommandError{
-            "signatures validation",
-            (boost::format("database error: %s") % e.what()).str(),
-            false});
+            "signatures validation", 1, error_str, false});
       }
 
       if (signatories_valid and *signatories_valid) {
         return {};
       } else {
+        auto error_str = "Transaction " + transaction.toString()
+            + " failed signatures validation";
+        // TODO [IR-1816] Akvinikym 29.10.18: substitute error code magic number
+        // with named constant
         return expected::makeError(validation::CommandError{
-            "signatures validation",
-            "possible reasons: no account, number of signatures is less than "
-            "account quorum, signatures are not a subset of account "
-            "signatories",
-            false});
+            "signatures validation", 2, error_str, false});
       }
     }
 
@@ -104,7 +107,8 @@ namespace iroha {
                   .match([](expected::Value<void> &) { return true; },
                          [i, &cmd_error](expected::Error<CommandError> &error) {
                            cmd_error = {error.error.command_name,
-                                        error.error.toString(),
+                                        error.error.error_code,
+                                        error.error.error_extra,
                                         true,
                                         i};
                            return false;
@@ -126,7 +130,11 @@ namespace iroha {
     }
 
     TemporaryWsvImpl::~TemporaryWsvImpl() {
-      *sql_ << "ROLLBACK";
+      try {
+        *sql_ << "ROLLBACK";
+      } catch (std::exception &e) {
+        log_->error("Rollback did not happen: {}", e.what());
+      }
     }
 
     TemporaryWsvImpl::SavepointWrapperImpl::SavepointWrapperImpl(
@@ -134,19 +142,24 @@ namespace iroha {
         std::string savepoint_name)
         : sql_{*wsv.sql_},
           savepoint_name_{std::move(savepoint_name)},
-          is_released_{false} {
+          is_released_{false},
+          log_(logger::log("Temporary wsv's savepoint wrapper")) {
       sql_ << "SAVEPOINT " + savepoint_name_ + ";";
-    };
+    }
 
     void TemporaryWsvImpl::SavepointWrapperImpl::release() {
       is_released_ = true;
     }
 
     TemporaryWsvImpl::SavepointWrapperImpl::~SavepointWrapperImpl() {
-      if (not is_released_) {
-        sql_ << "ROLLBACK TO SAVEPOINT " + savepoint_name_ + ";";
-      } else {
-        sql_ << "RELEASE SAVEPOINT " + savepoint_name_ + ";";
+      try {
+        if (not is_released_) {
+          sql_ << "ROLLBACK TO SAVEPOINT " + savepoint_name_ + ";";
+        } else {
+          sql_ << "RELEASE SAVEPOINT " + savepoint_name_ + ";";
+        }
+      } catch (std::exception &e) {
+        log_->error("SQL error. Reason: {}", e.what());
       }
     }
 

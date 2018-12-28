@@ -70,8 +70,8 @@ namespace shared_model {
             crypto::CryptoSigner<>::sign(proto::makeBlob(tx.payload()), key);
 
         auto sig = tx.add_signatures();
-        sig->set_signature(crypto::toBinaryString(signature));
-        sig->set_public_key(crypto::toBinaryString(key.publicKey()));
+        sig->set_signature(signature.hex());
+        sig->set_public_key(key.publicKey().hex());
         return boost::make_optional(tx);
       };
       if (s) {
@@ -87,8 +87,8 @@ namespace shared_model {
             crypto::CryptoSigner<>::sign(proto::makeBlob(qry.payload()), key);
 
         auto sig = qry.mutable_signature();
-        sig->set_signature(crypto::toBinaryString(signature));
-        sig->set_public_key(crypto::toBinaryString(key.publicKey()));
+        sig->set_signature(signature.hex());
+        sig->set_public_key(key.publicKey().hex());
         return boost::make_optional(qry);
       };
       if (s) {

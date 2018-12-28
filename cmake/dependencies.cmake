@@ -2,7 +2,7 @@ find_package(PackageHandleStandardArgs)
 
 include(ExternalProject)
 
-set(EP_PREFIX "${PROJECT_SOURCE_DIR}/external")
+set(EP_PREFIX "${PROJECT_BINARY_DIR}/external")
 set_directory_properties(PROPERTIES
     EP_PREFIX ${EP_PREFIX}
     )
@@ -27,13 +27,73 @@ find_package(spdlog)
 #           protobuf           #
 ################################
 option(FIND_PROTOBUF "Try to find protobuf in system" ON)
-find_package(protobuf)
+if (MSVC)
+  find_package(Protobuf REQUIRED CONFIG)
+  add_library(protobuf INTERFACE IMPORTED)
+  target_link_libraries(protobuf INTERFACE
+      protobuf::libprotobuf
+      )
+
+  get_target_property(Protobuf_INCLUDE_DIR protobuf::libprotobuf
+    INTERFACE_INCLUDE_DIRECTORIES)
+
+  get_target_property(Protobuf_PROTOC_EXECUTABLE protobuf::protoc
+    IMPORTED_LOCATION_RELEASE)
+  if(NOT EXISTS "${Protobuf_PROTOC_EXECUTABLE}")
+    get_target_property(Protobuf_PROTOC_EXECUTABLE protobuf::protoc
+      IMPORTED_LOCATION_DEBUG)
+  endif()
+  if(NOT EXISTS "${Protobuf_PROTOC_EXECUTABLE}")
+    get_target_property(Protobuf_PROTOC_EXECUTABLE protobuf::protoc
+      IMPORTED_LOCATION_NOCONFIG)
+  endif()
+
+  add_executable(protoc IMPORTED)
+  set_target_properties(protoc PROPERTIES
+      IMPORTED_LOCATION ${Protobuf_PROTOC_EXECUTABLE}
+      )
+else ()
+  find_package(protobuf)
+endif()
 
 #########################
 #         gRPC          #
 #########################
 option(FIND_GRPC "Try to find gRPC in system" ON)
-find_package(grpc)
+if (MSVC)
+  find_package(gRPC REQUIRED CONFIG)
+
+  add_library(grpc INTERFACE IMPORTED)
+  target_link_libraries(grpc INTERFACE
+      gRPC::grpc
+      )
+  add_library(grpc++ INTERFACE IMPORTED)
+  target_link_libraries(grpc++ INTERFACE
+      gRPC::grpc++
+      )
+  add_library(gpr INTERFACE IMPORTED)
+  target_link_libraries(gpr INTERFACE
+      gRPC::gpr
+      )
+
+  get_target_property(gRPC_CPP_PLUGIN_EXECUTABLE gRPC::grpc_cpp_plugin
+    IMPORTED_LOCATION_RELEASE)
+  if(NOT EXISTS "${gRPC_CPP_PLUGIN_EXECUTABLE}")
+    get_target_property(gRPC_CPP_PLUGIN_EXECUTABLE gRPC::grpc_cpp_plugin
+      IMPORTED_LOCATION_DEBUG)
+  endif()
+  if(NOT EXISTS "${gRPC_CPP_PLUGIN_EXECUTABLE}")
+    get_target_property(gRPC_CPP_PLUGIN_EXECUTABLE gRPC::grpc_cpp_plugin
+      IMPORTED_LOCATION_NOCONFIG)
+  endif()
+
+  add_executable(grpc_cpp_plugin IMPORTED)
+  set_target_properties(grpc_cpp_plugin PROPERTIES
+      IMPORTED_LOCATION ${gRPC_CPP_PLUGIN_EXECUTABLE}
+      )
+else ()
+  find_package(grpc)
+endif()
 
 ################################
 #          rapidjson           #
@@ -53,7 +113,11 @@ find_package(soci)
 ################################
 #            gflags            #
 ################################
-find_package(gflags)
+if (MSVC)
+  find_package(gflags REQUIRED CONFIG)
+else ()
+  find_package(gflags)
+endif()
 
 ##########################
 #        rx c++          #
@@ -63,7 +127,15 @@ find_package(rxcpp)
 ##########################
 #          TBB           #
 ##########################
-find_package(tbb)
+if (MSVC)
+  find_package(TBB REQUIRED CONFIG)
+  add_library(tbb INTERFACE IMPORTED)
+  target_link_libraries(tbb INTERFACE
+      TBB::tbb
+      )
+else ()
+  find_package(tbb)
+endif()
 
 ##########################
 #         boost          #
@@ -74,12 +146,21 @@ find_package(Boost 1.65.0 REQUIRED
     system
     thread
     )
-
-add_library(boost INTERFACE IMPORTED)
-set_target_properties(boost PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS}
-    INTERFACE_LINK_LIBRARIES "${Boost_LIBRARIES}"
-    )
+if (MSVC)
+  add_library(boost INTERFACE IMPORTED)
+  target_link_libraries(boost INTERFACE
+      Boost::boost
+      Boost::filesystem
+      Boost::system
+      Boost::thread
+      )
+else ()
+  add_library(boost INTERFACE IMPORTED)
+  set_target_properties(boost PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS}
+      INTERFACE_LINK_LIBRARIES "${Boost_LIBRARIES}"
+      )
+endif()
 
 if(ENABLE_LIBS_PACKAGING)
   foreach (library ${Boost_LIBRARIES})

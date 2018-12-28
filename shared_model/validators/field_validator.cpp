@@ -14,6 +14,7 @@
 #include "interfaces/common_objects/amount.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "interfaces/queries/query_payload_meta.hpp"
+#include "interfaces/queries/tx_pagination_meta.hpp"
 #include "validators/field_validator.hpp"
 
 // TODO: 15.02.18 nickaleks Change structure to compositional IR-978
@@ -236,7 +237,8 @@ namespace shared_model {
         ReasonsGroupType &reason,
         const interface::permissions::Grantable &permission) const {
       if (not isValid(permission)) {
-        reason.second.emplace_back("Provided grantable permission does not exist");
+        reason.second.emplace_back(
+            "Provided grantable permission does not exist");
       }
     }
 
@@ -380,6 +382,23 @@ namespace shared_model {
             .str();
       }
       return boost::none;
+    }
+
+    void FieldValidator::validateTxPaginationMeta(
+        ReasonsGroupType &reason,
+        const interface::TxPaginationMeta &tx_pagination_meta) const {
+      const auto page_size = tx_pagination_meta.pageSize();
+      if (page_size <= 0) {
+        reason.second.push_back(
+            (boost::format(
+                 "Page size is %s (%d), while it must be a non-zero positive.")
+             % (page_size == 0 ? "zero" : "negative") % page_size)
+                .str());
+      }
+      const auto first_hash = tx_pagination_meta.firstTxHash();
+      if (first_hash) {
+        validateHash(reason, *first_hash);
+      }
     }
 
   }  // namespace validation

@@ -28,16 +28,18 @@ namespace iroha {
 
     PostgresWsvQuery::PostgresWsvQuery(
         soci::session &sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
-        : sql_(sql), factory_(factory), log_(logger::log("PostgresWsvQuery")) {}
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        logger::Logger log)
+        : sql_(sql), factory_(factory), log_(std::move(log)) {}
 
     PostgresWsvQuery::PostgresWsvQuery(
         std::unique_ptr<soci::session> sql,
-        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory)
+        std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
+        logger::Logger log)
         : psql_(std::move(sql)),
           sql_(*psql_),
           factory_(factory),
-          log_(logger::log("PostgresWsvQuery")) {}
+          log_(std::move(log)) {}
 
     template <typename T>
     boost::optional<std::shared_ptr<T>> PostgresWsvQuery::fromResult(
@@ -85,7 +87,7 @@ namespace iroha {
                 soci::use(perm_str, "permission"));
       });
 
-      return flatMapValue(
+      return flatMapValue<boost::optional<bool>>(
                  result,
                  [](auto &count) { return boost::make_optional(count == 1); })
           .value_or(false);
@@ -148,7 +150,8 @@ namespace iroha {
                 soci::use(account_id, "account_id"));
       });
 
-      return flatMapValue(
+      return flatMapValue<
+          boost::optional<std::shared_ptr<shared_model::interface::Account>>>(
           result, [&](auto &domain_id, auto quorum, auto &data) {
             return this->fromResult(
                 factory_->createAccount(account_id, domain_id, quorum, data));
@@ -216,7 +219,7 @@ namespace iroha {
         });
       }
 
-      return flatMapValue(
+      return flatMapValue<boost::optional<std::string>>(
           result, [&](auto &json) { return boost::make_optional(json); });
     }
 
@@ -247,10 +250,12 @@ namespace iroha {
             soci::use(asset_id));
       });
 
-      return flatMapValue(result, [&](auto &domain_id, auto precision) {
-        return this->fromResult(
-            factory_->createAsset(asset_id, domain_id, precision));
-      });
+      return flatMapValue<
+          boost::optional<std::shared_ptr<shared_model::interface::Asset>>>(
+          result, [&](auto &domain_id, auto precision) {
+            return this->fromResult(
+                factory_->createAsset(asset_id, domain_id, precision));
+          });
     }
 
     boost::optional<
@@ -285,10 +290,12 @@ namespace iroha {
             soci::use(asset_id));
       });
 
-      return flatMapValue(result, [&](auto &amount) {
-        return this->fromResult(factory_->createAccountAsset(
-            account_id, asset_id, shared_model::interface::Amount(amount)));
-      });
+      return flatMapValue<boost::optional<
+          std::shared_ptr<shared_model::interface::AccountAsset>>>(
+          result, [&](auto &amount) {
+            return this->fromResult(factory_->createAccountAsset(
+                account_id, asset_id, shared_model::interface::Amount(amount)));
+          });
     }
 
     boost::optional<std::shared_ptr<shared_model::interface::Domain>>
@@ -300,10 +307,12 @@ namespace iroha {
                 soci::use(domain_id));
       });
 
-      return flatMapValue(result, [&](auto &default_role) {
-        return this->fromResult(
-            factory_->createDomain(domain_id, default_role));
-      });
+      return flatMapValue<
+          boost::optional<std::shared_ptr<shared_model::interface::Domain>>>(
+          result, [&](auto &default_role) {
+            return this->fromResult(
+                factory_->createDomain(domain_id, default_role));
+          });
     }
 
     boost::optional<std::vector<std::shared_ptr<shared_model::interface::Peer>>>

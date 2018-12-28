@@ -22,15 +22,15 @@ namespace iroha {
   GossipPropagationStrategy::GossipPropagationStrategy(
       PeerProviderFactory peer_factory,
       rxcpp::observe_on_one_worker emit_worker,
-      std::chrono::milliseconds period,
-      uint32_t amount)
+      const GossipPropagationStrategyParams &params)
       : peer_factory(peer_factory),
         non_visited({}),
         emit_worker(emit_worker),
-        emitent(rxcpp::observable<>::interval(steady_clock::now(), period)
-                    .map([this, amount](int) {
+        emitent(rxcpp::observable<>::interval(steady_clock::now(),
+                                              params.emission_period)
+                    .map([this, params](int) {
                       PropagationData vec;
-                      auto range = boost::irange(0u, amount);
+                      auto range = boost::irange(0u, params.amount_per_once);
                       // push until find empty element
                       std::find_if_not(
                           range.begin(), range.end(), [this, &vec](int) {

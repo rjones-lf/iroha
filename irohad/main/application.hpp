@@ -7,6 +7,7 @@
 #define IROHA_APPLICATION_HPP
 
 #include "ametsuchi/impl/storage_impl.hpp"
+#include "ametsuchi/tx_presence_cache.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "cryptography/keypair.hpp"
@@ -16,8 +17,9 @@
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
-#include "main/impl/ordering_init.hpp"
+#include "main/impl/on_demand_ordering_init.hpp"
 #include "main/server_runner.hpp"
+#include "multi_sig_transactions/gossip_propagation_strategy_params.hpp"
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "network/block_loader.hpp"
 #include "network/consensus_gate.hpp"
@@ -48,14 +50,13 @@ namespace iroha {
 
 class Irohad {
  public:
-
   using RunResult = iroha::expected::Result<void, std::string>;
 
   /**
    * Constructor that initializes common iroha pipeline
    * @param block_store_dir - folder where blocks will be stored
    * @param pg_conn - initialization string for postgre
-   * @param listen_ip - ip address for opening ports
+   * @param listen_ip - ip address for opening ports (internal & torii)
    * @param torii_port - port for torii binding
    * @param internal_port - port for internal communication - ordering service,
    * consensus, and block loader
@@ -64,7 +65,10 @@ class Irohad {
    * @param proposal_delay - maximum waiting time util emitting new proposal
    * @param vote_delay - waiting time before sending vote to next peer
    * @param keypair - public and private keys for crypto signer
-   * @param is_mst_supported - enable or disable mst processing support
+   * @param opt_mst_gossip_params - parameters for Gossip MST propagation
+   * (optional). If not provided, disables mst processing support
+   *
+   * TODO mboldyrev 03.11.2018 IR-1844 Refactor the constructor.
    */
   Irohad(const std::string &block_store_dir,
          const std::string &pg_conn,
@@ -75,17 +79,13 @@ class Irohad {
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
          const shared_model::crypto::Keypair &keypair,
-         bool is_mst_supported);
+         const boost::optional<iroha::GossipPropagationStrategyParams>
+             &opt_mst_gossip_params = boost::none);
 
   /**
    * Initialization of whole objects in system
    */
   virtual void init();
-
-  /**
-   * Reset oredering service storage state to default
-   */
-  void resetOrderingService();
 
   /**
    * Restore World State View
@@ -120,6 +120,8 @@ class Irohad {
   virtual void initNetworkClient();
 
   virtual void initFactories();
+
+  virtual void initPersistentCache();
 
   virtual void initOrderingGate();
 
@@ -160,6 +162,8 @@ class Irohad {
   std::chrono::milliseconds proposal_delay_;
   std::chrono::milliseconds vote_delay_;
   bool is_mst_supported_;
+  boost::optional<iroha::GossipPropagationStrategyParams>
+      opt_mst_gossip_params_;
 
   // ------------------------| internal dependencies |-------------------------
 
@@ -187,6 +191,9 @@ class Irohad {
   // transaction batch factory
   std::shared_ptr<shared_model::interface::TransactionBatchFactory>
       transaction_batch_factory_;
+
+  // persistent cache
+  std::shared_ptr<iroha::ametsuchi::TxPresenceCache> persistent_cache;
 
   // ordering gate
   std::shared_ptr<iroha::network::OrderingGate> ordering_gate;
@@ -216,6 +223,12 @@ class Irohad {
       iroha::protocol::Transaction>>
       transaction_factory;
 
+  // query factory
+  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::Query,
+      iroha::protocol::Query>>
+      query_factory;
+
   // query response factory
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
       query_response_factory_;
@@ -240,7 +253,7 @@ class Irohad {
   std::unique_ptr<ServerRunner> internal_server;
 
   // initialization objects
-  iroha::network::OrderingInit ordering_init;
+  iroha::network::OnDemandOrderingInit ordering_init;
   iroha::consensus::yac::YacInit yac_init;
   iroha::network::BlockLoaderInit loader_init;
 

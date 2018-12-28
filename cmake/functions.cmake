@@ -88,10 +88,19 @@ function(compile_proto_only_grpc_to_cpp PROTO)
     string(REGEX REPLACE "\\.proto$" "_mock.grpc.pb.h" GEN_GRPC_PB_MOCK_HEADER ${PROTO})
     set(TEST_OUTPUT ${SCHEMA_OUT_DIR}/${GEN_GRPC_PB_MOCK_HEADER})
   endif(TESTING)
+  if (MSVC)
+    set(GEN_COMMAND "${Protobuf_PROTOC_EXECUTABLE}")
+    set(GEN_ARGS ${Protobuf_INCLUDE_DIR})
+    set(GEN_PLUGIN "${gRPC_CPP_PLUGIN_EXECUTABLE}")
+  else()
+    set(GEN_COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}")
+    set(GEN_ARGS ${protobuf_INCLUDE_DIR})
+    set(GEN_PLUGIN "${grpc_CPP_PLUGIN}")
+  endif()
   add_custom_command(
       OUTPUT ${SCHEMA_OUT_DIR}/${GEN_GRPC_PB_HEADER} ${SCHEMA_OUT_DIR}/${GEN_GRPC_PB} ${TEST_OUTPUT}
-      COMMAND ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${protobuf_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH} "${protoc_EXECUTABLE}"
-      ARGS -I${protobuf_INCLUDE_DIR} -I${CMAKE_CURRENT_SOURCE_DIR} ${ARGN} --grpc_out=${GENERATE_MOCKS}${SCHEMA_OUT_DIR} --plugin=protoc-gen-grpc="${grpc_CPP_PLUGIN}" ${PROTO}
+      COMMAND ${GEN_COMMAND}
+      ARGS -I${GEN_ARGS} -I${CMAKE_CURRENT_SOURCE_DIR} ${ARGN} --grpc_out=${GENERATE_MOCKS}${SCHEMA_OUT_DIR} --plugin=protoc-gen-grpc=${GEN_PLUGIN} ${PROTO}
       DEPENDS grpc_cpp_plugin ${SCHEMA_PATH}/${PROTO}
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
       )

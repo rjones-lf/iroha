@@ -4,9 +4,13 @@
  */
 
 #include "backend/protobuf/proto_query_response_factory.hpp"
+
 #include "backend/protobuf/permissions.hpp"
 #include "backend/protobuf/query_responses/proto_block_query_response.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
+#include "backend/protobuf/transaction.hpp"
+#include "cryptography/public_key.hpp"
+#include "interfaces/common_objects/amount.hpp"
 
 namespace {
   /**
@@ -52,17 +56,20 @@ namespace {
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountAssetResponse(
-    std::vector<std::unique_ptr<shared_model::interface::AccountAsset>> assets,
+    std::vector<std::tuple<interface::types::AccountIdType,
+                           interface::types::AssetIdType,
+                           shared_model::interface::Amount>> assets,
     const crypto::Hash &query_hash) const {
   return createQueryResponse(
       [assets = std::move(assets)](
           iroha::protocol::QueryResponse &protocol_query_response) {
         iroha::protocol::AccountAssetResponse *protocol_specific_response =
             protocol_query_response.mutable_account_assets_response();
-        for (const auto &asset : assets) {
-          *protocol_specific_response->add_account_assets() =
-              static_cast<shared_model::proto::AccountAsset *>(asset.get())
-                  ->getTransport();
+        for (size_t i = 0; i < assets.size(); i++) {
+          auto *asset = protocol_specific_response->add_account_assets();
+          asset->set_account_id(std::move(std::get<0>(assets.at(i))));
+          asset->set_asset_id(std::move(std::get<1>(assets.at(i))));
+          asset->set_balance(std::get<2>(assets.at(i)).toStringRepr());
         }
       },
       query_hash);
@@ -84,19 +91,28 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountDetailResponse(
 
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
-    std::unique_ptr<shared_model::interface::Account> account,
-    std::vector<std::string> roles,
+    const shared_model::interface::types::AccountIdType account_id,
+    const shared_model::interface::types::DomainIdType domain_id,
+    shared_model::interface::types::QuorumType quorum,
+    const shared_model::interface::types::JsonType jsonData,
+    std::vector<shared_model::interface::types::RoleIdType> roles,
     const crypto::Hash &query_hash) const {
   return createQueryResponse(
-      [account = std::move(account), roles = std::move(roles)](
+      [account_id = std::move(account_id),
+       domain_id = std::move(domain_id),
+       jsonData = std::move(jsonData),
+       quorum,
+       roles = std::move(roles)](
           iroha::protocol::QueryResponse &protocol_query_response) {
         iroha::protocol::AccountResponse *protocol_specific_response =
             protocol_query_response.mutable_account_response();
-        *protocol_specific_response->mutable_account() =
-            static_cast<shared_model::proto::Account *>(account.get())
-                ->getTransport();
+        auto *account = protocol_specific_response->mutable_account();
+        account->set_account_id(std::move(account_id));
+        account->set_domain_id(std::move(domain_id));
+        account->set_quorum(quorum);
+        account->set_json_data(std::move(jsonData));
         for (const auto &role : roles) {
-          protocol_specific_response->add_account_roles(role);
+          protocol_specific_response->add_account_roles(std::move(role));
         }
       },
       query_hash);
@@ -105,10 +121,11 @@ shared_model::proto::ProtoQueryResponseFactory::createAccountResponse(
 std::unique_ptr<shared_model::interface::QueryResponse>
 shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
     ErrorQueryType error_type,
-    std::string error_msg,
+    interface::ErrorQueryResponse::ErrorMessageType error_msg,
+    interface::ErrorQueryResponse::ErrorCodeType error_code,
     const crypto::Hash &query_hash) const {
   return createQueryResponse(
-      [error_type, error_msg = std::move(error_msg)](
+      [error_type, error_msg = std::move(error_msg), error_code](
           iroha::protocol::QueryResponse &protocol_query_response) mutable {
         iroha::protocol::ErrorResponse_Reason reason;
         switch (error_type) {
@@ -144,6 +161,7 @@ shared_model::proto::ProtoQueryResponseFactory::createErrorQueryResponse(
             protocol_query_response.mutable_error_response();
         protocol_specific_response->set_reason(reason);
         protocol_specific_response->set_message(std::move(error_msg));
+        protocol_specific_response->set_error_code(error_code);
       },
       query_hash);
 }
@@ -158,8 +176,7 @@ shared_model::proto::ProtoQueryResponseFactory::createSignatoriesResponse(
         iroha::protocol::SignatoriesResponse *protocol_specific_response =
             protocol_query_response.mutable_signatories_response();
         for (const auto &key : signatories) {
-          const auto &blob = key.blob();
-          protocol_specific_response->add_keys(blob.data(), blob.size());
+          protocol_specific_response->add_keys(key.hex());
         }
       },
       query_hash);
@@ -185,17 +202,69 @@ shared_model::proto::ProtoQueryResponseFactory::createTransactionsResponse(
 }
 
 std::unique_ptr<shared_model::interface::QueryResponse>
-shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
-    std::unique_ptr<shared_model::interface::Asset> asset,
+shared_model::proto::ProtoQueryResponseFactory::createTransactionsPageResponse(
+    std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+        transactions,
+    const crypto::Hash &next_tx_hash,
+    interface::types::TransactionsNumberType all_transactions_size,
     const crypto::Hash &query_hash) const {
   return createQueryResponse(
-      [asset = std::move(asset)](
+      [transactions = std::move(transactions),
+       &next_tx_hash,
+       &all_transactions_size](
           iroha::protocol::QueryResponse &protocol_query_response) {
+        auto *protocol_specific_response =
+            protocol_query_response.mutable_transactions_page_response();
+        for (const auto &tx : transactions) {
+          *protocol_specific_response->add_transactions() =
+              static_cast<shared_model::proto::Transaction *>(tx.get())
+                  ->getTransport();
+        }
+        protocol_specific_response->set_next_tx_hash(next_tx_hash.hex());
+        protocol_specific_response->set_all_transactions_size(
+            all_transactions_size);
+      },
+      query_hash);
+}
+
+std::unique_ptr<shared_model::interface::QueryResponse>
+shared_model::proto::ProtoQueryResponseFactory::createTransactionsPageResponse(
+    std::vector<std::unique_ptr<shared_model::interface::Transaction>>
+        transactions,
+    interface::types::TransactionsNumberType all_transactions_size,
+    const crypto::Hash &query_hash) const {
+  return createQueryResponse(
+      [transactions = std::move(transactions), &all_transactions_size](
+          iroha::protocol::QueryResponse &protocol_query_response) {
+        iroha::protocol::TransactionsPageResponse *protocol_specific_response =
+            protocol_query_response.mutable_transactions_page_response();
+        for (const auto &tx : transactions) {
+          *protocol_specific_response->add_transactions() =
+              static_cast<shared_model::proto::Transaction *>(tx.get())
+                  ->getTransport();
+        }
+        protocol_specific_response->set_all_transactions_size(
+            all_transactions_size);
+      },
+      query_hash);
+}
+
+std::unique_ptr<shared_model::interface::QueryResponse>
+shared_model::proto::ProtoQueryResponseFactory::createAssetResponse(
+    const interface::types::AssetIdType asset_id,
+    const interface::types::DomainIdType domain_id,
+    const interface::types::PrecisionType precision,
+    const crypto::Hash &query_hash) const {
+  return createQueryResponse(
+      [asset_id = std::move(asset_id),
+       domain_id = std::move(domain_id),
+       precision](iroha::protocol::QueryResponse &protocol_query_response) {
         iroha::protocol::AssetResponse *protocol_specific_response =
             protocol_query_response.mutable_asset_response();
-        *protocol_specific_response->mutable_asset() =
-            static_cast<shared_model::proto::Asset *>(asset.get())
-                ->getTransport();
+        auto *asset = protocol_specific_response->mutable_asset();
+        asset->set_asset_id(std::move(asset_id));
+        asset->set_domain_id(std::move(domain_id));
+        asset->set_precision(precision);
       },
       query_hash);
 }
@@ -244,7 +313,7 @@ shared_model::proto::ProtoQueryResponseFactory::createBlockQueryResponse(
                                      &protocol_query_response) {
     iroha::protocol::BlockResponse *protocol_specific_response =
         protocol_query_response.mutable_block_response();
-    *protocol_specific_response->mutable_block() =
+    *protocol_specific_response->mutable_block()->mutable_block_v1() =
         static_cast<shared_model::proto::Block *>(block.get())->getTransport();
   });
 }
