@@ -245,16 +245,16 @@ namespace iroha {
       // not using bool since it is not supported by SOCI
       boost::optional<uint8_t> signatories_valid;
 
-      auto qry = (boost::format(R"(
+      auto qry = R"(
         SELECT count(public_key) = 1
         FROM account_has_signatory
-        WHERE account_id = :account_id AND public_key = '%s'
-        )") % keys)
-                     .str();
+        WHERE account_id = :account_id AND public_key = :pk
+        )";
 
       try {
         *sql_ << qry, soci::into(signatories_valid),
-            soci::use(query.creatorAccountId(), "account_id");
+            soci::use(query.creatorAccountId(), "account_id"),
+            soci::use(keys, "pk");
       } catch (const std::exception &e) {
         log_->error(e.what());
         return false;
