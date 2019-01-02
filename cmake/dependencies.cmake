@@ -21,7 +21,7 @@ endif ()
 #############################
 #         speedlog          #
 #############################
-find_package(spdlog)
+find_package(spdlog 1.3.1 REQUIRED)
 
 ################################
 #           protobuf           #
