@@ -7,6 +7,7 @@ add_library(logger
   logger.cpp
   logger_spdlog.cpp)
 target_link_libraries(logger
+    fmt
     spdlog
 )
 

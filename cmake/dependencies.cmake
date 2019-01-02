@@ -180,6 +180,11 @@ endif()
 ###################################
 find_package(ed25519)
 
+###################################
+#              fmt                #
+###################################
+find_package(fmt 5.3.0 REQUIRED)
+
 if (USE_LIBIROHA)
   find_package(libiroha)
 endif()
