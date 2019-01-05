@@ -151,8 +151,6 @@ TEST_F(BlockLoaderTest, ValidWhenSameTopBlock) {
   EXPECT_CALL(*storage, getBlocksFrom(block.height() + 1))
       .WillOnce(Return(std::vector<wBlock>()));
 
-  auto ppp = peer->pubkey();
-
   auto wrapper = make_test_subscriber<CallExact>(
       loader->retrieveBlocks(1, peer->pubkey()), 0);
   wrapper.subscribe();

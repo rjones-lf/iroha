@@ -40,10 +40,8 @@ IntegrationTestFramework &QueryPermissionAssets::prepareState(
     itf.sendTxAwait(
         fixture.complete(
             fixture.baseTx(kUserId)
-                .createAsset(
-                    asset_name, asset_domain, asset.second.precision())
-                .addAssetQuantity(asset.first,
-                                  asset.second.toStringRepr()),
+                .createAsset(asset_name, asset_domain, asset.second.precision())
+                .addAssetQuantity(asset.first, asset.second.toStringRepr()),
             kUserKeypair),
         getBlockTransactionsAmountChecker(1));
   }
@@ -62,11 +60,12 @@ QueryPermissionAssets::getGeneralResponseChecker() {
       ASSERT_EQ(boost::size(resp_assets), account_assets_.size());
       // check that every initially created asset is present in the result
       for (const auto &asset : account_assets_) {
-        bool presented = false;
-        std::for_each(resp_assets.begin(), resp_assets.end(), [&asset, &presented](const auto &a) {
-            presented |= asset.first == a.assetId();
-        });
-        ASSERT_TRUE(presented);
+        ASSERT_NE(std::find_if(resp_assets.begin(),
+                               resp_assets.end(),
+                               [&asset](const auto &a) {
+                                 return asset.first == a.assetId();
+                               }),
+                  resp_assets.end());
       }
     }) << "Actual response: "
        << response.toString();

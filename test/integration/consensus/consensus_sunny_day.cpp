@@ -40,7 +40,7 @@ class FixedCryptoProvider : public MockYacCryptoProvider {
   VoteMessage getVote(YacHash hash) override {
     auto vote = MockYacCryptoProvider::getVote(hash);
     auto signature = std::make_shared<MockSignature>();
-    data = std::make_unique<shared_model::crypto::Signed>("");
+    auto static data = std::make_unique<shared_model::crypto::Signed>("");
     EXPECT_CALL(*signature, publicKey()).WillRepeatedly(testing::ReturnRef(*pubkey));
     EXPECT_CALL(*signature, signedData()).WillRepeatedly(testing::ReturnRef(*data));
     vote.signature = signature;
@@ -48,7 +48,6 @@ class FixedCryptoProvider : public MockYacCryptoProvider {
   }
 
   std::unique_ptr<shared_model::crypto::PublicKey> pubkey;
-  std::unique_ptr<shared_model::crypto::Signed> data;
 };
 
 class ConsensusSunnyDayTest : public ::testing::Test {
