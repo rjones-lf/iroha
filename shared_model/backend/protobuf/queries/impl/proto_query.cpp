@@ -117,12 +117,11 @@ namespace shared_model {
       }
 
       auto sig = impl_->proto_.mutable_signature();
-      sig->set_signature(crypto::toBinaryString(signed_blob));
-      sig->set_public_key(crypto::toBinaryString(public_key));
+      sig->set_signature(signed_blob.hex());
+      sig->set_public_key(public_key.hex());
 
       impl_->signatures_ =
           SignatureSetType<proto::Signature>{proto::Signature{*sig}};
-
       return true;
     }
 

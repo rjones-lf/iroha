@@ -123,7 +123,8 @@ TEST_F(TransportTest, SendAndReceive) {
 
   std::string address = addr + std::to_string(port);
   shared_model::interface::types::PubkeyType pk(
-      "abcdabcdabcdabcdabcdabcdabcdabcd");
+      shared_model::crypto::Hash::fromHexString(
+          "abcdabcdabcdabcdabcdabcdabcdabcd"));
   std::shared_ptr<shared_model::interface::Peer> peer = makePeer(address, pk);
   // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side

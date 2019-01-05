@@ -27,7 +27,8 @@ using namespace std::chrono_literals;
 using namespace iroha::ametsuchi;
 using PropagationData = GossipPropagationStrategy::PropagationData;
 
-const shared_model::interface::types::PubkeyType empty_pubkey("");
+const shared_model::interface::types::PubkeyType empty_pubkey(
+    shared_model::crypto::Hash::fromHexString(""));
 
 /**
  * Generates peers with empty pub keys

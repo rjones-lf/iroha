@@ -78,7 +78,7 @@ message ErrorResponse {
 }
 
 message SignatoriesResponse {
-  repeated bytes keys = 1;
+  repeated string keys = 1;
 }
 
 message TransactionsResponse {

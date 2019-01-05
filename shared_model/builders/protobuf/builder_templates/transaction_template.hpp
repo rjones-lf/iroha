@@ -108,7 +108,7 @@ namespace shared_model {
                   type));
           for (const auto &hash : hashes) {
             tx.mutable_payload()->mutable_batch()->add_reduced_hashes(
-                crypto::toBinaryString(hash));
+                hash.hex());
           }
         });
       }
@@ -141,7 +141,7 @@ namespace shared_model {
           auto command = proto_command->mutable_add_peer();
           auto peer = command->mutable_peer();
           peer->set_address(address);
-          peer->set_peer_key(crypto::toBinaryString(peer_key));
+          peer->set_peer_key(peer_key.hex());
         });
       }
 
@@ -150,7 +150,7 @@ namespace shared_model {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_add_signatory();
           command->set_account_id(account_id);
-          command->set_public_key(crypto::toBinaryString(public_key));
+          command->set_public_key(public_key.hex());
         });
       }
 
@@ -160,7 +160,7 @@ namespace shared_model {
         return addCommand([&](auto proto_command) {
           auto command = proto_command->mutable_remove_signatory();
           command->set_account_id(account_id);
-          command->set_public_key(crypto::toBinaryString(public_key));
+          command->set_public_key(public_key.hex());
         });
       }
 
@@ -192,7 +192,7 @@ namespace shared_model {
           auto command = proto_command->mutable_create_account();
           command->set_account_name(account_name);
           command->set_domain_id(domain_id);
-          command->set_public_key(crypto::toBinaryString(main_pubkey));
+          command->set_public_key(main_pubkey.hex());
         });
       }
 
