@@ -12,6 +12,9 @@
 #include <numeric>  // for std::accumulate
 #include <string>
 
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+
 /// Allows to log objects, which have toString() method without calling it, e.g.
 /// log.info("{}", myObject)
 template <typename StreamType, typename T>
@@ -79,7 +82,7 @@ namespace logger {
               const std::string &format,
               const Args &... args) const {
        if (shouldLog(level)) {
-         logInternal(level, format); // TODO perform the actual formatting here
+         logInternal(level, fmt::format(format, args...));
        }
      }
 
