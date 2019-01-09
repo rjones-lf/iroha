@@ -80,12 +80,16 @@ namespace iroha {
     std::string result(str.size() / 2, 0);
     for (size_t i = 0; i < result.length(); ++i) {
       std::string byte = str.substr(i * 2, 2);
+      size_t pos = 0;  // processed characters count
       try {
         result.at(i) =
-            static_cast<std::string::value_type>(std::stoul(byte, nullptr, 16));
+            static_cast<std::string::value_type>(std::stoul(byte, &pos, 16));
       } catch (const std::invalid_argument &) {
         return boost::none;
       } catch (const std::out_of_range &) {
+        return boost::none;
+      }
+      if (pos != byte.size()) {
         return boost::none;
       }
     }
