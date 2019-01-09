@@ -5,14 +5,15 @@
 
 #include "torii/impl/command_service_transport_grpc.hpp"
 
-#include <gtest/gtest.h>
 #include <memory>
+
+#include <gtest/gtest.h>
+#include <libfuzzer/libfuzzer_macro.h>
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
-#include "libfuzzer/libfuzzer_macro.h"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
@@ -24,7 +25,6 @@
 #include "validators/default_validator.hpp"
 #include "validators/protobuf/proto_transaction_validator.hpp"
 
-using namespace std::chrono_literals;
 using testing::Return;
 
 struct CommandFixture {
@@ -33,6 +33,7 @@ struct CommandFixture {
   std::shared_ptr<iroha::torii::TransactionProcessorImpl> tx_processor_;
   std::shared_ptr<iroha::network::MockPeerCommunicationService> pcs_;
   std::shared_ptr<iroha::MockMstProcessor> mst_processor_;
+  std::shared_ptr<iroha::network::MockConsensusGate> consensus_gate_;
 
   rxcpp::subjects::subject<iroha::network::OrderingEvent> prop_notifier_;
   rxcpp::subjects::subject<iroha::simulator::VerifiedProposalCreatorEvent>
@@ -42,6 +43,7 @@ struct CommandFixture {
   rxcpp::subjects::subject<iroha::DataType> mst_notifier_;
   rxcpp::subjects::subject<std::shared_ptr<iroha::MstState>>
       mst_state_notifier_;
+  rxcpp::subjects::subject<iroha::consensus::GateObject> consensus_notifier_;
 
   CommandFixture() {
     pcs_ = std::make_shared<iroha::network::MockPeerCommunicationService>();
@@ -93,15 +95,20 @@ struct CommandFixture {
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         transaction_batch_factory = std::make_shared<
             shared_model::interface::TransactionBatchFactoryImpl>();
+
+    consensus_gate_ = std::make_shared<iroha::network::MockConsensusGate>();
+    ON_CALL(*consensus_gate_, onOutcome())
+        .WillByDefault(Return(consensus_notifier_.get_observable()));
+
     service_transport_ = std::make_shared<torii::CommandServiceTransportGrpc>(
         service_,
         status_bus,
-        15s,
-        15s,
         status_factory,
         transaction_factory,
         batch_parser,
-        transaction_batch_factory);
+        transaction_batch_factory,
+        consensus_gate_,
+        2);
   }
 };
 
