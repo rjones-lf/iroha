@@ -17,7 +17,6 @@ using namespace integration_framework;
 using namespace shared_model;
 using namespace common_constants;
 
-
 class GetAccount : public AcceptanceFixture {
  public:
   GetAccount() : itf(1) {}

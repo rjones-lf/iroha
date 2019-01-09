@@ -6,10 +6,11 @@
 #ifndef IROHA_ACCEPTANCE_FIXTURE_HPP
 #define IROHA_ACCEPTANCE_FIXTURE_HPP
 
-#include <gtest/gtest.h>
 #include <functional>
 #include <string>
 #include <vector>
+
+#include <gtest/gtest.h>
 #include "cryptography/keypair.hpp"
 #include "framework/common_constants.hpp"
 #include "interfaces/permissions.hpp"

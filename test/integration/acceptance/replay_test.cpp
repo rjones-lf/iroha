@@ -11,7 +11,6 @@ using namespace integration_framework;
 using namespace shared_model;
 using namespace common_constants;
 
-
 class ReplayFixture : public AcceptanceFixture {
  public:
   ReplayFixture() : itf(1) {}
@@ -22,7 +21,8 @@ class ReplayFixture : public AcceptanceFixture {
                      .createAccount(kUser, kDomain, kUserKeypair.publicKey())
                      .addAssetQuantity(kAssetId, "10000.0"),
                  kAdminKeypair);
-    itf.setInitialState(kAdminKeypair).sendTxAwait(create_user_tx, CHECK_TXS(1));
+    itf.setInitialState(kAdminKeypair)
+        .sendTxAwait(create_user_tx, CHECK_TXS(1));
   }
 
   IntegrationTestFramework itf;

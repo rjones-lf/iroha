@@ -11,7 +11,6 @@ using namespace integration_framework;
 using namespace shared_model;
 using namespace common_constants;
 
-
 class QuorumFixture : public AcceptanceFixture {
  public:
   QuorumFixture() : itf(1) {}
@@ -20,7 +19,8 @@ class QuorumFixture : public AcceptanceFixture {
     auto add_public_key_tx = complete(
         baseTx(kAdminId).addSignatory(kAdminId, kUserKeypair.publicKey()),
         kAdminKeypair);
-    itf.setInitialState(kAdminKeypair).sendTxAwait(add_public_key_tx, CHECK_TXS(1));
+    itf.setInitialState(kAdminKeypair)
+        .sendTxAwait(add_public_key_tx, CHECK_TXS(1));
   }
 
   IntegrationTestFramework itf;
