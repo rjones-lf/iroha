@@ -45,6 +45,9 @@ namespace {
 #define CHECK_COMMITTED BASE_CHECK_RESPONSE(CommittedTxResponse)
 
 #define CHECK_MST_PENDING BASE_CHECK_RESPONSE(MstPendingResponse)
+
+#define CHECK_TXS(i) \
+  [](const auto &resp) { ASSERT_EQ(resp->transactions().size(), i); }
 }  // namespace
 
 /**
