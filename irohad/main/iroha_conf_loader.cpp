@@ -169,7 +169,8 @@ void getVal<logger::LoggerManagerTreePtr>(const std::string &path,
   logger::LoggerConfig root_config{logger::kDefaultLogLevel,
                                    logger::kDefaultLogPatterns};
   updateLoggerConfig(path, root_config, src.GetObject());
-  dest = std::make_shared<logger::LoggerManagerTree>(std::move(root_config));
+  dest = std::make_shared<logger::LoggerManagerTree>(
+      std::make_shared<const logger::LoggerConfig>(std::move(root_config)));
   addChildrenLoggerConfigs(path, dest, src.GetObject());
 }
 
