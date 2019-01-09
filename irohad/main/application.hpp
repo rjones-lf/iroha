@@ -14,7 +14,8 @@
 #include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/iroha_internal/query_response_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
-#include "logger/logger.hpp"
+#include "logger/logger_fwd.hpp"
+#include "logger/logger_manager_fwd.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/on_demand_ordering_init.hpp"
@@ -65,6 +66,7 @@ class Irohad {
    * @param proposal_delay - maximum waiting time util emitting new proposal
    * @param vote_delay - waiting time before sending vote to next peer
    * @param keypair - public and private keys for crypto signer
+   * @param logger - the logger to use
    * @param opt_mst_gossip_params - parameters for Gossip MST propagation
    * (optional). If not provided, disables mst processing support
    *
@@ -79,6 +81,7 @@ class Irohad {
          std::chrono::milliseconds proposal_delay,
          std::chrono::milliseconds vote_delay,
          const shared_model::crypto::Keypair &keypair,
+         logger::LoggerManagerTreePtr logger_manager,
          const boost::optional<iroha::GossipPropagationStrategyParams>
              &opt_mst_gossip_params = boost::none);
 
@@ -259,7 +262,7 @@ class Irohad {
 
   std::shared_ptr<iroha::network::MstTransport> mst_transport;
 
-  logger::Logger log_;
+  logger::LoggerPtr log_;
 
  public:
   std::shared_ptr<iroha::ametsuchi::Storage> storage;

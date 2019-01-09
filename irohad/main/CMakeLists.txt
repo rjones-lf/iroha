@@ -54,7 +54,9 @@ target_link_libraries(application
     common
     )
 
-add_executable(irohad irohad.cpp)
+add_executable(irohad
+  irohad.cpp
+  iroha_conf_loader.cpp)
 target_link_libraries(irohad
     application
     raw_block_loader
