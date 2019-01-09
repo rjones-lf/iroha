@@ -154,8 +154,8 @@ namespace iroha {
         meta->set_query_counter(query->query_counter);
         // Set signatures
         auto sig = pb_query.mutable_signature();
-        sig->set_signature(query->signature.signature.to_string());
-        sig->set_public_key(query->signature.pubkey.to_string());
+        sig->set_signature(query->signature.signature.to_hexstring());
+        sig->set_public_key(query->signature.pubkey.to_hexstring());
       }
 
       boost::optional<protocol::Query> PbQueryFactory::serialize(

@@ -29,8 +29,8 @@ namespace iroha {
 
         for (const auto &sig_obj : tx.signatures) {
           auto proto_signature = pbtx.add_signatures();
-          proto_signature->set_public_key(sig_obj.pubkey.to_string());
-          proto_signature->set_signature(sig_obj.signature.to_string());
+          proto_signature->set_public_key(sig_obj.pubkey.to_hexstring());
+          proto_signature->set_signature(sig_obj.signature.to_hexstring());
         }
         return pbtx;
       }
