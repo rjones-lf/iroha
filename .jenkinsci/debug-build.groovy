@@ -22,6 +22,8 @@ def doDebugBuild(coverageEnabled=false) {
   if (env.NODE_NAME.contains('arm7')) {
     parallelism = 1
   }
+  sh "sudo echo %e.%p.coredump > /proc/sys/kernel/core_pattern"
+  sh "sudo ulimit -c unlimited"
 
   sh "docker network create ${env.IROHA_NETWORK}"
   def iC = dPullOrBuild.dockerPullOrUpdate("${platform}-develop-build",
