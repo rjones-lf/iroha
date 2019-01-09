@@ -106,7 +106,7 @@ namespace iroha {
                              pb_cast.tx_hashes().end(),
                              std::back_inserter(query.tx_hashes),
                              [](auto tx_hash) {
-                               return iroha::hash256_t::from_string(tx_hash);
+                               return iroha::hash256_t::from_hexstring(tx_hash);
                              });
               val = std::make_shared<GetTransactions>(query);
               break;
@@ -240,7 +240,7 @@ namespace iroha {
                       tmp->tx_hashes.end(),
                       [&pb_query_mut](auto tx_hash) {
                         auto adder = pb_query_mut->add_tx_hashes();
-                        *adder = tx_hash.to_string();
+                        *adder = tx_hash.to_hexstring();
                       });
         return pb_query;
       }
