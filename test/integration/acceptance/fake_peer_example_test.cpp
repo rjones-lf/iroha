@@ -284,6 +284,9 @@ TEST_F(FakePeerExampleFixture,
  * Check that after receiving a valid command the ITF peer sends either a
  * proposal or a batch to another peer
  *
+ * \attention the test is disabled because the ordering service protocol
+ * it uses was replaced by the new on-demand ordering version.
+ *
  * \attention this code is nothing more but an example of Fake Peer usage
  *
  * @given a network of two iroha peers
