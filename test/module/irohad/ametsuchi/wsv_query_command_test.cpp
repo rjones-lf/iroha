@@ -65,26 +65,5 @@ namespace iroha {
       ASSERT_TRUE(val(command->deletePeer(*peer)));
     }
 
-    // Since mocking database is not currently possible, use SetUp to create
-    // invalid database
-    class DatabaseInvalidTest : public WsvQueryCommandTest {
-      // skip database setup
-      void SetUp() override {
-        AmetsuchiTest::SetUp();
-        sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
-
-        command = std::make_unique<PostgresWsvCommand>(*sql);
-        query = std::make_unique<PostgresWsvQuery>(*sql, factory);
-      }
-    };
-
-    /**
-     * @given not set up database
-     * @when performing query to retrieve information from nonexisting tables
-     * @then query will return nullopt
-     */
-    TEST_F(DatabaseInvalidTest, QueryInvalidWhenDatabaseInvalid) {
-      EXPECT_FALSE(query->getSignatories("some_account"));
-    }
   }  // namespace ametsuchi
 }  // namespace iroha
