@@ -8,6 +8,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include "endpoint_mock.grpc.pb.h"
+#include "framework/mock_stream.h"
 #include "main/server_runner.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"
 
@@ -18,19 +19,16 @@ using testing::Return;
 class CommandSyncClientTest : public testing::Test {
  public:
   void SetUp() override {
-    runner = std::make_unique<ServerRunner>(ip + ":0");
-    server = std::make_shared<iroha::torii::MockCommandServiceTransport>();
-    runner->append(server).run().match(
-        [this](iroha::expected::Value<int> port) { this->port = port.value; },
-        [](iroha::expected::Error<std::string> err) { FAIL() << err.error; });
+    auto ustub = std::make_unique<iroha::protocol::MockCommandService_v1Stub>();
+    stub = ustub.get();
+    client = std::make_shared<torii::CommandSyncClient>(std::move(ustub));
   }
 
-  std::unique_ptr<ServerRunner> runner;
-  std::shared_ptr<iroha::torii::MockCommandServiceTransport> server;
+  iroha::protocol::MockCommandService_v1Stub *stub;
+  std::shared_ptr<torii::CommandSyncClient> client;
 
-  const std::string ip = "127.0.0.1";
   const size_t kHashLength = 32;
-  int port;
+  const std::string kTxHash = std::string(kHashLength, '1');
 };
 
 /**
@@ -39,13 +37,18 @@ class CommandSyncClientTest : public testing::Test {
  * @then the same method of the server is called and client successfully return
  */
 TEST_F(CommandSyncClientTest, Status) {
-  iroha::protocol::TxStatusRequest tx_request;
-  tx_request.set_tx_hash(std::string(kHashLength, '1'));
-  iroha::protocol::ToriiResponse toriiResponse;
-
-  torii::CommandSyncClient client(ip, port);
-  EXPECT_CALL(*server, Status(_, _, _)).WillOnce(Return(grpc::Status::OK));
-  auto stat = client.Status(tx_request, toriiResponse);
+  iroha::protocol::TxStatusRequest tx_request, intermediary_tx_request;
+  tx_request.set_tx_hash(kTxHash);
+  iroha::protocol::ToriiResponse torii_response, intermediary_response;
+  intermediary_response.set_tx_hash(kTxHash);
+  EXPECT_CALL(*stub, Status(_, _, _))
+      .WillOnce(
+          ::testing::DoAll(::testing::SaveArg<1>(&intermediary_tx_request),
+                           ::testing::SetArgPointee<2>(intermediary_response),
+                           Return(::grpc::Status::OK)));
+  auto stat = client->Status(tx_request, torii_response);
+  ASSERT_EQ(kTxHash, intermediary_tx_request.tx_hash());
+  ASSERT_EQ(kTxHash, torii_response.tx_hash());
   ASSERT_TRUE(stat.ok());
 }
 
@@ -55,10 +58,15 @@ TEST_F(CommandSyncClientTest, Status) {
  * @then the same method of the server is called and client successfully return
  */
 TEST_F(CommandSyncClientTest, Torii) {
-  iroha::protocol::Transaction tx;
-  EXPECT_CALL(*server, Torii(_, _, _)).WillOnce(Return(grpc::Status()));
-  torii::CommandSyncClient client(ip, port);
-  auto stat = client.Torii(tx);
+  iroha::protocol::Transaction tx, intermediary_tx;
+  tx.mutable_payload()->mutable_reduced_payload()->set_creator_account_id(
+      kTxHash);
+  EXPECT_CALL(*stub, Torii(_, _, _))
+      .WillOnce(::testing::DoAll(::testing::SaveArg<1>(&intermediary_tx),
+                                 ::testing::Return(::grpc::Status::OK)));
+  auto stat = client->Torii(tx);
+  ASSERT_EQ(kTxHash,
+            intermediary_tx.payload().reduced_payload().creator_account_id());
   ASSERT_TRUE(stat.ok());
 }
 
@@ -68,10 +76,20 @@ TEST_F(CommandSyncClientTest, Torii) {
  * @then the same method of the server is called and client successfully return
  */
 TEST_F(CommandSyncClientTest, ListTorii) {
-  iroha::protocol::TxList tx;
-  EXPECT_CALL(*server, ListTorii(_, _, _)).WillOnce(Return(grpc::Status()));
-  torii::CommandSyncClient client(ip, port);
-  auto stat = client.ListTorii(tx);
+  iroha::protocol::TxList tx_list, intermediary_tx_list;
+  tx_list.add_transactions()
+      ->mutable_payload()
+      ->mutable_reduced_payload()
+      ->set_creator_account_id(kTxHash);
+  EXPECT_CALL(*stub, ListTorii(_, _, _))
+      .WillOnce(::testing::DoAll(::testing::SaveArg<1>(&intermediary_tx_list),
+                                 ::testing::Return(::grpc::Status::OK)));
+  auto stat = client->ListTorii(tx_list);
+  ASSERT_EQ(kTxHash,
+            intermediary_tx_list.transactions()[0]
+                .payload()
+                .reduced_payload()
+                .creator_account_id());
   ASSERT_TRUE(stat.ok());
 }
 
@@ -81,20 +99,25 @@ TEST_F(CommandSyncClientTest, ListTorii) {
  * @then the same method of the server is called and client successfully return
  */
 TEST_F(CommandSyncClientTest, StatusStream) {
-  iroha::protocol::TxStatusRequest tx;
+  iroha::protocol::TxStatusRequest tx, intermediary_tx;
   iroha::protocol::ToriiResponse resp;
-  resp.set_tx_hash(std::string(kHashLength, '1'));
+  auto hash = std::string(kHashLength, '1');
+  tx.set_tx_hash(hash);
+  resp.set_tx_hash(hash);
   std::vector<iroha::protocol::ToriiResponse> responses;
-  EXPECT_CALL(*server, StatusStream(_, _, _))
-      .WillOnce(Invoke([&](auto,
-                           auto,
-                           grpc::ServerWriter<iroha::protocol::ToriiResponse>
-                               *response_writer) {
-        response_writer->Write(resp);
-        return grpc::Status();
-      }));
-  torii::CommandSyncClient client(ip, port);
-  client.StatusStream(tx, responses);
+  auto reader = std::make_unique<
+      grpc::testing::MockClientReader<::iroha::protocol::ToriiResponse>>();
+
+  EXPECT_CALL(*reader, Read(_))
+      .WillOnce(DoAll(::testing::SetArgPointee<0>(resp), Return(true)))
+      .WillOnce(Return(false));
+  EXPECT_CALL(*reader, Finish()).WillOnce(Return(::grpc::Status::OK));
+
+  EXPECT_CALL(*stub, StatusStreamRaw(_, _))
+      .WillOnce(::testing::DoAll(::testing::SaveArg<1>(&intermediary_tx),
+                                 Return(reader.release())));
+  client->StatusStream(tx, responses);
+  ASSERT_EQ(intermediary_tx.tx_hash(), resp.tx_hash());
   ASSERT_EQ(responses.size(), 1);
   ASSERT_EQ(responses[0].tx_hash(), resp.tx_hash());
 }
