@@ -258,7 +258,7 @@ Transaction Status Set
 ^^^^^^^^^^^^^^^^^^^^^^
 
  - NOT_RECEIVED: requested peer does not have this transaction.
- - ENOUGH_SIGNATURES_COLLECTED: this transaction is a multisignature transaction which has enough signatures and is going to be validated by the peer.
+ - ENOUGH_SIGNATURES_COLLECTED: this is a multisignature transaction which has enough signatures and is going to be validated by the peer.
  - MST_PENDING: this transaction is a multisignature transaction which has to be signed by more keys (as requested in quorum field).
  - MST_EXPIRED: this transaction is a multisignature transaction which is no longer valid and is going to be deleted by this peer.
  - STATELESS_VALIDATION_FAILED: the transaction was formed with some fields, not meeting stateless validation constraints. This status is returned to a client, who formed transaction, right after the transaction was sent. It would also return the reason — what rule was violated.
@@ -266,7 +266,7 @@ Transaction Status Set
  - STATEFUL_VALIDATION_FAILED: the transaction has commands, which violate validation rules, checking state of the chain (e.g. asset balance, account permissions, etc.). It would also return the reason — what rule was violated.
  - STATEFUL_VALIDATION_SUCCESS: the transaction has successfully passed stateful validation.
  - COMMITTED: the transaction is the part of a block, which gained enough votes and is in the block store at the moment.
- - REJECTED: this exact transaction was rejected by the peer during stateful validation step, in previous consensus rounds. Rejected transactions' hashes are stored in `block <#block>`__ store. This is required in order to prevent `replay attacks <https://en.wikipedia.org/wiki/Replay_attack>`__.
+ - REJECTED: this exact transaction was rejected by the peer during stateful validation step in previous consensus rounds. Rejected transactions' hashes are stored in `block <#block>`__ store. This is required in order to prevent `replay attacks <https://en.wikipedia.org/wiki/Replay_attack>`__.
 
 Pending Transactions
 ^^^^^^^^^^^^^^^^^^^^
