@@ -63,7 +63,9 @@ QueryPermissionAssets::getGeneralResponseChecker() {
         ASSERT_NE(std::find_if(resp_assets.begin(),
                                resp_assets.end(),
                                [&asset](const auto &a) {
-                                 return asset.first == a.assetId();
+                                 return asset.first == a.assetId()
+                                     and asset.second == a.balance()
+                                     and kUserId == a.accountId();
                                }),
                   resp_assets.end());
       }

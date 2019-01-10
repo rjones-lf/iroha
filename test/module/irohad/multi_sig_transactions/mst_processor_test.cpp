@@ -290,11 +290,9 @@ TEST_F(MstProcessorTest, onNewPropagationUsecase) {
   EXPECT_CALL(*transport, sendState(_, _)).Times(2);
 
   // ---------------------------------| when |----------------------------------
-  shared_model::crypto::PublicKey pk1(
-      shared_model::crypto::Hash::fromHexString("sign_one")),
-      pk2(shared_model::crypto::Hash::fromHexString("sign_two"));
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers{
-      makePeer("one", pk1), makePeer("two", pk2)};
+      makePeer("one", shared_model::interface::types::PubkeyType("sign_one")),
+      makePeer("two", shared_model::interface::types::PubkeyType("sign_two"))};
   propagation_subject.get_subscriber().on_next(peers);
 }
 
@@ -312,9 +310,8 @@ TEST_F(MstProcessorTest, emptyStatePropagation) {
   EXPECT_CALL(*transport, sendState(_, _)).Times(0);
 
   // ---------------------------------| given |---------------------------------
-  shared_model::crypto::PublicKey pk(
-      shared_model::crypto::Hash::fromHexString("another_pubkey"));
-  auto another_peer = makePeer("another", pk);
+  auto another_peer = makePeer(
+      "another", shared_model::interface::types::PubkeyType("sign_one"));
 
   auto another_peer_state = MstState::empty();
   another_peer_state += makeTestBatch(txBuilder(1));

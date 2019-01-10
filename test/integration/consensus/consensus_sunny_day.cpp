@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <grpc++/grpc++.h>
 #include <gmock/gmock.h>
+#include <grpc++/grpc++.h>
 #include "consensus/yac/impl/timer_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "consensus/yac/transport/impl/network_impl.hpp"
@@ -35,19 +35,22 @@ class FixedCryptoProvider : public MockYacCryptoProvider {
         shared_model::crypto::DefaultCryptoAlgorithmType::kPublicKeyLength, 0);
     std::copy(public_key.begin(), public_key.end(), key.begin());
     pubkey = clone(shared_model::crypto::PublicKey(key));
+    data = std::make_unique<shared_model::crypto::Signed>("");
   }
 
   VoteMessage getVote(YacHash hash) override {
     auto vote = MockYacCryptoProvider::getVote(hash);
     auto signature = std::make_shared<MockSignature>();
-    auto static data = std::make_unique<shared_model::crypto::Signed>("");
-    EXPECT_CALL(*signature, publicKey()).WillRepeatedly(testing::ReturnRef(*pubkey));
-    EXPECT_CALL(*signature, signedData()).WillRepeatedly(testing::ReturnRef(*data));
+    EXPECT_CALL(*signature, publicKey())
+        .WillRepeatedly(testing::ReturnRef(*pubkey));
+    EXPECT_CALL(*signature, signedData())
+        .WillRepeatedly(testing::ReturnRef(*data));
     vote.signature = signature;
     return vote;
   }
 
   std::unique_ptr<shared_model::crypto::PublicKey> pubkey;
+  std::unique_ptr<shared_model::crypto::Signed> data;
 };
 
 class ConsensusSunnyDayTest : public ::testing::Test {
