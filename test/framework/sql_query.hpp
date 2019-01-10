@@ -13,6 +13,7 @@
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
 #include "interfaces/common_objects/asset.hpp"
+#include "interfaces/common_objects/common_objects_factory.hpp"
 #include "interfaces/common_objects/domain.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/block.hpp"

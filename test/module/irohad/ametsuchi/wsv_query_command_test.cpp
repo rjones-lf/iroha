@@ -78,15 +78,13 @@ namespace iroha {
       }
     };
 
-    std::unique_ptr<soci::session> sql;
-
     /**
      * @given not set up database
      * @when performing query to retrieve information from nonexisting tables
      * @then query will return nullopt
      */
     TEST_F(DatabaseInvalidTest, QueryInvalidWhenDatabaseInvalid) {
-      EXPECT_FALSE(query->getPeers());
+      EXPECT_FALSE(query->getSignatories("some_account"));
     }
   }  // namespace ametsuchi
 }  // namespace iroha

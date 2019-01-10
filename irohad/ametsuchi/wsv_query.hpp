@@ -6,9 +6,9 @@
 #ifndef IROHA_WSV_QUERY_HPP
 #define IROHA_WSV_QUERY_HPP
 
-#include <boost/optional.hpp>
 #include <vector>
 
+#include <boost/optional.hpp>
 #include "interfaces/common_objects/peer.hpp"
 
 namespace iroha {

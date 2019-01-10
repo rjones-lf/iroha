@@ -8,6 +8,8 @@
 #include <soci/boost-tuple.h>
 #include "ametsuchi/impl/soci_utils.hpp"
 #include "backend/protobuf/permissions.hpp"
+#include "common/bind.hpp"
+#include "common/result.hpp"
 #include "interfaces/common_objects/common_objects_factory.hpp"
 
 namespace framework {
@@ -18,13 +20,11 @@ namespace framework {
     using iroha::ametsuchi::mapValues;
     using shared_model::interface::types::AccountDetailKeyType;
     using shared_model::interface::types::AccountIdType;
-    using shared_model::interface::types::AddressType;
     using shared_model::interface::types::AssetIdType;
     using shared_model::interface::types::DetailType;
     using shared_model::interface::types::DomainIdType;
     using shared_model::interface::types::JsonType;
     using shared_model::interface::types::PrecisionType;
-    using shared_model::interface::types::PubkeyType;
     using shared_model::interface::types::QuorumType;
     using shared_model::interface::types::RoleIdType;
 
@@ -184,6 +184,7 @@ namespace framework {
     boost::optional<shared_model::interface::RolePermissionSet>
     SqlQuery::getRolePermissions(
         const shared_model::interface::types::RoleIdType &role_name) {
+      using iroha::operator|;
       using T = boost::tuple<std::string>;
       auto result = execute<T>([&] {
         return (sql_.prepare
@@ -201,7 +202,7 @@ namespace framework {
           return shared_model::interface::RolePermissionSet{};
         }
 
-        return apply(range.front(), [](auto &permission) {
+        return iroha::ametsuchi::apply(range.front(), [](auto &permission) {
           return shared_model::interface::RolePermissionSet(permission);
         });
       };

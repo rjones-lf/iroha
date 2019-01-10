@@ -14,23 +14,15 @@
 namespace iroha {
   namespace ametsuchi {
 
-    using shared_model::interface::types::AccountDetailKeyType;
     using shared_model::interface::types::AccountIdType;
     using shared_model::interface::types::AddressType;
-    using shared_model::interface::types::AssetIdType;
-    using shared_model::interface::types::DetailType;
-    using shared_model::interface::types::DomainIdType;
-    using shared_model::interface::types::JsonType;
-    using shared_model::interface::types::PrecisionType;
     using shared_model::interface::types::PubkeyType;
-    using shared_model::interface::types::QuorumType;
-    using shared_model::interface::types::RoleIdType;
 
     PostgresWsvQuery::PostgresWsvQuery(
         soci::session &sql,
         std::shared_ptr<shared_model::interface::CommonObjectsFactory> factory,
         logger::Logger log)
-        : sql_(sql), factory_(factory), log_(std::move(log)) {}
+        : sql_(sql), factory_(std::move(factory)), log_(std::move(log)) {}
 
     PostgresWsvQuery::PostgresWsvQuery(
         std::unique_ptr<soci::session> sql,
@@ -38,7 +30,7 @@ namespace iroha {
         logger::Logger log)
         : psql_(std::move(sql)),
           sql_(*psql_),
-          factory_(factory),
+          factory_(std::move(factory)),
           log_(std::move(log)) {}
 
     template <typename T>

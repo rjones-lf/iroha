@@ -54,7 +54,7 @@ namespace iroha {
             std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
                 shared_model::validation::FieldValidator>>();
         query = std::make_unique<PostgresWsvQuery>(*sql, factory);
-        sql_query = std::make_unique<SqlQuery>(*sql);
+        sql_query = std::make_unique<SqlQuery>(*sql, std::move(factory));
         PostgresCommandExecutor::prepareStatements(*sql);
         executor =
             std::make_unique<PostgresCommandExecutor>(*sql, perm_converter);

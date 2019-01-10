@@ -18,6 +18,7 @@
 #include "backend/protobuf/proto_permission_to_string.hpp"
 #include "common/files.hpp"
 #include "framework/config_helper.hpp"
+#include "framework/sql_query.hpp"
 #include "logger/logger.hpp"
 #include "validators/field_validator.hpp"
 
@@ -51,6 +52,8 @@ namespace iroha {
                    });
 
         sql = std::make_shared<soci::session>(soci::postgresql, pgopt_);
+        sql_query =
+            std::make_unique<framework::ametsuchi::SqlQuery>(*sql, factory);
       }
 
       void SetUp() override {
@@ -75,6 +78,7 @@ namespace iroha {
                   shared_model::validation::FieldValidator>>();
 
       std::shared_ptr<StorageImpl> storage;
+      std::unique_ptr<framework::ametsuchi::SqlQuery> sql_query;
 
       std::shared_ptr<shared_model::interface::PermissionToString>
           perm_converter_;
