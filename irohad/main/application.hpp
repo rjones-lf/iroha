@@ -104,7 +104,7 @@ class Irohad {
    */
   RunResult run();
 
-  virtual ~Irohad();
+  virtual ~Irohad() = default;
 
  protected:
   // -----------------------| component initialization |------------------------
@@ -167,6 +167,15 @@ class Irohad {
 
   // ------------------------| internal dependencies |-------------------------
 
+  logger::Logger log_;
+
+  // common objects factory
+  std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+      common_objects_factory_;
+
+  // WSV restorer
+  std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;
+
   // crypto provider
   std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer_;
 
@@ -177,20 +186,29 @@ class Irohad {
   std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;
   std::shared_ptr<iroha::validation::ChainValidator> chain_validator;
 
-  // WSV restorer
-  std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;
-
   // async call
   std::shared_ptr<iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
       async_call_;
 
-  // common objects factory
-  std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-      common_objects_factory_;
-
   // transaction batch factory
   std::shared_ptr<shared_model::interface::TransactionBatchFactory>
       transaction_batch_factory_;
+
+  // transaction factory
+  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::Transaction,
+      iroha::protocol::Transaction>>
+      transaction_factory;
+
+  // query response factory
+  std::shared_ptr<shared_model::interface::QueryResponseFactory>
+      query_response_factory_;
+
+  // query factory
+  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::Query,
+      iroha::protocol::Query>>
+      query_factory;
 
   // persistent cache
   std::shared_ptr<iroha::ametsuchi::TxPresenceCache> persistent_cache;
@@ -217,30 +235,15 @@ class Irohad {
   // pcs
   std::shared_ptr<iroha::network::PeerCommunicationService> pcs;
 
-  // transaction factory
-  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
-      shared_model::interface::Transaction,
-      iroha::protocol::Transaction>>
-      transaction_factory;
-
-  // query factory
-  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
-      shared_model::interface::Query,
-      iroha::protocol::Query>>
-      query_factory;
-
-  // query response factory
-  std::shared_ptr<shared_model::interface::QueryResponseFactory>
-      query_response_factory_;
+  // status bus
+  std::shared_ptr<iroha::torii::StatusBus> status_bus_;
 
   // mst
+  std::shared_ptr<iroha::network::MstTransport> mst_transport;
   std::shared_ptr<iroha::MstProcessor> mst_processor;
 
   // pending transactions storage
   std::shared_ptr<iroha::PendingTransactionStorage> pending_txs_storage_;
-
-  // status bus
-  std::shared_ptr<iroha::torii::StatusBus> status_bus_;
 
   // transaction service
   std::shared_ptr<torii::CommandService> command_service;
@@ -257,15 +260,9 @@ class Irohad {
   iroha::consensus::yac::YacInit yac_init;
   iroha::network::BlockLoaderInit loader_init;
 
-  std::shared_ptr<iroha::network::MstTransport> mst_transport;
-
-  logger::Logger log_;
-
  public:
   std::shared_ptr<iroha::ametsuchi::Storage> storage;
-
   shared_model::crypto::Keypair keypair;
-  grpc::ServerBuilder builder;
 };
 
 #endif  // IROHA_APPLICATION_HPP

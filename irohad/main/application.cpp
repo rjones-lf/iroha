@@ -387,8 +387,8 @@ void Irohad::initMstProcessor() {
     mst_propagation = std::make_shared<GossipPropagationStrategy>(
         storage, rxcpp::observe_on_new_thread(), *opt_mst_gossip_params_);
   } else {
-    mst_propagation = std::make_shared<iroha::PropagationStrategyStub>();
     mst_transport = std::make_shared<iroha::network::MstTransportStub>();
+    mst_propagation = std::make_shared<iroha::PropagationStrategyStub>();
   }
 
   auto mst_time = std::make_shared<MstTimeProviderImpl>();
@@ -513,10 +513,4 @@ Irohad::RunResult Irohad::run() {
             log_->error(e.error);
             return e;
           });
-}
-
-Irohad::~Irohad() {
-  // TODO andrei 17.09.18: IR-1710 Verify that all components' destructors are
-  // called in irohad destructor
-  storage->freeConnections();
 }
