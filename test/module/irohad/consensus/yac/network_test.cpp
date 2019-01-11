@@ -61,6 +61,7 @@ namespace iroha {
         std::unique_ptr<grpc::Server> server;
         std::mutex mtx;
         std::condition_variable cv;
+        shared_model::crypto::PublicKey pubkey = shared_model::crypto::PublicKey{""};
       };
 
       /**

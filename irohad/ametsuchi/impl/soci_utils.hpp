@@ -142,11 +142,9 @@ namespace iroha {
       };
     }
 
-    template <typename T, typename F>
+    template <typename R, typename T, typename F>
     auto flatMapValue(T &t, F &&f) {
-      return t | [&](auto &st) -> decltype(
-                                   apply(boost::make_iterator_range(st).front(),
-                                         std::forward<F>(f))) {
+      return t | [&](auto &st) -> R {
         auto range = boost::make_iterator_range(st);
 
         if (range.empty()) {

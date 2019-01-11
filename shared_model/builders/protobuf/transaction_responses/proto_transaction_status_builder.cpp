@@ -87,7 +87,7 @@ namespace shared_model {
     TransactionStatusBuilder TransactionStatusBuilder::txHash(
         const crypto::Hash &hash) {
       TransactionStatusBuilder copy(*this);
-      copy.tx_response_.set_tx_hash(crypto::toBinaryString(hash));
+      copy.tx_response_.set_tx_hash(hash.hex());
       return copy;
     }
 

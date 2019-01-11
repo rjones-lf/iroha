@@ -4,6 +4,7 @@
  */
 
 #include "model/converters/pb_query_response_factory.hpp"
+#include "common/byteutils.hpp"
 #include "common/instanceof.hpp"
 #include "model/converters/pb_common.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
@@ -226,7 +227,7 @@ namespace iroha {
         protocol::SignatoriesResponse pb_response;
 
         for (auto key : signatoriesResponse.keys) {
-          pb_response.add_keys(key.data(), key.size());
+          pb_response.add_keys(key.to_hexstring());
         }
         return pb_response;
       }
@@ -236,9 +237,8 @@ namespace iroha {
           const protocol::SignatoriesResponse &signatoriesResponse) const {
         model::SignatoriesResponse res{};
         for (const auto &key : signatoriesResponse.keys()) {
-          pubkey_t pubkey;
-          std::copy(key.begin(), key.end(), pubkey.begin());
-          res.keys.push_back(pubkey);
+          iroha::hexstringToArray<pubkey_t::size()>(key) |
+              [&](const auto &pubkey) { res.keys.push_back(pubkey); };
         }
         return res;
       }

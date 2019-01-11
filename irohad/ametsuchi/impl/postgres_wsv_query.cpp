@@ -7,7 +7,6 @@
 
 #include <soci/boost-tuple.h>
 #include "ametsuchi/impl/soci_utils.hpp"
-#include "backend/protobuf/permissions.hpp"
 #include "common/result.hpp"
 #include "cryptography/public_key.hpp"
 

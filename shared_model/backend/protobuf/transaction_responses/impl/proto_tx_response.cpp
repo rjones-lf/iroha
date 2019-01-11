@@ -60,7 +60,7 @@ namespace shared_model {
       const ResponseVariantType ivariant_{variant_};
 
       // stub hash
-      const crypto::Hash hash_{proto_.tx_hash()};
+      const crypto::Hash hash_ = crypto::Hash::fromHexString(proto_.tx_hash());
     };
 
     TransactionResponse::TransactionResponse(const TransactionResponse &r)

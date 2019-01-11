@@ -4,6 +4,7 @@
  */
 
 #include "backend/protobuf/commands/proto_create_account.hpp"
+#include "cryptography/hash.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -12,7 +13,7 @@ namespace shared_model {
     CreateAccount::CreateAccount(CommandType &&command)
         : CopyableProto(std::forward<CommandType>(command)),
           create_account_{proto_->create_account()},
-          pubkey_{create_account_.public_key()} {}
+          pubkey_{crypto::Hash::fromHexString(create_account_.public_key())} {}
 
     template CreateAccount::CreateAccount(CreateAccount::TransportType &);
     template CreateAccount::CreateAccount(const CreateAccount::TransportType &);

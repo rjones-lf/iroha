@@ -80,10 +80,76 @@ namespace framework {
                 soci::use(perm_str, "permission"));
       });
 
-      return iroha::ametsuchi::flatMapValue(
+      return flatMapValue<boost::optional<bool>>(
                  result,
                  [](auto &count) { return boost::make_optional(count == 1); })
           .value_or(false);
+    }
+
+    boost::optional<std::vector<RoleIdType>> SqlQuery::getAccountRoles(
+        const AccountIdType &account_id) {
+      using T = boost::tuple<RoleIdType>;
+      auto result = execute<T>([&] {
+        return (sql_.prepare << "SELECT role_id FROM account_has_roles WHERE "
+                                "account_id = :account_id",
+                soci::use(account_id));
+      });
+
+      return mapValues<std::vector<RoleIdType>>(
+          result, [&](auto &role_id) { return role_id; });
+    }
+
+    boost::optional<shared_model::interface::RolePermissionSet>
+    SqlQuery::getRolePermissions(const RoleIdType &role_name) {
+      using iroha::operator|;
+      using T = boost::tuple<std::string>;
+      auto result = execute<T>([&] {
+        return (sql_.prepare
+                    << "SELECT permission FROM role_has_permissions WHERE "
+                       "role_id = :role_name",
+                soci::use(role_name));
+      });
+
+      return result | [&](auto &&st)
+                 -> boost::optional<
+                     shared_model::interface::RolePermissionSet> {
+        auto range = boost::make_iterator_range(st);
+
+        if (range.empty()) {
+          return shared_model::interface::RolePermissionSet{};
+        }
+
+        return iroha::ametsuchi::apply(range.front(), [](auto &permission) {
+          return shared_model::interface::RolePermissionSet(permission);
+        });
+      };
+    }
+
+    boost::optional<std::vector<RoleIdType>> SqlQuery::getRoles() {
+      using T = boost::tuple<RoleIdType>;
+      auto result = execute<T>(
+          [&] { return (sql_.prepare << "SELECT role_id FROM role"); });
+
+      return mapValues<std::vector<RoleIdType>>(
+          result, [&](auto &role_id) { return role_id; });
+    }
+
+    boost::optional<std::shared_ptr<shared_model::interface::Account>>
+    SqlQuery::getAccount(const AccountIdType &account_id) {
+      using T = boost::tuple<DomainIdType, QuorumType, JsonType>;
+      auto result = execute<T>([&] {
+        return (sql_.prepare << "SELECT domain_id, quorum, data "
+                                "FROM account WHERE account_id = "
+                                ":account_id",
+                soci::use(account_id, "account_id"));
+      });
+
+      return flatMapValue<
+          boost::optional<std::shared_ptr<shared_model::interface::Account>>>(
+          result, [&](auto &domain_id, auto quorum, auto &data) {
+            return this->fromResult(
+                factory_->createAccount(account_id, domain_id, quorum, data));
+          });
     }
 
     boost::optional<std::string> SqlQuery::getAccountDetail(
@@ -147,98 +213,12 @@ namespace framework {
         });
       }
 
-      return iroha::ametsuchi::flatMapValue(
+      return flatMapValue<boost::optional<std::string>>(
           result, [&](auto &json) { return boost::make_optional(json); });
     }
 
-    boost::optional<std::shared_ptr<shared_model::interface::Domain>>
-    SqlQuery::getDomain(
-        const shared_model::interface::types::DomainIdType &domain_id) {
-      using T = boost::tuple<RoleIdType>;
-      auto result = execute<T>([&] {
-        return (sql_.prepare << "SELECT default_role FROM domain "
-                                "WHERE domain_id = :id LIMIT 1",
-                soci::use(domain_id));
-      });
-
-      return flatMapValue(result, [&](auto &default_role) {
-        return this->fromResult(
-            factory_->createDomain(domain_id, default_role));
-      });
-    }
-
-    boost::optional<std::vector<shared_model::interface::types::RoleIdType>>
-    SqlQuery::getAccountRoles(
-        const shared_model::interface::types::AccountIdType &account_id) {
-      using T = boost::tuple<RoleIdType>;
-      auto result = execute<T>([&] {
-        return (sql_.prepare << "SELECT role_id FROM account_has_roles WHERE "
-                                "account_id = :account_id",
-                soci::use(account_id));
-      });
-
-      return mapValues<std::vector<RoleIdType>>(
-          result, [&](auto &role_id) { return role_id; });
-    }
-
-    boost::optional<shared_model::interface::RolePermissionSet>
-    SqlQuery::getRolePermissions(
-        const shared_model::interface::types::RoleIdType &role_name) {
-      using iroha::operator|;
-      using T = boost::tuple<std::string>;
-      auto result = execute<T>([&] {
-        return (sql_.prepare
-                    << "SELECT permission FROM role_has_permissions WHERE "
-                       "role_id = :role_name",
-                soci::use(role_name));
-      });
-
-      return result | [&](auto &&st)
-                 -> boost::optional<
-                     shared_model::interface::RolePermissionSet> {
-        auto range = boost::make_iterator_range(st);
-
-        if (range.empty()) {
-          return shared_model::interface::RolePermissionSet{};
-        }
-
-        return iroha::ametsuchi::apply(range.front(), [](auto &permission) {
-          return shared_model::interface::RolePermissionSet(permission);
-        });
-      };
-    }
-
-    boost::optional<std::vector<shared_model::interface::types::RoleIdType>>
-    SqlQuery::getRoles() {
-      using T = boost::tuple<RoleIdType>;
-      auto result = execute<T>(
-          [&] { return (sql_.prepare << "SELECT role_id FROM role"); });
-
-      return mapValues<std::vector<RoleIdType>>(
-          result, [&](auto &role_id) { return role_id; });
-    }
-
-    boost::optional<std::shared_ptr<shared_model::interface::Account>>
-    SqlQuery::getAccount(
-        const shared_model::interface::types::AccountIdType &account_id) {
-      using T = boost::tuple<DomainIdType, QuorumType, JsonType>;
-      auto result = execute<T>([&] {
-        return (sql_.prepare << "SELECT domain_id, quorum, data "
-                                "FROM account WHERE account_id = "
-                                ":account_id",
-                soci::use(account_id, "account_id"));
-      });
-
-      return flatMapValue(
-          result, [&](auto &domain_id, auto quorum, auto &data) {
-            return this->fromResult(
-                factory_->createAccount(account_id, domain_id, quorum, data));
-          });
-    }
-
     boost::optional<std::shared_ptr<shared_model::interface::Asset>>
-    SqlQuery::getAsset(
-        const shared_model::interface::types::AssetIdType &asset_id) {
+    SqlQuery::getAsset(const AssetIdType &asset_id) {
       using T = boost::tuple<DomainIdType, PrecisionType>;
       auto result = execute<T>([&] {
         return (
@@ -248,16 +228,17 @@ namespace framework {
             soci::use(asset_id));
       });
 
-      return flatMapValue(result, [&](auto &domain_id, auto precision) {
-        return this->fromResult(
-            factory_->createAsset(asset_id, domain_id, precision));
-      });
+      return flatMapValue<
+          boost::optional<std::shared_ptr<shared_model::interface::Asset>>>(
+          result, [&](auto &domain_id, auto precision) {
+            return this->fromResult(
+                factory_->createAsset(asset_id, domain_id, precision));
+          });
     }
 
     boost::optional<
         std::vector<std::shared_ptr<shared_model::interface::AccountAsset>>>
-    SqlQuery::getAccountAssets(
-        const shared_model::interface::types::AccountIdType &account_id) {
+    SqlQuery::getAccountAssets(const AccountIdType &account_id) {
       using T = boost::tuple<AssetIdType, std::string>;
       auto result = execute<T>([&] {
         return (sql_.prepare
@@ -275,9 +256,8 @@ namespace framework {
     }
 
     boost::optional<std::shared_ptr<shared_model::interface::AccountAsset>>
-    SqlQuery::getAccountAsset(
-        const shared_model::interface::types::AccountIdType &account_id,
-        const shared_model::interface::types::AssetIdType &asset_id) {
+    SqlQuery::getAccountAsset(const AccountIdType &account_id,
+                              const AssetIdType &asset_id) {
       using T = boost::tuple<std::string>;
       auto result = execute<T>([&] {
         return (
@@ -288,10 +268,29 @@ namespace framework {
             soci::use(asset_id));
       });
 
-      return flatMapValue(result, [&](auto &amount) {
-        return this->fromResult(factory_->createAccountAsset(
-            account_id, asset_id, shared_model::interface::Amount(amount)));
+      return flatMapValue<boost::optional<
+          std::shared_ptr<shared_model::interface::AccountAsset>>>(
+          result, [&](auto &amount) {
+            return this->fromResult(factory_->createAccountAsset(
+                account_id, asset_id, shared_model::interface::Amount(amount)));
+          });
+    }
+
+    boost::optional<std::shared_ptr<shared_model::interface::Domain>>
+    SqlQuery::getDomain(const DomainIdType &domain_id) {
+      using T = boost::tuple<RoleIdType>;
+      auto result = execute<T>([&] {
+        return (sql_.prepare << "SELECT default_role FROM domain "
+                                "WHERE domain_id = :id LIMIT 1",
+                soci::use(domain_id));
       });
+
+      return flatMapValue<
+          boost::optional<std::shared_ptr<shared_model::interface::Domain>>>(
+          result, [&](auto &default_role) {
+            return this->fromResult(
+                factory_->createDomain(domain_id, default_role));
+          });
     }
 
   }  // namespace ametsuchi

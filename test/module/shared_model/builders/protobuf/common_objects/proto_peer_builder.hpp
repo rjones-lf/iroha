@@ -30,7 +30,7 @@ namespace shared_model {
 
       PeerBuilder pubkey(const interface::types::PubkeyType &key) {
         PeerBuilder copy(*this);
-        copy.peer_.set_peer_key(shared_model::crypto::toBinaryString(key));
+        copy.peer_.set_peer_key(key.hex());
         return copy;
       }
 

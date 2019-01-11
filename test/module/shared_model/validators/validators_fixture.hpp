@@ -175,8 +175,12 @@ class ValidatorsTest : public ::testing::Test {
     domain_id = "ru";
     detail_key = "key";
     writer = "account@domain";
-    public_key = std::string(public_key_size, '0');
-    hash = std::string(public_key_size, '0');
+
+    // size of public_key and hash are twice bigger `public_key_size` because it
+    // is hex representation
+    public_key = std::string(public_key_size * 2, '0');
+    hash = std::string(public_key_size * 2, '0');
+
     role_permission = iroha::protocol::RolePermission::can_append_role;
     grantable_permission =
         iroha::protocol::GrantablePermission::can_add_my_signatory;

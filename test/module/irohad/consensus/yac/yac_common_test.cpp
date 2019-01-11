@@ -19,14 +19,14 @@ TEST(YacCommonTest, SameProposalTest) {
   log_->info("-----------| Verify ok and fail cases |-----------");
 
   YacHash hash(Round{1, 1}, "proposal", "commit");
-  std::vector<VoteMessage> votes{create_vote(hash, "two"),
-                                 create_vote(hash, "three"),
-                                 create_vote(hash, "four")};
+  std::vector<VoteMessage> votes{createVote(hash, "two"),
+                                 createVote(hash, "three"),
+                                 createVote(hash, "four")};
 
   ASSERT_TRUE(sameKeys(votes));
 
   votes.push_back(
-      create_vote(YacHash(Round{1, 2}, "not-proposal", "commit"), "five"));
+      createVote(YacHash(Round{1, 2}, "not-proposal", "commit"), "five"));
   ASSERT_FALSE(sameKeys(votes));
 }
 
@@ -34,13 +34,13 @@ TEST(YacCommonTest, getProposalHashTest) {
   log_->info("-----------| Verify ok and fail cases |-----------");
 
   YacHash hash(Round{1, 1}, "proposal", "commit");
-  std::vector<VoteMessage> votes{create_vote(hash, "two"),
-                                 create_vote(hash, "three"),
-                                 create_vote(hash, "four")};
+  std::vector<VoteMessage> votes{createVote(hash, "two"),
+                                 createVote(hash, "three"),
+                                 createVote(hash, "four")};
 
   ASSERT_EQ(hash.vote_round, getKey(votes).value());
 
   votes.push_back(
-      create_vote(YacHash(Round{1, 2}, "not-proposal", "commit"), "five"));
+      createVote(YacHash(Round{1, 2}, "not-proposal", "commit"), "five"));
   ASSERT_FALSE(getKey(votes));
 }

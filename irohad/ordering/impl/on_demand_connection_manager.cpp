@@ -9,6 +9,7 @@
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
+using namespace iroha;
 using namespace iroha::ordering;
 
 OnDemandConnectionManager::OnDemandConnectionManager(

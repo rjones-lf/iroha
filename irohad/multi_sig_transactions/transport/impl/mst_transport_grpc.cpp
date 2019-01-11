@@ -134,9 +134,10 @@ grpc::Status MstTransportGrpc::SendState(
     return grpc::Status::OK;
   }
 
-  if (auto subscriber = subscriber_.lock()) {
-    subscriber->onNewState(source_key, std::move(new_state));
-  } else {
+  if (auto subscriber =subscriber_.lock()) {
+    subscriber->onNewState(
+      source_key,
+      std::move(new_state));} else {
     async_call_->log_->warn("No subscriber for MST SendState event is set");
   }
 
