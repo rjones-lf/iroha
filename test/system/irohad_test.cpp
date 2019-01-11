@@ -20,7 +20,8 @@
 #include "crypto/keys_manager_impl.hpp"
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/query_responses/roles_response.hpp"
-#include "main/iroha_conf_loader.hpp"
+#include "logger/logger.hpp"
+#include "main/iroha_conf_literals.hpp"
 #include "torii/command_client.hpp"
 #include "torii/query_client.hpp"
 

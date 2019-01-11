@@ -15,6 +15,7 @@
 #include <rapidjson/rapidjson.h>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/range/adaptor/map.hpp>
+#include "main/iroha_conf_literals.hpp"
 
 #include "main/assert_config.hpp"
 

@@ -16,6 +16,7 @@ target_link_libraries(irohad_test
         command_client
         query_client
         keys_manager
+        iroha_conf_literals
         )
 add_dependencies(irohad_test irohad)
 add_definitions(-DPATHIROHAD="${PROJECT_BINARY_DIR}/bin")

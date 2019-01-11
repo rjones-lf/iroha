@@ -54,9 +54,7 @@ target_link_libraries(application
     common
     )
 
-add_executable(irohad
-  irohad.cpp
-  iroha_conf_loader.cpp)
+add_executable(irohad irohad.cpp)
 target_link_libraries(irohad
     application
     raw_block_loader
@@ -64,6 +62,13 @@ target_link_libraries(irohad
     rapidjson
     keys_manager
     common
+    iroha_conf_loader
     )
+
+add_library(iroha_conf_loader iroha_conf_loader.cpp)
+target_link_libraries(iroha_conf_loader iroha_conf_literals)
+
+add_library(iroha_conf_literals iroha_conf_literals.cpp)
+target_include_directories(iroha_conf_literals PUBLIC ${fmt_INCLUDE_DIR})
 
 add_install_step_for_bin(irohad)

@@ -12,6 +12,7 @@
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
+#include "main/iroha_conf_literals.hpp"
 #include "main/iroha_conf_loader.hpp"
 #include "main/raw_block_loader.hpp"
 

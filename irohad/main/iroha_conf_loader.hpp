@@ -11,29 +11,6 @@
 
 #include "logger/logger_manager.hpp"
 
-namespace config_members {
-  const char *BlockStorePath = "block_store_path";
-  const char *ToriiPort = "torii_port";
-  const char *InternalPort = "internal_port";
-  const char *KeyPairPath = "key_pair_path";
-  const char *PgOpt = "pg_opt";
-  const char *MaxProposalSize = "max_proposal_size";
-  const char *ProposalDelay = "proposal_delay";
-  const char *VoteDelay = "vote_delay";
-  const char *MstSupport = "mst_enable";
-  const char *LogSection = "log";
-  const char *LogLevel = "level";
-  const char *LogPatternsSection = "patterns";
-  const char *LogChildrenSection = "children";
-  const std::unordered_map<std::string, logger::LogLevel> LogLevels{
-      {"trace", logger::LogLevel::kTrace},
-      {"debug", logger::LogLevel::kDebug},
-      {"info", logger::LogLevel::kInfo},
-      {"warning", logger::LogLevel::kWarn},
-      {"error", logger::LogLevel::kError},
-      {"critical", logger::LogLevel::kCritical}};
-}  // namespace config_members
-
 struct IrohadConfig {
   std::string blok_store_path;
   uint16_t torii_port;
