@@ -20,7 +20,7 @@ class QuorumFixture : public AcceptanceFixture {
         baseTx(kAdminId).addSignatory(kAdminId, kUserKeypair.publicKey()),
         kAdminKeypair);
     itf.setInitialState(kAdminKeypair)
-        .sendTxAwait(add_public_key_tx, CHECK_TXS(1));
+        .sendTxAwait(add_public_key_tx, CHECK_TXS_QUANTITY(1));
   }
 
   IntegrationTestFramework itf;
@@ -35,7 +35,7 @@ TEST_F(QuorumFixture, CanRaiseQuorum) {
   const auto new_quorum = 2;
   auto raise_quorum_tx = complete(
       baseTx(kAdminId).setAccountQuorum(kAdminId, new_quorum), kAdminKeypair);
-  itf.sendTxAwait(raise_quorum_tx, CHECK_TXS(1));
+  itf.sendTxAwait(raise_quorum_tx, CHECK_TXS_QUANTITY(1));
 }
 
 /**
@@ -48,7 +48,7 @@ TEST_F(QuorumFixture, CannotRaiseQuorumMoreThanSignatures) {
   const auto new_quorum = 3;
   auto raise_quorum_tx = complete(
       baseTx(kAdminId).setAccountQuorum(kAdminId, new_quorum), kAdminKeypair);
-  itf.sendTxAwait(raise_quorum_tx, CHECK_TXS(0))
+  itf.sendTxAwait(raise_quorum_tx, CHECK_TXS_QUANTITY(0))
       .getTxStatus(raise_quorum_tx.hash(), CHECK_STATEFUL_INVALID);
 }
 
@@ -69,8 +69,8 @@ TEST_F(QuorumFixture, CanLowerQuorum) {
                              .signAndAddSignature(kAdminKeypair)
                              .signAndAddSignature(kUserKeypair)
                              .finish();
-  itf.sendTxAwait(raise_quorum_tx, CHECK_TXS(1));
-  itf.sendTxAwait(lower_quorum_tx, CHECK_TXS(1));
+  itf.sendTxAwait(raise_quorum_tx, CHECK_TXS_QUANTITY(1));
+  itf.sendTxAwait(lower_quorum_tx, CHECK_TXS_QUANTITY(1));
 }
 
 /**

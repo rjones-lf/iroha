@@ -47,18 +47,18 @@ class RemoveSignatory : public AcceptanceFixture {
 TEST_F(RemoveSignatory, Basic) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), CHECK_TXS(1))
-      .sendTxAwait(makeSecondUser(), CHECK_TXS(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendTxAwait(
           complete(baseTx().addSignatory(kUserId, kUser2Keypair.publicKey())),
-          CHECK_TXS(1))
+          CHECK_TXS_QUANTITY(1))
       .sendTxAwait(complete(baseTx().removeSignatory(
                        kUserId, kUser2Keypair.publicKey())),
-                   CHECK_TXS(1))
+                   CHECK_TXS_QUANTITY(1))
       .sendTx(complete(
           baseTx().removeSignatory(kUserId, kUser2Keypair.publicKey())))
-      .checkVerifiedProposal(CHECK_TXS(0))
-      .checkBlock(CHECK_TXS(0));
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0))
+      .checkBlock(CHECK_TXS_QUANTITY(0));
 }
 
 /**
@@ -71,16 +71,16 @@ TEST_F(RemoveSignatory, Basic) {
 TEST_F(RemoveSignatory, NoPermission) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser({}), CHECK_TXS(1))
-      .sendTxAwait(makeSecondUser(), CHECK_TXS(1))
+      .sendTxAwait(makeFirstUser({}), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendTxAwait(
           complete(baseTx().addSignatory(kUserId, kUser2Keypair.publicKey()),
                    kUserKeypair),
-          CHECK_TXS(1))
+          CHECK_TXS_QUANTITY(1))
       .sendTx(complete(
           baseTx().removeSignatory(kUserId, kUser2Keypair.publicKey())))
-      .checkVerifiedProposal(CHECK_TXS(0))
-      .checkBlock(CHECK_TXS(0));
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0))
+      .checkBlock(CHECK_TXS_QUANTITY(0));
 }
 
 /**
@@ -96,20 +96,20 @@ TEST_F(RemoveSignatory, GrantedPermission) {
       .setInitialState(kAdminKeypair)
       .sendTxAwait(
           makeFirstUser({interface::permissions::Role::kRemoveMySignatory}),
-          CHECK_TXS(1))
-      .sendTxAwait(makeSecondUser(), CHECK_TXS(1))
+          CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendTxAwait(
           complete(baseTx().addSignatory(kUserId, kUser2Keypair.publicKey()),
                    kUserKeypair),
-          CHECK_TXS(1))
+          CHECK_TXS_QUANTITY(1))
       .sendTxAwait(
           complete(baseTx().grantPermission(
               kUser2Id, interface::permissions::Grantable::kRemoveMySignatory)),
-          CHECK_TXS(1))
+          CHECK_TXS_QUANTITY(1))
       .sendTxAwait(complete(baseTx().creatorAccountId(kUser2Id).removeSignatory(
                                 kUserId, kUser2Keypair.publicKey()),
                             kUser2Keypair),
-                   CHECK_TXS(1));
+                   CHECK_TXS_QUANTITY(1));
 }
 
 /**
@@ -124,17 +124,17 @@ TEST_F(RemoveSignatory, NonGrantedPermission) {
       .setInitialState(kAdminKeypair)
       .sendTxAwait(
           makeFirstUser({interface::permissions::Role::kRemoveMySignatory}),
-          CHECK_TXS(1))
-      .sendTxAwait(makeSecondUser(), CHECK_TXS(1))
+          CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendTxAwait(
           complete(baseTx().addSignatory(kUserId, kUser2Keypair.publicKey()),
                    kUserKeypair),
-          CHECK_TXS(1))
+          CHECK_TXS_QUANTITY(1))
       .sendTx(complete(baseTx().creatorAccountId(kUser2Id).removeSignatory(
                            kUserId, kUser2Keypair.publicKey()),
                        kUser2Keypair))
-      .checkVerifiedProposal(CHECK_TXS(0))
-      .checkBlock(CHECK_TXS(0));
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0))
+      .checkBlock(CHECK_TXS_QUANTITY(0));
 }
 
 /**
@@ -145,12 +145,12 @@ TEST_F(RemoveSignatory, NonGrantedPermission) {
 TEST_F(RemoveSignatory, NonExistentUser) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), CHECK_TXS(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
       .sendTx(complete(baseTx().removeSignatory("inexistent@" + kDomain,
                                                 kUserKeypair.publicKey()),
                        kUser2Keypair))
-      .checkVerifiedProposal(CHECK_TXS(0))
-      .checkBlock(CHECK_TXS(0));
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0))
+      .checkBlock(CHECK_TXS_QUANTITY(0));
 }
 
 /**
@@ -162,7 +162,7 @@ TEST_F(RemoveSignatory, NonExistentUser) {
 TEST_F(RemoveSignatory, InvalidKey) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), CHECK_TXS(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
       .sendTx(complete(baseTx().removeSignatory(
                   kUserId,
                   shared_model::crypto::PublicKey(std::string(1337, 'a')))),
@@ -178,11 +178,11 @@ TEST_F(RemoveSignatory, InvalidKey) {
 TEST_F(RemoveSignatory, NonExistedKey) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), CHECK_TXS(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
       .sendTx(complete(baseTx().removeSignatory(
           kUserId, shared_model::crypto::PublicKey(std::string(32, 'a')))))
-      .checkVerifiedProposal(CHECK_TXS(0))
-      .checkBlock(CHECK_TXS(0));
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0))
+      .checkBlock(CHECK_TXS_QUANTITY(0));
 }
 
 /**
@@ -198,18 +198,18 @@ TEST_F(RemoveSignatory, NonExistedKey) {
 TEST_F(RemoveSignatory, DISABLED_SignatoriesLesserThanQuorum) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), CHECK_TXS(1))
-      .sendTxAwait(makeSecondUser(), CHECK_TXS(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendTxAwait(
           complete(baseTx().addSignatory(kUserId, kUser2Keypair.publicKey())),
-          CHECK_TXS(1))
+          CHECK_TXS_QUANTITY(1))
       .sendTxAwait(
           complete(
               baseTx().creatorAccountId(kAdminId).setAccountQuorum(kUserId, 2),
               kAdminKeypair),
-          CHECK_TXS(1))
+          CHECK_TXS_QUANTITY(1))
       .sendTx(complete(
           baseTx().removeSignatory(kUserId, kUser2Keypair.publicKey())))
-      .checkVerifiedProposal(CHECK_TXS(0))
-      .checkBlock(CHECK_TXS(0));
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0))
+      .checkBlock(CHECK_TXS_QUANTITY(0));
 }

@@ -26,7 +26,7 @@ class ReplayFixture : public AcceptanceFixture {
                      .addAssetQuantity(kAssetId, "10000.0"),
                  kAdminKeypair);
     itf.setInitialState(kAdminKeypair)
-        .sendTxAwait(create_user_tx, CHECK_TXS(1));
+        .sendTxAwait(create_user_tx, CHECK_TXS_QUANTITY(1));
   }
 
   IntegrationTestFramework itf;
@@ -45,8 +45,8 @@ TEST_F(ReplayFixture, OrderingGateReplay) {
       baseTx(kAdminId).transferAsset(kAdminId, kUserId, kAssetId, "", "1.0"),
       kAdminKeypair);
 
-  itf.sendTxAwait(transfer_tx, CHECK_TXS(1));  // should be committed
-  itf.sendTx(transfer_tx);                     // should not
+  itf.sendTxAwait(transfer_tx, CHECK_TXS_QUANTITY(1));  // should be committed
+  itf.sendTx(transfer_tx);                              // should not
   EXPECT_THROW(itf.skipProposal(),
                std::runtime_error);  // missed proposal should be thrown here
   // TODO 2019-01-09 igor-egorov IR-152

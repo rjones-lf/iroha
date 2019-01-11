@@ -176,11 +176,11 @@ TEST_F(CreateAccount, PrivelegeElevation) {
 
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(second_domain_tx, CHECK_TXS(1))
-      .sendTxAwait(makeUserWithPerms(), CHECK_TXS(1))
+      .sendTxAwait(second_domain_tx, CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeUserWithPerms(), CHECK_TXS_QUANTITY(1))
       .sendTx(create_elevated_user)
       .skipProposal()
-      .checkVerifiedProposal(CHECK_TXS(0))
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0))
       .checkBlock([&rejected_hash](const auto &block) {
         const auto rejected_hashes = block->rejected_transactions_hashes();
         ASSERT_THAT(rejected_hashes, ::testing::Contains(rejected_hash));

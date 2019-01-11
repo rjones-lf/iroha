@@ -47,7 +47,7 @@ namespace {
 
 #define CHECK_MST_PENDING BASE_CHECK_RESPONSE(MstPendingResponse)
 
-#define CHECK_TXS(i) \
+#define CHECK_TXS_QUANTITY(i) \
   [](const auto &resp) { ASSERT_EQ(resp->transactions().size(), i); }
 }  // namespace
 
