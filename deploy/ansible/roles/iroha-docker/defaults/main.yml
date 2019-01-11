@@ -35,7 +35,9 @@ deploy_dir: /opt/iroha-deploy
 # set to `false`
 iroha_network_name: iroha-net
 
-iroha_docker_tag: 1.0.0_rc1
+# The role is incompatible with Iroha versions below RC2 since keys format has changed.
+# Apply the patch (files/old-keys-format.patch) if you need support for previous Iroha versions.
+iroha_docker_tag: 1.0.0_rc2
 postgres_docker_tag: '9.5'
 
 ## Iroha config
