@@ -14,12 +14,12 @@ add_library(integration_framework
     integration_framework/fake_peer/fake_peer.cpp
     integration_framework/fake_peer/yac_network_notifier.cpp
     integration_framework/port_guard.cpp
-    common_constants.cpp
     )
 target_link_libraries(integration_framework
     application
     integration_framework_config_helper
     command_client
+    common_test_constants
     query_client
     ordering_gate_common
     yac_transport
@@ -27,6 +27,8 @@ target_link_libraries(integration_framework
     server_runner
     mst_transport
     )
+
+add_library(common_test_constants common_constants.cpp)
 
 target_include_directories(integration_framework PUBLIC ${PROJECT_SOURCE_DIR}/test)
 
