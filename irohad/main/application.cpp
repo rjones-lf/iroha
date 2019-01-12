@@ -267,6 +267,31 @@ void Irohad::initOrderingGate() {
   auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
       shared_model::validation::DefaultProposalValidator>>();
 
+  const uint64_t kCounter = 0, kMaxLocalCounter = 2;
+  // reject_counter and local_counter are local mutable variables of lambda
+  const uint64_t kMaxDelaySeconds = 5;
+  auto delay = [reject_counter = kCounter,
+                local_counter = kCounter,
+                // MSVC requires const variables to be captured
+                kMaxDelaySeconds,
+                kMaxLocalCounter](const auto &commit) mutable {
+    using iroha::synchronizer::SynchronizationOutcomeType;
+    if (commit.sync_outcome == SynchronizationOutcomeType::kReject
+        or commit.sync_outcome == SynchronizationOutcomeType::kNothing) {
+      // Increment reject_counter each local_counter calls of function
+      ++local_counter;
+      if (local_counter == kMaxLocalCounter) {
+        local_counter = 0;
+        if (reject_counter < kMaxDelaySeconds) {
+          reject_counter++;
+        }
+      }
+    } else {
+      reject_counter = 0;
+    }
+    return std::chrono::seconds(reject_counter);
+  };
+
   ordering_gate = ordering_init.initOrderingGate(max_proposal_size_,
                                                  proposal_delay_,
                                                  std::move(hashes),
@@ -277,7 +302,8 @@ void Irohad::initOrderingGate() {
                                                  async_call_,
                                                  std::move(factory),
                                                  persistent_cache,
-                                                 {blocks.back()->height(), 1});
+                                                 {blocks.back()->height(), 1},
+                                                 delay);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -358,11 +384,26 @@ void Irohad::initPeerCommunicationService() {
   pcs = std::make_shared<PeerCommunicationServiceImpl>(
       ordering_gate, synchronizer, simulator);
 
-  pcs->onProposal().subscribe(
-      [this](auto) { log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ "); });
+  pcs->onProposal().subscribe([this](const auto &) {
+    log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ ");
+  });
 
-  pcs->on_commit().subscribe(
-      [this](auto) { log_->info("~~~~~~~~~| COMMIT =^._.^= |~~~~~~~~~ "); });
+  pcs->on_commit().subscribe([this](const auto &event) {
+    using iroha::synchronizer::SynchronizationOutcomeType;
+    switch (event.sync_outcome) {
+      case SynchronizationOutcomeType::kCommit:
+        log_->info(R"(~~~~~~~~~| COMMIT =^._.^= |~~~~~~~~~ )");
+        break;
+      case SynchronizationOutcomeType::kReject:
+        log_->info(R"(~~~~~~~~~| REJECT \(*.*)/ |~~~~~~~~~ )");
+        break;
+      case SynchronizationOutcomeType::kNothing:
+        log_->info(R"(~~~~~~~~~| EMPTY (-_-)zzz |~~~~~~~~~ )");
+        break;
+      default:
+        break;
+    }
+  });
 
   log_->info("[Init] => pcs");
 }
@@ -421,12 +462,12 @@ void Irohad::initTransactionCommandService() {
       std::make_shared<::torii::CommandServiceTransportGrpc>(
           command_service,
           status_bus_,
-          std::chrono::seconds(1),
-          2 * proposal_delay_,
           status_factory,
           transaction_factory,
           batch_parser,
-          transaction_batch_factory_);
+          transaction_batch_factory_,
+          consensus_gate,
+          2);
 
   log_->info("[Init] => command service");
 }

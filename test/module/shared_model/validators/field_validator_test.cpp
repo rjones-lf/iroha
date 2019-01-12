@@ -294,7 +294,7 @@ class FieldValidatorTest : public ValidatorsTest {
     return {case_name,
             [&, address, pubkey] {
               this->peer.set_address(address);
-              this->peer.set_peer_key(pubkey);
+              this->peer.set_peer_key(shared_model::crypto::Hash(pubkey).hex());
             },
             true,
             ""};
@@ -385,7 +385,7 @@ class FieldValidatorTest : public ValidatorsTest {
       // invalid pubkey
       makeInvalidPeerPubkeyTestCase("invalid_peer_pubkey_length",
                                     "182.13.35.1:3040",
-                                    std::string(64, '0')),
+                                    std::string(123, '0')),
       makeInvalidPeerPubkeyTestCase(
           "invalid_peer_pubkey_empty", "182.13.35.1:3040", "")
       // clang-format on

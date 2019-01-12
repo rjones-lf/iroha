@@ -10,6 +10,7 @@
 #include "interfaces/common_objects/types.hpp"
 #include "network/impl/grpc_channel_builder.hpp"
 
+using namespace iroha;
 using namespace iroha::ordering;
 
 grpc::Status OrderingGateTransportGrpc::onProposal(

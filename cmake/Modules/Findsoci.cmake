@@ -14,14 +14,14 @@ mark_as_advanced(SOCI_INCLUDE_DIRS)
 
 find_library(
     SOCI_LIBRARY
-    NAMES soci_core
+    NAMES soci_core soci_core_3_2
     HINTS ${SOCI_INCLUDE_DIR}/..
     PATH_SUFFIXES lib${LIB_SUFFIX})
 mark_as_advanced(SOCI_LIBRARY)
 
 find_library(
     SOCI_postgresql_PLUGIN
-    NAMES soci_postgresql
+    NAMES soci_postgresql soci_postgresql_3_2
     HINTS ${SOCI_INCLUDE_DIR}/..
     PATH_SUFFIXES lib${LIB_SUFFIX})
 mark_as_advanced(SOCI_postgresql_PLUGIN)
@@ -76,8 +76,13 @@ endif ()
 set_target_properties(SOCI::core PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${SOCI_INCLUDE_DIRS}"
     IMPORTED_LOCATION "${SOCI_LIBRARY}"
-    INTERFACE_LINK_LIBRARIES dl
     )
+
+if (NOT MSVC)
+  set_target_properties(SOCI::core PROPERTIES
+      INTERFACE_LINK_LIBRARIES dl
+      )
+endif ()
 
 set_target_properties(SOCI::postgresql PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${SOCI_INCLUDE_DIRS}"

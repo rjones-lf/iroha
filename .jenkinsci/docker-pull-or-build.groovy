@@ -30,7 +30,15 @@ def dockerPullOrUpdate(imageName, currentDockerfileURL, previousDockerfileURL, r
       iC = docker.build("${DOCKER_REGISTRY_BASENAME}:${commit}-${BUILD_NUMBER}", "${buildOptions} --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
     } else {
     // Dockerfile is same as develop, we can just pull it
-      iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${imageName}")
+      def testExitCode = sh(script: "docker pull ${DOCKER_REGISTRY_BASENAME}:${imageName}", returnStatus: true)
+      if (testExitCode != 0) {
+        // image does not (yet) exist on Dockerhub. Build it
+        iC = docker.build("${DOCKER_REGISTRY_BASENAME}:${commit}-${BUILD_NUMBER}", "$buildOptions --no-cache -f /tmp/${env.GIT_COMMIT}/f1 /tmp/${env.GIT_COMMIT}")
+      }
+      else {
+        // no difference found compared to both previous and reference Dockerfile
+        iC = docker.image("${DOCKER_REGISTRY_BASENAME}:${imageName}")
+      }
     }
   }
   else {

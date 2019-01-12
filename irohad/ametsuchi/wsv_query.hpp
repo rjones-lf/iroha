@@ -6,10 +6,10 @@
 #ifndef IROHA_WSV_QUERY_HPP
 #define IROHA_WSV_QUERY_HPP
 
-#include <boost/optional.hpp>
 #include <string>
 #include <vector>
 
+#include <boost/optional.hpp>
 #include "interfaces/common_objects/account.hpp"
 #include "interfaces/common_objects/account_asset.hpp"
 #include "interfaces/common_objects/asset.hpp"

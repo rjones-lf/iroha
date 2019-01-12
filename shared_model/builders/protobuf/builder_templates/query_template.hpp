@@ -87,7 +87,7 @@ namespace shared_model {
               boost::none) {
         page_meta_payload->set_page_size(page_size);
         if (first_hash) {
-          page_meta_payload->set_first_tx_hash(toBinaryString(*first_hash));
+          page_meta_payload->set_first_tx_hash(first_hash->hex());
         }
       }
 
@@ -210,7 +210,7 @@ namespace shared_model {
         return queryField([&](auto proto_query) {
           auto query = proto_query->mutable_get_transactions();
           boost::for_each(hashes, [&query](const auto &hash) {
-            query->add_tx_hashes(toBinaryString(hash));
+            query->add_tx_hashes(hash.hex());
           });
         });
       }

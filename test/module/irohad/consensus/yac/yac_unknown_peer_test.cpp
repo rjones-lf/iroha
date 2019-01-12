@@ -68,7 +68,7 @@ TEST_F(YacTest, UnknownVoteAfterCommit) {
   std::vector<VoteMessage> votes;
 
   for (auto i = 0; i < 3; ++i) {
-    votes.push_back(create_vote(my_hash, std::to_string(i)));
+    votes.push_back(createVote(my_hash, std::to_string(i)));
   };
   yac->onState(votes);
 

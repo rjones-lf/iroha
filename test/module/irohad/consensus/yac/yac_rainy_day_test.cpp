@@ -42,10 +42,10 @@ TEST_F(YacTest, InvalidCaseWhenNotReceiveSupermajority) {
   yac->vote(hash1, my_order.value());
 
   for (auto i = 0; i < 2; ++i) {
-    yac->onState({create_vote(hash1, std::to_string(i))});
+    yac->onState({createVote(hash1, std::to_string(i))});
   };
   for (auto i = 2; i < 4; ++i) {
-    yac->onState({create_vote(hash2, std::to_string(i))});
+    yac->onState({createVote(hash2, std::to_string(i))});
   };
 }
 
@@ -75,10 +75,10 @@ TEST_F(YacTest, InvalidCaseWhenDoesNotVerify) {
   YacHash hash2(iroha::consensus::Round{1, 1}, "proposal_hash", "block_hash2");
 
   for (auto i = 0; i < 2; ++i) {
-    yac->onState({create_vote(hash1, std::to_string(i))});
+    yac->onState({createVote(hash1, std::to_string(i))});
   };
   for (auto i = 2; i < 4; ++i) {
-    yac->onState({create_vote(hash2, std::to_string(i))});
+    yac->onState({createVote(hash2, std::to_string(i))});
   };
 }
 
@@ -111,7 +111,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveOnVoteAfterReject) {
 
   auto create_peer_vote = [](const auto &peer, const auto &yac_hash) {
     auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
-    return create_vote(yac_hash, pubkey);
+    return createVote(yac_hash, pubkey);
   };
 
   // we need to have a succeeded commit by the time the last state is sent

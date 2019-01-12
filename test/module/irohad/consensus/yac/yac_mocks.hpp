@@ -62,7 +62,7 @@ namespace iroha {
         return sig;
       }
 
-      VoteMessage create_vote(YacHash hash, std::string pub_key) {
+      VoteMessage createVote(YacHash hash, std::string pub_key) {
         VoteMessage vote;
         vote.hash = hash;
         vote.signature = createSig(pub_key);

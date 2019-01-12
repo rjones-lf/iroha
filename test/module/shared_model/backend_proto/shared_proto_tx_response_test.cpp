@@ -34,7 +34,7 @@ TEST(ProtoTxResponse, TxResponseLoad) {
     auto model_response = shared_model::proto::TransactionResponse(response);
     ASSERT_EQ(i, model_response.get().which());
     ASSERT_EQ(model_response.transactionHash(),
-              shared_model::crypto::Hash(hash));
+              shared_model::crypto::Hash::fromHexString(hash));
   });
 }
 

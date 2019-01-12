@@ -364,7 +364,7 @@ namespace integration_framework {
       std::function<void(const shared_model::proto::TransactionResponse &)>
           validation) {
     iroha::protocol::TxStatusRequest request;
-    request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
+    request.set_tx_hash(hash.hex());
     iroha::protocol::ToriiResponse response;
     command_client_.Status(request, response);
     validation(shared_model::proto::TransactionResponse(std::move(response)));

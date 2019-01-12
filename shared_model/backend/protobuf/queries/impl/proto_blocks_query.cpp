@@ -59,8 +59,8 @@ namespace shared_model {
       }
 
       auto sig = proto_->mutable_signature();
-      sig->set_signature(crypto::toBinaryString(signed_blob));
-      sig->set_public_key(crypto::toBinaryString(public_key));
+      sig->set_signature(signed_blob.hex());
+      sig->set_public_key(public_key.hex());
       // TODO: nickaleks IR-120 12.12.2018 remove set
       signatures_.emplace(proto_->signature());
       return true;
