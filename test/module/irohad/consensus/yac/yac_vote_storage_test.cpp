@@ -27,7 +27,7 @@ class YacVoteStorageTest : public ::testing::Test {
 
   void SetUp() override {
     std::generate_n(std::back_inserter(valid_votes), number_of_peers, [this] {
-      return create_vote(this->hash, std::to_string(this->valid_votes.size()));
+      return createVote(this->hash, std::to_string(this->valid_votes.size()));
     });
   }
 };
