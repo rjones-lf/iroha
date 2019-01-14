@@ -7,15 +7,26 @@
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/range/adaptor/transformed.hpp>
+#include "backend/protobuf/proto_proposal_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "common/result.hpp"
 #include "framework/integration_framework/fake_peer/block_storage.hpp"
 #include "framework/integration_framework/fake_peer/network/batches_for_round.hpp"
 #include "framework/integration_framework/fake_peer/proposal_storage.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "logger/logger.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
+#include "validators/default_validator.hpp"
+
+using namespace iroha::expected;
 
 namespace integration_framework {
   namespace fake_peer {
+
+    HonestBehaviour::HonestBehaviour()
+        : proposal_factory_(
+              std::make_unique<shared_model::proto::ProtoProposalFactory<
+                  shared_model::validation::DefaultProposalValidator>>()) {}
 
     void HonestBehaviour::processYacMessage(YacMessagePtr message) {
       getFakePeer().voteForTheSame(message);
@@ -125,16 +136,30 @@ namespace integration_framework {
                   ->getTransport());
         }
       }
-      auto new_proposal = shared_model::proto::ProposalBuilder()
-                              .height(round.block_round)
-                              .createdTime(iroha::time::now())
-                              .transactions(txs)
-                              .build()
-                              .getTransport();
-      proposal_storage->storeProposal(
-          round,
-          std::make_shared<shared_model::proto::Proposal>(
-              std::move(new_proposal)));
+
+      auto new_proposal_creation_result = proposal_factory_->createProposal(
+          round.block_round, iroha::time::now(), txs);
+      new_proposal_creation_result.match(
+          [&proposal_storage,
+           &round](ValueOf<decltype(new_proposal_creation_result)> &success) {
+            std::shared_ptr<shared_model::interface::Proposal>
+                new_proposal_iface = std::move(success.value);
+            auto new_proposal_proto =
+                std::static_pointer_cast<shared_model::proto::Proposal>(
+                    std::move(new_proposal_iface));
+            proposal_storage->storeProposal(round,
+                                            std::move(new_proposal_proto));
+          },
+          [&,
+           this](const ErrorOf<decltype(new_proposal_creation_result)> &error) {
+            getLogger()->error(
+                "Could not create a proposal for round {} "
+                "with transactions {}: {}",
+                round,
+                logger::to_string(txs,
+                                  [](const auto &tx) { return tx.toString(); }),
+                error.error);
+          });
     }
 
   }  // namespace fake_peer

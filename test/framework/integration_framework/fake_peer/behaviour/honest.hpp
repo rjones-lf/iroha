@@ -8,11 +8,14 @@
 
 #include "framework/integration_framework/fake_peer/behaviour/empty.hpp"
 
+#include "interfaces/iroha_internal/proposal_factory.hpp"
+
 namespace integration_framework {
   namespace fake_peer {
 
     class HonestBehaviour : public EmptyBehaviour {
      public:
+      HonestBehaviour();
       virtual ~HonestBehaviour() = default;
 
       void processYacMessage(YacMessagePtr message) override;
@@ -26,6 +29,10 @@ namespace integration_framework {
           const BatchesForRound &batches_for_round) override;
 
       std::string getName() override;
+
+     private:
+      std::unique_ptr<shared_model::interface::ProposalFactory>
+          proposal_factory_;
     };
 
   }  // namespace fake_peer
