@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <atomic>
+
 #include "framework/integration_framework/fake_peer/behaviour/honest.hpp"
 #include "framework/integration_framework/fake_peer/block_storage.hpp"
 #include "framework/integration_framework/fake_peer/fake_peer.hpp"
@@ -114,13 +116,12 @@ TEST_F(FakePeerExampleFixture,
  * @when the irohad needs to synchronize
  * @then it refuses the malicious fork and applies the valid one
  */
-TEST_F(FakePeerExampleFixture,
-       SynchronizeTheRightVersionOfForkedLedger) {
-  static constexpr size_t num_bad_peers = 3;  ///< bad fake peers - the ones
-                                              ///< creating a malicious fork
+TEST_F(FakePeerExampleFixture, SynchronizeTheRightVersionOfForkedLedger) {
+  constexpr size_t num_bad_peers = 3;  ///< bad fake peers - the ones
+                                       ///< creating a malicious fork
   // the real peer is added to the bad peers as they once are failing together
-  static constexpr size_t num_peers = (num_bad_peers + 1) * 3 + 1;  ///< BFT
-  static constexpr size_t num_fake_peers = num_peers - 1;  ///< one peer is real
+  constexpr size_t num_peers = (num_bad_peers + 1) * 3 + 1;  ///< BFT
+  constexpr size_t num_fake_peers = num_peers - 1;  ///< one peer is real
 
   auto &itf = prepareState(num_fake_peers);
 
@@ -316,4 +317,84 @@ TEST_F(FakePeerExampleFixture,
   });
   EXPECT_TRUE(got_message.load())
       << "Reached timeout waiting for an ordering message.";
+}
+
+/**
+ * Check that after receiving a valid command the ITF peer provides a proposal
+ * containing it.
+ *
+ * \attention this code is nothing more but an example of Fake Peer usage
+ *
+ * @given a network of two iroha peers
+ * @when a valid command is sent to one
+ * @then it must either (on demand) provide a proposal containing this command,
+ * or request it from the other peer
+ */
+TEST_F(FakePeerExampleFixture,
+       OnDemandOrderingProposalAfterValidCommandReceived) {
+  constexpr std::chrono::seconds kProposalWaitingTime(1);
+
+  /* A custom behaviour that requests a proposal for the round it got vote for,
+   * and if gets one, checks that the proposal contains the given tx hash.
+   */
+  struct CustomBehaviour : public fake_peer::HonestBehaviour {
+    CustomBehaviour(const interface::types::HashType &tx_hash,
+                    std::atomic_flag &got_proposal_from_main_peer)
+        : tx_hash_(tx_hash),
+          got_proposal_from_main_peer_(got_proposal_from_main_peer) {}
+
+    void processYacMessage(fake_peer::YacMessagePtr message) override {
+      const auto proposal_from_main_peer = getFakePeer().sendProposalRequest(
+          message->front().hash.vote_round, kProposalWaitingTime);
+      if (proposal_from_main_peer
+          and std::any_of(proposal_from_main_peer->transactions().begin(),
+                          proposal_from_main_peer->transactions().end(),
+                          [this](const auto &tx) {
+                            return tx.reducedHash() == tx_hash_;
+                          })) {
+        got_proposal_from_main_peer_.test_and_set(std::memory_order_relaxed);
+      }
+      HonestBehaviour::processYacMessage(message);
+    }
+
+    const interface::types::HashType &tx_hash_;
+    std::atomic_flag &got_proposal_from_main_peer_;
+  };
+
+  // Create the tx:
+  const auto tx = complete(
+      baseTx(kAdminId).transferAsset(kAdminId, kUserId, kAssetId, "tx1", "1.0"),
+      kAdminKeypair);
+  const auto hash = tx.reducedHash();
+
+  std::atomic_flag got_proposal_from_main_peer = ATOMIC_FLAG_INIT;
+
+  auto &itf = prepareState(1);
+  fake_peers_.front()->setBehaviour(
+      std::make_shared<CustomBehaviour>(hash, got_proposal_from_main_peer));
+
+  // watch the proposal requests to fake peer
+  bool got_proposal_from_fake_peer = false;
+  fake_peers_.front()->getProposalRequestsObservable().subscribe(
+      [&got_proposal_from_fake_peer](const auto &round) {
+        got_proposal_from_fake_peer = true;
+      });
+
+  // Send a command to the ITF peer and store the block height:
+  shared_model::interface::types::HeightType block_height = 0;
+  itf.sendTx(tx).checkBlock([&block_height, &hash](const auto &block) {
+    block_height = block->height();
+    ASSERT_TRUE(std::any_of(
+        block->transactions().begin(),
+        block->transactions().end(),
+        [&hash](const auto &tx) { return tx.reducedHash() == hash; }))
+        << "The block does not contain the transaction!";
+  });
+  ASSERT_TRUE(block_height > 0) << "Did not get last block height value!";
+
+  EXPECT_TRUE(
+      got_proposal_from_fake_peer
+      || got_proposal_from_main_peer.test_and_set(std::memory_order_relaxed))
+      << "The proposal was neither requested from the fake peer, nor served by "
+         "the real peer!";
 }

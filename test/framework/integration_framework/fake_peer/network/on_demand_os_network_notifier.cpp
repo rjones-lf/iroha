@@ -24,6 +24,7 @@ namespace integration_framework {
 
       boost::optional<OnDemandOsNetworkNotifier::ProposalType>
       OnDemandOsNetworkNotifier::onRequestProposal(Round round) {
+        rounds_subject_.get_subscriber().on_next(round);
         auto fake_peer = fake_peer_wptr_.lock();
         BOOST_ASSERT_MSG(fake_peer, "Fake peer shared pointer is not set!");
         const auto behaviour = fake_peer->getBehaviour();
