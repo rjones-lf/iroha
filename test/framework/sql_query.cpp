@@ -11,12 +11,6 @@
 #include "common/bind.hpp"
 #include "common/result.hpp"
 
-namespace shared_model {
-  namespace interface {
-    class CommonObjectsFactory;
-  }
-}  // namespace shared_model
-
 namespace framework {
   namespace ametsuchi {
 
