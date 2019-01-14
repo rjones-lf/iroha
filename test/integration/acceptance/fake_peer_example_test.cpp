@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <atomic>
+
 #include "framework/integration_framework/fake_peer/behaviour/honest.hpp"
 #include "framework/integration_framework/fake_peer/block_storage.hpp"
 #include "framework/integration_framework/fake_peer/fake_peer.hpp"
@@ -114,13 +116,12 @@ TEST_F(FakePeerExampleFixture,
  * @when the irohad needs to synchronize
  * @then it refuses the malicious fork and applies the valid one
  */
-TEST_F(FakePeerExampleFixture,
-       SynchronizeTheRightVersionOfForkedLedger) {
-  static constexpr size_t num_bad_peers = 3;  ///< bad fake peers - the ones
-                                              ///< creating a malicious fork
+TEST_F(FakePeerExampleFixture, SynchronizeTheRightVersionOfForkedLedger) {
+  constexpr size_t num_bad_peers = 3;  ///< bad fake peers - the ones
+                                       ///< creating a malicious fork
   // the real peer is added to the bad peers as they once are failing together
-  static constexpr size_t num_peers = (num_bad_peers + 1) * 3 + 1;  ///< BFT
-  static constexpr size_t num_fake_peers = num_peers - 1;  ///< one peer is real
+  constexpr size_t num_peers = (num_bad_peers + 1) * 3 + 1;  ///< BFT
+  constexpr size_t num_fake_peers = num_peers - 1;  ///< one peer is real
 
   auto &itf = prepareState(num_fake_peers);
 
@@ -328,32 +329,33 @@ TEST_F(FakePeerExampleFixture,
  */
 TEST_F(FakePeerExampleFixture,
        OnDemandOrderingProposalAfterValidCommandReceived) {
-  static constexpr std::chrono::seconds kProposalWaitingTime(1);
+  constexpr std::chrono::seconds kProposalWaitingTime(1);
 
   /* A custom behaviour that requests a proposal for the round it got vote for,
    * and if gets one, checks that the proposal contains the given tx hash.
    */
   struct CustomBehaviour : public fake_peer::HonestBehaviour {
     CustomBehaviour(const interface::types::HashType &tx_hash,
-                    bool &got_proposal_from_main_peer)
+                    std::atomic_flag &got_proposal_from_main_peer)
         : tx_hash_(tx_hash),
           got_proposal_from_main_peer_(got_proposal_from_main_peer) {}
 
     void processYacMessage(fake_peer::YacMessagePtr message) override {
       const auto proposal_from_main_peer = getFakePeer().sendProposalRequest(
           message->front().hash.vote_round, kProposalWaitingTime);
-      if (proposal_from_main_peer) {
-        got_proposal_from_main_peer_ |= std::any_of(
-            proposal_from_main_peer->transactions().begin(),
-            proposal_from_main_peer->transactions().end(),
-            [this](const auto &tx) { return tx.reducedHash() == tx_hash_; });
+      if (proposal_from_main_peer
+          and std::any_of(proposal_from_main_peer->transactions().begin(),
+                          proposal_from_main_peer->transactions().end(),
+                          [this](const auto &tx) {
+                            return tx.reducedHash() == tx_hash_;
+                          })) {
+        got_proposal_from_main_peer_.test_and_set(std::memory_order_relaxed);
       }
       HonestBehaviour::processYacMessage(message);
-      //(this->*&fake_peer::HonestBehaviour::processYacMessage)(message);
     }
 
     const interface::types::HashType &tx_hash_;
-    bool &got_proposal_from_main_peer_;
+    std::atomic_flag &got_proposal_from_main_peer_;
   };
 
   // Create the tx:
@@ -362,7 +364,7 @@ TEST_F(FakePeerExampleFixture,
       kAdminKeypair);
   const auto hash = tx.reducedHash();
 
-  bool got_proposal_from_main_peer = false;
+  std::atomic_flag got_proposal_from_main_peer = ATOMIC_FLAG_INIT;
 
   auto &itf = prepareState(1);
   fake_peers_.front()->setBehaviour(
@@ -387,7 +389,9 @@ TEST_F(FakePeerExampleFixture,
   });
   ASSERT_TRUE(block_height > 0) << "Did not get last block height value!";
 
-  EXPECT_TRUE(got_proposal_from_fake_peer || got_proposal_from_main_peer)
+  EXPECT_TRUE(
+      got_proposal_from_fake_peer
+      || got_proposal_from_main_peer.test_and_set(std::memory_order_relaxed))
       << "The proposal was neither requested from the fake peer, nor served by "
          "the real peer!";
 }
