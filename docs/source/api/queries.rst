@@ -72,7 +72,7 @@ Response Structure
     "JSON data", "key-value account information", "JSON", "{ genesis: {name: alex} }"
 
 Possible Stateful Validation Errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
@@ -126,7 +126,7 @@ Response Structure
     "Keys", "an array of public keys", "`ed25519 <https://ed25519.cr.yp.to>`_", "292a8714694095edce6be799398ed5d6244cd7be37eb813106b217d850d261f2"
 
 Possible Stateful Validation Errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
@@ -181,7 +181,7 @@ Response Structure
     "Transactions", "an array of transactions", "Committed transactions", "{tx1, tx2…}"
 
 Possible Stateful Validation Errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
@@ -229,7 +229,7 @@ The response contains a list of `pending transactions <../core_concepts/glossary
         "Transactions", "an array of pending transactions", "Pending transactions", "{tx1, tx2…}"
 
 Possible Stateful Validation Errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
@@ -290,7 +290,7 @@ Response Schema
     }
 
 Possible Stateful Validation Errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
@@ -377,7 +377,7 @@ Response Structure
     "Next transaction hash", "hash pointing to the next transaction after the last transaction in the page. Empty if a page contains the last transaction for given account and asset", "bddd58404d1315e0eb27902c5d7c8eb0602c16238f005773df406bc191308929"
 
 Possible Stateful Validation Errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
@@ -441,7 +441,7 @@ Response Structure
     "Balance", "balance of the asset", "No less than 0", "200.20"
 
 Possible Stateful Validation Errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
@@ -523,7 +523,7 @@ Response Structure
         "Detail", "key-value pairs with account details", "JSON", "see below"
 
 Possible Stateful Validation Errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
@@ -654,7 +654,7 @@ Response Schema
     Valid range is: 0 <= precision <= 255
 
 Possible Stateful Validation Errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
@@ -709,7 +709,7 @@ Response Structure
     "Roles", "array of created roles in the network", "set of roles in the system", "{MoneyCreator, User, Admin, …}"
 
 Possible Stateful Validation Errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
@@ -763,7 +763,7 @@ Response Structure
     "Permissions", "array of permissions related to the role", "string of permissions related to the role", "{can_add_asset_qty, …}"
 
 Possible Stateful Validation Errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
