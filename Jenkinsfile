@@ -75,8 +75,10 @@ def cmd_sanitize(String cmd){
   for (i in cmd.split(";")){
     if (i.split("=").size() != 2 )
        return false
-    if (i.split("=").any { it.trim().contains(" ")})
+    for (j in i.split("=")){
+      if (j.trim().contains(" "))
       return false
+    }
   }
   return true
 }
