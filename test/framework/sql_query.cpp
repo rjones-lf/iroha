@@ -10,7 +10,12 @@
 #include "backend/protobuf/permissions.hpp"
 #include "common/bind.hpp"
 #include "common/result.hpp"
-#include "interfaces/common_objects/common_objects_factory.hpp"
+
+namespace shared_model {
+  namespace interface {
+    class CommonObjectsFactory;
+  }
+}  // namespace shared_model
 
 namespace framework {
   namespace ametsuchi {
