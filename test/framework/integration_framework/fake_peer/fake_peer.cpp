@@ -173,8 +173,8 @@ namespace integration_framework {
     }
 
     FakePeer &FakePeer::setProposalStorage(
-        const std::shared_ptr<ProposalStorage> &proposal_storage) {
-      proposal_storage_ = proposal_storage;
+        std::shared_ptr<ProposalStorage> proposal_storage) {
+      proposal_storage_ = std::move(proposal_storage);
       return *this;
     }
 

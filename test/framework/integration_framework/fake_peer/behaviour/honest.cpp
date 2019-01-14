@@ -96,7 +96,7 @@ namespace integration_framework {
         const BatchesForRound &batches_for_round) {
       if (batches_for_round.batches.empty()) {
         getLogger()->debug(
-            "Got an OnDemandOrderingService.SendBatches call, for {}, with "
+            "Got an OnDemandOrderingService.SendBatches call with "
             "empty batches set. Ignoring it.");
         return;
       }
