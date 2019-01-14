@@ -30,7 +30,7 @@ namespace integration_framework {
       if (it == proposals_map_.end()) {
         proposals_map_.emplace(round, proposal);
       } else {
-        proposals_map_.emplace_hint(proposals_map_.erase(it), round, proposal);
+        it->second = proposal;
       }
       return *this;
     }
