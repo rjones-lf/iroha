@@ -67,6 +67,20 @@ def build(Build build) {
   }
 }
 
+// sanitise the string it should contain only 'key1=value1;key2=value2;...'
+def cmd_sanitize(String cmd){
+  if (cmd.contains("//"))
+    return false
+
+  for (i in cmd.split(";")){
+    if (i.split("=").size() != 2 )
+       return false
+    if (i.split("=").any { it.trim().contains(" ")})
+      return false
+  }
+  return true
+}
+
 stage('Prepare environment'){
 timestamps(){
 
@@ -172,9 +186,9 @@ node ('master') {
      case 'On Open PR':
         mac_compiler = true
         mac_compiler_list = ['appleclang']
-        cppcheck = false
-        sonar = false
-        coverage = false
+        coverage = true
+        cppcheck = true
+        sonar = true
         break;
      case 'Commit in Open PR':
         echo "All Default"
@@ -184,8 +198,12 @@ node ('master') {
         sh "exit 1"
         break;
      case 'Custom command':
-        println("The value target=${target} is not implemented");
-        sh "exit 1"
+        if (cmd_sanitize(params.custom_cmd)){
+          evaluate (params.custom_cmd)
+        } else {
+           println("Unable to parse '${params.custom_cmd}'")
+           sh "exit 1"
+        }
         break;
      default:
         println("The value target=${target} is not implemented");
