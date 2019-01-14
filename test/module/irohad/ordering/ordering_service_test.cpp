@@ -100,7 +100,7 @@ class OrderingServiceTest : public ::testing::Test {
   std::shared_ptr<MockOsPersistentStateFactory> persistent_state_factory;
   std::condition_variable cv;
   std::mutex m;
-  std::string address{"0.0.0.0:50051"};
+  std::string address{"127.0.0.1:50051"};
   std::shared_ptr<shared_model::interface::Peer> peer;
   std::shared_ptr<MockPeerQuery> wsv;
   std::shared_ptr<MockPeerQueryFactory> pqfactory;

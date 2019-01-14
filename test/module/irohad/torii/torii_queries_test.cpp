@@ -5,7 +5,10 @@
 
 #include <boost/variant.hpp>
 #include "crypto/keypair.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/ametsuchi/mock_block_query.hpp"
+#include "module/irohad/ametsuchi/mock_query_executor.hpp"
+#include "module/irohad/ametsuchi/mock_storage.hpp"
+#include "module/irohad/ametsuchi/mock_wsv_query.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/pending_txs_storage/pending_txs_storage_mock.hpp"
 #include "module/irohad/torii/torii_mocks.hpp"

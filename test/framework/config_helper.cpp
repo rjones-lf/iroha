@@ -5,6 +5,7 @@
 
 #include "framework/config_helper.hpp"
 
+#include <ciso646>
 #include <sstream>
 
 namespace integration_framework {

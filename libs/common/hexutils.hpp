@@ -5,6 +5,7 @@
 #ifndef IROHA_HEXUTILS_HPP
 #define IROHA_HEXUTILS_HPP
 
+#include <ciso646>
 #include <iomanip>
 #include <sstream>
 #include <string>

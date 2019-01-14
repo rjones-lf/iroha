@@ -9,24 +9,45 @@
 #include <gtest/gtest.h>
 #include "endpoint_mock.grpc.pb.h"
 #include "main/server_runner.hpp"
-#include "module/irohad/torii/torii_mocks.hpp"
 
 using testing::_;
 using testing::Invoke;
 using testing::Return;
 
+class MockCommandServiceTransport
+    : public iroha::protocol::CommandService_v1::Service {
+ public:
+  MOCK_METHOD3(Torii,
+               grpc::Status(grpc::ServerContext *,
+                            const iroha::protocol::Transaction *,
+                            google::protobuf::Empty *));
+  MOCK_METHOD3(ListTorii,
+               grpc::Status(grpc::ServerContext *,
+                            const iroha::protocol::TxList *,
+                            google::protobuf::Empty *));
+  MOCK_METHOD3(Status,
+               grpc::Status(grpc::ServerContext *,
+                            const iroha::protocol::TxStatusRequest *,
+                            iroha::protocol::ToriiResponse *));
+  MOCK_METHOD3(
+      StatusStream,
+      grpc::Status(grpc::ServerContext *,
+                   const iroha::protocol::TxStatusRequest *,
+                   grpc::ServerWriter<iroha::protocol::ToriiResponse> *));
+};
+
 class CommandSyncClientTest : public testing::Test {
  public:
   void SetUp() override {
     runner = std::make_unique<ServerRunner>(ip + ":0");
-    server = std::make_shared<iroha::torii::MockCommandServiceTransport>();
+    server = std::make_shared<MockCommandServiceTransport>();
     runner->append(server).run().match(
         [this](iroha::expected::Value<int> port) { this->port = port.value; },
         [](iroha::expected::Error<std::string> err) { FAIL() << err.error; });
   }
 
   std::unique_ptr<ServerRunner> runner;
-  std::shared_ptr<iroha::torii::MockCommandServiceTransport> server;
+  std::shared_ptr<MockCommandServiceTransport> server;
 
   const std::string ip = "127.0.0.1";
   const size_t kHashLength = 32;

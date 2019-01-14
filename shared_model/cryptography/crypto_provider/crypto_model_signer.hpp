@@ -25,7 +25,7 @@ namespace shared_model {
       virtual ~CryptoModelSigner() = default;
 
       template <typename T>
-      void sign(T &signable) const noexcept {
+      inline void sign(T &signable) const noexcept {
         auto signedBlob = Algorithm::sign(signable.payload(), keypair_);
         signable.addSignature(signedBlob, keypair_.publicKey());
       }

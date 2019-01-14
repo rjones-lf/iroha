@@ -101,7 +101,7 @@ TEST_F(OnDemandConnectionManagerTest, onBatches) {
  * AND return data is forwarded
  */
 TEST_F(OnDemandConnectionManagerTest, onRequestProposal) {
-  consensus::Round round;
+  consensus::Round round{};
   boost::optional<OnDemandConnectionManager::ProposalType> oproposal =
       OnDemandConnectionManager::ProposalType{};
   auto proposal = oproposal.value().get();
@@ -123,7 +123,7 @@ TEST_F(OnDemandConnectionManagerTest, onRequestProposal) {
  * AND return data is forwarded
  */
 TEST_F(OnDemandConnectionManagerTest, onRequestProposalNone) {
-  consensus::Round round;
+  consensus::Round round{};
   boost::optional<OnDemandConnectionManager::ProposalType> oproposal;
   EXPECT_CALL(*connections[OnDemandConnectionManager::kIssuer],
               onRequestProposal(round))

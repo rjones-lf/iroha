@@ -67,7 +67,7 @@ TEST_F(SinglePointerCacheTest, MultithreadedCache) {
   constexpr std::chrono::milliseconds sleep_interval{100};
   constexpr int run_times{10};
 
-  auto read = [this, &sleep_interval] {
+  auto read = [this, &sleep_interval, run_times] {
     // if cache is not empty, read the value; otherwise do nothing
     for (auto i = 0; i < run_times; ++i) {
       auto value_ptr = int_cache.get();
@@ -77,21 +77,21 @@ TEST_F(SinglePointerCacheTest, MultithreadedCache) {
       std::this_thread::sleep_for(sleep_interval);
     }
   };
-  auto write_one = [this, &sleep_interval] {
+  auto write_one = [this, &sleep_interval, run_times] {
     // just write to cache
     for (auto i = 0; i < run_times; i++) {
       std::this_thread::sleep_for(sleep_interval);
       int_cache.insert(std::make_shared<int>(i));
     }
   };
-  auto write_two = [this, &sleep_interval] {
+  auto write_two = [this, &sleep_interval, run_times] {
     // just write to cache
     for (auto i = run_times; i > 0; --i) {
       std::this_thread::sleep_for(sleep_interval);
       int_cache.insert(std::make_shared<int>(i));
     }
   };
-  auto release = [this, &sleep_interval] {
+  auto release = [this, &sleep_interval, run_times] {
     // release the cache
     for (auto i = 0; i < run_times; ++i) {
       int_cache.release();

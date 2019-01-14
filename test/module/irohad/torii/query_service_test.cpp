@@ -8,7 +8,7 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/protobuf/queries.hpp"
-#include "module/irohad/torii/torii_mocks.hpp"
+#include "module/irohad/torii/processor/mock_query_processor.hpp"
 #include "utils/query_error_response_visitor.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"
 

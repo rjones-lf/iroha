@@ -10,18 +10,11 @@
 
 #include "interfaces/common_objects/types.hpp"
 #include "interfaces/iroha_internal/proposal.hpp"
+#include "module/irohad/validation/mock_stateful_validator.hpp"
 #include "validation/chain_validator.hpp"
-#include "validation/stateful_validator.hpp"
 
 namespace iroha {
   namespace validation {
-    class MockStatefulValidator : public validation::StatefulValidator {
-     public:
-      MOCK_METHOD2(validate,
-                   std::unique_ptr<VerifiedProposalAndErrors>(
-                       const shared_model::interface::Proposal &,
-                       ametsuchi::TemporaryWsv &));
-    };
 
     class MockChainValidator : public ChainValidator {
      public:

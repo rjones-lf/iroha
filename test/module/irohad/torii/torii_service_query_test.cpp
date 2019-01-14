@@ -12,7 +12,7 @@
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/queries.hpp"
 #include "main/server_runner.hpp"
-#include "module/irohad/torii/torii_mocks.hpp"
+#include "module/irohad/torii/processor/mock_query_processor.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "torii/query_client.hpp"
 #include "torii/query_service.hpp"

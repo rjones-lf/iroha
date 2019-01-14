@@ -13,7 +13,7 @@
 #include "converters/protobuf/json_proto_converter.hpp"
 #include "framework/result_fixture.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
-#include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
+#include "module/irohad/ametsuchi/mock_key_value_storage.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 
@@ -30,7 +30,7 @@ class BlockQueryTest : public AmetsuchiTest {
     ASSERT_TRUE(tmp);
     file = std::move(*tmp);
     mock_file = std::make_shared<MockKeyValueStorage>();
-    sql = std::make_unique<soci::session>(soci::postgresql, pgopt_);
+    sql = std::make_unique<soci::session>(*soci::factory_postgresql(), pgopt_);
 
     index = std::make_shared<PostgresBlockIndex>(*sql);
     auto converter =
