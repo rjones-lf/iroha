@@ -24,6 +24,7 @@ using ::testing::Invoke;
 static constexpr std::chrono::seconds kMstStateWaitingTime(10);
 static constexpr std::chrono::seconds kSynchronizerWaitingTime(10);
 static constexpr std::chrono::seconds kOrderingMessageWaitingTime(10);
+static constexpr std::chrono::seconds kProposalWaitingTime(1);
 
 class FakePeerExampleFixture : public AcceptanceFixture {
  public:
@@ -332,7 +333,6 @@ TEST_F(FakePeerExampleFixture,
  */
 TEST_F(FakePeerExampleFixture,
        OnDemandOrderingProposalAfterValidCommandReceived) {
-  constexpr std::chrono::seconds kProposalWaitingTime(1);
 
   /* A custom behaviour that requests a proposal for the round it got vote for,
    * and if gets one, checks that the proposal contains the given tx hash.

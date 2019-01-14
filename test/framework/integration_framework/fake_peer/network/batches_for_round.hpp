@@ -17,7 +17,7 @@ namespace integration_framework {
           std::shared_ptr<shared_model::interface::TransactionBatch>>;
 
       BatchesForRound(iroha::consensus::Round r, BatchesType b)
-          : round(r), batches(b){};
+          : round(std::move(r)), batches(std::move(b)){};
 
       iroha::consensus::Round round;
       BatchesType batches;
