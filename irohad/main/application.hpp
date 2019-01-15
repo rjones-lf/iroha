@@ -166,8 +166,17 @@ class Irohad {
       opt_mst_gossip_params_;
 
   // ------------------------| internal dependencies |-------------------------
+ public:
+  shared_model::crypto::Keypair keypair;
+  std::shared_ptr<iroha::ametsuchi::Storage> storage;
 
+ protected:
   logger::Logger log_;
+
+  // initialization objects
+  iroha::network::OnDemandOrderingInit ordering_init;
+  iroha::consensus::yac::YacInit yac_init;
+  iroha::network::BlockLoaderInit loader_init;
 
   // common objects factory
   std::shared_ptr<shared_model::interface::CommonObjectsFactory>
@@ -254,15 +263,6 @@ class Irohad {
 
   std::unique_ptr<ServerRunner> torii_server;
   std::unique_ptr<ServerRunner> internal_server;
-
-  // initialization objects
-  iroha::network::OnDemandOrderingInit ordering_init;
-  iroha::consensus::yac::YacInit yac_init;
-  iroha::network::BlockLoaderInit loader_init;
-
- public:
-  std::shared_ptr<iroha::ametsuchi::Storage> storage;
-  shared_model::crypto::Keypair keypair;
 };
 
 #endif  // IROHA_APPLICATION_HPP
