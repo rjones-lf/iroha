@@ -88,9 +88,9 @@ timestamps(){
 
 param_descriptions = """Default - will automatically chose the correct one based on branch name and build number
 Branch commit - Linux/gcc v5;	Test: Smoke, Unit;
-On open pr -  Linux/gcc v5, MacOS/appleclang; Test: Smoke, Unit; Coverage; Analysis: cppcheck, sonar;
+On open PR -  Linux/gcc v5, MacOS/appleclang; Test: Smoke, Unit; Coverage; Analysis: cppcheck, sonar;
 Commit in Open PR - Same as Branch commit
-Before merge to trunk - Linux/gcc v5 v7, Linux/clang v6 v7, MacOS/appleclang; Test: *; Coverage; Analysis: cppcheck, sonar; Build type: Debug when Release
+Before merge to trunk - Linux/gcc v5 v7, Linux/clang v6 v7, MacOS/appleclang; Test: ALL; Coverage; Analysis: cppcheck, sonar; Build type: Debug when Release
 Before merge develop - Not implemented
 Before merge master - Not implemented
 Nightly build - Not implemented
@@ -99,7 +99,7 @@ Custom command - enter command below
 
 properties([
     parameters([
-        choice(choices: 'Default\nBranch commit\nOn open pr\nCommit in Open PR\nBefore merge to trunk\nBefore merge develop\nBefore merge master\nNightly build\nCustom command', description: param_descriptions, name: 'target'),
+        choice(choices: 'Default\nBranch commit\nOn open PR\nCommit in Open PR\nBefore merge to trunk\nBefore merge develop\nBefore merge master\nNightly build\nCustom command', description: param_descriptions, name: 'target'),
         string(defaultValue: '', description: '', name: 'custom_cmd', trim: true)
     ]),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
@@ -148,10 +148,15 @@ node ('master') {
   packagePush = false
   specialBranch = false
 
+  if (scmVars.GIT_LOCAL_BRANCH in ["master","develop","dev"] || scmVars.CHANGE_BRANCH_LOCAL in ["develop","dev"])
+    specialBranch =  true
+  else
+    specialBranch = false
+
   if (build_type == 'Release') {
     packageBuild = true
     testing = false
-    if (scmVars.GIT_LOCAL_BRANCH ==~ /(master|develop|dev)/){
+    if (specialBranch){
       packagePush = true
     }
   }
@@ -162,11 +167,6 @@ node ('master') {
     pushDockerTag = 'latest'
   else
     pushDockerTag = 'not-supposed-to-be-pushed'
-
-  if (scmVars.GIT_LOCAL_BRANCH in ["master","develop","dev"] || scmVars.CHANGE_BRANCH_LOCAL in ["develop","dev"])
-    specialBranch =  true
-  else
-    specialBranch = false
 
   if (params.target == 'Default')
     if ( scmVars.GIT_BRANCH.startsWith('PR-'))
@@ -196,8 +196,16 @@ node ('master') {
         echo "All Default"
         break;
      case 'Before merge to trunk':
-        println("The value target=${target} is not implemented");
-        sh "exit 1"
+        //Before merge to trunk - Linux/gcc v5 v7, Linux/clang v6 v7, MacOS/appleclang; Test: ALL; Coverage; Analysis: cppcheck, sonar; Build type: Debug when Release
+        x64linux_compiler= true
+        x64linux_compiler_list = ['gcc5','gcc7', 'clang6' , 'clang7']
+        mac_compiler = true
+        mac_compiler_list = ['appleclang']
+        testing = true
+        testList = '()'
+        coverage = true
+        cppcheck = true
+        sonar = true
         break;
      case 'Custom command':
         if (cmd_sanitize(params.custom_cmd)){
@@ -240,6 +248,12 @@ node ('master') {
     x64LinuxBuildSteps = [{x64LinuxBuildScript.buildSteps(
       x64LinuxWorker.cpusAvailable, x64linux_compiler_list, build_type, specialBranch, coverage,
       testing, testList, cppcheck, sonar, doxygen, packageBuild, packagePush, sanitize, fuzzing, environmentList)}]
+    //If "master" or "dev" also run release build
+    if(specialBranch){
+      x64LinuxBuildSteps += [{x64LinuxBuildScript.buildSteps(
+      x64LinuxWorker.cpusAvailable, x64linux_compiler_list, 'Release', specialBranch, false,
+      false , testList, false, false, false, true, true, false, false, environmentList)}]
+    }
     x64LinuxPostSteps = new Builder.PostSteps(
       always: [{x64LinuxBuildScript.alwaysPostSteps(environmentList)}],
       success: [{x64LinuxBuildScript.successPostSteps(scmVars, build_type, packagePush, pushDockerTag, environmentList)}])
