@@ -37,28 +37,6 @@ namespace iroha {
       MOCK_METHOD0(statuses, rxcpp::observable<StatusBus::Objects>());
     };
 
-    class MockCommandServiceTransport
-        : public iroha::protocol::CommandService_v1::Service {
-     public:
-      MOCK_METHOD3(Torii,
-                   grpc::Status(grpc::ServerContext *,
-                                const iroha::protocol::Transaction *,
-                                google::protobuf::Empty *));
-      MOCK_METHOD3(ListTorii,
-                   grpc::Status(grpc::ServerContext *,
-                                const iroha::protocol::TxList *,
-                                google::protobuf::Empty *));
-      MOCK_METHOD3(Status,
-                   grpc::Status(grpc::ServerContext *,
-                                const iroha::protocol::TxStatusRequest *,
-                                iroha::protocol::ToriiResponse *));
-      MOCK_METHOD3(
-          StatusStream,
-          grpc::Status(grpc::ServerContext *,
-                       const iroha::protocol::TxStatusRequest *,
-                       grpc::ServerWriter<iroha::protocol::ToriiResponse> *));
-    };
-
     class MockCommandService : public ::torii::CommandService {
      public:
       MOCK_METHOD1(handleTransactionBatch,
