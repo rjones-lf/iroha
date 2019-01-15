@@ -58,14 +58,14 @@ def buildSteps( int parallelism, List compilerVersions, String build_type, boole
         stage("Test ${compiler}") {
           coverage ? build.initialCoverage(buildDir) : echo('Skipping initial coverage...')
           testSteps(scmVars, buildDir, environment, testList)
-          coverage ? build.postCoverage(buildDir, '/tmp/lcov_cobertura.py') : echo('Skipping post coverage...')
+          coverage ? build.postCoverage(buildDir, '/usr/local/bin/lcov_cobertura.py') : echo('Skipping post coverage...')
         }
       }
     }
   }
 }
 
-def successPostSteps(scmVars, String build_type, boolean packagePush, List environment) {
+def successPostSteps(scmVars, boolean packagePush, List environment) {
   stage('successPostSteps') {
     withEnv(environment) {
       timeout(time: 600, unit: "SECONDS") {

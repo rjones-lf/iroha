@@ -94,12 +94,12 @@ Before merge to trunk - Linux/gcc v5 v7, Linux/clang v6 v7, MacOS/appleclang; Te
 Before merge develop - Not implemented
 Before merge master - Not implemented
 Nightly build - Not implemented
-Custom command - enter command below
+Custom command - enter command below, Ex: build_type='Release'; testing=false;
 """
 
 properties([
     parameters([
-        choice(choices: 'Default\nBranch commit\nOn open PR\nCommit in Open PR\nBefore merge to trunk\nBefore merge develop\nBefore merge master\nNightly build\nCustom command', description: param_descriptions, name: 'target'),
+        choice(choices: 'Default\nBranch commit\nOn open PR\nCommit in Open PR\nBefore merge to trunk\nBefore merge develop\nBefore merge master\nNightly build\nCustom command', description: param_descriptions, name: 'build_scenario'),
         string(defaultValue: '', description: '', name: 'custom_cmd', trim: true)
     ]),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
@@ -127,9 +127,7 @@ node ('master') {
   // Define variable and params
 
   //All variable and Default values
-  x64linux_compiler= true
   x64linux_compiler_list = ['gcc5']
-  mac_compiler = false
   mac_compiler_list = []
 
   testing = true
@@ -153,12 +151,9 @@ node ('master') {
   else
     specialBranch = false
 
-  if (build_type == 'Release') {
-    packageBuild = true
-    testing = false
-    if (specialBranch){
-      packagePush = true
-    }
+  if (specialBranch){
+    // if specialBranch == true  also release build will run, so set packagePush
+    packagePush = true
   }
 
   if (scmVars.GIT_LOCAL_BRANCH ==~ /(develop|dev)/)
@@ -168,25 +163,24 @@ node ('master') {
   else
     pushDockerTag = 'not-supposed-to-be-pushed'
 
-  if (params.target == 'Default')
+  if (params.build_scenario == 'Default')
     if ( scmVars.GIT_BRANCH.startsWith('PR-'))
       if (BUILD_NUMBER == '1')
-        target='On open PR'
+        build_scenario='On open PR'
       else
-        target='Commit in Open PR'
+        build_scenario='Commit in Open PR'
     else
-      target='Branch commit'
+      build_scenario='Branch commit'
   else
-    target = params.target
+    build_scenario = params.build_scenario
 
 
-  print("Selected Target '${target}'")
-  switch(target) {
+  print("Selected Build Scenario '${build_scenario}'")
+  switch(build_scenario) {
      case 'Branch commit':
         echo "All Default"
         break;
      case 'On open PR':
-        mac_compiler = true
         mac_compiler_list = ['appleclang']
         coverage = true
         cppcheck = true
@@ -196,10 +190,7 @@ node ('master') {
         echo "All Default"
         break;
      case 'Before merge to trunk':
-        //Before merge to trunk - Linux/gcc v5 v7, Linux/clang v6 v7, MacOS/appleclang; Test: ALL; Coverage; Analysis: cppcheck, sonar; Build type: Debug when Release
-        x64linux_compiler= true
         x64linux_compiler_list = ['gcc5','gcc7', 'clang6' , 'clang7']
-        mac_compiler = true
         mac_compiler_list = ['appleclang']
         testing = true
         testList = '()'
@@ -216,15 +207,15 @@ node ('master') {
         }
         break;
      default:
-        println("The value target='${target}' is not implemented");
+        println("The value build_scenario='${build_scenario}' is not implemented");
         sh "exit 1"
         break;
   }
 
   echo "packageBuild=${packageBuild}, pushDockerTag=${pushDockerTag}, packagePush=${packagePush} "
   echo "testing=${testing}, testList=${testList}"
-  echo "x64linux_compiler=${x64linux_compiler}, x64linux_compiler_list=${x64linux_compiler_list}"
-  echo "mac_compiler=${mac_compiler}, mac_compiler_list=${mac_compiler_list}"
+  echo "x64linux_compiler_list=${x64linux_compiler_list}"
+  echo "mac_compiler_list=${mac_compiler_list}"
   echo "specialBranch=${specialBranch}"
   echo "sanitize=${sanitize}, cppcheck=${cppcheck}, fuzzing=${fuzzing}, sonar=${sonar}, coverage=${coverage}, doxygen=${doxygen}"
   print scmVars
@@ -244,27 +235,31 @@ node ('master') {
   // Define all possible steps
   def x64LinuxBuildSteps
   def x64LinuxPostSteps = new Builder.PostSteps()
-  if(x64linux_compiler){
+  if(!x64linux_compiler_list.isEmpty()){
     x64LinuxBuildSteps = [{x64LinuxBuildScript.buildSteps(
       x64LinuxWorker.cpusAvailable, x64linux_compiler_list, build_type, specialBranch, coverage,
-      testing, testList, cppcheck, sonar, doxygen, packageBuild, packagePush, sanitize, fuzzing, environmentList)}]
+      testing, testList, cppcheck, sonar, doxygen, packageBuild, sanitize, fuzzing, environmentList)}]
     //If "master" or "dev" also run release build
     if(specialBranch){
       x64LinuxBuildSteps += [{x64LinuxBuildScript.buildSteps(
       x64LinuxWorker.cpusAvailable, x64linux_compiler_list, 'Release', specialBranch, false,
-      false , testList, false, false, false, true, true, false, false, environmentList)}]
+      false , testList, false, false, false, true, false, false, environmentList)}]
     }
     x64LinuxPostSteps = new Builder.PostSteps(
       always: [{x64LinuxBuildScript.alwaysPostSteps(environmentList)}],
-      success: [{x64LinuxBuildScript.successPostSteps(scmVars, build_type, packagePush, pushDockerTag, environmentList)}])
+      success: [{x64LinuxBuildScript.successPostSteps(scmVars, packagePush, pushDockerTag, environmentList)}])
   }
   def x64MacBuildSteps
   def x64MacBuildPostSteps = new Builder.PostSteps()
-  if(mac_compiler){
+  if(!mac_compiler_list.isEmpty()){
     x64MacBuildSteps = [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, mac_compiler_list, build_type, coverage, testing, testList, packageBuild,  environmentList)}]
+    //If "master" or "dev" also run release build
+    if(specialBranch){
+      x64MacBuildSteps += [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, mac_compiler_list, 'Release', false, false, testList, true,  environmentList)}]
+    }
     x64MacBuildPostSteps = new Builder.PostSteps(
       always: [{x64BuildScript.alwaysPostSteps(environmentList)}],
-      success: [{x64BuildScript.successPostSteps(scmVars, build_type, packagePush, environmentList)}])
+      success: [{x64BuildScript.successPostSteps(scmVars, packagePush, environmentList)}])
   }
 
   // Define builders

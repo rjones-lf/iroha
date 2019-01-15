@@ -33,7 +33,7 @@ def testSteps(String buildDir, List environment, String testList) {
 }
 
 def buildSteps(int parallelism, List compilerVersions, String build_type, boolean specialBranch, boolean coverage,
-      boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild, boolean packagePush, boolean sanitize, boolean fuzzing, List environment) {
+      boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild, boolean sanitize, boolean fuzzing, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
     def build = load '.jenkinsci/build.groovy'
@@ -111,7 +111,7 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
   }
 }
 
-def successPostSteps(scmVars, String build_type, boolean packagePush, String dockerTag, List environment) {
+def successPostSteps(scmVars, boolean packagePush, String dockerTag, List environment) {
   stage('successPostSteps') {
     withEnv(environment) {
       if (packagePush) {
