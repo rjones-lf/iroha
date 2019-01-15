@@ -664,7 +664,7 @@ Possible Stateful Validation Errors
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
 Response Structure
-^^^^^^^^^^^^^^^^^^
+------------------
 
 .. csv-table::
     :header: "Field", "Description", "Constraint", "Example"
