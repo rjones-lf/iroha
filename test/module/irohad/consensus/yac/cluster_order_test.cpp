@@ -5,8 +5,7 @@
 
 #include "consensus/yac/cluster_order.hpp"
 
-#include <gtest/gtest.h>
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
+#include "module/irohad/consensus/yac/yac_fixture.hpp"
 
 class ClusterOrderTest : public ::testing::Test {
  protected:

@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
-
 #include <grpc++/grpc++.h>
 
 #include "consensus/yac/transport/impl/network_impl.hpp"
+
+#include "module/irohad/consensus/yac/mocks/crypto_provider.hpp"
+#include "module/irohad/consensus/yac/mocks/network.hpp"
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
 
 using ::testing::_;
 using ::testing::DoAll;
@@ -61,7 +63,8 @@ namespace iroha {
         std::unique_ptr<grpc::Server> server;
         std::mutex mtx;
         std::condition_variable cv;
-        shared_model::crypto::PublicKey pubkey = shared_model::crypto::PublicKey{""};
+        shared_model::crypto::PublicKey pubkey =
+            shared_model::crypto::PublicKey{""};
       };
 
       /**

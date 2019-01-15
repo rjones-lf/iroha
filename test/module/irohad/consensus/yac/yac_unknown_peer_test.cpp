@@ -4,8 +4,9 @@
  */
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
+
 #include "framework/test_subscriber.hpp"
-#include "yac_mocks.hpp"
+#include "module/irohad/consensus/yac/yac_fixture.hpp"
 
 using ::testing::_;
 using ::testing::An;

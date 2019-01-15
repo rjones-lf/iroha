@@ -6,6 +6,8 @@
 #ifndef IROHA_YAC_MOCKS_HPP
 #define IROHA_YAC_MOCKS_HPP
 
+#include <gtest/gtest.h>
+
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/yac.hpp"
 
