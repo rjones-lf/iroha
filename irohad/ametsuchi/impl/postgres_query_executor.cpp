@@ -263,7 +263,8 @@ namespace iroha {
     }
 
     bool PostgresQueryExecutor::validate(
-        const shared_model::interface::BlocksQuery &query) {
+        const shared_model::interface::BlocksQuery &query,
+        shared_model::interface::types::HeightType ledger_height) {
       using T = boost::tuple<int>;
       boost::format cmd(R"(%s)");
       try {
@@ -272,11 +273,19 @@ namespace iroha {
                  << (cmd % checkAccountRolePermission(Role::kGetBlocks)).str(),
              soci::use(query.creatorAccountId(), "role_account_id"));
 
-        return st.begin()->get<0>();
+        if (not st.begin()->get<0>()) {
+          return false;
+        }
       } catch (const std::exception &e) {
         log_->error("Failed to validate query: {}", e.what());
         return false;
       }
+
+      if (query.height() and *query.height() > ledger_height) {
+        return false;
+      }
+
+      return true;
     }
 
     PostgresQueryExecutorVisitor::PostgresQueryExecutorVisitor(
@@ -602,7 +611,8 @@ namespace iroha {
       };
 
       auto check_query = [this](const auto &q) {
-        if (this->existsInDb<int>("account", "account_id", "quorum", q.accountId())) {
+        if (this->existsInDb<int>(
+                "account", "account_id", "quorum", q.accountId())) {
           return QueryFallbackCheckResult{};
         }
         return QueryFallbackCheckResult{

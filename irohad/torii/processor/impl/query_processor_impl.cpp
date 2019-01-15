@@ -5,7 +5,9 @@
 
 #include "torii/processor/query_processor_impl.hpp"
 
+#include <boost/range/adaptors.hpp>
 #include <boost/range/size.hpp>
+#include <rxcpp/sources/rx-iterate.hpp>
 
 #include "ametsuchi/wsv_query.hpp"
 #include "common/bind.hpp"
@@ -94,14 +96,27 @@ namespace iroha {
 
       auto exec = qry_exec_->createQueryExecutor(pending_transactions_,
                                                  response_factory_);
-      if (not exec or not(exec | [&qry](const auto &executor) {
-            return executor->validate(qry);
+      if (not exec or not(exec | [this, &qry](const auto &executor) {
+            return executor->validate(
+                qry, storage_->getBlockQuery()->getTopBlockHeight());
           })) {
         std::shared_ptr<shared_model::interface::BlockQueryResponse> response =
             response_factory_->createBlockQueryResponse("stateful invalid");
         return rxcpp::observable<>::just(response);
       }
-      return blocks_query_subject_.get_observable();
+
+      if (not qry.height()) {
+        // default case - return blocks starting from the next one
+        return blocks_query_subject_.get_observable();
+      }
+
+      auto desired_blocks =
+          storage_->getBlockQuery()->getBlocksFrom(*qry.height())
+          | boost::adaptors::transformed(
+                [this](std::shared_ptr<shared_model::interface::Block> block) {
+                  return response_factory_->createBlockQueryResponse(clone(*block));
+                });
+      return rxcpp::observable<>::iterate(std::move(desired_blocks));
     }
 
   }  // namespace torii

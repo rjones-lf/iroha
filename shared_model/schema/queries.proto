@@ -103,4 +103,7 @@ message Query {
 message BlocksQuery {
   QueryPayloadMeta meta = 1;
   Signature signature = 2;
+  oneof opt_height {
+    uint64 height = 3;
+  }
 }

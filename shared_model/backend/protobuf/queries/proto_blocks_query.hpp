@@ -7,9 +7,9 @@
 #define IROHA_SHARED_MODEL_PROTO_BLOCKS_QUERY_HPP
 
 #include "backend/protobuf/common_objects/signature.hpp"
+#include "backend/protobuf/util.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "queries.pb.h"
-#include "backend/protobuf/util.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -27,6 +27,8 @@ namespace shared_model {
       const interface::types::AccountIdType &creatorAccountId() const override;
 
       interface::types::CounterType queryCounter() const override;
+
+      boost::optional<interface::types::HeightType> height() const override;
 
       const interface::types::BlobType &blob() const override;
 

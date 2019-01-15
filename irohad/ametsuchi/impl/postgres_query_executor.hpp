@@ -241,7 +241,9 @@ namespace iroha {
       QueryExecutorResult validateAndExecute(
           const shared_model::interface::Query &query) override;
 
-      bool validate(const shared_model::interface::BlocksQuery &query) override;
+      bool validate(
+          const shared_model::interface::BlocksQuery &query,
+          shared_model::interface::types::HeightType ledger_height) override;
 
      private:
       std::unique_ptr<soci::session> sql_;
