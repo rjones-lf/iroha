@@ -13,6 +13,7 @@ target_link_libraries(torii_fuzzing
   ametsuchi
   torii_service
   protobuf-mutator
+  test_logger
   )
 
 add_executable(status_fuzzing status_fuzz.cpp)
@@ -23,6 +24,7 @@ target_link_libraries(status_fuzzing
   ametsuchi
   torii_service
   protobuf-mutator
+  test_logger
   )
 
 add_executable(find_fuzzing find_fuzz.cpp)
@@ -33,6 +35,7 @@ target_link_libraries(find_fuzzing
   ametsuchi
   torii_service
   protobuf-mutator
+  test_logger
   )
 
 add_executable(send_batches_fuzz send_batches_fuzz.cpp)
@@ -89,4 +92,5 @@ target_link_libraries(mst_fuzz
   mst_transport
   ametsuchi
   protobuf-mutator
+  test_logger
   )

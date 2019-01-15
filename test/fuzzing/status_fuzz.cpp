@@ -13,6 +13,7 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
@@ -34,7 +35,8 @@ struct CommandFixture {
   std::shared_ptr<iroha::torii::TransactionProcessorImpl> tx_processor_;
   std::shared_ptr<iroha::ametsuchi::MockStorage> storage_;
   std::shared_ptr<iroha::network::MockPeerCommunicationService> pcs_;
-  std::shared_ptr<iroha::MockMstProcessor> mst_processor_;
+  std::shared_ptr<iroha::MockMstProcessor> mst_processor_(
+      std::make_shared<iroha::MockMstProcessor>(getTestLogger("MstProcessor")));
   std::shared_ptr<iroha::ametsuchi::MockBlockQuery> bq_;
   std::shared_ptr<iroha::network::MockConsensusGate> consensus_gate_;
 
@@ -59,7 +61,6 @@ struct CommandFixture {
     EXPECT_CALL(*pcs_, onVerifiedProposal())
         .WillRepeatedly(Return(vprop_notifier_.get_observable()));
 
-    mst_processor_ = std::make_shared<iroha::MockMstProcessor>();
     EXPECT_CALL(*mst_processor_, onStateUpdateImpl())
         .WillRepeatedly(Return(mst_state_notifier_.get_observable()));
     EXPECT_CALL(*mst_processor_, onPreparedBatchesImpl())
@@ -71,7 +72,11 @@ struct CommandFixture {
     auto status_factory =
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     tx_processor_ = std::make_shared<iroha::torii::TransactionProcessorImpl>(
-        pcs_, mst_processor_, status_bus, status_factory);
+        pcs_,
+        mst_processor_,
+        status_bus,
+        status_factory,
+        getTestLogger("TransactionProcessor"));
 
     std::unique_ptr<shared_model::validation::AbstractValidator<
         shared_model::interface::Transaction>>
@@ -115,7 +120,8 @@ struct CommandFixture {
         batch_parser,
         transaction_batch_factory,
         consensus_gate_,
-        2);
+        2,
+        getTestLogger("CommandServiceTransportGrpc"));
   }
 };
 

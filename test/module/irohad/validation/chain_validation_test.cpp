@@ -6,6 +6,7 @@
 #include "validation/impl/chain_validator_impl.hpp"
 
 #include <boost/range/adaptor/indirected.hpp>
+#include "framework/test_logger.hpp"
 #include "module/irohad/ametsuchi/mock_mutable_storage.hpp"
 #include "module/irohad/ametsuchi/mock_peer_query.hpp"
 #include "module/irohad/consensus/yac/mock_yac_supermajority_checker.hpp"
@@ -28,7 +29,8 @@ using ::testing::SaveArg;
 class ChainValidationTest : public ::testing::Test {
  public:
   void SetUp() override {
-    validator = std::make_shared<ChainValidatorImpl>(supermajority_checker);
+    validator = std::make_shared<ChainValidatorImpl>(
+        supermajority_checker, getTestLogger("ChainValidato"));
     storage = std::make_shared<MockMutableStorage>();
     query = std::make_shared<MockPeerQuery>();
     peers = std::vector<std::shared_ptr<shared_model::interface::Peer>>();

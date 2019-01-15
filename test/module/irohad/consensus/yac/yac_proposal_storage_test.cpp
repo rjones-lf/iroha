@@ -10,32 +10,30 @@
 #include "consensus/yac/storage/yac_common.hpp"
 #include "logger/logger.hpp"
 
+#include "framework/test_logger.hpp"
+#include "logger/logger_manager.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
 
 using namespace iroha::consensus::yac;
 
-static logger::Logger log_ = logger::testLog("YacProposalStorage");
+static logger::LoggerPtr log_ = getTestLogger("YacProposalStorage");
 
 class YacProposalStorageTest : public ::testing::Test {
  public:
-  YacHash hash;
-  PeersNumberType number_of_peers;
-  YacProposalStorage storage =
-      YacProposalStorage(iroha::consensus::Round{1, 1}, 4);
+  YacHash hash{iroha::consensus::Round{1, 1}, "proposal", "commit"};
+  PeersNumberType number_of_peers{7};
+  YacProposalStorage storage{
+      iroha::consensus::Round{1, 1},
+      number_of_peers,
+      getTestLoggerManager()->getChild("YacProposalStorage")};
   std::vector<VoteMessage> valid_votes;
 
   void SetUp() override {
-    hash = YacHash(iroha::consensus::Round{1, 1}, "proposal", "commit");
-    number_of_peers = 7;
-    storage =
-        YacProposalStorage(iroha::consensus::Round{1, 1}, number_of_peers);
-    valid_votes = [this]() {
-      std::vector<VoteMessage> votes;
-      for (auto i = 0u; i < number_of_peers; ++i) {
-        votes.push_back(createVote(hash, std::to_string(i)));
-      }
-      return votes;
-    }();
+    valid_votes.reserve(number_of_peers);
+    std::generate_n(std::back_inserter(valid_votes), number_of_peers, [this] {
+      static size_t counter = 0;
+      return createVote(this->hash, std::to_string(counter++));
+    });
   }
 };
 

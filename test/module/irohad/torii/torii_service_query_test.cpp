@@ -11,6 +11,7 @@
 #include "backend/protobuf/query_responses/proto_query_response.hpp"
 #include "builders/default_builders.hpp"
 #include "builders/protobuf/queries.hpp"
+#include "framework/test_logger.hpp"
 #include "main/server_runner.hpp"
 #include "module/irohad/torii/processor/mock_query_processor.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
@@ -31,7 +32,7 @@ using ::testing::Truly;
 class ToriiQueryServiceTest : public ::testing::Test {
  public:
   virtual void SetUp() {
-    runner = std::make_unique<ServerRunner>(ip + ":0");
+    runner = std::make_unique<ServerRunner>(ip + ":0", getTestLogger("ServerRunner"));
 
     // ----------- Command Service --------------
     query_processor = std::make_shared<iroha::torii::MockQueryProcessor>();
@@ -39,8 +40,8 @@ class ToriiQueryServiceTest : public ::testing::Test {
     //----------- Server run ----------------
     initQueryFactory();
     runner
-        ->append(std::make_unique<iroha::torii::QueryService>(query_processor,
-                                                              query_factory))
+        ->append(std::make_unique<iroha::torii::QueryService>(
+            query_processor, query_factory, getTestLogger("QueryService")))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {

@@ -8,6 +8,7 @@
 #include "ametsuchi/impl/postgres_wsv_command.hpp"
 #include "ametsuchi/impl/postgres_wsv_query.hpp"
 #include "framework/result_fixture.hpp"
+#include "framework/test_logger.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_fixture.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
@@ -24,7 +25,8 @@ namespace iroha {
                                               pgopt_);
 
         command = std::make_unique<PostgresWsvCommand>(*sql);
-        query = std::make_unique<PostgresWsvQuery>(*sql, factory);
+        query = std::make_unique<PostgresWsvQuery>(
+            *sql, factory, getTestLogger("WsvQuery"));
 
         *sql << init_;
       }

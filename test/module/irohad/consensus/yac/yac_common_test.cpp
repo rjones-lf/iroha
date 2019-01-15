@@ -10,12 +10,13 @@
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "logger/logger.hpp"
 
+#include "framework/test_logger.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
 
 using namespace iroha::consensus;
 using namespace iroha::consensus::yac;
 
-static logger::Logger log_ = logger::testLog("YacCommon");
+static logger::LoggerPtr log_ = getTestLogger("YacCommon");
 
 TEST(YacCommonTest, SameProposalTest) {
   log_->info("-----------| Verify ok and fail cases |-----------");

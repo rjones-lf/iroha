@@ -12,6 +12,7 @@
 #include "backend/protobuf/proto_transport_factory.hpp"
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "backend/protobuf/transaction.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
@@ -66,7 +67,11 @@ struct CommandFixture {
     auto status_factory =
         std::make_shared<shared_model::proto::ProtoTxStatusFactory>();
     tx_processor_ = std::make_shared<iroha::torii::TransactionProcessorImpl>(
-        pcs_, mst_processor_, status_bus, status_factory);
+        pcs_,
+        mst_processor_,
+        status_bus,
+        status_factory,
+        getTestLogger("TransactionProcessor"));
     auto storage = std::make_shared<iroha::ametsuchi::MockStorage>();
     service_ = std::make_shared<torii::CommandServiceImpl>(
         tx_processor_, storage, status_bus, status_factory);
@@ -108,7 +113,8 @@ struct CommandFixture {
         batch_parser,
         transaction_batch_factory,
         consensus_gate_,
-        2);
+        2,
+        getTestLogger("CommandServiceTransportGrpc"));
   }
 };
 

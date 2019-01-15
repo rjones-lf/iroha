@@ -10,6 +10,7 @@
 
 #include "ametsuchi/impl/tx_presence_cache_impl.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
+#include "framework/test_logger.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
@@ -60,7 +61,9 @@ namespace fuzzing {
           std::move(batch_factory),
           std::move(cache),
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair()
-              .publicKey());
+              .publicKey(),
+          getTestLogger("MstState"),
+          getTestLogger("MstTransportGrpc"));
     }
   };
 }  // namespace fuzzing

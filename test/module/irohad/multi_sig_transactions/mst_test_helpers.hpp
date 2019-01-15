@@ -12,13 +12,10 @@
 #include "datetime/time.hpp"
 #include "framework/batch_helper.hpp"
 #include "interfaces/common_objects/types.hpp"
+#include "logger/logger.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
-
-#include "logger/logger.hpp"
-
-static logger::Logger mst_helpers_log_ = logger::log("MST_HELPERS");
 
 inline auto makeKey() {
   return shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
@@ -42,7 +39,10 @@ auto makeTestBatch(TxBuilders... builders) {
 }
 
 template <typename Batch, typename... Signatures>
-auto addSignatures(Batch &&batch, int tx_number, Signatures... signatures) {
+auto addSignatures(logger::LoggerPtr log,
+                   Batch &&batch,
+                   int tx_number,
+                   Signatures... signatures) {
   auto insert_signatures = [&](auto &&sig_pair) {
     batch->addSignature(tx_number, sig_pair.first, sig_pair.second);
   };
@@ -55,9 +55,8 @@ auto addSignatures(Batch &&batch, int tx_number, Signatures... signatures) {
   // use unused variable
   (void)temp;
 
-  mst_helpers_log_->info(
-      "Number of signatures was inserted {}",
-      boost::size(batch->transactions().at(tx_number)->signatures()));
+  log->info("Number of signatures was inserted {}",
+            boost::size(batch->transactions().at(tx_number)->signatures()));
   return std::forward<Batch>(batch);
 }
 

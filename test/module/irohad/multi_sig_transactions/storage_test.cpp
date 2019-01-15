@@ -5,13 +5,14 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include "framework/test_logger.hpp"
 #include "logger/logger.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 
 using namespace iroha;
 
-auto log_ = logger::log("MstStorageTest");
+auto log_ = getTestLogger("MstStorageTest");
 
 class StorageTest : public testing::Test {
  public:
@@ -19,7 +20,8 @@ class StorageTest : public testing::Test {
 
   void SetUp() override {
     completer_ = std::make_shared<TestCompleter>();
-    storage = std::make_shared<MstStorageStateImpl>(completer_);
+    storage = std::make_shared<MstStorageStateImpl>(
+        completer_, getTestLogger("MstState"), getTestLogger("MstStorage"));
     fillOwnState();
   }
 
@@ -43,7 +45,7 @@ TEST_F(StorageTest, StorageWhenApplyOtherState) {
       "create state with default peers and other state => "
       "apply state");
 
-  auto new_state = MstState::empty(completer_);
+  auto new_state = MstState::empty(getTestLogger("MstState"), completer_);
   new_state += makeTestBatch(txBuilder(5, creation_time));
   new_state += makeTestBatch(txBuilder(6, creation_time));
   new_state += makeTestBatch(txBuilder(7, creation_time));
