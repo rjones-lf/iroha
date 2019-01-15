@@ -152,8 +152,9 @@ node ('master') {
     specialBranch = false
 
   if (specialBranch){
-    // if specialBranch == true  also release build will run, so set packagePush
+    // if specialBranch == true the release build will run, so set packagePush
     packagePush = true
+    doxygen = true
   }
 
   if (scmVars.GIT_LOCAL_BRANCH ==~ /(develop|dev)/)
@@ -239,8 +240,8 @@ node ('master') {
     x64LinuxBuildSteps = [{x64LinuxBuildScript.buildSteps(
       x64LinuxWorker.cpusAvailable, x64linux_compiler_list, build_type, specialBranch, coverage,
       testing, testList, cppcheck, sonar, doxygen, packageBuild, sanitize, fuzzing, environmentList)}]
-    //If "master" or "dev" also run release build
-    if(specialBranch){
+    //If "master" or "dev" also run Release build
+    if(specialBranch && build_type == 'Debug'){
       x64LinuxBuildSteps += [{x64LinuxBuildScript.buildSteps(
       x64LinuxWorker.cpusAvailable, x64linux_compiler_list, 'Release', specialBranch, false,
       false , testList, false, false, false, true, false, false, environmentList)}]
@@ -253,8 +254,8 @@ node ('master') {
   def x64MacBuildPostSteps = new Builder.PostSteps()
   if(!mac_compiler_list.isEmpty()){
     x64MacBuildSteps = [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, mac_compiler_list, build_type, coverage, testing, testList, packageBuild,  environmentList)}]
-    //If "master" or "dev" also run release build
-    if(specialBranch){
+    //If "master" or "dev" also run Release build
+    if(specialBranch && build_type == 'Debug'){
       x64MacBuildSteps += [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, mac_compiler_list, 'Release', false, false, testList, true,  environmentList)}]
     }
     x64MacBuildPostSteps = new Builder.PostSteps(
