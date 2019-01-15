@@ -22,6 +22,8 @@ def doDebugBuild(coverageEnabled=false) {
   if (env.NODE_NAME.contains('arm7')) {
     parallelism = 1
   }
+
+  // for saving coredumps
   sh "sudo echo %e.%p.coredump > /proc/sys/kernel/core_pattern"
   sh "sudo ulimit -c unlimited"
 
