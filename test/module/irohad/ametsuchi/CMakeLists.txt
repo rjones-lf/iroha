@@ -28,12 +28,6 @@ target_link_libraries(block_query_test
     shared_model_stateless_validation
     )
 
-addtest(kv_storage_test kv_storage_test.cpp)
-target_link_libraries(kv_storage_test
-    ametsuchi
-    ametsuchi_fixture
-    )
-
 addtest(storage_init_test storage_init_test.cpp)
 target_link_libraries(storage_init_test
     ametsuchi
@@ -52,6 +46,7 @@ target_link_libraries(postgres_executor_test
     shared_model_proto_backend
     ametsuchi
     commands_mocks_factory
+    framework_sql_query
     )
 
 addtest(postgres_query_executor_test postgres_query_executor_test.cpp)
@@ -72,6 +67,7 @@ add_library(ametsuchi_fixture INTERFACE)
 target_link_libraries(ametsuchi_fixture INTERFACE
     integration_framework_config_helper
     shared_model_proto_backend
+    framework_sql_query
     SOCI::core
     SOCI::postgresql
     )
