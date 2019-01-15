@@ -63,28 +63,42 @@ def all_permissions():
     ]
 
 
-def genesis_block(admin, alice, test_permissions):
+def genesis_block(admin, alice, test_permissions, multidomain=False):
     """
     Compose a set of common for all tests' genesis block transactions
     :param admin: dict of id and private key of admin
     :param alice: dict of id and private key of alice
     :param test_permissions: permissions for users in test domain
+    :param multidomain: admin and alice accounts will be created in
+    different domains and the first domain users will have admin right
+    by default if True
     :return: a list of irohalib.Iroha.command's
     """
     peer = primitive_pb2.Peer()
     peer.address = '0.0.0.0:50541'
     peer.peer_key = public_key_bytes(admin['key'])
-    return [
+    commands = [
         command('AddPeer', peer=peer),
         command('CreateRole', role_name='admin_role', permissions=all_permissions()),
-        command('CreateRole', role_name='test_role', permissions=test_permissions),
-        command('CreateDomain', domain_id='test', default_role='test_role'),
-        command('CreateAccount', account_name='admin', domain_id='test',
+        command('CreateRole', role_name='test_role', permissions=test_permissions)]
+    if multidomain:
+        commands.append(command('CreateDomain', domain_id='first', default_role='admin_role'))
+    commands.extend([
+        command('CreateDomain',
+                domain_id='second' if multidomain else 'test',
+                default_role='test_role'),
+        command('CreateAccount',
+                account_name='admin',
+                domain_id='first' if multidomain else 'test',
                 public_key=public_key_bytes(admin['key'])),
-        command('CreateAccount', account_name='alice', domain_id='test',
-                public_key=public_key_bytes(alice['key'])),
-        command('AppendRole', account_id=admin['id'], role_name='admin_role')
-    ]
+        command('CreateAccount',
+                account_name='alice',
+                domain_id='second' if multidomain else 'test',
+                public_key=public_key_bytes(alice['key']))
+    ])
+    if not multidomain:
+        commands.append(command('AppendRole', account_id=admin['id'], role_name='admin_role'))
+    return commands
 
 
 def new_user(user_id):

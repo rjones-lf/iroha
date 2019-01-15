@@ -183,11 +183,11 @@ class Iroha(object):
         internal_command = getattr(command_wrapper, field_name)
         for key, value in kwargs.items():
             if 'permissions' == key:
-                permissions_attr = getattr(internal_command, 'permissions')
+                permissions_attr = getattr(internal_command, key)
                 permissions_attr.extend(value)
                 continue
             if 'peer' == key:
-                peer_attr = getattr(internal_command, 'peer')
+                peer_attr = getattr(internal_command, key)
                 peer_attr.CopyFrom(value)
                 continue
             setattr(internal_command, key, value)
@@ -219,6 +219,10 @@ class Iroha(object):
         field_name = Iroha._camel_case_to_snake_case(name)
         internal_query = getattr(query_wrapper.payload, field_name)
         for key, value in kwargs.items():
+            if 'tx_hashes' == key:
+                hashes_attr = getattr(internal_query, key)
+                hashes_attr.extend(value)
+                continue
             setattr(internal_query, key, value)
         if not len(kwargs):
             message = getattr(queries_pb2, name)()

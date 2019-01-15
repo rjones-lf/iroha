@@ -9,11 +9,11 @@ import primitive_pb2
 
 admin = commons.new_user('admin@test')
 alice = commons.new_user('alice@test')
+iroha = irohalib.Iroha(admin['id'])
 
 
 @commons.hex
 def genesis_tx():
-    iroha = irohalib.Iroha(admin['id'])
     test_permissions = [primitive_pb2.can_add_asset_qty]
     genesis_commands = commons.genesis_block(admin, alice, test_permissions)
     genesis_commands.append(
@@ -25,9 +25,8 @@ def genesis_tx():
 
 @commons.hex
 def add_asset_tx():
-    iroha = irohalib.Iroha(alice['id'])
     tx = iroha.transaction([
         iroha.command('AddAssetQuantity', asset_id='coin#test', amount='5000.99')
-    ])
+    ], creator_account=alice['id'])
     irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
     return tx
