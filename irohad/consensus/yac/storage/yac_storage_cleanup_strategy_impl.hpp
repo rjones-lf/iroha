@@ -19,18 +19,18 @@ namespace iroha {
         using RoundType = Round;
         using QueueType = std::queue<Round>;
 
-        BufferedCleanupStrategy(QueueSizeType max_limit,
-                                RoundType minimal_round,
-                                QueueType existed_state);
+        explicit BufferedCleanupStrategy(QueueSizeType max_limit,
+                                         RoundType minimal_round,
+                                         QueueType existed_state);
 
         boost::optional<CleanupStrategy::RoundsType> finalize(
-            Round round, Answer answer) override;
+            RoundType round, Answer answer) override;
 
-        virtual bool shouldCreateRound(const Round &round) override;
+        bool shouldCreateRound(const Round &round) override;
 
        private:
         /// maximal size of queue
-        const QueueSizeType max_size_;
+        const QueueSizeType kMaxSize_;
 
         /// minimal round in queue
         RoundType min_round_;

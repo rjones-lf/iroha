@@ -86,9 +86,10 @@ class ConsensusSunnyDayTest : public ::testing::Test {
   }
 
   void SetUp() override {
+    const BufferedCleanupStrategy::QueueSizeType kNumberOfSavedRounds = 1;
     cleanup_strategy =
         std::make_shared<iroha::consensus::yac::BufferedCleanupStrategy>(
-            10,
+            kNumberOfSavedRounds,
             iroha::consensus::Round(1, 0),
             std::queue<iroha::consensus::Round>());
     auto async_call = std::make_shared<

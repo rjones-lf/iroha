@@ -18,7 +18,8 @@ class BufferedCleanupStrategyTest : public ::testing::Test {
   std::shared_ptr<CleanupStrategy> strategy_;
 
   void SetUp() override {
-    init(10,
+    const BufferedCleanupStrategy::QueueSizeType kNumberOfSavedRounds = 10;
+    init(kNumberOfSavedRounds,
          BufferedCleanupStrategy::RoundType(1, 0),
          std::queue<BufferedCleanupStrategy::RoundType>());
   }
@@ -54,9 +55,8 @@ TEST_F(BufferedCleanupStrategyTest, FinalizeNotFullCheck) {
     auto outcome = strategy_->finalize({1, i}, makeMockReject());
     // check that old elements are removed properly
     ASSERT_TRUE(outcome) << "fail on round " << i;
-    ASSERT_EQ(1, (*outcome).size());
-    ASSERT_EQ(iroha::consensus::Round(1, i - max_queue_size_),
-              (*outcome).at(0));
+    ASSERT_EQ(1, outcome->size());
+    ASSERT_EQ(iroha::consensus::Round(1, i - max_queue_size_), outcome->at(0));
   }
 }
 
