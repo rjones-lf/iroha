@@ -4,7 +4,7 @@ def linuxPostStep() {
       // handling coredumps (if tests crashed)
       def currentPath = sh(script: "pwd", returnStdout: true).trim()
       def dumpsFileName = sprintf('coredumps-%1$s.zip',
-        [commit.substring(0,8)])
+        [GIT_COMMIT.substring(0,8)])
 
       sh(script: "find ${currentPath} -type f -name '*.coredump' | zip -j ${dumpsFileName} -@")
 
