@@ -25,6 +25,12 @@ def cppCheck(String buildDir, int parallelism) {
 def sonarScanner(scmVars, environment) {
   withEnv(environment) {
     withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SONAR_TOKEN'), string(credentialsId: 'SORABOT_TOKEN', variable: 'SORABOT_TOKEN')]) {
+      sonar_option = ""
+      if (scmVars.CHANGE_ID != null)
+        sonar_option = "-Dsonar.github.pullRequest=${scmVars.CHANGE_ID}"
+      else
+        print "************** Warning No 'CHANGE_ID' Present run sonar without org.sonar.plugins.github.PullRequestProjectBuilder *****************"
+
       sh """
         sonar-scanner \
           -Dsonar.github.disableInlineComments \
@@ -32,8 +38,7 @@ def sonarScanner(scmVars, environment) {
           -Dsonar.analysis.mode=preview \
           -Dsonar.login=${SONAR_TOKEN} \
           -Dsonar.projectVersion=${BUILD_TAG} \
-          -Dsonar.github.oauth=${SORABOT_TOKEN} \
-          -Dsonar.github.pullRequest=${scmVars.CHANGE_ID}
+          -Dsonar.github.oauth=${SORABOT_TOKEN}  ${sonar_option}
       """
     }
   }
