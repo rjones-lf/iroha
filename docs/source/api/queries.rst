@@ -77,7 +77,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not get account", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not get account", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Query's creator does not have any of the permissions to get account", "Grant the necessary permission: individual, global or domain one"
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
@@ -131,7 +131,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not get signatories", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not get signatories", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Query's creator does not have any of the permissions to get signatories", "Grant the necessary permission: individual, global or domain one"
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
@@ -186,10 +186,10 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not get transactions", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not get transactions", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Query's creator does not have any of the permissions to get transactions", "Grant the necessary permission: individual, global or domain one"
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
-    "4", "Invalid hash", "At least one of the supplied hashes either does not exist in user's transaction list or creator of the query does not have permissions to see it"
+    "4", "Invalid hash", "At least one of the supplied hashes either does not exist in user's transaction list or creator of the query does not have permissions to see it", "Check the supplied hashes and try again"
 
 Get Pending Transactions
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -234,7 +234,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not get pending transactions", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not get pending transactions", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Query's creator does not have any of the permissions to get pending transactions", "Grant the necessary permission: individual, global or domain one"
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
@@ -295,7 +295,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not get account transactions", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not get account transactions", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Query's creator does not have any of the permissions to get account transactions", "Grant the necessary permission: individual, global or domain one"
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
     "4", "Invalid pagination hash", "Supplied hash does not appear in any of the user's transactions", "Make sure hash is correct and try again"
@@ -382,7 +382,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not get account asset transactions", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not get account asset transactions", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Query's creator does not have any of the permissions to get account asset transactions", "Grant the necessary permission: individual, global or domain one"
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
     "4", "Invalid pagination hash", "Supplied hash does not appear in any of the user's transactions", "Make sure hash is correct and try again"
@@ -446,7 +446,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not get account assets", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not get account assets", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Query's creator does not have any of the permissions to get account assets", "Grant the necessary permission: individual, global or domain one"
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
@@ -528,7 +528,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not get account detail", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not get account detail", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Query's creator does not have any of the permissions to get account detail", "Grant the necessary permission: individual, global or domain one"
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
@@ -659,7 +659,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not get asset info", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not get asset info", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Query's creator does not have any of the permissions to get asset info", "Grant the necessary permission: individual, global or domain one"
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
@@ -714,7 +714,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not get roles", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not get roles", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Query's creator does not have any of the permissions to get roles", "Grant the necessary permission: individual, global or domain one"
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 
@@ -768,7 +768,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not get role permissions", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not get role permissions", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Query's creator does not have any of the permissions to get role permissions", "Grant the necessary permission: individual, global or domain one"
     "3", "Invalid signatures", "Signatures of this query did not pass validation", "Add more signatures and make sure query's signatures are a subset of account's signatories"
 

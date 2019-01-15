@@ -51,7 +51,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not add asset quantity", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not add asset quantity", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to add asset quantity", "Grant the necessary permission"
     "3", "No such asset", "Cannot find asset with such name or such precision", "Make sure asset id and precision are correct"
     "4", "Summation overflow", "Resulting amount of asset is greater than the system can support", "Make sure that resulting amount is less than 2^256"
@@ -101,7 +101,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not add peer", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not add peer", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to add peer", "Grant the necessary permission"
 
 Add signatory
@@ -148,7 +148,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not add signatory", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not add signatory", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to add signatory", "Grant the necessary permission"
     "3", "No such account", "Cannot find account to add signatory to", "Make sure account id is correct"
     "4", "Signatory already exists", "Account already has such signatory attached", "Choose another signatory"
@@ -194,7 +194,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not append role", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not append role", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to append role", "Grant the necessary permission"
     "3", "No such account", "Cannot find account to append role to", "Make sure account id is correct"
     "4", "No such role", "Cannot find role with such name", "Make sure role id is correct"
@@ -242,7 +242,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not create account", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not create account", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator either does not have permission to create account or tries to create account in a more privileged domain, than the one creator is in", "Grant the necessary permission or choose another domain"
     "3", "No such domain", "Cannot find domain with such name", "Make sure domain id is correct"
     "4", "Account already exists", "Account with such name already exists in that domain", "Choose another name"
@@ -294,7 +294,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not create asset", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not create asset", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to create asset", "Grant the necessary permission"
     "3", "No such domain", "Cannot find domain with such name", "Make sure domain id is correct"
     "4", "Asset already exists", "Asset with such name already exists", "Choose another name"
@@ -340,7 +340,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not create domain", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not create domain", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to create domain", "Grant the necessary permission"
     "3", "Domain already exists", "Domain with such name already exists", "Choose another domain name"
     "4", "No default role found", "Role, which is provided as a default one for the domain, is not found", "Make sure the role you provided exists or create it"
@@ -386,7 +386,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not create role", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not create role", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to create role", "Grant the necessary permission"
     "3", "Role already exists", "Role with such name already exists", "Choose another role name"
 
@@ -431,7 +431,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not detach role", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not detach role", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to detach role", "Grant the necessary permission"
     "3", "No such account", "Cannot find account to detach role from", "Make sure account id is correct"
     "4", "No such role in account's roles", "Account with such id does not have role with such name", "Make sure account-role pair is correct"
@@ -478,7 +478,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not grant permission", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not grant permission", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to grant permission", "Grant the necessary permission"
     "3", "No such account", "Cannot find account to grant permission to", "Make sure account id is correct"
 
@@ -528,7 +528,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not remove signatory", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not remove signatory", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to remove signatory from his account", "Grant the necessary permission"
     "3", "No such account", "Cannot find account to remove signatory from", "Make sure account id is correct"
     "4", "No such signatory", "Cannot find signatory with such public key", "Make sure public key is correct"
@@ -573,7 +573,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not revoke permission", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not revoke permission", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to revoke permission", "Grant the necessary permission"
     "3", "No such account", "Cannot find account to revoke permission from", "Make sure account id is correct"
 
@@ -624,7 +624,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not set account detail", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not set account detail", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to set account detail for another account", "Grant the necessary permission"
     "3", "No such account", "Cannot find account to set account detail to", "Make sure account id is correct"
 
@@ -674,7 +674,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not set quorum", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not set quorum", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to set quorum for his account", "Grant the necessary permission"
     "3", "No such account", "Cannot find account to set quorum to", "Make sure account id is correct"
     "4", "No signatories on account", "Cannot find any signatories attached to the account", "Add some signatories before setting quorum"
@@ -725,7 +725,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not subtract asset quantity", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not subtract asset quantity", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to subtract asset quantity", "Grant the necessary permission"
     "3", "No such asset found", "Cannot find asset with such name or precision in account's assets", "Make sure asset name and precision are correct"
     "4", "Not enough balance", "Account's balance is too low to perform the operation", "Add asset to account or choose lower value to subtract"
@@ -778,7 +778,7 @@ Possible Stateful Validation Errors
 .. csv-table::
     :header: "Code", "Error Name", "Description", "How to solve"
 
-    "1", "Could not transfer asset", "Internal error happened", "Try again or contact with developers"
+    "1", "Could not transfer asset", "Internal error happened", "Try again or contact developers"
     "2", "No such permissions", "Command's creator does not have permission to transfer asset from his account", "Grant the necessary permission"
     "3", "No such source account", "Cannot find account with such id to transfer money from", "Make sure source account id is correct"
     "4", "No such destination account", "Cannot find account with such id to transfer money to", "Make sure destination account id is correct"
