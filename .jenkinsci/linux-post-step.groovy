@@ -6,7 +6,8 @@ def linuxPostStep() {
       def dumpsFileName = sprintf('coredumps-%1$s.zip',
         [GIT_COMMIT.substring(0,8)])
 
-      sh(script: "find ${currentPath} -type f -name '*.coredump' | zip -j ${dumpsFileName} -@")
+      // sh(script: "find ${currentPath} -type f -name '*.coredump' | zip -j ${dumpsFileName} -@")
+      sh(script: "find ${currentPath} -type f -name '*.coredump' -exec tar -rvf ${dumpsFileName} \{\} \\;")
 
       withCredentials([usernamePassword(credentialsId: 'ci_nexus', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
         artifactServers.each {
