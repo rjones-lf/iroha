@@ -12,8 +12,11 @@
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 #include "framework/test_subscriber.hpp"
-#include "module/irohad/consensus/yac/yac_mocks.hpp"
-#include "module/irohad/network/network_mocks.hpp"
+
+#include "module/irohad/consensus/yac/mocks/hash_gate.hpp"
+#include "module/irohad/consensus/yac/mocks/hash_provider.hpp"
+#include "module/irohad/consensus/yac/mocks/peer_orderer.hpp"
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
 #include "module/irohad/simulator/simulator_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 

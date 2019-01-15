@@ -7,6 +7,7 @@
 #define IROHA_YAC_GATE_HPP
 
 #include <rxcpp/rx.hpp>
+#include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/storage/storage_result.hpp"
 #include "network/consensus_gate.hpp"
 
