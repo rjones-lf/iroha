@@ -9,8 +9,6 @@
 #include <gtest/gtest.h>
 #include "endpoint_mock.grpc.pb.h"
 #include "framework/mock_stream.h"
-#include "main/server_runner.hpp"
-#include "module/irohad/torii/torii_mocks.hpp"
 
 using testing::_;
 using testing::Invoke;
@@ -34,7 +32,8 @@ class CommandSyncClientTest : public testing::Test {
 /**
  * @given command client
  * @when Status is called
- * @then the same method of the server is called and client successfully return
+ * @then the stub handles passed data correctly (no corruptions in both
+ * directions)
  */
 TEST_F(CommandSyncClientTest, Status) {
   iroha::protocol::TxStatusRequest tx_request, intermediary_tx_request;
@@ -55,7 +54,8 @@ TEST_F(CommandSyncClientTest, Status) {
 /**
  * @given command client
  * @when Torii is called
- * @then the same method of the server is called and client successfully return
+ * @then the stub handles passed data correctly (no corruptions in both
+ * directions)
  */
 TEST_F(CommandSyncClientTest, Torii) {
   iroha::protocol::Transaction tx, intermediary_tx;
@@ -73,7 +73,8 @@ TEST_F(CommandSyncClientTest, Torii) {
 /**
  * @given command client
  * @when ListTorii is called
- * @then the same method of the server is called and client successfully return
+ * @then the stub handles passed data correctly (no corruptions in both
+ * directions)
  */
 TEST_F(CommandSyncClientTest, ListTorii) {
   iroha::protocol::TxList tx_list, intermediary_tx_list;
@@ -96,7 +97,8 @@ TEST_F(CommandSyncClientTest, ListTorii) {
 /**
  * @given command client
  * @when StatusStream is called
- * @then the same method of the server is called and client successfully return
+ * @then the stub handles passed data correctly (no corruptions in both
+ * directions)
  */
 TEST_F(CommandSyncClientTest, StatusStream) {
   iroha::protocol::TxStatusRequest tx, intermediary_tx;
