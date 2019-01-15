@@ -171,7 +171,7 @@ node ('master') {
   if (params.target == 'Default')
     if ( scmVars.GIT_BRANCH.startsWith('PR-'))
       if (BUILD_NUMBER == '1')
-        target='On open pr'
+        target='On open PR'
       else
         target='Commit in Open PR'
     else
@@ -185,7 +185,7 @@ node ('master') {
      case 'Branch commit':
         echo "All Default"
         break;
-     case 'On Open PR':
+     case 'On open PR':
         mac_compiler = true
         mac_compiler_list = ['appleclang']
         coverage = true
@@ -216,7 +216,7 @@ node ('master') {
         }
         break;
      default:
-        println("The value target=${target} is not implemented");
+        println("The value target='${target}' is not implemented");
         sh "exit 1"
         break;
   }
