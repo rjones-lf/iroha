@@ -40,6 +40,9 @@
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/impl/async_grpc_client.hpp"
 #include "synchronizer/synchronizer_common.hpp"
+#include "multi_sig_transactions/mst_processor.hpp"
+#include "torii/status_bus.hpp"
+#include "ametsuchi/storage.hpp"
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;

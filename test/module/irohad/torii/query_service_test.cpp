@@ -12,8 +12,6 @@
 #include "utils/query_error_response_visitor.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"
 
-using namespace torii;
-
 using namespace iroha;
 using namespace iroha::torii;
 

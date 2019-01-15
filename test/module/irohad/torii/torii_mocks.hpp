@@ -59,7 +59,7 @@ namespace iroha {
                        grpc::ServerWriter<iroha::protocol::ToriiResponse> *));
     };
 
-    class MockCommandService : public ::torii::CommandService {
+    class MockCommandService : public CommandService {
      public:
       MOCK_METHOD1(handleTransactionBatch,
                    void(std::shared_ptr<

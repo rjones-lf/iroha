@@ -7,6 +7,7 @@
 #define IROHA_TX_PRESENCE_CACHE_STUB_HPP
 
 #include "ametsuchi/tx_presence_cache.hpp"
+#include "interfaces/iroha_internal/transaction_batch.hpp"
 
 namespace iroha {
   namespace ametsuchi {
