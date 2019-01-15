@@ -3,16 +3,14 @@ def linuxPostStep() {
     try {
       // handling coredumps (if tests crashed)
       def currentPath = sh(script: "pwd", returnStdout: true).trim()
-      def dumpsFileName = sprintf('coredumps-%1$s.zip',
+      def dumpsFileName = sprintf('coredumps-%1$s.tar',
         [GIT_COMMIT.substring(0,8)])
 
       // sh(script: "find ${currentPath} -type f -name '*.coredump' | zip -j ${dumpsFileName} -@")
       sh(script: "find ${currentPath} -type f -name '*.coredump' -exec tar -rvf ${dumpsFileName} {} \\;")
 
       withCredentials([usernamePassword(credentialsId: 'ci_nexus', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
-        artifactServers.each {
-          sh(script: "curl -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file ${dumpsFileName} https://${it}/repository/artifacts/iroha/coredumps/${dumpsFileName}")
-        }
+        sh(script: "curl -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file ${dumpsFileName} https://nexus.iroha.tech/repository/artifacts/iroha/coredumps/${dumpsFileName}")
       }
       if (currentBuild.currentResult == "SUCCESS" && GIT_LOCAL_BRANCH ==~ /(master|develop)/) {
         def artifacts = load ".jenkinsci/artifacts.groovy"
