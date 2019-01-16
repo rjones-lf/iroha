@@ -39,8 +39,8 @@ class ToriiQueryServiceTest : public ::testing::Test {
     //----------- Server run ----------------
     initQueryFactory();
     runner
-        ->append(std::make_unique<torii::QueryService>(query_processor,
-                                                       query_factory))
+        ->append(std::make_unique<iroha::torii::QueryService>(query_processor,
+                                                              query_factory))
         .run()
         .match(
             [this](iroha::expected::Value<int> port) {
@@ -70,7 +70,7 @@ class ToriiQueryServiceTest : public ::testing::Test {
 
   std::unique_ptr<ServerRunner> runner;
   std::shared_ptr<iroha::torii::MockQueryProcessor> query_processor;
-  std::shared_ptr<torii::QueryService::QueryFactoryType> query_factory;
+  std::shared_ptr<iroha::torii::QueryService::QueryFactoryType> query_factory;
 
   iroha::protocol::Block block;
 
@@ -100,8 +100,9 @@ TEST_F(ToriiQueryServiceTest, FetchBlocksWhenValidQuery) {
           .finish());
 
   iroha::protocol::Block block;
-  block.mutable_payload()->set_height(123);
-  auto proto_block = std::make_unique<shared_model::proto::Block>(block);
+  block.mutable_block_v1()->mutable_payload()->set_height(123);
+  auto proto_block =
+      std::make_unique<shared_model::proto::Block>(block.block_v1());
   std::shared_ptr<shared_model::interface::BlockQueryResponse> block_response =
       shared_model::proto::ProtoQueryResponseFactory().createBlockQueryResponse(
           std::move(proto_block));

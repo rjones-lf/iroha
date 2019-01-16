@@ -7,7 +7,6 @@
 
 #include <soci/postgresql/soci-postgresql.h>
 #include <boost/format.hpp>
-
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 #include "ametsuchi/impl/mutable_storage_impl.hpp"
 #include "ametsuchi/impl/peer_query_wsv.hpp"
@@ -36,8 +35,12 @@ namespace {
    */
   bool preparedTransactionsAvailable(soci::session &sql) {
     int prepared_txs_count = 0;
-    sql << "SHOW max_prepared_transactions;", soci::into(prepared_txs_count);
-    return prepared_txs_count != 0;
+    try {
+      sql << "SHOW max_prepared_transactions;", soci::into(prepared_txs_count);
+      return prepared_txs_count != 0;
+    } catch (std::exception &e) {
+      return false;
+    }
   }
 
 }  // namespace
@@ -62,7 +65,8 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::PermissionToString>
             perm_converter,
         size_t pool_size,
-        bool enable_prepared_blocks)
+        bool enable_prepared_blocks,
+        logger::Logger log)
         : block_store_dir_(std::move(block_store_dir)),
           postgres_options_(std::move(postgres_options)),
           block_store_(std::move(block_store)),
@@ -70,7 +74,7 @@ namespace iroha {
           factory_(std::move(factory)),
           converter_(std::move(converter)),
           perm_converter_(std::move(perm_converter)),
-          log_(logger::log("StorageImpl")),
+          log_(std::move(log)),
           pool_size_(pool_size),
           prepared_blocks_enabled_(enable_prepared_blocks),
           block_is_prepared(false) {
@@ -82,8 +86,12 @@ namespace iroha {
       if (prepared_blocks_enabled_) {
         rollbackPrepared(sql);
       }
-      sql << init_;
-      prepareStatements(*connection_, pool_size_);
+      try {
+        sql << init_;
+        prepareStatements(*connection_, pool_size_);
+      } catch (std::exception &e) {
+        log_->error("Storage was not initialized. Reason: {}", e.what());
+      }
     }
 
     expected::Result<std::unique_ptr<TemporaryWsv>, std::string>
@@ -227,11 +235,18 @@ namespace iroha {
 
     void StorageImpl::reset() {
       log_->info("drop wsv records from db tables");
-      soci::session sql(*connection_);
-      sql << reset_;
-
-      log_->info("drop blocks from disk");
-      block_store_->dropAll();
+      try {
+        soci::session sql(*connection_);
+        // rollback possible prepared transaction
+        if (block_is_prepared) {
+          rollbackPrepared(sql);
+        }
+        sql << reset_;
+        log_->info("drop blocks from disk");
+        block_store_->dropAll();
+      } catch (std::exception &e) {
+        log_->warn("Drop wsv was failed. Reason: {}", e.what());
+      }
     }
 
     void StorageImpl::dropStorage() {
@@ -246,10 +261,14 @@ namespace iroha {
         std::unique_lock<std::shared_timed_mutex> lock(drop_mutex);
         log_->info("Drop database {}", db);
         freeConnections();
-        soci::session sql(soci::postgresql,
+        soci::session sql(*soci::factory_postgresql(),
                           postgres_options_.optionsStringWithoutDbName());
         // perform dropping
-        sql << "DROP DATABASE " + db;
+        try {
+          sql << "DROP DATABASE " + db;
+        } catch (std::exception &e) {
+          log_->warn("Drop database was failed. Reason: {}", e.what());
+        }
       } else {
         soci::session(*connection_) << drop_;
       }
@@ -283,7 +302,8 @@ namespace iroha {
         const std::string &dbname,
         const std::string &options_str_without_dbname) {
       try {
-        soci::session sql(soci::postgresql, options_str_without_dbname);
+        soci::session sql(*soci::factory_postgresql(),
+                          options_str_without_dbname);
 
         int size;
         std::string name = dbname;
@@ -326,12 +346,16 @@ namespace iroha {
                                         size_t pool_size) {
       auto pool = std::make_shared<soci::connection_pool>(pool_size);
 
-      for (size_t i = 0; i != pool_size; i++) {
-        soci::session &session = pool->at(i);
-        session.open(soci::postgresql, options_str);
+      try {
+        for (size_t i = 0; i != pool_size; i++) {
+          soci::session &session = pool->at(i);
+          session.open(*soci::factory_postgresql(), options_str);
+        }
+      } catch (const std::exception &e) {
+        return expected::makeError(e.what());
       }
       return expected::makeValue(pool);
-    };
+    }
 
     expected::Result<std::shared_ptr<StorageImpl>, std::string>
     StorageImpl::create(
@@ -393,8 +417,13 @@ namespace iroha {
       for (const auto &block : storage->block_store_) {
         storeBlock(*block.second);
       }
-      *(storage->sql_) << "COMMIT";
-      storage->committed = true;
+      try {
+        *(storage->sql_) << "COMMIT";
+        storage->committed = true;
+      } catch (std::exception &e) {
+        storage->committed = false;
+        log_->warn("Mutable storage is not committed. Reason: {}", e.what());
+      }
     }
 
     bool StorageImpl::commitPrepared(
@@ -520,7 +549,7 @@ DROP TABLE IF EXISTS height_by_hash;
 DROP TABLE IF EXISTS tx_status_by_hash;
 DROP TABLE IF EXISTS height_by_account_set;
 DROP TABLE IF EXISTS index_by_creator_height;
-DROP TABLE IF EXISTS index_by_id_height_asset;
+DROP TABLE IF EXISTS position_by_account_asset;
 )";
 
     const std::string &StorageImpl::reset_ = R"(
@@ -535,11 +564,11 @@ DELETE FROM domain;
 DELETE FROM signatory;
 DELETE FROM peer;
 DELETE FROM role;
-DELETE FROM height_by_hash;
+DELETE FROM position_by_hash;
 DELETE FROM tx_status_by_hash;
 DELETE FROM height_by_account_set;
 DELETE FROM index_by_creator_height;
-DELETE FROM index_by_id_height_asset;
+DELETE FROM position_by_account_asset;
 )";
 
     const std::string &StorageImpl::init_ =
@@ -608,9 +637,10 @@ CREATE TABLE IF NOT EXISTS account_has_grantable_permissions (
         + R"() NOT NULL,
     PRIMARY KEY (permittee_account_id, account_id)
 );
-CREATE TABLE IF NOT EXISTS height_by_hash (
+CREATE TABLE IF NOT EXISTS position_by_hash (
     hash varchar,
-    height text
+    height text,
+    index text
 );
 
 CREATE TABLE IF NOT EXISTS tx_status_by_hash (
@@ -628,10 +658,10 @@ CREATE TABLE IF NOT EXISTS index_by_creator_height (
     height text,
     index text
 );
-CREATE TABLE IF NOT EXISTS index_by_id_height_asset (
-    id text,
-    height text,
+CREATE TABLE IF NOT EXISTS position_by_account_asset (
+    account_id text,
     asset_id text,
+    height text,
     index text
 );
 )";

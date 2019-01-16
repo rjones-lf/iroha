@@ -55,9 +55,11 @@ class BlockLoaderTest : public testing::Test {
     validator = validator_ptr.get();
     loader = std::make_shared<BlockLoaderImpl>(
         peer_query_factory,
-        shared_model::proto::ProtoBlockFactory(std::move(validator_ptr)));
-    service =
-        std::make_shared<BlockLoaderService>(block_query_factory, block_cache);
+        shared_model::proto::ProtoBlockFactory(
+            std::move(validator_ptr),
+            std::make_unique<MockValidator<iroha::protocol::Block>>()));
+    service = std::make_shared<BlockLoaderService>(
+        block_query_factory, block_cache, logger::log("BlockLoaderService"));
 
     grpc::ServerBuilder builder;
     int port = 0;

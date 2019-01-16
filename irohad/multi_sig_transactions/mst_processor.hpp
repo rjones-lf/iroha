@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_MST_PROPAGATOR_HPP
@@ -43,6 +31,13 @@ namespace iroha {
     void propagateBatch(const DataType &batch);
 
     /**
+     * Check, if passed batch is in pending storage
+     * @param batch to be checked
+     * @return true, if batch is already in pending storage, false otherwise
+     */
+    bool batchInStorage(const DataType &batch) const;
+
+    /**
      * Prove updating of state for handling status of signing
      */
     rxcpp::observable<std::shared_ptr<MstState>> onStateUpdate() const;
@@ -61,7 +56,7 @@ namespace iroha {
     virtual ~MstProcessor() = default;
 
    protected:
-    MstProcessor();
+    explicit MstProcessor(logger::Logger log = logger::log("MstProcessor"));
 
     logger::Logger log_;
 
@@ -90,6 +85,11 @@ namespace iroha {
      */
     virtual auto onExpiredBatchesImpl() const
         -> decltype(onExpiredBatches()) = 0;
+
+    /**
+     * @see batchInStorage method
+     */
+    virtual bool batchInStorageImpl(const DataType &batch) const = 0;
   };
 }  // namespace iroha
 

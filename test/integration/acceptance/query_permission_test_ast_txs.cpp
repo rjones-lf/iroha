@@ -5,9 +5,12 @@
 
 #include "integration/acceptance/query_permission_test_ast_txs.hpp"
 
-#include "interfaces/query_responses/transactions_response.hpp"
+#include "interfaces/query_responses/transactions_page_response.hpp"
 
 using namespace common_constants;
+
+static constexpr shared_model::interface::types::TransactionsNumberType
+    kTxPageSize(10);
 
 QueryPermissionAssetTxs::QueryPermissionAssetTxs()
     : QueryPermissionTestBase({Role::kGetMyAccAstTxs},
@@ -48,7 +51,8 @@ QueryPermissionAssetTxs::getGeneralResponseChecker() {
   return [this](const proto::QueryResponse &response) {
     ASSERT_NO_THROW({
       const auto &resp =
-          boost::get<const interface::TransactionsResponse &>(response.get());
+          boost::get<const interface::TransactionsPageResponse &>(
+              response.get());
 
       const auto &transactions = resp.transactions();
       ASSERT_EQ(boost::size(transactions), tx_hashes_.size());
@@ -76,6 +80,7 @@ shared_model::proto::Query QueryPermissionAssetTxs::makeQuery(
     const interface::types::AccountIdType &spectator,
     const crypto::Keypair &spectator_keypair) {
   return fixture.complete(
-      fixture.baseQry(spectator).getAccountAssetTransactions(target, kAssetId),
+      fixture.baseQry(spectator).getAccountAssetTransactions(
+          target, kAssetId, kTxPageSize),
       spectator_keypair);
 }

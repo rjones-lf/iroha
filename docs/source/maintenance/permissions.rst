@@ -58,6 +58,12 @@ List of Permissions
     * - `can_subtract_asset_qty`_ 
       - Asset Quantity
       - Command
+    * - `can_add_domain_asset_qty`_ 
+      - Asset Quantity
+      - Command
+    * - `can_subtract_domain_asset_qty`_ 
+      - Asset Quantity
+      - Command
     * - `can_create_domain`_ 
       - Domain
       - Command
@@ -382,6 +388,40 @@ The corresponding `command <../core_concepts/glossary.html#command>`__ can be ex
     :language: python
     :linenos:
     :lines: 9-42
+
+can_add_domain_asset_qty
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Allows issuing `assets <../core_concepts/glossary.html#asset>`__ only in own `domain <../core_concepts/glossary.html#domain>`__.
+
+The corresponding `command <../core_concepts/glossary.html#command>`__ can be executed only for an `account <../core_concepts/glossary.html#account>`__ of `transaction <../core_concepts/glossary.html#transaction>`__ creator and only if that account has a `role <../core_concepts/glossary.html#role>`__ with the `permission <../core_concepts/glossary.html#permission>`__ and only for assets in creator’s domain.
+
+| Related API method: `Add Asset Quantity <../api/commands.html#add-asset-quantity>`__
+| Usage in Java bindings: ``Role.kAddDomainAssetQty``
+| Usage in Python bindings: ``Role_kAddDomainAssetQty``
+|
+
+.. literalinclude:: ../../../example/python/permissions/can_add_domain_asset_qty.py
+    :language: python
+    :linenos:
+    :lines: 1-8
+
+can_subtract_domain_asset_qty
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Allows burning `assets <../core_concepts/glossary.html#asset>`__ only in own `domain <../core_concepts/glossary.html#domain>`__.
+
+The corresponding `command <../core_concepts/glossary.html#command>`__ can be executed only for an `account <../core_concepts/glossary.html#account>`__ of `transaction <../core_concepts/glossary.html#transaction>`__ creator and only if that account has a `role <../core_concepts/glossary.html#role>`__ with the `permission <../core_concepts/glossary.html#permission>`__ and only for assets in creator’s domain.
+
+| Related API method: `Subtract Asset Quantity <../api/commands.html#subtract-asset-quantity>`__
+| Usage in Java bindings: ``Role.kSubtractDomainAssetQty``
+| Usage in Python bindings: ``Role_kSubtractDomainAssetQty``
+|
+
+.. literalinclude:: ../../../example/python/permissions/can_subtract_domain_asset_qty.py
+    :language: python
+    :linenos:
+    :lines: 1-10
 
 Domain
 ------

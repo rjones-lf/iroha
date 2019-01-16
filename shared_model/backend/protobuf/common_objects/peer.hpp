@@ -8,6 +8,7 @@
 
 #include "backend/protobuf/common_objects/trivial_proto.hpp"
 #include "backend/protobuf/util.hpp"
+#include "cryptography/hash.hpp"
 #include "cryptography/public_key.hpp"
 #include "interfaces/common_objects/peer.hpp"
 #include "primitive.pb.h"
@@ -34,7 +35,7 @@ namespace shared_model {
       }
 
      private:
-      const interface::types::PubkeyType public_key_{proto_->peer_key()};
+      const interface::types::PubkeyType public_key_{crypto::Hash::fromHexString(proto_->peer_key())};
     };
   }  // namespace proto
 }  // namespace shared_model

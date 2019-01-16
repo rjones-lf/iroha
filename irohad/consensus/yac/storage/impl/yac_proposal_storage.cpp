@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
@@ -64,9 +52,8 @@ namespace iroha {
         if (shouldInsert(msg)) {
           // insert to block store
 
-          log_->info("Vote with round [{}, {}] and hashes [{}, {}] looks valid",
-                     msg.hash.vote_round.block_round,
-                     msg.hash.vote_round.reject_round,
+          log_->info("Vote with {} and hashes [{}, {}] looks valid",
+                     msg.hash.vote_round,
                      msg.hash.vote_hashes.proposal_hash,
                      msg.hash.vote_hashes.block_hash);
 

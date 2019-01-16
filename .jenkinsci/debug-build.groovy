@@ -5,12 +5,17 @@ def doDebugBuild(coverageEnabled=false) {
   def manifest = load ".jenkinsci/docker-manifest.groovy"
   def pCommit = load ".jenkinsci/previous-commit.groovy"
   def parallelism = params.PARALLELISM
+  def sanitizeEnabled = params.sanitize
+  def fuzzingEnabled = params.fuzzing
   def platform = sh(script: 'uname -m', returnStdout: true).trim()
   def previousCommit = pCommit.previousCommitOrCurrent()
   // params are always null unless job is started
   // this is the case for the FIRST build only.
   // So just set this to same value as default.
   // This is a known bug. See https://issues.jenkins-ci.org/browse/JENKINS-41929
+  if (sanitizeEnabled == null){
+    sanitizeEnabled = true
+  }
   if (!parallelism) {
     parallelism = 4
   }
@@ -28,17 +33,12 @@ def doDebugBuild(coverageEnabled=false) {
   // or it is a commit into PR which base branch is develop (usually develop -> master)
   if ((GIT_LOCAL_BRANCH == 'develop' || CHANGE_BRANCH_LOCAL == 'develop' || GIT_LOCAL_BRANCH == 'dev' || CHANGE_BRANCH_LOCAL == 'dev') && manifest.manifestSupportEnabled()) {
     manifest.manifestCreate("${DOCKER_REGISTRY_BASENAME}:develop-build",
-      ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
-       "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
-       "${DOCKER_REGISTRY_BASENAME}:aarch64-develop-build"])
+      ["${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build"]
+    )
     manifest.manifestAnnotate("${DOCKER_REGISTRY_BASENAME}:develop-build",
       [
         [manifest: "${DOCKER_REGISTRY_BASENAME}:x86_64-develop-build",
-         arch: 'amd64', os: 'linux', osfeatures: [], variant: ''],
-        [manifest: "${DOCKER_REGISTRY_BASENAME}:armv7l-develop-build",
-         arch: 'arm', os: 'linux', osfeatures: [], variant: 'v7'],
-        [manifest: "${DOCKER_REGISTRY_BASENAME}:aarch64-develop-build",
-         arch: 'arm64', os: 'linux', osfeatures: [], variant: '']
+         arch: 'amd64', os: 'linux', osfeatures: [], variant: '']
       ])
     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'login', passwordVariable: 'password')]) {
       manifest.manifestPush("${DOCKER_REGISTRY_BASENAME}:develop-build", login, password)
@@ -62,7 +62,13 @@ def doDebugBuild(coverageEnabled=false) {
     def scmVars = checkout scm
     def cmakeOptions = ""
     if ( coverageEnabled ) {
-      cmakeOptions = " -DCOVERAGE=ON "
+      cmakeOptions += " -DCOVERAGE=ON "
+    }
+    if ( sanitizeEnabled ){
+      cmakeOptions += " -DSANITIZE='address;leak' "
+    }
+    if ( fuzzingEnabled ){
+      cmakeOptions += " -DCMAKE_C_COMPILER=clang-6.0 -DCMAKE_CXX_COMPILER=clang++-6.0 -DFUZZING=ON "
     }
     env.IROHA_VERSION = "0x${scmVars.GIT_COMMIT}"
     env.IROHA_HOME = "/opt/iroha"
@@ -88,12 +94,15 @@ def doDebugBuild(coverageEnabled=false) {
     if ( coverageEnabled ) {
       sh "cmake --build build --target coverage.init.info"
     }
-    sh "cd build; ctest --output-on-failure --no-compress-output -T Test || true"
-    sh 'python .jenkinsci/helpers/platform_tag.py "Linux \$(uname -m)" \$(ls build/Testing/*/Test.xml)'
-    // Mark build as UNSTABLE if there are any failed tests (threshold <100%)
-    xunit testTimeMargin: '3000', thresholdMode: 2, thresholds: [passed(unstableThreshold: '100')], \
-      tools: [CTest(deleteOutputFiles: true, failIfNotNew: false, \
-      pattern: 'build/Testing/**/Test.xml', skipNoTestFiles: false, stopProcessingIfError: true)]
+    //If fuzzing Enabled do not run tests, they never stop
+    if ( !fuzzingEnabled ){
+      sh "cd build; ctest --output-on-failure --no-compress-output -T Test || true"
+      sh 'python .jenkinsci/helpers/platform_tag.py "Linux \$(uname -m)" \$(ls build/Testing/*/Test.xml)'
+      // Mark build as UNSTABLE if there are any failed tests (threshold <100%)
+      xunit testTimeMargin: '3000', thresholdMode: 2, thresholds: [passed(unstableThreshold: '100')], \
+        tools: [CTest(deleteOutputFiles: true, failIfNotNew: false, \
+        pattern: 'build/Testing/**/Test.xml', skipNoTestFiles: false, stopProcessingIfError: true)]
+    }
     if ( coverageEnabled ) {
       sh "cmake --build build --target cppcheck"
       // Sonar

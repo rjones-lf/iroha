@@ -25,7 +25,8 @@ namespace iroha {
           std::shared_ptr<iroha::PendingTransactionStorage>
               pending_transactions,
           std::shared_ptr<shared_model::interface::QueryResponseFactory>
-              response_factory);
+              response_factory,
+          logger::Logger log = logger::log("QueryProcessorImpl"));
 
       std::unique_ptr<shared_model::interface::QueryResponse> queryHandle(
           const shared_model::interface::Query &qry) override;

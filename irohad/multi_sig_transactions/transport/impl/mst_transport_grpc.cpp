@@ -90,8 +90,7 @@ grpc::Status MstTransportGrpc::SendState(
           if (not cache_presence) {
             // TODO andrei 30.11.18 IR-51 Handle database error
             async_call_->log_->warn(
-                "Check tx presence database error. Batch: {}",
-                value.value->toString());
+                "Check tx presence database error. Batch: {}", *value.value);
             return;
           }
           auto is_replay = std::any_of(
@@ -135,9 +134,10 @@ grpc::Status MstTransportGrpc::SendState(
     return grpc::Status::OK;
   }
 
-  if (auto subscriber = subscriber_.lock()) {
-    subscriber->onNewState(source_key, std::move(new_state));
-  } else {
+  if (auto subscriber =subscriber_.lock()) {
+    subscriber->onNewState(
+      source_key,
+      std::move(new_state));} else {
     async_call_->log_->warn("No subscriber for MST SendState event is set");
   }
 

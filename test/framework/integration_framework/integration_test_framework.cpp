@@ -10,6 +10,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/thread/barrier.hpp>
+#include "ametsuchi/storage.hpp"
 #include "backend/protobuf/block.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
 #include "backend/protobuf/proto_transport_factory.hpp"
@@ -37,9 +38,12 @@
 #include "module/shared_model/builders/protobuf/block.hpp"
 #include "module/shared_model/builders/protobuf/proposal.hpp"
 #include "module/shared_model/validators/always_valid_validators.hpp"
+#include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/impl/async_grpc_client.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 #include "synchronizer/synchronizer_common.hpp"
+#include "torii/status_bus.hpp"
 
 using namespace shared_model::crypto;
 using namespace std::literals::string_literals;
@@ -89,7 +93,9 @@ namespace integration_framework {
                                                         torii_port_,
                                                         internal_port_,
                                                         dbname)),
-        command_client_(kLocalHost, torii_port_),
+        command_client_(
+            iroha::network::createClient<iroha::protocol::CommandService_v1>(
+                kLocalHost + ":" + std::to_string(torii_port_))),
         query_client_(kLocalHost, torii_port_),
         async_call_(std::make_shared<AsyncCall>()),
         proposal_waiting(proposal_waiting),
@@ -117,7 +123,8 @@ namespace integration_framework {
     }
     // the code below should be executed anyway in order to prevent app hang
     if (iroha_instance_ and iroha_instance_->getIrohaInstance()) {
-      iroha_instance_->getIrohaInstance()->terminate();
+      iroha_instance_->getIrohaInstance()->terminate(
+          std::chrono::system_clock::now());
     }
   }
 
@@ -251,7 +258,6 @@ namespace integration_framework {
 
     iroha_instance_->initPipeline(keypair, maximum_proposal_size_);
     log_->info("created pipeline");
-    iroha_instance_->getIrohaInstance()->resetOrderingService();
 
     makeFakePeers();
   }
@@ -259,20 +265,33 @@ namespace integration_framework {
   void IntegrationTestFramework::subscribeQueuesAndRun() {
     // subscribing for components
 
-    iroha_instance_->getIrohaInstance()
-        ->getPeerCommunicationService()
-        ->on_proposal()
-        .subscribe([this](auto proposal) {
-          proposal_queue_.push(proposal);
+    auto proposals = iroha_instance_->getIrohaInstance()
+                         ->getPeerCommunicationService()
+                         ->onProposal();
+
+    proposals.filter([](const auto &event) { return event.proposal; })
+        .subscribe([this](const auto &event) {
+          proposal_queue_.push(getProposalUnsafe(event));
           log_->info("proposal");
           queue_cond.notify_all();
         });
 
+    auto proposal_flat_map =
+        [](auto t) -> rxcpp::observable<std::tuple_element_t<0, decltype(t)>> {
+      if (std::get<1>(t).proposal) {
+        return rxcpp::observable<>::just(std::get<0>(t));
+      }
+      return rxcpp::observable<>::empty<std::tuple_element_t<0, decltype(t)>>();
+    };
+
     iroha_instance_->getIrohaInstance()
         ->getPeerCommunicationService()
-        ->on_verified_proposal()
+        ->onVerifiedProposal()
+        .zip(proposals)
+        .flat_map(proposal_flat_map)
         .subscribe([this](auto verified_proposal_and_errors) {
-          verified_proposal_queue_.push(verified_proposal_and_errors);
+          verified_proposal_queue_.push(
+              getVerifiedProposalUnsafe(verified_proposal_and_errors));
           log_->info("verified proposal");
           queue_cond.notify_all();
         });
@@ -280,6 +299,8 @@ namespace integration_framework {
     iroha_instance_->getIrohaInstance()
         ->getPeerCommunicationService()
         ->on_commit()
+        .zip(proposals)
+        .flat_map(proposal_flat_map)
         .subscribe([this](auto commit_event) {
           commit_event.synced_blocks.subscribe([this](auto committed_block) {
             block_queue_.push(committed_block);
@@ -328,9 +349,9 @@ namespace integration_framework {
         ->onExpiredBatches();
   }
 
-  rxcpp::observable<iroha::network::Commit>
+  rxcpp::observable<iroha::network::ConsensusGate::GateObject>
   IntegrationTestFramework::getYacOnCommitObservable() {
-    return iroha_instance_->getIrohaInstance()->getConsensusGate()->on_commit();
+    return iroha_instance_->getIrohaInstance()->getConsensusGate()->onOutcome();
   }
 
   IntegrationTestFramework &
@@ -349,7 +370,7 @@ namespace integration_framework {
       std::function<void(const shared_model::proto::TransactionResponse &)>
           validation) {
     iroha::protocol::TxStatusRequest request;
-    request.set_tx_hash(shared_model::crypto::toBinaryString(hash));
+    request.set_tx_hash(hash.hex());
     iroha::protocol::ToriiResponse response;
     command_client_.Status(request, response);
     validation(shared_model::proto::TransactionResponse(std::move(response)));

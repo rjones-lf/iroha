@@ -19,9 +19,11 @@ namespace shared_model {
      */
     class ProtoBlockFactory : public interface::UnsafeBlockFactory {
      public:
-      explicit ProtoBlockFactory(
+      ProtoBlockFactory(
           std::unique_ptr<shared_model::validation::AbstractValidator<
-              shared_model::interface::Block>> validator);
+              shared_model::interface::Block>> interface_validator,
+          std::unique_ptr<shared_model::validation::AbstractValidator<
+              iroha::protocol::Block>> proto_validator);
 
       std::unique_ptr<interface::Block> unsafeCreateBlock(
           interface::types::HeightType height,
@@ -34,7 +36,7 @@ namespace shared_model {
        * Create block variant
        *
        * @param block - proto block from which block variant is created
-       * @return BlockVariant with block.
+       * @return Pointer to block.
        *         Error if block is invalid
        */
       iroha::expected::Result<std::unique_ptr<interface::Block>, std::string>
@@ -43,7 +45,10 @@ namespace shared_model {
      private:
       std::unique_ptr<shared_model::validation::AbstractValidator<
           shared_model::interface::Block>>
-          validator_;
+          interface_validator_;
+      std::unique_ptr<
+          shared_model::validation::AbstractValidator<iroha::protocol::Block>>
+          proto_validator_;
     };
   }  // namespace proto
 }  // namespace shared_model

@@ -43,7 +43,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveSupermajority) {
   for (auto i = 0; i < 3; ++i) {
     auto peer = my_peers.at(i);
     auto pubkey = shared_model::crypto::toBinaryString(peer->pubkey());
-    yac->onState({create_vote(my_hash, pubkey)});
+    yac->onState({createVote(my_hash, pubkey)});
   };
 }
 
@@ -74,7 +74,7 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommit) {
   auto votes = std::vector<VoteMessage>();
 
   for (auto i = 0; i < 4; ++i) {
-    votes.push_back(create_vote(my_hash, std::to_string(i)));
+    votes.push_back(createVote(my_hash, std::to_string(i)));
   };
   yac->onState(votes);
   ASSERT_TRUE(wrapper.validate());
@@ -116,13 +116,13 @@ TEST_F(YacTest, ValidCaseWhenReceiveCommitTwice) {
 
   // first commit
   for (auto i = 0; i < 3; ++i) {
-    votes.push_back(create_vote(my_hash, std::to_string(i)));
+    votes.push_back(createVote(my_hash, std::to_string(i)));
   };
   yac->onState(votes);
 
   // second commit
   for (auto i = 1; i < 4; ++i) {
-    votes.push_back(create_vote(my_hash, std::to_string(i)));
+    votes.push_back(createVote(my_hash, std::to_string(i)));
   };
   yac->onState(votes);
 
@@ -153,7 +153,7 @@ TEST_F(YacTest, ValidCaseWhenSoloConsensus) {
 
   yac->vote(my_hash, my_order.value());
 
-  auto vote_message = create_vote(my_hash, std::to_string(0));
+  auto vote_message = createVote(my_hash, std::to_string(0));
 
   yac->onState({vote_message});
 
@@ -185,7 +185,7 @@ TEST_F(YacTest, ValidCaseWhenVoteAfterCommit) {
   std::vector<VoteMessage> votes;
 
   for (auto i = 0; i < 3; ++i) {
-    votes.push_back(create_vote(my_hash, std::to_string(i)));
+    votes.push_back(createVote(my_hash, std::to_string(i)));
   };
   yac->onState(votes);
 

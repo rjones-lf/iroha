@@ -38,6 +38,7 @@ namespace iroha {
         soci::session &sql_;
         std::string savepoint_name_;
         bool is_released_;
+        logger::Logger log_;
       };
 
       TemporaryWsvImpl(
@@ -45,7 +46,8 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::CommonObjectsFactory>
               factory,
           std::shared_ptr<shared_model::interface::PermissionToString>
-              perm_converter);
+              perm_converter,
+          logger::Logger log = logger::log("TemporaryWSV"));
 
       expected::Result<void, validation::CommandError> apply(
           const shared_model::interface::Transaction &transaction) override;

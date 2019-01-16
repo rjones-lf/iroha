@@ -9,6 +9,9 @@
 using namespace common_constants;
 using AccountAssetTxsFixture = QueryPermissionFixture<QueryPermissionAssetTxs>;
 
+static constexpr shared_model::interface::types::TransactionsNumberType
+    kTxPageSize(10);
+
 /**
  * C346 Pass an empty asset id
  * @given a user with kGetAllAccAstTxs permission
@@ -19,9 +22,9 @@ using AccountAssetTxsFixture = QueryPermissionFixture<QueryPermissionAssetTxs>;
 TEST_F(AccountAssetTxsFixture, ReadEmptyAssetHavingAllTxsPermission) {
   const interface::types::AssetIdType empty = "";
   impl_.prepareState(*this, {Role::kGetAllAccAstTxs})
-      .sendQuery(
-          complete(baseQry().getAccountAssetTransactions(kUserId, empty)),
-          getQueryStatelesslyInvalidChecker());
+      .sendQuery(complete(baseQry().getAccountAssetTransactions(
+                     kUserId, empty, kTxPageSize)),
+                 getQueryStatelesslyInvalidChecker());
 }
 
 /**
@@ -38,8 +41,8 @@ TEST_F(AccountAssetTxsFixture,
        DISABLED_ReadNonExistingAssetHavingAllTxsPermission) {
   const interface::types::AssetIdType non_existing = "nonexisting#" + kDomain;
   impl_.prepareState(*this, {Role::kGetAllAccAstTxs})
-      .sendQuery(complete(baseQry().getAccountAssetTransactions(kUserId,
-                                                                non_existing)),
+      .sendQuery(complete(baseQry().getAccountAssetTransactions(
+                     kUserId, non_existing, kTxPageSize)),
                  getQueryStatefullyInvalidChecker());
 }
 
@@ -58,9 +61,9 @@ TEST_F(AccountAssetTxsFixture, DISABLED_OwnTxsIncludingAddAssetQuantity) {
   impl_.prepareState(*this, {Role::kGetAllAccAstTxs})
       .sendTxAwait(
           tx, [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(
-          complete(baseQry().getAccountAssetTransactions(kUserId, kAssetId)),
-          impl_.getGeneralResponseChecker());
+      .sendQuery(complete(baseQry().getAccountAssetTransactions(
+                     kUserId, kAssetId, kTxPageSize)),
+                 impl_.getGeneralResponseChecker());
 }
 
 /**
@@ -80,7 +83,7 @@ TEST_F(AccountAssetTxsFixture, DISABLED_OwnTxsIncludingSubtractAssetQuantity) {
   impl_.prepareState(*this, {Role::kGetAllAccAstTxs})
       .sendTxAwait(
           tx, [](auto &block) { ASSERT_EQ(block->transactions().size(), 1); })
-      .sendQuery(
-          complete(baseQry().getAccountAssetTransactions(kUserId, kAssetId)),
-          impl_.getGeneralResponseChecker());
+      .sendQuery(complete(baseQry().getAccountAssetTransactions(
+                     kUserId, kAssetId, kTxPageSize)),
+                 impl_.getGeneralResponseChecker());
 }

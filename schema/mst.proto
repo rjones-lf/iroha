@@ -1,8 +1,12 @@
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 syntax = "proto3";
 package iroha.network.transport;
 
 import "transaction.proto";
-import "primitive.proto";
 import "google/protobuf/empty.proto";
 
 message MstState {

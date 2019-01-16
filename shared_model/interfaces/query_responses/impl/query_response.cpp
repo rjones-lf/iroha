@@ -13,6 +13,7 @@
 #include "interfaces/query_responses/role_permissions.hpp"
 #include "interfaces/query_responses/roles_response.hpp"
 #include "interfaces/query_responses/signatories_response.hpp"
+#include "interfaces/query_responses/transactions_page_response.hpp"
 #include "interfaces/query_responses/transactions_response.hpp"
 #include "utils/visitor_apply_for_all.hpp"
 
@@ -21,11 +22,11 @@ using Variant =
 template Variant::~variant();
 template Variant::variant(Variant &&);
 template bool Variant::operator==(const Variant &) const;
-template void Variant::destroy_content();
-template int Variant::which() const;
-template void Variant::indicate_which(int);
-template bool Variant::using_backup() const;
-template Variant::convert_copy_into::convert_copy_into(void *);
+template void Variant::destroy_content() noexcept;
+template int Variant::which() const noexcept;
+template void Variant::indicate_which(int) noexcept;
+template bool Variant::using_backup() const noexcept;
+template Variant::convert_copy_into::convert_copy_into(void *) noexcept;
 
 namespace shared_model {
   namespace interface {

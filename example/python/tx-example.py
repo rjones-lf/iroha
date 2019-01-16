@@ -58,13 +58,7 @@ def print_status_streaming(tx):
     # Create status request
 
     print("Hash of the transaction: ", tx.hash().hex())
-    tx_hash = tx.hash().blob()
-
-    # Check python version
-    if sys.version_info[0] == 2:
-        tx_hash = ''.join(map(chr, tx_hash))
-    else:
-        tx_hash = bytes(tx_hash)
+    tx_hash = tx.hash().hex()
 
     # Create request
     request = endpoint_pb2.TxStatusRequest()

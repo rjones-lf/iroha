@@ -37,6 +37,11 @@ auto signature() {
 
 TEST(YacHashProviderTest, MakeYacHashTest) {
   YacHashProviderImpl hash_provider;
+  iroha::consensus::Round round{1, 0};
+  auto proposal = std::make_shared<MockProposal>();
+  EXPECT_CALL(*proposal, hash())
+      .WillRepeatedly(
+          ReturnRefOfCopy(shared_model::crypto::Hash(std::string())));
   auto block = std::make_shared<MockBlock>();
   EXPECT_CALL(*block, payload())
       .WillRepeatedly(
@@ -50,16 +55,24 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
                          1, signature()))
                  | boost::adaptors::indirected));
 
-  auto hex_test_hash = block->hash().hex();
+  auto hex_proposal_hash = proposal->hash().hex();
+  auto hex_block_hash = block->hash().hex();
 
-  auto yac_hash = hash_provider.makeHash(*block);
+  auto yac_hash = hash_provider.makeHash(iroha::simulator::BlockCreatorEvent{
+      iroha::simulator::RoundData{proposal, block}, round});
 
-  ASSERT_EQ(hex_test_hash, yac_hash.vote_hashes.proposal_hash);
-  ASSERT_EQ(hex_test_hash, yac_hash.vote_hashes.block_hash);
+  ASSERT_EQ(round, yac_hash.vote_round);
+  ASSERT_EQ(hex_proposal_hash, yac_hash.vote_hashes.proposal_hash);
+  ASSERT_EQ(hex_block_hash, yac_hash.vote_hashes.block_hash);
 }
 
 TEST(YacHashProviderTest, ToModelHashTest) {
   YacHashProviderImpl hash_provider;
+  iroha::consensus::Round round{1, 0};
+  auto proposal = std::make_shared<MockProposal>();
+  EXPECT_CALL(*proposal, hash())
+      .WillRepeatedly(
+          ReturnRefOfCopy(shared_model::crypto::Hash(std::string())));
   auto block = std::make_shared<MockBlock>();
   EXPECT_CALL(*block, payload())
       .WillRepeatedly(
@@ -73,7 +86,8 @@ TEST(YacHashProviderTest, ToModelHashTest) {
                          1, signature()))
                  | boost::adaptors::indirected));
 
-  auto yac_hash = hash_provider.makeHash(*block);
+  auto yac_hash = hash_provider.makeHash(iroha::simulator::BlockCreatorEvent{
+      iroha::simulator::RoundData{proposal, block}, round});
 
   auto model_hash = hash_provider.toModelHash(yac_hash);
 

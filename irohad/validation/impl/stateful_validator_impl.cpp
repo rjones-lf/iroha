@@ -34,7 +34,8 @@ namespace iroha {
           [](expected::Value<void> &) { return true; },
           [&tx, &transactions_errors_log](
               expected::Error<validation::CommandError> &error) {
-            transactions_errors_log.emplace(tx.hash(), std::move(error.error));
+            transactions_errors_log.emplace_back(validation::TransactionError{
+                tx.hash(), std::move(error.error)});
             return false;
           });
     };
@@ -98,10 +99,11 @@ namespace iroha {
     StatefulValidatorImpl::StatefulValidatorImpl(
         std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
         std::shared_ptr<shared_model::interface::TransactionBatchParser>
-            batch_parser)
+            batch_parser,
+        logger::Logger log)
         : factory_(std::move(factory)),
           batch_parser_(std::move(batch_parser)),
-          log_(logger::log("SFV")) {}
+          log_(std::move(log)) {}
 
     std::unique_ptr<validation::VerifiedProposalAndErrors>
     StatefulValidatorImpl::validate(
