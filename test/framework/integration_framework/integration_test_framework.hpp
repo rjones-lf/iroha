@@ -113,8 +113,14 @@ namespace integration_framework {
 
     ~IntegrationTestFramework();
 
+    /// Add a fake peer with given key.
     std::shared_ptr<fake_peer::FakePeer> addInitialPeer(
         const boost::optional<shared_model::crypto::Keypair> &key);
+
+    /// Add the given amount of fake peers with generated default keys and
+    /// "honest" behaviours.
+    std::vector<std::shared_ptr<fake_peer::FakePeer>> addInitialPeers(
+        size_t amount);
 
     /**
      * Construct default genesis block.

@@ -46,11 +46,7 @@ class FakePeerExampleFixture : public AcceptanceFixture {
     itf_->initPipeline(kAdminKeypair);
 
     // make the fake peers with honest behaviour
-    std::generate_n(std::back_inserter(fake_peers_), num_fake_peers, [this] {
-      FakePeerPtr fake_peer = this->itf_->addInitialPeer({});
-      fake_peer->setBehaviour(std::make_shared<fake_peer::HonestBehaviour>());
-      return fake_peer;
-    });
+    fake_peers_ = itf_->addInitialPeers(num_fake_peers);
 
     itf_->setGenesisBlock(itf_->defaultBlock()).subscribeQueuesAndRun();
 

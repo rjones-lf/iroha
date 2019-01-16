@@ -25,6 +25,7 @@
 #include "cryptography/default_hash_provider.hpp"
 #include "datetime/time.hpp"
 #include "framework/common_constants.hpp"
+#include "framework/integration_framework/fake_peer/behaviour/honest.hpp"
 #include "framework/integration_framework/fake_peer/fake_peer.hpp"
 #include "framework/integration_framework/iroha_instance.hpp"
 #include "framework/integration_framework/port_guard.hpp"
@@ -149,6 +150,17 @@ namespace integration_framework {
     fake_peer->initialize();
     fake_peers_.emplace_back(fake_peer);
     return fake_peer;
+  }
+
+  std::vector<std::shared_ptr<fake_peer::FakePeer>>
+  IntegrationTestFramework::addInitialPeers(size_t amount) {
+    std::vector<std::shared_ptr<fake_peer::FakePeer>> fake_peers;
+    std::generate_n(std::back_inserter(fake_peers), amount, [this] {
+      auto fake_peer = addInitialPeer({});
+      fake_peer->setBehaviour(std::make_shared<fake_peer::HonestBehaviour>());
+      return fake_peer;
+    });
+    return fake_peers;
   }
 
   shared_model::proto::Block IntegrationTestFramework::defaultBlock(
