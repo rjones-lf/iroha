@@ -175,6 +175,14 @@ struct MockPeer : public shared_model::interface::Peer {
   MOCK_CONST_METHOD0(clone, MockPeer *());
 };
 
+inline auto makePeer(const std::string &address,
+                     const shared_model::crypto::PublicKey &pub_key) {
+  auto peer = std::make_shared<MockPeer>();
+  EXPECT_CALL(*peer, address()).WillRepeatedly(testing::ReturnRefOfCopy(address));
+  EXPECT_CALL(*peer, pubkey()).WillRepeatedly(testing::ReturnRefOfCopy(pub_key));
+  return peer;
+}
+
 struct MockUnsafeProposalFactory
     : public shared_model::interface::UnsafeProposalFactory {
   MOCK_METHOD3(unsafeCreateProposal,

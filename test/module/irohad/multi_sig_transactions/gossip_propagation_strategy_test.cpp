@@ -20,6 +20,7 @@
 #include "ametsuchi/peer_query_factory.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 using namespace iroha;
 

@@ -104,12 +104,4 @@ inline auto makeTx(const shared_model::interface::types::CounterType &counter,
           .finish());
 }
 
-inline auto makePeer(const std::string &address,
-                     const shared_model::crypto::PublicKey &pub_key) {
-  auto peer = std::make_shared<MockPeer>();
-  EXPECT_CALL(*peer, address()).WillRepeatedly(testing::ReturnRefOfCopy(address));
-  EXPECT_CALL(*peer, pubkey()).WillRepeatedly(testing::ReturnRefOfCopy(pub_key));
-  return peer;
-}
-
 #endif  // IROHA_MST_TEST_HELPERS_HPP
