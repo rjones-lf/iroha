@@ -30,18 +30,17 @@ def build(Build build) {
     node(build.worker.label) {
       try {
         echo "Worker: ${env.NODE_NAME}"
-        print build.name
-        gitNotify (build.name, "Started...", 'PENDING')
+        gitNotify ("New CI: " + build.name, "Started...", 'PENDING')
         build.builder.buildSteps.each {
           it()
         }
         build.builder.postSteps.success.each {
           it()
         }
-        gitNotify (build.name, "Finish", 'SUCCESS')
+        gitNotify ("New CI: " + build.name, "Finish", 'SUCCESS')
       } catch(Exception e) {
         if (currentBuild.currentResult == 'SUCCESS') {
-            gitNotify (build.name, "FAILURE", 'FAILURE')
+            gitNotify ("New CI: " + build.name, "FAILURE", 'FAILURE')
             print "Error: " + e
             currentBuild.result = 'FAILURE'
         }
@@ -191,7 +190,7 @@ node ('master') {
         break;
      case 'On open PR':
         // Just hint, not the main way to Notify about build status.
-        gitNotify ("Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING')
+        gitNotify ("New CI: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING')
         mac_compiler_list = ['appleclang']
         coverage = true
         cppcheck = true
@@ -201,7 +200,7 @@ node ('master') {
         echo "All Default"
         break;
      case 'Before merge to trunk':
-        gitNotify ("Merge to trunk", "Started...", 'PENDING')
+        gitNotify ("New CI: Merge to trunk", "Started...", 'PENDING')
         x64linux_compiler_list = ['gcc5','gcc7', 'clang6' , 'clang7']
         mac_compiler_list = ['appleclang']
         testing = true
@@ -294,7 +293,7 @@ node ('master') {
   parallel tasks
 
   if (build_scenario == 'Before merge to trunk')
-    gitNotify ("Merge to trunk", "Finish", 'SUCCESS')
+    gitNotify ("New CI: Merge to trunk", "Finish", 'SUCCESS')
 
   // if (currentBuild.currentResult == 'SUCCESS') {
   //   if (scmVars.CHANGE_ID) {
