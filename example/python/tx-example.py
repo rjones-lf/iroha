@@ -80,7 +80,7 @@ def create_account_userone():
     """
     tx = iroha.transaction([
         iroha.command('CreateAccount', account_name='userone', domain_id='domain',
-                      public_key=IrohaCrypto.hex_key_to_bytes(user_public_key))
+                      public_key=user_public_key)
     ])
     IrohaCrypto.sign_transaction(tx, admin_private_key)
     send_transaction_and_print_status(tx)

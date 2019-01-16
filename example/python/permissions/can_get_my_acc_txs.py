@@ -23,6 +23,6 @@ def genesis_tx():
 
 @commons.hex
 def account_transactions_query():
-    query = iroha.query('GetAccountTransactions', creator_account=alice['id'], account_id=alice['id'])
+    query = iroha.query('GetAccountTransactions', creator_account=alice['id'], account_id=alice['id'], page_size=10)
     irohalib.IrohaCrypto.sign_query(query, alice['key'])
     return query

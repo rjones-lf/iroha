@@ -68,8 +68,8 @@ class IrohaCrypto(object):
         message_hash = IrohaCrypto.hash(message)
         signature_bytes = ed25519.signature_unsafe(message_hash, sk, pk)
         signature = primitive_pb2.Signature()
-        signature.public_key = pk
-        signature.signature = signature_bytes
+        signature.public_key = public_key
+        signature.signature = binascii.hexlify(signature_bytes)
         return signature
 
     @staticmethod
@@ -193,21 +193,30 @@ class Iroha(object):
             setattr(internal_command, key, value)
         return command_wrapper
 
-    def query(self, name, counter=1, creator_account=None, created_time=None, **kwargs):
+    def query(self, name, counter=1, creator_account=None, created_time=None, page_size=None, first_tx_hash=None,
+              **kwargs):
         """
         Creates a protobuf query with specified set of entities
         :param name: CamelCased name of query to be executed
         :param counter: query counter, should be incremented for each new query
         :param creator_account: account id of query creator
         :param created_time: query creation timestamp in milliseconds
+        :param page_size: a non-zero positive number, size of result rowset for queries with pagination
+        :param first_tx_hash: optional hash of a transaction that will be the beginning of the next page
         :param kwargs: query arguments as they defined in schema
         :return: a proto query
         """
         assert creator_account or self.creator_account, "No account name specified as query creator id"
+        pagination_meta = None
         if not created_time:
             created_time = self.now()
         if not creator_account:
             creator_account = self.creator_account
+        if page_size or first_tx_hash:
+            pagination_meta = queries_pb2.TxPaginationMeta()
+            pagination_meta.page_size = page_size
+            if first_tx_hash:
+                pagination_meta.first_tx_hash = first_tx_hash
 
         meta = queries_pb2.QueryPayloadMeta()
         meta.created_time = created_time
@@ -224,6 +233,9 @@ class Iroha(object):
                 hashes_attr.extend(value)
                 continue
             setattr(internal_query, key, value)
+        if pagination_meta:
+            pagination_meta_attr = getattr(internal_query, 'pagination_meta')
+            pagination_meta_attr.CopyFrom(pagination_meta)
         if not len(kwargs):
             message = getattr(queries_pb2, name)()
             internal_query.CopyFrom(message)
@@ -345,7 +357,7 @@ class IrohaGrpc(object):
         integral status code, and error message string (will be empty if no error occurred)
         """
         request = endpoint_pb2.TxStatusRequest()
-        request.tx_hash = IrohaCrypto.hash(transaction)
+        request.tx_hash = binascii.hexlify(IrohaCrypto.hash(transaction))
         response = self._command_service_stub.Status(request)
         status_code = response.tx_status
         status_name = endpoint_pb2.TxStatus.Name(response.tx_status)
@@ -360,7 +372,7 @@ class IrohaGrpc(object):
         integral status code, and error message string (will be empty if no error occurred)
         """
         request = endpoint_pb2.TxStatusRequest()
-        request.tx_hash = IrohaCrypto.hash(transaction)
+        request.tx_hash = binascii.hexlify(IrohaCrypto.hash(transaction))
         response = self._command_service_stub.StatusStream(request)
         for status in response:
             status_name = endpoint_pb2.TxStatus.Name(status.tx_status)

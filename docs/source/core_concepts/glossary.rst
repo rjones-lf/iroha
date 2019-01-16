@@ -35,16 +35,15 @@ Signable content is called payload, so the structure of a block looks like this:
 
 *Outside payload*
 
-    - hash — SHA3-512 hash of block protobuf payload
     - signatures — signatures of peers, which voted for the block during consensus round
 
 *Inside payload*
 
     - height — a number of blocks in the chain up to the block
     - timestamp — Unix time (in milliseconds) of block forming by a peer
-    - body — transactions, which successfully passed validation and consensus step
-    - transactions quantity
-    - previous hash of a block
+    - array of transactions, which successfully passed validation and consensus step
+    - hash of a previous block in the chain
+    - rejected transactions hashes — array of transaction hashes, which did not pass stateful validation step; this field is optional
 
 Block Creator
 =============
@@ -259,12 +258,15 @@ Transaction Status Set
 ^^^^^^^^^^^^^^^^^^^^^^
 
  - NOT_RECEIVED: requested peer does not have this transaction.
- - MST_EXPIRED: this transactions is a part of MST pipeline and has expired.
+ - ENOUGH_SIGNATURES_COLLECTED: this is a multisignature transaction which has enough signatures and is going to be validated by the peer.
+ - MST_PENDING: this transaction is a multisignature transaction which has to be signed by more keys (as requested in quorum field).
+ - MST_EXPIRED: this transaction is a multisignature transaction which is no longer valid and is going to be deleted by this peer.
  - STATELESS_VALIDATION_FAILED: the transaction was formed with some fields, not meeting stateless validation constraints. This status is returned to a client, who formed transaction, right after the transaction was sent. It would also return the reason — what rule was violated.
  - STATELESS_VALIDATION_SUCCESS: the transaction has successfully passed stateless validation. This status is returned to a client, who formed transaction, right after the transaction was sent.
  - STATEFUL_VALIDATION_FAILED: the transaction has commands, which violate validation rules, checking state of the chain (e.g. asset balance, account permissions, etc.). It would also return the reason — what rule was violated.
  - STATEFUL_VALIDATION_SUCCESS: the transaction has successfully passed stateful validation.
  - COMMITTED: the transaction is the part of a block, which gained enough votes and is in the block store at the moment.
+ - REJECTED: this exact transaction was rejected by the peer during stateful validation step in previous consensus rounds. Rejected transactions' hashes are stored in `block <#block>`__ store. This is required in order to prevent `replay attacks <https://en.wikipedia.org/wiki/Replay_attack>`__.
 
 Pending Transactions
 ^^^^^^^^^^^^^^^^^^^^
@@ -277,8 +279,6 @@ when the transaction is a part of `batch of transactions`_ and there is a not fu
 
 Batch of Transactions
 =====================
-
-*The feature is to be released.*
 
 Transactions batch is a feature that allows sending several transactions to Iroha at once preserving their order.
 

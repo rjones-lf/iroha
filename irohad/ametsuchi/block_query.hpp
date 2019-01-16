@@ -27,31 +27,6 @@ namespace iroha {
 
      public:
       virtual ~BlockQuery() = default;
-      /**
-       * Get all transactions of an account.
-       * @param account_id - account_id (accountName@domainName)
-       * @return observable of Model Transaction
-       */
-      virtual std::vector<wTransaction> getAccountTransactions(
-          const shared_model::interface::types::AccountIdType &account_id) = 0;
-
-      /**
-       * Get asset transactions of an account.
-       * @param account_id - account_id (accountName@domainName)
-       * @param asset_id - asset_id (assetName#domainName)
-       * @return observable of Model Transaction
-       */
-      virtual std::vector<wTransaction> getAccountAssetTransactions(
-          const shared_model::interface::types::AccountIdType &account_id,
-          const shared_model::interface::types::AssetIdType &asset_id) = 0;
-
-      /**
-       * Get transactions from transactions' hashes
-       * @param tx_hashes - transactions' hashes to retrieve
-       * @return observable of Model Transaction
-       */
-      virtual std::vector<boost::optional<wTransaction>> getTransactions(
-          const std::vector<shared_model::crypto::Hash> &tx_hashes) = 0;
 
       /**
        * Get given number of blocks starting with given height.
@@ -83,14 +58,6 @@ namespace iroha {
        * @return height
        */
       virtual uint32_t getTopBlockHeight() = 0;
-
-      /**
-       * Synchronously gets transaction by its hash
-       * @param hash - hash to search
-       * @return transaction or boost::none
-       */
-      virtual boost::optional<wTransaction> getTxByHashSync(
-          const shared_model::crypto::Hash &hash) = 0;
 
       /**
        * Synchronously checks whether transaction with given hash is present in

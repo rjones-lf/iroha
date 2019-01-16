@@ -13,6 +13,7 @@ grantable = {
 
 role = {
     'can_add_asset_qty': 'kAddAssetQty',
+    'can_add_domain_asset_qty': 'kAddDomainAssetQty',
     'can_add_peer': 'kAddPeer',
     'can_add_signatory': 'kAddSignatory',
     'can_append_role': 'kAppendRole',
@@ -54,5 +55,6 @@ role = {
     'can_set_detail': 'kSetDetail',
     'can_set_quorum': 'kSetQuorum',
     'can_subtract_asset_qty': 'kSubtractAssetQty',
+    'can_subtract_domain_asset_qty': 'kSubtractDomainAssetQty',
     'can_transfer': 'kTransfer'
 }

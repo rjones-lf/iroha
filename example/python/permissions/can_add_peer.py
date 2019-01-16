@@ -26,7 +26,7 @@ def add_peer_tx():
     peer_key = irohalib.IrohaCrypto.private_key()
     peer = primitive_pb2.Peer()
     peer.address = '192.168.10.10:50541'
-    peer.peer_key = commons.public_key_bytes(peer_key)
+    peer.peer_key = irohalib.IrohaCrypto.derive_public_key(peer_key)
     tx = iroha.transaction([
         iroha.command('AddPeer', peer=peer)
     ], creator_account=alice['id'])

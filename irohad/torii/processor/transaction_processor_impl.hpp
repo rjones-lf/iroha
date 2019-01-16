@@ -28,13 +28,15 @@ namespace iroha {
        * @param mst_processor is a handler for multisignature transactions
        * @param status_bus is a common notifier for tx statuses
        * @param status_factory creates transaction statuses
+       * @param log to print the progress
        */
       TransactionProcessorImpl(
           std::shared_ptr<network::PeerCommunicationService> pcs,
           std::shared_ptr<MstProcessor> mst_processor,
           std::shared_ptr<iroha::torii::StatusBus> status_bus,
           std::shared_ptr<shared_model::interface::TxStatusFactory>
-              status_factory);
+              status_factory,
+          logger::Logger log = logger::log("TxProcessor"));
 
       void batchHandle(
           std::shared_ptr<shared_model::interface::TransactionBatch>

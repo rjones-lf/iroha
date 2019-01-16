@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
@@ -143,8 +131,9 @@ TEST_F(PipelineIntegrationTest, SendTx) {
  * @then receive STATELESS_VALIDATION_SUCCESS status on that transactions,
  * all transactions are passed to proposal and appear in verified proposal and
  * block
+ * TODO andrei 31.10.18 IR-1784 Refactor MST to batches
  */
-TEST_F(PipelineIntegrationTest, SendTxSequence) {
+TEST_F(PipelineIntegrationTest, DISABLED_SendTxSequence) {
   size_t tx_size = 5;
   const auto &tx_sequence = prepareTransactionSequence(tx_size);
 
@@ -179,8 +168,9 @@ TEST_F(PipelineIntegrationTest, SendTxSequence) {
  * @when sending transaction sequence with stateful valid transactions to the
  * ledger using sendTxSequence await method
  * @then all transactions appear in the block
+ * TODO andrei 31.10.18 IR-1784 Refactor MST to batches
  */
-TEST_F(PipelineIntegrationTest, SendTxSequenceAwait) {
+TEST_F(PipelineIntegrationTest, DISABLED_SendTxSequenceAwait) {
   size_t tx_size = 5;
   const auto &tx_sequence = prepareTransactionSequence(tx_size);
 

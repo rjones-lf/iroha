@@ -23,7 +23,7 @@ def genesis_tx():
     genesis_commands = commons.genesis_block(admin, alice, test_permissions)
     genesis_commands.extend([
         iroha.command('CreateAccount', account_name='bob', domain_id='test',
-                      public_key=commons.public_key_bytes(bob['key'])),
+                      public_key=irohalib.IrohaCrypto.derive_public_key(bob['key'])),
         iroha.command('CreateAsset', asset_name='coin', domain_id='test', precision=2),
         iroha.command('AddAssetQuantity', asset_id='coin#test', amount='100.00'),
         iroha.command('TransferAsset',

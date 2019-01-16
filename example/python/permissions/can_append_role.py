@@ -21,7 +21,7 @@ def genesis_tx():
     genesis_commands.extend([
         iroha.command('CreateRole', role_name='second_role', permissions=second_role_permissions),
         iroha.command('CreateAccount', account_name='bob', domain_id='test',
-                      public_key=commons.public_key_bytes(bob['key'])),
+                      public_key=irohalib.IrohaCrypto.derive_public_key(bob['key'])),
         iroha.command('AppendRole', account_id=alice['id'], role_name='second_role')
     ])
     tx = iroha.transaction(genesis_commands)

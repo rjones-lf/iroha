@@ -75,7 +75,7 @@ namespace shared_model {
       using AccountDetailKeyType = std::string;
       /// Type of account detail value
       using AccountDetailValueType = std::string;
-      /// Type of a number of transactions in block
+      /// Type of a number of transactions in block and query response page
       using TransactionsNumberType = uint16_t;
       /// Type of the transfer message
       using DescriptionType = std::string;

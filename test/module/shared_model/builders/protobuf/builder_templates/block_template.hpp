@@ -48,7 +48,7 @@ namespace shared_model {
       template <int s>
       using NextBuilder = TemplateBlockBuilder<S | (1 << s), SV, BT>;
 
-      iroha::protocol::Block block_;
+      iroha::protocol::Block_v1 block_;
       SV stateless_validator_;
 
       template <int Sp, typename SVp, typename BTp>
@@ -88,7 +88,7 @@ namespace shared_model {
           for (const auto &hash : rejected_transactions_hashes) {
             auto *next_hash =
                 block.mutable_payload()->add_rejected_transactions_hashes();
-            (*next_hash) = shared_model::crypto::toBinaryString(hash);
+            (*next_hash) = hash.hex();
           }
         });
       }
@@ -100,8 +100,7 @@ namespace shared_model {
 
       auto prevHash(crypto::Hash hash) const {
         return transform<PrevHash>([&](auto &block) {
-          block.mutable_payload()->set_prev_block_hash(
-              crypto::toBinaryString(hash));
+          block.mutable_payload()->set_prev_block_hash(hash.hex());
         });
       }
 
@@ -118,7 +117,7 @@ namespace shared_model {
         auto tx_number = block_.payload().transactions().size();
         block_.mutable_payload()->set_tx_number(tx_number);
 
-        auto result = Block(iroha::protocol::Block(block_));
+        auto result = Block(iroha::protocol::Block_v1(block_));
         auto answer = stateless_validator_.validate(result);
 
         if (answer.hasErrors()) {

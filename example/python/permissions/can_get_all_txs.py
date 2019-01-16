@@ -49,7 +49,10 @@ def admin_action_2_tx():
 
 @commons.hex
 def transactions_query():
-    hashes = [admin_tx1_hash, admin_tx2_hash]
+    hashes = [
+        binascii.hexlify(admin_tx1_hash),
+        binascii.hexlify(admin_tx2_hash)
+    ]
     query = iroha.query('GetTransactions', tx_hashes=hashes, creator_account=alice['id'])
     irohalib.IrohaCrypto.sign_query(query, alice['key'])
     return query

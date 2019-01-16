@@ -28,10 +28,10 @@ class YacBlockStorageTest : public ::testing::Test {
     hash = YacHash(iroha::consensus::Round{1, 1}, "proposal", "commit");
     number_of_peers = 4;
     storage = YacBlockStorage(hash, number_of_peers);
-    valid_votes = {create_vote(hash, "one"),
-                   create_vote(hash, "two"),
-                   create_vote(hash, "three"),
-                   create_vote(hash, "four")};
+    valid_votes = {createVote(hash, "one"),
+                   createVote(hash, "two"),
+                   createVote(hash, "three"),
+                   createVote(hash, "four")};
   }
 };
 

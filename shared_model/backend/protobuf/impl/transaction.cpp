@@ -61,7 +61,7 @@ namespace shared_model {
         return SignatureSetType<proto::Signature>(signatures.begin(),
                                                   signatures.end());
       }()};
-    };
+    };  // namespace proto
 
     Transaction::Transaction(const TransportType &transaction) {
       impl_ = std::make_unique<Transaction::Impl>(transaction);
@@ -122,8 +122,8 @@ namespace shared_model {
       }
 
       auto sig = impl_->proto_->add_signatures();
-      sig->set_signature(crypto::toBinaryString(signed_blob));
-      sig->set_public_key(crypto::toBinaryString(public_key));
+      sig->set_signature(signed_blob.hex());
+      sig->set_public_key(public_key.hex());
 
       impl_->signatures_ = [this] {
         auto signatures = impl_->proto_->signatures()

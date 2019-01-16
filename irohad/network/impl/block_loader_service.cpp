@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "network/impl/block_loader_service.hpp"
@@ -26,10 +14,11 @@ using namespace iroha::network;
 BlockLoaderService::BlockLoaderService(
     std::shared_ptr<BlockQueryFactory> block_query_factory,
     std::shared_ptr<iroha::consensus::ConsensusResultCache>
-        consensus_result_cache)
+        consensus_result_cache,
+    logger::Logger log)
     : block_query_factory_(std::move(block_query_factory)),
       consensus_result_cache_(std::move(consensus_result_cache)),
-      log_(logger::log("BlockLoaderService")) {}
+      log_(std::move(log)) {}
 
 grpc::Status BlockLoaderService::retrieveBlocks(
     ::grpc::ServerContext *context,
@@ -40,8 +29,12 @@ grpc::Status BlockLoaderService::retrieveBlocks(
         return block_query->getBlocksFrom(height);
       };
   std::for_each(blocks.begin(), blocks.end(), [&writer](const auto &block) {
-    writer->Write(std::dynamic_pointer_cast<shared_model::proto::Block>(block)
-                      ->getTransport());
+    protocol::Block proto_block;
+    *proto_block.mutable_block_v1() =
+        std::dynamic_pointer_cast<shared_model::proto::Block>(block)
+            ->getTransport();
+
+    writer->Write(proto_block);
   });
   return grpc::Status::OK;
 }
@@ -61,8 +54,10 @@ grpc::Status BlockLoaderService::retrieveBlock(
   auto block = consensus_result_cache_->get();
   if (block) {
     if (block->hash() == hash) {
-      *response = std::static_pointer_cast<shared_model::proto::Block>(block)
-                      ->getTransport();
+      auto block_v1 =
+          std::static_pointer_cast<shared_model::proto::Block>(block)
+              ->getTransport();
+      *response->mutable_block_v1() = block_v1;
       return grpc::Status::OK;
     } else {
       log_->info(
@@ -100,7 +95,9 @@ grpc::Status BlockLoaderService::retrieveBlock(
     return grpc::Status(grpc::StatusCode::NOT_FOUND, "Block not found");
   }
 
-  *response = std::static_pointer_cast<shared_model::proto::Block>(*found_block)
-                  ->getTransport();
+  auto block_v1 =
+      std::static_pointer_cast<shared_model::proto::Block>(*found_block)
+          ->getTransport();
+  *response->mutable_block_v1() = block_v1;
   return grpc::Status::OK;
 }

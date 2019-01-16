@@ -10,6 +10,7 @@
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "module/irohad/ordering/ordering_mocks.hpp"
 #include "module/shared_model/interface_mocks.hpp"
+#include "ordering/impl/on_demand_common.hpp"
 
 using namespace iroha;
 using namespace iroha::ordering;
@@ -44,7 +45,7 @@ struct OnDemandConnectionManagerTest : public ::testing::Test {
     }
 
     manager = std::make_shared<OnDemandConnectionManager>(
-        factory, cpeers, peers.get_observable());
+        factory, peers.get_observable(), cpeers);
   }
 
   OnDemandConnectionManager::CurrentPeers cpeers;
@@ -75,19 +76,19 @@ TEST_F(OnDemandConnectionManagerTest, FactoryUsed) {
 TEST_F(OnDemandConnectionManagerTest, onBatches) {
   OdOsNotification::CollectionType collection;
   consensus::Round round{1, 2};
-  const OnDemandConnectionManager::PeerType types[] = {
+
+  auto set_expect = [&](OnDemandConnectionManager::PeerType type,
+                        consensus::Round round) {
+    EXPECT_CALL(*connections[type], onBatches(round, collection)).Times(1);
+  };
+
+  set_expect(
       OnDemandConnectionManager::kCurrentRoundRejectConsumer,
-      OnDemandConnectionManager::kNextRoundRejectConsumer,
-      OnDemandConnectionManager::kNextRoundCommitConsumer};
-  const consensus::Round rounds[] = {
-      {round.block_round, round.reject_round + 2},
-      {round.block_round + 1, 2},
-      {round.block_round + 2, 1}};
-  for (auto &&pair : boost::combine(types, rounds)) {
-    EXPECT_CALL(*connections[boost::get<0>(pair)],
-                onBatches(boost::get<1>(pair), collection))
-        .Times(1);
-  }
+      {round.block_round, currentRejectRoundConsumer(round.reject_round)});
+  set_expect(OnDemandConnectionManager::kNextRoundRejectConsumer,
+             {round.block_round + 1, kNextRejectRoundConsumer});
+  set_expect(OnDemandConnectionManager::kNextRoundCommitConsumer,
+             {round.block_round + 2, kNextCommitRoundConsumer});
 
   manager->onBatches(round, collection);
 }

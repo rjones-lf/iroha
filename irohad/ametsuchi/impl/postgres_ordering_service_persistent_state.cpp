@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include "ametsuchi/impl/postgres_ordering_service_persistent_state.hpp"
@@ -28,8 +16,7 @@ namespace iroha {
       try {
         *sql_ << query;
       } catch (std::exception &e) {
-        log_->error("Failed to execute query: " + query
-                    + ". Reason: " + e.what());
+        log_->error("Failed to execute query: {}. Reason: {}", query, e.what());
         return false;
       }
       return true;
@@ -42,7 +29,7 @@ namespace iroha {
       std::unique_ptr<soci::session> sql;
       try {
         sql =
-            std::make_unique<soci::session>(soci::postgresql, postgres_options);
+            std::make_unique<soci::session>(*soci::factory_postgresql(), postgres_options);
 
       } catch (std::exception &e) {
         return expected::makeError(
@@ -60,9 +47,8 @@ namespace iroha {
 
     PostgresOrderingServicePersistentState::
         PostgresOrderingServicePersistentState(
-            std::unique_ptr<soci::session> sql)
-        : sql_(std::move(sql)),
-          log_(logger::log("PostgresOrderingServicePersistentState")) {}
+            std::unique_ptr<soci::session> sql, logger::Logger log)
+        : sql_(std::move(sql)), log_(std::move(log)) {}
 
     bool PostgresOrderingServicePersistentState::initStorage() {
       return execute_(
@@ -88,8 +74,14 @@ namespace iroha {
     boost::optional<size_t>
     PostgresOrderingServicePersistentState::loadProposalHeight() const {
       boost::optional<size_t> height;
-      *sql_ << "SELECT * FROM ordering_service_state LIMIT 1",
-          soci::into(height);
+      std::string query = "SELECT * FROM ordering_service_state LIMIT 1";
+      try {
+        *sql_ << query, soci::into(height);
+      } catch (std::exception &e) {
+        log_->error("Failed to execute query: " + query
+                    + ". Reason: " + e.what());
+        return boost::none;
+      }
 
       if (not height) {
         log_->error(

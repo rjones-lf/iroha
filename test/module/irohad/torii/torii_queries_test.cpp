@@ -30,6 +30,8 @@
 #include "utils/query_error_response_visitor.hpp"
 
 constexpr size_t TimesFind = 1;
+static constexpr shared_model::interface::types::TransactionsNumberType
+    kTxPageSize(10);
 
 using ::testing::_;
 using ::testing::A;
@@ -462,8 +464,8 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
   iroha::pubkey_t pubkey;
   std::fill(pubkey.begin(), pubkey.end(), 0x1);
   std::vector<shared_model::interface::types::PubkeyType> keys;
-  keys.push_back(
-      shared_model::interface::types::PubkeyType(pubkey.to_string()));
+  keys.emplace_back(shared_model::interface::types::PubkeyType::fromHexString(
+      pubkey.to_hexstring()));
 
   EXPECT_CALL(*wsv_query, getSignatories(creator))
       .WillRepeatedly(Return(signatories));
@@ -501,7 +503,7 @@ TEST_F(ToriiQueriesTest, FindSignatoriesHasRolePermissions) {
     /// valid
     ASSERT_FALSE(response.has_error_response());
     // check if fields in response are valid
-    ASSERT_EQ(resp_pubkey, signatories.back());
+    ASSERT_EQ(resp_pubkey.toString(), signatories.back().toString());
     ASSERT_EQ(model_query.hash(), shared_response.queryHash());
   });
 }
@@ -532,7 +534,7 @@ TEST_F(ToriiQueriesTest, FindTransactionsWhenValid) {
                          .creatorAccountId(creator)
                          .queryCounter(1)
                          .createdTime(iroha::time::now())
-                         .getAccountTransactions(creator)
+                         .getAccountTransactions(creator, kTxPageSize)
                          .build()
                          .signAndAddSignature(pair)
                          .finish();
@@ -582,7 +584,7 @@ TEST_F(ToriiQueriesTest, FindManyTimesWhereQueryServiceSync) {
                            .creatorAccountId("a@domain")
                            .queryCounter(i)
                            .createdTime(iroha::time::now())
-                           .getAccountTransactions("a@2domain")
+                           .getAccountTransactions("a@2domain", kTxPageSize)
                            .build();
 
     auto stat = client.Find(model_query.getTransport(), response);

@@ -37,7 +37,7 @@ def genesis_tx():
 
 @commons.hex
 def account_asset_transactions_query():
-    query = iroha.query('GetAccountAssetTransactions', creator_account=alice['id'], account_id=admin['id'],
-                        asset_id='coin#first')
+    query = iroha.query('GetAccountAssetTransactions', creator_account=alice['id'], page_size=10,
+                        account_id=admin['id'], asset_id='coin#first')
     irohalib.IrohaCrypto.sign_query(query, alice['key'])
     return query

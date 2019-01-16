@@ -153,27 +153,27 @@ TYPED_TEST(BinaryTestFixture, can_get_my_acc_ast) {
 }
 
 TYPED_TEST(BinaryTestFixture, can_get_all_acc_ast_txs) {
-  this->template doTest<TransactionsResponse>(1, 1);
+  this->template doTest<TransactionsPageResponse>(1, 1);
 }
 
 TYPED_TEST(BinaryTestFixture, can_get_domain_acc_ast_txs) {
-  this->template doTest<TransactionsResponse>(1, 1);
+  this->template doTest<TransactionsPageResponse>(1, 1);
 }
 
 TYPED_TEST(BinaryTestFixture, can_get_my_acc_ast_txs) {
-  this->template doTest<TransactionsResponse>(1, 1);
+  this->template doTest<TransactionsPageResponse>(1, 1);
 }
 
 TYPED_TEST(BinaryTestFixture, can_get_all_acc_txs) {
-  this->template doTest<TransactionsResponse>(1, 1);
+  this->template doTest<TransactionsPageResponse>(1, 1);
 }
 
 TYPED_TEST(BinaryTestFixture, can_get_domain_acc_txs) {
-  this->template doTest<TransactionsResponse>(1, 1);
+  this->template doTest<TransactionsPageResponse>(1, 1);
 }
 
 TYPED_TEST(BinaryTestFixture, can_get_my_acc_txs) {
-  this->template doTest<TransactionsResponse>(1, 1);
+  this->template doTest<TransactionsPageResponse>(1, 1);
 }
 
 TYPED_TEST(BinaryTestFixture, can_read_assets) {

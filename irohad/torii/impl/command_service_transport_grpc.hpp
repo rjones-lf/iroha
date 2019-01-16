@@ -8,16 +8,31 @@
 
 #include "torii/command_service.hpp"
 
-#include <chrono>
-
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
+#include "interfaces/common_objects/transaction_sequence_common.hpp"
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
-#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
-#include "interfaces/iroha_internal/transaction_batch_parser.hpp"
-#include "interfaces/iroha_internal/tx_status_factory.hpp"
 #include "logger/logger.hpp"
-#include "torii/status_bus.hpp"
+
+namespace iroha {
+  namespace torii {
+    class StatusBus;
+  }
+}  // namespace iroha
+
+namespace shared_model {
+  namespace interface {
+    class TxStatusFactory;
+    class TransactionBatchParser;
+    class TransactionBatchFactory;
+  }  // namespace interface
+}  // namespace shared_model
+
+namespace iroha {
+  namespace network {
+    class ConsensusGate;
+  }
+}  // namespace iroha
 
 namespace torii {
   class CommandServiceTransportGrpc
@@ -32,21 +47,27 @@ namespace torii {
      * Creates a new instance of CommandServiceTransportGrpc
      * @param command_service - to delegate logic work
      * @param status_bus is a common notifier for tx statuses
+     * @param status_factory - factory of statuses
+     * @param transaction_factory - factory of transactions
+     * @param batch_parser - parses of batches
+     * @param transaction_batch_factory - factory of batches
      * @param initial_timeout - streaming timeout when tx is not received
      * @param nonfinal_timeout - streaming timeout when tx is being processed
+     * @param log to print progress
      */
     CommandServiceTransportGrpc(
         std::shared_ptr<CommandService> command_service,
         std::shared_ptr<iroha::torii::StatusBus> status_bus,
-        std::chrono::milliseconds initial_timeout,
-        std::chrono::milliseconds nonfinal_timeout,
         std::shared_ptr<shared_model::interface::TxStatusFactory>
             status_factory,
         std::shared_ptr<TransportFactoryType> transaction_factory,
         std::shared_ptr<shared_model::interface::TransactionBatchParser>
             batch_parser,
         std::shared_ptr<shared_model::interface::TransactionBatchFactory>
-            transaction_batch_factory);
+            transaction_batch_factory,
+        std::shared_ptr<iroha::network::ConsensusGate> consensus_gate,
+        int maximum_rounds_without_update,
+        logger::Logger log = logger::log("CommandServiceTransportGrpc"));
 
     /**
      * Torii call via grpc
@@ -106,8 +127,6 @@ namespace torii {
 
     std::shared_ptr<CommandService> command_service_;
     std::shared_ptr<iroha::torii::StatusBus> status_bus_;
-    const std::chrono::milliseconds initial_timeout_;
-    const std::chrono::milliseconds nonfinal_timeout_;
     std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory_;
     std::shared_ptr<TransportFactoryType> transaction_factory_;
     std::shared_ptr<shared_model::interface::TransactionBatchParser>
@@ -115,6 +134,9 @@ namespace torii {
     std::shared_ptr<shared_model::interface::TransactionBatchFactory>
         batch_factory_;
     logger::Logger log_;
+
+    std::shared_ptr<iroha::network::ConsensusGate> consensus_gate_;
+    const int maximum_rounds_without_update_;
   };
 }  // namespace torii
 

@@ -19,7 +19,7 @@ def genesis_tx():
     genesis_commands = commons.genesis_block(admin, alice, test_permissions)
     genesis_commands.append(
         iroha.command('CreateAccount', account_name='bob', domain_id='test',
-                      public_key=commons.public_key_bytes(bob['key'])))
+                      public_key=irohalib.IrohaCrypto.derive_public_key(bob['key'])))
     tx = iroha.transaction(genesis_commands)
     irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
     return tx

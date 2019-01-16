@@ -76,7 +76,7 @@ def genesis_block(admin, alice, test_permissions, multidomain=False):
     """
     peer = primitive_pb2.Peer()
     peer.address = '0.0.0.0:50541'
-    peer.peer_key = public_key_bytes(admin['key'])
+    peer.peer_key = admin['key']
     commands = [
         command('AddPeer', peer=peer),
         command('CreateRole', role_name='admin_role', permissions=all_permissions()),
@@ -90,11 +90,11 @@ def genesis_block(admin, alice, test_permissions, multidomain=False):
         command('CreateAccount',
                 account_name='admin',
                 domain_id='first' if multidomain else 'test',
-                public_key=public_key_bytes(admin['key'])),
+                public_key=irohalib.IrohaCrypto.derive_public_key(admin['key'])),
         command('CreateAccount',
                 account_name='alice',
                 domain_id='second' if multidomain else 'test',
-                public_key=public_key_bytes(alice['key']))
+                public_key=irohalib.IrohaCrypto.derive_public_key(alice['key']))
     ])
     if not multidomain:
         commands.append(command('AppendRole', account_id=admin['id'], role_name='admin_role'))
@@ -109,12 +109,6 @@ def new_user(user_id):
         'id': user_id,
         'key': private_key
     }
-
-
-def public_key_bytes(private_key_hex):
-    """Derive public key from private and return its bytes representation"""
-    public_key = irohalib.IrohaCrypto.derive_public_key(private_key_hex)
-    return binascii.unhexlify(public_key)
 
 
 def hex(generator):

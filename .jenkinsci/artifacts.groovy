@@ -37,7 +37,7 @@ def uploadArtifacts(filePaths, uploadPath, artifactServers=['nexus.iroha.tech'])
 
   withCredentials([usernamePassword(credentialsId: 'ci_nexus', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
     artifactServers.each {
-      sh(script: "while read line; do curl -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file \$line https://${it}/repository/artifacts/${uploadPath}/ ; done < \$(pwd)/batch.txt")
+      sh(script: "while read line; do curl --http1.1 -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file \$line https://${it}/repository/artifacts/${uploadPath}/ ; done < \$(pwd)/batch.txt")
     }
   }
 }

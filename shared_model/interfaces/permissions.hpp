@@ -58,7 +58,8 @@ namespace shared_model {
         kTransferMyAssets,
         kSetMyAccountDetail,
         kGetBlocks,
-
+        kAddDomainAssetQty,
+        kSubtractDomainAssetQty,
         COUNT
       };
 

@@ -25,7 +25,7 @@ def genesis_tx():
 @commons.hex
 def create_account_tx():
     tx = iroha.transaction([
-        iroha.command('CreateAccount', account_name='bob', domain_id='test', public_key=commons.public_key_bytes(bob['key']))
+        iroha.command('CreateAccount', account_name='bob', domain_id='test', public_key=bob['key'])
     ], creator_account=alice['id'])
     irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
     return tx

@@ -19,13 +19,14 @@ namespace torii {
       std::shared_ptr<iroha::torii::TransactionProcessor> tx_processor,
       std::shared_ptr<iroha::ametsuchi::Storage> storage,
       std::shared_ptr<iroha::torii::StatusBus> status_bus,
-      std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory)
+      std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory,
+      logger::Logger log)
       : tx_processor_(std::move(tx_processor)),
         storage_(std::move(storage)),
         status_bus_(std::move(status_bus)),
         cache_(std::make_shared<CacheType>()),
         status_factory_(std::move(status_factory)),
-        log_(logger::log("CommandServiceImpl")) {
+        log_(std::move(log)) {
     // Notifier for all clients
     status_bus_->statuses().subscribe([this](auto response) {
       // find response for this tx in cache; if status of received response
@@ -136,7 +137,7 @@ namespace torii {
   void CommandServiceImpl::pushStatus(
       const std::string &who,
       std::shared_ptr<shared_model::interface::TransactionResponse> response) {
-    log_->debug("{}: adding item to cache: {}", who, response->toString());
+    log_->debug("{}: adding item to cache: {}", who, *response);
     status_bus_->publish(response);
   }
 

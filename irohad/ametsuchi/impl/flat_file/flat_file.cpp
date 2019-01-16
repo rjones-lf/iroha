@@ -5,12 +5,14 @@
 
 #include "ametsuchi/impl/flat_file/flat_file.hpp"
 
-#include <boost/filesystem.hpp>
-#include <boost/range/adaptor/indexed.hpp>
-#include <boost/range/algorithm/find_if.hpp>
+#include <ciso646>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+
+#include <boost/filesystem.hpp>
+#include <boost/range/adaptor/indexed.hpp>
+#include <boost/range/algorithm/find_if.hpp>
 #include "common/files.hpp"
 
 using namespace iroha::ametsuchi;
@@ -111,9 +113,9 @@ void FlatFile::dropAll() {
 
 FlatFile::FlatFile(Identifier current_id,
                    const std::string &path,
-                   FlatFile::private_tag)
-    : dump_dir_(path) {
-  log_ = logger::log("FlatFile");
+                   FlatFile::private_tag,
+                   logger::Logger log)
+    : dump_dir_(path), log_{std::move(log)} {
   current_id_.store(current_id);
 }
 

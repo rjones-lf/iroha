@@ -5,6 +5,7 @@
 
 import irohalib
 import commons
+import binascii
 import primitive_pb2
 
 admin = commons.new_user('admin@first')
@@ -52,7 +53,10 @@ def alice_action_2_tx():
 
 @commons.hex
 def transactions_query():
-    hashes = [alice_tx1_hash, alice_tx2_hash]
+    hashes = [
+        binascii.hexlify(alice_tx1_hash),
+        binascii.hexlify(alice_tx2_hash)
+    ]
     query = iroha.query('GetTransactions', creator_account=alice['id'], tx_hashes=hashes)
     irohalib.IrohaCrypto.sign_query(query, alice['key'])
     return query

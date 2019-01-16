@@ -78,11 +78,19 @@ message ErrorResponse {
 }
 
 message SignatoriesResponse {
-  repeated bytes keys = 1;
+  repeated string keys = 1;
 }
 
 message TransactionsResponse {
   repeated Transaction transactions = 1;
+}
+
+message TransactionsPageResponse {
+  repeated Transaction transactions = 1;
+  uint32 all_transactions_size = 2;
+  oneof next_page_tag {
+    string next_tx_hash = 3;
+  }
 }
 
 message QueryResponse {
@@ -96,6 +104,7 @@ message QueryResponse {
     AssetResponse asset_response = 7;
     RolesResponse roles_response = 8;
     RolePermissionsResponse role_permissions_response = 9;
+    TransactionsPageResponse transactions_page_response = 11;
   }
   string query_hash = 10;
 }

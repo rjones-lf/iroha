@@ -19,7 +19,7 @@ def genesis_tx():
     genesis_commands = commons.genesis_block(admin, alice, test_permissions)
     genesis_commands.append(
         iroha.command('CreateAccount', account_name='bob', domain_id='test',
-                      public_key=commons.public_key_bytes(bob['key'])))
+                      public_key=irohalib.IrohaCrypto.derive_public_key(bob['key'])))
     tx = iroha.transaction(genesis_commands)
     irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
     return tx
@@ -38,7 +38,7 @@ def grant_can_add_my_signatory_tx():
 def add_signatory_tx():
     extra_key = irohalib.IrohaCrypto.private_key()
     tx = iroha.transaction([
-        iroha.command('AddSignatory', account_id=alice['id'], public_key=commons.public_key_bytes(extra_key))
+        iroha.command('AddSignatory', account_id=alice['id'], public_key=irohalib.IrohaCrypto.derive_public_key(extra_key))
     ], creator_account=bob['id'])
     irohalib.IrohaCrypto.sign_transaction(tx, bob['key'])
     return tx

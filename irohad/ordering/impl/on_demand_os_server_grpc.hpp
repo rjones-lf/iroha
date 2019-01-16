@@ -34,7 +34,8 @@ namespace iroha {
             std::shared_ptr<shared_model::interface::TransactionBatchParser>
                 batch_parser,
             std::shared_ptr<shared_model::interface::TransactionBatchFactory>
-                transaction_batch_factory);
+                transaction_batch_factory,
+            logger::Logger log = logger::log("OnDemandOsServerGrpc"));
 
         grpc::Status SendBatches(::grpc::ServerContext *context,
                                  const proto::BatchesRequest *request,

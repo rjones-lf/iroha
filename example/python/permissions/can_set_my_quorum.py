@@ -22,7 +22,7 @@ def genesis_tx():
     genesis_commands = commons.genesis_block(admin, alice, test_permissions)
     genesis_commands.append(
         iroha.command('CreateAccount', account_name='bob', domain_id='test',
-                      public_key=commons.public_key_bytes(bob['key']))
+                      public_key=irohalib.IrohaCrypto.derive_public_key(bob['key']))
     )
     tx = iroha.transaction(genesis_commands)
     irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
@@ -34,7 +34,7 @@ def grant_can_set_my_quorum_tx():
     extra_key = irohalib.IrohaCrypto.private_key()
     tx = iroha.transaction([
         iroha.command('GrantPermission', account_id=bob['id'], permission=primitive_pb2.can_set_my_quorum),
-        iroha.command('AddSignatory', account_id=alice['id'], public_key=commons.public_key_bytes(extra_key))
+        iroha.command('AddSignatory', account_id=alice['id'], public_key=irohalib.IrohaCrypto.derive_public_key(extra_key))
     ], creator_account=alice['id'])
     irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
     return tx

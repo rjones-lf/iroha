@@ -62,7 +62,7 @@ namespace iroha {
         return sig;
       }
 
-      VoteMessage create_vote(YacHash hash, std::string pub_key) {
+      VoteMessage createVote(YacHash hash, std::string pub_key) {
         VoteMessage vote;
         vote.hash = hash;
         vote.signature = createSig(pub_key);
@@ -181,7 +181,7 @@ namespace iroha {
       class MockYacHashProvider : public YacHashProvider {
        public:
         MOCK_CONST_METHOD1(makeHash,
-                           YacHash(const shared_model::interface::Block &));
+                           YacHash(const simulator::BlockCreatorEvent &event));
 
         MOCK_CONST_METHOD1(
             toModelHash,

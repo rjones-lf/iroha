@@ -8,9 +8,7 @@
 #include "multi_sig_transactions/storage/mst_storage.hpp"
 
 namespace iroha {
-  MstStorage::MstStorage() {
-    log_ = logger::log("MstStorage");
-  }
+  MstStorage::MstStorage(logger::Logger log) : log_{std::move(log)} {}
 
   StateUpdateResult MstStorage::apply(
       const shared_model::crypto::PublicKey &target_peer_key,
@@ -39,5 +37,9 @@ namespace iroha {
   MstState MstStorage::whatsNew(ConstRefState new_state) const {
     std::lock_guard<std::mutex> lock{this->mutex_};
     return whatsNewImpl(new_state);
+  }
+
+  bool MstStorage::batchInStorage(const DataType &batch) const {
+    return batchInStorageImpl(batch);
   }
 }  // namespace iroha

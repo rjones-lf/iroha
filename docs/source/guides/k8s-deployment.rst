@@ -120,13 +120,17 @@ Replace the default *kubectl* configuration:
 
 We can now control the remote k8s cluster
 
-*k8s-iroha.yaml* pod specification file requires to create a *config-map* first. This is a special resource that is mounted into each pod, and contains keys and configuration files required to run Iroha.
+*k8s-iroha.yaml* pod specification file requires the creation of a *config-map* first. This is a special resource that is mounted in the init container of each pod, and contains the configuration and genesis block files required to run Iroha.
 
 .. code-block:: shell
 
     kubectl create configmap iroha-config --from-file=deploy/ansible/roles/iroha-k8s/files/conf/
 
-.. Attention:: We store all the keys in a single *config-map*. This greatly simplifies the deployment, but suits only for proof-of-concept purposes as each node would have an access to private keys of others.
+Each peer will have their public and private keys stored in a Kubernetes secret which is  mounted in the init container and copied over for Iroha to use. Peers will only be able read their assigned secret when running Iroha.
+
+.. code-block:: shell
+
+    kubectl create -f deploy/ansible/roles/iroha-k8s/files/k8s-peer-keys.yaml
 
 Deploy Iroha network pod specification:
 

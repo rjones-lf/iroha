@@ -6,6 +6,7 @@
 #include "ordering/impl/ordering_gate_cache/on_demand_cache.hpp"
 
 #include "interfaces/iroha_internal/transaction_batch.hpp"
+#include "interfaces/transaction.hpp"
 
 using namespace iroha::ordering::cache;
 
@@ -22,7 +23,11 @@ void OnDemandCache::remove(const OrderingGateCache::HashesSetType &hashes) {
   std::unique_lock<std::shared_timed_mutex> lock(mutex_);
   for (auto &batches : circ_buffer) {
     for (auto it = batches.begin(); it != batches.end();) {
-      if (hashes.find(it->get()->reducedHash()) != hashes.end()) {
+      if (std::any_of(it->get()->transactions().begin(),
+                      it->get()->transactions().end(),
+                      [&hashes](const auto &tx) {
+                        return hashes.find(tx->hash()) != hashes.end();
+                      })) {
         // returns iterator following the last removed element
         // hence there is no increment in loop iteration_expression
         it = batches.erase(it);
