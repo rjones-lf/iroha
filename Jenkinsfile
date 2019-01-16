@@ -230,7 +230,7 @@ node ('master') {
 
 
   // Define Workers
-  x64LinuxWorker = new Worker(label: 'x86_64', cpusAvailable: 4)
+  x64LinuxWorker = new Worker(label: 'docker-build-agent', cpusAvailable: 4)
   x64MacWorker = new Worker(label: 'mac', cpusAvailable: 4)
 
 
