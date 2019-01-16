@@ -8,8 +8,6 @@
 import csv
 import rst
 import glossary
-import consts
-import os.path
 import os
 
 perm_type = category = perm = ""
@@ -106,8 +104,7 @@ with open(MATRIX_PATH, newline='') as csvfile:
                         print(row['Related Command'])
                         raise
             result.append('| {}: {}'.format(related, ', '.join(links)))
-
-        result.extend(rst.alias(perm, grantable))
+            result.append('')
 
         if row['Example'].strip():
             result.extend(rst.example(row['Example']))
@@ -116,8 +113,6 @@ with open(MATRIX_PATH, newline='') as csvfile:
     result.extend(rst.header('Supplementary Sources', 1))
     commons_path = [os.path.pardir] * 2 + ['example', 'python', 'permissions', 'commons.py']
     result.extend(rst.listing(commons_path, 'commons.py'))
-    consts_path = [os.path.pardir, 'permissions_compiler', 'consts.py']
-    result.extend(rst.listing(consts_path, 'consts.py'))
 
 with open('maintenance/permissions.rst', 'w') as output:
     content = "\n".join(result)

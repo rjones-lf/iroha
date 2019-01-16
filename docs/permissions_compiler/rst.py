@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-import consts
 import csv
 import os.path
 
@@ -80,28 +79,6 @@ def linkify(term, dictionary, pop=False):
             if pop:
                 dictionary.pop(clean_singular, None)
     return result
-
-
-def alias(permission, grantable):
-    """
-
-    :param permission: string permsssion name
-    :param grantable: boolean True if grantable
-    :return: list of strings
-    """
-    langs = {'Python': '_', 'Java': '.'}
-    lines = []
-    perm = permission.lower().strip()
-    for lang, delimiter in sorted(langs.items()):
-        lines.append('| Usage in {} bindings: ``{}{}{}``'.format(
-            lang,
-            'Grantable' if grantable else 'Role',
-            delimiter,
-            consts.grantable[perm] if grantable else consts.role[perm]
-        ))
-    lines.append('|')
-    lines.append('')
-    return lines
 
 
 def listing(compile_time_path, caption='', lines_range=None, lang='python'):
