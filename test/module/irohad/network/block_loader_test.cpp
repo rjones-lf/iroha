@@ -67,10 +67,8 @@ class BlockLoaderTest : public testing::Test {
     builder.RegisterService(service.get());
     server = builder.BuildAndStart();
 
-    peer = std::make_shared<MockPeer>();
     address = "0.0.0.0:" + std::to_string(port);
-    EXPECT_CALL(*peer, pubkey()).WillRepeatedly(testing::ReturnRef(peer_key));
-    EXPECT_CALL(*peer, address()).WillRepeatedly(testing::ReturnRef(address));
+    peer = makePeer(address, peer_key);
 
     ASSERT_TRUE(server);
     ASSERT_NE(port, 0);
