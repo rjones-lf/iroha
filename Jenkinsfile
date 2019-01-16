@@ -86,9 +86,10 @@ def cmd_sanitize(String cmd){
   return true
 }
 
-def gitNotify (context, description, status ){
-  githubNotify context: context, credentialsId: 'SORABOT_TOKEN_AND_LOGIN', description: description, status: status
+def gitNotify (context, description, status, targetUrl='' ){
+  githubNotify context: context, credentialsId: 'SORABOT_TOKEN_AND_LOGIN', description: description, status: status, targetUrl: targetUrl
 }
+
 stage('Prepare environment'){
 timestamps(){
 
@@ -190,13 +191,14 @@ node ('master') {
         break;
      case 'On open PR':
         // Just hint, not the main way to Notify about build status.
-        gitNotify ("New CI: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING')
+        gitNotify ("New CI: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING', env.JOB_URL + "/build")
         mac_compiler_list = ['appleclang']
         coverage = true
         cppcheck = true
         sonar = true
         break;
      case 'Commit in Open PR':
+        gitNotify ("New CI: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING', env.JOB_URL + "/build")
         echo "All Default"
         break;
      case 'Before merge to trunk':
