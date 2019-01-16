@@ -21,6 +21,16 @@ TEST(StringConverterTest, ConvertHexToBinary) {
 }
 
 /**
+ * @given invalid hex string
+ * @when string is converted to binary string
+ * @then boost::none is returned
+ */
+TEST(StringConverterTest, InvalidHexToBinary) {
+  std::string invalid_hex = "au";
+  ASSERT_FALSE(hexstringToBytestring(invalid_hex));
+}
+
+/**
  * @given binary string
  * @when binary string was converted to hex string
  * @then converted string match the result we are expected

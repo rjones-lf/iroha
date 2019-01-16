@@ -133,7 +133,7 @@ TEST_F(AmetsuchiTest, SampleTest) {
 
   apply(storage, block1);
 
-  validateAccount(wsv, user1id, domain);
+  validateAccount(sql_query, user1id, domain);
 
   // Block 2
   txs.clear();
@@ -153,9 +153,9 @@ TEST_F(AmetsuchiTest, SampleTest) {
 
   apply(storage, block2);
   validateAccountAsset(
-      wsv, user1id, assetid, shared_model::interface::Amount("50.0"));
+      sql_query, user1id, assetid, shared_model::interface::Amount("50.0"));
   validateAccountAsset(
-      wsv, user2id, assetid, shared_model::interface::Amount("100.0"));
+      sql_query, user2id, assetid, shared_model::interface::Amount("100.0"));
 
   // Block store tests
   auto hashes = {block1.hash(), block2.hash()};
@@ -216,7 +216,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   apply(storage, block1);
 
   {
-    auto account_opt = wsv->getAccount(user1id);
+    auto account_opt = sql_query->getAccount(user1id);
     ASSERT_TRUE(account_opt);
     auto account = account_opt.value();
     ASSERT_EQ(account->accountId(), user1id);
@@ -244,7 +244,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   apply(storage, block2);
 
   {
-    auto account = wsv->getAccount(user1id);
+    auto account = sql_query->getAccount(user1id);
     ASSERT_TRUE(account);
 
     auto signatories = wsv->getSignatories(user1id);
@@ -270,10 +270,10 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   apply(storage, block3);
 
   {
-    auto account1 = wsv->getAccount(user1id);
+    auto account1 = sql_query->getAccount(user1id);
     ASSERT_TRUE(account1);
 
-    auto account2 = wsv->getAccount(user2id);
+    auto account2 = sql_query->getAccount(user2id);
     ASSERT_TRUE(account2);
 
     auto signatories1 = wsv->getSignatories(user1id);
@@ -304,7 +304,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   apply(storage, block4);
 
   {
-    auto account = wsv->getAccount(user1id);
+    auto account = sql_query->getAccount(user1id);
     ASSERT_TRUE(account);
 
     // user1 has only pubkey2.
@@ -337,7 +337,7 @@ TEST_F(AmetsuchiTest, AddSignatoryTest) {
   apply(storage, block5);
 
   {
-    auto account_opt = wsv->getAccount(user2id);
+    auto account_opt = sql_query->getAccount(user2id);
     ASSERT_TRUE(account_opt);
     auto &account = account_opt.value();
     ASSERT_EQ(account->quorum(), 2);
@@ -568,14 +568,14 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
 
   apply(storage, genesis_block);
 
-  auto res = storage->getWsvQuery()->getDomain("test");
+  auto res = sql_query->getDomain("test");
   EXPECT_TRUE(res);
 
   // spoil WSV
   *sql << "DELETE FROM domain";
 
   // check there is no data in WSV
-  res = storage->getWsvQuery()->getDomain("test");
+  res = sql_query->getDomain("test");
   EXPECT_FALSE(res);
 
   // recover storage and check it is recovered
@@ -586,7 +586,7 @@ TEST_F(AmetsuchiTest, TestRestoreWSV) {
         FAIL() << "Failed to recover WSV";
       });
 
-  res = storage->getWsvQuery()->getDomain("test");
+  res = sql_query->getDomain("test");
   EXPECT_TRUE(res);
 }
 
@@ -662,7 +662,7 @@ class PreparedBlockTest : public AmetsuchiTest {
  * @then state of the ledger remains unchanged
  */
 TEST_F(PreparedBlockTest, PrepareBlockNoStateChanged) {
-  validateAccountAsset(storage->getWsvQuery(),
+  validateAccountAsset(sql_query,
                        "admin@test",
                        "coin#test",
                        shared_model::interface::Amount(base_balance));
@@ -673,7 +673,7 @@ TEST_F(PreparedBlockTest, PrepareBlockNoStateChanged) {
 
   // balance remains unchanged
   validateAccountAsset(
-      storage->getWsvQuery(), "admin@test", "coin#test", base_balance);
+      sql_query, "admin@test", "coin#test", base_balance);
 }
 
 /**
@@ -697,7 +697,7 @@ TEST_F(PreparedBlockTest, CommitPreparedStateChanged) {
   shared_model::interface::Amount resultingAmount("10.00");
 
   validateAccountAsset(
-      storage->getWsvQuery(), "admin@test", "coin#test", resultingAmount);
+      sql_query, "admin@test", "coin#test", resultingAmount);
 }
 
 /**
@@ -720,7 +720,7 @@ TEST_F(PreparedBlockTest, PrepareBlockCommitDifferentBlock) {
 
   shared_model::interface::Amount resultingBalance{"15.00"};
   validateAccountAsset(
-      storage->getWsvQuery(), "admin@test", "coin#test", resultingBalance);
+      sql_query, "admin@test", "coin#test", resultingBalance);
 }
 
 /**
@@ -749,5 +749,5 @@ TEST_F(PreparedBlockTest, CommitPreparedFailsAfterCommit) {
 
   shared_model::interface::Amount resultingBalance{"15.00"};
   validateAccountAsset(
-      storage->getWsvQuery(), "admin@test", "coin#test", resultingBalance);
+      sql_query, "admin@test", "coin#test", resultingBalance);
 }

@@ -12,6 +12,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "common/hexutils.hpp"
+
 namespace iroha {
   using BadFormatException = std::invalid_argument;
   using byte_t = uint8_t;
@@ -94,6 +96,17 @@ namespace iroha {
       std::copy(data.begin(), data.end(), b.begin());
 
       return b;
+    }
+
+    static blob_t<size_> from_hexstring(const std::string &hex) {
+      auto bytes = iroha::hexstringToBytestring(hex);
+      if (not bytes) {
+        throw BadFormatException(
+            "Provided data (" + hex
+            + ") is not a valid hex value for blob of size ("
+            + std::to_string(size_) + ").");
+      }
+      return from_string(*bytes);
     }
   };
 }  // namespace iroha

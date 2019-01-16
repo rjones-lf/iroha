@@ -7,6 +7,7 @@
 #define IROHA_QUERY_ERROR_RESPONSE_VISITOR_HPP
 
 #include <boost/variant.hpp>
+#include "common/visitor.hpp"
 #include "interfaces/query_responses/error_query_response.hpp"
 
 namespace shared_model {

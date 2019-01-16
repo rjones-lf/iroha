@@ -21,6 +21,7 @@
 #include "integration/acceptance/acceptance_fixture.hpp"
 #include "interfaces/query_responses/roles_response.hpp"
 #include "main/iroha_conf_loader.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 #include "torii/command_client.hpp"
 #include "torii/query_client.hpp"
 
@@ -146,7 +147,9 @@ class IrohadTest : public AcceptanceFixture {
         complete(baseTx(kAdminId).setAccountQuorum(kAdminId, 1), key_pair);
     tx_request.set_tx_hash(tx.hash().hex());
 
-    torii::CommandSyncClient client(kAddress, kPort);
+    torii::CommandSyncClient client(
+        iroha::network::createClient<iroha::protocol::CommandService_v1>(
+            kAddress + ":" + std::to_string(kPort)));
     client.Torii(tx.getTransport());
 
     auto resub_counter(resubscribe_attempts);

@@ -9,6 +9,7 @@
 
 #include <gflags/gflags.h>
 #include <grpc++/grpc++.h>
+#include "ametsuchi/storage.hpp"
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
@@ -215,10 +216,12 @@ int main(int argc, char *argv[]) {
       [](const auto &) { return true; },
       [](iroha::expected::Error<std::string> &) { return false; });
 
-  if (not blocks_exist) {  // may happen only in case of bug or zero disk space
+  if (not blocks_exist) {
     log->error(
-        "You should have never seen this message. There are no blocks in the "
-        "ledger.  Unable to start. Try to specify --genesis_block and "
+        "Unable to start the ledger. There are no blocks in the ledger. Please "
+        "ensure that you are not trying to start the newer version of "
+        "the ledger over incompatible version of the storage or there is "
+        "enough disk space. Try to specify --genesis_block and "
         "--overwrite_ledger parameters at the same time.");
     return EXIT_FAILURE;
   }

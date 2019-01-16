@@ -22,10 +22,18 @@ namespace iroha_cli {
              "Transaction has not passed stateful validation."},
             {iroha::protocol::TxStatus::STATEFUL_VALIDATION_SUCCESS,
              "Transaction has successfully passed stateful validation."},
+            {iroha::protocol::TxStatus::REJECTED,
+             "Transaction has been rejected."},
             {iroha::protocol::TxStatus::COMMITTED,
              "Transaction was successfully committed."},
+            {iroha::protocol::TxStatus::MST_EXPIRED,
+             "Transaction has not collected enough signatures in time."},
             {iroha::protocol::TxStatus::NOT_RECEIVED,
-             "Transaction was not found in the system."}};
+             "Transaction was not found in the system."},
+            {iroha::protocol::TxStatus::MST_PENDING,
+             "Transaction has not collected quorum of signatures."},
+            {iroha::protocol::TxStatus::ENOUGH_SIGNATURES_COLLECTED,
+             "Transaction has collected all signatures."}};
 
     InteractiveStatusCli::InteractiveStatusCli(
         const std::string &default_peer_ip, int default_port)
@@ -131,7 +139,7 @@ namespace iroha_cli {
       iroha::protocol::ToriiResponse answer;
       if (iroha::hexstringToBytestring(txHash_)) {
         answer = CliClient(address.value().first, address.value().second)
-                     .getTxStatus(*iroha::hexstringToBytestring(txHash_))
+                     .getTxStatus(txHash_)
                      .answer;
         status = answer.tx_status();
       }
