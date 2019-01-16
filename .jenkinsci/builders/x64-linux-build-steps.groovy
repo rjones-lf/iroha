@@ -91,6 +91,8 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
             coverage ? build.initialCoverage(buildDir) : echo('Skipping initial coverage...')
             testSteps(buildDir, environment, testList)
             coverage ? build.postCoverage(buildDir, '/tmp/lcov_cobertura.py') : echo('Skipping post coverage...')
+            // We run coverage one time,in first compiler, it enough
+            coverage = false
           }
         }
       }

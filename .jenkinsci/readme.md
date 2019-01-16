@@ -1,4 +1,4 @@
-###List of parameters for Jenkins "Custom command" option:
+### List of parameters for Jenkins "Custom command" option:
 
 ```bash
 <optin_name> = <default_value> [(or <second_default_value> if <git branch name>)] - <descriptions> Ex: <Example of Use>
@@ -21,6 +21,8 @@
 -  `sonar = false` - Runs Sonar Analysis, runs only on Linux Ex: `sonar = false;x64linux_compiler_list= ['gcc5','gcc7']`
 
 -  `coverage = false` - Runs coverage, will run only if `testing = true`  Ex: `coverage = true`
+
+-  `coverage_mac= false` - Runs coverage on mac compiler, It can be handy if we run only on mac compiler but still need coverage. Ex  `coverage_mac= false;x64linux_compiler_list= []; mac_compiler_list = ['appleclang']`
 
 -  `doxygen = false (or = true if mater|develop|dev )` Build doxygen, if specialBranch== true will publish, if not specialBranch will upload it to jenkins,  Ex: `doxygen=true`
 

@@ -138,6 +138,7 @@ node ('master') {
   fuzzing = false // x64linux_compiler_list= ['clang6']  testing = true testList = "(None)"
   sonar = false
   coverage = false
+  coverage_mac = false
   doxygen = false
 
   build_type = 'Debug'
@@ -253,7 +254,7 @@ node ('master') {
   def x64MacBuildSteps
   def x64MacBuildPostSteps = new Builder.PostSteps()
   if(!mac_compiler_list.isEmpty()){
-    x64MacBuildSteps = [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, mac_compiler_list, build_type, coverage, testing, testList, packageBuild,  environmentList)}]
+    x64MacBuildSteps = [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, mac_compiler_list, build_type, coverage_mac, testing, testList, packageBuild,  environmentList)}]
     //If "master" or "dev" also run Release build
     if(specialBranch && build_type == 'Debug'){
       x64MacBuildSteps += [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, mac_compiler_list, 'Release', false, false, testList, true,  environmentList)}]
