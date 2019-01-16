@@ -31,4 +31,3 @@ def create_role_tx():
     ], creator_account=alice['id'])
     irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
     return tx
-

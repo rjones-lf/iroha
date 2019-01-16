@@ -7,7 +7,6 @@ import irohalib
 import commons
 import primitive_pb2
 
-
 admin = commons.new_user('admin@first')
 alice = commons.new_user('alice@second')
 iroha = irohalib.Iroha(admin['id'])

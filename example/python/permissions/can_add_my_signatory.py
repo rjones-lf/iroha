@@ -38,7 +38,8 @@ def grant_can_add_my_signatory_tx():
 def add_signatory_tx():
     extra_key = irohalib.IrohaCrypto.private_key()
     tx = iroha.transaction([
-        iroha.command('AddSignatory', account_id=alice['id'], public_key=irohalib.IrohaCrypto.derive_public_key(extra_key))
+        iroha.command('AddSignatory', account_id=alice['id'],
+                      public_key=irohalib.IrohaCrypto.derive_public_key(extra_key))
     ], creator_account=bob['id'])
     irohalib.IrohaCrypto.sign_transaction(tx, bob['key'])
     return tx

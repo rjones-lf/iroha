@@ -34,7 +34,8 @@ def grant_can_remove_my_signatory_tx():
     extra_key = irohalib.IrohaCrypto.private_key()
     tx = iroha.transaction([
         iroha.command('GrantPermission', account_id=bob['id'], permission=primitive_pb2.can_remove_my_signatory),
-        iroha.command('AddSignatory', account_id=alice['id'], public_key=irohalib.IrohaCrypto.derive_public_key(extra_key))
+        iroha.command('AddSignatory', account_id=alice['id'],
+                      public_key=irohalib.IrohaCrypto.derive_public_key(extra_key))
     ], creator_account=alice['id'])
     irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
     return tx
@@ -43,7 +44,8 @@ def grant_can_remove_my_signatory_tx():
 @commons.hex
 def remove_signatory_tx():
     tx = iroha.transaction([
-        iroha.command('RemoveSignatory', account_id=alice['id'], public_key=irohalib.IrohaCrypto.derive_public_key(alice['key']))
+        iroha.command('RemoveSignatory', account_id=alice['id'],
+                      public_key=irohalib.IrohaCrypto.derive_public_key(alice['key']))
     ], creator_account=bob['id'])
     irohalib.IrohaCrypto.sign_transaction(tx, bob['key'])
     return tx

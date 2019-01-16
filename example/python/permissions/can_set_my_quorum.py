@@ -34,7 +34,8 @@ def grant_can_set_my_quorum_tx():
     extra_key = irohalib.IrohaCrypto.private_key()
     tx = iroha.transaction([
         iroha.command('GrantPermission', account_id=bob['id'], permission=primitive_pb2.can_set_my_quorum),
-        iroha.command('AddSignatory', account_id=alice['id'], public_key=irohalib.IrohaCrypto.derive_public_key(extra_key))
+        iroha.command('AddSignatory', account_id=alice['id'],
+                      public_key=irohalib.IrohaCrypto.derive_public_key(extra_key))
     ], creator_account=alice['id'])
     irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
     return tx

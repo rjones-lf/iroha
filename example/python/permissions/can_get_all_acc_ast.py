@@ -11,6 +11,7 @@ admin = commons.new_user('admin@first')
 alice = commons.new_user('alice@second')
 iroha = irohalib.Iroha(admin['id'])
 
+
 @commons.hex
 def genesis_tx():
     test_permissions = [primitive_pb2.can_get_all_acc_ast]

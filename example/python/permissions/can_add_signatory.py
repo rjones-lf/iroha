@@ -20,11 +20,13 @@ def genesis_tx():
     irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
     return tx
 
+
 @commons.hex
 def add_signatory_tx():
     extra_key = irohalib.IrohaCrypto.private_key()
     tx = iroha.transaction([
-        iroha.command('AddSignatory', account_id=alice['id'], public_key=irohalib.IrohaCrypto.derive_public_key(extra_key))
+        iroha.command('AddSignatory', account_id=alice['id'],
+                      public_key=irohalib.IrohaCrypto.derive_public_key(extra_key))
     ], creator_account=alice['id'])
     irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
     return tx

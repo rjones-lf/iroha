@@ -21,7 +21,6 @@ def genesis_tx():
     return tx
 
 
-
 @commons.hex
 def create_domain_tx():
     # 'test_role' was created in genesis transaction

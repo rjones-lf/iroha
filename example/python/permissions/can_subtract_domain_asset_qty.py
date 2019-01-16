@@ -5,6 +5,4 @@
 
 import can_subtract_asset_qty
 
-
 # Please see example for can_subtract_asset_qty permission.
-

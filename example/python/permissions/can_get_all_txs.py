@@ -12,7 +12,6 @@ admin = commons.new_user('admin@first')
 alice = commons.new_user('alice@second')
 iroha = irohalib.Iroha(admin['id'])
 
-
 admin_tx1_hash = None
 admin_tx2_hash = None
 
@@ -46,6 +45,7 @@ def admin_action_2_tx():
     admin_tx2_hash = irohalib.IrohaCrypto.hash(tx)
     irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
     return tx
+
 
 @commons.hex
 def transactions_query():

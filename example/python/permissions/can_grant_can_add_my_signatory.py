@@ -33,6 +33,7 @@ def grant_can_add_my_signatory_tx():
     irohalib.IrohaCrypto.sign_transaction(tx, alice['key'])
     return tx
 
+
 @commons.hex
 def revoke_can_add_my_signatory_tx():
     tx = iroha.transaction([

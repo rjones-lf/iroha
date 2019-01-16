@@ -18,7 +18,8 @@ def genesis_tx():
     test_permissions = [primitive_pb2.can_grant_can_set_my_quorum]
     genesis_commands = commons.genesis_block(admin, alice, test_permissions)
     genesis_commands.append(
-        iroha.command('CreateAccount', account_name='bob', domain_id='test', public_key=irohalib.IrohaCrypto.derive_public_key(bob['key']))
+        iroha.command('CreateAccount', account_name='bob', domain_id='test',
+                      public_key=irohalib.IrohaCrypto.derive_public_key(bob['key']))
     )
     tx = iroha.transaction(genesis_commands)
     irohalib.IrohaCrypto.sign_transaction(tx, admin['key'])
