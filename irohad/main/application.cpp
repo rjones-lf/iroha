@@ -92,6 +92,8 @@ Irohad::Irohad(const std::string &block_store_dir,
   initStorage();
 }
 
+Irohad::~Irohad() = default;
+
 /**
  * Initializing iroha daemon
  */

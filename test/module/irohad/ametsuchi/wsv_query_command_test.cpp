@@ -53,7 +53,7 @@ namespace iroha {
 
         peer = makePeer(address, pk);
       }
-      std::unique_ptr<MockPeer> peer;
+      std::shared_ptr<MockPeer> peer;
       shared_model::interface::types::AddressType address{""};
       shared_model::interface::types::PubkeyType pk{""};
     };
