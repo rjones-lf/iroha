@@ -41,8 +41,6 @@ class QueryProcessorTest : public ::testing::Test {
         std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
     qpi = std::make_shared<torii::QueryProcessorImpl>(
         storage, storage, nullptr, query_response_factory);
-    wsv_queries = std::make_shared<MockWsvQuery>();
-    EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
     EXPECT_CALL(*storage, getBlockQuery())
         .WillRepeatedly(Return(block_queries));
     EXPECT_CALL(*storage, createQueryExecutor(_, _))
@@ -69,7 +67,6 @@ class QueryProcessorTest : public ::testing::Test {
   std::vector<shared_model::interface::types::PubkeyType> signatories = {
       keypair.publicKey()};
   std::shared_ptr<MockQueryExecutor> qry_exec;
-  std::shared_ptr<MockWsvQuery> wsv_queries;
   std::shared_ptr<MockBlockQuery> block_queries;
   std::shared_ptr<MockStorage> storage;
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
@@ -171,8 +168,6 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
   auto block_number = 5;
   auto block_query = getBlocksQuery(kAccountId);
 
-  EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
-      .WillRepeatedly(Return(signatories));
   EXPECT_CALL(*qry_exec, validate(_, _)).WillOnce(Return(false));
 
   auto wrapper =
