@@ -54,7 +54,7 @@ Account
  - domain_id — identifier of domain where the account was created, references existing domain 
  - quorum — number of signatories required for creation of valid transaction from this account
  - transaction_count – counter of transactions created by this account
- - data — key-value storage for any information, related to the account
+ - data — key-value storage for any information, related to the account. Size is limited to 268435455 bytes (0x0FFFFFFF) (PostgreSQL JSONB field).
 
 AccountHasSignatory
 ^^^^^^^^^^^^^^^^^^^

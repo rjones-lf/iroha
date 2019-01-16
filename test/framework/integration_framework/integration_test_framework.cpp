@@ -41,6 +41,7 @@
 #include "multi_sig_transactions/mst_processor.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "network/impl/async_grpc_client.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 #include "synchronizer/synchronizer_common.hpp"
 #include "torii/status_bus.hpp"
 
@@ -92,7 +93,9 @@ namespace integration_framework {
                                                         torii_port_,
                                                         internal_port_,
                                                         dbname)),
-        command_client_(kLocalHost, torii_port_),
+        command_client_(
+            iroha::network::createClient<iroha::protocol::CommandService_v1>(
+                kLocalHost + ":" + std::to_string(torii_port_))),
         query_client_(kLocalHost, torii_port_),
         async_call_(std::make_shared<AsyncCall>()),
         proposal_waiting(proposal_waiting),
