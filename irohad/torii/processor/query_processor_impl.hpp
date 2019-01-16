@@ -45,9 +45,10 @@ namespace iroha {
           const shared_model::interface::BlocksQuery &qry) override;
 
      private:
-      rxcpp::subjects::subject<
-          std::shared_ptr<shared_model::interface::BlockQueryResponse>>
-          blocks_query_subject_;
+      using wBlockQueryResponse =
+          std::shared_ptr<shared_model::interface::BlockQueryResponse>;
+
+      rxcpp::subjects::subject<wBlockQueryResponse> blocks_query_subject_;
       std::shared_ptr<ametsuchi::Storage> storage_;
       std::shared_ptr<ametsuchi::QueryExecutorFactory> qry_exec_;
       std::shared_ptr<iroha::PendingTransactionStorage> pending_transactions_;

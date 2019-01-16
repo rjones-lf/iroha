@@ -5,10 +5,11 @@
 
 #include "torii/processor/query_processor_impl.hpp"
 
-#include <boost/range/adaptors.hpp>
 #include <boost/range/size.hpp>
+#include <rxcpp/operators/rx-concat.hpp>
+#include <rxcpp/operators/rx-distinct.hpp>
+#include <rxcpp/operators/rx-map.hpp>
 #include <rxcpp/sources/rx-iterate.hpp>
-
 #include "ametsuchi/wsv_query.hpp"
 #include "common/bind.hpp"
 #include "interfaces/queries/blocks_query.hpp"
@@ -83,8 +84,7 @@ namespace iroha {
       return executor.value()->validateAndExecute(qry);
     }
 
-    rxcpp::observable<
-        std::shared_ptr<shared_model::interface::BlockQueryResponse>>
+    rxcpp::observable<iroha::torii::QueryProcessorImpl::wBlockQueryResponse>
     QueryProcessorImpl::blocksQueryHandle(
         const shared_model::interface::BlocksQuery &qry) {
       if (not checkSignatories(qry)) {
@@ -111,12 +111,14 @@ namespace iroha {
       }
 
       auto desired_blocks =
-          storage_->getBlockQuery()->getBlocksFrom(*qry.height())
-          | boost::adaptors::transformed(
-                [this](std::shared_ptr<shared_model::interface::Block> block) {
-                  return response_factory_->createBlockQueryResponse(clone(*block));
-                });
-      return rxcpp::observable<>::iterate(std::move(desired_blocks));
+          storage_->getBlockQuery()->getBlocksFrom(*qry.height());
+
+      return rxcpp::observable<>::iterate(std::move(desired_blocks))
+          .map([this](std::shared_ptr<shared_model::interface::Block> block) {
+            return wBlockQueryResponse{
+                response_factory_->createBlockQueryResponse(clone(*block))};
+          })
+          .concat(blocks_query_subject_.get_observable().skip(*qry.height()));
     }
 
   }  // namespace torii
