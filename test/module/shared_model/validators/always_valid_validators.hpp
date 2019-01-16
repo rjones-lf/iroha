@@ -64,7 +64,7 @@ namespace shared_model {
       template <typename... Args>
       void validateBatchMeta(Args...) const {}
       template <typename... Args>
-      void validateHeight(Args...) const {}
+      void validatePositiveHeight(Args...) const {}
       template <typename... Args>
       void validateHash(Args...) const {}
     };

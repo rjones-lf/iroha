@@ -15,6 +15,7 @@
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
+#include "interfaces/query_responses/block_response.hpp"
 #include "interfaces/query_responses/query_response.hpp"
 #include "validation/utils.hpp"
 
@@ -110,6 +111,12 @@ namespace iroha {
         return blocks_query_subject_.get_observable();
       }
 
+      std::vector<wBlockQueryResponse> blocks_buffer;
+      blocks_query_subject_.get_observable().subscribe(
+          [&blocks_buffer](auto block_resp) {
+            blocks_buffer.push_back(std::move(block_resp));
+          });
+
       auto desired_blocks =
           storage_->getBlockQuery()->getBlocksFrom(*qry.height());
 
@@ -118,7 +125,23 @@ namespace iroha {
             return wBlockQueryResponse{
                 response_factory_->createBlockQueryResponse(clone(*block))};
           })
-          .concat(blocks_query_subject_.get_observable().skip(*qry.height()));
+          .concat(
+              rxcpp::observable<>::iterate(blocks_buffer)
+                  .filter([this, &qry](wBlockQueryResponse block_query_resp) {
+                    return visit_in_place(
+                        block_query_resp->get(),
+                        [&qry](const shared_model::interface::BlockResponse
+                                   &block_resp) {
+                          return block_resp.block().height() > *qry.height();
+                        },
+                        [this](const auto &err_resp) {
+                          log_->error(
+                              "Commit observable returned error block "
+                              "response - definitely should not happen");
+                          return false;
+                        });
+                  }))
+          .concat(blocks_query_subject_.get_observable());
     }
 
   }  // namespace torii

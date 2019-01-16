@@ -24,6 +24,7 @@
 #include "ametsuchi/wsv_query.hpp"
 #include "common/result.hpp"
 #include "interfaces/common_objects/peer.hpp"
+#include "interfaces/common_objects/types.hpp"
 
 namespace iroha {
   namespace ametsuchi {
@@ -287,8 +288,9 @@ namespace iroha {
           const shared_model::interface::Query &q) override {
         return QueryExecutorResult(validateAndExecute_(q));
       }
-      MOCK_METHOD1(validate,
-                   bool(const shared_model::interface::BlocksQuery &));
+      MOCK_METHOD2(validate,
+                   bool(const shared_model::interface::BlocksQuery &,
+                        shared_model::interface::types::HeightType));
     };
 
     class MockTxPresenceCache : public iroha::ametsuchi::TxPresenceCache {

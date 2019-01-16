@@ -11,6 +11,7 @@
 #include "cryptography/keypair.hpp"
 #include "framework/test_subscriber.hpp"
 #include "interfaces/query_responses/block_query_response.hpp"
+#include "interfaces/query_responses/block_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
 #include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
@@ -42,6 +43,7 @@ class QueryProcessorTest : public ::testing::Test {
     qpi = std::make_shared<torii::QueryProcessorImpl>(
         storage, storage, nullptr, query_response_factory);
     wsv_queries = std::make_shared<MockWsvQuery>();
+    block_queries = std::make_shared<MockBlockQuery>();
     EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
     EXPECT_CALL(*storage, getBlockQuery())
         .WillRepeatedly(Return(block_queries));
@@ -50,14 +52,20 @@ class QueryProcessorTest : public ::testing::Test {
             boost::make_optional(std::shared_ptr<QueryExecutor>(qry_exec))));
   }
 
-  auto getBlocksQuery(const std::string &creator_account_id) {
-    return TestUnsignedBlocksQueryBuilder()
-        .createdTime(kCreatedTime)
-        .creatorAccountId(creator_account_id)
-        .queryCounter(kCounter)
-        .build()
-        .signAndAddSignature(keypair)
-        .finish();
+  template <bool SetHeight = false>
+  auto getBlocksQuery(const std::string &creator_account_id,
+                      shared_model::interface::types::HeightType height = 0) {
+    auto half_builder = TestUnsignedBlocksQueryBuilder()
+                            .createdTime(kCreatedTime)
+                            .creatorAccountId(creator_account_id)
+                            .queryCounter(kCounter);
+    if (SetHeight) {
+      return half_builder.height(height)
+          .build()
+          .signAndAddSignature(keypair)
+          .finish();
+    }
+    return half_builder.build().signAndAddSignature(keypair).finish();
   }
 
   const decltype(iroha::time::now()) kCreatedTime = iroha::time::now();
@@ -132,17 +140,19 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
 
 /**
  * @given account, ametsuchi queries
- * @when valid block query is send
- * @then Query Processor should start emitting BlockQueryRespones to the
+ * @when valid block query without specified height is sent
+ * @then Query Processor should start emitting BlockQueryResponses to the
  * observable
  */
-TEST_F(QueryProcessorTest, GetBlocksQuery) {
+TEST_F(QueryProcessorTest, GetBlocksQueryWithoutHeight) {
   auto block_number = 5;
   auto block_query = getBlocksQuery(kAccountId);
 
   EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
       .WillOnce(Return(signatories));
-  EXPECT_CALL(*qry_exec, validate(_)).WillOnce(Return(true));
+  EXPECT_CALL(*qry_exec, validate(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*block_queries, getTopBlockHeight()).WillOnce(Return(1));
+  EXPECT_CALL(*block_queries, getBlocksFrom(_)).Times(0);
 
   auto wrapper = make_test_subscriber<CallExact>(
       qpi->blocksQueryHandle(block_query), block_number);
@@ -160,6 +170,65 @@ TEST_F(QueryProcessorTest, GetBlocksQuery) {
 }
 
 /**
+ * @given account, ametsuchi queries @and mocked ledger with some blocks
+ * @when valid block query with specified height is sent @and this height is
+ * less than the ledger's one
+ * @then Query Processor should emit blocks starting from the specified height
+ * @and finish by the newest ones @and handle the case when new block is
+ * comitted in the process of retreiving old ones
+ */
+TEST_F(QueryProcessorTest, GetBlocksQueryWithHeight) {
+  auto blocks_number = 5;
+  auto query_height = 2;
+  auto blocks_query = getBlocksQuery<true>(kAccountId, query_height);
+
+  EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
+      .WillOnce(Return(signatories));
+  EXPECT_CALL(*qry_exec, validate(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*block_queries, getTopBlockHeight()).WillOnce(Return(5));
+
+  // these blocks are the ones lying in the ledger for current moment
+  std::vector<std::shared_ptr<shared_model::interface::Block>> all_blocks;
+  for (auto i = 0; i < blocks_number; ++i) {
+    all_blocks.push_back(clone(TestBlockBuilder().height(i).build()));
+  }
+
+  // these blocks are to be requested and returned to the created observer; they
+  // are part of those in the ledger
+  std::vector<std::shared_ptr<shared_model::interface::Block>> query_blocks{
+      std::begin(all_blocks) + query_height, std::end(all_blocks)};
+  EXPECT_CALL(*block_queries, getBlocksFrom(query_height))
+      .WillOnce(Return(query_blocks));
+
+  auto wrapper = make_test_subscriber<CallExact>(
+      qpi->blocksQueryHandle(blocks_query), blocks_number);
+  wrapper.subscribe([query_height](auto response) {
+    // check heights of the newcome blocks
+    static shared_model::interface::types::HeightType last_seen_block_height =
+        query_height;
+    ASSERT_NO_THROW({
+      const auto &block =
+          boost::get<const shared_model::interface::BlockResponse &>(
+              response->get())
+              .block();
+      ASSERT_EQ(block.height(), last_seen_block_height);
+      ++last_seen_block_height;
+    });
+  });
+
+  // emit two more blocks and make sure they were emitted by our observable as
+  // well
+  storage->notifier.get_subscriber().on_next(
+      clone(TestBlockBuilder().height(blocks_number).build()));
+  storage->notifier.get_subscriber().on_next(
+      clone(TestBlockBuilder().height(blocks_number + 1).build()));
+
+  ASSERT_TRUE(wrapper.validate());
+}
+
+TEST_F(QueryProcessorTest, GetBlocksQueryWithInvalidHeight) {}
+
+/**
  * @given account, ametsuchi queries
  * @when valid block query is invalid (no can_get_blocks permission)
  * @then Query Processor should return an observable with blockError
@@ -170,7 +239,7 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
 
   EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
       .WillRepeatedly(Return(signatories));
-  EXPECT_CALL(*qry_exec, validate(_)).WillOnce(Return(false));
+  EXPECT_CALL(*qry_exec, validate(_, _)).WillOnce(Return(false));
 
   auto wrapper =
       make_test_subscriber<CallExact>(qpi->blocksQueryHandle(block_query), 1);
