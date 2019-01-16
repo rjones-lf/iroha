@@ -9,12 +9,14 @@
 #include "interfaces/iroha_internal/proposal.hpp"
 #include "ordering/impl/on_demand_common.hpp"
 
+using namespace iroha;
 using namespace iroha::ordering;
 
 OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
-    rxcpp::observable<CurrentPeers> peers)
-    : log_(logger::log("OnDemandConnectionManager")),
+    rxcpp::observable<CurrentPeers> peers,
+    logger::Logger log)
+    : log_(std::move(log)),
       factory_(std::move(factory)),
       subscription_(peers.subscribe([this](const auto &peers) {
         // exclusive lock
@@ -26,10 +28,15 @@ OnDemandConnectionManager::OnDemandConnectionManager(
 OnDemandConnectionManager::OnDemandConnectionManager(
     std::shared_ptr<transport::OdOsNotificationFactory> factory,
     rxcpp::observable<CurrentPeers> peers,
-    CurrentPeers initial_peers)
-    : OnDemandConnectionManager(std::move(factory), peers) {
+    CurrentPeers initial_peers,
+    logger::Logger log)
+    : OnDemandConnectionManager(std::move(factory), peers, std::move(log)) {
   // using start_with(initial_peers) results in deadlock
   initializeConnections(initial_peers);
+}
+
+OnDemandConnectionManager::~OnDemandConnectionManager() {
+  subscription_.unsubscribe();
 }
 
 void OnDemandConnectionManager::onBatches(consensus::Round round,
@@ -50,8 +57,7 @@ void OnDemandConnectionManager::onBatches(consensus::Round round,
    */
 
   auto propagate = [this, batches](PeerType type, consensus::Round round) {
-    log_->debug(
-        "onTransactions, round[{}, {}]", round.block_round, round.reject_round);
+    log_->debug("onBatches, {}", round);
 
     connections_.peers[type]->onBatches(round, batches);
   };
@@ -69,9 +75,7 @@ boost::optional<OnDemandConnectionManager::ProposalType>
 OnDemandConnectionManager::onRequestProposal(consensus::Round round) {
   std::shared_lock<std::shared_timed_mutex> lock(mutex_);
 
-  log_->debug("onRequestProposal, round[{}, {}]",
-              round.block_round,
-              round.reject_round);
+  log_->debug("onRequestProposal, {}", round);
 
   return connections_.peers[kIssuer]->onRequestProposal(round);
 }

@@ -35,7 +35,7 @@ message GetAccountAssetTransactions {
 }
 
 message GetTransactions {
-  repeated bytes tx_hashes = 1;
+  repeated string tx_hashes = 1;
 }
 
 message GetAccountAssets {

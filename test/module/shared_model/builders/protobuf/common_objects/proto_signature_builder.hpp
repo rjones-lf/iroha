@@ -27,16 +27,14 @@ namespace shared_model {
       SignatureBuilder publicKey(
           const shared_model::interface::types::PubkeyType &key) {
         SignatureBuilder copy(*this);
-        copy.signature_.set_public_key(
-            shared_model::crypto::toBinaryString(key));
+        copy.signature_.set_public_key(key.hex());
         return copy;
       }
 
       SignatureBuilder signedData(
           const interface::Signature::SignedType &signed_data) {
         SignatureBuilder copy(*this);
-        copy.signature_.set_signature(
-            shared_model::crypto::toBinaryString(signed_data));
+        copy.signature_.set_signature(signed_data.hex());
         return copy;
       }
 

@@ -5,6 +5,7 @@
 
 #include "main/application.hpp"
 
+#include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/impl/tx_presence_cache_impl.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
@@ -16,9 +17,10 @@
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "common/bind.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
+#include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
-#include "interfaces/permission_to_string.hpp"
+#include "main/server_runner.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy_stub.hpp"
@@ -26,9 +28,21 @@
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "multi_sig_transactions/transport/mst_transport_stub.hpp"
+#include "network/impl/block_loader_impl.hpp"
+#include "network/impl/peer_communication_service_impl.hpp"
 #include "ordering/impl/on_demand_common.hpp"
+#include "ordering/impl/on_demand_ordering_gate.hpp"
+#include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
+#include "simulator/impl/simulator.hpp"
+#include "synchronizer/impl/synchronizer_impl.hpp"
 #include "torii/impl/command_service_impl.hpp"
+#include "torii/impl/command_service_transport_grpc.hpp"
 #include "torii/impl/status_bus_impl.hpp"
+#include "torii/processor/query_processor_impl.hpp"
+#include "torii/processor/transaction_processor_impl.hpp"
+#include "torii/query_service.hpp"
+#include "validation/impl/chain_validator_impl.hpp"
+#include "validation/impl/stateful_validator_impl.hpp"
 #include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/protobuf/proto_block_validator.hpp"
@@ -267,6 +281,31 @@ void Irohad::initOrderingGate() {
   auto factory = std::make_unique<shared_model::proto::ProtoProposalFactory<
       shared_model::validation::DefaultProposalValidator>>();
 
+  const uint64_t kCounter = 0, kMaxLocalCounter = 2;
+  // reject_counter and local_counter are local mutable variables of lambda
+  const uint64_t kMaxDelaySeconds = 5;
+  auto delay = [reject_counter = kCounter,
+                local_counter = kCounter,
+                // MSVC requires const variables to be captured
+                kMaxDelaySeconds,
+                kMaxLocalCounter](const auto &commit) mutable {
+    using iroha::synchronizer::SynchronizationOutcomeType;
+    if (commit.sync_outcome == SynchronizationOutcomeType::kReject
+        or commit.sync_outcome == SynchronizationOutcomeType::kNothing) {
+      // Increment reject_counter each local_counter calls of function
+      ++local_counter;
+      if (local_counter == kMaxLocalCounter) {
+        local_counter = 0;
+        if (reject_counter < kMaxDelaySeconds) {
+          reject_counter++;
+        }
+      }
+    } else {
+      reject_counter = 0;
+    }
+    return std::chrono::seconds(reject_counter);
+  };
+
   ordering_gate = ordering_init.initOrderingGate(max_proposal_size_,
                                                  proposal_delay_,
                                                  std::move(hashes),
@@ -277,7 +316,8 @@ void Irohad::initOrderingGate() {
                                                  async_call_,
                                                  std::move(factory),
                                                  persistent_cache,
-                                                 {blocks.back()->height(), 1});
+                                                 {blocks.back()->height(), 1},
+                                                 delay);
   log_->info("[Init] => init ordering gate - [{}]",
              logger::logBool(ordering_gate));
 }
@@ -358,11 +398,26 @@ void Irohad::initPeerCommunicationService() {
   pcs = std::make_shared<PeerCommunicationServiceImpl>(
       ordering_gate, synchronizer, simulator);
 
-  pcs->onProposal().subscribe(
-      [this](auto) { log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ "); });
+  pcs->onProposal().subscribe([this](const auto &) {
+    log_->info("~~~~~~~~~| PROPOSAL ^_^ |~~~~~~~~~ ");
+  });
 
-  pcs->on_commit().subscribe(
-      [this](auto) { log_->info("~~~~~~~~~| COMMIT =^._.^= |~~~~~~~~~ "); });
+  pcs->on_commit().subscribe([this](const auto &event) {
+    using iroha::synchronizer::SynchronizationOutcomeType;
+    switch (event.sync_outcome) {
+      case SynchronizationOutcomeType::kCommit:
+        log_->info(R"(~~~~~~~~~| COMMIT =^._.^= |~~~~~~~~~ )");
+        break;
+      case SynchronizationOutcomeType::kReject:
+        log_->info(R"(~~~~~~~~~| REJECT \(*.*)/ |~~~~~~~~~ )");
+        break;
+      case SynchronizationOutcomeType::kNothing:
+        log_->info(R"(~~~~~~~~~| EMPTY (-_-)zzz |~~~~~~~~~ )");
+        break;
+      default:
+        break;
+    }
+  });
 
   log_->info("[Init] => pcs");
 }
@@ -421,12 +476,12 @@ void Irohad::initTransactionCommandService() {
       std::make_shared<::torii::CommandServiceTransportGrpc>(
           command_service,
           status_bus_,
-          std::chrono::seconds(1),
-          2 * proposal_delay_,
           status_factory,
           transaction_factory,
           batch_parser,
-          transaction_batch_factory_);
+          transaction_batch_factory_,
+          consensus_gate,
+          2);
 
   log_->info("[Init] => command service");
 }
@@ -461,7 +516,9 @@ Irohad::RunResult Irohad::run() {
 
   // Initializing internal server
   internal_server = std::make_unique<ServerRunner>(
-      listen_ip_ + ":" + std::to_string(internal_port_), false);
+      listen_ip_ + ":" + std::to_string(internal_port_),
+      false,
+      logger::log("InternalServerRunner"));
 
   // Run torii server
   return (torii_server->append(command_service_transport)

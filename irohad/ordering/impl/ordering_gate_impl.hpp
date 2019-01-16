@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #ifndef IROHA_ORDERING_GATE_IMPL_HPP
@@ -61,11 +49,13 @@ namespace iroha {
        * @param initial_height - height of the last block stored on this peer
        * @param run_async - whether proposals should be handled
        * asynchronously (on separate thread). Default is true.
+       * @param log to print progress
        */
       OrderingGateImpl(
           std::shared_ptr<iroha::network::OrderingGateTransport> transport,
           shared_model::interface::types::HeightType initial_height,
-          bool run_async = true);
+          bool run_async = true,
+          logger::Logger log = logger::log("OrderingGate"));
 
       void propagateBatch(
           std::shared_ptr<shared_model::interface::TransactionBatch> batch)

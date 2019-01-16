@@ -36,8 +36,8 @@ class BlockQueryTest : public AmetsuchiTest {
     auto converter =
         std::make_shared<shared_model::proto::ProtoBlockJsonConverter>();
     blocks = std::make_shared<PostgresBlockQuery>(*sql, *file, converter);
-    empty_blocks =
-        std::make_shared<PostgresBlockQuery>(*sql, *mock_file, converter);
+    empty_blocks = std::make_shared<PostgresBlockQuery>(
+        *sql, *mock_file, converter, logger::log("PostgresBlockQueryEmpty"));
 
     *sql << init_;
 
@@ -109,114 +109,6 @@ class BlockQueryTest : public AmetsuchiTest {
   std::string zero_string = std::string(32, '0');
   shared_model::crypto::Hash rejected_hash{"rejected_tx_hash"};
 };
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test
- * AND 1 tx created by user2@test
- * @when query to get transactions created by user1@test is invoked
- * @then query over user1@test returns 3 txs
- */
-TEST_F(BlockQueryTest, GetAccountTransactionsFromSeveralBlocks) {
-  // Check that creator1 has created 3 transactions
-  auto txs = blocks->getAccountTransactions(creator1);
-  ASSERT_EQ(txs.size(), 3);
-  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
-    EXPECT_EQ(tx->creatorAccountId(), creator1);
-  });
-}
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test
- * AND 1 tx created by user2@test
- * @when query to get transactions created by user2@test is invoked
- * @then query over user2@test returns 1 tx
- */
-TEST_F(BlockQueryTest, GetAccountTransactionsFromSingleBlock) {
-  // Check that creator1 has created 1 transaction
-  auto txs = blocks->getAccountTransactions(creator2);
-  ASSERT_EQ(txs.size(), 1);
-  std::for_each(txs.begin(), txs.end(), [&](const auto &tx) {
-    EXPECT_EQ(tx->creatorAccountId(), creator2);
-  });
-}
-
-/**
- * @given block store
- * @when query to get transactions created by user with id not registered in the
- * system is invoked
- * @then query returns empty result
- */
-TEST_F(BlockQueryTest, GetAccountTransactionsNonExistingUser) {
-  // Check that "nonexisting" user has no transaction
-  auto txs = blocks->getAccountTransactions("nonexisting user");
-  ASSERT_EQ(txs.size(), 0);
-}
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test
- * AND 1 tx created by user2@test
- * @when query to get transactions with existing transaction hashes
- * @then queried transactions
- */
-TEST_F(BlockQueryTest, GetTransactionsExistingTxHashes) {
-  auto txs = blocks->getTransactions({tx_hashes[1], tx_hashes[3]});
-  ASSERT_EQ(txs.size(), 2);
-  ASSERT_TRUE(txs[0]);
-  ASSERT_TRUE(txs[1]);
-  ASSERT_EQ(txs[0].get()->hash(), tx_hashes[1]);
-  ASSERT_EQ(txs[1].get()->hash(), tx_hashes[3]);
-}
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test
- * AND 1 tx created by user2@test
- * @when query to get transactions with non-existing transaction hashes
- * @then nullopt values are retrieved
- */
-TEST_F(BlockQueryTest, GetTransactionsIncludesNonExistingTxHashes) {
-  shared_model::crypto::Hash invalid_tx_hash_1(zero_string),
-      invalid_tx_hash_2(std::string(
-          shared_model::crypto::DefaultCryptoAlgorithmType::kHashLength, '9'));
-
-  auto txs = blocks->getTransactions({invalid_tx_hash_1, invalid_tx_hash_2});
-  ASSERT_EQ(txs.size(), 2);
-  ASSERT_FALSE(txs[0]);
-  ASSERT_FALSE(txs[1]);
-}
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test
- * AND 1 tx created by user2@test
- * @when query to get transactions with empty vector
- * @then no transactions are retrieved
- */
-TEST_F(BlockQueryTest, GetTransactionsWithEmpty) {
-  // transactions' hashes are empty.
-  auto txs = blocks->getTransactions({});
-  ASSERT_EQ(txs.size(), 0);
-}
-
-/**
- * @given block store with 2 blocks totally containing 3 txs created by
- * user1@test
- * AND 1 tx created by user2@test
- * @when query to get transactions with non-existing txhash and existing txhash
- * @then queried transactions and empty transaction
- */
-TEST_F(BlockQueryTest, GetTransactionsWithInvalidTxAndValidTx) {
-  // TODO 15/11/17 motxx - Use EqualList VerificationStrategy
-  shared_model::crypto::Hash invalid_tx_hash_1(zero_string);
-  auto txs = blocks->getTransactions({invalid_tx_hash_1, tx_hashes[0]});
-  ASSERT_EQ(txs.size(), 2);
-  ASSERT_FALSE(txs[0]);
-  ASSERT_TRUE(txs[1]);
-  ASSERT_EQ(txs[1].get()->hash(), tx_hashes[0]);
-}
 
 /**
  * @given block store with 2 blocks totally containing 3 txs created by

@@ -21,13 +21,14 @@ namespace iroha {
         std::shared_ptr<shared_model::crypto::CryptoModelSigner<>>
             crypto_signer,
         std::unique_ptr<shared_model::interface::UnsafeBlockFactory>
-            block_factory)
+            block_factory,
+        logger::Logger log)
         : validator_(std::move(statefulValidator)),
           ametsuchi_factory_(std::move(factory)),
           block_query_factory_(block_query_factory),
           crypto_signer_(std::move(crypto_signer)),
           block_factory_(std::move(block_factory)),
-          log_(logger::log("Simulator")) {
+          log_(std::move(log)) {
       ordering_gate->onProposal().subscribe(
           proposal_subscription_, [this](const network::OrderingEvent &event) {
             if (event.proposal) {

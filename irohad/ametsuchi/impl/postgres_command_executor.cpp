@@ -283,7 +283,8 @@ namespace {
                                 END
                            ELSE false END
           )") % checkAccountRolePermission(global_permission, creator_id)
-                         % checkAccountRolePermission(domain_permission, creator_id)
+                         % checkAccountRolePermission(domain_permission,
+                                                      creator_id)
                          % creator_id % id_with_target_domain)
                             .str();
     return query;
@@ -1286,13 +1287,30 @@ namespace iroha {
           {"createAccount",
            createAccountBase,
            {(boost::format(R"(
-            has_perm AS (%s),)")
+           domain_role_permissions_bits AS (
+                 SELECT COALESCE(bit_or(rhp.permission), '0'::bit(%1%)) AS bits
+                 FROM role_has_permissions AS rhp
+                 WHERE rhp.role_id = (SELECT * FROM get_domain_default_role)),
+           account_permissions AS (
+                 SELECT COALESCE(bit_or(rhp.permission), '0'::bit(%1%)) AS perm
+                 FROM role_has_permissions AS rhp
+                 JOIN account_has_roles AS ar ON ar.role_id = rhp.role_id
+                 WHERE ar.account_id = $1
+           ),
+           creator_has_enough_permissions AS (
+                SELECT ap.perm & dpb.bits = dpb.bits
+                FROM account_permissions AS ap, domain_role_permissions_bits AS dpb
+           ),
+           has_perm AS (%2%),
+          )") % bits
              % checkAccountRolePermission(
                    shared_model::interface::permissions::Role::kCreateAccount,
                    "$1"))
                 .str(),
-            R"(AND (SELECT * FROM has_perm))",
-            R"(WHEN NOT (SELECT * FROM has_perm) THEN 2)"}});
+            R"(AND (SELECT * FROM has_perm)
+               AND (SELECT * FROM creator_has_enough_permissions))",
+            R"(WHEN NOT (SELECT * FROM has_perm) THEN 2
+               WHEN NOT (SELECT * FROM creator_has_enough_permissions) THEN 2)"}});
 
       statements.push_back(
           {"createAsset",

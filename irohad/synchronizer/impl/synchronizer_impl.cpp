@@ -20,12 +20,13 @@ namespace iroha {
         std::shared_ptr<validation::ChainValidator> validator,
         std::shared_ptr<ametsuchi::MutableFactory> mutable_factory,
         std::shared_ptr<ametsuchi::BlockQueryFactory> block_query_factory,
-        std::shared_ptr<network::BlockLoader> block_loader)
+        std::shared_ptr<network::BlockLoader> block_loader,
+        logger::Logger log)
         : validator_(std::move(validator)),
           mutable_factory_(std::move(mutable_factory)),
           block_query_factory_(std::move(block_query_factory)),
           block_loader_(std::move(block_loader)),
-          log_(logger::log("synchronizer")) {
+          log_(std::move(log)) {
       consensus_gate->onOutcome().subscribe(
           subscription_, [this](consensus::GateObject object) {
             this->processOutcome(object);
@@ -123,8 +124,11 @@ namespace iroha {
         }
         std::unique_ptr<ametsuchi::MutableStorage> storage =
             std::move(opt_storage.value());
-        storage->apply(*msg.block);
-        mutable_factory_->commit(std::move(storage));
+        if (storage->apply(*msg.block)) {
+          mutable_factory_->commit(std::move(storage));
+        } else {
+          log_->warn("Block was not committed due to fail in mutable storage");
+        }
       }
       notifier_.get_subscriber().on_next(
           SynchronizationEvent{rxcpp::observable<>::just(msg.block),

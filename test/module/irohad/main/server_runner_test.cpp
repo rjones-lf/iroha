@@ -1,18 +1,6 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2018 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <gtest/gtest.h>
@@ -32,14 +20,16 @@ auto port_visitor = iroha::make_visitor(
  * @then Result with error is returned
  */
 TEST(ServerRunnerTest, SamePortNoReuse) {
-  ServerRunner first_runner((address % 0).str());
+  ServerRunner first_runner(
+      (address % 0).str(), true, logger::log("ServerRunner1"));
   auto first_query_service =
       std::make_shared<iroha::protocol::QueryService_v1::Service>();
   auto result = first_runner.append(first_query_service).run();
   auto port = boost::apply_visitor(port_visitor, result);
   ASSERT_NE(0, port);
 
-  ServerRunner second_runner((address % port).str(), false);
+  ServerRunner second_runner(
+      (address % port).str(), false, logger::log("ServerRunner2"));
   auto second_query_service =
       std::make_shared<iroha::protocol::QueryService_v1::Service>();
   result = second_runner.append(second_query_service).run();
@@ -53,14 +43,16 @@ TEST(ServerRunnerTest, SamePortNoReuse) {
  * @then Result with port number is returned
  */
 TEST(ServerRunnerTest, SamePortWithReuse) {
-  ServerRunner first_runner((address % 0).str());
+  ServerRunner first_runner(
+      (address % 0).str(), true, logger::log("ServerRunner1"));
   auto first_query_service =
       std::make_shared<iroha::protocol::QueryService_v1::Service>();
   auto result = first_runner.append(first_query_service).run();
   auto port = boost::apply_visitor(port_visitor, result);
   ASSERT_NE(0, port);
 
-  ServerRunner second_runner((address % port).str(), true);
+  ServerRunner second_runner(
+      (address % port).str(), true, logger::log("ServerRunner2"));
   auto second_query_service =
       std::make_shared<iroha::protocol::QueryService_v1::Service>();
   result = second_runner.append(second_query_service).run();

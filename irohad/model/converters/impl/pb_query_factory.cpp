@@ -4,6 +4,7 @@
  */
 
 #include "model/converters/pb_query_factory.hpp"
+
 #include "model/common.hpp"
 #include "model/queries/get_account.hpp"
 #include "model/queries/get_account_assets.hpp"
@@ -18,8 +19,8 @@ namespace iroha {
   namespace model {
     namespace converters {
 
-      PbQueryFactory::PbQueryFactory() {
-        log_ = logger::log("PbQueryFactory");
+      PbQueryFactory::PbQueryFactory(logger::Logger log)
+          : log_{std::move(log)} {
         serializers_[typeid(GetAccount)] = &PbQueryFactory::serializeGetAccount;
         serializers_[typeid(GetAccountAssets)] =
             &PbQueryFactory::serializeGetAccountAssets;
@@ -105,7 +106,7 @@ namespace iroha {
                              pb_cast.tx_hashes().end(),
                              std::back_inserter(query.tx_hashes),
                              [](auto tx_hash) {
-                               return iroha::hash256_t::from_string(tx_hash);
+                               return iroha::hash256_t::from_hexstring(tx_hash);
                              });
               val = std::make_shared<GetTransactions>(query);
               break;
@@ -135,8 +136,8 @@ namespace iroha {
         const auto &pb_sign = pb_query.signature();
 
         Signature sign{};
-        sign.pubkey = pubkey_t::from_string(pb_sign.public_key());
-        sign.signature = sig_t::from_string(pb_sign.signature());
+        sign.pubkey = pubkey_t::from_hexstring(pb_sign.public_key());
+        sign.signature = sig_t::from_hexstring(pb_sign.signature());
 
         val->query_counter = pl.meta().query_counter();
         val->signature = sign;
@@ -153,8 +154,8 @@ namespace iroha {
         meta->set_query_counter(query->query_counter);
         // Set signatures
         auto sig = pb_query.mutable_signature();
-        sig->set_signature(query->signature.signature.to_string());
-        sig->set_public_key(query->signature.pubkey.to_string());
+        sig->set_signature(query->signature.signature.to_hexstring());
+        sig->set_public_key(query->signature.pubkey.to_hexstring());
       }
 
       boost::optional<protocol::Query> PbQueryFactory::serialize(
@@ -239,7 +240,7 @@ namespace iroha {
                       tmp->tx_hashes.end(),
                       [&pb_query_mut](auto tx_hash) {
                         auto adder = pb_query_mut->add_tx_hashes();
-                        *adder = tx_hash.to_string();
+                        *adder = tx_hash.to_hexstring();
                       });
         return pb_query;
       }

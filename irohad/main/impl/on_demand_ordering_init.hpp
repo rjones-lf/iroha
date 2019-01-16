@@ -61,7 +61,9 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-          consensus::Round initial_round);
+          consensus::Round initial_round,
+          std::function<std::chrono::seconds(
+              const synchronizer::SynchronizationEvent &)> delay_func);
 
       /**
        * Creates on-demand ordering service. \see initOrderingGate for
@@ -74,6 +76,8 @@ namespace iroha {
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache);
 
      public:
+      ~OnDemandOrderingInit();
+
       /**
        * Initializes on-demand ordering gate and ordering sevice components
        *
@@ -114,7 +118,9 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
               proposal_factory,
           std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-          consensus::Round initial_round);
+          consensus::Round initial_round,
+          std::function<std::chrono::seconds(
+              const synchronizer::SynchronizationEvent &)> delay_func);
 
       /// gRPC service for ordering service
       std::shared_ptr<ordering::proto::OnDemandOrdering::Service> service;

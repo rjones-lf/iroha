@@ -6,10 +6,11 @@
 #ifndef IROHA_ACCEPTANCE_FIXTURE_HPP
 #define IROHA_ACCEPTANCE_FIXTURE_HPP
 
-#include <gtest/gtest.h>
 #include <functional>
 #include <string>
 #include <vector>
+
+#include <gtest/gtest.h>
 #include "cryptography/keypair.hpp"
 #include "framework/common_constants.hpp"
 #include "interfaces/permissions.hpp"
@@ -45,6 +46,9 @@ namespace {
 #define CHECK_COMMITTED BASE_CHECK_RESPONSE(CommittedTxResponse)
 
 #define CHECK_MST_PENDING BASE_CHECK_RESPONSE(MstPendingResponse)
+
+#define CHECK_TXS_QUANTITY(i) \
+  [](const auto &resp) { ASSERT_EQ(resp->transactions().size(), i); }
 }  // namespace
 
 /**

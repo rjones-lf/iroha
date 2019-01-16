@@ -132,9 +132,11 @@ namespace iroha {
           // with number of peers
           auto &peer =
               current_peers_[permutation[reject_round % permutation.size()]];
-          log_->debug("For round {}, using OS on peer: {}",
-                      consensus::Round{current_round.block_round, reject_round},
-                      peer->toString());
+          log_->debug(
+              "For {}, using OS on peer: {}",
+              consensus::Round{current_round.block_round + block_round_advance,
+                               reject_round},
+              *peer);
           return peer;
         };
 
@@ -182,34 +184,9 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
             proposal_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-        consensus::Round initial_round) {
-      // TODO andrei 06.12.18 IR-75 Make counter and generator parametrizable
-      const uint64_t kCounter = 0, kMaxLocalCounter = 2;
-      auto time_generator = [](auto reject_counter) {
-        return std::chrono::seconds(reject_counter);
-      };
-      // reject_counter and local_counter are local mutable variables of lambda
-      auto delay = [reject_counter = kCounter,
-                    local_counter = kCounter,
-                    &time_generator,
-                    kMaxLocalCounter](const auto &commit) mutable {
-        using iroha::synchronizer::SynchronizationOutcomeType;
-        if (commit.sync_outcome == SynchronizationOutcomeType::kReject
-            or commit.sync_outcome == SynchronizationOutcomeType::kNothing) {
-          // Increment reject_counter each local_counter calls of function
-          ++local_counter;
-          if (local_counter == kMaxLocalCounter) {
-            local_counter = 0;
-            if (reject_counter
-                < std::numeric_limits<decltype(reject_counter)>::max()) {
-              reject_counter++;
-            }
-          }
-        } else {
-          reject_counter = 0;
-        }
-        return time_generator(reject_counter);
-      };
+        consensus::Round initial_round,
+        std::function<std::chrono::seconds(
+            const synchronizer::SynchronizationEvent &)> delay_func) {
 
       auto map = [](auto commit) {
         return matchEvent(
@@ -248,7 +225,7 @@ namespace iroha {
           notifier.get_observable()
               .lift<iroha::synchronizer::SynchronizationEvent>(
                   iroha::makeDelay<iroha::synchronizer::SynchronizationEvent>(
-                      delay, rxcpp::identity_current_thread()))
+                      delay_func, rxcpp::identity_current_thread()))
               .map(map),
           std::move(cache),
           std::move(proposal_factory),
@@ -263,6 +240,10 @@ namespace iroha {
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache) {
       return std::make_shared<ordering::OnDemandOrderingServiceImpl>(
           max_size, std::move(proposal_factory), std::move(tx_cache));
+    }
+
+    OnDemandOrderingInit::~OnDemandOrderingInit() {
+      notifier.get_subscriber().unsubscribe();
     }
 
     std::shared_ptr<iroha::network::OrderingGate>
@@ -283,7 +264,9 @@ namespace iroha {
         std::shared_ptr<shared_model::interface::UnsafeProposalFactory>
             proposal_factory,
         std::shared_ptr<ametsuchi::TxPresenceCache> tx_cache,
-        consensus::Round initial_round) {
+        consensus::Round initial_round,
+        std::function<std::chrono::seconds(
+            const synchronizer::SynchronizationEvent &)> delay_func) {
       auto ordering_service =
           createService(max_size, proposal_factory, tx_cache);
       service = std::make_shared<ordering::transport::OnDemandOsServerGrpc>(
@@ -299,7 +282,8 @@ namespace iroha {
                         std::make_shared<ordering::cache::OnDemandCache>(),
                         std::move(proposal_factory),
                         std::move(tx_cache),
-                        initial_round);
+                        initial_round,
+                        std::move(delay_func));
     }
 
   }  // namespace network

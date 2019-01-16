@@ -6,9 +6,9 @@
 #ifndef IROHA_AMETSUCHI_H
 #define IROHA_AMETSUCHI_H
 
-#include <rxcpp/rx.hpp>
 #include <vector>
 
+#include <rxcpp/rx.hpp>
 #include "ametsuchi/block_query_factory.hpp"
 #include "ametsuchi/mutable_factory.hpp"
 #include "ametsuchi/os_persistent_state_factory.hpp"

@@ -6,12 +6,10 @@
 #include "backend/protobuf/block.hpp"
 
 #include <boost/range/adaptors.hpp>
-#include "backend/protobuf/common_objects/noncopyable_proto.hpp"
 #include "backend/protobuf/common_objects/signature.hpp"
 #include "backend/protobuf/transaction.hpp"
 #include "backend/protobuf/util.hpp"
-#include "block.pb.h"
-#include "interfaces/common_objects/types.hpp"
+#include "common/byteutils.hpp"
 
 namespace shared_model {
   namespace proto {
@@ -34,7 +32,8 @@ namespace shared_model {
       interface::types::BlobType blob_{[this] { return makeBlob(proto_); }()};
 
       interface::types::HashType prev_hash_{[this] {
-        return interface::types::HashType(proto_.payload().prev_block_hash());
+        return interface::types::HashType(
+            crypto::Hash::fromHexString(proto_.payload().prev_block_hash()));
       }()};
 
       SignatureSetType<proto::Signature> signatures_{[this] {
@@ -51,7 +50,8 @@ namespace shared_model {
             std::vector<interface::types::HashType> hashes;
             for (const auto &hash :
                  *payload_.mutable_rejected_transactions_hashes()) {
-              hashes.emplace_back(shared_model::crypto::Hash(hash));
+              hashes.emplace_back(
+                  shared_model::crypto::Hash::fromHexString(hash));
             }
             return hashes;
           }()};
@@ -103,8 +103,8 @@ namespace shared_model {
       }
 
       auto sig = impl_->proto_.add_signatures();
-      sig->set_signature(crypto::toBinaryString(signed_blob));
-      sig->set_public_key(crypto::toBinaryString(public_key));
+      sig->set_signature(signed_blob.hex());
+      sig->set_public_key(public_key.hex());
 
       impl_->signatures_ = [this] {
         auto signatures = impl_->proto_.signatures()

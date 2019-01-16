@@ -1,25 +1,15 @@
 /**
- * Copyright Soramitsu Co., Ltd. 2017 All Rights Reserved.
- * http://soramitsu.co.jp
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <gflags/gflags.h>
-#include <grpc++/grpc++.h>
 #include <csignal>
 #include <fstream>
 #include <thread>
+
+#include <gflags/gflags.h>
+#include <grpc++/grpc++.h>
+#include "ametsuchi/storage.hpp"
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
 #include "main/application.hpp"
@@ -226,10 +216,12 @@ int main(int argc, char *argv[]) {
       [](const auto &) { return true; },
       [](iroha::expected::Error<std::string> &) { return false; });
 
-  if (not blocks_exist) {  // may happen only in case of bug or zero disk space
+  if (not blocks_exist) {
     log->error(
-        "You should have never seen this message. There are no blocks in the "
-        "ledger.  Unable to start. Try to specify --genesis_block and "
+        "Unable to start the ledger. There are no blocks in the ledger. Please "
+        "ensure that you are not trying to start the newer version of "
+        "the ledger over incompatible version of the storage or there is "
+        "enough disk space. Try to specify --genesis_block and "
         "--overwrite_ledger parameters at the same time.");
     return EXIT_FAILURE;
   }
@@ -240,7 +232,9 @@ int main(int argc, char *argv[]) {
   auto handler = [](int s) { exit_requested.set_value(); };
   std::signal(SIGINT, handler);
   std::signal(SIGTERM, handler);
+#ifdef SIGQUIT
   std::signal(SIGQUIT, handler);
+#endif
 
   // runs iroha
   log->info("Running iroha");

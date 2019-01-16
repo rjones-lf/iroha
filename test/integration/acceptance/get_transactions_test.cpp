@@ -172,15 +172,19 @@ TEST_F(GetTransactions, InvalidSignatures) {
 /**
  * @given some user with only can_get_my_txs permission
  * @when query GetTransactions with nonexistent hash
- * @then TransactionsResponse with no transactions
+ * @then Stateful invalid query response
  */
 TEST_F(GetTransactions, NonexistentHash) {
   auto check = [](auto &status) {
     ASSERT_NO_THROW({
       const auto &resp =
-          boost::get<const shared_model::interface::TransactionsResponse &>(
+          boost::get<const shared_model::interface::ErrorQueryResponse &>(
               status.get());
-      ASSERT_EQ(resp.transactions().size(), 0);
+      // TODO [IR-1816] Akvinikym 03.12.18: replace magic number 4
+      // with a named constant
+      ASSERT_EQ(resp.errorCode(), 4);
+      boost::get<const shared_model::interface::StatefulFailedErrorResponse &>(
+          resp.get());
     });
   };
 

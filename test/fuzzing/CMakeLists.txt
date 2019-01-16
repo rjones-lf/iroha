@@ -35,19 +35,11 @@ target_link_libraries(find_fuzzing
   protobuf-mutator
   )
 
-add_executable(ordering_gate_fuzz ordering_gate_fuzz.cpp)
-target_link_libraries(ordering_gate_fuzz
-  gtest::gtest
-  gmock::gmock
-  on_demand_ordering_gate
-  shared_model_default_builders
-  protobuf-mutator
-  )
-
 add_executable(send_batches_fuzz send_batches_fuzz.cpp)
 target_link_libraries(send_batches_fuzz
   gtest::gtest
   gmock::gmock
+  ametsuchi
   on_demand_ordering_service
   on_demand_ordering_service_transport_grpc
   protobuf-mutator
@@ -55,6 +47,8 @@ target_link_libraries(send_batches_fuzz
 
 add_executable(request_proposal_fuzz request_proposal_fuzz.cpp)
 target_link_libraries(request_proposal_fuzz
+  ametsuchi
+  rxcpp
   gtest::gtest
   gmock::gmock
   on_demand_ordering_service
@@ -93,5 +87,6 @@ target_link_libraries(mst_fuzz
   gtest::gtest
   gmock::gmock
   mst_transport
+  ametsuchi
   protobuf-mutator
   )
