@@ -12,7 +12,6 @@
 #include "datetime/time.hpp"
 #include "framework/batch_helper.hpp"
 #include "interfaces/common_objects/types.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
 
@@ -101,15 +100,6 @@ inline auto makeTx(const shared_model::interface::types::CounterType &counter,
           .build()
           .signAndAddSignature(keypair)
           .finish());
-}
-
-inline auto makePeer(const std::string &address, const std::string &pub_key) {
-  return std::make_shared<shared_model::proto::Peer>(
-      shared_model::proto::PeerBuilder()
-          .address(address)
-          .pubkey(shared_model::crypto::PublicKey(
-              shared_model::crypto::Hash::fromHexString(pub_key)))
-          .build());
 }
 
 #endif  // IROHA_MST_TEST_HELPERS_HPP

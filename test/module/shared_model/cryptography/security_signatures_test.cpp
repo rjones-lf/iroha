@@ -7,8 +7,8 @@
 #include <gtest/gtest.h>
 
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
-#include "module/shared_model/builders/protobuf/test_signature_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 
 /**
  * @given Two signatures with same pub key but different signed
@@ -16,19 +16,17 @@
  * @then  Expect true
  */
 TEST(SecuritySignature, SignatureOperatorEqual) {
-  auto first_signature =
-      TestSignatureBuilder()
-          .publicKey(shared_model::crypto::PublicKey("one"))
-          .signedData(shared_model::crypto::Signed("signed_one"))
-          .build();
+  shared_model::crypto::PublicKey pk1("one"), pk2("one");
+  shared_model::crypto::Signed data1("signed_one"), data2("signed_two");
+  auto first_signature = std::make_unique<MockSignature>();
+  auto second_signature = std::make_unique<MockSignature>();
 
-  auto second_signature =
-      TestSignatureBuilder()
-          .publicKey(shared_model::crypto::PublicKey("one"))
-          .signedData(shared_model::crypto::Signed("signed_two"))
-          .build();
+  EXPECT_CALL(*first_signature, publicKey()).WillRepeatedly(testing::ReturnRef(pk1));
+  EXPECT_CALL(*second_signature, publicKey()).WillRepeatedly(testing::ReturnRef(pk2));
+  EXPECT_CALL(*first_signature, signedData()).WillRepeatedly(testing::ReturnRef(data1));
+  EXPECT_CALL(*second_signature, signedData()).WillRepeatedly(testing::ReturnRef(data2));
 
-  ASSERT_TRUE(first_signature == second_signature);
+  ASSERT_TRUE(*first_signature == *second_signature);
 }
 
 /**

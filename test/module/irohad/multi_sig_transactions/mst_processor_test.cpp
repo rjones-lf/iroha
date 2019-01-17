@@ -11,6 +11,7 @@
 #include "logger/logger.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 
@@ -291,7 +292,8 @@ TEST_F(MstProcessorTest, onNewPropagationUsecase) {
 
   // ---------------------------------| when |----------------------------------
   std::vector<std::shared_ptr<shared_model::interface::Peer>> peers{
-      makePeer("one", "sign_one"), makePeer("two", "sign_two")};
+      makePeer("one", shared_model::interface::types::PubkeyType("sign_one")),
+      makePeer("two", shared_model::interface::types::PubkeyType("sign_two"))};
   propagation_subject.get_subscriber().on_next(peers);
 }
 
@@ -309,7 +311,8 @@ TEST_F(MstProcessorTest, emptyStatePropagation) {
   EXPECT_CALL(*transport, sendState(_, _)).Times(0);
 
   // ---------------------------------| given |---------------------------------
-  auto another_peer = makePeer("another", "another_pubkey");
+  auto another_peer = makePeer(
+      "another", shared_model::interface::types::PubkeyType("sign_one"));
 
   auto another_peer_state = MstState::empty();
   another_peer_state += makeTestBatch(txBuilder(1));

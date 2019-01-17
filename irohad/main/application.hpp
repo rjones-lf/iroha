@@ -6,47 +6,60 @@
 #ifndef IROHA_APPLICATION_HPP
 #define IROHA_APPLICATION_HPP
 
-#include "ametsuchi/impl/storage_impl.hpp"
-#include "ametsuchi/tx_presence_cache.hpp"
 #include "consensus/consensus_block_cache.hpp"
 #include "cryptography/crypto_provider/crypto_model_signer.hpp"
-#include "cryptography/keypair.hpp"
-#include "interfaces/common_objects/common_objects_factory.hpp"
-#include "interfaces/iroha_internal/query_response_factory.hpp"
-#include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
 #include "main/impl/on_demand_ordering_init.hpp"
-#include "main/server_runner.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy_params.hpp"
-#include "multi_sig_transactions/mst_processor.hpp"
-#include "network/block_loader.hpp"
-#include "network/consensus_gate.hpp"
-#include "network/impl/peer_communication_service_impl.hpp"
-#include "network/mst_transport.hpp"
-#include "network/ordering_gate.hpp"
-#include "network/peer_communication_service.hpp"
-#include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
-#include "simulator/block_creator.hpp"
-#include "simulator/impl/simulator.hpp"
-#include "synchronizer/impl/synchronizer_impl.hpp"
-#include "synchronizer/synchronizer.hpp"
-#include "torii/command_service.hpp"
-#include "torii/impl/command_service_transport_grpc.hpp"
-#include "torii/processor/query_processor_impl.hpp"
-#include "torii/processor/transaction_processor_impl.hpp"
-#include "torii/query_service.hpp"
-#include "validation/chain_validator.hpp"
-#include "validation/impl/chain_validator_impl.hpp"
-#include "validation/impl/stateful_validator_impl.hpp"
-#include "validation/stateful_validator.hpp"
 
 namespace iroha {
+  class PendingTransactionStorage;
+  class MstProcessor;
   namespace ametsuchi {
     class WsvRestorer;
+    class TxPresenceCache;
+    class Storage;
+  }  // namespace ametsuchi
+  namespace network {
+    class BlockLoader;
+    class ConsensusGate;
+    class PeerCommunicationService;
+    class MstTransport;
+    class OrderingGate;
+  }  // namespace network
+  namespace simulator {
+    class Simulator;
   }
+  namespace synchronizer {
+    class Synchronizer;
+  }
+  namespace torii {
+    class QueryProcessor;
+    class StatusBus;
+    class CommandService;
+    class CommandServiceTransportGrpc;
+    class QueryService;
+  }  // namespace torii
+  namespace validation {
+    class ChainValidator;
+    class StatefulValidator;
+  }  // namespace validation
 }  // namespace iroha
+
+namespace shared_model {
+  namespace crypto {
+    class Keypair;
+  }
+  namespace interface {
+    class CommonObjectsFactory;
+    class QueryResponseFactory;
+    class TransactionBatchFactory;
+  }  // namespace interface
+}  // namespace shared_model
+
+class ServerRunner;
 
 class Irohad {
  public:
@@ -166,6 +179,24 @@ class Irohad {
       opt_mst_gossip_params_;
 
   // ------------------------| internal dependencies |-------------------------
+ public:
+  shared_model::crypto::Keypair keypair;
+  std::shared_ptr<iroha::ametsuchi::Storage> storage;
+
+ protected:
+  logger::Logger log_;
+
+  // initialization objects
+  iroha::network::OnDemandOrderingInit ordering_init;
+  iroha::consensus::yac::YacInit yac_init;
+  iroha::network::BlockLoaderInit loader_init;
+
+  // common objects factory
+  std::shared_ptr<shared_model::interface::CommonObjectsFactory>
+      common_objects_factory_;
+
+  // WSV restorer
+  std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;
 
   // crypto provider
   std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer_;
@@ -177,20 +208,29 @@ class Irohad {
   std::shared_ptr<iroha::validation::StatefulValidator> stateful_validator;
   std::shared_ptr<iroha::validation::ChainValidator> chain_validator;
 
-  // WSV restorer
-  std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;
-
   // async call
   std::shared_ptr<iroha::network::AsyncGrpcClient<google::protobuf::Empty>>
       async_call_;
 
-  // common objects factory
-  std::shared_ptr<shared_model::interface::CommonObjectsFactory>
-      common_objects_factory_;
-
   // transaction batch factory
   std::shared_ptr<shared_model::interface::TransactionBatchFactory>
       transaction_batch_factory_;
+
+  // transaction factory
+  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::Transaction,
+      iroha::protocol::Transaction>>
+      transaction_factory;
+
+  // query response factory
+  std::shared_ptr<shared_model::interface::QueryResponseFactory>
+      query_response_factory_;
+
+  // query factory
+  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
+      shared_model::interface::Query,
+      iroha::protocol::Query>>
+      query_factory;
 
   // persistent cache
   std::shared_ptr<iroha::ametsuchi::TxPresenceCache> persistent_cache;
@@ -217,55 +257,26 @@ class Irohad {
   // pcs
   std::shared_ptr<iroha::network::PeerCommunicationService> pcs;
 
-  // transaction factory
-  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
-      shared_model::interface::Transaction,
-      iroha::protocol::Transaction>>
-      transaction_factory;
-
-  // query factory
-  std::shared_ptr<shared_model::interface::AbstractTransportFactory<
-      shared_model::interface::Query,
-      iroha::protocol::Query>>
-      query_factory;
-
-  // query response factory
-  std::shared_ptr<shared_model::interface::QueryResponseFactory>
-      query_response_factory_;
+  // status bus
+  std::shared_ptr<iroha::torii::StatusBus> status_bus_;
 
   // mst
+  std::shared_ptr<iroha::network::MstTransport> mst_transport;
   std::shared_ptr<iroha::MstProcessor> mst_processor;
 
   // pending transactions storage
   std::shared_ptr<iroha::PendingTransactionStorage> pending_txs_storage_;
 
-  // status bus
-  std::shared_ptr<iroha::torii::StatusBus> status_bus_;
-
   // transaction service
-  std::shared_ptr<torii::CommandService> command_service;
-  std::shared_ptr<torii::CommandServiceTransportGrpc> command_service_transport;
+  std::shared_ptr<iroha::torii::CommandService> command_service;
+  std::shared_ptr<iroha::torii::CommandServiceTransportGrpc>
+      command_service_transport;
 
   // query service
-  std::shared_ptr<torii::QueryService> query_service;
+  std::shared_ptr<iroha::torii::QueryService> query_service;
 
   std::unique_ptr<ServerRunner> torii_server;
   std::unique_ptr<ServerRunner> internal_server;
-
-  // initialization objects
-  iroha::network::OnDemandOrderingInit ordering_init;
-  iroha::consensus::yac::YacInit yac_init;
-  iroha::network::BlockLoaderInit loader_init;
-
-  std::shared_ptr<iroha::network::MstTransport> mst_transport;
-
-  logger::Logger log_;
-
- public:
-  std::shared_ptr<iroha::ametsuchi::Storage> storage;
-
-  shared_model::crypto::Keypair keypair;
-  grpc::ServerBuilder builder;
 };
 
 #endif  // IROHA_APPLICATION_HPP

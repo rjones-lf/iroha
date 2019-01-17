@@ -31,7 +31,8 @@ namespace iroha {
        * Execute and validate query.
        */
       virtual QueryExecutorResult validateAndExecute(
-          const shared_model::interface::Query &query) = 0;
+          const shared_model::interface::Query &query,
+          const bool validate_signatories) = 0;
 
       /**
        * Perform BlocksQuery validation
@@ -39,7 +40,8 @@ namespace iroha {
        */
       virtual bool validate(
           const shared_model::interface::BlocksQuery &query,
-          shared_model::interface::types::HeightType ledger_height) = 0;
+          shared_model::interface::types::HeightType ledger_height,
+          const bool validate_signatories) = 0;
     };
   }  // namespace ametsuchi
 }  // namespace iroha

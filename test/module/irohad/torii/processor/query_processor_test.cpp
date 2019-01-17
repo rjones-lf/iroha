@@ -14,7 +14,6 @@
 #include "interfaces/query_responses/block_response.hpp"
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/validation/validation_mocks.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_account_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_block_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_query_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
@@ -42,9 +41,7 @@ class QueryProcessorTest : public ::testing::Test {
         std::make_shared<shared_model::proto::ProtoQueryResponseFactory>();
     qpi = std::make_shared<torii::QueryProcessorImpl>(
         storage, storage, nullptr, query_response_factory);
-    wsv_queries = std::make_shared<MockWsvQuery>();
     block_queries = std::make_shared<MockBlockQuery>();
-    EXPECT_CALL(*storage, getWsvQuery()).WillRepeatedly(Return(wsv_queries));
     EXPECT_CALL(*storage, getBlockQuery())
         .WillRepeatedly(Return(block_queries));
     EXPECT_CALL(*storage, createQueryExecutor(_, _))
@@ -77,7 +74,6 @@ class QueryProcessorTest : public ::testing::Test {
   std::vector<shared_model::interface::types::PubkeyType> signatories = {
       keypair.publicKey()};
   std::shared_ptr<MockQueryExecutor> qry_exec;
-  std::shared_ptr<MockWsvQuery> wsv_queries;
   std::shared_ptr<MockBlockQuery> block_queries;
   std::shared_ptr<MockStorage> storage;
   std::shared_ptr<shared_model::interface::QueryResponseFactory>
@@ -101,8 +97,6 @@ TEST_F(QueryProcessorTest, QueryProcessorWhereInvokeInvalidQuery) {
       query_response_factory->createAccountDetailResponse("", qry.hash())
           .release();
 
-  EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
-      .WillRepeatedly(Return(signatories));
   EXPECT_CALL(*qry_exec, validateAndExecute_(_)).WillOnce(Return(qry_resp));
 
   auto response = qpi->queryHandle(qry);
@@ -126,9 +120,16 @@ TEST_F(QueryProcessorTest, QueryProcessorWithWrongKey) {
                        shared_model::crypto::DefaultCryptoAlgorithmType::
                            generateKeypair())
                    .finish();
+  auto *qry_resp = query_response_factory
+                       ->createErrorQueryResponse(
+                           shared_model::interface::QueryResponseFactory::
+                               ErrorQueryType::kStatefulFailed,
+                           "query signatories did not pass validation",
+                           3,
+                           query.hash())
+                       .release();
 
-  EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
-      .WillRepeatedly(Return(signatories));
+  EXPECT_CALL(*qry_exec, validateAndExecute_(_)).WillOnce(Return(qry_resp));
 
   auto response = qpi->queryHandle(query);
   ASSERT_TRUE(response);
@@ -148,9 +149,7 @@ TEST_F(QueryProcessorTest, GetBlocksQueryWithoutHeight) {
   auto block_number = 5;
   auto block_query = getBlocksQuery(kAccountId);
 
-  EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
-      .WillOnce(Return(signatories));
-  EXPECT_CALL(*qry_exec, validate(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*qry_exec, validate(_, _, _)).WillOnce(Return(true));
   EXPECT_CALL(*block_queries, getTopBlockHeight()).WillOnce(Return(1));
   EXPECT_CALL(*block_queries, getBlocksFrom(_)).Times(0);
 
@@ -183,9 +182,7 @@ TEST_F(QueryProcessorTest, GetBlocksQueryWithHeight) {
   auto query_start_from = 2;
   auto blocks_query = getBlocksQuery<true>(kAccountId, query_start_from);
 
-  EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
-      .WillOnce(Return(signatories));
-  EXPECT_CALL(*qry_exec, validate(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*qry_exec, validate(_, _, _)).WillOnce(Return(true));
   EXPECT_CALL(*block_queries, getTopBlockHeight())
       .WillOnce(Return(ledger_height));
 
@@ -238,9 +235,7 @@ TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
   auto block_number = 5;
   auto block_query = getBlocksQuery(kAccountId);
 
-  EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
-      .WillRepeatedly(Return(signatories));
-  EXPECT_CALL(*qry_exec, validate(_, _)).WillOnce(Return(false));
+  EXPECT_CALL(*qry_exec, validate(_, _, _)).WillOnce(Return(false));
 
   auto wrapper =
       make_test_subscriber<CallExact>(qpi->blocksQueryHandle(block_query), 1);

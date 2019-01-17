@@ -5,6 +5,7 @@
 
 #include "main/application.hpp"
 
+#include "ametsuchi/impl/storage_impl.hpp"
 #include "ametsuchi/impl/tx_presence_cache_impl.hpp"
 #include "ametsuchi/impl/wsv_restorer_impl.hpp"
 #include "backend/protobuf/common_objects/proto_common_objects_factory.hpp"
@@ -16,9 +17,10 @@
 #include "backend/protobuf/proto_tx_status_factory.hpp"
 #include "common/bind.hpp"
 #include "consensus/yac/impl/supermajority_checker_impl.hpp"
+#include "cryptography/crypto_provider/crypto_model_signer.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory_impl.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
-#include "interfaces/permission_to_string.hpp"
+#include "main/server_runner.hpp"
 #include "multi_sig_transactions/gossip_propagation_strategy.hpp"
 #include "multi_sig_transactions/mst_processor_impl.hpp"
 #include "multi_sig_transactions/mst_propagation_strategy_stub.hpp"
@@ -26,9 +28,21 @@
 #include "multi_sig_transactions/storage/mst_storage_impl.hpp"
 #include "multi_sig_transactions/transport/mst_transport_grpc.hpp"
 #include "multi_sig_transactions/transport/mst_transport_stub.hpp"
+#include "network/impl/block_loader_impl.hpp"
+#include "network/impl/peer_communication_service_impl.hpp"
 #include "ordering/impl/on_demand_common.hpp"
+#include "ordering/impl/on_demand_ordering_gate.hpp"
+#include "pending_txs_storage/impl/pending_txs_storage_impl.hpp"
+#include "simulator/impl/simulator.hpp"
+#include "synchronizer/impl/synchronizer_impl.hpp"
 #include "torii/impl/command_service_impl.hpp"
+#include "torii/impl/command_service_transport_grpc.hpp"
 #include "torii/impl/status_bus_impl.hpp"
+#include "torii/processor/query_processor_impl.hpp"
+#include "torii/processor/transaction_processor_impl.hpp"
+#include "torii/query_service.hpp"
+#include "validation/impl/chain_validator_impl.hpp"
+#include "validation/impl/stateful_validator_impl.hpp"
 #include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/protobuf/proto_block_validator.hpp"
@@ -77,6 +91,8 @@ Irohad::Irohad(const std::string &block_store_dir,
   // initialization of iroha daemon
   initStorage();
 }
+
+Irohad::~Irohad() = default;
 
 /**
  * Initializing iroha daemon
@@ -428,8 +444,8 @@ void Irohad::initMstProcessor() {
     mst_propagation = std::make_shared<GossipPropagationStrategy>(
         storage, rxcpp::observe_on_new_thread(), *opt_mst_gossip_params_);
   } else {
-    mst_propagation = std::make_shared<iroha::PropagationStrategyStub>();
     mst_transport = std::make_shared<iroha::network::MstTransportStub>();
+    mst_propagation = std::make_shared<iroha::PropagationStrategyStub>();
   }
 
   auto mst_time = std::make_shared<MstTimeProviderImpl>();
@@ -554,10 +570,4 @@ Irohad::RunResult Irohad::run() {
             log_->error(e.error);
             return e;
           });
-}
-
-Irohad::~Irohad() {
-  // TODO andrei 17.09.18: IR-1710 Verify that all components' destructors are
-  // called in irohad destructor
-  storage->freeConnections();
 }

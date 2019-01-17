@@ -47,7 +47,9 @@ class QueryPermissionAssets final : public QueryPermissionTestBase {
   std::function<void(const proto::QueryResponse &response)>
   getGeneralResponseChecker() override;
 
-  std::vector<shared_model::proto::AccountAsset> account_assets_;
+  std::vector<std::pair<shared_model::interface::types::AssetIdType,
+                       shared_model::interface::Amount>>
+      account_assets_;
 };
 
 #endif /* QUERY_PERMISSION_TEST_AST_HPP_ */

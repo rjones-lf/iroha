@@ -8,6 +8,7 @@
 
 #include "cryptography/keypair.hpp"
 #include "main/application.hpp"
+#include "main/server_runner.hpp"
 
 namespace integration_framework {
   /**

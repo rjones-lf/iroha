@@ -167,7 +167,7 @@ namespace iroha {
         return query_executor->createQueryExecutor(pending_txs_storage,
                                                    query_response_factory)
             | [&query](const auto &executor) {
-                return executor->validateAndExecute(query);
+                return executor->validateAndExecute(query, false);
               };
       }
 
@@ -273,7 +273,7 @@ namespace iroha {
       ASSERT_TRUE(query_executor->createQueryExecutor(pending_txs_storage,
                                                       query_response_factory)
                   | [&blocks_query](const auto &executor) {
-                      return executor->validate(blocks_query, 1);
+                      return executor->validate(blocks_query, 1, false);
                     });
     }
 
@@ -296,7 +296,7 @@ namespace iroha {
                    | [&blocks_query](const auto &executor) {
                        // second arg is (query_height-1); for some reason, it
                        // cannot be captured, causes compile error
-                       return executor->validate(blocks_query, 2);
+                       return executor->validate(blocks_query, 2, false);
                      });
     }
 
@@ -311,7 +311,7 @@ namespace iroha {
       ASSERT_FALSE(query_executor->createQueryExecutor(pending_txs_storage,
                                                        query_response_factory)
                    | [&blocks_query](const auto &executor) {
-                       return executor->validate(blocks_query, 1);
+                       return executor->validate(blocks_query, 1, false);
                      });
     }
 

@@ -285,12 +285,14 @@ namespace iroha {
                    shared_model::interface::QueryResponse *(
                        const shared_model::interface::Query &));
       QueryExecutorResult validateAndExecute(
-          const shared_model::interface::Query &q) override {
+          const shared_model::interface::Query &q,
+          bool validate_signatories = true) override {
         return QueryExecutorResult(validateAndExecute_(q));
       }
-      MOCK_METHOD2(validate,
+      MOCK_METHOD3(validate,
                    bool(const shared_model::interface::BlocksQuery &,
-                        shared_model::interface::types::HeightType));
+                        shared_model::interface::types::HeightType,
+                        bool));
     };
 
     class MockTxPresenceCache : public iroha::ametsuchi::TxPresenceCache {

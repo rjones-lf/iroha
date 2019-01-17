@@ -11,11 +11,15 @@
 #include "model/converters/json_transaction_factory.hpp"
 #include "model/converters/pb_query_factory.hpp"
 #include "model/converters/pb_transaction_factory.hpp"
+#include "network/impl/grpc_channel_builder.hpp"
 
 namespace iroha_cli {
 
   CliClient::CliClient(std::string target_ip, int port)
-      : command_client_(target_ip, port), query_client_(target_ip, port) {}
+      : command_client_(
+            iroha::network::createClient<iroha::protocol::CommandService_v1>(
+                target_ip + ":" + std::to_string(port))),
+        query_client_(target_ip, port) {}
 
   CliClient::Response<CliClient::TxStatus> CliClient::sendTx(
       const shared_model::interface::Transaction &tx) {
