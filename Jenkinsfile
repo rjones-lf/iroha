@@ -203,6 +203,10 @@ node ('master') {
      case 'Custom command':
         if (cmd_sanitize(params.custom_cmd)){
           evaluate (params.custom_cmd)
+          // A very rare scenario when linux compiler is not selected but we still need coverage
+          if (x64linux_compiler_list.isEmpty() && coverage ){
+            coverage_mac = true
+          }
         } else {
            println("Unable to parse '${params.custom_cmd}'")
            sh "exit 1"
@@ -214,12 +218,11 @@ node ('master') {
         break;
   }
 
-  echo "packageBuild=${packageBuild}, pushDockerTag=${pushDockerTag}, packagePush=${packagePush} "
+  echo "specialBranch=${specialBranch}, packageBuild=${packageBuild}, pushDockerTag=${pushDockerTag}, packagePush=${packagePush} "
   echo "testing=${testing}, testList=${testList}"
   echo "x64linux_compiler_list=${x64linux_compiler_list}"
   echo "mac_compiler_list=${mac_compiler_list}"
-  echo "specialBranch=${specialBranch}"
-  echo "sanitize=${sanitize}, cppcheck=${cppcheck}, fuzzing=${fuzzing}, sonar=${sonar}, coverage=${coverage}, doxygen=${doxygen}"
+  echo "sanitize=${sanitize}, cppcheck=${cppcheck}, fuzzing=${fuzzing}, sonar=${sonar}, coverage=${coverage}, coverage_mac=${coverage_mac} doxygen=${doxygen}"
   print scmVars
   print environmentList
 
