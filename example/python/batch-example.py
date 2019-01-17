@@ -88,9 +88,9 @@ def create_users():
         iroha.command('AddAssetQuantity',
                       asset_id='dogecoin#test', amount='20000'),
         iroha.command('CreateAccount', account_name='alice', domain_id='test',
-                      public_key=ic.hex_key_to_bytes(alice_public_keys[0])),
+                      public_key=alice_public_keys[0]),
         iroha.command('CreateAccount', account_name='bob', domain_id='test',
-                      public_key=ic.hex_key_to_bytes(bob_public_keys[0])),
+                      public_key=bob_public_keys[0]),
         iroha.command('TransferAsset', src_account_id='admin@test', dest_account_id='alice@test',
                       asset_id='bitcoin#test', description='init top up', amount='100000'),
         iroha.command('TransferAsset', src_account_id='admin@test', dest_account_id='bob@test',
@@ -106,7 +106,7 @@ def add_keys_and_set_quorum():
     alice_iroha = Iroha('alice@test')
     alice_cmds = [
         alice_iroha.command('AddSignatory', account_id='alice@test',
-                            public_key=ic.hex_key_to_bytes(alice_public_keys[1])),
+                            public_key=alice_public_keys[1]),
         alice_iroha.command('SetAccountQuorum',
                             account_id='alice@test', quorum=2)
     ]
@@ -117,7 +117,7 @@ def add_keys_and_set_quorum():
     bob_iroha = Iroha('bob@test')
     bob_cmds = [
         bob_iroha.command('AddSignatory', account_id='bob@test',
-                          public_key=ic.hex_key_to_bytes(bob_public_keys[1])),
+                          public_key=bob_public_keys[1]),
         bob_iroha.command('SetAccountQuorum', account_id='bob@test', quorum=2)
     ]
     bob_tx = bob_iroha.transaction(bob_cmds)

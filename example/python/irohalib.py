@@ -105,11 +105,12 @@ class IrohaCrypto(object):
         """
         Calculates hash of reduced payload of a transaction
         :param transaction: transaction to be processed
-        :return: bytes representation of hash
+        :return: hex representation of hash
         """
         bytes = transaction.payload.reduced_payload.SerializeToString()
         hash = hashlib.sha3_256(bytes).digest()
-        return hash
+        hex_hash = binascii.hexlify(hash)
+        return hex_hash
 
     @staticmethod
     def private_key():
@@ -118,11 +119,6 @@ class IrohaCrypto(object):
         :return: hex representation of private key
         """
         return binascii.b2a_hex(os.urandom(32))
-
-    @staticmethod
-    def hex_key_to_bytes(key):
-        """Convert hex string to bytes string. The string is just a container"""
-        return binascii.unhexlify(key)
 
 
 class Iroha(object):
