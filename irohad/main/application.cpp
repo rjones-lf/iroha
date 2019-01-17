@@ -363,7 +363,7 @@ void Irohad::initConsensusGate() {
                                               vote_delay_,
                                               async_call_,
                                               common_objects_factory_);
-
+  consensus_gate->onOutcome().subscribe(gate_object.get_subscriber());
   log_->info("[Init] => consensus gate");
 }
 
@@ -466,7 +466,7 @@ void Irohad::initTransactionCommandService() {
           transaction_factory,
           batch_parser,
           transaction_batch_factory_,
-          consensus_gate,
+          gate_object.get_observable(),
           2);
 
   log_->info("[Init] => command service");

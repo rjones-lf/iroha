@@ -74,10 +74,6 @@ class CommandServiceTransportGrpcTest : public testing::Test {
         std::make_shared<shared_model::interface::TransactionBatchParserImpl>();
     batch_factory = std::make_shared<MockTransactionBatchFactory>();
 
-    mock_consensus_gate = std::make_shared<iroha::network::MockConsensusGate>();
-    ON_CALL(*mock_consensus_gate, onOutcome())
-        .WillByDefault(
-            Return(rxcpp::observable<>::empty<iroha::consensus::GateObject>()));
   }
 
   void SetUp() override {
@@ -93,7 +89,7 @@ class CommandServiceTransportGrpcTest : public testing::Test {
         transaction_factory,
         batch_parser,
         batch_factory,
-        mock_consensus_gate,
+        consensus_gate_objects.get_observable(),
         2);
   }
 
@@ -110,7 +106,8 @@ class CommandServiceTransportGrpcTest : public testing::Test {
   std::shared_ptr<MockCommandService> command_service;
   std::shared_ptr<torii::CommandServiceTransportGrpc> transport_grpc;
 
-  std::shared_ptr<iroha::network::MockConsensusGate> mock_consensus_gate;
+  rxcpp::subjects::subject<iroha::consensus::GateObject> consensus_gate_objects;
+  std::vector<GateObject> gate_objects{BlockReject{}, BlockReject{}};
 
   const size_t kHashLength = 32;
   const size_t kTimes = 5;
@@ -255,6 +252,16 @@ TEST_F(CommandServiceTransportGrpcTest, StatusStreamEmpty) {
   grpc::ServerContext context;
   iroha::protocol::TxStatusRequest request;
 
+  transport_grpc = std::make_shared<torii::CommandServiceTransportGrpc>(
+      command_service,
+      status_bus,
+      status_factory,
+      transaction_factory,
+      batch_parser,
+      batch_factory,
+      rxcpp::observable<>::iterate(gate_objects),
+      2);
+
   EXPECT_CALL(*command_service, getStatusStream(_))
       .WillOnce(Return(rxcpp::observable<>::empty<std::shared_ptr<
                            shared_model::interface::TransactionResponse>>()));
@@ -285,9 +292,15 @@ TEST_F(CommandServiceTransportGrpcTest, StatusStreamOnNotReceived) {
                     _))
       .WillOnce(Return(true));
 
-  std::vector<GateObject> gate_objects{BlockReject{}, BlockReject{}};
-  EXPECT_CALL(*mock_consensus_gate, onOutcome())
-      .WillOnce(Return(rxcpp::observable<>::iterate(gate_objects)));
+  transport_grpc = std::make_shared<torii::CommandServiceTransportGrpc>(
+      command_service,
+      status_bus,
+      status_factory,
+      transaction_factory,
+      batch_parser,
+      batch_factory,
+      rxcpp::observable<>::iterate(gate_objects),
+      2);
 
   ASSERT_TRUE(transport_grpc
                   ->StatusStream(

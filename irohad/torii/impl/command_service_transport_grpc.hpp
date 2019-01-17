@@ -14,6 +14,8 @@
 #include "interfaces/iroha_internal/abstract_transport_factory.hpp"
 #include "logger/logger.hpp"
 
+#include "consensus/gate_object.hpp" // todo
+
 namespace iroha {
   namespace torii {
     class StatusBus;
@@ -65,7 +67,7 @@ namespace torii {
             batch_parser,
         std::shared_ptr<shared_model::interface::TransactionBatchFactory>
             transaction_batch_factory,
-        std::shared_ptr<iroha::network::ConsensusGate> consensus_gate,
+        rxcpp::observable<iroha::consensus::GateObject> gate_object,
         int maximum_rounds_without_update,
         logger::Logger log = logger::log("CommandServiceTransportGrpc"));
 
@@ -135,7 +137,7 @@ namespace torii {
         batch_factory_;
     logger::Logger log_;
 
-    std::shared_ptr<iroha::network::ConsensusGate> consensus_gate_;
+    rxcpp::observable<iroha::consensus::GateObject> gate_object_;
     const int maximum_rounds_without_update_;
   };
 }  // namespace torii

@@ -210,6 +210,7 @@ class Irohad {
 
   // consensus gate
   std::shared_ptr<iroha::network::ConsensusGate> consensus_gate;
+  rxcpp::subjects::subject<iroha::consensus::GateObject> gate_object;
 
   // synchronizer
   std::shared_ptr<iroha::synchronizer::Synchronizer> synchronizer;

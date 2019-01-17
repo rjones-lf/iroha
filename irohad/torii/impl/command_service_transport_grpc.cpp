@@ -14,6 +14,7 @@
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include "backend/protobuf/transaction_responses/proto_tx_response.hpp"
+#include "common/timeout.hpp"
 #include "interfaces/iroha_internal/transaction_batch.hpp"
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
 #include "interfaces/iroha_internal/transaction_batch_parser.hpp"
@@ -33,7 +34,7 @@ namespace torii {
           batch_parser,
       std::shared_ptr<shared_model::interface::TransactionBatchFactory>
           transaction_batch_factory,
-      std::shared_ptr<iroha::network::ConsensusGate> consensus_gate,
+      rxcpp::observable<iroha::consensus::GateObject> gate_object,
       int maximum_rounds_without_update,
       logger::Logger log)
       : command_service_(std::move(command_service)),
@@ -43,7 +44,7 @@ namespace torii {
         batch_parser_(std::move(batch_parser)),
         batch_factory_(std::move(transaction_batch_factory)),
         log_(std::move(log)),
-        consensus_gate_(std::move(consensus_gate)),
+        gate_object_(std::move(gate_object)),
         maximum_rounds_without_update_(maximum_rounds_without_update) {}
 
   grpc::Status CommandServiceTransportGrpc::Torii(
@@ -184,21 +185,13 @@ namespace torii {
     auto client_id_format = boost::format("Peer: '%s', %s");
     std::string client_id =
         (client_id_format % context->peer() % hash.toString()).str();
+    
+    auto consensus_gate_observable =
+        gate_object_.scan(0, [](int seed, const auto &) { return ++seed; })
+            .start_with(0);
 
-    // in each round, increment the round counter, showing number of consecutive
-    // rounds without status update; if it becomes greater than some predefined
-    // value, stop the status streaming
-    std::atomic_int round_counter{0};
-    consensus_gate_->onOutcome().subscribe(
-        [this, &subscription, &round_counter](const auto &) {
-          auto new_val = round_counter.load() + 1;
-          if (new_val >= maximum_rounds_without_update_) {
-            subscription.unsubscribe();
-          } else {
-            round_counter++;
-          }
-        });
-
+    boost::optional<iroha::protocol::TxStatus> last_tx_status;
+    auto rounds_counter{0};
     command_service_
         ->getStatusStream(hash)
         // convert to transport objects
@@ -208,21 +201,40 @@ namespace torii {
                      shared_model::proto::TransactionResponse>(response)
               ->getTransport();
         })
+        .combine_latest(consensus_gate_observable)
         // complete the observable if client is disconnected
-        .take_while([=](const auto &) {
+        .take_while([=, &rounds_counter, &last_tx_status](const auto &tuple) {
           auto is_cancelled = context->IsCancelled();
           if (is_cancelled) {
             log_->debug("client unsubscribed, {}", client_id);
           }
+          // we increment round counter when the same status arrived again.
+          auto status = std::get<0>(tuple).tx_status();
+          if (last_tx_status and (status == *last_tx_status)) {
+            ++rounds_counter;
+          } else {
+            rounds_counter = 0;
+          }
+          // we stop the stream when round counter is greater than allowed.
+          if (rounds_counter >= maximum_rounds_without_update_) {
+            return false;
+          }
+
           return not is_cancelled;
         })
+        .filter([&last_tx_status](const auto &tuple) {
+          auto status = std::get<0>(tuple).tx_status();
+          // we allow further processing in case of any new status
+          // (including the first one)
+          auto result = not last_tx_status or (*last_tx_status != status);
+          last_tx_status = status;
+          return result;
+        })
         .subscribe(subscription,
-                   [this, &response_writer, &client_id, &round_counter](
-                       iroha::protocol::ToriiResponse response) {
+                   [this, &response_writer, &client_id](const auto &tuple) {
+                     auto response = std::get<0>(tuple);
                      if (response_writer->Write(response)) {
                        log_->debug("status written, {}", client_id);
-                       // reset consecutive rounds counter for this tx
-                       round_counter.store(0);
                      }
                    },
                    [&](std::exception_ptr ep) {
