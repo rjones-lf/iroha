@@ -21,7 +21,7 @@ custom_hostnames: false
 # deployments for testing purposes.
 #
 # Default: false
-overlay_network: true
+overlay_network: false
 
 ## Deployment configs
 container_basename: iroha
