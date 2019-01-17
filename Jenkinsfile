@@ -86,27 +86,17 @@ def cmd_sanitize(String cmd){
 stage('Prepare environment'){
 timestamps(){
 
-param_descriptions = """Default - will automatically chose the correct one based on branch name and build number
-Branch commit - Linux/gcc v5;	Test: Smoke, Unit;
-On open PR -  Linux/gcc v5, MacOS/appleclang; Test: Smoke, Unit; Coverage; Analysis: cppcheck, sonar;
-Commit in Open PR - Same as Branch commit
-Before merge to trunk - Linux/gcc v5 v7, Linux/clang v6 v7, MacOS/appleclang; Test: ALL; Coverage; Analysis: cppcheck, sonar; Build type: Debug when Release
-Before merge develop - Not implemented
-Before merge master - Not implemented
-Nightly build - Not implemented
-Custom command - enter command below, Ex: build_type='Release'; testing=false;
-"""
-
-properties([
-    parameters([
-        choice(choices: 'Default\nBranch commit\nOn open PR\nCommit in Open PR\nBefore merge to trunk\nBefore merge develop\nBefore merge master\nNightly build\nCustom command', description: param_descriptions, name: 'build_scenario'),
-        string(defaultValue: '', description: '', name: 'custom_cmd', trim: true)
-    ]),
-    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
-])
 
 node ('master') {
   scmVars = checkout scm
+  def textVariables = load '.jenkinsci/text-variables.groovy'
+  properties([
+      parameters([
+          choice(choices: textVariables.param_chose_opt, description: textVariables.param_descriptions, name: 'build_scenario'),
+          string(defaultValue: '', description: textVariables.cmd_description, name: 'custom_cmd', trim: true)
+      ]),
+      buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
+  ])
   environmentList = []
   environment = [:]
   environment = [
