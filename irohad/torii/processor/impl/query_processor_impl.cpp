@@ -111,20 +111,28 @@ namespace iroha {
         return blocks_query_subject_.get_observable();
       }
 
+      // buffer of blocks in case something was committed between retrieving
+      // blocks from ledger and final concatenation of the observables; without
+      // the buffer, such blocks would disappear
       std::vector<wBlockQueryResponse> blocks_buffer;
-      blocks_query_subject_.get_observable().subscribe(
-          [&blocks_buffer](auto block_resp) {
-            blocks_buffer.push_back(std::move(block_resp));
-          });
+      auto buffer_subscription =
+          blocks_query_subject_.get_observable().subscribe(
+              [&blocks_buffer](auto block_resp) {
+                blocks_buffer.push_back(std::move(block_resp));
+              });
 
       auto desired_blocks =
           storage_->getBlockQuery()->getBlocksFrom(*qry.height());
 
       return rxcpp::observable<>::iterate(std::move(desired_blocks))
+          // transform retrieved blocks to query responses
           .map([this](std::shared_ptr<shared_model::interface::Block> block) {
             return wBlockQueryResponse{
                 response_factory_->createBlockQueryResponse(clone(*block))};
           })
+          // concatenate retrieved blocks with blocks buffer and filter out
+          // repeated ones by checking the height - if it is less or equal than
+          // the query's one, this block is already in the set of retrieved
           .concat(
               rxcpp::observable<>::iterate(blocks_buffer)
                   .filter([this, &qry](wBlockQueryResponse block_query_resp) {
@@ -141,6 +149,9 @@ namespace iroha {
                           return false;
                         });
                   }))
+          .finally(
+              [buffer_subscription] { buffer_subscription.unsubscribe(); })
+          // finally concatenate observer to all future blocks
           .concat(blocks_query_subject_.get_observable());
     }
 

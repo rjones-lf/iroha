@@ -178,34 +178,37 @@ TEST_F(QueryProcessorTest, GetBlocksQueryWithoutHeight) {
  * comitted in the process of retreiving old ones
  */
 TEST_F(QueryProcessorTest, GetBlocksQueryWithHeight) {
-  auto blocks_number = 5;
-  auto query_height = 2;
-  auto blocks_query = getBlocksQuery<true>(kAccountId, query_height);
+  auto ledger_height = 4;
+  auto total_returned_blocks = 4;
+  auto query_start_from = 2;
+  auto blocks_query = getBlocksQuery<true>(kAccountId, query_start_from);
 
   EXPECT_CALL(*wsv_queries, getSignatories(kAccountId))
       .WillOnce(Return(signatories));
   EXPECT_CALL(*qry_exec, validate(_, _)).WillOnce(Return(true));
-  EXPECT_CALL(*block_queries, getTopBlockHeight()).WillOnce(Return(5));
+  EXPECT_CALL(*block_queries, getTopBlockHeight())
+      .WillOnce(Return(ledger_height));
 
   // these blocks are the ones lying in the ledger for current moment
   std::vector<std::shared_ptr<shared_model::interface::Block>> all_blocks;
-  for (auto i = 0; i < blocks_number; ++i) {
+  for (auto i = 0; i < ledger_height; ++i) {
     all_blocks.push_back(clone(TestBlockBuilder().height(i).build()));
   }
 
   // these blocks are to be requested and returned to the created observer; they
   // are part of those in the ledger
   std::vector<std::shared_ptr<shared_model::interface::Block>> query_blocks{
-      std::begin(all_blocks) + query_height, std::end(all_blocks)};
-  EXPECT_CALL(*block_queries, getBlocksFrom(query_height))
+      std::begin(all_blocks) + query_start_from, std::end(all_blocks)};
+  EXPECT_CALL(*block_queries, getBlocksFrom(query_start_from))
       .WillOnce(Return(query_blocks));
 
   auto wrapper = make_test_subscriber<CallExact>(
-      qpi->blocksQueryHandle(blocks_query), blocks_number);
-  wrapper.subscribe([query_height](auto response) {
-    // check heights of the newcome blocks
+      qpi->blocksQueryHandle(blocks_query), total_returned_blocks);
+  wrapper.subscribe([query_start_from](auto response) {
+    // check heights of the received blocks - they must be in right consecutive
+    // order
     static shared_model::interface::types::HeightType last_seen_block_height =
-        query_height;
+        query_start_from;
     ASSERT_NO_THROW({
       const auto &block =
           boost::get<const shared_model::interface::BlockResponse &>(
@@ -216,22 +219,20 @@ TEST_F(QueryProcessorTest, GetBlocksQueryWithHeight) {
     });
   });
 
-  // emit two more blocks and make sure they were emitted by our observable as
+  // emit two more blocks - they must be emitted by our observable as
   // well
   storage->notifier.get_subscriber().on_next(
-      clone(TestBlockBuilder().height(blocks_number).build()));
+      clone(TestBlockBuilder().height(ledger_height).build()));
   storage->notifier.get_subscriber().on_next(
-      clone(TestBlockBuilder().height(blocks_number + 1).build()));
+      clone(TestBlockBuilder().height(ledger_height + 1).build()));
 
   ASSERT_TRUE(wrapper.validate());
 }
 
-TEST_F(QueryProcessorTest, GetBlocksQueryWithInvalidHeight) {}
-
 /**
  * @given account, ametsuchi queries
  * @when valid block query is invalid (no can_get_blocks permission)
- * @then Query Processor should return an observable with blockError
+ * @then Query Processor should return an observable with BlockError
  */
 TEST_F(QueryProcessorTest, GetBlocksQueryNoPerms) {
   auto block_number = 5;

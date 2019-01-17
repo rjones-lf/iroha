@@ -90,7 +90,7 @@ namespace shared_model {
       }
 
       auto height(interface::types::HeightType height) const {
-        NextBuilder<S> copy = *this;
+        NextBuilder<0> copy = *this;
         copy.query_.set_height(height);
         return copy;
       }
