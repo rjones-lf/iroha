@@ -76,9 +76,6 @@ class SimulatorTest : public ::testing::Test {
     shared_model::crypto::crypto_signer_expecter.reset();
   }
 
-  //  void init() {
-  //  }
-
   consensus::Round round;
 
   std::shared_ptr<MockStatefulValidator> validator;
@@ -133,14 +130,6 @@ auto makeTx() {
           shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair())
       .finish();
 }
-
-// TEST_F(SimulatorTest, ValidWhenInitialized) {
-//  // simulator constructor => onProposal subscription called
-//  EXPECT_CALL(*ordering_gate, onProposal())
-//      .WillOnce(Return(rxcpp::observable<>::empty<OrderingEvent>()));
-//
-//  init();
-//}
 
 TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
   // proposal with height 2 => height 1 block present => new block generated
