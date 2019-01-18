@@ -12,7 +12,8 @@
 #include <memory>
 #include <unordered_map>
 
-#include "consensus/yac/messages.hpp"
+#include "consensus/yac/outcome_messages.hpp"
+#include "interfaces/common_objects/peer.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
 #include "network/impl/async_grpc_client.hpp"

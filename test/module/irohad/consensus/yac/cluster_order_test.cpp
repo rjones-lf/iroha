@@ -3,9 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <gtest/gtest.h>
+
 #include "consensus/yac/cluster_order.hpp"
 
-#include "module/irohad/consensus/yac/yac_fixture.hpp"
+#include "module/irohad/consensus/yac/yac_test_util.hpp"
 
 class ClusterOrderTest : public ::testing::Test {
  protected:

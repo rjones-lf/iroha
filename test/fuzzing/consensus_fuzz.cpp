@@ -7,6 +7,8 @@
 
 #include <libfuzzer/libfuzzer_macro.h>
 
+#include "consensus/yac/transport/impl/network_impl.hpp"
+
 #include "module/irohad/consensus/yac/mocks/network.hpp"
 
 using namespace testing;

@@ -45,7 +45,7 @@ namespace iroha {
 
         VoteMessage getVote(YacHash hash) override {
           VoteMessage vote;
-          vote.hash = hash;
+          vote.hash = std::move(hash);
           vote.signature = createSig("");
           return vote;
         }

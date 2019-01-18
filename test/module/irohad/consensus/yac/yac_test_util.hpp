@@ -32,9 +32,9 @@ namespace iroha {
         return peer;
       }
 
-      inline VoteMessage createVote(YacHash hash, std::string pub_key) {
+      inline VoteMessage createVote(YacHash hash, const std::string &pub_key) {
         VoteMessage vote;
-        vote.hash = hash;
+        vote.hash = std::move(hash);
         vote.signature = createSig(pub_key);
         return vote;
       }
