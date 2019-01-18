@@ -103,7 +103,7 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
       stage('Build docs'){
         docs ? doxygen.doDoxygen(specialBranch, scmVars.GIT_LOCAL_BRANCH) : echo("Skipping Doxygen...")
       }
-      stage ('DockerManifestPush'){
+      stage ('Docker ManifestPush'){
         if (specialBranch) {
           utils.dockerPush(iC, "${platform}-develop-build")
           dockerManifestPush(iC, "develop-build", environment)
@@ -114,7 +114,7 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
 }
 
 def successPostSteps(scmVars, boolean packagePush, String dockerTag, List environment) {
-  stage('successPostSteps') {
+  stage('Linux success PostSteps') {
     withEnv(environment) {
       if (packagePush) {
         def artifacts = load ".jenkinsci/artifacts.groovy"
@@ -149,7 +149,7 @@ def successPostSteps(scmVars, boolean packagePush, String dockerTag, List enviro
 }
 
 def alwaysPostSteps(List environment) {
-  stage('alwaysPostSteps') {
+  stage('Linux always PostSteps') {
     withEnv(environment) {
       sh "docker rm -f ${env.IROHA_POSTGRES_HOST} || true"
       sh "docker network rm ${env.IROHA_NETWORK}"

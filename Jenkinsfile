@@ -1,3 +1,5 @@
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
+
 def tasks = [:]
 
 class Worker {
@@ -34,30 +36,30 @@ def build(Build build) {
         build.builder.buildSteps.each {
           it()
         }
-        build.builder.postSteps.success.each {
-          it()
-        }
-        gitNotify ("New CI: " + build.name, "Finish", 'SUCCESS')
-      } catch(Exception e) {
         if (currentBuild.currentResult == 'SUCCESS') {
-            gitNotify ("New CI: " + build.name, "FAILURE", 'FAILURE')
-            print "Error: " + e
-            currentBuild.result = 'FAILURE'
-        }
-        else if(currentBuild.currentResult == 'UNSTABLE') {
+          build.builder.postSteps.success.each {
+            it()
+          }
+          gitNotify ("New CI: " + build.name, "Finish", 'SUCCESS')
+        } else if(currentBuild.currentResult == 'UNSTABLE') {
           build.builder.postSteps.unstable.each {
             it()
           }
+          gitNotify ("New CI: " + build.name, "UNSTABLE", 'FAILURE')
         }
-        else if(currentBuild.currentResult == 'FAILURE') {
-          build.builder.postSteps.failure.each {
-            it()
-          }
+      } catch(FlowInterruptedException e) {
+        print "Looks like we ABORTED"
+        currentBuild.result = 'ABORTED'
+        gitNotify ("New CI: " + build.name, "ABORTED", 'FAILURE')
+        build.builder.postSteps.aborted.each {
+          it()
         }
-        else if(currentBuild.currentResult == 'ABORTED') {
-          build.builder.postSteps.aborted.each {
-            it()
-          }
+      } catch(Exception e) {
+        print "Error was detected: " + e
+        currentBuild.result = 'FAILURE'
+        gitNotify ("New CI: " + build.name, "FAILURE", 'FAILURE')
+        build.builder.postSteps.failure.each {
+          it()
         }
       }
       // ALWAYS
@@ -93,27 +95,17 @@ def gitNotify (context, description, status, targetUrl='' ){
 stage('Prepare environment'){
 timestamps(){
 
-param_descriptions = """Default - will automatically chose the correct one based on branch name and build number
-Branch commit - Linux/gcc v5;	Test: Smoke, Unit;
-On open PR -  Linux/gcc v5, MacOS/appleclang; Test: Smoke, Unit; Coverage; Analysis: cppcheck, sonar;
-Commit in Open PR - Same as Branch commit
-Before merge to trunk - Linux/gcc v5 v7, Linux/clang v6 v7, MacOS/appleclang; Test: ALL; Coverage; Analysis: cppcheck, sonar; Build type: Debug when Release
-Before merge develop - Not implemented
-Before merge master - Not implemented
-Nightly build - Not implemented
-Custom command - enter command below, Ex: build_type='Release'; testing=false;
-"""
-
-properties([
-    parameters([
-        choice(choices: 'Default\nBranch commit\nOn open PR\nCommit in Open PR\nBefore merge to trunk\nBefore merge develop\nBefore merge master\nNightly build\nCustom command', description: param_descriptions, name: 'build_scenario'),
-        string(defaultValue: '', description: '', name: 'custom_cmd', trim: true)
-    ]),
-    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
-])
 
 node ('master') {
   scmVars = checkout scm
+  def textVariables = load '.jenkinsci/text-variables.groovy'
+  properties([
+      parameters([
+          choice(choices: textVariables.param_chose_opt, description: textVariables.param_descriptions, name: 'build_scenario'),
+          string(defaultValue: '', description: textVariables.cmd_description, name: 'custom_cmd', trim: true)
+      ]),
+      buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '30'))
+  ])
   environmentList = []
   environment = [:]
   environment = [
@@ -153,6 +145,7 @@ node ('master') {
   pushDockerTag = 'not-supposed-to-be-pushed'
   packagePush = false
   specialBranch = false
+  parallelism = 0
 
   if (scmVars.GIT_LOCAL_BRANCH in ["master","develop","dev"] || scmVars.CHANGE_BRANCH_LOCAL in ["develop","dev"])
     specialBranch =  true
@@ -214,6 +207,10 @@ node ('master') {
      case 'Custom command':
         if (cmd_sanitize(params.custom_cmd)){
           evaluate (params.custom_cmd)
+          // A very rare scenario when linux compiler is not selected but we still need coverage
+          if (x64linux_compiler_list.isEmpty() && coverage ){
+            coverage_mac = true
+          }
         } else {
            println("Unable to parse '${params.custom_cmd}'")
            sh "exit 1"
@@ -225,12 +222,11 @@ node ('master') {
         break;
   }
 
-  echo "packageBuild=${packageBuild}, pushDockerTag=${pushDockerTag}, packagePush=${packagePush} "
-  echo "testing=${testing}, testList=${testList}"
+  echo "specialBranch=${specialBranch}, packageBuild=${packageBuild}, pushDockerTag=${pushDockerTag}, packagePush=${packagePush} "
+  echo "testing=${testing}, testList=${testList}, parallelism=${parallelism}"
   echo "x64linux_compiler_list=${x64linux_compiler_list}"
   echo "mac_compiler_list=${mac_compiler_list}"
-  echo "specialBranch=${specialBranch}"
-  echo "sanitize=${sanitize}, cppcheck=${cppcheck}, fuzzing=${fuzzing}, sonar=${sonar}, coverage=${coverage}, doxygen=${doxygen}"
+  echo "sanitize=${sanitize}, cppcheck=${cppcheck}, fuzzing=${fuzzing}, sonar=${sonar}, coverage=${coverage}, coverage_mac=${coverage_mac} doxygen=${doxygen}"
   print scmVars
   print environmentList
 
@@ -241,7 +237,7 @@ node ('master') {
 
 
   // Define Workers
-  x64LinuxWorker = new Worker(label: 'docker-build-agent', cpusAvailable: 4)
+  x64LinuxWorker = new Worker(label: 'docker-build-agent', cpusAvailable: 8)
   x64MacWorker = new Worker(label: 'mac', cpusAvailable: 4)
 
 
@@ -250,12 +246,12 @@ node ('master') {
   def x64LinuxPostSteps = new Builder.PostSteps()
   if(!x64linux_compiler_list.isEmpty()){
     x64LinuxBuildSteps = [{x64LinuxBuildScript.buildSteps(
-      x64LinuxWorker.cpusAvailable, x64linux_compiler_list, build_type, specialBranch, coverage,
+      parallelism==0 ?x64LinuxWorker.cpusAvailable : parallelism, x64linux_compiler_list, build_type, specialBranch, coverage,
       testing, testList, cppcheck, sonar, doxygen, packageBuild, sanitize, fuzzing, environmentList)}]
     //If "master" or "dev" also run Release build
     if(specialBranch && build_type == 'Debug'){
       x64LinuxBuildSteps += [{x64LinuxBuildScript.buildSteps(
-      x64LinuxWorker.cpusAvailable, x64linux_compiler_list, 'Release', specialBranch, false,
+      parallelism==0 ?x64LinuxWorker.cpusAvailable : parallelism, x64linux_compiler_list, 'Release', specialBranch, false,
       false , testList, false, false, false, true, false, false, environmentList)}]
     }
     x64LinuxPostSteps = new Builder.PostSteps(
@@ -265,10 +261,10 @@ node ('master') {
   def x64MacBuildSteps
   def x64MacBuildPostSteps = new Builder.PostSteps()
   if(!mac_compiler_list.isEmpty()){
-    x64MacBuildSteps = [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, mac_compiler_list, build_type, coverage_mac, testing, testList, packageBuild,  environmentList)}]
+    x64MacBuildSteps = [{x64BuildScript.buildSteps(parallelism==0 ?x64MacWorker.cpusAvailable : parallelism, mac_compiler_list, build_type, coverage_mac, testing, testList, packageBuild,  environmentList)}]
     //If "master" or "dev" also run Release build
     if(specialBranch && build_type == 'Debug'){
-      x64MacBuildSteps += [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, mac_compiler_list, 'Release', false, false, testList, true,  environmentList)}]
+      x64MacBuildSteps += [{x64BuildScript.buildSteps(parallelism==0 ?x64MacWorker.cpusAvailable : parallelism, mac_compiler_list, 'Release', false, false, testList, true,  environmentList)}]
     }
     x64MacBuildPostSteps = new Builder.PostSteps(
       always: [{x64BuildScript.alwaysPostSteps(environmentList)}],
