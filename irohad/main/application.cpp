@@ -468,7 +468,7 @@ void Irohad::initTransactionCommandService() {
           batch_parser,
           transaction_batch_factory_,
           consensus_gate_objects.get_observable().map([](const auto &) {
-            return torii::CommandServiceTransportGrpc::ConsensusGateEvent{};
+            return ::torii::CommandServiceTransportGrpc::ConsensusGateEvent{};
           }),
           2);  // TODO 18.01.2019 igor-egorov, make it configurable IR-230
 

@@ -187,11 +187,9 @@ namespace torii {
 
     auto consensus_gate_observable =
         consensus_gate_objects_
-            // via scan we do type erasure here
-            .scan(0, [](int seed, const auto &) { return ++seed; })
             // a dummy start_with lets us don't wait for the consensus event
             // on further combine_latest
-            .start_with(0);
+            .start_with(ConsensusGateEvent{});
 
     boost::optional<iroha::protocol::TxStatus> last_tx_status;
     auto rounds_counter{0};
