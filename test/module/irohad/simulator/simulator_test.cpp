@@ -253,7 +253,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
  * @then verified proposal consists of txs we did not fail, and the failed
  * transactions are provided as well
  */
- TEST_F(SimulatorTest, SomeFailingTxs) {
+TEST_F(SimulatorTest, SomeFailingTxs) {
   // create a 3-height proposal, but validator returns only a 2-height
   // verified proposal
   const int kNumTransactions = 3;
@@ -269,8 +269,8 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
           .build());
   auto verified_proposal_and_errors =
       std::make_unique<VerifiedProposalAndErrors>();
-  const shared_model::interface::types::HeightType verified_proposal_height =
-  2; const std::vector<shared_model::proto::Transaction>
+  const shared_model::interface::types::HeightType verified_proposal_height = 2;
+  const std::vector<shared_model::proto::Transaction>
       verified_proposal_transactions{txs[0]};
   verified_proposal_and_errors->verified_proposal =
       std::make_unique<shared_model::proto::Proposal>(
@@ -293,8 +293,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
       .WillOnce(Return(expected::makeValue(wBlock(clone(block)))));
 
   EXPECT_CALL(*validator, validate(_, _))
-      .WillOnce(Invoke([&verified_proposal_and_errors](const auto &p, auto &v)
-      {
+      .WillOnce(Invoke([&verified_proposal_and_errors](const auto &p, auto &v) {
         return std::move(verified_proposal_and_errors);
       }));
 
@@ -304,8 +303,7 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
 
   // ensure that txs in verified proposal do not include failed ones
   EXPECT_EQ(verified_proposal->height(), verified_proposal_height);
-  EXPECT_EQ(verified_proposal->transactions(),
-  verified_proposal_transactions);
+  EXPECT_EQ(verified_proposal->transactions(), verified_proposal_transactions);
   EXPECT_TRUE(verification_result->get()->rejected_transactions.size()
               == kNumTransactions - 1);
   const auto verified_proposal_rejected_tx_hashes =
