@@ -11,9 +11,9 @@
 #include "consensus/yac/cluster_order.hpp"
 #include "consensus/yac/yac.hpp"
 
-#include "module/irohad/consensus/yac/mocks/crypto_provider.hpp"
-#include "module/irohad/consensus/yac/mocks/network.hpp"
-#include "module/irohad/consensus/yac/mocks/timer.hpp"
+#include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
+#include "module/irohad/consensus/yac/mock_yac_network.hpp"
+#include "module/irohad/consensus/yac/mock_yac_timer.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
 
 namespace iroha {

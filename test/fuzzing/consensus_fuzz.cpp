@@ -9,7 +9,7 @@
 
 #include "consensus/yac/transport/impl/network_impl.hpp"
 
-#include "module/irohad/consensus/yac/mocks/network.hpp"
+#include "module/irohad/consensus/yac/mock_yac_network.hpp"
 
 using namespace testing;
 

@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "consensus/yac/impl/peer_orderer_impl.hpp"
+
 #include <iostream>
 #include <unordered_map>
 
@@ -11,8 +13,6 @@
 #include <boost/range/adaptors.hpp>
 #include <boost/range/counting_range.hpp>
 #include <boost/range/numeric.hpp>
-
-#include "consensus/yac/impl/peer_orderer_impl.hpp"
 #include "consensus/yac/storage/yac_proposal_storage.hpp"
 
 #include "module/irohad/ametsuchi/mock_peer_query.hpp"

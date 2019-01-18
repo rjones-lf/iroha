@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "consensus/yac/storage/yac_proposal_storage.hpp"
+
 #include <gtest/gtest.h>
 
 #include "consensus/yac/storage/yac_common.hpp"
-#include "consensus/yac/storage/yac_proposal_storage.hpp"
 #include "logger/logger.hpp"
 
 #include "module/irohad/consensus/yac/yac_test_util.hpp"

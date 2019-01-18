@@ -15,7 +15,7 @@
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 
 #include "framework/test_subscriber.hpp"
-#include "module/irohad/consensus/yac/mocks/crypto_provider.hpp"
+#include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 

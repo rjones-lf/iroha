@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_SUERMAJORITY_CHECKER_HPP
-#define IROHA_SUERMAJORITY_CHECKER_HPP
+#ifndef IROHA_MOCK_YAC_SUPERMAJORITY_CHECKER_HPP
+#define IROHA_MOCK_YAC_SUPERMAJORITY_CHECKER_HPP
 
 #include <gmock/gmock.h>
 
@@ -37,4 +37,4 @@ namespace iroha {
   }    // namespace consensus
 }  // namespace iroha
 
-#endif  // IROHA_SUERMAJORITY_CHECKER_HPP
+#endif  // IROHA_MOCK_YAC_SUPERMAJORITY_CHECKER_HPP

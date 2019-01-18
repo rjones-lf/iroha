@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_NETWORK_HPP
-#define IROHA_NETWORK_HPP
+#ifndef IROHA_MOCK_YAC_NETWORK_HPP
+#define IROHA_MOCK_YAC_NETWORK_HPP
 
 #include <gmock/gmock.h>
 
@@ -58,4 +58,4 @@ namespace iroha {
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
-#endif  // IROHA_NETWORK_HPP
+#endif  // IROHA_MOCK_YAC_NETWORK_HPP

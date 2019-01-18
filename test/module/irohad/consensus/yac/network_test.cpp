@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <grpc++/grpc++.h>
-
 #include "consensus/yac/transport/impl/network_impl.hpp"
 
-#include "module/irohad/consensus/yac/mocks/crypto_provider.hpp"
-#include "module/irohad/consensus/yac/mocks/network.hpp"
+#include <grpc++/grpc++.h>
+
+#include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
+#include "module/irohad/consensus/yac/mock_yac_network.hpp"
 #include "module/irohad/consensus/yac/yac_test_util.hpp"
 
 using ::testing::_;

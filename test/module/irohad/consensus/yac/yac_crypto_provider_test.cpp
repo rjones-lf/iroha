@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
+
 #include <gtest/gtest.h>
 
-#include "consensus/yac/impl/yac_crypto_provider_impl.hpp"
 #include "consensus/yac/outcome_messages.hpp"
 #include "cryptography/crypto_provider/crypto_defaults.hpp"
 

@@ -11,7 +11,7 @@
 #include "consensus/yac/vote_message.hpp"
 #include "consensus/yac/yac_hash_provider.hpp"
 
-#include "module/irohad/consensus/yac/mocks/crypto_provider.hpp"
+#include "module/irohad/consensus/yac/mock_yac_crypto_provider.hpp"
 #include "module/shared_model/interface_mocks.hpp"
 
 namespace iroha {

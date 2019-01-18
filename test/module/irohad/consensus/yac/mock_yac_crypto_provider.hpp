@@ -3,6 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#ifndef IROHA_MOCK_YAC_CRYPTO_PROVIDER_HPP
+#define IROHA_MOCK_YAC_CRYPTO_PROVIDER_HPP
+
 #include <gmock/gmock.h>
 
 #include "consensus/yac/yac_crypto_provider.hpp"
@@ -10,8 +13,6 @@
 
 #include "module/shared_model/interface_mocks.hpp"
 
-#ifndef IROHA_CRYPTO_PROVIDER_HPP
-#define IROHA_CRYPTO_PROVIDER_HPP
 namespace iroha {
   namespace consensus {
     namespace yac {
@@ -62,4 +63,4 @@ namespace iroha {
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
-#endif  // IROHA_CRYPTO_PROVIDER_HPP
+#endif  // IROHA_MOCK_YAC_CRYPTO_PROVIDER_HPP
