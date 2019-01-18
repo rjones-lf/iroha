@@ -1,6 +1,7 @@
 - name: Install packages
   apt:
     update_cache: yes
+    name: "{{ packages }}"
   vars:
     packages:
     - python-setuptools
@@ -10,6 +11,7 @@
 - name: Install packages
   apt:
     update_cache: yes
+    name: "{{ packages }}"
   vars:
     packages:
     - python3-setuptools

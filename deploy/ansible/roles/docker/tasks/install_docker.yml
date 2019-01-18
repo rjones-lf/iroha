@@ -1,5 +1,6 @@
 - name: Purge old Docker versions if any
   apt:
+    name: "{{ packages }}"
     purge: yes
     state: absent
   vars:
@@ -10,6 +11,7 @@
 
 - name: Install packages
   apt:
+    name: "{{ packages }}"
     update_cache: yes
   vars:
     packages:
