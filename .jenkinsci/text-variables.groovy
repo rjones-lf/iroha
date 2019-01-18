@@ -54,6 +54,19 @@ cmd_description = """
 </li>
 </ul>
 </li>
+</ul>
+<ul>
+<li>
+<p><strong>parallelism</strong> = 0</p>
+<ul>
+<li>
+<p>Build in parallel. 0 is choose default: 8 for Linux and 4 for Mac</p>
+</li>
+<li>Ex:&nbsp;cppcheck = flase</li>
+</ul>
+</li>
+</ul>
+<ul>
 <li>
 <p><strong>testing</strong> = true&nbsp;</p>
 <ul>

@@ -1,3 +1,5 @@
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
+
 def tasks = [:]
 
 class Worker {
@@ -33,28 +35,26 @@ def build(Build build) {
         build.builder.buildSteps.each {
           it()
         }
-        build.builder.postSteps.success.each {
-          it()
-        }
-      } catch(Exception e) {
         if (currentBuild.currentResult == 'SUCCESS') {
-            print "Error: " + e
-            currentBuild.result = 'FAILURE'
-        }
-        else if(currentBuild.currentResult == 'UNSTABLE') {
+          build.builder.postSteps.success.each {
+            it()
+          }
+        } else if(currentBuild.currentResult == 'UNSTABLE') {
           build.builder.postSteps.unstable.each {
             it()
           }
         }
-        else if(currentBuild.currentResult == 'FAILURE') {
-          build.builder.postSteps.failure.each {
-            it()
-          }
+      } catch(FlowInterruptedException e) {
+        print "Looks like we ABORTED"
+        currentBuild.result = 'ABORTED'
+        build.builder.postSteps.aborted.each {
+          it()
         }
-        else if(currentBuild.currentResult == 'ABORTED') {
-          build.builder.postSteps.aborted.each {
-            it()
-          }
+      } catch(Exception e) {
+        print "Error was detected: " + e
+        currentBuild.result = 'FAILURE'
+        build.builder.postSteps.failure.each {
+          it()
         }
       }
       // ALWAYS
@@ -136,6 +136,7 @@ node ('master') {
   pushDockerTag = 'not-supposed-to-be-pushed'
   packagePush = false
   specialBranch = false
+  parallelism = 0
 
   if (scmVars.GIT_LOCAL_BRANCH in ["master","develop","dev"] || scmVars.CHANGE_BRANCH_LOCAL in ["develop","dev"])
     specialBranch =  true
@@ -209,7 +210,7 @@ node ('master') {
   }
 
   echo "specialBranch=${specialBranch}, packageBuild=${packageBuild}, pushDockerTag=${pushDockerTag}, packagePush=${packagePush} "
-  echo "testing=${testing}, testList=${testList}"
+  echo "testing=${testing}, testList=${testList}, parallelism=${parallelism}"
   echo "x64linux_compiler_list=${x64linux_compiler_list}"
   echo "mac_compiler_list=${mac_compiler_list}"
   echo "sanitize=${sanitize}, cppcheck=${cppcheck}, fuzzing=${fuzzing}, sonar=${sonar}, coverage=${coverage}, coverage_mac=${coverage_mac} doxygen=${doxygen}"
@@ -223,7 +224,7 @@ node ('master') {
 
 
   // Define Workers
-  x64LinuxWorker = new Worker(label: 'docker-build-agent', cpusAvailable: 4)
+  x64LinuxWorker = new Worker(label: 'docker-build-agent', cpusAvailable: 8)
   x64MacWorker = new Worker(label: 'mac', cpusAvailable: 4)
 
 
@@ -232,12 +233,12 @@ node ('master') {
   def x64LinuxPostSteps = new Builder.PostSteps()
   if(!x64linux_compiler_list.isEmpty()){
     x64LinuxBuildSteps = [{x64LinuxBuildScript.buildSteps(
-      x64LinuxWorker.cpusAvailable, x64linux_compiler_list, build_type, specialBranch, coverage,
+      parallelism==0 ?x64LinuxWorker.cpusAvailable : parallelism, x64linux_compiler_list, build_type, specialBranch, coverage,
       testing, testList, cppcheck, sonar, doxygen, packageBuild, sanitize, fuzzing, environmentList)}]
     //If "master" or "dev" also run Release build
     if(specialBranch && build_type == 'Debug'){
       x64LinuxBuildSteps += [{x64LinuxBuildScript.buildSteps(
-      x64LinuxWorker.cpusAvailable, x64linux_compiler_list, 'Release', specialBranch, false,
+      parallelism==0 ?x64LinuxWorker.cpusAvailable : parallelism, x64linux_compiler_list, 'Release', specialBranch, false,
       false , testList, false, false, false, true, false, false, environmentList)}]
     }
     x64LinuxPostSteps = new Builder.PostSteps(
@@ -247,10 +248,10 @@ node ('master') {
   def x64MacBuildSteps
   def x64MacBuildPostSteps = new Builder.PostSteps()
   if(!mac_compiler_list.isEmpty()){
-    x64MacBuildSteps = [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, mac_compiler_list, build_type, coverage_mac, testing, testList, packageBuild,  environmentList)}]
+    x64MacBuildSteps = [{x64BuildScript.buildSteps(parallelism==0 ?x64MacWorker.cpusAvailable : parallelism, mac_compiler_list, build_type, coverage_mac, testing, testList, packageBuild,  environmentList)}]
     //If "master" or "dev" also run Release build
     if(specialBranch && build_type == 'Debug'){
-      x64MacBuildSteps += [{x64BuildScript.buildSteps(x64MacWorker.cpusAvailable, mac_compiler_list, 'Release', false, false, testList, true,  environmentList)}]
+      x64MacBuildSteps += [{x64BuildScript.buildSteps(parallelism==0 ?x64MacWorker.cpusAvailable : parallelism, mac_compiler_list, 'Release', false, false, testList, true,  environmentList)}]
     }
     x64MacBuildPostSteps = new Builder.PostSteps(
       always: [{x64BuildScript.alwaysPostSteps(environmentList)}],

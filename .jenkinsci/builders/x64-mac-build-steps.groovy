@@ -68,7 +68,7 @@ def buildSteps( int parallelism, List compilerVersions, String build_type, boole
 }
 
 def successPostSteps(scmVars, boolean packagePush, List environment) {
-  stage('successPostSteps') {
+  stage('Mac success PostSteps') {
     withEnv(environment) {
       timeout(time: 600, unit: "SECONDS") {
         if (packagePush) {
@@ -91,7 +91,7 @@ def successPostSteps(scmVars, boolean packagePush, List environment) {
 }
 
 def alwaysPostSteps(List environment) {
-  stage('alwaysPostSteps') {
+  stage('Mac always PostSteps') {
     withEnv(environment) {
       cleanWs()
     }
