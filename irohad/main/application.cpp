@@ -363,7 +363,8 @@ void Irohad::initConsensusGate() {
                                               vote_delay_,
                                               async_call_,
                                               common_objects_factory_);
-  consensus_gate->onOutcome().subscribe(gate_object.get_subscriber());
+  consensus_gate->onOutcome().subscribe(
+      consensus_gate_objects.get_subscriber());
   log_->info("[Init] => consensus gate");
 }
 
@@ -466,8 +467,10 @@ void Irohad::initTransactionCommandService() {
           transaction_factory,
           batch_parser,
           transaction_batch_factory_,
-          gate_object.get_observable(),
-          2);
+          consensus_gate_objects.get_observable().map([](const auto &) {
+            return torii::CommandServiceTransportGrpc::ConsensusGateEvent{};
+          }),
+          2);  // TODO 18.01.2019 igor-egorov, make it configurable IR-230
 
   log_->info("[Init] => command service");
 }
