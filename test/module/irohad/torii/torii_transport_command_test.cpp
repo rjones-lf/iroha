@@ -78,7 +78,7 @@ class CommandServiceTransportGrpcTest : public testing::Test {
     status_bus = std::make_shared<MockStatusBus>();
     command_service = std::make_shared<MockCommandService>();
 
-    transport_grpc = std::make_shared<CommandServiceTransportGrpc>(
+    transport_grpc = std::make_shared<torii::CommandServiceTransportGrpc>(
         command_service,
         status_bus,
         status_factory,
@@ -102,9 +102,11 @@ class CommandServiceTransportGrpcTest : public testing::Test {
   std::shared_ptr<MockCommandService> command_service;
   std::shared_ptr<torii::CommandServiceTransportGrpc> transport_grpc;
 
-  rxcpp::subjects::subject<CommandServiceTransportGrpc::ConsensusGateEvent>
+  rxcpp::subjects::subject<
+      torii::CommandServiceTransportGrpc::ConsensusGateEvent>
       consensus_gate_objects;
-  std::vector<CommandServiceTransportGrpc::ConsensusGateEvent> gate_objects{2};
+  std::vector<torii::CommandServiceTransportGrpc::ConsensusGateEvent>
+      gate_objects{2};
 
   const size_t kHashLength = 32;
   const size_t kTimes = 5;
