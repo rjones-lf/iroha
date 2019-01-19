@@ -203,29 +203,31 @@ namespace torii {
               ->getTransport();
         })
         .combine_latest(consensus_gate_observable)
+        .map([](const auto &tuple) { return std::get<0>(tuple); })
         // complete the observable if client is disconnected or too many
         // rounds have passed without tx status change
-        .take_while([=, &rounds_counter, &last_tx_status](const auto &tuple) {
-          auto is_cancelled = context->IsCancelled();
-          if (is_cancelled) {
-            log_->debug("client unsubscribed, {}", client_id);
-          }
-          // we increment round counter when the same status arrived again.
-          auto status = std::get<0>(tuple).tx_status();
-          if (last_tx_status and (status == *last_tx_status)) {
-            ++rounds_counter;
-          } else {
-            rounds_counter = 0;
-          }
-          // we stop the stream when round counter is greater than allowed.
-          if (rounds_counter >= maximum_rounds_without_update_) {
-            return false;
-          }
+        .take_while(
+            [=, &rounds_counter, &last_tx_status](const auto &response) {
+              auto is_cancelled = context->IsCancelled();
+              if (is_cancelled) {
+                log_->debug("client unsubscribed, {}", client_id);
+              }
+              // we increment round counter when the same status arrived again.
+              auto status = response.tx_status();
+              if (last_tx_status and (status == *last_tx_status)) {
+                ++rounds_counter;
+              } else {
+                rounds_counter = 0;
+              }
+              // we stop the stream when round counter is greater than allowed.
+              if (rounds_counter >= maximum_rounds_without_update_) {
+                return false;
+              }
 
-          return not is_cancelled;
-        })
-        .filter([&last_tx_status](const auto &tuple) {
-          auto status = std::get<0>(tuple).tx_status();
+              return not is_cancelled;
+            })
+        .filter([&last_tx_status](const auto &response) {
+          auto status = response.tx_status();
           // we allow further processing in case of any new status
           // (including the first one)
           auto result = not last_tx_status or (*last_tx_status != status);
@@ -233,8 +235,7 @@ namespace torii {
           return result;
         })
         .subscribe(subscription,
-                   [this, &response_writer, &client_id](const auto &tuple) {
-                     auto response = std::get<0>(tuple);
+                   [this, &response_writer, &client_id](const auto &response) {
                      if (response_writer->Write(response)) {
                        log_->debug("status written, {}", client_id);
                      }
