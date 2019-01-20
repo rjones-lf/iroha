@@ -75,6 +75,21 @@ namespace iroha {
             // batch is successful; release savepoint
             validation_result = true;
             savepoint->release();
+          } else {
+            auto failed_tx_hash = transactions_errors_log.back().tx_hash;
+            for (const auto &tx : batch) {
+              if (tx.hash() != failed_tx_hash) {
+                transactions_errors_log.emplace_back(
+                    validation::TransactionError{
+                        tx.hash(),
+                        validation::CommandError{
+                            "",
+                            1,  // internal error code
+                            "The other transaction failed the batch",
+                            true,
+                            std::numeric_limits<size_t>::max()}});
+              }
+            }
           }
 
           validation_results.insert(
