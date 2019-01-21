@@ -2,6 +2,48 @@ import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
 
 def tasks = [:]
 
+def commitNotify = new CommitNotify(this)
+
+class CommitNotify {
+    def steps
+    boolean gitNotify
+    boolean emailNotify
+    def gitStatusMap = [
+    "SUCCESS": "SUCCESS",
+    "UNSTABLE": "FAILURE",
+    "ABORTED": "FAILURE",
+    "FAILURE": "FAILURE",
+   ]
+
+    CommitNotify(steps,gitNotify=true, emailNotify=false) {
+        this.steps = steps
+        this.gitNotify = gitNotify
+        this.emailNotify = emailNotify
+    }
+
+    void start(String  context, String  description='Starting...', String targetUrl='')
+    {
+        gitNotify ? this.gitHubMsg(context, description, 'PENDING', targetUrl) : false
+    }
+
+    void finish(String context, String description='Finish!' , String status, String targetUrl='')
+    {
+        gitNotify  ?  this.gitHubMsg(context, description, gitStatusMap[status], targetUrl) : false
+        emailNotify ? this.gitHubMsg(context, description, status, targetUrl) : false
+    }
+
+    void gitHubMsg(String context, String description, String status, String targetUrl)
+    {
+        this.steps.githubNotify context: context, credentialsId: 'SORABOT_TOKEN_AND_LOGIN', description: description, status: status, targetUrl: targetUrl
+    }
+
+    void emailMsg(String context, String description, String status, String targetUrl)
+    {
+        // TODO Email
+        print('Email: context: ' + context + " description: " + description + " status: " + status + " targetUrl: " + targetUrl)
+    }
+}
+
 class Worker {
   String label
   int cpusAvailable
@@ -32,7 +74,7 @@ def build(Build build) {
     node(build.worker.label) {
       try {
         echo "Worker: ${env.NODE_NAME}"
-        gitNotify ("New CI: " + build.name, "Started...", 'PENDING')
+        commitNotify.start("New CI: " + build.name)
         build.builder.buildSteps.each {
           it()
         }
@@ -40,30 +82,27 @@ def build(Build build) {
           build.builder.postSteps.success.each {
             it()
           }
-          gitNotify ("New CI: " + build.name, "Finish", 'SUCCESS')
         } else if(currentBuild.currentResult == 'UNSTABLE') {
           build.builder.postSteps.unstable.each {
             it()
           }
-          gitNotify ("New CI: " + build.name, "UNSTABLE", 'FAILURE')
         }
       } catch(FlowInterruptedException e) {
         print "Looks like we ABORTED"
         currentBuild.result = 'ABORTED'
-        gitNotify ("New CI: " + build.name, "ABORTED", 'FAILURE')
         build.builder.postSteps.aborted.each {
           it()
         }
       } catch(Exception e) {
         print "Error was detected: " + e
         currentBuild.result = 'FAILURE'
-        gitNotify ("New CI: " + build.name, "FAILURE", 'FAILURE')
         build.builder.postSteps.failure.each {
           it()
         }
       }
       // ALWAYS
       finally {
+        commitNotify.finish("New CI: " + build.name, currentBuild.currentResult, currentBuild.currentResult)
         build.builder.postSteps.always.each {
           it()
         }
@@ -86,10 +125,6 @@ def cmd_sanitize(String cmd){
     }
   }
   return true
-}
-
-def gitNotify (context, description, status, targetUrl='' ){
-  githubNotify context: context, credentialsId: 'SORABOT_TOKEN_AND_LOGIN', description: description, status: status, targetUrl: targetUrl
 }
 
 stage('Prepare environment'){
@@ -184,18 +219,18 @@ node ('master') {
         break;
      case 'On open PR':
         // Just hint, not the main way to Notify about build status.
-        gitNotify ("New CI: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING', env.JOB_URL + "/build")
+        commitNotify.start("New CI: Merge to trunk", "Please, run: 'Before merge to trunk'", env.JOB_URL + "/build" )
         mac_compiler_list = ['appleclang']
         coverage = true
         cppcheck = true
         sonar = true
         break;
      case 'Commit in Open PR':
-        gitNotify ("New CI: Merge to trunk", "Please, run: 'Before merge to trunk'", 'PENDING', env.JOB_URL + "/build")
+        commitNotify.start("New CI: Merge to trunk", "Please, run: 'Before merge to trunk'",  env.JOB_URL + "/build")
         echo "All Default"
         break;
      case 'Before merge to trunk':
-        gitNotify ("New CI: Merge to trunk", "Started...", 'PENDING')
+        commitNotify.start( "New CI: Merge to trunk")
         x64linux_compiler_list = ['gcc5','gcc7', 'clang6' , 'clang7']
         mac_compiler_list = ['appleclang']
         testing = true
@@ -291,15 +326,7 @@ node ('master') {
   parallel tasks
 
   if (build_scenario == 'Before merge to trunk')
-    gitNotify ("New CI: Merge to trunk", "Finish", 'SUCCESS')
-
-  // if (currentBuild.currentResult == 'SUCCESS') {
-  //   if (scmVars.CHANGE_ID) {
-  //     if(scmVars.CHANGE_BRANCH == 'feature/ready-dev-experimental') {
-  //       sh 'echo PUSH!'
-  //     }
-  //   }
-  // }
+    commitNotify.finish("New CI: Merge to trunk", currentBuild.currentResult, 'SUCCESS')
 }
 
 }
