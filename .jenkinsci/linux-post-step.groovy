@@ -2,7 +2,7 @@ def linuxPostStep() {
   timeout(time: 600, unit: "SECONDS") {
     try {
       // stop write core dumps
-      sh "bash -c 'ulimit -c 0'"
+      sh "ulimit -c 0"
       if (currentBuild.currentResult != "SUCCESS" && params.coredump) {
         // handling coredumps (if tests crashed)
         def dumpsFileName = sprintf('coredumps-%1$s.bzip2',

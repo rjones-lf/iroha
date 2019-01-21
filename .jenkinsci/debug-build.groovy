@@ -26,7 +26,6 @@ def doDebugBuild(coverageEnabled=false) {
   // enable coredumps collecting
   if (params.coredump) {
     sh "echo %e.%p.coredump > /proc/sys/kernel/core_pattern"
-    sh "echo \$0"
     sh "ulimit -c unlimited"
   }
 
