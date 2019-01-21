@@ -20,6 +20,7 @@ properties([parameters([
   booleanParam(defaultValue: true, description: 'Build docs', name: 'Doxygen'),
   booleanParam(defaultValue: true, description: 'Sanitize address;leak', name: 'sanitize'),
   booleanParam(defaultValue: false, description: 'Build fuzzing, but do not run tests', name: 'fuzzing'),
+  booleanParam(defaultValue: true, description: 'Collect coredumps', name: 'coredump'),
   string(defaultValue: '8', description: 'Expect ~3GB memory consumtion per CPU core', name: 'PARALLELISM')])])
 
 

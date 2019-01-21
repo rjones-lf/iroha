@@ -23,9 +23,12 @@ def doDebugBuild(coverageEnabled=false) {
     parallelism = 1
   }
 
-  // for saving coredumps
-  sh "echo %e.%p.coredump > /proc/sys/kernel/core_pattern"
-  sh "bash -c 'ulimit -c unlimited'"
+  // enable coredumps collecting
+  if (params.coredump) {
+    sh "echo %e.%p.coredump > /proc/sys/kernel/core_pattern"
+    sh "echo \$0"
+    sh "ulimit -c unlimited"
+  }
 
   sh "docker network create ${env.IROHA_NETWORK}"
   def iC = dPullOrBuild.dockerPullOrUpdate("${platform}-develop-build",

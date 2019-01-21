@@ -3,17 +3,15 @@ def linuxPostStep() {
     try {
       // stop write core dumps
       sh "bash -c 'ulimit -c 0'"
-      if (currentBuild.currentResult != "SUCCESS") {
+      if (currentBuild.currentResult != "SUCCESS" && params.coredump) {
         // handling coredumps (if tests crashed)
-        def currentPath = sh(script: "pwd", returnStdout: true).trim()
-        def dumpsFileName = sprintf('coredumps-%1$s.tar',
+        def dumpsFileName = sprintf('coredumps-%1$s.bzip2',
           [GIT_COMMIT.substring(0,8)])
 
-        // sh(script: "find ${currentPath} -type f -name '*.coredump' | zip -j ${dumpsFileName} -@")
-        sh(script: "find ${currentPath} -type f -name '*.coredump' -exec tar -rvfj ${dumpsFileName} {} \\;")
+        sh(script: "find ${$WORKSPACE} -type f -name '*.coredump' -exec tar -rvfj ${dumpsFileName} {} \\;")
         if( fileExists(dumpsFileName)) {
           withCredentials([usernamePassword(credentialsId: 'ci_nexus', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
-            sh(script: "curl -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file ${dumpsFileName} https://nexus.iroha.tech/repository/artifacts/iroha/coredumps/${dumpsFileName}")
+            sh(script: "curl -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file ${WORKSPACE}/${dumpsFileName} https://nexus.iroha.tech/repository/artifacts/iroha/coredumps/${dumpsFileName}")
           }
           echo "Build is not SUCCESS! See core dumps at: https://nexus.iroha.tech/repository/artifacts/iroha/coredumps/${dumpsFileName}"
         }
