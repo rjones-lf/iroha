@@ -285,9 +285,11 @@ node ('master') {
                                      type: build_type,
                                      builder: x64MacBuilder,
                                      worker: x64MacWorker)
+  if(!x64linux_compiler_list.isEmpty())
+    tasks[x64LinuxBuild.name] = build(x64LinuxBuild)
+  if(!mac_compiler_list.isEmpty())
+    tasks[x64MacBuild.name] = build(x64MacBuild)
 
-  tasks[x64LinuxBuild.name] = build(x64LinuxBuild)
-  tasks[x64MacBuild.name] = build(x64MacBuild)
   cleanWs()
   parallel tasks
 
