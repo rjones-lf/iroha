@@ -7,6 +7,7 @@
 #define IROHA_TRANSACTION_BATCH_FACTORY_IMPL_HPP
 
 #include "interfaces/iroha_internal/transaction_batch_factory.hpp"
+#include "validators/transaction_batch_validator.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -21,6 +22,9 @@ namespace shared_model {
 
       FactoryImplResult createTransactionBatch(
           std::shared_ptr<Transaction> transaction) const override;
+
+     private:
+      validation::BatchValidator batch_validator_;
     };
 
   }  // namespace interface
