@@ -40,30 +40,31 @@ def build(Build build) {
           build.builder.postSteps.success.each {
             it()
           }
-          gitNotify ("New CI: " + build.name, "Finish", 'SUCCESS')
         } else if(currentBuild.currentResult == 'UNSTABLE') {
           build.builder.postSteps.unstable.each {
             it()
           }
-          gitNotify ("New CI: " + build.name, "UNSTABLE", 'FAILURE')
         }
       } catch(FlowInterruptedException e) {
         print "Looks like we ABORTED"
         currentBuild.result = 'ABORTED'
-        gitNotify ("New CI: " + build.name, "ABORTED", 'FAILURE')
         build.builder.postSteps.aborted.each {
           it()
         }
       } catch(Exception e) {
         print "Error was detected: " + e
         currentBuild.result = 'FAILURE'
-        gitNotify ("New CI: " + build.name, "FAILURE", 'FAILURE')
         build.builder.postSteps.failure.each {
           it()
         }
       }
       // ALWAYS
       finally {
+        if (currentBuild.currentResult == 'SUCCESS') {
+           gitNotify ("New CI: " + build.name, "Finish", 'SUCCESS')
+        else
+           gitNotify ("New CI: " + build.name, currentBuild.currentResult, 'FAILURE')
+
         build.builder.postSteps.always.each {
           it()
         }
