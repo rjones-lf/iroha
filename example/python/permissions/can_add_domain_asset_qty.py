@@ -6,3 +6,5 @@
 import can_add_asset_qty
 
 # Please see example for can_add_asset_qty permission.
+
+# TODO igor-egorov 21.01.2019 IR-240

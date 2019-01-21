@@ -33,9 +33,7 @@ add_executable(binary_test
     )
 target_link_libraries(binary_test
     gtest::main
-    shared_model_proto_backend  # probably not needed here
     integration_framework
-    bindings
     )
 add_dependencies(binary_test python_proto_includes)
 target_include_directories(binary_test PUBLIC ${PROJECT_SOURCE_DIR}/test)

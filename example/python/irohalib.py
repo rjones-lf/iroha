@@ -47,6 +47,8 @@ class IrohaCrypto(object):
         obj = None
         if hasattr(proto_with_payload, 'payload'):
             obj = getattr(proto_with_payload, 'payload')
+        # hash of meta is implemented for block streaming queries,
+        # because they do not have a payload in their schema
         elif hasattr(proto_with_payload, 'meta'):
             obj = getattr(proto_with_payload, 'meta')
 

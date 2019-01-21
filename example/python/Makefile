@@ -1,5 +1,7 @@
 #!/usr/bin/env make
 
+# TODO igor-egorov 21.01.2019 reimplement using cmake IR-239
+
 # sources
 PROTO_PATH = ../../shared_model/schema
 PROTO_FILES = $(wildcard $(PROTO_PATH)/*.proto)
