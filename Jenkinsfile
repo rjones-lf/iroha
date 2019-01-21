@@ -60,7 +60,7 @@ def build(Build build) {
       }
       // ALWAYS
       finally {
-        if (currentBuild.currentResult == 'SUCCESS') {
+        if (currentBuild.currentResult == 'SUCCESS')
            gitNotify ("New CI: " + build.name, "Finish", 'SUCCESS')
         else
            gitNotify ("New CI: " + build.name, currentBuild.currentResult, 'FAILURE')
