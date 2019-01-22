@@ -32,6 +32,8 @@ static_assert(kBadJsonPrintOffsset <= kBadJsonPrintLength,
  * logger config. The parent logger JSON object is searched for the children
  * config section, and the children configs are parsed and created if the
  * section is present.
+ * @param path - current config node path used to denote the possible error
+ *    place.
  * @param parent_config - the parent logger config
  * @param parent_obj - the parent logger json configuration
  */
@@ -42,8 +44,10 @@ void addChildrenLoggerConfigs(
 
 /**
  * Overrides the logger configuration with the values from JSON object.
- * @param dst - the configuration to use as base
- * @param src - the JSON object to take overrides from
+ * @param path - current config node path used to denote the possible error
+ *    place.
+ * @param cfg - the configuration to use as base
+ * @param obj - the JSON object to take overrides from
  */
 void updateLoggerConfig(const std::string &path,
                         logger::LoggerConfig &cfg,
@@ -51,6 +55,8 @@ void updateLoggerConfig(const std::string &path,
 
 /**
  * Gets a value by a key from a JSON object, if present.
+ * @param path - current config node path used to denote the possible error
+ *    place.
  * @param dest - the variable to store the value
  * @param obj - the source JSON object
  * @param key - the key for the requested value
@@ -192,7 +198,7 @@ void getVal<IrohadConfig>(const std::string &path,
   getValByKey(path, dest.logger_manager, obj, mbr::LogSection);
 }
 
-// ------------ end of getVal(dst, src) ------------
+// ------------ end of getVal(path, dst, src) ------------
 
 void updateLoggerConfig(const std::string &path,
                         logger::LoggerConfig &cfg,
@@ -217,6 +223,8 @@ bool tryGetValByKey(const std::string &path,
 
 /**
  * Gets an optional value by a key from a JSON object.
+ * @param path - current config node path used to denote the possible error
+ *    place.
  * @param obj - the source JSON object
  * @param key - the key for the requested value
  * @return the value if present in the JSON object, otherwise boost::none.
@@ -232,6 +240,8 @@ boost::optional<TDest> getOptValByKey(const std::string &path,
 /**
  * Gets a value by a key from a JSON object. Throws an exception if the value
  * was not loaded.
+ * @param path - current config node path used to denote the possible error
+ *    place.
  * @param dest - the variable to store the value
  * @param obj - the source JSON object
  * @param key - the key for the requested value
