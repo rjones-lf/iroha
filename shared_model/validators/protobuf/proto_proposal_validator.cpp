@@ -20,7 +20,6 @@ namespace shared_model {
       for (const auto &tx : proposal.transactions()) {
         if (auto tx_answer = transaction_validator_->validate(tx)) {
           reason.second.emplace_back(tx_answer.reason());
-          break;
         }
       }
 

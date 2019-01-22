@@ -6,7 +6,6 @@
 #include "validators/transaction_batch_validator.hpp"
 
 #include <boost/range/adaptor/indirected.hpp>
-#include <boost/range/combine.hpp>
 #include "interfaces/iroha_internal/batch_meta.hpp"
 #include "interfaces/transaction.hpp"
 
@@ -26,8 +25,10 @@ namespace {
   BatchCheckResult batchIsWellFormed(
       const shared_model::interface::types::TransactionsForwardCollectionType
           &transactions) {
+    // equality of transactions batchMeta is checked during batch parsing
     auto batch_meta_opt = transactions.begin()->batchMeta();
-    if (not batch_meta_opt and boost::size(transactions) == 1) {
+    const auto transactions_quantity = boost::size(transactions);
+    if (not batch_meta_opt and transactions_quantity == 1) {
       // batch is created from one tx - there is no batch_meta in valid case
       return BatchCheckResult::kOk;
     }
@@ -37,18 +38,18 @@ namespace {
     }
 
     const auto &batch_hashes = batch_meta_opt->get()->reducedHashes();
-    if (batch_hashes.size() != boost::size(transactions)) {
+    if (batch_hashes.size() != transactions_quantity) {
       return BatchCheckResult::kIncorrectBatchMetaSize;
     }
 
-    auto metas_and_txs = boost::combine(batch_hashes, transactions);
     auto hashes_are_correct =
-        std::all_of(boost::begin(metas_and_txs),
-                    boost::end(metas_and_txs),
-                    [](const auto &meta_and_tx) {
-                      return boost::get<0>(meta_and_tx)
-                          == boost::get<1>(meta_and_tx).reducedHash();
-                    });
+        std::equal(boost::begin(batch_hashes),
+                   boost::end(batch_hashes),
+                   boost::begin(transactions),
+                   boost::end(transactions),
+                   [](const auto &tx_reduced_hash, const auto &tx) {
+                     return tx_reduced_hash == tx.reducedHash();
+                   });
     if (not hashes_are_correct) {
       return BatchCheckResult::kIncorrectHashes;
     }
@@ -80,6 +81,8 @@ namespace shared_model {
       if (not has_at_least_one_signature) {
         batch_reason.second.emplace_back(
             "Transaction batch should contain at least one signature");
+        // no stronger check for signatures is required here
+        // here we are checking only batch logic, not transaction-related
       }
 
       switch (batchIsWellFormed(transactions)) {

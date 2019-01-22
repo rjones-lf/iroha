@@ -31,7 +31,6 @@
 #include "torii/impl/status_bus_impl.hpp"
 #include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
-#include "validators/proposal_validator.hpp"
 #include "validators/protobuf/proto_block_validator.hpp"
 #include "validators/protobuf/proto_proposal_validator.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"

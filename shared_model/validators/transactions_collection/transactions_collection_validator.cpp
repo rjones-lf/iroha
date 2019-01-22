@@ -66,7 +66,6 @@ namespace shared_model {
       for (auto &batch : batches) {
         if (auto answer = batch_validator.validate(batch)) {
           reason.second.emplace_back(answer.reason());
-          break;
         }
       }
 
