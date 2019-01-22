@@ -82,10 +82,12 @@ namespace iroha {
                 transactions_errors_log.emplace_back(
                     validation::TransactionError{
                         tx.hash(),
+                        // TODO igor-egorov 22.01.2019 IR-245 add a separate
+                        // error code for failed batch case
                         validation::CommandError{
                             "",
                             1,  // internal error code
-                            "The other transaction failed the batch",
+                            "Another transaction failed the batch",
                             true,
                             std::numeric_limits<size_t>::max()}});
               }

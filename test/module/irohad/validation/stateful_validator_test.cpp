@@ -316,7 +316,8 @@ TEST_F(Validator, Batches) {
   ASSERT_EQ(
       verified_proposal_and_errors->verified_proposal->transactions().size(),
       5);
-  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(), 2);
+  ASSERT_EQ(verified_proposal_and_errors->rejected_transactions.size(),
+            failed_atomic_batch.size());
   EXPECT_EQ(
       verified_proposal_and_errors->rejected_transactions[0].error.error_code,
       sample_error_code);
@@ -330,7 +331,7 @@ TEST_F(Validator, Batches) {
       1);
   EXPECT_EQ(
       verified_proposal_and_errors->rejected_transactions[1].error.error_extra,
-      "The other transaction failed the batch");
+      "Another transaction failed the batch");
   EXPECT_EQ(verified_proposal_and_errors->rejected_transactions[1].tx_hash,
             txs[4].hash());
 }
