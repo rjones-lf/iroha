@@ -17,9 +17,6 @@
 #include <boost/range/adaptor/map.hpp>
 #include "main/iroha_conf_literals.hpp"
 
-#include "main/assert_config.hpp"
-
-namespace ac = assert_config;
 namespace mbr = config_members;
 
 static constexpr size_t kBadJsonPrintLength = 15;
@@ -96,6 +93,17 @@ void getValByKey(const std::string &path,
                  const rapidjson::Value::ConstObject &obj,
                  const TKey &key);
 
+/**
+ * Throws a runtime exception if the given condition is false.
+ * @param condition
+ * @param error - error message
+ */
+inline void assert_fatal(bool condition, std::string error) {
+  if (!condition) {
+    throw std::runtime_error(error);
+  }
+}
+
 // ------------ getVal(path, dst, src) ------------
 // getVal is a set of functions that load the value from rapidjson::Value to a
 // given destination variable. They check the JSON type and throw exception if
@@ -111,11 +119,11 @@ getVal(const std::string &path, TDest &, const rapidjson::Value &) {
 template <typename TDest>
 typename std::enable_if<std::numeric_limits<TDest>::is_integer>::type getVal(
     const std::string &path, TDest &dest, const rapidjson::Value &src) {
-  ac::assert_fatal(src.IsInt64(), path + " must be an integer");
+  assert_fatal(src.IsInt64(), path + " must be an integer");
   const int64_t val = src.GetInt64();
-  ac::assert_fatal(val >= std::numeric_limits<TDest>::min()
-                       && val <= std::numeric_limits<TDest>::max(),
-                   path + ": integer value out of range");
+  assert_fatal(val >= std::numeric_limits<TDest>::min()
+                   && val <= std::numeric_limits<TDest>::max(),
+               path + ": integer value out of range");
   dest = val;
 }
 
@@ -123,7 +131,7 @@ template <>
 void getVal<bool>(const std::string &path,
                   bool &dest,
                   const rapidjson::Value &src) {
-  ac::assert_fatal(src.IsBool(), path + " must be a boolean");
+  assert_fatal(src.IsBool(), path + " must be a boolean");
   dest = src.GetBool();
 }
 
@@ -131,7 +139,7 @@ template <>
 void getVal<std::string>(const std::string &path,
                          std::string &dest,
                          const rapidjson::Value &src) {
-  ac::assert_fatal(src.IsString(), path + " must be a string");
+  assert_fatal(src.IsString(), path + " must be a string");
   dest = src.GetString();
 }
 
@@ -156,8 +164,8 @@ template <>
 void getVal<logger::LogPatterns>(const std::string &path,
                                  logger::LogPatterns &dest,
                                  const rapidjson::Value &src) {
-  ac::assert_fatal(src.IsObject(),
-                   path + " must be a map from log level to pattern");
+  assert_fatal(src.IsObject(),
+               path + " must be a map from log level to pattern");
   for (const auto &pattern_entry : src.GetObject()) {
     logger::LogLevel level;
     std::string pattern_str;
@@ -171,7 +179,7 @@ template <>
 void getVal<logger::LoggerManagerTreePtr>(const std::string &path,
                                           logger::LoggerManagerTreePtr &dest,
                                           const rapidjson::Value &src) {
-  ac::assert_fatal(src.IsObject(), path + " must be a logger tree config");
+  assert_fatal(src.IsObject(), path + " must be a logger tree config");
   logger::LoggerConfig root_config{logger::kDefaultLogLevel,
                                    logger::kDefaultLogPatterns};
   updateLoggerConfig(path, root_config, src.GetObject());
@@ -184,8 +192,8 @@ template <>
 void getVal<IrohadConfig>(const std::string &path,
                           IrohadConfig &dest,
                           const rapidjson::Value &src) {
-  ac::assert_fatal(src.IsObject(),
-                   path + " Irohad config top element must be an object.");
+  assert_fatal(src.IsObject(),
+               path + " Irohad config top element must be an object.");
   const auto obj = src.GetObject();
   getValByKey(path, dest.blok_store_path, obj, mbr::BlockStorePath);
   getValByKey(path, dest.torii_port, obj, mbr::ToriiPort);
@@ -251,7 +259,8 @@ void getValByKey(const std::string &path,
                  TDest &dest,
                  const rapidjson::Value::ConstObject &obj,
                  const TKey &key) {
-  ac::assert_fatal(tryGetValByKey(path, dest, obj, key), ac::no_member_error(key));
+  assert_fatal(tryGetValByKey(path, dest, obj, key),
+               path + " has no key '" + key + "'.");
 }
 
 void addChildrenLoggerConfigs(const std::string &path,
@@ -261,10 +270,10 @@ void addChildrenLoggerConfigs(const std::string &path,
   if (it != parent_obj.MemberEnd()) {
     auto children_section_path = sublevelPath(path, mbr::LogChildrenSection);
     for (const auto &child_json : it->value.GetObject()) {
-      ac::assert_fatal(child_json.name.IsString(),
-                       "Child logger key must be a string holding its tag.");
-      ac::assert_fatal(child_json.value.IsObject(),
-                       "Child logger value must be a JSON object.");
+      assert_fatal(child_json.name.IsString(),
+                   "Child logger key must be a string holding its tag.");
+      assert_fatal(child_json.value.IsObject(),
+                   "Child logger value must be a JSON object.");
       auto child_tag = child_json.name.GetString();
       const auto child_obj = child_json.value.GetObject();
       auto child_path = sublevelPath(children_section_path, child_tag);
@@ -299,8 +308,8 @@ IrohadConfig parse_iroha_config(const std::string &conf_path) {
     std::ifstream ifs_iroha(conf_path);
     rapidjson::IStreamWrapper isw(ifs_iroha);
     doc.ParseStream(isw);
-    ac::assert_fatal(not doc.HasParseError(),
-                     reportJsonParsingError(doc, conf_path, ifs_iroha));
+    assert_fatal(not doc.HasParseError(),
+                 reportJsonParsingError(doc, conf_path, ifs_iroha));
     return doc;
   }()};
 
