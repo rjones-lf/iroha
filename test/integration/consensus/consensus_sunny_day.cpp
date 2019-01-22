@@ -24,7 +24,7 @@ using namespace framework::test_subscriber;
 static size_t num_peers = 1, my_num = 0;
 
 auto mk_local_peer(uint64_t num) {
-  auto address = "0.0.0.0:--" + std::to_string(num);
+  auto address = "0.0.0.0:" + std::to_string(num);
   return iroha::consensus::yac::mk_peer(address);
 }
 
@@ -62,7 +62,7 @@ class ConsensusSunnyDayTest : public ::testing::Test {
   uint64_t delay = 3 * 1000;
   std::shared_ptr<Yac> yac;
 
-  static const size_t port = 505410;
+  static const size_t port = 50541;
 
   ConsensusSunnyDayTest() : my_peer(mk_local_peer(port + my_num)) {
     for (decltype(num_peers) i = 0; i < num_peers; ++i) {
