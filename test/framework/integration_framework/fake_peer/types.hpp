@@ -91,7 +91,7 @@ namespace integration_framework {
         std::vector<std::reference_wrapper<const shared_model::proto::Block>>;
     using OrderingProposalRequest = iroha::consensus::Round;
     using OrderingProposalRequestResult =
-        boost::optional<shared_model::proto::Proposal &>;
+        boost::optional<const shared_model::proto::Proposal &>;
 
   }  // namespace fake_peer
 }  // namespace integration_framework

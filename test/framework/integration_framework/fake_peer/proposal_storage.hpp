@@ -8,6 +8,7 @@
 
 #include <map>
 
+#include <boost/thread/shared_mutex.hpp>
 #include "backend/protobuf/proposal.hpp"
 #include "consensus/round.hpp"
 #include "framework/integration_framework/fake_peer/types.hpp"
@@ -30,11 +31,10 @@ namespace integration_framework {
       ProposalStorage &storeProposal(const Round &round,
                                      std::shared_ptr<Proposal> proposal);
 
-      ProposalStorage &setDefaultProvider(DefaultProvider default_provider);
-
      private:
       DefaultProvider default_provider_;
-      std::map<Round, std::shared_ptr<Proposal>> proposals_map_;
+      std::map<Round, std::shared_ptr<const Proposal>> proposals_map_;
+      mutable boost::shared_mutex proposals_map_mutex_;
     };
 
   }  // namespace fake_peer
