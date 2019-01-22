@@ -17,8 +17,6 @@
 #include <boost/range/adaptor/map.hpp>
 #include "main/iroha_conf_literals.hpp"
 
-namespace mbr = config_members;
-
 static constexpr size_t kBadJsonPrintLength = 15;
 static constexpr size_t kBadJsonPrintOffsset = 5;
 static_assert(kBadJsonPrintOffsset <= kBadJsonPrintLength,
@@ -149,11 +147,11 @@ void getVal<logger::LogLevel>(const std::string &path,
                               const rapidjson::Value &src) {
   std::string level_str;
   getVal(path, level_str, src);
-  const auto it = mbr::LogLevels.find(level_str);
-  if (it == mbr::LogLevels.end()) {
+  const auto it = config_members::LogLevels.find(level_str);
+  if (it == config_members::LogLevels.end()) {
     BOOST_THROW_EXCEPTION(std::runtime_error(
         "Wrong log level at " + path + ": must be one of '"
-        + boost::algorithm::join(mbr::LogLevels | boost::adaptors::map_keys,
+        + boost::algorithm::join(config_members::LogLevels | boost::adaptors::map_keys,
                                  "', '")
         + "'."));
   }
@@ -195,15 +193,15 @@ void getVal<IrohadConfig>(const std::string &path,
   assert_fatal(src.IsObject(),
                path + " Irohad config top element must be an object.");
   const auto obj = src.GetObject();
-  getValByKey(path, dest.blok_store_path, obj, mbr::BlockStorePath);
-  getValByKey(path, dest.torii_port, obj, mbr::ToriiPort);
-  getValByKey(path, dest.internal_port, obj, mbr::InternalPort);
-  getValByKey(path, dest.pg_opt, obj, mbr::PgOpt);
-  getValByKey(path, dest.max_proposal_size, obj, mbr::MaxProposalSize);
-  getValByKey(path, dest.proposal_delay, obj, mbr::ProposalDelay);
-  getValByKey(path, dest.vote_delay, obj, mbr::VoteDelay);
-  getValByKey(path, dest.mst_support, obj, mbr::MstSupport);
-  getValByKey(path, dest.logger_manager, obj, mbr::LogSection);
+  getValByKey(path, dest.blok_store_path, obj, config_members::BlockStorePath);
+  getValByKey(path, dest.torii_port, obj, config_members::ToriiPort);
+  getValByKey(path, dest.internal_port, obj, config_members::InternalPort);
+  getValByKey(path, dest.pg_opt, obj, config_members::PgOpt);
+  getValByKey(path, dest.max_proposal_size, obj, config_members::MaxProposalSize);
+  getValByKey(path, dest.proposal_delay, obj, config_members::ProposalDelay);
+  getValByKey(path, dest.vote_delay, obj, config_members::VoteDelay);
+  getValByKey(path, dest.mst_support, obj, config_members::MstSupport);
+  getValByKey(path, dest.logger_manager, obj, config_members::LogSection);
 }
 
 // ------------ end of getVal(path, dst, src) ------------
@@ -211,8 +209,8 @@ void getVal<IrohadConfig>(const std::string &path,
 void updateLoggerConfig(const std::string &path,
                         logger::LoggerConfig &cfg,
                         const rapidjson::Value::ConstObject &obj) {
-  tryGetValByKey(path, cfg.log_level, obj, mbr::LogLevel);
-  tryGetValByKey(path, cfg.patterns, obj, mbr::LogPatternsSection);
+  tryGetValByKey(path, cfg.log_level, obj, config_members::LogLevel);
+  tryGetValByKey(path, cfg.patterns, obj, config_members::LogPatternsSection);
 }
 
 template <typename TDest, typename TKey>
@@ -266,9 +264,9 @@ void getValByKey(const std::string &path,
 void addChildrenLoggerConfigs(const std::string &path,
                               const logger::LoggerManagerTreePtr &parent_config,
                               const rapidjson::Value::ConstObject &parent_obj) {
-  const auto it = parent_obj.FindMember(mbr::LogChildrenSection);
+  const auto it = parent_obj.FindMember(config_members::LogChildrenSection);
   if (it != parent_obj.MemberEnd()) {
-    auto children_section_path = sublevelPath(path, mbr::LogChildrenSection);
+    auto children_section_path = sublevelPath(path, config_members::LogChildrenSection);
     for (const auto &child_json : it->value.GetObject()) {
       assert_fatal(child_json.name.IsString(),
                    "Child logger key must be a string holding its tag.");
@@ -280,9 +278,9 @@ void addChildrenLoggerConfigs(const std::string &path,
       auto child_conf = parent_config->registerChild(
           std::move(child_tag),
           getOptValByKey<logger::LogLevel>(
-              child_path, child_obj, mbr::LogLevel),
+              child_path, child_obj, config_members::LogLevel),
           getOptValByKey<logger::LogPatterns>(
-              child_path, child_obj, mbr::LogPatternsSection));
+              child_path, child_obj, config_members::LogPatternsSection));
       addChildrenLoggerConfigs(std::move(child_path), child_conf, child_obj);
     }
   }
