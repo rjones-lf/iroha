@@ -11,6 +11,7 @@
 #include <grpc++/grpc++.h>
 #include "common/result.hpp"
 #include "crypto/keys_manager_impl.hpp"
+#include "logger/logger_manager.hpp"
 #include "main/application.hpp"
 #include "main/iroha_conf_literals.hpp"
 #include "main/iroha_conf_loader.hpp"
@@ -90,7 +91,7 @@ static bool validateVerbosity(const char *flagname, const std::string &val) {
 
 /// Verbosity flag for spdlog configuration
 DEFINE_string(verbosity, kLogSettingsFromConfigFile, "Log verbosity");
-DEFINE_validator(verbosity, validateVerbosity);
+DEFINE_validator(verbosity, &validateVerbosity);
 
 std::promise<void> exit_requested;
 
@@ -98,12 +99,16 @@ int main(int argc, char *argv[]) {
   // Parsing command line arguments
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  boost::optional<logger::Logger> log;
+  logger::LoggerManagerTreePtr log_manager;
+  logger::LoggerPtr log;
+
+  // If the global log level override was set in the command line arguments,
+  // create a logger manager with the given log level for all subsystems:
   if (FLAGS_verbosity != kLogSettingsFromConfigFile) {
     logger::LoggerConfig cfg;
     cfg.log_level = config_members::LogLevels.at(FLAGS_verbosity);
-    log =
-        logger::Logger("MAIN", cfg, logger::LoggerThreadSafety::kSingleThread);
+    log_manager = std::make_shared<logger::LoggerManagerTree>(std::move(cfg));
+    log = log_manager->getChild("Init")->getLogger();
   }
 
   // Check if validators are registered.
@@ -118,15 +123,11 @@ int main(int argc, char *argv[]) {
 
   // Reading iroha configuration file
   const auto config = parse_iroha_config(FLAGS_config);
-  if (log) {
-    log->info("config initialized");
+  if (not log_manager) {
+    log_manager = config.logger_manager;
+    log = log_manager->getChild("Init")->getLogger();
   }
-
-  if (not log) {
-    log = logger::Logger(config.logger_tree,
-                         logger::LoggerThreadSafety::kSingleThread);
-  }
-  log->info("start");
+  log->info("config initialized");
 
   // Reading public and private key files
   iroha::KeysManagerImpl keysManager(FLAGS_keypair_name);
@@ -149,7 +150,7 @@ int main(int argc, char *argv[]) {
                 std::chrono::milliseconds(config.proposal_delay),
                 std::chrono::milliseconds(config.vote_delay),
                 *keypair,
-                log->getChild("Irohad"),
+                log_manager->getChild("Irohad"),
                 boost::make_optional(config.mst_support,
                                      iroha::GossipPropagationStrategyParams{}));
 
