@@ -3,12 +3,12 @@ def linuxPostStep() {
     try {
       // stop write core dumps
       sh "ulimit -c 0"
+      // handling coredumps (if tests crashed)
       if (currentBuild.currentResult != "SUCCESS" && params.coredump) {
-        // handling coredumps (if tests crashed)
         def dumpsFileName = sprintf('coredumps-%1$s.bzip2',
           [GIT_COMMIT.substring(0,8)])
 
-        sh(script: "find ${WORKSPACE} -type f -name '*.coredump' -exec tar -cjvf ${dumpsFileName} {} \\+ \\;")
+        sh(script: "find . -type f -name '*.coredump'-exec tar -cjvf ${dumpsFileName} {} \\;")
         if( fileExists(dumpsFileName)) {
           withCredentials([usernamePassword(credentialsId: 'ci_nexus', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER')]) {
             sh(script: "curl -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file ${WORKSPACE}/${dumpsFileName} https://nexus.iroha.tech/repository/artifacts/iroha/coredumps/${dumpsFileName}")
