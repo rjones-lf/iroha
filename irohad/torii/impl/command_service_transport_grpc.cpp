@@ -161,8 +161,10 @@ namespace torii {
 
   namespace {
     void handleEvents(rxcpp::composite_subscription &subscription,
-                      rxcpp::schedulers::run_loop &run_loop) {
-      while (subscription.is_subscribed() or not run_loop.empty()) {
+                      rxcpp::schedulers::run_loop &run_loop,
+                      bool &stream_failed) {
+      while ((subscription.is_subscribed() or not run_loop.empty())
+             and not stream_failed) {
         run_loop.dispatch();
       }
     }
@@ -193,62 +195,86 @@ namespace torii {
 
     boost::optional<iroha::protocol::TxStatus> last_tx_status;
     auto rounds_counter{0};
-    command_service_
-        ->getStatusStream(hash)
-        // convert to transport objects
-        .map([&](auto response) {
-          log_->info("mapped {}, {}", *response, client_id);
-          return std::static_pointer_cast<
-                     shared_model::proto::TransactionResponse>(response)
-              ->getTransport();
-        })
-        .combine_latest(consensus_gate_observable)
-        .map([](const auto &tuple) { return std::get<0>(tuple); })
-        // complete the observable if client is disconnected or too many
-        // rounds have passed without tx status change
-        .take_while(
-            [=, &rounds_counter, &last_tx_status](const auto &response) {
+
+    auto stream_failed = false;
+    auto stream_subscription =
+        command_service_
+            ->getStatusStream(hash)
+            // convert to transport objects
+            .map([&](auto response) {
+              log_->info("mapped {}, {}", *response, client_id);
+              return std::static_pointer_cast<
+                         shared_model::proto::TransactionResponse>(response)
+                  ->getTransport();
+            })
+            .combine_latest(consensus_gate_observable)
+            .map([](const auto &tuple) { return std::get<0>(tuple); })
+            // complete the observable if stream has failed or client is
+            // disconnected, or too many rounds have passed without tx status
+            // change
+            .take_while([this,
+                         context,
+                         &client_id,
+                         &stream_failed,
+                         &rounds_counter,
+                         &last_tx_status](const auto &response) {
+              if (stream_failed) {
+                return false;
+              }
               auto is_cancelled = context->IsCancelled();
               if (is_cancelled) {
                 log_->debug("client unsubscribed, {}", client_id);
               }
-              // we increment round counter when the same status arrived again.
+
+              // we increment round counter when the same status arrived
+              // again.
               auto status = response.tx_status();
               if (last_tx_status and (status == *last_tx_status)) {
                 ++rounds_counter;
               } else {
                 rounds_counter = 0;
               }
-              // we stop the stream when round counter is greater than allowed.
+              // we stop the stream when round counter is greater than
+              // allowed.
               if (rounds_counter >= maximum_rounds_without_update_) {
                 return false;
               }
 
               return not is_cancelled;
             })
-        .filter([&last_tx_status](const auto &response) {
-          auto status = response.tx_status();
-          // we allow further processing in case of any new status
-          // (including the first one)
-          auto result = not last_tx_status or (*last_tx_status != status);
-          last_tx_status = status;
-          return result;
-        })
-        .subscribe(subscription,
-                   [this, &response_writer, &client_id](const auto &response) {
-                     if (response_writer->Write(response)) {
-                       log_->debug("status written, {}", client_id);
-                     }
-                   },
-                   [&](std::exception_ptr ep) {
-                     log_->error("something bad happened, client_id {}",
-                                 client_id);
-                   },
-                   [&] { log_->debug("stream done, {}", client_id); });
+            .filter([&last_tx_status](const auto &response) {
+              auto status = response.tx_status();
+              // we allow further processing in case of any new status
+              // (including the first one)
+              auto result = not last_tx_status or (*last_tx_status != status);
+              last_tx_status = status;
+              return result;
+            })
+            .subscribe(
+                subscription,
+                [this, &stream_failed, &response_writer, &client_id](
+                    const auto &response) {
+                  if (not stream_failed and response_writer->Write(response)) {
+                    log_->debug("status written, {}", client_id);
+                  } else {
+                    log_->error(
+                        "failed to write to the stream: maybe client "
+                        "closed the connection; client_id {}",
+                        client_id);
+                    stream_failed = true;
+                  }
+                },
+                [&](std::exception_ptr ep) {
+                  log_->error("something bad happened, client_id {}",
+                              client_id);
+                  stream_failed = true;
+                },
+                [&] { log_->debug("stream done, {}", client_id); });
 
     // run loop while subscription is active or there are pending events in
     // the queue
-    handleEvents(subscription, rl);
+    handleEvents(subscription, rl, stream_failed);
+    stream_subscription.unsubscribe();
 
     log_->debug("status stream done, {}", client_id);
     return grpc::Status::OK;
