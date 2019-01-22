@@ -17,8 +17,13 @@
 #include <boost/range/adaptor/map.hpp>
 #include "main/iroha_conf_literals.hpp"
 
+/// The length of the string around the error place to print in case of JSON
+/// syntax error.
 static constexpr size_t kBadJsonPrintLength = 15;
+
+/// The offset of printed chunk towards file start from the error position.
 static constexpr size_t kBadJsonPrintOffsset = 5;
+
 static_assert(kBadJsonPrintOffsset <= kBadJsonPrintLength,
               "The place of error is out of the printed string boundaries!");
 
@@ -32,10 +37,9 @@ static_assert(kBadJsonPrintOffsset <= kBadJsonPrintLength,
  * @param parent_config - the parent logger config
  * @param parent_obj - the parent logger json configuration
  */
-void addChildrenLoggerConfigs(
-    const std::string &path,
-    const logger::LoggerManagerTreePtr &parent_config,
-    const rapidjson::Value::ConstObject &parent_obj);
+void addChildrenLoggerConfigs(const std::string &path,
+                              const logger::LoggerManagerTreePtr &parent_config,
+                              const rapidjson::Value::ConstObject &parent_obj);
 
 /**
  * Overrides the logger configuration with the values from JSON object.
@@ -151,8 +155,8 @@ void getVal<logger::LogLevel>(const std::string &path,
   if (it == config_members::LogLevels.end()) {
     BOOST_THROW_EXCEPTION(std::runtime_error(
         "Wrong log level at " + path + ": must be one of '"
-        + boost::algorithm::join(config_members::LogLevels | boost::adaptors::map_keys,
-                                 "', '")
+        + boost::algorithm::join(
+              config_members::LogLevels | boost::adaptors::map_keys, "', '")
         + "'."));
   }
   dest = it->second;
@@ -197,7 +201,8 @@ void getVal<IrohadConfig>(const std::string &path,
   getValByKey(path, dest.torii_port, obj, config_members::ToriiPort);
   getValByKey(path, dest.internal_port, obj, config_members::InternalPort);
   getValByKey(path, dest.pg_opt, obj, config_members::PgOpt);
-  getValByKey(path, dest.max_proposal_size, obj, config_members::MaxProposalSize);
+  getValByKey(
+      path, dest.max_proposal_size, obj, config_members::MaxProposalSize);
   getValByKey(path, dest.proposal_delay, obj, config_members::ProposalDelay);
   getValByKey(path, dest.vote_delay, obj, config_members::VoteDelay);
   getValByKey(path, dest.mst_support, obj, config_members::MstSupport);
@@ -266,7 +271,8 @@ void addChildrenLoggerConfigs(const std::string &path,
                               const rapidjson::Value::ConstObject &parent_obj) {
   const auto it = parent_obj.FindMember(config_members::LogChildrenSection);
   if (it != parent_obj.MemberEnd()) {
-    auto children_section_path = sublevelPath(path, config_members::LogChildrenSection);
+    auto children_section_path =
+        sublevelPath(path, config_members::LogChildrenSection);
     for (const auto &child_json : it->value.GetObject()) {
       assert_fatal(child_json.name.IsString(),
                    "Child logger key must be a string holding its tag.");
