@@ -78,7 +78,7 @@ static bool validateVerbosity(const char *flagname, const std::string &val) {
   }
   const auto it = config_members::LogLevels.find(val);
   if (it == config_members::LogLevels.end()) {
-    std::cout << "Invalid value for " << flagname << ": should be one of '"
+    std::cerr << "Invalid value for " << flagname << ": should be one of '"
               << kLogSettingsFromConfigFile;
     for (const auto &level : config_members::LogLevels) {
       std::cerr << "', '" << level.first;
