@@ -128,6 +128,7 @@ int main(int argc, char *argv[]) {
                 config[mbr::MaxProposalSize].GetUint(),
                 std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()),
                 std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()),
+                std::chrono::minutes(config[mbr::MstExpirationTime].GetUint()),
                 *keypair,
                 boost::make_optional(config[mbr::MstSupport].GetBool(),
                                      iroha::GossipPropagationStrategyParams{}));

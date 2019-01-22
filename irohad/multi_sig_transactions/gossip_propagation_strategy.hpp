@@ -18,7 +18,7 @@ namespace iroha {
 
   /**
    * This class provides strategy for propagation states in network
-   * Emits exactly (or zero iff provider is empty) amount of peers
+   * Emits exactly (or zero if provider is empty) amount of peers
    * at some period
    * note: it can be inconsistent with the peer provider
    */

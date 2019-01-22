@@ -70,6 +70,7 @@ namespace integration_framework {
     const size_t internal_port_;
     const std::chrono::milliseconds proposal_delay_;
     const std::chrono::milliseconds vote_delay_;
+    const std::chrono::minutes mst_expiration_time_;
     boost::optional<iroha::GossipPropagationStrategyParams>
         opt_mst_gossip_params_;
 

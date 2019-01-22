@@ -314,7 +314,8 @@ TEST_F(MstProcessorTest, emptyStatePropagation) {
   auto another_peer = makePeer(
       "another", shared_model::interface::types::PubkeyType("sign_one"));
 
-  auto another_peer_state = MstState::empty();
+  auto another_peer_state = MstState::empty(
+      std::make_shared<iroha::DefaultCompleter>(std::chrono::minutes(0)));
   another_peer_state += makeTestBatch(txBuilder(1));
 
   storage->apply(another_peer->pubkey(), another_peer_state);

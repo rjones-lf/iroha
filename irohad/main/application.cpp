@@ -71,6 +71,7 @@ Irohad::Irohad(const std::string &block_store_dir,
                size_t max_proposal_size,
                std::chrono::milliseconds proposal_delay,
                std::chrono::milliseconds vote_delay,
+               std::chrono::minutes mst_expiration_time,
                const shared_model::crypto::Keypair &keypair,
                const boost::optional<GossipPropagationStrategyParams>
                    &opt_mst_gossip_params)
@@ -83,6 +84,7 @@ Irohad::Irohad(const std::string &block_store_dir,
       proposal_delay_(proposal_delay),
       vote_delay_(vote_delay),
       is_mst_supported_(opt_mst_gossip_params),
+      mst_expiration_time_(mst_expiration_time),
       opt_mst_gossip_params_(opt_mst_gossip_params),
       keypair(keypair) {
   log_ = logger::log("IROHAD");
@@ -430,7 +432,7 @@ void Irohad::initStatusBus() {
 }
 
 void Irohad::initMstProcessor() {
-  auto mst_completer = std::make_shared<DefaultCompleter>();
+  auto mst_completer = std::make_shared<DefaultCompleter>(mst_expiration_time_);
   auto mst_storage = std::make_shared<MstStorageStateImpl>(mst_completer);
   std::shared_ptr<iroha::PropagationStrategy> mst_propagation;
   if (is_mst_supported_) {
@@ -440,6 +442,7 @@ void Irohad::initMstProcessor() {
         batch_parser,
         transaction_batch_factory_,
         persistent_cache,
+        mst_completer,
         keypair.publicKey());
     mst_propagation = std::make_shared<GossipPropagationStrategy>(
         storage, rxcpp::observe_on_new_thread(), *opt_mst_gossip_params_);
