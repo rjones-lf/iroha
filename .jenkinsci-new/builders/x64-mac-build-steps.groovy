@@ -12,7 +12,7 @@ def testSteps(scmVars, String buildDir, List environment, String testList) {
       """
       sh "cd build; IROHA_POSTGRES_HOST=localhost IROHA_POSTGRES_PORT=5433 ctest --output-on-failure --no-compress-output --tests-regex '${testList}'  --test-action Test || true"
 
-      sh 'python .jenkinsci/helpers/platform_tag.py "Darwin \$(uname -m)" \$(ls build/Testing/*/Test.xml)'
+      sh 'python .jenkinsci-new/helpers/platform_tag.py "Darwin \$(uname -m)" \$(ls build/Testing/*/Test.xml)'
       // Mark build as UNSTABLE if there are any failed tests (threshold <100%)
       xunit testTimeMargin: '3000', thresholdMode: 2, thresholds: [passed(unstableThreshold: '100')], \
         tools: [CTest(deleteOutputFiles: true, failIfNotNew: false, \
@@ -28,9 +28,9 @@ def testSteps(scmVars, String buildDir, List environment, String testList) {
 def buildSteps( int parallelism, List compilerVersions, String build_type, boolean coverage, boolean testing, String testList, boolean packagebuild, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
-    def build = load '.jenkinsci/build.groovy'
-    def vars = load ".jenkinsci/utils/vars.groovy"
-    def utils = load ".jenkinsci/utils/utils.groovy"
+    def build = load '.jenkinsci-new/build.groovy'
+    def vars = load ".jenkinsci-new/utils/vars.groovy"
+    def utils = load ".jenkinsci-new/utils/utils.groovy"
     buildDir = 'build'
     compilers = vars.compilerMapping()
     cmakeBooleanOption = [ (true): 'ON', (false): 'OFF' ]
@@ -72,7 +72,7 @@ def successPostSteps(scmVars, boolean packagePush, List environment) {
     withEnv(environment) {
       timeout(time: 600, unit: "SECONDS") {
         if (packagePush) {
-          def artifacts = load ".jenkinsci/artifacts.groovy"
+          def artifacts = load ".jenkinsci-new/artifacts.groovy"
           def commit = scmVars.GIT_COMMIT
           // if we use several compiler only last build  will saved as iroha.deb and iroha.tar.gz
           sh """

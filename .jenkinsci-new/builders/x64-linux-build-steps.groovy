@@ -1,7 +1,7 @@
 #!/usr/bin/env groovy
 
 def dockerManifestPush(dockerImageObj, String dockerTag, environment) {
-  def manifest = load ".jenkinsci/utils/docker-manifest.groovy"
+  def manifest = load ".jenkinsci-new/utils/docker-manifest.groovy"
   withEnv(environment) {
     if (manifest.manifestSupportEnabled()) {
       manifest.manifestCreate("${env.DOCKER_REGISTRY_BASENAME}:${dockerTag}",
@@ -24,7 +24,7 @@ def dockerManifestPush(dockerImageObj, String dockerTag, environment) {
 def testSteps(String buildDir, List environment, String testList) {
   withEnv(environment) {
     sh "cd ${buildDir}; ctest --output-on-failure --no-compress-output --tests-regex '${testList}'  --test-action Test || true"
-    sh """ python .jenkinsci/helpers/platform_tag.py "Linux \$(uname -m)" \$(ls ${buildDir}/Testing/*/Test.xml) """
+    sh """ python .jenkinsci-new/helpers/platform_tag.py "Linux \$(uname -m)" \$(ls ${buildDir}/Testing/*/Test.xml) """
     // Mark build as UNSTABLE if there are any failed tests (threshold <100%)
     xunit testTimeMargin: '3000', thresholdMode: 2, thresholds: [passed(unstableThreshold: '100')], \
       tools: [CTest(deleteOutputFiles: true, failIfNotNew: false, \
@@ -36,11 +36,11 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
       boolean testing, String testList, boolean cppcheck, boolean sonar, boolean docs, boolean packagebuild, boolean sanitize, boolean fuzzing, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
-    def build = load '.jenkinsci/build.groovy'
-    def vars = load ".jenkinsci/utils/vars.groovy"
-    def utils = load ".jenkinsci/utils/utils.groovy"
-    def dockerUtils = load ".jenkinsci/utils/docker-pull-or-build.groovy"
-    def doxygen = load ".jenkinsci/utils/doxygen.groovy"
+    def build = load '.jenkinsci-new/build.groovy'
+    def vars = load ".jenkinsci-new/utils/vars.groovy"
+    def utils = load ".jenkinsci-new/utils/utils.groovy"
+    def dockerUtils = load ".jenkinsci-new/utils/docker-pull-or-build.groovy"
+    def doxygen = load ".jenkinsci-new/utils/doxygen.groovy"
     buildDir = 'build'
     compilers = vars.compilerMapping()
     cmakeBooleanOption = [ (true): 'ON', (false): 'OFF' ]
@@ -117,8 +117,8 @@ def successPostSteps(scmVars, boolean packagePush, String dockerTag, List enviro
   stage('Linux success PostSteps') {
     withEnv(environment) {
       if (packagePush) {
-        def artifacts = load ".jenkinsci/artifacts.groovy"
-        def utils = load ".jenkinsci/utils/utils.groovy"
+        def artifacts = load ".jenkinsci-new/artifacts.groovy"
+        def utils = load ".jenkinsci-new/utils/utils.groovy"
         platform = sh(script: 'uname -m', returnStdout: true).trim()
         def commit = scmVars.GIT_COMMIT
 
