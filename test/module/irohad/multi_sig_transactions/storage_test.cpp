@@ -13,12 +13,23 @@ using namespace iroha;
 
 auto log_ = logger::log("MstStorageTest");
 
+class StorageTestCompleter : public DefaultCompleter {
+ public:
+  explicit StorageTestCompleter() : DefaultCompleter(std::chrono::minutes(0)) {}
+  bool operator()(const DataType &batch, const TimeType &time) const override {
+    return std::any_of(
+        batch->transactions().begin(),
+        batch->transactions().end(),
+        [&time](const auto &tx) { return tx->createdTime() < time; });
+  }
+};
+
 class StorageTest : public testing::Test {
  public:
   StorageTest() : absent_peer_key("absent") {}
 
   void SetUp() override {
-    completer_ = std::make_shared<DefaultCompleter>(std::chrono::minutes(0));
+    completer_ = std::make_shared<StorageTestCompleter>();
     storage = std::make_shared<MstStorageStateImpl>(completer_);
     fillOwnState();
   }
@@ -35,7 +46,7 @@ class StorageTest : public testing::Test {
   const unsigned quorum = 3u;
   const shared_model::interface::types::TimestampType creation_time =
       iroha::time::now();
-  std::shared_ptr<DefaultCompleter> completer_;
+  std::shared_ptr<StorageTestCompleter> completer_;
 };
 
 TEST_F(StorageTest, StorageWhenApplyOtherState) {
