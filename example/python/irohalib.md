@@ -12,6 +12,7 @@ All you have to do before the first usage is:
 
 ```sh
 pip3 install grpcio-tools
+pip3 install pysha3
 protoc --proto_path=../../shared_model/schema --python_out=. ../../shared_model/schema/*.proto
 python -m grpc_tools.protoc --proto_path=../../shared_model/schema --python_out=. --grpc_python_out=. ../../shared_model/schema/endpoint.proto
 
