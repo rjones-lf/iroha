@@ -29,11 +29,11 @@ namespace integration_framework {
         BOOST_ASSERT_MSG(fake_peer, "Fake peer shared pointer is not set!");
         const auto behaviour = fake_peer->getBehaviour();
         if (behaviour) {
-          auto proposal = behaviour->processOrderingProposalRequest(round);
-          if (proposal) {
+          auto opt_proposal = behaviour->processOrderingProposalRequest(round);
+          if (opt_proposal) {
             return std::unique_ptr<shared_model::interface::Proposal>(
                 std::make_unique<shared_model::proto::Proposal>(
-                    proposal->getTransport()));
+                    (*opt_proposal)->getTransport()));
           }
         }
         return {};

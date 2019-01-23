@@ -20,7 +20,7 @@ namespace integration_framework {
       auto it = proposals_map_.find(round);
       if (it != proposals_map_.end()) {
         if (it->second) {
-          return *it->second;
+          return it->second;
         } else {
           return boost::none;
         }

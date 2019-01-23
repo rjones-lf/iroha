@@ -83,13 +83,13 @@ namespace integration_framework {
             request.toString());
         return boost::none;
       }
-      auto proposal = proposal_storage->getProposal(request);
+      auto opt_proposal = proposal_storage->getProposal(request);
       getLogger()->debug(
           "Got an OnDemandOrderingService.GetProposal call for round {}, "
           "{} returning a proposal.",
           request.toString(),
-          proposal ? "" : "NOT");
-      return proposal;
+          opt_proposal ? "" : "NOT");
+      return opt_proposal;
     }
 
     void HonestBehaviour::processOrderingBatches(
@@ -125,7 +125,7 @@ namespace integration_framework {
       std::vector<shared_model::proto::Transaction> txs;
       auto opt_proposal = proposal_storage->getProposal(round);
       if (opt_proposal) {
-        for (const auto &tx : opt_proposal->getTransport().transactions()) {
+        for (const auto &tx : (*opt_proposal)->getTransport().transactions()) {
           txs.emplace_back(tx);
         }
       }
