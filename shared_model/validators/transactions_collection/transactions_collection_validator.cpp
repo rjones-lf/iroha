@@ -10,9 +10,11 @@
 #include <boost/format.hpp>
 #include <boost/range/adaptor/indirected.hpp>
 #include "interfaces/common_objects/transaction_sequence_common.hpp"
+#include "interfaces/iroha_internal/transaction_batch_parser_impl.hpp"
 #include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/signable_validator.hpp"
+#include "validators/transaction_batch_validator.hpp"
 #include "validators/transaction_validator.hpp"
 #include "validators/transactions_collection/batch_order_validator.hpp"
 
@@ -54,6 +56,16 @@ namespace shared_model {
               (boost::format("Tx %s : %s") % tx.hash().hex() % answer.reason())
                   .str();
           reason.second.push_back(message);
+        }
+      }
+
+      interface::TransactionBatchParserImpl batch_parser;
+      BatchValidator batch_validator;
+
+      auto batches = batch_parser.parseBatches(transactions);
+      for (auto &batch : batches) {
+        if (auto answer = batch_validator.validate(batch)) {
+          reason.second.emplace_back(answer.reason());
         }
       }
 

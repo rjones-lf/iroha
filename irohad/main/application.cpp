@@ -32,6 +32,7 @@
 #include "validators/default_validator.hpp"
 #include "validators/field_validator.hpp"
 #include "validators/protobuf/proto_block_validator.hpp"
+#include "validators/protobuf/proto_proposal_validator.hpp"
 #include "validators/protobuf/proto_query_validator.hpp"
 #include "validators/protobuf/proto_transaction_validator.hpp"
 
@@ -189,6 +190,26 @@ void Irohad::initNetworkClient() {
 }
 
 void Irohad::initFactories() {
+  // proposal factory
+  std::shared_ptr<
+      shared_model::validation::AbstractValidator<iroha::protocol::Transaction>>
+      proto_transaction_validator = std::make_shared<
+          shared_model::validation::ProtoTransactionValidator>();
+  std::unique_ptr<shared_model::validation::AbstractValidator<
+      shared_model::interface::Proposal>>
+      proposal_validator = std::make_unique<
+          shared_model::validation::DefaultProposalValidator>();
+  std::unique_ptr<
+      shared_model::validation::AbstractValidator<iroha::protocol::Proposal>>
+      proto_proposal_validator =
+          std::make_unique<shared_model::validation::ProtoProposalValidator>(
+              proto_transaction_validator);
+  proposal_factory =
+      std::make_shared<shared_model::proto::ProtoTransportFactory<
+          shared_model::interface::Proposal,
+          shared_model::proto::Proposal>>(std::move(proposal_validator),
+                                          std::move(proto_proposal_validator));
+
   // transaction factories
   transaction_batch_factory_ =
       std::make_shared<shared_model::interface::TransactionBatchFactoryImpl>();
@@ -198,10 +219,6 @@ void Irohad::initFactories() {
       transaction_validator =
           std::make_unique<shared_model::validation::
                                DefaultOptionalSignedTransactionValidator>();
-  std::unique_ptr<
-      shared_model::validation::AbstractValidator<iroha::protocol::Transaction>>
-      proto_transaction_validator = std::make_unique<
-          shared_model::validation::ProtoTransactionValidator>();
   transaction_factory =
       std::make_shared<shared_model::proto::ProtoTransportFactory<
           shared_model::interface::Transaction,
@@ -301,6 +318,7 @@ void Irohad::initOrderingGate() {
                                                  transaction_batch_factory_,
                                                  async_call_,
                                                  std::move(factory),
+                                                 proposal_factory,
                                                  persistent_cache,
                                                  {blocks.back()->height(), 1},
                                                  delay);
