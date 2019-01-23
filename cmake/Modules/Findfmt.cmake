@@ -22,23 +22,23 @@ if (NOT DEFINED fmt_VERSION OR fmt_VERSION VERSION_LESS fmt_FIND_VERSION)
   message(STATUS "Package 'fmt' of version ${fmt_FIND_VERSION} not found. "
           "Will download it from git repo.")
 
-  set(git_url https://github.com/fmtlib/fmt.git)
+  set(GIT_URL https://github.com/fmtlib/fmt.git)
   set(fmt_VERSION ${fmt_FIND_VERSION})
-  set(git_tag "refs/tags/${fmt_VERSION}")
+  set(GIT_TAG "refs/tags/${fmt_VERSION}")
   set_package_properties(fmt
       PROPERTIES
-      URL ${git_url}
+      URL ${GIT_URL}
       DESCRIPTION "String formatting library"
       )
 
   externalproject_add(fmtlib_fmt
-      GIT_REPOSITORY  ${git_url}
-      GIT_TAG         ${git_tag}
+      GIT_REPOSITORY  ${GIT_URL}
+      GIT_TAG         ${GIT_TAG}
+      GIT_SHALLOW     1
       CONFIGURE_COMMAND "" # remove configure step
       BUILD_COMMAND "" # remove build step
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND "" # remove test step
-      UPDATE_COMMAND "" # remove update step
       )
   externalproject_get_property(fmtlib_fmt source_dir)
   set(fmt_INCLUDE_DIR ${source_dir}/include)

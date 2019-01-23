@@ -23,24 +23,23 @@ if (NOT DEFINED spdlog_VERSION OR spdlog_VERSION VERSION_LESS spdlog_FIND_VERSIO
   message(STATUS "Package 'spdlog' of version ${spdlog_FIND_VERSION} not found. "
           "Will download it from git repo.")
 
-  set(git_url https://github.com/gabime/spdlog.git)
+  set(GIT_URL https://github.com/gabime/spdlog.git)
   set(spdlog_VERSION ${spdlog_FIND_VERSION})
-  set(git_tag "v${spdlog_VERSION}")
+  set(GIT_TAG "v${spdlog_VERSION}")
   set_package_properties(spdlog
       PROPERTIES
-      URL ${git_url}
+      URL ${GIT_URL}
       DESCRIPTION "Logging library"
       )
 
   externalproject_add(gabime_spdlog
-      GIT_REPOSITORY  ${git_url}
-      GIT_TAG         ${git_tag}
+      GIT_REPOSITORY  ${GIT_URL}
+      GIT_TAG         ${GIT_TAG}
       GIT_SHALLOW     1
       CONFIGURE_COMMAND "" # remove configure step
       BUILD_COMMAND "" # remove build step
       INSTALL_COMMAND "" # remove install step
       TEST_COMMAND "" # remove test step
-      UPDATE_COMMAND "" # remove update step
       )
   externalproject_get_property(gabime_spdlog source_dir)
   set(spdlog_INCLUDE_DIR ${source_dir}/include)
