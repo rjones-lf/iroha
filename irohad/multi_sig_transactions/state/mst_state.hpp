@@ -55,8 +55,8 @@ namespace iroha {
 
   /**
    * Class provides the default behavior for the batch completer.
-   * Complete, if all transactions have at least quorum number of signatures and
-   * complete, if all transactions are not expired.
+   * Complete, if all transactions have at least quorum number of signatures.
+   * Expired if all transactions are not expired.
    */
   class DefaultCompleter : public Completer {
     /**
