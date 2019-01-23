@@ -1,4 +1,12 @@
 #!/usr/bin/env groovy
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+//
+// Linux Build steps
+//
 
 def dockerManifestPush(dockerImageObj, String dockerTag, environment) {
   def manifest = load ".jenkinsci-new/utils/docker-manifest.groovy"
@@ -91,7 +99,7 @@ def buildSteps(int parallelism, List compilerVersions, String build_type, boolea
             coverage ? build.initialCoverage(buildDir) : echo('Skipping initial coverage...')
             testSteps(buildDir, environment, testList)
             coverage ? build.postCoverage(buildDir, '/tmp/lcov_cobertura.py') : echo('Skipping post coverage...')
-            // We run coverage one time,in first compiler, it enough
+            // We run coverage once, using the first compiler as it is enough
             coverage = false
           }
         }
@@ -122,7 +130,7 @@ def successPostSteps(scmVars, boolean packagePush, String dockerTag, List enviro
         platform = sh(script: 'uname -m', returnStdout: true).trim()
         def commit = scmVars.GIT_COMMIT
 
-        // if we use several compiler only last build  will saved as iroha.deb and iroha.tar.gz
+        // if we use several compilers only the last compiler, used for the build, will be used for iroha.deb and iroha.tar.gz archives
         sh """
           ls -lah ./build
           mv ./build/iroha-*.deb ./build/iroha.deb

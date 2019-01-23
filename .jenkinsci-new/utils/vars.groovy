@@ -1,4 +1,12 @@
 #!/usr/bin/env groovy
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+//
+// vars to map compiler versions
+//
 
 def compilerMapping () {
   return ['gcc5': ['cxx_compiler':'g++-5', 'cc_compiler':'gcc-5'],

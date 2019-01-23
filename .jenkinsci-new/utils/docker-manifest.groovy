@@ -1,4 +1,12 @@
 #!/usr/bin/env groovy
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+//
+// Helpers to work with docker manifest
+//
 
 def manifestSupportEnabled() {
 	def dockerVersion = sh(script: "docker -v", returnStdout: true).trim()

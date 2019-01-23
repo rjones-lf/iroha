@@ -1,4 +1,12 @@
 #!/usr/bin/env groovy
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+//
+// This module helps automatically build new docker develop-build image if Dockerfile changed
+//
 
 def buildOptionsString(options) {
   def s = ''
@@ -60,12 +68,6 @@ def dockerPullOrBuild(imageName, currentDockerfileURL, previousDockerfileURL, re
     }
   }
   return iC
-  // if (GIT_LOCAL_BRANCH ==~ /develop|master|dev/ || CHANGE_BRANCH_LOCAL == 'develop' || CHANGE_BRANCH_LOCAL == 'dev') {
-  //   docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-  //     iC.push(imageName)
-  //   }
-  // }
-  // return iC
 }
 
 return this

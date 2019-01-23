@@ -1,4 +1,12 @@
 #!/usr/bin/env groovy
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+//
+// Mac Build steps
+//
 
 def testSteps(scmVars, String buildDir, List environment, String testList) {
   withEnv(environment) {
@@ -25,7 +33,7 @@ def testSteps(scmVars, String buildDir, List environment, String testList) {
   }
 }
 
-def buildSteps( int parallelism, List compilerVersions, String build_type, boolean coverage, boolean testing, String testList, boolean packagebuild, List environment) {
+def buildSteps(int parallelism, List compilerVersions, String build_type, boolean coverage, boolean testing, String testList, boolean packagebuild, List environment) {
   withEnv(environment) {
     scmVars = checkout scm
     def build = load '.jenkinsci-new/build.groovy'
@@ -59,7 +67,7 @@ def buildSteps( int parallelism, List compilerVersions, String build_type, boole
           coverage ? build.initialCoverage(buildDir) : echo('Skipping initial coverage...')
           testSteps(scmVars, buildDir, environment, testList)
           coverage ? build.postCoverage(buildDir, '/usr/local/bin/lcov_cobertura.py') : echo('Skipping post coverage...')
-          // We run coverage one time,in first compiler, it enough
+          // We run coverage once, using the first compiler as it is enough
           coverage = false
         }
       }
@@ -74,7 +82,7 @@ def successPostSteps(scmVars, boolean packagePush, List environment) {
         if (packagePush) {
           def artifacts = load ".jenkinsci-new/artifacts.groovy"
           def commit = scmVars.GIT_COMMIT
-          // if we use several compiler only last build  will saved as iroha.deb and iroha.tar.gz
+          // if we use several compilers only the last compiler, used for the build, will be used for iroha.deb and iroha.tar.gz archives
           sh """
             ls -lah ./build
             mv ./build/iroha-*.tar.gz ./build/iroha.tar.gz

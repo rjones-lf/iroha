@@ -1,4 +1,12 @@
 #!/usr/bin/env groovy
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+//
+// functions we use when build iroha
+//
 
 def cmakeConfigure(String buildDir, String cmakeOptions, String sourceTreeDir=".") {
   sh "cmake -H${sourceTreeDir} -B${buildDir} ${cmakeOptions}"

@@ -1,10 +1,15 @@
 #!/usr/bin/env groovy
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+//
+//  Builds and push Doxygen docks
+//
 
 def doDoxygen(boolean specialBranch, String local_branch) {
   sh "doxygen Doxyfile"
-  // TODO: Remove this comment once dev branch will return to develop
-  // I will not be changing branches here. It requires some rewriting
-  // Hope dev branch situation will be resolved soon
   if (specialBranch) {
     def branch = local_branch == "master" ? local_branch : "develop"
     sshagent(['jenkins-artifact']) {

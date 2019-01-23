@@ -1,4 +1,12 @@
 #!/usr/bin/env groovy
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+//
+// Upload Artifacts to nexus
+//
 
 def uploadArtifacts(filePaths, uploadPath, artifactServers=['nexus.iroha.tech']) {
   def filePathsConverted = []

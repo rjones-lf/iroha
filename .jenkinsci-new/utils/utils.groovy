@@ -1,4 +1,12 @@
 #!/usr/bin/env groovy
+/**
+ * Copyright Soramitsu Co., Ltd. All Rights Reserved.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+//
+// Small utils that can be used multiple times
+//
 
 def previousCommitOrCurrent(scmVars) {
   // GIT_PREVIOUS_COMMIT is null on first PR build
