@@ -278,7 +278,9 @@ RUN set -e; \
 # python bindings dependencies
 RUN set -e; \
     pip install grpcio_tools; \
-    pip3 install grpcio_tools
+    pip3 install grpcio_tools; \
+    pip install pysha3; \
+    pip3 install pysha3
 
 # install lcov
 RUN set -e; \
