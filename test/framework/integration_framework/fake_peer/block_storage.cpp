@@ -30,6 +30,16 @@ namespace integration_framework {
     BlockStorage::BlockStorage()
         : log_(logger::log("Fake peer block storage")) {}
 
+    BlockStorage::BlockStorage(const BlockStorage &other)
+        : blocks_by_height_(other.blocks_by_height_),
+          blocks_by_hash_(other.blocks_by_hash_),
+          log_(logger::log("Fake peer block storage")) {}
+
+    BlockStorage::BlockStorage(BlockStorage &&other)
+        : blocks_by_height_(std::move(other.blocks_by_height_)),
+          blocks_by_hash_(std::move(other.blocks_by_hash_)),
+          log_(logger::log("Fake peer block storage")) {}
+
     void BlockStorage::storeBlock(const BlockPtr &block) {
       boost::lock_guard<boost::shared_mutex> lock(block_maps_mutex_);
       if (emplaceCheckingOverwrite(blocks_by_height_, block->height(), block)) {

@@ -31,6 +31,10 @@ namespace integration_framework {
       using HashType = shared_model::crypto::Hash;
 
       BlockStorage();
+      BlockStorage(const BlockStorage &);
+      BlockStorage(BlockStorage &&);
+      BlockStorage operator=(const BlockStorage &) = delete;
+      BlockStorage operator=(BlockStorage &&) = delete;
 
       void storeBlock(const BlockPtr &block);
 
