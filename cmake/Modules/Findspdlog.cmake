@@ -1,10 +1,8 @@
 add_library(spdlog INTERFACE IMPORTED)
 
-set(spdlog_external_project_name gabime_spdlog)
-
 unset(spdlog_INCLUDE_DIR CACHE)
 find_path(spdlog_INCLUDE_DIR spdlog/spdlog.h
-  PATHS ${EP_PREFIX}/src/${spdlog_external_project_name}/include
+  PATHS ${EP_PREFIX}/src/gabime_spdlog/include
   )
 mark_as_advanced(spdlog_INCLUDE_DIR)
 
@@ -34,7 +32,7 @@ if (NOT DEFINED spdlog_VERSION OR spdlog_VERSION VERSION_LESS spdlog_FIND_VERSIO
       DESCRIPTION "Logging library"
       )
 
-  externalproject_add(${spdlog_external_project_name}
+  externalproject_add(gabime_spdlog
       GIT_REPOSITORY  ${git_url}
       GIT_TAG         ${git_tag}
       GIT_SHALLOW     1
@@ -44,11 +42,11 @@ if (NOT DEFINED spdlog_VERSION OR spdlog_VERSION VERSION_LESS spdlog_FIND_VERSIO
       TEST_COMMAND "" # remove test step
       UPDATE_COMMAND "" # remove update step
       )
-  externalproject_get_property(${spdlog_external_project_name} source_dir)
+  externalproject_get_property(gabime_spdlog source_dir)
   set(spdlog_INCLUDE_DIR ${source_dir}/include)
   file(MAKE_DIRECTORY ${spdlog_INCLUDE_DIR})
 
-  add_dependencies(spdlog ${spdlog_external_project_name})
+  add_dependencies(spdlog gabime_spdlog)
 endif ()
 
 set_target_properties(spdlog PROPERTIES

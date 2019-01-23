@@ -1,9 +1,7 @@
 add_library(fmt INTERFACE IMPORTED)
 
-set(fmt_external_project_name fmtlib_fmt)
-
 find_path(fmt_INCLUDE_DIR fmt/format.h
-  PATHS ${EP_PREFIX}/src/${fmt_external_project_name}/include)
+  PATHS ${EP_PREFIX}/src/fmtlib_fmt/include)
 mark_as_advanced(fmt_INCLUDE_DIR)
 
 # read the fmt version stored in fmt/core.h
@@ -33,7 +31,7 @@ if (NOT DEFINED fmt_VERSION OR fmt_VERSION VERSION_LESS fmt_FIND_VERSION)
       DESCRIPTION "String formatting library"
       )
 
-  externalproject_add(${fmt_external_project_name}
+  externalproject_add(fmtlib_fmt
       GIT_REPOSITORY  ${git_url}
       GIT_TAG         ${git_tag}
       CONFIGURE_COMMAND "" # remove configure step
@@ -42,11 +40,11 @@ if (NOT DEFINED fmt_VERSION OR fmt_VERSION VERSION_LESS fmt_FIND_VERSION)
       TEST_COMMAND "" # remove test step
       UPDATE_COMMAND "" # remove update step
       )
-  externalproject_get_property(${fmt_external_project_name} source_dir)
+  externalproject_get_property(fmtlib_fmt source_dir)
   set(fmt_INCLUDE_DIR ${source_dir}/include)
   file(MAKE_DIRECTORY ${fmt_INCLUDE_DIR})
 
-  add_dependencies(fmt ${fmt_external_project_name})
+  add_dependencies(fmt fmtlib_fmt)
 endif()
 
 set_target_properties(fmt PROPERTIES
