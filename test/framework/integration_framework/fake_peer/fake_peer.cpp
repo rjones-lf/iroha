@@ -148,19 +148,12 @@ namespace integration_framework {
     FakePeer &FakePeer::setBlockStorage(
         const std::shared_ptr<BlockStorage> &block_storage) {
       ensureInitialized();
-      if (block_storage_) {
-        block_storage_->claimNotUsingPeer(shared_from_this());
-      }
       block_storage_ = block_storage;
-      block_storage_->claimUsingPeer(shared_from_this());
       return *this;
     }
 
     FakePeer &FakePeer::removeBlockStorage() {
       ensureInitialized();
-      if (block_storage_) {
-        block_storage_->claimNotUsingPeer(shared_from_this());
-      }
       block_storage_.reset();
       return *this;
     }

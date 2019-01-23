@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <boost/thread/shared_mutex.hpp>
 #include "cryptography/hash.hpp"
 #include "interfaces/common_objects/types.hpp"
 #include "logger/logger.hpp"
@@ -29,29 +30,20 @@ namespace integration_framework {
       using HeightType = shared_model::interface::types::HeightType;
       using HashType = shared_model::crypto::Hash;
 
+      BlockStorage();
+
       void storeBlock(const BlockPtr &block);
 
       BlockPtr getBlockByHeight(HeightType height) const;
       BlockPtr getBlockByHash(const HashType &hash) const;
       BlockPtr getTopBlock() const;
 
-      // Claim that a fake peer uses this storage. Used for logging.
-      void claimUsingPeer(const std::shared_ptr<FakePeer> &peer);
-
-      // claim that a fake peer is not using this storage any more.
-      void claimNotUsingPeer(const std::shared_ptr<FakePeer> &peer);
-
      private:
-      logger::Logger getLogger() const;
-
       std::unordered_map<HeightType, BlockPtr> blocks_by_height_;
       std::unordered_map<HashType, BlockPtr, HashType::Hasher> blocks_by_hash_;
+      mutable boost::shared_mutex block_maps_mutex_;
 
-      /// The collection of peers claiming to use this block storage.
-      // Vector is used (although a kind of set would fit better) because
-      // weak pointers seem unsuitable for any comparison, as the shared_ptr
-      // they refer to may change.
-      mutable std::vector<std::weak_ptr<FakePeer>> using_peers_;
+      logger::Logger log_;
     };
 
   }  // namespace fake_peer
