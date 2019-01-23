@@ -25,7 +25,7 @@ namespace integration_framework {
 
     class BlockStorage final {
      public:
-      using BlockPtr = std::shared_ptr<shared_model::proto::Block>;
+      using BlockPtr = std::shared_ptr<const shared_model::proto::Block>;
       using HeightType = shared_model::interface::types::HeightType;
       using HashType = shared_model::crypto::Hash;
 

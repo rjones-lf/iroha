@@ -51,7 +51,7 @@ namespace integration_framework {
             request->toString());
         return {};
       }
-      return *std::static_pointer_cast<shared_model::proto::Block>(block);
+      return block;
     }
 
     LoaderBlocksRequestResult HonestBehaviour::processLoaderBlocksRequest(
@@ -67,7 +67,7 @@ namespace integration_framework {
       LoaderBlocksRequestResult blocks;
       while ((block = block_storage->getBlockByHeight(current_height++))
              != nullptr) {
-        blocks.emplace_back(*block);
+        blocks.emplace_back(block);
       }
       return blocks;
     }

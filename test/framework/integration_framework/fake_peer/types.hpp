@@ -86,9 +86,9 @@ namespace integration_framework {
     using LoaderBlockRequest = std::shared_ptr<shared_model::crypto::Hash>;
     using LoaderBlocksRequest = shared_model::interface::types::HeightType;
     using LoaderBlockRequestResult =
-        boost::optional<const shared_model::proto::Block &>;
+        boost::optional<std::shared_ptr<const shared_model::proto::Block>>;
     using LoaderBlocksRequestResult =
-        std::vector<std::reference_wrapper<const shared_model::proto::Block>>;
+        std::vector<std::shared_ptr<const shared_model::proto::Block>>;
     using OrderingProposalRequest = iroha::consensus::Round;
     using OrderingProposalRequestResult =
         boost::optional<shared_model::proto::Proposal &>;

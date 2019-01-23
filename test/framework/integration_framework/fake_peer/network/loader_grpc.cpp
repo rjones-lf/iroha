@@ -81,11 +81,11 @@ namespace integration_framework {
         return ::grpc::Status(::grpc::StatusCode::INTERNAL,
                               "Fake Peer has no behaviour set!");
       }
-      auto block = behaviour->processLoaderBlockRequest(hash);
-      if (!block) {
+      auto opt_block = behaviour->processLoaderBlockRequest(hash);
+      if (!opt_block) {
         return ::grpc::Status(::grpc::StatusCode::NOT_FOUND, "Block not found");
       }
-      *response->mutable_block_v1() = block->getTransport();
+      *response->mutable_block_v1() = (*opt_block)->getTransport();
       return ::grpc::Status::OK;
     }
 
@@ -104,7 +104,7 @@ namespace integration_framework {
       auto blocks = behaviour->processLoaderBlocksRequest(height);
       for (auto &block : blocks) {
         iroha::protocol::Block proto_block;
-        *proto_block.mutable_block_v1() = block.get().getTransport();
+        *proto_block.mutable_block_v1() = block->getTransport();
         writer->Write(proto_block);
       }
       return ::grpc::Status::OK;
