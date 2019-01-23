@@ -18,7 +18,7 @@ namespace iroha {
   namespace consensus {
     namespace yac {
 
-      inline std::shared_ptr<shared_model::interface::Peer> mk_peer(
+      inline std::shared_ptr<shared_model::interface::Peer> makePeer(
           const std::string &address) {
         auto key = std::string(32, '0');
         std::copy(address.begin(), address.end(), key.begin());

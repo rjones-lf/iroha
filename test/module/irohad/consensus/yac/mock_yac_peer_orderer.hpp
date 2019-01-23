@@ -29,8 +29,9 @@ namespace iroha {
 
         MockYacPeerOrderer &operator=(const MockYacPeerOrderer &rhs) {
           return *this;
-        };
+        }
       };
+
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha

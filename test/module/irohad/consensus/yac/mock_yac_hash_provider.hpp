@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_HASH_PROVIDER_HPP
-#define IROHA_HASH_PROVIDER_HPP
+#ifndef IROHA_MOCK_YAC_HASH_PROVIDER_HPP
+#define IROHA_MOCK_YAC_HASH_PROVIDER_HPP
 
 #include <gmock/gmock.h>
 
@@ -38,4 +38,4 @@ namespace iroha {
   }    // namespace consensus
 }  // namespace iroha
 
-#endif  // IROHA_HASH_PROVIDER_HPP
+#endif  // IROHA_MOCK_YAC_HASH_PROVIDER_HPP

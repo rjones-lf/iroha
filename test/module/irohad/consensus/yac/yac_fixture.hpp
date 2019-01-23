@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef IROHA_YAC_MOCKS_HPP
-#define IROHA_YAC_MOCKS_HPP
+#ifndef IROHA_YAC_FIXTURE_HPP
+#define IROHA_YAC_FIXTURE_HPP
 
 #include <gtest/gtest.h>
 
@@ -28,13 +28,13 @@ namespace iroha {
         std::shared_ptr<MockTimer> timer;
         std::shared_ptr<Yac> yac;
 
-        // ------|Round|------
+        // ------|One round|------
         std::vector<std::shared_ptr<shared_model::interface::Peer>>
             default_peers = [] {
               std::vector<std::shared_ptr<shared_model::interface::Peer>>
                   result;
               for (size_t i = 1; i <= 7; ++i) {
-                result.push_back(mk_peer(std::to_string(i)));
+                result.push_back(makePeer(std::to_string(i)));
               }
               return result;
             }();
@@ -57,8 +57,9 @@ namespace iroha {
           network->subscribe(yac);
         }
       };
+
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha
 
-#endif  // IROHA_YAC_MOCKS_HPP
+#endif  // IROHA_YAC_FIXTURE_HPP

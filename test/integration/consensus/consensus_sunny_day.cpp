@@ -31,7 +31,7 @@ static size_t num_peers = 1, my_num = 0;
 
 auto mk_local_peer(uint64_t num) {
   auto address = "0.0.0.0:" + std::to_string(num);
-  return iroha::consensus::yac::mk_peer(address);
+  return iroha::consensus::yac::makePeer(address);
 }
 
 class FixedCryptoProvider : public MockYacCryptoProvider {

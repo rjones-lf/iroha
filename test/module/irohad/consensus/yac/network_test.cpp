@@ -47,7 +47,7 @@ namespace iroha {
           ASSERT_TRUE(server);
           ASSERT_NE(port, 0);
 
-          peer = mk_peer(std::string(default_ip) + ":" + std::to_string(port));
+          peer = makePeer(std::string(default_ip) + ":" + std::to_string(port));
         }
 
         void TearDown() override {

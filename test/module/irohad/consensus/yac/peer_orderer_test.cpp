@@ -64,7 +64,7 @@ class YacPeerOrdererTest : public ::testing::Test {
   std::vector<wPeer> s_peers = [] {
     std::vector<wPeer> result;
     for (size_t i = 1; i <= N_PEERS; ++i) {
-      auto tmp = iroha::consensus::yac::mk_peer(std::to_string(i));
+      auto tmp = iroha::consensus::yac::makePeer(std::to_string(i));
 
       auto key = tmp->pubkey();
 

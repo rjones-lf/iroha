@@ -13,11 +13,12 @@
 namespace iroha {
   namespace consensus {
     namespace yac {
+
       class MockYacNetwork : public YacNetwork {
        public:
         void subscribe(
             std::shared_ptr<YacNetworkNotifications> handler) override {
-          notification = handler;
+          notification = std::move(handler);
         };
 
         void release() {

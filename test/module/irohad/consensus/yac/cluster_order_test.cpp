@@ -12,8 +12,8 @@
 class ClusterOrderTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    p1 = iroha::consensus::yac::mk_peer("1");
-    p2 = iroha::consensus::yac::mk_peer("2");
+    p1 = iroha::consensus::yac::makePeer("1");
+    p2 = iroha::consensus::yac::makePeer("2");
     peers_list = {p1, p2};
   }
 

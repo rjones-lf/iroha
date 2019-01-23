@@ -18,17 +18,18 @@ namespace iroha {
        public:
         MOCK_CONST_METHOD2(
             hasSupermajority,
-            bool(const shared_model::interface::types::SignatureRangeType
-                     &signatures,
+            bool(const shared_model::interface::types::SignatureRangeType &,
                  const std::vector<
-                     std::shared_ptr<shared_model::interface::Peer>> &peers));
+                     std::shared_ptr<shared_model::interface::Peer>> &));
+
         MOCK_CONST_METHOD2(checkSize, bool(PeersNumberType, PeersNumberType));
+
         MOCK_CONST_METHOD2(
             peersSubset,
-            bool(const shared_model::interface::types::SignatureRangeType
-                     &signatures,
+            bool(const shared_model::interface::types::SignatureRangeType &,
                  const std::vector<
-                     std::shared_ptr<shared_model::interface::Peer>> &peers));
+                     std::shared_ptr<shared_model::interface::Peer>> &));
+
         MOCK_CONST_METHOD3(
             hasReject, bool(PeersNumberType, PeersNumberType, PeersNumberType));
       };

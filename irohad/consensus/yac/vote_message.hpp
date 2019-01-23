@@ -40,6 +40,7 @@ namespace iroha {
               .finalize();
         }
       };
+
     }  // namespace yac
   }    // namespace consensus
 }  // namespace iroha

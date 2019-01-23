@@ -28,7 +28,7 @@ namespace iroha {
 
         MockHashGate &operator=(const MockHashGate &rhs) {
           return *this;
-        };
+        }
       };
 
     }  // namespace yac
