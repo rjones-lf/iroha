@@ -14,6 +14,7 @@
 #include "interfaces/common_objects/types.hpp"
 #include "module/shared_model/builders/protobuf/test_transaction_builder.hpp"
 #include "multi_sig_transactions/mst_types.hpp"
+#include "multi_sig_transactions/state/mst_state.hpp"
 
 #include "logger/logger.hpp"
 
@@ -101,5 +102,20 @@ inline auto makeTx(const shared_model::interface::types::CounterType &counter,
           .signAndAddSignature(keypair)
           .finish());
 }
+
+namespace iroha {
+  class TestCompleter : public DefaultCompleter {
+   public:
+    explicit TestCompleter() : DefaultCompleter(std::chrono::minutes(0)) {}
+
+    bool operator()(const DataType &batch,
+                    const TimeType &time) const override {
+      return std::any_of(
+          batch->transactions().begin(),
+          batch->transactions().end(),
+          [&time](const auto &tx) { return tx->createdTime() < time; });
+    }
+  };
+}  // namespace iroha
 
 #endif  // IROHA_MST_TEST_HELPERS_HPP

@@ -13,18 +13,7 @@ using namespace iroha;
 using namespace iroha::model;
 
 auto log_ = logger::log("MstStateTest");
-
-class StateTestCompleter : public DefaultCompleter {
- public:
-  explicit StateTestCompleter() : DefaultCompleter(std::chrono::minutes(0)) {}
-  bool operator()(const DataType &batch, const TimeType &time) const override {
-    return std::any_of(
-        batch->transactions().begin(),
-        batch->transactions().end(),
-        [&time](const auto &tx) { return tx->createdTime() < time; });
-  }
-};
-auto completer_ = std::make_shared<StateTestCompleter>();
+auto completer_ = std::make_shared<TestCompleter>();
 
 /**
  * @given empty state
