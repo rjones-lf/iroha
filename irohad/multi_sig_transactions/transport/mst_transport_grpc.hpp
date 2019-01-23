@@ -42,7 +42,7 @@ namespace iroha {
           std::shared_ptr<shared_model::interface::TransactionBatchFactory>
               transaction_batch_factory,
           std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache,
-          std::shared_ptr<DefaultCompleter> mst_completer,
+          std::shared_ptr<Completer> mst_completer,
           shared_model::crypto::PublicKey my_key);
 
       /**
@@ -80,7 +80,7 @@ namespace iroha {
           batch_factory_;
       std::shared_ptr<iroha::ametsuchi::TxPresenceCache> tx_presence_cache_;
       /// source peer key for MST propogation messages
-      std::shared_ptr<DefaultCompleter> mst_completer_;
+      std::shared_ptr<Completer> mst_completer_;
       const std::string my_key_;
     };
 

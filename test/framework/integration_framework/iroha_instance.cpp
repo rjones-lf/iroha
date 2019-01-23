@@ -33,8 +33,8 @@ namespace integration_framework {
         proposal_delay_(1h),
         // not required due to solo consensus
         vote_delay_(0ms),
-        // let's use the same value as in the default config
-        mst_expiration_time_(std::chrono::minutes(1440)),
+        // amount of minutes in a day
+        mst_expiration_time_(std::chrono::minutes(24*60)),
         opt_mst_gossip_params_(boost::make_optional(
             mst_support, iroha::GossipPropagationStrategyParams{})) {}
 
