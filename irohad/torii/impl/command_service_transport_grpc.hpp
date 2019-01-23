@@ -134,6 +134,7 @@ namespace torii {
 
     rxcpp::observable<ConsensusGateEvent> consensus_gate_objects_;
     const int maximum_rounds_without_update_;
+    std::mutex stream_write_mutex_;
   };
 }  // namespace torii
 

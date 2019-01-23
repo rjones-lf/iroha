@@ -52,7 +52,7 @@ namespace torii {
         const shared_model::crypto::Hash &request) override;
     rxcpp::observable<
         std::shared_ptr<shared_model::interface::TransactionResponse>>
-    getStatusStream(const shared_model::crypto::Hash &hash) override;
+    getStatusStream(shared_model::crypto::Hash hash) override;
 
    private:
     /**

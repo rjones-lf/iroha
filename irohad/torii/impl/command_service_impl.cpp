@@ -100,7 +100,7 @@ namespace torii {
 
   rxcpp::observable<
       std::shared_ptr<shared_model::interface::TransactionResponse>>
-  CommandServiceImpl::getStatusStream(const shared_model::crypto::Hash &hash) {
+  CommandServiceImpl::getStatusStream(shared_model::crypto::Hash hash) {
     using ResponsePtrType =
         std::shared_ptr<shared_model::interface::TransactionResponse>;
     auto initial_status = cache_->findItem(hash).value_or([&] {
@@ -113,7 +113,7 @@ namespace torii {
         .start_with(initial_status)
         // select statuses with requested hash
         .filter(
-            [&](auto response) { return response->transactionHash() == hash; })
+            [=](auto response) { return response->transactionHash() == hash; })
         // successfully complete the observable if final status is received.
         // final status is included in the observable
         .template lift<ResponsePtrType>([](rxcpp::subscriber<ResponsePtrType>
