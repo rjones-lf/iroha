@@ -466,13 +466,18 @@ namespace iroha {
         return boost::none;
       }
       return createPeerQuery() |
-          [](const auto &peer_query) { return peer_query->getLedgerPeers(); } |
-          [this, &block](auto &&peers) {
-            auto state = std::make_unique<LedgerState>(
-                std::make_shared<PeerList>(std::move(peers)));
-            return boost::optional<std::unique_ptr<LedgerState>>{
-                this->storeBlock(block), std::move(state)};
-          };
+                 [](const auto &peer_query) {
+                   return peer_query->getLedgerPeers();
+                 }
+                 | [this, &block](auto &&peers)
+                 -> boost::optional<std::unique_ptr<LedgerState>> {
+        if (this->storeBlock(block)) {
+          return boost::optional<std::unique_ptr<LedgerState>>(
+              std::make_unique<LedgerState>(
+                  std::make_shared<PeerList>(std::move(peers))));
+        }
+        return boost::none;
+      };
     }
 
     std::shared_ptr<WsvQuery> StorageImpl::getWsvQuery() const {
