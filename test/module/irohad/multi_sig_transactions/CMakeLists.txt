@@ -22,8 +22,6 @@ target_link_libraries(storage_test
 AddTest(completer_test completer_test.cpp)
 target_link_libraries(completer_test
     mst_state
-    shared_model_proto_builders
-    shared_model_interfaces_factories
     )
 
 AddTest(transport_test transport_test.cpp)

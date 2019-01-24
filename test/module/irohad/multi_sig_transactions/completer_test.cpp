@@ -5,10 +5,12 @@
 
 #include <gtest/gtest.h>
 #include <chrono>
-#include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
+#include "datetime/time.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 
 using namespace iroha;
+using namespace testing;
 
 /**
  * @given batch with 3 transactions: first one with quorum 1 and 1 signature,
@@ -19,15 +21,35 @@ using namespace iroha;
  */
 TEST(CompleterTest, BatchQuorumTestEnoughSignatures) {
   auto completer = std::make_shared<DefaultCompleter>(std::chrono::minutes(0));
-  auto time = iroha::time::now();
-  auto batch = makeTestBatch(
-      txBuilder(1, time, 1), txBuilder(2, time, 2), txBuilder(3, time, 3));
-  addSignatures(batch, 0, makeSignature("1", "1"));
-  addSignatures(batch, 1, makeSignature("2", "1"));
-  addSignatures(batch, 1, makeSignature("2", "2"));
-  addSignatures(batch, 2, makeSignature("3", "1"));
-  addSignatures(batch, 2, makeSignature("3", "2"));
-  addSignatures(batch, 2, makeSignature("3", "3"));
+
+  MockSignature sig11;
+  std::vector<std::reference_wrapper<MockSignature>> sigs1{std::ref(sig11)};
+  MockSignature sig21, sig22;
+  std::vector<std::reference_wrapper<MockSignature>> sigs2{std::ref(sig21),
+                                                           std::ref(sig22)};
+  MockSignature sig31, sig32, sig33;
+  std::vector<std::reference_wrapper<MockSignature>> sigs3{
+      std::ref(sig31), std::ref(sig32), std::ref(sig33)};
+
+  auto tx1 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx1, quorum()).WillOnce(Return(1));
+  EXPECT_CALL(*tx1, signatures())
+      .WillOnce(
+          Return<shared_model::interface::types::SignatureRangeType>(sigs1));
+
+  auto tx2 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx2, quorum()).WillOnce(Return(2));
+  EXPECT_CALL(*tx2, signatures())
+      .WillOnce(
+          Return<shared_model::interface::types::SignatureRangeType>(sigs2));
+
+  auto tx3 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx3, quorum()).WillOnce(Return(3));
+  EXPECT_CALL(*tx3, signatures())
+      .WillOnce(
+          Return<shared_model::interface::types::SignatureRangeType>(sigs3));
+
+  auto batch = createMockBatchWithTransactions({tx1, tx2, tx3}, "");
   ASSERT_TRUE((*completer)(batch));
 }
 
@@ -40,28 +62,51 @@ TEST(CompleterTest, BatchQuorumTestEnoughSignatures) {
  */
 TEST(CompleterTest, BatchQuorumTestNotEnoughSignatures) {
   auto completer = std::make_shared<DefaultCompleter>(std::chrono::minutes(0));
-  auto time = iroha::time::now();
-  auto batch = makeTestBatch(
-      txBuilder(1, time, 1), txBuilder(2, time, 2), txBuilder(3, time, 3));
-  addSignatures(batch, 0, makeSignature("1", "1"));
-  addSignatures(batch, 1, makeSignature("2", "1"));
-  addSignatures(batch, 2, makeSignature("3", "1"));
-  addSignatures(batch, 2, makeSignature("3", "2"));
-  addSignatures(batch, 2, makeSignature("3", "3"));
+
+  MockSignature sig11;
+  std::vector<std::reference_wrapper<MockSignature>> sigs1{std::ref(sig11)};
+  MockSignature sig21;
+  std::vector<std::reference_wrapper<MockSignature>> sigs2{std::ref(sig21)};
+  MockSignature sig31, sig32, sig33;
+  std::vector<std::reference_wrapper<MockSignature>> sigs3{
+      std::ref(sig31), std::ref(sig32), std::ref(sig33)};
+
+  auto tx1 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx1, quorum()).WillOnce(Return(1));
+  EXPECT_CALL(*tx1, signatures())
+      .WillOnce(
+          Return<shared_model::interface::types::SignatureRangeType>(sigs1));
+
+  auto tx2 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx2, quorum()).WillOnce(Return(2));
+  EXPECT_CALL(*tx2, signatures())
+      .WillOnce(
+          Return<shared_model::interface::types::SignatureRangeType>(sigs2));
+
+  auto tx3 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx3, quorum()).Times(0);
+  EXPECT_CALL(*tx3, signatures()).Times(0);
+
+  auto batch = createMockBatchWithTransactions({tx1, tx2, tx3}, "");
   ASSERT_FALSE((*completer)(batch));
 }
 
 /**
- * @given batch with 3 transactions with now() creation time and completer with
- * 1 minute expiration time
+ * @given batch with 3 transactions with now() creation time and completer
+ * with 1 minute expiration time
  * @when completer with 2 minute gap was called for the batch
  * @then batch is expired
  */
 TEST(CompleterTest, BatchExpirationTestExpired) {
   auto completer = std::make_shared<DefaultCompleter>(std::chrono::minutes(1));
   auto time = iroha::time::now();
-  auto batch = makeTestBatch(
-      txBuilder(1, time, 1), txBuilder(2, time, 2), txBuilder(3, time, 3));
+  auto tx1 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx1, createdTime()).WillOnce(Return(time));
+  auto tx2 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx2, createdTime()).Times(0);
+  auto tx3 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx3, createdTime()).Times(0);
+  auto batch = createMockBatchWithTransactions({tx1, tx2, tx3}, "");
   ASSERT_TRUE((*completer)(
       batch, time + std::chrono::minutes(2) / std::chrono::milliseconds(1)));
 }
@@ -76,12 +121,18 @@ TEST(CompleterTest, BatchExpirationTestExpired) {
 TEST(CompleterTest, BatchExpirationTestNoExpired) {
   auto completer = std::make_shared<DefaultCompleter>(std::chrono::minutes(5));
   auto time = iroha::time::now();
-  auto batch = makeTestBatch(
-      txBuilder(
-          1, time + std::chrono::minutes(2) / std::chrono::milliseconds(1), 1),
-      txBuilder(
-          2, time + std::chrono::minutes(3) / std::chrono::milliseconds(1), 2),
-      txBuilder(
-          3, time + std::chrono::minutes(4) / std::chrono::milliseconds(1), 3));
+  auto tx1 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx1, createdTime())
+      .WillOnce(Return(
+          time + std::chrono::minutes(2) / std::chrono::milliseconds(1)));
+  auto tx2 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx2, createdTime())
+      .WillOnce(Return(
+          time + std::chrono::minutes(3) / std::chrono::milliseconds(1)));
+  auto tx3 = std::make_shared<MockTransaction>();
+  EXPECT_CALL(*tx3, createdTime())
+      .WillOnce(Return(
+          time + std::chrono::minutes(4) / std::chrono::milliseconds(1)));
+  auto batch = createMockBatchWithTransactions({tx1, tx2, tx3}, "");
   ASSERT_FALSE((*completer)(batch, time));
 }
