@@ -32,8 +32,8 @@ using ::testing::DefaultValue;
 using ::testing::Return;
 
 /**
- * Factory for generation mock mutable storages.
- * This method provide technique,
+ * Factory for mock mutable storage generation.
+ * This method provides technique,
  * when required to return object wrapped in Result.
  */
 expected::Result<std::unique_ptr<MutableStorage>, std::string>
