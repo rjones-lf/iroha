@@ -73,7 +73,7 @@ namespace iroha {
           getStatusStream,
           rxcpp::observable<
               std::shared_ptr<shared_model::interface::TransactionResponse>>(
-              shared_model::crypto::Hash));
+              const shared_model::crypto::Hash &));
     };
 
   }  // namespace torii

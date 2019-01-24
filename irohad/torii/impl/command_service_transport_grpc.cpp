@@ -161,10 +161,8 @@ namespace torii {
 
   namespace {
     void handleEvents(rxcpp::composite_subscription &subscription,
-                      rxcpp::schedulers::run_loop &run_loop,
-                      bool &stream_failed) {
-      while ((subscription.is_subscribed() or not run_loop.empty())
-             and not stream_failed) {
+                      rxcpp::schedulers::run_loop &run_loop) {
+      while (subscription.is_subscribed() or not run_loop.empty()) {
         run_loop.dispatch();
       }
     }
@@ -195,7 +193,7 @@ namespace torii {
 
     boost::optional<iroha::protocol::TxStatus> last_tx_status;
     auto rounds_counter{0};
-    auto stream_failed = false;
+    std::mutex stream_write_mutex;
     command_service_
         ->getStatusStream(hash)
         // convert to transport objects
@@ -209,66 +207,53 @@ namespace torii {
         .map([](const auto &tuple) { return std::get<0>(tuple); })
         // complete the observable if client is disconnected or too many
         // rounds have passed without tx status change
-        .take_while([=, &rounds_counter, &last_tx_status, &stream_failed](
+        .take_while([=, &rounds_counter, &last_tx_status, &stream_write_mutex](
                         const auto &response) {
-          if (stream_failed) {
-            return false;
-          }
-          auto is_cancelled = context->IsCancelled();
-          if (is_cancelled) {
+          if (context->IsCancelled()) {
             log_->debug("client unsubscribed, {}", client_id);
-          }
-
-          // we increment round counter when the same status arrived again.
-          auto status = response.tx_status();
-          if (last_tx_status and (status == *last_tx_status)) {
-            ++rounds_counter;
-          } else {
-            rounds_counter = 0;
-          }
-          // we stop the stream when round counter is greater than allowed.
-          if (rounds_counter >= maximum_rounds_without_update_) {
             return false;
           }
 
-          return not is_cancelled;
-        })
-        .filter([&last_tx_status](const auto &response) {
+          // increment round counter when the same status arrived again.
           auto status = response.tx_status();
-          // we allow further processing in case of any new status
-          // (including the first one)
-          auto result = not last_tx_status or (*last_tx_status != status);
+          auto status_is_same = last_tx_status and (status == *last_tx_status);
+          if (status_is_same) {
+            ++rounds_counter;
+            if (rounds_counter >= maximum_rounds_without_update_) {
+              // we stop the stream when round counter is greater than allowed.
+              return false;
+            }
+            // omit the received status, but do not stop the stream
+            return true;
+          }
+          rounds_counter = 0;
           last_tx_status = status;
-          return result;
+
+          // write a new status to the stream
+          // TODO [IR-249] akvinikym 23.01.19: remove the mutex after
+          // ensuring only one thread can be here
+          std::lock_guard<std::mutex> lg{stream_write_mutex};
+          if (not response_writer->Write(response)) {
+            log_->error("write to stream has failed to client {}", client_id);
+            return false;
+          }
+
+          log_->debug("status written, {}", client_id);
+          return true;
         })
-        .subscribe(
-            subscription,
-            [this, &subscription, &response_writer, &client_id, &stream_failed](
-                const auto &response) {
-              // TODO [IR-249] akvinikym 23.01.19: remove the mutex after
-              // ensuring only one thread can be here
-              std::lock_guard<std::mutex> lg{stream_write_mutex_};
-              if (not stream_failed and response_writer->Write(response)) {
-                log_->debug("status written, {}", client_id);
-              } else {
-                log_->error("write to stream has failed to client {}",
-                            client_id);
-                stream_failed = true;
-                subscription.unsubscribe();
-              }
-            },
-            [&](std::exception_ptr ep) {
-              log_->error("something bad happened, client_id {}", client_id);
-              stream_failed = true;
-              subscription.unsubscribe();
-            },
-            [&] { log_->debug("stream done, {}", client_id); });
+        .subscribe(subscription,
+                   [](const auto &) {},
+                   [&](std::exception_ptr ep) {
+                     log_->error("something bad happened, client_id {}",
+                                 client_id);
+                   },
+                   [&] { log_->debug("stream done, {}", client_id); });
 
     // run loop while subscription is active or there are pending events in
     // the queue
-    handleEvents(subscription, rl, stream_failed);
+    handleEvents(subscription, rl);
 
     log_->debug("status stream done, {}", client_id);
     return grpc::Status::OK;
-  }
+  }  // namespace torii
 }  // namespace torii

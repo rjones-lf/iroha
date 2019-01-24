@@ -52,7 +52,7 @@ namespace torii {
      */
     virtual rxcpp::observable<
         std::shared_ptr<shared_model::interface::TransactionResponse>>
-    getStatusStream(shared_model::crypto::Hash hash) = 0;
+    getStatusStream(const shared_model::crypto::Hash &hash) = 0;
   };
 
 }  // namespace torii
