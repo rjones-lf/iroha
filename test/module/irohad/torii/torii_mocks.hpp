@@ -8,6 +8,7 @@
 
 #include <gmock/gmock.h>
 
+#include "cryptography/hash.hpp"
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
 #include "interfaces/query_responses/block_query_response.hpp"
@@ -72,7 +73,7 @@ namespace iroha {
           getStatusStream,
           rxcpp::observable<
               std::shared_ptr<shared_model::interface::TransactionResponse>>(
-              const shared_model::crypto::Hash &hash));
+              shared_model::crypto::Hash));
     };
 
   }  // namespace torii
