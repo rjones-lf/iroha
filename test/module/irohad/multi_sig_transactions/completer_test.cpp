@@ -4,6 +4,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <boost/range/adaptor/indirected.hpp>
 #include <chrono>
 #include "datetime/time.hpp"
 #include "module/shared_model/interface_mocks.hpp"
@@ -22,32 +23,30 @@ using namespace testing;
 TEST(CompleterTest, BatchQuorumTestEnoughSignatures) {
   auto completer = std::make_shared<DefaultCompleter>(std::chrono::minutes(0));
 
-  MockSignature sig11;
-  std::vector<std::reference_wrapper<MockSignature>> sigs1{std::ref(sig11)};
-  MockSignature sig21, sig22;
-  std::vector<std::reference_wrapper<MockSignature>> sigs2{std::ref(sig21),
-                                                           std::ref(sig22)};
-  MockSignature sig31, sig32, sig33;
-  std::vector<std::reference_wrapper<MockSignature>> sigs3{
-      std::ref(sig31), std::ref(sig32), std::ref(sig33)};
+  std::vector<std::shared_ptr<MockSignature>> sigs1{
+      1, std::make_shared<MockSignature>()};
+  std::vector<std::shared_ptr<MockSignature>> sigs2{
+      2, std::make_shared<MockSignature>()};
+  std::vector<std::shared_ptr<MockSignature>> sigs3{
+      3, std::make_shared<MockSignature>()};
 
   auto tx1 = std::make_shared<MockTransaction>();
   EXPECT_CALL(*tx1, quorum()).WillOnce(Return(1));
   EXPECT_CALL(*tx1, signatures())
-      .WillOnce(
-          Return<shared_model::interface::types::SignatureRangeType>(sigs1));
+      .WillOnce(Return<shared_model::interface::types::SignatureRangeType>(
+          sigs1 | boost::adaptors::indirected));
 
   auto tx2 = std::make_shared<MockTransaction>();
   EXPECT_CALL(*tx2, quorum()).WillOnce(Return(2));
   EXPECT_CALL(*tx2, signatures())
-      .WillOnce(
-          Return<shared_model::interface::types::SignatureRangeType>(sigs2));
+      .WillOnce(Return<shared_model::interface::types::SignatureRangeType>(
+          sigs2 | boost::adaptors::indirected));
 
   auto tx3 = std::make_shared<MockTransaction>();
   EXPECT_CALL(*tx3, quorum()).WillOnce(Return(3));
   EXPECT_CALL(*tx3, signatures())
-      .WillOnce(
-          Return<shared_model::interface::types::SignatureRangeType>(sigs3));
+      .WillOnce(Return<shared_model::interface::types::SignatureRangeType>(
+          sigs3 | boost::adaptors::indirected));
 
   auto batch = createMockBatchWithTransactions({tx1, tx2, tx3}, "");
   ASSERT_TRUE((*completer)(batch));
@@ -63,25 +62,24 @@ TEST(CompleterTest, BatchQuorumTestEnoughSignatures) {
 TEST(CompleterTest, BatchQuorumTestNotEnoughSignatures) {
   auto completer = std::make_shared<DefaultCompleter>(std::chrono::minutes(0));
 
-  MockSignature sig11;
-  std::vector<std::reference_wrapper<MockSignature>> sigs1{std::ref(sig11)};
-  MockSignature sig21;
-  std::vector<std::reference_wrapper<MockSignature>> sigs2{std::ref(sig21)};
-  MockSignature sig31, sig32, sig33;
-  std::vector<std::reference_wrapper<MockSignature>> sigs3{
-      std::ref(sig31), std::ref(sig32), std::ref(sig33)};
+  std::vector<std::shared_ptr<MockSignature>> sigs1{
+      1, std::make_shared<MockSignature>()};
+  std::vector<std::shared_ptr<MockSignature>> sigs2{
+      1, std::make_shared<MockSignature>()};
+  std::vector<std::shared_ptr<MockSignature>> sigs3{
+      3, std::make_shared<MockSignature>()};
 
   auto tx1 = std::make_shared<MockTransaction>();
   EXPECT_CALL(*tx1, quorum()).WillOnce(Return(1));
   EXPECT_CALL(*tx1, signatures())
-      .WillOnce(
-          Return<shared_model::interface::types::SignatureRangeType>(sigs1));
+      .WillOnce(Return<shared_model::interface::types::SignatureRangeType>(
+          sigs1 | boost::adaptors::indirected));
 
   auto tx2 = std::make_shared<MockTransaction>();
   EXPECT_CALL(*tx2, quorum()).WillOnce(Return(2));
   EXPECT_CALL(*tx2, signatures())
-      .WillOnce(
-          Return<shared_model::interface::types::SignatureRangeType>(sigs2));
+      .WillOnce(Return<shared_model::interface::types::SignatureRangeType>(
+          sigs2 | boost::adaptors::indirected));
 
   auto tx3 = std::make_shared<MockTransaction>();
   EXPECT_CALL(*tx3, quorum()).Times(0);
