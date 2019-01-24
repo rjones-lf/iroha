@@ -6,9 +6,6 @@
 #include "torii/processor/query_processor_impl.hpp"
 
 #include <boost/range/size.hpp>
-#include <rxcpp/operators/rx-concat.hpp>
-#include <rxcpp/operators/rx-map.hpp>
-#include <rxcpp/sources/rx-iterate.hpp>
 #include "common/bind.hpp"
 #include "interfaces/queries/blocks_query.hpp"
 #include "interfaces/queries/query.hpp"
