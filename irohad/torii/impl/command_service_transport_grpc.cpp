@@ -209,6 +209,10 @@ namespace torii {
         // rounds have passed without tx status change
         .take_while([=, &rounds_counter, &last_tx_status, &stream_write_mutex](
                         const auto &response) {
+          // TODO [IR-249] akvinikym 23.01.19: remove the mutex after
+          // ensuring only one thread can be here
+          std::lock_guard<std::mutex> lg{stream_write_mutex};
+
           if (context->IsCancelled()) {
             log_->debug("client unsubscribed, {}", client_id);
             return false;
@@ -230,9 +234,6 @@ namespace torii {
           last_tx_status = status;
 
           // write a new status to the stream
-          // TODO [IR-249] akvinikym 23.01.19: remove the mutex after
-          // ensuring only one thread can be here
-          std::lock_guard<std::mutex> lg{stream_write_mutex};
           if (not response_writer->Write(response)) {
             log_->error("write to stream has failed to client {}", client_id);
             return false;
