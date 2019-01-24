@@ -23,23 +23,6 @@ using namespace framework::test_subscriber;
 using testing::_;
 using testing::Return;
 
-class TestCompleter : public Completer {
-  bool operator()(const DataType &batch) const override {
-    return std::all_of(batch->transactions().begin(),
-                       batch->transactions().end(),
-                       [](const auto &tx) {
-                         return boost::size(tx->signatures()) >= tx->quorum();
-                       });
-  }
-
-  bool operator()(const DataType &batch, const TimeType &time) const override {
-    return std::any_of(
-        batch->transactions().begin(),
-        batch->transactions().end(),
-        [&time](const auto &tx) { return tx->createdTime() < time; });
-  }
-};
-
 class MstProcessorTest : public testing::Test {
  public:
   // --------------------------------| fields |---------------------------------
