@@ -354,23 +354,12 @@ namespace shared_model {
         shared_model::validation::ReasonsGroupType &reason,
         const interface::BatchMeta &batch_meta) const {}
 
-    void FieldValidator::validatePositiveHeight(
+    void FieldValidator::validateHeight(
         shared_model::validation::ReasonsGroupType &reason,
         const shared_model::interface::types::HeightType &height) const {
       if (height <= 0) {
         auto message =
             (boost::format("Height should be > 0, passed value: %d") % height)
-                .str();
-        reason.second.push_back(message);
-      }
-    }
-
-    void FieldValidator::validateNonNegativeHeight(
-        ReasonsGroupType &reason,
-        const interface::types::HeightType &height) const {
-      if (height < 0) {
-        auto message =
-            (boost::format("Height should be >= 0, passed value: %d") % height)
                 .str();
         reason.second.push_back(message);
       }

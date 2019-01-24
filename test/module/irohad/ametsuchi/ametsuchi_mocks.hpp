@@ -123,6 +123,11 @@ namespace iroha {
                    boost::optional<TxCacheStatusType>(
                        const shared_model::crypto::Hash &));
       MOCK_METHOD0(getTopBlockHeight, uint32_t(void));
+      MOCK_CONST_METHOD1(
+          getBlock,
+          expected::Result<std::unique_ptr<shared_model::interface::Block>,
+                           std::string>(
+              shared_model::interface::types::HeightType));
     };
 
     class MockTemporaryFactory : public TemporaryFactory {

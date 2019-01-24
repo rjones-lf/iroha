@@ -155,11 +155,8 @@ namespace shared_model {
       void validateBatchMeta(ReasonsGroupType &reason,
                              const interface::BatchMeta &description) const;
 
-      void validatePositiveHeight(ReasonsGroupType &reason,
+      void validateHeight(ReasonsGroupType &reason,
                           const interface::types::HeightType &height) const;
-
-      void validateNonNegativeHeight(ReasonsGroupType &reason,
-          const interface::types::HeightType &height) const;
 
       void validateHash(ReasonsGroupType &reason,
                         const crypto::Hash &hash) const;

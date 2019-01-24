@@ -64,7 +64,7 @@ namespace iroha {
           })) {
         std::shared_ptr<shared_model::interface::BlockQueryResponse> response =
             response_factory_->createBlockQueryResponse("stateful invalid");
-        return rxcpp::observable<>::just(response);
+        return rxcpp::observable<>::just(std::move(response));
       }
 
       if (not qry.height()) {
@@ -72,47 +72,22 @@ namespace iroha {
         return blocks_query_subject_.get_observable();
       }
 
-      // buffer of blocks in case something was committed between retrieving
-      // blocks from ledger and final concatenation of the observables; without
-      // the buffer, such blocks would disappear
-      std::vector<wBlockQueryResponse> blocks_buffer;
-      auto buffer_subscription =
-          blocks_query_subject_.get_observable().subscribe(
-              [&blocks_buffer](auto block_resp) {
-                blocks_buffer.push_back(std::move(block_resp));
+      // height is specified - return that block
+      auto block = storage_->getBlockQuery()->getBlock(*qry.height());
+      std::shared_ptr<shared_model::interface::BlockQueryResponse>
+          block_response = block.match(
+              [this](iroha::expected::Value<std::unique_ptr<shared_model::interface::Block>> &block_ptr) {
+                return response_factory_->createBlockQueryResponse(
+                    std::move(block_ptr.value));
+              },
+              [this, &qry](const iroha::expected::Error<std::string> &err) {
+                log_->error("Could not retrieve block of height {}, error: {}",
+                            *qry.height(),
+                            err.error);
+                return response_factory_->createBlockQueryResponse(
+                    "could not retrieve block due to internal error");
               });
-
-      auto desired_blocks =
-          storage_->getBlockQuery()->getBlocksFrom(*qry.height());
-
-      return rxcpp::observable<>::iterate(std::move(desired_blocks))
-          // transform retrieved blocks to query responses
-          .map([this](std::shared_ptr<shared_model::interface::Block> block) {
-            return wBlockQueryResponse{
-                response_factory_->createBlockQueryResponse(clone(*block))};
-          })
-          // concatenate retrieved blocks with blocks buffer and filter out
-          // repeated ones by checking the height - if it is less or equal than
-          // the query's one, this block is already in the set of retrieved
-          .concat(
-              rxcpp::observable<>::iterate(blocks_buffer)
-                  .filter([this, &qry](wBlockQueryResponse block_query_resp) {
-                    return visit_in_place(
-                        block_query_resp->get(),
-                        [&qry](const shared_model::interface::BlockResponse
-                                   &block_resp) {
-                          return block_resp.block().height() > *qry.height();
-                        },
-                        [this](const auto &err_resp) {
-                          log_->error(
-                              "Commit observable returned error block "
-                              "response - definitely should not happen");
-                          return false;
-                        });
-                  }))
-          .finally([buffer_subscription] { buffer_subscription.unsubscribe(); })
-          // finally concatenate observer to all future blocks
-          .concat(blocks_query_subject_.get_observable());
+      return rxcpp::observable<>::just(std::move(block_response));
     }
 
   }  // namespace torii

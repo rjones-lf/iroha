@@ -29,6 +29,9 @@ namespace iroha {
       virtual ~QueryExecutor() = default;
       /**
        * Execute and validate query.
+       * @param query to validate and execute
+       * @param validate_signatories - if signatories should be validated
+       * @return pointer to query response
        */
       virtual QueryExecutorResult validateAndExecute(
           const shared_model::interface::Query &query,
@@ -36,6 +39,9 @@ namespace iroha {
 
       /**
        * Perform BlocksQuery validation
+       * @param query to validate
+       * @param ledger_height - current height of the ledger
+       * @param validate_signatories - if signatories should be validated
        * @return true if valid, false otherwise
        */
       virtual bool validate(

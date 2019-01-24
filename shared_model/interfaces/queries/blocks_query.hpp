@@ -33,8 +33,8 @@ namespace shared_model {
       virtual types::CounterType queryCounter() const = 0;
 
       /**
-       * Get height of the block, from which the stream should start; if it's
-       * none, it will start from the next committed block, as before
+       * Get height of the block to be returned; if it's none, the top block
+       * will be returned
        * @return optional to block's height
        */
       virtual boost::optional<types::HeightType> height() const = 0;

@@ -51,7 +51,7 @@ namespace shared_model {
         Answer answer;
         ReasonsGroupType reason;
         reason.first = reason_name;
-        field_validator_.validatePositiveHeight(reason, cont.height());
+        field_validator_.validateHeight(reason, cont.height());
         std::forward<Validator>(validator)(reason, cont);
 
         validateTransactions(reason, cont.transactions(), cont.createdTime());

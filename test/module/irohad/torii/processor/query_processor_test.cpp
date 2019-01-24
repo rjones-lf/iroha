@@ -29,6 +29,7 @@ using namespace framework::test_subscriber;
 
 using ::testing::_;
 using ::testing::A;
+using ::testing::ByMove;
 using ::testing::Invoke;
 using ::testing::Return;
 
@@ -172,56 +173,38 @@ TEST_F(QueryProcessorTest, GetBlocksQueryWithoutHeight) {
  * @given account, ametsuchi queries @and mocked ledger with some blocks
  * @when valid block query with specified height is sent @and this height is
  * less than the ledger's one
- * @then Query Processor should emit blocks starting from the specified height
- * @and finish by the newest ones @and handle the case when new block is
- * comitted in the process of retreiving old ones
+ * @then Query Processor should emit block of this height
  */
 TEST_F(QueryProcessorTest, GetBlocksQueryWithHeight) {
   auto ledger_height = 4;
-  auto total_returned_blocks = 4;
-  auto query_start_from = 2;
-  auto blocks_query = getBlocksQuery<true>(kAccountId, query_start_from);
+  auto query_height = 2;
+  auto blocks_query = getBlocksQuery<true>(kAccountId, query_height);
 
   EXPECT_CALL(*qry_exec, validate(_, _, _)).WillOnce(Return(true));
   EXPECT_CALL(*block_queries, getTopBlockHeight())
       .WillOnce(Return(ledger_height));
 
   // these blocks are the ones lying in the ledger for current moment
-  std::vector<std::shared_ptr<shared_model::interface::Block>> all_blocks;
+  std::vector<std::unique_ptr<shared_model::interface::Block>> all_blocks;
   for (auto i = 0; i < ledger_height; ++i) {
-    all_blocks.push_back(clone(TestBlockBuilder().height(i).build()));
+    all_blocks.push_back(clone(TestBlockBuilder().height(i + 1).build()));
   }
 
-  // these blocks are to be requested and returned to the created observer; they
-  // are part of those in the ledger
-  std::vector<std::shared_ptr<shared_model::interface::Block>> query_blocks{
-      std::begin(all_blocks) + query_start_from, std::end(all_blocks)};
-  EXPECT_CALL(*block_queries, getBlocksFrom(query_start_from))
-      .WillOnce(Return(query_blocks));
+  EXPECT_CALL(*block_queries, getBlock(query_height))
+      .WillOnce(Return(ByMove(
+          iroha::expected::makeValue(clone(*all_blocks[query_height - 1])))));
 
-  auto wrapper = make_test_subscriber<CallExact>(
-      qpi->blocksQueryHandle(blocks_query), total_returned_blocks);
-  wrapper.subscribe([query_start_from](auto response) {
-    // check heights of the received blocks - they must be in right consecutive
-    // order
-    static shared_model::interface::types::HeightType last_seen_block_height =
-        query_start_from;
+  auto wrapper =
+      make_test_subscriber<CallExact>(qpi->blocksQueryHandle(blocks_query), 1);
+  wrapper.subscribe([query_height](auto response) {
     ASSERT_NO_THROW({
       const auto &block =
           boost::get<const shared_model::interface::BlockResponse &>(
               response->get())
               .block();
-      ASSERT_EQ(block.height(), last_seen_block_height);
-      ++last_seen_block_height;
+      ASSERT_EQ(block.height(), query_height);
     });
   });
-
-  // emit two more blocks - they must be emitted by our observable as
-  // well
-  storage->notifier.get_subscriber().on_next(
-      clone(TestBlockBuilder().height(ledger_height).build()));
-  storage->notifier.get_subscriber().on_next(
-      clone(TestBlockBuilder().height(ledger_height + 1).build()));
 
   ASSERT_TRUE(wrapper.validate());
 }

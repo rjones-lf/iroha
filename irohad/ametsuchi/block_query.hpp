@@ -75,6 +75,15 @@ namespace iroha {
        * @return result of Model Block or error message
        */
       virtual expected::Result<wBlock, std::string> getTopBlock() = 0;
+
+      /**
+       * Retrieve block with given id block storage
+       * @param id - height of a block to retrieve
+       * @return block with given height
+       */
+      virtual expected::Result<std::unique_ptr<shared_model::interface::Block>,
+                               std::string>
+      getBlock(shared_model::interface::types::HeightType id) const = 0;
     };
   }  // namespace ametsuchi
 }  // namespace iroha
