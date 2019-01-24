@@ -13,8 +13,8 @@
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/network/network_mocks.hpp"
 #include "module/irohad/ordering/mock_ordering_service_persistent_state.hpp"
-#include "module/shared_model/builders/protobuf/common_objects/proto_peer_builder.hpp"
 #include "module/shared_model/builders/protobuf/test_proposal_builder.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 #include "ordering/impl/ordering_service_transport_grpc.hpp"
 #include "ordering/impl/single_peer_ordering_service.hpp"
 
@@ -54,11 +54,9 @@ class MockOrderingServiceTransport : public network::OrderingServiceTransport {
 class OrderingServiceTest : public ::testing::Test {
  public:
   OrderingServiceTest() {
-    peer = clone(shared_model::proto::PeerBuilder()
-                     .address(address)
-                     .pubkey(shared_model::interface::types::PubkeyType(
-                         std::string(32, '0')))
-                     .build());
+    peer = std::make_unique<MockPeer>();
+    EXPECT_CALL(*peer, address()).WillRepeatedly(testing::ReturnRef(address));
+    EXPECT_CALL(*peer, pubkey()).WillRepeatedly(testing::ReturnRef(pk));
   }
 
   void SetUp() override {
@@ -101,7 +99,8 @@ class OrderingServiceTest : public ::testing::Test {
   std::condition_variable cv;
   std::mutex m;
   std::string address{"127.0.0.1:50051"};
-  std::shared_ptr<shared_model::interface::Peer> peer;
+  shared_model::interface::types::PubkeyType pk{std::string(32, '0')};
+  std::shared_ptr<MockPeer> peer;
   std::shared_ptr<MockPeerQuery> wsv;
   std::shared_ptr<MockPeerQueryFactory> pqfactory;
   std::unique_ptr<shared_model::interface::ProposalFactory> factory;
@@ -155,7 +154,8 @@ TEST_F(OrderingServiceTest, ValidWhenProposalSizeStrategy) {
   EXPECT_CALL(*fake_transport, publishProposalProxy(_, _))
       .Times(tx_num / max_proposal);
   EXPECT_CALL(*wsv, getLedgerPeers())
-      .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));
+      .WillRepeatedly(Return(
+          std::vector<std::shared_ptr<shared_model::interface::Peer>>{peer}));
 
   auto ordering_service = initOs(max_proposal);
   fake_transport->subscribe(ordering_service);
@@ -185,7 +185,8 @@ TEST_F(OrderingServiceTest, ValidWhenTimerStrategy) {
       .Times(1)
       .WillOnce(Return(boost::optional<size_t>(2)));
   EXPECT_CALL(*wsv, getLedgerPeers())
-      .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));
+      .WillRepeatedly(Return(
+          std::vector<std::shared_ptr<shared_model::interface::Peer>>{peer}));
   EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(2);
 
   auto ordering_service = initOs(max_proposal);
@@ -284,7 +285,8 @@ TEST_F(OrderingServiceTest, BatchesProceed) {
           boost::optional<size_t>(first_batch_size + second_batch_size)));
   EXPECT_CALL(*fake_transport, publishProposalProxy(_, _)).Times(1);
   EXPECT_CALL(*wsv, getLedgerPeers())
-      .WillRepeatedly(Return(std::vector<decltype(peer)>{peer}));
+      .WillRepeatedly(Return(
+          std::vector<std::shared_ptr<shared_model::interface::Peer>>{peer}));
 
   auto ordering_service = initOs(max_proposal);
   fake_transport->subscribe(ordering_service);

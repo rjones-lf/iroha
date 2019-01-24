@@ -84,15 +84,15 @@ class CommandServiceTransportGrpcTest : public testing::Test {
     status_bus = std::make_shared<MockStatusBus>();
     command_service = std::make_shared<MockCommandService>();
 
-    transport_grpc = std::make_shared<torii::CommandServiceTransportGrpc>(
-        command_service,
-        status_bus,
-        status_factory,
-        transaction_factory,
-        batch_parser,
-        batch_factory,
-        mock_consensus_gate,
-        2);
+    transport_grpc =
+        std::make_shared<CommandServiceTransportGrpc>(command_service,
+                                                      status_bus,
+                                                      status_factory,
+                                                      transaction_factory,
+                                                      batch_parser,
+                                                      batch_factory,
+                                                      mock_consensus_gate,
+                                                      2);
   }
 
   std::shared_ptr<MockStatusBus> status_bus;
@@ -106,7 +106,7 @@ class CommandServiceTransportGrpcTest : public testing::Test {
   std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory;
 
   std::shared_ptr<MockCommandService> command_service;
-  std::shared_ptr<torii::CommandServiceTransportGrpc> transport_grpc;
+  std::shared_ptr<CommandServiceTransportGrpc> transport_grpc;
 
   std::shared_ptr<iroha::network::MockConsensusGate> mock_consensus_gate;
 

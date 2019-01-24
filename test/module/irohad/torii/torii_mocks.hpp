@@ -25,7 +25,7 @@ namespace iroha {
       MOCK_METHOD0(statuses, rxcpp::observable<StatusBus::Objects>());
     };
 
-    class MockCommandService : public ::torii::CommandService {
+    class MockCommandService : public iroha::torii::CommandService {
      public:
       MOCK_METHOD1(handleTransactionBatch,
                    void(std::shared_ptr<

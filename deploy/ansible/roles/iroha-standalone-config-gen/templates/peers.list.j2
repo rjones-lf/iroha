@@ -1,3 +1,0 @@
-{% for host in groups['iroha-nodes'] %}
-{{ hostvars[host].ansible_host }}:{{ hostvars[host].internal_port }}
-{% endfor %}

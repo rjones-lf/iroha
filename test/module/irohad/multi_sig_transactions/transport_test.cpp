@@ -13,6 +13,7 @@
 #include "module/irohad/ametsuchi/ametsuchi_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_mocks.hpp"
 #include "module/irohad/multi_sig_transactions/mst_test_helpers.hpp"
+#include "module/shared_model/interface_mocks.hpp"
 #include "module/shared_model/validators/validators.hpp"
 #include "multi_sig_transactions/state/mst_state.hpp"
 #include "validators/field_validator.hpp"
@@ -121,8 +122,11 @@ TEST_F(TransportTest, SendAndReceive) {
   ASSERT_TRUE(server);
   ASSERT_NE(port, 0);
 
-  std::shared_ptr<shared_model::interface::Peer> peer =
-      makePeer(addr + std::to_string(port), "abcdabcdabcdabcdabcdabcdabcdabcd");
+  std::string address = addr + std::to_string(port);
+  shared_model::interface::types::PubkeyType pk(
+      shared_model::crypto::Hash::fromHexString(
+          "abcdabcdabcdabcdabcdabcdabcdabcd"));
+  std::shared_ptr<shared_model::interface::Peer> peer = makePeer(address, pk);
   // we want to ensure that server side will call onNewState()
   // with same parameters as on the client side
   EXPECT_CALL(*mst_notification_transport_, onNewState(_, _))

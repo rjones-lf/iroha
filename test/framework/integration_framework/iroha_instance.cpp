@@ -4,8 +4,11 @@
  */
 
 #include "framework/integration_framework/iroha_instance.hpp"
+
 #include <cstdlib>
 #include <sstream>
+
+#include "ametsuchi/storage.hpp"
 #include "cryptography/keypair.hpp"
 #include "framework/config_helper.hpp"
 #include "framework/integration_framework/test_irohad.hpp"

@@ -36,9 +36,6 @@ class AddSignatory : public AcceptanceFixture {
       crypto::DefaultCryptoAlgorithmType::generateKeypair();
 };
 
-#define CHECK_BLOCK(i) \
-  [](auto &block) { ASSERT_EQ(block->transactions().size(), i); }
-
 /**
  * C224 Add existing public key of other user
  * @given some user with CanAddSignatory permission and a second user
@@ -49,11 +46,11 @@ class AddSignatory : public AcceptanceFixture {
 TEST_F(AddSignatory, Basic) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), CHECK_BLOCK(1))
-      .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendTxAwait(
           complete(baseTx().addSignatory(kUserId, kUser2Keypair.publicKey())),
-          CHECK_BLOCK(1))
+          CHECK_TXS_QUANTITY(1))
       .sendQuery(
           complete(baseQry().creatorAccountId(kAdminId).getSignatories(kUserId),
                    kAdminKeypair),
@@ -83,11 +80,11 @@ TEST_F(AddSignatory, NoPermission) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
       .sendTxAwait(makeFirstUser({interface::permissions::Role::kReceive}),
-                   CHECK_BLOCK(1))
-      .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
+                   CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendTx(
           complete(baseTx().addSignatory(kUserId, kUser2Keypair.publicKey())))
-      .checkVerifiedProposal(CHECK_BLOCK(0));
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0));
 }
 
 /**
@@ -105,16 +102,16 @@ TEST_F(AddSignatory, GrantedPermission) {
       .setInitialState(kAdminKeypair)
       .sendTxAwait(
           makeFirstUser({interface::permissions::Role::kAddMySignatory}),
-          CHECK_BLOCK(1))
-      .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
+          CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendTxAwait(
           complete(baseTx().grantPermission(
               kUser2Id, interface::permissions::Grantable::kAddMySignatory)),
-          CHECK_BLOCK(1))
+          CHECK_TXS_QUANTITY(1))
       .sendTxAwait(complete(baseTx().creatorAccountId(kUser2Id).addSignatory(
                                 kUserId, kUser2Keypair.publicKey()),
                             kUser2Keypair),
-                   CHECK_BLOCK(1));
+                   CHECK_TXS_QUANTITY(1));
 }
 
 /**
@@ -130,12 +127,12 @@ TEST_F(AddSignatory, NonGrantedPermission) {
       .setInitialState(kAdminKeypair)
       .sendTxAwait(
           makeFirstUser({interface::permissions::Role::kAddMySignatory}),
-          CHECK_BLOCK(1))
-      .sendTxAwait(makeSecondUser(), CHECK_BLOCK(1))
+          CHECK_TXS_QUANTITY(1))
+      .sendTxAwait(makeSecondUser(), CHECK_TXS_QUANTITY(1))
       .sendTx(complete(baseTx().creatorAccountId(kUser2Id).addSignatory(
                            kUserId, kUser2Keypair.publicKey()),
                        kUser2Keypair))
-      .checkVerifiedProposal(CHECK_BLOCK(0));
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0));
 }
 
 /**
@@ -147,11 +144,11 @@ TEST_F(AddSignatory, NonGrantedPermission) {
 TEST_F(AddSignatory, NonExistentUser) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), CHECK_BLOCK(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
       .sendTx(complete(baseTx().addSignatory("inexistent@" + kDomain,
                                              kUserKeypair.publicKey()),
                        kUser2Keypair))
-      .checkVerifiedProposal(CHECK_BLOCK(0));
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0));
 }
 
 /**
@@ -163,7 +160,7 @@ TEST_F(AddSignatory, NonExistentUser) {
 TEST_F(AddSignatory, InvalidKey) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), CHECK_BLOCK(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
       .sendTx(complete(baseTx().addSignatory(kUserId,
                                              shared_model::crypto::PublicKey(
                                                  std::string(1337, 'a'))),
@@ -180,10 +177,10 @@ TEST_F(AddSignatory, InvalidKey) {
 TEST_F(AddSignatory, NonExistedKey) {
   IntegrationTestFramework(1)
       .setInitialState(kAdminKeypair)
-      .sendTxAwait(makeFirstUser(), CHECK_BLOCK(1))
+      .sendTxAwait(makeFirstUser(), CHECK_TXS_QUANTITY(1))
       .sendTx(complete(
           baseTx().addSignatory(
               kUserId, shared_model::crypto::PublicKey(std::string(32, 'a'))),
           kUser2Keypair))
-      .checkVerifiedProposal(CHECK_BLOCK(0));
+      .checkVerifiedProposal(CHECK_TXS_QUANTITY(0));
 }
