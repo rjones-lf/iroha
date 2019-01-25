@@ -43,7 +43,7 @@ As second argument you need to provide object that contains properties for requi
     grpc.credentials.createInsecure()
   )
 
-  const adminPriv = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70
+  const adminPriv = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
   commands.setAccountDetail({
     privateKeys: [adminPriv],
