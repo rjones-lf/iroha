@@ -26,7 +26,7 @@ For usage of any command you need to provide ``commandOptions`` as a first argum
 .. code-block:: javascript
 
   const commandOptions = {
-    privateKeys: [''], // Array of private keys in hex format
+    privateKeys: ['f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'], // Array of private keys in hex format
     creatorAccountId: '', // Account id, ex. admin@test
     quorum: 1,
     commandService: null
@@ -42,6 +42,8 @@ As second argument you need to provide object that contains properties for requi
     '127.0.0.1:50051',
     grpc.credentials.createInsecure()
   )
+
+  const adminPriv = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70
 
   commands.setAccountDetail({
     privateKeys: [adminPriv],
@@ -61,7 +63,7 @@ For usage of any query you need to provide ``queryOptions`` as a first argument.
 .. code-block:: javascript
 
   const queryOptions = {
-    privateKey: '', // Private key in hex format
+    privateKey: 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70', // Private key in hex format
     creatorAccountId: '', // Account id, ex. admin@test
     queryService: null
   }
@@ -76,6 +78,8 @@ As second argument you need to provide object that contains properties for requi
     '127.0.0.1:50051',
     grpc.credentials.createInsecure()
   )
+
+  const adminPriv = 'f101537e319568c765b2cc89698325604991dca57b9716b58016b253506cab70'
 
   queries.getAccountDetail({
     privateKey: adminPriv,
