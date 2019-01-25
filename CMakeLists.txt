@@ -82,7 +82,6 @@ option(SWIG_PYTHON  "Generate Swig Python bindings"  OFF)
 option(SWIG_JAVA    "Generate Swig Java bindings"    OFF)
 option(SUPPORT_PYTHON2 "ON if Python2, OFF if python3" OFF)
 option(SWIG_CSHARP  "Generate Swig C# bindings"      OFF)
-option(SWIG_NODE    "Generate Swig NodeJS"           OFF)
 option(USE_LIBIROHA "Use external model library"     OFF)
 
 
