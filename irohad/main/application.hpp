@@ -7,7 +7,8 @@
 #define IROHA_APPLICATION_HPP
 
 #include "consensus/consensus_block_cache.hpp"
-#include "cryptography/crypto_provider/crypto_model_signer.hpp"
+#include "cryptography/crypto_provider/abstract_crypto_model_signer.hpp"
+#include "interfaces/queries/query.hpp"
 #include "logger/logger.hpp"
 #include "main/impl/block_loader_init.hpp"
 #include "main/impl/consensus_init.hpp"
@@ -202,7 +203,9 @@ class Irohad {
   std::shared_ptr<iroha::ametsuchi::WsvRestorer> wsv_restorer_;
 
   // crypto provider
-  std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer_;
+  std::shared_ptr<shared_model::crypto::AbstractCryptoModelSigner<
+      shared_model::interface::Block>>
+      crypto_signer_;
 
   // batch parser
   std::shared_ptr<shared_model::interface::TransactionBatchParser> batch_parser;
