@@ -9,10 +9,15 @@
 namespace shared_model {
   namespace crypto {
 
-    // signer which can be overloaded for dynamic polymorphism
+    /**
+     * An interface that supports signing Model objects
+     */
     template <typename Model>
     class AbstractCryptoModelSigner {
      public:
+      /**
+       * Signs m according to implementation
+       */
       virtual void sign(Model &m) const = 0;
 
       virtual ~AbstractCryptoModelSigner() = default;
