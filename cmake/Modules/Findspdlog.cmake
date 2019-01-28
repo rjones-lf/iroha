@@ -1,6 +1,5 @@
 add_library(spdlog INTERFACE IMPORTED)
 
-unset(spdlog_INCLUDE_DIR CACHE)
 find_path(spdlog_INCLUDE_DIR spdlog/spdlog.h
   PATHS ${EP_PREFIX}/src/gabime_spdlog/include
   )
